@@ -1990,106 +1990,108 @@ namespace IRExplorerUI {
             return callGraph;
         }
 
-        private async Task<ChildFunctionEx> CreateCallTree(IRTextFunction function) {
-            var (_, callGraphNode) = await GenerateFunctionCallGraph(function.ParentSummary, function);
-            CallGraphNode otherNode = null;
+#region Dead code for making a call tree from CallGraph, not profile info
+        //private async Task<ChildFunctionEx> CreateCallTree(IRTextFunction function) {
+        //    var (_, callGraphNode) = await GenerateFunctionCallGraph(function.ParentSummary, function);
+        //    CallGraphNode otherNode = null;
 
-            if (otherSummary_ != null) {
-                var otherFunction = otherSummary_.FindFunction(function);
+        //    if (otherSummary_ != null) {
+        //        var otherFunction = otherSummary_.FindFunction(function);
 
-                if (otherFunction != null) {
-                    (_, otherNode) = await GenerateFunctionCallGraph(otherSummary_, otherFunction);
-                }
-            }
+        //        if (otherFunction != null) {
+        //            (_, otherNode) = await GenerateFunctionCallGraph(otherSummary_, otherFunction);
+        //        }
+        //    }
 
-            var visitedNodes = new HashSet<CallGraphNode>();
-            var rootNode = new ChildFunctionEx(ChildFunctionExKind.CallTreeNode);
-            rootNode.Children = new List<ChildFunctionEx>();
+        //    var visitedNodes = new HashSet<CallGraphNode>();
+        //    var rootNode = new ChildFunctionEx(ChildFunctionExKind.CallTreeNode);
+        //    rootNode.Children = new List<ChildFunctionEx>();
 
-            if (callGraphNode != null) {
-                CreateCallTree(callGraphNode, otherNode, function, rootNode, visitedNodes);
-            }
+        //    if (callGraphNode != null) {
+        //        CreateCallTree(callGraphNode, otherNode, function, rootNode, visitedNodes);
+        //    }
 
-            return rootNode;
-        }
+        //    return rootNode;
+        //}
 
-        private void CreateCallTree(CallGraphNode node, CallGraphNode otherNode,
-            IRTextFunction function, ChildFunctionEx parentNode,
-            HashSet<CallGraphNode> visitedNodes) {
-            visitedNodes.Add(node);
+        //private void CreateCallTree(CallGraphNode node, CallGraphNode otherNode,
+        //    IRTextFunction function, ChildFunctionEx parentNode,
+        //    HashSet<CallGraphNode> visitedNodes) {
+        //    visitedNodes.Add(node);
 
-            if (node.HasCallers) {
-                //? TODO: Sort on top of the list
-                var callerInfo = CreateCallTreeChild(node, function);
-                callerInfo.FunctionName = "Callers";
-                callerInfo.IsMarked = true;
-                parentNode.Children.Add(callerInfo);
+        //    if (node.HasCallers) {
+        //        //? TODO: Sort on top of the list
+        //        var callerInfo = CreateCallTreeChild(node, function);
+        //        callerInfo.FunctionName = "Callers";
+        //        callerInfo.IsMarked = true;
+        //        parentNode.Children.Add(callerInfo);
 
-                foreach (var callerNode in node.UniqueCallers) {
-                    var callerFunc = function.ParentSummary.FindFunction(callerNode.FunctionName);
-                    if (callerFunc == null)
-                        continue;
+        //        foreach (var callerNode in node.UniqueCallers) {
+        //            var callerFunc = function.ParentSummary.FindFunction(callerNode.FunctionName);
+        //            if (callerFunc == null)
+        //                continue;
 
-                    var callerNodeEx = CreateCallTreeChild(callerNode, callerFunc);
-                    callerInfo.Children.Add(callerNodeEx);
-                }
-            }
+        //            var callerNodeEx = CreateCallTreeChild(callerNode, callerFunc);
+        //            callerInfo.Children.Add(callerNodeEx);
+        //        }
+        //    }
 
-            foreach (var calleeNode in node.UniqueCallees) {
-                var childFunc = function.ParentSummary.FindFunction(calleeNode.FunctionName);
-                if (childFunc == null) continue;
+        //    foreach (var calleeNode in node.UniqueCallees) {
+        //        var childFunc = function.ParentSummary.FindFunction(calleeNode.FunctionName);
+        //        if (childFunc == null) continue;
 
-                // Create node and attach statistics if available.
-                var childNode = CreateCallTreeChild(calleeNode, childFunc);
-                parentNode.Children.Add(childNode);
+        //        // Create node and attach statistics if available.
+        //        var childNode = CreateCallTreeChild(calleeNode, childFunc);
+        //        parentNode.Children.Add(childNode);
 
-                var otherCalleeNode = otherNode?.FindCallee(calleeNode);
+        //        var otherCalleeNode = otherNode?.FindCallee(calleeNode);
 
-                if (otherSummary_ != null && otherCalleeNode == null) {
-                    // Missing in right.
-                    childNode.TextColor = ColorBrushes.GetBrush(settings_.NewSectionColor);
-                    childNode.IsMarked = true;
-                }
+        //        if (otherSummary_ != null && otherCalleeNode == null) {
+        //            // Missing in right.
+        //            childNode.TextColor = ColorBrushes.GetBrush(settings_.NewSectionColor);
+        //            childNode.IsMarked = true;
+        //        }
 
-                if (calleeNode.HasCallees && !visitedNodes.Contains(calleeNode)) {
-                    childNode.Children = new List<ChildFunctionEx>();
-                    CreateCallTree(calleeNode, otherCalleeNode, childFunc, childNode, visitedNodes);
+        //        if (calleeNode.HasCallees && !visitedNodes.Contains(calleeNode)) {
+        //            childNode.Children = new List<ChildFunctionEx>();
+        //            CreateCallTree(calleeNode, otherCalleeNode, childFunc, childNode, visitedNodes);
 
-                    if (childNode.IsMarked && parentNode != null) {
-                        parentNode.IsMarked = true;
-                    }
-                }
-            }
+        //            if (childNode.IsMarked && parentNode != null) {
+        //                parentNode.IsMarked = true;
+        //            }
+        //        }
+        //    }
 
-            // Sort children, since that is not yet supported by the TreeListView control.
-            parentNode.Children.Sort((a, b) => {
-                // Ensure the callers node is placed first.
-                if (b.Time > a.Time) {
-                    return 1;
-                }
-                else if (b.Time < a.Time) {
-                    return -1;
-                }
+        //    // Sort children, since that is not yet supported by the TreeListView control.
+        //    parentNode.Children.Sort((a, b) => {
+        //        // Ensure the callers node is placed first.
+        //        if (b.Time > a.Time) {
+        //            return 1;
+        //        }
+        //        else if (b.Time < a.Time) {
+        //            return -1;
+        //        }
 
-                return string.Compare(b.FunctionName, a.FunctionName, StringComparison.Ordinal);
-            });
-        }
+        //        return string.Compare(b.FunctionName, a.FunctionName, StringComparison.Ordinal);
+        //    });
+        //}
 
-        private FunctionCodeStatistics GetFunctionStatistics(IRTextFunction function) {
-            var functionEx = GetFunctionExtension(function);
-            return functionEx.Statistics;
-        }
+        //private FunctionCodeStatistics GetFunctionStatistics(IRTextFunction function) {
+        //    var functionEx = GetFunctionExtension(function);
+        //    return functionEx.Statistics;
+        //}
 
-        private ChildFunctionEx CreateCallTreeChild(CallGraphNode childNode, IRTextFunction childFunc) {
-            var childInfo = new ChildFunctionEx(ChildFunctionExKind.CallTreeNode) {
-                Function = childFunc,
-                FunctionName = childNode.FunctionName,
-                TextColor = Brushes.Black,
-                BackColor = ColorBrushes.GetBrush(Colors.Transparent),
-                Children = new List<ChildFunctionEx>(),
-            };
-            return childInfo;
-        }
+        //private ChildFunctionEx CreateCallTreeChild(CallGraphNode childNode, IRTextFunction childFunc) {
+        //    var childInfo = new ChildFunctionEx(ChildFunctionExKind.CallTreeNode) {
+        //        Function = childFunc,
+        //        FunctionName = childNode.FunctionName,
+        //        TextColor = Brushes.Black,
+        //        BackColor = ColorBrushes.GetBrush(Colors.Transparent),
+        //        Children = new List<ChildFunctionEx>(),
+        //    };
+        //    return childInfo;
+        //}
+#endregion
 
         public override void OnSessionSave() {
             base.OnSessionStart();

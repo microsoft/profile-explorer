@@ -1,0 +1,63 @@
+﻿<UserControl
+    x:Class="IRExplorerUI.Profile.ProfileListView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:IRExplorerUI.Profile"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <ListView
+        x:Name="ItemList"
+        Grid.Column="2"
+        Panel.ZIndex="1"
+        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+        BorderBrush="{x:Null}"
+        BorderThickness="0,0,0,0"
+        VirtualizingStackPanel.IsVirtualizing="True"
+        VirtualizingStackPanel.VirtualizationMode="Recycling">
+        <ListView.View>
+            <GridView>
+                <GridViewColumn Width="200" DisplayMemberBinding="{Binding Name}">
+                    <GridViewColumnHeader x:Name="FunctionColumnHeader" Content="{Binding NameColumnTitle}" />
+                    <GridViewColumn.HeaderContainerStyle>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                    </GridViewColumn.HeaderContainerStyle>
+                </GridViewColumn>
+                <GridViewColumn Width="150">
+                    <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="{Binding TimeColumnTitle}" />
+
+                    <GridViewColumn.HeaderContainerStyle>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                    </GridViewColumn.HeaderContainerStyle>
+
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border HorizontalAlignment="Stretch">
+                                <ContentControl
+                                    HorizontalAlignment="Stretch"
+                                    Content="{Binding}"
+                                    ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
+                            </Border>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+
+
+            </GridView>
+        </ListView.View>
+
+        <ListView.ItemContainerStyle>
+            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            </Style>
+        </ListView.ItemContainerStyle>
+    </ListView>
+</UserControl>

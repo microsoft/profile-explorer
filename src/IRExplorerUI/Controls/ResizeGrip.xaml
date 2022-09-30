@@ -27,7 +27,7 @@
                                     DockPanel.Dock="Right"
                                     IsHitTestVisible="True">
                                     <Line
-                                        Stroke="DarkGray"
+                                        Stroke="{TemplateBinding Foreground}"
                                         StrokeThickness="1.5"
                                         X1="6"
                                         X2="18"
@@ -35,14 +35,14 @@
                                         Y2="6" />
                                     <!--  smallest/right|bottom most  -->
                                     <Line
-                                        Stroke="DarkGray"
+                                        Stroke="{TemplateBinding Foreground}"
                                         StrokeThickness="1.5"
                                         X1="10"
                                         X2="18"
                                         Y1="18"
                                         Y2="10" />
                                     <Line
-                                        Stroke="DarkGray"
+                                        Stroke="{TemplateBinding Foreground}"
                                         StrokeThickness="1.5"
                                         X1="14"
                                         X2="18"
