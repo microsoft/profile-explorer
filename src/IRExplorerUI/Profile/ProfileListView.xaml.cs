@@ -38,7 +38,7 @@ namespace IRExplorerUI.Profile {
             };
         }
 
-        public static ProfileListViewItem From(ModuleProfileInfo node, ProfileData profileData) {
+        public static ProfileListViewItem From(IFunctionProfileInfoProvider.ModuleProfileInfo node, ProfileData profileData) {
             return new ProfileListViewItem() {
                 FunctionName = node.Name,
                 Weight = node.Weight,
@@ -84,12 +84,24 @@ namespace IRExplorerUI.Profile {
             set => SetField(ref showExclusiveTimeColumn_, value);
         }
 
+        private bool showTimeColumn_;
+        public bool ShowTimeColumn {
+            get => showTimeColumn_;
+            set => SetField(ref showTimeColumn_, value);
+        }
+
+        private bool showCombinedTimeColumn_;
+        public bool ShowCombinedTimeColumn {
+            get => showCombinedTimeColumn_;
+            set => SetField(ref showCombinedTimeColumn_, value);
+        }
+
         public void Show(List<ProfileCallTreeNode> nodes) {
             var list = new List<ProfileListViewItem>(nodes.Count);
             nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData)));
             ItemList.ItemsSource = new ListCollectionView(list);
         }
-        public void Show(List<ModuleProfileInfo> nodes) {
+        public void Show(List<IFunctionProfileInfoProvider.ModuleProfileInfo> nodes) {
             var list = new List<ProfileListViewItem>(nodes.Count);
             nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData)));
             ItemList.ItemsSource = new ListCollectionView(list);

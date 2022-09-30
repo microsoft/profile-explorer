@@ -68,7 +68,7 @@
 		<EmbeddedResource Remove="Themes\**" />
 		<None Remove="Themes\**" />
 		<Page Remove="Themes\**" />
-		<Page Update="Profile\CallTreeNodePopup.xaml">
+		<Page Update="Profile\CallTreeNodePanel.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		  <XamlRuntime>Wpf</XamlRuntime>
 		  <SubType>Designer</SubType>

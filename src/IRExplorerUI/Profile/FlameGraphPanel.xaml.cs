@@ -141,11 +141,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     public override void OnSessionStart() {
         base.OnSessionStart();
+        NodePanel.Initialize(Session, this);
         InitializePendingCallTree();
-    }
-
-    public async Task Initialize(ProfileCallTree callTree) {
-        await GraphViewer.Initialize(callTree, GraphArea);
     }
 
     private void SetupEvents() {
@@ -166,6 +163,17 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     private void FlameGraphPanel_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
         HidePreviewPopup();
+
+        var point = e.GetPosition(GraphHost);
+        var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
+
+        if (pointedNode == null) {
+            GraphViewer.ClearSelection(); // Click outside graph is captured here.
+        }
+        else if (pointedNode.CallTreeNode != null) {
+            NodePanel.Show(pointedNode.CallTreeNode);
+        }
+
     }
 
     private void HidePreviewPopup() {
@@ -364,6 +372,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         if (pointedNode == null) {
             GraphViewer.ClearSelection(); // Click outside graph is captured here.
+        }
+        else if(pointedNode.CallTreeNode != null) {
+            NodePanel.Show(pointedNode.CallTreeNode);
         }
 
         dragging_ = true;
@@ -636,10 +647,14 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         if (callNode != null) {
             // If popup already opened for this node reuse the instance.
-            if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup popup &&
-                popup.CallTreeNode == callNode) {
-                return popup;
-            }
+            //? FIX FIX FIX
+            //? FIX FIX FIX
+            //? FIX FIX FIX
+            //? FIX FIX FIX
+            //if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup popup &&
+            //    popup.CallTreeNode == callNode) {
+            //    return popup;
+            //}
 
             return new CallTreeNodePopup(callNode, this, previewPoint, 400, 120, GraphViewer, Session);
         }
@@ -659,15 +674,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         return list;
     }
 
-    public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
-        return new List<ProfileCallTreeNode>();
-    }
-
-    public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
-        var moduleMap = new Dictionary<string, ModuleProfileInfo>();
-
+    public List<IFunctionProfileInfoProvider.ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
+        var moduleMap = new Dictionary<string, IFunctionProfileInfoProvider.ModuleProfileInfo>();
         CollectModules(node, moduleMap);
-        var moduleList = new List<ModuleProfileInfo>(moduleMap.Count);
+        var moduleList = new List<IFunctionProfileInfoProvider.ModuleProfileInfo>(moduleMap.Count);
 
         foreach (var module in moduleMap.Values) {
             module.Percentage = node.ScaleWeight(module.Weight);
@@ -678,13 +688,40 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         return moduleList;
     }
 
-    public void CollectModules(ProfileCallTreeNode node, Dictionary<string, ModuleProfileInfo> moduleMap) {
-        var entry = moduleMap.GetOrAddValue(node.ModuleName, () => new ModuleProfileInfo(node.ModuleName));
+    public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
+        var funcMap = new Dictionary<string, ProfileCallTreeNode>();
+        CollectFunctions(node, funcMap);
+        var funcList = new List<ProfileCallTreeNode>(funcMap.Count);
+
+        foreach (var func in funcMap.Values) {
+            funcList.Add(func);
+        }
+
+        funcList.Sort((a, b) => b.ExclusiveWeight.CompareTo(a.ExclusiveWeight));
+        return funcList;
+    }
+
+    public void CollectModules(ProfileCallTreeNode node, Dictionary<string, IFunctionProfileInfoProvider.ModuleProfileInfo> moduleMap) {
+        var entry = moduleMap.GetOrAddValue(node.ModuleName,
+            () => new IFunctionProfileInfoProvider.ModuleProfileInfo(node.ModuleName));
         entry.Weight += node.ExclusiveWeight;
 
         if (node.HasChildren) {
             foreach (var childNode in node.Children) {
                 CollectModules(childNode, moduleMap);
+            }
+        }
+    }
+
+    public void CollectFunctions(ProfileCallTreeNode node, Dictionary<string, ProfileCallTreeNode> funcMap) {
+        var entry = funcMap.GetOrAddValue(node.FunctionName,
+            () => new ProfileCallTreeNode(node.FunctionDebugInfo, node.Function));
+        entry.Weight += node.Weight;
+        entry.ExclusiveWeight = node.ExclusiveWeight;
+
+        if (node.HasChildren) {
+            foreach (var childNode in node.Children) {
+                CollectFunctions(childNode, funcMap);
             }
         }
     }
