@@ -10,6 +10,7 @@ using System.Windows.Threading;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Google.Protobuf.WellKnownTypes;
 using IRExplorerCore.Graph;
+using IRExplorerCore.Utilities;
 using IRExplorerUI.Controls;
 using Microsoft.Diagnostics.Tracing.Stacks;
 
@@ -662,7 +663,29 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         return new List<ProfileCallTreeNode>();
     }
 
-    public void GetTopModules(ProfileCallTreeNode node) {
-        
+    public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
+        var moduleMap = new Dictionary<string, ModuleProfileInfo>();
+
+        CollectModules(node, moduleMap);
+        var moduleList = new List<ModuleProfileInfo>(moduleMap.Count);
+
+        foreach (var module in moduleMap.Values) {
+            module.Percentage = node.ScaleWeight(module.Weight);
+            moduleList.Add(module);
+        }
+
+        moduleList.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+        return moduleList;
+    }
+
+    public void CollectModules(ProfileCallTreeNode node, Dictionary<string, ModuleProfileInfo> moduleMap) {
+        var entry = moduleMap.GetOrAddValue(node.ModuleName, () => new ModuleProfileInfo(node.ModuleName));
+        entry.Weight += node.ExclusiveWeight;
+
+        if (node.HasChildren) {
+            foreach (var childNode in node.Children) {
+                CollectModules(childNode, moduleMap);
+            }
+        }
     }
 }

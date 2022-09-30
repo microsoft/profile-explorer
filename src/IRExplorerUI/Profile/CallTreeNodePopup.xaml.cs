@@ -18,15 +18,22 @@ using IRExplorerCore.IR;
 using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Controls {
+    public class ModuleProfileInfo {
+        public ModuleProfileInfo() {}
 
+        public ModuleProfileInfo(string name) {
+            Name = name;
+        }
+
+        public string Name { get; set; }
+        public double Percentage { get; set; }
+        public TimeSpan Weight { get; set; }
+    }
 
     public interface IFunctionProfileInfoProvider {
-       
-        // backt, functs, mods
-
         List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node);
         List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node);
-        void GetTopModules(ProfileCallTreeNode node);
+        List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node);
     }
 
     public class ProfileCallTreeNodeEx : BindableObject {
@@ -70,15 +77,19 @@ namespace IRExplorerUI.Controls {
             PanelResizeGrip.ResizedControl = this;
             DataContext = this;
             BacktraceList.Session = session;
+            FunctionList.Session = session;
+            ModuleList.Session = session;
 
             BacktraceList.Show(funcInfoProvider_.GetBacktrace(node));
+            FunctionList.Show(funcInfoProvider.GetTopFunctions(node));
+            ModuleList.Show(funcInfoProvider.GetTopModules(node));
         }
 
         private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {
             var nodeEx = new ProfileCallTreeNodeEx(node) {
                 FullFunctionName = node.FunctionName,
                 FunctionName = FormatFunctionName(node, demangle: true, MaxFunctionNmeLength),
-                ModuleName = FormatModuleName(node, MaxModuleNameLength), 
+                ModuleName = FormatModuleName(node, MaxModuleNameLength),
                 Percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight),
                 ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight),
             };

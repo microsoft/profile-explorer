@@ -58,7 +58,7 @@ public class ProfileCallTree {
         var state = new ProfileCallTreeState(funcToNodesMap_.Count);
         state.RootNodes = rootNodes_;
         state.NextNodeId = nextNodeId_;
-        
+
         foreach (var pair in funcToNodesMap_) {
             var funcId = new IRTextFunctionId(pair.Key);
             state.FuncToNodesMap[funcId] = pair.Value;
@@ -119,7 +119,7 @@ public class ProfileCallTree {
                     for(int i = 0; i < count; i++) {
                         var childNode = funcNode.Children[i];
 
-                        if (nodesSet.TryGetValue(childNode, out var uniqueNode) && 
+                        if (nodesSet.TryGetValue(childNode, out var uniqueNode) &&
                             !ReferenceEquals(childNode, uniqueNode)) {
                             funcNode.Children[i] = uniqueNode;
                             childNode = uniqueNode;
@@ -133,7 +133,7 @@ public class ProfileCallTree {
 
             callTree.funcToNodesMap_[function] = nodeList;
         }
-        
+
         return callTree;
     }
 
@@ -187,7 +187,7 @@ public class ProfileCallTree {
 
         return childNode;
     }
-    
+
     public void RegisterFunctionTreeNode(ProfileCallTreeNode node) {
         // Add an unique instance of the node for a function.
         node.Id = Interlocked.Increment(ref nextNodeId_);
@@ -287,7 +287,7 @@ public class ProfileCallTree {
                     if (!childrenSet.TryGetValue(childNode, out var existingNode)) {
                         existingNode = new ProfileCallTreeNode(childNode.FunctionDebugInfo, childNode.Function);
                         childrenSet.Add(existingNode);
-                    }                        
+                    }
 
                     existingNode.Weight += childNode.Weight;
                     existingNode.ExclusiveWeight += childNode.ExclusiveWeight;
@@ -396,7 +396,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     private IRTextFunctionReference functionRef_ { get; set; }
     [ProtoMember(2)]
     private List<ProfileCallTreeNode> children_;
-    [ProtoMember(3)] 
+    [ProtoMember(3)]
     private Dictionary<long, ProfileCallSite> callSites_;
 
     private List<ProfileCallTreeNode> callers_; // Can't be serialized, reconstructed.
@@ -428,12 +428,16 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     public string FunctionName => Function.Name;
     public string ModuleName => Function.ParentSummary.ModuleName;
 
+    public double ScaleWeight(TimeSpan relativeWeigth) {
+        return (double)relativeWeigth.Ticks / (double)Weight.Ticks;
+    }
+
     public (TimeSpan Weight, TimeSpan ExclusiveWeight) ChildrenWeight {
         get {
             Debug.Assert(HasChildren);
             TimeSpan weight = TimeSpan.Zero;
             TimeSpan exclusiveWeight = TimeSpan.Zero;
-                
+
             foreach (var child in Children) {
                 weight += child.Weight;
                 exclusiveWeight += child.ExclusiveWeight;
@@ -488,7 +492,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         ExclusiveWeight += weight;
         lock_.ExitWriteLock();
     }
-        
+
     public (ProfileCallTreeNode, bool) AddChild(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
         var (childNode, isNewNode) = GetOrCreateChildNode(functionDebugInfo, function);
 
@@ -498,7 +502,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
         return (childNode, isNewNode);
     }
-    
+
     private void AddParent(ProfileCallTreeNode parentNode) {
         try {
             lock_.EnterUpgradeableReadLock();
@@ -633,7 +637,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         //    }
         //}
     }
-        
+
     public bool Equals(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
         return Function.Equals(function) &&
                FunctionDebugInfo.Equals(functionDebugInfo);
