@@ -8,6 +8,7 @@
     xmlns:doc="clr-namespace:IRExplorerUI.Document"
     xmlns:local="clr-namespace:IRExplorerUI.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:profile="clr-namespace:IRExplorerUI.Profile"
     d:DesignHeight="450"
     d:DesignWidth="800"
     AllowsTransparency="True"
@@ -27,7 +28,7 @@
                 ShadowDepth="2"
                 Color="#FF929292" />
         </Border.Effect>
-        <Grid>
+        <Grid x:Name="ContentHost">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="20" />
@@ -78,11 +79,13 @@
                     Source="{StaticResource CloseIcon}" />
             </Button>
 
-            <DockPanel
+            <Grid
                 Grid.Row="1"
+                Grid.Column="0"
                 Grid.ColumnSpan="3"
-                Margin="4,4,4,4">
-                <StackPanel DockPanel.Dock="Top">
+                Margin="4,4,4,4"
+                HorizontalAlignment="Stretch">
+                <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock
                             Width="70"
@@ -103,59 +106,82 @@
                             Content="{Binding Node}"
                             ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Visibility="{Binding ParentTimeVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Width="70" Text="Module" />
-                        <TextBlock
-                            Margin="4,0,0,0"
-                            FontWeight="DemiBold"
-                            Text="{Binding Node.ModuleName}" />
-                    </StackPanel>
-
-
-
-                    <DockPanel HorizontalAlignment="Stretch">
-                        <TextBlock Width="70" Text="Function" />
-                        <TextBox
-                            HorizontalAlignment="Stretch"
-                            Background="{x:Null}"
-                            BorderBrush="{x:Null}"
-                            FontWeight="DemiBold"
-                            IsReadOnly="True"
-                            MaxLines="3"
-                            ScrollViewer.CanContentScroll="True"
-                            ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                            ScrollViewer.VerticalScrollBarVisibility="Auto"
-                            Text="{Binding Path=Node.FullFunctionName}"
-                            TextWrapping="Wrap" />
-                    </DockPanel>
                 </StackPanel>
 
-                <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
-                    <TextBlock
-                        Margin="0,0,4,0"
-                        FontWeight="DemiBold"
-                        Text="Backtrace" />
-                    <TextBlock
-                        Margin="4,0,4,0"
-                        FontWeight="DemiBold"
-                        Text="Functions" />
-                    <TextBlock
-                        Margin="4,0,4,0"
-                        FontWeight="DemiBold"
-                        Text="Modules" />
+                <StackPanel
+                    Margin="0,40,0,0"
+                    HorizontalAlignment="Stretch"
+                    Orientation="Horizontal">
                     <Expander
-                        Margin="0,4,0,4"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
-                        Header="Details"
-                        Visibility="Hidden">
-                        <doc:SearcheableIRDocument
-                            x:Name="TextView"
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch"
-                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                            DockPanel.Dock="Bottom" />
+                        HorizontalContentAlignment="Left"
+                        Header="Info">
+                        <StackPanel MaxWidth="{Binding ActualWidth, ElementName=ContentHost}" Margin="0,4,0,0">
+                            <Grid HorizontalAlignment="Stretch">
+                                <TextBlock
+                                    Width="70"
+                                    HorizontalAlignment="Left"
+                                    Text="Module" />
+                                <TextBox
+                                    Margin="65,0,0,0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Null}"
+                                    BorderBrush="{x:Null}"
+                                    FontWeight="DemiBold"
+                                    IsReadOnly="True"
+                                    MaxLines="3"
+                                    ScrollViewer.CanContentScroll="True"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                    Text="{Binding Path=Node.ModuleName}"
+                                    TextWrapping="Wrap" />
+                            </Grid>
+
+                            <Grid HorizontalAlignment="Stretch">
+                                <TextBlock
+                                    Width="70"
+                                    HorizontalAlignment="Left"
+                                    Text="Function" />
+                                <TextBox
+                                    Margin="65,0,0,0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Null}"
+                                    BorderBrush="{x:Null}"
+                                    FontWeight="DemiBold"
+                                    IsReadOnly="True"
+                                    MaxLines="10"
+                                    ScrollViewer.CanContentScroll="True"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                    Text="{Binding Path=Node.FullFunctionName}"
+                                    TextWrapping="Wrap" />
+                            </Grid>
+                        </StackPanel>
+
                     </Expander>
+                    <Expander
+                        Margin="8,0,0,0"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        Header="Backtrace">
+                        <profile:ProfileListView
+                            x:Name="BacktraceList"
+                            NameColumnTitle="Function"
+                            TimeColumnTitle="Time (self)" />
+                    </Expander>
+
+                    <Expander
+                        Margin="8,0,0,0"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        Header="Functions" />
+
+                    <Expander
+                        Margin="8,0,0,0"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        Header="Modules" />
                 </StackPanel>
 
 
@@ -166,7 +192,7 @@
                     HorizontalAlignment="Right"
                     VerticalAlignment="Bottom"
                     Panel.ZIndex="100" />
-            </DockPanel>
+            </Grid>
         </Grid>
     </Border>
 </controls:DraggablePopup>

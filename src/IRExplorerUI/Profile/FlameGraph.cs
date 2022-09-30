@@ -244,6 +244,8 @@ namespace IRExplorerUI.Profile {
     }
 
     public class FlameGraph {
+        private Dictionary<ProfileCallTreeNode, FlameGraphNode> treeNodeToFgNodeMap_;
+
         public double MaxWidth { get; set; }
         public double NodeHeight { get; set; }
         public FlameGraphNode RootNode { get; set; }
@@ -252,6 +254,11 @@ namespace IRExplorerUI.Profile {
 
         public FlameGraph(ProfileCallTree callTree) {
             CallTree = callTree;
+            treeNodeToFgNodeMap_ = new Dictionary<ProfileCallTreeNode, FlameGraphNode>();
+        }
+
+        public FlameGraphNode GetNode(ProfileCallTreeNode node) {
+            return treeNodeToFgNodeMap_.GetValueOrDefault(node);
         }
 
         public void Build(ProfileCallTreeNode rootNode) {
@@ -292,6 +299,7 @@ namespace IRExplorerUI.Profile {
                 var childNode = Build(childFlameNode, child.Weight, child.Children, depth + 1);
                 childNode.Parent = flameNode;
                 flameNode.Children.Add(childNode);
+                treeNodeToFgNodeMap_[child] = childFlameNode;
             }
 
             return flameNode;

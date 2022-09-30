@@ -18,6 +18,17 @@ using IRExplorerCore.IR;
 using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Controls {
+
+
+    public interface IFunctionProfileInfoProvider {
+       
+        // backt, functs, mods
+
+        List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node);
+        List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node);
+        void GetTopModules(ProfileCallTreeNode node);
+    }
+
     public class ProfileCallTreeNodeEx : BindableObject {
         public ProfileCallTreeNodeEx(ProfileCallTreeNode callTreeNode) {
             CallTreeNode = callTreeNode;
@@ -41,14 +52,16 @@ namespace IRExplorerUI.Controls {
         private const int MaxModuleNameLength = 50;
 
         private ProfileCallTreeNodeEx nodeEx_;
+        private IFunctionProfileInfoProvider funcInfoProvider_;
 
         public ISession Session { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public CallTreeNodePopup(ProfileCallTreeNode node, ProfileCallTreeNode parentNode,
+        public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,
                                  Point position, double width, double height,
                                  UIElement referenceElement, ISession session) {
+            funcInfoProvider_ = funcInfoProvider;
             Session = session;
             Node = SetupNodeExtension(node);
 
@@ -56,16 +69,17 @@ namespace IRExplorerUI.Controls {
             Initialize(position, width, height, referenceElement);
             PanelResizeGrip.ResizedControl = this;
             DataContext = this;
+            BacktraceList.Session = session;
 
-            var stackTrace = CreateStackBackTrace(node);
-            TextView.SetText(stackTrace);
+            BacktraceList.Show(funcInfoProvider_.GetBacktrace(node));
         }
 
         private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {
             var nodeEx = new ProfileCallTreeNodeEx(node) {
                 FullFunctionName = node.FunctionName,
                 FunctionName = FormatFunctionName(node, demangle: true, MaxFunctionNmeLength),
-                ModuleName = FormatModuleName(node, MaxModuleNameLength), Percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight),
+                ModuleName = FormatModuleName(node, MaxModuleNameLength), 
+                Percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight),
                 ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight),
             };
 
@@ -121,11 +135,6 @@ namespace IRExplorerUI.Controls {
             }
 
             return name;
-        }
-
-        public async Task SetText(string text, FunctionIR function, IRTextSection section,
-                                  IRDocument associatedDocument, ISession session) {
-            await TextView.SetText(text, function, section, associatedDocument, session);
         }
 
         public ProfileCallTreeNodeEx Node {

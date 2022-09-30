@@ -26,11 +26,9 @@ using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.VisualBasic;
 using IRExplorerUI.Controls;
 using System.Security.Cryptography.Xml;
-using System.Windows.Documents;
 using System.Windows.Media.Animation;
 using IRExplorerCore.IR;
 using OxyPlot;
-using FontWeights = System.Windows.FontWeights;
 using System.Diagnostics;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using VerticalAlignment = System.Windows.VerticalAlignment;
@@ -62,38 +60,20 @@ namespace IRExplorerUI {
         Header
     }
 
-    public class ChildFunctionEx : ITreeModel, INotifyPropertyChanged {
-        private TextBlock name_;
-
-        public TextBlock Name {
-            get {
-                if (name_ == null) {
-                    name_ = CreateOnDemandName();
-                }
-
-                return name_;
-            }
-        }
-
+    public class ChildFunctionEx : SearchableProfileItem, ITreeModel {
         public ChildFunctionExKind Kind { get; set; }
-        public bool IsMarked { get; set; }
-        public TextSearchResult? SearchResult { get; set; }
-        public IRTextFunction Function { get; set; } //? TODO: Could use CallTreeNode.Function
+        public IRTextFunction Function { get; set; }
         public ProfileCallTreeNode CallTreeNode { get; set; }
         public TreeNode TreeNode { get; set; } // Associated UI tree node.
-        public string FunctionName { get; set; }
-        public string ModuleName { get; set; }
         public Brush TextColor { get; set; }
         public Brush BackColor { get; set; }
         public Brush BackColor2 { get; set; }
         public List<ChildFunctionEx> Children { get; set; }
         public long Time { get; set; }
-        public double Percentage { get; set; }
-        public double ExclusivePercentage { get; set; }
 
         public bool HasCallTreeNode => CallTreeNode != null;
-        public TimeSpan Weight => HasCallTreeNode ? CallTreeNode.Weight : TimeSpan.Zero;
-        public TimeSpan ExclusiveWeight => HasCallTreeNode ? CallTreeNode.ExclusiveWeight : TimeSpan.Zero;
+        public override TimeSpan Weight => HasCallTreeNode ? CallTreeNode.Weight : TimeSpan.Zero;
+        public override TimeSpan ExclusiveWeight => HasCallTreeNode ? CallTreeNode.ExclusiveWeight : TimeSpan.Zero;
 
         public ChildFunctionEx(ChildFunctionExKind kind) {
             Children = new List<ChildFunctionEx>();
@@ -116,81 +96,13 @@ namespace IRExplorerUI {
             return parentNode.Children != null && parentNode.Children.Count > 0;
         }
 
-        public void ResetCachedName() {
-            name_ = null;
-            OnPropertyChanged(nameof(Name));
-        }
-
-        private TextBlock CreateOnDemandName() {
-            var textBlock = new TextBlock();
-            var nameFontWeight = IsMarked ? FontWeights.Bold : FontWeights.SemiBold;
-
-            if (IsMarked) {
-                textBlock.FontWeight = FontWeights.Bold;
-            }
-
-            if (Kind != ChildFunctionExKind.Header &&
-                App.Settings.CallTreeSettings.PrependModuleToFunction) {
-                if (!string.IsNullOrEmpty(ModuleName)) {
-                    textBlock.Inlines.Add(new Run(ModuleName) {
-                        Foreground = Brushes.DimGray,
-                        FontWeight = IsMarked ? FontWeights.DemiBold : FontWeights.Normal
-                    });
-                }
-
-                textBlock.Inlines.Add("!");
-
-                if (SearchResult.HasValue) {
-                    CreateSearchResultName(textBlock, nameFontWeight);
-                }
-                else {
-                    textBlock.Inlines.Add(new Run(FunctionName) {
-                        FontWeight = nameFontWeight
-                    });
-                }
-            }
-            else {
-                if (SearchResult.HasValue) {
-                    CreateSearchResultName(textBlock, nameFontWeight);
-                }
-                else {
-                    textBlock.Inlines.Add(new Run(FunctionName) {
-                        FontWeight = nameFontWeight
-                    });
-                }
-            }
-
-            return textBlock;
-        }
-
-        private void CreateSearchResultName(TextBlock textBlock, FontWeight nameFontWeight) {
-            if (SearchResult.Value.Offset > 0) {
-                textBlock.Inlines.Add(new Run(FunctionName.Substring(0, SearchResult.Value.Offset)) {
-                    FontWeight = nameFontWeight
-                });
-            }
-
-            textBlock.Inlines.Add(new Run(FunctionName.Substring(SearchResult.Value.Offset, SearchResult.Value.Length)) {
-                Background = Brushes.Khaki
-            });
-
-            int remainingLength = FunctionName.Length - (SearchResult.Value.Offset + SearchResult.Value.Length);
-
-            if (remainingLength > 0) {
-                textBlock.Inlines.Add(new Run(FunctionName.Substring(FunctionName.Length - remainingLength, remainingLength)) {
-                    FontWeight = nameFontWeight
-                });
-            }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null) {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        protected override bool ShouldPrependModule() {
+            return Kind != ChildFunctionExKind.Header &&
+                   App.Settings.CallTreeSettings.PrependModuleToFunction;
         }
     }
 
-    public partial class CallTreePanel : ToolPanelControl, INotifyPropertyChanged {
+    public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvider, INotifyPropertyChanged {
         public static readonly DependencyProperty ShowToolbarProperty =
             DependencyProperty.Register("ShowToolbar", typeof(bool), typeof(CallTreePanel));
 
@@ -243,8 +155,7 @@ namespace IRExplorerUI {
             var callNode = funcNode?.CallTreeNode;
 
             if (callNode != null) {
-                //? TODO: Pass parent and stack trace
-                return new CallTreeNodePopup(callNode, null, previewPoint, 500, 400, CallTree, Session);
+                return new CallTreeNodePopup(callNode, this, previewPoint, 400, 120, CallTree, Session);
             }
 
             return null;
@@ -829,6 +740,25 @@ namespace IRExplorerUI {
             panel.VerticalAlignment = VerticalAlignment.Stretch;
             await panel.Initialize(Session.ProfileData.CallTree);
             return panel;
+        }
+
+        public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
+            var list = new List<ProfileCallTreeNode>();
+
+            //while (fgNode != null) {
+            //    list.Add(fgNode.CallTreeNode);
+            //    fgNode = fgNode.Parent;
+            //}
+
+            return list;
+        }
+
+        public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
+            return new List<ProfileCallTreeNode>();
+        }
+
+        public void GetTopModules(ProfileCallTreeNode node) {
+
         }
     }
 }
