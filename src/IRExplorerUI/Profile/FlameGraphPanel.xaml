@@ -2,6 +2,7 @@
     x:Class="IRExplorerUI.Profile.FlameGraphPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:IRExplorerUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
     xmlns:local="clr-namespace:IRExplorerUI.Profile"
@@ -161,6 +162,7 @@
         <irExplorerUi:ScrollViewerClickable
             x:Name="GraphHost"
             Grid.Row="1"
+            Margin="0,0,300,0"
             Background="Gainsboro"
             HorizontalScrollBarVisibility="Auto"
             ScrollChanged="GraphHost_OnScrollChanged"
@@ -168,5 +170,11 @@
             <local:FlameGraphViewer x:Name="GraphViewer" ContextMenu="{StaticResource GraphContextMenu}" />
         </irExplorerUi:ScrollViewerClickable>
 
+        <local:CallTreeNodePanel
+            x:Name="NodePanel"
+            Grid.Row="1"
+            Width="300"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Stretch" />
     </Grid>
 </irExplorerUi:ToolPanelControl>

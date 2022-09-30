@@ -447,6 +447,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         }
     }
 
+    public ProfileCallTreeNode() {}
+
     public ProfileCallTreeNode(FunctionDebugInfo funcInfo, IRTextFunction function,
         List<ProfileCallTreeNode> children = null,
         List<ProfileCallTreeNode> callers = null,

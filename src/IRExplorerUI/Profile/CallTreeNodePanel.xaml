@@ -1,0 +1,133 @@
+﻿<client:ToolPanelControl
+    x:Class="IRExplorerUI.Profile.CallTreeNodePanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:client="clr-namespace:IRExplorerUI"
+    xmlns:controls="clr-namespace:IRExplorerUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:doc="clr-namespace:IRExplorerUI.Document"
+    xmlns:local="clr-namespace:IRExplorerUI.Controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:profile="clr-namespace:IRExplorerUI.Profile"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    SnapsToDevicePixels="True"
+    UseLayoutRounding="True"
+    mc:Ignorable="d">
+    <Grid Margin="4,4,4,4" HorizontalAlignment="Stretch">
+        <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock
+                    Width="70"
+                    VerticalAlignment="Center"
+                    Text="Time (total)" />
+
+                <ContentControl
+                    MinWidth="150"
+                    HorizontalAlignment="Stretch"
+                    Content="{Binding Node}"
+                    ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Width="70" Text="Time (self)" />
+                <ContentControl
+                    MinWidth="150"
+                    HorizontalAlignment="Stretch"
+                    Content="{Binding Node}"
+                    ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
+            </StackPanel>
+        </StackPanel>
+
+        <TabControl Margin="0,40,0,0" HorizontalAlignment="Stretch">
+            <TabItem
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                HorizontalContentAlignment="Left"
+                Header="Info">
+                <StackPanel MaxWidth="{Binding ActualWidth, ElementName=ContentHost}" Margin="0,4,0,0">
+                    <Grid HorizontalAlignment="Stretch">
+                        <TextBlock
+                            Width="70"
+                            HorizontalAlignment="Left"
+                            Text="Module" />
+                        <TextBox
+                            Margin="65,0,0,0"
+                            HorizontalAlignment="Stretch"
+                            Background="{x:Null}"
+                            BorderBrush="{x:Null}"
+                            FontWeight="DemiBold"
+                            IsReadOnly="True"
+                            MaxLines="3"
+                            ScrollViewer.CanContentScroll="True"
+                            ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            Text="{Binding Path=Node.ModuleName}"
+                            TextWrapping="Wrap" />
+                    </Grid>
+
+                    <Grid HorizontalAlignment="Stretch">
+                        <TextBlock
+                            Width="70"
+                            HorizontalAlignment="Left"
+                            Text="Function" />
+                        <TextBox
+                            Margin="65,0,0,0"
+                            HorizontalAlignment="Stretch"
+                            Background="{x:Null}"
+                            BorderBrush="{x:Null}"
+                            FontWeight="DemiBold"
+                            IsReadOnly="True"
+                            MaxLines="10"
+                            ScrollViewer.CanContentScroll="True"
+                            ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            Text="{Binding Path=Node.FullFunctionName}"
+                            TextWrapping="Wrap" />
+                    </Grid>
+                </StackPanel>
+
+            </TabItem>
+            <TabItem
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Header="Backtrace">
+                <profile:ProfileListView
+                    x:Name="BacktraceList"
+                    NameColumnTitle="Function"
+                    ShowExclusiveTimeColumn="True"
+                    ShowTimeColumn="True"
+                    TimeColumnTitle="Time" />
+            </TabItem>
+
+            <TabItem
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Header="Functions">
+                <profile:ProfileListView
+                    x:Name="FunctionList"
+                    NameColumnTitle="Function"
+                    ShowCombinedTimeColumn="True"
+                    TimeColumnTitle="Time" />
+            </TabItem>
+            <TabItem
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Header="Modules">
+                <profile:ProfileListView
+                    x:Name="ModuleList"
+                    ExclusiveTimeColumnTitle="Time"
+                    NameColumnTitle="Module"
+                    ShowExclusiveTimeColumn="True" />
+            </TabItem>
+        </TabControl>
+
+
+        <controls:ResizeGrip
+            x:Name="PanelResizeGrip"
+            Width="16"
+            Height="16"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Panel.ZIndex="100" />
+    </Grid>
+</client:ToolPanelControl>

@@ -11,6 +11,7 @@
                 <ResourceDictionary Source="Converters.xaml" />
                 <ResourceDictionary Source="Icons.xaml" />
                 <ResourceDictionary Source="Styles.xaml" />
+                <ResourceDictionary Source="ProfileStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

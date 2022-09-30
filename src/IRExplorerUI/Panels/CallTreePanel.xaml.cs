@@ -738,7 +738,7 @@ namespace IRExplorerUI {
             panel.Height = height;
             panel.HorizontalAlignment = HorizontalAlignment.Stretch;
             panel.VerticalAlignment = VerticalAlignment.Stretch;
-            await panel.Initialize(Session.ProfileData.CallTree);
+            //await panel.Initialize(Session.ProfileData.CallTree);
             return panel;
         }
 
@@ -757,8 +757,8 @@ namespace IRExplorerUI {
             return new List<ProfileCallTreeNode>();
         }
 
-        public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
-            return new List<ModuleProfileInfo>();
+        public List<IFunctionProfileInfoProvider.ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
+            return new List<IFunctionProfileInfoProvider.ModuleProfileInfo>();
         }
     }
 }

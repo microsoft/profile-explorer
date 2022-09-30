@@ -16,10 +16,12 @@
     <utils:BoolToParameterConverter x:Key="BooToParameter" />
     <utils:DoubleScalingConverter x:Key="DoubleScalingConverter" />
     <utils:DoubleScalingBoundConverter x:Key="DoubleScalingBoundConverter" />
+    <utils:DoubleDiffScalingBoundConverter x:Key="DoubleDiffScalingBoundConverter" />
     <utils:TreeViewLineConverter x:Key="LineConverter" />
     <utils:ColorBrushOpacityConverter x:Key="ColorBrushOpacityConverter" />
     <utils:MillisecondTimeConverter x:Key="MillisecondTimeConverter" />
     <utils:PercentageConverter x:Key="PercentageConverter" />
+    <utils:ExclusivePercentageConverter x:Key="ExclusivePercentageConverter" />
     <utils:ListToStringConverter x:Key="StringListConverter" />
     <utils:ListPairToStringConverter x:Key="StringListPairConverter" />
     <utils:DictionaryToStringConverter x:Key="StringDictionaryConverter" />

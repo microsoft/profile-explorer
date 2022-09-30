@@ -88,6 +88,10 @@ class DoubleScalingConverter : IValueConverter {
 // https://stackoverflow.com/a/15309844
 class DoubleScalingBoundConverter : IMultiValueConverter {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) {
+        if (values.Length < 2 || !(values[0] is double && values[1] is double)) {
+            return null;
+        }
+
         double doubleValue = (double)values[0];
 
         if (doubleValue == 0.0 || Math.Abs(doubleValue) < double.Epsilon) {
@@ -96,6 +100,25 @@ class DoubleScalingBoundConverter : IMultiValueConverter {
 
         double maxValue = (double)values[1];
         return Math.Min(doubleValue * maxValue, maxValue);
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) {
+        return null;
+    }
+}
+
+class DoubleDiffScalingBoundConverter : IMultiValueConverter {
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) {
+        double doubleValue1 = (double)values[0];
+        double doubleValue2 = (double)values[1];
+        double diffValue = doubleValue2 - doubleValue1;
+
+        if (diffValue == 0.0 || Math.Abs(diffValue) < double.Epsilon) {
+            return 0.0;
+        }
+
+        double maxValue = (double)values[2];
+        return Math.Min(diffValue * maxValue, maxValue);
     }
 
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) {
@@ -161,6 +184,20 @@ class PercentageConverter : IValueConverter {
     }
 }
 
+
+class ExclusivePercentageConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+        if (value is double doubleValue) {
+            return $"{doubleValue.AsPercentageString()} self";
+        }
+
+        return value;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+        return null;
+    }
+}
 
 public class ListToStringConverter : IValueConverter {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
