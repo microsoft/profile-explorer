@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -63,6 +64,9 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     public IFunctionProfileInfoProvider FunctionInfoProvider { get; set; }
 
+    //? TODO: use settigs for module columns
+    //? ShowModuleColumn
+
     public override ISession Session {
         get => base.Session;
         set {
@@ -73,7 +77,38 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         }
     }
 
-    public event PropertyChangedEventHandler PropertyChanged;
+    public ProfileCallTreeNodeEx Node {
+        get => nodeEx_;
+        set => SetField(ref nodeEx_, value);
+    }
+
+    public ProfileCallTreeNode CallTreeNode {
+        get => Node?.CallTreeNode;
+        set {
+            if (value != Node?.CallTreeNode) {
+                Node = SetupNodeExtension(value);
+            }
+        }
+    }
+
+    private ProfileCallTreeNodeEx instancesNode_;
+    public ProfileCallTreeNodeEx InstancesNode {
+        get => instancesNode_;
+        set => SetField(ref instancesNode_, value);
+    }
+
+    private ProfileCallTreeNodeEx thisInstancesNode_;
+    public ProfileCallTreeNodeEx ThisInstanceNode {
+        get => thisInstancesNode_;
+        set => SetField(ref thisInstancesNode_, value);
+    }
+
+    private int funcInstancesCount_;
+    public int FunctionInstancesCount {
+        get => funcInstancesCount_;
+        set => SetField(ref funcInstancesCount_, value);
+    }
+
 
     public CallTreeNodePanel() {
         InitializeComponent();
@@ -81,11 +116,31 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         DataContext = this;
     }
 
-    public void Show(ProfileCallTreeNode node) {
+    public async Task Show(ProfileCallTreeNode node) {
         CallTreeNode = node;
-        BacktraceList.Show(FunctionInfoProvider.GetBacktrace(node));
-        FunctionList.Show(FunctionInfoProvider.GetTopFunctions(node));
-        ModuleList.Show(FunctionInfoProvider.GetTopModules(node));
+        
+        BacktraceList.Show(await Task.Run(() => FunctionInfoProvider.GetBacktrace(node)));
+        FunctionList.Show(await Task.Run(() => FunctionInfoProvider.GetTopFunctions(node)));
+        ModuleList.Show(await Task.Run(() => FunctionInfoProvider.GetTopModules(node)));
+        await SetupInstanceInfo(node);
+    }
+
+    private async Task SetupInstanceInfo(ProfileCallTreeNode node) {
+        var callTree = Session.ProfileData.CallTree;
+        var instanceNodes = callTree.GetCallTreeNodes(node.Function);
+
+        if (instanceNodes == null) {
+            return;
+        }
+            
+        FunctionInstancesCount = instanceNodes.Count;
+        var combinedNode = await Task.Run(() => callTree.GetCombinedCallTreeNode(node.Function));
+        InstancesNode = SetupNodeExtension(combinedNode);
+     
+        var thisNode = SetupNodeExtension(nodeEx_.CallTreeNode);
+        thisNode.Percentage = combinedNode.ScaleWeight(thisNode.Weight);
+        thisNode.ExclusivePercentage = combinedNode.ScaleWeight(thisNode.ExclusiveWeight);
+        ThisInstanceNode = thisNode;
     }
 
     private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {
@@ -98,29 +153,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         };
 
         return nodeEx;
-    }
-
-    private string CreateStackBackTrace(ProfileCallTreeNode node) {
-        var builder = new StringBuilder();
-        AppendStackToolTipFrames(node, builder);
-        return builder.ToString();
-    }
-
-    //? callback or provide
-    private void AppendStackToolTipFrames(ProfileCallTreeNode node, StringBuilder builder) {
-        var percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight);
-        var funcName = FormatFunctionName(node, true, 80);
-
-        if (true /*settings_.PrependModuleToFunction*/) {
-            funcName = $"{node.ModuleName}!{funcName}";
-        }
-
-        builder.Append($"{percentage.AsPercentageString(2, false).PadLeft(6)} | {node.Weight.AsMillisecondsString()} | {funcName}");
-        builder.AppendLine(funcName);
-
-        if (node.HasCallers) {
-            AppendStackToolTipFrames(node.Callers[0], builder);
-        }
     }
 
     private string FormatFunctionName(ProfileCallTreeNode node, bool demangle = true, int maxLength = int.MaxValue) {
@@ -151,31 +183,21 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         return name;
     }
 
-    public ProfileCallTreeNodeEx Node {
-        get => nodeEx_;
-        set {
-            if (nodeEx_ != value) {
-                nodeEx_ = value;
-                OnPropertyChange(nameof(Node));
-            }
-        }
-    }
-
-    public ProfileCallTreeNode CallTreeNode {
-        get => Node?.CallTreeNode;
-        set {
-            if (value != Node?.CallTreeNode) {
-                Node = SetupNodeExtension(value);
-            }
-        }
-    }
-
-    private void OnPropertyChange(string propertyname) {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
-    }
-
     public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {
         Session = session;
         FunctionInfoProvider = funcInfoProvider;
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
     }
 }

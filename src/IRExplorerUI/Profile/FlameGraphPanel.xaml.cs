@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,7 +19,7 @@ using Microsoft.Diagnostics.Tracing.Stacks;
 
 namespace IRExplorerUI.Profile;
 
-public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoProvider {
+public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoProvider, INotifyPropertyChanged {
     public static DependencyProperty FlameGraphWidthProperty =
         DependencyProperty.Register(nameof(FlameGraphWidth), typeof(double), typeof(FlameGraphPanel),
             new PropertyMetadata(0.0, FlameGraphWeightChanged));
@@ -101,10 +103,14 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         stateStack_ = new Stack<FlameGraphState>();
         stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer, CreateBacktracePopup);
         SetupEvents();
+        DataContext = this;
+
+        //? TODO: Settings
+        ShowNodePanel = true;
     }
 
     public override ToolPanelKind PanelKind => ToolPanelKind.FlameGraph;
-    private double GraphAreaWidth => GraphHost.ViewportWidth - 1;
+    private double GraphAreaWidth => Math.Max(0, GraphHost.ViewportWidth - 1);
     private double GraphAreaHeight=> GraphHost.ViewportHeight;
     private Rect GraphArea => new Rect(0, 0, GraphAreaWidth, GraphAreaHeight);
     private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
@@ -146,7 +152,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     private void SetupEvents() {
-        MouseWheel += GraphPanel_MouseWheel;
+        PreviewMouseWheel += GraphPanel_MouseWheel;
         KeyDown += GraphPanel_KeyDown;
         PreviewKeyDown += FlameGraphPanel_PreviewKeyDown;
         PreviewMouseDown += FlameGraphPanel_PreviewMouseDown;
@@ -161,7 +167,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         HidePreviewPopup();
     }
 
-    private void FlameGraphPanel_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
+    private async void FlameGraphPanel_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
         HidePreviewPopup();
 
         var point = e.GetPosition(GraphHost);
@@ -171,7 +177,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             GraphViewer.ClearSelection(); // Click outside graph is captured here.
         }
         else if (pointedNode.CallTreeNode != null) {
-            NodePanel.Show(pointedNode.CallTreeNode);
+            await NodePanel.Show(pointedNode.CallTreeNode);
         }
 
     }
@@ -360,7 +366,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
     }
 
-    private void GraphPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+    private async void GraphPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
         // Start dragging the graph only if the click starts inside the scroll area,
         // excluding the scroll bars, and it in an empty spot.
         if (IsMouseOutsideViewport(e)) {
@@ -374,7 +380,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             GraphViewer.ClearSelection(); // Click outside graph is captured here.
         }
         else if(pointedNode.CallTreeNode != null) {
-            NodePanel.Show(pointedNode.CallTreeNode);
+            await NodePanel.Show(pointedNode.CallTreeNode);
         }
 
         dragging_ = true;
@@ -456,6 +462,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private double PanOffset => Utils.IsKeyboardModifierActive() ?
                                  FastPanOffset : DefaultPanOffset;
 
+    private bool showNodePanel_;
+    public bool ShowNodePanel {
+        get => showNodePanel_;
+        set => SetField(ref showNodePanel_, value);
+    }
+
     private void ScrollToRelativeOffsets(double adjustmentX, double adjustmentY) {
         double offsetX = GraphHost.HorizontalOffset;
         double offsetY = GraphHost.VerticalOffset;
@@ -486,8 +498,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         HidePreviewPopup();
 
         // Zoom when Ctrl/Alt/Shift or left mouse button are presesed.
-        if (!Utils.IsKeyboardModifierActive() &&
-            !(e.LeftButton == MouseButtonState.Pressed)) {
+        if (!(Utils.IsKeyboardModifierActive() ||
+            e.LeftButton == MouseButtonState.Pressed)) {
             return;
         }
 
@@ -724,5 +736,18 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                 CollectFunctions(childNode, funcMap);
             }
         }
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
     }
 }

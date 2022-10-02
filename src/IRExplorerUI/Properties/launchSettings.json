@@ -1,8 +1,7 @@
 {
   "profiles": {
     "Client": {
-      "commandName": "Project",
-      "commandLineArgs": "C:\\test\\ir\\results.log"
+      "commandName": "Project"
     }
   }
 }

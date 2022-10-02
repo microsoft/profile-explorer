@@ -109,6 +109,11 @@ class DoubleScalingBoundConverter : IMultiValueConverter {
 
 class DoubleDiffScalingBoundConverter : IMultiValueConverter {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) {
+        if (values.Length < 3 || 
+            !(values[0] is double && values[1] is double && values[2] is double)) {
+            return null;
+        }
+
         double doubleValue1 = (double)values[0];
         double doubleValue2 = (double)values[1];
         double diffValue = doubleValue2 - doubleValue1;
