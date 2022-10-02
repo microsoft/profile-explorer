@@ -278,6 +278,7 @@
                     x:Name="ModulesList"
                     Grid.Column="0"
                     Panel.ZIndex="2"
+                    AlternationCount="2"
                     AutomationProperties.AutomationId="AutoFunctionList"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     BorderBrush="{x:Null}"
@@ -324,6 +325,15 @@
                             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                             <EventSetter Event="MouseDoubleClick" Handler="ModuleDoubleClick" />
                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+
+                            <Style.Triggers>
+                                <Trigger Property="ItemsControl.AlternationIndex" Value="0">
+                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                                </Trigger>
+                                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
+                                </Trigger>
+                            </Style.Triggers>
                         </Style>
                     </ListView.ItemContainerStyle>
                 </ListView>
@@ -339,6 +349,7 @@
                     x:Name="FunctionList"
                     Grid.Column="2"
                     Panel.ZIndex="1"
+                    AlternationCount="2"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     BorderBrush="{x:Null}"
                     BorderThickness="0,0,0,0"
@@ -472,6 +483,13 @@
                                     <Setter Property="BorderBrush" Value="Transparent" />
                                     <Setter Property="BorderThickness" Value="1" />
                                 </DataTrigger>
+
+                                <Trigger Property="ItemsControl.AlternationIndex" Value="0">
+                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                                </Trigger>
+                                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
+                                </Trigger>
                             </Style.Triggers>
                         </Style>
                     </ListView.ItemContainerStyle>

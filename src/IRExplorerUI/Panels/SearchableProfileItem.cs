@@ -32,7 +32,6 @@ public class SearchableProfileItem : BindableObject {
 
     protected virtual TextBlock CreateOnDemandName() {
         var textBlock = new TextBlock();
-        var nameFontWeight = IsMarked ? FontWeights.Bold : FontWeights.SemiBold;
 
         if (IsMarked) {
             textBlock.FontWeight = FontWeights.Bold;
@@ -45,6 +44,7 @@ public class SearchableProfileItem : BindableObject {
             });
 
             textBlock.Inlines.Add("!");
+            var nameFontWeight = IsMarked ? FontWeights.Bold : FontWeights.SemiBold;
 
             if (SearchResult.HasValue) {
                 CreateSearchResultName(textBlock, nameFontWeight);
@@ -56,6 +56,8 @@ public class SearchableProfileItem : BindableObject {
             }
         }
         else {
+            var nameFontWeight = IsMarked ? FontWeights.DemiBold : FontWeights.Normal;
+
             if (SearchResult.HasValue) {
                 CreateSearchResultName(textBlock, nameFontWeight);
             }

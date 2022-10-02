@@ -1,7 +1,12 @@
 ﻿<controls:DraggablePopup
+    AllowsTransparency="True"
+    SnapsToDevicePixels="True"
+    UseLayoutRounding="True"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
     x:Class="IRExplorerUI.Profile.CallTreeNodePopup"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:client="clr-namespace:IRExplorerUI"
     xmlns:controls="clr-namespace:IRExplorerUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,24 +14,19 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:profile="clr-namespace:IRExplorerUI.Profile"
     xmlns:wordprocessing="clr-namespace:DocumentFormat.OpenXml.Wordprocessing;assembly=DocumentFormat.OpenXml"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
-    AllowsTransparency="True"
-    SnapsToDevicePixels="True"
-    UseLayoutRounding="True"
-    mc:Ignorable="d">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Border
-        Margin="0,0,6,6"
         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        BorderThickness="1,1,1,1">
+        BorderThickness="1,1,1,1"
+        Margin="0,0,6,6">
         <Border.Effect>
             <DropShadowEffect
                 BlurRadius="5"
+                Color="#FF929292"
                 Direction="315"
                 RenderingBias="Performance"
-                ShadowDepth="2"
-                Color="#FF929292" />
+                ShadowDepth="2" />
         </Border.Effect>
         <Grid x:Name="ContentHost">
             <Grid.ColumnDefinitions>
@@ -40,63 +40,68 @@
             </Grid.RowDefinitions>
 
             <Grid
-                x:Name="ToolbarPanel"
-                Grid.Row="0"
+                Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}"
                 Grid.Column="0"
                 Grid.ColumnSpan="3"
-                Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}">
+                Grid.Row="0"
+                x:Name="ToolbarPanel">
                 <TextBlock
-                    Margin="4,0,50,0"
-                    VerticalAlignment="Center"
                     FontWeight="DemiBold"
+                    Margin="4,0,50,0"
                     Text="{Binding Node.FunctionName}"
                     TextTrimming="CharacterEllipsis"
-                    ToolTip="{Binding Node.FullFunctionName}" />
+                    VerticalAlignment="Center">
+                    <TextBlock.ToolTip>
+                        <ToolTip Visibility="Visible">
+                            <TextBlock Text="{Binding Node.FullFunctionName}" />
+                        </ToolTip>
+                    </TextBlock.ToolTip>
+                </TextBlock>
             </Grid>
             <ToggleButton
-                x:Name="FindButton"
-                Grid.Row="0"
-                Grid.Column="1"
                 Background="{x:Null}"
                 BorderBrush="{x:Null}"
-                IsChecked="{Binding SearchPanelVisible, Mode=TwoWay, ElementName=TextView}">
+                Grid.Column="1"
+                Grid.Row="0"
+                IsChecked="{Binding SearchPanelVisible, Mode=TwoWay, ElementName=TextView}"
+                x:Name="FindButton">
                 <Image
-                    Width="14"
                     Height="14"
-                    Source="{StaticResource ArrowIcon}" />
+                    Source="{StaticResource ArrowIcon}"
+                    Width="14" />
             </ToggleButton>
             <Button
-                x:Name="CloseButton"
-                Grid.Row="0"
-                Grid.Column="2"
                 Background="{x:Null}"
                 BorderBrush="{x:Null}"
                 Click="CloseButton_Click"
-                ToolTip="Close query panel">
+                Grid.Column="2"
+                Grid.Row="0"
+                ToolTip="Close query panel"
+                x:Name="CloseButton">
                 <Image
-                    Width="16"
                     Height="16"
-                    Source="{StaticResource CloseIcon}" />
+                    Source="{StaticResource CloseIcon}"
+                    Width="16" />
             </Button>
 
             <Grid
-                Grid.Row="1"
                 Grid.Column="0"
                 Grid.ColumnSpan="3"
-                Margin="4,4,4,4"
-                HorizontalAlignment="Stretch">
+                Grid.Row="1"
+                HorizontalAlignment="Stretch"
+                Margin="4,4,4,4">
                 <profile:CallTreeNodePanel
-                    x:Name="PanelHost"
                     HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch" />
+                    VerticalAlignment="Stretch"
+                    x:Name="PanelHost" />
 
                 <controls:ResizeGrip
-                    x:Name="PanelResizeGrip"
-                    Width="16"
                     Height="16"
                     HorizontalAlignment="Right"
+                    Panel.ZIndex="100"
                     VerticalAlignment="Bottom"
-                    Panel.ZIndex="100" />
+                    Width="16"
+                    x:Name="PanelResizeGrip" />
             </Grid>
         </Grid>
     </Border>

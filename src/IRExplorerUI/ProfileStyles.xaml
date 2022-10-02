@@ -181,7 +181,6 @@
                         Margin="4,0,0,0"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        FontWeight="DemiBold"
                         Text="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}"
                         TextTrimming="CharacterEllipsis" />
                 </Grid>
@@ -236,7 +235,6 @@
                         Margin="4,0,0,0"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        FontWeight="DemiBold"
                         Text="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
                         TextTrimming="CharacterEllipsis" />
                 </Grid>
@@ -251,7 +249,6 @@
                 Margin="1,0,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center"
-                FontWeight="DemiBold"
                 Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}">
                 <TextBlock.Style>
                     <Style TargetType="{x:Type TextBlock}">
@@ -307,7 +304,6 @@
                         <TextBlock
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
-                            FontWeight="DemiBold"
                             Text="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}"
                             TextTrimming="CharacterEllipsis" />
                         <TextBlock Text=", " />
@@ -315,7 +311,6 @@
                             Margin="4,0,0,0"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
-                            FontWeight="DemiBold"
                             Foreground="Black"
                             Text="{Binding Path=ExclusivePercentage, Converter={StaticResource ExclusivePercentageConverter}}">
                             <TextBlock.Style>
@@ -333,4 +328,6 @@
             </Border>
         </Grid>
     </DataTemplate>
+
+
 </ResourceDictionary>
