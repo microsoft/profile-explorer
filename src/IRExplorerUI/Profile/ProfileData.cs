@@ -207,6 +207,29 @@ public class ProfileData {
         profileData.Report = state.Report;
         profileData.CallTree = ProfileCallTree.Deserialize(state.CallTreeState, summaryMap);
         profileData.Samples = state.Samples;
+
+        foreach (var pair in profileData.Samples) {
+            foreach (var frame in pair.Stack.StackFrames) {
+                if (frame.Function == null) {
+                    continue; // Unknown frame.
+                }
+
+                if (!summaryMap.ContainsKey(frame.Function.Id.SummaryId)) {
+                    continue;
+                }
+
+                var summary = summaryMap[frame.Function.Id.SummaryId];
+                var function = summary.GetFunctionWithId(frame.Function.Id.FunctionNumber);
+
+                if (function == null) {
+                    Debug.Assert(false, "Could not find node for func");
+                    continue;
+                }
+
+                frame.Function = function;
+            }
+        }
+
         return profileData;
     }
 

@@ -28,8 +28,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     public bool IsZoomed => Math.Abs(MaxGraphWidth - VisibleArea.Width) > 1;
 
     private Dictionary<FlameGraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
-        return type switch
-        {
+        return type switch {
             HighlighingType.Hovered => hoverNodes_,
             HighlighingType.Selected => selectedNodes_,
             HighlighingType.Marked => markedNodes_,
@@ -85,10 +84,8 @@ public partial class FlameGraphViewer : FrameworkElement {
         group[node] = node.Style;
 
         node.Style = type switch {
-            HighlighingType.Hovered => isParent ? PickHoveredParentNodeStyle(node.Style) :
-                                                  PickHoveredNodeStyle(node.Style),
-            HighlighingType.Selected => isParent ? PickSelectedParentNodeStyle(node.Style) :
-                                                   PickSelectedNodeStyle(node.Style),
+            HighlighingType.Hovered => isParent ? PickHoveredParentNodeStyle(node.Style) : PickHoveredNodeStyle(node.Style),
+            HighlighingType.Selected => isParent ? PickSelectedParentNodeStyle(node.Style) : PickSelectedNodeStyle(node.Style),
             _ => node.Style
         };
 
@@ -198,9 +195,13 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         initialized_ = true;
         flameGraph_ = new FlameGraph(callTree);
-       // await Task.Run(() => flameGraph_.Build(rootNode));
-       var x = (App.Current.MainWindow as ISession).ProfileData;
-       flameGraph_.BuildTimeline(x);
+
+#if true
+        await Task.Run(() => flameGraph_.Build(rootNode));
+#else
+       //var x = (App.Current.MainWindow as ISession).ProfileData;
+       //flameGraph_.BuildTimeline(x);
+#endif
 
         Trace.WriteLine($"Init FG with visible area {visibleArea}");
         renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea);

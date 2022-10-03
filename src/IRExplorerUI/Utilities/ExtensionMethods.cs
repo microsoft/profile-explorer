@@ -334,7 +334,7 @@ namespace IRExplorerUI {
             return digits switch {
                 1 => $"{value:0.0}{suffix}",
                 2 => $"{value:0.00}{suffix}",
-                _ => String.Format("0:0." + new string('0', digits), value) + suffix
+                _ => String.Format("{0:0." + new string('0', digits) + "}", value) + suffix
             };
         }
 

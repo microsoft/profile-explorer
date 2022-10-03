@@ -1004,7 +1004,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         [ProtoMember(1)]
         public FunctionDebugInfo DebugInfo { get; set; }
         [ProtoMember(2)]
-        public IRTextFunction Function { get; set; }
+        public IRTextFunctionReference Function { get; set; }
         public ProfileImage Image { get; set; }
         public ModuleInfo Module { get; set; }
         public FunctionProfileData Profile { get; set; }
