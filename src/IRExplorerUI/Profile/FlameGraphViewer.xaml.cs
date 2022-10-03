@@ -198,7 +198,9 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         initialized_ = true;
         flameGraph_ = new FlameGraph(callTree);
-        await Task.Run(() => flameGraph_.Build(rootNode));
+       // await Task.Run(() => flameGraph_.Build(rootNode));
+       var x = (App.Current.MainWindow as ISession).ProfileData;
+       flameGraph_.BuildTimeline(x);
 
         Trace.WriteLine($"Init FG with visible area {visibleArea}");
         renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea);
