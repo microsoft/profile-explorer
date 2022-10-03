@@ -51,6 +51,10 @@ namespace IRExplorerUI.Profile {
 
         public bool HasChildren => Children is { Count: > 0 };
 
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan EndTime { get; set; }
+        public TimeSpan Duration { get; set; }
+
         public virtual void Draw(Rect visibleArea, DrawingContext dc) {
             if (IsDummyNode || Bounds.Width < MinVisibleWidth) {
                 return;
@@ -261,21 +265,108 @@ namespace IRExplorerUI.Profile {
             return treeNodeToFgNodeMap_.GetValueOrDefault(node);
         }
 
+        public void BuildTimeline(ProfileData data) {
+            Trace.WriteLine($"Timeline Samples: {data.Samples.Count}");
+            data.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
+
+            var flameNode = new FlameGraphNode(null, RootWeight, 0);
+
+            foreach (var (sample, stack) in data.Samples) {
+                AddSample(flameNode, sample, stack);
+
+
+                flameNode.StartTime = TimeSpan.FromTicks(Math.Min(flameNode.StartTime.Ticks, sample.Time.Ticks));
+                flameNode.EndTime = TimeSpan.FromTicks(Math.Max(flameNode.StartTime.Ticks, sample.Time.Ticks));
+                //flameNode.Weight += sample.Weight;
+                flameNode.Weight = flameNode.EndTime - flameNode.StartTime + sample.Weight;
+
+            }
+
+            flameNode.Duration = flameNode.EndTime - flameNode.StartTime;
+            RootNode = flameNode;
+            RootWeight = flameNode.Weight;
+        }
+
+        private void AddSample(FlameGraphNode rootNode, ProfileSample sample, ETWProfileDataProvider.ResolvedProfileStack stack) {
+            var node = rootNode;
+            int depth = 0;
+
+            for (int k = stack.FrameCount - 1; k >= 0; k--) {
+                var resolvedFrame = stack.StackFrames[k];
+
+                if (resolvedFrame.IsUnknown) {
+                    continue;
+                }
+
+                FlameGraphNode targetNode = null;
+
+                if (node.HasChildren) {
+                    for (int i = node.Children.Count - 1; i >= 0; i--) {
+                        var child = node.Children[i];
+
+                        if (!child.CallTreeNode.Function.Equals(resolvedFrame.Function)) {
+                            break;
+                        }
+
+                        if (child.EndTime <= sample.Time) {
+                            targetNode = child;
+                            break;
+                        }
+                        //else {
+                         //   ;
+
+                        //}
+                    }
+                }
+
+                if (targetNode == null) {
+                    targetNode = new FlameGraphNode(new ProfileCallTreeNode(resolvedFrame.DebugInfo, resolvedFrame.Function), TimeSpan.Zero, depth);
+                    node.Children ??= new List<FlameGraphNode>();
+                    node.Children.Add(targetNode);
+                    targetNode.StartTime = sample.Time;
+                    targetNode.EndTime = sample.Time + sample.Weight;
+                    targetNode.Parent = targetNode;
+
+                    if (node.Children.Count > 1) {
+                        ;
+                    }
+                }
+                else {
+                    node.StartTime = TimeSpan.FromTicks(Math.Min(node.StartTime.Ticks, sample.Time.Ticks));
+                    node.EndTime = TimeSpan.FromTicks(Math.Max(node.EndTime.Ticks, sample.Time.Ticks + sample.Weight.Ticks));
+                }
+
+                targetNode.Weight += sample.Weight;
+                targetNode.Weight = targetNode.EndTime - targetNode.StartTime;
+
+                //node.Weight +=   sample.Weight;
+
+                if (k > 0) {
+                    node.ChildrenWeight += sample.Weight;
+                }
+
+                node = targetNode;
+                depth++;
+            }
+
+            ;
+        }
+
         public void Build(ProfileCallTreeNode rootNode) {
             if (rootNode == null) {
                 // Make on dummy root node that hosts all real root nodes.
                 RootWeight = CallTree.TotalRootNodesWeight;
                 var flameNode = new FlameGraphNode(null, RootWeight, 0);
-                RootNode = Build(flameNode, RootWeight, CallTree.RootNodes, 0);
+                RootNode = Build(flameNode, CallTree.RootNodes, 0);
             }
             else {
                 RootWeight = rootNode.Weight;
                 var flameNode = new FlameGraphNode(rootNode, rootNode.Weight, 0);
-                RootNode = Build(flameNode, RootWeight, rootNode.Children, 0);
+                RootNode = Build(flameNode, rootNode.Children, 0);
             }
         }
 
-        private FlameGraphNode Build(FlameGraphNode flameNode, TimeSpan weight,
+        private FlameGraphNode Build(FlameGraphNode flameNode,
             ICollection<ProfileCallTreeNode> children, int depth) {
             if (children == null || children.Count == 0) {
                 return flameNode;
@@ -296,7 +387,7 @@ namespace IRExplorerUI.Profile {
 
             foreach (var child in sortedChildren) {
                 var childFlameNode = new FlameGraphNode(child, child.Weight, depth + 1);
-                var childNode = Build(childFlameNode, child.Weight, child.Children, depth + 1);
+                var childNode = Build(childFlameNode, child.Children, depth + 1);
                 childNode.Parent = flameNode;
                 flameNode.Children.Add(childNode);
                 treeNodeToFgNodeMap_[child] = childFlameNode;
@@ -307,6 +398,14 @@ namespace IRExplorerUI.Profile {
 
         public double ScaleWeight(TimeSpan weight) {
             return (double)weight.Ticks / (double)RootWeight.Ticks;
+        }
+
+
+        public double ScaleTime(TimeSpan time) {
+            return (double)time.Ticks / (double)RootNode.Duration.Ticks;
+        }
+        public double ScaleStartTime(TimeSpan time) {
+            return (double)(time.Ticks - RootNode.StartTime.Ticks) / (double)RootNode.Duration.Ticks;
         }
     }
 
@@ -441,6 +540,8 @@ namespace IRExplorerUI.Profile {
         }
 
         private void UpdateNodeWidth(FlameGraphNode node, double x, double y, bool redraw) {
+            //? avoid div by precomputing 1/totalWeight and MUL
+            x = flameGraph_.ScaleStartTime(node.StartTime) * maxWidth_;
             double width = flameGraph_.ScaleWeight(node.Weight) * maxWidth_;
             var prevBounds = node.Bounds;
             node.Bounds = new Rect(x, y, width, nodeHeight_);

@@ -17,7 +17,7 @@ public class ProfileData {
     public class ProfileDataState {
         [ProtoMember(1)]
         public TimeSpan ProfileWeight { get; set; }
-            
+
         [ProtoMember(2)]
         public TimeSpan TotalWeight { get; set; }
 
@@ -26,7 +26,7 @@ public class ProfileData {
 
         [ProtoMember(4)]
         public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
-            
+
         [ProtoMember(5)]
         public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
 
@@ -34,7 +34,11 @@ public class ProfileData {
         public ProfileDataReport Report { get; set; }
 
         [ProtoMember(7)]
-        public byte[] CallTreeState;
+        public byte[] CallTreeState; //? TODO: Reimplement, super slow!
+
+        [ProtoMember(8)]
+        public List<(ProfileSample Sample, ETWProfileDataProvider.ResolvedProfileStack Stack)> Samples { get; set; }
+
 
         public ProfileDataState(TimeSpan profileWeight, TimeSpan totalWeight) {
             ProfileWeight = profileWeight;
@@ -51,6 +55,8 @@ public class ProfileData {
     public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
     public ProfileCallTree CallTree { get; set; }
     public ProfileDataReport Report { get; set; }
+
+    public List<(ProfileSample Sample, ETWProfileDataProvider.ResolvedProfileStack Stack)> Samples { get; set; }
 
     public List<PerformanceCounterInfo> SortedPerformanceCounters {
         get {
@@ -81,13 +87,13 @@ public class ProfileData {
             ModuleWeights[moduleName] = weight;
         }
     }
-        
+
     public void AddModuleCounter(string moduleName, int perfCounterId, long value) {
         if (!ModuleCounters.TryGetValue(moduleName, out var counterSet)) {
             counterSet = new PerformanceCounterSet();
             ModuleCounters[moduleName] = counterSet;
         }
-            
+
         counterSet.AddCounterSample(perfCounterId, value);
     }
 
@@ -126,7 +132,7 @@ public class ProfileData {
 
         return null;
     }
-        
+
     public double ScaleFunctionWeight(TimeSpan weight) {
         return ProfileWeight.Ticks == 0 ? 0 :
             (double)weight.Ticks / (double)ProfileWeight.Ticks;
@@ -164,6 +170,7 @@ public class ProfileData {
         state.ModuleWeights = ModuleWeights;
         state.Report = Report;
         state.CallTreeState = CallTree.Serialize();
+        state.Samples = Samples;
 
         foreach (var pair in FunctionProfiles) {
             var funcId = new IRTextFunctionId(pair.Key);
@@ -199,6 +206,7 @@ public class ProfileData {
 
         profileData.Report = state.Report;
         profileData.CallTree = ProfileCallTree.Deserialize(state.CallTreeState, summaryMap);
+        profileData.Samples = state.Samples;
         return profileData;
     }
 
@@ -319,7 +327,7 @@ public class PerformanceMetricInfo : PerformanceCounterInfo {
     public override bool IsMetric => true;
 
     public PerformanceMetricInfo(int id, PerformanceMetricConfig config,
-                                 PerformanceCounterInfo baseCounter, 
+                                 PerformanceCounterInfo baseCounter,
                                  PerformanceCounterInfo relativeCounter) : base(id, config.Name) {
         Config = config;
         BaseCounter = baseCounter;
