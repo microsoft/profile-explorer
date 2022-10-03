@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore {
-    public class IRTextFunction {
+    public class IRTextFunction : IEquatable<IRTextFunction> {
         public List<IRTextSection> Sections { get; }
         public int Number { get; set; }
         public string Name { get; }
@@ -51,17 +51,40 @@ namespace IRExplorerCore {
             return Sections.FindAll((section) => section.Name.Contains(nameSubstring));
         }
 
-        public override bool Equals(object obj) {
-            return Equals(obj, true);
+        public bool Equals(IRTextFunction other) {
+            return Equals(other, true);
         }
 
-        public bool Equals(object obj, bool checkParent) {
-            return obj is IRTextFunction function &&
-                   Name == function.Name &&
-                   (!checkParent ||
-                   (((ParentSummary != null && function.ParentSummary != null &&
-                     ParentSummary.ModuleName == function.ParentSummary.ModuleName) ||
-                    (ParentSummary == null && function.ParentSummary == null))));
+        public bool Equals(IRTextFunction other, bool checkParent) {
+            if (ReferenceEquals(null, other)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other)) {
+                return true;
+            }
+
+            return Name == other.Name &&
+                   (!checkParent || // Also check parent being the same.
+                    (((ParentSummary != null && other.ParentSummary != null &&
+                       ParentSummary.ModuleName == other.ParentSummary.ModuleName) ||
+                      (ParentSummary == null && other.ParentSummary == null))));
+        }
+
+        public bool Equals(object obj) {
+            if (ReferenceEquals(null, obj)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj)) {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType()) {
+                return false;
+            }
+
+            return Equals((IRTextFunction)obj, true);
         }
 
         public override int GetHashCode() {

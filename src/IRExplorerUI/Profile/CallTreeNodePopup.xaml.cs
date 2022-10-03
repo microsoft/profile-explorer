@@ -26,7 +26,8 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
 
     public ISession Session { get; set; }
     public ProfileCallTreeNodeEx Node => PanelHost.Node;
-        public event PropertyChangedEventHandler PropertyChanged;
+
+    public event PropertyChangedEventHandler PropertyChanged;
 
     public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,
         Point position, double width, double height,
@@ -36,14 +37,14 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
 
         InitializeComponent();
         Initialize(position, width, height, referenceElement);
-        PanelHost.Initialize(session, funcInfoProvider);
-
         PanelResizeGrip.ResizedControl = this;
-        DataContext = this;
+
+        PanelHost.Initialize(session, funcInfoProvider);
     }
 
     protected override async void OnOpened(EventArgs e) {
         await PanelHost.Show(node_);
+        DataContext = this;
     }
 
     public override bool ShouldStartDragging(MouseButtonEventArgs e) {

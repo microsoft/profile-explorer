@@ -270,16 +270,15 @@ namespace IRExplorerUI.Profile {
             data.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
 
             var flameNode = new FlameGraphNode(null, RootWeight, 0);
+            flameNode.StartTime = TimeSpan.MaxValue;
+            flameNode.EndTime = TimeSpan.MinValue;
 
             foreach (var (sample, stack) in data.Samples) {
                 AddSample(flameNode, sample, stack);
 
-
                 flameNode.StartTime = TimeSpan.FromTicks(Math.Min(flameNode.StartTime.Ticks, sample.Time.Ticks));
-                flameNode.EndTime = TimeSpan.FromTicks(Math.Max(flameNode.StartTime.Ticks, sample.Time.Ticks));
-                //flameNode.Weight += sample.Weight;
+                flameNode.EndTime = TimeSpan.FromTicks(Math.Max(flameNode.EndTime.Ticks, sample.Time.Ticks + sample.Weight.Ticks));
                 flameNode.Weight = flameNode.EndTime - flameNode.StartTime + sample.Weight;
-
             }
 
             flameNode.Duration = flameNode.EndTime - flameNode.StartTime;
@@ -294,7 +293,11 @@ namespace IRExplorerUI.Profile {
             for (int k = stack.FrameCount - 1; k >= 0; k--) {
                 var resolvedFrame = stack.StackFrames[k];
 
-                if (resolvedFrame.IsUnknown) {
+                // if (resolvedFrame.IsUnknown) {
+                //     continue;
+                // }
+
+                if (resolvedFrame.Function == null) {
                     continue;
                 }
 
@@ -308,13 +311,9 @@ namespace IRExplorerUI.Profile {
                             break;
                         }
 
-                        if (child.EndTime <= sample.Time) {
+                        //if (child.EndTime <= sample.Time) {
                             targetNode = child;
                             break;
-                        }
-                        //else {
-                         //   ;
-
                         //}
                     }
                 }
@@ -326,30 +325,23 @@ namespace IRExplorerUI.Profile {
                     targetNode.StartTime = sample.Time;
                     targetNode.EndTime = sample.Time + sample.Weight;
                     targetNode.Parent = targetNode;
-
-                    if (node.Children.Count > 1) {
-                        ;
-                    }
                 }
                 else {
-                    node.StartTime = TimeSpan.FromTicks(Math.Min(node.StartTime.Ticks, sample.Time.Ticks));
-                    node.EndTime = TimeSpan.FromTicks(Math.Max(node.EndTime.Ticks, sample.Time.Ticks + sample.Weight.Ticks));
+                    targetNode.StartTime = TimeSpan.FromTicks(Math.Min(targetNode.StartTime.Ticks, sample.Time.Ticks));
+                    targetNode.EndTime = TimeSpan.FromTicks(Math.Max(targetNode.EndTime.Ticks, sample.Time.Ticks + sample.Weight.Ticks));
                 }
 
-                targetNode.Weight += sample.Weight;
-                targetNode.Weight = targetNode.EndTime - targetNode.StartTime;
-
-                //node.Weight +=   sample.Weight;
 
                 if (k > 0) {
                     node.ChildrenWeight += sample.Weight;
                 }
 
+                //targetNode.Weight += sample.Weight;
+                targetNode.Weight = targetNode.EndTime - targetNode.StartTime + sample.Weight;
+
                 node = targetNode;
                 depth++;
             }
-
-            ;
         }
 
         public void Build(ProfileCallTreeNode rootNode) {
@@ -406,6 +398,10 @@ namespace IRExplorerUI.Profile {
         }
         public double ScaleStartTime(TimeSpan time) {
             return (double)(time.Ticks - RootNode.StartTime.Ticks) / (double)RootNode.Duration.Ticks;
+        }
+
+        public double ScaleDuration(TimeSpan startTime, TimeSpan endTime) {
+            return (double)(endTime.Ticks - startTime.Ticks) / (double)RootNode.Duration.Ticks;
         }
     }
 
@@ -526,6 +522,8 @@ namespace IRExplorerUI.Profile {
                 dummyNodesQuadTree_.Bounds = GraphArea;
                 maxNodeDepth_ = 0;
                 UpdateNodeWidth(flameGraph_.RootNode, 0, 0, true);
+
+                Trace.WriteLine($"Max depth {maxNodeDepth_}");
             }
 
             // Update only the visible nodes on scrolling.
@@ -537,12 +535,80 @@ namespace IRExplorerUI.Profile {
                 graphDC.DrawRectangle(node.Style.BackColor, node.Style.Border, node.Bounds);
                 graphDC.DrawRectangle(CreatePlaceholderTiledBrush(8), null, node.Bounds);
             }
+
+            DrawTimeBar(graphDC);
+        }
+
+        private void DrawTimeBar(DrawingContext graphDC) {
+            const double TimeBarHeight = 20;
+            const double MinTickDistance = 50;
+
+            var bar = new Rect(visibleArea_.Left, visibleArea_.Bottom - TimeBarHeight,
+                visibleArea_.Width, TimeBarHeight);
+            graphDC.DrawRectangle(Brushes.Bisque, null, bar);
+
+            double secondTickDist = maxWidth_ / flameGraph_.RootNode.Duration.TotalSeconds;
+            double msTickDist = maxWidth_ / flameGraph_.RootNode.Duration.TotalMilliseconds;
+            int seconds = 0;
+
+            for (double x = 0; x < maxWidth_; x += secondTickDist) {
+                var tickRect = new Rect(x, visibleArea_.Bottom - 4, 4, 4);
+                graphDC.DrawRectangle(Brushes.Black, null, tickRect);
+                DrawCenteredText($"{seconds} s", tickRect.Left, tickRect.Top, graphDC);
+
+                double subTicks = secondTickDist / MinTickDistance;
+                double subTickDist = secondTickDist / subTicks;
+                double timePerSubTick = 1000.0 / subTicks;
+                double ms = timePerSubTick;
+
+                for (double y = subTickDist; y < secondTickDist - subTickDist; y += subTickDist) {
+                    var msTickRect = new Rect(x + y, visibleArea_.Bottom - 2, 2, 3);
+                    graphDC.DrawRectangle(Brushes.DimGray, null, msTickRect);
+                    double time = (seconds + ms / 1000);
+                    if (subTicks <= 10) {
+                        DrawCenteredText($"{time:0.0}", msTickRect.Left, msTickRect.Top, graphDC);
+                    }
+                    else if(subTicks <= 100) {
+                        DrawCenteredText($"{time:0.00}", msTickRect.Left, msTickRect.Top, graphDC);
+                    }
+                    else {
+                        int digits = (int)Math.Ceiling(Math.Log10(subTicks));
+                        var timeStr = String.Format("{0:0." + new string('0', digits) + "}", time);
+                        DrawCenteredText(timeStr, msTickRect.Left, msTickRect.Top, graphDC);
+                    }
+
+                    ms += timePerSubTick;
+                }
+
+                seconds++;
+
+            }
+        }
+
+        private void DrawCenteredText(string text, double x, double y, DrawingContext dc) {
+            var glyphInfo = glyphs_.GetGlyphs(text);
+            x = Math.Max(0, x - glyphInfo.TextWidth / 2);
+            y = Math.Max(0, y - glyphInfo.TextHeight / 4);
+
+            dc.PushTransform(new TranslateTransform(x, y));
+            dc.DrawGlyphRun(Brushes.Black, glyphInfo.Glyphs);
+            dc.Pop();
         }
 
         private void UpdateNodeWidth(FlameGraphNode node, double x, double y, bool redraw) {
             //? avoid div by precomputing 1/totalWeight and MUL
-            x = flameGraph_.ScaleStartTime(node.StartTime) * maxWidth_;
-            double width = flameGraph_.ScaleWeight(node.Weight) * maxWidth_;
+            double width;
+
+            if (false /* timeline */) {
+                x = flameGraph_.ScaleStartTime(node.StartTime) * maxWidth_;
+                width = flameGraph_.ScaleDuration(node.StartTime, node.EndTime) * maxWidth_;
+            }
+            else {
+                width = flameGraph_.ScaleWeight(node.Weight) * maxWidth_;
+            }
+
+            //Trace.WriteLine($"Node at {x}, width {width}");
+
             var prevBounds = node.Bounds;
             node.Bounds = new Rect(x, y, width, nodeHeight_);
             node.Bounds = Utils.SnapToPixels(node.Bounds);
