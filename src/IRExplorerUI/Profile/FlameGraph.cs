@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Diagnostics;
+using System.Windows.Controls;
 using System.Windows.Documents;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
@@ -18,6 +19,7 @@ namespace IRExplorerUI.Profile {
         internal const double DefaultMargin = 4;
         internal const double ExtraValueMargin = 20;
         internal const double MinVisibleRectWidth = 4;
+        internal const double RecomputeVisibleRectWidth = MinVisibleRectWidth * 4;
         internal const double MinVisibleWidth = 1;
         private const int MaxTextParts = 3;
 
@@ -56,12 +58,14 @@ namespace IRExplorerUI.Profile {
         public TimeSpan Duration { get; set; }
 
         public virtual void Draw(Rect visibleArea, DrawingContext dc) {
-            if (IsDummyNode || Bounds.Width < MinVisibleWidth) {
+            if (IsDummyNode) {
                 return;
             }
 
-            dc.PushGuidelineSet(CreateGuidelineSet(Bounds));
-            dc.DrawRectangle(Style.BackColor, Style.Border, Bounds);
+            var bounds = new Rect(Bounds.Left * Owner.MaxGraphWidth, Bounds.Top,
+                                  Bounds.Width * Owner.MaxGraphWidth, Bounds.Height);
+            dc.PushGuidelineSet(CreateGuidelineSet(bounds));
+            dc.DrawRectangle(Style.BackColor, Style.Border, bounds);
 
             // ...
             int index = 0;
@@ -69,12 +73,12 @@ namespace IRExplorerUI.Profile {
             double margin = DefaultMargin;
 
             // Start the text in the visible area.
-            bool startsInView = Bounds.Left >= visibleArea.Left;
-            double offsetX = startsInView ? Bounds.Left : visibleArea.Left;
-            double maxWidth = Bounds.Width - 2 * DefaultMargin;
+            bool startsInView = bounds.Left >= visibleArea.Left;
+            double offsetX = startsInView ? bounds.Left : visibleArea.Left;
+            double maxWidth = bounds.Width - 2 * DefaultMargin;
 
             if (!startsInView) {
-                maxWidth -= visibleArea.Left - Bounds.Left;
+                maxWidth -= visibleArea.Left - bounds.Left;
             }
 
             while (maxWidth > 8 && index < MaxTextParts && !trimmed) {
@@ -227,34 +231,57 @@ namespace IRExplorerUI.Profile {
             glyphsCache.CacheGlyphs(glyphInfo, originalText, maxWidth);
 
             return (text, glyphInfo.Glyphs, trimmed,
-                    new Size(glyphInfo.TextWidth, glyphInfo.TextHeight));
+                new Size(glyphInfo.TextWidth, glyphInfo.TextHeight));
         }
     }
 
 
     public class FlameGraphGroupNode : FlameGraphNode {
         public override bool IsGroup => true;
-        public List<ProfileCallTreeNode> Nodes { get; }
+        public List<ProfileCallTreeNode> ReplacedNodes { get; }
+        public int ReplacedStartIndex { get; }
 
-        public FlameGraphGroupNode(List<ProfileCallTreeNode> nodes, TimeSpan weight, int depth) :
+        public FlameGraphGroupNode(FlameGraphNode parentNode, int startIndex, List<ProfileCallTreeNode> replacedNodes, TimeSpan weight, int depth) :
             base(null, weight, depth) {
-            Nodes = nodes;
-
+            Parent = parentNode;
+            ReplacedStartIndex = startIndex;
+            ReplacedNodes = replacedNodes;
         }
 
         public override void Draw(Rect visibleArea, DrawingContext dc) {
-
         }
     }
 
     public class FlameGraph {
         private Dictionary<ProfileCallTreeNode, FlameGraphNode> treeNodeToFgNodeMap_;
+        private FlameGraphNode rootNode_;
+        private TimeSpan rootWeight_;
+        private double rootWeightReciprocal_;
+        private double rootDurationReciprocal_;
 
-        public double MaxWidth { get; set; }
-        public double NodeHeight { get; set; }
-        public FlameGraphNode RootNode { get; set; }
-        public TimeSpan RootWeight { get; set; }
         public ProfileCallTree CallTree { get; set; }
+
+        public FlameGraphNode RootNode {
+            get => rootNode_;
+            set {
+                rootNode_ = value;
+
+                if (rootNode_.Duration.Ticks != 0) {
+                    rootDurationReciprocal_ = 1.0 / (double)rootNode_.Duration.Ticks;
+                }
+            }
+        }
+
+        public TimeSpan RootWeight {
+            get => rootWeight_;
+            set {
+                rootWeight_ = value;
+
+                if (rootWeight_.Ticks != 0) {
+                    rootWeightReciprocal_ = 1.0 / (double)rootWeight_.Ticks;
+                }
+            }
+        }
 
         public FlameGraph(ProfileCallTree callTree) {
             CallTree = callTree;
@@ -312,8 +339,8 @@ namespace IRExplorerUI.Profile {
                         }
 
                         //if (child.EndTime <= sample.Time) {
-                            targetNode = child;
-                            break;
+                        targetNode = child;
+                        break;
                         //}
                     }
                 }
@@ -389,42 +416,48 @@ namespace IRExplorerUI.Profile {
         }
 
         public double ScaleWeight(TimeSpan weight) {
-            return (double)weight.Ticks / (double)RootWeight.Ticks;
+            return (double)weight.Ticks * rootWeightReciprocal_;
         }
 
-
-        public double ScaleTime(TimeSpan time) {
-            return (double)time.Ticks / (double)RootNode.Duration.Ticks;
-        }
         public double ScaleStartTime(TimeSpan time) {
-            return (double)(time.Ticks - RootNode.StartTime.Ticks) / (double)RootNode.Duration.Ticks;
+            return (double)(time.Ticks - RootNode.StartTime.Ticks) / rootDurationReciprocal_;
         }
 
         public double ScaleDuration(TimeSpan startTime, TimeSpan endTime) {
-            return (double)(endTime.Ticks - startTime.Ticks) / (double)RootNode.Duration.Ticks;
+            return (double)(endTime.Ticks - startTime.Ticks) / rootDurationReciprocal_;
+        }
+
+        public double InverseScaleWeight(TimeSpan weight) {
+            return (double)RootWeight.Ticks / weight.Ticks;
         }
     }
 
     public class FlameGraphRenderer {
         internal const double DefaultTextSize = 12;
+        internal const double DefaultNodeHeight = 18;
+        internal const double TimeBarHeight = 24;
 
         private FlameGraph flameGraph_;
         private int maxNodeDepth_;
         private double nodeHeight_;
         private double maxWidth_;
+        private double minVisibleRectWidth_;
+        private bool nodeLayoutComputed_;
         private Rect visibleArea_;
-        private Rect previousVisibleArea_;
+        private Rect quadVisibleArea_;
+        private Rect quadGraphArea_;
+        
         private Typeface font_;
         private Typeface nameFont_;
         private double fontSize_;
         private Dictionary<ProfileCallTreeNodeKind, ColorPalette> palettes_;
         private Pen defaultBorder_;
-        private Brush placeholderColor_;
+        private DrawingBrush placeholderTileBrush_;
         private DrawingVisual graphVisual_;
         private GlyphRunCache glyphs_;
         private GlyphRunCache nameGlyphs_;
         private QuadTree<FlameGraphNode> nodesQuadTree_;
-        private QuadTree<FlameGraphNode> dummyNodesQuadTree_;
+        private QuadTree<FlameGraphGroupNode> dummyNodesQuadTree_;
 
         public GlyphRunCache GlyphsCache => glyphs_;
         public GlyphRunCache NameGlyphsCache => nameGlyphs_;
@@ -434,24 +467,27 @@ namespace IRExplorerUI.Profile {
         public Rect VisibleArea => visibleArea_;
         public Rect GraphArea => new Rect(0, 0, MaxGraphWidth, MaxGraphHeight);
 
+        private void UpdateGraphSizes() {
+            minVisibleRectWidth_ = FlameGraphNode.MinVisibleRectWidth / maxWidth_;
+            quadGraphArea_ = new Rect(0, 0, 1.0, MaxGraphHeight);
+            quadVisibleArea_ = new Rect(visibleArea_.Left / maxWidth_, visibleArea_.Top,
+                                        visibleArea_.Width / maxWidth_, visibleArea_.Height);
+        }
+
         public FlameGraphRenderer(FlameGraph flameGraph, Rect visibleArea) {
             flameGraph_ = flameGraph;
             maxWidth_ = visibleArea.Width;
             visibleArea_ = visibleArea;
-            palettes_ = new Dictionary<ProfileCallTreeNodeKind, ColorPalette>();
+            UpdateGraphSizes();
 
+            palettes_ = new Dictionary<ProfileCallTreeNodeKind, ColorPalette>();
             palettes_[ProfileCallTreeNodeKind.Unset] = ColorPalette.Profile;
             palettes_[ProfileCallTreeNodeKind.NativeUser] = ColorPalette.Profile;
             palettes_[ProfileCallTreeNodeKind.NativeKernel] = ColorPalette.HeatMap;
             palettes_[ProfileCallTreeNodeKind.Managed] = ColorPalette.HeatMap2;
 
-
-            //palettes_ = ColorPalette.MakeScale(0.5f, 0.8f, 0.8f, 1, 10);
-
             defaultBorder_ = ColorPens.GetPen(Colors.Black, 0.5);
-            placeholderColor_ = ColorBrushes.GetBrush(Colors.Green);
-
-            nodeHeight_ = 18; //? Option
+            nodeHeight_ = DefaultNodeHeight; //? TODO: Option
             font_ = new Typeface("Segoe UI");
             nameFont_ = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.DemiBold, FontStretch.FromOpenTypeStretch(5));
             fontSize_ = DefaultTextSize;
@@ -463,7 +499,7 @@ namespace IRExplorerUI.Profile {
             glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(graphVisual_).PixelsPerDip);
             nameGlyphs_ = new GlyphRunCache(nameFont_, fontSize_, VisualTreeHelper.GetDpi(graphVisual_).PixelsPerDip);
 
-            Redraw(true);
+            RedrawGraph();
             graphVisual_.Drawing?.Freeze();
             return graphVisual_;
         }
@@ -471,9 +507,7 @@ namespace IRExplorerUI.Profile {
         private void SetupNode(FlameGraphNode node) {
             //? TODO: Palette based on module
             //? int colorIndex = Math.Min(node.Depth, palettes_.Count - 1);
-            var palette = node.CallTreeNode != null ?
-                palettes_[node.CallTreeNode.Kind] :
-                palettes_[ProfileCallTreeNodeKind.Unset];
+            var palette = node.CallTreeNode != null ? palettes_[node.CallTreeNode.Kind] : palettes_[ProfileCallTreeNodeKind.Unset];
 
             int colorIndex = node.Depth % palette.Count;
             var backColor = palette[palette.Count - colorIndex - 1];
@@ -491,52 +525,89 @@ namespace IRExplorerUI.Profile {
         }
 
         public void Redraw() {
-            Redraw(false);
+            RedrawGraph(false);
         }
 
         public void UpdateMaxWidth(double maxWidth) {
-            maxWidth_ = maxWidth;
-            Redraw(true);
+            maxWidth_ = Math.Max(maxWidth, 1);
+            RedrawGraph();
         }
 
         public void UpdateVisibleArea(Rect visibleArea) {
-            previousVisibleArea_ = visibleArea_;
             visibleArea_ = visibleArea;
-            Redraw(false);
+            RedrawGraph(false);
         }
 
         public double ScaleWeight(TimeSpan weight) {
             return flameGraph_.ScaleWeight(weight);
         }
 
-        private DrawingBrush placeholderTileBrush_;
 
-        private void Redraw(bool resized) {
+        private void RedrawGraph(bool updateLayout = true) {
             using var graphDC = graphVisual_.RenderOpen();
 
-            if (resized || nodesQuadTree_ == null) {
+            if (updateLayout) {
                 // Recompute the position of all nodes and rebuild the quad tree.
-                nodesQuadTree_ = new QuadTree<FlameGraphNode>();
-                dummyNodesQuadTree_ = new QuadTree<FlameGraphNode>();
-                nodesQuadTree_.Bounds = GraphArea;
-                dummyNodesQuadTree_.Bounds = GraphArea;
-                maxNodeDepth_ = 0;
-                UpdateNodeWidth(flameGraph_.RootNode, 0, 0, true);
-
-                Trace.WriteLine($"Max depth {maxNodeDepth_}");
+                if (!nodeLayoutComputed_) {
+                    UpdateGraphSizes();
+                    nodesQuadTree_ = new QuadTree<FlameGraphNode>();
+                    dummyNodesQuadTree_ = new QuadTree<FlameGraphGroupNode>();
+                    nodesQuadTree_.Bounds = quadGraphArea_;
+                    dummyNodesQuadTree_.Bounds = quadGraphArea_;
+                    maxNodeDepth_ = 0;
+                    UpdateNodeLayout(flameGraph_.RootNode, 0, 0, true);
+                    nodeLayoutComputed_ = true;
+                }
             }
 
+            
             // Update only the visible nodes on scrolling.
-            foreach (var node in nodesQuadTree_.GetNodesInside(visibleArea_)) {
+            int shrinkingNodes = 0;
+
+            foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
                 node.Draw(visibleArea_, graphDC);
+
+                if (nodeLayoutComputed_ && node.Bounds.Width < minVisibleRectWidth_) {
+                    shrinkingNodes++;
+                }
             }
 
-            foreach (var node in dummyNodesQuadTree_.GetNodesInside(visibleArea_)) {
-                graphDC.DrawRectangle(node.Style.BackColor, node.Style.Border, node.Bounds);
-                graphDC.DrawRectangle(CreatePlaceholderTiledBrush(8), null, node.Bounds);
+            if (shrinkingNodes > 0) {
+                //? TODO: Removing from the quad tree is very slow,
+                //? recompute the entire layout instead...
+                //! Consider a faster implementation or other kind of spatial tree.
+                nodeLayoutComputed_ = false;
+                Redraw();
+                return;
             }
 
+            DrawDummyNodes(graphDC);
             DrawTimeBar(graphDC);
+        }
+
+        private void DrawDummyNodes(DrawingContext graphDC) {
+            List<FlameGraphGroupNode> enlargeList = null;
+
+            foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
+                var scaledBounds = new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top, 
+                                            node.Bounds.Width * maxWidth_, node.Bounds.Height);
+                graphDC.DrawRectangle(node.Style.BackColor, node.Style.Border, scaledBounds);
+                graphDC.DrawRectangle(CreatePlaceholderTiledBrush(8), null, scaledBounds);
+
+                if (nodeLayoutComputed_ && node.Bounds.Width >= minVisibleRectWidth_) {
+                    enlargeList ??= new List<FlameGraphGroupNode>();
+                    enlargeList.Add(node);
+                }
+            }
+
+            if (enlargeList != null) {
+                foreach (var node in enlargeList) {
+                    Trace.WriteLine($"Force enlarge {node.Parent?.CallTreeNode?.FunctionName}");
+                    dummyNodesQuadTree_.Remove(node);
+                    UpdateChildrenNodeLayout(node.Parent, node.Bounds.Left,
+                                             node.Bounds.Top - nodeHeight_, node.ReplacedStartIndex);
+                }
+            }
         }
 
         private void DrawTimeBar(DrawingContext graphDC) {
@@ -568,7 +639,7 @@ namespace IRExplorerUI.Profile {
                     if (subTicks <= 10) {
                         DrawCenteredText($"{time:0.0}", msTickRect.Left, msTickRect.Top, graphDC);
                     }
-                    else if(subTicks <= 100) {
+                    else if (subTicks <= 100) {
                         DrawCenteredText($"{time:0.00}", msTickRect.Left, msTickRect.Top, graphDC);
                     }
                     else {
@@ -581,7 +652,6 @@ namespace IRExplorerUI.Profile {
                 }
 
                 seconds++;
-
             }
         }
 
@@ -595,31 +665,37 @@ namespace IRExplorerUI.Profile {
             dc.Pop();
         }
 
-        private void UpdateNodeWidth(FlameGraphNode node, double x, double y, bool redraw) {
+        private void UpdateNodeLayout(FlameGraphNode node, double x, double y, bool redraw) {
             //? avoid div by precomputing 1/totalWeight and MUL
             double width;
 
             if (false /* timeline */) {
-                x = flameGraph_.ScaleStartTime(node.StartTime) * maxWidth_;
-                width = flameGraph_.ScaleDuration(node.StartTime, node.EndTime) * maxWidth_;
+                x = flameGraph_.ScaleStartTime(node.StartTime);
+                width = flameGraph_.ScaleDuration(node.StartTime, node.EndTime);
             }
             else {
-                width = flameGraph_.ScaleWeight(node.Weight) * maxWidth_;
+                width = flameGraph_.ScaleWeight(node.Weight);
             }
 
             //Trace.WriteLine($"Node at {x}, width {width}");
 
             var prevBounds = node.Bounds;
             node.Bounds = new Rect(x, y, width, nodeHeight_);
-            node.Bounds = Utils.SnapToPixels(node.Bounds);
+
+            //node.Bounds = Utils.SnapToPixels(node.Bounds);
             node.IsDummyNode = !redraw;
 
             if (redraw) {
                 maxNodeDepth_ = Math.Max(node.Depth, maxNodeDepth_);
-            }
 
-            if (node.Bounds.Width > 0 && node.Bounds.Height > 0) {
-                nodesQuadTree_.Insert(node, node.Bounds);
+                if (node.Bounds.Width >= minVisibleRectWidth_) {
+                    if (node.Bounds.Left > 0.5 ||
+                        node.Bounds.Width > 0.5) {
+                        ;
+                    }
+
+                    nodesQuadTree_.Insert(node, node.Bounds);
+                }
             }
 
             if (node.Children == null) {
@@ -627,17 +703,19 @@ namespace IRExplorerUI.Profile {
             }
 
             // Children are sorted by weight or time.
+            UpdateChildrenNodeLayout(node, x, y);
+        }
+
+        private void UpdateChildrenNodeLayout(FlameGraphNode node, double x, double y, int startIndex = 0) {
             int skippedChildren = 0;
 
-            for (int i = 0; i < node.Children.Count; i++) {
+            for (int i = startIndex; i < node.Children.Count; i++) {
                 //? If multiple children below width, single patterned rect
                 var childNode = node.Children[i];
-                var childWidth = flameGraph_.ScaleWeight(childNode.Weight) * maxWidth_;
-                childWidth = Utils.SnapToPixels(childWidth);
-
+                var childWidth = flameGraph_.ScaleWeight(childNode.Weight);
 
                 if (skippedChildren == 0) {
-                    if (childWidth < FlameGraphNode.MinVisibleRectWidth) {
+                    if (childWidth < minVisibleRectWidth_) {
                         childNode.IsDummyNode = true;
                         var replacement = CreateSmallWeightDummyNode(node, x, y, i, out skippedChildren);
                     }
@@ -646,7 +724,7 @@ namespace IRExplorerUI.Profile {
                     childNode.IsDummyNode = true;
                 }
 
-                UpdateNodeWidth(childNode, x, y + nodeHeight_, skippedChildren == 0);
+                UpdateNodeLayout(childNode, x, y + nodeHeight_, skippedChildren == 0);
                 x += childWidth;
 
                 if (skippedChildren > 0) {
@@ -663,32 +741,32 @@ namespace IRExplorerUI.Profile {
 
             // Collect all the child nodes that have a small weight
             // and replace them by one dummy node.
-            var nodes = new List<ProfileCallTreeNode>(node.Children.Count - startIndex);
+            var replacedNodes = new List<ProfileCallTreeNode>(node.Children.Count - startIndex);
             int k;
 
             for (k = startIndex; k < node.Children.Count; k++) {
                 var childNode = node.Children[k];
-                double childWidth = flameGraph_.ScaleWeight(childNode.Weight) * maxWidth_;
+                double childWidth = flameGraph_.ScaleWeight(childNode.Weight);
 
                 // In case child sorting is not by weight, stop extending the range
                 // when a larger one is found again.
-                if (childWidth > FlameGraphNode.MinVisibleRectWidth) {
+                if (childWidth > minVisibleRectWidth_) {
                     break;
                 }
 
-                nodes.Add(childNode.CallTreeNode);
+                replacedNodes.Add(childNode.CallTreeNode);
                 totalWidth += childWidth;
                 totalWeight += childNode.Weight;
             }
 
             skippedChildren = k - startIndex; // Caller should ignore these children.
 
-            if (totalWidth < FlameGraphNode.MinVisibleRectWidth) {
+            if (totalWidth < minVisibleRectWidth_) {
                 return null; // Nothing to draw.
             }
 
             var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
-            var dummyNode = new FlameGraphGroupNode(nodes, totalWeight, node.Depth);
+            var dummyNode = new FlameGraphGroupNode(node, startIndex, replacedNodes, totalWeight, node.Depth);
             dummyNode.IsDummyNode = true;
             dummyNode.Bounds = replacement;
             dummyNode.Style = PickDummyNodeStyle(node.Style);
@@ -700,21 +778,27 @@ namespace IRExplorerUI.Profile {
         }
 
         public FlameGraphNode HitTestNode(Point point) {
+            var queryRect = new Rect(point.X / maxWidth_, point.Y, 1.0 / maxWidth_, 1);
+
             if (nodesQuadTree_ != null) {
-                var nodes = nodesQuadTree_.GetNodesInside(new Rect(point, point));
+                var nodes = nodesQuadTree_.GetNodesInside(queryRect);
                 foreach (var node in nodes) {
                     return node;
                 }
             }
 
             if (dummyNodesQuadTree_ != null) {
-                var nodes = dummyNodesQuadTree_.GetNodesInside(new Rect(point, point));
+                var nodes = dummyNodesQuadTree_.GetNodesInside(queryRect);
                 foreach (var node in nodes) {
                     return node;
                 }
             }
 
             return null;
+        }
+        
+        public Point ComputeNodePosition(FlameGraphNode node) {
+            return new Point(node.Bounds.Left * maxWidth_, node.Bounds.Top);
         }
 
         private HighlightingStyle PickDummyNodeStyle(HighlightingStyle style) {

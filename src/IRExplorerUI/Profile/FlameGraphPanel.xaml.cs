@@ -237,7 +237,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         enlargedNode_ = node;
 
         // How wide the entire graph needs to be so that the node fils the view.
-        double ratio = ((double)GraphViewer.FlameGraph.RootWeight.Ticks / node.Weight.Ticks);
+        double ratio = GraphViewer.FlameGraph.InverseScaleWeight(node.Weight);
         double newMaxWidth = GraphAreaWidth * ratio;
 
         if (true) { //? TODO: Check if animations enabled
@@ -246,13 +246,13 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
             initialWidth_ = newMaxWidth;
             initialOffsetX_ = GraphHost.HorizontalOffset;
-            endOffsetX_ = node.Bounds.Left * offsetRatio;
+            endOffsetX_ = GraphViewer.ComputeNodePosition(node).X * offsetRatio;
 
             var horizontalAnim = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(EnlargeAnimationDuration));
 
             horizontalAnim.Completed += async (sender, args) => {
                 await Dispatcher.BeginInvoke(() => {
-                    double newNodeX = node.Bounds.Left;
+                    double newNodeX = GraphViewer.ComputeNodePosition(node).X;
                     double offset = Math.Min(newNodeX, newMaxWidth);
                     GraphHost.ScrollToHorizontalOffset(offset);
 

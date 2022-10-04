@@ -102,6 +102,10 @@ public partial class FlameGraphViewer : FrameworkElement {
     private void ResetHighlightedNodes(HighlighingType type, bool includeParents = false) {
         var group = GetHighlightedNodeGroup(type);
 
+        if (group.Count == 0) {
+            return;
+        }
+
         foreach (var pair in group) {
             pair.Key.Style = pair.Value;
 
@@ -121,8 +125,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         group.Clear();
         renderer_.Redraw();
     }
-
-
+    
     public void ResetNodeHighlighting() {
         ResetHighlightedNodes(HighlighingType.Hovered, true);
         ResetHighlightedNodes(HighlighingType.Selected, true);
@@ -203,7 +206,7 @@ public partial class FlameGraphViewer : FrameworkElement {
        //flameGraph_.BuildTimeline(x);
 #endif
 
-        Trace.WriteLine($"Init FG with visible area {visibleArea}");
+        Trace.WriteLine($"Init FlameGraph with visible area {visibleArea}");
         renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea);
         graphVisual_ = renderer_.Setup();
         AddVisualChild(graphVisual_);
@@ -227,18 +230,10 @@ public partial class FlameGraphViewer : FrameworkElement {
 
     public FlameGraphNode FindPointedNode(Point point) {
         return renderer_.HitTestNode(point);
+    }
 
-        //var result = VisualTreeHelper.HitTest(this, point);
-
-        //if (result == null) {
-        //    return null;
-        //}
-
-        //if (result.VisualHit is DrawingVisual visual) {
-        //    return visual.ReadLocalValue(TagProperty) as FlameGraphNode;
-        //}
-
-        //return null;
+    public Point ComputeNodePosition(FlameGraphNode node) {
+        return renderer_.ComputeNodePosition(node);
     }
 
     protected override int VisualChildrenCount => 1;
