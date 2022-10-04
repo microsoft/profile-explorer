@@ -545,29 +545,31 @@ namespace IRExplorerUI.Profile {
 
         private void RedrawGraph(bool updateLayout = true) {
             using var graphDC = graphVisual_.RenderOpen();
+            var nodeLayoutRecomputed = false;
+            UpdateGraphSizes();
 
             if (updateLayout) {
                 // Recompute the position of all nodes and rebuild the quad tree.
                 if (!nodeLayoutComputed_) {
-                    UpdateGraphSizes();
                     nodesQuadTree_ = new QuadTree<FlameGraphNode>();
                     dummyNodesQuadTree_ = new QuadTree<FlameGraphGroupNode>();
                     nodesQuadTree_.Bounds = quadGraphArea_;
                     dummyNodesQuadTree_.Bounds = quadGraphArea_;
                     maxNodeDepth_ = 0;
+
                     UpdateNodeLayout(flameGraph_.RootNode, 0, 0, true);
                     nodeLayoutComputed_ = true;
+                    nodeLayoutRecomputed = true;
                 }
             }
 
-            
             // Update only the visible nodes on scrolling.
             int shrinkingNodes = 0;
 
             foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
                 node.Draw(visibleArea_, graphDC);
 
-                if (nodeLayoutComputed_ && node.Bounds.Width < minVisibleRectWidth_) {
+                if (!nodeLayoutRecomputed && node.Bounds.Width < minVisibleRectWidth_) {
                     shrinkingNodes++;
                 }
             }
@@ -577,37 +579,179 @@ namespace IRExplorerUI.Profile {
                 //? recompute the entire layout instead...
                 //! Consider a faster implementation or other kind of spatial tree.
                 nodeLayoutComputed_ = false;
-                Redraw();
+                RedrawGraph();
                 return;
             }
 
             DrawDummyNodes(graphDC);
-            DrawTimeBar(graphDC);
+            //? DrawTimeBar(graphDC);
         }
 
         private void DrawDummyNodes(DrawingContext graphDC) {
             List<FlameGraphGroupNode> enlargeList = null;
 
             foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
-                var scaledBounds = new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top, 
-                                            node.Bounds.Width * maxWidth_, node.Bounds.Height);
-                graphDC.DrawRectangle(node.Style.BackColor, node.Style.Border, scaledBounds);
-                graphDC.DrawRectangle(CreatePlaceholderTiledBrush(8), null, scaledBounds);
-
-                if (nodeLayoutComputed_ && node.Bounds.Width >= minVisibleRectWidth_) {
+                // Reconsider replacing the dummy node.
+                if (flameGraph_.ScaleWeight(node.ReplacedNodes[0].Weight) > minVisibleRectWidth_) {
                     enlargeList ??= new List<FlameGraphGroupNode>();
                     enlargeList.Add(node);
                 }
-            }
-
-            if (enlargeList != null) {
-                foreach (var node in enlargeList) {
-                    Trace.WriteLine($"Force enlarge {node.Parent?.CallTreeNode?.FunctionName}");
-                    dummyNodesQuadTree_.Remove(node);
-                    UpdateChildrenNodeLayout(node.Parent, node.Bounds.Left,
-                                             node.Bounds.Top - nodeHeight_, node.ReplacedStartIndex);
+                else {
+                    DrawDummyNode(node, graphDC);
                 }
             }
+
+            if (enlargeList == null) {
+                return;
+            }
+            
+            // Replace/split the enlarged dummy nodes.
+            foreach (var node in enlargeList) {
+                if (node.Parent == null) {
+                    continue;
+                }
+
+                dummyNodesQuadTree_.Remove(node);
+                UpdateChildrenNodeLayout(node.Parent, node.Parent.Bounds.Left,
+                                         node.Parent.Bounds.Top, node.ReplacedStartIndex);
+            }
+
+            // Redraw to show the newly create nodes replacing the dummy ones.
+            foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
+                node.Draw(visibleArea_, graphDC);
+            }
+
+            foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
+                DrawDummyNode(node, graphDC);
+            }
+        }
+
+        private void DrawDummyNode(FlameGraphGroupNode node, DrawingContext graphDC) {
+            var scaledBounds = new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top,
+                                        node.Bounds.Width * maxWidth_, node.Bounds.Height);
+            graphDC.DrawRectangle(node.Style.BackColor, node.Style.Border, scaledBounds);
+            graphDC.DrawRectangle(CreatePlaceholderTiledBrush(8), null, scaledBounds);
+        }
+
+        private void DrawCenteredText(string text, double x, double y, DrawingContext dc) {
+            var glyphInfo = glyphs_.GetGlyphs(text);
+            x = Math.Max(0, x - glyphInfo.TextWidth / 2);
+            y = Math.Max(0, y - glyphInfo.TextHeight / 4);
+
+            dc.PushTransform(new TranslateTransform(x, y));
+            dc.DrawGlyphRun(Brushes.Black, glyphInfo.Glyphs);
+            dc.Pop();
+        }
+
+        private void UpdateNodeLayout(FlameGraphNode node, double x, double y, bool redraw) {
+            double width;
+
+            if (false /* timeline */) {
+                x = flameGraph_.ScaleStartTime(node.StartTime);
+                width = flameGraph_.ScaleDuration(node.StartTime, node.EndTime);
+            }
+            else {
+                width = flameGraph_.ScaleWeight(node.Weight);
+            }
+
+            //Trace.WriteLine($"Node at {x}, width {width}");
+
+            var prevBounds = node.Bounds;
+            node.Bounds = new Rect(x, y, width, nodeHeight_);
+
+            //node.Bounds = Utils.SnapToPixels(node.Bounds);
+            node.IsDummyNode = !redraw;
+
+            if (redraw) {
+                maxNodeDepth_ = Math.Max(node.Depth, maxNodeDepth_);
+
+                if (node.Bounds.Width >= minVisibleRectWidth_) {
+                    nodesQuadTree_.Insert(node, node.Bounds);
+                }
+            }
+
+            if (node.Children == null) {
+                return;
+            }
+
+            // Children are sorted by weight or time.
+            UpdateChildrenNodeLayout(node, x, y);
+        }
+
+        private void UpdateChildrenNodeLayout(FlameGraphNode node, double x, double y, int startIndex = 0) {
+            int skippedChildren = 0;
+
+            for (int i = 0; i < startIndex; i++) {
+                var childNode = node.Children[i];
+                var childWidth = flameGraph_.ScaleWeight(childNode.Weight);
+                x += childWidth;
+            }
+
+            for (int i = startIndex; i < node.Children.Count; i++) {
+                //? If multiple children below width, single patterned rect
+                var childNode = node.Children[i];
+                var childWidth = flameGraph_.ScaleWeight(childNode.Weight);
+
+                if (skippedChildren == 0) {
+                    if (childWidth < minVisibleRectWidth_) {
+                        childNode.IsDummyNode = true;
+                        CreateSmallWeightDummyNode(node, x, y, i, out skippedChildren);
+                    }
+                }
+                else {
+                    childNode.IsDummyNode = true;
+                }
+
+                UpdateNodeLayout(childNode, x, y + nodeHeight_, skippedChildren == 0);
+                x += childWidth;
+
+                if (skippedChildren > 0) {
+                    childNode.IsDummyNode = true;
+                    skippedChildren--;
+                }
+            }
+        }
+
+        private void CreateSmallWeightDummyNode(FlameGraphNode node, double x, double y,
+                                                int startIndex, out int skippedChildren) {
+            TimeSpan totalWeight = TimeSpan.Zero;
+            double totalWidth = 0;
+
+            // Collect all the child nodes that have a small weight
+            // and replace them by one dummy node.
+            var replacedNodes = new List<ProfileCallTreeNode>(node.Children.Count - startIndex);
+            int k;
+
+            for (k = startIndex; k < node.Children.Count; k++) {
+                var childNode = node.Children[k];
+                double childWidth = flameGraph_.ScaleWeight(childNode.Weight);
+
+                // In case child sorting is not by weight, stop extending the range
+                // when a larger one is found again.
+                if (childWidth > minVisibleRectWidth_) {
+                    break;
+                }
+
+                replacedNodes.Add(childNode.CallTreeNode);
+                totalWidth += childWidth;
+                totalWeight += childNode.Weight;
+            }
+
+            skippedChildren = k - startIndex; // Caller should ignore these children.
+
+            if (totalWidth < minVisibleRectWidth_) {
+                return; // Nothing to draw.
+            }
+
+            var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
+            var dummyNode = new FlameGraphGroupNode(node, startIndex, replacedNodes, totalWeight, node.Depth);
+            dummyNode.IsDummyNode = true;
+            dummyNode.Bounds = replacement;
+            dummyNode.Style = PickDummyNodeStyle(node.Style);
+            dummyNodesQuadTree_.Insert(dummyNode, replacement);
+
+            //? Could make color darker than level, or less satureded  better
+            //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
         }
 
         private void DrawTimeBar(DrawingContext graphDC) {
@@ -653,128 +797,6 @@ namespace IRExplorerUI.Profile {
 
                 seconds++;
             }
-        }
-
-        private void DrawCenteredText(string text, double x, double y, DrawingContext dc) {
-            var glyphInfo = glyphs_.GetGlyphs(text);
-            x = Math.Max(0, x - glyphInfo.TextWidth / 2);
-            y = Math.Max(0, y - glyphInfo.TextHeight / 4);
-
-            dc.PushTransform(new TranslateTransform(x, y));
-            dc.DrawGlyphRun(Brushes.Black, glyphInfo.Glyphs);
-            dc.Pop();
-        }
-
-        private void UpdateNodeLayout(FlameGraphNode node, double x, double y, bool redraw) {
-            //? avoid div by precomputing 1/totalWeight and MUL
-            double width;
-
-            if (false /* timeline */) {
-                x = flameGraph_.ScaleStartTime(node.StartTime);
-                width = flameGraph_.ScaleDuration(node.StartTime, node.EndTime);
-            }
-            else {
-                width = flameGraph_.ScaleWeight(node.Weight);
-            }
-
-            //Trace.WriteLine($"Node at {x}, width {width}");
-
-            var prevBounds = node.Bounds;
-            node.Bounds = new Rect(x, y, width, nodeHeight_);
-
-            //node.Bounds = Utils.SnapToPixels(node.Bounds);
-            node.IsDummyNode = !redraw;
-
-            if (redraw) {
-                maxNodeDepth_ = Math.Max(node.Depth, maxNodeDepth_);
-
-                if (node.Bounds.Width >= minVisibleRectWidth_) {
-                    if (node.Bounds.Left > 0.5 ||
-                        node.Bounds.Width > 0.5) {
-                        ;
-                    }
-
-                    nodesQuadTree_.Insert(node, node.Bounds);
-                }
-            }
-
-            if (node.Children == null) {
-                return;
-            }
-
-            // Children are sorted by weight or time.
-            UpdateChildrenNodeLayout(node, x, y);
-        }
-
-        private void UpdateChildrenNodeLayout(FlameGraphNode node, double x, double y, int startIndex = 0) {
-            int skippedChildren = 0;
-
-            for (int i = startIndex; i < node.Children.Count; i++) {
-                //? If multiple children below width, single patterned rect
-                var childNode = node.Children[i];
-                var childWidth = flameGraph_.ScaleWeight(childNode.Weight);
-
-                if (skippedChildren == 0) {
-                    if (childWidth < minVisibleRectWidth_) {
-                        childNode.IsDummyNode = true;
-                        var replacement = CreateSmallWeightDummyNode(node, x, y, i, out skippedChildren);
-                    }
-                }
-                else {
-                    childNode.IsDummyNode = true;
-                }
-
-                UpdateNodeLayout(childNode, x, y + nodeHeight_, skippedChildren == 0);
-                x += childWidth;
-
-                if (skippedChildren > 0) {
-                    childNode.IsDummyNode = true;
-                    skippedChildren--;
-                }
-            }
-        }
-
-        private FlameGraphNode CreateSmallWeightDummyNode(FlameGraphNode node, double x, double y,
-            int startIndex, out int skippedChildren) {
-            TimeSpan totalWeight = TimeSpan.Zero;
-            double totalWidth = 0;
-
-            // Collect all the child nodes that have a small weight
-            // and replace them by one dummy node.
-            var replacedNodes = new List<ProfileCallTreeNode>(node.Children.Count - startIndex);
-            int k;
-
-            for (k = startIndex; k < node.Children.Count; k++) {
-                var childNode = node.Children[k];
-                double childWidth = flameGraph_.ScaleWeight(childNode.Weight);
-
-                // In case child sorting is not by weight, stop extending the range
-                // when a larger one is found again.
-                if (childWidth > minVisibleRectWidth_) {
-                    break;
-                }
-
-                replacedNodes.Add(childNode.CallTreeNode);
-                totalWidth += childWidth;
-                totalWeight += childNode.Weight;
-            }
-
-            skippedChildren = k - startIndex; // Caller should ignore these children.
-
-            if (totalWidth < minVisibleRectWidth_) {
-                return null; // Nothing to draw.
-            }
-
-            var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
-            var dummyNode = new FlameGraphGroupNode(node, startIndex, replacedNodes, totalWeight, node.Depth);
-            dummyNode.IsDummyNode = true;
-            dummyNode.Bounds = replacement;
-            dummyNode.Style = PickDummyNodeStyle(node.Style);
-            dummyNodesQuadTree_.Insert(dummyNode, replacement);
-
-            //? Could make color darker than level, or less satureded  better
-            //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
-            return dummyNode;
         }
 
         public FlameGraphNode HitTestNode(Point point) {
