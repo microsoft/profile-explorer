@@ -604,8 +604,9 @@ namespace IRExplorerUI.Profile {
             if (enlargeList == null) {
                 return;
             }
-            
+
             // Replace/split the enlarged dummy nodes.
+#if false
             foreach (var node in enlargeList) {
                 if (node.Parent == null) {
                     continue;
@@ -624,6 +625,11 @@ namespace IRExplorerUI.Profile {
             foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
                 DrawDummyNode(node, graphDC);
             }
+#else
+            nodeLayoutComputed_ = false;
+            RedrawGraph();
+            return;
+#endif
         }
 
         private void DrawDummyNode(FlameGraphGroupNode node, DrawingContext graphDC) {
