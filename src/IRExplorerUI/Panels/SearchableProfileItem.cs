@@ -40,7 +40,7 @@ public class SearchableProfileItem : BindableObject {
         if (ShouldPrependModule() && !string.IsNullOrEmpty(ModuleName)) {
             textBlock.Inlines.Add(new Run(ModuleName) {
                 Foreground = Brushes.DimGray,
-                FontWeight = IsMarked ? FontWeights.DemiBold : FontWeights.Normal
+                FontWeight = IsMarked ? FontWeights.Medium : FontWeights.Normal
             });
 
             textBlock.Inlines.Add("!");
@@ -56,7 +56,7 @@ public class SearchableProfileItem : BindableObject {
             }
         }
         else {
-            var nameFontWeight = IsMarked ? FontWeights.DemiBold : FontWeights.Normal;
+            var nameFontWeight = IsMarked ? FontWeights.Bold : FontWeights.Medium;
 
             if (SearchResult.HasValue) {
                 CreateSearchResultName(textBlock, nameFontWeight);

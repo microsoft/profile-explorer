@@ -61,7 +61,7 @@
                 <TextBlock
                     FontFamily="{Binding TextFont}"
                     FontSize="{Binding TextSize}"
-                    FontWeight="DemiBold"
+                    FontWeight="Medium"
                     Foreground="{Binding TextColor}"
                     Margin="0,0,2,0"
                     MinWidth="{Binding MinTextWidth}"
@@ -82,7 +82,7 @@
                 <TextBlock
                     FontFamily="{Binding TextFont}"
                     FontSize="{Binding TextSize}"
-                    FontWeight="DemiBold"
+                    FontWeight="Medium"
                     Foreground="{Binding TextColor}"
                     Margin="4,0,2,0"
                     Text="{Binding ValuePercentage, StringFormat=p2}"
@@ -136,7 +136,7 @@
     <DataTemplate x:Key="ProfilePercentageTemplate">
         <Grid HorizontalAlignment="Stretch">
             <TextBlock
-                FontWeight="DemiBold"
+                FontWeight="Medium"
                 HorizontalAlignment="Left"
                 Margin="2,0,0,0"
                 Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}"
@@ -191,7 +191,7 @@
     <DataTemplate x:Key="ProfileExclusivePercentageTemplate">
         <Grid HorizontalAlignment="Stretch">
             <TextBlock
-                FontWeight="DemiBold"
+                FontWeight="Medium"
                 HorizontalAlignment="Left"
                 Margin="2,0,0,0"
                 Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}"
@@ -245,6 +245,7 @@
     <DataTemplate x:Key="ProfileCombinedPercentageTemplate">
         <Grid HorizontalAlignment="Stretch">
             <TextBlock
+                FontWeight="Medium"
                 HorizontalAlignment="Left"
                 Margin="2,0,0,0"
                 Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}"

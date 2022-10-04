@@ -156,7 +156,7 @@ namespace IRExplorerUI.Compilers.ASM {
             if (column.Appearance.PickColorForPercentage) {
                 return percentage switch {
                     >= 0.9 => FontWeights.Bold,
-                    >= 0.75 => FontWeights.DemiBold,
+                    >= 0.75 => FontWeights.Medium,
                     _ => FontWeights.Normal
                 };
             }
@@ -165,7 +165,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 0 => FontWeights.ExtraBold,
                 1 => FontWeights.Bold,
                 _ => IsSignificantValue(order, percentage)
-                    ? FontWeights.DemiBold 
+                    ? FontWeights.Medium 
                     : FontWeights.Normal
             };
         }
@@ -173,7 +173,7 @@ namespace IRExplorerUI.Compilers.ASM {
         public FontWeight PickTextWeight(double percentage) {
             return percentage switch {
                 >= 0.9 => FontWeights.Bold,
-                >= 0.75 => FontWeights.DemiBold,
+                >= 0.75 => FontWeights.Medium,
                 _ => FontWeights.Normal
             };
         }

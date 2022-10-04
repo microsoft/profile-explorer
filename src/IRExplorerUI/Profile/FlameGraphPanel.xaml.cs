@@ -113,6 +113,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private double GraphAreaWidth => Math.Max(0, GraphHost.ViewportWidth - 1);
     private double GraphAreaHeight=> GraphHost.ViewportHeight;
     private Rect GraphArea => new Rect(0, 0, GraphAreaWidth, GraphAreaHeight);
+    private Rect GraphVisibleArea => new Rect(GraphHost.HorizontalOffset,
+                                              GraphHost.VerticalOffset,
+                                              GraphAreaWidth, GraphAreaHeight);
     private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
     private double GraphZoomRatioLog => Math.Log2(GraphZoomRatio + 1);
     private double CenterZoomPointX => GraphHost.HorizontalOffset + GraphAreaWidth / 2;
@@ -147,27 +150,25 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     public override void OnSessionStart() {
         base.OnSessionStart();
-        NodePanel.Initialize(Session, this);
+        NodeDetailsPanel.Initialize(Session, this);
         InitializePendingCallTree();
     }
 
     private void SetupEvents() {
-        PreviewMouseWheel += GraphPanel_MouseWheel;
-        KeyDown += GraphPanel_KeyDown;
-        PreviewKeyDown += FlameGraphPanel_PreviewKeyDown;
-        PreviewMouseDown += FlameGraphPanel_PreviewMouseDown;
-        MouseLeftButtonDown += GraphPanel_MouseLeftButtonDown;
-        MouseLeftButtonUp += GraphPanel_MouseLeftButtonUp;
+        GraphHost.SizeChanged += (sender, args) => UpdateGraphWidth(args.NewSize.Width);
+
+        GraphHost.PreviewMouseWheel += OnPreviewMouseWheel;
+        GraphHost.PreviewMouseDown += OnPreviewMouseDown;
+
+        KeyDown += OnKeyDown;
+        MouseLeftButtonDown += OnMouseLeftButtonDown;
+        MouseLeftButtonUp += OnMouseLeftButtonUp;
         MouseDoubleClick += OnMouseDoubleClick;
-        MouseMove += GraphPanel_MouseMove;
+        MouseMove += OnMouseMove;
         MouseDown += OnMouseDown;
     }
 
-    private void FlameGraphPanel_PreviewKeyDown(object sender, KeyEventArgs e) {
-        HidePreviewPopup();
-    }
-
-    private async void FlameGraphPanel_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
+    private async void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) {
         HidePreviewPopup();
 
         var point = e.GetPosition(GraphHost);
@@ -177,9 +178,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             GraphViewer.ClearSelection(); // Click outside graph is captured here.
         }
         else if (pointedNode.CallTreeNode != null) {
-            await NodePanel.Show(pointedNode.CallTreeNode);
+            await NodeDetailsPanel.Show(pointedNode.CallTreeNode);
         }
-
     }
 
     private void HidePreviewPopup() {
@@ -349,7 +349,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         GraphViewer.ResetNodeHighlighting();
     }
 
-    private void GraphPanel_MouseMove(object sender, MouseEventArgs e) {
+    private void OnMouseMove(object sender, MouseEventArgs e) {
         if (dragging_) {
             var offset = draggingViewStart_ - (e.GetPosition(GraphHost) - draggingStart_);
             GraphHost.ScrollToHorizontalOffset(offset.X);
@@ -358,7 +358,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
     }
 
-    private void GraphPanel_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
+    private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
         if (dragging_) {
             dragging_ = false;
             ReleaseMouseCapture();
@@ -366,7 +366,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
     }
 
-    private async void GraphPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+    private async void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
         // Start dragging the graph only if the click starts inside the scroll area,
         // excluding the scroll bars, and it in an empty spot.
         if (IsMouseOutsideViewport(e)) {
@@ -380,7 +380,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             GraphViewer.ClearSelection(); // Click outside graph is captured here.
         }
         else if(pointedNode.CallTreeNode != null) {
-            await NodePanel.Show(pointedNode.CallTreeNode);
+            await NodeDetailsPanel.Show(pointedNode.CallTreeNode);
         }
 
         dragging_ = true;
@@ -399,7 +399,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                point.Y >= GraphHost.ViewportHeight;
     }
 
-    private async void GraphPanel_KeyDown(object sender, KeyEventArgs e) {
+    private async void OnKeyDown(object sender, KeyEventArgs e) {
+        HidePreviewPopup();
+
         switch (e.Key) {
             case Key.Left: {
                 ScrollToRelativeOffsets(-PanOffset, 0);
@@ -494,7 +496,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         SetMaxWidth(newWidth, animate, duration);
     }
 
-    private void GraphPanel_MouseWheel(object sender, MouseWheelEventArgs e) {
+    private void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e) {
         HidePreviewPopup();
 
         // Zoom when Ctrl/Alt/Shift or left mouse button are presesed.
@@ -599,9 +601,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             return;
         }
 
-        var area = new Rect(GraphHost.HorizontalOffset, GraphHost.VerticalOffset,
-                            GraphAreaWidth, GraphAreaHeight);
-        GraphViewer.UpdateVisibleArea(area);
+        GraphViewer.UpdateVisibleArea(GraphVisibleArea);
     }
 
     private async void UndoButtoon_Click(object sender, RoutedEventArgs e) {
@@ -647,9 +647,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo) {
         base.OnRenderSizeChanged(sizeInfo);
+        UpdateGraphWidth(sizeInfo.NewSize.Width);
+    }
 
+    private void UpdateGraphWidth(double width) {
         if (GraphViewer.IsInitialized && !GraphViewer.IsZoomed) {
-            SetMaxWidth(sizeInfo.NewSize.Width, false);
+            SetMaxWidth(width, false);
         }
     }
 

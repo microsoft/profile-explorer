@@ -1,27 +1,27 @@
 ﻿<UserControl
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
     x:Class="IRExplorerUI.Profile.ProfileListView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
     xmlns:local="clr-namespace:IRExplorerUI.Profile"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
-    mc:Ignorable="d">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ListView
-        x:Name="ItemList"
-        Panel.ZIndex="1"
         AlternationCount="2"
         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
         BorderBrush="{x:Null}"
         BorderThickness="0,0,0,0"
+        Panel.ZIndex="1"
         VirtualizingStackPanel.IsVirtualizing="True"
-        VirtualizingStackPanel.VirtualizationMode="Recycling">
+        VirtualizingStackPanel.VirtualizationMode="Recycling"
+        x:Name="ItemList">
         <ListView.View>
             <GridView>
                 <GridViewColumn Width="250">
-                    <GridViewColumnHeader x:Name="FunctionColumnHeader" Content="{Binding NameColumnTitle}" />
+                    <GridViewColumnHeader Content="{Binding NameColumnTitle}" x:Name="FunctionColumnHeader" />
                     <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
                             <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -32,9 +32,9 @@
                             <StackPanel>
                                 <ContentPresenter Content="{Binding Name}" ToolTip="{Binding FunctionName}" />
                                 <ContentControl
-                                    HorizontalAlignment="Stretch"
                                     Content="{Binding}"
-                                    ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
+                                    ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
+                                    HorizontalAlignment="Stretch" />
 
                             </StackPanel>
                         </DataTemplate>
@@ -42,7 +42,7 @@
                 </GridViewColumn>
 
                 <GridViewColumn Width="120" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowModuleColumn}">
-                    <GridViewColumnHeader x:Name="ModuleColumnHeader" Content="Module" />
+                    <GridViewColumnHeader Content="Module" x:Name="ModuleColumnHeader" />
                     <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
                             <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -51,11 +51,11 @@
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock
-                                Margin="1,0,0,0"
+                                FontWeight="Medium"
                                 HorizontalAlignment="Left"
-                                VerticalAlignment="Center"
-                                FontWeight="DemiBold"
-                                Text="{Binding Path=ModuleName}">
+                                Margin="1,0,0,0"
+                                Text="{Binding Path=ModuleName}"
+                                VerticalAlignment="Center">
                                 <TextBlock.Style>
                                     <Style TargetType="{x:Type TextBlock}">
                                         <Style.Triggers>
@@ -71,7 +71,7 @@
                 </GridViewColumn>
 
                 <GridViewColumn Width="150" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowExclusiveTimeColumn}">
-                    <GridViewColumnHeader x:Name="ChildExclusiveTimeColumnHeader" Content="{Binding ExclusiveTimeColumnTitle}" />
+                    <GridViewColumnHeader Content="{Binding ExclusiveTimeColumnTitle}" x:Name="ChildExclusiveTimeColumnHeader" />
                     <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
                             <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -81,15 +81,15 @@
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
                             <ContentControl
-                                HorizontalAlignment="Stretch"
                                 Content="{Binding}"
-                                ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
+                                ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}"
+                                HorizontalAlignment="Stretch" />
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
                 <GridViewColumn Width="150" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowTimeColumn}">
-                    <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="{Binding TimeColumnTitle}" />
+                    <GridViewColumnHeader Content="{Binding TimeColumnTitle}" x:Name="ChildTimeColumnHeader" />
 
                     <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -100,15 +100,15 @@
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
                             <ContentControl
-                                HorizontalAlignment="Stretch"
                                 Content="{Binding}"
-                                ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
+                                ContentTemplate="{StaticResource ProfilePercentageTemplate}"
+                                HorizontalAlignment="Stretch" />
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
                 <GridViewColumn Width="180" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowCombinedTimeColumn}">
-                    <GridViewColumnHeader x:Name="ChildCombinedTimeColumnHeader" Content="{Binding TimeColumnTitle}" />
+                    <GridViewColumnHeader Content="{Binding TimeColumnTitle}" x:Name="ChildCombinedTimeColumnHeader" />
                     <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
                             <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -118,9 +118,9 @@
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
                             <ContentControl
-                                HorizontalAlignment="Stretch"
                                 Content="{Binding}"
-                                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
+                                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
+                                HorizontalAlignment="Stretch" />
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>

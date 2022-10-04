@@ -483,7 +483,7 @@
                                 BorderBrush="{x:Null}"
                                 Checked="ToggleButton_Checked"
                                 FontSize="11"
-                                FontWeight="DemiBold"
+                                FontWeight="Medium"
                                 Padding="2,1,2,1"
                                 ToolTip="Enter/exit diffing two sections (F9)"
                                 Unchecked="DiffModeButton_Unchecked"
@@ -662,7 +662,7 @@
                             BorderBrush="{x:Null}"
                             Click="ShareButton_Click"
                             FontSize="11"
-                            FontWeight="DemiBold"
+                            FontWeight="Medium"
                             Padding="2,1,2,1"
                             ToolTip="Create/open shared session link"
                             VerticalAlignment="Center"
@@ -695,7 +695,7 @@
                             BorderBrush="{x:Null}"
                             Click="FindButton_Click"
                             FontSize="11"
-                            FontWeight="DemiBold"
+                            FontWeight="Medium"
                             Padding="2,1,2,1"
                             ToolTip="Search the entire document (Ctrl+F3)"
                             VerticalAlignment="Center"
@@ -1020,7 +1020,7 @@
                 VerticalAlignment="Center" />
             <TextBlock
                 FontSize="11"
-                FontWeight="DemiBold"
+                FontWeight="Medium"
                 MaxWidth="80"
                 MinWidth="80"
                 Text="2 ($LL4)"
@@ -1039,7 +1039,7 @@
                 VerticalAlignment="Center" />
             <TextBlock
                 FontSize="11"
-                FontWeight="DemiBold"
+                FontWeight="Medium"
                 MaxWidth="50"
                 MinWidth="50"
                 Text="2 / 3"
@@ -1174,7 +1174,7 @@
                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                 Click="UpdateButton_Click"
                 FontSize="11"
-                FontWeight="DemiBold"
+                FontWeight="Medium"
                 ToolTip="Update application to newest version"
                 VerticalAlignment="Center"
                 Visibility="Hidden"
@@ -1191,7 +1191,7 @@
 
             <TextBlock
                 FontSize="11"
-                FontWeight="DemiBold"
+                FontWeight="Medium"
                 Foreground="DarkRed"
                 MouseDown="OptionalStatusText_MouseDown"
                 VerticalAlignment="Center"

@@ -1,38 +1,38 @@
 ﻿<UserControl
+    mc:Ignorable="d"
     x:Class="IRExplorerUI.Document.ActionPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI.Document"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:system="clr-namespace:System;assembly=mscorlib"
-    mc:Ignorable="d">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Border
-        Height="22"
         BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
-        BorderThickness="1,1,1,1">
+        BorderThickness="1,1,1,1"
+        Height="22">
         <StackPanel Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}" Orientation="Horizontal">
             <Image
-                Width="16"
                 Height="16"
                 Margin="2,0,2,0"
                 Source="{StaticResource QueryIcon}"
-                Visibility="{Binding HasActionButtons, Converter={StaticResource BoolToVisibilityConverter}}" />
+                Visibility="{Binding HasActionButtons, Converter={StaticResource BoolToVisibilityConverter}}"
+                Width="16" />
             <ItemsControl x:Name="ActionButtonsPanel">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Button
-                            Width="20"
-                            Padding="0,0,0,2"
-                            HorizontalContentAlignment="Center"
-                            VerticalContentAlignment="Center"
                             Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}"
                             BorderThickness="0,0,1,0"
                             Click="ActionButton_Click"
                             Content="{Binding Name}"
                             FontSize="14"
-                            FontWeight="DemiBold"
-                            ToolTip="Select element as query input value #N" />
+                            FontWeight="Medium"
+                            HorizontalContentAlignment="Center"
+                            Padding="0,0,0,2"
+                            ToolTip="Select element as query input value #N"
+                            VerticalContentAlignment="Center"
+                            Width="20" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
                 <ItemsControl.ItemsPanel>
@@ -42,25 +42,25 @@
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
             <Button
-                x:Name="RemarkButton"
-                Width="Auto"
-                Height="Auto"
-                Padding="2,2,2,2"
                 Background="{DynamicResource {x:Static SystemColors.InfoBrushKey}}"
                 BorderThickness="0"
                 Click="RemarkButton_Click"
-                Visibility="{Binding ShowRemarksButton, Converter={StaticResource BoolToVisibilityConverter}}">
+                Height="Auto"
+                Padding="2,2,2,2"
+                Visibility="{Binding ShowRemarksButton, Converter={StaticResource BoolToVisibilityConverter}}"
+                Width="Auto"
+                x:Name="RemarkButton">
                 <StackPanel Orientation="Horizontal">
                     <Image
-                        Width="14"
                         Height="14"
                         Margin="0,0,2,0"
-                        Source="{StaticResource RemarkIcon}" />
+                        Source="{StaticResource RemarkIcon}"
+                        Width="14" />
                     <Image
-                        Width="16"
                         Height="16"
                         Margin="-2,0,0,0"
-                        Source="{StaticResource DownArrowIcon}" />
+                        Source="{StaticResource DownArrowIcon}"
+                        Width="16" />
                 </StackPanel>
             </Button>
         </StackPanel>

@@ -1,7 +1,16 @@
 ﻿<controls:DraggablePopup
+    AllowsTransparency="True"
+    Height="200"
+    MinHeight="50"
+    MinWidth="400"
+    SnapsToDevicePixels="True"
+    UseLayoutRounding="True"
+    Width="600"
+    d:DesignHeight="450"
+    d:DesignWidth="700"
+    mc:Ignorable="d"
     x:Class="IRExplorerUI.Document.RemarkPreviewPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:client="clr-namespace:IRExplorerUI"
     xmlns:controls="clr-namespace:IRExplorerUI.Controls"
@@ -10,32 +19,23 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
     xmlns:toolkit="clr-namespace:Xceed.Wpf.Toolkit.PropertyGrid;assembly=DotNetProjects.Wpf.Extended.Toolkit"
-    Width="600"
-    Height="200"
-    MinWidth="400"
-    MinHeight="50"
-    d:DesignHeight="450"
-    d:DesignWidth="700"
-    AllowsTransparency="True"
-    SnapsToDevicePixels="True"
-    UseLayoutRounding="True"
-    mc:Ignorable="d">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <controls:DraggablePopup.Resources>
         <sys:String x:Key="ActiveBorderColor">#00008b</sys:String>
     </controls:DraggablePopup.Resources>
     <Border
-        x:Name="PanelBorder"
-        Margin="0,0,6,6"
         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        BorderThickness="1,1,1,1">
+        BorderThickness="1,1,1,1"
+        Margin="0,0,6,6"
+        x:Name="PanelBorder">
         <Border.Effect>
             <DropShadowEffect
                 BlurRadius="5"
+                Color="#FF929292"
                 Direction="315"
                 RenderingBias="Performance"
-                ShadowDepth="2"
-                Color="#FF929292" />
+                ShadowDepth="2" />
         </Border.Effect>
         <Grid>
             <Grid.RowDefinitions>
@@ -76,263 +76,263 @@
             </Grid.RowDefinitions>
 
             <controls:ResizeGrip
-                x:Name="PanelResizeGrip"
                 Grid.Row="0"
                 Grid.RowSpan="5"
-                Width="16"
                 Height="16"
                 HorizontalAlignment="Right"
+                Panel.ZIndex="100"
                 VerticalAlignment="Bottom"
-                Panel.ZIndex="100" />
+                Width="16"
+                x:Name="PanelResizeGrip" />
 
             <Border
-                Grid.Row="0"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                 BorderBrush="DimGray"
-                BorderThickness="0,0,0,1">
+                BorderThickness="0,0,0,1"
+                Grid.Row="0">
                 <DockPanel
-                    x:Name="ToolbarPanel"
                     Background="#FFFFFBCF"
-                    LastChildFill="False">
+                    LastChildFill="False"
+                    x:Name="ToolbarPanel">
 
                     <StackPanel Orientation="Horizontal">
                         <TextBlock
                             Grid.Row="0"
                             Margin="6,0,6,0"
                             Padding="0,0,0,1"
-                            VerticalAlignment="Center"
-                            Text="Filter" />
+                            Text="Filter"
+                            VerticalAlignment="Center" />
                         <ToggleButton
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
                             Background="#01FFFFFF"
                             BorderBrush="{Binding Path=HasOptimizationRemarks, Converter={StaticResource BooToParameter}, ConverterParameter={StaticResource ActiveBorderColor}}"
                             Click="Button_Click"
+                            Grid.Row="0"
+                            Height="20"
                             IsChecked="{Binding Path=Settings.Optimization}"
-                            ToolTip="Show optimization remarks">
+                            ToolTip="Show optimization remarks"
+                            Width="20">
                             <Image
                                 Height="12"
                                 HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
                                 IsHitTestVisible="False"
-                                Source="{StaticResource ZapIcon}" />
+                                Source="{StaticResource ZapIcon}"
+                                VerticalAlignment="Center" />
                         </ToggleButton>
 
                         <ToggleButton
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
                             Background="#01FFFFFF"
                             BorderBrush="{Binding Path=HasAnalysisRemarks, Converter={StaticResource BooToParameter}, ConverterParameter={StaticResource ActiveBorderColor}}"
                             Click="Button_Click"
+                            Grid.Row="0"
+                            Height="20"
                             IsChecked="{Binding Path=Settings.Analysis}"
-                            ToolTip="Show analysis remarks">
+                            ToolTip="Show analysis remarks"
+                            Width="20">
                             <TextBlock
-                                VerticalAlignment="Center"
                                 FontSize="14"
                                 FontWeight="Bold"
                                 IsHitTestVisible="False"
-                                Text="A" />
+                                Text="A"
+                                VerticalAlignment="Center" />
                         </ToggleButton>
 
                         <TextBlock
                             Grid.Row="0"
                             Margin="2,0,2,0"
-                            VerticalAlignment="Top"
-                            Text="|">
+                            Text="|"
+                            VerticalAlignment="Top">
                             <TextBlock.Foreground>
                                 <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveBorderColorKey}}" />
                             </TextBlock.Foreground>
                         </TextBlock>
 
                         <ToggleButton
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
                             Background="#01FFFFFF"
                             BorderBrush="{Binding Path=HasDefaultRemarks, Converter={StaticResource BooToParameter}, ConverterParameter={StaticResource ActiveBorderColor}}"
                             Click="Button_Click"
+                            Grid.Row="0"
+                            Height="20"
                             IsChecked="{Binding Path=Settings.Default}"
-                            ToolTip="Show default remarks">
+                            ToolTip="Show default remarks"
+                            Width="20">
                             <TextBlock
-                                Margin="0,0,0,1"
-                                VerticalAlignment="Center"
                                 FontSize="14"
                                 FontWeight="Bold"
                                 IsHitTestVisible="False"
-                                Text="D" />
+                                Margin="0,0,0,1"
+                                Text="D"
+                                VerticalAlignment="Center" />
                         </ToggleButton>
 
                         <ToggleButton
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
                             Background="#01FFFFFF"
                             BorderBrush="{Binding Path=HasVerboseRemarks, Converter={StaticResource BooToParameter}, ConverterParameter={StaticResource ActiveBorderColor}}"
                             Click="Button_Click"
+                            Grid.Row="0"
+                            Height="20"
                             IsChecked="{Binding Path=Settings.Verbose}"
-                            ToolTip="Show verbose remarks">
+                            ToolTip="Show verbose remarks"
+                            Width="20">
                             <TextBlock
-                                Margin="0,0,0,1"
-                                VerticalAlignment="Center"
                                 FontSize="14"
                                 FontWeight="Bold"
                                 IsHitTestVisible="False"
-                                Text="V" />
+                                Margin="0,0,0,1"
+                                Text="V"
+                                VerticalAlignment="Center" />
                         </ToggleButton>
 
                         <ToggleButton
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
                             Background="#01FFFFFF"
                             BorderBrush="{Binding Path=HasTraceRemarks, Converter={StaticResource BooToParameter}, ConverterParameter={StaticResource ActiveBorderColor}}"
                             Click="Button_Click"
+                            Grid.Row="0"
+                            Height="20"
                             IsChecked="{Binding Path=Settings.Trace}"
-                            ToolTip="Show trace remarks">
+                            ToolTip="Show trace remarks"
+                            Width="20">
                             <TextBlock
-                                Margin="0,0,0,1"
-                                VerticalAlignment="Center"
                                 FontSize="14"
                                 FontWeight="Bold"
                                 IsHitTestVisible="False"
-                                Text="T" />
+                                Margin="0,0,0,1"
+                                Text="T"
+                                VerticalAlignment="Center" />
                         </ToggleButton>
 
                         <TextBlock
                             Grid.Row="0"
                             Margin="2,0,2,0"
-                            VerticalAlignment="Top"
-                            Text="|">
+                            Text="|"
+                            VerticalAlignment="Top">
                             <TextBlock.Foreground>
                                 <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveBorderColorKey}}" />
                             </TextBlock.Foreground>
                         </TextBlock>
 
                         <ToggleButton
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
                             Background="#01FFFFFF"
                             BorderBrush="{x:Null}"
                             Click="Button_Click"
+                            Grid.Row="0"
+                            Height="20"
                             IsChecked="{Binding Path=Settings.ShowPreviousSections}"
-                            ToolTip="Show remarks from the previous sections">
+                            ToolTip="Show remarks from the previous sections"
+                            Width="20">
                             <TextBlock
-                                Margin="0,0,0,1"
-                                VerticalAlignment="Center"
                                 FontSize="14"
                                 FontWeight="Bold"
                                 IsHitTestVisible="False"
-                                Text="P" />
+                                Margin="0,0,0,1"
+                                Text="P"
+                                VerticalAlignment="Center" />
                         </ToggleButton>
 
                         <TextBlock
                             Grid.Row="0"
                             Margin="2,0,2,0"
-                            VerticalAlignment="Top"
-                            Text="|">
+                            Text="|"
+                            VerticalAlignment="Top">
                             <TextBlock.Foreground>
                                 <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveBorderColorKey}}" />
                             </TextBlock.Foreground>
                         </TextBlock>
 
                         <Button
-                            x:Name="PopupPanelButton"
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
                             Background="#01FFFFFF"
                             BorderBrush="{x:Null}"
-                            Click="PopupPanelButton_Click">
+                            Click="PopupPanelButton_Click"
+                            Grid.Row="0"
+                            Height="20"
+                            Width="20"
+                            x:Name="PopupPanelButton">
                             <Image
-                                Width="16"
                                 Height="16"
-                                Source="{StaticResource PinIcon}" />
+                                Source="{StaticResource PinIcon}"
+                                Width="16" />
                         </Button>
 
                         <Button
-                            x:Name="ColorButton"
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
                             Background="#01FFFFFF"
                             BorderBrush="{x:Null}"
                             Click="ColorButton_Click"
-                            Visibility="Collapsed">
+                            Grid.Row="0"
+                            Height="20"
+                            Visibility="Collapsed"
+                            Width="20"
+                            x:Name="ColorButton">
                             <Image
-                                Width="16"
                                 Height="16"
-                                Source="{StaticResource ThemeIcon}" />
+                                Source="{StaticResource ThemeIcon}"
+                                Width="16" />
                         </Button>
                     </StackPanel>
 
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                         <Image
-                            Width="16"
                             Height="16"
-                            Source="{StaticResource SearchIcon}" />
+                            Source="{StaticResource SearchIcon}"
+                            Width="16" />
                         <Grid>
                             <TextBox
-                                Name="RemarkFilterTextbox"
-                                Width="150"
-                                Height="21"
-                                Margin="4,0,0,0"
-                                HorizontalAlignment="Right"
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                Height="21"
+                                HorizontalAlignment="Right"
+                                Margin="4,0,0,0"
+                                Name="RemarkFilterTextbox"
                                 Text="{Binding Path=Settings.SearchedText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                TextChanged="TextBox_TextChanged" />
+                                TextChanged="TextBox_TextChanged"
+                                Width="150" />
                             <TextBlock
-                                Margin="8,0,8,1"
-                                VerticalAlignment="Center"
                                 Foreground="DimGray"
                                 IsHitTestVisible="False"
+                                Margin="8,0,8,1"
                                 Text="Search remarks"
+                                VerticalAlignment="Center"
                                 Visibility="{Binding ElementName=RemarkFilterTextbox, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                         </Grid>
                         <Button
-                            Width="20"
-                            Margin="2,0,0,0"
-                            VerticalAlignment="Center"
                             Background="{x:Null}"
                             BorderBrush="{x:Null}"
-                            ToolTip="Show options panel">
+                            Margin="2,0,0,0"
+                            ToolTip="Show options panel"
+                            VerticalAlignment="Center"
+                            Width="20">
                             <Image
-                                Width="16"
                                 Height="16"
-                                Source="{StaticResource SettingsIcon}" />
+                                Source="{StaticResource SettingsIcon}"
+                                Width="16" />
                         </Button>
                         <Button
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
                             Background="#01FFFFFF"
                             BorderBrush="{x:Null}"
-                            Click="ClosePanelButton_Click">
+                            Click="ClosePanelButton_Click"
+                            Grid.Row="0"
+                            Height="20"
+                            Width="20">
                             <Image
-                                Width="16"
                                 Height="16"
-                                Source="{StaticResource CloseIcon}" />
+                                Source="{StaticResource CloseIcon}"
+                                Width="16" />
                         </Button>
                     </StackPanel>
                 </DockPanel>
             </Border>
 
             <ListView
-                x:Name="RemarkList"
-                Grid.Row="1"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
+                Grid.Row="1"
                 MouseDoubleClick="RemarkList_MouseDoubleClick"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                 SelectionChanged="RemarkList_SelectionChanged"
                 VirtualizingPanel.CacheLength="2,2"
                 VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling">
+                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                x:Name="RemarkList">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn>
@@ -377,105 +377,104 @@
             </ListView>
 
             <GridSplitter
+                Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                 Grid.Row="2"
                 Height="2"
                 HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch"
-                Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+                VerticalAlignment="Stretch" />
 
             <DockPanel Grid.Row="3" LastChildFill="True">
                 <Border
-                    Height="20"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     BorderBrush="DimGray"
                     BorderThickness="0,0,0,1"
-                    DockPanel.Dock="Top">
+                    DockPanel.Dock="Top"
+                    Height="20">
                     <DockPanel
-                        x:Name="ContextToolbarPanel"
                         Background="#FFFFFBCF"
-                        LastChildFill="True">
+                        LastChildFill="True"
+                        x:Name="ContextToolbarPanel">
 
                         <StackPanel Orientation="Horizontal">
                             <Label
+                                Content="Section"
                                 Margin="4,0,4,0"
-                                Padding="0,0,0,1"
-                                Content="Section" />
+                                Padding="0,0,0,1" />
                             <Label
-                                x:Name="SectionLabel"
+                                Content="Name"
+                                FontWeight="Medium"
                                 Margin="4,0,4,0"
                                 Padding="0,0,0,1"
-                                Content="Name"
-                                FontWeight="DemiBold" />
+                                x:Name="SectionLabel" />
                         </StackPanel>
 
                         <StackPanel
-                            HorizontalAlignment="Right"
                             DockPanel.Dock="Right"
+                            HorizontalAlignment="Right"
                             Orientation="Horizontal">
                             <Button
-                                x:Name="ContextParentButton"
-                                Width="20"
-                                VerticalAlignment="Center"
                                 Background="{x:Null}"
                                 BorderBrush="{x:Null}"
                                 Click="ContextParentButton_Click"
-                                ToolTip="Switch to parent remark context">
+                                ToolTip="Switch to parent remark context"
+                                VerticalAlignment="Center"
+                                Width="20"
+                                x:Name="ContextParentButton">
                                 <Image
-                                    Width="16"
                                     Height="16"
-                                    Source="{StaticResource GotoDefinitionIcon}" />
+                                    Source="{StaticResource GotoDefinitionIcon}"
+                                    Width="16" />
                             </Button>
                             <ToggleButton
-                                Width="20"
-                                VerticalAlignment="Center"
                                 Background="{x:Null}"
                                 BorderBrush="{x:Null}"
                                 IsChecked="{Binding FilterActiveContextRemarks, Mode=TwoWay}"
-                                ToolTip="Show only remarks from selected context in the document">
+                                ToolTip="Show only remarks from selected context in the document"
+                                VerticalAlignment="Center"
+                                Width="20">
                                 <Image
-                                    Width="16"
                                     Height="16"
-                                    Source="{StaticResource EyeIcon}" />
+                                    Source="{StaticResource EyeIcon}"
+                                    Width="16" />
                             </ToggleButton>
                             <ToggleButton
-                                Width="20"
-                                VerticalAlignment="Center"
                                 Background="{x:Null}"
                                 BorderBrush="{x:Null}"
                                 IsChecked="{Binding ShowSearchPanel, Mode=TwoWay}"
-                                ToolTip="Search remarks">
+                                ToolTip="Search remarks"
+                                VerticalAlignment="Center"
+                                Width="20">
                                 <Image
-                                    Width="16"
                                     Height="16"
-                                    Source="{StaticResource SearchIcon}" />
+                                    Source="{StaticResource SearchIcon}"
+                                    Width="16" />
                             </ToggleButton>
                         </StackPanel>
                     </DockPanel>
                 </Border>
 
                 <TabControl
-                    x:Name="RemarksTabControl"
                     Padding="0"
                     SelectionChanged="TabControl_SelectionChanged"
-                    TabStripPlacement="Bottom">
-                    <TabItem x:Name="ContextTreeTabItem" Header="Context Tree">
+                    TabStripPlacement="Bottom"
+                    x:Name="RemarksTabControl">
+                    <TabItem Header="Context Tree" x:Name="ContextTreeTabItem">
                         <DockPanel LastChildFill="True">
                             <local:SearchPanel
-                                x:Name="ContextSearchPanel"
+                                DockPanel.Dock="Top"
                                 Height="28"
                                 HorizontalAlignment="Stretch"
-                                VerticalAlignment="Top"
-                                DockPanel.Dock="Top"
                                 Opacity="1"
-                                Visibility="Collapsed" />
+                                VerticalAlignment="Top"
+                                Visibility="Collapsed"
+                                x:Name="ContextSearchPanel" />
                             <TreeView
-                                x:Name="RemarkContextTree"
-                                Grid.Row="1"
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                 BorderBrush="{x:Null}"
                                 BorderThickness="0,0,0,0"
                                 DockPanel.Dock="Bottom"
                                 FontFamily="Consolas"
+                                Grid.Row="1"
                                 ItemContainerStyle="{StaticResource RemarkTreeViewItemStyle}"
                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -483,15 +482,16 @@
                                 VirtualizingStackPanel.CacheLength="200,300"
                                 VirtualizingStackPanel.IsVirtualizing="True"
                                 VirtualizingStackPanel.ScrollUnit="Pixel"
-                                VirtualizingStackPanel.VirtualizationMode="Recycling" />
+                                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                x:Name="RemarkContextTree" />
                         </DockPanel>
                     </TabItem>
 
-                    <TabItem x:Name="OutputTextTabItem" Header="Output Text">
+                    <TabItem Header="Output Text" x:Name="OutputTextTabItem">
                         <local:SearcheableIRDocument
-                            x:Name="RemarkTextView"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                            DockPanel.Dock="Bottom" />
+                            DockPanel.Dock="Bottom"
+                            x:Name="RemarkTextView" />
                     </TabItem>
                 </TabControl>
 

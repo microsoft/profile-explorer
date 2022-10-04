@@ -208,8 +208,9 @@
             <local:CallTreeNodePanel
                 Grid.Column="2"
                 HorizontalAlignment="Stretch"
+                ShowDetails="True"
                 VerticalAlignment="Stretch"
-                x:Name="NodePanel" />
+                x:Name="NodeDetailsPanel" />
         </Grid>
     </Grid>
 </irExplorerUi:ToolPanelControl>

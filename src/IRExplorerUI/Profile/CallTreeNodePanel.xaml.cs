@@ -18,7 +18,7 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Profile;
 
-namespace IRExplorerUI.Profile; 
+namespace IRExplorerUI.Profile;
 
 public interface IFunctionProfileInfoProvider {
     public class ModuleProfileInfo {
@@ -109,6 +109,11 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         set => SetField(ref funcInstancesCount_, value);
     }
 
+    private bool showDetails_;
+    public bool ShowDetails {
+        get => showDetails_;
+        set => SetField(ref showDetails_, value);
+    }
 
     public CallTreeNodePanel() {
         InitializeComponent();
@@ -118,7 +123,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     public async Task Show(ProfileCallTreeNode node) {
         CallTreeNode = node;
-        
         BacktraceList.Show(await Task.Run(() => FunctionInfoProvider.GetBacktrace(node)));
         FunctionList.Show(await Task.Run(() => FunctionInfoProvider.GetTopFunctions(node)));
         ModuleList.Show(await Task.Run(() => FunctionInfoProvider.GetTopModules(node)));
@@ -132,11 +136,11 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         if (instanceNodes == null) {
             return;
         }
-            
+
         FunctionInstancesCount = instanceNodes.Count;
         var combinedNode = await Task.Run(() => callTree.GetCombinedCallTreeNode(node.Function));
         InstancesNode = SetupNodeExtension(combinedNode);
-     
+
         var thisNode = SetupNodeExtension(nodeEx_.CallTreeNode);
         thisNode.Percentage = combinedNode.ScaleWeight(thisNode.Weight);
         thisNode.ExclusivePercentage = combinedNode.ScaleWeight(thisNode.ExclusiveWeight);

@@ -115,6 +115,8 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     }
 
     public int CompareTo(FunctionDebugInfo other) {
+        if (other == null) return 0;
+
         if (StartRVA < other.StartRVA && EndRVA < other.EndRVA) {
             return -1;
         }
@@ -205,7 +207,7 @@ public struct DebugSourceLineInfo : IEquatable<DebugSourceLineInfo> {
     }
 
     public bool Equals(DebugSourceLineInfo other) {
-        return OffsetStart == other.OffsetStart && Line == other.Line && 
+        return OffsetStart == other.OffsetStart && Line == other.Line &&
                Column == other.Column && FilePath == other.FilePath;
     }
 
