@@ -101,7 +101,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     public FlameGraphPanel() {
         InitializeComponent();
         stateStack_ = new Stack<FlameGraphState>();
-        stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer, CreateBacktracePopup);
+        stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer, CreatePreviewPopup);
         SetupEvents();
         DataContext = this;
 
@@ -645,33 +645,24 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         GraphViewer.Reset();
     }
 
-    protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo) {
-        base.OnRenderSizeChanged(sizeInfo);
-        UpdateGraphWidth(sizeInfo.NewSize.Width);
-    }
-
     private void UpdateGraphWidth(double width) {
         if (GraphViewer.IsInitialized && !GraphViewer.IsZoomed) {
             SetMaxWidth(width, false);
         }
     }
 
-    private DraggablePopup CreateBacktracePopup(Point mousePoint, Point previewPoint) {
+    private DraggablePopup CreatePreviewPopup(Point mousePoint, Point previewPoint) {
         var pointedNode = GraphViewer.FindPointedNode(mousePoint);
         var callNode = pointedNode?.CallTreeNode;
 
         if (callNode != null) {
             // If popup already opened for this node reuse the instance.
-            //? FIX FIX FIX
-            //? FIX FIX FIX
-            //? FIX FIX FIX
-            //? FIX FIX FIX
-            //if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup popup &&
-            //    popup.CallTreeNode == callNode) {
-            //    return popup;
-            //}
+            if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup popup &&
+                popup.CallTreeNode == callNode) {
+                return popup;
+            }
 
-            return new CallTreeNodePopup(callNode, this, previewPoint, 400, 120, GraphViewer, Session);
+            return new CallTreeNodePopup(callNode, this, previewPoint, 350, 65, GraphViewer, Session);
         }
 
         return null;

@@ -117,7 +117,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     public CallTreeNodePanel() {
         InitializeComponent();
-        PanelResizeGrip.ResizedControl = this;
         DataContext = this;
     }
 

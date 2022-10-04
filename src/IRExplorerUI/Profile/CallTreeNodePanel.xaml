@@ -159,14 +159,5 @@
                     x:Name="ModuleList" />
             </TabItem>
         </TabControl>
-
-
-        <controls:ResizeGrip
-            Height="16"
-            HorizontalAlignment="Right"
-            Panel.ZIndex="100"
-            VerticalAlignment="Bottom"
-            Width="16"
-            x:Name="PanelResizeGrip" />
     </Grid>
 </client:ToolPanelControl>
