@@ -295,14 +295,7 @@ class QuadTree<T> where T : class {
             Quadrant toInsert = this;
             while (true) {
                 double w = toInsert.bounds.Width / 2;
-                if (w < 1) {
-                    w = 1;
-                }
-
                 double h = toInsert.bounds.Height / 2;
-                if (h < 1) {
-                    h = 1;
-                }
 
                 // assumption that the Rect struct is almost as fast as doing the operations
                 // manually since Rect is a value type.

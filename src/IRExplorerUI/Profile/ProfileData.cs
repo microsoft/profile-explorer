@@ -15,29 +15,21 @@ namespace IRExplorerUI.Profile;
 public class ProfileData {
     [ProtoContract(SkipConstructor = true)]
     public class ProfileDataState {
-        [ProtoMember(1)]
-        public TimeSpan ProfileWeight { get; set; }
+        [ProtoMember(1)] public TimeSpan ProfileWeight { get; set; }
 
-        [ProtoMember(2)]
-        public TimeSpan TotalWeight { get; set; }
+        [ProtoMember(2)] public TimeSpan TotalWeight { get; set; }
 
-        [ProtoMember(3)]
-        public Dictionary<IRTextFunctionId, FunctionProfileData> FunctionProfiles { get; set; }
+        [ProtoMember(3)] public Dictionary<IRTextFunctionId, FunctionProfileData> FunctionProfiles { get; set; }
 
-        [ProtoMember(4)]
-        public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
+        [ProtoMember(4)] public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
 
-        [ProtoMember(5)]
-        public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
+        [ProtoMember(5)] public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
 
-        [ProtoMember(6)]
-        public ProfileDataReport Report { get; set; }
+        [ProtoMember(6)] public ProfileDataReport Report { get; set; }
 
-        [ProtoMember(7)]
-        public byte[] CallTreeState; //? TODO: Reimplement, super slow!
+        [ProtoMember(7)] public byte[] CallTreeState; //? TODO: Reimplement, super slow!
 
-        [ProtoMember(8)]
-        public List<(ProfileSample Sample, ETWProfileDataProvider.ResolvedProfileStack Stack)> Samples { get; set; }
+        [ProtoMember(8)] public List<(ProfileSample Sample, ETWProfileDataProvider.ResolvedProfileStack Stack)> Samples { get; set; }
 
 
         public ProfileDataState(TimeSpan profileWeight, TimeSpan totalWeight) {
@@ -134,13 +126,11 @@ public class ProfileData {
     }
 
     public double ScaleFunctionWeight(TimeSpan weight) {
-        return ProfileWeight.Ticks == 0 ? 0 :
-            (double)weight.Ticks / (double)ProfileWeight.Ticks;
+        return ProfileWeight.Ticks == 0 ? 0 : (double)weight.Ticks / (double)ProfileWeight.Ticks;
     }
 
     public double ScaleModuleWeight(TimeSpan weight) {
-        return TotalWeight.Ticks == 0 ? 0 :
-            (double)weight.Ticks / (double)TotalWeight.Ticks;
+        return TotalWeight.Ticks == 0 ? 0 : (double)weight.Ticks / (double)TotalWeight.Ticks;
     }
 
     public FunctionProfileData GetFunctionProfile(IRTextFunction function) {
@@ -192,7 +182,7 @@ public class ProfileData {
             summaryMap[summary.Id] = summary;
         }
 
-        foreach(var pair in state.FunctionProfiles) {
+        foreach (var pair in state.FunctionProfiles) {
             var summary = summaryMap[pair.Key.SummaryId];
             var function = summary.GetFunctionWithId(pair.Key.FunctionNumber);
 
@@ -206,6 +196,16 @@ public class ProfileData {
 
         profileData.Report = state.Report;
         profileData.CallTree = ProfileCallTree.Deserialize(state.CallTreeState, summaryMap);
+        DeserializeSamples(profileData, state, summaryMap);
+
+        return profileData;
+    }
+
+    private static void DeserializeSamples(ProfileData profileData, ProfileDataState state, Dictionary<Guid, IRTextSummary> summaryMap) {
+        if (state.Samples == null) {
+            return;
+        }
+
         profileData.Samples = state.Samples;
 
         foreach (var pair in profileData.Samples) {
@@ -229,8 +229,6 @@ public class ProfileData {
                 frame.Function = function;
             }
         }
-
-        return profileData;
     }
 
     public List<Tuple<IRTextFunction, FunctionProfileData>> GetSortedFunctions() {
@@ -242,10 +240,8 @@ public class ProfileData {
 
 [ProtoContract(SkipConstructor = true)]
 public struct IRTextFunctionId : IEquatable<IRTextFunctionId> {
-    [ProtoMember(1)]
-    public Guid SummaryId { get; set; }
-    [ProtoMember(2)]
-    public int FunctionNumber { get; set; }
+    [ProtoMember(1)] public Guid SummaryId { get; set; }
+    [ProtoMember(2)] public int FunctionNumber { get; set; }
 
     public IRTextFunctionId(Guid summaryId, int funcNumber) {
         SummaryId = summaryId;
@@ -284,12 +280,10 @@ public struct IRTextFunctionId : IEquatable<IRTextFunctionId> {
 
 [ProtoContract(SkipConstructor = true)]
 public class IRTextFunctionReference {
-    [ProtoMember(1)]
-    public IRTextFunctionId Id;
+    [ProtoMember(1)] public IRTextFunctionId Id;
     public IRTextFunction Value;
 
     public IRTextFunctionReference() {
-
     }
 
     public IRTextFunctionReference(IRTextFunction func) {
@@ -314,21 +308,15 @@ public class IRTextFunctionReference {
 [ProtoContract(SkipConstructor = true)]
 [ProtoInclude(100, typeof(PerformanceMetricInfo))]
 public class PerformanceCounterInfo {
-    [ProtoMember(1)]
-    public PerformanceCounterConfig Config { get;set; }
-    [ProtoMember(2)]
-    public int Index { get; set; }
-    [ProtoMember(3)]
-    public int Id { get; set; }
-    [ProtoMember(4)]
-    public string Name { get; set; }
-    [ProtoMember(5)]
-    public int Frequency { get; set; }
+    [ProtoMember(1)] public PerformanceCounterConfig Config { get; set; }
+    [ProtoMember(2)] public int Index { get; set; }
+    [ProtoMember(3)] public int Id { get; set; }
+    [ProtoMember(4)] public string Name { get; set; }
+    [ProtoMember(5)] public int Frequency { get; set; }
 
     public virtual bool IsMetric => false;
 
     public PerformanceCounterInfo() {
-
     }
 
     public PerformanceCounterInfo(int id, string name, int frequency = 0) {
@@ -340,18 +328,15 @@ public class PerformanceCounterInfo {
 
 [ProtoContract(SkipConstructor = true)]
 public class PerformanceMetricInfo : PerformanceCounterInfo {
-    [ProtoMember(1)]
-    public PerformanceMetricConfig Config { get; set; }
-    [ProtoMember(2)]
-    public PerformanceCounterInfo BaseCounter { get; set; }
-    [ProtoMember(3)]
-    public PerformanceCounterInfo RelativeCounter { get; set; }
+    [ProtoMember(1)] public PerformanceMetricConfig Config { get; set; }
+    [ProtoMember(2)] public PerformanceCounterInfo BaseCounter { get; set; }
+    [ProtoMember(3)] public PerformanceCounterInfo RelativeCounter { get; set; }
 
     public override bool IsMetric => true;
 
     public PerformanceMetricInfo(int id, PerformanceMetricConfig config,
-                                 PerformanceCounterInfo baseCounter,
-                                 PerformanceCounterInfo relativeCounter) : base(id, config.Name) {
+        PerformanceCounterInfo baseCounter,
+        PerformanceCounterInfo relativeCounter) : base(id, config.Name) {
         Config = config;
         BaseCounter = baseCounter;
         RelativeCounter = relativeCounter;
@@ -367,17 +352,15 @@ public class PerformanceMetricInfo : PerformanceCounterInfo {
 
         // Counters may not be accurate and the percentage can end up more than 100%.
         double result = (double)relativeValue / (double)baseValue;
-        return Config.IsPercentage ? Math.Min (result, 1) : result;
+        return Config.IsPercentage ? Math.Min(result, 1) : result;
     }
 }
 
 // https://devblogs.microsoft.com/premier-developer/performance-traps-of-ref-locals-and-ref-returns-in-c/
 [ProtoContract(SkipConstructor = true)]
 public class PerformanceCounterValue : IEquatable<PerformanceCounterValue> {
-    [ProtoMember(1)]
-    public int CounterId { get; set; }
-    [ProtoMember(2)]
-    public long Value { get; set; }
+    [ProtoMember(1)] public int CounterId { get; set; }
+    [ProtoMember(2)] public long Value { get; set; }
 
     public PerformanceCounterValue(int counterId, long value = 0) {
         CounterId = counterId;
@@ -404,8 +387,7 @@ public class PerformanceCounterValue : IEquatable<PerformanceCounterValue> {
 public class PerformanceCounterSet {
     //? Use smth like https://github.com/faustodavid/ListPool/blob/main/src/ListPool/ValueListPool.cs
     //? and make PerformanceCounterSet as struct.
-    [ProtoMember(1)]
-    public List<PerformanceCounterValue> Counters { get; set; }
+    [ProtoMember(1)] public List<PerformanceCounterValue> Counters { get; set; }
 
     public int Count => Counters.Count;
 
