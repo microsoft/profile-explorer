@@ -615,7 +615,7 @@ namespace IRExplorerUI {
 
                             if (remark == remarkGroup.LeaderRemark) {
                                 leaderIndex = index;
-                                fontWeight = FontWeights.DemiBold;
+                                fontWeight = FontWeights.Medium;
                             }
 
                             var text = DocumentUtils.CreateFormattedText(this, remark.RemarkText, DefaultFont, fontSize,

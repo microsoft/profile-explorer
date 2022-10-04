@@ -117,7 +117,7 @@ namespace IRExplorerUI.Query {
         private string text_;
         private string description_;
         private bool hasBoldText_;
-        private bool hasDemiBoldText_;
+        private bool hasMediumText_;
         private bool isEnabled_;
 
         public QueryButton(string text, EventHandler<object> action = null, object data = null) {
@@ -142,9 +142,9 @@ namespace IRExplorerUI.Query {
             set => SetAndNotify(ref hasBoldText_, value);
         }
 
-        public bool HasDemiBoldText {
-            get => hasDemiBoldText_;
-            set => SetAndNotify(ref hasDemiBoldText_, value);
+        public bool HasMediumText {
+            get => hasMediumText_;
+            set => SetAndNotify(ref hasMediumText_, value);
         }
 
         public bool IsEnabled {

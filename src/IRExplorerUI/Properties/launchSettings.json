@@ -1,7 +1,8 @@
 {
   "profiles": {
     "Client": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "C:\\work\\net.irx"
     }
   }
 }

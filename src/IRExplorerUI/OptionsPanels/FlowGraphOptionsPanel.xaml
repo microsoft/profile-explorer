@@ -1,68 +1,68 @@
 ﻿<local:OptionsPanelBase
+    d:DesignHeight="600"
+    d:DesignWidth="400"
+    mc:Ignorable="d"
     x:Class="IRExplorerUI.OptionsPanels.FlowGraphOptionsPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI.OptionsPanels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:toolkit="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
-    d:DesignHeight="600"
-    d:DesignWidth="400"
-    mc:Ignorable="d">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
         <StackPanel Margin="4,4,4,4">
-            <TextBlock FontWeight="DemiBold" Text="Graph Interaction" />
+            <TextBlock FontWeight="Medium" Text="Graph Interaction" />
             <StackPanel Margin="0,0,0,2" Orientation="Horizontal" />
             <CheckBox
-                Margin="0,2,0,2"
                 Content="Sync selected/hovered nodes with document"
-                IsChecked="{Binding Path=SyncSelectedNodes, Mode=TwoWay}" />
+                IsChecked="{Binding Path=SyncSelectedNodes, Mode=TwoWay}"
+                Margin="0,2,0,2" />
             <CheckBox
-                Margin="0,2,0,2"
                 Content="Sync marked nodes with document"
-                IsChecked="{Binding Path=SyncMarkedNodes, Mode=TwoWay}" />
+                IsChecked="{Binding Path=SyncMarkedNodes, Mode=TwoWay}"
+                Margin="0,2,0,2" />
             <CheckBox
-                Margin="0,2,0,2"
                 Content="Bring selected node into view"
-                IsChecked="{Binding Path=BringNodesIntoView, Mode=TwoWay}" />
+                IsChecked="{Binding Path=BringNodesIntoView, Mode=TwoWay}"
+                Margin="0,2,0,2" />
 
             <CheckBox
-                Margin="0,2,0,2"
                 Content="Show immediate dominator edges"
-                IsChecked="{Binding Path=ShowImmDominatorEdges, Mode=TwoWay}" />
+                IsChecked="{Binding Path=ShowImmDominatorEdges, Mode=TwoWay}"
+                Margin="0,2,0,2" />
 
             <CheckBox
-                x:Name="ShowPreviewCheckbox"
-                Margin="0,2,0,2"
                 Content="Show node preview popup on hover"
-                IsChecked="{Binding Path=ShowPreviewPopup, Mode=TwoWay}" />
+                IsChecked="{Binding Path=ShowPreviewPopup, Mode=TwoWay}"
+                Margin="0,2,0,2"
+                x:Name="ShowPreviewCheckbox" />
             <CheckBox
-                Margin="20,3,0,2"
                 Content="Only when the Shift key is pressed"
                 IsChecked="{Binding Path=ShowPreviewPopupWithModifier, Mode=TwoWay}"
-                IsEnabled="{Binding ElementName=ShowPreviewCheckbox, Path=IsChecked}" />
+                IsEnabled="{Binding ElementName=ShowPreviewCheckbox, Path=IsChecked}"
+                Margin="20,3,0,2" />
             <Separator Margin="0,4,0,4" />
 
-            <TextBlock FontWeight="DemiBold" Text="Graph Node Style" />
+            <TextBlock FontWeight="Medium" Text="Graph Node Style" />
             <CheckBox
-                Margin="0,4,0,2"
                 Content="Use semantic colorization for nodes"
-                IsChecked="{Binding Path=ColorizeNodes, Mode=TwoWay}" />
+                IsChecked="{Binding Path=ColorizeNodes, Mode=TwoWay}"
+                Margin="0,4,0,2" />
             <CheckBox
-                Margin="0,2,0,2"
                 Content="Use semantic colorization for edges"
-                IsChecked="{Binding Path=ColorizeEdges, Mode=TwoWay}" />
+                IsChecked="{Binding Path=ColorizeEdges, Mode=TwoWay}"
+                Margin="0,2,0,2" />
             <CheckBox
-                Margin="0,2,0,2"
                 Content="Highlight connected nodes on hover"
-                IsChecked="{Binding Path=HighlightConnectedNodesOnHover, Mode=TwoWay}" />
+                IsChecked="{Binding Path=HighlightConnectedNodesOnHover, Mode=TwoWay}"
+                Margin="0,2,0,2" />
             <CheckBox
-                Margin="0,2,0,2"
                 Content="Highlight connected nodes on selection"
-                IsChecked="{Binding Path=HighlightConnectedNodesOnSelection, Mode=TwoWay}" />
+                IsChecked="{Binding Path=HighlightConnectedNodesOnSelection, Mode=TwoWay}"
+                Margin="0,2,0,2" />
             <Separator Margin="0,4,0,4" />
 
-            <TextBlock FontWeight="DemiBold" Text="Graph Colors" />
+            <TextBlock FontWeight="Medium" Text="Graph Colors" />
             <StackPanel Margin="0,4,0,0" Orientation="Vertical">
 
                 <Grid>
@@ -71,20 +71,20 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Text color" />
+                        Text="Text color"
+                        VerticalAlignment="Center" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -93,20 +93,20 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         SelectedColor="{Binding Path=BackgroundColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Background color" />
+                        Text="Background color"
+                        VerticalAlignment="Center" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -115,20 +115,20 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         SelectedColor="{Binding Path=NodeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Node color" />
+                        Text="Node color"
+                        VerticalAlignment="Center" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -137,20 +137,20 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         SelectedColor="{Binding Path=EdgeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Edge color" />
+                        Text="Edge color"
+                        VerticalAlignment="Center" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -159,20 +159,20 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         SelectedColor="{Binding Path=NodeBorderColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Node border color" />
+                        Text="Node border color"
+                        VerticalAlignment="Center" />
                 </Grid>
                 <Grid Margin="0,2,0,0">
                     <Grid.ColumnDefinitions>
@@ -180,20 +180,20 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         SelectedColor="{Binding Path=EmptyNodeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Empty node color" />
+                        Text="Empty node color"
+                        VerticalAlignment="Center" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -202,20 +202,20 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         SelectedColor="{Binding Path=BranchNodeBorderColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Branch node border color" />
+                        Text="Branch node border color"
+                        VerticalAlignment="Center" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -224,20 +224,20 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         SelectedColor="{Binding Path=SwitchNodeBorderColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Switch node border color" />
+                        Text="Switch node border color"
+                        VerticalAlignment="Center" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -246,20 +246,20 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         SelectedColor="{Binding Path=ReturnNodeBorderColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Return node border color" />
+                        Text="Return node border color"
+                        VerticalAlignment="Center" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -268,20 +268,20 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         SelectedColor="{Binding Path=LoopNodeBorderColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Loop header node border color" />
+                        Text="Loop header node border color"
+                        VerticalAlignment="Center" />
                 </Grid>
 
 
@@ -291,29 +291,29 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         SelectedColor="{Binding Path=DominatorEdgeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Immediate dominator edge color" />
+                        Text="Immediate dominator edge color"
+                        VerticalAlignment="Center" />
                 </Grid>
 
                 <Separator Margin="0,4,0,4" />
-                <TextBlock FontWeight="DemiBold" Text="Loop Graph Colors" />
+                <TextBlock FontWeight="Medium" Text="Loop Graph Colors" />
                 <CheckBox
-                    x:Name="LoopCheckbox"
-                    Margin="0,4,0,2"
                     Content="Colorize loop nodes"
-                    IsChecked="{Binding Path=MarkLoopBlocks, Mode=TwoWay}" />
+                    IsChecked="{Binding Path=MarkLoopBlocks, Mode=TwoWay}"
+                    Margin="0,4,0,2"
+                    x:Name="LoopCheckbox" />
 
                 <Grid Margin="0,2,0,0">
                     <Grid.ColumnDefinitions>
@@ -321,21 +321,21 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         IsEnabled="{Binding ElementName=LoopCheckbox, Path=IsChecked}"
                         SelectedColor="{Binding Path=LoopNodeColors[0], Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Loop node color - nesting level 1" />
+                        Text="Loop node color - nesting level 1"
+                        VerticalAlignment="Center" />
                 </Grid>
                 <Grid Margin="0,2,0,0">
                     <Grid.ColumnDefinitions>
@@ -343,21 +343,21 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         IsEnabled="{Binding ElementName=LoopCheckbox, Path=IsChecked}"
                         SelectedColor="{Binding Path=LoopNodeColors[1], Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Loop node color - nesting level 2" />
+                        Text="Loop node color - nesting level 2"
+                        VerticalAlignment="Center" />
                 </Grid>
                 <Grid Margin="0,2,0,0">
                     <Grid.ColumnDefinitions>
@@ -365,21 +365,21 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         IsEnabled="{Binding ElementName=LoopCheckbox, Path=IsChecked}"
                         SelectedColor="{Binding Path=LoopNodeColors[2], Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Loop node color - nesting level 3" />
+                        Text="Loop node color - nesting level 3"
+                        VerticalAlignment="Center" />
                 </Grid>
                 <Grid Margin="0,2,0,0">
                     <Grid.ColumnDefinitions>
@@ -387,21 +387,21 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
                         BorderBrush="#707070"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
                         IsEnabled="{Binding ElementName=LoopCheckbox, Path=IsChecked}"
                         SelectedColor="{Binding Path=LoopNodeColors[3], Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                        UsingAlphaChannel="False"
+                        VerticalAlignment="Center"
+                        Width="64" />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Loop node color - nesting level 4+" />
+                        Text="Loop node color - nesting level 4+"
+                        VerticalAlignment="Center" />
                 </Grid>
             </StackPanel>
         </StackPanel>

@@ -46,7 +46,7 @@
                 Grid.Row="0"
                 x:Name="ToolbarPanel">
                 <TextBlock
-                    FontWeight="DemiBold"
+                    FontWeight="Medium"
                     Margin="4,0,50,0"
                     Text="{Binding Node.FunctionName}"
                     TextTrimming="CharacterEllipsis"

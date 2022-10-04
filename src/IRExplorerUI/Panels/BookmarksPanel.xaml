@@ -1,13 +1,13 @@
 ﻿<local:ToolPanelControl
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
     x:Class="IRExplorerUI.BookmarksPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
-    mc:Ignorable="d">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <local:ToolPanelControl.CommandBindings>
         <CommandBinding Command="local:BookmarkCommand.JumpToBookmark" Executed="JumpToBookmarkExecuted" />
         <CommandBinding Command="local:BookmarkCommand.RemoveBookmark" Executed="RemoveBookmarkExecuted" />
@@ -23,25 +23,25 @@
         </Grid.RowDefinitions>
 
         <Grid
+            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
             Grid.Row="0"
-            HorizontalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="25" />
             </Grid.ColumnDefinitions>
             <ToolBarTray
+                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                 Grid.Column="0"
                 Height="28"
                 HorizontalAlignment="Stretch"
-                VerticalAlignment="Top"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                IsLocked="True">
+                IsLocked="True"
+                VerticalAlignment="Top">
                 <ToolBar
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Top"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                    Loaded="ToolBar_Loaded">
+                    HorizontalAlignment="Stretch"
+                    Loaded="ToolBar_Loaded"
+                    VerticalAlignment="Top">
                     <Button
                         Command="local:BookmarkCommand.JumpToBookmark"
                         CommandParameter="{Binding ElementName=BookmarkList, Path=SelectedItem}"
@@ -53,9 +53,9 @@
                     <Separator />
 
                     <Button
-                        Margin="4,0,0,0"
                         Command="local:DocumentCommand.PreviousBookmark"
                         CommandTarget="{Binding ElementName=BookmarkList}"
+                        Margin="4,0,0,0"
                         ToolTip="Jump to previous bookmark (Shift+F2)">
                         <Image Source="{StaticResource UpArrowIcon}" />
                     </Button>
@@ -65,35 +65,35 @@
                     <Separator />
 
                     <Button
-                        Margin="4,0,0,0"
                         Command="local:DocumentCommand.FirstBookmark"
                         CommandTarget="{Binding ElementName=BookmarkList}"
+                        Margin="4,0,0,0"
                         ToolTip="Jump to first bookmark">
                         <Image Source="{StaticResource BoldUpArrowIcon}" />
                     </Button>
 
                     <Button
-                        Margin="4,0,0,0"
                         Command="local:DocumentCommand.LastBookmark"
                         CommandTarget="{Binding ElementName=BookmarkList}"
+                        Margin="4,0,0,0"
                         ToolTip="Jump to last bookmark">
                         <Image Source="{StaticResource BoldDownArrowIcon}" />
                     </Button>
                     <Separator />
 
-                    <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                    <Menu Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" VerticalAlignment="Center">
                         <MenuItem
-                            Margin="0,0,0,0"
-                            Padding="0,2,2,2"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                             Header="Remove"
-                            OverridesDefaultStyle="True">
+                            Margin="0,0,0,0"
+                            OverridesDefaultStyle="True"
+                            Padding="0,2,2,2">
                             <MenuItem.Icon>
                                 <Image
-                                    Width="16"
                                     Height="16"
-                                    Source="{StaticResource RemoveIcon}" />
+                                    Source="{StaticResource RemoveIcon}"
+                                    Width="16" />
                             </MenuItem.Icon>
                             <MenuItem
                                 Command="local:BookmarkCommand.RemoveBookmark"
@@ -116,27 +116,27 @@
         </Grid>
 
         <ListView
-            x:Name="BookmarkList"
-            Grid.Row="1"
-            Margin="0,-1,0,0"
             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             BorderBrush="{x:Null}"
             BorderThickness="0,0,0,0"
+            Grid.Row="1"
+            Margin="0,-1,0,0"
             VirtualizingPanel.IsVirtualizing="True"
-            VirtualizingPanel.VirtualizationMode="Recycling">
+            VirtualizingPanel.VirtualizationMode="Recycling"
+            x:Name="BookmarkList">
             <ListView.View>
                 <GridView>
                     <GridViewColumn
-                        Width="30"
                         DisplayMemberBinding="{Binding Index}"
-                        Header="#">
+                        Header="#"
+                        Width="30">
                         <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
-                    <GridViewColumn Width="30" Header="Pin">
+                    <GridViewColumn Header="Pin" Width="30">
                         <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -154,9 +154,9 @@
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
                     <GridViewColumn
-                        Width="70"
                         DisplayMemberBinding="{Binding Line}"
-                        Header="Line">
+                        Header="Line"
+                        Width="70">
                         <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -164,16 +164,16 @@
                         </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
                     <GridViewColumn
-                        Width="100"
                         DisplayMemberBinding="{Binding Block}"
-                        Header="Block">
+                        Header="Block"
+                        Width="100">
                         <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
-                    <GridViewColumn Width="300" Header="Description">
+                    <GridViewColumn Header="Description" Width="300">
                         <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -185,7 +185,7 @@
                                     AcceptsReturn="False"
                                     Background="Transparent"
                                     BorderThickness="0"
-                                    FontWeight="DemiBold"
+                                    FontWeight="Medium"
                                     GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                     MaxLines="1"
                                     PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
@@ -233,9 +233,9 @@
                         InputGestureText="Enter">
                         <MenuItem.Icon>
                             <Image
-                                Width="16"
                                 Height="16"
-                                Source="{StaticResource BookmarkArrowIcon}" />
+                                Source="{StaticResource BookmarkArrowIcon}"
+                                Width="16" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem
@@ -246,9 +246,9 @@
                         InputGestureText="Ctrl+Shift+B">
                         <MenuItem.Icon>
                             <Image
-                                Width="16"
                                 Height="16"
-                                Source="{StaticResource RemoveIcon}" />
+                                Source="{StaticResource RemoveIcon}"
+                                Width="16" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
@@ -269,10 +269,10 @@
             </ListView.ContextMenu>
             <ListView.InputBindings>
                 <KeyBinding
-                    Key="Return"
                     Command="local:BookmarkCommand.JumpToBookmark"
                     CommandParameter="{Binding ElementName=BookmarkList, Path=SelectedItem}"
-                    CommandTarget="{Binding ElementName=BookmarkList}" />
+                    CommandTarget="{Binding ElementName=BookmarkList}"
+                    Key="Return" />
             </ListView.InputBindings>
         </ListView>
     </Grid>
@@ -280,23 +280,23 @@
 
     <local:ToolPanelControl.InputBindings>
         <KeyBinding
-            Key="Return"
             Command="local:BookmarkCommand.JumpToBookmark"
-            CommandParameter="{Binding ElementName=BookmarkList, Path=SelectedItem}" />
-        <KeyBinding Key="F2" Command="local:DocumentCommand.NextBookmark" />
+            CommandParameter="{Binding ElementName=BookmarkList, Path=SelectedItem}"
+            Key="Return" />
+        <KeyBinding Command="local:DocumentCommand.NextBookmark" Key="F2" />
         <KeyBinding
-            Key="F2"
             Command="local:DocumentCommand.PreviousBookmark"
+            Key="F2"
             Modifiers="Ctrl" />
         <KeyBinding
-            Key="B"
             Command="local:BookmarkCommand.RemoveBookmark"
             CommandParameter="{Binding ElementName=BookmarkList, Path=SelectedItem}"
+            Key="B"
             Modifiers="Ctrl+Shift" />
         <KeyBinding
-            Key="M"
             Command="local:BookmarkCommand.MarkBookmark"
             CommandParameter="{Binding ElementName=BookmarkList, Path=SelectedItem}"
+            Key="M"
             Modifiers="Ctrl" />
     </local:ToolPanelControl.InputBindings>
 </local:ToolPanelControl>

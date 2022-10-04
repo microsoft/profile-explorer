@@ -103,7 +103,7 @@ namespace IRExplorerUI.Compilers.UTC {
             query.Data.AddInput("Show arrows", QueryValueKind.Bool, false);
 
             var a = query.Data.AddButton("All");
-            a.HasDemiBoldText = true;
+            a.HasMediumText = true;
             a.Action = (sender, data) =>
                 ((UTCBuiltinInterferenceQuery)query.Data.Instance).Execute(query.Data, MarkingScope.All);
 
@@ -238,7 +238,7 @@ namespace IRExplorerUI.Compilers.UTC {
             var instrStyle = new HighlightingStyle(Brushes.Transparent, ColorPens.GetPen(Colors.Gray));
 
             foreach (var elem in func.AllElements) {
-                if (elem is OperandIR op && 
+                if (elem is OperandIR op &&
                     op.IsVariable && op.HasName &&
                     op.Name == interfSymbol) {
                     if (ShouldMarkElement(op, markingScope, queryBlock)) {

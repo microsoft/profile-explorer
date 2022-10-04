@@ -1,13 +1,13 @@
 ﻿<local:ToolPanelControl
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
     x:Class="IRExplorerUI.SearchResultsPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
-    mc:Ignorable="d">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <local:ToolPanelControl.CommandBindings>
         <CommandBinding Command="local:SearchResultsCommand.JumpToSelected" Executed="JumpToSelectedExecuted" />
         <CommandBinding Command="local:SearchResultsCommand.JumpToNext" Executed="JumpToNextExecuted" />
@@ -26,34 +26,34 @@
         </Grid.RowDefinitions>
 
         <Grid
+            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
             Grid.Row="0"
-            HorizontalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="75" />
             </Grid.ColumnDefinitions>
             <ToolBarTray
+                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                 Grid.Column="0"
                 Height="28"
                 HorizontalAlignment="Stretch"
-                VerticalAlignment="Top"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                IsLocked="True">
+                IsLocked="True"
+                VerticalAlignment="Top">
                 <ToolBar
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Top"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                    Loaded="ToolBar_Loaded">
+                    HorizontalAlignment="Stretch"
+                    Loaded="ToolBar_Loaded"
+                    VerticalAlignment="Top">
 
                     <TextBlock
                         Margin="5,0,0,0"
-                        VerticalAlignment="Center"
-                        Text="Section" />
+                        Text="Section"
+                        VerticalAlignment="Center" />
                     <Button
-                        Margin="4,0,0,0"
                         Command="local:SearchResultsCommand.JumpToPreviousSection"
                         CommandTarget="{Binding ElementName=ResultList}"
+                        Margin="4,0,0,0"
                         ToolTip="Jump to previous section results (Ctrl+Shift+F3)">
                         <Image Source="{StaticResource BoldUpArrowIcon}" />
                     </Button>
@@ -67,9 +67,9 @@
                     <Separator />
 
                     <Button
-                        Margin="4,0,0,0"
                         Command="local:SearchResultsCommand.JumpToPrevious"
                         CommandTarget="{Binding ElementName=ResultList}"
+                        Margin="4,0,0,0"
                         ToolTip="Jump to previous result (Shift+F3)">
                         <Image Source="{StaticResource UpArrowIcon}" />
                     </Button>
@@ -83,32 +83,32 @@
 
                     <TextBlock
                         Margin="4,0,0,0"
-                        VerticalAlignment="Center"
-                        Text="Results:" />
+                        Text="Results:"
+                        VerticalAlignment="Center" />
 
                     <TextBlock
-                        x:Name="ResultNumberText"
+                        FontWeight="Medium"
                         Margin="8,0,0,0"
+                        Text=""
                         VerticalAlignment="Center"
-                        FontWeight="DemiBold"
-                        Text="" />
+                        x:Name="ResultNumberText" />
 
                     <TextBlock
                         Margin="32,0,0,0"
-                        VerticalAlignment="Center"
                         Text="Searched text:"
+                        VerticalAlignment="Center"
                         Visibility="{Binding HideSearchedText, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
                     <TextBlock
-                        x:Name="SearchedText"
+                        FontWeight="Medium"
                         Margin="4,0,0,0"
-                        VerticalAlignment="Center"
-                        FontWeight="DemiBold"
                         Text=""
-                        Visibility="{Binding HideSearchedText, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+                        VerticalAlignment="Center"
+                        Visibility="{Binding HideSearchedText, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
+                        x:Name="SearchedText" />
                     <TextBlock
                         Margin="32,0,0,0"
-                        VerticalAlignment="Center"
-                        Text="{Binding OptionalText}" />
+                        Text="{Binding OptionalText}"
+                        VerticalAlignment="Center" />
                 </ToolBar>
             </ToolBarTray>
             <local:PanelToolbarTray
@@ -119,24 +119,24 @@
         </Grid>
 
         <ListView
-            x:Name="ResultList"
-            Grid.Row="1"
-            Margin="0,-1,0,0"
             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             BorderBrush="{x:Null}"
             BorderThickness="0,0,0,0"
+            Grid.Row="1"
+            Margin="0,-1,0,0"
             VirtualizingPanel.CacheLengthUnit="Item"
             VirtualizingPanel.IsVirtualizing="True"
             VirtualizingStackPanel.CacheLength="2,3"
             VirtualizingStackPanel.ScrollUnit="Item"
-            VirtualizingStackPanel.VirtualizationMode="Recycling">
+            VirtualizingStackPanel.VirtualizationMode="Recycling"
+            x:Name="ResultList">
             <ListView.View>
                 <GridView>
 
                     <GridViewColumn
-                        Width="300"
                         DisplayMemberBinding="{Binding SectionName}"
-                        Header="Section">
+                        Header="Section"
+                        Width="300">
                         <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -145,9 +145,9 @@
                     </GridViewColumn>
 
                     <GridViewColumn
-                        Width="40"
                         DisplayMemberBinding="{Binding Index}"
-                        Header="#">
+                        Header="#"
+                        Width="40">
                         <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -155,7 +155,7 @@
                         </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
 
-                    <GridViewColumn Width="380" Header="Search result">
+                    <GridViewColumn Header="Search result" Width="380">
                         <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -193,9 +193,9 @@
                         InputGestureText="Shift+Return">
                         <MenuItem.Icon>
                             <Image
-                                Width="16"
                                 Height="16"
-                                Source="{StaticResource OpenExternalIcon}" />
+                                Source="{StaticResource OpenExternalIcon}"
+                                Width="16" />
                         </MenuItem.Icon>
                     </MenuItem>
 
@@ -207,9 +207,9 @@
                         InputGestureText="Ctrl+Left">
                         <MenuItem.Icon>
                             <Image
-                                Width="16"
                                 Height="16"
-                                Source="{StaticResource DockLeftIcon}" />
+                                Source="{StaticResource DockLeftIcon}"
+                                Width="16" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem
@@ -220,9 +220,9 @@
                         InputGestureText="Ctrl+Right">
                         <MenuItem.Icon>
                             <Image
-                                Width="16"
                                 Height="16"
-                                Source="{StaticResource DockRightIcon}" />
+                                Source="{StaticResource DockRightIcon}"
+                                Width="16" />
                         </MenuItem.Icon>
                     </MenuItem>
                 </ContextMenu>
@@ -230,15 +230,15 @@
 
             <ListView.InputBindings>
                 <KeyBinding
-                    Key="Return"
                     Command="local:SearchResultsCommand.JumpToSelected"
                     CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
-                    CommandTarget="{Binding ElementName=ResultList}" />
+                    CommandTarget="{Binding ElementName=ResultList}"
+                    Key="Return" />
                 <KeyBinding
-                    Key="Return"
                     Command="local:SearchResultsCommand.OpenInNewTab"
                     CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
                     CommandTarget="{Binding ElementName=ResultList}"
+                    Key="Return"
                     Modifiers="Shift" />
             </ListView.InputBindings>
         </ListView>
@@ -246,34 +246,34 @@
 
     <local:ToolPanelControl.InputBindings>
         <KeyBinding
-            Key="F3"
             Command="local:SearchResultsCommand.JumpToNext"
-            CommandTarget="{Binding ElementName=ResultList}" />
+            CommandTarget="{Binding ElementName=ResultList}"
+            Key="F3" />
         <KeyBinding
-            Key="F3"
             Command="local:SearchResultsCommand.JumpToPrevious"
             CommandTarget="{Binding ElementName=ResultList}"
+            Key="F3"
             Modifiers="Shift" />
         <KeyBinding
-            Key="F3"
             Command="local:SearchResultsCommand.JumpToNextSection"
             CommandTarget="{Binding ElementName=ResultList}"
+            Key="F3"
             Modifiers="Ctrl" />
         <KeyBinding
-            Key="F3"
             Command="local:SearchResultsCommand.JumpToPreviousSection"
             CommandTarget="{Binding ElementName=ResultList}"
+            Key="F3"
             Modifiers="Ctrl+Shift" />
 
         <KeyBinding
-            Key="Left"
             Command="local:SearchResultsCommand.OpenLeft"
             CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
+            Key="Left"
             Modifiers="Ctrl" />
         <KeyBinding
-            Key="Right"
             Command="local:SearchResultsCommand.OpenRight"
             CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
+            Key="Right"
             Modifiers="Ctrl" />
     </local:ToolPanelControl.InputBindings>
 </local:ToolPanelControl>

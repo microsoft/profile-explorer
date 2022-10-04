@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -102,7 +103,9 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     public void Show(List<ProfileCallTreeNode> nodes) {
         var list = new List<ProfileListViewItem>(nodes.Count);
         nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData)));
-        ItemList.ItemsSource = new ListCollectionView(list);
+        //? TODO: Option
+        var filteredList = list.TakeWhile(value => value.Weight.TotalMilliseconds > 1);
+        ItemList.ItemsSource = new ListCollectionView(filteredList.ToList());
     }
 
     public void Show(List<IFunctionProfileInfoProvider.ModuleProfileInfo> nodes) {

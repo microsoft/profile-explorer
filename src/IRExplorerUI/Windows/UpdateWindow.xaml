@@ -1,20 +1,20 @@
 ﻿<Window
-    x:Class="IRExplorerUI.UpdateWindow"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:IRExplorerUI"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="IR Explorer Update"
-    Width="600"
     Height="500"
     Loaded="Window_Loaded"
     ResizeMode="CanResizeWithGrip"
     ShowInTaskbar="False"
     SnapsToDevicePixels="True"
+    Title="IR Explorer Update"
+    Width="600"
     WindowStartupLocation="CenterOwner"
     WindowStyle="ToolWindow"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    x:Class="IRExplorerUI.UpdateWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:IRExplorerUI"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
         <Grid.RowDefinitions>
             <RowDefinition Height="80" />
@@ -25,64 +25,64 @@
             <StackPanel Margin="0,8,0,0" Orientation="Vertical">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock
-                        Margin="8,4,0,0"
                         FontSize="13"
+                        Margin="8,4,0,0"
                         Text="Available version: " />
                     <TextBlock
-                        x:Name="NewVersionLabel"
-                        Margin="8,4,0,0"
                         FontSize="13"
                         FontWeight="SemiBold"
-                        Text="0.0.0" />
+                        Margin="8,4,0,0"
+                        Text="0.0.0"
+                        x:Name="NewVersionLabel" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal">
                     <TextBlock
-                        Margin="8,2,0,0"
                         FontSize="13"
+                        Margin="8,2,0,0"
                         Text="Current version: " />
                     <TextBlock
-                        x:Name="CurrentVersionLabel"
-                        Margin="16,2,0,0"
                         FontSize="13"
                         FontWeight="SemiBold"
-                        Text="0.0.0" />
+                        Margin="16,2,0,0"
+                        Text="0.0.0"
+                        x:Name="CurrentVersionLabel" />
                 </StackPanel>
 
                 <TextBlock
-                    Margin="8,8,0,8"
                     FontSize="14"
-                    FontWeight="DemiBold"
+                    FontWeight="Medium"
+                    Margin="8,8,0,8"
                     Text="Release notes" />
             </StackPanel>
             <Image
-                Margin="0,4,8,0"
-                HorizontalAlignment="Right"
                 DockPanel.Dock="Right"
+                HorizontalAlignment="Right"
+                Margin="0,4,8,0"
                 Source="/refresh.png" />
 
         </DockPanel>
         <WebBrowser
-            x:Name="Browser"
             Grid.Row="1"
-            Margin="0,8,0,4" />
+            Margin="0,8,0,4"
+            x:Name="Browser" />
         <StackPanel
             Grid.Row="2"
-            Margin="0,4,8,4"
             HorizontalAlignment="Right"
+            Margin="0,4,8,4"
             Orientation="Horizontal">
             <Button
-                x:Name="CancelButton"
+                Click="CancelButton_Click"
+                Content="Cancel"
                 Margin="0,0,4,0"
                 Padding="4,1,4,1"
-                Click="CancelButton_Click"
-                Content="Cancel" />
+                x:Name="CancelButton" />
             <Button
-                x:Name="UpdateButton"
-                Padding="4,1,4,1"
                 Background="#FFAFEABF"
                 Click="UpdateButton_Click"
-                Content="Install Update" />
+                Content="Install Update"
+                Padding="4,1,4,1"
+                x:Name="UpdateButton" />
         </StackPanel>
     </Grid>
 </Window>
