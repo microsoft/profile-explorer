@@ -358,13 +358,19 @@
                     x:Name="FunctionList">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn DisplayMemberBinding="{Binding Name}" Width="200">
+                            <GridViewColumn Width="200">
                                 <GridViewColumnHeader Content="Function" x:Name="FunctionColumnHeader" />
                                 <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                         <Setter Property="HorizontalContentAlignment" Value="Left" />
                                     </Style>
                                 </GridViewColumn.HeaderContainerStyle>
+
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock FontWeight="Medium" Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
                             </GridViewColumn>
                             <GridViewColumn
                                 DisplayMemberBinding="{Binding SectionCount}"
