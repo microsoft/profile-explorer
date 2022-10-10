@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 using DocumentFormat.OpenXml.Drawing.Charts;
@@ -13,6 +14,7 @@ public class GlyphRunCache {
         public GlyphRun Glyphs;
         public double TextWidth;
         public double TextHeight;
+        public bool IsCached;
 
         public GlyphInfo(GlyphRun glyphs, double textWidth, double textHeight) {
             Glyphs = glyphs;
@@ -21,9 +23,21 @@ public class GlyphRunCache {
         }
     }
 
+
+    private class MaxWidthComparer : IEqualityComparer<double> {
+        public bool Equals(double x, double y) {
+            return Math.Abs(x - y) < double.Epsilon;
+        }
+
+        public int GetHashCode(double value) {
+            return (int)value;
+        }
+    }
+
+
     private static readonly Point ZeroPoint = new Point(0, 0);
     private readonly GlyphTypeface glyphTypeface_;
-    private readonly Dictionary<string, List<(double MaxWidth, GlyphInfo Info)>> textGlyphsCache_;
+    private readonly Dictionary<string, Dictionary<double, GlyphInfo>> textGlyphsCache_;
     private readonly Typeface typeFace_;
     private readonly double textSize_;
     private readonly float pixelsPerDip_;
@@ -34,7 +48,7 @@ public class GlyphRunCache {
         typeFace_ = typeFace;
         textSize_ = textSize;
         pixelsPerDip_ = (float)pixelsPerDip;
-        textGlyphsCache_ = new Dictionary<string, List<(double MaxWidth, GlyphInfo Info)>>();
+        textGlyphsCache_ = new Dictionary<string, Dictionary<double, GlyphInfo>>();
 
         if (!typeFace.TryGetGlyphTypeface(out glyphTypeface_)) {
             throw new InvalidOperationException("Failed to get GlyphTypeface");
@@ -60,10 +74,8 @@ public class GlyphRunCache {
 
     public GlyphInfo GetGlyphs(string text, double maxWidth) {
         if (textGlyphsCache_.TryGetValue(text, out var glyphsList)) {
-            var index = glyphsList.FindIndex(info => Math.Abs(info.MaxWidth - maxWidth) < double.Epsilon);
-
-            if (index != -1) {
-                return glyphsList[index].Info;
+            if (glyphsList.TryGetValue(maxWidth, out var info)) {
+                return info;
             }
         }
 
@@ -71,16 +83,16 @@ public class GlyphRunCache {
     }
 
     public void CacheGlyphs(GlyphInfo info, string text, double maxWidth) {
+        if (info.IsCached) {
+            return;
+        }
+
         if (!textGlyphsCache_.TryGetValue(text, out var glyphsList)) {
-            glyphsList = new List<(double MaxWidth, GlyphInfo Info)>();
+            glyphsList = new Dictionary<double, GlyphInfo>(new MaxWidthComparer());
             textGlyphsCache_[text] = glyphsList;
         }
 
-        var index = glyphsList.FindIndex(info => Math.Abs(info.MaxWidth - maxWidth) < double.Epsilon);
-
-        if (index == -1) {
-            glyphsList.Add((maxWidth, info));
-        }
+        glyphsList[maxWidth] = info;
     }
 
     private GlyphInfo MakeGlyphRun(string text) {

@@ -64,7 +64,7 @@
 
 
                         <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-                            <TextBlock Text="Total number" Width="70" />
+                            <TextBlock Text="Number" Width="70" />
                             <TextBlock Margin="4,0,0,0" Text="{Binding FunctionInstancesCount}" />
                         </StackPanel>
 

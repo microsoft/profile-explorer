@@ -45,7 +45,7 @@ public sealed class ETWEventProcessor : IDisposable {
     double samplingIntervalLimitMS_;
 
     public ETWEventProcessor(ETWTraceEventSource source, ProfileDataProviderOptions providerOptions,
-                             bool isRealTime = true, 
+                             bool isRealTime = true,
                              int acceptedProcessId = 0, bool handleChildProcesses = false,
                              bool handleDotNetEvents = false,
                              string managedAsmDir = null) {
@@ -79,7 +79,7 @@ public sealed class ETWEventProcessor : IDisposable {
                                                     CancelableTask cancelableTask) {
         // Default 1ms sampling interval 1ms.
         UpdateSamplingInterval(SampleReportingInterval);
-        
+
         source_.Kernel.PerfInfoCollectionStart += data => {
             if (data.SampleSource == 0) {
                 UpdateSamplingInterval(data.NewInterval);
@@ -121,7 +121,7 @@ public sealed class ETWEventProcessor : IDisposable {
 
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
             int contextId = profile.AddContext(context);
-            
+
             var sample = new ProfileSample((long)data.InstructionPointer,
                 TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec),
                 TimeSpan.FromMilliseconds(samplingIntervalMS_),
@@ -129,7 +129,7 @@ public sealed class ETWEventProcessor : IDisposable {
             int sampleId = profile.AddSample(sample);
             profile.ReturnContext(contextId);
 
-            
+
             if (sampleId - lastReportedSample >= SampleReportingInterval) {
                 List<ProcessSummary> processList = null;
 
@@ -156,7 +156,7 @@ public sealed class ETWEventProcessor : IDisposable {
 
             Trace.Flush();
         };
-        
+
         source_.Process();
         return profile.BuildProcessSummary();
     }
@@ -167,7 +167,7 @@ public sealed class ETWEventProcessor : IDisposable {
         samplingIntervalLimitMS_ = samplingIntervalMS_ * SamplingErrorMargin;
     }
 
-    public RawProfileData ProcessEvents(ProfileLoadProgressHandler progressCallback, 
+    public RawProfileData ProcessEvents(ProfileLoadProgressHandler progressCallback,
                                         CancelableTask cancelableTask) {
         UpdateSamplingInterval(SampleReportingInterval);
         ImageIDTraceData lastImageIdData = null;
@@ -188,16 +188,16 @@ public sealed class ETWEventProcessor : IDisposable {
             // The image timestamp often is part of this event when reading an ETL file.
             // A correct timestamp is needed to locate and download the image.
 
-            //Trace.WriteLine($"ImageID: orig {data.OriginalFileName}, QPC {data.TimeStampQPC}");
-            //Trace.WriteLine($"ImageID: timeStamp {data.TimeDateStamp}");
-            //Trace.WriteLine($"ImageID: has lastProfileImage {lastProfileImage != null}");
-            //Trace.WriteLine($"    matching {lastProfileImage != null && lastProfileImageTime == data.TimeStampQPC}");
+            Trace.WriteLine($"ImageID: orig {data.OriginalFileName}, QPC {data.TimeStampQPC}");
+            Trace.WriteLine($"ImageID: timeStamp {data.TimeDateStamp}");
+            Trace.WriteLine($"ImageID: has lastProfileImage {lastProfileImage != null}");
+            Trace.WriteLine($"    matching {lastProfileImage != null && lastProfileImageTime == data.TimeStampQPC}");
 
-            //if (lastProfileImage != null) {
-            //    Trace.WriteLine($"    last image: {lastProfileImage.FilePath}");
-            //    Trace.WriteLine($"    last orign: {lastProfileImage.OriginalFileName}");
-            //    Trace.WriteLine($"    qpc {lastProfileImageTime} vs current {data.TimeStampQPC}");
-            //}
+            if (lastProfileImage != null) {
+                Trace.WriteLine($"    last image: {lastProfileImage.FilePath}");
+                Trace.WriteLine($"    last orign: {lastProfileImage.OriginalFileName}");
+                Trace.WriteLine($"    qpc {lastProfileImageTime} vs current {data.TimeStampQPC}");
+            }
 
             if (lastProfileImage != null &&
                 lastProfileImageTime == data.TimeStampQPC) {
@@ -205,6 +205,7 @@ public sealed class ETWEventProcessor : IDisposable {
 
                 if (lastProfileImage.TimeStamp == 0) {
                     lastProfileImage.TimeStamp = data.TimeDateStamp;
+                    Trace.WriteLine($"    set new timestamp: {lastProfileImage.TimeStamp}");
                 }
             }
             else {
@@ -236,14 +237,14 @@ public sealed class ETWEventProcessor : IDisposable {
             int timeStamp = data.TimeDateStamp;
             bool sawImageId = false;
 
-            //Trace.WriteLine($"ImageGroup: name {data.FileName}, proc {data.ProcessID}, base {data.ImageBase:X}, size {data.ImageSize:X}, procName {data.ProcessName}, TS {data.TimeStampQPC}");
-            //Trace.WriteLine($"   has last {lastImageIdData != null}");
-            //Trace.WriteLine($"   matching {lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC}");
+            Trace.WriteLine($"ImageGroup: name {data.FileName}, proc {data.ProcessID}, base {data.ImageBase:X}, size {data.ImageSize:X}, procName {data.ProcessName}, TS {data.TimeStampQPC}");
+            Trace.WriteLine($"   has last {lastImageIdData != null}");
+            Trace.WriteLine($"   matching {lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC}");
 
-            //if (lastImageIdData != null) {
-            //    Trace.WriteLine($"    last orign: {lastImageIdData.OriginalFileName}");
-            //    Trace.WriteLine($"    dateStamp {lastImageIdData.TimeDateStamp} vs current {data.TimeDateStamp}");
-            //}
+            if (lastImageIdData != null) {
+                Trace.WriteLine($"    last orign: {lastImageIdData.OriginalFileName}");
+                Trace.WriteLine($"    dateStamp {lastImageIdData.TimeDateStamp} vs current {data.TimeDateStamp}");
+            }
 
             if (lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC) {
                 // The ImageID event showed up earlier in the stream.
@@ -251,6 +252,7 @@ public sealed class ETWEventProcessor : IDisposable {
                 originalName = lastImageIdData.OriginalFileName;
 
                 if (timeStamp == 0) {
+                    Trace.WriteLine($"    use last imageId timestamp: {lastImageIdData.TimeDateStamp}");
                     timeStamp = lastImageIdData.TimeDateStamp;
                 }
             }
@@ -281,12 +283,12 @@ public sealed class ETWEventProcessor : IDisposable {
                 lastProfileImage = null;
             }
         };
-        
+
         source_.Kernel.ThreadStartGroup += data => {
             if (cancelableTask != null && cancelableTask.IsCanceled) {
                 source_.StopProcessing();
             }
-            
+
             var thread = new ProfileThread(data.ThreadID, data.ProcessID, data.ThreadName);
             profile.AddThreadToProcess(data.ProcessID, thread);
         };
@@ -311,7 +313,7 @@ public sealed class ETWEventProcessor : IDisposable {
             if (data.FrameCount > 0 &&
                 IsKernelAddress(data.InstructionPointer(0), data.PointerSize)) {
                 isKernelStack = true;
-                
+
                 //Trace.WriteLine($"Kernel stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
                 //if (data.FrameCount > 1 && !IsKernelAddress(data.InstructionPointer(data.FrameCount - 1), 8)) {
                 //  //  Trace.WriteLine("     ends in user");
@@ -551,7 +553,7 @@ public sealed class ETWEventProcessor : IDisposable {
         catch (Exception ex) {
             Trace.TraceError($"Failed to process ETW events: {ex.Message}");
         }
-        
+
         Trace.WriteLine($"Done processing ETW events");
         Trace.WriteLine($"  samples: {profile.Samples.Count}");
         Trace.WriteLine($"  events: {profile.PerformanceCountersEvents.Count}");
@@ -582,7 +584,7 @@ public sealed class ETWEventProcessor : IDisposable {
 #endif
         return profile;
     }
-    
+
     private void ProcessDotNetEvents(RawProfileData profile) {
         //var rundownParser = new ClrRundownTraceEventParser(source_);
 
@@ -601,7 +603,7 @@ public sealed class ETWEventProcessor : IDisposable {
         //rundownParser.MethodILToNativeMapDCStart += data => {
         //    ProcessDotNetILToNativeMap(data, profile);
         //};
-        
+
         //rundownParser.MethodILToNativeMapDCStop += data => {
         //    ProcessDotNetILToNativeMap(data, profile);
         //};
@@ -610,17 +612,17 @@ public sealed class ETWEventProcessor : IDisposable {
         //    ProcessDotNetMethodLoad(data, profile);
         //};
 
-        //rundownParser.MethodDCStopVerbose += data => {        
+        //rundownParser.MethodDCStopVerbose += data => {
         //    ProcessDotNetMethodLoad(data, profile);
         //};
     }
-    
+
     private void ProcessLoaderModuleLoad(ModuleLoadUnloadTraceData data, RawProfileData profile) {
         Trace.WriteLine($"=> Managed module {data.ModuleID}, {data.ModuleILFileName} in proc {data.ProcessID}");
         var runtimeArch = Machine.Amd64;
         var moduleName = data.ModuleILFileName;
         var moduleDebugInfo = profile.GetOrAddModuleDebugInfo(data.ProcessID, moduleName, data.ModuleID, runtimeArch);
-        
+
         if (moduleDebugInfo != null) {
             moduleDebugInfo.ManagedSymbolFile = FromModuleLoad(data);
             Trace.WriteLine($"Set managed symbol {moduleDebugInfo.ManagedSymbolFile}");
@@ -640,9 +642,9 @@ public sealed class ETWEventProcessor : IDisposable {
         if (methodMapping == null) {
             return;
         }
-        
+
         var ilOffsets = new List<(int ILOffset, int NativeOffset)>(data.CountOfMapEntries);
-        
+
         for (int i = 0; i < data.CountOfMapEntries; i++) {
             ilOffsets.Add((data.ILOffset(i), data.NativeOffset(i)));
         }
@@ -658,12 +660,12 @@ public sealed class ETWEventProcessor : IDisposable {
         if (!IsAcceptedProcess(data.ProcessID)) {
             return; // Ignore events from other processes.
         }
-        
+
 #if DEBUG
         Trace.WriteLine($"=> Load at {data.MethodStartAddress}: {data.MethodNamespace}.{data.MethodName}, {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
         Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
 #endif
-        
+
         var funcRva = data.MethodStartAddress;
         //var funcName = data.MethodSignature;
         var funcName = $"{data.MethodNamespace}.{data.MethodName}";
@@ -684,11 +686,11 @@ public sealed class ETWEventProcessor : IDisposable {
             _ => null
         };
     }
-    
+
     private SymbolFileDescriptor FromModuleLoad(ModuleLoadUnloadTraceData data) {
         return new SymbolFileDescriptor(data.ManagedPdbBuildPath, data.ManagedPdbSignature, data.ManagedPdbAge);
     }
-    
+
     private bool IsAcceptedProcess(int processID) {
         if (acceptedProcessId_ == 0) {
             return true; // No filtering.
