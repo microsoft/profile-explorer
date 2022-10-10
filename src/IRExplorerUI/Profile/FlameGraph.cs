@@ -37,7 +37,8 @@ namespace IRExplorerUI.Profile {
 
         public TimeSpan Weight { get; set; }
         public TimeSpan ChildrenWeight { get; set; }
-        public int Depth { get; }
+        public int Depth { get; set; }
+        public int MaxDepthUnder { get; set; }
 
         public HighlightingStyle Style { get; set; }
         public Brush TextColor { get; set; }
@@ -53,17 +54,18 @@ namespace IRExplorerUI.Profile {
 
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
-        public TimeSpan Duration { get; set; }
+        public TimeSpan Duration => EndTime - StartTime;
     }
 
 
     public class FlameGraphGroupNode : FlameGraphNode {
         public override bool IsGroup => true;
-        public List<ProfileCallTreeNode> ReplacedNodes { get; }
+        public List<FlameGraphNode> ReplacedNodes { get; }
         public int ReplacedStartIndex { get; }
+        public int ReplacedEndIndex => ReplacedStartIndex + ReplacedNodes.Count;
 
         public FlameGraphGroupNode(FlameGraphNode parentNode, int startIndex,
-                                   List<ProfileCallTreeNode> replacedNodes, TimeSpan weight, int depth) :
+                                   List<FlameGraphNode> replacedNodes, TimeSpan weight, int depth) :
             base(null, weight, depth) {
             Parent = parentNode;
             ReplacedStartIndex = startIndex;
@@ -127,9 +129,33 @@ namespace IRExplorerUI.Profile {
                 flameNode.Weight = flameNode.EndTime - flameNode.StartTime + sample.Weight;
             }
 
-            flameNode.Duration = flameNode.EndTime - flameNode.StartTime;
+            //flameNode.Duration = flameNode.EndTime - flameNode.StartTime;
             RootNode = flameNode;
             RootWeight = flameNode.Weight;
+            //Dump(RootNode);
+        }
+
+        public void Dump(FlameGraphNode node, int level = 0) {
+            Trace.Write(new  string(' ', level * 2 ));
+            Trace.WriteLine($"{node.CallTreeNode?.FunctionName}  | {node.Depth} | {node.Weight.TotalMilliseconds}");
+
+            if (node.Weight.Ticks == 0) {
+                Trace.WriteLine("=> no weight");
+            }
+
+            if (node.HasChildren) {
+                foreach (var child in node.Children) {
+                    Dump(child, level + 1);
+                }
+            }
+
+            if (level < 1) {
+                Trace.WriteLine("==============================================");
+            }
+
+            else if (level < 2) {
+                Trace.WriteLine("----------------------");
+            }
         }
 
         private void AddSample(FlameGraphNode rootNode, ProfileSample sample, ETWProfileDataProvider.ResolvedProfileStack stack) {
@@ -158,19 +184,28 @@ namespace IRExplorerUI.Profile {
                         }
 
                         //if (child.EndTime <= sample.Time) {
+
+                        //if(sample.Time - child.EndTime < TimeSpan.FromMilliseconds(100)) {
                         targetNode = child;
+                        //}
                         break;
+
                         //}
                     }
                 }
 
                 if (targetNode == null) {
-                    targetNode = new FlameGraphNode(new ProfileCallTreeNode(resolvedFrame.DebugInfo, resolvedFrame.Function), TimeSpan.Zero, depth);
+                    targetNode = new FlameGraphNode(new ProfileCallTreeNode(resolvedFrame.DebugInfo, resolvedFrame.Function),
+                        TimeSpan.Zero, depth);
                     node.Children ??= new List<FlameGraphNode>();
                     node.Children.Add(targetNode);
                     targetNode.StartTime = sample.Time;
                     targetNode.EndTime = sample.Time + sample.Weight;
-                    targetNode.Parent = targetNode;
+                    targetNode.Parent = node;
+
+                    if (node.CallTreeNode != null) {
+                        targetNode.CallTreeNode.AddParentNoLock(node.CallTreeNode);
+                    }
                 }
                 else {
                     targetNode.StartTime = TimeSpan.FromTicks(Math.Min(targetNode.StartTime.Ticks, sample.Time.Ticks));
@@ -181,9 +216,12 @@ namespace IRExplorerUI.Profile {
                 if (k > 0) {
                     node.ChildrenWeight += sample.Weight;
                 }
+                else {
+                    node.Weight += sample.Weight;
+                }
 
-                //targetNode.Weight += sample.Weight;
-                targetNode.Weight = targetNode.EndTime - targetNode.StartTime + sample.Weight;
+                targetNode.Weight += sample.Weight;
+                //targetNode.Weight = targetNode.EndTime - targetNode.StartTime + sample.Weight;
 
                 node = targetNode;
                 depth++;
@@ -239,11 +277,11 @@ namespace IRExplorerUI.Profile {
         }
 
         public double ScaleStartTime(TimeSpan time) {
-            return (double)(time.Ticks - RootNode.StartTime.Ticks) / rootDurationReciprocal_;
+            return (double)(time.Ticks - RootNode.StartTime.Ticks) * rootDurationReciprocal_;
         }
 
         public double ScaleDuration(TimeSpan startTime, TimeSpan endTime) {
-            return (double)(endTime.Ticks - startTime.Ticks) / rootDurationReciprocal_;
+            return (double)(endTime.Ticks - startTime.Ticks) * rootDurationReciprocal_;
         }
 
         public double InverseScaleWeight(TimeSpan weight) {

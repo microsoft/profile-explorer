@@ -117,7 +117,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                                               GraphHost.VerticalOffset,
                                               GraphAreaWidth, GraphAreaHeight);
     private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
-    private double GraphZoomRatioLog => Math.Log2(GraphZoomRatio + 1);
+    private double GraphZoomRatioLog => Math.Pow(Math.Log2(GraphZoomRatio + 1), 2);
     private double CenterZoomPointX => GraphHost.HorizontalOffset + GraphAreaWidth / 2;
 
     public override void OnShowPanel() {
@@ -662,7 +662,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                 return popup;
             }
 
-            return new CallTreeNodePopup(callNode, this, previewPoint, 350, 65, GraphViewer, Session);
+            return new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, GraphViewer, Session);
         }
 
         return null;
