@@ -116,11 +116,6 @@ public class FlameGraphRenderer {
         return flameGraph_.ScaleWeight(weight);
     }
 
-    private int total = 0;
-    private int tiny = 0;
-    private int small = 0;
-    private int smal5 = 0;
-
     private void RedrawGraph(bool updateLayout = true) {
         if(!RedrawGraphImpl(updateLayout)) {
             nodeLayoutComputed_ = false;
@@ -142,18 +137,9 @@ public class FlameGraphRenderer {
                 dummyNodesQuadTree_.Bounds = quadGraphArea_;
                 maxNodeDepth_ = 0;
 
-                total = 0;
-                tiny = 0;
-                smal5 = 0;
-                small = 0;
                 UpdateNodeLayout(flameGraph_.RootNode, 0, 0, true);
                 nodeLayoutComputed_ = true;
                 nodeLayoutRecomputed = true;
-
-                Trace.WriteLine($"Tiny {tiny} out of {total}");
-                Trace.WriteLine($"small {small} out of {total}");
-                Trace.WriteLine($"small 0.5 {smal5} out of {total}");
-
             }
         }
 
@@ -183,7 +169,7 @@ public class FlameGraphRenderer {
 
 #endif
         DrawDummyNodes(graphDC, nodeLayoutRecomputed);
-        DrawTimeBar(graphDC);
+        //DrawTimeBar(graphDC);
         return true;
     }
 
@@ -206,8 +192,6 @@ public class FlameGraphRenderer {
             return;
         }
 
-        Trace.WriteLine($"=> Enlarging {enlargeList.Count}");
-
         // Replace/split the enlarged dummy nodes.
 #if true
         bool update = false;
@@ -221,7 +205,7 @@ public class FlameGraphRenderer {
 
             if (flameGraph_.ScaleDuration(node.StartTime, node.EndTime) > minVisibleRectWidth_) {
                 // The dummy node may be recreated back, don't update in that case.
-                if (UpdateChildrenNodeLayout(node.Parent, node.Parent.Bounds.Left,
+                if (UpdateChildrenNodeLayoutTimeline(node.Parent, node.Parent.Bounds.Left,
                         node.Parent.Bounds.Top,
                         node.ReplacedStartIndex,
                         node.ReplacedEndIndex)) {
@@ -265,10 +249,121 @@ public class FlameGraphRenderer {
         dc.Pop();
     }
 
-    private void UpdateNodeLayout(FlameGraphNode node, double x, double y, bool redraw) {
+      private void UpdateNodeLayout(FlameGraphNode node, double x, double y, bool redraw) {
         double width;
 
-        if (true /* timeline */) {
+        if (false /* timeline */) {
+            x = flameGraph_.ScaleStartTime(node.StartTime);
+            width = flameGraph_.ScaleDuration(node.StartTime, node.EndTime);
+        }
+        else {
+            width = flameGraph_.ScaleWeight(node.Weight);
+        }
+
+        //Trace.WriteLine($"Node at {x}, width {width}");
+
+        var prevBounds = node.Bounds;
+        node.Bounds = new Rect(x, y, width, nodeHeight_);
+
+        //node.Bounds = Utils.SnapToPixels(node.Bounds);
+        node.IsDummyNode = !redraw;
+
+        if (redraw) {
+            maxNodeDepth_ = Math.Max(node.Depth, maxNodeDepth_);
+
+            if (node.Bounds.Width >= minVisibleRectWidth_) {
+                nodesQuadTree_.Insert(node, node.Bounds);
+            }
+        }
+
+        if (node.Children == null) {
+            return;
+        }
+
+        // Children are sorted by weight or time.
+        UpdateChildrenNodeLayout(node, x, y);
+    }
+
+    private void UpdateChildrenNodeLayout(FlameGraphNode node, double x, double y, int startIndex = 0) {
+        int skippedChildren = 0;
+
+        for (int i = 0; i < startIndex; i++) {
+            var childNode = node.Children[i];
+            var childWidth = flameGraph_.ScaleWeight(childNode.Weight);
+            x += childWidth;
+        }
+
+        for (int i = startIndex; i < node.Children.Count; i++) {
+            //? If multiple children below width, single patterned rect
+            var childNode = node.Children[i];
+            var childWidth = flameGraph_.ScaleWeight(childNode.Weight);
+
+            if (skippedChildren == 0) {
+                if (childWidth < minVisibleRectWidth_) {
+                    childNode.IsDummyNode = true;
+                    CreateSmallWeightDummyNode(node, x, y, i, out skippedChildren);
+                }
+            }
+            else {
+                childNode.IsDummyNode = true;
+            }
+
+            UpdateNodeLayout(childNode, x, y + nodeHeight_, skippedChildren == 0);
+            x += childWidth;
+
+            if (skippedChildren > 0) {
+                childNode.IsDummyNode = true;
+                skippedChildren--;
+            }
+        }
+    }
+
+    private void CreateSmallWeightDummyNode(FlameGraphNode node, double x, double y,
+        int startIndex, out int skippedChildren) {
+        TimeSpan totalWeight = TimeSpan.Zero;
+        double totalWidth = 0;
+
+        // Collect all the child nodes that have a small weight
+        // and replace them by one dummy node.
+        var replacedNodes = new List<FlameGraphNode>(node.Children.Count - startIndex);
+        int k;
+
+        for (k = startIndex; k < node.Children.Count; k++) {
+            var childNode = node.Children[k];
+            double childWidth = flameGraph_.ScaleWeight(childNode.Weight);
+
+            // In case child sorting is not by weight, stop extending the range
+            // when a larger one is found again.
+            if (childWidth > minVisibleRectWidth_) {
+                break;
+            }
+
+            replacedNodes.Add(childNode);
+            totalWidth += childWidth;
+            totalWeight += childNode.Weight;
+        }
+
+        skippedChildren = k - startIndex; // Caller should ignore these children.
+
+        if (totalWidth < minVisibleRectWidth_) {
+            return; // Nothing to draw.
+        }
+
+        var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
+        var dummyNode = new FlameGraphGroupNode(node, startIndex, replacedNodes, totalWeight, node.Depth);
+        dummyNode.IsDummyNode = true;
+        dummyNode.Bounds = replacement;
+        dummyNode.Style = PickDummyNodeStyle(node.Style);
+        dummyNodesQuadTree_.Insert(dummyNode, replacement);
+
+        //? Could make color darker than level, or less satureded  better
+        //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
+    }
+
+    private void UpdateNodeLayoutTimeline(FlameGraphNode node, double x, double y, bool redraw) {
+        double width;
+
+        if (false /* timeline */) {
             x = flameGraph_.ScaleStartTime(node.StartTime);
             width = flameGraph_.ScaleDuration(node.StartTime, node.EndTime);
         }
@@ -288,7 +383,7 @@ public class FlameGraphRenderer {
 
         //if (redraw) {
             maxNodeDepth_ = Math.Max(node.Depth, maxNodeDepth_);
-            total++;
+
             //if (node.Bounds.Width >= minVisibleRectWidth_) {
                // nodesQuadTree_.Insert(node, node.Bounds);
             //}
@@ -299,16 +394,6 @@ public class FlameGraphRenderer {
             else {
                 node.IsDummyNode = true; //? Ignore node from enlarging checks.
             }
-
-            // if (node.Bounds.Width * maxWidth_ < 0.01) {
-            //     tiny++;
-            // }
-            // else if (node.Bounds.Width * maxWidth_ < 0.1) {
-            //     small++;
-            // }
-            // else if (node.Bounds.Width * maxWidth_ < 0.5) {
-            //     smal5++;
-            // }
         //}
 
         if (node.Children == null) {
@@ -316,14 +401,14 @@ public class FlameGraphRenderer {
         }
 
         // Children are sorted by weight or time.
-        UpdateChildrenNodeLayout(node, x, y);
+        UpdateChildrenNodeLayoutTimeline(node, x, y);
 
         // if (node.Depth < 1) {
         //     Trace.WriteLine("==============================================");
         // }
     }
 
-    private bool UpdateChildrenNodeLayout(FlameGraphNode node, double x, double y,
+    private bool UpdateChildrenNodeLayoutTimeline(FlameGraphNode node, double x, double y,
                                           int startIndex = 0, int stopIndex = int.MaxValue) {
         int skippedChildren = 0;
         int totalSkippedChildren = 0;
@@ -345,7 +430,7 @@ public class FlameGraphRenderer {
             if (skippedChildren == 0) {
                  if (childWidth < minVisibleRectWidth_) {
                      childNode.IsDummyNode = true;
-                     dummyNode = CreateSmallWeightDummyNode(node, x, y, i, stopIndex, out skippedChildren);
+                     dummyNode = CreateSmallWeightDummyNodeTimeline(node, x, y, i, stopIndex, out skippedChildren);
                      totalSkippedChildren += skippedChildren;
 
                     //? TODO: When called from enlarged dummy node,
@@ -356,7 +441,7 @@ public class FlameGraphRenderer {
                 childNode.IsDummyNode = true;
             }
 
-            UpdateNodeLayout(childNode, x, y + nodeHeight_, skippedChildren == 0);
+            UpdateNodeLayoutTimeline(childNode, x, y + nodeHeight_, skippedChildren == 0);
             childNode.MaxDepthUnder = maxNodeDepth_ - childNode.Depth;
 
             if (dummyNode != null) {
@@ -375,7 +460,7 @@ public class FlameGraphRenderer {
         return totalSkippedChildren < (stopIndex - startIndex);
     }
 
-    private FlameGraphNode CreateSmallWeightDummyNode(FlameGraphNode node, double x, double y,
+    private FlameGraphNode CreateSmallWeightDummyNodeTimeline(FlameGraphNode node, double x, double y,
         int startIndex, int stopIndex, out int skippedChildren) {
         TimeSpan totalWeight = TimeSpan.Zero;
         double totalWidth = 0;
@@ -556,7 +641,7 @@ public class FlameGraphRenderer {
             return;
         }
 
-        //dc.PushGuidelineSet(CreateGuidelineSet(bounds));
+        dc.PushGuidelineSet(CreateGuidelineSet(bounds, 0.5f));
         dc.DrawRectangle(flameGraphNode.Style.BackColor, flameGraphNode.Style.Border, bounds);
 
         // ...
@@ -566,6 +651,7 @@ public class FlameGraphRenderer {
 
         // Start the text in the visible area.
         bool startsInView = bounds.Left >= visibleArea_.Left;
+        double offsetY = 1;
         double offsetX = startsInView ? bounds.Left : visibleArea_.Left;
         double maxWidth = bounds.Width - 2 * FlameGraphNode.DefaultMargin;
 
@@ -591,7 +677,7 @@ public class FlameGraphRenderer {
                                 TrimTextToWidth(moduleLabel, maxWidth - margin, false);
 
                             if (modText.Length > 0) {
-                                DrawText(modGlyphs, bounds, flameGraphNode.ModuleTextColor, offsetX, margin, modTextSize, dc);
+                                DrawText(modGlyphs, bounds, flameGraphNode.ModuleTextColor, offsetX + margin, offsetY, modTextSize, dc);
                             }
 
                             maxWidth -= modTextSize.Width + 1;
@@ -636,7 +722,7 @@ public class FlameGraphRenderer {
                 TrimTextToWidth(label, maxWidth - margin, useNameFont);
 
             if (text.Length > 0) {
-                DrawText(glyphs, bounds, textColor, offsetX, margin, textSize, dc);
+                DrawText(glyphs, bounds, textColor, offsetX + margin, offsetY, textSize, dc);
             }
 
             trimmed = textTrimmed;
@@ -645,23 +731,30 @@ public class FlameGraphRenderer {
             index++;
         }
 
-        //dc.Pop(); // PushGuidelineSet
+        dc.Pop(); // PushGuidelineSet
     }
 
-    public void DrawText(GlyphRun glyphs, Rect bounds, Brush textColor, double offsetX, double margin,
-            Size textSize, DrawingContext dc) {
-            double x = offsetX + margin;
-            double y = bounds.Top + bounds.Height / 2 + textSize.Height / 4;
+    private static GuidelineSet cachedTextGuidelines_;
 
-            var rect = glyphs.ComputeAlignmentBox();
-            dc.PushGuidelineSet(CreateGuidelineSet(rect));
+
+    private void DrawText(GlyphRun glyphs, Rect bounds, Brush textColor, double offsetX, double offsetY,
+            Size textSize, DrawingContext dc) {
+            double x = offsetX;
+            double y = bounds.Top + bounds.Height / 2 + textSize.Height / 4 + offsetY;
+
+            if (cachedTextGuidelines_ == null) {
+                var rect = glyphs.ComputeAlignmentBox();
+                cachedTextGuidelines_ = CreateGuidelineSet(rect, 1.0f);
+            }
+
+            dc.PushGuidelineSet(cachedTextGuidelines_);
             dc.PushTransform(new TranslateTransform(x, y));
             dc.DrawGlyphRun(textColor, glyphs);
             dc.Pop();
             dc.Pop(); // PushGuidelineSet
         }
 
-        public (string Text, GlyphRun glyphs, bool Trimmed, Size TextSize)
+    private (string Text, GlyphRun glyphs, bool Trimmed, Size TextSize)
             TrimTextToWidth(string text, double maxWidth, bool useNameFont) {
             var originalText = text;
             var glyphsCache = useNameFont ? NameGlyphsCache : GlyphsCache;
@@ -696,10 +789,6 @@ public class FlameGraphRenderer {
                     }
                 }
 
-                // var letterWidth = Math.Ceiling(glyphInfo.TextWidth / text.Length);
-                // var extraWidth = glyphInfo.TextWidth - maxWidth + 1;
-                // var extraLetters = Math.Max(1, (int)Math.Ceiling(extraWidth / letterWidth));
-                // extraLetters += 1; // . suffix
                 trimmed = true;
 
                 if (trimmedLength > 0) {
@@ -720,13 +809,12 @@ public class FlameGraphRenderer {
                 new Size(glyphInfo.TextWidth, glyphInfo.TextHeight));
         }
 
-        private static GuidelineSet CreateGuidelineSet(Rect rect) {
-            const double halfPenWidth = 0.5f;
+        private GuidelineSet CreateGuidelineSet(Rect rect, double penWidth) {
             GuidelineSet guidelines = new GuidelineSet();
-            guidelines.GuidelinesX.Add(rect.Left + halfPenWidth);
-            guidelines.GuidelinesX.Add(rect.Right + halfPenWidth);
-            guidelines.GuidelinesY.Add(rect.Top + halfPenWidth);
-            guidelines.GuidelinesY.Add(rect.Bottom + halfPenWidth);
+            guidelines.GuidelinesX.Add(rect.Left + penWidth);
+            guidelines.GuidelinesX.Add(rect.Right + penWidth);
+            guidelines.GuidelinesY.Add(rect.Top + penWidth);
+            guidelines.GuidelinesY.Add(rect.Bottom + penWidth);
             return guidelines;
         }
 

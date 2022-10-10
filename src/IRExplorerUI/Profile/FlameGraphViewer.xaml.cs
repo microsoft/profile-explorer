@@ -125,7 +125,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         group.Clear();
         renderer_.Redraw();
     }
-    
+
     public void ResetNodeHighlighting() {
         ResetHighlightedNodes(HighlighingType.Hovered, true);
         ResetHighlightedNodes(HighlighingType.Selected, true);
@@ -203,7 +203,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         await Task.Run(() => flameGraph_.Build(rootNode));
 #else
        //var x = (App.Current.MainWindow as ISession).ProfileData;
-       //flameGraph_.BuildTimeline(x);
+       //flameGraph_.BuildTimeli\ne(x);
 #endif
 
         Trace.WriteLine($"Init FlameGraph with visible area {visibleArea}");

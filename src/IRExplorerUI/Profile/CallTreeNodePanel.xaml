@@ -64,21 +64,20 @@
 
 
                         <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-                            <TextBlock Text="Number" Width="70" />
+                            <TextBlock Text="Count" Width="70" />
                             <TextBlock Margin="4,0,0,0" Text="{Binding FunctionInstancesCount}" />
                         </StackPanel>
 
 
                         <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-                            <TextBlock Text="All instances" Width="70" />
+                            <TextBlock Text="Total time" Width="70" />
                             <ContentControl
                                 Content="{Binding InstancesNode}"
                                 ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
                                 HorizontalAlignment="Left"
+                                Margin="4,0,0,0"
                                 Width="200" />
                         </StackPanel>
-
-
 
                         <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
                             <TextBlock Text="This instance" Width="70" />
