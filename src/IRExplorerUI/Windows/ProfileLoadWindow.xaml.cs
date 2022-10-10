@@ -600,7 +600,8 @@ namespace IRExplorerUI {
         private async Task StartRecordingSession() {
             var appPath = SetSessionApplicationPath();
 
-            if (!File.Exists(appPath)) {
+            if (options_.RecordingSessionOptions.SessionKind ==   ProfileSessionKind.StartProcess &&
+                !File.Exists(appPath)) {
                 MessageBox.Show($"Could not find profiled application: {appPath}", "IR Explorer",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
