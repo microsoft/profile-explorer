@@ -183,7 +183,7 @@ public sealed class ETWEventProcessor : IDisposable {
         int lastReportedSample = 0;
 
         var symbolParser = new SymbolTraceEventParser(source_);
-
+        
         symbolParser.ImageID += data => {
             // The image timestamp often is part of this event when reading an ETL file.
             // A correct timestamp is needed to locate and download the image.
@@ -723,5 +723,6 @@ public sealed class ETWEventProcessor : IDisposable {
 
     public void Dispose() {
         source_?.Dispose();
+        source_ = null;
     }
 }

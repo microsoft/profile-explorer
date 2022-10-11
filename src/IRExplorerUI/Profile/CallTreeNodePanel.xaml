@@ -57,17 +57,16 @@
                     HorizontalScrollBarVisibility="Disabled"
                     VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="0,4,0,0" MaxWidth="{Binding ActualWidth, ElementName=ContentHost}">
-                        <TextBlock
-                            FontWeight="Medium"
-                            Margin="4,0,0,0"
-                            Text="Instances" />
-
-
                         <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-                            <TextBlock Text="Count" Width="70" />
-                            <TextBlock Margin="4,0,0,0" Text="{Binding FunctionInstancesCount}" />
+                            <TextBlock
+                                FontWeight="Medium"
+                                Text="Instances"
+                                Width="70" />
+                            <TextBlock
+                                FontWeight="Medium"
+                                Margin="4,0,0,0"
+                                Text="{Binding FunctionInstancesCount}" />
                         </StackPanel>
-
 
                         <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
                             <TextBlock Text="Total time" Width="70" />
@@ -80,11 +79,12 @@
                         </StackPanel>
 
                         <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-                            <TextBlock Text="This instance" Width="70" />
+                            <TextBlock Text="Median time" Width="70" />
                             <ContentControl
-                                Content="{Binding ThisInstanceNode}"
+                                Content="{Binding MedianNode}"
                                 ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
                                 HorizontalAlignment="Left"
+                                Margin="4,0,0,0"
                                 Width="200" />
                         </StackPanel>
 
@@ -139,7 +139,7 @@
             <TabItem
                 Header="Functions"
                 HorizontalAlignment="Stretch"
-                ToolTip="Self time per functions under selected function"
+                ToolTip="Self time for functions under this instance"
                 VerticalAlignment="Stretch">
                 <profile:ProfileListView
                     NameColumnTitle="Function"
@@ -150,12 +150,23 @@
             <TabItem
                 Header="Modules"
                 HorizontalAlignment="Stretch"
-                ToolTip="Self time per functions under selected function"
+                ToolTip="Self time for modules under this instance"
                 VerticalAlignment="Stretch">
                 <profile:ProfileListView
                     ExclusiveTimeColumnTitle="Time"
                     NameColumnTitle="Module"
                     x:Name="ModuleList" />
+            </TabItem>
+
+            <TabItem
+                Header="Instances"
+                HorizontalAlignment="Stretch"
+                ToolTip="All unique instances of this function"
+                VerticalAlignment="Stretch">
+                <profile:ProfileListView
+                    NameColumnTitle="Function"
+                    TimeColumnTitle="Time"
+                    x:Name="InstancesList" />
             </TabItem>
         </TabControl>
     </Grid>
