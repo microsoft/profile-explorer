@@ -1311,14 +1311,14 @@ namespace IRExplorerUI {
             SectionPanel.ShowModuleReport();
         }
 
-        public async Task<bool> LoadProfileData(string profileFilePath, ProfileProcess process, 
+        public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, 
                                               ProfileDataProviderOptions options,
                                               SymbolFileSourceOptions symbolOptions,
                                               ProfileDataReport report,
                                               ProfileLoadProgressHandler progressCallback,
                                               CancelableTask cancelableTask) {
             using var profileData = new ETWProfileDataProvider(this);
-            var result = await profileData.LoadTraceAsync(profileFilePath, process, 
+            var result = await profileData.LoadTraceAsync(profileFilePath, processIds, 
                                                       options, symbolOptions,
                                                       report, progressCallback, cancelableTask);
             if (!IsSessionStarted) {
@@ -1333,14 +1333,14 @@ namespace IRExplorerUI {
             return result != null;
         }
 
-        public async Task<bool> LoadProfileData(RawProfileData data, ProfileProcess process,
+        public async Task<bool> LoadProfileData(RawProfileData data, List<int> processIds,
                                               ProfileDataProviderOptions options,
                                               SymbolFileSourceOptions symbolOptions,
                                               ProfileDataReport report,
                                               ProfileLoadProgressHandler progressCallback,
                                               CancelableTask cancelableTask) {
             using var profileData = new ETWProfileDataProvider(this);
-            var result = await profileData.LoadTraceAsync(data, process,
+            var result = await profileData.LoadTraceAsync(data, processIds,
                                                       options, symbolOptions, 
                                                       report, progressCallback, cancelableTask);
             if (!IsSessionStarted) {

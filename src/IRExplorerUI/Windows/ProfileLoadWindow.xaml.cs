@@ -140,7 +140,7 @@ namespace IRExplorerUI {
         private bool showProcessList_;
         private bool isRecordingProfile_;
         private List<ProcessSummary> processList_;
-        private ProcessSummary selectedProcSummary_;
+        private List<ProcessSummary> selectedProcSummary_;
         private List<ProcessSummary> recoredProcSummaries_;
         private bool windowClosed_;
         private RecordingSessionEx currentSession_;
@@ -415,7 +415,9 @@ namespace IRExplorerUI {
             if (selectedProcSummary_ == null) {
                 return false;
             }
-            
+
+            var processIds = selectedProcSummary_.ConvertAll(proc => proc.Process.ProcessId);
+
             if (IsRecordMode) {
                
 
@@ -426,12 +428,12 @@ namespace IRExplorerUI {
                     binSearchOptions = binSearchOptions.WithSymbolPaths(recordingOptions_.WorkingDirectory);
                 }
 
-                success = await Session.LoadProfileData(recordedProfile_, selectedProcSummary_.Process,
+                success = await Session.LoadProfileData(recordedProfile_, processIds,
                                                         options_, binSearchOptions, report,
                                                         ProfileLoadProgressCallback, task);
             }
             else {
-                success = await Session.LoadProfileData(ProfileFilePath, selectedProcSummary_.Process,
+                success = await Session.LoadProfileData(ProfileFilePath, processIds,
                                                         options_, symbolOptions_, report,
                                                         ProfileLoadProgressCallback, task);
             }
@@ -573,9 +575,14 @@ namespace IRExplorerUI {
             Utils.ShowExecutableOpenFileDialog(ApplicationAutocompleteBox);
 
         private void ProcessList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
-            if (ProcessList.SelectedItem != null) {
-                selectedProcSummary_ = (ProcessSummary)ProcessList.SelectedItem;
-                BinaryFilePath = selectedProcSummary_.Process.Name;
+            if (ProcessList.SelectedItems.Count > 0) {
+                selectedProcSummary_ = new List<ProcessSummary>(ProcessList.SelectedItems.OfType<ProcessSummary>());
+                Trace.WriteLine($"Selected {selectedProcSummary_.Count}");
+                BinaryFilePath = selectedProcSummary_[0].Process.Name;
+            }
+            else {
+                selectedProcSummary_ = null;
+                BinaryFilePath = null;
             }
         }
 
@@ -657,7 +664,7 @@ namespace IRExplorerUI {
             RecordProgressLabel.Text = status;
         }
 
-        private void DisplayProcessList(List<ProcessSummary> list, ProcessSummary selectedProcSummary = null) {
+        private void DisplayProcessList(List<ProcessSummary> list, List<ProcessSummary> selectedProcSummary = null) {
             list.Sort((a, b) => b.Weight.CompareTo(a.Weight));
             ProcessList.ItemsSource = null;
             ProcessList.ItemsSource = new ListCollectionView(list);
@@ -665,7 +672,9 @@ namespace IRExplorerUI {
 
             if (selectedProcSummary != null) {
                 // Keep selected process after updating list.
-                ProcessList.SelectedItem = list.Find(item => item.Process == selectedProcSummary.Process);
+                foreach (var proc in selectedProcSummary) {
+                    ProcessList.SelectedItems.Add(list.Find(item => item.Process == proc.Process));
+                }
             }
         }
 

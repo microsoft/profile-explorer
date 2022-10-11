@@ -370,7 +370,7 @@
                             MinHeight="100"
                             ScrollViewer.VerticalScrollBarVisibility="Auto"
                             SelectionChanged="ProcessList_OnSelectionChanged"
-                            SelectionMode="Single"
+                            SelectionMode="Extended"
                             VerticalAlignment="Stretch"
                             VirtualizingStackPanel.IsVirtualizing="True"
                             VirtualizingStackPanel.VirtualizationMode="Recycling"

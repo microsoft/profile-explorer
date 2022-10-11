@@ -179,7 +179,7 @@ public class FlameGraphRenderer {
         foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
             // Reconsider replacing the dummy node.
             if (!nodeLayoutRecomputed &&
-                flameGraph_.ScaleWeight(node.Weight) > minVisibleRectWidth_) {
+                flameGraph_.ScaleWeight(node.Weight) > 10*minVisibleRectWidth_) {
                 enlargeList ??= new List<FlameGraphGroupNode>();
                 enlargeList.Add(node);
             }
