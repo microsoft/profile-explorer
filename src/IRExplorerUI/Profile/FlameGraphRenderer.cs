@@ -179,6 +179,62 @@ public class FlameGraphRenderer {
         foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
             // Reconsider replacing the dummy node.
             if (!nodeLayoutRecomputed &&
+                flameGraph_.ScaleWeight(node.Weight) > 2 * minVisibleRectWidth_) {
+                enlargeList ??= new List<FlameGraphGroupNode>();
+                enlargeList.Add(node);
+            }
+            else {
+                DrawDummyNode(node, graphDC);
+            }
+        }
+
+        if (enlargeList == null) {
+            return;
+        }
+
+        // Replace/split the enlarged dummy nodes.
+#if true
+        bool update = false;
+
+        foreach (var node in enlargeList) {
+            if (node.Parent == null) {
+                continue;
+            }
+
+            dummyNodesQuadTree_.Remove(node);
+
+            // The dummy node may be recreated back, don't update in that case.
+            if (UpdateChildrenNodeLayoutTimeline(node.Parent, node.Parent.Bounds.Left,
+                    node.Parent.Bounds.Top,
+                    node.ReplacedStartIndex,
+                    node.ReplacedEndIndex)) {
+                update = true;
+            }
+        }
+
+        // Redraw to show the newly create nodes replacing the dummy ones.
+        if (update) {
+            foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
+                DrawNode(node, graphDC);
+            }
+
+            foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
+                DrawDummyNode(node, graphDC);
+            }
+        }
+#else
+        nodeLayoutComputed_ = false;
+        RedrawGraph();
+        return;
+#endif
+    }
+
+    private void DrawDummyNodesTimeline(DrawingContext graphDC, bool nodeLayoutRecomputed) {
+        List<FlameGraphGroupNode> enlargeList = null;
+
+        foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
+            // Reconsider replacing the dummy node.
+            if (!nodeLayoutRecomputed &&
                 flameGraph_.ScaleDuration(node.StartTime, node.EndTime) > 5*minVisibleRectWidth_ ) {
                 enlargeList ??= new List<FlameGraphGroupNode>();
                 enlargeList.Add(node);

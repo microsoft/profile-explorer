@@ -120,6 +120,14 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private double GraphZoomRatioLog => Math.Pow(Math.Log2(GraphZoomRatio + 1), 2);
     private double CenterZoomPointX => GraphHost.HorizontalOffset + GraphAreaWidth / 2;
 
+    public override ISession Session {
+        get => base.Session;
+        set {
+            base.Session = value;
+            NodeDetailsPanel.Initialize(value, this);
+        }
+    }
+
     public override void OnShowPanel() {
         base.OnShowPanel();
         panelVisible_ = true;
@@ -130,6 +138,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         // Display flame graph once the panel is visible and visible area is valid.
         if (pendingCallTree_ == null) {
             pendingCallTree_ = callTree;
+            InitializePendingCallTree();
         }
     }
 
@@ -150,7 +159,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     public override void OnSessionStart() {
         base.OnSessionStart();
-        NodeDetailsPanel.Initialize(Session, this);
         InitializePendingCallTree();
     }
 
