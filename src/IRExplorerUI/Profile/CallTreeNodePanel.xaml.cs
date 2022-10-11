@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -74,6 +75,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
             BacktraceList.Session = value;
             FunctionList.Session = value;
             ModuleList.Session = value;
+            InstancesList.Session = value;
         }
     }
 
@@ -97,10 +99,10 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         set => SetField(ref instancesNode_, value);
     }
 
-    private ProfileCallTreeNodeEx thisInstancesNode_;
-    public ProfileCallTreeNodeEx ThisInstanceNode {
-        get => thisInstancesNode_;
-        set => SetField(ref thisInstancesNode_, value);
+    private ProfileCallTreeNodeEx mediansNode_;
+    public ProfileCallTreeNodeEx MedianNode {
+        get => mediansNode_;
+        set => SetField(ref mediansNode_, value);
     }
 
     private int funcInstancesCount_;
@@ -122,7 +124,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     public async Task Show(ProfileCallTreeNode node) {
         CallTreeNode = node;
-        BacktraceList.Show(await Task.Run(() => FunctionInfoProvider.GetBacktrace(node)));
+        BacktraceList.Show(await Task.Run(() => FunctionInfoProvider.GetBacktrace(node)), filter: false);
         FunctionList.Show(await Task.Run(() => FunctionInfoProvider.GetTopFunctions(node)));
         ModuleList.Show(await Task.Run(() => FunctionInfoProvider.GetTopModules(node)));
         await SetupInstanceInfo(node);
@@ -136,14 +138,20 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
             return;
         }
 
-        FunctionInstancesCount = instanceNodes.Count;
         var combinedNode = await Task.Run(() => callTree.GetCombinedCallTreeNode(node.Function));
         InstancesNode = SetupNodeExtension(combinedNode);
+        FunctionInstancesCount = instanceNodes.Count;
 
-        var thisNode = SetupNodeExtension(nodeEx_.CallTreeNode);
-        thisNode.Percentage = combinedNode.ScaleWeight(thisNode.Weight);
-        thisNode.ExclusivePercentage = combinedNode.ScaleWeight(thisNode.ExclusiveWeight);
-        ThisInstanceNode = thisNode;
+        // Show all instances.
+        instanceNodes.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+        InstancesList.Show(instanceNodes, false);
+
+        // Show median time.
+        var medianNode = instanceNodes[instanceNodes.Count / 2];
+        var medianNodeEx = SetupNodeExtension(medianNode);
+        medianNodeEx.Percentage = Session.ProfileData.ScaleFunctionWeight(medianNodeEx.Weight);
+        medianNodeEx.ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(medianNodeEx.ExclusiveWeight);
+        MedianNode = medianNodeEx;
     }
 
     private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {
