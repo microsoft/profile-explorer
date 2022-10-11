@@ -100,11 +100,21 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
         set => SetField(ref showModuleColumn_, value);
     }
 
-    public void Show(List<ProfileCallTreeNode> nodes) {
+    public void Show(List<ProfileCallTreeNode> nodes, bool filter = true) {
         var list = new List<ProfileListViewItem>(nodes.Count);
         nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData)));
-        //? TODO: Option
-        var filteredList = list.TakeWhile(value => value.Weight.TotalMilliseconds > 1);
+
+        //? TODO: Option for filtering
+        IEnumerable<ProfileListViewItem> filteredList = list;
+
+        if (filter) {
+            filteredList = list.TakeWhile(value => value.Weight.TotalMilliseconds > 1);
+
+            if (!filteredList.Any()) {
+                filteredList = list.Take(10);
+            }
+        }
+
         ItemList.ItemsSource = new ListCollectionView(filteredList.ToList());
     }
 
