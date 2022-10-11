@@ -54,7 +54,8 @@ namespace IRExplorerUI {
         private const string LastDockLayoutFile = "LastDockLayout.xml";
         private const string DefaultDockLayoutFile = "DockLayout.xml";
         private const string WorkspaceDockLayoutFile = "WorkspaceDockLayout-{0}.xml";
-        private const string TraceFile = "IRExplorer.trace";
+        private const string TraceFile = "IRExplorer.log";
+        private const string BackupTraceFile = "IRExplorerBackup.log";
         private const string RemarkDefinitionFile = @"remark-settings.json";
         private const string SectionDefinitionFile = @"section-settings.json";
         private const string InternalIRSyntaxHighlightingFile = @"ir.xshd";
@@ -187,6 +188,10 @@ namespace IRExplorerUI {
 
         public static string GetTraceFilePath() {
             return GetSettingsFilePath(TraceFile);
+        }
+
+        public static string GetBackupTraceFilePath() {
+            return GetSettingsFilePath(BackupTraceFile);
         }
 
         public static string GetExtensionFilePath() {
@@ -489,6 +494,7 @@ namespace IRExplorerUI {
                 string traceFilePath = GetTraceFilePath();
 
                 if (File.Exists(traceFilePath)) {
+                    File.Copy(traceFilePath, GetBackupTraceFilePath());
                     File.Delete(traceFilePath);
                 }
 

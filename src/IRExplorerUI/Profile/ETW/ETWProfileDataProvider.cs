@@ -42,16 +42,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
     }
 
-    public ProfileData LoadTrace(string tracePath, string imageName,
-        ProfileDataProviderOptions options,
-        SymbolFileSourceOptions symbolOptions,
-        ProfileDataReport report,
-        ProfileLoadProgressHandler progressCallback,
-        CancelableTask cancelableTask) {
-        return LoadTraceAsync(tracePath, imageName, options, symbolOptions,
-                              report, progressCallback, cancelableTask).Result;
-    }
-
     public static async Task<List<ProcessSummary>>
         FindTraceProcesses(string tracePath, ProfileDataProviderOptions options,
                            ProcessListProgressHandler progressCallback,
@@ -66,7 +56,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
     }
 
-    public async Task<ProfileData> LoadTraceAsync(string tracePath, string imageName,
+    public async Task<ProfileData> LoadTraceAsync(string tracePath, ProfileProcess mainProcess,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
         ProfileDataReport report,
@@ -83,26 +73,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
         });
 
-        var binSearchOptions = symbolOptions.WithSymbolPaths(imageName, tracePath);
-        return await LoadTraceAsync(profile, imageName, options, binSearchOptions,
-                                    report, progressCallback, cancelableTask);
-    }
-
-    public async Task<ProfileData> LoadTraceAsync(RawProfileData prof, string imageName,
-        ProfileDataProviderOptions options,
-        SymbolFileSourceOptions symbolOptions,
-        ProfileDataReport report,
-        ProfileLoadProgressHandler progressCallback,
-        CancelableTask cancelableTask) {
-
-        imageName = Utils.TryGetFileNameWithoutExtension(imageName);
-        var mainProcess = prof.FindProcess(imageName, true);
-
-        if (mainProcess == null) {
-            return null;
-        }
-
-        return await LoadTraceAsync(prof, mainProcess, options, symbolOptions,
+        return await LoadTraceAsync(profile, mainProcess, options, symbolOptions,
                                     report, progressCallback, cancelableTask);
     }
 

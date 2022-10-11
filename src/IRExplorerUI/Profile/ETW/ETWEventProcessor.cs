@@ -77,7 +77,7 @@ public sealed class ETWEventProcessor : IDisposable {
 
     public List<ProcessSummary> BuildProcessSummary(ProcessListProgressHandler progressCallback,
                                                     CancelableTask cancelableTask) {
-        // Default 1ms sampling interval 1ms.
+        // Default 1ms sampling interval.
         UpdateSamplingInterval(SampleReportingInterval);
 
         source_.Kernel.PerfInfoCollectionStart += data => {
@@ -188,16 +188,16 @@ public sealed class ETWEventProcessor : IDisposable {
             // The image timestamp often is part of this event when reading an ETL file.
             // A correct timestamp is needed to locate and download the image.
 
-            Trace.WriteLine($"ImageID: orig {data.OriginalFileName}, QPC {data.TimeStampQPC}");
-            Trace.WriteLine($"ImageID: timeStamp {data.TimeDateStamp}");
-            Trace.WriteLine($"ImageID: has lastProfileImage {lastProfileImage != null}");
-            Trace.WriteLine($"    matching {lastProfileImage != null && lastProfileImageTime == data.TimeStampQPC}");
-
-            if (lastProfileImage != null) {
-                Trace.WriteLine($"    last image: {lastProfileImage.FilePath}");
-                Trace.WriteLine($"    last orign: {lastProfileImage.OriginalFileName}");
-                Trace.WriteLine($"    qpc {lastProfileImageTime} vs current {data.TimeStampQPC}");
-            }
+            //Trace.WriteLine($"ImageID: orig {data.OriginalFileName}, QPC {data.TimeStampQPC}");
+            //Trace.WriteLine($"ImageID: timeStamp {data.TimeDateStamp}");
+            //Trace.WriteLine($"ImageID: has lastProfileImage {lastProfileImage != null}");
+            //Trace.WriteLine($"    matching {lastProfileImage != null && lastProfileImageTime == data.TimeStampQPC}");
+            //
+            //if (lastProfileImage != null) {
+            //    Trace.WriteLine($"    last image: {lastProfileImage.FilePath}");
+            //    Trace.WriteLine($"    last orign: {lastProfileImage.OriginalFileName}");
+            //    Trace.WriteLine($"    qpc {lastProfileImageTime} vs current {data.TimeStampQPC}");
+            //}
 
             if (lastProfileImage != null &&
                 lastProfileImageTime == data.TimeStampQPC) {
@@ -205,7 +205,6 @@ public sealed class ETWEventProcessor : IDisposable {
 
                 if (lastProfileImage.TimeStamp == 0) {
                     lastProfileImage.TimeStamp = data.TimeDateStamp;
-                    Trace.WriteLine($"    set new timestamp: {lastProfileImage.TimeStamp}");
                 }
             }
             else {
@@ -237,14 +236,14 @@ public sealed class ETWEventProcessor : IDisposable {
             int timeStamp = data.TimeDateStamp;
             bool sawImageId = false;
 
-            Trace.WriteLine($"ImageGroup: name {data.FileName}, proc {data.ProcessID}, base {data.ImageBase:X}, size {data.ImageSize:X}, procName {data.ProcessName}, TS {data.TimeStampQPC}");
-            Trace.WriteLine($"   has last {lastImageIdData != null}");
-            Trace.WriteLine($"   matching {lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC}");
-
-            if (lastImageIdData != null) {
-                Trace.WriteLine($"    last orign: {lastImageIdData.OriginalFileName}");
-                Trace.WriteLine($"    dateStamp {lastImageIdData.TimeDateStamp} vs current {data.TimeDateStamp}");
-            }
+            //Trace.WriteLine($"ImageGroup: name {data.FileName}, proc {data.ProcessID}, base {data.ImageBase:X}, size {data.ImageSize:X}, procName {data.ProcessName}, TS {data.TimeStampQPC}");
+            //Trace.WriteLine($"   has last {lastImageIdData != null}");
+            //Trace.WriteLine($"   matching {lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC}");
+            //
+            //if (lastImageIdData != null) {
+            //    Trace.WriteLine($"    last orign: {lastImageIdData.OriginalFileName}");
+            //    Trace.WriteLine($"    dateStamp {lastImageIdData.TimeDateStamp} vs current {data.TimeDateStamp}");
+            //}
 
             if (lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC) {
                 // The ImageID event showed up earlier in the stream.
@@ -252,7 +251,6 @@ public sealed class ETWEventProcessor : IDisposable {
                 originalName = lastImageIdData.OriginalFileName;
 
                 if (timeStamp == 0) {
-                    Trace.WriteLine($"    use last imageId timestamp: {lastImageIdData.TimeDateStamp}");
                     timeStamp = lastImageIdData.TimeDateStamp;
                 }
             }

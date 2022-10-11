@@ -10,14 +10,14 @@ using ProtoBuf;
 namespace IRExplorerUI.Profile;
 
 public interface IProfileDataProvider {
-    ProfileData LoadTrace(string tracePath, string imageName,
+    Task<ProfileData> LoadTraceAsync(RawProfileData prof, ProfileProcess process,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
         ProfileDataReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask = null);
 
-    Task<ProfileData> LoadTraceAsync(string tracePath, string imageName,
+    Task<ProfileData> LoadTraceAsync(string tracePath, ProfileProcess process,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
         ProfileDataReport report,

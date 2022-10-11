@@ -1311,14 +1311,14 @@ namespace IRExplorerUI {
             SectionPanel.ShowModuleReport();
         }
 
-        public async Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, 
+        public async Task<bool> LoadProfileData(string profileFilePath, ProfileProcess process, 
                                               ProfileDataProviderOptions options,
                                               SymbolFileSourceOptions symbolOptions,
                                               ProfileDataReport report,
                                               ProfileLoadProgressHandler progressCallback,
                                               CancelableTask cancelableTask) {
             using var profileData = new ETWProfileDataProvider(this);
-            var result = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, 
+            var result = await profileData.LoadTraceAsync(profileFilePath, process, 
                                                       options, symbolOptions,
                                                       report, progressCallback, cancelableTask);
             if (!IsSessionStarted) {
