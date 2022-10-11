@@ -179,7 +179,7 @@ public class FlameGraphRenderer {
         foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
             // Reconsider replacing the dummy node.
             if (!nodeLayoutRecomputed &&
-                flameGraph_.ScaleWeight(node.Weight) > 2 * minVisibleRectWidth_) {
+                flameGraph_.ScaleWeight(node.Weight) > minVisibleRectWidth_) {
                 enlargeList ??= new List<FlameGraphGroupNode>();
                 enlargeList.Add(node);
             }
@@ -204,10 +204,9 @@ public class FlameGraphRenderer {
             dummyNodesQuadTree_.Remove(node);
 
             // The dummy node may be recreated back, don't update in that case.
-            if (UpdateChildrenNodeLayoutTimeline(node.Parent, node.Parent.Bounds.Left,
+            if (UpdateChildrenNodeLayout(node.Parent, node.Parent.Bounds.Left,
                     node.Parent.Bounds.Top,
-                    node.ReplacedStartIndex,
-                    node.ReplacedEndIndex)) {
+                    node.ReplacedStartIndex)) {
                 update = true;
             }
         }
