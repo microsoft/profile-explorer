@@ -56,7 +56,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
     }
 
-    public async Task<ProfileData> LoadTraceAsync(string tracePath, ProfileProcess mainProcess,
+    public async Task<ProfileData> LoadTraceAsync(string tracePath, List<int> processIds,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
         ProfileDataReport report,
@@ -73,16 +73,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
         });
 
-        return await LoadTraceAsync(profile, mainProcess, options, symbolOptions,
+        return await LoadTraceAsync(profile, processIds, options, symbolOptions,
                                     report, progressCallback, cancelableTask);
     }
 
-    public async Task<ProfileData> LoadTraceAsync(RawProfileData prof, ProfileProcess mainProcess,
+    public async Task<ProfileData> LoadTraceAsync(RawProfileData prof, List<int> processIds,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
         ProfileDataReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask) {
+        var mainProcess = prof.FindProcess(processIds[0]);
         report_ = report;
         report_.Process = mainProcess;
         report.TraceInfo = prof.TraceInfo;
@@ -180,7 +181,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                             var context = sample.GetContext(prof);
 
-                            if (context.ProcessId != mainProcessId) {
+                            if(!processIds.Contains(context.ProcessId)) {
                                 continue;
                             }
 
@@ -217,7 +218,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                             bool isTopFrame = true;
                             stackFuncts.Clear();
                             stackModules.Clear();
-                            bool hask = false;
 
                             var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
@@ -302,8 +302,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     ProfileImage frameImage = null;
 
                                     if (ETWEventProcessor.IsKernelAddress((ulong)frameIp, pointerSize)) {
-                                        //Utils.WaitForDebugger(true);
-                                        hask = true;
                                         frameImage = prof.FindImageForIP(frameIp, 0);
                                     }
                                     else {
@@ -509,7 +507,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                 if (options_.IncludePerformanceCounters) {
                     // Process performance counters.
-                    ProcessPerformanceCounters(prof, mainProcessId, symbolOptions, progressCallback, cancelableTask);
+                    ProcessPerformanceCounters(prof, processIds, symbolOptions, progressCallback, cancelableTask);
 
                 }
 
@@ -790,7 +788,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         return imageModule;
     }
 
-    private void ProcessPerformanceCounters(RawProfileData prof, int mainProcessId,
+    private void ProcessPerformanceCounters(RawProfileData prof, List<int> processIds,
                                             SymbolFileSourceOptions symbolOptions,
                                             ProfileLoadProgressHandler progressCallback,
                                             CancelableTask cancelableTask) {
@@ -832,7 +830,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
             var context = counter.GetContext(prof);
 
-            if (context.ProcessId != mainProcessId) {
+            if(!processIds.Contains(context.ProcessId)) {
                 continue;
             }
 

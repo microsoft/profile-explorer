@@ -96,14 +96,14 @@ namespace IRExplorerUI {
         Task<LoadedDocument> OpenSessionDocument(string filePath);
         Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null);
 
-        Task<bool> LoadProfileData(string profileFilePath, ProfileProcess process, 
+        Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, 
                                     ProfileDataProviderOptions options,
                                     SymbolFileSourceOptions symbolOptions,
                                     ProfileDataReport report,
                                     ProfileLoadProgressHandler progressCallback,
                                     CancelableTask cancelableTask);
 
-        Task<bool> LoadProfileData(RawProfileData data, ProfileProcess process,
+        Task<bool> LoadProfileData(RawProfileData data, List<int> processIds,
             ProfileDataProviderOptions options,
             SymbolFileSourceOptions symbolOptions,
             ProfileDataReport report,
