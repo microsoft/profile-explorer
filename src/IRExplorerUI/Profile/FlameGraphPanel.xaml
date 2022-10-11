@@ -55,9 +55,9 @@
             </Style.Triggers>
         </Style>
 
-        <Style TargetType="{x:Type ColumnDefinition}" x:Key="NodePaenlColumnsStyle">
+        <Style TargetType="{x:Type ColumnDefinition}" x:Key="NodePanelColumnsStyle">
             <Style.Setters>
-                <Setter Property="Width" Value="250" />
+                <Setter Property="Width" Value="290" />
             </Style.Setters>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding ShowNodePanel}" Value="False">
@@ -185,7 +185,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Style="{StaticResource ColumnsGridSplitterStyle}" />
-                <ColumnDefinition Style="{StaticResource NodePaenlColumnsStyle}" />
+                <ColumnDefinition Style="{StaticResource NodePanelColumnsStyle}" />
             </Grid.ColumnDefinitions>
 
             <irExplorerUi:ScrollViewerClickable

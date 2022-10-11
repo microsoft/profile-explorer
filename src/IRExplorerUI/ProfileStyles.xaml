@@ -4,6 +4,11 @@
     xmlns:utils="clr-namespace:IRExplorerUI.Utilities"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+
+    <SolidColorBrush Color="#66FFFFFF" x:Key="ProfilePercentageBackBrush" />
+    <SolidColorBrush Color="#66bf6262" x:Key="ProfilePercentageBrush" />
+    <SolidColorBrush Color="#664f86c9" x:Key="ProfilePercentageExclusiveBrush" />
+
     <DataTemplate x:Key="TimePercentageColumnValueTemplate">
         <Border
             Background="{Binding BackColor}"
@@ -128,10 +133,6 @@
             </StackPanel>
         </Border>
     </DataTemplate>
-
-    <SolidColorBrush Color="#55FFFFFF" x:Key="ProfilePercentageBackBrush" />
-    <SolidColorBrush Color="#66C43939" x:Key="ProfilePercentageBrush" />
-    <SolidColorBrush Color="#663891D1" x:Key="ProfilePercentageExclusiveBrush" />
 
     <DataTemplate x:Key="ProfilePercentageTemplate">
         <Grid HorizontalAlignment="Stretch">
