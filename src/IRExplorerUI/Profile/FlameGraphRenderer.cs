@@ -206,13 +206,14 @@ public class FlameGraphRenderer {
             // The dummy node may be recreated back, don't update in that case.
             if (UpdateChildrenNodeLayout(node.Parent, node.Parent.Bounds.Left,
                     node.Parent.Bounds.Top,
-                    node.ReplacedStartIndex)) {
+                    node.ReplacedStartIndex,
+                    node.ReplacedEndIndex)) {
                 update = true;
             }
         }
 
         // Redraw to show the newly create nodes replacing the dummy ones.
-        if (update) {
+        if (true || update) {
             foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
                 DrawNode(node, graphDC);
             }
@@ -339,8 +340,10 @@ public class FlameGraphRenderer {
         UpdateChildrenNodeLayout(node, x, y);
     }
 
-    private void UpdateChildrenNodeLayout(FlameGraphNode node, double x, double y, int startIndex = 0) {
+     private bool UpdateChildrenNodeLayout(FlameGraphNode node, double x, double y,
+                                          int startIndex = 0, int stopIndex = int.MaxValue) {
         int skippedChildren = 0;
+        int totalSkippedChildren = 0;
 
         for (int i = 0; i < startIndex; i++) {
             var childNode = node.Children[i];
@@ -348,22 +351,35 @@ public class FlameGraphRenderer {
             x += childWidth;
         }
 
-        for (int i = startIndex; i < node.Children.Count; i++) {
+        stopIndex = Math.Min(stopIndex, node.Children.Count);
+
+        for (int i = startIndex; i < stopIndex; i++) {
             //? If multiple children below width, single patterned rect
             var childNode = node.Children[i];
             var childWidth = flameGraph_.ScaleWeight(childNode.Weight);
+            FlameGraphNode dummyNode = null;
 
             if (skippedChildren == 0) {
-                if (childWidth < minVisibleRectWidth_) {
-                    childNode.IsDummyNode = true;
-                    CreateSmallWeightDummyNode(node, x, y, i, out skippedChildren);
-                }
+                 if (childWidth < minVisibleRectWidth_) {
+                     childNode.IsDummyNode = true;
+                     dummyNode = CreateSmallWeightDummyNode(node, x, y, i, stopIndex, out skippedChildren);
+                     totalSkippedChildren += skippedChildren;
+
+                    //? TODO: When called from enlarged dummy node,
+                    //? if all children part of new (same) dummy node skip going recursively.
+                 }
             }
             else {
                 childNode.IsDummyNode = true;
             }
 
             UpdateNodeLayout(childNode, x, y + nodeHeight_, skippedChildren == 0);
+            childNode.MaxDepthUnder = maxNodeDepth_ - childNode.Depth;
+
+            if (dummyNode != null) {
+                dummyNode.MaxDepthUnder = maxNodeDepth_ - dummyNode.Depth;
+            }
+
             x += childWidth;
 
             if (skippedChildren > 0) {
@@ -371,10 +387,13 @@ public class FlameGraphRenderer {
                 skippedChildren--;
             }
         }
+
+        node.MaxDepthUnder = maxNodeDepth_ - node.Depth;
+        return totalSkippedChildren < (stopIndex - startIndex);
     }
 
-    private void CreateSmallWeightDummyNode(FlameGraphNode node, double x, double y,
-        int startIndex, out int skippedChildren) {
+     private FlameGraphNode CreateSmallWeightDummyNode(FlameGraphNode node, double x, double y,
+        int startIndex, int stopIndex, out int skippedChildren) {
         TimeSpan totalWeight = TimeSpan.Zero;
         double totalWidth = 0;
 
@@ -383,7 +402,10 @@ public class FlameGraphRenderer {
         var replacedNodes = new List<FlameGraphNode>(node.Children.Count - startIndex);
         int k;
 
-        for (k = startIndex; k < node.Children.Count; k++) {
+        TimeSpan startTime = TimeSpan.MaxValue;
+        TimeSpan endTime = TimeSpan.MinValue;
+
+        for (k = startIndex; k < stopIndex; k++) {
             var childNode = node.Children[k];
             double childWidth = flameGraph_.ScaleWeight(childNode.Weight);
 
@@ -396,12 +418,14 @@ public class FlameGraphRenderer {
             replacedNodes.Add(childNode);
             totalWidth += childWidth;
             totalWeight += childNode.Weight;
+            startTime = TimeSpan.FromTicks(Math.Min(startTime.Ticks, childNode.StartTime.Ticks));
+            endTime = TimeSpan.FromTicks(Math.Max(endTime.Ticks, childNode.EndTime.Ticks));
         }
 
         skippedChildren = k - startIndex; // Caller should ignore these children.
 
         if (totalWidth < minVisibleRectWidth_) {
-            return; // Nothing to draw.
+            return null; // Nothing to draw.
         }
 
         var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
@@ -409,10 +433,13 @@ public class FlameGraphRenderer {
         dummyNode.IsDummyNode = true;
         dummyNode.Bounds = replacement;
         dummyNode.Style = PickDummyNodeStyle(node.Style);
+        dummyNode.StartTime = startTime;
+        dummyNode.EndTime = endTime;
         dummyNodesQuadTree_.Insert(dummyNode, replacement);
 
         //? Could make color darker than level, or less satureded  better
         //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
+        return dummyNode;
     }
 
     private void UpdateNodeLayoutTimeline(FlameGraphNode node, double x, double y, bool redraw) {
@@ -570,7 +597,7 @@ public class FlameGraphRenderer {
         const double TextMarginY = 7;
 
         var bar = new Rect(visibleArea_.Left, visibleArea_.Top,
-            visibleArea_.Width, TimeBarHeight);
+            visibleArea_.Width, timeBarHeight_);
         graphDC.DrawRectangle(Brushes.Bisque, null, bar);
 
         double secondTickDist = maxWidth_ / flameGraph_.RootNode.Duration.TotalSeconds;
@@ -680,7 +707,11 @@ public class FlameGraphRenderer {
         return placeholderTileBrush_;
     }
 
+#if false
     private double timeBarHeight_ = TimeBarHeight;
+#else
+    private double timeBarHeight_ = 0;
+#endif
 
     public void DrawNode(FlameGraphNode flameGraphNode, DrawingContext dc) {
         if (flameGraphNode.IsDummyNode) {
