@@ -96,7 +96,7 @@ namespace IRExplorerUI {
         Task<LoadedDocument> OpenSessionDocument(string filePath);
         Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null);
 
-        Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, 
+        Task<bool> LoadProfileData(string profileFilePath, ProfileProcess process, 
                                     ProfileDataProviderOptions options,
                                     SymbolFileSourceOptions symbolOptions,
                                     ProfileDataReport report,

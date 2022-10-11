@@ -20,6 +20,7 @@ public class GlyphRunCache {
             Glyphs = glyphs;
             TextWidth = textWidth;
             TextHeight = textHeight;
+            IsCached = false;
         }
     }
 

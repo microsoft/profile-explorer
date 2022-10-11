@@ -412,10 +412,12 @@ namespace IRExplorerUI {
             IsLoadingProfile = true;
             LoadProgressBar.Value = 0;
 
+            if (selectedProcSummary_ == null) {
+                return false;
+            }
+            
             if (IsRecordMode) {
-                if (selectedProcSummary_ == null) {
-                    return false;
-                }
+               
 
                 report.SessionOptions = recordingOptions_.Clone();
                 var binSearchOptions = symbolOptions_.WithSymbolPaths(recordingOptions_.ApplicationPath);
@@ -429,7 +431,7 @@ namespace IRExplorerUI {
                                                         ProfileLoadProgressCallback, task);
             }
             else {
-                success = await Session.LoadProfileData(ProfileFilePath, BinaryFilePath,
+                success = await Session.LoadProfileData(ProfileFilePath, selectedProcSummary_.Process,
                                                         options_, symbolOptions_, report,
                                                         ProfileLoadProgressCallback, task);
             }
@@ -570,9 +572,6 @@ namespace IRExplorerUI {
         private void ApplicationBrowseButton_Click(object sender, RoutedEventArgs e) =>
             Utils.ShowExecutableOpenFileDialog(ApplicationAutocompleteBox);
 
-        private void BinaryBrowseButton_Click(object sender, RoutedEventArgs e) =>
-            Utils.ShowExecutableOpenFileDialog(BinaryAutocompleteBox);
-
         private void ProcessList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (ProcessList.SelectedItem != null) {
                 selectedProcSummary_ = (ProcessSummary)ProcessList.SelectedItem;
@@ -665,6 +664,7 @@ namespace IRExplorerUI {
             ShowProcessList = true;
 
             if (selectedProcSummary != null) {
+                // Keep selected process after updating list.
                 ProcessList.SelectedItem = list.Find(item => item.Process == selectedProcSummary.Process);
             }
         }
