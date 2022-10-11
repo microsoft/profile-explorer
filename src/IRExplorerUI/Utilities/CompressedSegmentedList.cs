@@ -30,6 +30,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
         public int Count => count_;
         public bool WasCompressed => data_ != null;
         public bool IsCompressed => values_ == null;
+        public bool IsBeingCompressed => IsCompressed && !WasCompressed;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T GetValue(int index) {
@@ -147,7 +148,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
 
         public void CompressValues() {
             lock (this) {
-                if (WasCompressed) {
+                if (WasCompressed || IsBeingCompressed) {
                     values_ = null; // Free array.
                     return;
                 }
