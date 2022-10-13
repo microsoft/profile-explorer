@@ -60,11 +60,12 @@ public sealed class ETWEventProcessor : IDisposable {
         childAcceptedProcessIds_ = new List<int>();
     }
 
-    public ETWEventProcessor(string tracePath, ProfileDataProviderOptions providerOptions) {
+    public ETWEventProcessor(string tracePath, ProfileDataProviderOptions providerOptions, int acceptedProcessId = 0) {
         Debug.Assert(File.Exists(tracePath));
         childAcceptedProcessIds_ = new List<int>();
         source_ = new ETWTraceEventSource(tracePath);
         providerOptions_ = providerOptions;
+        acceptedProcessId_ = acceptedProcessId;
     }
 
     public static bool IsKernelAddress(ulong ip, int pointerSize) {
@@ -95,9 +96,13 @@ public sealed class ETWEventProcessor : IDisposable {
         };
 
         RawProfileData profile = new();
+        var summaryBuilder = new ProcessSummaryBuilder(profile);
+
         int lastReportedSample = 0;
         int lastProcessListSample = 0;
         int nextProcessListSample = SampleReportingInterval * 10;
+        int sampleId = 0;
+        DateTime lastProcessListReport = DateTime.UtcNow;
 
         if (isRealTime_) {
             profile.TraceInfo.ProfileStartTime = DateTime.Now;
@@ -121,29 +126,25 @@ public sealed class ETWEventProcessor : IDisposable {
 
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
             int contextId = profile.AddContext(context);
-
-            var sample = new ProfileSample((long)data.InstructionPointer,
-                TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec),
-                TimeSpan.FromMilliseconds(samplingIntervalMS_),
-                false, contextId);
-            int sampleId = profile.AddSample(sample);
+            
+            sampleId++;
+            var sampleWeight = TimeSpan.FromMilliseconds(samplingIntervalMS_);
+            var sampleTime = TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec);
+            summaryBuilder.AddSample(sampleWeight, sampleTime, context);
             profile.ReturnContext(contextId);
-
 
             if (sampleId - lastReportedSample >= SampleReportingInterval) {
                 List<ProcessSummary> processList = null;
+                var currentTime = DateTime.UtcNow;
 
-
-                if (sampleId - lastProcessListSample >= nextProcessListSample) {
+                if (sampleId - lastProcessListSample >= nextProcessListSample &&
+                    (currentTime - lastProcessListReport).TotalMilliseconds > 1000) { {
                     var sw = Stopwatch.StartNew();
 
-                    processList = profile.BuildProcessSummary();
+                    processList = summaryBuilder.MakeSummaries();
                     lastProcessListSample = sampleId;
-                    nextProcessListSample *= 2;
-
-                    Trace.WriteLine($"Took {sw.ElapsedMilliseconds} for {profile.Samples.Count / 10000} K");
-
-                }
+                    lastProcessListReport = currentTime;
+                }}
 
                 progressCallback?.Invoke(new ProcessListProgress() {
                     Total = (int)source_.SessionDuration.TotalMilliseconds,
@@ -158,7 +159,12 @@ public sealed class ETWEventProcessor : IDisposable {
         };
 
         source_.Process();
-        return profile.BuildProcessSummary();
+
+        if (cancelableTask.IsCanceled) {
+            return new List<ProcessSummary>();
+        }
+
+        return summaryBuilder.MakeSummaries();
     }
 
     void UpdateSamplingInterval(int value) {
@@ -173,7 +179,6 @@ public sealed class ETWEventProcessor : IDisposable {
         ImageIDTraceData lastImageIdData = null;
         ProfileImage lastProfileImage = null;
         long lastProfileImageTime = 0;
-
 
         double[] perCoreLastTime = new double[MaxCoreCount];
         int[] perCoreLastSample = new int[MaxCoreCount];
@@ -338,7 +343,6 @@ public sealed class ETWEventProcessor : IDisposable {
                 if (lastKernelStack.StackId != 0 &&
                     lastKernelStack.Timestamp == data.EventTimeStampQPC) {
                     //Trace.WriteLine($"Found kstack {lastKernelStack.StackId} at {lastKernelStack.Timestamp}");
-
 
                     // Append at the end of the kernel stack, marking a user -> kernel mode transition.
                     kstack = profile.FindStack(lastKernelStack.StackId);

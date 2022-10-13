@@ -189,17 +189,17 @@
                                         Text="{Binding SessionOptions.WorkingDirectory}" />
                                 </Grid>
                                 <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Environment vars." />
+                                    <TextBlock VerticalAlignment="Top" Text="Environment vars." />
                                     <CheckBox
                                         Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
+                                        VerticalAlignment="Top"
                                         Background="Transparent"
                                         BorderBrush="DarkBlue"
                                         IsChecked="{Binding SessionOptions.EnableEnvironmentVars}"
                                         IsHitTestVisible="False" />
                                     <TextBox
                                         Margin="120,1,0,1"
-                                        VerticalAlignment="Center"
+                                        VerticalAlignment="Top"
                                         Background="Transparent"
                                         BorderBrush="LightGray"
                                         Foreground="DarkBlue"
@@ -241,17 +241,17 @@
                                         IsHitTestVisible="False" />
                                 </Grid>
                                 <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Perf. counters" />
+                                    <TextBlock VerticalAlignment="Top" Text="Perf. counters" />
                                     <CheckBox
                                         Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
+                                        VerticalAlignment="Top"
                                         Background="Transparent"
                                         BorderBrush="DarkBlue"
                                         IsChecked="{Binding SessionOptions.RecordPerformanceCounters}"
                                         IsHitTestVisible="False" />
                                     <TextBox
                                         Margin="120,1,0,1"
-                                        VerticalAlignment="Center"
+                                        VerticalAlignment="Top"
                                         Background="Transparent"
                                         BorderBrush="LightGray"
                                         Foreground="DarkBlue"
@@ -544,7 +544,10 @@
                                     IsReadOnly="True"
                                     Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.Age, ElementName=ModuleList}" />
                             </Grid>
-                            <Expander Margin="0,10,0,0" Header="Logs">
+                            <Expander
+                                Margin="0,10,0,0"
+                                Header="Logs"
+                                IsExpanded="True">
                                 <Grid>
                                     <TextBox
                                         MaxHeight="100"

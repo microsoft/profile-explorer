@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Media;
 
 namespace IRExplorerUI.Profile;
@@ -291,8 +292,15 @@ public class FlameGraphRenderer {
         double estimatedDepth = Math.Max(1, 1 + Math.Log10(node.MaxDepthUnder));
         var scaledBounds = new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top + timeBarHeight_,
             node.Bounds.Width * maxWidth_, node.Bounds.Height * estimatedDepth);
+
+        if (cachedDummyNodeGuidelines_ == null) {
+            cachedDummyNodeGuidelines_ = CreateGuidelineSet(scaledBounds, 0.5f);
+        }
+
+        graphDC.PushGuidelineSet(cachedDummyNodeGuidelines_);
         graphDC.DrawRectangle(node.Style.BackColor, node.Style.Border, scaledBounds);
         graphDC.DrawRectangle(CreatePlaceholderTiledBrush(8), null, scaledBounds);
+        graphDC.Pop();
     }
 
     private void DrawCenteredText(string text, double x, double y, DrawingContext dc) {
@@ -668,7 +676,6 @@ public class FlameGraphRenderer {
         return new HighlightingStyle(newColor, style.Border);
     }
 
-
     private DrawingBrush CreatePlaceholderTiledBrush(double tileSize) {
         // Create the brush once, freeze and reuse it everywhere.
         if (placeholderTileBrush_ != null) {
@@ -727,7 +734,11 @@ public class FlameGraphRenderer {
             return;
         }
 
-        dc.PushGuidelineSet(CreateGuidelineSet(bounds, 0.5f));
+        if (cachedNodeGuidelines_ == null) {
+            cachedNodeGuidelines_ = CreateGuidelineSet(bounds, 0.5f);
+        }
+
+        dc.PushGuidelineSet(cachedNodeGuidelines_);
         dc.DrawRectangle(flameGraphNode.Style.BackColor, flameGraphNode.Style.Border, bounds);
 
         // ...
@@ -820,8 +831,9 @@ public class FlameGraphRenderer {
         dc.Pop(); // PushGuidelineSet
     }
 
-    private static GuidelineSet cachedTextGuidelines_;
-
+    private GuidelineSet cachedTextGuidelines_;
+    private GuidelineSet cachedNodeGuidelines_;
+    private GuidelineSet cachedDummyNodeGuidelines_;
 
     private void DrawText(GlyphRun glyphs, Rect bounds, Brush textColor, double offsetX, double offsetY,
             Size textSize, DrawingContext dc) {
@@ -887,7 +899,6 @@ public class FlameGraphRenderer {
                     glyphInfo.TextWidth = maxWidth;
                 }
             }
-
 
             glyphsCache.CacheGlyphs(glyphInfo, originalText, maxWidth);
 

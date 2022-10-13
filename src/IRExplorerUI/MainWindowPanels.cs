@@ -981,7 +981,7 @@ namespace IRExplorerUI {
         }
 
         private bool RestoreDockLayout() {
-            var dockLayoutFile = App.GetLastDockLayoutFilePath();
+            var dockLayoutFile = App.GetDefaultDockLayoutFilePath();
 
             if (!File.Exists(dockLayoutFile)) {
                 return false;

@@ -153,10 +153,10 @@ namespace IRExplorerUI {
             changedDocuments_ = new Dictionary<string, DateTime>();
             detachedPanels_ = new List<DraggablePopup>();
             lockObject_ = new object();
-            
+
             SetupMainWindow();
             SetupGraphLayoutCache();
-            
+
             ContentRendered += MainWindow_ContentRendered;
             StateChanged += MainWindow_StateChanged;
             LocationChanged += MainWindow_LocationChanged;
@@ -453,11 +453,11 @@ namespace IRExplorerUI {
             DocumentLoadProgressBar.Value = 0;
             DocumentLoadProgressBar.Visibility = Visibility.Visible;
             DocumentLoadProgressPanel.Visibility = Visibility.Visible;
-            
+
             if (string.IsNullOrEmpty(title)) {
                 title = "Loading";
             }
-            
+
             DocumentLoadLabel.Text = title;
         }
 
@@ -811,10 +811,10 @@ namespace IRExplorerUI {
             throw new InvalidOperationException("Crash Handler test assert");
         }
 
-        private async Task DisplayCallGraph(IRTextSummary summary, IRTextSection section, 
+        private async Task DisplayCallGraph(IRTextSummary summary, IRTextSection section,
                                             bool buildPartialGraph) {
             var loadedDoc = sessionState_.FindLoadedDocument(summary);
-            var layoutGraph = await Task.Run(() => 
+            var layoutGraph = await Task.Run(() =>
                 CallGraphUtils.BuildCallGraphLayout(summary, section, loadedDoc,
                                                     CompilerInfo, buildPartialGraph));
             DisplayCallGraph(layoutGraph, section);
@@ -839,9 +839,9 @@ namespace IRExplorerUI {
         public Task SwitchActiveFunction(IRTextFunction function) {
             return SectionPanel.SelectFunction(function);
         }
-        
+
         private void MenuItem_Click_3(object sender, RoutedEventArgs e) {
-            
+
         }
 
         private void UpdateButton_Click(object sender, RoutedEventArgs e) {
@@ -1070,11 +1070,11 @@ namespace IRExplorerUI {
             var plotView = new OxyPlot.SkiaSharp.Wpf.PlotView();
             model.IsLegendVisible = true;
             model.Padding = new OxyThickness(0);
-            
+
             model.Axes.Add(new LinearAxis() {
-                Position = AxisPosition.Left, 
-                TickStyle = TickStyle.Crossing, 
-                MajorGridlineStyle = LineStyle.Automatic, 
+                Position = AxisPosition.Left,
+                TickStyle = TickStyle.Crossing,
+                MajorGridlineStyle = LineStyle.Automatic,
                 MinorGridlineStyle = LineStyle.None,
                 IsZoomEnabled = false,
             });
@@ -1290,7 +1290,7 @@ namespace IRExplorerUI {
         }
 
         private bool SaveDockLayout() {
-            return SaveDockLayout(App.GetLastDockLayoutFilePath());
+            return SaveDockLayout(App.GetDefaultDockLayoutFilePath());
         }
 
         private bool SaveDockLayout(string dockLayoutFile) {
@@ -1311,14 +1311,14 @@ namespace IRExplorerUI {
             SectionPanel.ShowModuleReport();
         }
 
-        public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, 
+        public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds,
                                               ProfileDataProviderOptions options,
                                               SymbolFileSourceOptions symbolOptions,
                                               ProfileDataReport report,
                                               ProfileLoadProgressHandler progressCallback,
                                               CancelableTask cancelableTask) {
             using var profileData = new ETWProfileDataProvider(this);
-            var result = await profileData.LoadTraceAsync(profileFilePath, processIds, 
+            var result = await profileData.LoadTraceAsync(profileFilePath, processIds,
                                                       options, symbolOptions,
                                                       report, progressCallback, cancelableTask);
             if (!IsSessionStarted) {
@@ -1341,7 +1341,7 @@ namespace IRExplorerUI {
                                               CancelableTask cancelableTask) {
             using var profileData = new ETWProfileDataProvider(this);
             var result = await profileData.LoadTraceAsync(data, processIds,
-                                                      options, symbolOptions, 
+                                                      options, symbolOptions,
                                                       report, progressCallback, cancelableTask);
             if (!IsSessionStarted) {
                 return false;
@@ -1351,9 +1351,9 @@ namespace IRExplorerUI {
                 result.Report = report;
                 sessionState_.ProfileData = result;
             }
-            
+
             return result != null;
-        }        
+        }
 
         private async void LoadProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
             var window = new ProfileLoadWindow(this, false);

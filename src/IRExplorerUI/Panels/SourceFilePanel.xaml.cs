@@ -178,7 +178,7 @@ namespace IRExplorerUI {
             };
 
             var result = fileDialog.ShowDialog();
-            
+
             if (result.HasValue && result.Value) {
                 return fileDialog.FileName;
             }
@@ -250,7 +250,7 @@ namespace IRExplorerUI {
             }
             else if (loadedDoc.DebugInfoFileExists) {
                 var debugInfo = Session.CompilerInfo.CreateDebugInfoProvider(loadedDoc.BinaryFile.FilePath);
-                
+
                 if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFile)) {
                     return debugInfo;
                 }
@@ -346,7 +346,7 @@ namespace IRExplorerUI {
                 mappedSourceFilePath = sourceInfo.FilePath;
             }
             else if(!sourceMapperDisabled_) {
-                mappedSourceFilePath = sourceFileMapper_.Map(sourceInfo.FilePath, () => 
+                mappedSourceFilePath = sourceFileMapper_.Map(sourceInfo.FilePath, () =>
                     BrowseSourceFile(filter: $"Source File|{Path.GetFileName(sourceInfo.OriginalFilePath)}",
                                      title: $"Open {sourceInfo.OriginalFilePath}"));
 
@@ -354,13 +354,13 @@ namespace IRExplorerUI {
                     using var centerForm = new DialogCenteringHelper(this);
 
                     if (MessageBox.Show("Continue asking for source file location during this session?", "IR Explorer",
-                                        MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == 
+                                        MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) ==
                                         MessageBoxResult.No) {
                         sourceMapperDisabled_ = true;
                     }
                 }
             }
-            
+
             if (mappedSourceFilePath != null &&
                 await LoadSourceFileImpl(mappedSourceFilePath, sourceInfo.OriginalFilePath, sourceInfo.StartLine)) {
                 sourceFileLoaded_ = true;
@@ -448,7 +448,7 @@ namespace IRExplorerUI {
             currentInlinee_ = null;
         }
 
-        //? TODO: Select source line must go through inlinee mapping to select proper asm 
+        //? TODO: Select source line must go through inlinee mapping to select proper asm
         //     all instrs that have the line on the inlinee list for this func
 
         public async Task<bool> LoadInlineeSourceFile(IRExplorerCore.IR.StackFrame inlinee) {
@@ -507,7 +507,10 @@ namespace IRExplorerUI {
 
         private async Task AnnotateProfilerData(FunctionProfileData profile, IDebugInfoProvider debugInfo) {
             ResetProfileMarking();
-            var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
+            //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
+
+            //? Accessing the PDB (DIA) from another thread fails.
+            var result = profile.ProcessSourceLines(debugInfo);
             var sourceLineWeights = result.SourceLineWeightList;
 
             if (sourceLineWeights.Count == 0) {
@@ -646,11 +649,11 @@ namespace IRExplorerUI {
         public double DefaultLineHeight => TextView.TextArea.TextView.DefaultLineHeight;
 
         public void SuspendUpdate() {
-            
+
         }
 
         public void ResumeUpdate() {
-            
+
         }
 
         public void ClearInstructionMarkers() {
@@ -664,7 +667,7 @@ namespace IRExplorerUI {
                 group.Add(pair.Item1);
                 profileMarker_.Add(group);
             }
-            
+
             UpdateHighlighting();
         }
 
