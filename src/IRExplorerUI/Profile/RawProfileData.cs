@@ -520,41 +520,13 @@ public class RawProfileData {
     }
 
     public List<ProcessSummary> BuildProcessSummary() {
-        var processSamples = new Dictionary<ProfileProcess, TimeSpan>();
-        var procDuration = new Dictionary<ProfileProcess, (TimeSpan First, TimeSpan Last)>();
-        var totalWeight = TimeSpan.Zero;
+        var builder = new ProcessSummaryBuilder(this);
 
         foreach (var sample in samples_) {
-            var context = sample.GetContext(this);
-            var process = GetOrCreateProcess(context.ProcessId);
-            processSamples.AccumulateValue(process, sample.Weight);
-            totalWeight += sample.Weight;
-
-            // Modify in-place.
-            ref var durationRef = ref CollectionsMarshal.GetValueRefOrAddDefault(procDuration, process, out bool found);
-
-            if (!found) {
-                durationRef.First = sample.Time;
-            }
-
-            durationRef.Last = sample.Time;
+            builder.AddSample(sample);
         };
 
-        var list = new List<ProcessSummary>(procDuration.Count);
-
-        foreach (var pair in processSamples) {
-            var item = new ProcessSummary(pair.Key, pair.Value) {
-                WeightPercentage = 100 * (double)pair.Value.Ticks / (double)totalWeight.Ticks
-            };
-
-            list.Add(item);
-
-            if (procDuration.TryGetValue(pair.Key, out var duration)) {
-                item.Duration = duration.Last - duration.First;
-            }
-        }
-
-        return list;
+        return builder.MakeSummaries();
     }
 
     public void PrintProcess(int processId) {
@@ -699,7 +671,6 @@ public class ManagedData {
         public Dictionary<string, int /* mappingId */> managedMethodsMap_;
         public List<ManagedMethodMapping> managedMethods_;
 
-
     }
 
     public Dictionary<ProfileImage, DotNetDebugInfoProvider> imageDebugInfo_;
@@ -790,5 +761,65 @@ public class IpToImageCache {
         }
 
         return null;
+    }
+}
+
+public class ProcessSummaryBuilder {
+    private RawProfileData profile_;
+    private Dictionary<ProfileProcess, TimeSpan> processSamples_ = new();
+    private Dictionary<ProfileProcess, (TimeSpan First, TimeSpan Last)> procDuration_ = new();
+    private TimeSpan totalWeight_;
+
+    public ProcessSummaryBuilder(RawProfileData profile) {
+        profile_ = profile;
+    }
+
+    public void AddSample(ProfileSample sample) {
+        var context = sample.GetContext(profile_);
+        var process = profile_.GetOrCreateProcess(context.ProcessId);
+        processSamples_.AccumulateValue(process, sample.Weight);
+        totalWeight_ += sample.Weight;
+
+        // Modify in-place.
+        ref var durationRef = ref CollectionsMarshal.GetValueRefOrAddDefault(procDuration_, process, out bool found);
+
+        if (!found) {
+            durationRef.First = sample.Time;
+        }
+
+        durationRef.Last = sample.Time;
+    }
+
+    public void AddSample(TimeSpan sampleWeight, TimeSpan sampleTime, ProfileContext context) {
+        var process = profile_.GetOrCreateProcess(context.ProcessId);
+        processSamples_.AccumulateValue(process, sampleWeight);
+        totalWeight_ += sampleWeight;
+
+        // Modify in-place.
+        ref var durationRef = ref CollectionsMarshal.GetValueRefOrAddDefault(procDuration_, process, out bool found);
+
+        if (!found) {
+            durationRef.First = sampleTime;
+        }
+
+        durationRef.Last = sampleTime;
+    }
+
+    public List<ProcessSummary> MakeSummaries() {
+        var list = new List<ProcessSummary>(procDuration_.Count);
+
+        foreach (var pair in processSamples_) {
+            var item = new ProcessSummary(pair.Key, pair.Value) {
+                WeightPercentage = 100 * (double)pair.Value.Ticks / (double)totalWeight_.Ticks
+            };
+
+            list.Add(item);
+
+            if (procDuration_.TryGetValue(pair.Key, out var duration)) {
+                item.Duration = duration.Last - duration.First;
+            }
+        }
+
+        return list;
     }
 }

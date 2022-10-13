@@ -134,7 +134,7 @@ namespace IRExplorerUI {
             return GetSettingsFilePath(compilerName);
         }
 
-        public static string GetLastDockLayoutFilePath() {
+        public static string GetDefaultDockLayoutFilePath() {
             string path = GetSettingsDirectoryPath();
             return Path.Combine(path, DefaultDockLayoutFile);
         }
@@ -494,7 +494,7 @@ namespace IRExplorerUI {
                 string traceFilePath = GetTraceFilePath();
 
                 if (File.Exists(traceFilePath)) {
-                    File.Copy(traceFilePath, GetBackupTraceFilePath());
+                    File.Copy(traceFilePath, GetBackupTraceFilePath(), true);
                     File.Delete(traceFilePath);
                 }
 
@@ -509,6 +509,8 @@ namespace IRExplorerUI {
 
             if (!LoadApplicationSettings()) {
                 // Failed to load settings, reset them.
+                Utils.TryDeleteFile(GetSettingsFilePath());
+                Utils.TryDeleteFile(GetDefaultDockLayoutFilePath());
                 Settings = new ApplicationSettings();
             }
         }

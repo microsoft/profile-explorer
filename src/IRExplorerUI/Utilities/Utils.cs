@@ -685,6 +685,22 @@ namespace IRExplorerUI {
             Debugger.Break();
         }
 
+        public static bool TryDeleteFile(string path) {
+            if (!File.Exists(path)) {
+                return false;
+            }
+            
+            try {
+                File.Delete(path);
+            }
+            catch (Exception ex) {
+                Trace.WriteLine($"Failed to delete {path}: {ex.Message}");
+                return false;
+            }
+
+            return true;
+        }
+
         public static string TryGetFileName(string path) {
             try {
                 if (string.IsNullOrEmpty(path)) {

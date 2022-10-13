@@ -296,6 +296,7 @@ namespace IRExplorerUI {
             set {
                 recordingOptions_ = value;
                 OnPropertyChange(nameof(RecordingOptions));
+                OnPropertyChange(nameof(Options));
             }
         }
 
@@ -306,6 +307,7 @@ namespace IRExplorerUI {
             set {
                 options_ = value;
                 OnPropertyChange(nameof(Options));
+                OnPropertyChange(nameof(RecordingOptions));
             }
         }
 
@@ -419,7 +421,6 @@ namespace IRExplorerUI {
             var processIds = selectedProcSummary_.ConvertAll(proc => proc.Process.ProcessId);
 
             if (IsRecordMode) {
-               
 
                 report.SessionOptions = recordingOptions_.Clone();
                 var binSearchOptions = symbolOptions_.WithSymbolPaths(recordingOptions_.ApplicationPath);
@@ -641,7 +642,7 @@ namespace IRExplorerUI {
             timer.Stop();
             IsRecordingProfile = false;
 
-            if (recordedProfile_ != null && !task.IsCanceled) {
+            if (recordedProfile_ != null) {
                 processList_ = await Task.Run(() => recordedProfile_.BuildProcessSummary());
                 DisplayProcessList(processList_);
             }

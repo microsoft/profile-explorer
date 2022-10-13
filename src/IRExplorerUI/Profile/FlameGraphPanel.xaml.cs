@@ -28,7 +28,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         DependencyProperty.Register(nameof(FlameGraphOffset), typeof(double), typeof(FlameGraphPanel),
             new PropertyMetadata(0.0, FlameGraphOffsetChanged));
 
-
     public static DependencyProperty FlameGraphNodeOffsetProperty =
         DependencyProperty.Register(nameof(FlameGraphNodeOffsetProperty), typeof(double), typeof(FlameGraphPanel),
             new PropertyMetadata(0.0, FlameGraphOffsetChanged));
@@ -209,7 +208,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         var pointedNode = GraphViewer.FindPointedNode(point);
 
         if (pointedNode != null) {
-            await EnlargeNode(pointedNode);
+            if (Utils.IsControlModifierActive()) {
+                await OpenFunction(pointedNode);
+            }
+            else {
+                await EnlargeNode(pointedNode);
+            }
         }
         else {
             double zoomPointX = e.GetPosition(GraphViewer).X;
@@ -223,13 +227,21 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
     }
 
+    private async Task OpenFunction(FlameGraphNode node) {
+        if (node.CallTreeNode != null &&
+            node.CallTreeNode.Function.HasSections) {
+            var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+            var args = new OpenSectionEventArgs(node.CallTreeNode.Function.Sections[0], openMode);
+            await Session.SwitchDocumentSectionAsync(args);
+        }
+    }
+
     private double zoomPointX_;
     private double initialWidth_;
     private double initialOffsetX_;
 
     private double endOffsetX_;
     private FlameGraphNode offsetNode_;
-
 
     private async Task EnlargeNode(FlameGraphNode node, bool saveState = true, double verticalOffset = double.NaN) {
         if (Utils.IsAltModifierActive()) {

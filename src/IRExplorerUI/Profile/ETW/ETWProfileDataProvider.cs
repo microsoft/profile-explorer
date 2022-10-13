@@ -15,6 +15,7 @@ using IRExplorerUI.Profile.ETW;
 using Microsoft.Diagnostics.Tracing;
 using ProtoBuf;
 using static SkiaSharp.HarfBuzz.SKShaper;
+using System.Windows;
 
 namespace IRExplorerUI.Profile;
 
@@ -69,7 +70,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         });
 
         var profile = await Task.Run(() => {
-            using var eventProcessor = new ETWEventProcessor(tracePath, options);
+            int acceptedProcessId = processIds.Count == 1 ? processIds[0] : 0;
+            using var eventProcessor = new ETWEventProcessor(tracePath, options, acceptedProcessId);
             return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
         });
 
