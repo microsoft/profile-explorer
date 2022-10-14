@@ -15,7 +15,6 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerCore;
@@ -30,9 +29,9 @@ using IRExplorerUI.Controls;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerCore.IR.Tags;
 using ClosedXML.Excel;
-using static IRExplorerUI.ModuleReportPanel;
-using System.IO;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerUI.Profile;
+using MouseHoverLogic = IRExplorerUI.Utilities.UI.MouseHoverLogic;
 
 namespace IRExplorerUI {
     public static class DocumentHostCommand {
@@ -158,7 +157,7 @@ namespace IRExplorerUI {
             TextColor = Brushes.Black;
         }
 
-        public static ElementColumnValue Empty => new ElementColumnValue(string.Empty);
+        public static readonly ElementColumnValue Empty = new ElementColumnValue(string.Empty);
 
         public IRElement Element { get; set; }
         public long Value { get; set; }

@@ -16,10 +16,10 @@ namespace IRExplorerUI.Compilers {
         IEnumerable<FunctionDebugInfo> EnumerateFunctions(bool includeExternal = false);
         FunctionDebugInfo FindFunction(string functionName);
         FunctionDebugInfo FindFunctionByRVA(long rva);
-        DebugFunctionSourceFileInfo FindFunctionSourceFilePath(IRTextFunction textFunc);
-        DebugFunctionSourceFileInfo FindFunctionSourceFilePath(string functionName);
-        DebugFunctionSourceFileInfo FindSourceFilePathByRVA(long rva);
-        DebugSourceLineInfo FindSourceLineByRVA(long rva);
+        SourceFileDebugInfo FindFunctionSourceFilePath(IRTextFunction textFunc);
+        SourceFileDebugInfo FindFunctionSourceFilePath(string functionName);
+        SourceFileDebugInfo FindSourceFilePathByRVA(long rva);
+        SourceLineDebugInfo FindSourceLineByRVA(long rva);
     }
 
     [ProtoContract(SkipConstructor = true)]

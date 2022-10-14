@@ -46,7 +46,7 @@ public class ProfileStack : IEquatable<ProfileStack> {
 
     public bool IsUnknown => FramePointers == null;
     public int FrameCount => FramePointers.Length;
-    public static ProfileStack Unknown => new ProfileStack();
+    public static readonly ProfileStack Unknown = new ProfileStack();
 
     public object GetOptionalData() {
         Interlocked.MemoryBarrierProcessWide();

@@ -50,11 +50,7 @@ namespace IRExplorerUI.Profile {
             if (binFile == null || !binFile.Found) {
                 Trace.TraceWarning($"  Could not find local path for image {imageName}");
                 report_.AddModuleInfo(binaryInfo, binFile, ModuleLoadState.NotFound);
-
-                // Create a dummy document to represent the module,
-                // AddPlaceholderFunction will populate it.
-                ModuleDocument = LoadedDocument.CreateDummyDocument(binaryInfo.ImageName);
-                Summary = ModuleDocument.Summary;
+                CreateDummyDocument(binaryInfo);
                 return false;
             }
 
@@ -65,6 +61,7 @@ namespace IRExplorerUI.Profile {
             if (loadedDoc == null) {
                 Trace.TraceWarning($"  Failed to load document for image {imageName}");
                 report_.AddModuleInfo(binaryInfo, binFile, ModuleLoadState.Failed);
+                CreateDummyDocument(binaryInfo);
                 return false;
             }
             else {
@@ -86,6 +83,14 @@ namespace IRExplorerUI.Profile {
             Trace.TraceInformation($"Initialized image {imageName}");
             Initialized = true;
             return true;
+        }
+
+        private void CreateDummyDocument(BinaryFileDescriptor binaryInfo)
+        {
+            // Create a dummy document to represent the module,
+            // AddPlaceholderFunction will populate it.
+            ModuleDocument = LoadedDocument.CreateDummyDocument(binaryInfo.ImageName);
+            Summary = ModuleDocument.Summary;
         }
 
         public async Task<bool> InitializeDebugInfo() {

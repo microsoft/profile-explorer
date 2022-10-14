@@ -14,7 +14,7 @@ namespace IRExplorerCore
             EndLine = endLine;
         }
 
-        public static IRPassOutput Empty => new IRPassOutput(0, 0, 0, 0);
+        public static readonly IRPassOutput Empty = new IRPassOutput(0, 0, 0, 0);
 
         public long DataStartOffset { get; set; }
         /// <summary>
@@ -22,10 +22,10 @@ namespace IRExplorerCore
         /// </summary>
         public long DataEndOffset { get; set; }
         public long Size => DataEndOffset - DataStartOffset;
+        public byte[] Signature { get; set; } // SHA256 signature of the text.
         public int StartLine { get; set; }
         public int EndLine { get; set; }
         public int LineCount => EndLine - StartLine + 1;
-        public byte[] Signature { get; set; } // SHA256 signature of the text.
         public bool HasPreprocessedLines { get; set; }
 
         public override bool Equals(object obj) {

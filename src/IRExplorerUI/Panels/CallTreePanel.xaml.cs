@@ -147,24 +147,27 @@ namespace IRExplorerUI {
 
         private void SetupEvents() {
             CallTree.NodeExpanded += CallTreeOnNodeExpanded;
-            stackHoverPreview_ = new DraggablePopupHoverPreview(CallTree, CreateBacktracePopup);
-        }
 
-        private DraggablePopup CreateBacktracePopup(Point mousePoint, Point previewPoint) {
-            var element = (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint);
+            stackHoverPreview_ = new DraggablePopupHoverPreview(CallTree, 
+                CallTreeNodePopup.PopupHoverDuration,
+                (mousePoint, previewPoint) => {
+                    var element = (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint);
 
-            if (element is not TreeListItem treeItem) {
-                return null;
-            }
+                    if (element is not TreeListItem treeItem) {
+                        return null;
+                    }
 
-            var funcNode = treeItem.Node?.Tag as ChildFunctionEx;
-            var callNode = funcNode?.CallTreeNode;
+                    var funcNode = treeItem.Node?.Tag as ChildFunctionEx;
+                    var callNode = funcNode?.CallTreeNode;
 
-            if (callNode != null) {
-                return new CallTreeNodePopup(callNode, this, previewPoint, 400, 120, CallTree, Session);
-            }
+                    if (callNode != null) {
+                        return new CallTreeNodePopup(callNode, this, previewPoint, 400, 120, CallTree, Session);
+                    }
 
-            return null;
+                    return null;
+                },
+                (mousePoint, popup) => true,
+                popup => Session.RegisterDetachedPanel(popup));
         }
 
         private void CallTreeOnNodeExpanded(object sender, TreeNode node) {

@@ -223,7 +223,7 @@ namespace IRExplorerUI {
             string path = BrowseSourceFile();
 
             if (path != null) {
-                var sourceInfo = new DebugFunctionSourceFileInfo(path, path);
+                var sourceInfo = new SourceFileDebugInfo(path, path);
                 await LoadSourceFile(sourceInfo, section_.ParentFunction);
             }
         }
@@ -275,7 +275,7 @@ namespace IRExplorerUI {
             var debugInfo = GetDebugInfo(loadedDoc);
 
             if(debugInfo != null) {
-                var sourceInfo = DebugFunctionSourceFileInfo.Unknown;
+                var sourceInfo = SourceFileDebugInfo.Unknown;
                 funcProfile = Session.ProfileData?.GetFunctionProfile(function);
 
                 if (funcProfile != null) {
@@ -309,7 +309,7 @@ namespace IRExplorerUI {
 
             if (funcProfile != null) {
                 if (!funcLoaded && !string.IsNullOrEmpty(funcProfile.SourceFilePath)) {
-                    var sourceInfo = new DebugFunctionSourceFileInfo(funcProfile.SourceFilePath, funcProfile.SourceFilePath, 0);
+                    var sourceInfo = new SourceFileDebugInfo(funcProfile.SourceFilePath, funcProfile.SourceFilePath, 0);
                     funcLoaded = await LoadSourceFile(sourceInfo, function);
                 }
 
@@ -325,9 +325,9 @@ namespace IRExplorerUI {
             return funcLoaded;
         }
 
-        private DebugFunctionSourceFileInfo LocateSourceFile(FunctionProfileData funcProfile,
+        private SourceFileDebugInfo LocateSourceFile(FunctionProfileData funcProfile,
                                                               IDebugInfoProvider debugInfo) {
-            var sourceInfo = DebugFunctionSourceFileInfo.Unknown;
+            var sourceInfo = SourceFileDebugInfo.Unknown;
 
             // Lookup function by RVA, more precise.
             if (funcProfile.FunctionDebugInfo != null) {
@@ -337,7 +337,7 @@ namespace IRExplorerUI {
             return sourceInfo;
         }
 
-        private async Task<bool> LoadSourceFile(DebugFunctionSourceFileInfo sourceInfo, IRTextFunction function) {
+        private async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo, IRTextFunction function) {
             // Check if the file can be found. If it's from another machine,
             // a mapping is done after the user is asked to pick the new location of the file.
             string mappedSourceFilePath = null;

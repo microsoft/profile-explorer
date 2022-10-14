@@ -9,7 +9,6 @@ namespace IRExplorerUI {
     public class IRDocumentColumnData {
         public List<OptionalColumn> Columns { get; set; }
         public Dictionary<IRElement, ElementRowValue> Values { get; set; }
-        
 
         public IRDocumentColumnData(int capacity = 0) {
             Columns = new List<OptionalColumn>();
@@ -89,7 +88,6 @@ namespace IRExplorerUI {
         }
     }
 
-
     public sealed class ElementColumnValue : BindableObject {
         public ElementColumnValue(string text, long value = 0, double valueValuePercentage = 0.0, 
                                 int valueOrder = int.MaxValue, string tooltip = null) {
@@ -103,7 +101,7 @@ namespace IRExplorerUI {
             ShowPercentageBar = true;
         }
 
-        public static ElementColumnValue Empty => new ElementColumnValue(string.Empty);
+        public static readonly ElementColumnValue Empty = new ElementColumnValue(string.Empty);
 
         public IRElement Element { get; set; }
         public long Value { get; set; }
@@ -209,7 +207,6 @@ namespace IRExplorerUI {
             set => SetAndNotify(ref textFont_, value);
         }
     }
-
 
     public sealed class ElementRowValue : BindableObject {
         public ElementRowValue(IRElement element) {

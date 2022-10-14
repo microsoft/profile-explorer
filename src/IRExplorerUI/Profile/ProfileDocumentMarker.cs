@@ -315,7 +315,7 @@ namespace IRExplorerUI.Compilers.ASM {
                     var sb = new StringBuilder();
                     int index = 0;
 
-                    foreach (var target in callsite.Targets) {
+                    foreach (var target in callsite.SortedTargets) {
                         if (++index > 1) {
                             sb.AppendLine();
                         }

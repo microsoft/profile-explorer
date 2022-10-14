@@ -276,6 +276,10 @@ public struct IRTextFunctionId : IEquatable<IRTextFunctionId> {
     public static bool operator !=(IRTextFunctionId left, IRTextFunctionId right) {
         return !left.Equals(right);
     }
+
+    public static implicit operator IRTextFunctionId(IRTextFunction func) {
+        return new IRTextFunctionId(func);
+    }
 }
 
 [ProtoContract(SkipConstructor = true)]

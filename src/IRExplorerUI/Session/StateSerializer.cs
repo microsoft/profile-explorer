@@ -23,6 +23,7 @@ namespace IRExplorerUI {
             RegisterSurrogate<Pen, PenSurrogate>();
             RegisterSurrogate<Rect, RectSurrogate>();
             RegisterSurrogate<FontWeight, FontWeightSurrogate>();
+            RuntimeTypeModel.Default.InternStrings = true;
         }
 
         public static void RegisterSurrogate<T1, T2>() {

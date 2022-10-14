@@ -180,7 +180,7 @@ public class FlameGraphRenderer {
         foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
             // Reconsider replacing the dummy node.
             if (!nodeLayoutRecomputed &&
-                flameGraph_.ScaleWeight(node.Weight) > 10*minVisibleRectWidth_) {
+                flameGraph_.ScaleWeight(node.Weight) > 5*minVisibleRectWidth_) {
                 enlargeList ??= new List<FlameGraphGroupNode>();
                 enlargeList.Add(node);
             }
@@ -360,6 +360,7 @@ public class FlameGraphRenderer {
         }
 
         stopIndex = Math.Min(stopIndex, node.Children.Count);
+        int range = stopIndex - startIndex;
 
         for (int i = startIndex; i < stopIndex; i++) {
             //? If multiple children below width, single patterned rect
@@ -381,7 +382,11 @@ public class FlameGraphRenderer {
                 childNode.IsDummyNode = true;
             }
 
-            UpdateNodeLayout(childNode, x, y + nodeHeight_, skippedChildren == 0);
+            // If all child nodes were merged into a dummy node don't recurse.
+            if (totalSkippedChildren < range) {
+                UpdateNodeLayout(childNode, x, y + nodeHeight_, skippedChildren == 0);
+            }
+
             childNode.MaxDepthUnder = maxNodeDepth_ - childNode.Depth;
 
             if (dummyNode != null) {
@@ -397,7 +402,7 @@ public class FlameGraphRenderer {
         }
 
         node.MaxDepthUnder = maxNodeDepth_ - node.Depth;
-        return totalSkippedChildren < (stopIndex - startIndex);
+        return totalSkippedChildren < range;
     }
 
      private FlameGraphNode CreateSmallWeightDummyNode(FlameGraphNode node, double x, double y,
@@ -407,11 +412,9 @@ public class FlameGraphRenderer {
 
         // Collect all the child nodes that have a small weight
         // and replace them by one dummy node.
-        var replacedNodes = new List<FlameGraphNode>(node.Children.Count - startIndex);
-        int k;
-
         TimeSpan startTime = TimeSpan.MaxValue;
         TimeSpan endTime = TimeSpan.MinValue;
+        int k;
 
         for (k = startIndex; k < stopIndex; k++) {
             var childNode = node.Children[k];
@@ -423,7 +426,6 @@ public class FlameGraphRenderer {
                 break;
             }
 
-            replacedNodes.Add(childNode);
             totalWidth += childWidth;
             totalWeight += childNode.Weight;
             startTime = TimeSpan.FromTicks(Math.Min(startTime.Ticks, childNode.StartTime.Ticks));
@@ -437,7 +439,7 @@ public class FlameGraphRenderer {
         }
 
         var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
-        var dummyNode = new FlameGraphGroupNode(node, startIndex, replacedNodes, totalWeight, node.Depth);
+        var dummyNode = new FlameGraphGroupNode(node, startIndex, skippedChildren, totalWeight, node.Depth);
         dummyNode.IsDummyNode = true;
         dummyNode.Bounds = replacement;
         dummyNode.Style = PickDummyNodeStyle(node.Style);
@@ -557,12 +559,10 @@ public class FlameGraphRenderer {
 
         // Collect all the child nodes that have a small weight
         // and replace them by one dummy node.
-        var replacedNodes = new List<FlameGraphNode>(node.Children.Count - startIndex);
-        int k;
-
         TimeSpan startTime = TimeSpan.MaxValue;
         TimeSpan endTime = TimeSpan.MinValue;
-
+        int k;
+        
         for (k = startIndex; k < stopIndex; k++) {
             var childNode = node.Children[k];
             double childWidth = flameGraph_.ScaleDuration(childNode.StartTime, childNode.EndTime);
@@ -573,7 +573,6 @@ public class FlameGraphRenderer {
                 break;
             }
 
-            replacedNodes.Add(childNode);
             totalWidth += childWidth;
             totalWeight += childNode.Weight;
             startTime = TimeSpan.FromTicks(Math.Min(startTime.Ticks, childNode.StartTime.Ticks));
@@ -587,7 +586,7 @@ public class FlameGraphRenderer {
         }
 
         var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
-        var dummyNode = new FlameGraphGroupNode(node, startIndex, replacedNodes, totalWeight, node.Depth);
+        var dummyNode = new FlameGraphGroupNode(node, startIndex, skippedChildren, totalWeight, node.Depth);
         dummyNode.IsDummyNode = true;
         dummyNode.Bounds = replacement;
         dummyNode.Style = PickDummyNodeStyle(node.Style);
