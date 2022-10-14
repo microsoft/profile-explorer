@@ -172,7 +172,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         MouseMove += OnMouseMove;
         MouseDown += OnMouseDown;
 
-        stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer, 
+        stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
             CallTreeNodePopup.PopupHoverDuration,
             (mousePoint, previewPoint) => {
                 var pointedNode = GraphViewer.FindPointedNode(mousePoint);
@@ -192,10 +192,19 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                 return null;
             },
             (mousePoint, popup) => {
-                var pointedNode = GraphViewer.FindPointedNode(mousePoint);
-                return ((CallTreeNodePopup)popup).CallTreeNode != pointedNode?.CallTreeNode;
+                if (popup is CallTreeNodePopup previewPopup) {
+                    // Hide if not over the same node anymore.
+                    var pointedNode = GraphViewer.FindPointedNode(mousePoint);
+                    return previewPopup.CallTreeNode != pointedNode?.CallTreeNode;
+                }
+
+                return true;
             },
-            popup => Session.RegisterDetachedPanel(popup));
+            popup => {
+                if (popup.IsDetached) {
+                    Session.RegisterDetachedPanel(popup);
+                }
+            });
     }
 
     private async void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) {
@@ -265,7 +274,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private double endOffsetX_;
     private FlameGraphNode offsetNode_;
 
-    private async Task EnlargeNode(FlameGraphNode node, bool saveState = true, 
+    private async Task EnlargeNode(FlameGraphNode node, bool saveState = true,
                                    double verticalOffset = double.NaN,
                                    double horizontalOffset = double.NaN) {
         if (Utils.IsAltModifierActive()) {

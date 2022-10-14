@@ -161,13 +161,24 @@ namespace IRExplorerUI {
                     var callNode = funcNode?.CallTreeNode;
 
                     if (callNode != null) {
-                        return new CallTreeNodePopup(callNode, this, previewPoint, 400, 120, CallTree, Session);
+                        // If popup already opened for this node reuse the instance.
+                        if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup popup) {
+                            popup.UpdatePosition(previewPoint, CallTree);
+                            popup.UpdateNode(callNode);
+                            return popup;
+                        }
+
+                        return new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, CallTree, Session);
                     }
 
                     return null;
                 },
                 (mousePoint, popup) => true,
-                popup => Session.RegisterDetachedPanel(popup));
+                popup => {
+                    if (popup.IsDetached) {
+                        Session.RegisterDetachedPanel(popup);
+                    }
+                });
         }
 
         private void CallTreeOnNodeExpanded(object sender, TreeNode node) {
