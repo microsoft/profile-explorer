@@ -16,9 +16,9 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     [ProtoMember(4)]
     public long Size { get; set; }
     [ProtoMember(5)]
-    public DebugSourceLineInfo StartDebugSourceLine { get; set; }
+    public SourceLineDebugInfo StartSourceLineDebug { get; set; }
     [ProtoMember(6)]
-    public List<DebugSourceLineInfo> SourceLines { get; set; }
+    public List<SourceLineDebugInfo> SourceLines { get; set; }
     [ProtoMember(7)]
     public string OptimizationLevel { get; set; }
 
@@ -27,32 +27,35 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     public bool HasSourceLines => SourceLines != null && SourceLines.Count > 0;
     public bool HasOptimizationLevel => !string.IsNullOrEmpty(OptimizationLevel);
 
+    public static readonly FunctionDebugInfo Unknown = new FunctionDebugInfo("", 0, 0);
+    public bool IsUnknown => RVA == 0 && Size == 0;
+
     public FunctionDebugInfo(string name, long rva, long size, string optLevel = null, int id = -1) {
         Name = name;
         RVA = rva;
         Size = size;
         OptimizationLevel = optLevel;
-        StartDebugSourceLine = DebugSourceLineInfo.Unknown;
+        StartSourceLineDebug = SourceLineDebugInfo.Unknown;
         SourceLines = null;
         Id = id;
     }
 
-    public void AddSourceLine(DebugSourceLineInfo sourceLine) {
-        SourceLines ??= new List<DebugSourceLineInfo>();
+    public void AddSourceLine(SourceLineDebugInfo sourceLine) {
+        SourceLines ??= new List<SourceLineDebugInfo>();
         SourceLines.Add(sourceLine);
 
-        if (StartDebugSourceLine.IsUnknown) {
-            StartDebugSourceLine = sourceLine;
+        if (StartSourceLineDebug.IsUnknown) {
+            StartSourceLineDebug = sourceLine;
         }
     }
 
-    public DebugSourceLineInfo FindNearestLine(long offset) {
+    public SourceLineDebugInfo FindNearestLine(long offset) {
         if (!HasSourceLines) {
-            return DebugSourceLineInfo.Unknown;
+            return SourceLineDebugInfo.Unknown;
         }
 
         if (offset < SourceLines[0].OffsetStart) {
-            return DebugSourceLineInfo.Unknown;
+            return SourceLineDebugInfo.Unknown;
         }
 
         // Find line mapped to same offset or nearest smaller offset.
@@ -144,8 +147,8 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
 }
 
 [ProtoContract(SkipConstructor = true)]
-public struct DebugFunctionSourceFileInfo : IEquatable<DebugFunctionSourceFileInfo> {
-    public DebugFunctionSourceFileInfo(string filePath, string originalFilePath, int startLine = 0, bool hasChecksumMismatch = false) {
+public struct SourceFileDebugInfo : IEquatable<SourceFileDebugInfo> {
+    public SourceFileDebugInfo(string filePath, string originalFilePath, int startLine = 0, bool hasChecksumMismatch = false) {
         FilePath = filePath;
         OriginalFilePath = originalFilePath;
         StartLine = startLine;
@@ -160,13 +163,13 @@ public struct DebugFunctionSourceFileInfo : IEquatable<DebugFunctionSourceFileIn
     public int StartLine { get; set; }
     [ProtoMember(4)]
     public bool HasChecksumMismatch { get; set; }
-    public static DebugFunctionSourceFileInfo Unknown => new(null, null, -1);
+    public static readonly SourceFileDebugInfo Unknown = new(null, null, -1);
 
     public bool IsUnknown => FilePath == null;
     public bool HasFilePath => !string.IsNullOrEmpty(FilePath);
     public bool HasOriginalFilePath => !string.IsNullOrEmpty(OriginalFilePath);
 
-    public bool Equals(DebugFunctionSourceFileInfo other) {
+    public bool Equals(SourceFileDebugInfo other) {
         return FilePath == other.FilePath &&
                OriginalFilePath == other.OriginalFilePath &&
                StartLine == other.StartLine &&
@@ -174,7 +177,7 @@ public struct DebugFunctionSourceFileInfo : IEquatable<DebugFunctionSourceFileIn
     }
 
     public override bool Equals(object obj) {
-        return obj is DebugFunctionSourceFileInfo other && Equals(other);
+        return obj is SourceFileDebugInfo other && Equals(other);
     }
 
     public override int GetHashCode() {
@@ -183,7 +186,7 @@ public struct DebugFunctionSourceFileInfo : IEquatable<DebugFunctionSourceFileIn
 }
 
 [ProtoContract(SkipConstructor = true)]
-public struct DebugSourceLineInfo : IEquatable<DebugSourceLineInfo> {
+public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
     [ProtoMember(1)]
     public int OffsetStart { get; set; } // Offset in bytes relative to function start.
     [ProtoMember(2)]
@@ -195,10 +198,10 @@ public struct DebugSourceLineInfo : IEquatable<DebugSourceLineInfo> {
     [ProtoMember(5)]
     public string FilePath { get; set; }
 
-    public static DebugSourceLineInfo Unknown = new DebugSourceLineInfo(-1, -1);
+    public static readonly SourceLineDebugInfo Unknown = new SourceLineDebugInfo(-1, -1);
     public bool IsUnknown => Line == -1;
 
-    public DebugSourceLineInfo(int offsetStart, int line, int column = 0, string filePath = null) {
+    public SourceLineDebugInfo(int offsetStart, int line, int column = 0, string filePath = null) {
         OffsetStart = offsetStart;
         OffsetEnd = offsetStart;
         Line = line;
@@ -206,13 +209,13 @@ public struct DebugSourceLineInfo : IEquatable<DebugSourceLineInfo> {
         FilePath = filePath;
     }
 
-    public bool Equals(DebugSourceLineInfo other) {
+    public bool Equals(SourceLineDebugInfo other) {
         return OffsetStart == other.OffsetStart && Line == other.Line &&
                Column == other.Column && FilePath == other.FilePath;
     }
 
     public override bool Equals(object obj) {
-        return obj is DebugSourceLineInfo other && Equals(other);
+        return obj is SourceLineDebugInfo other && Equals(other);
     }
 
     public override int GetHashCode() {

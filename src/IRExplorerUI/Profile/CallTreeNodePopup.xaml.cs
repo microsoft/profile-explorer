@@ -18,38 +18,50 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Profile;
+using Microsoft.Diagnostics.Tracing.Stacks;
 
 namespace IRExplorerUI.Profile;
 
 public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged {
-    private IFunctionProfileInfoProvider funcInfoProvider_;
+    public static readonly TimeSpan PopupHoverDuration = TimeSpan.FromMilliseconds(50);
 
     public ISession Session { get; set; }
-    public ProfileCallTreeNode CallTreeNode { get; }
+    public ProfileCallTreeNode CallTreeNode { get; set; }
     public ProfileCallTreeNodeEx Node => PanelHost.Node;
     public event PropertyChangedEventHandler PropertyChanged;
 
     public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,
         Point position, double width, double height,
         UIElement referenceElement, ISession session) {
-        Session = session;
-        CallTreeNode = node;
-
+        
         InitializeComponent();
         Initialize(position, width, height, referenceElement);
-        PanelHost.Initialize(session, funcInfoProvider);
         PanelResizeGrip.ResizedControl = this;
+
+        Session = session;
+        PanelHost.Initialize(session, funcInfoProvider);
+        UpdateNode(node);
+        DataContext = this;
+    }
+
+    public void UpdateNode(ProfileCallTreeNode node) {
+        if (node == CallTreeNode) {
+            return;
+        }
+
+        CallTreeNode = node;
+        PanelHost.Show(CallTreeNode);
+        OnPropertyChanged(nameof(Node));
+
+        Dispatcher.BeginInvoke(async () => {
+            await PanelHost.ShowDetailsAsync();
+        });
     }
 
     private bool showResizeGrip_;
     public bool ShowResizeGrip {
         get => showResizeGrip_;
         set => SetField(ref showResizeGrip_, value);
-    }
-
-    protected override async void OnOpened(EventArgs e) {
-        await PanelHost.Show(CallTreeNode);
-        DataContext = this; // Set only now to bind title.
     }
 
     public override bool ShouldStartDragging(MouseButtonEventArgs e) {
@@ -65,6 +77,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) {
+        Session.UnregisterDetachedPanel(this);
         ClosePopup();
     }
 

@@ -53,7 +53,6 @@ namespace IRExplorerUI.Compilers.ASM {
         public string DebugInfoFilePath { get; set; }
     }
 
-
     public class Disassembler : IDisposable {
         private List<(byte[] Data, long StartRVA)> codeSectionData_;
         private long baseAddress_;
@@ -302,7 +301,7 @@ namespace IRExplorerUI.Compilers.ASM {
             }
 
             foreach (var funcInfo in debugInfo_.EnumerateFunctions(includeExternalSyms)) {
-                if (funcInfo.RVA != 0) {
+                if (!funcInfo.IsUnknown) {
                     sortedFuncList_.Add(funcInfo);
                 }
             }

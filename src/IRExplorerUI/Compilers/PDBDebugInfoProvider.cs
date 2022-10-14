@@ -44,7 +44,6 @@ namespace IRExplorerUI.Compilers {
         public SymbolFileSourceOptions SymbolOptions { get; set; }
         public Machine? Architecture => null;
 
-
         //? HttpHandler will be needed for the auth token with recent TraceEvent version
         //public class HttpHandler : DelegatingHandler {
         //    public HttpHandler(HttpMessageHandler h) : base(h) { }
@@ -59,7 +58,6 @@ namespace IRExplorerUI.Compilers {
         //        return r;
         //    }
         //}
-
 
         public static async Task<DebugFileSearchResult> LocateDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceOptions options) {
             if (symbolFile == null) {
@@ -201,11 +199,11 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
 
-        public DebugFunctionSourceFileInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
+        public SourceFileDebugInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
             return FindFunctionSourceFilePath(textFunc.Name);
         }
 
-        public DebugFunctionSourceFileInfo FindSourceFilePathByRVA(long rva) {
+        public SourceFileDebugInfo FindSourceFilePathByRVA(long rva) {
             // Find the first line in the function.
             var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(rva);
             return FindFunctionSourceFilePathImpl(lineInfo, sourceFile, (uint)rva);
@@ -213,11 +211,11 @@ namespace IRExplorerUI.Compilers {
 
         //? TODO: file selected in source panel should also be checked
         //? TODO: Integrate with SourceFileMapper
-        public DebugFunctionSourceFileInfo FindFunctionSourceFilePath(string functionName) {
+        public SourceFileDebugInfo FindFunctionSourceFilePath(string functionName) {
             var funcSymbol = FindFunctionSymbol(functionName);
 
             if (funcSymbol == null) {
-                return DebugFunctionSourceFileInfo.Unknown;
+                return SourceFileDebugInfo.Unknown;
             }
 
             // Find the first line in the function.
@@ -225,10 +223,10 @@ namespace IRExplorerUI.Compilers {
             return FindFunctionSourceFilePathImpl(lineInfo, sourceFile, funcSymbol.relativeVirtualAddress);
         }
 
-        private DebugFunctionSourceFileInfo FindFunctionSourceFilePathImpl(DebugSourceLineInfo lineInfo,
+        private SourceFileDebugInfo FindFunctionSourceFilePathImpl(SourceLineDebugInfo lineInfo,
             IDiaSourceFile sourceFile, uint rva) {
             if (lineInfo.IsUnknown) {
-                return DebugFunctionSourceFileInfo.Unknown;
+                return SourceFileDebugInfo.Unknown;
             }
 
             var originalFilePath = lineInfo.FilePath;
@@ -273,11 +271,11 @@ namespace IRExplorerUI.Compilers {
                 }
                 catch (Exception ex) {
                     Trace.TraceError($"Failed to locate source file for {debugFilePath_}: {ex.Message}");
-                    return DebugFunctionSourceFileInfo.Unknown;
+                    return SourceFileDebugInfo.Unknown;
                 }
             }
 
-            return new DebugFunctionSourceFileInfo(localFilePath, originalFilePath, lineInfo.Line, hasChecksumMismatch);
+            return new SourceFileDebugInfo(localFilePath, originalFilePath, lineInfo.Line, hasChecksumMismatch);
         }
 
         private bool SourceFileChecksumMatchesPDB(IDiaSourceFile sourceFile, string filePath) {
@@ -288,11 +286,11 @@ namespace IRExplorerUI.Compilers {
                    pdbChecksum.SequenceEqual(fileChecksum);
         }
 
-        public DebugSourceLineInfo FindSourceLineByRVA(long rva) {
+        public SourceLineDebugInfo FindSourceLineByRVA(long rva) {
             return FindSourceLineByRVAImpl(rva).Item1;
         }
 
-        private (DebugSourceLineInfo, IDiaSourceFile) FindSourceLineByRVAImpl(long rva) {
+        private (SourceLineDebugInfo, IDiaSourceFile) FindSourceLineByRVAImpl(long rva) {
             try {
                 session_.findLinesByRVA((uint)rva, 0, out var lineEnum);
 
@@ -304,7 +302,7 @@ namespace IRExplorerUI.Compilers {
                     }
 
                     var sourceFile = lineNumber.sourceFile;
-                    return (new DebugSourceLineInfo((int)lineNumber.addressOffset, (int)lineNumber.lineNumber,
+                    return (new SourceLineDebugInfo((int)lineNumber.addressOffset, (int)lineNumber.lineNumber,
                                              (int)lineNumber.columnNumber, sourceFile.fileName), sourceFile);
                 }
             }
@@ -312,7 +310,7 @@ namespace IRExplorerUI.Compilers {
                 Trace.TraceError($"Failed to get line for RVA {rva}: {ex.Message}");
             }
 
-            return (DebugSourceLineInfo.Unknown, null);
+            return (SourceLineDebugInfo.Unknown, null);
         }
 
         private HashAlgorithm GetSourceFileChecksumHashAlgorithm(IDiaSourceFile sourceFile) {

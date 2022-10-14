@@ -122,12 +122,20 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         DataContext = this;
     }
 
-    public async Task Show(ProfileCallTreeNode node) {
+    public void Show(ProfileCallTreeNode node) {
         CallTreeNode = node;
-        BacktraceList.Show(await Task.Run(() => FunctionInfoProvider.GetBacktrace(node)), filter: false);
-        FunctionList.Show(await Task.Run(() => FunctionInfoProvider.GetTopFunctions(node)));
-        ModuleList.Show(await Task.Run(() => FunctionInfoProvider.GetTopModules(node)));
-        await SetupInstanceInfo(node);
+    }
+
+    public async Task ShowAsync(ProfileCallTreeNode node) {
+        CallTreeNode = node;
+        await ShowDetailsAsync();
+    }
+
+    public async Task ShowDetailsAsync() {
+        BacktraceList.Show(await Task.Run(() => FunctionInfoProvider.GetBacktrace(CallTreeNode)), filter: false);
+        FunctionList.Show(await Task.Run(() => FunctionInfoProvider.GetTopFunctions(CallTreeNode)));
+        ModuleList.Show(await Task.Run(() => FunctionInfoProvider.GetTopModules(CallTreeNode)));
+        await SetupInstanceInfo(CallTreeNode);
     }
 
     private async Task SetupInstanceInfo(ProfileCallTreeNode node) {

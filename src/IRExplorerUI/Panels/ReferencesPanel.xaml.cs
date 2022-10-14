@@ -12,11 +12,11 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Utilities.UI;
 using ProtoBuf;
 
 namespace IRExplorerUI {
@@ -224,7 +224,8 @@ namespace IRExplorerUI {
             InitializeComponent();
             DataContext = this;
             MouseLeave += OnMouseLeave;
-            
+
+            //? TODO: Replace with DraggablePopupHoverPreview
             var hover = new MouseHoverLogic(this);
             hover.MouseHover += Hover_MouseHover;
             hover.MouseHoverStopped += Hover_MouseHoverStopped;

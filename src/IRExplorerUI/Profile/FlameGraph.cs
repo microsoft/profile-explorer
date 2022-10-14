@@ -57,19 +57,18 @@ namespace IRExplorerUI.Profile {
         public TimeSpan Duration => EndTime - StartTime;
     }
 
-
     public class FlameGraphGroupNode : FlameGraphNode {
         public override bool IsGroup => true;
-        public List<FlameGraphNode> ReplacedNodes { get; }
+        public int ReplacedNodeCount  { get; }
         public int ReplacedStartIndex { get; }
-        public int ReplacedEndIndex => ReplacedStartIndex + ReplacedNodes.Count;
+        public int ReplacedEndIndex => ReplacedStartIndex + ReplacedNodeCount;
 
         public FlameGraphGroupNode(FlameGraphNode parentNode, int startIndex,
-                                   List<FlameGraphNode> replacedNodes, TimeSpan weight, int depth) :
+                                   int replacedNodeCount, TimeSpan weight, int depth) :
             base(null, weight, depth) {
             Parent = parentNode;
             ReplacedStartIndex = startIndex;
-            ReplacedNodes = replacedNodes;
+            ReplacedNodeCount = replacedNodeCount;
         }
     }
 
@@ -211,7 +210,6 @@ namespace IRExplorerUI.Profile {
                     targetNode.StartTime = TimeSpan.FromTicks(Math.Min(targetNode.StartTime.Ticks, sample.Time.Ticks));
                     targetNode.EndTime = TimeSpan.FromTicks(Math.Max(targetNode.EndTime.Ticks, sample.Time.Ticks + sample.Weight.Ticks));
                 }
-
 
                 if (k > 0) {
                     node.ChildrenWeight += sample.Weight;

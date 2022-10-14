@@ -171,7 +171,7 @@ namespace IRExplorerUI.Compilers {
                             //Trace.WriteLine($"Using closest {closestPoint.Value.StartLine}");
                             var doc = md.GetDocument(closestPoint.Value.Document);
                             var docName = md.GetString(doc.Name);
-                            var lineInfo = new DebugSourceLineInfo(pair.NativeOffset, closestPoint.Value.StartLine,
+                            var lineInfo = new SourceLineDebugInfo(pair.NativeOffset, closestPoint.Value.StartLine,
                                 closestPoint.Value.StartColumn, docName);
                             functionDebugInfo.AddSourceLine(lineInfo);
                         }
@@ -232,39 +232,39 @@ namespace IRExplorerUI.Compilers {
                 }
             }
 
-            return null;
+            return FunctionDebugInfo.Unknown;
         }
 
-        public DebugFunctionSourceFileInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
+        public SourceFileDebugInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
             return FindFunctionSourceFilePath(textFunc.Name);
         }
 
-        public DebugFunctionSourceFileInfo FindFunctionSourceFilePath(string functionName) {
+        public SourceFileDebugInfo FindFunctionSourceFilePath(string functionName) {
             if (functionMap_.TryGetValue(functionName, out var funcInfo)) {
                 return GetSourceFileInfo(funcInfo);
             }
 
-            return DebugFunctionSourceFileInfo.Unknown;
+            return SourceFileDebugInfo.Unknown;
         }
 
-        private static DebugFunctionSourceFileInfo GetSourceFileInfo(FunctionDebugInfo info)
+        private static SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info)
         {
-            return new DebugFunctionSourceFileInfo(info.StartDebugSourceLine.FilePath,
-                info.StartDebugSourceLine.FilePath,
-                info.StartDebugSourceLine.Line);
+            return new SourceFileDebugInfo(info.StartSourceLineDebug.FilePath,
+                info.StartSourceLineDebug.FilePath,
+                info.StartSourceLineDebug.Line);
         }
 
-        public DebugFunctionSourceFileInfo FindSourceFilePathByRVA(long rva) {
+        public SourceFileDebugInfo FindSourceFilePathByRVA(long rva) {
             var funcInfo = FindFunctionByRVA(rva);
 
             if (EnsureHasSourceLines(funcInfo)) {
                 return GetSourceFileInfo(funcInfo);
             }
 
-            return DebugFunctionSourceFileInfo.Unknown;
+            return SourceFileDebugInfo.Unknown;
         }
 
-        public DebugSourceLineInfo FindSourceLineByRVA(long rva) {
+        public SourceLineDebugInfo FindSourceLineByRVA(long rva) {
             var funcInfo = FindFunctionByRVA(rva);
 
             if (EnsureHasSourceLines(funcInfo)) {
@@ -272,7 +272,7 @@ namespace IRExplorerUI.Compilers {
                 return funcInfo.FindNearestLine(offset);
             }
 
-            return DebugSourceLineInfo.Unknown;
+            return SourceLineDebugInfo.Unknown;
         }
         
         public bool LoadDebugInfo(string debugFilePath) {

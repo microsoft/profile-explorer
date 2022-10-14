@@ -10,13 +10,13 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Utilities.UI;
 using ProtoBuf;
 
 namespace IRExplorerUI {

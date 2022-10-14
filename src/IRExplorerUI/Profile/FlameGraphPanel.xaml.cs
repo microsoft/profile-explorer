@@ -16,7 +16,6 @@ using IRExplorerCore.Utilities;
 using IRExplorerUI.Controls;
 using Microsoft.Diagnostics.Tracing.Stacks;
 
-
 namespace IRExplorerUI.Profile;
 
 public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoProvider, INotifyPropertyChanged {
@@ -84,7 +83,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private const double FastPanOffset = 1000;
     private const double DefaultPanOffset = 100;
     private const double ZoomAnimationDuration = TimePerFrame * 10;
-    private const double EnlargeAnimationDuration = TimePerFrame * 20;
+    private const double EnlargeAnimationDuration = TimePerFrame * 12;
     private const double ScrollWheelZoomAnimationDuration = TimePerFrame * 8;
 
     private bool dragging_;
@@ -100,7 +99,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     public FlameGraphPanel() {
         InitializeComponent();
         stateStack_ = new Stack<FlameGraphState>();
-        stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer, CreatePreviewPopup);
         SetupEvents();
         DataContext = this;
 
@@ -116,7 +114,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                                               GraphHost.VerticalOffset,
                                               GraphAreaWidth, GraphAreaHeight);
     private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
-    private double GraphZoomRatioLog => Math.Pow(Math.Log2(GraphZoomRatio + 1), 2);
+    private double GraphZoomRatioLog => true ? GraphZoomRatio :  Math.Pow(Math.Log2(GraphZoomRatio + 1), 3);
     private double CenterZoomPointX => GraphHost.HorizontalOffset + GraphAreaWidth / 2;
 
     public override ISession Session {
@@ -173,19 +171,43 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         MouseDoubleClick += OnMouseDoubleClick;
         MouseMove += OnMouseMove;
         MouseDown += OnMouseDown;
+
+        stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer, 
+            CallTreeNodePopup.PopupHoverDuration,
+            (mousePoint, previewPoint) => {
+                var pointedNode = GraphViewer.FindPointedNode(mousePoint);
+                var callNode = pointedNode?.CallTreeNode;
+
+                if (callNode != null) {
+                    // If popup already opened for this node reuse the instance.
+                    if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup popup) {
+                        popup.UpdatePosition(previewPoint, GraphViewer);
+                        popup.UpdateNode(callNode);
+                        return popup;
+                    }
+
+                    return new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, GraphViewer, Session);
+                }
+
+                return null;
+            },
+            (mousePoint, popup) => {
+                var pointedNode = GraphViewer.FindPointedNode(mousePoint);
+                return ((CallTreeNodePopup)popup).CallTreeNode != pointedNode?.CallTreeNode;
+            },
+            popup => Session.RegisterDetachedPanel(popup));
     }
 
     private async void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) {
         HidePreviewPopup();
 
-        var point = e.GetPosition(GraphHost);
         var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
         if (pointedNode == null) {
             GraphViewer.ClearSelection(); // Click outside graph is captured here.
         }
         else if (pointedNode.CallTreeNode != null) {
-            await NodeDetailsPanel.Show(pointedNode.CallTreeNode);
+            await NodeDetailsPanel.ShowAsync(pointedNode.CallTreeNode);
         }
     }
 
@@ -243,7 +265,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private double endOffsetX_;
     private FlameGraphNode offsetNode_;
 
-    private async Task EnlargeNode(FlameGraphNode node, bool saveState = true, double verticalOffset = double.NaN) {
+    private async Task EnlargeNode(FlameGraphNode node, bool saveState = true, 
+                                   double verticalOffset = double.NaN,
+                                   double horizontalOffset = double.NaN) {
         if (Utils.IsAltModifierActive()) {
             await ChangeRootNode(node, true);
             return;
@@ -268,12 +292,16 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             initialOffsetX_ = GraphHost.HorizontalOffset;
             endOffsetX_ = GraphViewer.ComputeNodePosition(node).X * offsetRatio;
 
+            if (!double.IsNaN(horizontalOffset)) {
+                endOffsetX_ = horizontalOffset;
+            }
+
             var horizontalAnim = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(EnlargeAnimationDuration));
 
             horizontalAnim.Completed += async (sender, args) => {
                 await Dispatcher.BeginInvoke(() => {
                     double newNodeX = GraphViewer.ComputeNodePosition(node).X;
-                    double offset = Math.Min(newNodeX, newMaxWidth);
+                    double offset = Math.Min(endOffsetX_, newMaxWidth);
                     GraphHost.ScrollToHorizontalOffset(offset);
 
                     if (!double.IsNaN(verticalOffset)) {
@@ -349,7 +377,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             case FlameGraphStateKind.EnlargeNode: {
                 // IF there is no node the root node should be selected.
                 var node = state.Node ?? GraphViewer.FlameGraph.RootNode;
-                await EnlargeNode(node, false, state.VerticalOffset);
+                await EnlargeNode(node, false, state.VerticalOffset, state.HorizontalOffset);
                 break;
             }
             case FlameGraphStateKind.ChangeRootNode: {
@@ -374,15 +402,30 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             var offset = draggingViewStart_ - (e.GetPosition(GraphHost) - draggingStart_);
             GraphHost.ScrollToHorizontalOffset(offset.X);
             GraphHost.ScrollToVerticalOffset(offset.Y);
+            CaptureMouse();
             e.Handled = true;
         }
     }
 
-    private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
+    private async void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
         if (dragging_) {
             dragging_ = false;
             ReleaseMouseCapture();
             e.Handled = true;
+        }
+
+        if (IsMouseOutsideViewport(e)) {
+            return;
+        }
+
+        var point = e.GetPosition(GraphHost);
+        var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
+
+        if (pointedNode == null) {
+            GraphViewer.ClearSelection(); // Click outside graph is captured here.
+        }
+        else if (pointedNode.CallTreeNode != null) {
+            await NodeDetailsPanel.ShowAsync(pointedNode.CallTreeNode);
         }
     }
 
@@ -394,21 +437,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
 
         var point = e.GetPosition(GraphHost);
-        var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
-
-        if (pointedNode == null) {
-            GraphViewer.ClearSelection(); // Click outside graph is captured here.
-        }
-        else if(pointedNode.CallTreeNode != null) {
-            await NodeDetailsPanel.Show(pointedNode.CallTreeNode);
-        }
-
         dragging_ = true;
         draggingStart_ = point;
-        draggingViewStart_ = new Point(GraphHost.HorizontalOffset, GraphHost.VerticalOffset); CaptureMouse();
-        Focus();
-        CaptureMouse();
-        e.Handled = true;
+        draggingViewStart_ = new Point(GraphHost.HorizontalOffset, GraphHost.VerticalOffset);
     }
 
     private bool IsMouseOutsideViewport(MouseButtonEventArgs e) {
@@ -501,13 +532,38 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         GraphHost.ScrollToVerticalOffset(offsetY);
     }
 
+    DoubleAnimation widthAnimation_;
+    DoubleAnimation zoomAnimation_;
+
     private void SetMaxWidth(double maxWidth, bool animate = true, double duration = ZoomAnimationDuration) {
         if (animate) {
             var animation = new DoubleAnimation(GraphViewer.MaxGraphWidth, maxWidth, TimeSpan.FromMilliseconds(duration));
+            animation.Completed += (sender, args) => {
+                widthAnimation_ = null;
+            };
+
+            widthAnimation_ = animation;
             BeginAnimation(FlameGraphWidthProperty, animation, HandoffBehavior.SnapshotAndReplace);
         }
         else {
+            CancelWidthAnimation();
             GraphViewer.UpdateMaxWidth(maxWidth);
+        }
+    }
+
+    private void CancelWidthAnimation() {
+        if(widthAnimation_ != null) {
+            widthAnimation_.BeginTime = null;
+            BeginAnimation(FlameGraphWidthProperty, widthAnimation_);
+            widthAnimation_ = null;
+        }
+    }
+
+    private void CancelZoomAnimation() {
+        if (zoomAnimation_ != null) {
+            zoomAnimation_.BeginTime = null;
+            BeginAnimation(FlameGraphWidthProperty, zoomAnimation_);
+            zoomAnimation_ = null;
         }
     }
 
@@ -550,9 +606,17 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             initialWidth_ = initialWidth;
             initialOffsetX_ = initialOffsetX;
             var animation = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(duration));
+
+            animation.Completed += (sender, args) => {
+                zoomAnimation_ = null;
+            };
+
+            zoomAnimation_ = animation;
             BeginAnimation(FlameGraphOffsetProperty, animation, HandoffBehavior.SnapshotAndReplace);
         }
         else {
+            CancelWidthAnimation();
+            CancelZoomAnimation();
             AdjustGraphOffset(zoomPointX, initialWidth, initialOffsetX);
         }
     }
@@ -573,7 +637,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     private void AdjustZoomPointOffset(double progress) {
-    double zoom = GraphViewer.MaxGraphWidth / initialWidth_;
+        double zoom = GraphViewer.MaxGraphWidth / initialWidth_;
         double offsetAdjustment = (initialOffsetX_ / zoom + zoomPointX_);
         GraphHost.ScrollToHorizontalOffset(offsetAdjustment * zoom - zoomPointX_);
     }
@@ -677,8 +741,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         if (callNode != null) {
             // If popup already opened for this node reuse the instance.
-            if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup popup &&
-                popup.CallTreeNode == callNode) {
+            if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup popup) {
+                popup.UpdatePosition(previewPoint, GraphViewer);
+                popup.UpdateNode(callNode);
                 return popup;
             }
 

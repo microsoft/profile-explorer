@@ -973,13 +973,13 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         public long FrameIP { get; set; }
         public long FrameRVA { get; set; }
         [ProtoMember(1)]
-        public FunctionDebugInfo DebugInfo { get; set; }
+        public FunctionDebugInfo DebugInfo { get; set; } //? Common part, extract
         [ProtoMember(2)]
-        public IRTextFunctionReference Function { get; set; }
-        public ProfileImage Image { get; set; }
-        public ModuleInfo Module { get; set; }
-        public FunctionProfileData Profile { get; set; }
-        public bool IsKernelCode { get; set; }
+        public IRTextFunctionReference Function { get; set; }  //? Common part, extract
+        public ProfileImage Image { get; set; } // Common part, extract
+        public ModuleInfo Module { get; set; }  //? Common part, extract
+        public FunctionProfileData Profile { get; set; } //? Common part, extract
+        public bool IsKernelCode { get; set; } //? Common part, extract
         public bool IsUnknown => Image == null;
 
         public ResolvedProfileStackFrame() { }
@@ -995,7 +995,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             Profile = profile;
         }
 
-        public static ResolvedProfileStackFrame Unknown => new ResolvedProfileStackFrame();
+        public static readonly ResolvedProfileStackFrame Unknown = new ResolvedProfileStackFrame();
     }
 
     [ProtoContract(SkipConstructor = true)]
