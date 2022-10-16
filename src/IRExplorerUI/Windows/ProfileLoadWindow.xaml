@@ -1,37 +1,37 @@
 ﻿<Window
-    Height="600"
-    MinHeight="500"
-    MinWidth="600"
-    ResizeMode="CanResizeWithGrip"
-    ShowInTaskbar="False"
-    SizeToContent="Height"
-    Title="Load profile trace"
-    Width="800"
-    WindowStartupLocation="CenterOwner"
-    WindowStyle="ToolWindow"
-    d:DesignHeight="800"
-    mc:Ignorable="d"
     x:Class="IRExplorerUI.ProfileLoadWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:IRExplorerUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:profile="clr-namespace:IRExplorerUI.Profile"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit">
+    xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
+    Title="Load profile trace"
+    Width="800"
+    Height="600"
+    MinWidth="600"
+    MinHeight="500"
+    d:DesignHeight="800"
+    ResizeMode="CanResizeWithGrip"
+    ShowInTaskbar="False"
+    SizeToContent="Height"
+    WindowStartupLocation="CenterOwner"
+    WindowStyle="ToolWindow"
+    mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
         <DockPanel>
-            <Grid DockPanel.Dock="Left" Width="220">
+            <Grid Width="220" DockPanel.Dock="Left">
                 <ListBox
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                    x:Name="SessionList"
                     HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     IsEnabled="{Binding ProcessListEnabled}"
                     ScrollViewer.VerticalScrollBarVisibility="Auto"
                     SelectionChanged="SessionList_SelectionChanged"
-                    SelectionMode="Single"
-                    VerticalAlignment="Stretch"
-                    x:Name="SessionList">
+                    SelectionMode="Single">
 
                     <ListBox.ItemTemplate>
                         <DataTemplate>
@@ -43,9 +43,9 @@
 
                                 </StackPanel>
                                 <StackPanel
-                                    DockPanel.Dock="Right"
-                                    HorizontalAlignment="Right"
                                     Margin="20,0,0,0"
+                                    HorizontalAlignment="Right"
+                                    DockPanel.Dock="Right"
                                     Orientation="Horizontal">
                                     <StackPanel.Style>
                                         <Style TargetType="{x:Type StackPanel}">
@@ -59,25 +59,25 @@
                                     </StackPanel.Style>
 
                                     <Button
+                                        Name="SessionReportButton"
+                                        Width="20"
+                                        Height="20"
+                                        Padding="1"
                                         Background="Transparent"
                                         BorderThickness="0"
                                         Click="SessionReportButton_Click"
-                                        Height="20"
-                                        Name="SessionReportButton"
-                                        Padding="1"
-                                        ToolTip="Open session report"
-                                        Width="20">
+                                        ToolTip="Open session report">
                                         <Image Height="16" Source="{StaticResource WindowIcon}" />
                                     </Button>
                                     <Button
+                                        Name="SessionRemoveButton"
+                                        Width="20"
+                                        Height="20"
+                                        Padding="1"
                                         Background="Transparent"
                                         BorderThickness="0"
                                         Click="SessionRemoveButton_Click"
-                                        Height="20"
-                                        Name="SessionRemoveButton"
-                                        Padding="1"
-                                        ToolTip="Remove session from history"
-                                        Width="20">
+                                        ToolTip="Remove session from history">
                                         <Image Height="16" Source="{StaticResource ClearIcon}" />
                                     </Button>
                                 </StackPanel>
@@ -99,121 +99,121 @@
                 </ListBox>
             </Grid>
             <TabControl
+                VerticalAlignment="Stretch"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                DockPanel.Dock="Right"
-                VerticalAlignment="Stretch">
+                DockPanel.Dock="Right">
                 <TabItem Header="Session">
                     <StackPanel Margin="0,0,0,8" Orientation="Vertical">
-                        <StackPanel Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}" x:Name="ProfileCapturePanel">
+                        <StackPanel x:Name="ProfileCapturePanel" Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
 
                             <TextBlock Margin="8,6,8,0" Text="Profiling target" />
 
                             <RadioButton
+                                x:Name="StartAppRadioButton"
+                                Margin="8,6,8,0"
                                 Content="Start application"
                                 IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profile:ProfileSessionKind.StartProcess}}"
                                 IsEnabled="{Binding InputControlsEnabled}"
-                                Margin="8,6,8,0"
-                                ToolTip="Start a new process and record only its profile"
-                                x:Name="StartAppRadioButton" />
+                                ToolTip="Start a new process and record only its profile" />
                             <RadioButton
+                                x:Name="SystemWideRadioButton"
+                                Margin="8,4,8,0"
                                 Content="System-wide"
                                 IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
                                 IsEnabled="{Binding InputControlsEnabled}"
-                                Margin="8,4,8,0"
-                                ToolTip="Profiles every application running on the current machine"
-                                x:Name="SystemWideRadioButton" />
+                                ToolTip="Profiles every application running on the current machine" />
 
                             <Separator Margin="0,8,0,8" />
 
-                            <StackPanel Visibility="{Binding ElementName=StartAppRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}" x:Name="StartProcessPanel">
+                            <StackPanel x:Name="StartProcessPanel" Visibility="{Binding ElementName=StartAppRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <TextBlock Margin="8,0,8,0" Text="Application path" />
                                 <Grid Margin="8,4,8,0">
                                     <controls:FileSystemTextBox
+                                        x:Name="ApplicationAutocompleteBox"
+                                        Height="22"
+                                        Margin="0,0,48,0"
+                                        HorizontalAlignment="Stretch"
                                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                         FilterMode="StartsWithOrdinal"
-                                        Height="22"
-                                        HorizontalAlignment="Stretch"
                                         IsDropDownOpen="True"
                                         IsEnabled="{Binding InputControlsEnabled}"
                                         IsTextCompletionEnabled="False"
-                                        Margin="0,0,48,0"
                                         MinimumPrefixLength="1"
-                                        Text="{Binding Path=RecordingOptions.ApplicationPath, Mode=TwoWay}"
-                                        x:Name="ApplicationAutocompleteBox" />
+                                        Text="{Binding Path=RecordingOptions.ApplicationPath, Mode=TwoWay}" />
 
                                     <Button
+                                        x:Name="ApplicationBrowseButton"
+                                        Height="22"
+                                        Padding="4,2,4,2"
+                                        HorizontalAlignment="Right"
                                         Click="ApplicationBrowseButton_Click"
                                         Content="Browse"
-                                        Height="22"
-                                        HorizontalAlignment="Right"
-                                        IsEnabled="{Binding InputControlsEnabled}"
-                                        Padding="4,2,4,2"
-                                        x:Name="ApplicationBrowseButton" />
+                                        IsEnabled="{Binding InputControlsEnabled}" />
                                 </Grid>
 
                                 <TextBlock Margin="8,4,8,0" Text="Arguments" />
                                 <Grid Margin="8,4,8,0">
                                     <TextBox
+                                        Height="22"
+                                        Margin="0,0,48,0"
+                                        HorizontalAlignment="Stretch"
                                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                        Height="22"
-                                        HorizontalAlignment="Stretch"
                                         IsEnabled="{Binding InputControlsEnabled}"
-                                        Margin="0,0,48,0"
                                         Text="{Binding Path=RecordingOptions.ApplicationArguments, Mode=TwoWay}" />
                                 </Grid>
                                 <TextBlock Margin="8,4,8,0" Text="Working directory" />
                                 <Grid Margin="8,4,8,0">
                                     <TextBox
+                                        Height="22"
+                                        Margin="0,0,48,0"
+                                        HorizontalAlignment="Stretch"
                                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                        Height="22"
-                                        HorizontalAlignment="Stretch"
                                         IsEnabled="{Binding InputControlsEnabled}"
-                                        Margin="0,0,48,0"
                                         Text="{Binding Path=RecordingOptions.WorkingDirectory, Mode=TwoWay}" />
                                 </Grid>
 
                                 <CheckBox
+                                    x:Name="EnvironmentVarsCheckbox"
+                                    Margin="8,8,0,0"
                                     Content="Optional environment variables (one per line, var=value format)"
                                     IsChecked="{Binding Path=RecordingOptions.EnableEnvironmentVars, Mode=TwoWay}"
-                                    IsEnabled="{Binding InputControlsEnabled}"
-                                    Margin="8,8,0,0"
-                                    x:Name="EnvironmentVarsCheckbox" />
+                                    IsEnabled="{Binding InputControlsEnabled}" />
                                 <TextBox
+                                    x:Name="EnvironmentVarsTextBox"
+                                    MinHeight="36"
+                                    Margin="28,4,55,0"
+                                    HorizontalAlignment="Stretch"
                                     AcceptsReturn="True"
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                    HorizontalAlignment="Stretch"
                                     IsEnabled="{Binding ElementName=EnvironmentVarsCheckbox, Path=IsChecked}"
-                                    Margin="28,4,55,0"
-                                    MinHeight="36"
                                     Text="{Binding Path=RecordingOptions.EnvironmentVariables, Mode=TwoWay, Converter={StaticResource StringListPairConverter}}"
-                                    TextWrapping="Wrap"
-                                    x:Name="EnvironmentVarsTextBox" />
+                                    TextWrapping="Wrap" />
 
                             </StackPanel>
 
                             <Expander
+                                Margin="8,8,8,0"
                                 IsEnabled="{Binding InputControlsEnabled}"
-                                IsExpanded="True"
-                                Margin="8,8,8,0">
+                                IsExpanded="True">
                                 <Expander.Header>
                                     <TextBlock FontWeight="Medium" Text="Recording options" />
                                 </Expander.Header>
                                 <StackPanel>
                                     <CheckBox
+                                        Margin="0,8,0,0"
                                         Content="Profile managed (.NET) applications"
-                                        IsChecked="{Binding Path=RecordingOptions.ProfileDotNet, Mode=TwoWay}"
-                                        Margin="0,8,0,0" />
+                                        IsChecked="{Binding Path=RecordingOptions.ProfileDotNet, Mode=TwoWay}" />
                                     <CheckBox
+                                        Margin="0,4,0,0"
                                         Content="Profile child processes"
-                                        IsChecked="{Binding Path=RecordingOptions.ProfileChildProcesses, Mode=TwoWay}"
-                                        Margin="0,4,0,0" />
+                                        IsChecked="{Binding Path=RecordingOptions.ProfileChildProcesses, Mode=TwoWay}" />
                                     <CheckBox
+                                        Margin="0,4,0,0"
                                         Content="Record CPU performance counter (PMC) events"
-                                        IsChecked="{Binding Path=RecordingOptions.RecordPerformanceCounters, Mode=TwoWay}"
-                                        Margin="0,4,0,0" />
+                                        IsChecked="{Binding Path=RecordingOptions.RecordPerformanceCounters, Mode=TwoWay}" />
 
                                     <StackPanel
                                         Margin="0,8,0,0"
@@ -221,35 +221,36 @@
                                         Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                                         <TextBlock Text="Sampling frequency" />
                                         <Slider
+                                            x:Name="SamplingFrequencySlider"
+                                            Width="120"
+                                            Margin="8,0,0,0"
                                             Foreground="{DynamicResource DisabledForegroundBrush}"
                                             Interval="1000"
                                             IsEnabled="{Binding RecordingControlsEnabled}"
                                             IsSnapToTickEnabled="True"
                                             LargeChange="2000"
-                                            Margin="8,0,0,0"
                                             Maximum="8000"
                                             Minimum="1000"
                                             SmallChange="1000"
                                             TickFrequency="1000"
                                             TickPlacement="BottomRight"
-                                            Value="{Binding Path=RecordingOptions.SamplingFrequency, Mode=TwoWay}"
-                                            Width="120"
-                                            x:Name="SamplingFrequencySlider" />
+                                            ValueChanged="SamplingFrequencySlider_ValueChanged"
+                                            Value="{Binding Path=RecordingOptions.SamplingFrequency, Mode=TwoWay}" />
                                         <TextBlock Margin="8,0,0,0" Text="{Binding Path=RecordingOptions.SamplingFrequency}" />
                                         <Button
+                                            x:Name="DefaultFrequencyButton"
+                                            Height="22"
+                                            Margin="4,0,0,0"
+                                            Padding="4,0,4,0"
                                             Click="DefaultFrequencyButton_Click"
-                                            Content="Default"
-                                            Height="22"
-                                            Margin="4,0,0,0"
-                                            Padding="4,0,4,0"
-                                            x:Name="DefaultFrequencyButton" />
+                                            Content="Default" />
                                         <Button
-                                            Click="MaxFrequencyButton_Click"
-                                            Content="Max"
+                                            x:Name="MaxFrequencyButton"
                                             Height="22"
                                             Margin="4,0,0,0"
                                             Padding="4,0,4,0"
-                                            x:Name="MaxFrequencyButton" />
+                                            Click="MaxFrequencyButton_Click"
+                                            Content="Max" />
                                     </StackPanel>
 
                                 </StackPanel>
@@ -261,30 +262,30 @@
                                 Orientation="Horizontal"
                                 Visibility="{Binding RequiresElevation, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <Button
+                                    x:Name="RestartAppButton"
+                                    Height="22"
+                                    Padding="4,0,4,0"
+                                    HorizontalAlignment="Left"
                                     Background="#FFFCF4CC"
                                     Click="RestartAppButton_OnClick"
-                                    Content="Restart as Admin"
-                                    Height="22"
-                                    HorizontalAlignment="Left"
-                                    Padding="4,0,4,0"
-                                    x:Name="RestartAppButton" />
+                                    Content="Restart as Admin" />
 
                                 <TextBlock
-                                    FontWeight="Bold"
                                     Margin="8,0,0,0"
-                                    Text="IR Explorer must run with Administrator permissions"
-                                    VerticalAlignment="Center" />
+                                    VerticalAlignment="Center"
+                                    FontWeight="Bold"
+                                    Text="IR Explorer must run with Administrator permissions" />
                             </StackPanel>
 
                             <StackPanel Margin="0,4,0,4">
                                 <TextBlock Margin="8,0,4,0" Text="Session name (optional)" />
                                 <TextBox
+                                    Height="22"
+                                    Margin="8,4,56,0"
+                                    HorizontalAlignment="Stretch"
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                    Height="22"
-                                    HorizontalAlignment="Stretch"
                                     IsEnabled="{Binding InputControlsEnabled}"
-                                    Margin="8,4,56,0"
                                     Text="{Binding Path=RecordingOptions.Title, Mode=TwoWay}" />
                             </StackPanel>
 
@@ -293,92 +294,92 @@
                                 Orientation="Horizontal"
                                 Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                                 <Button
+                                    x:Name="StartCaptureButton"
+                                    Height="22"
+                                    Padding="4,0,4,0"
+                                    HorizontalAlignment="Left"
                                     Background="#FFFCF4CC"
                                     Click="StartCaptureButton_OnClick"
                                     Content="Start capture"
-                                    Height="22"
-                                    HorizontalAlignment="Left"
-                                    IsEnabled="{Binding RecordingControlsEnabled}"
-                                    Padding="4,0,4,0"
-                                    x:Name="StartCaptureButton" />
+                                    IsEnabled="{Binding RecordingControlsEnabled}" />
                                 <Button
-                                    Click="StopCaptureButton_OnClick"
-                                    Content="Stop"
+                                    x:Name="StopCaptureButton"
                                     Height="22"
-                                    HorizontalAlignment="Left"
-                                    IsEnabled="{Binding RecordingStopControlsEnabled}"
                                     Margin="4,0,0,0"
                                     Padding="4,0,4,0"
-                                    x:Name="StopCaptureButton" />
+                                    HorizontalAlignment="Left"
+                                    Click="StopCaptureButton_OnClick"
+                                    Content="Stop"
+                                    IsEnabled="{Binding RecordingStopControlsEnabled}" />
 
                                 <TextBlock
+                                    x:Name="RecordProgressLabel"
                                     Margin="8,0,0,0"
-                                    Text="Starting recording"
                                     VerticalAlignment="Center"
-                                    Visibility="{Binding IsRecordingProfile, Converter={StaticResource BoolToVisibilityConverter}}"
-                                    x:Name="RecordProgressLabel" />
+                                    Text="Starting recording"
+                                    Visibility="{Binding IsRecordingProfile, Converter={StaticResource BoolToVisibilityConverter}}" />
                             </StackPanel>
                         </StackPanel>
 
-                        <StackPanel Visibility="{Binding IsRecordMode, Converter={StaticResource InvertedBoolToVisibilityConverter}}" x:Name="ProfileLoadPanel">
+                        <StackPanel x:Name="ProfileLoadPanel" Visibility="{Binding IsRecordMode, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                             <TextBlock Margin="8,8,8,0" Text="Profile data file" />
                             <Grid Margin="8,4,8,0">
                                 <controls:FileSystemTextBox
+                                    x:Name="ProfileAutocompleteBox"
+                                    Height="22"
+                                    Margin="0,0,48,0"
+                                    HorizontalAlignment="Stretch"
                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                     FilterMode="StartsWithOrdinal"
-                                    Height="22"
-                                    HorizontalAlignment="Stretch"
                                     IsDropDownOpen="True"
                                     IsEnabled="{Binding InputControlsEnabled}"
                                     IsTextCompletionEnabled="False"
-                                    Margin="0,0,48,0"
                                     MinimumPrefixLength="1"
                                     Text="{Binding Path=ProfileFilePath, Mode=TwoWay}"
-                                    TextChanged="ProfileAutocompleteBox_TextChanged"
-                                    x:Name="ProfileAutocompleteBox" />
+                                    TextChanged="ProfileAutocompleteBox_TextChanged" />
 
                                 <Button
+                                    x:Name="BaseBrowseButton"
+                                    Height="22"
+                                    Padding="4,2,4,2"
+                                    HorizontalAlignment="Right"
                                     Click="ProfileBrowseButton_Click"
                                     Content="Browse"
-                                    Height="22"
-                                    HorizontalAlignment="Right"
-                                    IsEnabled="{Binding InputControlsEnabled}"
-                                    Padding="4,2,4,2"
-                                    x:Name="BaseBrowseButton" />
+                                    IsEnabled="{Binding InputControlsEnabled}" />
                             </Grid>
 
                             <TextBlock Margin="8,4,8,0" Text="Process executable binary" />
                             <Grid Margin="8,4,8,0">
                                 <TextBox
+                                    x:Name="BinaryAutocompleteBox"
+                                    Height="22"
+                                    Margin="0,0,48,0"
+                                    HorizontalAlignment="Stretch"
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                    Height="22"
-                                    HorizontalAlignment="Stretch"
                                     IsEnabled="{Binding InputControlsEnabled}"
                                     IsReadOnly="True"
-                                    Margin="0,0,48,0"
-                                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay}"
-                                    x:Name="BinaryAutocompleteBox" />
+                                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay}" />
                             </Grid>
                         </StackPanel>
 
                         <ListView
+                            x:Name="ProcessList"
+                            MinHeight="100"
+                            MaxHeight="400"
+                            Margin="8,4,8,0"
+                            VerticalAlignment="Stretch"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             IsEnabled="{Binding ProcessListEnabled}"
-                            Margin="8,4,8,0"
-                            MaxHeight="400"
-                            MinHeight="100"
                             ScrollViewer.VerticalScrollBarVisibility="Auto"
                             SelectionChanged="ProcessList_OnSelectionChanged"
                             SelectionMode="Extended"
-                            VerticalAlignment="Stretch"
                             VirtualizingStackPanel.IsVirtualizing="True"
                             VirtualizingStackPanel.VirtualizationMode="Recycling"
-                            Visibility="{Binding ShowProcessList, Converter={StaticResource BoolToVisibilityConverter}}"
-                            x:Name="ProcessList">
+                            Visibility="{Binding ShowProcessList, Converter={StaticResource BoolToVisibilityConverter}}">
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Process.Name}" Width="150">
+                                    <GridViewColumn Width="150" DisplayMemberBinding="{Binding Process.Name}">
                                         <GridViewColumnHeader Content="Process" />
                                         <GridViewColumn.HeaderContainerStyle>
                                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -387,7 +388,7 @@
                                         </GridViewColumn.HeaderContainerStyle>
                                     </GridViewColumn>
 
-                                    <GridViewColumn DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}" Width="80">
+                                    <GridViewColumn Width="80" DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}">
                                         <GridViewColumnHeader Content="Weight" />
                                         <GridViewColumn.HeaderContainerStyle>
                                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -396,7 +397,7 @@
                                         </GridViewColumn.HeaderContainerStyle>
                                     </GridViewColumn>
 
-                                    <GridViewColumn DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}" Width="80">
+                                    <GridViewColumn Width="80" DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}">
                                         <GridViewColumnHeader Content="Duration" />
                                         <GridViewColumn.HeaderContainerStyle>
                                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -405,7 +406,7 @@
                                         </GridViewColumn.HeaderContainerStyle>
                                     </GridViewColumn>
 
-                                    <GridViewColumn DisplayMemberBinding="{Binding Process.ProcessId}" Width="70">
+                                    <GridViewColumn Width="70" DisplayMemberBinding="{Binding Process.ProcessId}">
                                         <GridViewColumnHeader Content="Process ID" />
                                         <GridViewColumn.HeaderContainerStyle>
                                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -414,7 +415,7 @@
                                         </GridViewColumn.HeaderContainerStyle>
                                     </GridViewColumn>
 
-                                    <GridViewColumn DisplayMemberBinding="{Binding Process.CommandLine}" Width="100">
+                                    <GridViewColumn Width="100" DisplayMemberBinding="{Binding Process.CommandLine}">
                                         <GridViewColumnHeader Content="Command line" />
                                         <GridViewColumn.HeaderContainerStyle>
                                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -435,47 +436,47 @@
                         </ListView>
 
                         <Grid Margin="8,8,8,0">
-                            <StackPanel HorizontalAlignment="Left" Width="250">
+                            <StackPanel Width="250" HorizontalAlignment="Left">
                                 <ProgressBar
+                                    x:Name="LoadProgressBar"
                                     Height="4"
                                     HorizontalAlignment="Stretch"
                                     Maximum="100"
-                                    Value="40"
                                     Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibilityConverter}}"
-                                    x:Name="LoadProgressBar" />
+                                    Value="40" />
                                 <DockPanel Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibilityConverter}}">
                                     <TextBlock
+                                        x:Name="LoadProgressLabel"
                                         DockPanel.Dock="Left"
-                                        Text=""
-                                        x:Name="LoadProgressLabel" />
+                                        Text="" />
                                     <TextBlock
-                                        DockPanel.Dock="Right"
+                                        x:Name="ProgressPercentLabel"
                                         HorizontalAlignment="Right"
-                                        Text="0 %"
-                                        x:Name="ProgressPercentLabel" />
+                                        DockPanel.Dock="Right"
+                                        Text="0 %" />
                                 </DockPanel>
                             </StackPanel>
 
                             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                                 <Button
-                                    Click="CancelButton_Click"
-                                    Content="Cancel"
+                                    x:Name="CancelButton"
                                     Height="24"
                                     Margin="0,0,4,0"
                                     Padding="4,0,4,0"
                                     VerticalAlignment="Top"
-                                    Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}"
-                                    x:Name="CancelButton" />
+                                    Click="CancelButton_Click"
+                                    Content="Cancel"
+                                    Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <Button
+                                    x:Name="LoadButton"
+                                    Height="24"
+                                    Padding="4,0,4,0"
+                                    VerticalAlignment="Top"
                                     Background="#FFFCF4CC"
                                     Click="LoadButton_Click"
                                     Content="Load Profile"
-                                    Height="24"
                                     IsEnabled="{Binding InputControlsEnabled}"
-                                    Padding="4,0,4,0"
-                                    VerticalAlignment="Top"
-                                    Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}"
-                                    x:Name="LoadButton" />
+                                    Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                             </StackPanel>
                         </Grid>
                     </StackPanel>
@@ -491,15 +492,15 @@
 
                         <Expander
                             Grid.Row="0"
-                            IsExpanded="True"
-                            Margin="8,0,8,0">
+                            Margin="8,0,8,0"
+                            IsExpanded="True">
                             <Expander.Header>
                                 <DockPanel>
                                     <TextBlock DockPanel.Dock="Left" Text="CPU performance counters" />
                                     <StackPanel
+                                        VerticalAlignment="Center"
                                         DockPanel.Dock="Right"
-                                        Orientation="Horizontal"
-                                        VerticalAlignment="Center">
+                                        Orientation="Horizontal">
                                         <TextBlock Margin="4,0,0,0" Text="(" />
                                         <TextBlock Text="{Binding EnabledPerfCounters}" />
                                         <TextBlock Text=")" />
@@ -512,18 +513,18 @@
                                     <RowDefinition Height="32" />
                                 </Grid.RowDefinitions>
                                 <ListView
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                    x:Name="PerfCounterList"
                                     Grid.Row="0"
-                                    HorizontalAlignment="Stretch"
-                                    IsEnabled="{Binding InputControlsEnabled}"
-                                    Margin="0,8,0,0"
                                     MinHeight="100"
+                                    Margin="0,8,0,0"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
+                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                    IsEnabled="{Binding InputControlsEnabled}"
                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
                                     SelectionMode="Single"
-                                    VerticalAlignment="Stretch"
                                     VirtualizingStackPanel.IsVirtualizing="True"
-                                    VirtualizingStackPanel.VirtualizationMode="Recycling"
-                                    x:Name="PerfCounterList">
+                                    VirtualizingStackPanel.VirtualizationMode="Recycling">
                                     <ListView.View>
                                         <GridView>
                                             <GridViewColumn Width="180">
@@ -554,19 +555,19 @@
                                                     <DataTemplate>
                                                         <StackPanel Orientation="Horizontal">
                                                             <xctk:IntegerUpDown
+                                                                Width="70"
                                                                 Increment="1000"
                                                                 Maximum="{Binding Path=MaxInterval}"
                                                                 Minimum="{Binding Path=MinInterval}"
                                                                 ParsingNumberStyle="Number"
                                                                 ShowButtonSpinner="True"
-                                                                Value="{Binding Path=Interval, Mode=TwoWay}"
-                                                                Width="70" />
+                                                                Value="{Binding Path=Interval, Mode=TwoWay}" />
                                                             <Button
+                                                                Width="20"
+                                                                Margin="1,0,1,0"
                                                                 Click="ResetButton_OnClick"
                                                                 Content="R"
-                                                                Margin="1,0,1,0"
-                                                                ToolTip="Reset to default value"
-                                                                Width="20" />
+                                                                ToolTip="Reset to default value" />
                                                         </StackPanel>
                                                     </DataTemplate>
                                                 </GridViewColumn.CellTemplate>
@@ -577,7 +578,7 @@
                                                 </GridViewColumn.HeaderContainerStyle>
                                             </GridViewColumn>
 
-                                            <GridViewColumn DisplayMemberBinding="{Binding MinInterval}" Width="75">
+                                            <GridViewColumn Width="75" DisplayMemberBinding="{Binding MinInterval}">
                                                 <GridViewColumnHeader Content="Min Interval" />
                                                 <GridViewColumn.HeaderContainerStyle>
                                                     <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -586,7 +587,7 @@
                                                 </GridViewColumn.HeaderContainerStyle>
                                             </GridViewColumn>
 
-                                            <GridViewColumn DisplayMemberBinding="{Binding Id}" Width="40">
+                                            <GridViewColumn Width="40" DisplayMemberBinding="{Binding Id}">
                                                 <GridViewColumnHeader Content="Id" />
                                                 <GridViewColumn.HeaderContainerStyle>
                                                     <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -595,7 +596,7 @@
                                                 </GridViewColumn.HeaderContainerStyle>
                                             </GridViewColumn>
 
-                                            <GridViewColumn DisplayMemberBinding="{Binding IsBuiltin}" Width="70">
+                                            <GridViewColumn Width="70" DisplayMemberBinding="{Binding IsBuiltin}">
                                                 <GridViewColumnHeader Content="Is builtin" />
                                                 <GridViewColumn.HeaderContainerStyle>
                                                     <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -622,39 +623,39 @@
                                 <Grid
                                     Grid.Row="1"
                                     Height="24"
-                                    Margin="0,4,0,4"
-                                    MinHeight="24">
+                                    MinHeight="24"
+                                    Margin="0,4,0,4">
                                     <StackPanel
-                                        DockPanel.Dock="Right"
                                         HorizontalAlignment="Right"
-                                        Orientation="Horizontal"
-                                        VerticalAlignment="Top">
+                                        VerticalAlignment="Top"
+                                        DockPanel.Dock="Right"
+                                        Orientation="Horizontal">
                                         <Image Height="16" Source="{StaticResource SearchIcon}" />
-                                        <Grid Height="24" x:Name="FunctionFilterGrid">
+                                        <Grid x:Name="FunctionFilterGrid" Height="24">
                                             <TextBox
-                                                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                                                Height="24"
-                                                HorizontalAlignment="Stretch"
-                                                Margin="4,0,0,0"
-                                                MaxWidth="300"
                                                 Name="CounterFilter"
-                                                TextChanged="CounterFilter_TextChanged"
-                                                ToolTip="Filter counters list based on a case-insensitive substring"
+                                                Width="200"
+                                                Height="24"
+                                                MaxWidth="300"
+                                                Margin="4,0,0,0"
+                                                HorizontalAlignment="Stretch"
                                                 VerticalAlignment="Center"
                                                 VerticalContentAlignment="Center"
-                                                Width="200">
+                                                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                                TextChanged="CounterFilter_TextChanged"
+                                                ToolTip="Filter counters list based on a case-insensitive substring">
                                                 <TextBox.InputBindings>
                                                     <KeyBinding
+                                                        Key="Escape"
                                                         Command="local:Command.ClearTextbox"
-                                                        CommandParameter="{Binding ElementName=FunctionFilter}"
-                                                        Key="Escape" />
+                                                        CommandParameter="{Binding ElementName=FunctionFilter}" />
                                                 </TextBox.InputBindings>
 
                                             </TextBox>
                                             <TextBlock
+                                                Margin="8,4"
                                                 Foreground="DimGray"
                                                 IsHitTestVisible="False"
-                                                Margin="8,4"
                                                 Text="Filter counters"
                                                 Visibility="{Binding ElementName=CounterFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
                                         </Grid>
@@ -670,30 +671,30 @@
 
                         <Expander
                             Grid.Row="2"
+                            Margin="8,8,8,0"
                             Header="Metrics"
-                            IsExpanded="True"
-                            Margin="8,8,8,0">
+                            IsExpanded="True">
                             <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="*" />
                                     <RowDefinition Height="32" />
                                 </Grid.RowDefinitions>
                                 <ListView
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                                    HorizontalAlignment="Stretch"
-                                    IsEnabled="{Binding InputControlsEnabled}"
-                                    Margin="0,8,0,0"
-                                    MaxHeight="300"
+                                    x:Name="PerfMetricsList"
                                     MinHeight="100"
+                                    MaxHeight="300"
+                                    Margin="0,8,0,0"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
+                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                    IsEnabled="{Binding InputControlsEnabled}"
                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
                                     SelectionMode="Single"
-                                    VerticalAlignment="Stretch"
                                     VirtualizingPanel.IsVirtualizing="True"
-                                    VirtualizingPanel.VirtualizationMode="Recycling"
-                                    x:Name="PerfMetricsList">
+                                    VirtualizingPanel.VirtualizationMode="Recycling">
                                     <ListView.View>
                                         <GridView>
-                                            <GridViewColumn DisplayMemberBinding="{Binding Name}" Width="150">
+                                            <GridViewColumn Width="150" DisplayMemberBinding="{Binding Name}">
                                                 <GridViewColumn.HeaderContainerStyle>
                                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                                         <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -702,7 +703,7 @@
                                                 <GridViewColumnHeader Content="Name" />
                                             </GridViewColumn>
 
-                                            <GridViewColumn DisplayMemberBinding="{Binding RelativeCounterName}" Width="100">
+                                            <GridViewColumn Width="100" DisplayMemberBinding="{Binding RelativeCounterName}">
                                                 <GridViewColumn.HeaderContainerStyle>
                                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                                         <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -711,7 +712,7 @@
                                                 <GridViewColumnHeader Content="Relative counter" />
                                             </GridViewColumn>
 
-                                            <GridViewColumn DisplayMemberBinding="{Binding BaseCounterName}" Width="100">
+                                            <GridViewColumn Width="100" DisplayMemberBinding="{Binding BaseCounterName}">
                                                 <GridViewColumn.HeaderContainerStyle>
                                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                                         <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -720,7 +721,7 @@
                                                 <GridViewColumnHeader Content="Base counter" />
                                             </GridViewColumn>
 
-                                            <GridViewColumn DisplayMemberBinding="{Binding Description}" Width="150">
+                                            <GridViewColumn Width="150" DisplayMemberBinding="{Binding Description}">
                                                 <GridViewColumn.HeaderContainerStyle>
                                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                                         <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -741,39 +742,39 @@
                                 <Grid
                                     Grid.Row="1"
                                     Height="24"
-                                    Margin="0,4,0,4"
-                                    MinHeight="24">
+                                    MinHeight="24"
+                                    Margin="0,4,0,4">
                                     <StackPanel
-                                        DockPanel.Dock="Right"
                                         HorizontalAlignment="Right"
-                                        Orientation="Horizontal"
-                                        VerticalAlignment="Top">
+                                        VerticalAlignment="Top"
+                                        DockPanel.Dock="Right"
+                                        Orientation="Horizontal">
                                         <Image Height="16" Source="{StaticResource SearchIcon}" />
                                         <Grid Height="24">
                                             <TextBox
-                                                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                                                Height="24"
-                                                HorizontalAlignment="Stretch"
-                                                Margin="4,0,0,0"
-                                                MaxWidth="300"
                                                 Name="MetricFilter"
-                                                TextChanged="MetricFilter_TextChanged"
-                                                ToolTip="Filter counters list based on a case-insensitive substring"
+                                                Width="200"
+                                                Height="24"
+                                                MaxWidth="300"
+                                                Margin="4,0,0,0"
+                                                HorizontalAlignment="Stretch"
                                                 VerticalAlignment="Center"
                                                 VerticalContentAlignment="Center"
-                                                Width="200">
+                                                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                                TextChanged="MetricFilter_TextChanged"
+                                                ToolTip="Filter counters list based on a case-insensitive substring">
                                                 <TextBox.InputBindings>
                                                     <KeyBinding
+                                                        Key="Escape"
                                                         Command="local:Command.ClearTextbox"
-                                                        CommandParameter="{Binding ElementName=FunctionFilter}"
-                                                        Key="Escape" />
+                                                        CommandParameter="{Binding ElementName=FunctionFilter}" />
                                                 </TextBox.InputBindings>
 
                                             </TextBox>
                                             <TextBlock
+                                                Margin="8,4"
                                                 Foreground="DimGray"
                                                 IsHitTestVisible="False"
-                                                Margin="8,4"
                                                 Text="Filter metrics"
                                                 Visibility="{Binding ElementName=CounterFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
                                         </Grid>
@@ -787,151 +788,151 @@
                 <TabItem Header="Options">
                     <StackPanel Margin="0,4,0,8" Orientation="Vertical">
                         <Expander
+                            Margin="8,0,8,0"
                             IsEnabled="{Binding InputControlsEnabled}"
-                            IsExpanded="True"
-                            Margin="8,0,8,0">
+                            IsExpanded="True">
                             <Expander.Header>
                                 <TextBlock FontWeight="Medium" Text="Processing report" />
                             </Expander.Header>
                             <StackPanel>
                                 <CheckBox
+                                    Margin="0,8,0,0"
                                     Content="Consider Kernel profile samples"
-                                    IsChecked="{Binding Path=Options.IncludeKernelEvents, Mode=TwoWay}"
-                                    Margin="0,8,0,0" />
+                                    IsChecked="{Binding Path=Options.IncludeKernelEvents, Mode=TwoWay}" />
                                 <CheckBox
+                                    Margin="0,4,0,0"
                                     Content="Consider CPU performance counter samples"
-                                    IsChecked="{Binding Path=Options.IncludePerformanceCounters, Mode=TwoWay}"
-                                    Margin="0,4,0,0" />
+                                    IsChecked="{Binding Path=Options.IncludePerformanceCounters, Mode=TwoWay}" />
                                 <CheckBox
+                                    Margin="0,4,0,0"
                                     Content="Mark source lines in inlined functions"
                                     IsChecked="{Binding Path=Options.MarkInlinedFunctions, Mode=TwoWay}"
-                                    IsEnabled="False"
-                                    Margin="0,4,0,0" />
+                                    IsEnabled="False" />
                             </StackPanel>
                         </Expander>
 
                         <Expander
+                            Margin="8,8,8,0"
                             IsEnabled="{Binding InputControlsEnabled}"
-                            IsExpanded="True"
-                            Margin="8,8,8,0">
+                            IsExpanded="True">
                             <Expander.Header>
                                 <TextBlock FontWeight="Medium" Text="Symbol report" />
                             </Expander.Header>
 
                             <StackPanel>
                                 <CheckBox
+                                    Margin="0,8,0,0"
                                     Content="Enable default Symbol Server"
                                     IsChecked="{Binding Path=SymbolOptions.UseDefaultSymbolSource, Mode=TwoWay}"
-                                    Margin="0,8,0,0"
                                     ToolTip="https://msdl.microsoft.com/download/symbols" />
 
                                 <CheckBox
+                                    Margin="0,4,0,0"
                                     Content="Cache symbol files locally"
                                     IsChecked="{Binding Path=SymbolOptions.UseSymbolCache, Mode=TwoWay}"
                                     IsEnabled="False"
-                                    Margin="0,4,0,0"
                                     ToolTip="C:\Symbols" />
 
                                 <CheckBox
-                                    Content="Optional symbol locations (one per line)"
-                                    IsChecked="{Binding Path=SymbolOptions.SymbolSearchPathsEnabled, Mode=TwoWay}"
+                                    x:Name="SymbolSearchPathsCheckbox"
                                     Margin="0,4,0,0"
-                                    x:Name="SymbolSearchPathsCheckbox" />
+                                    Content="Optional symbol locations (one per line)"
+                                    IsChecked="{Binding Path=SymbolOptions.SymbolSearchPathsEnabled, Mode=TwoWay}" />
                                 <Grid Margin="0,4,0,0">
                                     <TextBox
+                                        x:Name="SymbolAutocompleteBox"
+                                        MinHeight="36"
+                                        Margin="20,4,55,0"
+                                        HorizontalAlignment="Stretch"
                                         AcceptsReturn="True"
                                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                        HorizontalAlignment="Stretch"
                                         IsEnabled="{Binding ElementName=SymbolSearchPathsCheckbox, Path=IsChecked}"
-                                        Margin="20,4,55,0"
-                                        MinHeight="36"
                                         Text="{Binding Path=SymbolOptions.SymbolSearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
-                                        TextWrapping="Wrap"
-                                        x:Name="SymbolAutocompleteBox" />
+                                        TextWrapping="Wrap" />
                                 </Grid>
                             </StackPanel>
                         </Expander>
 
                         <Expander
+                            Margin="8,8,8,0"
                             IsEnabled="{Binding InputControlsEnabled}"
-                            IsExpanded="True"
-                            Margin="8,8,8,0">
+                            IsExpanded="True">
                             <Expander.Header>
                                 <TextBlock FontWeight="Medium" Text="Source file report" />
                             </Expander.Header>
 
                             <StackPanel>
                                 <CheckBox
+                                    Margin="0,8,0,0"
                                     Content="Download source files from Source Server"
                                     IsChecked="{Binding Path=SymbolOptions.SourceServerEnabled, Mode=TwoWay}"
-                                    Margin="0,8,0,0"
                                     ToolTip="Download source files using the SourceLink info from the symbol files" />
 
                                 <CheckBox
+                                    x:Name="AuthorizationTokenCheckbox"
+                                    Margin="0,4,0,0"
                                     Content="Use Source Server authentication token (PAT)"
                                     IsChecked="{Binding Path=SymbolOptions.AuthorizationTokenEnabled, Mode=TwoWay}"
-                                    Margin="0,4,0,0"
-                                    ToolTip="Personal Authentication Token used with private SourceLink servers"
-                                    x:Name="AuthorizationTokenCheckbox" />
+                                    ToolTip="Personal Authentication Token used with private SourceLink servers" />
 
                                 <TextBox
+                                    Margin="20,4,55,0"
+                                    HorizontalAlignment="Stretch"
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                    HorizontalAlignment="Stretch"
                                     IsEnabled="{Binding ElementName=AuthorizationTokenCheckbox, Path=IsChecked}"
-                                    Margin="20,4,55,0"
                                     Text="{Binding Path=SymbolOptions.AuthorizationToken, Mode=TwoWay}"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                         </Expander>
                         <Expander
+                            Margin="8,8,8,8"
                             IsEnabled="{Binding InputControlsEnabled}"
-                            IsExpanded="True"
-                            Margin="8,8,8,8">
+                            IsExpanded="True">
                             <Expander.Header>
                                 <TextBlock FontWeight="Medium" Text="Binary file report" />
                             </Expander.Header>
 
                             <StackPanel>
                                 <CheckBox
+                                    Margin="0,8,0,0"
                                     Content="Download binaries from Symbol Server"
                                     IsChecked="{Binding Path=SymbolOptions.UseDefaultSymbolSource, Mode=TwoWay}"
-                                    Margin="0,8,0,0"
                                     ToolTip="https://msdl.microsoft.com/download/symbols" />
 
                                 <CheckBox
-                                    Content="Optional binary directories (one per line)"
-                                    IsChecked="{Binding Path=Options.BinarySearchPathsEnabled, Mode=TwoWay}"
+                                    x:Name="BinarySearchPathsCheckbox"
                                     Margin="0,4,0,0"
-                                    x:Name="BinarySearchPathsCheckbox" />
+                                    Content="Optional binary directories (one per line)"
+                                    IsChecked="{Binding Path=Options.BinarySearchPathsEnabled, Mode=TwoWay}" />
                                 <Grid Margin="0,4,0,0">
                                     <TextBox
+                                        MinHeight="36"
+                                        Margin="20,4,55,0"
+                                        HorizontalAlignment="Stretch"
                                         AcceptsReturn="True"
                                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                        HorizontalAlignment="Stretch"
                                         IsEnabled="{Binding ElementName=BinarySearchPathsCheckbox, Path=IsChecked}"
-                                        Margin="20,4,55,0"
-                                        MinHeight="36"
                                         Text="{Binding Path=Options.BinarySearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
                                         TextWrapping="Wrap" />
                                 </Grid>
 
                                 <CheckBox
-                                    Content="Processed binary whitelist (one per line)"
-                                    IsChecked="{Binding Path=Options.BinaryNameWhitelistEnabled, Mode=TwoWay}"
+                                    x:Name="BinaryNameWhitelistCheckbox"
                                     Margin="0,8,0,0"
-                                    x:Name="BinaryNameWhitelistCheckbox" />
+                                    Content="Processed binary whitelist (one per line)"
+                                    IsChecked="{Binding Path=Options.BinaryNameWhitelistEnabled, Mode=TwoWay}" />
                                 <Grid Margin="0,4,0,0">
                                     <TextBox
+                                        MinHeight="36"
+                                        Margin="20,4,55,0"
+                                        HorizontalAlignment="Stretch"
                                         AcceptsReturn="True"
                                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                        HorizontalAlignment="Stretch"
                                         IsEnabled="{Binding ElementName=BinaryNameWhitelistCheckbox, Path=IsChecked}"
-                                        Margin="20,4,55,0"
-                                        MinHeight="36"
                                         Text="{Binding Path=Options.BinaryNameWhitelist, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
                                         TextWrapping="Wrap" />
                                 </Grid>

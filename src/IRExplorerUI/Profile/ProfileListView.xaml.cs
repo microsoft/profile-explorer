@@ -94,10 +94,28 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
         set => SetField(ref showCombinedTimeColumn_, value);
     }
 
+    private bool showCombinedTimeNameRow_;
+    public bool ShowCombinedTimeNameRow {
+        get => showCombinedTimeNameRow_;
+        set => SetField(ref showCombinedTimeNameRow_, value);
+    }
+
+    private bool showTimeNameRow_;
+    public bool ShowTimeNameRow {
+        get => showTimeNameRow_;
+        set => SetField(ref showTimeNameRow_, value);
+    }
+
     private bool showModuleColumn_;
     public bool ShowModuleColumn {
         get => showModuleColumn_;
         set => SetField(ref showModuleColumn_, value);
+    }
+
+    private bool showContextColumn_;
+    public bool ShowContextColumn {
+        get => showContextColumn_;
+        set => SetField(ref showContextColumn_, value);
     }
 
     public void Show(List<ProfileCallTreeNode> nodes, bool filter = true) {

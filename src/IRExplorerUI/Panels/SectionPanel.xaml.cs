@@ -460,8 +460,8 @@ namespace IRExplorerUI {
 
         public SectionPanel() {
             InitializeComponent();
-            statisticsTask_ = new CancelableTaskInstance();
-            callGraphTask_ = new CancelableTaskInstance();
+            statisticsTask_ = new CancelableTaskInstance(false);
+            callGraphTask_ = new CancelableTaskInstance(false);
             sections_ = new List<IRTextSectionEx>();
             moduleSummaries_ = new List<IRTextSummary>();
             sectionExtMap_ = new Dictionary<IRTextSection, IRTextSectionEx>();
@@ -2094,7 +2094,7 @@ namespace IRExplorerUI {
 #endregion
 
         public override void OnSessionSave() {
-            base.OnSessionStart();
+            base.OnSessionSave();
             var state = new SectionPanelState();
             state.AnnotatedSections = annotatedSections_.ToList(item => item.Section.Id);
 
@@ -2104,6 +2104,13 @@ namespace IRExplorerUI {
 
             var data = StateSerializer.Serialize(state);
             Session.SavePanelState(data, this, null);
+        }
+
+        public override void OnSessionEnd() {
+            base.OnSessionEnd();
+            statisticsTask_.CancelTask();
+            statisticsTask_.WaitForTask();
+            ResetUI(); //? TODO: Await, make OnSessionEnd async
         }
 
         #endregion
@@ -2378,6 +2385,7 @@ namespace IRExplorerUI {
                 tasks.Add(taskFactory.StartNew(() => {
                     try {
                         if (cancelableTask.IsCanceled) {
+                            cancelableTask.Completed();
                             return;
                         }
 
@@ -2385,12 +2393,6 @@ namespace IRExplorerUI {
                         var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
 
                         if (sectionStats != null) {
-                            if (functionStatMap_ == null) {
-                                Trace.WriteLine($"Null map at {DateTime.Now}, ticks {Environment.TickCount64}");
-#if DEBUG
-                                Utils.WaitForDebugger();
-#endif
-                            }
                             functionStatMap_.TryAdd(function, sectionStats);
                         }
                     }

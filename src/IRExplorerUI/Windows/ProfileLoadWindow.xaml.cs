@@ -829,5 +829,10 @@ namespace IRExplorerUI {
                 BinaryFilePath = report.Process.ImageFileName;
             }
         }
+
+        private void SamplingFrequencySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
+            // Hack to get the label to update, since RecordingOptions doesn't notify.
+            OnPropertyChange(nameof(RecordingOptions));
+        }
     }
 }

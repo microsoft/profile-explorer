@@ -368,11 +368,14 @@ namespace IRExplorerUI {
 
             if (sessionState_.Info.IsFileSession) {
                 using var centerForm = new DialogCenteringHelper(this);
-
-                if (MessageBox.Show("Save session changes before closing?", "IR Explorer",
-                                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) ==
-                    MessageBoxResult.Yes) {
+                var result = MessageBox.Show("Save session changes before closing?", "IR Explorer",
+                                             MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
+                if (result == MessageBoxResult.Yes) {
                     SaveDocumentExecuted(this, null);
+                }
+                else if (result == MessageBoxResult.Cancel) {
+                    e.Cancel = true;
+                    return;
                 }
             }
             else {
@@ -381,18 +384,19 @@ namespace IRExplorerUI {
 
                 if (SectionPanel.HasAnnotatedSections) {
                     using var centerForm = new DialogCenteringHelper(this);
-
-                    if (MessageBox.Show("Save file changes as a new session before closing?", "IR Explorer",
-                                        MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) ==
-                        MessageBoxResult.Yes) {
+                    var result = MessageBox.Show("Save file changes as a new session before closing?", "IR Explorer",
+                                                  MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
+                    if (result == MessageBoxResult.Yes) {
                         SaveDocumentExecuted(this, null);
+                    }
+                    else if (result == MessageBoxResult.Cancel) {
+                        e.Cancel = true;
+                        return;
                     }
                 }
             }
 
             await EndSession();
-
-            var time = DateTime.UtcNow - App.AppStartTime;
         }
 
         private void MainWindow_ContentRendered(object sender, EventArgs e) {
