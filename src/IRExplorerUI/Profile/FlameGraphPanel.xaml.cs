@@ -201,9 +201,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                 return true;
             },
             popup => {
-                if (popup.IsDetached) {
-                    Session.RegisterDetachedPanel(popup);
-                }
+                Session.RegisterDetachedPanel(popup);
             });
     }
 

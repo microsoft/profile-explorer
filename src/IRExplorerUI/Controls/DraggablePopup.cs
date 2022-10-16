@@ -43,8 +43,8 @@ namespace IRExplorerUI.Controls {
         }
 
         public void UpdateSize(double width, double height) {
-            Width = width;
-            Height = height;
+            //Width = width;
+            //Height = height;
         }
 
         public void Initialize(Point position, double width, double height,

@@ -27,4 +27,5 @@
     <utils:DictionaryToStringConverter x:Key="StringDictionaryConverter" />
     <utils:PerformanceCounterListConverter x:Key="PerformanceCounterConverter" />
     <utils:InvertedBooleanConverter x:Key="InvertedBoolConverter" />
+    <utils:ProfileCallTreeNodeKindConverter x:Key="CallTreeNodeKindConverter" />
 </ResourceDictionary>

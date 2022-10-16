@@ -89,6 +89,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         set {
             if (value != Node?.CallTreeNode) {
                 Node = SetupNodeExtension(value);
+                OnPropertyChanged();
             }
         }
     }

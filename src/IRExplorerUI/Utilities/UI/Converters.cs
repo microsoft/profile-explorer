@@ -366,3 +366,32 @@ public class PerformanceCounterListConverter : IValueConverter {
         return null;
     }
 }
+
+public class ProfileCallTreeNodeKindConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+        if (value is ProfileCallTreeNodeKind kind) {
+            if (parameter is bool flag and true) {
+                return kind switch {
+                    ProfileCallTreeNodeKind.NativeUser => "U",
+                    ProfileCallTreeNodeKind.NativeKernel => "K",
+                    ProfileCallTreeNodeKind.Managed => "M",
+                    _ => ""
+                };
+            }
+            else {
+                return kind switch {
+                    ProfileCallTreeNodeKind.NativeUser => "User mode",
+                    ProfileCallTreeNodeKind.NativeKernel => "Kernel mode",
+                    ProfileCallTreeNodeKind.Managed => "Managed",
+                    _ => ""
+                };
+            }
+        }
+
+        return null;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+        return null;
+    }
+}

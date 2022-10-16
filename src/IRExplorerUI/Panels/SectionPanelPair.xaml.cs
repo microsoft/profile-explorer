@@ -438,8 +438,8 @@ namespace IRExplorerUI {
         public override void OnSessionEnd() {
             SetMainSummary(null).Wait();
             SetDiffSummary(null).Wait();
-            MainPanel.ResetUI(); //? TODO: Await, make OnSessionEnd async
-            DiffPanel.ResetUI();
+            MainPanel.OnSessionEnd(); //? TODO: Await, make OnSessionEnd async
+            DiffPanel.OnSessionEnd();
         }
 
         public async Task AnalyzeDocumentDiffs() {

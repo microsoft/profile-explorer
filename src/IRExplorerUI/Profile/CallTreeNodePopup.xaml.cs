@@ -85,7 +85,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
         DetachPopup();
         ShowResizeGrip = true;
         PanelHost.ShowDetails = true;
-        Height = 300;
+        Height = 400;
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
