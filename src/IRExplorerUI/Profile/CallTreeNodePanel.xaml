@@ -52,9 +52,9 @@
             </StackPanel>
             <Grid Grid.Column="1" Margin="0,0,4,0">
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Margin="4,0,0,0" Text="100" />
+                    <TextBlock Margin="4,0,0,0" Text="{Binding CurrentInstanceIndex}" />
                     <TextBlock Text=" / " />
-                    <TextBlock Text="2000" />
+                    <TextBlock Text="{Binding FunctionInstancesCount}" />
                 </StackPanel>
                 <Button
                     x:Name="PreviousInstanceButton"
@@ -62,7 +62,8 @@
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
                     Background="{x:Null}"
-                    BorderBrush="{x:Null}">
+                    BorderBrush="{x:Null}"
+                    Click="PreviousInstanceButton_Click">
                     <Image
                         Width="14"
                         Height="14"
@@ -74,7 +75,8 @@
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
                     Background="{x:Null}"
-                    BorderBrush="{x:Null}">
+                    BorderBrush="{x:Null}"
+                    Click="NextInstanceButton_Click">
                     <Image
                         Width="14"
                         Height="14"
@@ -202,8 +204,7 @@
                     NameColumnTitle="Function"
                     ShowCombinedTimeNameRow="True"
                     ShowContextColumn="True"
-                    ShowModuleColumn="True"
-                    TimeColumnTitle="Time" />
+                    ShowModuleColumn="True" />
             </TabItem>
 
             <TabItem
@@ -214,10 +215,9 @@
                 <profile:ProfileListView
                     x:Name="FunctionList"
                     NameColumnTitle="Function"
-                    ShowCombinedTimeNameRow="True"
                     ShowContextColumn="True"
-                    ShowModuleColumn="True"
-                    TimeColumnTitle="Time" />
+                    ShowExclusiveTimeNameRow="True"
+                    ShowModuleColumn="True" />
             </TabItem>
             <TabItem
                 HorizontalAlignment="Stretch"
@@ -240,8 +240,7 @@
                     x:Name="InstancesList"
                     NameColumnTitle="Function"
                     ShowCombinedTimeNameRow="True"
-                    ShowContextColumn="True"
-                    TimeColumnTitle="Time" />
+                    ShowContextColumn="True" />
             </TabItem>
         </TabControl>
     </DockPanel>

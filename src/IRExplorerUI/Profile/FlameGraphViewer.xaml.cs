@@ -26,6 +26,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     public double MaxGraphWidth => renderer_.MaxGraphWidth;
     public Rect VisibleArea => renderer_.VisibleArea;
     public bool IsZoomed => Math.Abs(MaxGraphWidth - VisibleArea.Width) > 1;
+    public FlameGraphNode SelectedNode => selectedNode_;
 
     private Dictionary<FlameGraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
         return type switch {
@@ -185,6 +186,12 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
     }
 
+    public FlameGraphNode SelectNode(ProfileCallTreeNode graphNode) {
+        var node = flameGraph_.GetNode(graphNode);
+        SelectNode(node);
+        return node;
+    }
+
     public void ClearSelection() {
         ResetHighlightedNodes(HighlighingType.Hovered);
         ResetHighlightedNodes(HighlighingType.Selected, true);
@@ -232,8 +239,16 @@ public partial class FlameGraphViewer : FrameworkElement {
         return renderer_.HitTestNode(point);
     }
 
+    public Rect ComputeNodeBounds(FlameGraphNode node) {
+        return renderer_.ComputeNodeBounds(node);
+    }
+
     public Point ComputeNodePosition(FlameGraphNode node) {
-        return renderer_.ComputeNodePosition(node);
+        return ComputeNodeBounds(node).TopLeft;
+    }
+
+    public Size ComputeNodeSize(FlameGraphNode node) {
+        return ComputeNodeBounds(node).Size;
     }
 
     protected override int VisualChildrenCount => 1;

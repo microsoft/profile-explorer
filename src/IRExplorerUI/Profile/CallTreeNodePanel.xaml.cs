@@ -58,15 +58,17 @@ public class ProfileCallTreeNodeEx : BindableObject {
 }
 
 public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChanged {
-    private const int MaxFunctionNmeLength = 80;
+    private const int MaxFunctionNameLength = 100;
     private const int MaxModuleNameLength = 50;
 
     private ProfileCallTreeNodeEx nodeEx_;
+    private int nodeInstanceIndex_;
+    private List<ProfileCallTreeNode> instanceNodes_;
+    private IFunctionProfileInfoProvider funcInfoProvider_;
 
-    public IFunctionProfileInfoProvider FunctionInfoProvider { get; set; }
-
-    //? TODO: use settigs for module columns
-    //? ShowModuleColumn
+    public event EventHandler<ProfileCallTreeNode> NodeInstanceChanged;
+    public event EventHandler<ProfileCallTreeNode> NodeClick;
+    public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
 
     public override ISession Session {
         get => base.Session;
@@ -112,6 +114,12 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         set => SetField(ref funcInstancesCount_, value);
     }
 
+    private int currentInstanceIndex_;
+    public int CurrentInstanceIndex {
+        get => currentInstanceIndex_;
+        set => SetField(ref currentInstanceIndex_, value);
+    }
+
     private bool showDetails_;
     public bool ShowDetails {
         get => showDetails_;
@@ -133,30 +141,35 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     }
 
     public async Task ShowDetailsAsync() {
-        BacktraceList.Show(await Task.Run(() => FunctionInfoProvider.GetBacktrace(CallTreeNode)), filter: false);
-        FunctionList.Show(await Task.Run(() => FunctionInfoProvider.GetTopFunctions(CallTreeNode)));
-        ModuleList.Show(await Task.Run(() => FunctionInfoProvider.GetTopModules(CallTreeNode)));
         await SetupInstanceInfo(CallTreeNode);
+        BacktraceList.Show(await Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode)), filter: false);
+        FunctionList.Show(await Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode)));
+        ModuleList.Show(await Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode)));
     }
 
     private async Task SetupInstanceInfo(ProfileCallTreeNode node) {
-        var callTree = Session.ProfileData.CallTree;
-        var instanceNodes = callTree.GetCallTreeNodes(node.Function);
+        //? TODO: IF same func, don't recompute
 
-        if (instanceNodes == null) {
+        var callTree = Session.ProfileData.CallTree;
+        instanceNodes_ = callTree.GetCallTreeNodes(node.Function);
+
+        if (instanceNodes_ == null) {
             return;
         }
 
         var combinedNode = await Task.Run(() => callTree.GetCombinedCallTreeNode(node.Function));
         InstancesNode = SetupNodeExtension(combinedNode);
-        FunctionInstancesCount = instanceNodes.Count;
+        FunctionInstancesCount = instanceNodes_.Count;
 
         // Show all instances.
-        instanceNodes.Sort((a, b) => b.Weight.CompareTo(a.Weight));
-        InstancesList.Show(instanceNodes, false);
+        instanceNodes_.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+        InstancesList.Show(instanceNodes_, false);
+
+        nodeInstanceIndex_ = instanceNodes_.FindIndex(instanceNode => instanceNode == node);
+        CurrentInstanceIndex = nodeInstanceIndex_ + 1;
 
         // Show median time.
-        var medianNode = instanceNodes[instanceNodes.Count / 2];
+        var medianNode = instanceNodes_[instanceNodes_.Count / 2];
         var medianNodeEx = SetupNodeExtension(medianNode);
         medianNodeEx.Percentage = Session.ProfileData.ScaleFunctionWeight(medianNodeEx.Weight);
         medianNodeEx.ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(medianNodeEx.ExclusiveWeight);
@@ -166,7 +179,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {
         var nodeEx = new ProfileCallTreeNodeEx(node) {
             FullFunctionName = node.FunctionName,
-            FunctionName = FormatFunctionName(node, demangle: true, MaxFunctionNmeLength),
+            FunctionName = FormatFunctionName(node, demangle: true, MaxFunctionNameLength),
             ModuleName = FormatModuleName(node, MaxModuleNameLength),
             Percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight),
             ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight),
@@ -205,7 +218,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {
         Session = session;
-        FunctionInfoProvider = funcInfoProvider;
+        funcInfoProvider_ = funcInfoProvider;
     }
 
     public event PropertyChangedEventHandler PropertyChanged;
@@ -219,5 +232,23 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         field = value;
         OnPropertyChanged(propertyName);
         return true;
+    }
+
+    private async void PreviousInstanceButton_Click(object sender, RoutedEventArgs e) {
+        if (nodeInstanceIndex_ > 0) {
+            int index = Utils.IsKeyboardModifierActive() ? 0 : nodeInstanceIndex_ - 1;
+            var node = instanceNodes_[index];
+            NodeInstanceChanged?.Invoke(this, node);
+            await ShowAsync(node);
+        }
+    }
+
+    private async void NextInstanceButton_Click(object sender, RoutedEventArgs e) {
+        if (nodeInstanceIndex_ < FunctionInstancesCount - 1) {
+            int index = Utils.IsKeyboardModifierActive() ? FunctionInstancesCount -1 : nodeInstanceIndex_ + 1;
+            var node = instanceNodes_[index];
+            NodeInstanceChanged?.Invoke(this, node);
+            await ShowAsync(node);
+        }
     }
 }

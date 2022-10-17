@@ -1235,6 +1235,7 @@ namespace IRExplorerUI {
             }
 
             UseProfileCallTree = true;
+            GridViewColumnVisibility.UpdateListView(FunctionList);
 
             // Create the call tree.
             var panel = Session.FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
@@ -2384,13 +2385,12 @@ namespace IRExplorerUI {
 
                 tasks.Add(taskFactory.StartNew(() => {
                     try {
-                        if (cancelableTask.IsCanceled) {
-                            cancelableTask.Completed();
-                            return;
-                        }
-
                         var section = function.Sections[0];
                         var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
+                       
+                        if (cancelableTask.IsCanceled) {
+                            return;
+                        }
 
                         if (sectionStats != null) {
                             functionStatMap_.TryAdd(function, sectionStats);
@@ -2404,6 +2404,12 @@ namespace IRExplorerUI {
             }
 
             await Task.WhenAll(tasks.ToArray());
+
+            if (cancelableTask.IsCanceled) {
+                // Complete only now after all tasks were canceled,
+                // otherwise the session ending would move on and break the tasks still executing.
+                cancelableTask.Completed();
+            }
 
             Session.SetApplicationProgress(false, double.NaN);
             return functionStatMap_;

@@ -160,7 +160,7 @@ public class FlameGraphRenderer {
             //? TODO: Removing from the quad tree is very slow,
             //? recompute the entire layout instead...
             //! Consider a faster implementation or other kind of spatial tree.
-            Trace.WriteLine($"=> Shrinking {shrinkingNodes}");
+            //Trace.WriteLine($"=> Shrinking {shrinkingNodes}");
             return false;
         }
 #else
@@ -169,18 +169,18 @@ public class FlameGraphRenderer {
         }
 
 #endif
-        DrawDummyNodes(graphDC, nodeLayoutRecomputed);
+        bool result = DrawDummyNodes(graphDC, nodeLayoutRecomputed);
         //DrawTimeBar(graphDC);
-        return true;
+        return result;
     }
 
-    private void DrawDummyNodes(DrawingContext graphDC, bool nodeLayoutRecomputed) {
+    private bool DrawDummyNodes(DrawingContext graphDC, bool nodeLayoutRecomputed) {
         List<FlameGraphGroupNode> enlargeList = null;
 
         foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
             // Reconsider replacing the dummy node.
             if (!nodeLayoutRecomputed &&
-                flameGraph_.ScaleWeight(node.Weight) > 2*minVisibleRectWidth_) {
+                flameGraph_.ScaleWeight(node.Weight) >= minVisibleRectWidth_) {
                 enlargeList ??= new List<FlameGraphGroupNode>();
                 enlargeList.Add(node);
             }
@@ -190,11 +190,12 @@ public class FlameGraphRenderer {
         }
 
         if (enlargeList == null) {
-            return;
+            return true;
         }
 
         // Replace/split the enlarged dummy nodes.
-#if true
+        //? TODO: Still doesn't always expand like recomputing layout does
+#if false
         bool update = false;
 
         foreach (var node in enlargeList) {
@@ -224,9 +225,11 @@ public class FlameGraphRenderer {
             }
         }
 #else
+        return false;
+
         nodeLayoutComputed_ = false;
         RedrawGraph();
-        return;
+        return false;
 #endif
     }
 
@@ -664,8 +667,8 @@ public class FlameGraphRenderer {
         return null;
     }
 
-    public Point ComputeNodePosition(FlameGraphNode node) {
-        return new Point(node.Bounds.Left * maxWidth_, node.Bounds.Top);
+    public Rect ComputeNodeBounds(FlameGraphNode node) {
+        return new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top, node.Bounds.Width * maxWidth_, node.Bounds.Height);
     }
 
     private HighlightingStyle PickDummyNodeStyle(HighlightingStyle style) {
