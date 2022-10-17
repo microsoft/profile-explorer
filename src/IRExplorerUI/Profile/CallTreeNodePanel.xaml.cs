@@ -67,8 +67,14 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     private IFunctionProfileInfoProvider funcInfoProvider_;
 
     public event EventHandler<ProfileCallTreeNode> NodeInstanceChanged;
-    public event EventHandler<ProfileCallTreeNode> NodeClick;
-    public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
+    public event EventHandler<ProfileCallTreeNode> BacktraceNodeClick;
+    public event EventHandler<ProfileCallTreeNode> BacktraceNodeDoubleClick;
+    public event EventHandler<ProfileCallTreeNode> InstanceNodeClick;
+    public event EventHandler<ProfileCallTreeNode> InstanceNodeDoubleClick;
+    public event EventHandler<ProfileCallTreeNode> FunctionNodeClick;
+    public event EventHandler<ProfileCallTreeNode> FunctionNodeDoubleClick;
+    public event EventHandler<ProfileCallTreeNode> ModuleNodeClick;
+    public event EventHandler<ProfileCallTreeNode> ModuleNodeDoubleClick;
 
     public override ISession Session {
         get => base.Session;
@@ -128,7 +134,20 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     public CallTreeNodePanel() {
         InitializeComponent();
+        SetupEvents();
         DataContext = this;
+    }
+
+    private void SetupEvents() {
+        BacktraceList.NodeClick += (sender, node) => BacktraceNodeClick?.Invoke(sender, node);
+        BacktraceList.NodeDoubleClick += (sender, node) => BacktraceNodeDoubleClick?.Invoke(sender, node);
+        FunctionList.NodeClick += (sender, node) => FunctionNodeClick?.Invoke(sender, node);
+        FunctionList.NodeDoubleClick += (sender, node) => FunctionNodeDoubleClick?.Invoke(sender, node);
+        InstancesList.NodeClick += (sender, node) => InstanceNodeClick?.Invoke(sender, node);
+        InstancesList.NodeDoubleClick += (sender, node) => InstanceNodeDoubleClick?.Invoke(sender, node);
+        ModuleList.NodeClick += (sender, node) => ModuleNodeClick?.Invoke(sender, node);
+        ModuleList.NodeDoubleClick += (sender, node) => ModuleNodeDoubleClick?.Invoke(sender, node);
+
     }
 
     public void Show(ProfileCallTreeNode node) {
