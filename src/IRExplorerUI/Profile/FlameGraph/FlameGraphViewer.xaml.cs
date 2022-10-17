@@ -198,7 +198,8 @@ public partial class FlameGraphViewer : FrameworkElement {
         selectedNode_ = null;
     }
 
-    public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode, Rect visibleArea) {
+    public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode, 
+                                 Rect visibleArea, FlameGraphSettings settings) {
         if (graphVisual_ != null) {
             Reset();
         }
@@ -214,15 +215,19 @@ public partial class FlameGraphViewer : FrameworkElement {
 #endif
 
         Trace.WriteLine($"Init FlameGraph with visible area {visibleArea}");
-        renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea);
+        renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea, settings);
         graphVisual_ = renderer_.Setup();
         AddVisualChild(graphVisual_);
         AddLogicalChild(graphVisual_);
         UpdateMaxWidth(renderer_.MaxGraphWidth);
     }
 
-    public async Task Initialize(ProfileCallTree callTree, Rect visibleArea) {
-        await Initialize(callTree, null, visibleArea);
+    public void SettingsUpdated(FlameGraphSettings settings) {
+        renderer_.SettingsUpdated(settings);
+    }
+
+    public async Task Initialize(ProfileCallTree callTree, Rect visibleArea, FlameGraphSettings settings) {
+        await Initialize(callTree, null, visibleArea, settings);
     }
 
     public void UpdateMaxWidth(double maxWidth) {

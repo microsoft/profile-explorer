@@ -344,7 +344,8 @@ namespace IRExplorerUI {
 
             var hover = new MouseHoverLogic(this);
             hover.MouseHover += Hover_MouseHover;
-            loadTask_ = new CancelableTaskInstance();
+            loadTask_ = new CancelableTaskInstance(true, Session.SessionState.RegisterCancelableTask,
+                                                         Session.SessionState.UnregisterCancelableTask);
             activeQueryPanels_ = new List<QueryPanel>();
         }
 
@@ -875,7 +876,7 @@ namespace IRExplorerUI {
 
             // Cancel any running tasks and hide panels.
             loadTask_.CancelTask();
-            // await loadTask_.WaitForTaskAsync();
+            //? TODO: used await loadTask_.CancelTaskAndWaitAsync(); when UnloadSection returns Task
             await HideRemarkPanel();
             HideActionPanel();
             SaveSectionState(section);
@@ -1382,7 +1383,7 @@ namespace IRExplorerUI {
                 var document = Session.SessionState.FindLoadedDocument(Section);
                 var options = new RemarkProviderOptions();
                 var results = remarkProvider.ExtractAllRemarks(sections, Function, document, options, cancelableTask);
-                loadTask_.CompleteTask(cancelableTask, Session.SessionState.UnregisterCancelableTask);
+                loadTask_.CompleteTask(cancelableTask);
                 return results;
             });
         }

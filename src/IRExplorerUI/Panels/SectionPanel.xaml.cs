@@ -459,8 +459,6 @@ namespace IRExplorerUI {
 
         public SectionPanel() {
             InitializeComponent();
-            statisticsTask_ = new CancelableTaskInstance(false);
-            callGraphTask_ = new CancelableTaskInstance(false);
             sections_ = new List<IRTextSectionEx>();
             moduleSummaries_ = new List<IRTextSummary>();
             sectionExtMap_ = new Dictionary<IRTextSection, IRTextSectionEx>();
@@ -1378,7 +1376,7 @@ namespace IRExplorerUI {
 
         private async Task ResetStatistics() {
             Trace.WriteLine($"Cancel stats at {DateTime.Now}, ticks {Environment.TickCount64}");
-            await statisticsTask_.CancelTaskAsync();
+            await statisticsTask_.CancelTaskAndWaitAsync();
             Trace.WriteLine($"Done cancel stats at {DateTime.Now}, ticks {Environment.TickCount64}");
             callGraphCache_ = null;
             functionStatMap_ = null;
@@ -1895,6 +1893,10 @@ namespace IRExplorerUI {
 
         public override async void OnSessionStart() {
             base.OnSessionStart();
+            statisticsTask_ = new CancelableTaskInstance(false, Session.SessionState.RegisterCancelableTask,
+                                                                Session.SessionState.UnregisterCancelableTask);
+            callGraphTask_ = new CancelableTaskInstance(false, Session.SessionState.RegisterCancelableTask,
+                                                               Session.SessionState.UnregisterCancelableTask);
             var data = Session.LoadPanelState(this, null);
 
             if (data != null) {
@@ -1974,7 +1976,7 @@ namespace IRExplorerUI {
             }
 
             Session.SetApplicationProgress(true, double.NaN, "Generating call graph");
-            using var cancelableTask = await callGraphTask_.CancelPreviousAndCreateTaskAsync(Session.SessionState.RegisterCancelableTask);
+            using var cancelableTask = await callGraphTask_.CancelPreviousAndCreateTaskAsync();
 
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
             callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
@@ -1985,7 +1987,7 @@ namespace IRExplorerUI {
                 callGraphCache_[summary] = callGraph;
             }
 
-            callGraphTask_.CompleteTask(cancelableTask, Session.SessionState.UnregisterCancelableTask);
+            callGraphTask_.CompleteTask(cancelableTask);
             Session.SetApplicationProgress(false, 0);
             return callGraph;
         }
@@ -2108,8 +2110,6 @@ namespace IRExplorerUI {
 
         public override void OnSessionEnd() {
             base.OnSessionEnd();
-            statisticsTask_.CancelTask();
-            statisticsTask_.WaitForTask();
             ResetUI(); //? TODO: Await, make OnSessionEnd async
         }
 
@@ -2340,7 +2340,7 @@ namespace IRExplorerUI {
         }
 
         private async Task ComputeFunctionStatistics() {
-            using var cancelableTask = await statisticsTask_.CancelPreviousAndCreateTaskAsync(Session.SessionState.RegisterCancelableTask);
+            using var cancelableTask = await statisticsTask_.CancelPreviousAndCreateTaskAsync();
             var functionStatMap = await ComputeFunctionStatisticsImpl(cancelableTask);
 
             if (cancelableTask.IsCanceled) {
@@ -2353,7 +2353,7 @@ namespace IRExplorerUI {
             }
 
             Trace.TraceInformation("ComputeFunctionStatistics: done");
-            statisticsTask_.CompleteTask(cancelableTask, Session.SessionState.UnregisterCancelableTask);
+            statisticsTask_.CompleteTask();
 
             AddStatisticsFunctionListColumns(false);
             RefreshFunctionList();
@@ -2381,15 +2381,19 @@ namespace IRExplorerUI {
                 if (function.SectionCount == 0) {
                     continue;
                 }
+                
+                if (cancelableTask.IsCanceled) {
+                    break;
+                }
 
                 tasks.Add(taskFactory.StartNew(() => {
                     try {
-                        var section = function.Sections[0];
-                        var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
-                       
                         if (cancelableTask.IsCanceled) {
                             return;
                         }
+
+                        var section = function.Sections[0];
+                        var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
 
                         if (sectionStats != null) {
                             functionStatMap_.TryAdd(function, sectionStats);

@@ -936,8 +936,8 @@ namespace IRExplorerUI {
         }
 
         private async Task SetupPanels() {
-            await SetupSectionPanel();
             NotifyPanelsOfSessionStart();
+            await SetupSectionPanel();
         }
 
         private async Task SetupSectionPanel() {
