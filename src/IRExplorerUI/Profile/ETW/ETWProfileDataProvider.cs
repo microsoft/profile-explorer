@@ -27,6 +27,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     private ProfileData profileData_;
 
     private const int IMAGE_LOCK_COUNT = 64;
+    private object lockObject;
     private object[] imageLocks;
     private ConcurrentDictionary<int, ModuleInfo> imageModuleMap_;
 
@@ -35,6 +36,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         profileData_ = new ProfileData();
 
         // Data structs used for module loading.
+        lockObject = new();
         imageModuleMap_ = new ConcurrentDictionary<int, ModuleInfo>();
         imageLocks = new object[IMAGE_LOCK_COUNT];
 
@@ -58,12 +60,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
 
     public async Task<ProfileData> LoadTraceAsync(string tracePath, List<int> processIds,
-        ProfileDataProviderOptions options,
-        SymbolFileSourceOptions symbolOptions,
-        ProfileDataReport report,
-        ProfileLoadProgressHandler progressCallback,
-        CancelableTask cancelableTask) {
-
+                                                ProfileDataProviderOptions options,
+                                                SymbolFileSourceOptions symbolOptions,
+                                                ProfileDataReport report,
+                                                ProfileLoadProgressHandler progressCallback,
+                                                CancelableTask cancelableTask) {
         progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) {
             Total = 0,
             Current = 0
@@ -78,17 +79,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         return await LoadTraceAsync(profile, processIds, options, symbolOptions,
                                     report, progressCallback, cancelableTask);
     }
-
-    public async Task<ProfileData> LoadTraceAsync(RawProfileData prof, List<int> processIds,
-        ProfileDataProviderOptions options,
-        SymbolFileSourceOptions symbolOptions,
-        ProfileDataReport report,
-        ProfileLoadProgressHandler progressCallback,
-        CancelableTask cancelableTask) {
-        var mainProcess = prof.FindProcess(processIds[0]);
+    
+    public async Task<ProfileData> LoadTraceAsync(RawProfileData profile, List<int> processIds,
+                                                ProfileDataProviderOptions options,
+                                                SymbolFileSourceOptions symbolOptions,
+                                                ProfileDataReport report,
+                                                ProfileLoadProgressHandler progressCallback,
+                                                CancelableTask cancelableTask) {
+        var mainProcess = profile.FindProcess(processIds[0]);
         report_ = report;
         report_.Process = mainProcess;
-        report.TraceInfo = prof.TraceInfo;
+        report.TraceInfo = profile.TraceInfo;
         var mainProcessId = mainProcess.ProcessId;
 
         try {
@@ -102,7 +103,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             // The entire ETW processing must be done on the same thread.
             bool result = await Task.Run(async () => {
                 Trace.WriteLine($"Init at {DateTime.Now}");
-
                 var totalSw = Stopwatch.StartNew();
 
                 // Start getting the function address data while the trace is loading.
@@ -116,390 +116,54 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                 Trace.WriteLine($"Start load at {DateTime.Now}");
 
-                if (cancelableTask != null && cancelableTask.IsCanceled) {
+                if (cancelableTask is { IsCanceled: true }) {
                     return false;
                 }
 
                 // Process the samples.
-
-                Trace.WriteLine($"Start preload symbols {DateTime.Now}");
-
                 progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
                     Total = 0,
                     Current = 0
                 });
 
-                prof.PrintProcess(mainProcessId);
-                //prof.PrintSamples(mainProcessId);
+                profile.PrintProcess(mainProcessId);
+                //profile.PrintSamples(mainProcessId);
 
-                await LoadBinaryAndDebugFiles(prof, mainProcess, imageName, symbolOptions, progressCallback, cancelableTask);
-
-                if (cancelableTask != null && cancelableTask.IsCanceled) {
+                await LoadBinaryAndDebugFiles(profile, mainProcess, imageName, 
+                                              symbolOptions, progressCallback, cancelableTask);
+                if (cancelableTask is { IsCanceled: true }) {
                     return false;
                 }
 
                 var sw = Stopwatch.StartNew();
-                int chunks = Math.Min(16, (Environment.ProcessorCount * 3) / 4);
 
+                // Split sample processing in multiple chunk, each done by another thread.
+                int chunks = Math.Min(16, (Environment.ProcessorCount * 3) / 4);
 #if DEBUG
                 chunks = 1;
 #endif
+                int chunkSize = profile.ComputeSampleChunkLength(chunks);
 
                 Trace.WriteLine($"Using {chunks} threads");
-                //? TODO: Round up to chunk size to avoid thread issues
-                //?    CompressedList API to give chunk size for T
-
                 var tasks = new List<Task>();
                 var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
                 var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
 
-                int chunkSize = prof.ComputeSampleChunkLength(chunks);
-                Trace.WriteLine($"Using chunk {chunkSize}");
-
-                var lockObject = new object();
-                int index = 0;
-
+                //? TODO: Build call tree outside, with sample filtering
                 var callTree = new ProfileCallTree();
 
                 for (int k = 0; k < chunks; k++) {
-                    int start = Math.Min(k * chunkSize, (int)prof.Samples.Count);
-                    int end = Math.Min((k + 1) * chunkSize, (int)prof.Samples.Count);
+                    int start = Math.Min(k * chunkSize, (int)profile.Samples.Count);
+                    int end = Math.Min((k + 1) * chunkSize, (int)profile.Samples.Count);
 
-                    if (start == end)
+                    if (start == end) {
                         continue;
+                    }
 
                     tasks.Add(taskFactory.StartNew(() => {
-                        //{
-                        var stackFuncts = new HashSet<IRTextFunction>();
-                        var stackModules = new HashSet<int>();
-
-                        foreach(var sample in prof.Samples.Enumerate(start, end)) {
-                            index++;
-
-                            if (!options.IncludeKernelEvents &&
-                                sample.IsKernelCode) {
-                                continue; //? TODO: Is this all kernel?
-                            }
-
-                            var context = sample.GetContext(prof);
-
-                            if(!processIds.Contains(context.ProcessId)) {
-                                continue;
-                            }
-
-                            //? TODO: Replace %?
-                            if (index % 10000 == 0) {
-                                if (cancelableTask != null && cancelableTask.IsCanceled) {
-                                    return;
-                                }
-
-                                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
-                                    Total = (int)prof.Samples.Count, Current = index
-                                });
-                            }
-
-                            var sampleWeight = sample.Weight;
-
-                            // Count time for each sample.
-                            var stack = sample.GetStack(prof);
-
-                            if (stack.IsUnknown) {
-                                lock (profileData_) {
-                                    profileData_.TotalWeight += sampleWeight; //? Lock
-                                }
-
-                                continue;
-                            }
-
-                            // Count time in the profile image.
-                            lock (profileData_) {
-                                profileData_.TotalWeight += sampleWeight; //? Lock
-                                profileData_.ProfileWeight += sampleWeight; //? Remove, keep only TotalWeight?
-                            }
-
-                            bool isTopFrame = true;
-                            stackFuncts.Clear();
-                            stackModules.Clear();
-
-                            var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
-
-                            if (resolvedStack != null) {
-                                foreach (var resolvedFrame in resolvedStack.StackFrames) {
-                                    if (resolvedFrame.IsUnknown) {
-                                        // Can at least increment the module weight.
-                                        if (isTopFrame) {
-                                            var frameImage = prof.FindImageForIP(resolvedFrame.FrameIP, context);
-
-                                            if (frameImage != null && stackModules.Add(frameImage.Id)) {
-
-                                                //? TODO: Use debugInfo from FindModuleInfo
-                                                lock (lockObject) {
-                                                    profileData_.AddModuleSample(frameImage.ModuleName, sampleWeight);
-                                                }
-                                            }
-                                        }
-
-                                        continue;
-                                    }
-
-                                    // Count exclusive time for each module in the executable.
-                                    if (isTopFrame && stackModules.Add(resolvedFrame.Image.Id)) {
-                                        lock (lockObject) {
-                                            profileData_.AddModuleSample(resolvedFrame.Image.ModuleName, sampleWeight);
-                                        }
-                                    }
-
-                                    //Trace.WriteLine($"Resolved image {resolvedFrame.Image.ModuleName}m {resolvedFrame.DebugInfo.Name}, prof func {resolvedFrame.Profile.FunctionDebugInfo.Name}, rva {resolvedFrame.FrameRVA}, ip {resolvedFrame.FrameIP}");
-
-                                    var frameRva = resolvedFrame.FrameRVA;
-                                    var funcInfo = resolvedFrame.DebugInfo;
-                                    var funcRva = funcInfo.RVA;
-                                    var textFunction = resolvedFrame.Function;
-                                    var profile = resolvedFrame.Profile;
-
-                                    lock (profile) {
-                                        //profile.FunctionDebugInfo = funcInfo; //? REMOVE
-                                        var offset = frameRva - funcRva;
-
-                                        // Don't count the inclusive time for recursive functions multiple times.
-                                        if (stackFuncts.Add(textFunction)) {
-                                            profile.AddInstructionSample(offset, sampleWeight);
-                                            profile.Weight += sampleWeight;
-                                        }
-
-                                        // Count the exclusive time for the top frame function.
-                                        if (isTopFrame) {
-                                            profile.ExclusiveWeight += sampleWeight;
-                                        }
-
-                                        //? TODO: Expensive, do as post-processing
-                                        // Try to map the sample to all the inlined functions.
-                                        //if (options_.MarkInlinedFunctions && resolvedFrame.Module.HasDebugInfo &&
-                                        //    textFunction.Sections.Count > 0) {
-                                        //    ProcessInlineeSample(sampleWeight, offset, textFunction, resolvedFrame.Module);
-                                        //}
-                                    }
-
-                                    isTopFrame = false;
-                                }
-                            }
-                            else {
-                                resolvedStack = new ResolvedProfileStack(stack.FrameCount, context);
-                                var stackFrames = stack.FramePointers;
-                                long managedBaseAddress = 0;
-                                int frameIndex = 0;
-                                int pointerSize = prof.TraceInfo.PointerSize;
-
-                                bool trace = false;
-
-                                //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
-                                //? for ex it never gets to main. Easy example is a quicksort impl
-                                for(; frameIndex < stackFrames.Length; frameIndex++) {
-                                    var frameIp = stackFrames[frameIndex];
-
-                                    if (trace) {
-                                        Trace.WriteLine($"  at frame {frameIndex}: {frameIp}");
-                                    }
-
-                                    ProfileImage frameImage = null;
-
-                                    if (ETWEventProcessor.IsKernelAddress((ulong)frameIp, pointerSize)) {
-                                        frameImage = prof.FindImageForIP(frameIp, 0);
-                                    }
-                                    else {
-                                        frameImage = prof.FindImageForIP(frameIp, context.ProcessId);
-                                    }
-
-                                    if (frameImage == null) {
-                                        if (prof.HasManagedMethods(context.ProcessId)) {
-                                            var managedFunc = prof.FindManagedMethodForIP(frameIp, context.ProcessId);
-
-                                            if (managedFunc != null) {
-                                                frameImage = managedFunc.Image;
-                                                managedBaseAddress = 1;
-                                            }
-                                        }
-
-                                        if (frameImage == null) {
-                                            if (trace) {
-                                                Trace.WriteLine($"  ! no frameImage");
-                                            }
-
-                                            resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown, frameIndex, stack);
-                                            isTopFrame = false;
-                                            continue;
-                                        }
-                                    }
-
-                                    // Count exclusive time for each module in the executable.
-                                    if (isTopFrame && stackModules.Add(frameImage.Id)) {
-                                        lock (profileData_) {
-                                            profileData_.AddModuleSample(frameImage.ModuleName, sampleWeight);
-                                        }
-                                    }
-
-                                    long frameRva = 0;
-                                    long funcRva = 0;
-                                    string funcName = null;
-                                    ModuleInfo module = null;
-                                    FunctionDebugInfo funcInfo = null;
-                                    IRTextFunction textFunction = null;
-
-                                    //var modSw = Stopwatch.StartNew();
-                                    module = FindModuleInfo(prof, frameImage, context.ProcessId, symbolOptions);
-                                    //modSw.Stop();
-                                    //if (modSw.ElapsedMilliseconds > 500) {
-                                    //    Trace.WriteLine($"=> Slow load {modSw.Elapsed}: {frameImage.Name}");
-                                    //}
-
-                                    if (module != null) {
-                                        if (managedBaseAddress != 0) {
-                                            frameRva = frameIp;
-                                            // Trace.WriteLine($"Check managed image {frameImage.ModuleName}");
-                                            // Trace.WriteLine($"   for IP {frameIp}");
-                                            //trace = true;
-
-                                            if (module.HasDebugInfo) {
-                                                funcInfo = module.FindFunctionDebugInfo(frameRva);
-                                            }
-                                            else {
-                                                //? TODO: merge with below to add +HEX func names
-                                            }
-                                        }
-                                        else {
-                                            frameRva = frameIp - frameImage.BaseAddress;
-
-                                            if (module.HasDebugInfo) {
-                                                funcInfo = module.FindFunctionDebugInfo(frameRva);
-                                            }
-
-                                            if(funcInfo == null) {
-                                                textFunction = module.FindFunction(frameRva, out _);
-
-                                                if (textFunction == null) {
-                                                    var placeholderName = $"{frameIp:X}";
-                                                    textFunction = module.AddPlaceholderFunction(placeholderName, frameIp);
-                                                    if (trace) {
-                                                        Trace.WriteLine($"New placehodler {placeholderName} in {frameImage.ModuleName} ");
-                                                    }
-                                                }
-
-                                                funcInfo = new FunctionDebugInfo(textFunction.Name, frameIp, 0);
-                                            }
-                                        }
-
-                                        if (funcInfo != null) {
-                                            funcName = funcInfo.Name;
-                                            funcRva = funcInfo.RVA;
-
-                                            if (trace) {
-                                                Trace.WriteLine($"  => {funcName} at RVA {funcRva} in {frameImage.ModuleName} ");
-                                            }
-                                        }
-                                        else {
-                                            if (trace) {
-                                                Trace.WriteLine($"  ! no funcInfo in frame RVA {frameRva} {frameImage.ModuleName}");
-                                            }
-                                        }
-                                    }
-                                    else {
-                                        if (trace) {
-                                            Trace.WriteLine($"  ! no module for {frameImage.ModuleName}");
-                                            Trace.WriteLine($"      debug issue: {module != null && !module.HasDebugInfo}");
-                                        }
-                                    }
-
-                                    //? Tracing
-                                    //if (funcName != null && funcName.Contains("_PyObject_Malloc")) {
-                                    //    Trace.WriteLine($"At {funcName}");
-                                    //    trace = true;
-                                    //}
-
-                                    if (funcName == null) {
-#if false
-                                        if (managedBaseAddress == 0) {
-                                            Trace.WriteLine($"=> No func for {frameImage.ModuleName}, frameIP {frameIp}");
-                                            Trace.WriteLine($"     frameRVA {frameIp - frameImage.BaseAddress}");
-                                            Trace.WriteLine($"     image: {frameImage}");
-                                            if (module != null && module.sortedFuncList_ != null && module.sortedFuncList_.Count > 0) {
-                                                Trace.WriteLine($"    RVA range: {module.sortedFuncList_[0].StartRVA:X},{ module.sortedFuncList_[^1].StartRVA:X}");
-                                            }
-                                        }
-
-                                        bool addedPlaceholder = false;
-
-                                        if (module != null) {
-                                            var placeholderName = $"{frameIp:X}";
-                                            textFunction = module.AddPlaceholderFunction(placeholderName, frameIp);
-                                            funcInfo = new FunctionDebugInfo(placeholderName, frameIp, 0);
-                                            addedPlaceholder = textFunction != null;
-                                        }
-
-                                        if(!addedPlaceholder) {
-                                            resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
-                                            isTopFrame = false;
-                                            continue;
-                                        }
-#else
-                                        //resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
-                                        //isTopFrame = false;
-#endif
-                                    }
-                                    else {
-                                        if (textFunction == null) {
-                                            textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
-                                        }
-                                    }
-
-                                    if (textFunction == null) {
-                                        resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown, frameIndex, stack);
-                                        isTopFrame = false;
-                                        continue;
-                                    }
-
-                                    FunctionProfileData profile = null;
-
-                                    //? TODO: Use RW lock
-                                    lock (profileData_) {
-                                        profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
-                                    }
-
-                                    lock (profile) {
-                                        profile.FunctionDebugInfo = funcInfo;
-                                        var offset = frameRva - funcRva;
-
-                                        // Don't count the inclusive time for recursive functions multiple times.
-                                        if (stackFuncts.Add(textFunction)) {
-                                            profile.AddInstructionSample(offset, sampleWeight);
-                                            profile.Weight += sampleWeight;
-                                        }
-
-                                        // Count the exclusive time for the top frame function.
-                                        if (isTopFrame) {
-                                            profile.ExclusiveWeight += sampleWeight;
-                                        }
-
-                                        //? TODO: Expensive, do as post-processing
-                                        // Try to map the sample to all the inlined functions.
-                                        //if (options_.MarkInlinedFunctions && module.HasDebugInfo &&
-                                        //    textFunction.Sections.Count > 0) {
-                                        //    ProcessInlineeSample(sampleWeight, offset, textFunction, module);
-                                        //}
-
-                                        var resolvedFrame = new ResolvedProfileStackFrame(frameIp, frameRva, funcInfo,
-                                                                                          textFunction, frameImage, module, profile);
-                                        resolvedStack.AddFrame(resolvedFrame, frameIndex, stack);
-                                    }
-                                    //}
-
-                                    isTopFrame = false;
-                                }
-
-                                stack.SetOptionalData(resolvedStack);
-                            }
-
-                            UpdateCallTree(resolvedStack, callTree, sample);
-                        }
+                        ProcessSamplesChunk(profile, start, end, 
+                                            processIds, options.IncludeKernelEvents, callTree, 
+                                            symbolOptions, progressCallback, cancelableTask);
                     }));
                 }
 
@@ -509,16 +173,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                 if (options_.IncludePerformanceCounters) {
                     // Process performance counters.
-                    ProcessPerformanceCounters(prof, processIds, symbolOptions, progressCallback, cancelableTask);
-
+                    ProcessPerformanceCounters(profile, processIds, symbolOptions, progressCallback, cancelableTask);
                 }
 
                 Trace.WriteLine($"Done in {totalSw.Elapsed}");
-                //Trace.Flush();
                 return true;
             });
 
-            if (cancelableTask != null && cancelableTask.IsCanceled) {
+            if (cancelableTask is { IsCanceled: true }) {
                 return null;
             }
 
@@ -536,7 +198,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 await session_.SetupNewSession(exeDocument, otherDocuments);
             }
 
-            if (cancelableTask != null && cancelableTask.IsCanceled) {
+            if (cancelableTask is { IsCanceled: true }) {
                 return null;
             }
 
@@ -547,6 +209,290 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             Trace.WriteLine(ex.StackTrace);
             Trace.Flush();
             return null;
+        }
+    }
+
+    private void ProcessSamplesChunk(RawProfileData profile, int start, int end, List<int> processIds,
+                                     bool includeKernelEvents, ProfileCallTree callTree,
+                                     SymbolFileSourceOptions symbolOptions,
+                                     ProfileLoadProgressHandler progressCallback, 
+                                     CancelableTask cancelableTask) {
+        int index = 0;
+        var stackFuncts = new HashSet<IRTextFunction>();
+        var stackModules = new HashSet<int>();
+
+        foreach (var sample in profile.Samples.Enumerate(start, end)) {
+            if (!includeKernelEvents && sample.IsKernelCode) {
+                continue;
+            }
+
+            // Ignore other processes.
+            var context = sample.GetContext(profile);
+
+            if (!processIds.Contains(context.ProcessId)) {
+                continue;
+            }
+
+            //? TODO: Replace %?
+            if (index++ % 10000 == 0) {
+                if (cancelableTask is { IsCanceled: true }) {
+                    return;
+                }
+
+                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
+                    Total = (int)profile.Samples.Count, Current = index
+                });
+            }
+
+            // Count time for each sample.
+            var sampleWeight = sample.Weight;
+            var stack = sample.GetStack(profile);
+
+            // Count time in the profile image.
+            //? TODO: Avoid lock by summing per thread, accumulate at the end
+            lock (profileData_) {
+                profileData_.TotalWeight += sampleWeight;
+                profileData_.ProfileWeight += sampleWeight; //? Remove, keep only TotalWeight?
+
+                if (stack.IsUnknown) {
+                    continue; // Ignore sample without a stack.
+                }
+
+                profileData_.ProfileWeight += sampleWeight; //? Remove, keep only TotalWeight?
+            }
+
+            // Process each stack frame to map it to a module:function
+            // using the debug info. A stack is resolved only once, future
+            // occurrences use the cached version.
+            stackFuncts.Clear();
+            stackModules.Clear();
+
+            var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
+
+            if (false && resolvedStack != null) {
+                ProcessResolvedStack(resolvedStack, sampleWeight, stackModules, stackFuncts);
+            }
+            else {
+                resolvedStack = ProcessUnresolvedStack(stack, sampleWeight, context, profile, 
+                                                       stackModules, stackFuncts, symbolOptions);
+                stack.SetOptionalData(resolvedStack); // Cache resolved stack.
+            }
+
+            UpdateCallTree(resolvedStack, callTree, sample);
+        }
+    }
+
+    private ResolvedProfileStack ProcessUnresolvedStack(ProfileStack stack, TimeSpan sampleWeight, 
+                                                        ProfileContext context, RawProfileData profile, 
+                                                        HashSet<int> stackModules, HashSet<IRTextFunction> stackFuncts, 
+                                                        SymbolFileSourceOptions symbolOptions) {
+        bool isTopFrame = true;
+        var resolvedStack = new ResolvedProfileStack(stack.FrameCount, context);
+        var stackFrames = stack.FramePointers;
+        bool isManagedCode = false;
+        int frameIndex = 0;
+        int pointerSize = profile.TraceInfo.PointerSize;
+
+        bool trace = false;
+
+        //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
+        //? for ex it never gets to main. Easy example is a quicksort impl
+        for (; frameIndex < stackFrames.Length; frameIndex++) {
+            var frameIp = stackFrames[frameIndex];
+            ProfileImage frameImage = null;
+
+            if (ETWEventProcessor.IsKernelAddress((ulong)frameIp, pointerSize)) {
+                frameImage = profile.FindImageForIP(frameIp, ETWEventProcessor.KernelProcessId);
+            }
+            else {
+                frameImage = profile.FindImageForIP(frameIp, context.ProcessId);
+            }
+
+            if (frameImage == null) {
+                // Check if it's a .NET method, the JITted code may not mapped to any module.
+                if (profile.HasManagedMethods(context.ProcessId)) {
+                    var managedFunc = profile.FindManagedMethodForIP(frameIp, context.ProcessId);
+
+                    if (managedFunc != null) {
+                        frameImage = managedFunc.Image;
+                        isManagedCode = true;
+                    }
+                }
+
+                if (frameImage == null) {
+                    if (trace) {
+                        Trace.WriteLine($"  ! no frameImage");
+                    }
+
+                    resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown, frameIndex, stack);
+                    isTopFrame = false;
+                    continue;
+                }
+            }
+
+            // Count exclusive time for each module in the executable.
+            if (isTopFrame && stackModules.Add(frameImage.Id)) {
+                lock (profileData_) {
+                    profileData_.AddModuleSample(frameImage.ModuleName, sampleWeight);
+                }
+            }
+
+            // Try to resolve the frame using the lists of processes/images and debug info.
+            long frameRva = 0;
+            long funcRva = 0;
+            ModuleInfo module = null;
+            FunctionDebugInfo funcDebugInfo = null;
+            IRTextFunction textFunction = null;
+
+            module = FindModuleInfo(profile, frameImage, context.ProcessId, symbolOptions);
+
+            if (module == null) {
+                if (trace) {
+                    Trace.WriteLine($"  ! no module for {frameImage.ModuleName}");
+                }
+
+                resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown, frameIndex, stack);
+                isTopFrame = false;
+                continue;
+            }
+
+            if (isManagedCode) {
+                frameRva = frameIp;
+            }
+            else {
+                frameRva = frameIp - frameImage.BaseAddress;
+            }
+
+            // Find the function the sample belongs to.
+            if (module.HasDebugInfo) {
+                funcDebugInfo = module.FindFunctionDebugInfo(frameRva);
+            }
+
+            if (funcDebugInfo == null) {
+                // No debug info available for the RVA, make a placeholder function
+                // to have something to associate the sample with.
+                textFunction = module.FindFunction(frameRva, out _);
+
+                if (textFunction == null) {
+                    var placeholderName = $"{frameIp:X}";
+                    textFunction = module.AddPlaceholderFunction(placeholderName, frameIp);
+
+                    if (trace) {
+                        Trace.WriteLine($"New placeholder {placeholderName} in {frameImage.ModuleName} ");
+                    }
+                }
+
+                funcDebugInfo = new FunctionDebugInfo(textFunction.Name, frameIp, 0);
+            }
+
+            // Find the corresponding text function in the module, which may
+            // be set already above for placeholders.
+            if (textFunction == null) {
+                textFunction = module.FindFunction(funcDebugInfo.RVA, out bool isExternalFunc);
+
+                if (textFunction == null) {
+                    if (trace) {
+                        Trace.WriteLine($"  ! no text func in frame RVA {frameRva} {frameImage.ModuleName}");
+                    }
+
+                    resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown, frameIndex, stack);
+                    isTopFrame = false;
+                    continue;
+                }
+            }
+
+            // Create the function profile data, with the merged weight of all instances
+            // of the func. across all call stacks.
+            FunctionProfileData funcProfile = null;
+
+            lock (profileData_) {
+                //? TODO:  Use RW lock
+                funcProfile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
+            }
+
+            lock (funcProfile) {
+                funcProfile.FunctionDebugInfo = funcDebugInfo;
+                var offset = frameRva - funcRva;
+
+                // Don't count the inclusive time for recursive functions multiple times.
+                if (stackFuncts.Add(textFunction)) {
+                    funcProfile.AddInstructionSample(offset, sampleWeight);
+                    funcProfile.Weight += sampleWeight;
+                }
+
+                // Count the exclusive time for the top frame function.
+                if (isTopFrame) {
+                    funcProfile.ExclusiveWeight += sampleWeight;
+                }
+
+                //? TODO: Expensive, do as post-processing
+                // Try to map the sample to all the inlined functions.
+                //if (options_.MarkInlinedFunctions && module.HasDebugInfo &&
+                //    textFunction.Sections.Count > 0) {
+                //    ProcessInlineeSample(sampleWeight, offset, textFunction, module);
+                //}
+
+                var resolvedFrame = new ResolvedProfileStackFrame(frameIp, frameRva, funcDebugInfo,
+                                                                  textFunction, frameImage, module, funcProfile);
+                resolvedStack.AddFrame(resolvedFrame, frameIndex, stack);
+            }
+
+            isTopFrame = false;
+        }
+
+        return resolvedStack;
+    }
+
+    private void ProcessResolvedStack(ResolvedProfileStack resolvedStack, TimeSpan sampleWeight, 
+                                      HashSet<int> stackModules, HashSet<IRTextFunction> stackFuncts) {
+        bool isTopFrame = true;
+
+        foreach (var resolvedFrame in resolvedStack.StackFrames) {
+            if (resolvedFrame.IsUnknown) {
+                continue;
+            }
+
+            // Count exclusive time for each module in the executable.
+            if (isTopFrame && stackModules.Add(resolvedFrame.Image.Id)) {
+                lock (lockObject) {
+                    //? TODO: Avoid lock by summing per thread, accumulate at the end
+                    //? TODO: Also, don't use mod name as key, use imageId
+                    profileData_.AddModuleSample(resolvedFrame.Image.ModuleName, sampleWeight);
+                }
+            }
+
+
+            //Trace.WriteLine($"Resolved image {resolvedFrame.Image.ModuleName}m {resolvedFrame.DebugInfo.Name}, profile func {resolvedFrame.Profile.FunctionDebugInfo.Name}, rva {resolvedFrame.FrameRVA}, ip {resolvedFrame.FrameIP}");
+
+            var frameRva = resolvedFrame.FrameRVA;
+            var funcInfo = resolvedFrame.DebugInfo;
+            var funcRva = funcInfo.RVA;
+            var textFunction = resolvedFrame.Function;
+            var funcProfile = resolvedFrame.Profile;
+
+            lock (funcProfile) {
+                var offset = frameRva - funcRva;
+
+                // Don't count the inclusive time for recursive functions multiple times.
+                if (stackFuncts.Add(textFunction)) {
+                    funcProfile.AddInstructionSample(offset, sampleWeight);
+                    funcProfile.Weight += sampleWeight;
+                }
+
+                // Count the exclusive time for the top frame function.
+                if (isTopFrame) {
+                    funcProfile.ExclusiveWeight += sampleWeight;
+                }
+
+                //? TODO: Expensive, do as post-processing
+                // Try to map the sample to all the inlined functions.
+                //if (options_.MarkInlinedFunctions && resolvedFrame.Module.HasDebugInfo &&
+                //    textFunction.Sections.Count > 0) {
+                //    ProcessInlineeSample(sampleWeight, offset, textFunction, resolvedFrame.Module);
+                //}
+            }
+
+            isTopFrame = false;
         }
     }
 
@@ -654,14 +600,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         IRMode irMode = IRMode.Default;
 
         for (int i = 0; i < imageLimit; i++) {
-            if (cancelableTask != null && cancelableTask.IsCanceled) {
+            if (cancelableTask is { IsCanceled: true }) {
                 return;
             }
 
             Debug.Assert(binTaskList[i] != null);
             var binaryFile = await binTaskList[i].ConfigureAwait(false);
 
-            if (irMode == IRMode.Default && binaryFile != null && binaryFile.Found) {
+            if (irMode == IRMode.Default && binaryFile is { Found: true }) {
                 var binaryInfo = binaryFile.BinaryFile;
 
                 if (binaryInfo != null) {
@@ -698,20 +644,20 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         });
 
         for (int i = 0; i < imageLimit; i++) {
-            if (cancelableTask != null && cancelableTask.IsCanceled) {
+            if (cancelableTask is { IsCanceled: true }) {
                 return;
             }
 
             var binaryFile = await binTaskList[i].ConfigureAwait(false);
 
-            if (binaryFile != null && binaryFile.Found) {
+            if (binaryFile is { Found: true }) {
                 pdbTaskList[i] = session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath);
             }
         }
 
         // Wait for the PDBs to be loaded.
         for (int i = 0; i < imageLimit; i++) {
-            if (cancelableTask != null && cancelableTask.IsCanceled) {
+            if (cancelableTask is { IsCanceled: true }) {
                 return;
             }
 
@@ -821,7 +767,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             index++;
 
             if (index % 50000 == 0) {
-                if (cancelableTask != null && cancelableTask.IsCanceled) {
+                if (cancelableTask is { IsCanceled: true }) {
                     break;
                 }
 
