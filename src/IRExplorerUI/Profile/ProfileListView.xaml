@@ -21,6 +21,7 @@
         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
         BorderBrush="{x:Null}"
         BorderThickness="0,0,0,0"
+        SelectionChanged="ItemList_SelectionChanged"
         VirtualizingStackPanel.IsVirtualizing="True"
         VirtualizingStackPanel.VirtualizationMode="Recycling">
         <ListView.View>
@@ -184,6 +185,7 @@
 
         <ListView.ItemContainerStyle>
             <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                <EventSetter Event="MouseDoubleClick" Handler="ItemList_ModuleDoubleClick" />
                 <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
 

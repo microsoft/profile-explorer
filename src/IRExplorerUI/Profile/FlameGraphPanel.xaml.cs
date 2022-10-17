@@ -15,6 +15,7 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Controls;
 using Microsoft.Diagnostics.Tracing.Stacks;
+using Microsoft.VisualBasic;
 using ProtoBuf.WellKnownTypes;
 
 namespace IRExplorerUI.Profile;
@@ -194,6 +195,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         MouseDown += OnMouseDown;
 
         NodeDetailsPanel.NodeInstanceChanged += NodeDetailsPanel_NodeInstanceChanged;
+        NodeDetailsPanel.BacktraceNodeClick += NodeDetailsPanel_NodeClick;
+        NodeDetailsPanel.BacktraceNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
+        NodeDetailsPanel.InstanceNodeClick += NodeDetailsPanel_NodeClick;
+        NodeDetailsPanel.BacktraceNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
 
         stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
             CallTreeNodePopup.PopupHoverDuration,
@@ -231,6 +236,21 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private async void NodeDetailsPanel_NodeInstanceChanged(object sender, ProfileCallTreeNode e) {
         var node = GraphViewer.SelectNode(e);
         BringNodeIntoView(node);
+    }
+
+    private async void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
+        var node = GraphViewer.SelectNode(e);
+        BringNodeIntoView(node, false);
+
+        //? Sync source file
+    }
+    
+    private async void NodeDetailsPanel_NodeDoubleClick(object sender, ProfileCallTreeNode e) {
+        if (e.Function != null && e.Function.HasSections) {
+            var openMode = Utils.IsKeyboardModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+            var args = new OpenSectionEventArgs(e.Function.Sections[0], openMode);
+            await Session.SwitchDocumentSectionAsync(args);
+        }
     }
 
     private async void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) {
@@ -297,13 +317,14 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
     }
 
-    private void BringNodeIntoView(FlameGraphNode node) {
+    private void BringNodeIntoView(FlameGraphNode node, bool fitSize = true) {
         var bounds = GraphViewer.ComputeNodeBounds(node);
         var graphArea = GraphVisibleArea;
         DoubleAnimation animation1 = null;
         DoubleAnimation animation2 = null;
 
         if (bounds.Left < graphArea.Left || bounds.Right > graphArea.Right) {
+            //? TODO: If node is outside on the right, increase offset to show it all
             animation1 = ScrollToHorizontalOffset(bounds.Left);
         }
 
@@ -311,19 +332,21 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             animation2 = ScrollToVerticalOffset(bounds.Top);
         }
 
-        switch ((animation1 != null, animation2 != null)) {
-            case (true, true):
-            case (true, false): {
-                animation1.Completed += (sender, e) => BringNodeIntoViewZoom(node) ; 
-                break;
-            }
-            case (false, true): {
-                animation2.Completed += (sender, e) => BringNodeIntoViewZoom(node); 
-                break;
-            }
-            default: {
-                BringNodeIntoViewZoom(node);
-                break;
+        if (fitSize) {
+            switch ((animation1 != null, animation2 != null)) {
+                case (true, true):
+                case (true, false): {
+                    animation1.Completed += (sender, e) => BringNodeIntoViewZoom(node);
+                    break;
+                }
+                case (false, true): {
+                    animation2.Completed += (sender, e) => BringNodeIntoViewZoom(node);
+                    break;
+                }
+                default: {
+                    BringNodeIntoViewZoom(node);
+                    break;
+                }
             }
         }
 
@@ -367,8 +390,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         var bounds = GraphViewer.ComputeNodeBounds(node);
         double zoomX = 0;
 
-        if (bounds.Width < 200) {
-            zoomX = 200 - bounds.Width;
+        if (bounds.Width < 100) {
+            zoomX = 100 - bounds.Width;
         }
         else if (bounds.Width > GraphAreaWidth) {
             zoomX = GraphAreaWidth - bounds.Width;

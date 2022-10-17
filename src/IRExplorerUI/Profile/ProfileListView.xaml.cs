@@ -57,6 +57,8 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
     public ISession Session { get; set; }
     public event PropertyChangedEventHandler PropertyChanged;
+    public event EventHandler<ProfileCallTreeNode> NodeClick;
+    public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
 
     private string nameColumnTitle_;
     public string NameColumnTitle {
@@ -137,6 +139,9 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
             if (!filteredList.Any()) {
                 filteredList = list.Take(10);
             }
+            else {
+                filteredList = filteredList.Take(50);
+            }
         }
 
         ItemList.ItemsSource = new ListCollectionView(filteredList.ToList());
@@ -157,5 +162,19 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
         field = value;
         OnPropertyChanged(propertyName);
         return true;
+    }
+
+    private void ItemList_ModuleDoubleClick(object sender, MouseButtonEventArgs e) {
+        var node = ((ListViewItem)sender).Content as ProfileListViewItem;
+        if (node?.CallTreeNode != null) {
+            NodeDoubleClick?.Invoke(this, node.CallTreeNode);
+        }
+    }
+
+    private void ItemList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+        var node = ItemList.SelectedItem as ProfileListViewItem;
+        if (node?.CallTreeNode != null) {
+            NodeClick?.Invoke(this, node.CallTreeNode);
+        }
     }
 }
