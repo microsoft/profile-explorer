@@ -9,7 +9,7 @@ using ProtoBuf;
 namespace IRExplorerUI.Profile;
 
 public interface IProfileDataProvider {
-    Task<ProfileData> LoadTraceAsync(RawProfileData prof, List<int> processIds,
+    Task<ProfileData> LoadTraceAsync(RawProfileData profile, List<int> processIds,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
         ProfileDataReport report,

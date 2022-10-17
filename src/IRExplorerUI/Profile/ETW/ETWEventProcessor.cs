@@ -77,6 +77,8 @@ public sealed class ETWEventProcessor : IDisposable {
         return ip >= 0xFFFF000000000000;
     }
 
+    public const int KernelProcessId = 0;
+
     public List<ProcessSummary> BuildProcessSummary(ProcessListProgressHandler progressCallback,
                                                     CancelableTask cancelableTask) {
         // Default 1ms sampling interval.
