@@ -4,18 +4,25 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace IRExplorerCore {
+    // Manages a unique running instance of a CancelableTask.
     public class CancelableTaskInstance : IDisposable {
-        private object lockObject_ = new object();
         private CancelableTask taskInstance_;
+        private CancelableTaskDelegate registerAction_;
+        private CancelableTaskDelegate unregisterAction_;
+        private object lockObject_ = new object();
         private bool completeOnCancel_;
 
-        public CancelableTaskInstance(bool completeOnCancel = true) {
+        public delegate void CancelableTaskDelegate(CancelableTask task);
+        
+        public CancelableTaskInstance(bool completeOnCancel = true, 
+                                      CancelableTaskDelegate registerAction = null,
+                                      CancelableTaskDelegate unregisterAction = null) {
             completeOnCancel_ = completeOnCancel;
+            registerAction_ = registerAction;
+            unregisterAction_ = unregisterAction;
         }
 
-        public delegate void CancelableTaskDelegate(CancelableTask task);
-
-        public CancelableTask CreateTask(CancelableTaskDelegate registerAction = null) {
+        public CancelableTask CreateTask() {
             lock (lockObject_) {
                 if (taskInstance_ != null) {
                     // Cancel running task without blocking.
@@ -23,12 +30,12 @@ namespace IRExplorerCore {
                 }
 
                 taskInstance_ = new CancelableTask(completeOnCancel_);
-                registerAction?.Invoke(taskInstance_);
+                registerAction_?.Invoke(taskInstance_);
                 return taskInstance_;
             }
         }
 
-        public async Task<CancelableTask> CancelPreviousAndCreateTaskAsync(CancelableTaskDelegate registerAction = null) {
+        public async Task<CancelableTask> CancelPreviousAndCreateTaskAsync() {
             CancelableTask task = null;
 
             lock (lockObject_) {
@@ -37,17 +44,17 @@ namespace IRExplorerCore {
             }
 
             if (task != null) {
-                await CancelTaskAsync(task);
+                await CancelTaskAndWaitAsync(task);
             }
 
             lock (lockObject_) {
                 taskInstance_ = new CancelableTask(completeOnCancel_);
-                registerAction?.Invoke(taskInstance_);
+                registerAction_?.Invoke(taskInstance_);
                 return taskInstance_;
             }
         }
 
-        public void CancelTask(CancelableTaskDelegate unregisterAction = null) {
+        public void CancelTask() {
             lock (lockObject_) {
                 if (taskInstance_ == null) {
                     return;
@@ -58,16 +65,27 @@ namespace IRExplorerCore {
 
                 // Cancel the task and wait for it to complete without blocking.
                 canceledTask.Cancel();
-                unregisterAction?.Invoke(canceledTask);
-
-                Task.Run(() => {
-                    canceledTask.WaitToComplete();
-                    canceledTask.Dispose();
-                });
+                unregisterAction_?.Invoke(canceledTask);
             }
         }
 
-        public async Task CancelTaskAsync() {
+        public void CancelTaskAndWait() {
+            lock (lockObject_) {
+                if (taskInstance_ == null) {
+                    return;
+                }
+
+                var canceledTask = taskInstance_;
+                taskInstance_ = null;
+
+                // Cancel the task and wait for it to complete without blocking.
+                canceledTask.Cancel();
+                canceledTask.WaitToComplete();
+                unregisterAction_?.Invoke(canceledTask);
+            }
+        }
+
+        public async Task CancelTaskAndWaitAsync() {
             CancelableTask task = null;
 
             lock (lockObject_) {
@@ -76,14 +94,14 @@ namespace IRExplorerCore {
             }
 
             if (task != null) {
-                await CancelTaskAsync(task);
+                await CancelTaskAndWaitAsync(task);
             }
         }
 
-        private async Task CancelTaskAsync(CancelableTask canceledTask, CancelableTaskDelegate unregisterAction = null) {
+        private async Task CancelTaskAndWaitAsync(CancelableTask canceledTask) {
             // Cancel the task and wait for it to complete.
             canceledTask.Cancel();
-            unregisterAction?.Invoke(canceledTask);
+            unregisterAction_?.Invoke(canceledTask);
 
             await Task.Run(async () => {
                 await canceledTask.WaitToCompleteAsync();
@@ -91,14 +109,14 @@ namespace IRExplorerCore {
             });
         }
 
-        public void CompleteTask(CancelableTask task, CancelableTaskDelegate unregisterAction = null) {
+        public void CompleteTask(CancelableTask task) {
             lock (lockObject_) {
                 if (task != taskInstance_) {
                     return; // A canceled task, ignore it.
                 }
 
                 if (taskInstance_ != null) {
-                    unregisterAction?.Invoke(taskInstance_);
+                    unregisterAction_?.Invoke(taskInstance_);
                     taskInstance_.Completed();
                     taskInstance_.Dispose();
                     taskInstance_ = null;
@@ -106,9 +124,27 @@ namespace IRExplorerCore {
             }
         }
 
-        public void WaitForTask() {
+        public void CompleteTask() {
+            CancelableTask task = null;
+
             lock (lockObject_) {
-                taskInstance_?.WaitToComplete();
+                task = taskInstance_;
+            }
+
+            if (task != null) {
+                CompleteTask(task);
+            }
+        }
+
+        public void WaitForTask() {
+            CancelableTask task = null;
+
+            lock (lockObject_) {
+                task = taskInstance_;
+            }
+
+            if (task != null) {
+                task.WaitToComplete();
             }
         }
 

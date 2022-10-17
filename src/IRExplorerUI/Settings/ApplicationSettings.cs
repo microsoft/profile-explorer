@@ -75,6 +75,9 @@ namespace IRExplorerUI {
         [ProtoMember(18)]
         public CallTreeSettings CallTreeSettings { get; set; }
 
+        [ProtoMember(19)]
+        public FlameGraphSettings FlameGraphSettings { get; set; }
+
         public ApplicationSettings() {
             Reset();
         }
@@ -89,6 +92,7 @@ namespace IRExplorerUI {
             DiffSettings.Reset();
             SectionSettings.Reset();
             CallTreeSettings.Reset();
+            FlameGraphSettings.Reset();
             AutoReloadDocument = true;
             ThemeIndex = 2; // Blue theme.
         }
@@ -108,6 +112,7 @@ namespace IRExplorerUI {
             ProfileOptions ??= new ProfileDataProviderOptions();
             SymbolOptions ??= new SymbolFileSourceOptions();
             CallTreeSettings ??= new CallTreeSettings();
+            FlameGraphSettings ??= new FlameGraphSettings();
         }
 
         public void AddRecentFile(string path) {

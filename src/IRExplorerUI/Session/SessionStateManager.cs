@@ -409,6 +409,16 @@ namespace IRExplorerUI {
         }
 
         public void EndSession() {
+            foreach (var docInfo in documents_) {
+                docInfo.ChangeDocumentWatcherState(false);
+                docInfo.Dispose();
+            }
+
+            documents_.Clear();
+            IsAutoSaveEnabled = false;
+        }
+
+        public async Task CancelPendingTasks() {
             List<CancelableTask> tasks;
 
             lock (lockObject_) {
@@ -417,16 +427,8 @@ namespace IRExplorerUI {
 
             foreach (var task in tasks) {
                 task.Cancel();
-                task.WaitToComplete();
+                await task.WaitToCompleteAsync();
             }
-
-            foreach (var docInfo in documents_) {
-                docInfo.ChangeDocumentWatcherState(false);
-                docInfo.Dispose();
-            }
-
-            documents_.Clear();
-            IsAutoSaveEnabled = false;
         }
 
         public void RegisterCancelableTask(CancelableTask task) {

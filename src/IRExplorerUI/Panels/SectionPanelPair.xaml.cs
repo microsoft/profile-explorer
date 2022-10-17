@@ -433,6 +433,7 @@ namespace IRExplorerUI {
 
         public override void OnSessionStart() {
             MainPanel.OnSessionStart();
+            DiffPanel.OnSessionStart();
         }
 
         public override void OnSessionEnd() {

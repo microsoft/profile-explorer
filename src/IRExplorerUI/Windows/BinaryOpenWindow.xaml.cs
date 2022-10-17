@@ -29,7 +29,7 @@ namespace IRExplorerUI {
             InDiffMode = inDiffMode;
 
             DataContext = this;
-            loadTask_ = new CancelableTaskInstance();
+            loadTask_ = new CancelableTaskInstance(true);
         }
 
         public bool IsLoadingBinary {

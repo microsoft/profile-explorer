@@ -104,10 +104,11 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private const double EnlargeAnimationDuration = TimePerFrame * 12;
     private const double ScrollWheelZoomAnimationDuration = TimePerFrame * 8;
 
+    private FlameGraphSettings settings_;
+    private Stack<FlameGraphState> stateStack_;
     private bool dragging_;
     private Point draggingStart_;
     private Point draggingViewStart_;
-    private Stack<FlameGraphState> stateStack_;
     private bool panelVisible_;
     private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
     private FlameGraphNode enlargedNode_;
@@ -122,11 +123,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     public FlameGraphPanel() {
         InitializeComponent();
+        settings_ = App.Settings.FlameGraphSettings;
         stateStack_ = new Stack<FlameGraphState>();
         SetupEvents();
         DataContext = this;
-
-        //? TODO: Settings
         ShowNodePanel = true;
     }
 
@@ -137,6 +137,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private Rect GraphVisibleArea => new Rect(GraphHost.HorizontalOffset,
                                               GraphHost.VerticalOffset,
                                               GraphAreaWidth, GraphAreaHeight);
+    private Rect GraphHostBounds => new Rect(0, 0, GraphHost.ActualWidth, GraphHost.ActualHeight);
     private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
     private double CenterZoomPointX => GraphHost.HorizontalOffset + GraphAreaWidth / 2;
 
@@ -145,6 +146,28 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         set {
             base.Session = value;
             NodeDetailsPanel.Initialize(value, this);
+        }
+    }
+
+    public bool PrependModuleToFunction {
+        get => settings_.PrependModuleToFunction;
+        set {
+            if (value != settings_.PrependModuleToFunction) {
+                settings_.PrependModuleToFunction = value;
+                GraphViewer.SettingsUpdated(settings_);
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public bool UseCompactMode {
+        get => settings_.UseCompactMode;
+        set {
+            if (value != settings_.UseCompactMode) {
+                settings_.UseCompactMode = value;
+                GraphViewer.SettingsUpdated(settings_);
+                OnPropertyChanged();
+            }
         }
     }
 
@@ -172,7 +195,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private void InitializeCallTree(ProfileCallTree callTree) {
         Dispatcher.BeginInvoke(async () => {
             if (callTree != null && !GraphViewer.IsInitialized) {
-                await GraphViewer.Initialize(callTree, GraphArea);
+                await GraphViewer.Initialize(callTree, GraphArea, settings_);
             }
         }, DispatcherPriority.Background);
     }
@@ -247,11 +270,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
     
     private async void NodeDetailsPanel_NodeDoubleClick(object sender, ProfileCallTreeNode e) {
-        if (e.Function != null && e.Function.HasSections) {
-            var openMode = Utils.IsKeyboardModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
-            var args = new OpenSectionEventArgs(e.Function.Sections[0], openMode);
-            await Session.SwitchDocumentSectionAsync(args);
-        }
+        await OpenFunction(e);
     }
 
     private async void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) {
@@ -310,10 +329,13 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     private async Task OpenFunction(FlameGraphNode node) {
-        if (node.CallTreeNode != null &&
-            node.CallTreeNode.Function.HasSections) {
+        await OpenFunction(node.CallTreeNode);
+    }
+
+    private async Task OpenFunction(ProfileCallTreeNode node) {
+        if (node != null && node.Function.HasSections) {
             var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
-            var args = new OpenSectionEventArgs(node.CallTreeNode.Function.Sections[0], openMode);
+            var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
             await Session.SwitchDocumentSectionAsync(args);
         }
     }
@@ -456,7 +478,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         ResetHighlightedNodes();
         await GraphViewer.Initialize(GraphViewer.FlameGraph.CallTree, node.CallTreeNode,
-            new Rect(0, 0, GraphHost.ActualWidth, GraphHost.ActualHeight));
+                                     GraphHostBounds, settings_);
     }
 
     enum FlameGraphStateKind {

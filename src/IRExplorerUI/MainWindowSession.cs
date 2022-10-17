@@ -354,9 +354,12 @@ namespace IRExplorerUI {
                 autoSaveTimer_ = null;
             }
 
+            // Wait for any pending tasks to complete.
+            await sessionState_.CancelPendingTasks();
+            
             // Close all documents and notify all panels.
             NotifyPanelsOfSessionEnd();
-
+            
             foreach (var docHostInfo in sessionState_.DocumentHosts) {
                 CloseDocument(docHostInfo);
             }

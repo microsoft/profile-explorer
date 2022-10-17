@@ -12,6 +12,7 @@ public class FlameGraphRenderer {
     internal const double DefaultNodeHeight = 18;
     internal const double TimeBarHeight = 24;
 
+    private FlameGraphSettings settings_;
     private FlameGraph flameGraph_;
     private int maxNodeDepth_;
     private double nodeHeight_;
@@ -49,7 +50,8 @@ public class FlameGraphRenderer {
             visibleArea_.Width / maxWidth_, visibleArea_.Height);
     }
 
-    public FlameGraphRenderer(FlameGraph flameGraph, Rect visibleArea) {
+    public FlameGraphRenderer(FlameGraph flameGraph, Rect visibleArea, FlameGraphSettings settings) {
+        settings_ = settings;
         flameGraph_ = flameGraph;
         maxWidth_ = visibleArea.Width;
         visibleArea_ = visibleArea;
@@ -66,6 +68,11 @@ public class FlameGraphRenderer {
         font_ = new Typeface("Segoe UI");
         nameFont_ = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Medium, FontStretch.FromOpenTypeStretch(5));
         fontSize_ = DefaultTextSize;
+    }
+
+    public void SettingsUpdated(FlameGraphSettings settings) {
+        settings_ = settings;
+        RedrawGraph();
     }
 
     public DrawingVisual Setup() {
@@ -769,8 +776,7 @@ public class FlameGraphRenderer {
                     if (flameGraphNode.CallTreeNode != null) {
                         label = flameGraphNode.CallTreeNode.FunctionName;
 
-                        if (true) {
-                            //? TODO: option
+                        if (settings_.PrependModuleToFunction) {
                             var moduleLabel = flameGraphNode.CallTreeNode.ModuleName + "!";
                             var (modText, modGlyphs, modTextTrimmed, modTextSize) =
                                 TrimTextToWidth(moduleLabel, maxWidth - margin, false);
@@ -793,7 +799,7 @@ public class FlameGraphRenderer {
                 }
                 case 1: {
                     if (flameGraphNode.ShowWeightPercentage) {
-                        label = ExtensionMethods.AsPercentageString(ScaleWeight(flameGraphNode.Weight));
+                        label = ScaleWeight(flameGraphNode.Weight).AsPercentageString();
                         margin = FlameGraphNode.ExtraValueMargin;
                         textColor = flameGraphNode.WeightTextColor;
                         useNameFont = true;
@@ -804,7 +810,7 @@ public class FlameGraphRenderer {
 
                 case 2: {
                     if (flameGraphNode.ShowWeight) {
-                        label = $"({ExtensionMethods.AsMillisecondsString(flameGraphNode.Weight)})";
+                        label = $"({flameGraphNode.Weight.AsMillisecondsString()})";
                         margin = FlameGraphNode.DefaultMargin;
                         textColor = flameGraphNode.WeightTextColor;
                     }
