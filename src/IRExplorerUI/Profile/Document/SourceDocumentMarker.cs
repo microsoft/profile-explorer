@@ -8,10 +8,11 @@ using IRExplorerCore.IR;
 using System.Text;
 using System.Threading.Tasks;
 using IRExplorerUI.Document;
+using IRExplorerUI.Compilers;
 
 //? TODO: EXTRACT SOURCE LOCATION MARKING TO OWN CLASS NOT PROFILE-DEPENDENT
 
-namespace IRExplorerUI.Compilers.ASM {
+namespace IRExplorerUI.Profile {
     public class SourceDocumentMarker {
         private ProfileDocumentMarkerOptions options_;
         private ICompilerIRInfo ir_;
@@ -43,12 +44,12 @@ namespace IRExplorerUI.Compilers.ASM {
                     overlay.IsLabelPinned = true;
                     overlay.TextColor = options_.ElementOverlayTextColor;
                     overlay.Background = options_.ElementOverlayBackColor;
-                    
+
                     overlays.Add(overlay);
                     lineLengths.Add(element.TextLength);
                 }
 
-                if(!tag.HasInlinees) {
+                if (!tag.HasInlinees) {
                     continue;
                 }
 

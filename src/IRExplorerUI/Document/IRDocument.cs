@@ -26,8 +26,8 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR.Tags;
-using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI {
     public enum BringIntoViewStyle {

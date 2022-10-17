@@ -16,7 +16,6 @@ using System.Windows.Media;
 using Aga.Controls.Tree;
 using IRExplorerUI.Document;
 using IRExplorerCore;
-using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Profile;
 using Microsoft.Diagnostics.Tracing.Stacks;
 using IRExplorerCore.Graph;

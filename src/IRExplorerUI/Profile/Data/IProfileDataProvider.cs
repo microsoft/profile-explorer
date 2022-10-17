@@ -4,7 +4,6 @@ using System.IO;
 using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
-using IRExplorerUI.Profile;
 using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
@@ -40,7 +39,7 @@ public class ProcessSummary {
     public TimeSpan Duration { get; set; }
     //[ProtoMember(5)]
     //public List<(ProfileImage Image, TimeSpan Weight)> ImageWeights;
-    
+
     public ProcessSummary(ProfileProcess process, TimeSpan weight) {
         Process = process;
         Weight = weight;

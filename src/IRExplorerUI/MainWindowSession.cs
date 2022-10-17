@@ -25,10 +25,10 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Compilers;
-using IRExplorerUI.Profile;
 using Microsoft.Win32;
 using IRExplorerUI.Query;
 using IRExplorerUI.Compilers.ASM;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI {
     public partial class MainWindow : Window, ISession {
@@ -216,7 +216,7 @@ namespace IRExplorerUI {
                 //? TODO: Support diff profile data providers
                 //var loader = idToDocumentMap[docState.Id].Loader;
                 var summaries = sessionState_.Documents.ConvertAll<IRTextSummary>(d => d.Summary);
-                sessionState_.ProfileData = ProfileData.Deserialize(state.ProfileState, summaries);
+                sessionState_.ProfileData = IRExplorerUI.Profile.ProfileData.Deserialize(state.ProfileState, summaries);
             }
 
             foreach (var panelState in state.GlobalPanelStates) {

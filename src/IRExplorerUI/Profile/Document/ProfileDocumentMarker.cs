@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using System.Text;
 
-namespace IRExplorerUI.Compilers.ASM {
+namespace IRExplorerUI.Profile {
     // Used as the interface for both the full IR document and lightweight version (source file).
     public interface MarkedDocument {
         double DefaultLineHeight { get; }
@@ -46,10 +46,10 @@ namespace IRExplorerUI.Compilers.ASM {
 
         public double VirtualColumnPosition { get; set; }
         public double ElementWeightCutoff { get; set; }
-        public double LineWeightCutoff {  get; set; }
+        public double LineWeightCutoff { get; set; }
         public int TopOrderCutoff { get; set; }
         public double IconBarWeightCutoff { get; set; }
-        
+
         public Brush ColumnTextColor { get; set; }
         public Brush ElementOverlayTextColor { get; set; }
         public Brush HotElementOverlayTextColor { get; set; }
@@ -165,7 +165,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 0 => FontWeights.ExtraBold,
                 1 => FontWeights.Bold,
                 _ => IsSignificantValue(order, percentage)
-                    ? FontWeights.Medium 
+                    ? FontWeights.Medium
                     : FontWeights.Normal
             };
         }
@@ -200,7 +200,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 1 => IconDrawing.FromIconResource("HotFlameIcon2"),
                 // Even if instr is the n-th hottest one, don't use an icon
                 // if the percentage is small.
-                _ => (IsSignificantValue(order, percentage)) ?
+                _ => IsSignificantValue(order, percentage) ?
                     IconDrawing.FromIconResource("HotFlameIcon3") :
                     IconDrawing.FromIconResource("HotFlameIconTransparent")
             };
@@ -240,13 +240,13 @@ namespace IRExplorerUI.Compilers.ASM {
         public bool ShouldShowPercentageBar(OptionalColumn column) =>
             DisplayPercentageBar &&
             (column.Appearance.ShowPercentageBar ||
-            (column.IsMainColumn && column.Appearance. ShowMainColumnPercentageBar));
+            column.IsMainColumn && column.Appearance.ShowMainColumnPercentageBar);
         public bool ShouldShowIcon(OptionalColumn column) =>
             DisplayIcons && (column.Appearance.ShowIcon ||
-            (column.IsMainColumn && column.Appearance.ShowMainColumnIcon));
+            column.IsMainColumn && column.Appearance.ShowMainColumnIcon);
         public bool ShouldUseBackColor(OptionalColumn column) =>
             column.Appearance.UseBackColor ||
-            (column.IsMainColumn && column.Appearance.UseMainColumnBackColor);
+            column.IsMainColumn && column.Appearance.UseMainColumnBackColor;
 
         public Color PickColorForPercentage(double percentage) {
             return PickBackColorForPercentage(null, percentage);
@@ -259,7 +259,7 @@ namespace IRExplorerUI.Compilers.ASM {
         private ProfileDocumentMarkerOptions options_;
         private ICompilerIRInfo ir_;
 
-        public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile, 
+        public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile,
                                      ProfileDocumentMarkerOptions options, ICompilerIRInfo ir) {
             profile_ = profile;
             globalProfile_ = globalProfile;
@@ -300,10 +300,11 @@ namespace IRExplorerUI.Compilers.ASM {
             }
 
             foreach (var callsite in node.CallSites.Values) {
-                if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA- profile_.FunctionDebugInfo.RVA, ir_, out var element)) {
+                if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA - profile_.FunctionDebugInfo.RVA, ir_, out var element)) {
                     //Trace.WriteLine($"Found CS for elem at RVA {callsite.RVA}, weight {callsite.Weight}: {element}");
                     var instr = element as InstructionIR;
-                    if (instr == null || !ir_.IsCallInstruction(instr)) continue;
+                    if (instr == null || !ir_.IsCallInstruction(instr))
+                        continue;
 
                     // Skip over direct calls.
                     var callTarget = ir_.GetCallTarget(instr);
@@ -328,7 +329,7 @@ namespace IRExplorerUI.Compilers.ASM {
                     var label = $"Indirect call targets:\n{sb}";
                     var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16, label, "");
 
-                    Color color = App.Settings.DocumentSettings.BackgroundColor;
+                    var color = App.Settings.DocumentSettings.BackgroundColor;
 
                     if (instr.ParentBlock != null && !instr.ParentBlock.HasEvenIndexInFunction) {
                         color = App.Settings.DocumentSettings.AlternateBackgroundColor;
@@ -351,7 +352,7 @@ namespace IRExplorerUI.Compilers.ASM {
             }
         }
 
-        public async Task<IRDocumentColumnData> MarkSourceLines(MarkedDocument document, FunctionIR function, 
+        public async Task<IRDocumentColumnData> MarkSourceLines(MarkedDocument document, FunctionIR function,
                                                                 FunctionProfileData.ProcessingResult result) {
             return MarkProfiledElements(result, function, document);
         }
@@ -362,7 +363,7 @@ namespace IRExplorerUI.Compilers.ASM {
             var blockPen = ColorPens.GetPen(options_.BlockOverlayBorderColor,
                                             options_.BlockOverlayBorderThickness);
 
-            for(int i = 0; i < blockWeights.Count; i++) {
+            for (int i = 0; i < blockWeights.Count; i++) {
                 var block = blockWeights[i].Item1;
                 var weight = blockWeights[i].Item2;
                 double weightPercentage = profile_.ScaleWeight(weight);
@@ -408,7 +409,7 @@ namespace IRExplorerUI.Compilers.ASM {
             }
         }
 
-        private static readonly OptionalColumn TIME_COLUMN = 
+        private static readonly OptionalColumn TIME_COLUMN =
             OptionalColumn.Template("[TimeHeader]", "TimePercentageColumnValueTemplate",
                                     "TimeHeader", "Time (ms)", "Instruction time", null, 50.0, "TimeColumnHeaderTemplate",
             new OptionalColumnAppearance() {
@@ -421,19 +422,19 @@ namespace IRExplorerUI.Compilers.ASM {
                 InvertColorPalette = true
             });
 
-        private static readonly OptionalColumn TIME_PERCENTAGE_COLUMN = 
+        private static readonly OptionalColumn TIME_PERCENTAGE_COLUMN =
             OptionalColumn.Template("[TimePercentageHeader]", "TimePercentageColumnValueTemplate",
             "TimePercentageHeader", "Time (%)", "Instruction time percentage relative to function time", null, 50.0, "TimeColumnHeaderTemplate",
             new OptionalColumnAppearance() {
                 ShowPercentageBar = true,
-                ShowMainColumnPercentageBar = true, 
+                ShowMainColumnPercentageBar = true,
                 UseBackColor = true,
                 UseMainColumnBackColor = true,
                 ShowIcon = true,
                 BackColorPalette = ColorPalette.Profile,
                 InvertColorPalette = true
             });
-        
+
         public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
                                      FunctionIR function, MarkedDocument document) {
             Trace.WriteLine($"Apply {column.ColumnName}, main {column.IsMainColumn}");
@@ -443,7 +444,8 @@ namespace IRExplorerUI.Compilers.ASM {
 
             foreach (var tuple in function.AllTuples) {
                 var value = columnData.GetColumnValue(tuple, column);
-                if(value == null) continue;
+                if (value == null)
+                    continue;
 
                 int order = value.ValueOrder;
                 double percentage = value.ValuePercentage;
@@ -482,8 +484,8 @@ namespace IRExplorerUI.Compilers.ASM {
             }
         }
 
-        private IRDocumentColumnData 
-            MarkProfiledElements(FunctionProfileData.ProcessingResult result, 
+        private IRDocumentColumnData
+            MarkProfiledElements(FunctionProfileData.ProcessingResult result,
                                  FunctionIR function, MarkedDocument document) {
             var elements = result.SampledElements;
 
@@ -501,7 +503,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 var percentageLabel = weightPercentage.AsTrimmedPercentageString();
                 var columnValue = new ElementColumnValue(label, weight.Ticks, weightPercentage, i);
                 var percentageColumnValue = new ElementColumnValue(percentageLabel, weight.Ticks, weightPercentage, i);
-                
+
                 columnData.AddValue(percentageColumnValue, element, percentageColumn);
                 var valueGroup = columnData.AddValue(columnValue, element, timeColumn);
                 //valueGroup.BackColor = Brushes.Bisque;
@@ -616,7 +618,8 @@ namespace IRExplorerUI.Compilers.ASM {
 
                     var color = colors[counter.Index % colors.Length];
                     //columnValue.TextColor = color;
-                    if (counter.IsMetric) columnValue.BackColor = Brushes.Beige;
+                    if (counter.IsMetric)
+                        columnValue.BackColor = Brushes.Beige;
                     columnValue.ValuePercentage = valuePercentage;
                     //? TODO: SHow bar only if any value is much higher? Std dev
                     columnValue.ShowPercentageBar = !isValueBasedMetric && valuePercentage >= 0.03;
@@ -669,7 +672,7 @@ namespace IRExplorerUI.Compilers.ASM {
             }
         }
 
-        static readonly (string,string)[] PerfCounterNameReplacements = new (string, string)[] {
+        static readonly (string, string)[] PerfCounterNameReplacements = new (string, string)[] {
             ("Instruction", "Instr"),
             ("Misprediction", "Mispred"),
         };

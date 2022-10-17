@@ -14,6 +14,7 @@ using Google.Protobuf.WellKnownTypes;
 using IRExplorerCore.Graph;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Profile;
 using Microsoft.Diagnostics.Tracing.Stacks;
 using Microsoft.VisualBasic;
 using ProtoBuf.WellKnownTypes;

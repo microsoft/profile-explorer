@@ -29,7 +29,6 @@ using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Analysis;
 using Xceed.Wpf.Toolkit;
 using MessageBox = System.Windows.MessageBox;
-using IRExplorerUI.Compilers.ASM;
 using System.Dynamic;
 using System.Runtime.CompilerServices;
 using IRExplorerCore.Graph;

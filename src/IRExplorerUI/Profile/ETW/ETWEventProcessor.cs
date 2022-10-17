@@ -21,8 +21,9 @@ using System.Net;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Diagnostics.Tracing.AutomatedAnalysis;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using IRExplorerUI.Profile;
 
-namespace IRExplorerUI.Profile.ETW;
+namespace IRExplorerUI.Profile;
 
 public sealed class ETWEventProcessor : IDisposable {
     const double SamplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using IRExplorerUI.Profile;
 using ProtoBuf;
 
 namespace IRExplorerUI.Profile;

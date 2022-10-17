@@ -26,7 +26,6 @@ using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using UserControl = System.Windows.Controls.UserControl;
 using IRExplorerUI.Query;
 using IRExplorerUI.Controls;
-using IRExplorerUI.Compilers.ASM;
 using IRExplorerCore.IR.Tags;
 using ClosedXML.Excel;
 using ICSharpCode.AvalonEdit.Rendering;
@@ -1289,7 +1288,7 @@ namespace IRExplorerUI {
         }
 
         private void BuildProfileBlocksList(FunctionProfileData funcProfile, 
-                                             FunctionProfileData.ProcessingResult result) {
+                                            FunctionProfileData.ProcessingResult result) {
             profileBlocks_ = result.BlockSampledElements;
             var list = new List<ProfiledBlockEx>(result.BlockSampledElements.Count);
             double maxWidth = 0;
