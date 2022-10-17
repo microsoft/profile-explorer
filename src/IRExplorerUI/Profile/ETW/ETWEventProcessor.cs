@@ -98,6 +98,7 @@ public sealed class ETWEventProcessor : IDisposable {
             }
         };
 
+        // Use a dummy process summary to collect all the process info.
         RawProfileData profile = new();
         var summaryBuilder = new ProcessSummaryBuilder(profile);
 
@@ -113,8 +114,8 @@ public sealed class ETWEventProcessor : IDisposable {
 
         source_.Kernel.ProcessStartGroup += data => {
             var proc = new ProfileProcess(data.ProcessID, data.ParentID,
-                data.ProcessName, data.ImageFileName,
-                data.CommandLine);
+                                           data.ProcessName, data.ImageFileName,
+                                           data.CommandLine);
             profile.AddProcess(proc);
         };
 
@@ -136,6 +137,7 @@ public sealed class ETWEventProcessor : IDisposable {
             summaryBuilder.AddSample(sampleWeight, sampleTime, context);
             profile.ReturnContext(contextId);
 
+            // Rebuild process list and update UI from time to time.
             if (sampleId - lastReportedSample >= SampleReportingInterval) {
                 List<ProcessSummary> processList = null;
                 var currentTime = DateTime.UtcNow;
@@ -157,10 +159,9 @@ public sealed class ETWEventProcessor : IDisposable {
 
                 lastReportedSample = sampleId;
             }
-
-            Trace.Flush();
         };
 
+        // Go over events and accumulate samples to build the process summary.
         source_.Process();
 
         if (cancelableTask.IsCanceled) {
@@ -183,6 +184,7 @@ public sealed class ETWEventProcessor : IDisposable {
         ProfileImage lastProfileImage = null;
         long lastProfileImageTime = 0;
 
+        // Info used to associate a sample with the last call stack running on a CPU core.
         double[] perCoreLastTime = new double[MaxCoreCount];
         int[] perCoreLastSample = new int[MaxCoreCount];
         (int StackId, long Timestamp)[] perCoreLastKernelStack = new (int StackId, long Timestamp)[MaxCoreCount];
@@ -190,6 +192,8 @@ public sealed class ETWEventProcessor : IDisposable {
         var perContextLastSample = new Dictionary<int, int>();
         int lastReportedSample = 0;
 
+        // For ETL file, the image timestamp (needed to find a binary on a symbol server)
+        // can show up in the ImageID event instead the usual Kernel.ImageGroup.
         var symbolParser = new SymbolTraceEventParser(source_);
         
         symbolParser.ImageID += data => {
@@ -231,7 +235,6 @@ public sealed class ETWEventProcessor : IDisposable {
 #if DEBUG
             Trace.WriteLine($"ProcessStartGroup: {proc}");
 #endif
-
             // If parent is one of the accepted processes, accept the child too.
             if (handleChildProcesses_ && IsAcceptedProcess(data.ParentID)) {
                 //Trace.WriteLine($"=> Accept child {data.ProcessID} of {data.ParentID}");
@@ -276,10 +279,7 @@ public sealed class ETWEventProcessor : IDisposable {
                 (long)data.DefaultBase, data.ImageSize,
                 timeStamp, data.ImageChecksum);
             int imageId = profile.AddImageToProcess(data.ProcessID, image);
-
-#if DEBUG
-            //Trace.WriteLine($"ImageGroup: {image}, Proc: {data.ProcessID}");
-#endif
+            
             if (!sawImageId) {
                 // The ImageID event may show up later in the stream.
                 lastProfileImage = profile.FindImage(imageId);
@@ -314,6 +314,10 @@ public sealed class ETWEventProcessor : IDisposable {
         };
 
         source_.Kernel.StackWalkStack += data => {
+            if (!IsAcceptedProcess(data.ProcessID)) {
+                return; // Ignore events from other processes.
+            }
+            
             bool isKernelStack = false;
 
             if (data.FrameCount > 0 &&
@@ -329,23 +333,19 @@ public sealed class ETWEventProcessor : IDisposable {
                 //Trace.WriteLine($"User stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
             }
 
-            if (!IsAcceptedProcess(data.ProcessID)) {
-                return; // Ignore events from other processes.
-            }
-
-            //queue.Add((StackWalkStackTraceData)data.Clone());
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
             int contextId = profile.AddContext(context);
             int frameCount = data.FrameCount;
-
             ProfileStack kstack = null;
 
             if (!isKernelStack) {
+                // This is a user mode stack, check if before it an associated
+                // kernel mode stack was recorded - if so, merge the two stacks.
                 var lastKernelStack = perCoreLastKernelStack[data.ProcessorNumber];
 
                 if (lastKernelStack.StackId != 0 &&
                     lastKernelStack.Timestamp == data.EventTimeStampQPC) {
-                    //Trace.WriteLine($"Found kstack {lastKernelStack.StackId} at {lastKernelStack.Timestamp}");
+                    //Trace.WriteLine($"Found Kstack {lastKernelStack.StackId} at {lastKernelStack.Timestamp}");
 
                     // Append at the end of the kernel stack, marking a user -> kernel mode transition.
                     kstack = profile.FindStack(lastKernelStack.StackId);
@@ -363,6 +363,7 @@ public sealed class ETWEventProcessor : IDisposable {
             }
 
             if (kstack == null) {
+                // This is either a kernel mode stack, or a user mode stack with no associated kernel mode stack.
                 var stack = profile.RentTemporaryStack(frameCount, contextId);
 
                 // Copy data from event to the temp. stack pointer array.
@@ -498,10 +499,6 @@ public sealed class ETWEventProcessor : IDisposable {
         GC.Collect();
         GC.WaitForPendingFinalizers();
         long memory = GC.GetTotalMemory(true);
-
-        var pmcDict = new Dictionary<Tuple<long, int, int>, List<PerformanceCounterEvent>>();
-        int small = 0;
-        int large = 0;
 #endif
 
         if (providerOptions_.IncludePerformanceCounters) {
@@ -526,8 +523,8 @@ public sealed class ETWEventProcessor : IDisposable {
                 double timestamp = data.TimeStampRelativeMSec;
 
                 var counterEvent = new PerformanceCounterEvent((long)data.InstructionPointer,
-                    TimeSpan.FromMilliseconds(timestamp),
-                    contextId, (short)data.ProfileSource);
+                                                                TimeSpan.FromMilliseconds(timestamp),
+                                                                contextId, (short)data.ProfileSource);
                 profile.AddPerformanceCounterEvent(counterEvent);
                 profile.ReturnContext(contextId);
             };
@@ -579,12 +576,6 @@ public sealed class ETWEventProcessor : IDisposable {
         GC.WaitForPendingFinalizers();
         long memory2 = GC.GetTotalMemory(true);
         Trace.WriteLine($"Memory diff: {(memory2 - memory) / (1024 * 1024):F2}, MB");
-        Trace.Flush();
-
-        Trace.WriteLine($"PMC dict keys: {pmcDict.Count}");
-        Trace.WriteLine($"   small diff: {small}");
-        Trace.WriteLine($"   large diff: {large}");
-        Trace.WriteLine($"   small perc: {((double)small / (small + large)) * 100:F4}");
         Trace.Flush();
 #endif
         return profile;

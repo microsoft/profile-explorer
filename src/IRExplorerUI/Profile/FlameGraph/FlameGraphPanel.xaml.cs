@@ -207,10 +207,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     private void SetupEvents() {
         GraphHost.SizeChanged += (sender, args) => UpdateGraphWidth(args.NewSize.Width);
-
         GraphHost.PreviewMouseWheel += OnPreviewMouseWheel;
         GraphHost.PreviewMouseDown += OnPreviewMouseDown;
 
+        // Setup events for the flame graph area.
         KeyDown += OnKeyDown;
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         MouseLeftButtonUp += OnMouseLeftButtonUp;
@@ -218,11 +218,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         MouseMove += OnMouseMove;
         MouseDown += OnMouseDown;
 
+        // Setup events for the node details view.
         NodeDetailsPanel.NodeInstanceChanged += NodeDetailsPanel_NodeInstanceChanged;
         NodeDetailsPanel.BacktraceNodeClick += NodeDetailsPanel_NodeClick;
         NodeDetailsPanel.BacktraceNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
         NodeDetailsPanel.InstanceNodeClick += NodeDetailsPanel_NodeClick;
-        NodeDetailsPanel.BacktraceNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
+        NodeDetailsPanel.InstanceNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
 
         stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
             CallTreeNodePopup.PopupHoverDuration,

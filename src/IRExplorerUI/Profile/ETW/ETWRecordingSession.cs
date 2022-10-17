@@ -74,6 +74,7 @@ namespace IRExplorerUI.Profile {
 
         public static List<PerformanceMetricConfig> BuiltinPerformanceMetrics {
             get {
+                //? TODO: Configurable list
                 var list = new List<PerformanceMetricConfig>();
                 list.Add(new PerformanceMetricConfig("DCacheMiss", "DcacheAccesses", "DcacheMisses", true, "Data cache miss percentage"));
                 list.Add(new PerformanceMetricConfig("ICacheMiss", "ICFetch", "ICMiss", true, "Instruction cache miss percentage"));
@@ -161,6 +162,7 @@ namespace IRExplorerUI.Profile {
                             (ulong)(ClrTraceEventParser.Keywords.Jit |
                                     ClrTraceEventParser.Keywords.JittedMethodILToNativeMap |
                                     ClrTraceEventParser.Keywords.Loader));
+                        //? TODO: Needed when attaching to a running .net app.
                         //session_.EnableProvider(
                         //    ClrRundownTraceEventParser.ProviderGuid,
                         //    TraceEventLevel.Verbose,

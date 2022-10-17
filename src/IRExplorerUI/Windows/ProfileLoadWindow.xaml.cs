@@ -12,16 +12,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Threading;
-using DocumentFormat.OpenXml.Office2010.PowerPoint;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
-using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
-using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
-using Microsoft.Win32;
-using PEFile;
 
 namespace IRExplorerUI {
     public class RecordingSessionEx : BindableObject {
@@ -106,8 +100,7 @@ namespace IRExplorerUI {
         }
 
         static readonly SortedList<double, Func<TimeSpan, string>> offsets =
-            new SortedList<double, Func<TimeSpan, string>>
-            {
+            new SortedList<double, Func<TimeSpan, string>> {
                 { 0.75, x => $"{x.TotalSeconds:F0} seconds"},
                 { 1.5, x => "a minute"},
                 { 45, x => $"{x.TotalMinutes:F0} minutes"},
@@ -270,7 +263,6 @@ namespace IRExplorerUI {
         private ICollectionView metricsFilter_;
         private string profileFilePath_;
         private string binaryFilePath_;
-        private bool ignoreProfilePathChange_;
 
         public int EnabledPerfCounters {
             get => enabledPerfCounters_;
@@ -698,11 +690,6 @@ namespace IRExplorerUI {
             ShowProcessList = false;
 
             if (!string.IsNullOrEmpty(ProfileFilePath)) {
-                //if (ignoreProfilePathChange_) {
-                //    ignoreProfilePathChange_ = false;
-                //    return;
-                //}
-
                 if (await LoadProcessList()) {
                     if (processList_ == null) {
                         MessageBox.Show("Failed to load ETL process list!", "IR Explorer",
