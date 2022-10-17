@@ -100,6 +100,12 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
         set => SetField(ref showCombinedTimeNameRow_, value);
     }
 
+    private bool showExclusiveTimeNameRow_;
+    public bool ShowExclusiveTimeNameRow {
+        get => showExclusiveTimeNameRow_;
+        set => SetField(ref showExclusiveTimeNameRow_, value);
+    }
+
     private bool showTimeNameRow_;
     public bool ShowTimeNameRow {
         get => showTimeNameRow_;

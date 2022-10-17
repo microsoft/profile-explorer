@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI;
 
@@ -61,16 +63,44 @@ public static class ContextMenuLeftClickBehavior {
 
 // Based on https://stackoverflow.com/a/3088387
 public class GridViewColumnVisibility {
-    static void UpdateListView(ListView lv) {
+    private static Dictionary<ListView, List<(GridViewColumn Column, int Index)>> removedColumns_ = new();
+
+    public static void UpdateListView(ListView lv) {
         GridView gridview = lv.View as GridView;
         if (gridview == null || gridview.Columns == null)
             return;
+
+        removedColumns_ ??= new Dictionary<ListView, List<(GridViewColumn, int)>>();
+        var columnList = removedColumns_.GetOrAddValue(lv, () => new List<(GridViewColumn Column, int Index)>());
+        var addedColumns = new List<GridViewColumn>();
+
+        // If some of the removed columns got re-enabled, insert them back.
+        foreach (var removedColumn in columnList) {
+            if (GetIsVisible(removedColumn.Column)) {
+                gridview.Columns.Insert(removedColumn.Index, removedColumn.Column);
+                addedColumns.Add(removedColumn.Column);
+            }
+        }
+
+        // Discard columns that got re-enabled.
+        foreach (var column in addedColumns) {
+            var index = columnList.FindIndex(c => c.Column == column);
+            if (index != -1) {
+                columnList.RemoveAt(index);
+            }
+        }
+
+        // Remove disabled columns and save them for later
+        // inc ase they get re-enabled.
         List<GridViewColumn> toRemove = new List<GridViewColumn>();
+
         foreach (GridViewColumn gc in gridview.Columns) {
             if (GetIsVisible(gc) == false) {
                 toRemove.Add(gc);
+                columnList.Add((gc, toRemove.Count));
             }
         }
+        
         foreach (GridViewColumn gc in toRemove) {
             gridview.Columns.Remove(gc);
         }

@@ -75,20 +75,21 @@
                         <DataTemplate>
                             <StackPanel>
                                 <ContentPresenter Content="{Binding Name}" ToolTip="{Binding FunctionName}" />
-                                <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
-
-                                    <ContentControl
-                                        HorizontalAlignment="Stretch"
-                                        Content="{Binding}"
-                                        ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
-                                        Visibility="{Binding Path=DataContext.ShowCombinedTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                    <ContentControl
-                                        HorizontalAlignment="Stretch"
-                                        Content="{Binding}"
-                                        ContentTemplate="{StaticResource ProfilePercentageTemplate}"
-                                        Visibility="{Binding Path=DataContext.ShowTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
-
-                                </StackPanel>
+                                <ContentControl
+                                    HorizontalAlignment="Stretch"
+                                    Content="{Binding}"
+                                    ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
+                                    Visibility="{Binding Path=DataContext.ShowCombinedTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                <ContentControl
+                                    HorizontalAlignment="Stretch"
+                                    Content="{Binding}"
+                                    ContentTemplate="{StaticResource ProfilePercentageTemplate}"
+                                    Visibility="{Binding Path=DataContext.ShowTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                <ContentControl
+                                    HorizontalAlignment="Stretch"
+                                    Content="{Binding}"
+                                    ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}"
+                                    Visibility="{Binding Path=DataContext.ShowExclusiveTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
                             </StackPanel>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>

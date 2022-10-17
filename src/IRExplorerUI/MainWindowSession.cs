@@ -1608,8 +1608,6 @@ namespace IRExplorerUI {
         }
 
         public void SetApplicationProgress(bool visible, double percentage, string title = null) {
-            System.Diagnostics.Trace.WriteLine(Environment.StackTrace);
-
             Dispatcher.BeginInvoke(() => {
                 if (visible && !documentLoadProgressVisible_) {
                     ShowProgressBar(title);
