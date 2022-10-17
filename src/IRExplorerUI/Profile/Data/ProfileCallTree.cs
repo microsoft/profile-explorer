@@ -8,8 +8,8 @@ using System.Threading;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Profile;
 using ProtoBuf;
-using static IRExplorerUI.Profile.ProfileData;
 
 namespace IRExplorerUI.Profile;
 

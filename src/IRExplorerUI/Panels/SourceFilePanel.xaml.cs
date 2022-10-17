@@ -20,7 +20,6 @@ using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
-using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 using Microsoft.Win32;

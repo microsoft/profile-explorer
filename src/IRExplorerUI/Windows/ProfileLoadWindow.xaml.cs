@@ -18,7 +18,6 @@ using DocumentFormat.OpenXml.Office2010.PowerPoint;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
-using IRExplorerUI.Profile.ETW;
 using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Win32;

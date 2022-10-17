@@ -108,7 +108,7 @@ public class RawProfileData {
     }
 
     public void AddManagedMethodMapping(long moduleId, long methodId,
-                                         FunctionDebugInfo functionDebugInfo, 
+                                         FunctionDebugInfo functionDebugInfo,
                                          long ip, int size, int processId) {
         var (moduleDebugInfo, moduleImage) = GetModuleDebugInfo(processId, moduleId);
 
@@ -165,10 +165,10 @@ public class RawProfileData {
                                                            long moduleId, Machine architecture) {
         var data = GetOrCreateManagedData(processId);
         var proc = GetOrCreateProcess(processId);
-        
+
         foreach (var image in proc.Images(this)) {
             //? TODO: Avoid linear search
-            
+
             if (image.ModuleName.Equals(moduleName, StringComparison.OrdinalIgnoreCase)) {
                 if (!data.imageDebugInfo_.TryGetValue(image, out var debugInfo)) {
                     // A placeholder is created for cases where the method load event
@@ -230,9 +230,9 @@ public class RawProfileData {
 
         if (handlesDotNetEvents) {
             procManagedDataMap_ = new Dictionary<int, ManagedData>();
-        }        
+        }
     }
-    
+
     public void LoadingCompleted() {
         // Free objects used while reading the profile.
         stacksMap_ = null;
@@ -343,7 +343,7 @@ public class RawProfileData {
     public int AddPerformanceCounterEvent(PerformanceCounterEvent counterEvent) {
         Debug.Assert(counterEvent.ContextId != 0);
         perfCountersEvents_.Add(counterEvent);
-        return (int)perfCountersEvents_.Count;
+        return perfCountersEvents_.Count;
     }
 
     internal ProfileContext RentTempContext(int processId, int threadId, int processorNumber) {
@@ -419,8 +419,8 @@ public class RawProfileData {
 
         if (!procStacks.TryGetValue(stack, out var existingStack)) {
             stacks_.Add(stack);
-            procStacks[stack] = (int)stacks_.Count;
-            existingStack = (int)stacks_.Count;
+            procStacks[stack] = stacks_.Count;
+            existingStack = stacks_.Count;
         }
         else {
             Debug.Assert(stack == FindStack(existingStack));
@@ -456,7 +456,7 @@ public class RawProfileData {
         return processes_.GetValueOrNull(processId);
     }
 
-        public ProfileImage FindImage(ProfileProcess process, BinaryFileDescriptor info) {
+    public ProfileImage FindImage(ProfileProcess process, BinaryFileDescriptor info) {
         foreach (var image in process.Images(this)) {
             if (image.FilePath == info.ImageName &&
                 image.TimeStamp == info.TimeStamp &&
@@ -550,7 +550,7 @@ public class RawProfileData {
     public void PrintAllProcesses() {
         Trace.WriteLine($"Profile processes: {processes_.Count}");
 
-        foreach(var proc in processes_) {
+        foreach (var proc in processes_) {
             Trace.WriteLine($"- {proc}");
 
             //if (proc.Value.Name.Contains("bench")) {
@@ -611,7 +611,7 @@ public class RawProfileData {
 
 [ProtoContract(SkipConstructor = true)]
 public class ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparable<long>, IEquatable<ManagedMethodMapping> {
-    public ManagedMethodMapping(FunctionDebugInfo functionDebugInfo, ProfileImage image, 
+    public ManagedMethodMapping(FunctionDebugInfo functionDebugInfo, ProfileImage image,
                                 long moduleId, long ip, int size) {
         FunctionDebugInfo = functionDebugInfo;
         Image = image;
@@ -643,7 +643,8 @@ public class ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparab
     }
 
     public bool Equals(ManagedMethodMapping other) {
-        if (other == null) return false;
+        if (other == null)
+            return false;
         return IP == other.IP;
     }
 
@@ -722,7 +723,7 @@ public class IpToImageCache {
     }
 
     public static IpToImageCache Create(IEnumerable<ProfileImage> images) {
-        long lowestAddr = Int64.MaxValue;
+        long lowestAddr = long.MaxValue;
 
         foreach (var image in images) {
             lowestAddr = Math.Min(lowestAddr, image.BaseAddress);
@@ -810,7 +811,7 @@ public class ProcessSummaryBuilder {
 
         foreach (var pair in processSamples_) {
             var item = new ProcessSummary(pair.Key, pair.Value) {
-                WeightPercentage = 100 * (double)pair.Value.Ticks / (double)totalWeight_.Ticks
+                WeightPercentage = 100 * (double)pair.Value.Ticks / totalWeight_.Ticks
             };
 
             list.Add(item);

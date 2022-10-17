@@ -12,7 +12,7 @@ using System.Windows.Media;
 using DocumentFormat.OpenXml.Bibliography;
 using IRExplorerUI.Profile;
 
-namespace IRExplorerUI.Utilities; 
+namespace IRExplorerUI.Utilities;
 
 class BooleanConverter<T> : IValueConverter {
     public BooleanConverter(T trueValue, T falseValue) {

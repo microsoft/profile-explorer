@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Profile {
     public sealed class ModuleInfo {
@@ -29,12 +30,12 @@ namespace IRExplorerUI.Profile {
         //? TODO: Needed only for inlinee samples
         public Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
 
-        public ModuleInfo(ProfileDataReport report,  ISession session) {
+        public ModuleInfo(ProfileDataReport report, ISession session) {
             report_ = report;
             session_ = session;
             lock_ = new ReaderWriterLockSlim();
         }
-        
+
         public async Task<bool> Initialize(BinaryFileDescriptor binaryInfo, SymbolFileSourceOptions symbolOptions,
                                             IDebugInfoProvider debugInfo) {
             if (Initialized) {
@@ -44,7 +45,7 @@ namespace IRExplorerUI.Profile {
             binaryInfo_ = binaryInfo;
             var imageName = binaryInfo.ImageName;
             Trace.WriteLine($"ModuleInfo init {imageName}");
-            
+
             var binFile = await FindBinaryFilePath(symbolOptions).ConfigureAwait(false);
 
             if (binFile == null || !binFile.Found) {
@@ -55,9 +56,9 @@ namespace IRExplorerUI.Profile {
             }
 
             IsManaged = binFile.BinaryFile != null && binFile.BinaryFile.IsManagedImage;
-            
+
             var loadedDoc = await session_.LoadBinaryDocument(binFile.FilePath, binaryInfo.ImageName, debugInfo).ConfigureAwait(false);
-            
+
             if (loadedDoc == null) {
                 Trace.TraceWarning($"  Failed to load document for image {imageName}");
                 report_.AddModuleInfo(binaryInfo, binFile, ModuleLoadState.Failed);
@@ -85,8 +86,7 @@ namespace IRExplorerUI.Profile {
             return true;
         }
 
-        private void CreateDummyDocument(BinaryFileDescriptor binaryInfo)
-        {
+        private void CreateDummyDocument(BinaryFileDescriptor binaryInfo) {
             // Create a dummy document to represent the module,
             // AddPlaceholderFunction will populate it.
             ModuleDocument = LoadedDocument.CreateDummyDocument(binaryInfo.ImageName);
@@ -130,11 +130,11 @@ namespace IRExplorerUI.Profile {
 
             foreach (var funcInfo in DebugInfo.EnumerateFunctions(false)) {
                 //Trace.WriteLine($"{funcInfo.Name}, {funcInfo.RVA}");
-                
+
                 if (funcInfo.RVA != 0) {
                     sortedFuncList_.Add(funcInfo);
                 }
-                
+
                 var func = Summary.FindFunction(funcInfo.Name);
 
                 if (func != null) {
@@ -144,7 +144,7 @@ namespace IRExplorerUI.Profile {
                     externalsFuncMap_[funcInfo.RVA] = funcInfo.Name;
                 }
             }
-            
+
             sortedFuncList_.Sort();
 
 #if DEBUG
@@ -174,7 +174,7 @@ namespace IRExplorerUI.Profile {
             // this will also attempt to download it if not found locally.
             return await session_.CompilerInfo.FindBinaryFile(binaryInfo_, options).ConfigureAwait(false);
         }
-        
+
         public FunctionDebugInfo FindFunctionDebugInfo(long funcAddress) {
             if (!HasDebugInfo || sortedFuncList_ == null) {
                 return null;

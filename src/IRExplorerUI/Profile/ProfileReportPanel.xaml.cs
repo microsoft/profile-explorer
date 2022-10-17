@@ -14,6 +14,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using IRExplorerCore;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Profile {
     public partial class ProfileReportPanel : ToolPanelControl {

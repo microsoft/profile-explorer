@@ -5,6 +5,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Profile;
 using ProtoBuf;
 
 namespace IRExplorerUI.Profile;

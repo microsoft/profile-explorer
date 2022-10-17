@@ -14,7 +14,7 @@ namespace IRExplorerUI.Profile {
     class WindowsThreadSuspender : CriticalFinalizerObject, IDisposable {
         private readonly object _sync = new();
         private readonly int _pid;
-        private volatile int[]? _suspendedThreads;
+        private volatile int[] _suspendedThreads;
 
         public WindowsThreadSuspender(int pid) {
             _pid = pid;
@@ -23,7 +23,7 @@ namespace IRExplorerUI.Profile {
 
         private int[] SuspendThreads() {
             bool permissionFailure = false;
-            HashSet<int>? suspendedThreads = new HashSet<int>();
+            var suspendedThreads = new HashSet<int>();
 
             // A thread may create more threads while we are in the process of walking the list.  We will keep looping through
             // the thread list over and over until we find that we haven't found any new threads to suspend.
@@ -40,12 +40,12 @@ namespace IRExplorerUI.Profile {
                         throw new InvalidOperationException($"Unable to inspect process {_pid:x}.", e);
                     }
 
-                    foreach (ProcessThread? thread in process.Threads) {
+                    foreach (ProcessThread thread in process.Threads) {
                         if (thread != null) {
                             if (suspendedThreads.Contains(thread.Id))
                                 continue;
 
-                            using Interop.SafeWin32Handle threadHandle = Interop.OpenThread(Interop.ThreadAccess.SUSPEND_RESUME, false, (uint)thread.Id);
+                            using var threadHandle = Interop.OpenThread(Interop.ThreadAccess.SUSPEND_RESUME, false, (uint)thread.Id);
                             if (threadHandle.IsInvalid || Interop.SuspendThread(threadHandle.DangerousGetHandle()) == -1) {
                                 permissionFailure = true;
                                 continue;
@@ -73,7 +73,7 @@ namespace IRExplorerUI.Profile {
 
         private void ResumeThreads(IEnumerable<int> suspendedThreads) {
             foreach (int threadId in suspendedThreads) {
-                using Interop.SafeWin32Handle threadHandle = Interop.OpenThread(Interop.ThreadAccess.SUSPEND_RESUME, false, (uint)threadId);
+                using var threadHandle = Interop.OpenThread(Interop.ThreadAccess.SUSPEND_RESUME, false, (uint)threadId);
                 if (threadHandle.IsInvalid || Interop.ResumeThread(threadHandle.DangerousGetHandle()) == -1) {
                     // If we fail to resume a thread we are in a bit of trouble because the target process is likely in a bad
                     // state.  This shouldn't ever happen, but if it does there's nothing we can do about it.  We'll log an event
@@ -133,7 +133,7 @@ namespace IRExplorerUI.Profile {
                 [return: MarshalAs(UnmanagedType.Bool)]
                 public static extern bool CloseHandle(IntPtr handle);
             }
-            
+
             private const string Kernel32LibraryName = "kernel32.dll";
 
             [DllImport(Kernel32LibraryName)]

@@ -5,11 +5,12 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using IRExplorerCore;
+using IRExplorerUI.Profile;
 using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Session;
 
-namespace IRExplorerUI.Profile.ETW {
+namespace IRExplorerUI.Profile {
     public sealed class ETWRecordingSession : IDisposable {
         private TraceEventSession session_;
         private ProfileRecordingSessionOptions options_;

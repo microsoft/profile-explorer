@@ -11,11 +11,11 @@ using System.Collections.Concurrent;
 using System.IO;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
-using IRExplorerUI.Profile.ETW;
 using Microsoft.Diagnostics.Tracing;
 using ProtoBuf;
 using static SkiaSharp.HarfBuzz.SKShaper;
 using System.Windows;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Profile;
 

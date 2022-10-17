@@ -11,6 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using Brush = System.Windows.Media.Brush;
 using Size = System.Windows.Size;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Profile {
     public class FlameGraphNode {
