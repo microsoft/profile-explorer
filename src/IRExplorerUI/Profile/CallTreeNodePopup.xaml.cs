@@ -52,10 +52,6 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
         CallTreeNode = node;
         PanelHost.Show(CallTreeNode);
         OnPropertyChanged(nameof(Node));
-
-        Dispatcher.BeginInvoke(async () => {
-            await PanelHost.ShowDetailsAsync();
-        });
     }
 
     private bool showResizeGrip_;
@@ -81,11 +77,11 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
         ClosePopup();
     }
 
-    private void ExpandButton_OnClick(object sender, RoutedEventArgs e) {
+    private async void ExpandButton_OnClick(object sender, RoutedEventArgs e) {
         DetachPopup();
-        ShowResizeGrip = true;
-        PanelHost.ShowDetails = true;
+        await PanelHost.ShowDetailsAsync();
         Height = 400;
+        ShowResizeGrip = true;
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
