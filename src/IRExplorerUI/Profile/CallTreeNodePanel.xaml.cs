@@ -154,19 +154,23 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         CallTreeNode = node;
     }
 
-    public async Task ShowAsync(ProfileCallTreeNode node) {
+    public async Task ShowWithDetailsAsync(ProfileCallTreeNode node) {
         CallTreeNode = node;
         await ShowDetailsAsync();
     }
 
     public async Task ShowDetailsAsync() {
         await SetupInstanceInfo(CallTreeNode);
+        ShowDetails = true;
+
         BacktraceList.Show(await Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode)), filter: false);
         FunctionList.Show(await Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode)));
         ModuleList.Show(await Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode)));
     }
 
     private async Task SetupInstanceInfo(ProfileCallTreeNode node) {
+        Trace.WriteLine($"Setup node {node.FunctionName}");
+        
         //? TODO: IF same func, don't recompute
 
         var callTree = Session.ProfileData.CallTree;
@@ -180,7 +184,9 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         InstancesNode = SetupNodeExtension(combinedNode);
         FunctionInstancesCount = instanceNodes_.Count;
 
-        // Show all instances.
+        // Show all instances. Make a copy of the list since it's shared
+        // with all other instances of the node and it may be iterated on another thread.
+        instanceNodes_ = new List<ProfileCallTreeNode>(instanceNodes_);
         instanceNodes_.Sort((a, b) => b.Weight.CompareTo(a.Weight));
         InstancesList.Show(instanceNodes_, false);
 
@@ -258,7 +264,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
             int index = Utils.IsKeyboardModifierActive() ? 0 : nodeInstanceIndex_ - 1;
             var node = instanceNodes_[index];
             NodeInstanceChanged?.Invoke(this, node);
-            await ShowAsync(node);
+            await ShowWithDetailsAsync(node);
         }
     }
 
@@ -267,7 +273,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
             int index = Utils.IsKeyboardModifierActive() ? FunctionInstancesCount -1 : nodeInstanceIndex_ + 1;
             var node = instanceNodes_[index];
             NodeInstanceChanged?.Invoke(this, node);
-            await ShowAsync(node);
+            await ShowWithDetailsAsync(node);
         }
     }
 }

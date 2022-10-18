@@ -286,9 +286,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         if (pointedNode == null) {
             GraphViewer.ClearSelection(); // Click outside graph is captured here.
         }
-        else if (pointedNode.CallTreeNode != null) {
-            await NodeDetailsPanel.ShowAsync(pointedNode.CallTreeNode);
-        }
     }
 
     private void HidePreviewPopup() {
@@ -575,7 +572,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             GraphViewer.ClearSelection(); // Click outside graph is captured here.
         }
         else if (pointedNode.CallTreeNode != null) {
-            await NodeDetailsPanel.ShowAsync(pointedNode.CallTreeNode);
+            await NodeDetailsPanel.ShowWithDetailsAsync(pointedNode.CallTreeNode);
         }
     }
 
