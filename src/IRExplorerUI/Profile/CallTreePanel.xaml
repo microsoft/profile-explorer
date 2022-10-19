@@ -69,34 +69,6 @@
                         ToolTip="Show the module name in front of the function name" />
                     <Separator />
 
-                    <Button
-                        Click="CallTreeButton_OnClick"
-                        ToolTip="View complete call tree"
-                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <StackPanel Orientation="Horizontal">
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Margin="0,1,0,0"
-                                Source="{StaticResource GraphIcon}" />
-                            <TextBlock Text="Call Tree" />
-                        </StackPanel>
-                    </Button>
-                    <Button
-                        Click="Button_Click"
-                        ToolTip="View flame graph"
-                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <StackPanel Orientation="Horizontal">
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Margin="0,1,0,0"
-                                Source="{StaticResource FlameGraphIcon}" />
-                            <TextBlock Text="Flame Graph" />
-                        </StackPanel>
-                    </Button>
-                    <Separator Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}" />
-
                     <Image Source="{StaticResource SearchIcon}" />
                     <Grid Height="24">
                         <TextBox

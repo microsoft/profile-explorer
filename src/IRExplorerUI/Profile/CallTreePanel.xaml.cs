@@ -89,7 +89,7 @@ namespace IRExplorerUI {
             if (node == null) {
                 return Children;
             }
-
+            
             var parentNode = (ChildFunctionEx)node;
             return parentNode.Children;
         }

@@ -13,12 +13,9 @@ using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
 
-public class ProfileCallTree {
+public sealed class ProfileCallTree {
     [ProtoContract(SkipConstructor = true)]
     public class ProfileCallTreeState {
-        public HashSet<ProfileCallTreeNode> RootNodes;
-        public Dictionary<IRTextFunctionId, List<ProfileCallTreeNode>> FuncToNodesMap;
-
         [ProtoMember(1)]
         public Dictionary<long, ProfileCallTreeNode> NodeIdMap;
         [ProtoMember(2)]
@@ -30,8 +27,12 @@ public class ProfileCallTree {
         [ProtoMember(5)]
         public long NextNodeId;
 
-        public ProfileCallTreeState(int funcCount) {
-
+        public ProfileCallTreeState(ProfileCallTree callTree) {
+            NodeIdMap = new Dictionary<long, ProfileCallTreeNode>(callTree.funcToNodesMap_.Count * 2);
+            FunctionNodeIdMap = new Dictionary<IRTextFunctionId, long[]>(callTree.funcToNodesMap_.Count);
+            ChildrenIds = new Dictionary<long, long[]>(callTree.funcToNodesMap_.Count * 2);
+            RootNodeIds = new long[callTree.rootNodes_.Count];
+            NextNodeId = callTree.nextNodeId_;
         }
     }
 
@@ -65,12 +66,7 @@ public class ProfileCallTree {
     }
 
     public byte[] Serialize() {
-        var state = new ProfileCallTreeState(funcToNodesMap_.Count);
-        state.NodeIdMap = new Dictionary<long, ProfileCallTreeNode>(funcToNodesMap_.Count * 2);
-        state.FunctionNodeIdMap = new Dictionary<IRTextFunctionId, long[]>(funcToNodesMap_.Count);
-        state.ChildrenIds = new Dictionary<long, long[]>(funcToNodesMap_.Count * 2);
-        state.RootNodeIds = new long[rootNodes_.Count];
-        state.NextNodeId = nextNodeId_;
+        var state = new ProfileCallTreeState(this);
         int index = 0;
 
         foreach (var node in rootNodes_) {
@@ -102,20 +98,12 @@ public class ProfileCallTree {
             state.FunctionNodeIdMap[pair.Key] = funcNodeIds;
         }
 
-        var sw = Stopwatch.StartNew();
-        var data = StateSerializer.Serialize(state);
-        Trace.WriteLine($"Serialized CT {data.Length} in {sw.ElapsedMilliseconds}");
-        Trace.Flush();
-        return data;
+        return StateSerializer.Serialize(state);
     }
 
     public static ProfileCallTree Deserialize(byte[] data, Dictionary<Guid, IRTextSummary> summaryMap) {
-        var sw = Stopwatch.StartNew();
         var state = StateSerializer.Deserialize<ProfileCallTreeState>(data);
-
-        Trace.WriteLine($"Deserialize took {sw.ElapsedMilliseconds}");
         var callTree = new ProfileCallTree();
-        var nodesSet = new HashSet<ProfileCallTreeNode>();
 
         callTree.nextNodeId_ = state.NextNodeId;
         callTree.nodeIdMap_ = new Dictionary<long, ProfileCallTreeNode>(state.FunctionNodeIdMap.Count);
@@ -159,8 +147,6 @@ public class ProfileCallTree {
             callTree.rootNodes_.Add(node);
         }
 
-        Trace.WriteLine($"All took {sw.ElapsedMilliseconds}");
-        Trace.Flush();
         return callTree;
     }
 
@@ -347,8 +333,8 @@ public class ProfileCallTree {
             }
         }
 
-        return new ProfileCallTreeNode(nodes[0].FunctionDebugInfo, nodes[0].Function,
-                                       childrenSet.ToList(), callersSet.ToList(), callSiteMap) {
+        return new ProfileCallTreeGroupNode(nodes[0].FunctionDebugInfo, nodes[0].Function, nodes,
+                                            childrenSet.ToList(), callersSet.ToList(), callSiteMap) {
             Weight = weight, ExclusiveWeight = excWeight,
         };
     }
@@ -370,6 +356,78 @@ public class ProfileCallTree {
         }
 
         return weight;
+    }
+
+    public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
+        var list = new List<ProfileCallTreeNode>();
+
+        while(node.HasCallers) {
+            list.Add(node.Callers[0]);
+            node = node.Callers[0];
+        }
+
+        return list;
+    }
+
+    public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
+        var funcMap = new Dictionary<string, ProfileCallTreeNode>();
+        CollectFunctions(node, funcMap);
+        var funcList = new List<ProfileCallTreeNode>(funcMap.Count);
+
+        foreach (var func in funcMap.Values) {
+            funcList.Add(func);
+        }
+
+        funcList.Sort((a, b) => b.ExclusiveWeight.CompareTo(a.ExclusiveWeight));
+        return funcList;
+    }
+
+    public void CollectFunctions(ProfileCallTreeNode node, Dictionary<string, ProfileCallTreeNode> funcMap) {
+        //? TODO: Instead of making a fake CallTreeNode, have CallTreeNodePanel accept an interface
+        //? implemented by both CallTreeNode and FGNode exposing weight/time info?
+
+        // Combine all instances of a function under the node.
+        var entry = funcMap.GetOrAddValue(node.FunctionName,
+            () => new ProfileCallTreeGroupNode(node.FunctionDebugInfo, node.Function) {
+                Kind = node.Kind
+            });
+
+        var groupEntry = (ProfileCallTreeGroupNode)entry;
+        groupEntry.Nodes.Add(node);
+        groupEntry.Weight += node.Weight;
+        groupEntry.ExclusiveWeight = node.ExclusiveWeight;
+
+        if (node.HasChildren) {
+            foreach (var childNode in node.Children) {
+                CollectFunctions(childNode, funcMap);
+            }
+        }
+    }
+
+    public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
+        var moduleMap = new Dictionary<string, ModuleProfileInfo>();
+        CollectModules(node, moduleMap);
+        var moduleList = new List<ModuleProfileInfo>(moduleMap.Count);
+
+        foreach (var module in moduleMap.Values) {
+            module.Percentage = node.ScaleWeight(module.Weight);
+            moduleList.Add(module);
+        }
+
+        moduleList.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+        return moduleList;
+    }
+
+    public void CollectModules(ProfileCallTreeNode node, Dictionary<string, ModuleProfileInfo> moduleMap) {
+        var entry = moduleMap.GetOrAddValue(node.ModuleName,
+            () => new ModuleProfileInfo(node.ModuleName));
+        entry.Weight += node.ExclusiveWeight;
+
+        if (node.HasChildren) {
+            foreach (var childNode in node.Children) {
+                CollectModules(childNode, moduleMap);
+            }
+        }
     }
 
     public string Print() {
@@ -419,8 +477,9 @@ public enum ProfileCallTreeNodeKind {
 
 [ProtoContract(SkipConstructor = true)]
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
-    [ProtoMember(1)]
+[ProtoMember(1)]
     private IRTextFunctionReference functionRef_ { get; set; }
+    //? TODO: Renumber, 2
     private List<ProfileCallTreeNode> children_;
     [ProtoMember(3)]
     private Dictionary<long, ProfileCallSite> callSites_;
@@ -448,6 +507,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     public List<ProfileCallTreeNode> Callers => callers_;
     public Dictionary<long, ProfileCallSite> CallSites => callSites_;
 
+    public virtual bool IsGroup => false;
     public bool HasChildren => Children != null && Children.Count > 0;
     public bool HasCallers => Callers != null && Callers.Count > 0;
     public bool HasCallSites => CallSites != null && CallSites.Count > 0;
@@ -476,9 +536,9 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     public ProfileCallTreeNode() {}
 
     public ProfileCallTreeNode(FunctionDebugInfo funcInfo, IRTextFunction function,
-        List<ProfileCallTreeNode> children = null,
-        List<ProfileCallTreeNode> callers = null,
-        Dictionary<long, ProfileCallSite> callSites = null) {
+                               List<ProfileCallTreeNode> children = null,
+                               List<ProfileCallTreeNode> callers = null,
+                               Dictionary<long, ProfileCallSite> callSites = null) {
         InitializeReferenceMembers();
         FunctionDebugInfo = funcInfo;
 
@@ -729,6 +789,20 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 }
 
+public sealed class ProfileCallTreeGroupNode : ProfileCallTreeNode {
+    public override bool IsGroup => true;
+    public List<ProfileCallTreeNode> Nodes { get; set; }
+
+    public ProfileCallTreeGroupNode(FunctionDebugInfo funcInfo, IRTextFunction function,
+                                    List<ProfileCallTreeNode> nodes = null,
+                                    List<ProfileCallTreeNode> children = null,
+                                    List<ProfileCallTreeNode> callers = null,
+                                    Dictionary<long, ProfileCallSite> callSites = null) :
+        base(funcInfo, function, children, callers, callSites) {
+        Nodes = nodes ?? new List<ProfileCallTreeNode>();
+    }
+}
+
 [ProtoContract(SkipConstructor = true)]
 public class ProfileCallSite : IEquatable<ProfileCallSite> {
     [ProtoMember(1)]
@@ -819,4 +893,16 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
     public static bool operator !=(ProfileCallSite left, ProfileCallSite right) {
         return !Equals(left, right);
     }
+}
+
+public class ModuleProfileInfo {
+    public ModuleProfileInfo() {}
+
+    public ModuleProfileInfo(string name) {
+        Name = name;
+    }
+
+    public string Name { get; set; }
+    public double Percentage { get; set; }
+    public TimeSpan Weight { get; set; }
 }
