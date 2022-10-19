@@ -166,13 +166,60 @@
                         ToolTip="Show the module name in front of the function name" />
                     <Separator />
 
+
+                    <Image Source="{StaticResource SearchIcon}" />
+                    <Grid Height="24">
+                        <TextBox
+                            x:Name="FunctionFilter"
+                            Width="200"
+                            Margin="4,0,0,0"
+                            HorizontalAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            TabIndex="4"
+                            ToolTip="Search functions based on a case-insensitive string (Ctrl+F)">
+                            <TextBox.InputBindings>
+                                <KeyBinding
+                                    Key="Escape"
+                                    Command="irExplorerUi:CallTreeCommand.ClearSearch"
+                                    CommandParameter="{Binding ElementName=FunctionFilter}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <TextBlock
+                            Margin="8,4"
+                            Foreground="DimGray"
+                            IsHitTestVisible="False"
+                            Text="Search functions"
+                            Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    </Grid>
+
                     <Button
-                        Command="irExplorerUi:GraphCommand.GraphZoomIn"
-                        CommandTarget="{Binding ElementName=GraphHost}"
-                        IsEnabled="False"
-                        ToolTip="Search graph node text (Ctrl+F)">
-                        <Image Source="{StaticResource SearchIcon}" />
+                        Command="irExplorerUi:CallTreeCommand.ClearSearch"
+                        CommandParameter="{Binding ElementName=SectionFilter}"
+                        TabIndex="5"
+                        ToolTip="Reset section filter">
+                        <Image
+                            Width="16"
+                            Height="16"
+                            Source="{StaticResource ClearIcon}" />
                     </Button>
+
+                    <TextBlock
+                        Margin="8,0,0,0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Text="Results:"
+                        Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Text="{Binding Path=SearchResultText, UpdateSourceTrigger=PropertyChanged}"
+                        Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
                 </ToolBar>
             </ToolBarTray>
 

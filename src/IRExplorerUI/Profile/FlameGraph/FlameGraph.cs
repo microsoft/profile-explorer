@@ -58,7 +58,7 @@ namespace IRExplorerUI.Profile {
         public TimeSpan Duration => EndTime - StartTime;
     }
 
-    public class FlameGraphGroupNode : FlameGraphNode {
+    public sealed class FlameGraphGroupNode : FlameGraphNode {
         public override bool IsGroup => true;
         public int ReplacedNodeCount  { get; }
         public int ReplacedStartIndex { get; }
@@ -73,7 +73,7 @@ namespace IRExplorerUI.Profile {
         }
     }
 
-    public class FlameGraph {
+    public sealed class FlameGraph {
         private Dictionary<ProfileCallTreeNode, FlameGraphNode> treeNodeToFgNodeMap_;
         private FlameGraphNode rootNode_;
         private TimeSpan rootWeight_;
@@ -109,8 +109,19 @@ namespace IRExplorerUI.Profile {
             treeNodeToFgNodeMap_ = new Dictionary<ProfileCallTreeNode, FlameGraphNode>();
         }
 
-        public FlameGraphNode GetNode(ProfileCallTreeNode node) {
-            return treeNodeToFgNodeMap_.GetValueOrDefault(node);
+        public List<FlameGraphNode> GetNodes(ProfileCallTreeNode node) {
+            if (!node.IsGroup) {
+                return new List<FlameGraphNode>() { treeNodeToFgNodeMap_.GetValueOrDefault(node) };
+            }
+
+            var groupNode = node as ProfileCallTreeGroupNode;
+            var list = new List<FlameGraphNode>(groupNode.Nodes.Count);
+
+            foreach (var childNode in groupNode.Nodes) {
+                list.Add(treeNodeToFgNodeMap_.GetValueOrDefault(childNode));
+            }
+
+            return list;
         }
 
         public void BuildTimeline(ProfileData data) {

@@ -110,6 +110,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private Point draggingStart_;
     private Point draggingViewStart_;
     private bool panelVisible_;
+    private ProfileCallTree callTree_;
     private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
     private FlameGraphNode enlargedNode_;
     private DateTime lastWheelZoomTime_;
@@ -193,6 +194,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     private void InitializeCallTree(ProfileCallTree callTree) {
+        callTree_ = callTree;
+
         Dispatcher.BeginInvoke(async () => {
             if (callTree != null && !GraphViewer.IsInitialized) {
                 await GraphViewer.Initialize(callTree, GraphArea, settings_);
@@ -224,6 +227,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         NodeDetailsPanel.BacktraceNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
         NodeDetailsPanel.InstanceNodeClick += NodeDetailsPanel_NodeClick;
         NodeDetailsPanel.InstanceNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
+        NodeDetailsPanel.FunctionNodeClick += NodeDetailsPanel_NodeClick;
+        NodeDetailsPanel.FunctionNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
 
         stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
             CallTreeNodePopup.PopupHoverDuration,
@@ -264,12 +269,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     private async void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
-        var node = GraphViewer.SelectNode(e);
-        BringNodeIntoView(node, false);
+        var nodes = GraphViewer.MarkNodes(e);
+        BringNodeIntoView(nodes[0], false);
 
         //? Sync source file
     }
-    
+
     private async void NodeDetailsPanel_NodeDoubleClick(object sender, ProfileCallTreeNode e) {
         await OpenFunction(e);
     }
@@ -391,7 +396,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
     }
 
-    private DoubleAnimation ScrollToVerticalOffset(double offset, bool triggerAnimation = true, 
+    private DoubleAnimation ScrollToVerticalOffset(double offset, bool triggerAnimation = true,
                                                    bool animate = true, double duration = ZoomAnimationDuration) {
         if (animate) {
             var animation1 = new DoubleAnimation(GraphHost.VerticalOffset, offset, TimeSpan.FromMilliseconds(duration));
@@ -439,7 +444,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         if (saveState) {
             SaveCurrentState(FlameGraphStateKind.EnlargeNode);
         }
-        
+
         // How wide the entire graph needs to be so that the node fils the view.
         double ratio = GraphViewer.FlameGraph.InverseScaleWeight(node.Weight);
         double newMaxWidth = GraphAreaWidth * ratio;
@@ -877,6 +882,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     public override void OnSessionEnd() {
         base.OnSessionEnd();
+        callTree_ = null;
         pendingCallTree_ = null;
 
         if (!GraphViewer.IsInitialized) {
@@ -912,74 +918,17 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
-        var list = new List<ProfileCallTreeNode>();
-        var fgNode = GraphViewer.FlameGraph.GetNode(node);
-
-        while (fgNode?.CallTreeNode != null) {
-            list.Add(fgNode.CallTreeNode);
-            fgNode = fgNode.Parent;
-        }
-
-        return list;
+        return callTree_.GetBacktrace(node);
     }
 
-    public List<IFunctionProfileInfoProvider.ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
-        var moduleMap = new Dictionary<string, IFunctionProfileInfoProvider.ModuleProfileInfo>();
-        CollectModules(node, moduleMap);
-        var moduleList = new List<IFunctionProfileInfoProvider.ModuleProfileInfo>(moduleMap.Count);
-
-        foreach (var module in moduleMap.Values) {
-            module.Percentage = node.ScaleWeight(module.Weight);
-            moduleList.Add(module);
-        }
-
-        moduleList.Sort((a, b) => b.Weight.CompareTo(a.Weight));
-        return moduleList;
+    public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
+        return callTree_.GetTopModules(node);
     }
 
     public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
-        var funcMap = new Dictionary<string, ProfileCallTreeNode>();
-        CollectFunctions(node, funcMap);
-        var funcList = new List<ProfileCallTreeNode>(funcMap.Count);
-
-        foreach (var func in funcMap.Values) {
-            funcList.Add(func);
-        }
-
-        funcList.Sort((a, b) => b.ExclusiveWeight.CompareTo(a.ExclusiveWeight));
-        return funcList;
+        return callTree_.GetTopFunctions(node);
     }
 
-    public void CollectModules(ProfileCallTreeNode node, Dictionary<string, IFunctionProfileInfoProvider.ModuleProfileInfo> moduleMap) {
-        var entry = moduleMap.GetOrAddValue(node.ModuleName,
-            () => new IFunctionProfileInfoProvider.ModuleProfileInfo(node.ModuleName));
-        entry.Weight += node.ExclusiveWeight;
-
-        if (node.HasChildren) {
-            foreach (var childNode in node.Children) {
-                CollectModules(childNode, moduleMap);
-            }
-        }
-    }
-
-    public void CollectFunctions(ProfileCallTreeNode node, Dictionary<string, ProfileCallTreeNode> funcMap) {
-        //? TODO: Instead of making a fake CallTreeNode, have CallTreeNodePanel accept an interface
-        //? implemented by both CallTreeNode and FGNode exposing weight/time info.
-
-        // Combine all instances of a function under the node.
-        var entry = funcMap.GetOrAddValue(node.FunctionName,
-            () => new ProfileCallTreeNode(node.FunctionDebugInfo, node.Function) {
-                Kind = node.Kind
-            });
-        entry.Weight += node.Weight;
-        entry.ExclusiveWeight = node.ExclusiveWeight;
-
-        if (node.HasChildren) {
-            foreach (var childNode in node.Children) {
-                CollectFunctions(childNode, funcMap);
-            }
-        }
-    }
 
     public event PropertyChangedEventHandler PropertyChanged;
 

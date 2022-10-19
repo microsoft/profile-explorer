@@ -22,17 +22,6 @@ using IRExplorerUI.Profile;
 namespace IRExplorerUI.Profile;
 
 public interface IFunctionProfileInfoProvider {
-    public class ModuleProfileInfo {
-        public ModuleProfileInfo() {}
-
-        public ModuleProfileInfo(string name) {
-            Name = name;
-        }
-
-        public string Name { get; set; }
-        public double Percentage { get; set; }
-        public TimeSpan Weight { get; set; }
-    }
 
     List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node);
     List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node);
@@ -170,7 +159,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     private async Task SetupInstanceInfo(ProfileCallTreeNode node) {
         Trace.WriteLine($"Setup node {node.FunctionName}");
-        
+
         //? TODO: IF same func, don't recompute
 
         var callTree = Session.ProfileData.CallTree;

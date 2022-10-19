@@ -99,6 +99,16 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
     }
 
+    private void MarkNode(FlameGraphNode node, HighlighingType type) {
+        var group = GetHighlightedNodeGroup(type);
+        group[node] = node.Style;
+
+        node.Style = type switch {
+            HighlighingType.Hovered => PickHoveredNodeStyle(node.Style),
+            HighlighingType.Selected => PickSelectedNodeStyle(node.Style),
+            _ => node.Style
+        };
+    }
 
     private void ResetHighlightedNodes(HighlighingType type, bool includeParents = false) {
         var group = GetHighlightedNodeGroup(type);
@@ -186,10 +196,28 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
     }
 
+    public void MarkNodes(List<FlameGraphNode> graphNodes) {
+        ResetHighlightedNodes(HighlighingType.Hovered);
+        ResetHighlightedNodes(HighlighingType.Selected);
+
+        foreach (var node in graphNodes) {
+            MarkNode(node, HighlighingType.Selected);
+
+        }
+
+        renderer_.Redraw();
+    }
+
     public FlameGraphNode SelectNode(ProfileCallTreeNode graphNode) {
-        var node = flameGraph_.GetNode(graphNode);
-        SelectNode(node);
-        return node;
+        var nodes = flameGraph_.GetNodes(graphNode);
+        SelectNode(nodes[0]);
+        return nodes[0];
+    }
+
+    public List<FlameGraphNode> MarkNodes(ProfileCallTreeNode graphNode) {
+        var nodes = flameGraph_.GetNodes(graphNode);
+        MarkNodes(nodes);
+        return nodes;
     }
 
     public void ClearSelection() {
@@ -198,7 +226,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         selectedNode_ = null;
     }
 
-    public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode, 
+    public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode,
                                  Rect visibleArea, FlameGraphSettings settings) {
         if (graphVisual_ != null) {
             Reset();

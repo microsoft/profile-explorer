@@ -155,7 +155,7 @@
 		<Compile Update="Panels\ModuleReportPanel.xaml.cs">
 		  <SubType>Code</SubType>
 		</Compile>
-		<Compile Update="Panels\CallTreePanel.xaml.cs">
+		<Compile Update="Profile\CallTreePanel.xaml.cs">
 		  <SubType>Code</SubType>
 		</Compile>
 		<Compile Update="Panels\ScriptingPanel.xaml.cs">
@@ -231,7 +231,7 @@
 		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		  <SubType>Designer</SubType>
 		</Page>
-		<Page Update="Panels\CallTreePanel.xaml">
+		<Page Update="Profile\CallTreePanel.xaml">
 		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		  <SubType>Designer</SubType>
 		</Page>
