@@ -7,7 +7,7 @@ using System.Windows.Media;
 
 namespace IRExplorerUI {
     class ColorUtils {
-        public static Color IncreaseSaturation(Color color, float saturationAdjustment = 2f) {
+        public static Color AdjustSaturation(Color color, float saturationAdjustment = 2f) {
             RGBToHSL(color, out float h, out float s, out float l);
             s = Math.Clamp(s * saturationAdjustment, 0, 1);
             l = Math.Clamp(l * 0.5f, 0, 1);

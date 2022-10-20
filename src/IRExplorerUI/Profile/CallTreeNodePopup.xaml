@@ -85,11 +85,12 @@
                     VerticalAlignment="Top"
                     Background="{x:Null}"
                     BorderBrush="{x:Null}"
-                    Click="ExpandButton_OnClick">
+                    Click="ExpandButton_OnClick"
+                    Visibility="{Binding ShowResizeGrip, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                     <Image
-                        Width="14"
-                        Height="14"
-                        Source="{StaticResource PlusIcon}" />
+                        Width="16"
+                        Height="16"
+                        Source="{StaticResource OpenExternalIcon}" />
                 </Button>
                 <Button
                     x:Name="CloseButton"

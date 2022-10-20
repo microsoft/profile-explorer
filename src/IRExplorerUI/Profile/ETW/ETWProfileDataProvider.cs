@@ -269,7 +269,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
             var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
-            if (false && resolvedStack != null) {
+            if (resolvedStack != null) {
                 ProcessResolvedStack(resolvedStack, sampleWeight, stackModules, stackFuncts);
             }
             else {

@@ -18,6 +18,8 @@ using System.Windows.Shapes;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Profile;
+using OxyPlot;
+using OxyPlot.Series;
 
 namespace IRExplorerUI.Profile;
 
@@ -188,6 +190,70 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         medianNodeEx.Percentage = Session.ProfileData.ScaleFunctionWeight(medianNodeEx.Weight);
         medianNodeEx.ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(medianNodeEx.ExclusiveWeight);
         MedianNode = medianNodeEx;
+
+        await SetupInstancesHistogram(instanceNodes_);
+    }
+    
+
+    private async Task SetupInstancesHistogram(List<ProfileCallTreeNode> nodes) {
+        var model = new PlotModel();
+
+        var histogramSeries1 = new HistogramSeries();
+        histogramSeries1.FillColor = OxyColors.Gray;
+        histogramSeries1.StrokeThickness = 1;
+        histogramSeries1.Title = "Measurements";
+
+        var maxWeight = nodes[0].Weight;
+        var minWeight = nodes[^1].Weight;
+        var delta = maxWeight - minWeight;
+        double maxBinCount = 10;
+        double weightPerBin = Math.Ceiling(delta.TotalMicroseconds / maxBinCount);
+        double maxHeight = InstanceHistogramHost.ActualHeight - 50;
+
+        TimeSpan binWeight = nodes[0].Weight;
+        TimeSpan binTotalWeight = nodes[0].Weight;
+        int binStartIndex = 0;
+        int binCount = 1;
+
+        var bins = new List<(TimeSpan Weight, TimeSpan TotalWeight, int Count)>();
+
+        for(int i = 1; i < nodes.Count; i++) {
+            var node = nodes[i];
+
+            if ((binWeight - node.Weight).TotalMicroseconds > weightPerBin) {
+                bins.Add((binWeight, binTotalWeight, binCount));
+                binWeight = node.Weight;
+                binTotalWeight = node.Weight;
+                binStartIndex = i;
+                binCount = 1;
+            }
+            else {
+                binTotalWeight += node.Weight;
+                binCount++;
+            }
+        }
+
+        bins.Add((binWeight, binTotalWeight, binCount));
+
+        foreach (var bin in bins) {
+            var start = bin.Weight.TotalMicroseconds;
+            var end = (bin.Weight + TimeSpan.FromMicroseconds(weightPerBin)).TotalMicroseconds;
+            var height = (maxHeight / nodes.Count) * bin.Count;
+            histogramSeries1.Items.Add(new HistogramItem(start, end, height, bin.Count));
+        }
+
+        histogramSeries1.LabelFormatString = "{0}";
+        histogramSeries1.LabelPlacement = LabelPlacement.Inside;
+        histogramSeries1.LabelMargin = 5;
+        model.Series.Add(histogramSeries1);
+
+        var plotView = new OxyPlot.SkiaSharp.Wpf.PlotView();
+        plotView.Model = model;
+        model.IsLegendVisible = true;
+        plotView.VerticalContentAlignment = System.Windows.VerticalAlignment.Center;
+        plotView.Width = InstanceHistogramHost.ActualWidth;
+        plotView.Height = InstanceHistogramHost.ActualHeight - 50;
+        InstanceHistogramHost.Children.Add(plotView);
     }
 
     private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {

@@ -35,6 +35,7 @@ namespace IRExplorerUI.Profile {
         public FlameGraphRenderer Owner { get; set; }
         public FlameGraphNode Parent { get; set; }
         public List<FlameGraphNode> Children { get; set; }
+        public TextSearchResult? SearchResult { get; set; }
 
         public TimeSpan Weight { get; set; }
         public TimeSpan ChildrenWeight { get; set; }
@@ -51,6 +52,7 @@ namespace IRExplorerUI.Profile {
         public bool ShowInclusiveWeight { get; set; }
         public bool IsDummyNode { get; set; }
 
+        public bool HasFunction => CallTreeNode != null;
         public bool HasChildren => Children is { Count: > 0 };
 
         public TimeSpan StartTime { get; set; }
@@ -122,6 +124,41 @@ namespace IRExplorerUI.Profile {
             }
 
             return list;
+        }
+
+        public List<FlameGraphNode> SearchNodes(string text, bool includeModuleName = true) {
+            var nodes = new List<FlameGraphNode>();
+            SearchNodesImpl(RootNode, text, nodes, includeModuleName);
+            return nodes;
+        }
+
+        public void SearchNodesImpl(FlameGraphNode node, string text,
+                                    List<FlameGraphNode> nodes, bool includeModuleName) {
+            if (node.HasFunction) {
+                var result = TextSearcher.FirstIndexOf(node.CallTreeNode.FunctionName, text, 0, TextSearchKind.CaseInsensitive);
+                if (result.HasValue) {
+                    node.SearchResult = result;
+                    nodes.Add(node);
+                }
+                else {
+                    result = TextSearcher.FirstIndexOf(node.CallTreeNode.ModuleName, text, 0, TextSearchKind.CaseInsensitive);
+                    if (result.HasValue) {
+                        nodes.Add(node);
+                    }
+                }
+            }
+
+            if (node.HasChildren) {
+                foreach (var child in node.Children) {
+                    SearchNodesImpl(child, text, nodes, includeModuleName);
+                }
+            }
+        }
+
+        public void ResetSearchResults(List<FlameGraphNode> nodes) {
+            foreach(var node in nodes) {
+                node.SearchResult = null;
+            }
         }
 
         public void BuildTimeline(ProfileData data) {
@@ -214,7 +251,7 @@ namespace IRExplorerUI.Profile {
                     targetNode.EndTime = sample.Time + sample.Weight;
                     targetNode.Parent = node;
 
-                    if (node.CallTreeNode != null) {
+                    if (node.HasFunction) {
                         targetNode.CallTreeNode.AddParentNoLock(node.CallTreeNode);
                     }
                 }

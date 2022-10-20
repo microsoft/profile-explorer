@@ -27,7 +27,6 @@ using IRExplorerUI.Controls;
 using System.Security.Cryptography.Xml;
 using System.Windows.Media.Animation;
 using IRExplorerCore.IR;
-using OxyPlot;
 using System.Diagnostics;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using VerticalAlignment = System.Windows.VerticalAlignment;
@@ -89,7 +88,7 @@ namespace IRExplorerUI {
             if (node == null) {
                 return Children;
             }
-            
+
             var parentNode = (ChildFunctionEx)node;
             return parentNode.Children;
         }
@@ -147,7 +146,7 @@ namespace IRExplorerUI {
         private void SetupEvents() {
             CallTree.NodeExpanded += CallTreeOnNodeExpanded;
 
-            stackHoverPreview_ = new DraggablePopupHoverPreview(CallTree, 
+            stackHoverPreview_ = new DraggablePopupHoverPreview(CallTree,
                 CallTreeNodePopup.PopupHoverDuration,
                 (mousePoint, previewPoint) => {
                     var element = (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint);
@@ -233,7 +232,6 @@ namespace IRExplorerUI {
         }
 
         private bool showSearchSection_;
-
         public bool ShowSearchSection {
             get => showSearchSection_;
             set {
@@ -245,7 +243,6 @@ namespace IRExplorerUI {
         }
 
         private string searchResultText_;
-
         public string SearchResultText {
             get => searchResultText_;
             set {
@@ -667,9 +664,12 @@ namespace IRExplorerUI {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private void FunctionFilter_TextChanged(object sender, TextChangedEventArgs e) {
+        private async void FunctionFilter_TextChanged(object sender, TextChangedEventArgs e) {
             var text = FunctionFilter.Text.Trim();
+            await SearchCallTree(text);
+        }
 
+        private async Task SearchCallTree(string text) {
             if (searchResultNodes_ != null) {
                 // Clear previous search results.
                 foreach (var node in searchResultNodes_) {
@@ -679,30 +679,25 @@ namespace IRExplorerUI {
             }
 
             if (text.Length > 1) {
-                int results = SearchCallTree(text);
+                searchResultNodes_ = new List<ChildFunctionEx>();
+                await Task.Run(() => SearchCallTree(text, profileCallTree_, searchResultNodes_));
+
+                SearchResultText = searchResultNodes_.Count > 0 ? $"{searchResultNodes_.Count}" : "Not found";
                 ShowSearchSection = true;
-                SearchResultText = results != 0 ? $"{searchResultNodes_.Count}" : "Not found";
-            }
-            else {
-                ShowSearchSection = false;
-            }
-        }
 
-        int SearchCallTree(string text) {
-            var matchingNodes = new List<ChildFunctionEx>();
-            SearchCallTree(text, profileCallTree_, matchingNodes);
-            searchResultNodes_ = matchingNodes;
+                foreach (var node in searchResultNodes_) {
+                    node.ResetCachedName();
 
-            foreach (var node in searchResultNodes_) {
-                node.ResetCachedName();
-
-                // Expand path to the node.
-                for (var treeNode = node.TreeNode; treeNode != null; treeNode = treeNode.Parent) {
-                    treeNode.IsExpanded = true;
+                    // Expand path to the node.
+                    for (var treeNode = node.TreeNode; treeNode != null; treeNode = treeNode.Parent) {
+                        treeNode.IsExpanded = true;
+                    }
                 }
             }
-
-            return searchResultNodes_.Count;
+            else {
+                searchResultNodes_ = null;
+                ShowSearchSection = false;
+            }
         }
 
         void SearchCallTree(string text, ChildFunctionEx node, List<ChildFunctionEx> matchingNodes) {
@@ -756,22 +751,15 @@ namespace IRExplorerUI {
         }
 
         public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
-            var list = new List<ProfileCallTreeNode>();
-
-            //while (fgNode != null) {
-            //    list.Add(fgNode.CallTreeNode);
-            //    fgNode = fgNode.Parent;
-            //}
-
-            return list;
+            return Session.ProfileData.CallTree.GetBacktrace(node);
         }
 
         public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
-            return new List<ProfileCallTreeNode>();
+            return Session.ProfileData.CallTree.GetTopFunctions(node);
         }
 
-        public List<IFunctionProfileInfoProvider.ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
-            return new List<IFunctionProfileInfoProvider.ModuleProfileInfo>();
+        public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
+            return Session.ProfileData.CallTree.GetTopModules(node);
         }
     }
 }

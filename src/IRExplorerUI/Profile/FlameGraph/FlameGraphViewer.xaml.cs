@@ -106,6 +106,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         node.Style = type switch {
             HighlighingType.Hovered => PickHoveredNodeStyle(node.Style),
             HighlighingType.Selected => PickSelectedNodeStyle(node.Style),
+            HighlighingType.Marked => PickSearchResultNodeStyle(node.Style),
             _ => node.Style
         };
     }
@@ -170,6 +171,11 @@ public partial class FlameGraphViewer : FrameworkElement {
         return new HighlightingStyle(newColor, style.Border);
     }
 
+    private HighlightingStyle PickSearchResultNodeStyle(HighlightingStyle style) {
+        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.95f);
+        return new HighlightingStyle(newColor, ColorPens.GetBoldPen(Colors.MediumBlue));
+    }
+
     private void OnMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
     }
 
@@ -196,15 +202,35 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
     }
 
-    public void MarkNodes(List<FlameGraphNode> graphNodes) {
+    public void SelectNodes(List<FlameGraphNode> nodes) {
         ResetHighlightedNodes(HighlighingType.Hovered);
         ResetHighlightedNodes(HighlighingType.Selected);
 
-        foreach (var node in graphNodes) {
+        foreach (var node in nodes) {
             MarkNode(node, HighlighingType.Selected);
 
         }
 
+        renderer_.Redraw();
+    }
+
+    public void MarkSearchResultNodes(List<FlameGraphNode> searchResultNodes, List<FlameGraphNode> prevSearchResultNodes) {
+        ResetHighlightedNodes(HighlighingType.Marked);
+
+        if (prevSearchResultNodes != null) {
+            flameGraph_.ResetSearchResults(prevSearchResultNodes);
+        }
+
+        foreach (var node in searchResultNodes) {
+            MarkNode(node, HighlighingType.Marked);
+        }
+
+        renderer_.Redraw();
+    }
+
+    public void ResetSearchResultNodes(List<FlameGraphNode> nodes) {
+        ResetHighlightedNodes(HighlighingType.Marked);
+        flameGraph_.ResetSearchResults(nodes);
         renderer_.Redraw();
     }
 
@@ -214,9 +240,9 @@ public partial class FlameGraphViewer : FrameworkElement {
         return nodes[0];
     }
 
-    public List<FlameGraphNode> MarkNodes(ProfileCallTreeNode graphNode) {
+    public List<FlameGraphNode> SelectNodes(ProfileCallTreeNode graphNode) {
         var nodes = flameGraph_.GetNodes(graphNode);
-        MarkNodes(nodes);
+        SelectNodes(nodes);
         return nodes;
     }
 
