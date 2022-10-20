@@ -287,26 +287,28 @@ namespace IRExplorerUI.Compilers.ASM {
             }
 
             var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva);
-            return result != null ? result : debugInfo_.FindFunctionByRVA(rva);
+            return result ?? debugInfo_.FindFunctionByRVA(rva);
         }
 
         private void BuildFunctionRvaCache(bool includeExternalSyms) {
             // Cache RVA -> function mapping, much faster to query.
-            int capacity = sortedFuncList_ != null ? sortedFuncList_.Count * 2 : 1;
-            sortedFuncList_ = new List<FunctionDebugInfo>(capacity);
-            hasExternalSyms_ = includeExternalSyms;
+            lock (this) {
+                int capacity = sortedFuncList_ != null ? sortedFuncList_.Count * 2 : 1;
+                sortedFuncList_ = new List<FunctionDebugInfo>(capacity);
+                hasExternalSyms_ = includeExternalSyms;
 
-            if (debugInfo_ == null) {
-                return;
-            }
-
-            foreach (var funcInfo in debugInfo_.EnumerateFunctions(includeExternalSyms)) {
-                if (!funcInfo.IsUnknown) {
-                    sortedFuncList_.Add(funcInfo);
+                if (debugInfo_ == null) {
+                    return;
                 }
-            }
 
-            sortedFuncList_.Sort();
+                foreach (var funcInfo in debugInfo_.EnumerateFunctions(includeExternalSyms)) {
+                    if (!funcInfo.IsUnknown) {
+                        sortedFuncList_.Add(funcInfo);
+                    }
+                }
+
+                sortedFuncList_.Sort();
+            }
         }
 
         private bool ShouldLookupAddressByName(Interop.Instruction instr, ref bool isJump) {
