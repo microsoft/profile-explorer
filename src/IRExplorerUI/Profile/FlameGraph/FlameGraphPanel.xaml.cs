@@ -115,6 +115,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private FlameGraphNode enlargedNode_;
     private DateTime lastWheelZoomTime_;
     private DraggablePopupHoverPreview stackHoverPreview_;
+    private List<FlameGraphNode> searchResultNodes_;
 
     private double zoomPointX_;
     private double initialWidth_;
@@ -161,12 +162,44 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
     }
 
+    public bool SyncSourceFile {
+        get => settings_.SyncSourceFile;
+        set {
+            if (value != settings_.SyncSourceFile) {
+                settings_.SyncSourceFile = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public bool UseCompactMode {
         get => settings_.UseCompactMode;
         set {
             if (value != settings_.UseCompactMode) {
                 settings_.UseCompactMode = value;
                 GraphViewer.SettingsUpdated(settings_);
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private bool showSearchSection_;
+    public bool ShowSearchSection {
+        get => showSearchSection_;
+        set {
+            if (showSearchSection_ != value) {
+                showSearchSection_ = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private string searchResultText_;
+    public string SearchResultText {
+        get => searchResultText_;
+        set {
+            if (searchResultText_ != value) {
+                searchResultText_ = value;
                 OnPropertyChanged();
             }
         }
@@ -269,7 +302,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     private async void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
-        var nodes = GraphViewer.MarkNodes(e);
+        var nodes = GraphViewer.SelectNodes(e);
         BringNodeIntoView(nodes[0], false);
 
         //? Sync source file
@@ -576,8 +609,17 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         if (pointedNode == null) {
             GraphViewer.ClearSelection(); // Click outside graph is captured here.
         }
-        else if (pointedNode.CallTreeNode != null) {
+        else if (pointedNode.HasFunction) {
             await NodeDetailsPanel.ShowWithDetailsAsync(pointedNode.CallTreeNode);
+
+            if (settings_.SyncSourceFile) {
+                // Load the source file and scroll to the hottest line.
+                var panel = Session.FindAndActivatePanel(ToolPanelKind.Source) as SourceFilePanel;
+
+                if (panel != null) {
+                    await panel.LoadSourceFile(pointedNode.CallTreeNode.Function.Sections[0]);
+                }
+            }
         }
     }
 
@@ -941,5 +983,30 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         field = value;
         OnPropertyChanged(propertyName);
         return true;
+    }
+
+    private async void FunctionFilter_OnTextChanged(object sender, TextChangedEventArgs e) {
+        var text = FunctionFilter.Text.Trim();
+        await SearchFlameGraph(text);
+    }
+
+    private async Task SearchFlameGraph(string text) {
+        var prevSearchResultNodes = searchResultNodes_;
+        searchResultNodes_ = null;
+
+        if (text.Length > 1) {
+            searchResultNodes_ = await Task.Run(() => GraphViewer.FlameGraph.SearchNodes(text));
+            GraphViewer.MarkSearchResultNodes(searchResultNodes_, prevSearchResultNodes);
+
+            ShowSearchSection = true;
+            SearchResultText = searchResultNodes_.Count > 0 ? $"{searchResultNodes_.Count}" : "Not found";
+        }
+        else {
+            if (prevSearchResultNodes != null) {
+                GraphViewer.ResetSearchResultNodes(prevSearchResultNodes);
+            }
+
+            ShowSearchSection = false;
+        }
     }
 }

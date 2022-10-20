@@ -10,9 +10,6 @@
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
-    <UserControl.Resources>
-        <system:Boolean x:Key="TrueBool">True</system:Boolean>
-    </UserControl.Resources>
     <ListView
         x:Name="ItemList"
         Panel.ZIndex="1"
@@ -26,43 +23,14 @@
         VirtualizingStackPanel.VirtualizationMode="Recycling">
         <ListView.View>
             <GridView>
-                <GridViewColumn Width="24" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowContextColumn}">
+                <GridViewColumn
+                    Width="24"
+                    irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowContextColumn}"
+                    CellTemplate="{StaticResource ExecutionContextTemplate}">
                     <GridViewColumnHeader
                         x:Name="ContextColumnHeader"
                         Content="C"
                         ToolTip="Execution context" />
-                    <GridViewColumn.CellTemplate>
-                        <DataTemplate>
-                            <Border
-                                Width="16"
-                                Height="16"
-                                Margin="-4,0,-4,0"
-                                BorderBrush="Black"
-                                BorderThickness="0.5">
-                                <TextBlock
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontWeight="Medium"
-                                    Text="{Binding CallTreeNode.Kind, Converter={StaticResource CallTreeNodeKindConverter}, ConverterParameter={StaticResource TrueBool}}"
-                                    ToolTip="{Binding CallTreeNode.Kind, Converter={StaticResource CallTreeNodeKindConverter}}" />
-                                <Border.Style>
-                                    <Style TargetType="{x:Type Border}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}" Value="{x:Static local:ProfileCallTreeNodeKind.NativeKernel}">
-                                                <Setter Property="Background" Value="MistyRose" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}" Value="{x:Static local:ProfileCallTreeNodeKind.Managed}">
-                                                <Setter Property="Background" Value="AliceBlue" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}" Value="{x:Static local:ProfileCallTreeNodeKind.NativeUser}">
-                                                <Setter Property="Opacity" Value="0.5" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                            </Border>
-                        </DataTemplate>
-                    </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
                 <GridViewColumn Width="250">

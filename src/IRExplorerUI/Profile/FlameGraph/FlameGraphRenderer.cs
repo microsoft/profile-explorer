@@ -89,7 +89,7 @@ public class FlameGraphRenderer {
     private void SetupNode(FlameGraphNode node) {
         //? TODO: Palette based on module
         //? int colorIndex = Math.Min(node.Depth, palettes_.Count - 1);
-        var palette = node.CallTreeNode != null ? palettes_[node.CallTreeNode.Kind] : palettes_[ProfileCallTreeNodeKind.Unset];
+        var palette = node.HasFunction ? palettes_[node.CallTreeNode.Kind] : palettes_[ProfileCallTreeNodeKind.Unset];
 
         int colorIndex = node.Depth % palette.Count;
         var backColor = palette[palette.Count - colorIndex - 1];
@@ -572,7 +572,7 @@ public class FlameGraphRenderer {
         TimeSpan startTime = TimeSpan.MaxValue;
         TimeSpan endTime = TimeSpan.MinValue;
         int k;
-        
+
         for (k = startIndex; k < stopIndex; k++) {
             var childNode = node.Children[k];
             double childWidth = flameGraph_.ScaleDuration(childNode.StartTime, childNode.EndTime);
@@ -680,9 +680,9 @@ public class FlameGraphRenderer {
 
     private HighlightingStyle PickDummyNodeStyle(HighlightingStyle style) {
         /// TODO Cache
-        var newColor = ColorUtils.IncreaseSaturation(((SolidColorBrush)style.BackColor).Color, 0.3f);
+        var newColor = ColorUtils.AdjustSaturation(((SolidColorBrush)style.BackColor).Color, 0.3f);
         newColor = ColorUtils.AdjustLight(newColor, 2.0f);
-        return new HighlightingStyle(newColor, style.Border);
+        return new HighlightingStyle(newColor, defaultBorder_);
     }
 
     private DrawingBrush CreatePlaceholderTiledBrush(double tileSize) {
@@ -729,15 +729,15 @@ public class FlameGraphRenderer {
     private double timeBarHeight_ = 0;
 #endif
 
-    public void DrawNode(FlameGraphNode flameGraphNode, DrawingContext dc) {
-        if (flameGraphNode.IsDummyNode) {
+    public void DrawNode(FlameGraphNode node, DrawingContext dc) {
+        if (node.IsDummyNode) {
             return;
         }
 
-        var bounds = new Rect(flameGraphNode.Bounds.Left * maxWidth_,
-                              flameGraphNode.Bounds.Top + timeBarHeight_,
-                              flameGraphNode.Bounds.Width * maxWidth_,
-                              flameGraphNode.Bounds.Height);
+        var bounds = new Rect(node.Bounds.Left * maxWidth_,
+                              node.Bounds.Top + timeBarHeight_,
+                              node.Bounds.Width * maxWidth_,
+                              node.Bounds.Height);
 
         if (bounds.Width <= 1) {
             return;
@@ -748,7 +748,7 @@ public class FlameGraphRenderer {
         }
 
         dc.PushGuidelineSet(cachedNodeGuidelines_);
-        dc.DrawRectangle(flameGraphNode.Style.BackColor, flameGraphNode.Style.Border, bounds);
+        dc.DrawRectangle(node.Style.BackColor, node.Style.Border, bounds);
 
         // ...
         int index = 0;
@@ -757,7 +757,7 @@ public class FlameGraphRenderer {
 
         // Start the text in the visible area.
         bool startsInView = bounds.Left >= visibleArea_.Left;
-        double offsetY = 1;
+        double offsetY = bounds.Top + 1;
         double offsetX = startsInView ? bounds.Left : visibleArea_.Left;
         double maxWidth = bounds.Width - 2 * FlameGraphNode.DefaultMargin;
 
@@ -769,20 +769,20 @@ public class FlameGraphRenderer {
         while (maxWidth > 8 && index < FlameGraphNode.MaxTextParts && !trimmed) {
             string label = "";
             bool useNameFont = false;
-            Brush textColor = flameGraphNode.TextColor;
+            Brush textColor = node.TextColor;
 
             switch (index) {
                 case 0: {
-                    if (flameGraphNode.CallTreeNode != null) {
-                        label = flameGraphNode.CallTreeNode.FunctionName;
+                    if (node.HasFunction) {
+                        label = node.CallTreeNode.FunctionName;
 
                         if (settings_.PrependModuleToFunction) {
-                            var moduleLabel = flameGraphNode.CallTreeNode.ModuleName + "!";
+                            var moduleLabel = node.CallTreeNode.ModuleName + "!";
                             var (modText, modGlyphs, modTextTrimmed, modTextSize) =
                                 TrimTextToWidth(moduleLabel, maxWidth - margin, false);
 
                             if (modText.Length > 0) {
-                                DrawText(modGlyphs, bounds, flameGraphNode.ModuleTextColor, offsetX + margin, offsetY, modTextSize, dc);
+                                DrawText(modGlyphs, bounds, node.ModuleTextColor, offsetX + margin, offsetY, modTextSize, dc);
                             }
 
                             maxWidth -= modTextSize.Width + 1;
@@ -798,10 +798,10 @@ public class FlameGraphRenderer {
                     break;
                 }
                 case 1: {
-                    if (flameGraphNode.ShowWeightPercentage) {
-                        label = ScaleWeight(flameGraphNode.Weight).AsPercentageString();
+                    if (node.ShowWeightPercentage) {
+                        label = ScaleWeight(node.Weight).AsPercentageString();
                         margin = FlameGraphNode.ExtraValueMargin;
-                        textColor = flameGraphNode.WeightTextColor;
+                        textColor = node.WeightTextColor;
                         useNameFont = true;
                     }
 
@@ -809,10 +809,10 @@ public class FlameGraphRenderer {
                 }
 
                 case 2: {
-                    if (flameGraphNode.ShowWeight) {
-                        label = $"({flameGraphNode.Weight.AsMillisecondsString()})";
+                    if (node.ShowWeight) {
+                        label = $"({node.Weight.AsMillisecondsString()})";
                         margin = FlameGraphNode.DefaultMargin;
-                        textColor = flameGraphNode.WeightTextColor;
+                        textColor = node.WeightTextColor;
                     }
 
                     break;
@@ -827,6 +827,10 @@ public class FlameGraphRenderer {
                 TrimTextToWidth(label, maxWidth - margin, useNameFont);
 
             if (text.Length > 0) {
+                if (index == 0 && node.SearchResult.HasValue) {
+                    DrawSearchResultSelection(node.SearchResult.Value, text, glyphs, bounds, offsetX + margin, offsetY, dc);
+                }
+
                 DrawText(glyphs, bounds, textColor, offsetX + margin, offsetY, textSize, dc);
             }
 
@@ -839,6 +843,30 @@ public class FlameGraphRenderer {
         dc.Pop(); // PushGuidelineSet
     }
 
+    private void DrawSearchResultSelection(TextSearchResult searchResult, string text, GlyphRun glyphs,
+                                           Rect bounds, double offsetX, double offsetY, DrawingContext dc) {
+        var glypWidths = glyphs.AdvanceWidths;
+        int startIndex = Math.Min(searchResult.Offset, glypWidths.Count);
+        int endIndex = Math.Min(searchResult.Offset + searchResult.Length, glypWidths.Count);
+
+        if (startIndex == text.Length || startIndex == endIndex) {
+            return; // Result outside of visible text part.
+        }
+
+        for (int i = 0; i < startIndex; i++) {
+            offsetX += glypWidths[i];
+        }
+
+        double width = 0;
+
+        for(int i = startIndex; i < endIndex; i++) {
+            width += glypWidths[i];
+        }
+
+        var selectionBounds = new Rect(offsetX, offsetY, width, nodeHeight_ - 2);
+        dc.DrawRectangle(Brushes.Khaki, null, selectionBounds);
+    }
+
     private GuidelineSet cachedTextGuidelines_;
     private GuidelineSet cachedNodeGuidelines_;
     private GuidelineSet cachedDummyNodeGuidelines_;
@@ -846,7 +874,7 @@ public class FlameGraphRenderer {
     private void DrawText(GlyphRun glyphs, Rect bounds, Brush textColor, double offsetX, double offsetY,
             Size textSize, DrawingContext dc) {
             double x = offsetX;
-            double y = bounds.Top + bounds.Height / 2 + textSize.Height / 4 + offsetY;
+            double y = bounds.Height / 2 + textSize.Height / 4 + offsetY;
 
             if (cachedTextGuidelines_ == null) {
                 var rect = glyphs.ComputeAlignmentBox();

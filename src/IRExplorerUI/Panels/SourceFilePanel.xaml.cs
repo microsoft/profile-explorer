@@ -232,6 +232,14 @@ namespace IRExplorerUI {
         public override ToolPanelKind PanelKind => ToolPanelKind.Source;
         public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
 
+        public async Task LoadSourceFile(IRTextSection section) {
+            section_ = section;
+
+            if (await LoadSourceFileForFunction(section_.ParentFunction)) {
+                ScrollToLine(hottestSourceLine_);
+            }
+        }
+
         public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
             base.OnDocumentSectionLoaded(section, document);
             section_ = section;

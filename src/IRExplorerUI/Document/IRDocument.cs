@@ -2829,7 +2829,7 @@ namespace IRExplorerUI {
 
             if (bookmark.Style != null) {
                 var brush = style.BackColor as SolidColorBrush;
-                var color = ColorUtils.IncreaseSaturation(brush.Color);
+                var color = ColorUtils.AdjustSaturation(brush.Color);
                 style = new HighlightingStyle(color);
             }
             else {
@@ -2854,7 +2854,7 @@ namespace IRExplorerUI {
                     return;
                 }
 
-                var color = ColorUtils.IncreaseSaturation(brush.Color);
+                var color = ColorUtils.AdjustSaturation(brush.Color);
                 var elementVisual = new Rect(0, startY + y, width, dotSize);
                 var barStyle = new HighlightingStyle(color);
 
@@ -2870,7 +2870,7 @@ namespace IRExplorerUI {
         private void PopulateMarkerBarForBlocks(int startY, double width, double height) {
             foreach (var blockGroup in margin_.BlockGroups) {
                 var brush = blockGroup.Group.Style.BackColor as SolidColorBrush;
-                var color = ColorUtils.IncreaseSaturation(brush.Color, 1.5f);
+                var color = ColorUtils.AdjustSaturation(brush.Color, 1.5f);
 
                 if (!blockGroup.SavesStateToFile) {
                     continue;
@@ -2940,7 +2940,7 @@ namespace IRExplorerUI {
             int startLine = lastLine - lineSpan;
             double y = Math.Floor((double)startLine / LineCount * height);
             double lineHeight = Math.Ceiling(Math.Max(1, (double)lineSpan / LineCount * height));
-            color = ColorUtils.IncreaseSaturation(color, 1.5f);
+            color = ColorUtils.AdjustSaturation(color, 1.5f);
             var elementVisual = new Rect(2 * width / 3, startY + y, width / 3, lineHeight);
             var barStyle = new HighlightingStyle(color);
 
@@ -2971,7 +2971,7 @@ namespace IRExplorerUI {
 
                 double y = (double)element.TextLocation.Line / LineCount * height;
                 var brush = Brushes.Blue;
-                var color = ColorUtils.IncreaseSaturation(brush.Color);
+                var color = ColorUtils.AdjustSaturation(brush.Color);
                 var elementVisual = new Rect(0, startY + y, width, dotSize);
                 var barStyle = new HighlightingStyle(color);
 

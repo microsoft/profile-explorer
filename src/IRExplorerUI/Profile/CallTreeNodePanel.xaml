@@ -50,7 +50,10 @@
                         ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
                 </StackPanel>
             </StackPanel>
-            <Grid Grid.Column="1" Margin="0,0,4,0">
+            <Grid
+                Grid.Column="1"
+                Margin="0,0,4,0"
+                Visibility="{Binding ShowDetails, Converter={StaticResource BoolToVisibilityConverter}}">
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
                     <TextBlock Margin="4,0,0,0" Text="{Binding CurrentInstanceIndex}" />
                     <TextBlock Text=" / " />
@@ -132,15 +135,16 @@
                                 Content="{Binding MedianNode}"
                                 ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
                         </StackPanel>
-
-                        <StackPanel Margin="4,6,0,0" Orientation="Horizontal">
-                            <TextBlock
-                                Width="70"
-                                HorizontalAlignment="Left"
-                                FontWeight="Medium"
-                                Text="Context" />
-                            <TextBlock Margin="4,0,0,0" Text="{Binding CallTreeNode.Kind, Converter={StaticResource CallTreeNodeKindConverter}}" />
-                        </StackPanel>
+                        <TextBlock
+                            Margin="4,2,0,8"
+                            Text="&gt; Histogram"
+                            ToolTip="TODO" />
+                        <Canvas
+                            x:Name="InstanceHistogramHost"
+                            Width="300"
+                            Height="200"
+                            HorizontalAlignment="Left"
+                            Background="Gray" />
 
                         <TextBlock
                             Margin="4,2,0,0"
@@ -167,11 +171,18 @@
                                 TextWrapping="Wrap" />
                         </Canvas>
 
-                        <TextBlock
-                            Margin="4,2,0,0"
-                            HorizontalAlignment="Left"
-                            FontWeight="Medium"
-                            Text="Function name" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="4,2,16,0"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                FontWeight="Medium"
+                                Text="Function name" />
+                            <ContentPresenter
+                                VerticalAlignment="Center"
+                                Content="{Binding}"
+                                ContentTemplate="{StaticResource ExecutionContextTemplate}" />
+                        </StackPanel>
                         <Canvas
                             x:Name="FunctionCanvas"
                             Height="{Binding ElementName=FunctionTextBlock, Path=ActualHeight}"

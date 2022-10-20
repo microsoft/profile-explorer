@@ -41,7 +41,7 @@ public class ProfileListViewItem : SearchableProfileItem {
         };
     }
 
-    public static ProfileListViewItem From(IFunctionProfileInfoProvider.ModuleProfileInfo node, ProfileData profileData) {
+    public static ProfileListViewItem From(ModuleProfileInfo node, ProfileData profileData) {
         return new ProfileListViewItem() {
             FunctionName = node.Name,
             Weight = node.Weight,
@@ -148,7 +148,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
         ItemList.ItemsSource = new ListCollectionView(filteredList.ToList());
     }
 
-    public void Show(List<IFunctionProfileInfoProvider.ModuleProfileInfo> nodes) {
+    public void Show(List<ModuleProfileInfo> nodes) {
         var list = new List<ProfileListViewItem>(nodes.Count);
         nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData)));
         ItemList.ItemsSource = new ListCollectionView(list);
