@@ -111,7 +111,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         };
     }
 
-    private void ResetHighlightedNodes(HighlighingType type, bool includeParents = false) {
+    private void ResetHighlightedNodes(HighlighingType type, bool includeParents = false, bool redraw = true) {
         var group = GetHighlightedNodeGroup(type);
 
         if (group.Count == 0) {
@@ -135,7 +135,10 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
 
         group.Clear();
-        renderer_.Redraw();
+
+        if (redraw) {
+            renderer_.Redraw();
+        }
     }
 
     public void ResetNodeHighlighting() {
@@ -214,13 +217,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         renderer_.Redraw();
     }
 
-    public void MarkSearchResultNodes(List<FlameGraphNode> searchResultNodes, List<FlameGraphNode> prevSearchResultNodes) {
-        ResetHighlightedNodes(HighlighingType.Marked);
-
-        if (prevSearchResultNodes != null) {
-            flameGraph_.ResetSearchResults(prevSearchResultNodes);
-        }
-
+    public void MarkSearchResultNodes(List<FlameGraphNode> searchResultNodes) {
         foreach (var node in searchResultNodes) {
             MarkNode(node, HighlighingType.Marked);
         }
@@ -228,10 +225,13 @@ public partial class FlameGraphViewer : FrameworkElement {
         renderer_.Redraw();
     }
 
-    public void ResetSearchResultNodes(List<FlameGraphNode> nodes) {
-        ResetHighlightedNodes(HighlighingType.Marked);
+    public void ResetSearchResultNodes(List<FlameGraphNode> nodes, bool redraw = true) {
+        ResetHighlightedNodes(HighlighingType.Marked, includeParents: false, redraw);
         flameGraph_.ResetSearchResults(nodes);
-        renderer_.Redraw();
+
+        if (redraw) {
+            renderer_.Redraw();
+        }
     }
 
     public FlameGraphNode SelectNode(ProfileCallTreeNode graphNode) {
@@ -244,6 +244,17 @@ public partial class FlameGraphViewer : FrameworkElement {
         var nodes = flameGraph_.GetNodes(graphNode);
         SelectNodes(nodes);
         return nodes;
+    }
+
+    public List<FlameGraphNode> SelectNodes(List<ProfileCallTreeNode> nodes) {
+        var fgNodes = new List<FlameGraphNode>(nodes.Count);
+
+        foreach (var node in nodes) {
+            fgNodes.AddRange(flameGraph_.GetNodes(node));
+        }
+
+        SelectNodes(fgNodes);
+        return fgNodes;
     }
 
     public void ClearSelection() {

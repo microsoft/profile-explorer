@@ -19,6 +19,8 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Profile;
 using OxyPlot;
+using OxyPlot.Annotations;
+using OxyPlot.Axes;
 using OxyPlot.Series;
 
 namespace IRExplorerUI.Profile;
@@ -56,6 +58,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     private int nodeInstanceIndex_;
     private List<ProfileCallTreeNode> instanceNodes_;
     private IFunctionProfileInfoProvider funcInfoProvider_;
+    private bool histogramVisible_;
 
     public event EventHandler<ProfileCallTreeNode> NodeInstanceChanged;
     public event EventHandler<ProfileCallTreeNode> BacktraceNodeClick;
@@ -66,6 +69,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     public event EventHandler<ProfileCallTreeNode> FunctionNodeDoubleClick;
     public event EventHandler<ProfileCallTreeNode> ModuleNodeClick;
     public event EventHandler<ProfileCallTreeNode> ModuleNodeDoubleClick;
+    public event EventHandler<List<ProfileCallTreeNode>> NodesSelected;
 
     public override ISession Session {
         get => base.Session;
@@ -123,6 +127,12 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         set => SetField(ref showDetails_, value);
     }
 
+    private bool isHistogramExpanded_;
+    public bool IsHistogramExpanded {
+        get => isHistogramExpanded_;
+        set => SetField(ref isHistogramExpanded_, value);
+    }
+
     public CallTreeNodePanel() {
         InitializeComponent();
         SetupEvents();
@@ -160,8 +170,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     }
 
     private async Task SetupInstanceInfo(ProfileCallTreeNode node) {
-        Trace.WriteLine($"Setup node {node.FunctionName}");
-
         //? TODO: IF same func, don't recompute
 
         var callTree = Session.ProfileData.CallTree;
@@ -191,37 +199,47 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         medianNodeEx.ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(medianNodeEx.ExclusiveWeight);
         MedianNode = medianNodeEx;
 
-        await SetupInstancesHistogram(instanceNodes_);
+        if (IsHistogramExpanded) {
+            SetupInstancesHistogram(instanceNodes_, node);
+        }
     }
-    
 
-    private async Task SetupInstancesHistogram(List<ProfileCallTreeNode> nodes) {
-        var model = new PlotModel();
+    public class BinHistogramItem : HistogramItem {
+        public int Count { get; set; }
+        public TimeSpan AverageWeight { get; set; }
+        public TimeSpan TotalWeight { get; set; }
+        public List<ProfileCallTreeNode> Nodes { get; set; }
+        
+        public BinHistogramItem(double rangeStart, double rangeEnd, double area, int count) : base(rangeStart, rangeEnd, area, count)
+        {
+            
+        }
 
-        var histogramSeries1 = new HistogramSeries();
-        histogramSeries1.FillColor = OxyColors.Gray;
-        histogramSeries1.StrokeThickness = 1;
-        histogramSeries1.Title = "Measurements";
+        public BinHistogramItem(double rangeStart, double rangeEnd, double area, int count, OxyColor color) : base(rangeStart, rangeEnd, area, count, color)
+        {
+        }
+    }
 
+    private void SetupInstancesHistogram(List<ProfileCallTreeNode> nodes, ProfileCallTreeNode currentNode) {
+        const double maxBinCount = 20;
         var maxWeight = nodes[0].Weight;
         var minWeight = nodes[^1].Weight;
         var delta = maxWeight - minWeight;
-        double maxBinCount = 10;
-        double weightPerBin = Math.Ceiling(delta.TotalMicroseconds / maxBinCount);
-        double maxHeight = InstanceHistogramHost.ActualHeight - 50;
+        long weightPerBin = (long)Math.Ceiling((double)delta.Ticks / maxBinCount);
+        double maxHeight = InstanceHistogramHost.ActualHeight;
 
+        // Partition nodes into bins.
+        var bins = new List<(TimeSpan Weight, TimeSpan TotalWeight, int StartIndex, int Count)>();
         TimeSpan binWeight = nodes[0].Weight;
         TimeSpan binTotalWeight = nodes[0].Weight;
         int binStartIndex = 0;
         int binCount = 1;
 
-        var bins = new List<(TimeSpan Weight, TimeSpan TotalWeight, int Count)>();
-
         for(int i = 1; i < nodes.Count; i++) {
             var node = nodes[i];
 
-            if ((binWeight - node.Weight).TotalMicroseconds > weightPerBin) {
-                bins.Add((binWeight, binTotalWeight, binCount));
+            if ((binWeight - node.Weight).Ticks > weightPerBin) {
+                bins.Add((binWeight, binTotalWeight, binStartIndex, binCount));
                 binWeight = node.Weight;
                 binTotalWeight = node.Weight;
                 binStartIndex = i;
@@ -233,27 +251,103 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
             }
         }
 
-        bins.Add((binWeight, binTotalWeight, binCount));
+        bins.Add((binWeight, binTotalWeight, binStartIndex, binCount));
+
+        // Add each bin to the graph.
+        var model = new PlotModel();
+        var series = new HistogramSeries();
+        series.FillColor = OxyColors.WhiteSmoke;
+        series.StrokeThickness = 0.5;
 
         foreach (var bin in bins) {
-            var start = bin.Weight.TotalMicroseconds;
-            var end = (bin.Weight + TimeSpan.FromMicroseconds(weightPerBin)).TotalMicroseconds;
+            if (bin.Count == 0) {
+                continue;
+            }
+
+            var start = bin.Weight.Ticks;
+            var end = (bin.Weight + TimeSpan.FromTicks(weightPerBin)).Ticks;
             var height = (maxHeight / nodes.Count) * bin.Count;
-            histogramSeries1.Items.Add(new HistogramItem(start, end, height, bin.Count));
+            var item = new BinHistogramItem(start, end, bin.Count, bin.Count, OxyColors.Khaki) {
+                Count = bin.Count, 
+                TotalWeight = bin.TotalWeight, 
+                AverageWeight = TimeSpan.FromTicks(bin.TotalWeight.Ticks / bin.Count),
+                Nodes = nodes.GetRange(bin.StartIndex, bin.Count)
+            };
+            series.Items.Add(item);
         }
 
-        histogramSeries1.LabelFormatString = "{0}";
-        histogramSeries1.LabelPlacement = LabelPlacement.Inside;
-        histogramSeries1.LabelMargin = 5;
-        model.Series.Add(histogramSeries1);
+        series.LabelFormatString = "{3}";
+        series.LabelMargin = 2;
+        series.MouseDown += (sender, e) => {
+            if (e.HitTestResult.Item is BinHistogramItem binItem) {
+                NodesSelected?.Invoke(this, binItem.Nodes);
+            }
+        };
+        model.Series.Add(series);
+
+        // Setup horizontal axis.
+        var weightAxis = new LinearAxis();
+        weightAxis.Position = AxisPosition.Bottom;
+        weightAxis.TickStyle = TickStyle.None;
+
+        if (delta.TotalSeconds <= 1) {
+            weightAxis.LabelFormatter = value => TimeSpan.FromTicks((long)value).AsMillisecondsString();
+        }
+        else {
+            weightAxis.LabelFormatter = value => TimeSpan.FromTicks((long)value).AsSecondsString();
+        }
+
+        weightAxis.MinimumPadding = 0;
+        weightAxis.MinimumDataMargin = 4;
+        weightAxis.IsPanEnabled = false;
+        weightAxis.IsZoomEnabled = false;
+        model.Axes.Add(weightAxis);
+        
+        // Setup vertical axis.
+        var countAxis = new LinearAxis();
+        countAxis.Position = AxisPosition.Right;
+        countAxis.TickStyle = TickStyle.None;
+        countAxis.Title = "Instances #";
+        countAxis.StringFormat = " ";
+        countAxis.IsPanEnabled = false;
+        countAxis.IsZoomEnabled = false;
+        countAxis.MinimumPadding = 0;
+        countAxis.MaximumDataMargin = 20;
+        model.Axes.Add(countAxis);
+
+        var currentNodeLine = new LineAnnotation();
+        currentNodeLine.Type = LineAnnotationType.Vertical;
+        currentNodeLine.X = currentNode.Weight.Ticks;
+        currentNodeLine.StrokeThickness = 1.5;
+        currentNodeLine.LineStyle = LineStyle.Dot;
+        currentNodeLine.ToolTip = "Current instance";
+        model.Annotations.Add(currentNodeLine);
 
         var plotView = new OxyPlot.SkiaSharp.Wpf.PlotView();
         plotView.Model = model;
-        model.IsLegendVisible = true;
+        model.IsLegendVisible = false;
         plotView.VerticalContentAlignment = System.Windows.VerticalAlignment.Center;
         plotView.Width = InstanceHistogramHost.ActualWidth;
-        plotView.Height = InstanceHistogramHost.ActualHeight - 50;
+        plotView.Height = InstanceHistogramHost.ActualHeight;
+        plotView.MinHeight = plotView.Height;
+        model.PlotAreaBorderThickness = new OxyThickness(0, 0, 0, 0.5);
+        plotView.Background = InstanceHistogramHost.Background;
+        
+        // Override tooltip.
+        plotView.Controller = new PlotController();
+        plotView.Controller.UnbindMouseDown(OxyMouseButton.Left);
+        plotView.Controller.BindMouseEnter(PlotCommands.HoverSnapTrack);
+
+        var tooltipTemplate = App.Current.FindResource("HistogramTooltipTemplate");
+        plotView.DefaultTrackerTemplate = (ControlTemplate)tooltipTemplate;
+
+        InstanceHistogramHost.Children.Clear();
         InstanceHistogramHost.Children.Add(plotView);
+        histogramVisible_ = true;
+    }
+
+    private void PlotView_MouseDown(object sender, MouseButtonEventArgs e) {
+        
     }
 
     private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {
@@ -329,6 +423,14 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
             var node = instanceNodes_[index];
             NodeInstanceChanged?.Invoke(this, node);
             await ShowWithDetailsAsync(node);
+        }
+    }
+
+    private void HistogramHost_Expanded(object sender, RoutedEventArgs e) {
+        if (!histogramVisible_ && instanceNodes_ != null) {
+            Dispatcher.BeginInvoke(() => {
+                SetupInstancesHistogram(instanceNodes_, CallTreeNode);
+            }, System.Windows.Threading.DispatcherPriority.Background);
         }
     }
 }

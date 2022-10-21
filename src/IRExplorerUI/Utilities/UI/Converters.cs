@@ -165,6 +165,12 @@ class MillisecondTimeConverter : IValueConverter {
         if(value is TimeSpan timeValue) {
             return timeValue.AsMillisecondsString();
         }
+        else if (value is long longValue) {
+            return TimeSpan.FromTicks(longValue).AsMillisecondsString();
+        }
+        else if (value is double doubleValue) {
+            return TimeSpan.FromTicks((long)doubleValue).AsMillisecondsString();
+        }
 
         return value;
     }

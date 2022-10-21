@@ -262,6 +262,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         NodeDetailsPanel.InstanceNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
         NodeDetailsPanel.FunctionNodeClick += NodeDetailsPanel_NodeClick;
         NodeDetailsPanel.FunctionNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
+        NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
 
         stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
             CallTreeNodePopup.PopupHoverDuration,
@@ -294,6 +295,11 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             popup => {
                 Session.RegisterDetachedPanel(popup);
             });
+    }
+
+    private void NodeDetailsPanel_NodesSelected(object sender, List<ProfileCallTreeNode> e) {
+        var nodes = GraphViewer.SelectNodes(e);
+        BringNodeIntoView(nodes[0], false);
     }
 
     private async void NodeDetailsPanel_NodeInstanceChanged(object sender, ProfileCallTreeNode e) {
@@ -994,18 +1000,19 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         var prevSearchResultNodes = searchResultNodes_;
         searchResultNodes_ = null;
 
+        if (prevSearchResultNodes != null) {
+            bool redraw = text.Length <= 1; // Prevent flicker by redrawing once when search is done.
+            GraphViewer.ResetSearchResultNodes(prevSearchResultNodes, redraw);
+        }
+
         if (text.Length > 1) {
             searchResultNodes_ = await Task.Run(() => GraphViewer.FlameGraph.SearchNodes(text));
-            GraphViewer.MarkSearchResultNodes(searchResultNodes_, prevSearchResultNodes);
+            GraphViewer.MarkSearchResultNodes(searchResultNodes_);
 
             ShowSearchSection = true;
             SearchResultText = searchResultNodes_.Count > 0 ? $"{searchResultNodes_.Count}" : "Not found";
         }
         else {
-            if (prevSearchResultNodes != null) {
-                GraphViewer.ResetSearchResultNodes(prevSearchResultNodes);
-            }
-
             ShowSearchSection = false;
         }
     }
