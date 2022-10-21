@@ -106,10 +106,7 @@
                     VerticalScrollBarVisibility="Auto">
                     <StackPanel MaxWidth="{Binding ActualWidth, ElementName=ContentHost}" Margin="0,4,0,0">
                         <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-                            <TextBlock
-                                Width="70"
-                                FontWeight="Medium"
-                                Text="Instances" />
+                            <TextBlock Width="70" Text="Instances" />
                             <TextBlock
                                 Margin="4,0,0,0"
                                 FontWeight="Medium"
@@ -135,21 +132,30 @@
                                 Content="{Binding MedianNode}"
                                 ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
                         </StackPanel>
-                        <TextBlock
+
+                        <Expander
+                            x:Name="HistogramHost"
                             Margin="4,2,0,8"
-                            Text="&gt; Histogram"
-                            ToolTip="TODO" />
-                        <Canvas
-                            x:Name="InstanceHistogramHost"
-                            Width="300"
-                            Height="200"
-                            HorizontalAlignment="Left"
-                            Background="Gray" />
+                            HorizontalAlignment="Stretch"
+                            Expanded="HistogramHost_Expanded"
+                            Header="Histogram"
+                            IsExpanded="{Binding IsHistogramExpanded, Mode=TwoWay}">
+                            <Border
+                                Height="150"
+                                Margin="0,4,0,0"
+                                BorderBrush="DarkGray"
+                                BorderThickness="1">
+                                <Canvas
+                                    x:Name="InstanceHistogramHost"
+                                    Margin="0,-4,0,-4"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch" />
+                            </Border>
+                        </Expander>
 
                         <TextBlock
                             Margin="4,2,0,0"
                             HorizontalAlignment="Left"
-                            FontWeight="Medium"
                             Text="Module" />
                         <Canvas
                             x:Name="ModuleCanvas"
@@ -162,6 +168,7 @@
                                 Width="{Binding ElementName=ModuleCanvas, Path=ActualWidth}"
                                 Background="{x:Null}"
                                 BorderBrush="{x:Null}"
+                                FontWeight="Medium"
                                 IsReadOnly="True"
                                 MaxLines="2"
                                 ScrollViewer.CanContentScroll="True"
@@ -173,10 +180,9 @@
 
                         <StackPanel Orientation="Horizontal">
                             <TextBlock
-                                Margin="4,2,16,0"
+                                Margin="4,4,16,0"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Center"
-                                FontWeight="Medium"
                                 Text="Function name" />
                             <ContentPresenter
                                 VerticalAlignment="Center"
@@ -195,6 +201,7 @@
                                 HorizontalAlignment="Stretch"
                                 Background="{x:Null}"
                                 BorderBrush="{x:Null}"
+                                FontWeight="Medium"
                                 IsReadOnly="True"
                                 ScrollViewer.CanContentScroll="True"
                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
