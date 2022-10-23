@@ -18,6 +18,7 @@ public class FlameGraphRenderer {
     private int maxNodeDepth_;
     private double nodeHeight_;
     private double maxWidth_;
+    private double prevMaxWidth_;
     private double minVisibleRectWidth_;
     private bool nodeLayoutComputed_;
     private Rect visibleArea_;
@@ -36,6 +37,7 @@ public class FlameGraphRenderer {
     private GlyphRunCache nameGlyphs_;
     private QuadTree<FlameGraphNode> nodesQuadTree_;
     private QuadTree<FlameGraphGroupNode> dummyNodesQuadTree_;
+    private Dictionary<HighlightingStyle, HighlightingStyle> dummyNodeStyles_;
 
     public GlyphRunCache GlyphsCache => glyphs_;
     public GlyphRunCache NameGlyphsCache => nameGlyphs_;
@@ -52,12 +54,12 @@ public class FlameGraphRenderer {
             visibleArea_.Width / maxWidth_, visibleArea_.Height);
     }
 
-    public FlameGraphRenderer(FlameGraph flameGraph, Rect visibleArea, FlameGraphSettings settings) {
-        isTimeline_ = true;
-
+    public FlameGraphRenderer(FlameGraph flameGraph, Rect visibleArea, FlameGraphSettings settings, bool isTimeline) {
+        isTimeline_ = isTimeline;
         settings_ = settings;
         flameGraph_ = flameGraph;
         maxWidth_ = visibleArea.Width;
+        prevMaxWidth_ = maxWidth_;
         visibleArea_ = visibleArea;
         UpdateGraphSizes();
 
@@ -72,6 +74,7 @@ public class FlameGraphRenderer {
         font_ = new Typeface("Segoe UI");
         nameFont_ = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Medium, FontStretch.FromOpenTypeStretch(5));
         fontSize_ = DefaultTextSize;
+        dummyNodeStyles_ = new();
     }
 
     public void SettingsUpdated(FlameGraphSettings settings) {
@@ -115,8 +118,10 @@ public class FlameGraphRenderer {
     }
 
     public void UpdateMaxWidth(double maxWidth) {
+        prevMaxWidth_ = maxWidth_;
         maxWidth_ = Math.Max(maxWidth, 1);
         RedrawGraph();
+        prevMaxWidth_ = maxWidth_;
     }
 
     public void UpdateVisibleArea(Rect visibleArea) {
@@ -135,6 +140,7 @@ public class FlameGraphRenderer {
 
         if(!RedrawGraphImpl(updateLayout)) {
             nodeLayoutComputed_ = false;
+            Trace.WriteLine($"Redraw {Environment.TickCount64}");
             RedrawGraphImpl(true);
         }
     }
@@ -160,12 +166,14 @@ public class FlameGraphRenderer {
         }
 
         // Update only the visible nodes on scrolling.
+        bool layoutChanged = !nodeLayoutRecomputed && Math.Abs(maxWidth_ - prevMaxWidth_) > double.Epsilon
+        ;
         int shrinkingNodes = 0;
 
 #if true
         foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
             node.Owner.DrawNode(node, graphDC);
-            if (!nodeLayoutRecomputed && !node.IsDummyNode &&
+            if (layoutChanged && !node.IsDummyNode &&
                 node.Bounds.Width < minVisibleRectWidth_) {
                 shrinkingNodes++;
             }
@@ -184,7 +192,7 @@ public class FlameGraphRenderer {
         }
 
 #endif
-        bool result = DrawDummyNodes(graphDC, nodeLayoutRecomputed);
+        bool result = DrawDummyNodes(graphDC, layoutChanged);
 
         if (isTimeline_) {
             DrawTimeBar(graphDC);
@@ -202,13 +210,12 @@ public class FlameGraphRenderer {
     }
 
 
-    private bool DrawDummyNodes(DrawingContext graphDC, bool nodeLayoutRecomputed) {
+    private bool DrawDummyNodes(DrawingContext graphDC, bool layoutChanged) {
         List<FlameGraphGroupNode> enlargeList = null;
-
+        
         foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
             // Reconsider replacing the dummy node.
-            if (!nodeLayoutRecomputed &&
-                ScaleNode(node) >= minVisibleRectWidth_) {
+            if (layoutChanged && ScaleNode(node) >= minVisibleRectWidth_) {
                 enlargeList ??= new List<FlameGraphGroupNode>();
                 enlargeList.Add(node);
             }
@@ -253,6 +260,7 @@ public class FlameGraphRenderer {
             }
         }
 #else
+        
         return false;
 
         nodeLayoutComputed_ = false;
@@ -307,8 +315,10 @@ public class FlameGraphRenderer {
 
         if (redraw) {
             maxNodeDepth_ = Math.Max(node.Depth, maxNodeDepth_);
+            double minWidth = minVisibleRectWidth_;
+            if (isTimeline_) minWidth *= 0.1; // Add more nodes to be zoomed in.
 
-            if (node.Bounds.Width >= minVisibleRectWidth_ * 0.1) {
+            if (node.Bounds.Width > minWidth) {
                 nodesQuadTree_.Insert(node, node.Bounds);
             }
         }
@@ -411,7 +421,13 @@ public class FlameGraphRenderer {
             return null; // Nothing to draw.
         }
 
-        x = flameGraph_.ScaleStartTime(startTime);
+        if (isTimeline_)
+        {
+            x = flameGraph_.ScaleStartTime(startTime);
+        }
+
+
+        //? TODO: Use a pool for FlameGraphGroupNode instead of new (JIT_New dominaates)
         var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
         var dummyNode = new FlameGraphGroupNode(node, startIndex, skippedChildren, totalWeight, node.Depth);
         dummyNode.IsDummyNode = true;
@@ -427,37 +443,38 @@ public class FlameGraphRenderer {
     }
     
     private void DrawTimeBar(DrawingContext graphDC) {
-        const double MinTickDistance = 50;
+        const double MinTickDistance = 75;
         const double TextMarginY = 7;
 
         var bar = new Rect(visibleArea_.Left, visibleArea_.Top,
                            visibleArea_.Width, timeBarHeight_);
-        graphDC.DrawRectangle(Brushes.Bisque, null, bar);
+        graphDC.DrawRectangle(Brushes.AliceBlue, null, bar);
 
         double secondTickDist = maxWidth_ / flameGraph_.RootNode.Duration.TotalSeconds;
         double msTickDist = maxWidth_ / flameGraph_.RootNode.Duration.TotalMilliseconds;
 
         double startX = Math.Max(0, visibleArea_.Left - secondTickDist);
         double endX = Math.Min(visibleArea_.Right, maxWidth_);
-        double seconds = startX / secondTickDist;
+        double currentSec = startX / secondTickDist;
         double secondStartX = Math.Ceiling(startX / secondTickDist) * secondTickDist;
 
-        for (double x = startX; x <= endX; x += secondTickDist) {
+        for (double x = startX; x < endX; x += secondTickDist) {
             if (x >= secondStartX) {
                 var tickRect = new Rect(x, visibleArea_.Top, 2, 4);
                 graphDC.DrawRectangle(Brushes.Black, null, tickRect);
-                DrawCenteredText($"{(int)seconds}s", tickRect.Left, tickRect.Top + TextMarginY, graphDC);
+                DrawCenteredText($"{(int)currentSec}s", tickRect.Left, tickRect.Top + TextMarginY, graphDC);
             }
 
             double subTicks = secondTickDist / MinTickDistance;
             double subTickDist = secondTickDist / subTicks;
             double timePerSubTick = 1000.0 / subTicks;
-            double ms = timePerSubTick;
+            double msEndX = Math.Min(secondTickDist - subTickDist, endX);
+            double currentMs = timePerSubTick;
 
-            for (double y = subTickDist; y < secondTickDist - subTickDist; y += subTickDist) {
+            for (double y = subTickDist; y < msEndX; y += subTickDist) {
                 var msTickRect = new Rect(x + y, visibleArea_.Top, 2, 3);
                 graphDC.DrawRectangle(Brushes.DimGray, null, msTickRect);
-                double time = (seconds + ms / 1000);
+                double time = (currentSec + currentMs / 1000);
                 if (subTicks <= 10) {
                     DrawCenteredText($"{time:0.0}", msTickRect.Left, msTickRect.Top + TextMarginY, graphDC);
                 }
@@ -470,10 +487,10 @@ public class FlameGraphRenderer {
                     DrawCenteredText(timeStr, msTickRect.Left, msTickRect.Top + TextMarginY, graphDC);
                 }
 
-                ms += timePerSubTick;
+                currentMs += timePerSubTick;
             }
 
-            seconds++;
+            currentSec++;
         }
     }
 
@@ -500,12 +517,16 @@ public class FlameGraphRenderer {
     public Rect ComputeNodeBounds(FlameGraphNode node) {
         return new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top, node.Bounds.Width * maxWidth_, node.Bounds.Height);
     }
-
+    
     private HighlightingStyle PickDummyNodeStyle(HighlightingStyle style) {
-        /// TODO Cache
-        var newColor = ColorUtils.AdjustSaturation(((SolidColorBrush)style.BackColor).Color, 0.2f);
-        newColor = ColorUtils.AdjustLight(newColor, 2.0f);
-        return new HighlightingStyle(newColor, defaultBorder_);
+        if (!dummyNodeStyles_.TryGetValue(style, out var dummyStyle)) {
+            var newColor = ColorUtils.AdjustSaturation(((SolidColorBrush)style.BackColor).Color, 0.2f);
+            newColor = ColorUtils.AdjustLight(newColor, 2.0f);
+            dummyStyle = new HighlightingStyle(newColor, defaultBorder_);
+            dummyNodeStyles_[style] = dummyStyle;
+        }
+
+        return dummyStyle;
     }
 
     private Brush CreatePlaceholderTiledBrush(double tileSize) {

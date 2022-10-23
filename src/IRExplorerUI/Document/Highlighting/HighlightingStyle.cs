@@ -8,7 +8,10 @@ using ProtoBuf;
 
 namespace IRExplorerUI {
     [ProtoContract]
-    public sealed class HighlightingStyle {
+    public sealed class HighlightingStyle : IEquatable<HighlightingStyle> {
+        [ProtoMember(1)] public Brush BackColor { get; set; }
+        [ProtoMember(2)] public Pen Border { get; set; }
+        
         public HighlightingStyle() { }
 
         public HighlightingStyle(Color color) : this(color, 1.0) { }
@@ -30,9 +33,33 @@ namespace IRExplorerUI {
             Border = border;
         }
 
-        [ProtoMember(1)] public Brush BackColor { get; set; }
+        public bool Equals(HighlightingStyle other) {
+            if (ReferenceEquals(null, other)) {
+                return false;
+            }
 
-        [ProtoMember(2)] public Pen Border { get; set; }
+            if (ReferenceEquals(this, other)) {
+                return true;
+            }
+
+            return Equals(BackColor, other.BackColor) && Equals(Border, other.Border);
+        }
+
+        public override bool Equals(object obj) {
+            return ReferenceEquals(this, obj) || obj is HighlightingStyle other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(BackColor, Border);
+        }
+
+        public static bool operator ==(HighlightingStyle left, HighlightingStyle right) {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(HighlightingStyle left, HighlightingStyle right) {
+            return !Equals(left, right);
+        }
     }
 
     public sealed class PairHighlightingStyle {
