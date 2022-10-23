@@ -161,7 +161,7 @@ namespace IRExplorerUI.Profile {
             }
         }
 
-        public void BuildTimeline(ProfileData data) {
+        public void BuildTimeline(ProfileData data, int threadId) {
             Trace.WriteLine($"Timeline Samples: {data.Samples.Count}");
             data.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
 
@@ -170,6 +170,10 @@ namespace IRExplorerUI.Profile {
             flameNode.EndTime = TimeSpan.MinValue;
 
             foreach (var (sample, stack) in data.Samples) {
+                if (threadId != -1 && stack.Context.ThreadId != threadId) {
+                    continue;
+                }
+
                 AddSample(flameNode, sample, stack);
 
                 flameNode.StartTime = TimeSpan.FromTicks(Math.Min(flameNode.StartTime.Ticks, sample.Time.Ticks));

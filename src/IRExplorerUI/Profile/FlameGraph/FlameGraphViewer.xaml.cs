@@ -271,13 +271,22 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         initialized_ = true;
         flameGraph_ = new FlameGraph(callTree);
+        bool isTimeline = true;
 
-#if true
-        await Task.Run(() => flameGraph_.Build(rootNode));
-#else
-       //var x = (App.Current.MainWindow as ISession).ProfileData;
-       //flameGraph_.BuildTimeli\ne(x);
-#endif
+        if (isTimeline) {
+            var profile = (App.Current.MainWindow as ISession).ProfileData;
+            var threads = profile.SortedThreadWeights;
+
+            foreach(var t in threads) {
+                Trace.WriteLine($"Thread {t.ThreadId}: {t.Weight}");
+            }
+
+            var thread = threads[0].ThreadId;
+            flameGraph_.BuildTimeline(profile, thread);
+        }
+        else {
+            await Task.Run(() => flameGraph_.Build(rootNode));
+        }
 
         Trace.WriteLine($"Init FlameGraph with visible area {visibleArea}");
         renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea, settings);

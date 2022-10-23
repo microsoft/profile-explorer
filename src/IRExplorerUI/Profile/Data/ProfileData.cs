@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using IRExplorerCore;
 using ProtoBuf;
+using IRExplorerUI;
 
 namespace IRExplorerUI.Profile;
 
@@ -54,6 +55,24 @@ public class ProfileData {
         get {
             var list = PerformanceCounters.ToValueList();
             list.Sort((a, b) => b.Id.CompareTo(a.Id));
+            return list;
+        }
+    }
+
+    public List<(int ThreadId, TimeSpan Weight)> SortedThreadWeights {
+        get {
+            var list = new List<(int ThreadId, TimeSpan Weight)>();
+            var threadWeights = new Dictionary<int, TimeSpan>();
+
+            foreach (var (sample, stack) in Samples) {
+                threadWeights.AccumulateValue(stack.Context.ThreadId, sample.Weight);
+            }
+
+            foreach (var (threadId, weight) in threadWeights) {
+                list.Add((threadId, weight));
+            }
+
+            list.Sort((a, b) => b.Weight.CompareTo(a.Weight));
             return list;
         }
     }
