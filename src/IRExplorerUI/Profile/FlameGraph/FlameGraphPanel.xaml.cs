@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -17,7 +18,10 @@ using IRExplorerUI.Controls;
 using IRExplorerUI.Profile;
 using Microsoft.Diagnostics.Tracing.Stacks;
 using Microsoft.VisualBasic;
-using ProtoBuf.WellKnownTypes;
+using OxyPlot;
+using OxyPlot.Annotations;
+using OxyPlot.Axes;
+using OxyPlot.Series;
 
 namespace IRExplorerUI.Profile;
 
@@ -310,8 +314,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private async void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
         var nodes = GraphViewer.SelectNodes(e);
         BringNodeIntoView(nodes[0], false);
-
-        //? Sync source file
     }
 
     private async void NodeDetailsPanel_NodeDoubleClick(object sender, ProfileCallTreeNode e) {
@@ -1015,5 +1017,213 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         else {
             ShowSearchSection = false;
         }
+    }
+
+    private void Button_Click(object sender, RoutedEventArgs e) {
+        var sw2 = Stopwatch.StartNew();
+
+        //? - process timeline
+        //? - per-proc thread timeline
+        //? - per-proc module timeline
+        //? - per-proc core timeline
+        //? o time range filter
+        //? o group samples by process (cache)
+
+        var dict = new Dictionary<int, TimeSpan>();
+        var start = long.MaxValue;
+        var end = long.MinValue;
+        var profile = Session.ProfileData;
+
+        if (profile.Samples.Count == 0) {
+            return;
+        }
+
+        start = profile.Samples[0].Sample.Time.Ticks;
+        end = profile.Samples[^1].Sample.Time.Ticks;
+
+        // 1 tick = 100 ns
+        long resolution = 10;
+        var timeDiffNs = (end - start) / resolution;
+        var timeDiff = TimeSpan.FromTicks(timeDiffNs);
+        var timePerSlice = TimeSpan.FromMilliseconds(10);
+        double width = timeDiff.Ticks / timePerSlice.Ticks;
+        var sliceSeriesDict = new Dictionary<int, Dictionary<int, TimeSpan>>();
+        List<Tuple<int, Dictionary<int, TimeSpan>>> sliceSeriesList = null;
+
+        var sw3 = Stopwatch.StartNew();
+
+        foreach (var (sample, stack) in profile.Samples) {
+            var point = (sample.Time.Ticks - start) / resolution;
+            var slice = (int)(point / timePerSlice.Ticks);
+
+            var sliceDict = sliceSeriesDict.GetOrAddValue(stack.Context.ThreadId);
+            sliceDict.AccumulateValue(slice, sample.Weight);
+        }
+
+        sliceSeriesList = sliceSeriesDict.ToList();
+
+        //sliceSeriesList.Sort((a, b) => {
+        //    if (!dict.TryGetValue(a.Item1, out var pa) ||
+        //        !dict.TryGetValue(b.Item1, out var pb)) {
+        //        return 0;
+        //    }
+
+        //    return -pa.CompareTo(pb);
+        //});
+
+        Trace.WriteLine($"2_PerProcSliceTime: {sw2.ElapsedMilliseconds}, {sw2.Elapsed}");
+        Trace.Flush();
+
+
+        //foreach (var pair in list) {
+        //    var p = profile.FindProcess(pair.Item1);
+        //    Trace.WriteLine($"{p.Id}, {p?.Name}: {pair.Item2}");
+        //}
+
+        int count = 0;
+        var model = new PlotModel();
+        
+
+        foreach (var pair in sliceSeriesList) {
+            var sliceList = pair.Item2.ToList();
+            sliceList.Sort((a, b) => a.Item1.CompareTo(b.Item1)); // Sort slices by index.
+
+            //var slicePlot = new OxyPlot.Series.LineSeries();
+            var slicePlot = new OxyPlot.Series.BarSeries();
+            slicePlot.BarWidth = 10;
+            slicePlot.IsStacked = true;
+            slicePlot.StrokeThickness = 0.5;
+            //slicePlot.StrokeColor = OxyColor.FromArgb(255, 50, 50, 50);
+            //slicePlot.StrokeThickness = 3;
+            var c = ColorUtils.GenerateRandomPastelColor();
+            //slicePlot.Color = OxyColor.FromRgb(c.R, c.G, c.B);
+            slicePlot.FillColor = OxyColor.FromRgb(c.R, c.G, c.B);
+            slicePlot.ToolTip = $"Thread #{pair.Item1}";
+
+            slicePlot.Title = pair.Item1.ToString();
+            model.Series.Add(slicePlot);
+
+            foreach (var slicePair in sliceList) {
+                var pointTime = TimeSpan.FromTicks(slicePair.Item1 * timePerSlice.Ticks).TotalSeconds;
+                var item = new BarItem(slicePair.Item2.TotalMilliseconds);
+                item.CategoryIndex = slicePair.Item1;
+                slicePlot.Items.Add(item);
+            }
+
+            //if (count++ > 10)
+            //    break;
+            //Trace.WriteLine($"{pair.Key}: {pair.Item2}");
+        }
+
+        var w = new Window();
+        w.Width = 500;
+        w.Height = 300;
+        var plotView = new OxyPlot.SkiaSharp.Wpf.PlotView();
+        model.IsLegendVisible = true;
+        model.Padding = new OxyThickness(0);
+
+        model.Axes.Add(new CategoryAxis() {
+            Position = AxisPosition.Left,
+            TickStyle = TickStyle.Crossing,
+            MajorGridlineStyle = LineStyle.Automatic,
+            MinorGridlineStyle = LineStyle.None,
+            IsZoomEnabled = true,
+        });
+        model.Axes.Add(new LinearAxis() {
+            Position = AxisPosition.Bottom,
+            TickStyle = TickStyle.Crossing,
+            MajorGridlineStyle = LineStyle.Automatic,
+            MinorGridlineStyle = LineStyle.None,
+            IsZoomEnabled = false,
+        });
+
+
+        plotView.Model = Transpose(model);
+        w.Content = plotView;
+        w.Show();
+
+        Trace.Flush();
+    }
+
+    private const string XAXIS_KEY = "x";
+    private const string YAXIS_KEY = "y";
+
+    public static PlotModel Transpose(PlotModel model) {
+        if (!string.IsNullOrEmpty(model.Title)) {
+            model.Title += " (transposed)";
+        }
+
+           // Update plot to generate default axes etc.
+           ((IPlotModel)model).Update(false);
+
+        foreach (var axis in model.Axes) {
+            switch (axis.Position) {
+                case AxisPosition.Bottom:
+                    axis.Position = AxisPosition.Left;
+                    break;
+                case AxisPosition.Left:
+                    axis.Position = AxisPosition.Bottom;
+                    break;
+                case AxisPosition.Right:
+                    axis.Position = AxisPosition.Top;
+                    break;
+                case AxisPosition.Top:
+                    axis.Position = AxisPosition.Right;
+                    break;
+                case AxisPosition.None:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        foreach (var annotation in model.Annotations) {
+            if (annotation.XAxis != null && annotation.XAxisKey == null) {
+                if (annotation.XAxis.Key == null) {
+                    annotation.XAxis.Key = XAXIS_KEY;
+                }
+
+                annotation.XAxisKey = annotation.XAxis.Key;
+            }
+
+            if (annotation.YAxis != null && annotation.YAxisKey == null) {
+                if (annotation.YAxis.Key == null) {
+                    annotation.YAxis.Key = YAXIS_KEY;
+                }
+
+                annotation.YAxisKey = annotation.YAxis.Key;
+            }
+        }
+
+        foreach (var series in model.Series.OfType<XYAxisSeries>()) {
+            if (series.XAxisKey == null) {
+                if (series.XAxis == null) // this can happen if the series is invisible initially
+                {
+                    series.XAxisKey = XAXIS_KEY;
+                }
+                else {
+                    if (series.XAxis.Key == null) {
+                        series.XAxis.Key = XAXIS_KEY;
+                    }
+
+                    series.XAxisKey = series.XAxis.Key;
+                }
+            }
+
+            if (series.YAxisKey == null) {
+                if (series.YAxis == null) {
+                    series.YAxisKey = YAXIS_KEY;
+                }
+                else {
+                    if (series.YAxis.Key == null) {
+                        series.YAxis.Key = YAXIS_KEY;
+                    }
+
+                    series.YAxisKey = series.YAxis.Key;
+                }
+            }
+        }
+
+        return model;
     }
 }

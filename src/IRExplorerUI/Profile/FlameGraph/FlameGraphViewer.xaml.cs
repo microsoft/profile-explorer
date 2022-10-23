@@ -271,7 +271,7 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         initialized_ = true;
         flameGraph_ = new FlameGraph(callTree);
-        bool isTimeline = true;
+        bool isTimeline = false;
 
         if (isTimeline) {
             var profile = (App.Current.MainWindow as ISession).ProfileData;
@@ -289,7 +289,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
 
         Trace.WriteLine($"Init FlameGraph with visible area {visibleArea}");
-        renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea, settings);
+        renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea, settings, isTimeline);
         graphVisual_ = renderer_.Setup();
         AddVisualChild(graphVisual_);
         AddLogicalChild(graphVisual_);

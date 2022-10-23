@@ -145,11 +145,75 @@
                                 Margin="0,4,0,0"
                                 BorderBrush="DarkGray"
                                 BorderThickness="1">
-                                <Canvas
-                                    x:Name="InstanceHistogramHost"
-                                    Margin="0,-4,0,-4"
-                                    HorizontalAlignment="Stretch"
-                                    VerticalAlignment="Stretch" />
+                                <StackPanel>
+                                    <Canvas
+                                        x:Name="InstanceHistogramHost"
+                                        Height="130"
+                                        Margin="0,-4,0,0"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch" />
+                                    <Grid>
+                                        <StackPanel
+                                            Margin="4,2,4,2"
+                                            HorizontalAlignment="Left"
+                                            Orientation="Horizontal">
+                                            <RadioButton
+                                                VerticalAlignment="Center"
+                                                Content="Total"
+                                                IsChecked="{Binding UseSelfTimeHistogram, Mode=TwoWay, Converter={StaticResource InvertedBoolConverter}}" />
+                                            <RadioButton
+                                                Margin="4,0,0,0"
+                                                VerticalAlignment="Center"
+                                                Content="Self"
+                                                IsChecked="{Binding UseSelfTimeHistogram, Mode=TwoWay}" />
+                                        </StackPanel>
+                                        <StackPanel
+                                            Margin="4"
+                                            HorizontalAlignment="Right"
+                                            Orientation="Horizontal">
+                                            <Grid>
+                                                <Border
+                                                    Width="12"
+                                                    Height="12"
+                                                    HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center"
+                                                    Background="DarkGreen" />
+                                                <TextBlock
+                                                    Margin="16,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="11"
+                                                    Text="Instance" />
+                                            </Grid>
+                                            <Grid Margin="6,0,0,0">
+                                                <Border
+                                                    Width="12"
+                                                    Height="12"
+                                                    HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center"
+                                                    Background="DarkBlue" />
+                                                <TextBlock
+                                                    Margin="16,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="11"
+                                                    Text="Median" />
+                                            </Grid>
+                                            <Grid Margin="6,0,0,0">
+                                                <Border
+                                                    Width="12"
+                                                    Height="12"
+                                                    HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center"
+                                                    Background="Firebrick" />
+                                                <TextBlock
+                                                    Margin="16,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="11"
+                                                    Text="Avg" />
+                                            </Grid>
+
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
                             </Border>
                         </Expander>
 

@@ -224,25 +224,22 @@ namespace IRExplorerUI.Profile {
                 if (resolvedFrame.Function == null) {
                     continue;
                 }
-
+                
                 FlameGraphNode targetNode = null;
 
                 if (node.HasChildren) {
                     for (int i = node.Children.Count - 1; i >= 0; i--) {
                         var child = node.Children[i];
-
+                        
                         if (!child.CallTreeNode.Function.Equals(resolvedFrame.Function)) {
-                            break;
+                            break; // Last func is different, stop and start a new stack.
                         }
 
-                        //if (child.EndTime <= sample.Time) {
+                        if (sample.Time - child.EndTime < TimeSpan.FromMilliseconds(100)) {
+                            targetNode = child; // Also start a new stack if nothing executed for a while.
+                        }
 
-                        //if(sample.Time - child.EndTime < TimeSpan.FromMilliseconds(100)) {
-                        targetNode = child;
-                        //}
                         break;
-
-                        //}
                     }
                 }
 

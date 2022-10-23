@@ -120,8 +120,8 @@
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
-		<PackageReference Include="OxyPlot.SkiaSharp.Wpf" Version="2.1.0-Preview1" />
-		<PackageReference Include="OxyPlot.Wpf" Version="2.0.0" />
+		<PackageReference Include="OxyPlot.SkiaSharp.Wpf" Version="2.1.0" />
+		<PackageReference Include="OxyPlot.Wpf" Version="2.1.0" />
 		<PackageReference Include="protobuf-net" Version="3.0.101" />
 		<PackageReference Include="RangeTree" Version="3.0.1" />
 		<PackageReference Include="System.IO" Version="4.3.0" />

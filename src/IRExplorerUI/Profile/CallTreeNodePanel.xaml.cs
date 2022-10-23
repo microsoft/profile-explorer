@@ -18,6 +18,7 @@ using System.Windows.Shapes;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Profile;
+using Microsoft.Diagnostics.Tracing.Stacks;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
@@ -133,6 +134,16 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         set => SetField(ref isHistogramExpanded_, value);
     }
 
+    private bool useSelfTimeHistogram_;
+    public bool UseSelfTimeHistogram {
+        get => useSelfTimeHistogram_;
+        set {
+            if (SetField(ref useSelfTimeHistogram_, value)) {
+                SetupInstancesHistogram(instanceNodes_, CallTreeNode, useSelfTimeHistogram_);
+            }
+        }
+    }
+
     public CallTreeNodePanel() {
         InitializeComponent();
         SetupEvents();
@@ -200,12 +211,12 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         MedianNode = medianNodeEx;
 
         if (IsHistogramExpanded) {
-            SetupInstancesHistogram(instanceNodes_, node);
+            SetupInstancesHistogram(instanceNodes_, node, useSelfTimeHistogram_);
         }
     }
 
     public class BinHistogramItem : HistogramItem {
-        public int Count { get; set; }
+        public new int Count { get; set; }
         public TimeSpan AverageWeight { get; set; }
         public TimeSpan TotalWeight { get; set; }
         public List<ProfileCallTreeNode> Nodes { get; set; }
@@ -220,33 +231,47 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         }
     }
 
-    private void SetupInstancesHistogram(List<ProfileCallTreeNode> nodes, ProfileCallTreeNode currentNode) {
+    private void SetupInstancesHistogram(List<ProfileCallTreeNode> nodes, 
+                                         ProfileCallTreeNode currentNode, bool useSelfTime) {
+        if (useSelfTime) {
+            SetupInstancesHistogramImpl(nodes, currentNode, node => node.ExclusiveWeight);
+        }
+        else {
+            SetupInstancesHistogramImpl(nodes, currentNode, node => node.Weight);
+        }
+    }
+
+    private void SetupInstancesHistogramImpl(List<ProfileCallTreeNode> nodes, ProfileCallTreeNode currentNode,
+                                             Func<ProfileCallTreeNode, TimeSpan> selectWeight) {
+        nodes = new List<ProfileCallTreeNode>(nodes);
+        nodes.Sort((a, b) => selectWeight(a).CompareTo(selectWeight(b)));
+        
         const double maxBinCount = 20;
-        var maxWeight = nodes[0].Weight;
-        var minWeight = nodes[^1].Weight;
+        var maxWeight = selectWeight(nodes[^1]);
+        var minWeight = selectWeight(nodes[0]);
         var delta = maxWeight - minWeight;
         long weightPerBin = (long)Math.Ceiling((double)delta.Ticks / maxBinCount);
         double maxHeight = InstanceHistogramHost.ActualHeight;
 
         // Partition nodes into bins.
         var bins = new List<(TimeSpan Weight, TimeSpan TotalWeight, int StartIndex, int Count)>();
-        TimeSpan binWeight = nodes[0].Weight;
-        TimeSpan binTotalWeight = nodes[0].Weight;
+        TimeSpan binWeight = selectWeight(nodes[0]);
+        TimeSpan binTotalWeight = binWeight;
         int binStartIndex = 0;
         int binCount = 1;
 
         for(int i = 1; i < nodes.Count; i++) {
             var node = nodes[i];
 
-            if ((binWeight - node.Weight).Ticks > weightPerBin) {
+            if ((selectWeight(node) - binWeight).Ticks > weightPerBin) {
                 bins.Add((binWeight, binTotalWeight, binStartIndex, binCount));
-                binWeight = node.Weight;
-                binTotalWeight = node.Weight;
+                binWeight = selectWeight(node);
+                binTotalWeight = binWeight;
                 binStartIndex = i;
                 binCount = 1;
             }
             else {
-                binTotalWeight += node.Weight;
+                binTotalWeight += selectWeight(node);
                 binCount++;
             }
         }
@@ -298,7 +323,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         }
 
         weightAxis.MinimumPadding = 0;
-        weightAxis.MinimumDataMargin = 4;
+        weightAxis.MinimumDataMargin = 6;
         weightAxis.IsPanEnabled = false;
         weightAxis.IsZoomEnabled = false;
         model.Axes.Add(weightAxis);
@@ -307,7 +332,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         var countAxis = new LinearAxis();
         countAxis.Position = AxisPosition.Right;
         countAxis.TickStyle = TickStyle.None;
-        countAxis.Title = "Instances #";
+        countAxis.Title = "Instances";
         countAxis.StringFormat = " ";
         countAxis.IsPanEnabled = false;
         countAxis.IsZoomEnabled = false;
@@ -315,14 +340,34 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         countAxis.MaximumDataMargin = 20;
         model.Axes.Add(countAxis);
 
-        var currentNodeLine = new LineAnnotation();
-        currentNodeLine.Type = LineAnnotationType.Vertical;
-        currentNodeLine.X = currentNode.Weight.Ticks;
-        currentNodeLine.StrokeThickness = 1.5;
-        currentNodeLine.LineStyle = LineStyle.Dot;
-        currentNodeLine.ToolTip = "Current instance";
-        model.Annotations.Add(currentNodeLine);
+        // Add line for current instance.
+        void AddLineAnnotation(double value, OxyColor color, LineStyle lineStyle) {
+            var line = new LineAnnotation();
+            line.Type = LineAnnotationType.Vertical;
+            line.X = value;
+            line.StrokeThickness = 1.5;
+            line.Color = color;
+            line.LineStyle = lineStyle;
+            model.Annotations.Add(line);
+        }
+        
+        void AddPointAnnotation(double value, OxyColor color) {
+            var point = new PointAnnotation();
+            point.Shape = MarkerType.Diamond;
+            point.X = value;
+            point.Fill = color;
+            model.Annotations.Add(point);
+        }
+        
+        AddPointAnnotation(currentNode.Weight.Ticks, OxyColors.Green);
 
+        // Add lines for median and average time.
+        var average = nodes.Average(node => node.Weight.Ticks);
+        AddLineAnnotation(average, OxyColors.Firebrick, LineStyle.Dot);
+
+        var median = nodes[nodes.Count / 2].Weight.Ticks;
+        AddLineAnnotation(median, OxyColors.DarkBlue, LineStyle.Dot);
+        
         var plotView = new OxyPlot.SkiaSharp.Wpf.PlotView();
         plotView.Model = model;
         model.IsLegendVisible = false;
@@ -345,11 +390,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         InstanceHistogramHost.Children.Add(plotView);
         histogramVisible_ = true;
     }
-
-    private void PlotView_MouseDown(object sender, MouseButtonEventArgs e) {
-        
-    }
-
+    
     private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {
         var nodeEx = new ProfileCallTreeNodeEx(node) {
             FullFunctionName = node.FunctionName,
@@ -429,7 +470,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     private void HistogramHost_Expanded(object sender, RoutedEventArgs e) {
         if (!histogramVisible_ && instanceNodes_ != null) {
             Dispatcher.BeginInvoke(() => {
-                SetupInstancesHistogram(instanceNodes_, CallTreeNode);
+                SetupInstancesHistogram(instanceNodes_, CallTreeNode, useSelfTimeHistogram_);
             }, System.Windows.Threading.DispatcherPriority.Background);
         }
     }
