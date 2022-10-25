@@ -22,46 +22,69 @@ namespace IRExplorerUI {
             Colors = new List<Color>(colors);
         }
 
-        public static ColorPalette HeatMap =>
-            new ColorPalette(new Color[] {
-                Utils.ColorFromString("#598AC5"),
-                Utils.ColorFromString("#7EA2D2"),
-                Utils.ColorFromString("#A2BCDF"), 
-                Utils.ColorFromString("#C6D6ED"),
-                Utils.ColorFromString("#EBEFF8"), 
-                Utils.ColorFromString("#FBECEF"), 
-                Utils.ColorFromString("#F9CDCC"), 
-                Utils.ColorFromString("#FAABAE"), 
-                Utils.ColorFromString("#F88A8B"), 
-                Utils.ColorFromString("#F8696B"),
-            });
-
-        public static ColorPalette HeatMap2 =>
-            new ColorPalette(new Color[] { 
-                Utils.ColorFromString("#63BE7B"),
-                Utils.ColorFromString("#85C77D"),
-                Utils.ColorFromString("#A8D280"),
-                Utils.ColorFromString("#CCDD81"),
-                Utils.ColorFromString("#EEE683"),
-                Utils.ColorFromString("#FFDD83"),
-                Utils.ColorFromString("#FCBF7C"),
-                Utils.ColorFromString("#FCA377"),
-                Utils.ColorFromString("#F58874"),
-                Utils.ColorFromString("#F8696B")
-            });
-
         public static ColorPalette Profile =>
             new ColorPalette(new Color[] {
-                Utils.ColorFromString("#FFFEE1"),
-                Utils.ColorFromString("#FFFEE1"),
-                Utils.ColorFromString("#FFFAE1"),
-                Utils.ColorFromString("#FFF9E1"),
-                Utils.ColorFromString("#FFEFD9"),
-                Utils.ColorFromString("#FFE9D9"),
-                Utils.ColorFromString("#FFE9D9"),
-                Utils.ColorFromString("#FFE3D9"),
-                Utils.ColorFromString("#FFDED9"),
-                Utils.ColorFromString("#FFD1D1")
+                Utils.ColorFromString("#FFFCF4D6"),
+                Utils.ColorFromString("#FFFCF2D6"),
+                Utils.ColorFromString("#FFFCF0D6"),
+                Utils.ColorFromString("#FFFCEED6"),
+                Utils.ColorFromString("#FFFCECD6"),
+                Utils.ColorFromString("#FFFCEAD6"),
+                Utils.ColorFromString("#FFFCE8D6"),
+                Utils.ColorFromString("#FFFCE6D6"),
+                Utils.ColorFromString("#FFFCE4D6"),
+                Utils.ColorFromString("#FFFCE2D6"),
+                Utils.ColorFromString("#FFFCE0D6"),
+                Utils.ColorFromString("#FFFCDED6"),
+                Utils.ColorFromString("#FFFCDCD6"),
+                Utils.ColorFromString("#FFFCDAD7"),
+                Utils.ColorFromString("#FFFCD9D7"),
+                Utils.ColorFromString("#FFFCD7D7"),
+            });
+
+
+        public static ColorPalette ProfileManaged =>
+            new ColorPalette(new Color[] {
+                Utils.ColorFromString("#FFC9DBF3"),
+                Utils.ColorFromString("#FFCCDAF2"),
+                Utils.ColorFromString("#FFD1DAF0"),
+                Utils.ColorFromString("#FFD4DAEE"),
+                Utils.ColorFromString("#FFD9DAEE"),
+                Utils.ColorFromString("#FFDCDAEC"),
+                Utils.ColorFromString("#FFDFDBEB"),
+                Utils.ColorFromString("#FFE3DBEA"),
+                Utils.ColorFromString("#FFE6DBE9"),
+                Utils.ColorFromString("#FFE9DBE8"),
+                Utils.ColorFromString("#FFECDCE8"),
+                Utils.ColorFromString("#FFEEDCE8"),
+                Utils.ColorFromString("#FFF1DDE7"),
+                Utils.ColorFromString("#FFF4DEE7"),
+                Utils.ColorFromString("#FFF6DEE7"),
+                Utils.ColorFromString("#FFF7E0E7"),
+
+            });
+
+
+        public static ColorPalette ProfileKernel =>
+            new ColorPalette(new Color[] {
+                Utils.ColorFromString("#FFCFFAFB"),
+                Utils.ColorFromString("#FFCFF7FB"),
+                Utils.ColorFromString("#FFD0F4FB"),
+                Utils.ColorFromString("#FFD0F1FB"),
+                Utils.ColorFromString("#FFD0EFFB"),
+                Utils.ColorFromString("#FFD0ECFB"),
+                Utils.ColorFromString("#FFD0EAFB"),
+                Utils.ColorFromString("#FFD0E7FB"),
+                Utils.ColorFromString("#FFD1E4FB"),
+                Utils.ColorFromString("#FFD1E2FB"),
+                Utils.ColorFromString("#FFD1E0FB"),
+                Utils.ColorFromString("#FFD1DDFB"),
+                Utils.ColorFromString("#FFD1DAFB"),
+                Utils.ColorFromString("#FFD1D8FB"),
+                Utils.ColorFromString("#FFD2D5FB"),
+                Utils.ColorFromString("#FFD2D3FB"),
+
+
             });
 
         public static ColorPalette DarkHue => MakeHue(0.9f,0.2f, 10);

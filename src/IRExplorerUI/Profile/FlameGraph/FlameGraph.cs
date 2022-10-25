@@ -244,8 +244,10 @@ namespace IRExplorerUI.Profile {
                 }
 
                 if (targetNode == null) {
-                    targetNode = new FlameGraphNode(new ProfileCallTreeNode(resolvedFrame.DebugInfo, resolvedFrame.Function),
-                        TimeSpan.Zero, depth);
+                    var callNode = new ProfileCallTreeNode(resolvedFrame.DebugInfo, resolvedFrame.Function) {
+                        //? TODO: Kind = resolvedFrame.IsKernelCode
+                    };
+                    targetNode = new FlameGraphNode(callNode, TimeSpan.Zero, depth);
                     node.Children ??= new List<FlameGraphNode>();
                     node.Children.Add(targetNode);
                     targetNode.StartTime = sample.Time;
