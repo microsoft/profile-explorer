@@ -5,11 +5,14 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
+using PEFile;
 using ProtoBuf;
+using static IRExplorerUI.Profile.ETWProfileDataProvider;
 
 namespace IRExplorerUI.Profile;
 
@@ -62,6 +65,98 @@ public sealed class ProfileCallTree {
                 sum += node.Weight;
             }
             return sum;
+        }
+    }
+
+    public static ProfileCallTree Build(ProfileData data) {
+        return Build(data, 0, data.Samples.Count);
+    }
+
+    public static ProfileCallTree Build(ProfileData data, int sampleStartIndex, int sampleEndIndex) {
+        ProfileCallTree callTree = new();
+
+#if false
+        for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
+            var (sample, stack) = data.Samples[i];
+            UpdateCallTree(sample, stack, callTree);
+        }
+#else
+        var sw = Stopwatch.StartNew();
+
+        int sampleCount = sampleEndIndex - sampleStartIndex;
+        int chunks = Math.Min(16, (Environment.ProcessorCount * 3) / 4);
+            //chunks = 1;
+        int chunkSize = sampleCount / chunks;
+        var tasks = new List<Task>();
+        var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
+        var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
+
+        for (int k = 0; k < chunks; k++) {
+            int start = Math.Min(sampleStartIndex + k * chunkSize, sampleEndIndex);
+            int end = Math.Min(sampleStartIndex + (k + 1) * chunkSize, sampleEndIndex);
+
+            tasks.Add(taskFactory.StartNew(() => {
+                for (int i = start; i < end; i++) {
+                    var (sample, stack) = data.Samples[i];
+                    UpdateCallTree(sample, stack, callTree);
+                }
+            }));
+
+
+        }
+
+        Task.WhenAll(tasks.ToArray()).Wait();
+        Trace.WriteLine($"CT took {sw.ElapsedMilliseconds}");
+#endif
+        return callTree;
+    }
+    
+    private static void UpdateCallTree(ProfileSample sample, ResolvedProfileStack resolvedStack, ProfileCallTree callTree) {
+        // Build call tree. Note that the call tree methods themselves are thread-safe.
+        bool isRootFrame = true;
+        ProfileCallTreeNode prevNode = null;
+        ResolvedProfileStackFrame prevFrame = new();
+
+        for (int k = resolvedStack.FrameCount - 1; k >= 0; k--) {
+            var resolvedFrame = resolvedStack.StackFrames[k];
+
+            if (resolvedFrame.FrameRVA == 0 &&  resolvedFrame.Info.DebugInfo == null) {
+                continue;
+            }
+
+            ProfileCallTreeNode node = null;
+
+            if (isRootFrame) {
+                node = callTree.AddRootNode(resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function);
+                isRootFrame = false;
+            }
+            else {
+                node = callTree.AddChildNode(prevNode, resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function);
+                prevNode.AddCallSite(node, prevFrame.FrameRVA, sample.Weight);
+            }
+
+            node.AccumulateWeight(sample.Weight);
+
+            // Set the user/kernel-mode context of the function.
+            if (node.Kind == ProfileCallTreeNodeKind.Unset) {
+                if (resolvedFrame.Info.IsKernelCode) {
+                    node.Kind = ProfileCallTreeNodeKind.NativeKernel;
+                }
+                else if (resolvedFrame.Info.IsManagedCode) {
+                    node.Kind = ProfileCallTreeNodeKind.Managed;
+                }
+                else {
+                    node.Kind = ProfileCallTreeNodeKind.NativeUser;
+                }
+            }
+
+            //node.RecordSample(sample, resolvedFrame); //? Remove
+            prevNode = node;
+            prevFrame = resolvedFrame;
+        }
+
+        if (prevNode != null) {
+            prevNode.AccumulateExclusiveWeight(sample.Weight);
         }
     }
 
@@ -690,7 +785,10 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
                 callSites_[rva] = callsite;
             }
 
-            callsite.AddTarget(childNode.Id, weight);
+            //? TODO: Use a signature to identify the node, merging the FunctionDebugInfos with same module:name.
+            //? Use SHA for signature
+            long id = childNode.FunctionDebugInfo.Name.GetHashCode();
+            callsite.AddTarget(id, weight);
         }
         finally {
             lock_.ExitWriteLock();
@@ -816,7 +914,7 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
 
     public List<(long NodeId, TimeSpan Weight)> SortedTargets {
         get {
-            if (!HasSingleTarget || !isSorted_) {
+            if (!HasSingleTarget && !isSorted_) {
                 Targets.Sort((a, b) => b.Weight.CompareTo(a.Weight));
             }
 
@@ -837,6 +935,8 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
     }
 
     public void AddTarget(long nodeId, TimeSpan weight) {
+        //? TODO: Use a signature to identify the node, merging the FunctionDebugInfos with same module:name.
+        // Use SHA for signature
         Weight += weight; // Total weight of targets.
         int index = Targets.FindIndex(item => item.NodeId == nodeId);
 

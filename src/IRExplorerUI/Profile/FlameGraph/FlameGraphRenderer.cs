@@ -140,7 +140,7 @@ public class FlameGraphRenderer {
 
         if(!RedrawGraphImpl(updateLayout)) {
             nodeLayoutComputed_ = false;
-            Trace.WriteLine($"Redraw {Environment.TickCount64}");
+            //Trace.WriteLine($"Redraw {Environment.TickCount64}");
             RedrawGraphImpl(true);
         }
     }

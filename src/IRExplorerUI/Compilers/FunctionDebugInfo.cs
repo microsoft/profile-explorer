@@ -114,7 +114,7 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Id, RVA, Size);
+        return HashCode.Combine(Name, Id, RVA, Size);
     }
 
     public int CompareTo(FunctionDebugInfo other) {

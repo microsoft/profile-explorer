@@ -51,6 +51,10 @@ namespace IRExplorerUI {
             await MainPanel.Update();
         }
 
+        public async Task RefreshProfile() {
+            await MainPanel.Update(force: true);
+        }
+
         public IRTextSummary MainSummary {
             get => MainPanel.Summary;
         }

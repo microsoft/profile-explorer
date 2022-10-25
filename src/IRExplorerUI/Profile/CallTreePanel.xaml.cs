@@ -265,8 +265,8 @@ namespace IRExplorerUI {
             return weight => (double)weight.Ticks / (double)totalWeight.Ticks;
         }
 
-        public async Task DisplayProfileCallTree() {
-            if (profileCallTree_ != null) {
+        public async Task DisplayProfileCallTree(bool forceUpdate = false) {
+            if (profileCallTree_ != null && !forceUpdate) {
                 return;
             }
 
