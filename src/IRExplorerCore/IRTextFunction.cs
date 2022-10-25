@@ -64,7 +64,7 @@ namespace IRExplorerCore {
                 return true;
             }
 
-            return Name == other.Name &&
+            return Name.Equals(other.Name, StringComparison.Ordinal) &&
                    (!checkParent || // Also check parent being the same.
                     (((ParentSummary != null && other.ParentSummary != null &&
                        ParentSummary.ModuleName == other.ParentSummary.ModuleName) ||

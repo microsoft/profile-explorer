@@ -777,10 +777,22 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e) {
         HidePreviewPopup();
 
-        // Zoom when Ctrl/Alt/Shift or left mouse button are presesed.
-        if (!(Utils.IsKeyboardModifierActive() ||
-            e.LeftButton == MouseButtonState.Pressed)) {
+        if (Utils.IsShiftModifierActive()) {
+            // Turn vertical scrolling into horizontal scrolling.
+            GraphHost.ScrollToHorizontalOffset(GraphHost.HorizontalOffset - e.Delta);
+            e.Handled = true;
             return;
+        }
+        else if (!(Utils.IsKeyboardModifierActive() ||
+            e.LeftButton == MouseButtonState.Pressed)) {
+            // Zoom when Ctrl/Alt/Shift or left mouse button are pressed.
+            return;
+        }
+
+        // Cancel ongoing dragging operation.
+        if (dragging_) {
+            dragging_ = false;
+            ReleaseMouseCapture();
         }
 
         // Disable animation if scrolling without interruption.
@@ -1082,7 +1094,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         int count = 0;
         var model = new PlotModel();
-        
+
 
         foreach (var pair in sliceSeriesList) {
             var sliceList = pair.Item2.ToList();

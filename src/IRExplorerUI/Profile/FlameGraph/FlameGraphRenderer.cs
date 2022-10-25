@@ -24,7 +24,7 @@ public class FlameGraphRenderer {
     private Rect visibleArea_;
     private Rect quadVisibleArea_;
     private Rect quadGraphArea_;
-    
+
     private bool isTimeline_;
     private Typeface font_;
     private Typeface nameFont_;
@@ -66,8 +66,8 @@ public class FlameGraphRenderer {
         palettes_ = new Dictionary<ProfileCallTreeNodeKind, ColorPalette>();
         palettes_[ProfileCallTreeNodeKind.Unset] = ColorPalette.Profile;
         palettes_[ProfileCallTreeNodeKind.NativeUser] = ColorPalette.Profile;
-        palettes_[ProfileCallTreeNodeKind.NativeKernel] = ColorPalette.HeatMap;
-        palettes_[ProfileCallTreeNodeKind.Managed] = ColorPalette.Profile;
+        palettes_[ProfileCallTreeNodeKind.NativeKernel] = ColorPalette.ProfileKernel;
+        palettes_[ProfileCallTreeNodeKind.Managed] = ColorPalette.ProfileManaged;
 
         defaultBorder_ = ColorPens.GetPen(Colors.Black, 0.5);
         nodeHeight_ = DefaultNodeHeight; //? TODO: Option
@@ -152,6 +152,8 @@ public class FlameGraphRenderer {
 
         if (updateLayout) {
             // Recompute the position of all nodes and rebuild the quad tree.
+            // This is done once, with node position/size being relative to the maxWidth,
+            // except when dummy nodes get involved, which can force a re-layout.
             if (!nodeLayoutComputed_) {
                 nodesQuadTree_ = new QuadTree<FlameGraphNode>();
                 dummyNodesQuadTree_ = new QuadTree<FlameGraphGroupNode>();
@@ -166,15 +168,12 @@ public class FlameGraphRenderer {
         }
 
         // Update only the visible nodes on scrolling.
-        bool layoutChanged = !nodeLayoutRecomputed && Math.Abs(maxWidth_ - prevMaxWidth_) > double.Epsilon
-        ;
+        bool layoutChanged = !nodeLayoutRecomputed && Math.Abs(maxWidth_ - prevMaxWidth_) > double.Epsilon;
         int shrinkingNodes = 0;
 
-#if true
         foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
             node.Owner.DrawNode(node, graphDC);
-            if (layoutChanged && !node.IsDummyNode &&
-                node.Bounds.Width < minVisibleRectWidth_) {
+            if (layoutChanged && ScaleNode(node) < minVisibleRectWidth_) {
                 shrinkingNodes++;
             }
         }
@@ -183,15 +182,9 @@ public class FlameGraphRenderer {
             //? TODO: Removing from the quad tree is very slow,
             //? recompute the entire layout instead...
             //! Consider a faster implementation or other kind of spatial tree.
-            //Trace.WriteLine($"=> Shrinking {shrinkingNodes}");
             return false;
         }
-#else
-        foreach (var node in nodesQuadTree_.table.Keys) {
-            node.Owner.DrawNode(node, graphDC);
-        }
 
-#endif
         bool result = DrawDummyNodes(graphDC, layoutChanged);
 
         if (isTimeline_) {
@@ -211,20 +204,27 @@ public class FlameGraphRenderer {
 
 
     private bool DrawDummyNodes(DrawingContext graphDC, bool layoutChanged) {
-        List<FlameGraphGroupNode> enlargeList = null;
-        
+        int shrinkingNodes = 0;
+        int growingNodes = 0;
+
         foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
+            var width = ScaleNode(node);
+
+            if (width < minVisibleRectWidth_ * 0.5) {
+                shrinkingNodes++;
+                continue;
+            }
+
             // Reconsider replacing the dummy node.
-            if (layoutChanged && ScaleNode(node) >= minVisibleRectWidth_) {
-                enlargeList ??= new List<FlameGraphGroupNode>();
-                enlargeList.Add(node);
+            if (layoutChanged && ScaleNode(node) > minVisibleRectWidth_ * 0.5) {
+                growingNodes++;
             }
             else {
                 DrawDummyNode(node, graphDC);
             }
         }
 
-        if (enlargeList == null) {
+        if (growingNodes == 0 && shrinkingNodes == 0) {
             return true;
         }
 
@@ -260,7 +260,7 @@ public class FlameGraphRenderer {
             }
         }
 #else
-        
+
         return false;
 
         nodeLayoutComputed_ = false;
@@ -268,7 +268,7 @@ public class FlameGraphRenderer {
         return false;
 #endif
     }
-    
+
     private void DrawDummyNode(FlameGraphGroupNode node, DrawingContext graphDC) {
         double estimatedDepth = Math.Max(1, 1 + Math.Log10(node.MaxDepthUnder));
         var scaledBounds = new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top + timeBarHeight_,
@@ -405,6 +405,7 @@ public class FlameGraphRenderer {
 
             // In case child sorting is not by weight, stop extending the range
             // when a larger one is found again.
+            //? TODO: In timeline, nodes not placed properly
             if (childWidth > minVisibleRectWidth_) {
                 break;
             }
@@ -441,7 +442,7 @@ public class FlameGraphRenderer {
         //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
         return dummyNode;
     }
-    
+
     private void DrawTimeBar(DrawingContext graphDC) {
         const double MinTickDistance = 75;
         const double TextMarginY = 7;
@@ -517,7 +518,7 @@ public class FlameGraphRenderer {
     public Rect ComputeNodeBounds(FlameGraphNode node) {
         return new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top, node.Bounds.Width * maxWidth_, node.Bounds.Height);
     }
-    
+
     private HighlightingStyle PickDummyNodeStyle(HighlightingStyle style) {
         if (!dummyNodeStyles_.TryGetValue(style, out var dummyStyle)) {
             var newColor = ColorUtils.AdjustSaturation(((SolidColorBrush)style.BackColor).Color, 0.2f);
