@@ -257,7 +257,6 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             //? TODO: Avoid lock by summing per thread, accumulate at the end
             lock (profileData_) {
                 profileData_.TotalWeight += sampleWeight;
-                profileData_.ProfileWeight += sampleWeight; //? Remove, keep only TotalWeight?
 
                 if (stack.IsUnknown) {
                     continue; // Ignore sample without a stack.

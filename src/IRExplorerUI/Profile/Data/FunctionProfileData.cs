@@ -21,9 +21,9 @@ public class FunctionProfileData {
     [ProtoMember(4)]
     public Dictionary<long, TimeSpan> InstructionWeight { get; set; } // Instr. offset mapping
     [ProtoMember(5)]
-    public Dictionary<IRTextFunctionId, TimeSpan> CalleesWeights { get; set; } // {Summary,Function ID} mapping
+    public Dictionary<IRTextFunctionId, TimeSpan> CalleesWeights { get; set; } //? TODO: Remove, unused
     [ProtoMember(6)]
-    public Dictionary<IRTextFunctionId, TimeSpan> CallerWeights { get; set; } // {Summary,Function ID} mapping
+    public Dictionary<IRTextFunctionId, TimeSpan> CallerWeights { get; set; } //? TODO: Remove, unused
     [ProtoMember(7)]
     public Dictionary<long, PerformanceCounterSet> InstructionCounters { get; set; }
     [ProtoMember(8)]

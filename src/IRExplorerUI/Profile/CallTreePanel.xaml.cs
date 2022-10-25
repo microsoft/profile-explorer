@@ -509,7 +509,7 @@ namespace IRExplorerUI {
             return result;
         }
 
-        private string FormatFunctionName(ProfileCallTreeNode node, int maxLength = int.MaxValue) {
+        private string FormatFunctionName(ProfileCallTreeNode node) {
             var funcName = node.FunctionName;
 
             if (true) {
@@ -520,36 +520,9 @@ namespace IRExplorerUI {
                     funcName = nameProvider.DemangleFunctionName(funcName, nameProvider.GlobalDemanglingOptions);
                 }
             }
-
-            if (funcName.Length > maxLength) {
-                funcName = $"{funcName.Substring(0, maxLength)}...";
-            }
-
             return funcName;
         }
-
-        private string CreateStackBackTrace(ProfileCallTreeNode node) {
-            var builder = new StringBuilder();
-            AppendStackToolTipFrames(node, builder);
-            return builder.ToString();
-        }
-
-        private void AppendStackToolTipFrames(ProfileCallTreeNode node, StringBuilder builder) {
-            var percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight);
-            var funcName = FormatFunctionName(node, 80);
-
-            if (settings_.PrependModuleToFunction) {
-                funcName = $"{node.ModuleName}!{funcName}";
-            }
-
-            builder.Append($"{percentage.AsPercentageString(2, false).PadLeft(6)} | {node.Weight.AsMillisecondsString()} | {funcName}");
-            builder.AppendLine(funcName);
-
-            if (node.HasCallers) {
-                AppendStackToolTipFrames(node.Callers[0], builder);
-            }
-        }
-
+        
         #region IToolPanel
 
         public override ToolPanelKind PanelKind => ToolPanelKind.CallTree;
