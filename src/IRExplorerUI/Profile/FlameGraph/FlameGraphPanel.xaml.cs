@@ -489,8 +489,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         // How wide the entire graph needs to be so that the node fils the view.
         double ratio = GraphViewer.FlameGraph.InverseScaleWeight(node.Weight);
         double newMaxWidth = GraphAreaWidth * ratio;
-        var duration = true ? TimeSpan.FromMicroseconds(EnlargeAnimationDuration) : TimeSpan.Zero; //? TODO: Check if animations enabled
-
         double prevRatio = GraphViewer.MaxGraphWidth / GraphAreaWidth;
         double offsetRatio = prevRatio > 0 ? ratio / prevRatio : ratio;
 
@@ -938,6 +936,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     public async Task DisplayFlameGraph() {
+        if (GraphViewer.IsInitialized) {
+            GraphViewer.Reset();
+        }
+
         var callTree = Session.ProfileData.CallTree;
         SchedulePendingCallTree(callTree);
     }
@@ -960,25 +962,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             SetMaxWidth(width, false);
         }
     }
-
-    private DraggablePopup CreatePreviewPopup(Point mousePoint, Point previewPoint) {
-        var pointedNode = GraphViewer.FindPointedNode(mousePoint);
-        var callNode = pointedNode?.CallTreeNode;
-
-        if (callNode != null) {
-            // If popup already opened for this node reuse the instance.
-            if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup popup) {
-                popup.UpdatePosition(previewPoint, GraphViewer);
-                popup.UpdateNode(callNode);
-                return popup;
-            }
-
-            return new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, GraphViewer, Session);
-        }
-
-        return null;
-    }
-
+    
     public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
         return callTree_.GetBacktrace(node);
     }

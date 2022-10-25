@@ -906,7 +906,68 @@ namespace IRExplorerUI {
             OptionalStatusText.Visibility = !string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void MenuItem_Click_8(object sender, RoutedEventArgs e) {
+        void ComputeFunctionProfile(ProfileData data, int sampleStartIndex, int sampleEndIndex) {
+            data.ModuleWeights.Clear();
+            data.ProfileWeight = TimeSpan.Zero;
+            data.TotalWeight = TimeSpan.Zero;
+
+            foreach (var funcProfile in data.FunctionProfiles) {
+                funcProfile.Value.Reset();
+            }
+
+            HashSet<int> stackModules = new();
+            HashSet<IRTextFunction> stackFuncts = new();
+            
+            for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
+                var (sample, stack) = data.Samples[i];
+                bool isTopFrame = true;
+                stackModules.Clear();
+                stackFuncts.Clear();
+
+                foreach (var resolvedFrame in stack.StackFrames) {
+                    if (resolvedFrame.IsUnknown) {
+                        continue;
+                    }
+
+                    if (isTopFrame && stackModules.Add(resolvedFrame.Info.Image.Id)) {
+                        //? TODO: Avoid lock by summing per thread, accumulate at the end
+                        //? TODO: Also, don't use mod name as key, use imageId
+                        data.AddModuleSample(resolvedFrame.Info.Image.ModuleName, sample.Weight);
+                        data.TotalWeight += sample.Weight;
+                        data.ProfileWeight += sample.Weight;
+                    }
+                    
+                    var funcRva = resolvedFrame.Info.DebugInfo.RVA;
+                    var frameRva = resolvedFrame.FrameRVA;
+                    var textFunction = resolvedFrame.Info.Function;
+                    var funcProfile = resolvedFrame.Info.Profile;
+
+                    if (funcProfile == null) {
+                        funcProfile = data.GetOrCreateFunctionProfile(resolvedFrame.Info.Function, null);
+                        resolvedFrame.Info.Profile = funcProfile;
+                    }
+
+                    lock (funcProfile) {
+                        var offset = frameRva - funcRva;
+
+                        // Don't count the inclusive time for recursive functions multiple times.
+                        if (stackFuncts.Add(textFunction)) {
+                            funcProfile.AddInstructionSample(offset, sample.Weight);
+                            funcProfile.Weight += sample.Weight;
+                        }
+
+                        // Count the exclusive time for the top frame function.
+                        if (isTopFrame) {
+                            funcProfile.ExclusiveWeight += sample.Weight;
+                        }
+                    }
+
+                    isTopFrame = false;
+                }
+            }
+        }
+
+        private async void MenuItem_Click_8(object sender, RoutedEventArgs e) {
             //? TODO: Remove
 #if false
             //var data = File.ReadAllBytes(@"C:\work\samples.dat");
@@ -1411,6 +1472,41 @@ namespace IRExplorerUI {
             if (ProfileData?.Report != null) {
                 ProfileReportPanel.ShowReport(ProfileData.Report, this);
             }
+        }
+
+        private async void Button_Click(object sender, RoutedEventArgs e) {
+            var sw = Stopwatch.StartNew();
+            ProfileCallTree tree = null;
+
+            int start = 0;
+            int end = (int)(ProfileData.Samples.Count * (SampleRangeSlider.Value / SampleRangeSlider.Maximum));
+            Trace.WriteLine($"Filter range 0-{end} out of {ProfileData.Samples.Count}");
+
+            ComputeFunctionProfile(this.ProfileData, start, end);
+            Trace.WriteLine($"ComputeFunctionProfile {sw.ElapsedMilliseconds}");
+
+            tree = await Task.Run(() => ProfileCallTree.Build(this.ProfileData, start, end));
+            Trace.WriteLine($"ProfileCallTree {sw.ElapsedMilliseconds}");
+
+
+            ProfileData.CallTree = tree;
+
+            await SectionPanel.RefreshProfile();
+
+            var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
+
+            if (panel != null) {
+                await panel.DisplayProfileCallTree(true);
+            }
+
+            var fgPanel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+
+            if (fgPanel != null) {
+                await fgPanel.DisplayFlameGraph();
+            }
+
+            sw.Stop();
+            Trace.WriteLine($"Filtering {sw.ElapsedMilliseconds}");
         }
     }
 }

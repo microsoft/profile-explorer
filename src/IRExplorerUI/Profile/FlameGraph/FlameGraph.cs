@@ -210,7 +210,7 @@ namespace IRExplorerUI.Profile {
             }
         }
 
-        private void AddSample(FlameGraphNode rootNode, ProfileSample sample, ETWProfileDataProvider.ResolvedProfileStack stack) {
+        private void AddSample(FlameGraphNode rootNode, ProfileSample sample, ResolvedProfileStack stack) {
             var node = rootNode;
             int depth = 0;
 
@@ -221,7 +221,7 @@ namespace IRExplorerUI.Profile {
                 //     continue;
                 // }
 
-                if (resolvedFrame.Function == null) {
+                if (resolvedFrame.Info.Function == null) {
                     continue;
                 }
                 
@@ -231,7 +231,7 @@ namespace IRExplorerUI.Profile {
                     for (int i = node.Children.Count - 1; i >= 0; i--) {
                         var child = node.Children[i];
                         
-                        if (!child.CallTreeNode.Function.Equals(resolvedFrame.Function)) {
+                        if (!child.CallTreeNode.Function.Equals(resolvedFrame.Info.Function)) {
                             break; // Last func is different, stop and start a new stack.
                         }
 
@@ -244,7 +244,7 @@ namespace IRExplorerUI.Profile {
                 }
 
                 if (targetNode == null) {
-                    var callNode = new ProfileCallTreeNode(resolvedFrame.DebugInfo, resolvedFrame.Function) {
+                    var callNode = new ProfileCallTreeNode(resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function) {
                         //? TODO: Kind = resolvedFrame.IsKernelCode
                     };
                     targetNode = new FlameGraphNode(callNode, TimeSpan.Zero, depth);

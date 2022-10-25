@@ -30,7 +30,7 @@ public class ProfileData {
 
         [ProtoMember(7)] public byte[] CallTreeState; //? TODO: Reimplement, super slow!
 
-        [ProtoMember(8)] public List<(ProfileSample Sample, ETWProfileDataProvider.ResolvedProfileStack Stack)> Samples { get; set; }
+        [ProtoMember(8)] public List<(ProfileSample Sample, ResolvedProfileStack Stack)> Samples { get; set; }
 
 
         public ProfileDataState(TimeSpan profileWeight, TimeSpan totalWeight) {
@@ -49,7 +49,7 @@ public class ProfileData {
     public ProfileCallTree CallTree { get; set; }
     public ProfileDataReport Report { get; set; }
 
-    public List<(ProfileSample Sample, ETWProfileDataProvider.ResolvedProfileStack Stack)> Samples { get; set; }
+    public List<(ProfileSample Sample, ResolvedProfileStack Stack)> Samples { get; set; }
 
     public List<PerformanceCounterInfo> SortedPerformanceCounters {
         get {
@@ -229,23 +229,23 @@ public class ProfileData {
 
         foreach (var pair in profileData.Samples) {
             foreach (var frame in pair.Stack.StackFrames) {
-                if (frame.Function == null) {
+                if (frame.Info.Function == null) {
                     continue; // Unknown frame.
                 }
 
-                if (!summaryMap.ContainsKey(frame.Function.Id.SummaryId)) {
+                if (!summaryMap.ContainsKey(frame.Info.Function.Id.SummaryId)) {
                     continue;
                 }
 
-                var summary = summaryMap[frame.Function.Id.SummaryId];
-                var function = summary.GetFunctionWithId(frame.Function.Id.FunctionNumber);
+                var summary = summaryMap[frame.Info.Function.Id.SummaryId];
+                var function = summary.GetFunctionWithId(frame.Info.Function.Id.FunctionNumber);
 
                 if (function == null) {
                     Debug.Assert(false, "Could not find node for func");
                     continue;
                 }
 
-                frame.Function = function;
+                frame.Info.Function = function;
             }
         }
     }
