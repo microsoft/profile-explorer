@@ -920,6 +920,9 @@ namespace IRExplorerUI {
             
             for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
                 var (sample, stack) = data.Samples[i];
+                data.TotalWeight += sample.Weight;
+                data.ProfileWeight += sample.Weight;
+                
                 bool isTopFrame = true;
                 stackModules.Clear();
                 stackFuncts.Clear();
@@ -933,8 +936,6 @@ namespace IRExplorerUI {
                         //? TODO: Avoid lock by summing per thread, accumulate at the end
                         //? TODO: Also, don't use mod name as key, use imageId
                         data.AddModuleSample(resolvedFrame.Info.Image.ModuleName, sample.Weight);
-                        data.TotalWeight += sample.Weight;
-                        data.ProfileWeight += sample.Weight;
                     }
                     
                     var funcRva = resolvedFrame.Info.DebugInfo.RVA;
@@ -1496,17 +1497,22 @@ namespace IRExplorerUI {
             var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
 
             if (panel != null) {
+                var sw2 = Stopwatch.StartNew();
                 await panel.DisplayProfileCallTree(true);
+                Trace.WriteLine($"DisplayProfileCallTree {sw2.ElapsedMilliseconds}");
             }
 
             var fgPanel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
 
             if (fgPanel != null) {
+                var sw2 = Stopwatch.StartNew();
                 await fgPanel.DisplayFlameGraph();
+                Trace.WriteLine($"DisplayFlameGraph {sw2.ElapsedMilliseconds}");
             }
 
             sw.Stop();
             Trace.WriteLine($"Filtering {sw.ElapsedMilliseconds}");
+            Trace.Flush();
         }
     }
 }

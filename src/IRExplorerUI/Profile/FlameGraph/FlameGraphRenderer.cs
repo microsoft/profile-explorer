@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI.Profile;
 
@@ -443,7 +444,7 @@ public class FlameGraphRenderer {
         return dummyNode;
     }
 
-    private void DrawTimeBar(DrawingContext graphDC) {
+     private void DrawTimeBar(DrawingContext graphDC) {
         const double MinTickDistance = 75;
         const double TextMarginY = 7;
 

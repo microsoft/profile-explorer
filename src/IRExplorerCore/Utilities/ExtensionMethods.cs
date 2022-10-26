@@ -28,7 +28,7 @@ namespace IRExplorerCore.Utilities {
             return currentValue;
         }
 
-        public static V GetOrAddValue<K, V>(this Dictionary<K, V> dict, K key, Func<V> newValueFunc) where V : new() {
+        public static V GetOrAddValue<K, V>(this Dictionary<K, V> dict, K key, Func<V> newValueFunc) where V : class{
             if (!dict.TryGetValue(key, out V currentValue)) {
                 currentValue = newValueFunc();
                 dict[key] = currentValue;

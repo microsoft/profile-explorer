@@ -271,7 +271,7 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         initialized_ = true;
         flameGraph_ = new FlameGraph(callTree);
-        bool isTimeline = false;
+        bool isTimeline = true;
 
         if (isTimeline) {
             var profile = (App.Current.MainWindow as ISession).ProfileData;
