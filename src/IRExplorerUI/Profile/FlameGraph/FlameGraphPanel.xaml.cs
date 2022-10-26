@@ -236,6 +236,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         Dispatcher.BeginInvoke(async () => {
             if (callTree != null && !GraphViewer.IsInitialized) {
                 await GraphViewer.Initialize(callTree, GraphArea, settings_);
+                await ActivityView.Initialize(Session.ProfileData, GraphArea);
             }
         }, DispatcherPriority.Background);
     }
@@ -749,6 +750,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             CancelWidthAnimation();
             GraphViewer.UpdateMaxWidth(maxWidth);
         }
+
+        ActivityView.UpdateMaxWidth(maxWidth);
     }
 
     private void CancelWidthAnimation() {
@@ -909,6 +912,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
 
         GraphViewer.UpdateVisibleArea(GraphVisibleArea);
+        ActivityView.UpdateVisibleArea(GraphVisibleArea);
     }
 
     private async void UndoButtoon_Click(object sender, RoutedEventArgs e) {
@@ -962,7 +966,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             SetMaxWidth(width, false);
         }
     }
-    
+
     public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
         return callTree_.GetBacktrace(node);
     }
