@@ -306,16 +306,18 @@
                                                     Height="16"
                                                     HorizontalAlignment="Right"
                                                     VerticalAlignment="Top"
+                                                    MouseDown="ModuleWarningImage_MouseUp"
                                                     Source="{StaticResource WarningIconColor}"
-                                                    ToolTip="Debug info file not found and loaded"
+                                                    ToolTip="Debug info file not found&#x0a;Click for details"
                                                     Visibility="{Binding DebugFileMissing, Converter={StaticResource BoolToVisibilityConverter}}" />
                                                 <Image
                                                     Width="16"
                                                     Height="16"
                                                     HorizontalAlignment="Right"
                                                     VerticalAlignment="Top"
+                                                    MouseDown="ModuleWarningImage_MouseUp"
                                                     Source="{StaticResource WarningIconColor}"
-                                                    ToolTip="Binary file not found and loaded"
+                                                    ToolTip="Binary file not found&#x0a;Click for details"
                                                     Visibility="{Binding BinaryFileMissing, Converter={StaticResource BoolToVisibilityConverter}}" />
                                             </Grid>
                                             <Border
