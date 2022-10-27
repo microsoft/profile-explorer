@@ -356,6 +356,7 @@ namespace IRExplorerUI {
         public TimeSpan ExclusiveWeight { get; set; }
         public bool BinaryFileMissing { get; set; }
         public bool DebugFileMissing { get; set; }
+        public ProfileDataReport.ModuleStatus Status { get; set; }
     }
 
     public enum SectionFieldKind {
@@ -1150,6 +1151,8 @@ namespace IRExplorerUI {
                 var moduleStatus = profile.Report?.GetModuleStatus(pair.Key);
 
                 if (moduleStatus != null) {
+                    moduleInfo.Status = moduleStatus;
+
                     if (moduleStatus.State != ModuleLoadState.Loaded) {
                         moduleInfo.BinaryFileMissing = !moduleStatus.HasBinaryLoaded;
                         moduleInfo.DebugFileMissing = !moduleStatus.HasDebugInfoLoaded;
@@ -2757,11 +2760,9 @@ namespace IRExplorerUI {
             Clipboard.SetText(writer.ToString());
         }
 
-        //public async void RemoveSummary(IRTextSummary summary) {
-        //    if (moduleSummaries_.Remove(summary_)) {
-        //        sectionExtensionComputed_ = false;
-        //        await SetupFunctionList();
-        //    }
-        //}
+        private void ModuleWarningImage_MouseUp(object sender, MouseButtonEventArgs e) {
+            var moduleEx = ModulesList.SelectedItem as ModuleEx;
+            ProfileReportPanel.ShowReport(Session.ProfileData.Report, Session, moduleEx?.Status);
+        }
     }
 }

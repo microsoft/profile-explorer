@@ -26,7 +26,7 @@ namespace IRExplorerUI.Profile {
             session_ = session;
         }
 
-        public void ShowReport(ProfileDataReport report) {
+        public void ShowReport(ProfileDataReport report, ProfileDataReport.ModuleStatus selectedModule) {
             report_ = report;
             DataContext = report;
 
@@ -38,9 +38,16 @@ namespace IRExplorerUI.Profile {
                 // Process list is already sorted by weight.
                 ProcessList.ItemsSource = new ListCollectionView(report.RunningProcesses);
             }
+
+            if (selectedModule != null) {
+                ModuleList.SelectedItem = selectedModule;
+                ModuleList.ScrollIntoView(selectedModule);
+                TabHost.SelectedIndex = 1;
+            }
         }
 
-        public static void ShowReport(ProfileDataReport report, ISession session) {
+        public static void ShowReport(ProfileDataReport report, ISession session,
+                                      ProfileDataReport.ModuleStatus selectedModule = null) {
             var panel = new ProfileReportPanel(session);
             panel.TitleSuffix = $"Profile report";
 
@@ -53,7 +60,7 @@ namespace IRExplorerUI.Profile {
             window.Height = 600;
             window.Owner = App.Current.MainWindow;
             window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            panel.ShowReport(report);
+            panel.ShowReport(report, selectedModule);
             window.Show();
         }
     }
