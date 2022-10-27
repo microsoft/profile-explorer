@@ -19,6 +19,9 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
         public BinaryFileSearchResult BinaryFileInfo { get; set; } // Lookup result with local file.
         [ProtoMember(4)]
         public DebugFileSearchResult DebugInfoFile { get; set; }
+
+        public bool HasBinaryLoaded => State == ModuleLoadState.Loaded;
+        public bool HasDebugInfoLoaded => DebugInfoFile is { Found: true };
     }
 
     [ProtoMember(1)]
@@ -62,6 +65,10 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
         status.DebugInfoFile = searchResult;
     }
 
+    public ModuleStatus GetModuleStatus(string moduleName) {
+        return Modules.Find(module => module.ImageFileInfo.ImageName.Equals(moduleName, StringComparison.OrdinalIgnoreCase));
+    }
+
     public bool Equals(ProfileDataReport other) {
         if (ReferenceEquals(null, other)) {
             return false;
@@ -70,7 +77,6 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
         if (ReferenceEquals(this, other)) {
             return true;
         }
-
 
         return Equals(SessionOptions, other.SessionOptions) &&
                TraceInfo.HasSameTraceFilePath(other.TraceInfo);

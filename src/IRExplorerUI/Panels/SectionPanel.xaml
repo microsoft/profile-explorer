@@ -299,12 +299,25 @@
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <DockPanel Margin="2">
-                                            <TextBlock
-                                                Margin="0,0,0,2"
-                                                DockPanel.Dock="Top"
-                                                FontWeight="Medium"
-                                                Text="{Binding Name}" />
-
+                                            <Grid Margin="0,0,0,2" DockPanel.Dock="Top">
+                                                <TextBlock FontWeight="Medium" Text="{Binding Name}" />
+                                                <Image
+                                                    Width="16"
+                                                    Height="16"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Top"
+                                                    Source="{StaticResource WarningIconColor}"
+                                                    ToolTip="Debug info file not found and loaded"
+                                                    Visibility="{Binding DebugFileMissing, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                <Image
+                                                    Width="16"
+                                                    Height="16"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Top"
+                                                    Source="{StaticResource WarningIconColor}"
+                                                    ToolTip="Binary file not found and loaded"
+                                                    Visibility="{Binding BinaryFileMissing, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                            </Grid>
                                             <Border
                                                 HorizontalAlignment="Stretch"
                                                 Background="{Binding BackColor}"
