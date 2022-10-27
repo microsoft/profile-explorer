@@ -354,6 +354,8 @@ namespace IRExplorerUI {
         public Brush BackColor { get; set; }
         public double ExclusivePercentage { get; set; }
         public TimeSpan ExclusiveWeight { get; set; }
+        public bool BinaryFileMissing { get; set; }
+        public bool DebugFileMissing { get; set; }
     }
 
     public enum SectionFieldKind {
@@ -1143,6 +1145,16 @@ namespace IRExplorerUI {
                     ExclusivePercentage = weightPercentage, 
                     ExclusiveWeight = pair.Value
                 };
+
+                // Set warnings for missing binary/debug files.
+                var moduleStatus = profile.Report?.GetModuleStatus(pair.Key);
+
+                if (moduleStatus != null) {
+                    if (moduleStatus.State != ModuleLoadState.Loaded) {
+                        moduleInfo.BinaryFileMissing = !moduleStatus.HasBinaryLoaded;
+                        moduleInfo.DebugFileMissing = !moduleStatus.HasDebugInfoLoaded;
+                    }
+                }
 
                 modulesEx.Add(moduleInfo);
             }
