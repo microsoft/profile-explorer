@@ -12,7 +12,6 @@ namespace IRExplorerUI.Profile;
 public class FlameGraphRenderer {
     internal const double DefaultTextSize = 12;
     internal const double DefaultNodeHeight = 18;
-    internal const double TimeBarHeight = 24;
 
     private FlameGraphSettings settings_;
     private FlameGraph flameGraph_;
@@ -135,10 +134,6 @@ public class FlameGraphRenderer {
     }
 
     private void RedrawGraph(bool updateLayout = true) {
-        if (isTimeline_) {
-            timeBarHeight_ = TimeBarHeight;
-        }
-
         if(!RedrawGraphImpl(updateLayout)) {
             nodeLayoutComputed_ = false;
             //Trace.WriteLine($"Redraw {Environment.TickCount64}");
@@ -186,13 +181,7 @@ public class FlameGraphRenderer {
             return false;
         }
 
-        bool result = DrawDummyNodes(graphDC, layoutChanged);
-
-        if (isTimeline_) {
-            DrawTimeBar(graphDC);
-        }
-
-        return result;
+        return DrawDummyNodes(graphDC, layoutChanged);
     }
 
     private double ScaleNode(FlameGraphNode node) {
@@ -272,7 +261,7 @@ public class FlameGraphRenderer {
 
     private void DrawDummyNode(FlameGraphGroupNode node, DrawingContext graphDC) {
         double estimatedDepth = Math.Max(1, 1 + Math.Log10(node.MaxDepthUnder));
-        var scaledBounds = new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top + timeBarHeight_,
+        var scaledBounds = new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top,
             node.Bounds.Width * maxWidth_, node.Bounds.Height * estimatedDepth);
 
         if (cachedDummyNodeGuidelines_ == null) {
@@ -443,61 +432,9 @@ public class FlameGraphRenderer {
         //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
         return dummyNode;
     }
-
-     private void DrawTimeBar(DrawingContext graphDC) {
-        const double MinTickDistance = 75;
-        const double TextMarginY = 7;
-
-        var bar = new Rect(visibleArea_.Left, visibleArea_.Top,
-                           visibleArea_.Width, timeBarHeight_);
-        graphDC.DrawRectangle(Brushes.AliceBlue, null, bar);
-
-        double secondTickDist = maxWidth_ / flameGraph_.RootNode.Duration.TotalSeconds;
-        double msTickDist = maxWidth_ / flameGraph_.RootNode.Duration.TotalMilliseconds;
-
-        double startX = Math.Max(0, visibleArea_.Left - secondTickDist);
-        double endX = Math.Min(visibleArea_.Right, maxWidth_);
-        double currentSec = startX / secondTickDist;
-        double secondStartX = Math.Ceiling(startX / secondTickDist) * secondTickDist;
-
-        for (double x = startX; x < endX; x += secondTickDist) {
-            if (x >= secondStartX) {
-                var tickRect = new Rect(x, visibleArea_.Top, 2, 4);
-                graphDC.DrawRectangle(Brushes.Black, null, tickRect);
-                DrawCenteredText($"{(int)currentSec}s", tickRect.Left, tickRect.Top + TextMarginY, graphDC);
-            }
-
-            double subTicks = secondTickDist / MinTickDistance;
-            double subTickDist = secondTickDist / subTicks;
-            double timePerSubTick = 1000.0 / subTicks;
-            double msEndX = Math.Min(secondTickDist - subTickDist, endX);
-            double currentMs = timePerSubTick;
-
-            for (double y = subTickDist; y < msEndX; y += subTickDist) {
-                var msTickRect = new Rect(x + y, visibleArea_.Top, 2, 3);
-                graphDC.DrawRectangle(Brushes.DimGray, null, msTickRect);
-                double time = (currentSec + currentMs / 1000);
-                if (subTicks <= 10) {
-                    DrawCenteredText($"{time:0.0}", msTickRect.Left, msTickRect.Top + TextMarginY, graphDC);
-                }
-                else if (subTicks <= 100) {
-                    DrawCenteredText($"{time:0.00}", msTickRect.Left, msTickRect.Top + TextMarginY, graphDC);
-                }
-                else {
-                    int digits = (int)Math.Ceiling(Math.Log10(subTicks));
-                    var timeStr = String.Format("{0:0." + new string('0', digits) + "}", time);
-                    DrawCenteredText(timeStr, msTickRect.Left, msTickRect.Top + TextMarginY, graphDC);
-                }
-
-                currentMs += timePerSubTick;
-            }
-
-            currentSec++;
-        }
-    }
-
+    
     public FlameGraphNode HitTestNode(Point point) {
-        var queryRect = new Rect(point.X / maxWidth_, point.Y - timeBarHeight_, 1.0 / maxWidth_, 1);
+        var queryRect = new Rect(point.X / maxWidth_, point.Y, 1.0 / maxWidth_, 1);
 
         if (nodesQuadTree_ != null) {
             var nodes = nodesQuadTree_.GetNodesInside(queryRect);
@@ -592,16 +529,14 @@ public class FlameGraphRenderer {
         rtb.Render(drawingVisual);
         return rtb;
     }
-
-    private double timeBarHeight_ = 0;
-
+    
     public void DrawNode(FlameGraphNode node, DrawingContext dc) {
         if (node.IsDummyNode) {
             return;
         }
 
         var bounds = new Rect(node.Bounds.Left * maxWidth_,
-                              node.Bounds.Top + timeBarHeight_,
+                              node.Bounds.Top,
                               node.Bounds.Width * maxWidth_,
                               node.Bounds.Height);
 

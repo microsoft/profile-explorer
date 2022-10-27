@@ -236,7 +236,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         Dispatcher.BeginInvoke(async () => {
             if (callTree != null && !GraphViewer.IsInitialized) {
                 await GraphViewer.Initialize(callTree, GraphArea, settings_);
-                await ActivityView.Initialize(Session.ProfileData, GraphArea);
+                var activityArea = new Rect(0, 0, ActivityView.ActualWidth, ActivityView.ActualHeight);
+                await ActivityView.Initialize(Session.ProfileData, activityArea);
             }
         }, DispatcherPriority.Background);
     }

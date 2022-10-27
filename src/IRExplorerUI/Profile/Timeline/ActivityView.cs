@@ -24,12 +24,16 @@ public class ActivityView : FrameworkElement {
         }
     }
 
-    const double MarginY = 2;
     const double SliceWidth = 8;
-    const double MaxSampleHeight = 50;
-
+    const double TimeBarHeight = 18;
+    const double TopMarginY = 1 + TimeBarHeight;
+    const double BottomMarginY = 12;
+    const double DefaultTextSize = 11;
+    
     private DrawingVisual visual_;
+    private GlyphRunCache glyphs_;
     private ProfileData profile_;
+    private double sampleHeight_;
     private double maxWidth_;
     private Rect visibleArea_;
     private List<SliceList> slices_;
@@ -37,9 +41,12 @@ public class ActivityView : FrameworkElement {
     private double positionLineX_;
     private bool startedSelection_;
     private bool hasSelection_;
-    private double selectionStartX_;
-    private double selectionEndX_;
-
+    private TimeSpan selectionStartTime_;
+    private TimeSpan selectionEndTime_;
+    private Typeface font_;
+    private double fontSize_;
+    private TimeSpan startTime_;
+    private TimeSpan endTime_;
 
     public ActivityView() {
         MouseLeftButtonDown += OnMouseLeftButtonDown;
@@ -52,7 +59,7 @@ public class ActivityView : FrameworkElement {
         if (startedSelection_) {
             startedSelection_ = false;
             hasSelection_ = true;
-            selectionEndX_ = e.GetPosition(this).X;
+            selectionEndTime_ = PositionToTime(e.GetPosition(this).X);
             ReleaseMouseCapture();
             Redraw();
         }
@@ -67,7 +74,7 @@ public class ActivityView : FrameworkElement {
 
     private void ActivityView_MouseMove(object sender, MouseEventArgs e) {
         if (startedSelection_) {
-            selectionEndX_ = e.GetPosition(this).X;
+            selectionEndTime_ = PositionToTime(e.GetPosition(this).X);
             Redraw();
         }
         else {
@@ -84,8 +91,8 @@ public class ActivityView : FrameworkElement {
         }
 
         startedSelection_ = true;
-        selectionStartX_ = e.GetPosition(this).X;
-        selectionEndX_ = selectionStartX_;
+        selectionStartTime_ = PositionToTime(e.GetPosition(this).X);
+        selectionEndTime_ = selectionStartTime_;
         CaptureMouse();
         Redraw();
     }
@@ -94,11 +101,16 @@ public class ActivityView : FrameworkElement {
         profile_ = profile;
         visibleArea_ = visibleArea;
         maxWidth_ = visibleArea.Width;
+        sampleHeight_ = visibleArea_.Height - TopMarginY - BottomMarginY;
         visual_ = new DrawingVisual();
         visual_.Drawing?.Freeze();
         AddVisualChild(visual_);
         AddLogicalChild(visual_);
 
+        font_ = new Typeface("Segoe UI");
+        fontSize_ = DefaultTextSize;
+        glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual_).PixelsPerDip);
+        
         slices_ = await Task.Run(() => ComputeSampleSlices(profile));
         Redraw();
     }
@@ -108,11 +120,10 @@ public class ActivityView : FrameworkElement {
             return new List<SliceList>();
         }
 
-        var start = profile.Samples[0].Sample.Time.Ticks;
-        var end = profile.Samples[^1].Sample.Time.Ticks;
-
+        startTime_ = profile.Samples[0].Sample.Time;
+        endTime_ = profile.Samples[^1].Sample.Time;
         double slices = maxWidth_ / SliceWidth;
-        var timeDiff = TimeSpan.FromTicks(end - start);
+        var timeDiff = endTime_ - startTime_;
         double timePerSlice = (double)timeDiff.Ticks / slices;
         var sliceSeriesDict = new Dictionary<int, SliceList>();
 
@@ -123,7 +134,7 @@ public class ActivityView : FrameworkElement {
                 continue;
             }
 
-            var slice = (int)((sample.Time.Ticks - start) / timePerSlice);
+            var slice = (int)((sample.Time - startTime_).Ticks / timePerSlice);
 
             //int queryThreadId = stack.Context.ThreadId;
             int queryThreadId = 0;
@@ -158,7 +169,8 @@ public class ActivityView : FrameworkElement {
 
     private void Redraw() {
         using var graphDC = visual_.RenderOpen();
-        graphDC.DrawRectangle(Brushes.Azure, null, visibleArea_);
+        var area = new Rect(0, 0, visibleArea_.Width, visibleArea_.Height);
+        graphDC.DrawRectangle(Brushes.WhiteSmoke, null, area);
 
         if (slices_ == null) {
             return;
@@ -172,7 +184,7 @@ public class ActivityView : FrameworkElement {
             for(int i = 0; i < list.Slices.Count; i++) {
                 var weight = list.Slices[i];
 
-                double height = ((double)weight.Ticks / (double)list.MaxWeight.Ticks) * MaxSampleHeight;
+                double height = ((double)weight.Ticks / (double)list.MaxWeight.Ticks) * sampleHeight_;
 
                 if (i * sliceWidth + sliceWidth < visibleArea_.Left) {
                     continue;
@@ -181,32 +193,121 @@ public class ActivityView : FrameworkElement {
                     break;
                 }
 
-                var rect = new Rect(i * sliceWidth - visibleArea_.Left, 
-                                    MaxSampleHeight - height + MarginY, 
+                var rect = new Rect(i * sliceWidth - visibleArea_.Left,
+                    sampleHeight_ - height + TopMarginY, 
                                     sliceWidth, height);
                 graphDC.DrawRectangle(Brushes.DodgerBlue, ColorPens.GetPen(Colors.Black) , rect);
             }
         }
 
+        DrawTimeBar(graphDC);
+
         if (showPositionLine_) {
             var lineStart = new Point(positionLineX_, 0);
-            var lineEnd = new Point(positionLineX_, MaxSampleHeight + MarginY);
+            var lineEnd = new Point(positionLineX_, sampleHeight_ + TopMarginY);
             graphDC.DrawLine(ColorPens.GetBoldPen(Colors.Gold), lineStart, lineEnd);
+
+            var time = PositionToTime(positionLineX_);
+            var textY = sampleHeight_ + TopMarginY + BottomMarginY / 2 - 3;
+            DrawCenteredText(time.AsMillisecondsString(), positionLineX_, textY, graphDC);
             //? text ms
         }
 
         if (startedSelection_ || hasSelection_) {
-            var startX = selectionStartX_;
-            var endX = selectionEndX_;
+            var startX = TimeToPosition(selectionStartTime_);
+            var endX = TimeToPosition(selectionEndTime_);
+
             if (endX < startX) {
                 (startX, endX) = (endX, startX);
             }
 
             var selectionWidth = Math.Max(1, endX - startX);
-            var rect = new Rect(startX, 0, selectionWidth, MaxSampleHeight + MarginY);
-            var opacity = startedSelection_ ? 150 : 100;
+            var selectionHeight = sampleHeight_ + TopMarginY;
+            var rect = new Rect(startX, 0, selectionWidth, selectionHeight);
+            var opacity = startedSelection_ ? 120 : 100;
             graphDC.DrawRectangle(ColorBrushes.GetTransparentBrush(Colors.Gold, opacity), ColorPens.GetPen(Colors.Black), rect);
+
+
+            var time = TimeSpan.FromTicks(Math.Abs((selectionEndTime_ - selectionStartTime_).Ticks));
+            var textX = startX + selectionWidth / 2;
+            var textY = selectionHeight + BottomMarginY / 2 - 3;
+            DrawCenteredText(time.AsMillisecondsString(), textX, textY, graphDC);
         }
+
+    }
+
+    private TimeSpan PositionToTime(double positionX) {
+        var timeDiff = endTime_ - startTime_;
+        var ticks = (long)((visibleArea_.Left + positionX) / maxWidth_ * timeDiff.Ticks);
+        return TimeSpan.FromTicks(ticks);
+    }
+
+    private double TimeToPosition(TimeSpan time) {
+        var timeDiff = endTime_ - startTime_;
+        return ((double)time.Ticks / (double)timeDiff.Ticks * maxWidth_) - visibleArea_.Left;
+    }
+
+    private void DrawTimeBar(DrawingContext graphDC) {
+        const double MinTickDistance = 75;
+        const double TextMarginY = 7;
+
+        var bar = new Rect(0, visibleArea_.Top,
+                           visibleArea_.Width, TimeBarHeight);
+        graphDC.DrawRectangle(Brushes.AliceBlue, null, bar);
+
+        var timeDiff = endTime_ - startTime_;
+        double secondTickDist = maxWidth_ / timeDiff.TotalSeconds;
+        double msTickDist = maxWidth_ / timeDiff.TotalMilliseconds;
+
+        double startX = Math.Max(0,  -secondTickDist);
+        double endX = Math.Min(visibleArea_.Right, maxWidth_);
+        //double currentSec = startX / secondTickDist;
+        double currentSec = Math.Floor(startX / secondTickDist);
+
+        for (double x = startX; x < endX; x += secondTickDist) {
+            //if (x >= currentSec) {
+                var tickRect = new Rect(x - visibleArea_.Left, visibleArea_.Top, 2, 4);
+                graphDC.DrawRectangle(Brushes.Black, null, tickRect);
+                DrawCenteredText($"{(int)currentSec}s", tickRect.Left, tickRect.Top + TextMarginY, graphDC);
+            //}
+
+            double subTicks = secondTickDist / MinTickDistance;
+            double subTickDist = secondTickDist / subTicks;
+            double timePerSubTick = 1000.0 / subTicks;
+            double msEndX = Math.Min(secondTickDist - subTickDist, endX);
+            double currentMs = timePerSubTick;
+
+            for (double y = subTickDist; y < msEndX; y += subTickDist) {
+                var msTickRect = new Rect(x + y - visibleArea_.Left, visibleArea_.Top, 2, 3);
+                graphDC.DrawRectangle(Brushes.DimGray, null, msTickRect);
+                double time = (currentSec + currentMs / 1000);
+
+                if (subTicks <= 10) {
+                    DrawCenteredText($"{time:0.0}", msTickRect.Left, msTickRect.Top + TextMarginY, graphDC);
+                }
+                else if (subTicks <= 100) {
+                    DrawCenteredText($"{time:0.00}", msTickRect.Left, msTickRect.Top + TextMarginY, graphDC);
+                }
+                else {
+                    int digits = (int)Math.Ceiling(Math.Log10(subTicks));
+                    var timeStr = String.Format("{0:0." + new string('0', digits) + "}", time);
+                    DrawCenteredText(timeStr, msTickRect.Left, msTickRect.Top + TextMarginY, graphDC);
+                }
+
+                currentMs += timePerSubTick;
+            }
+
+            currentSec++;
+        }
+    }
+    
+    private void DrawCenteredText(string text, double x, double y, DrawingContext dc) {
+        var glyphInfo = glyphs_.GetGlyphs(text);
+        x = x - glyphInfo.TextWidth / 2;
+        y = y + glyphInfo.TextHeight / 2;
+        dc.PushTransform(new TranslateTransform(x, y));
+        dc.DrawGlyphRun(Brushes.Black, glyphInfo.Glyphs);
+        dc.Pop();
     }
 
     protected override int VisualChildrenCount => 1;
