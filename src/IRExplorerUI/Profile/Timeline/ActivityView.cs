@@ -202,17 +202,6 @@ public class ActivityView : FrameworkElement {
 
         DrawTimeBar(graphDC);
 
-        if (showPositionLine_) {
-            var lineStart = new Point(positionLineX_, 0);
-            var lineEnd = new Point(positionLineX_, sampleHeight_ + TopMarginY);
-            graphDC.DrawLine(ColorPens.GetBoldPen(Colors.Gold), lineStart, lineEnd);
-
-            var time = PositionToTime(positionLineX_);
-            var textY = sampleHeight_ + TopMarginY + BottomMarginY / 2 - 3;
-            DrawCenteredText(time.AsMillisecondsString(), positionLineX_, textY, graphDC);
-            //? text ms
-        }
-
         if (startedSelection_ || hasSelection_) {
             var startX = TimeToPosition(selectionStartTime_);
             var endX = TimeToPosition(selectionEndTime_);
@@ -227,13 +216,21 @@ public class ActivityView : FrameworkElement {
             var opacity = startedSelection_ ? 120 : 100;
             graphDC.DrawRectangle(ColorBrushes.GetTransparentBrush(Colors.Gold, opacity), ColorPens.GetPen(Colors.Black), rect);
 
-
             var time = TimeSpan.FromTicks(Math.Abs((selectionEndTime_ - selectionStartTime_).Ticks));
             var textX = startX + selectionWidth / 2;
             var textY = selectionHeight + BottomMarginY / 2 - 3;
-            DrawCenteredText(time.AsMillisecondsString(), textX, textY, graphDC);
+            DrawCenteredText(time.AsMillisecondsString(), textX, textY, Brushes.Black, graphDC);
         }
+        else if (showPositionLine_) {
+            var lineStart = new Point(positionLineX_, 0);
+            var lineEnd = new Point(positionLineX_, sampleHeight_ + TopMarginY);
+            graphDC.DrawLine(ColorPens.GetBoldPen(Colors.Gold), lineStart, lineEnd);
 
+            var time = PositionToTime(positionLineX_);
+            var textY = sampleHeight_ + TopMarginY + BottomMarginY / 2 - 3;
+            DrawCenteredText(time.AsMillisecondsString(), positionLineX_, textY, Brushes.Black, graphDC);
+            //? text ms
+        }
     }
 
     private TimeSpan PositionToTime(double positionX) {
@@ -248,16 +245,23 @@ public class ActivityView : FrameworkElement {
     }
 
     private void DrawTimeBar(DrawingContext graphDC) {
-        const double MinTickDistance = 75;
+        const double MinTickDistance = 35;
+        const double MinSecondTickDistance = 40;
         const double TextMarginY = 7;
+        var secTextColor = Brushes.Black;
+        var msTextColor = Brushes.DimGray;
 
         var bar = new Rect(0, visibleArea_.Top,
                            visibleArea_.Width, TimeBarHeight);
         graphDC.DrawRectangle(Brushes.AliceBlue, null, bar);
 
         var timeDiff = endTime_ - startTime_;
-        double secondTickDist = maxWidth_ / timeDiff.TotalSeconds;
-        double msTickDist = maxWidth_ / timeDiff.TotalMilliseconds;
+        double maxSecTicks = maxWidth_ / MinSecondTickDistance;
+        double secTicks = Math.Ceiling(Math.Min(maxSecTicks, timeDiff.TotalSeconds));
+        double secPerTick = timeDiff.TotalSeconds / secTicks;
+        secTicks = timeDiff.TotalSeconds / Math.Ceiling(secPerTick);
+        secPerTick = timeDiff.TotalSeconds / secTicks;
+        double secondTickDist = maxWidth_ / secTicks;
 
         double startX = Math.Max(0,  -secondTickDist);
         double endX = Math.Min(visibleArea_.Right, maxWidth_);
@@ -266,9 +270,9 @@ public class ActivityView : FrameworkElement {
 
         for (double x = startX; x < endX; x += secondTickDist) {
             //if (x >= currentSec) {
-                var tickRect = new Rect(x - visibleArea_.Left, visibleArea_.Top, 2, 4);
+                var tickRect = new Rect(x - visibleArea_.Left, visibleArea_.Top, 3, 4);
                 graphDC.DrawRectangle(Brushes.Black, null, tickRect);
-                DrawCenteredText($"{(int)currentSec}s", tickRect.Left, tickRect.Top + TextMarginY, graphDC);
+                DrawCenteredText($"{(int)Math.Round(currentSec)}s", tickRect.Left, tickRect.Top + TextMarginY, secTextColor, graphDC);
             //}
 
             double subTicks = secondTickDist / MinTickDistance;
@@ -283,30 +287,30 @@ public class ActivityView : FrameworkElement {
                 double time = (currentSec + currentMs / 1000);
 
                 if (subTicks <= 10) {
-                    DrawCenteredText($"{time:0.0}", msTickRect.Left, msTickRect.Top + TextMarginY, graphDC);
+                    DrawCenteredText($"{time:0.0}", msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC);
                 }
                 else if (subTicks <= 100) {
-                    DrawCenteredText($"{time:0.00}", msTickRect.Left, msTickRect.Top + TextMarginY, graphDC);
+                    DrawCenteredText($"{time:0.00}", msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC);
                 }
                 else {
                     int digits = (int)Math.Ceiling(Math.Log10(subTicks));
                     var timeStr = String.Format("{0:0." + new string('0', digits) + "}", time);
-                    DrawCenteredText(timeStr, msTickRect.Left, msTickRect.Top + TextMarginY, graphDC);
+                    DrawCenteredText(timeStr, msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC);
                 }
 
                 currentMs += timePerSubTick;
             }
 
-            currentSec++;
+            currentSec += secPerTick;
         }
     }
     
-    private void DrawCenteredText(string text, double x, double y, DrawingContext dc) {
+    private void DrawCenteredText(string text, double x, double y, Brush color, DrawingContext dc) {
         var glyphInfo = glyphs_.GetGlyphs(text);
         x = x - glyphInfo.TextWidth / 2;
         y = y + glyphInfo.TextHeight / 2;
         dc.PushTransform(new TranslateTransform(x, y));
-        dc.DrawGlyphRun(Brushes.Black, glyphInfo.Glyphs);
+        dc.DrawGlyphRun(color, glyphInfo.Glyphs);
         dc.Pop();
     }
 
