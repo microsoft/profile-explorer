@@ -270,6 +270,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         NodeDetailsPanel.FunctionNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
         NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
 
+        ActivityView.SelectedTimeRange += ActivityView_OnSelectedTimeRange;
+        ActivityView.SelectingTimeRange += ActivityView_OnSelectingTimeRange;
+
         stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
             CallTreeNodePopup.PopupHoverDuration,
             (mousePoint, previewPoint) => {
@@ -301,6 +304,26 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             popup => {
                 Session.RegisterDetachedPanel(popup);
             });
+    }
+
+    private void ActivityView_OnSelectedTimeRange(object sender, (TimeSpan StartTime, TimeSpan EndTime, int StartSampleIndex, int EndSampleIndex) e) {
+        Trace.WriteLine($"Selected {e.StartTime} / {e.EndTime}, range {e.StartSampleIndex}-{e.EndSampleIndex}");
+
+        //? Problem with time range is that it's for all threads, but FG timeline has single thread
+
+        GraphViewer.ClearSelection();
+        var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
+        GraphViewer.SelectNodes(nodes);
+    }
+
+    private void ActivityView_OnSelectingTimeRange(object sender, (TimeSpan StartTime, TimeSpan EndTime, int StartSampleIndex, int EndSampleIndex) e) {
+        Trace.WriteLine($"Selecting {e.StartTime} / {e.EndTime}, range {e.StartSampleIndex}-{e.EndSampleIndex}");
+
+        //? Problem with time range is that it's for all threads, but FG timeline has single thread
+
+        GraphViewer.ClearSelection();
+        var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
+        GraphViewer.SelectNodes(nodes);
     }
 
     private void NodeDetailsPanel_NodesSelected(object sender, List<ProfileCallTreeNode> e) {
