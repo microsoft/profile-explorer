@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI.Profile;
@@ -15,11 +16,12 @@ public class ActivityView : FrameworkElement {
         public int ThreadId { get; set; }
         public TimeSpan TotalWeight { get; set; }
         public TimeSpan MaxWeight { get; set; }
-        public List<TimeSpan> Slices { get; set; }
+        public TimeSpan TimePerSlice { get; set; }
+        public List<(TimeSpan Weight, int FirstSampleIndex, int SampleCount)> Slices { get; set; }
 
         public SliceList(int threadId) {
             ThreadId = threadId;
-            Slices = new List<TimeSpan>();
+            Slices = new List<(TimeSpan Weight, int FirstSampleIndex, int SampleCount)>();
             MaxWeight = TimeSpan.MinValue;
         }
     }
@@ -29,7 +31,7 @@ public class ActivityView : FrameworkElement {
     const double TopMarginY = 1 + TimeBarHeight;
     const double BottomMarginY = 12;
     const double DefaultTextSize = 11;
-    
+
     private DrawingVisual visual_;
     private GlyphRunCache glyphs_;
     private ProfileData profile_;
@@ -43,6 +45,7 @@ public class ActivityView : FrameworkElement {
     private bool hasSelection_;
     private TimeSpan selectionStartTime_;
     private TimeSpan selectionEndTime_;
+    private TimeSpan SelectionTimeDiff => selectionEndTime_ - selectionStartTime_;
     private Typeface font_;
     private double fontSize_;
     private TimeSpan startTime_;
@@ -55,14 +58,80 @@ public class ActivityView : FrameworkElement {
         MouseLeave += ActivityView_MouseLeave;
     }
 
+    public event EventHandler<(TimeSpan StartTime, TimeSpan EndTime,
+        int StartSampleIndex, int EndSampleIndex)> SelectingTimeRange;
+    public event EventHandler<(TimeSpan StartTime, TimeSpan EndTime,
+        int StartSampleIndex, int EndSampleIndex)> SelectedTimeRange;
+    public event EventHandler ClearedSelectedTimeRange;
+
+    public event EventHandler<(TimeSpan Time, int SampleIndex)> HoveringTimePoint;
+    public event EventHandler<(TimeSpan Time, int SampleIndex)> SelectedTimePoint;
+    public event EventHandler ClearedTimePoint;
+
     private void ActivityView_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
         if (startedSelection_) {
             startedSelection_ = false;
-            hasSelection_ = true;
             selectionEndTime_ = PositionToTime(e.GetPosition(this).X);
+            hasSelection_ = SelectionTimeDiff.Ticks > 0;
             ReleaseMouseCapture();
             Redraw();
+
+            if (hasSelection_) {
+                SelectedTimeRange?.Invoke(this, (selectionStartTime_ + startTime_, selectionEndTime_ + startTime_,
+                    TimeToSampleIndex(selectionStartTime_, SelectionTimeDiff),
+                    TimeToSampleIndexBack(selectionEndTime_, SelectionTimeDiff)));
+            }
         }
+        else {
+            //? TODO: Select closest sample, SelectionTimeDiff invalid here
+            SelectedTimePoint?.Invoke(this, (selectionStartTime_ + startTime_, TimeToSampleIndex(selectionStartTime_, SelectionTimeDiff)));
+        }
+    }
+
+    private int TimeToSampleIndex(TimeSpan time, TimeSpan timeRange) {
+        int sliceIndex = (int)(time.Ticks / slices_[0].TimePerSlice.Ticks);
+        var queryTime = time + startTime_;
+
+        for (int i = sliceIndex; i < slices_[0].Slices.Count; i++) {
+            var slice = slices_[0].Slices[sliceIndex];
+
+            if (slice.FirstSampleIndex >= 0) {
+                for(int sampleIndex = slice.FirstSampleIndex; sampleIndex < slice.FirstSampleIndex + slice.SampleCount; sampleIndex++) {
+                    if (profile_.Samples[sampleIndex].Sample.Time >= queryTime) {
+                        return sampleIndex;
+                    }
+                }
+            }
+
+            if((i + 1) * slices_[0].TimePerSlice > timeRange) {
+                break;
+            }
+        }
+
+        return -1;
+    }
+
+    private int TimeToSampleIndexBack(TimeSpan time, TimeSpan timeRange) {
+        int sliceIndex = (int)(time.Ticks / slices_[0].TimePerSlice.Ticks);
+        var queryTime = time + startTime_;
+
+        for (int i = sliceIndex; i >= 0; i--) {
+            var slice = slices_[0].Slices[sliceIndex];
+
+            if (slice.FirstSampleIndex >= 0) {
+                for(int sampleIndex = slice.FirstSampleIndex + slice.SampleCount; sampleIndex >= slice.FirstSampleIndex; sampleIndex--) {
+                    if (profile_.Samples[sampleIndex].Sample.Time <= queryTime) {
+                        return sampleIndex;
+                    }
+                }
+            }
+
+            if((sliceIndex - i + 1) * slices_[0].TimePerSlice > timeRange) {
+                break;
+            }
+        }
+
+        return -1;
     }
 
     private void ActivityView_MouseLeave(object sender, MouseEventArgs e) {
@@ -76,11 +145,18 @@ public class ActivityView : FrameworkElement {
         if (startedSelection_) {
             selectionEndTime_ = PositionToTime(e.GetPosition(this).X);
             Redraw();
+
+            SelectingTimeRange?.Invoke(this, (selectionStartTime_ + startTime_, selectionEndTime_ + startTime_,
+                TimeToSampleIndex(selectionStartTime_, SelectionTimeDiff),
+                TimeToSampleIndexBack(selectionEndTime_, SelectionTimeDiff)));
         }
         else {
             showPositionLine_ = true;
             positionLineX_ = e.GetPosition(this).X;
             Redraw();
+
+            //? TODO: Select closest sample, SelectionTimeDiff invalid here
+            HoveringTimePoint?.Invoke(this, (selectionStartTime_ + startTime_, TimeToSampleIndex(selectionStartTime_, SelectionTimeDiff)));
         }
 
     }
@@ -88,6 +164,7 @@ public class ActivityView : FrameworkElement {
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
         if (hasSelection_) {
             hasSelection_ = false;
+            ClearedTimePoint?.Invoke(this, EventArgs.Empty);
         }
 
         startedSelection_ = true;
@@ -110,7 +187,7 @@ public class ActivityView : FrameworkElement {
         font_ = new Typeface("Segoe UI");
         fontSize_ = DefaultTextSize;
         glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual_).PixelsPerDip);
-        
+
         slices_ = await Task.Run(() => ComputeSampleSlices(profile));
         Redraw();
     }
@@ -128,33 +205,39 @@ public class ActivityView : FrameworkElement {
         var sliceSeriesDict = new Dictionary<int, SliceList>();
 
         var sw3 = Stopwatch.StartNew();
+        int sampleIndex = 0;
 
         foreach (var (sample, stack) in profile.Samples) {
             if(threadId != -1 && stack.Context.ThreadId != threadId) {
                 continue;
             }
 
-            var slice = (int)((sample.Time - startTime_).Ticks / timePerSlice);
+            var sliceIndex = (int)((sample.Time - startTime_).Ticks / timePerSlice);
 
             //int queryThreadId = stack.Context.ThreadId;
             int queryThreadId = 0;
 
             var sliceList = sliceSeriesDict.GetOrAddValue(queryThreadId,
-                () => new SliceList(queryThreadId) {});
+                () => new SliceList(queryThreadId) {
+                    TimePerSlice = TimeSpan.FromTicks((long)timePerSlice)
+                });
 
-            if(slice < sliceList.Slices.Count) {
-                sliceList.Slices[slice] += sample.Weight;
+            if(sliceIndex < sliceList.Slices.Count) {
+                var sliceSpan = CollectionsMarshal.AsSpan(sliceList.Slices);
+                sliceSpan[sliceIndex].Weight += sample.Weight;
+                sliceSpan[sliceIndex].SampleCount++;
             } else {
-                for(int i = sliceList.Slices.Count; i < slice; i++) {
-                    sliceList.Slices.Add(TimeSpan.Zero);
+                for(int i = sliceList.Slices.Count; i < sliceIndex; i++) {
+                    sliceList.Slices.Add((TimeSpan.Zero, -1, 0));
                 }
 
-                sliceList.Slices.Add(sample.Weight);
+                sliceList.Slices.Add((sample.Weight, sampleIndex, 1));
             }
 
             sliceList.TotalWeight += sample.Weight;
-            sliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(sliceList.MaxWeight.Ticks, 
-                                                              sliceList.Slices[slice].Ticks));
+            sliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(sliceList.MaxWeight.Ticks,
+                                                              sliceList.Slices[sliceIndex].Weight.Ticks));
+            sampleIndex++;
         }
 
         Trace.WriteLine($"ComputeSampleSlices {sw3.ElapsedMilliseconds}ms");
@@ -175,14 +258,14 @@ public class ActivityView : FrameworkElement {
         if (slices_ == null) {
             return;
         }
-        
+
         // lay on top technique
 
         foreach (var list in slices_) {
             var sliceWidth = maxWidth_ / list.Slices.Count;
 
             for(int i = 0; i < list.Slices.Count; i++) {
-                var weight = list.Slices[i];
+                var weight = list.Slices[i].Weight;
 
                 double height = ((double)weight.Ticks / (double)list.MaxWeight.Ticks) * sampleHeight_;
 
@@ -194,7 +277,7 @@ public class ActivityView : FrameworkElement {
                 }
 
                 var rect = new Rect(i * sliceWidth - visibleArea_.Left,
-                    sampleHeight_ - height + TopMarginY, 
+                    sampleHeight_ - height + TopMarginY,
                                     sliceWidth, height);
                 graphDC.DrawRectangle(Brushes.DodgerBlue, ColorPens.GetPen(Colors.Black) , rect);
             }
@@ -304,7 +387,7 @@ public class ActivityView : FrameworkElement {
             currentSec += secPerTick;
         }
     }
-    
+
     private void DrawCenteredText(string text, double x, double y, Brush color, DrawingContext dc) {
         var glyphInfo = glyphs_.GetGlyphs(text);
         x = x - glyphInfo.TextWidth / 2;

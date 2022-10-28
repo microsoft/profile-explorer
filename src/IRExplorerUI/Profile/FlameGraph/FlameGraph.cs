@@ -161,6 +161,28 @@ namespace IRExplorerUI.Profile {
             }
         }
 
+        public List<FlameGraphNode> GetNodesInTimeRange(TimeSpan startTime, TimeSpan endTime) {
+            var nodes = new List<FlameGraphNode>();
+            GetNodesInTimeRangeImpl(RootNode, startTime, endTime, nodes);
+            return nodes;
+        }
+
+        private void GetNodesInTimeRangeImpl(FlameGraphNode node, TimeSpan startTime, TimeSpan endTime, List<FlameGraphNode> nodes) {
+            if (node.StartTime >= endTime || node.EndTime <= startTime) {
+                return;
+            }
+
+            if (node.HasFunction) {
+                nodes.Add(node);
+            }
+
+            if (node.HasChildren) {
+                foreach (var child in node.Children) {
+                    GetNodesInTimeRangeImpl(child, startTime, endTime, nodes);
+                }
+            }
+        }
+
         public void BuildTimeline(ProfileData data, int threadId) {
             Trace.WriteLine($"Timeline Samples: {data.Samples.Count}");
             data.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
@@ -224,13 +246,13 @@ namespace IRExplorerUI.Profile {
                 if (resolvedFrame.Info.Function == null) {
                     continue;
                 }
-                
+
                 FlameGraphNode targetNode = null;
 
                 if (node.HasChildren) {
                     for (int i = node.Children.Count - 1; i >= 0; i--) {
                         var child = node.Children[i];
-                        
+
                         if (!child.CallTreeNode.Function.Equals(resolvedFrame.Info.Function)) {
                             break; // Last func is different, stop and start a new stack.
                         }
