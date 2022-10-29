@@ -12,6 +12,7 @@ using System.Windows.Documents;
 using Brush = System.Windows.Media.Brush;
 using Size = System.Windows.Size;
 using IRExplorerUI.Profile;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace IRExplorerUI.Profile {
     public class FlameGraphNode {
@@ -79,8 +80,11 @@ namespace IRExplorerUI.Profile {
         private Dictionary<ProfileCallTreeNode, FlameGraphNode> treeNodeToFgNodeMap_;
         private FlameGraphNode rootNode_;
         private TimeSpan rootWeight_;
+        private TimeSpan profileStartTime_;
+        private TimeSpan profileEndTime_;
         private double rootWeightReciprocal_;
         private double rootDurationReciprocal_;
+        private double profileDurationReciprocal_;
 
         public ProfileCallTree CallTree { get; set; }
 
@@ -91,6 +95,7 @@ namespace IRExplorerUI.Profile {
 
                 if (rootNode_.Duration.Ticks != 0) {
                     rootDurationReciprocal_ = 1.0 / (double)rootNode_.Duration.Ticks;
+                    profileDurationReciprocal_ = 1.0 / (double)(profileEndTime_ - profileStartTime_).Ticks;
                 }
             }
         }
@@ -190,6 +195,11 @@ namespace IRExplorerUI.Profile {
             var flameNode = new FlameGraphNode(null, RootWeight, 0);
             flameNode.StartTime = TimeSpan.MaxValue;
             flameNode.EndTime = TimeSpan.MinValue;
+
+            if (data.Samples.Count > 0) {
+                profileStartTime_ = data.Samples[0].Sample.Time;
+                profileEndTime_ = data.Samples[^1].Sample.Time;
+            }
 
             foreach (var (sample, stack) in data.Samples) {
                 if (threadId != -1 && stack.Context.ThreadId != threadId) {
@@ -344,16 +354,30 @@ namespace IRExplorerUI.Profile {
             return flameNode;
         }
 
-        public double ScaleWeight(TimeSpan weight) {
-            return (double)weight.Ticks * rootWeightReciprocal_;
+        public double ScaleWeight(FlameGraphNode node) {
+            return (double)node.Weight.Ticks * rootWeightReciprocal_;
         }
 
         public double ScaleStartTime(TimeSpan time) {
-            return (double)(time.Ticks - RootNode.StartTime.Ticks) * rootDurationReciprocal_;
+            return (double)(time.Ticks - profileStartTime_.Ticks) * profileDurationReciprocal_;
         }
 
-        public double ScaleDuration(TimeSpan startTime, TimeSpan endTime) {
-            return (double)(endTime.Ticks - startTime.Ticks) * rootDurationReciprocal_;
+        public double ScaleStartTime(FlameGraphNode node) {
+            if (node.CallTreeNode != null) {
+                return (double)(node.StartTime.Ticks - profileStartTime_.Ticks) * profileDurationReciprocal_;
+            }
+            else {
+                return (double)(node.StartTime.Ticks - RootNode.StartTime.Ticks) * rootDurationReciprocal_;
+            }
+        }
+
+        public double ScaleDuration(FlameGraphNode node) {
+            if (node.CallTreeNode != null) {
+                return (double)(node.EndTime.Ticks - node.StartTime.Ticks) * profileDurationReciprocal_;
+            }
+            else {
+                return (double)(node.EndTime.Ticks - node.StartTime.Ticks) * rootDurationReciprocal_;
+            }
         }
 
         public double InverseScaleWeight(TimeSpan weight) {

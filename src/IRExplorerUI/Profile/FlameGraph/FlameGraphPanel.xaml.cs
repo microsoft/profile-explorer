@@ -108,6 +108,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private const double EnlargeAnimationDuration = TimePerFrame * 12;
     private const double ScrollWheelZoomAnimationDuration = TimePerFrame * 8;
 
+    private bool isTimelineView_;
     private FlameGraphSettings settings_;
     private Stack<FlameGraphState> stateStack_;
     private bool dragging_;
@@ -128,6 +129,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
 
     public FlameGraphPanel() {
+        isTimelineView_ = true; //? REMOVE
+
         InitializeComponent();
         settings_ = App.Settings.FlameGraphSettings;
         stateStack_ = new Stack<FlameGraphState>();
@@ -235,7 +238,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         Dispatcher.BeginInvoke(async () => {
             if (callTree != null && !GraphViewer.IsInitialized) {
-                await GraphViewer.Initialize(callTree, GraphArea, settings_);
+                await GraphViewer.Initialize(callTree, GraphArea, isTimelineView_, settings_);
+                
                 var activityArea = new Rect(0, 0, ActivityView.ActualWidth, ActivityView.ActualHeight);
                 await ActivityView.Initialize(Session.ProfileData, activityArea);
             }
@@ -272,6 +276,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         ActivityView.SelectedTimeRange += ActivityView_OnSelectedTimeRange;
         ActivityView.SelectingTimeRange += ActivityView_OnSelectingTimeRange;
+        ActivityView.FilterTimeRange += ActivityView_FilterTimeRange;
+        ActivityView.ClearedSelectedTimeRange += ActivityView_ClearedSelectedTimeRange;
 
         stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
             CallTreeNodePopup.PopupHoverDuration,
@@ -306,24 +312,35 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             });
     }
 
-    private void ActivityView_OnSelectedTimeRange(object sender, (TimeSpan StartTime, TimeSpan EndTime, int StartSampleIndex, int EndSampleIndex) e) {
-        Trace.WriteLine($"Selected {e.StartTime} / {e.EndTime}, range {e.StartSampleIndex}-{e.EndSampleIndex}");
-
-        //? Problem with time range is that it's for all threads, but FG timeline has single thread
-
-        GraphViewer.ClearSelection();
-        var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
-        GraphViewer.SelectNodes(nodes);
+    private void ActivityView_FilterTimeRange(object sender, SampleTimeRangeInfo e) {
+        Session.FilterProfileSamples(e);
     }
 
-    private void ActivityView_OnSelectingTimeRange(object sender, (TimeSpan StartTime, TimeSpan EndTime, int StartSampleIndex, int EndSampleIndex) e) {
-        Trace.WriteLine($"Selecting {e.StartTime} / {e.EndTime}, range {e.StartSampleIndex}-{e.EndSampleIndex}");
+    private void ActivityView_ClearedSelectedTimeRange(object sender, EventArgs e) {
+        GraphViewer.ClearSelection();
+    }
 
-        //? Problem with time range is that it's for all threads, but FG timeline has single thread
+    private void ActivityView_OnSelectedTimeRange(object sender, SampleTimeRangeInfo e) {
+        Trace.WriteLine($"Selected {e.StartTime} / {e.EndTime}, range {e.StartSampleIndex}-{e.EndSampleIndex}");
 
         GraphViewer.ClearSelection();
-        var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
-        GraphViewer.SelectNodes(nodes);
+
+        if (isTimelineView_) {
+            var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
+            GraphViewer.SelectNodes(nodes);
+        }
+
+    }
+
+    private void ActivityView_OnSelectingTimeRange(object sender, SampleTimeRangeInfo e) {
+        //Trace.WriteLine($"Selecting {e.StartTime} / {e.EndTime}, range {e.StartSampleIndex}-{e.EndSampleIndex}");
+
+        GraphViewer.ClearSelection();
+        
+        if (isTimelineView_) {
+            var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
+            GraphViewer.SelectNodes(nodes);
+        }
     }
 
     private void NodeDetailsPanel_NodesSelected(object sender, List<ProfileCallTreeNode> e) {
@@ -545,7 +562,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         ResetHighlightedNodes();
         await GraphViewer.Initialize(GraphViewer.FlameGraph.CallTree, node.CallTreeNode,
-                                     GraphHostBounds, settings_);
+                                     GraphHostBounds, isTimelineView_, settings_);
     }
 
     enum FlameGraphStateKind {
@@ -936,7 +953,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
 
         GraphViewer.UpdateVisibleArea(GraphVisibleArea);
-        ActivityView.UpdateVisibleArea(GraphVisibleArea);
+        var activityArea = new Rect(0, 0, ActivityView.ActualWidth, ActivityView.ActualHeight);
+        ActivityView.UpdateVisibleArea(activityArea);
     }
 
     private async void UndoButtoon_Click(object sender, RoutedEventArgs e) {

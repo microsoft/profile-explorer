@@ -1476,17 +1476,19 @@ namespace IRExplorerUI {
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e) {
+            
+        }
+
+        public async Task<bool> FilterProfileSamples(SampleTimeRangeInfo range) {
             var sw = Stopwatch.StartNew();
             ProfileCallTree tree = null;
+            
+            Trace.WriteLine($"Filter range {range.StartSampleIndex}-{range.EndSampleIndex} out of {ProfileData.Samples.Count}");
 
-            int start = 0;
-            int end = (int)(ProfileData.Samples.Count * (SampleRangeSlider.Value / SampleRangeSlider.Maximum));
-            Trace.WriteLine($"Filter range 0-{end} out of {ProfileData.Samples.Count}");
-
-            ComputeFunctionProfile(this.ProfileData, start, end);
+            ComputeFunctionProfile(this.ProfileData, range.StartSampleIndex, range.EndSampleIndex);
             Trace.WriteLine($"ComputeFunctionProfile {sw.ElapsedMilliseconds}");
 
-            tree = await Task.Run(() => ProfileCallTree.Build(this.ProfileData, start, end));
+            tree = await Task.Run(() => ProfileCallTree.Build(this.ProfileData, range.StartSampleIndex, range.EndSampleIndex));
             Trace.WriteLine($"ProfileCallTree {sw.ElapsedMilliseconds}");
 
 
@@ -1513,6 +1515,7 @@ namespace IRExplorerUI {
             sw.Stop();
             Trace.WriteLine($"Filtering {sw.ElapsedMilliseconds}");
             Trace.Flush();
+            return true;
         }
     }
 }
