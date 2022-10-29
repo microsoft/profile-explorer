@@ -96,6 +96,8 @@ namespace IRExplorerUI {
         Task<LoadedDocument> OpenSessionDocument(string filePath);
         Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null);
 
+        //? TODO: Extract into an IProfilingSession, connecting all profile panels
+        //? and sending the activity/timeline events to all of them.
         Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, 
                                     ProfileDataProviderOptions options,
                                     SymbolFileSourceOptions symbolOptions,
@@ -109,6 +111,8 @@ namespace IRExplorerUI {
             ProfileDataReport report,
             ProfileLoadProgressHandler progressCallback,
             CancelableTask cancelableTask);
+
+        Task<bool> FilterProfileSamples(SampleTimeRangeInfo range);
 
         bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);
         IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);

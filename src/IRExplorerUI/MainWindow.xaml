@@ -710,16 +710,7 @@
                                 Source="{StaticResource SearchIcon}"
                                 UseLayoutRounding="True" />
                         </Button>
-
-
                     </Border>
-
-                    <Slider
-                        x:Name="SampleRangeSlider"
-                        Width="100"
-                        Maximum="100"
-                        Minimum="1" />
-                    <Button Click="Button_Click" Content="Filter" />
                 </StackPanel>
             </Grid>
         </Border>

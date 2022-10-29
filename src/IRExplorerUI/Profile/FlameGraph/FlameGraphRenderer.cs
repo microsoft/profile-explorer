@@ -128,11 +128,7 @@ public class FlameGraphRenderer {
         visibleArea_ = visibleArea;
         RedrawGraph(false);
     }
-
-    public double ScaleWeight(TimeSpan weight) {
-        return flameGraph_.ScaleWeight(weight);
-    }
-
+    
     private void RedrawGraph(bool updateLayout = true) {
         if(!RedrawGraphImpl(updateLayout)) {
             nodeLayoutComputed_ = false;
@@ -186,10 +182,10 @@ public class FlameGraphRenderer {
 
     private double ScaleNode(FlameGraphNode node) {
         if (isTimeline_) {
-            return flameGraph_.ScaleDuration(node.StartTime, node.EndTime);
+            return flameGraph_.ScaleDuration(node);
         }
 
-        return flameGraph_.ScaleWeight(node.Weight);
+        return flameGraph_.ScaleWeight(node);
     }
 
 
@@ -288,11 +284,11 @@ public class FlameGraphRenderer {
         double width;
 
         if (isTimeline_) {
-            x = flameGraph_.ScaleStartTime(node.StartTime);
+            x = flameGraph_.ScaleStartTime(node);
             width = ScaleNode(node);
         }
         else {
-            width = flameGraph_.ScaleWeight(node.Weight);
+            width = flameGraph_.ScaleWeight(node);
         }
 
         //Trace.WriteLine($"Node at {x}, width {width}");
@@ -328,7 +324,7 @@ public class FlameGraphRenderer {
 
         for (int i = 0; i < startIndex; i++) {
             var childNode = node.Children[i];
-            var childWidth = flameGraph_.ScaleWeight(childNode.Weight);
+            var childWidth = flameGraph_.ScaleWeight(childNode);
             x += childWidth;
         }
 
@@ -338,7 +334,7 @@ public class FlameGraphRenderer {
         for (int i = startIndex; i < stopIndex; i++) {
             //? If multiple children below width, single patterned rect
             var childNode = node.Children[i];
-            var childWidth = flameGraph_.ScaleWeight(childNode.Weight);
+            var childWidth = flameGraph_.ScaleWeight(childNode);
             FlameGraphNode dummyNode = null;
 
             if (skippedChildren == 0) {
@@ -600,7 +596,7 @@ public class FlameGraphRenderer {
                 }
                 case 1: {
                     if (node.ShowWeightPercentage) {
-                        label = ScaleWeight(node.Weight).AsPercentageString();
+                        label = flameGraph_.ScaleWeight(node).AsPercentageString();
                         margin = FlameGraphNode.ExtraValueMargin;
                         textColor = node.WeightTextColor;
                         useNameFont = true;

@@ -15,12 +15,13 @@ public partial class FlameGraphViewer : FrameworkElement {
     private DrawingVisual graphVisual_;
     private FlameGraphNode hoveredNode_;
     private FlameGraphNode selectedNode_;
+    private bool isTimelineView_;
     private bool initialized_;
 
     private Dictionary<FlameGraphNode, HighlightingStyle> hoverNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> markedNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> selectedNodes_;
-
+    
     public bool IsInitialized => initialized_;
     public FlameGraph FlameGraph => flameGraph_;
     public double MaxGraphWidth => renderer_.MaxGraphWidth;
@@ -264,16 +265,16 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode,
-                                 Rect visibleArea, FlameGraphSettings settings) {
+                                 Rect visibleArea, bool isTimelineView, FlameGraphSettings settings) {
         if (graphVisual_ != null) {
             Reset();
         }
 
         initialized_ = true;
         flameGraph_ = new FlameGraph(callTree);
-        bool isTimeline = true;
+        isTimelineView_ = isTimelineView;
 
-        if (isTimeline) {
+        if (isTimelineView_) {
             var profile = (App.Current.MainWindow as ISession).ProfileData;
             var threads = profile.SortedThreadWeights;
 
@@ -289,7 +290,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
 
         Trace.WriteLine($"Init FlameGraph with visible area {visibleArea}");
-        renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea, settings, isTimeline);
+        renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea, settings, isTimelineView_);
         graphVisual_ = renderer_.Setup();
         AddVisualChild(graphVisual_);
         AddLogicalChild(graphVisual_);
@@ -300,8 +301,8 @@ public partial class FlameGraphViewer : FrameworkElement {
         renderer_.SettingsUpdated(settings);
     }
 
-    public async Task Initialize(ProfileCallTree callTree, Rect visibleArea, FlameGraphSettings settings) {
-        await Initialize(callTree, null, visibleArea, settings);
+    public async Task Initialize(ProfileCallTree callTree, Rect visibleArea, bool isTimelineView, FlameGraphSettings settings) {
+        await Initialize(callTree, null, visibleArea, isTimelineView, settings);
     }
 
     public void UpdateMaxWidth(double maxWidth) {
