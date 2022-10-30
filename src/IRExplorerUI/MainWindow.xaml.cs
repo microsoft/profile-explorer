@@ -906,7 +906,7 @@ namespace IRExplorerUI {
             OptionalStatusText.Visibility = !string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        void ComputeFunctionProfile(ProfileData data, int sampleStartIndex, int sampleEndIndex) {
+        void ComputeFunctionProfile(ProfileData data, int sampleStartIndex, int sampleEndIndex, int threadId) {
             data.ModuleWeights.Clear();
             data.ProfileWeight = TimeSpan.Zero;
             data.TotalWeight = TimeSpan.Zero;
@@ -920,6 +920,11 @@ namespace IRExplorerUI {
             
             for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
                 var (sample, stack) = data.Samples[i];
+
+                if (threadId != -1 && stack.Context.ThreadId != threadId) {
+                    continue;
+                }
+                
                 data.TotalWeight += sample.Weight;
                 data.ProfileWeight += sample.Weight;
                 
@@ -1485,10 +1490,10 @@ namespace IRExplorerUI {
             
             Trace.WriteLine($"Filter range {range.StartSampleIndex}-{range.EndSampleIndex} out of {ProfileData.Samples.Count}");
 
-            ComputeFunctionProfile(this.ProfileData, range.StartSampleIndex, range.EndSampleIndex);
+            ComputeFunctionProfile(this.ProfileData, range.StartSampleIndex, range.EndSampleIndex, range.ThreadId);
             Trace.WriteLine($"ComputeFunctionProfile {sw.ElapsedMilliseconds}");
 
-            tree = await Task.Run(() => ProfileCallTree.Build(this.ProfileData, range.StartSampleIndex, range.EndSampleIndex));
+            tree = await Task.Run(() => ProfileCallTree.Build(this.ProfileData, range.StartSampleIndex, range.EndSampleIndex, range.ThreadId));
             Trace.WriteLine($"ProfileCallTree {sw.ElapsedMilliseconds}");
 
 

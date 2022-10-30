@@ -7,7 +7,9 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -121,12 +123,14 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private DateTime lastWheelZoomTime_;
     private DraggablePopupHoverPreview stackHoverPreview_;
     private List<FlameGraphNode> searchResultNodes_;
-
+    private List<ActivityTimelineView> threadActivityViews_;
+    
     private double zoomPointX_;
     private double initialWidth_;
     private double initialOffsetX_;
     private double endOffsetX_;
-
+    private DoubleAnimation widthAnimation_;
+    private DoubleAnimation zoomAnimation_;
 
     public FlameGraphPanel() {
         isTimelineView_ = true; //? REMOVE
@@ -238,10 +242,33 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         Dispatcher.BeginInvoke(async () => {
             if (callTree != null && !GraphViewer.IsInitialized) {
-                await GraphViewer.Initialize(callTree, GraphArea, isTimelineView_, settings_);
-                
+                await GraphViewer.Initialize(callTree, GraphArea, settings_);
+
                 var activityArea = new Rect(0, 0, ActivityView.ActualWidth, ActivityView.ActualHeight);
+                var threads = Session.ProfileData.SortedThreadWeights;
                 await ActivityView.Initialize(Session.ProfileData, activityArea);
+                ActivityView.IsTimeBarVisible = true;
+                ActivityView.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
+                ActivityView.SamplesBackColor = Brushes.DeepSkyBlue;
+
+                var threadActivityArea = new Rect(0, 0, ActivityView.ActualWidth, 40);
+                threadActivityViews_ = new List<ActivityTimelineView>();
+                int limit = 0;
+
+                foreach (var thread in threads) {
+                    if (limit++ > 5)
+                        break;
+
+                    var threadView = new ActivityTimelineView();
+                    threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
+                    threadView.ActivityHost.SamplesBackColor = ColorBrushes.GetBrush(ColorUtils.GenerateRandomPastelColor());
+                    threadActivityViews_.Add(threadView);
+                    await threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea, thread.ThreadId);
+                    //await threadView.TimelineViewer.Initialize(callTree, GraphArea, settings_, 
+                    //                                           isTimelineView_, thread.ThreadId);
+                }
+
+                ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
             }
         }, DispatcherPriority.Background);
     }
@@ -562,7 +589,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         ResetHighlightedNodes();
         await GraphViewer.Initialize(GraphViewer.FlameGraph.CallTree, node.CallTreeNode,
-                                     GraphHostBounds, isTimelineView_, settings_);
+                                     GraphHostBounds, settings_, isTimelineView_);
     }
 
     enum FlameGraphStateKind {
@@ -773,10 +800,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         GraphHost.ScrollToHorizontalOffset(offsetX);
         GraphHost.ScrollToVerticalOffset(offsetY);
     }
-
-    DoubleAnimation widthAnimation_;
-    DoubleAnimation zoomAnimation_;
-
+    
     private void SetMaxWidth(double maxWidth, bool animate = true, double duration = ZoomAnimationDuration) {
         if (animate) {
             var animation = new DoubleAnimation(GraphViewer.MaxGraphWidth, maxWidth, TimeSpan.FromMilliseconds(duration));
@@ -793,6 +817,13 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
 
         ActivityView.UpdateMaxWidth(maxWidth);
+
+        if (threadActivityViews_ != null) {
+            foreach (var view in threadActivityViews_) {
+                view.ActivityHost.UpdateMaxWidth(maxWidth);
+                view.TimelineViewer.UpdateMaxWidth(maxWidth);
+            }
+        }
     }
 
     private void CancelWidthAnimation() {
@@ -953,8 +984,15 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
 
         GraphViewer.UpdateVisibleArea(GraphVisibleArea);
-        var activityArea = new Rect(0, 0, ActivityView.ActualWidth, ActivityView.ActualHeight);
+        var activityArea = new Rect(GraphHost.HorizontalOffset, 0, ActivityView.ActualWidth, ActivityView.ActualHeight);
         ActivityView.UpdateVisibleArea(activityArea);
+
+        if (threadActivityViews_ != null) {
+            foreach (var view in threadActivityViews_) {
+                view.ActivityHost.UpdateVisibleArea(activityArea);
+                view.TimelineViewer.UpdateVisibleArea(activityArea);
+            }
+        }
     }
 
     private async void UndoButtoon_Click(object sender, RoutedEventArgs e) {
@@ -1059,213 +1097,5 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         else {
             ShowSearchSection = false;
         }
-    }
-
-    private void Button_Click(object sender, RoutedEventArgs e) {
-        var sw2 = Stopwatch.StartNew();
-
-        //? - process timeline
-        //? - per-proc thread timeline
-        //? - per-proc module timeline
-        //? - per-proc core timeline
-        //? o time range filter
-        //? o group samples by process (cache)
-
-        var dict = new Dictionary<int, TimeSpan>();
-        var start = long.MaxValue;
-        var end = long.MinValue;
-        var profile = Session.ProfileData;
-
-        if (profile.Samples.Count == 0) {
-            return;
-        }
-
-        start = profile.Samples[0].Sample.Time.Ticks;
-        end = profile.Samples[^1].Sample.Time.Ticks;
-
-        // 1 tick = 100 ns
-        long resolution = 10;
-        var timeDiffNs = (end - start) / resolution;
-        var timeDiff = TimeSpan.FromTicks(timeDiffNs);
-        var timePerSlice = TimeSpan.FromMilliseconds(10);
-        double width = timeDiff.Ticks / timePerSlice.Ticks;
-        var sliceSeriesDict = new Dictionary<int, Dictionary<int, TimeSpan>>();
-        List<Tuple<int, Dictionary<int, TimeSpan>>> sliceSeriesList = null;
-
-        var sw3 = Stopwatch.StartNew();
-
-        foreach (var (sample, stack) in profile.Samples) {
-            var point = (sample.Time.Ticks - start) / resolution;
-            var slice = (int)(point / timePerSlice.Ticks);
-
-            var sliceDict = sliceSeriesDict.GetOrAddValue(stack.Context.ThreadId);
-            sliceDict.AccumulateValue(slice, sample.Weight);
-        }
-
-        sliceSeriesList = sliceSeriesDict.ToList();
-
-        //sliceSeriesList.Sort((a, b) => {
-        //    if (!dict.TryGetValue(a.Item1, out var pa) ||
-        //        !dict.TryGetValue(b.Item1, out var pb)) {
-        //        return 0;
-        //    }
-
-        //    return -pa.CompareTo(pb);
-        //});
-
-        Trace.WriteLine($"2_PerProcSliceTime: {sw2.ElapsedMilliseconds}, {sw2.Elapsed}");
-        Trace.Flush();
-
-
-        //foreach (var pair in list) {
-        //    var p = profile.FindProcess(pair.Item1);
-        //    Trace.WriteLine($"{p.Id}, {p?.Name}: {pair.Item2}");
-        //}
-
-        int count = 0;
-        var model = new PlotModel();
-
-
-        foreach (var pair in sliceSeriesList) {
-            var sliceList = pair.Item2.ToList();
-            sliceList.Sort((a, b) => a.Item1.CompareTo(b.Item1)); // Sort slices by index.
-
-            //var slicePlot = new OxyPlot.Series.LineSeries();
-            var slicePlot = new OxyPlot.Series.BarSeries();
-            slicePlot.BarWidth = 10;
-            slicePlot.IsStacked = true;
-            slicePlot.StrokeThickness = 0.5;
-            //slicePlot.StrokeColor = OxyColor.FromArgb(255, 50, 50, 50);
-            //slicePlot.StrokeThickness = 3;
-            var c = ColorUtils.GenerateRandomPastelColor();
-            //slicePlot.Color = OxyColor.FromRgb(c.R, c.G, c.B);
-            slicePlot.FillColor = OxyColor.FromRgb(c.R, c.G, c.B);
-            slicePlot.ToolTip = $"Thread #{pair.Item1}";
-
-            slicePlot.Title = pair.Item1.ToString();
-            model.Series.Add(slicePlot);
-
-            foreach (var slicePair in sliceList) {
-                var pointTime = TimeSpan.FromTicks(slicePair.Item1 * timePerSlice.Ticks).TotalSeconds;
-                var item = new BarItem(slicePair.Item2.TotalMilliseconds);
-                item.CategoryIndex = slicePair.Item1;
-                slicePlot.Items.Add(item);
-            }
-
-            //if (count++ > 10)
-            //    break;
-            //Trace.WriteLine($"{pair.Key}: {pair.Item2}");
-        }
-
-        var w = new Window();
-        w.Width = 500;
-        w.Height = 300;
-        var plotView = new OxyPlot.SkiaSharp.Wpf.PlotView();
-        model.IsLegendVisible = true;
-        model.Padding = new OxyThickness(0);
-
-        model.Axes.Add(new CategoryAxis() {
-            Position = AxisPosition.Left,
-            TickStyle = TickStyle.Crossing,
-            MajorGridlineStyle = LineStyle.Automatic,
-            MinorGridlineStyle = LineStyle.None,
-            IsZoomEnabled = true,
-        });
-        model.Axes.Add(new LinearAxis() {
-            Position = AxisPosition.Bottom,
-            TickStyle = TickStyle.Crossing,
-            MajorGridlineStyle = LineStyle.Automatic,
-            MinorGridlineStyle = LineStyle.None,
-            IsZoomEnabled = false,
-        });
-
-
-        plotView.Model = Transpose(model);
-        w.Content = plotView;
-        w.Show();
-
-        Trace.Flush();
-    }
-
-    private const string XAXIS_KEY = "x";
-    private const string YAXIS_KEY = "y";
-
-    public static PlotModel Transpose(PlotModel model) {
-        if (!string.IsNullOrEmpty(model.Title)) {
-            model.Title += " (transposed)";
-        }
-
-           // Update plot to generate default axes etc.
-           ((IPlotModel)model).Update(false);
-
-        foreach (var axis in model.Axes) {
-            switch (axis.Position) {
-                case AxisPosition.Bottom:
-                    axis.Position = AxisPosition.Left;
-                    break;
-                case AxisPosition.Left:
-                    axis.Position = AxisPosition.Bottom;
-                    break;
-                case AxisPosition.Right:
-                    axis.Position = AxisPosition.Top;
-                    break;
-                case AxisPosition.Top:
-                    axis.Position = AxisPosition.Right;
-                    break;
-                case AxisPosition.None:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        foreach (var annotation in model.Annotations) {
-            if (annotation.XAxis != null && annotation.XAxisKey == null) {
-                if (annotation.XAxis.Key == null) {
-                    annotation.XAxis.Key = XAXIS_KEY;
-                }
-
-                annotation.XAxisKey = annotation.XAxis.Key;
-            }
-
-            if (annotation.YAxis != null && annotation.YAxisKey == null) {
-                if (annotation.YAxis.Key == null) {
-                    annotation.YAxis.Key = YAXIS_KEY;
-                }
-
-                annotation.YAxisKey = annotation.YAxis.Key;
-            }
-        }
-
-        foreach (var series in model.Series.OfType<XYAxisSeries>()) {
-            if (series.XAxisKey == null) {
-                if (series.XAxis == null) // this can happen if the series is invisible initially
-                {
-                    series.XAxisKey = XAXIS_KEY;
-                }
-                else {
-                    if (series.XAxis.Key == null) {
-                        series.XAxis.Key = XAXIS_KEY;
-                    }
-
-                    series.XAxisKey = series.XAxis.Key;
-                }
-            }
-
-            if (series.YAxisKey == null) {
-                if (series.YAxis == null) {
-                    series.YAxisKey = YAXIS_KEY;
-                }
-                else {
-                    if (series.YAxis.Key == null) {
-                        series.YAxis.Key = YAXIS_KEY;
-                    }
-
-                    series.YAxisKey = series.YAxis.Key;
-                }
-            }
-        }
-
-        return model;
     }
 }

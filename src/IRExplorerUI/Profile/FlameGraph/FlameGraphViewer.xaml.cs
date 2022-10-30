@@ -265,7 +265,8 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode,
-                                 Rect visibleArea, bool isTimelineView, FlameGraphSettings settings) {
+                                 Rect visibleArea, FlameGraphSettings settings,
+                                 bool isTimelineView = false, int threadId = -1) {
         if (graphVisual_ != null) {
             Reset();
         }
@@ -276,14 +277,7 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         if (isTimelineView_) {
             var profile = (App.Current.MainWindow as ISession).ProfileData;
-            var threads = profile.SortedThreadWeights;
-
-            foreach(var t in threads) {
-                Trace.WriteLine($"Thread {t.ThreadId}: {t.Weight}");
-            }
-
-            var thread = threads[0].ThreadId;
-            flameGraph_.BuildTimeline(profile, thread);
+            flameGraph_.BuildTimeline(profile, threadId);
         }
         else {
             await Task.Run(() => flameGraph_.Build(rootNode));
@@ -301,11 +295,16 @@ public partial class FlameGraphViewer : FrameworkElement {
         renderer_.SettingsUpdated(settings);
     }
 
-    public async Task Initialize(ProfileCallTree callTree, Rect visibleArea, bool isTimelineView, FlameGraphSettings settings) {
-        await Initialize(callTree, null, visibleArea, isTimelineView, settings);
+    public async Task Initialize(ProfileCallTree callTree, Rect visibleArea, FlameGraphSettings settings,
+                                 bool isTimelineView = false, int threadId = -1) {
+        await Initialize(callTree, null, visibleArea, settings, isTimelineView, threadId);
     }
 
     public void UpdateMaxWidth(double maxWidth) {
+        if (!initialized_) {
+            return;
+        }
+        
         renderer_.UpdateMaxWidth(maxWidth);
         InvalidateMeasure();
     }
@@ -334,6 +333,10 @@ public partial class FlameGraphViewer : FrameworkElement {
     protected override int VisualChildrenCount => 1;
 
     public void UpdateVisibleArea(Rect visibleArea) {
+        if (!initialized_) {
+            return;
+        }
+
         renderer_.UpdateVisibleArea(visibleArea);
     }
 

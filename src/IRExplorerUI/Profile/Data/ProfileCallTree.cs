@@ -69,15 +69,20 @@ public sealed class ProfileCallTree {
     }
 
     public static ProfileCallTree Build(ProfileData data) {
-        return Build(data, 0, data.Samples.Count);
+        return Build(data, 0, data.Samples.Count, -1);
     }
 
-    public static ProfileCallTree Build(ProfileData data, int sampleStartIndex, int sampleEndIndex) {
+    public static ProfileCallTree Build(ProfileData data, int sampleStartIndex, int sampleEndIndex, int threadId) {
         ProfileCallTree callTree = new();
 
-#if false
+#if true
         for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
             var (sample, stack) = data.Samples[i];
+
+            if (threadId != -1 && stack.Context.ThreadId != threadId) {
+                continue;
+            }
+            
             UpdateCallTree(sample, stack, callTree);
         }
 #else
