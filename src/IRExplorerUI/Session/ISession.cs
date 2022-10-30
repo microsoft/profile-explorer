@@ -113,6 +113,7 @@ namespace IRExplorerUI {
             CancelableTask cancelableTask);
 
         Task<bool> FilterProfileSamples(SampleTimeRangeInfo range);
+        Task<bool> RemoveProfileSamplesFilter();
 
         bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);
         IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);

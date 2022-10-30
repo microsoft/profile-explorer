@@ -12,18 +12,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Google.Protobuf.WellKnownTypes;
-using IRExplorerCore.Graph;
-using IRExplorerCore.Utilities;
-using IRExplorerUI.Controls;
-using IRExplorerUI.Profile;
-using Microsoft.Diagnostics.Tracing.Stacks;
-using Microsoft.VisualBasic;
-using OxyPlot;
-using OxyPlot.Annotations;
-using OxyPlot.Axes;
-using OxyPlot.Series;
 
 namespace IRExplorerUI.Profile;
 
@@ -244,6 +232,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             if (callTree != null && !GraphViewer.IsInitialized) {
                 await GraphViewer.Initialize(callTree, GraphArea, settings_);
 
+                if (threadActivityViews_ != null) {
+                    return;
+                }
+
                 var activityArea = new Rect(0, 0, ActivityView.ActualWidth, ActivityView.ActualHeight);
                 var threads = Session.ProfileData.SortedThreadWeights;
                 await ActivityView.Initialize(Session.ProfileData, activityArea);
@@ -260,6 +252,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                         break;
 
                     var threadView = new ActivityTimelineView();
+                    SetupActivityViewEvents(threadView.ActivityHost);
                     threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
                     threadView.ActivityHost.SamplesBackColor = ColorBrushes.GetBrush(ColorUtils.GenerateRandomPastelColor());
                     threadActivityViews_.Add(threadView);
@@ -301,10 +294,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         NodeDetailsPanel.FunctionNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
         NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
 
-        ActivityView.SelectedTimeRange += ActivityView_OnSelectedTimeRange;
-        ActivityView.SelectingTimeRange += ActivityView_OnSelectingTimeRange;
-        ActivityView.FilterTimeRange += ActivityView_FilterTimeRange;
-        ActivityView.ClearedSelectedTimeRange += ActivityView_ClearedSelectedTimeRange;
+        SetupActivityViewEvents(ActivityView);
 
         stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
             CallTreeNodePopup.PopupHoverDuration,
@@ -339,11 +329,69 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             });
     }
 
-    private void ActivityView_FilterTimeRange(object sender, SampleTimeRangeInfo e) {
-        Session.FilterProfileSamples(e);
+    private void SetupActivityViewEvents(ActivityView view) {
+        view.SelectedTimeRange += ActivityView_OnSelectedTimeRange;
+        view.SelectingTimeRange += ActivityView_OnSelectingTimeRange;
+        view.FilteredTimeRange += ActivityView_FilteredTimeRange;
+        view.ClearedSelectedTimeRange += ActivityView_ClearedSelectedTimeRange;
+        view.ClearedFilteredTimeRange += ActivityView_ClearedFilteredTimeRange;
+    }
+
+    private async void ActivityView_ClearedFilteredTimeRange(object sender, EventArgs e) {
+        var view = sender as ActivityView;
+
+        if (view.IsSingleThreadView) {
+            ActivityView.ClearTimeRangeFilter();
+        }
+
+        if (threadActivityViews_ != null) {
+            foreach (var threadView in threadActivityViews_) {
+                if (threadView.ActivityHost != view) {
+                    threadView.ActivityHost.ClearTimeRangeFilter();
+                }
+            }
+        }
+
+        await Session.RemoveProfileSamplesFilter();
+    }
+
+    private async void ActivityView_FilteredTimeRange(object sender, SampleTimeRangeInfo e) {
+        var view = sender as ActivityView;
+
+        if (view.IsSingleThreadView) {
+            ActivityView.FilterTimeRange(e);
+
+            foreach (var threadView in threadActivityViews_) {
+                if (threadView.ActivityHost != view) {
+                    threadView.ActivityHost.FilterAllOut();
+                }
+            }
+        }
+        else {
+            if (threadActivityViews_ != null) {
+                foreach (var threadView in threadActivityViews_) {
+                    threadView.ActivityHost.FilterTimeRange(e);
+                }
+            }
+        }
+        
+        await Session.FilterProfileSamples(e);
     }
 
     private void ActivityView_ClearedSelectedTimeRange(object sender, EventArgs e) {
+        var view = sender as ActivityView;
+
+        if (view.IsSingleThreadView) {
+            ActivityView.ClearSelectedTimeRange();
+        }
+        else {
+            if (threadActivityViews_ != null) {
+                foreach (var threadView in threadActivityViews_) {
+                    threadView.ActivityHost.ClearSelectedTimeRange();
+                }
+            }
+        }
+        
         GraphViewer.ClearSelection();
     }
 
@@ -361,6 +409,19 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     private void ActivityView_OnSelectingTimeRange(object sender, SampleTimeRangeInfo e) {
         //Trace.WriteLine($"Selecting {e.StartTime} / {e.EndTime}, range {e.StartSampleIndex}-{e.EndSampleIndex}");
+
+        var view = sender as ActivityView;
+
+        if (view.IsSingleThreadView) {
+            ActivityView.SelectTimeRange(e);
+        }
+        else {
+            if (threadActivityViews_ != null) {
+                foreach (var threadView in threadActivityViews_) {
+                    threadView.ActivityHost.SelectTimeRange(e);
+                }
+            }
+        }
 
         GraphViewer.ClearSelection();
         
@@ -989,6 +1050,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         if (threadActivityViews_ != null) {
             foreach (var view in threadActivityViews_) {
+                activityArea = new Rect(GraphHost.HorizontalOffset, 0, view.ActivityHost.ActualWidth, view.ActivityHost.ActualHeight);
                 view.ActivityHost.UpdateVisibleArea(activityArea);
                 view.TimelineViewer.UpdateVisibleArea(activityArea);
             }

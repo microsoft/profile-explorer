@@ -10,9 +10,21 @@
     mc:Ignorable="d">
     <Border BorderBrush="Black" BorderThickness="0,1,0,0">
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Grid
+                Width="50"
+                Height="40"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Background="PapayaWhip">
+                <StackPanel Margin="2">
+                    <TextBlock Text="Thread" />
+                    <TextBlock Text="{Binding Path=ThreadId, ElementName=ActivityHost}" />
+                </StackPanel>
+            </Grid>
             <local:ActivityView
                 x:Name="ActivityHost"
                 Height="40"
+                Margin="50,0,0,0"
                 VerticalAlignment="Top" />
             <local:FlameGraphViewer
                 x:Name="TimelineViewer"

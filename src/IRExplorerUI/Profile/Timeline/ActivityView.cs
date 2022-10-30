@@ -72,6 +72,9 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     private TimeSpan selectionStartTime_;
     private TimeSpan selectionEndTime_;
     private TimeSpan SelectionTimeDiff => selectionEndTime_ - selectionStartTime_;
+    private TimeSpan filterStartTime_;
+    private TimeSpan filterEndTime_;
+    private bool hasFilter_;
     private Typeface font_;
     private double fontSize_;
     private Brush backColor_;
@@ -87,14 +90,16 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     public event EventHandler<SampleTimeRangeInfo> SelectingTimeRange;
     public event EventHandler<SampleTimeRangeInfo> SelectedTimeRange;
-    public event EventHandler<SampleTimeRangeInfo> FilterTimeRange;
+    public event EventHandler<SampleTimeRangeInfo> FilteredTimeRange;
     public event EventHandler ClearedSelectedTimeRange;
+    public event EventHandler ClearedFilteredTimeRange;
 
     public event EventHandler<SampleTimePointInfo> HoveringTimePoint;
     public event EventHandler<SampleTimePointInfo> SelectedTimePoint;
     public event EventHandler ClearedTimePoint;
 
     public int ThreadId { get; private set; }
+    public bool IsSingleThreadView => ThreadId != -1;
     
     private bool isTimeBarVisible_;
     public bool IsTimeBarVisible {
@@ -125,10 +130,28 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
     private void UpdateSizes() {
-        topMargin_ = IsTimeBarVisible ? TopMarginY : 0;
+        topMargin_ = IsTimeBarVisible ? TopMarginY : 2;
         bottomMargin_ = BottomMarginY;
         sampleHeight_ = visibleArea_.Height - topMargin_ - bottomMargin_;
     }
+
+
+    public void SelectTimeRange(SampleTimeRangeInfo range) {
+        selectionStartTime_ = range.StartTime - startTime_;
+        selectionEndTime_ = range.EndTime - startTime_;
+        hasSelection_ = true;
+        startedSelection_ = false;
+        Redraw();
+    }
+
+    public void ClearSelectedTimeRange() {
+        if (hasSelection_) {
+            hasSelection_ = false;
+            startedSelection_ = false;
+            Redraw();
+        }
+    }
+
 
     private SampleTimePointInfo GetSelectedTimePoint() {
         return new SampleTimePointInfo(selectionStartTime_ + startTime_, 
@@ -188,13 +211,38 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     }
 
+    public void FilterTimeRange(SampleTimeRangeInfo range) {
+        filterStartTime_ = range.StartTime - startTime_;
+        filterEndTime_ = range.EndTime - startTime_;
+        hasFilter_ = true;
+        ClearSelectedTimeRange();
+        Redraw();
+    }
+
+    public void FilterAllOut() {
+        filterStartTime_ = filterEndTime_ = TimeSpan.Zero;
+        hasFilter_ = true;
+        ClearSelectedTimeRange();
+        Redraw();
+    }
+
+    public void ClearTimeRangeFilter() {
+        if (hasFilter_) {
+            hasFilter_ = false;
+            Redraw();
+        }
+    }
+
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+        var time = PositionToTime(e.GetPosition(this).X);
+        
         if (hasSelection_) {
-            var time = PositionToTime(e.GetPosition(this).X);
 
             if (time >= selectionStartTime_ && time <= selectionEndTime_) {
                 if (e.ClickCount > 1) {
-                    FilterTimeRange?.Invoke(this, GetSelectedTimeRange());
+                    var range = GetSelectedTimeRange();
+                    FilterTimeRange(range);
+                    FilteredTimeRange?.Invoke(this, range);
                 }
 
                 return;
@@ -203,12 +251,21 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             hasSelection_ = false;
             ClearedSelectedTimeRange?.Invoke(this, EventArgs.Empty);
         }
-        else {
-            ClearedTimePoint?.Invoke(this, EventArgs.Empty);
+
+
+        if (hasFilter_) {
+            if (time < filterStartTime_ || time > filterEndTime_) {
+                if (e.ClickCount > 1) {
+                    ClearTimeRangeFilter();
+                    ClearedFilteredTimeRange?.Invoke(this, EventArgs.Empty);
+                }
+            }
         }
+        
+        ClearedTimePoint?.Invoke(this, EventArgs.Empty);
 
         startedSelection_ = true;
-        selectionStartTime_ = PositionToTime(e.GetPosition(this).X);
+        selectionStartTime_ = time;
         selectionEndTime_ = selectionStartTime_;
         CaptureMouse();
         Redraw();
@@ -321,7 +378,6 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
             for(int i = 0; i < list.Slices.Count; i++) {
                 var weight = list.Slices[i].Weight;
-
                 double height = ((double)weight.Ticks / (double)list.MaxWeight.Ticks) * sampleHeight_;
 
                 if(height < double.Epsilon) {
@@ -336,7 +392,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 }
 
                 var rect = new Rect(i * scaledSliceWidth - visibleArea_.Left,
-                    sampleHeight_ - height + topMargin_,
+                                    sampleHeight_ - height + topMargin_,
                                     scaledSliceWidth, height);
                 graphDC.DrawRectangle(sampleBackColor_, sampleBorderColor_, rect);
             }
@@ -350,12 +406,23 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         if (IsTimeBarVisible) {
             DrawTimeBar(graphDC);
         }
-
-        if (ThreadId != -1) {
-            var textY = sampleHeight_ + topMargin_ + bottomMargin_ / 2 - 3;
-            DrawText($"Thread {ThreadId}", 4, textY, Brushes.DarkRed, graphDC, backColor_, HorizontalAlignment.Left);
-        }
         
+        if (hasFilter_) {
+            var startX = TimeToPosition(filterStartTime_);
+            var endX = TimeToPosition(filterEndTime_);
+            var brush = ColorBrushes.GetTransparentBrush(Colors.Gray, 120);
+
+            if (startX > 0) {
+                var beforeRect = new Rect(0, 0, startX, sampleHeight_ + topMargin_);
+                graphDC.DrawRectangle(brush, null, beforeRect);
+            }
+
+            if (endX < visibleArea_.Width) {
+                var afterRect = new Rect(endX, 0, visibleArea_.Width - endX, sampleHeight_ + topMargin_);
+                graphDC.DrawRectangle(brush, null, afterRect);
+            }
+        }
+
         if (startedSelection_ || hasSelection_) {
             var startX = TimeToPosition(selectionStartTime_);
             var endX = TimeToPosition(selectionEndTime_);
@@ -511,9 +578,10 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     private int TimeToSampleIndex(TimeSpan time, TimeSpan timeRange) {
         int sliceIndex = (int)(time.Ticks / slices_[0].TimePerSlice.Ticks);
         var queryTime = time + startTime_;
+        timeRange += startTime_;
 
         for (int i = sliceIndex; i < slices_[0].Slices.Count; i++) {
-            var slice = slices_[0].Slices[sliceIndex];
+            var slice = slices_[0].Slices[i];
 
             if (slice.FirstSampleIndex >= 0) {
                 for(int sampleIndex = slice.FirstSampleIndex; sampleIndex < slice.FirstSampleIndex + slice.SampleCount; sampleIndex++) {
@@ -527,16 +595,18 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 break;
             }
         }
-
-        return -1;
+        
+        return 0;
     }
 
     private int TimeToSampleIndexBack(TimeSpan time, TimeSpan timeRange) {
         int sliceIndex = (int)(time.Ticks / slices_[0].TimePerSlice.Ticks);
+        sliceIndex = Math.Min(sliceIndex, slices_[0].Slices.Count - 1);
         var queryTime = time + startTime_;
-
+        timeRange += startTime_;
+        
         for (int i = sliceIndex; i >= 0; i--) {
-            var slice = slices_[0].Slices[sliceIndex];
+            var slice = slices_[0].Slices[i];
 
             if (slice.FirstSampleIndex >= 0) {
                 for(int sampleIndex = slice.FirstSampleIndex + slice.SampleCount; sampleIndex >= slice.FirstSampleIndex; sampleIndex--) {
@@ -551,7 +621,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             }
         }
 
-        return -1;
+        return 0;
     }
 
 
