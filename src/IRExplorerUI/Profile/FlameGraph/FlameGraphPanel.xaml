@@ -256,7 +256,6 @@
                 SettingsClicked="PanelToolbarTray_SettingsClicked" />
         </Grid>
 
-
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -265,9 +264,21 @@
             </Grid.ColumnDefinitions>
 
 
+            <Grid
+                Width="50"
+                Height="80"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Background="PapayaWhip">
+                <StackPanel Margin="2">
+                    <TextBlock Text="All" />
+                </StackPanel>
+            </Grid>
+
             <local:ActivityView
                 x:Name="ActivityView"
                 Height="80"
+                Margin="50,0,0,0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Top" />
 

@@ -1479,11 +1479,7 @@ namespace IRExplorerUI {
                 ProfileReportPanel.ShowReport(ProfileData.Report, this);
             }
         }
-
-        private async void Button_Click(object sender, RoutedEventArgs e) {
-            
-        }
-
+        
         public async Task<bool> FilterProfileSamples(SampleTimeRangeInfo range) {
             var sw = Stopwatch.StartNew();
             ProfileCallTree tree = null;
@@ -1521,6 +1517,12 @@ namespace IRExplorerUI {
             Trace.WriteLine($"Filtering {sw.ElapsedMilliseconds}");
             Trace.Flush();
             return true;
+        }
+
+        public async Task<bool> RemoveProfileSamplesFilter() {
+            var range = new SampleTimeRangeInfo(TimeSpan.Zero, TimeSpan.Zero,
+                                                0, ProfileData.Samples.Count, -1);
+            return await FilterProfileSamples(range);
         }
     }
 }
