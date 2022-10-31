@@ -11,20 +11,33 @@
     <Border BorderBrush="Black" BorderThickness="0,1,0,0">
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid
-                Width="50"
-                Height="40"
+                Width="80"
+                Height="32"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
                 Background="PapayaWhip">
-                <StackPanel Margin="2">
-                    <TextBlock Text="Thread" />
-                    <TextBlock Text="{Binding Path=ThreadId, ElementName=ActivityHost}" />
-                </StackPanel>
+                <Image
+                    Width="16"
+                    Height="16"
+                    Margin="2,0,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Source="{StaticResource QueryIcon}" />
+                <TextBlock
+                    Margin="20,0,0,0"
+                    VerticalAlignment="Top"
+                    FontWeight="Medium"
+                    Text="{Binding Path=ThreadId, ElementName=ActivityHost}"
+                    ToolTip="Thread number" />
+                <TextBlock
+                    Margin="2,16,0,0"
+                    FontSize="11"
+                    Text="{Binding ThreadWeight, ElementName=ActivityHost, Converter={StaticResource PercentageConverter}}" />
             </Grid>
             <local:ActivityView
                 x:Name="ActivityHost"
-                Height="40"
-                Margin="50,0,0,0"
+                Height="32"
+                Margin="80,0,0,0"
                 VerticalAlignment="Top" />
             <local:FlameGraphViewer
                 x:Name="TimelineViewer"

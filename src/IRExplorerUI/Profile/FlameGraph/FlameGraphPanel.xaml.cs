@@ -248,13 +248,14 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                 int limit = 0;
 
                 foreach (var thread in threads) {
-                    if (limit++ > 5)
+                    if (limit++ > 10)
                         break;
 
                     var threadView = new ActivityTimelineView();
                     SetupActivityViewEvents(threadView.ActivityHost);
+                    threadView.ActivityHost.BackColor = Brushes.WhiteSmoke;
                     threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
-                    threadView.ActivityHost.SamplesBackColor = ColorBrushes.GetBrush(ColorUtils.GenerateRandomPastelColor());
+                    threadView.ActivityHost.SamplesBackColor = ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(thread.ThreadId));
                     threadActivityViews_.Add(threadView);
                     await threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea, thread.ThreadId);
                     //await threadView.TimelineViewer.Initialize(callTree, GraphArea, settings_, 
@@ -384,14 +385,15 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         if (view.IsSingleThreadView) {
             ActivityView.ClearSelectedTimeRange();
         }
-        else {
-            if (threadActivityViews_ != null) {
-                foreach (var threadView in threadActivityViews_) {
+
+        if (threadActivityViews_ != null) {
+            foreach (var threadView in threadActivityViews_) {
+                if (threadView.ActivityHost != view) {
                     threadView.ActivityHost.ClearSelectedTimeRange();
                 }
             }
         }
-        
+
         GraphViewer.ClearSelection();
     }
 
@@ -399,6 +401,26 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         Trace.WriteLine($"Selected {e.StartTime} / {e.EndTime}, range {e.StartSampleIndex}-{e.EndSampleIndex}");
 
         GraphViewer.ClearSelection();
+
+        var view = sender as ActivityView;
+
+        if (view.IsSingleThreadView) {
+            ActivityView.SelectTimeRange(e);
+
+            foreach (var threadView in threadActivityViews_) {
+                if (threadView.ActivityHost != view) {
+                    threadView.ActivityHost.ClearSelectedTimeRange();
+                }
+            }
+        }
+        else {
+            if (threadActivityViews_ != null) {
+                foreach (var threadView in threadActivityViews_) {
+                    threadView.ActivityHost.SelectTimeRange(e);
+                }
+            }
+        }
+
 
         if (isTimelineView_) {
             var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
@@ -414,6 +436,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         if (view.IsSingleThreadView) {
             ActivityView.SelectTimeRange(e);
+
+            foreach (var threadView in threadActivityViews_) {
+                if (threadView.ActivityHost != view) {
+                    threadView.ActivityHost.ClearSelectedTimeRange();
+                }
+            }
         }
         else {
             if (threadActivityViews_ != null) {

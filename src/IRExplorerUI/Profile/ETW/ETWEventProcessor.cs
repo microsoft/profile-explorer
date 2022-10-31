@@ -130,7 +130,7 @@ public sealed class ETWEventProcessor : IDisposable {
 
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
             int contextId = profile.AddContext(context);
-            
+
             sampleId++;
             var sampleWeight = TimeSpan.FromMilliseconds(samplingIntervalMS_);
             var sampleTime = TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec);
@@ -195,7 +195,7 @@ public sealed class ETWEventProcessor : IDisposable {
         // For ETL file, the image timestamp (needed to find a binary on a symbol server)
         // can show up in the ImageID event instead the usual Kernel.ImageGroup.
         var symbolParser = new SymbolTraceEventParser(source_);
-        
+
         symbolParser.ImageID += data => {
             // The image timestamp often is part of this event when reading an ETL file.
             // A correct timestamp is needed to locate and download the image.
@@ -279,7 +279,7 @@ public sealed class ETWEventProcessor : IDisposable {
                 (long)data.DefaultBase, data.ImageSize,
                 timeStamp, data.ImageChecksum);
             int imageId = profile.AddImageToProcess(data.ProcessID, image);
-            
+
             if (!sawImageId) {
                 // The ImageID event may show up later in the stream.
                 lastProfileImage = profile.FindImage(imageId);
@@ -317,7 +317,7 @@ public sealed class ETWEventProcessor : IDisposable {
             if (!IsAcceptedProcess(data.ProcessID)) {
                 return; // Ignore events from other processes.
             }
-            
+
             bool isKernelStack = false;
 
             if (data.FrameCount > 0 &&
@@ -403,6 +403,7 @@ public sealed class ETWEventProcessor : IDisposable {
         source_.Kernel.PerfInfoCollectionStart += data => {
             if (data.SampleSource == 0) {
                 UpdateSamplingInterval(data.NewInterval);
+                profile.TraceInfo.SamplingInterval = TimeSpan.FromMilliseconds(samplingIntervalMS_);
                 samplingIntervalSet_ = true;
             }
             else {
@@ -417,6 +418,7 @@ public sealed class ETWEventProcessor : IDisposable {
         source_.Kernel.PerfInfoSetInterval += data => {
             if (data.SampleSource == 0 && !samplingIntervalSet_) {
                 UpdateSamplingInterval(data.OldInterval);
+                profile.TraceInfo.SamplingInterval = TimeSpan.FromMilliseconds(samplingIntervalMS_);
                 samplingIntervalSet_ = true;
             }
         };

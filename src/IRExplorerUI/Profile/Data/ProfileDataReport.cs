@@ -40,6 +40,20 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
     public bool IsRecordingSession => SessionOptions != null;
     public List<ModuleStatus> Modules => moduleStatusMap_.ToValueList();
 
+    public TimeSpan SamplingInterval {
+        get {
+            if (TraceInfo.SamplingInterval.Ticks > 0) {
+                return TraceInfo.SamplingInterval;
+            }
+            else if(SessionOptions != null) {
+                return TimeSpan.FromMilliseconds(1.0 / SessionOptions.SamplingFrequency);
+            }
+            else {
+                return TimeSpan.Zero;
+            }
+        }
+    }
+
     public ProfileDataReport() {
         moduleStatusMap_ = new Dictionary<BinaryFileDescriptor, ModuleStatus>();
     }
@@ -120,7 +134,7 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
                 Trace.WriteLine($"   - path: {pair.Value.BinaryFileInfo.FilePath}");
                 Trace.WriteLine($"   - details: {pair.Value.BinaryFileInfo.Details}");
             }
-            
+
             if (pair.Value.DebugInfoFile != null) {
                 Trace.WriteLine($"   - debug: {pair.Value.DebugInfoFile.Found}");
                 Trace.WriteLine($"   - path: {pair.Value.DebugInfoFile.FilePath}");
