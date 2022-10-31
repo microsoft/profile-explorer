@@ -263,29 +263,48 @@
                 <ColumnDefinition Style="{StaticResource NodePanelColumnsStyle}" />
             </Grid.ColumnDefinitions>
 
-
             <Grid
-                Width="50"
-                Height="80"
+                Width="80"
+                Height="70"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
                 Background="PapayaWhip">
                 <StackPanel Margin="2">
-                    <TextBlock Text="All" />
+                    <TextBlock
+                        Margin="0,1,0,0"
+                        FontWeight="Medium"
+                        Text="All Threads" />
+                    <TextBlock
+                        FontWeight="Medium"
+                        Text="Filter"
+                        Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <TextBlock
+                        Margin="0,-1,0,0"
+                        FontWeight="Medium"
+                        Text="{Binding FilteredTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}"
+                        Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <Button
+                        Height="16"
+                        Margin="0,1,0,0"
+                        Padding="-1"
+                        Content="Remove"
+                        Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <TextBlock Text="{Binding SelectionTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}" Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
                 </StackPanel>
             </Grid>
 
             <local:ActivityView
                 x:Name="ActivityView"
-                Height="80"
-                Margin="50,0,0,0"
+                Height="70"
+                Margin="80,0,0,0"
                 HorizontalAlignment="Stretch"
-                VerticalAlignment="Top" />
+                VerticalAlignment="Top"
+                BackColor="Linen" />
 
             <ScrollViewer
                 Grid.Column="0"
                 Height="160"
-                Margin="0,80,0,0"
+                Margin="0,70,0,0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Top"
                 CanContentScroll="True"

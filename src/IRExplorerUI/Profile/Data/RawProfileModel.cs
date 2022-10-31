@@ -157,6 +157,8 @@ public class ProfileTraceInfo {
     public string DomainName { get; set; }
     [ProtoMember(9)]
     public string TraceFilePath { get; set; }
+    [ProtoMember(10)]
+    public TimeSpan SamplingInterval { get; set; }
 
     public bool Is64Bit => PointerSize == 8;
     public TimeSpan ProfileDuration => ProfileEndTime - ProfileStartTime;

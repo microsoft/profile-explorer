@@ -7,6 +7,39 @@ using System.Windows.Media;
 
 namespace IRExplorerUI {
     class ColorUtils {
+        static readonly string[] PastelColors = new string[] {
+            "#FE9BA1",
+            "#FFABA0",
+            "#FFC69E",
+            "#D8BBCA",
+            "#D5A2BB",
+            "#EAA2B9",
+            "#FFAB9F",
+            "#FFBEA1",
+            "#FFE0A0",
+            "#DBD2CA",
+            "#D9B5B9",
+            "#EAB4B8",
+            "#FFBEA0",
+            "#FFFF9F",
+            "#C8F3A9",
+            "#D4F3D4",
+            "#CFD3BC",
+            "#AAC4C5",
+            "#99C4C6",
+            "#9AE2B3",
+            "#DCEFAC",
+            "#A4C7F0",
+            "#B7C6F0",
+            "#DEDCB8",
+            "#B6C9EE",
+            "#EAB4B8",
+            "#B0ABDB",
+            "#CCA9DB",
+            "#ACC6C5",
+            "#F1DCB8"
+        };
+        
         public static Color AdjustSaturation(Color color, float saturationAdjustment = 2f) {
             RGBToHSL(color, out float h, out float s, out float l);
             s = Math.Clamp(s * saturationAdjustment, 0, 1);
@@ -45,41 +78,12 @@ namespace IRExplorerUI {
             blue = (blue + mix.B) / 2;
             return Color.FromRgb((byte)red, (byte)green, (byte)blue);
 #else
-            string[] PastelColors = new string[] {
-                "#FE9BA1",
-                "#FFABA0",
-                "#FFC69E",
-                "#D8BBCA",
-                "#D5A2BB",
-                "#EAA2B9",
-                "#FFAB9F",
-                "#FFBEA1",
-                "#FFE0A0",
-                "#DBD2CA",
-                "#D9B5B9",
-                "#EAB4B8",
-                "#FFBEA0",
-                "#FFFF9F",
-                "#C8F3A9",
-                "#D4F3D4",
-                "#CFD3BC",
-                "#AAC4C5",
-                "#99C4C6",
-                "#9AE2B3",
-                "#DCEFAC",
-                "#A4C7F0",
-                "#B7C6F0",
-                "#DEDCB8",
-                "#B6C9EE",
-                "#EAB4B8",
-                "#B0ABDB",
-                "#CCA9DB",
-                "#ACC6C5",
-                "#F1DCB8"
-            };
-
             return Utils.ColorFromString(PastelColors[new Random().Next(PastelColors.Length)]);
 #endif
+        }
+
+        public static Color GeneratePastelColor(int id) {
+            return Utils.ColorFromString(PastelColors[id % PastelColors.Length]);
         }
 
         private static void RGBToHSL(Color color, out float h, out float s, out float l) {
