@@ -170,6 +170,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
                 await Task.WhenAll(tasks.ToArray());
                 profileData_.CallTree = callTree;
+                profileData_.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
                 Trace.WriteLine($"Done processing samples in {sw.Elapsed}");
 
                 if (options_.IncludePerformanceCounters) {
@@ -470,7 +471,6 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                     profileData_.AddModuleSample(resolvedFrame.Info.Image.ModuleName, sampleWeight);
                 }
             }
-
 
             //Trace.WriteLine($"Resolved image {resolvedFrame.Image.ModuleName}m {resolvedFrame.DebugInfo.Name}, profile func {resolvedFrame.Profile.FunctionDebugInfo.Name}, rva {resolvedFrame.FrameRVA}, ip {resolvedFrame.FrameIP}");
             var funcRva = resolvedFrame.Info.DebugInfo.RVA;

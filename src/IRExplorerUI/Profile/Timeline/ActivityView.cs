@@ -14,7 +14,6 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace IRExplorerUI.Profile;
 
-
 public record SampleTimeRangeInfo(TimeSpan StartTime, TimeSpan EndTime,
                                   int StartSampleIndex, int EndSampleIndex, int ThreadId);
 
@@ -212,7 +211,6 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             UpdateSelectionState();
         }
     }
-
 
     private SampleTimePointInfo GetSelectedTimePoint() {
         return new SampleTimePointInfo(selectionStartTime_ + startTime_,
@@ -502,7 +500,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 var textX = startX + selectionWidth / 2;
                 var textY = topMargin_ + 2;
                 var text = time.AsMillisecondsString();
-                DrawText(text, textX, textY, Brushes.Black, graphDC, backColor_, sampleBorderColor_);
+                DrawText(text, textX, textY, Brushes.Black, graphDC, true, backColor_, sampleBorderColor_);
             }
         }
 
@@ -525,12 +523,12 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 text = time.AsMillisecondsString();
             }
 
-            DrawText(text, positionLineX_, textY, Brushes.Black, graphDC, backColor_, sampleBorderColor_);
+            DrawText(text, positionLineX_, textY, Brushes.Black, graphDC, true, backColor_, sampleBorderColor_);
         }
     }
 
     private void DrawTimeBar(DrawingContext graphDC) {
-        const double MinTickDistance = 50;
+        const double MinTickDistance = 60;
         const double MinSecondTickDistance = 50;
         const double TextMarginY = 7;
         var secTextColor = Brushes.Black;
@@ -542,52 +540,59 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
         var timeDiff = endTime_ - startTime_;
         double maxSecTicks = maxWidth_ / MinSecondTickDistance;
-        double secTicks = Math.Ceiling(Math.Min(maxSecTicks, timeDiff.TotalSeconds));
-        double secPerTick = timeDiff.TotalSeconds / secTicks;
-        secTicks = timeDiff.TotalSeconds / Math.Ceiling(secPerTick);
-        secPerTick = timeDiff.TotalSeconds / secTicks;
-        double secondTickDist = maxWidth_ / secTicks;
+        double secsTicksCount = Math.Ceiling(Math.Min(maxSecTicks, timeDiff.TotalSeconds));
+        double secsPerTick = timeDiff.TotalSeconds / secsTicksCount;
+        secsTicksCount = timeDiff.TotalSeconds / Math.Ceiling(secsPerTick);
+        secsPerTick = timeDiff.TotalSeconds / secsTicksCount;
+        double secondsTickDist = maxWidth_ / secsTicksCount;
 
-        double startX = Math.Max(0,  -secondTickDist);
+        // Adjust start position to the nearest multiple of the tick time.
+        double startX = visibleArea_.Left;
         double endX = Math.Min(visibleArea_.Right, maxWidth_);
-        double currentSec = Math.Floor(startX / secondTickDist);
+        double currentSec = Math.Floor(startX / secondsTickDist) * secsPerTick;
+        startX = (currentSec * secondsTickDist) / secsPerTick;
 
-        for (double x = startX; x < endX; x += secondTickDist) {
-            var tickRect = new Rect(x - visibleArea_.Left, visibleArea_.Top, 3, 4);
-            graphDC.DrawRectangle(Brushes.Black, null, tickRect);
-            DrawText($"{(int)Math.Round(currentSec)}s", tickRect.Left, tickRect.Top + TextMarginY, secTextColor, graphDC);
+        for (double x = startX; x < endX; x += secondsTickDist) {
+           // if (x >= realStartX) {
+                var tickRect = new Rect(x - visibleArea_.Left, visibleArea_.Top, 3, 4);
+                graphDC.DrawRectangle(Brushes.Black, null, tickRect);
+                DrawText($"{(int)Math.Round(currentSec)}s", tickRect.Left, tickRect.Top + TextMarginY, secTextColor, graphDC, false);
+            //}
 
-            double subTicks = secondTickDist / MinTickDistance;
-            double subTickDist = secondTickDist / subTicks;
-            double timePerSubTick = 1000.0 / subTicks;
-            double msEndX = Math.Min(secondTickDist - subTickDist, endX);
+            int subTicks = (int)(secondsTickDist / MinTickDistance);
+            if (subTicks > 1 && subTicks % 2 == 0) subTicks--;
+
+            double subTickDist = secondsTickDist / (subTicks + 1);
+            double timePerSubTick = 1000.0 / (subTicks + 1);
+            double msEndX = Math.Min(secondsTickDist - subTickDist, endX);
             double currentMs = timePerSubTick;
 
-            for (double y = subTickDist; y < msEndX; y += subTickDist) {
+            for (double y = subTickDist; y <= msEndX; y += subTickDist) {
                 var msTickRect = new Rect(x + y - visibleArea_.Left, visibleArea_.Top, 2, 3);
                 graphDC.DrawRectangle(Brushes.DimGray, null, msTickRect);
                 double time = (currentSec + currentMs / 1000);
 
-                if (subTicks <= 10) {
-                    DrawText($"{time:0.0}", msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC);
+                if (subTicks <= 1) {
+                    DrawText($"{time:0.0}", msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC, false);
                 }
                 else if (subTicks <= 100) {
-                    DrawText($"{time:0.00}", msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC);
+                    DrawText($"{time:0.00}", msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC, false);
                 }
                 else {
                     int digits = (int)Math.Ceiling(Math.Log10(subTicks));
                     var timeStr = String.Format("{0:0." + new string('0', digits) + "}", time);
-                    DrawText(timeStr, msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC);
+                    DrawText(timeStr, msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC, false);
                 }
 
                 currentMs += timePerSubTick;
             }
 
-            currentSec += secPerTick;
+            currentSec += secsPerTick;
         }
     }
 
     private void DrawText(string text, double x, double y, Brush color, DrawingContext dc,
+                          bool keepInView = true,
                           Brush backColor = null, Pen borderColor = null, 
                           HorizontalAlignment horizontalAlign = HorizontalAlignment.Center) {
         var glyphInfo = glyphs_.GetGlyphs(text);
@@ -597,15 +602,15 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             x = x - glyphInfo.TextWidth / 2;
         }
 
-        x = Math.Clamp(x, textMargin.Left, visibleArea_.Width - glyphInfo.TextWidth);
+        if (keepInView) {
+            x = Math.Clamp(x, textMargin.Left, visibleArea_.Width - glyphInfo.TextWidth);
+        }
 
         if (backColor != null) {
             var textRect = new Rect(x - textMargin.Left, y - textMargin.Top, 
                                     glyphInfo.TextWidth + textMargin.Right, glyphInfo.TextHeight + textMargin.Bottom);
             dc.DrawRectangle(backColor, borderColor, textRect);
         }
-
-        
 
         y = y + glyphInfo.TextHeight / 2;
         dc.PushTransform(new TranslateTransform(x, y));
