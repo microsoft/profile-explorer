@@ -104,6 +104,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     public event EventHandler ClearedTimePoint;
 
     public int ThreadId { get; private set; }
+    public string ThreadName { get; set; }
     public bool IsSingleThreadView => ThreadId != -1;
     public bool HasSelection => hasSelection_;
     public TimeSpan SelectionTime => selectionEndTime_ - selectionStartTime_;
@@ -223,6 +224,44 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                                        TimeToSampleIndexBack(selectionEndTime_, SelectionTimeDiff), ThreadId);
     }
 
+    private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+        var time = PositionToTime(e.GetPosition(this).X);
+
+        if (hasSelection_) {
+
+            if (time >= selectionStartTime_ && time <= selectionEndTime_) {
+                if (e.ClickCount > 1) {
+                    var range = GetSelectedTimeRange();
+                    FilterTimeRange(range);
+                    FilteredTimeRange?.Invoke(this, range);
+                }
+
+                return;
+            }
+
+            hasSelection_ = false;
+            UpdateSelectionState();
+            ClearedSelectedTimeRange?.Invoke(this, EventArgs.Empty);
+        }
+
+        if (hasFilter_) {
+            if (time < filterStartTime_ || time > filterEndTime_) {
+                if (e.ClickCount > 1) {
+                    ClearTimeRangeFilter();
+                    ClearedFilteredTimeRange?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        ClearedTimePoint?.Invoke(this, EventArgs.Empty);
+
+        startedSelection_ = true;
+        selectionStartTime_ = time;
+        selectionEndTime_ = selectionStartTime_;
+        CaptureMouse();
+        Redraw();
+    }
+
     private void ActivityView_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
         if (startedSelection_) {
             startedSelection_ = false;
@@ -234,6 +273,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             }
 
             hasSelection_ = SelectionTimeDiff.Ticks > 0;
+            showPositionLine_ = false;
             ReleaseMouseCapture();
             UpdateSelectionState();
 
@@ -295,45 +335,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         OnPropertyChanged(nameof(HasFilter));
         OnPropertyChanged(nameof(FilteredTime));
     }
-
-    private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-        var time = PositionToTime(e.GetPosition(this).X);
-
-        if (hasSelection_) {
-
-            if (time >= selectionStartTime_ && time <= selectionEndTime_) {
-                if (e.ClickCount > 1) {
-                    var range = GetSelectedTimeRange();
-                    FilterTimeRange(range);
-                    FilteredTimeRange?.Invoke(this, range);
-                }
-
-                return;
-            }
-
-            hasSelection_ = false;
-            UpdateSelectionState();
-            ClearedSelectedTimeRange?.Invoke(this, EventArgs.Empty);
-        }
-        
-        if (hasFilter_) {
-            if (time < filterStartTime_ || time > filterEndTime_) {
-                if (e.ClickCount > 1) {
-                    ClearTimeRangeFilter();
-                    ClearedFilteredTimeRange?.Invoke(this, EventArgs.Empty);
-                }
-            }
-        }
-
-        ClearedTimePoint?.Invoke(this, EventArgs.Empty);
-
-        startedSelection_ = true;
-        selectionStartTime_ = time;
-        selectionEndTime_ = selectionStartTime_;
-        CaptureMouse();
-        Redraw();
-    }
-
+    
     public async Task Initialize(ProfileData profile, Rect visibleArea, int threadId = -1) {
         if (initialized_) {
             return;
@@ -343,6 +345,12 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         profile_ = profile;
         visibleArea_ = visibleArea;
         ThreadId = threadId;
+
+        var thread = profile.FindThread(threadId);
+        if(thread != null) {
+            ThreadName = thread.Name;
+        }
+
         samplingInterval_ = profile_.Report.SamplingInterval;
         Trace.WriteLine($"samplingInterval_ {samplingInterval_}");
 
@@ -357,8 +365,12 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual_).PixelsPerDip);
 
         sliceWidth_ = SliceWidth;
+        //? TODO: Separate ComputeSlices to run on multiple threads
         slices_ = await Task.Run(() => ComputeSampleSlices(profile, threadId));
+        
         OnPropertyChanged(nameof(ThreadWeight));
+        OnPropertyChanged(nameof(ThreadId));
+        OnPropertyChanged(nameof(ThreadName));
         Redraw();
     }
 
@@ -412,6 +424,11 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             sampleIndex++;
         }
 
+        if (sliceSeriesDict.Count == 0) {
+            // Other code assumes there is at least one slice list, make a dummy one.
+            return new List<SliceList>() { new SliceList(threadId) };
+        }
+
         Trace.WriteLine($"ComputeSampleSlices {sw3.ElapsedMilliseconds}ms");
         return sliceSeriesDict.ToValueList();
     }
@@ -443,7 +460,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             int startSlice = (int)(visibleArea_.Left / scaledSliceWidth);
             int endSlice = Math.Min((int)(visibleArea_.Right / scaledSliceWidth), list.Slices.Count);
 
-            for(int i = startSlice; i < endSlice; i++) {
+            for (int i = startSlice; i < endSlice; i++) {
                 var weight = list.Slices[i].Weight;
                 double height = ((double)weight.Ticks / (double)list.MaxWeight.Ticks) * sampleHeight_;
 
@@ -451,10 +468,22 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                     continue;
                 }
 
+                // Mark the slice that's under the mouse cursor.
+                var backColor = sampleBackColor_;
+                var borderColor = sampleBorderColor_;
+
+                if (showPositionLine_ && !startedSelection_) {
+                    if (positionLineX_ > i * scaledSliceWidth &&
+                        positionLineX_ < (i + 1) * scaledSliceWidth) {
+                        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)sampleBackColor_).Color, 0.75f);
+                        backColor = ColorBrushes.GetBrush(newColor);
+                    }
+                }
+
                 var rect = new Rect(i * scaledSliceWidth - visibleArea_.Left,
                                     sampleHeight_ - height + topMargin_,
                                     scaledSliceWidth, height);
-                graphDC.DrawRectangle(sampleBackColor_, sampleBorderColor_, rect);
+                graphDC.DrawRectangle(backColor, borderColor, rect);
             }
 
             //if (scaledSliceWidth > 2 * sliceWidth_) {
@@ -516,8 +545,8 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             var slice = TimeToSlice(time);
 
             if (slice.HasValue) {
-                text += $"{EstimateCpuUsage(slice.Value, slices_[0].TimePerSlice, samplingInterval_):F2}, {time.AsMillisecondsString()}";
-                text += $" ({slice.Value.Weight.AsMillisecondsString()})";
+                text += $"{EstimateCpuUsage(slice.Value, slices_[0].TimePerSlice, samplingInterval_):F2} C, {time.AsMillisecondsString()}";
+                text += $" (W {slice.Value.Weight.AsSecondsString()})";
             }
             else {
                 text = time.AsMillisecondsString();

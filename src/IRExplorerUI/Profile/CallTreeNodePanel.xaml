@@ -224,7 +224,6 @@
                         <Canvas
                             x:Name="ModuleCanvas"
                             Height="{Binding ElementName=ModuleTextBlock, Path=ActualHeight}"
-                            Margin="0,0,42,0"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch">
                             <TextBox
@@ -256,7 +255,6 @@
                         <Canvas
                             x:Name="FunctionCanvas"
                             Height="{Binding ElementName=FunctionTextBlock, Path=ActualHeight}"
-                            Margin="0,0,42,0"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch">
                             <TextBox

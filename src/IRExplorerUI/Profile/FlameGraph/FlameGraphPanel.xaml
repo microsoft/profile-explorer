@@ -231,7 +231,6 @@
                         Text="Results:"
                         Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-
                     <TextBlock
                         Margin="4,0,0,0"
                         HorizontalAlignment="Center"
@@ -264,7 +263,7 @@
             </Grid.ColumnDefinitions>
 
             <Grid
-                Width="80"
+                Width="100"
                 Height="70"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
@@ -276,11 +275,13 @@
                         Text="All Threads" />
                     <TextBlock
                         FontWeight="Medium"
+                        Foreground="MediumBlue"
                         Text="Filter"
                         Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
                     <TextBlock
                         Margin="0,-1,0,0"
                         FontWeight="Medium"
+                        Foreground="MediumBlue"
                         Text="{Binding FilteredTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}"
                         Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
                     <Button
@@ -296,7 +297,7 @@
             <local:ActivityView
                 x:Name="ActivityView"
                 Height="70"
-                Margin="80,0,0,0"
+                Margin="100,0,0,0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Top"
                 BackColor="Linen" />

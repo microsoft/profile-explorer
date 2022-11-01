@@ -1121,7 +1121,9 @@ namespace IRExplorerUI {
             var demanglingOptions = nameProvider.GlobalDemanglingOptions;
 
             foreach (var funcEx in functions) {
-                funcEx.AlternateName = nameProvider.DemangleFunctionName(funcEx.Function, demanglingOptions);
+                if (funcEx.AlternateName == null) {
+                    funcEx.AlternateName = nameProvider.DemangleFunctionName(funcEx.Function, demanglingOptions);
+                }
             }
 
             AlternateNameColumnVisible = true;
@@ -1142,8 +1144,8 @@ namespace IRExplorerUI {
             foreach (var pair in profile.ModuleWeights) {
                 double weightPercentage = profile.ScaleModuleWeight(pair.Value);
                 var moduleInfo = new ModuleEx() {
-                    Name = pair.Key, 
-                    ExclusivePercentage = weightPercentage, 
+                    Name = pair.Key,
+                    ExclusivePercentage = weightPercentage,
                     ExclusiveWeight = pair.Value
                 };
 
@@ -1165,8 +1167,8 @@ namespace IRExplorerUI {
             // Add one entry to represent all modules.
             var allWeightPercentage = profile.ScaleFunctionWeight(profile.ProfileWeight);
             modulesEx.Add(new ModuleEx() {
-                Name = "All", 
-                ExclusivePercentage = allWeightPercentage, 
+                Name = "All",
+                ExclusivePercentage = allWeightPercentage,
                 ExclusiveWeight = profile.ProfileWeight
             });
 
@@ -1336,7 +1338,6 @@ namespace IRExplorerUI {
             }
 
             SetDemangledFunctionNames(functionsEx);
-
             return functionsEx;
         }
 
@@ -1364,8 +1365,13 @@ namespace IRExplorerUI {
 
         private void CreateFunctionExtensions(IRTextSummary summary, List<IRTextFunctionEx> functionsEx) {
             foreach (var func in summary.Functions) {
-                var funcEx = new IRTextFunctionEx(func, functionsEx.Count);
-                functionExtMap_[func] = funcEx;
+                if(!functionExtMap_.TryGetValue(func, out var funcEx)) {
+                    funcEx = new IRTextFunctionEx(func, functionsEx.Count);
+                    functionExtMap_[func] = funcEx;
+                }
+                else {
+                    funcEx.Index = functionsEx.Count;
+                }
                 functionsEx.Add(funcEx);
             }
         }
@@ -1420,8 +1426,10 @@ namespace IRExplorerUI {
                 int index = 0;
 
                 foreach (var section in func.Sections) {
-                    var sectionEx = new IRTextSectionEx(section, index++);
-                    sectionExtMap_[section] = sectionEx;
+                    if (!sectionExtMap_.ContainsKey(section)) {
+                        var sectionEx = new IRTextSectionEx(section, index++);
+                        sectionExtMap_[section] = sectionEx;
+                    }
                 }
             }
         }
@@ -2396,7 +2404,7 @@ namespace IRExplorerUI {
                 if (function.SectionCount == 0) {
                     continue;
                 }
-                
+
                 if (cancelableTask.IsCanceled) {
                     break;
                 }

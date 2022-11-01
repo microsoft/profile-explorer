@@ -456,6 +456,17 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
         }
     }
 
+    public ProfileThread FindThread(int threadId, RawProfileData profileData) {
+        foreach (var id in ThreadIds) {
+            var thread = profileData.FindThread(id);
+            if (thread.ThreadId == threadId) {
+                return thread;
+            }
+        }
+
+        return null;
+    }
+
     public ProfileProcess(int processId, int parentId, string name,
         string imageFileName, string commandLine) : this() {
         ProcessId = processId;
@@ -527,6 +538,8 @@ public sealed class ProfileThread : IEquatable<ProfileThread> {
     public int ProcessId { get; set; }
     [ProtoMember(3)]
     public string Name { get; set; }
+
+    public bool HasName => !string.IsNullOrEmpty(Name);
 
     public ProfileThread() { }
 

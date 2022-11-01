@@ -68,55 +68,7 @@ public sealed class ProfileCallTree {
         }
     }
 
-    public static ProfileCallTree Build(ProfileData data) {
-        return Build(data, 0, data.Samples.Count, -1);
-    }
-
-    public static ProfileCallTree Build(ProfileData data, int sampleStartIndex, int sampleEndIndex, int threadId) {
-        ProfileCallTree callTree = new();
-
-#if true
-        for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
-            var (sample, stack) = data.Samples[i];
-
-            if (threadId != -1 && stack.Context.ThreadId != threadId) {
-                continue;
-            }
-            
-            UpdateCallTree(sample, stack, callTree);
-        }
-#else
-        var sw = Stopwatch.StartNew();
-
-        int sampleCount = sampleEndIndex - sampleStartIndex;
-        int chunks = Math.Min(16, (Environment.ProcessorCount * 3) / 4);
-            //chunks = 1;
-        int chunkSize = sampleCount / chunks;
-        var tasks = new List<Task>();
-        var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
-        var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
-
-        for (int k = 0; k < chunks; k++) {
-            int start = Math.Min(sampleStartIndex + k * chunkSize, sampleEndIndex);
-            int end = Math.Min(sampleStartIndex + (k + 1) * chunkSize, sampleEndIndex);
-
-            tasks.Add(taskFactory.StartNew(() => {
-                for (int i = start; i < end; i++) {
-                    var (sample, stack) = data.Samples[i];
-                    UpdateCallTree(sample, stack, callTree);
-                }
-            }));
-
-
-        }
-
-        Task.WhenAll(tasks.ToArray()).Wait();
-        Trace.WriteLine($"CT took {sw.ElapsedMilliseconds}");
-#endif
-        return callTree;
-    }
-    
-    private static void UpdateCallTree(ProfileSample sample, ResolvedProfileStack resolvedStack, ProfileCallTree callTree) {
+    public void UpdateCallTree(ProfileSample sample, ResolvedProfileStack resolvedStack) {
         // Build call tree. Note that the call tree methods themselves are thread-safe.
         bool isRootFrame = true;
         ProfileCallTreeNode prevNode = null;
@@ -132,11 +84,11 @@ public sealed class ProfileCallTree {
             ProfileCallTreeNode node = null;
 
             if (isRootFrame) {
-                node = callTree.AddRootNode(resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function);
+                node = AddRootNode(resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function);
                 isRootFrame = false;
             }
             else {
-                node = callTree.AddChildNode(prevNode, resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function);
+                node = AddChildNode(prevNode, resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function);
                 prevNode.AddCallSite(node, prevFrame.FrameRVA, sample.Weight);
             }
 
@@ -591,12 +543,21 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     public long Id { get; set; }
     [ProtoMember(5)]
     public FunctionDebugInfo FunctionDebugInfo { get; set; }
-    [ProtoMember(6)]
-    public TimeSpan Weight { get; set; }
-    [ProtoMember(7)]
-    public TimeSpan ExclusiveWeight { get; set; }
+
+    [ProtoMember(6)] private long weight_; // Weight saved as ticks to use Interlocked.Add
+    [ProtoMember(7)] private long exclusiveWeight_;
     [ProtoMember(8)]
     public ProfileCallTreeNodeKind Kind { get; set; }
+
+    public TimeSpan Weight {
+        get => TimeSpan.FromTicks(weight_);
+        set => weight_ = value.Ticks;
+    }
+
+    public TimeSpan ExclusiveWeight {
+        get => TimeSpan.FromTicks(exclusiveWeight_);
+        set => exclusiveWeight_ = value.Ticks;
+    }
 
     public IRTextFunction Function {
         get => functionRef_;
@@ -670,15 +631,13 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public void AccumulateWeight(TimeSpan weight) {
-        lock_.EnterWriteLock();
-        Weight += weight;
-        lock_.ExitWriteLock();
+        // Avoid lock incrementing the weight ticks.
+        Interlocked.Add(ref weight_, weight.Ticks);
     }
 
     public void AccumulateExclusiveWeight(TimeSpan weight) {
-        lock_.EnterWriteLock();
-        ExclusiveWeight += weight;
-        lock_.ExitWriteLock();
+        // Avoid lock incrementing the weight ticks.
+        Interlocked.Add(ref exclusiveWeight_, weight.Ticks);
     }
 
     public (ProfileCallTreeNode, bool) AddChild(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
@@ -841,7 +800,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public bool Equals(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
-        return Function.Equals(function) &&
+        return //Function.Equals(function) &&
                FunctionDebugInfo.Equals(functionDebugInfo);
     }
 

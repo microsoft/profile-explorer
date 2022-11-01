@@ -295,8 +295,23 @@ public sealed class ETWEventProcessor : IDisposable {
                 source_.StopProcessing();
             }
 
+            if (IsAcceptedProcess(data.ProcessID)) {
+                Trace.WriteLine($"Thread {data.ThreadID}: {data.ThreadName}");
+            }
+
             var thread = new ProfileThread(data.ThreadID, data.ProcessID, data.ThreadName);
             profile.AddThreadToProcess(data.ProcessID, thread);
+        };
+
+        source_.Kernel.ThreadSetName += data => {
+            if (IsAcceptedProcess(data.ProcessID)) {
+                var proc = profile.GetOrCreateProcess(data.ProcessID);
+                var thread = proc.FindThread(data.ThreadID, profile);
+
+                if (thread != null) {
+                    thread.Name = data.ThreadName;
+                }
+            }
         };
 
         source_.Kernel.EventTraceHeader += data => {

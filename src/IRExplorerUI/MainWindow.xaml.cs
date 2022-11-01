@@ -915,257 +915,86 @@ namespace IRExplorerUI {
                 funcProfile.Value.Reset();
             }
 
-            HashSet<int> stackModules = new();
-            HashSet<IRTextFunction> stackFuncts = new();
+            data.CallTree = null; //? Recycle nodes
+            ProfileCallTree callTree = new();
+
+            int sampleCount = sampleEndIndex - sampleStartIndex;
+            int chunks = Math.Min(8, (Environment.ProcessorCount * 3) / 4);
             
-            for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
-                var (sample, stack) = data.Samples[i];
+            int chunkSize = sampleCount / chunks;
+            var tasks = new List<Task>();
+            var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
+            var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
 
-                if (threadId != -1 && stack.Context.ThreadId != threadId) {
-                    continue;
-                }
-                
-                data.TotalWeight += sample.Weight;
-                data.ProfileWeight += sample.Weight;
-                
-                bool isTopFrame = true;
-                stackModules.Clear();
-                stackFuncts.Clear();
+            for (int k = 0; k < chunks; k++) {
+                int start = Math.Min(sampleStartIndex + k * chunkSize, sampleEndIndex);
+                int end = Math.Min(sampleStartIndex + (k + 1) * chunkSize, sampleEndIndex);
 
-                foreach (var resolvedFrame in stack.StackFrames) {
-                    if (resolvedFrame.IsUnknown) {
-                        continue;
-                    }
+                tasks.Add(taskFactory.StartNew(() => {
+                    HashSet<int> stackModules = new();
+                    HashSet<IRTextFunction> stackFuncts = new();
 
-                    if (isTopFrame && stackModules.Add(resolvedFrame.Info.Image.Id)) {
-                        //? TODO: Avoid lock by summing per thread, accumulate at the end
-                        //? TODO: Also, don't use mod name as key, use imageId
-                        data.AddModuleSample(resolvedFrame.Info.Image.ModuleName, sample.Weight);
-                    }
-                    
-                    var funcRva = resolvedFrame.Info.DebugInfo.RVA;
-                    var frameRva = resolvedFrame.FrameRVA;
-                    var textFunction = resolvedFrame.Info.Function;
-                    var funcProfile = resolvedFrame.Info.Profile;
+                    for (int i = start; i < end; i++) {
+                        var (sample, stack) = data.Samples[i];
 
-                    if (funcProfile == null) {
-                        funcProfile = data.GetOrCreateFunctionProfile(resolvedFrame.Info.Function, null);
-                        resolvedFrame.Info.Profile = funcProfile;
-                    }
-
-                    lock (funcProfile) {
-                        var offset = frameRva - funcRva;
-
-                        // Don't count the inclusive time for recursive functions multiple times.
-                        if (stackFuncts.Add(textFunction)) {
-                            funcProfile.AddInstructionSample(offset, sample.Weight);
-                            funcProfile.Weight += sample.Weight;
+                        if (threadId != -1 && stack.Context.ThreadId != threadId) {
+                            continue;
                         }
 
-                        // Count the exclusive time for the top frame function.
-                        if (isTopFrame) {
-                            funcProfile.ExclusiveWeight += sample.Weight;
+                        data.TotalWeight += sample.Weight;
+                        data.ProfileWeight += sample.Weight;
+
+                        bool isTopFrame = true;
+                        stackModules.Clear();
+                        stackFuncts.Clear();
+
+                        foreach (var resolvedFrame in stack.StackFrames) {
+                            if (resolvedFrame.IsUnknown) {
+                                continue;
+                            }
+
+                            if (isTopFrame && stackModules.Add(resolvedFrame.Info.Image.Id)) {
+                                //? TODO: Avoid lock by summing per thread, accumulate at the end
+                                //? TODO: Also, don't use mod name as key, use imageId
+                                data.AddModuleSample(resolvedFrame.Info.Image.ModuleName, sample.Weight);
+                            }
+
+                            var funcRva = resolvedFrame.Info.DebugInfo.RVA;
+                            var frameRva = resolvedFrame.FrameRVA;
+                            var textFunction = resolvedFrame.Info.Function;
+                            var funcProfile = resolvedFrame.Info.Profile;
+
+                            if (funcProfile == null) {
+                                funcProfile = data.GetOrCreateFunctionProfile(resolvedFrame.Info.Function, null);
+                                resolvedFrame.Info.Profile = funcProfile;
+                            }
+
+                            lock (funcProfile) {
+                                var offset = frameRva - funcRva;
+
+                                // Don't count the inclusive time for recursive functions multiple times.
+                                if (stackFuncts.Add(textFunction)) {
+                                    funcProfile.AddInstructionSample(offset, sample.Weight);
+                                    funcProfile.Weight += sample.Weight;
+                                }
+
+                                // Count the exclusive time for the top frame function.
+                                if (isTopFrame) {
+                                    funcProfile.ExclusiveWeight += sample.Weight;
+                                }
+                            }
+
+                            isTopFrame = false;
                         }
+
+                        callTree.UpdateCallTree(sample, stack);
                     }
+                }));
 
-                    isTopFrame = false;
-                }
-            }
-        }
-
-        private async void MenuItem_Click_8(object sender, RoutedEventArgs e) {
-            //? TODO: Remove
-#if false
-            //var data = File.ReadAllBytes(@"C:\work\samples.dat");
-            //var profile = StateSerializer.Deserialize<ProtoProfile>(data);
-
-            var dict = new Dictionary<int, TimeSpan>();
-            var start = long.MaxValue;
-            var end = long.MinValue;
-            var sw = Stopwatch.StartNew();
-
-            long maxSample = 0;
-
-            foreach (var s in profile.samples_) {
-                maxSample = Math.Max(maxSample, s.Weight.Ticks);
             }
 
-            Trace.WriteLine($"0_MaxSample: {sw.ElapsedMilliseconds}");
-
-            foreach (var s in profile.samples_) {
-                dict.AccumulateValue(s.GetContext(profile).ProcessId, s.Weight);
-                start = Math.Min(start, s.Weight.Ticks);
-                end = Math.Max(end, s.Weight.Ticks);
-            }
-
-            //Trace.WriteLine($"1_PerProcTime: {sw.ElapsedMilliseconds}");
-            var r = new Random();
-
-            //for(int i = 0; i < profile.PerfCounters.Count; i++) {
-            //    var c = profile.PerfCounters[i];
-            //    c.ProcessId = r.Next(0, 500);
-            //    profile.PerfCounters[i] = c;
-            //}
-
-            //sw.Restart();
-            //var dict2 = new Dictionary<int, TimeSpan>();
-
-            //for (int k = 0; k < 5; k++) {
-            //    dict2.Clear();
-            //    var sw4 = Stopwatch.StartNew();
-
-            //    foreach (var s in profile.PerfCounters) {
-            //        dict2.AccumulateValue(s.ProcessId, TimeSpan.FromMilliseconds(1));
-            //    }
-
-            //    Trace.WriteLine($"PMCiter: {sw4.ElapsedMilliseconds}, {sw4.Elapsed}");
-            //}
-
-            //Trace.WriteLine($"1_PMC: {dict2.Count}, {sw.ElapsedMilliseconds}");
-            //foreach (var keyValuePair in dict2)
-            //{
-            //    Trace.Write($"{keyValuePair.Key}, ");
-            //}
-
-            //{
-            //    using var ts = new StreamWriter(@"C:\work\pmc_counters.csv");
-            //    foreach (var s in profile.PerfCounters) {
-            //        ts.WriteLine($"{s.Time}, {s.IP}, {s.RVA}, {s.ProcessId}, {s.ThreadId}, {s.CounterId}");
-            //    }
-            //}
-
-            //{
-            //    using var ts = new StreamWriter(@"C:\work\pmc_counters2.csv");
-            //    for(int i = 0; i < profile.PerfCounters.Count / 8; i++) {
-            //        var s = profile.PerfCounters[i];
-            //        ts.WriteLine($"{s.Time}, {s.IP}, {s.RVA}, {s.ProcessId}, {s.ThreadId}, {s.CounterId}");
-            //    }
-            //}
-
-            //{
-            //    using var ts = new StreamWriter(@"C:\work\pmc_samples.csv");
-            //    foreach (var s in profile.Samples) {
-            //        ts.WriteLine($"{s.RVA}, {s.Time}, {s.Weight.Ticks}, {s.ProcessId}, {s.ThreadId}, {s.ImageId}, {s.StackFrameId}, {s.ProcessorCore}");
-            //    }
-            //}
-
-            var sw2 = Stopwatch.StartNew();
-
-            //? - process timeline
-            //? - per-proc thread timeline
-            //? - per-proc module timeline
-            //? - per-proc core timeline
-            //? o time range filter
-            //? o group samples by process (cache)
-
-            // 1 tick = 100 ns
-            long resolution = 100;
-            var timeDiffNs = (end - start) / resolution;
-            var timeDiff = TimeSpan.FromTicks(timeDiffNs);
-            var timePerSlice = TimeSpan.FromMilliseconds(10);
-            double width = timeDiff.Ticks / timePerSlice.Ticks;
-            var sliceSeriesDict = new Dictionary<int, Dictionary<int, TimeSpan>>();
-            List<Tuple<int, Dictionary<int, TimeSpan>>> sliceSeriesList = null;
-
-            for (int k = 0; k < 1; k++) {
-                var sw3 = Stopwatch.StartNew();
-
-                sliceSeriesDict.Clear();
-                foreach (var s in profile.samples_) {
-                    var point = (s.Time.Ticks - start) / resolution;
-                    var slice = (int)(point / timePerSlice.Ticks);
-
-                    //? Add extension method TryGetOrAddValue
-                    var sliceDict = sliceSeriesDict.GetOrAddValue(s.GetContext(profile).ProcessId);
-                    sliceDict.AccumulateValue(slice, s.Weight);
-                }
-
-                var list = dict.ToList();
-                list.Sort((a, b) => -a.Item2.CompareTo(b.Item2));
-
-                sliceSeriesList = sliceSeriesDict.ToList();
-                sliceSeriesList.Sort((a, b) => {
-                    if (!dict.TryGetValue(a.Item1, out var pa) ||
-                        !dict.TryGetValue(b.Item1, out var pb)) {
-                        return 0;
-                    }
-
-                    return -pa.CompareTo(pb);
-                });
-
-                Trace.WriteLine($"Iter_PerProcSliceTime: {sw3.ElapsedMilliseconds}, {sw3.Elapsed}");
-            }
-
-            Trace.WriteLine($"2_PerProcSliceTime: {sw.ElapsedMilliseconds}, {sw.Elapsed}");
-            Trace.WriteLine($"2_PerProcSliceTime: {sw2.ElapsedMilliseconds}, {sw2.Elapsed}");
-            Trace.Flush();
-
-            Trace.WriteLine($"Samples: {profile.samples_.Count}");
-            Trace.WriteLine($"Time: {timeDiff}, {timeDiff.TotalMinutes}");
-
-            //foreach (var pair in list) {
-            //    var p = profile.FindProcess(pair.Item1);
-            //    Trace.WriteLine($"{p.Id}, {p?.Name}: {pair.Item2}");
-            //}
-
-            int count = 0;
-            var model = new PlotModel();
-
-            foreach (var pair in sliceSeriesList) {
-                if (count++ == 0) continue;
-                var sliceList = pair.Item2.ToList();
-                sliceList.Sort((a, b) => a.Item1.CompareTo(b.Item1));
-
-                //var slicePlot = new OxyPlot.Series.LineSeries();
-                var slicePlot = new OxyPlot.Series.LinearBarSeries();
-                slicePlot.BarWidth = 10;
-                slicePlot.StrokeThickness = 1;
-                slicePlot.StrokeColor = OxyColor.FromArgb(255, 50, 50, 50);
-
-                var p = profile.GetOrCreateProcess(pair.Item1);
-                slicePlot.Title = p?.Name;
-                model.Series.Add(slicePlot);
-
-                foreach (var slicePair in sliceList) {
-                    var pointTime = TimeSpan.FromTicks(slicePair.Item1 * timePerSlice.Ticks).TotalSeconds;
-                    slicePlot.Points.Add(new DataPoint(pointTime, slicePair.Item2.TotalMilliseconds));
-                }
-
-                if (count++ >10) break;
-                //Trace.WriteLine($"{pair.Key}: {pair.Item2}");
-            }
-
-            var w = new Window();
-            w.Width = 500;
-            w.Height = 300;
-            var plotView = new OxyPlot.SkiaSharp.Wpf.PlotView();
-            model.IsLegendVisible = true;
-            model.Padding = new OxyThickness(0);
-
-            model.Axes.Add(new LinearAxis() {
-                Position = AxisPosition.Left,
-                TickStyle = TickStyle.Crossing,
-                MajorGridlineStyle = LineStyle.Automatic,
-                MinorGridlineStyle = LineStyle.None,
-                IsZoomEnabled = false,
-            });
-            model.Axes.Add(new LinearAxis() {
-                Position = AxisPosition.Bottom,
-                TickStyle = TickStyle.Crossing,
-                MajorGridlineStyle = LineStyle.Automatic,
-                MinorGridlineStyle = LineStyle.None,
-                IsZoomEnabled = true,
-            });
-
-            plotView.Model = model;
-            w.Content = plotView;
-            w.Show();
-
-            Trace.Flush();
-
-            //GC.Collect();
-            //GC.WaitForPendingFinalizers();
-#endif
+            Task.WhenAll(tasks.ToArray()).Wait();
+            data.CallTree = callTree;
         }
 
         private class MainWindowState {
@@ -1482,27 +1311,28 @@ namespace IRExplorerUI {
         
         public async Task<bool> FilterProfileSamples(SampleTimeRangeInfo range) {
             var sw = Stopwatch.StartNew();
-            ProfileCallTree tree = null;
-            
+
+            Trace.WriteLine($"--------------------------------------------------------\n");
             Trace.WriteLine($"Filter range {range.StartSampleIndex}-{range.EndSampleIndex} out of {ProfileData.Samples.Count}");
 
-            ComputeFunctionProfile(this.ProfileData, range.StartSampleIndex, range.EndSampleIndex, range.ThreadId);
-            Trace.WriteLine($"ComputeFunctionProfile {sw.ElapsedMilliseconds}");
+            {
+                var sw2 = Stopwatch.StartNew();
+                ComputeFunctionProfile(this.ProfileData, range.StartSampleIndex, range.EndSampleIndex, range.ThreadId);
+                Trace.WriteLine($"1) ComputeFunctionProfile {sw2.ElapsedMilliseconds}");
+            }
 
-            tree = await Task.Run(() => ProfileCallTree.Build(this.ProfileData, range.StartSampleIndex, range.EndSampleIndex, range.ThreadId));
-            Trace.WriteLine($"ProfileCallTree {sw.ElapsedMilliseconds}");
-
-
-            ProfileData.CallTree = tree;
-
-            await SectionPanel.RefreshProfile();
+            {
+                var sw2 = Stopwatch.StartNew();
+                await SectionPanel.RefreshProfile();
+                Trace.WriteLine($"3) RefreshProfile {sw2.ElapsedMilliseconds}");
+            }
 
             var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
 
             if (panel != null) {
                 var sw2 = Stopwatch.StartNew();
                 await panel.DisplayProfileCallTree(true);
-                Trace.WriteLine($"DisplayProfileCallTree {sw2.ElapsedMilliseconds}");
+                Trace.WriteLine($"4) DisplayProfileCallTree {sw2.ElapsedMilliseconds}");
             }
 
             var fgPanel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
@@ -1510,11 +1340,11 @@ namespace IRExplorerUI {
             if (fgPanel != null) {
                 var sw2 = Stopwatch.StartNew();
                 await fgPanel.DisplayFlameGraph();
-                Trace.WriteLine($"DisplayFlameGraph {sw2.ElapsedMilliseconds}");
+                Trace.WriteLine($"5) DisplayFlameGraph {sw2.ElapsedMilliseconds}");
             }
 
             sw.Stop();
-            Trace.WriteLine($"Filtering {sw.ElapsedMilliseconds}");
+            Trace.WriteLine($"Total: {sw.ElapsedMilliseconds}");
             Trace.Flush();
             return true;
         }
