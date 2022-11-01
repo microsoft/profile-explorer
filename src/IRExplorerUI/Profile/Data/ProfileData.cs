@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using IRExplorerCore;
+using IRExplorerCore.Utilities;
 using ProtoBuf;
 using IRExplorerUI;
 
@@ -31,7 +32,9 @@ public class ProfileData {
         [ProtoMember(7)] public byte[] CallTreeState; //? TODO: Reimplement, super slow!
 
         [ProtoMember(8)] public List<(ProfileSample Sample, ResolvedProfileStack Stack)> Samples { get; set; }
-
+        [ProtoMember(9)] public ProfileProcess Process { get; set; }
+        [ProtoMember(10)]
+        public Dictionary<int, ProfileThread> Threads { get; set; }
 
         public ProfileDataState(TimeSpan profileWeight, TimeSpan totalWeight) {
             ProfileWeight = profileWeight;
@@ -50,6 +53,8 @@ public class ProfileData {
     public ProfileDataReport Report { get; set; }
 
     public List<(ProfileSample Sample, ResolvedProfileStack Stack)> Samples { get; set; }
+    public ProfileProcess Process { get; set; }
+    public Dictionary<int, ProfileThread> Threads { get; set; }
 
     public List<PerformanceCounterInfo> SortedPerformanceCounters {
         get {
@@ -88,6 +93,7 @@ public class ProfileData {
         ModuleWeights = new Dictionary<string, TimeSpan>();
         PerformanceCounters = new Dictionary<int, PerformanceCounterInfo>();
         ModuleCounters = new Dictionary<string, PerformanceCounterSet>();
+        Threads = new Dictionary<int, ProfileThread>();
     }
 
     public void AddModuleSample(string moduleName, TimeSpan weight) {
@@ -180,6 +186,8 @@ public class ProfileData {
         state.Report = Report;
         state.CallTreeState = CallTree.Serialize();
         state.Samples = Samples;
+        state.Process = Process;
+        state.Threads = Threads;
 
         foreach (var pair in FunctionProfiles) {
             var funcId = new IRTextFunctionId(pair.Key);
@@ -213,10 +221,11 @@ public class ProfileData {
             profileData.FunctionProfiles[function] = pair.Value;
         }
 
+        profileData.Process = state.Process;
+        profileData.Threads = state.Threads;
         profileData.Report = state.Report;
         profileData.CallTree = ProfileCallTree.Deserialize(state.CallTreeState, summaryMap);
         DeserializeSamples(profileData, state, summaryMap);
-
         return profileData;
     }
 
@@ -254,6 +263,19 @@ public class ProfileData {
         var list = FunctionProfiles.ToList();
         list.Sort((a, b) => -a.Item2.ExclusiveWeight.CompareTo(b.Item2.ExclusiveWeight));
         return list;
+    }
+
+    public void AddThreads(IEnumerable<ProfileThread> threads) {
+        foreach (var thread in threads) {
+            Threads[thread.ThreadId] = thread;
+        }
+    }
+
+    public ProfileThread FindThread(int threadId) {
+        if (Threads != null) {
+            return Threads.GetValueOrNull(threadId);
+        }
+        return null;
     }
 }
 

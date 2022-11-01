@@ -93,6 +93,17 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         report.TraceInfo = profile.TraceInfo;
         var mainProcessId = mainProcess.ProcessId;
 
+        // Save process and thread info.
+        profileData_.Process = mainProcess;
+
+        foreach (var procId in processIds) {
+            var proc = profile.FindProcess(procId);
+
+            if (proc != null) {
+                profileData_.AddThreads(proc.Threads(profile));
+            }
+        }
+
         try {
             options_ = options;
             var imageName = Utils.TryGetFileNameWithoutExtension(mainProcess.ImageFileName);
@@ -139,7 +150,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                 var sw = Stopwatch.StartNew();
 
                 // Split sample processing in multiple chunk, each done by another thread.
-                int chunks = Math.Min(16, (Environment.ProcessorCount * 3) / 4);
+                int chunks = Math.Min(8, (Environment.ProcessorCount * 3) / 4);
 #if DEBUG
                 chunks = 1;
 #endif
@@ -283,7 +294,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                 stack.SetOptionalData(resolvedStack); // Cache resolved stack.
             }
 
-            UpdateCallTree(resolvedStack, callTree, sample);
+            callTree.UpdateCallTree(sample, resolvedStack);
 
             //? TODO: Use multiple lists, merge and sort at the end to avoid lock.
             lock (this) {
@@ -501,56 +512,6 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             }
 
             isTopFrame = false;
-        }
-    }
-
-    private void UpdateCallTree(ResolvedProfileStack resolvedStack, ProfileCallTree callTree,
-                                ProfileSample sample) {
-        // Build call tree. Note that the call tree methods themselves are thread-safe.
-        bool isRootFrame = true;
-        ProfileCallTreeNode prevNode = null;
-        ResolvedProfileStackFrame prevFrame = new();
-
-        for (int k = resolvedStack.FrameCount - 1; k >= 0; k--) {
-            var resolvedFrame = resolvedStack.StackFrames[k];
-
-            if (resolvedFrame.IsUnknown) {
-                continue;
-            }
-
-            ProfileCallTreeNode node = null;
-
-            if (isRootFrame) {
-                node = callTree.AddRootNode(resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function);
-                isRootFrame = false;
-            }
-            else {
-                node = callTree.AddChildNode(prevNode, resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function);
-                prevNode.AddCallSite(node, prevFrame.FrameRVA, sample.Weight);
-            }
-
-            node.AccumulateWeight(sample.Weight);
-
-            // Set the user/kernel-mode context of the function.
-            if (node.Kind == ProfileCallTreeNodeKind.Unset) {
-                if (resolvedFrame.Info.IsKernelCode) {
-                    node.Kind = ProfileCallTreeNodeKind.NativeKernel;
-                }
-                else if(resolvedFrame.Info.IsManagedCode) {
-                    node.Kind = ProfileCallTreeNodeKind.Managed;
-                }
-                else {
-                    node.Kind = ProfileCallTreeNodeKind.NativeUser;
-                }
-            }
-
-            //node.RecordSample(sample, resolvedFrame); //? Remove
-            prevNode = node;
-            prevFrame = resolvedFrame;
-        }
-
-        if (prevNode != null) {
-            prevNode.AccumulateExclusiveWeight(sample.Weight);
         }
     }
 

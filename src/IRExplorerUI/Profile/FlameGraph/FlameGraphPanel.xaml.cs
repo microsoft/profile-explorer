@@ -112,7 +112,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private DraggablePopupHoverPreview stackHoverPreview_;
     private List<FlameGraphNode> searchResultNodes_;
     private List<ActivityTimelineView> threadActivityViews_;
-    
+
     private double zoomPointX_;
     private double initialWidth_;
     private double initialOffsetX_;
@@ -121,7 +121,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private DoubleAnimation zoomAnimation_;
 
     public FlameGraphPanel() {
-        isTimelineView_ = true; //? REMOVE
+        isTimelineView_ = false; //? REMOVE
 
         InitializeComponent();
         settings_ = App.Settings.FlameGraphSettings;
@@ -248,7 +248,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                 int limit = 0;
 
                 foreach (var thread in threads) {
-                    if (limit++ > 10)
+                    if (limit++ > 30)
                         break;
 
                     var threadView = new ActivityTimelineView();
@@ -256,9 +256,18 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                     threadView.ActivityHost.BackColor = Brushes.WhiteSmoke;
                     threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
                     threadView.ActivityHost.SamplesBackColor = ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(thread.ThreadId));
+
+                    // var threadInfo = Session.ProfileData.FindThread(thread.ThreadId);
+                    //
+                    // if (threadInfo != null && threadInfo.HasName) {
+                    //     var backColor = ColorUtils.GeneratePastelColor(threadInfo.Name.GetHashCode());
+                    //     threadView.ActivityHost.BackColor = ColorBrushes.GetBrush(backColor);
+                    // }
+
                     threadActivityViews_.Add(threadView);
                     await threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea, thread.ThreadId);
-                    //await threadView.TimelineViewer.Initialize(callTree, GraphArea, settings_, 
+
+                    //await threadView.TimelineViewer.Initialize(callTree, GraphArea, settings_,
                     //                                           isTimelineView_, thread.ThreadId);
                 }
 
@@ -375,7 +384,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                 }
             }
         }
-        
+
         await Session.FilterProfileSamples(e);
     }
 
@@ -421,8 +430,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             }
         }
 
-
-        if (isTimelineView_) {
+        if (isTimelineView_ && GraphViewer.IsInitialized) {
             var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
             GraphViewer.SelectNodes(nodes);
         }
@@ -452,8 +460,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
 
         GraphViewer.ClearSelection();
-        
-        if (isTimelineView_) {
+
+        if (isTimelineView_ && GraphViewer.IsInitialized) {
             var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
             GraphViewer.SelectNodes(nodes);
         }
@@ -889,7 +897,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         GraphHost.ScrollToHorizontalOffset(offsetX);
         GraphHost.ScrollToVerticalOffset(offsetY);
     }
-    
+
     private void SetMaxWidth(double maxWidth, bool animate = true, double duration = ZoomAnimationDuration) {
         if (animate) {
             var animation = new DoubleAnimation(GraphViewer.MaxGraphWidth, maxWidth, TimeSpan.FromMilliseconds(duration));
@@ -1148,7 +1156,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
         return callTree_.GetTopFunctions(node);
     }
-
 
     public event PropertyChangedEventHandler PropertyChanged;
 
