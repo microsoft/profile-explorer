@@ -335,7 +335,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         OnPropertyChanged(nameof(HasFilter));
         OnPropertyChanged(nameof(FilteredTime));
     }
-    
+
     public async Task Initialize(ProfileData profile, Rect visibleArea, int threadId = -1) {
         if (initialized_) {
             return;
@@ -367,7 +367,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         sliceWidth_ = SliceWidth;
         //? TODO: Separate ComputeSlices to run on multiple threads
         slices_ = await Task.Run(() => ComputeSampleSlices(profile, threadId));
-        
+
         OnPropertyChanged(nameof(ThreadWeight));
         OnPropertyChanged(nameof(ThreadId));
         OnPropertyChanged(nameof(ThreadName));
@@ -541,7 +541,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             var time = PositionToTime(positionLineX_);
             var textY = topMargin_ + 2;
             string text = "";
-            
+
             var slice = TimeToSlice(time);
 
             if (slice.HasValue) {
@@ -553,6 +553,19 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             }
 
             DrawText(text, positionLineX_, textY, Brushes.Black, graphDC, true, backColor_, sampleBorderColor_);
+
+            //var sampleIndex = TimeToSampleIndex(time);
+
+            //if (sampleIndex != -1) {
+            //    var sample = profile_.Samples[sampleIndex];
+            //    if (sample.Stack.FrameCount > 0) {
+            //        textY += 14;
+            //        var func = sample.Stack.StackFrames[0].Info.Function.Value;
+            //        text = $"{func.Name}";
+            //        DrawText(text, positionLineX_, textY, Brushes.Black, graphDC, false, backColor_, sampleBorderColor_);
+
+            //    }
+            //}
         }
     }
 
@@ -622,7 +635,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     private void DrawText(string text, double x, double y, Brush color, DrawingContext dc,
                           bool keepInView = true,
-                          Brush backColor = null, Pen borderColor = null, 
+                          Brush backColor = null, Pen borderColor = null,
                           HorizontalAlignment horizontalAlign = HorizontalAlignment.Center) {
         var glyphInfo = glyphs_.GetGlyphs(text);
         var textMargin = new Thickness(2,4,4,0);
@@ -636,7 +649,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         }
 
         if (backColor != null) {
-            var textRect = new Rect(x - textMargin.Left, y - textMargin.Top, 
+            var textRect = new Rect(x - textMargin.Left, y - textMargin.Top,
                                     glyphInfo.TextWidth + textMargin.Right, glyphInfo.TextHeight + textMargin.Bottom);
             dc.DrawRectangle(backColor, borderColor, textRect);
         }
@@ -692,7 +705,9 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             if (slice.FirstSampleIndex >= 0) {
                 for(int sampleIndex = slice.FirstSampleIndex; sampleIndex < slice.FirstSampleIndex + slice.SampleCount; sampleIndex++) {
                     if (profile_.Samples[sampleIndex].Sample.Time >= queryTime) {
-                        return sampleIndex;
+                        if (!IsSingleThreadView || profile_.Samples[sampleIndex].Stack.Context.ThreadId == ThreadId) {
+                            return sampleIndex;
+                        }
                     }
                 }
             }
@@ -717,7 +732,9 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             if (slice.FirstSampleIndex >= 0) {
                 for(int sampleIndex = slice.FirstSampleIndex + slice.SampleCount; sampleIndex >= slice.FirstSampleIndex; sampleIndex--) {
                     if (profile_.Samples[sampleIndex].Sample.Time <= queryTime) {
-                        return sampleIndex;
+                        if (!IsSingleThreadView || profile_.Samples[sampleIndex].Stack.Context.ThreadId == ThreadId) {
+                            return sampleIndex;
+                        }
                     }
                 }
             }

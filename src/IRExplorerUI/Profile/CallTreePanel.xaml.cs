@@ -65,7 +65,9 @@ namespace IRExplorerUI {
     }
 
     public class ChildFunctionEx : SearchableProfileItem, ITreeModel {
-        public ChildFunctionExKind Kind { get; set; }
+        private string functionName_;
+        private FunctionNameFormatter funcNameFormatter_;
+
         public IRTextFunction Function { get; set; }
         public ProfileCallTreeNode CallTreeNode { get; set; }
         public TreeNode TreeNode { get; set; } // Associated UI tree node.
@@ -74,14 +76,46 @@ namespace IRExplorerUI {
         public Brush BackColor2 { get; set; }
         public List<ChildFunctionEx> Children { get; set; }
         public long Time { get; set; }
+        public ChildFunctionExKind Kind { get; set; }
 
         public bool HasCallTreeNode => CallTreeNode != null;
         public override TimeSpan Weight => HasCallTreeNode ? CallTreeNode.Weight : TimeSpan.Zero;
         public override TimeSpan ExclusiveWeight => HasCallTreeNode ? CallTreeNode.ExclusiveWeight : TimeSpan.Zero;
 
-        public ChildFunctionEx(ChildFunctionExKind kind) {
+        public override string FunctionName {
+            get {
+                if (functionName_ != null) {
+                    return functionName_;
+                }
+
+                if (CallTreeNode != null) {
+                    if (funcNameFormatter_ != null) {
+                        return funcNameFormatter_(CallTreeNode.FunctionName);
+                    }
+                    return CallTreeNode.FunctionName;
+                }
+
+                return null;
+            }
+            set {
+                functionName_ = value;
+            }
+        }
+
+        public override string ModuleName {
+            get {
+                if (CallTreeNode != null) {
+                    return CallTreeNode.ModuleName;
+                }
+
+                return null;
+            }
+        }
+
+        public ChildFunctionEx(ChildFunctionExKind kind, FunctionNameFormatter funcNameFormatter = null) {
             Children = new List<ChildFunctionEx>();
             Kind = kind;
+            funcNameFormatter_ = funcNameFormatter;
         }
 
         public IEnumerable GetChildren(object node) {
@@ -115,6 +149,7 @@ namespace IRExplorerUI {
         private ChildFunctionEx profileCallTree_;
         private List<ChildFunctionEx> searchResultNodes_;
         private CallTreeSettings settings_;
+        private CancelableTaskInstance searchTask_;
 
         public bool PrependModuleToFunction {
             get => settings_.PrependModuleToFunction;
@@ -139,6 +174,7 @@ namespace IRExplorerUI {
         public CallTreePanel() {
             InitializeComponent();
             settings_ = App.Settings.CallTreeSettings;
+            searchTask_ = new CancelableTaskInstance(false);
             DataContext = this;
             SetupEvents();
         }
@@ -464,13 +500,11 @@ namespace IRExplorerUI {
             Func<TimeSpan, double> percentageFunc) {
             double weightPercentage = percentageFunc(node.Weight);
             double exclusiveWeightPercentage = percentageFunc(node.ExclusiveWeight);
-            string funcName = FormatFunctionName(node);
 
-            return new ChildFunctionEx(kind) {
+            return new ChildFunctionEx(kind, FormatFunctionName) {
                 Function = node.Function,
                 ModuleName = node.ModuleName,
                 Time = node.Weight.Ticks,
-                FunctionName = funcName,
                 CallTreeNode = node,
                 Percentage = weightPercentage,
                 ExclusivePercentage = exclusiveWeightPercentage,
@@ -509,20 +543,19 @@ namespace IRExplorerUI {
             return result;
         }
 
-        private string FormatFunctionName(ProfileCallTreeNode node) {
-            var funcName = node.FunctionName;
-
-            if (true) {
-                //? option
+        private string FormatFunctionName(string funcName) {
+            if (App.Settings.SectionSettings.ShowDemangledNames) {
                 var nameProvider = Session.CompilerInfo.NameProvider;
 
                 if (nameProvider.IsDemanglingSupported) {
                     funcName = nameProvider.DemangleFunctionName(funcName, nameProvider.GlobalDemanglingOptions);
                 }
             }
+
             return funcName;
         }
-        
+
+
         #region IToolPanel
 
         public override ToolPanelKind PanelKind => ToolPanelKind.CallTree;
@@ -570,13 +603,13 @@ namespace IRExplorerUI {
             ExpandHottestFunctionPathImpl(node);
         }
 
-        private void ExpandHottestFunctionPathImpl(TreeNode node) {
+        private void ExpandHottestFunctionPathImpl(TreeNode node, int depth = 0) {
             var childInfo = node.Tag as ChildFunctionEx;
             childInfo.IsMarked = true;
 
-            if (node.HasChildren) {
+            if (node.HasChildren && depth <= 10) {
                 node.IsExpanded = true;
-                ExpandHottestFunctionPath(node.Nodes[0]);
+                ExpandHottestFunctionPathImpl(node.Nodes[0], depth + 1);
             }
         }
 
@@ -643,6 +676,8 @@ namespace IRExplorerUI {
         }
 
         private async Task SearchCallTree(string text) {
+            using var cancelableTask = await searchTask_.CancelPreviousAndCreateTaskAsync();
+
             if (searchResultNodes_ != null) {
                 // Clear previous search results.
                 foreach (var node in searchResultNodes_) {
@@ -655,10 +690,18 @@ namespace IRExplorerUI {
                 searchResultNodes_ = new List<ChildFunctionEx>();
                 await Task.Run(() => SearchCallTree(text, profileCallTree_, searchResultNodes_));
 
+                if(cancelableTask.IsCanceled) {
+                    return;
+                }
+
                 SearchResultText = searchResultNodes_.Count > 0 ? $"{searchResultNodes_.Count}" : "Not found";
                 ShowSearchSection = true;
 
                 foreach (var node in searchResultNodes_) {
+                    if (cancelableTask.IsCanceled) {
+                        return;
+                    }
+
                     node.ResetCachedName();
 
                     // Expand path to the node.
