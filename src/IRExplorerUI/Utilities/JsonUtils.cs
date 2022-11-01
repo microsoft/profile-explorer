@@ -21,15 +21,28 @@ namespace IRExplorerUI {
         }
     }
 
+    public class StringInterningConverter : JsonConverter<string> {
+        public override string Read(ref Utf8JsonReader reader, Type typeToConvert,
+            JsonSerializerOptions options) {
+            return string.Intern(reader.GetString());
+        }
+
+        public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options) {
+            writer.WriteStringValue(value);
+        }
+    }
+
     public class JsonUtils {
         public static JsonSerializerOptions GetJsonOptions() {
             var options = new JsonSerializerOptions {
                 WriteIndented = true, 
                 PropertyNameCaseInsensitive = true, 
-                IgnoreReadOnlyProperties = true
+                IgnoreReadOnlyProperties = true,
+
             };
 
             options.Converters.Add(new JsonColorConverter());
+            options.Converters.Add(new StringInterningConverter());
             options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
             return options;
         }

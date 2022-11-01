@@ -24,7 +24,7 @@ using Microsoft.Diagnostics.Symbols;
 namespace IRExplorerUI.Compilers {
     //? Provider ASM should return instance instead of JSONDebug
     public class DotNetDebugInfoProvider : IDebugInfoProvider {
-        public class AddressNamePair {
+        public struct AddressNamePair {
             public long Address { get; set; }
             public string Name { get; set; }
         }
@@ -281,9 +281,7 @@ namespace IRExplorerUI.Compilers {
                 return false;
             }
 
-            ManagedProcessCode processCode;
-
-            if (!JsonUtils.DeserializeFromFile(ManagedAsmFilePath, out processCode)) {
+            if (!JsonUtils.DeserializeFromFile(ManagedAsmFilePath, out ManagedProcessCode processCode)) {
                 return false;
             }
 

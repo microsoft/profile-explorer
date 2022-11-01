@@ -14,7 +14,7 @@ namespace IRExplorerCore {
         private int hashCode_;
 
         public IRTextFunction(string name) {
-            Name = name;
+            Name =  string.Intern(name);
             Sections = new List<IRTextSection>();
         }
 
@@ -65,10 +65,19 @@ namespace IRExplorerCore {
             }
 
             return Name.Equals(other.Name, StringComparison.Ordinal) &&
-                   (!checkParent || // Also check parent being the same.
-                    (((ParentSummary != null && other.ParentSummary != null &&
-                       ParentSummary.ModuleName == other.ParentSummary.ModuleName) ||
-                      (ParentSummary == null && other.ParentSummary == null))));
+                   (!checkParent || HasSameModule(other));
+        }
+
+        private bool HasSameModule(IRTextFunction other) {
+            if (ReferenceEquals(ParentSummary, other.ParentSummary)) {
+                return true;
+            }
+            
+            if (ParentSummary != null && other.ParentSummary != null) {
+                return ParentSummary.ModuleName.Equals(other.ParentSummary.ModuleName, StringComparison.Ordinal);
+            }
+
+            return ParentSummary == null && other.ParentSummary == null;
         }
 
         public bool Equals(object obj) {

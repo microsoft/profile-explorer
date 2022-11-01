@@ -136,7 +136,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         public override int GetHashCode() {
-            return HashCode.Combine(FileName.ToLower(), Id, Age);
+            return HashCode.Combine(FileName.GetHashCode(StringComparison.OrdinalIgnoreCase), Id, Age);
         }
 
         public static bool operator ==(SymbolFileDescriptor left, SymbolFileDescriptor right) {
@@ -148,13 +148,13 @@ namespace IRExplorerUI.Compilers {
         }
 
         public SymbolFileDescriptor(string fileName, Guid id, int age) {
-            FileName = fileName;
+            FileName = string.Intern(fileName);
             Id = id;
             Age = age;
         }
 
         public SymbolFileDescriptor(string fileName) {
-            FileName = fileName;
+            FileName = string.Intern(fileName);
         }
     }
 }

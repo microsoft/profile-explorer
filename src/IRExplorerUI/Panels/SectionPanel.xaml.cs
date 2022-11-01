@@ -1397,7 +1397,12 @@ namespace IRExplorerUI {
 
         private async Task ResetStatistics() {
             Trace.WriteLine($"Cancel stats at {DateTime.Now}, ticks {Environment.TickCount64}");
-            await statisticsTask_.CancelTaskAndWaitAsync();
+            if (statisticsTask_ != null) {
+                await statisticsTask_.CancelTaskAndWaitAsync();
+            }
+            else {
+                Utils.WaitForDebugger(true);
+            }
             Trace.WriteLine($"Done cancel stats at {DateTime.Now}, ticks {Environment.TickCount64}");
             callGraphCache_ = null;
             functionStatMap_ = null;

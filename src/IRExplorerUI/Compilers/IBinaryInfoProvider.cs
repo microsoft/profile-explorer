@@ -72,7 +72,7 @@ public class BinaryFileDescriptor : IEquatable<BinaryFileDescriptor> {
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(ImageName, TimeStamp, ImageSize);
+        return HashCode.Combine(ImageName.GetHashCode(StringComparison.OrdinalIgnoreCase), TimeStamp, ImageSize);
     }
 
     public static bool operator ==(BinaryFileDescriptor left, BinaryFileDescriptor right) {
