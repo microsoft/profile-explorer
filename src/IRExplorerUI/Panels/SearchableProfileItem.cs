@@ -7,14 +7,16 @@ using System.Windows.Media;
 namespace IRExplorerUI;
 
 public class SearchableProfileItem : BindableObject {
-    public bool IsMarked { get; set; }
-    public TextSearchResult? SearchResult { get; set; }
-    public string FunctionName { get; set; }
-    public string ModuleName { get; set; }
+    public delegate string FunctionNameFormatter(string name);
+
+    public virtual string FunctionName { get; set; }
+    public virtual string ModuleName { get; set; }
     public double Percentage { get; set; }
     public double ExclusivePercentage { get; set; }
     public virtual TimeSpan Weight { get; set; }
     public virtual TimeSpan ExclusiveWeight { get; set; }
+    public TextSearchResult? SearchResult { get; set; }
+    public bool IsMarked { get; set; }
 
     private TextBlock name_;
     public TextBlock Name {

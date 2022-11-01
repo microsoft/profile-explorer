@@ -13,8 +13,8 @@ namespace IRExplorerCore {
         private bool completeOnCancel_;
 
         public delegate void CancelableTaskDelegate(CancelableTask task);
-        
-        public CancelableTaskInstance(bool completeOnCancel = true, 
+
+        public CancelableTaskInstance(bool completeOnCancel = true,
                                       CancelableTaskDelegate registerAction = null,
                                       CancelableTaskDelegate unregisterAction = null) {
             completeOnCancel_ = completeOnCancel;
@@ -103,10 +103,8 @@ namespace IRExplorerCore {
             canceledTask.Cancel();
             unregisterAction_?.Invoke(canceledTask);
 
-            await Task.Run(async () => {
-                await canceledTask.WaitToCompleteAsync();
-                canceledTask.Dispose();
-            });
+            await canceledTask.WaitToCompleteAsync();
+            canceledTask.Dispose();
         }
 
         public void CompleteTask(CancelableTask task) {
