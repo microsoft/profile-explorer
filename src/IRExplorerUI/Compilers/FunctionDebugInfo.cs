@@ -10,7 +10,7 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     [ProtoMember(1)]
     public long Id { get; set; }
     [ProtoMember(2)]
-    public string Name { get; set; }
+    public string Name { get; private set; }
     [ProtoMember(3)]
     public long RVA { get; set; }
     [ProtoMember(4)]
@@ -31,7 +31,7 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     public bool IsUnknown => RVA == 0 && Size == 0;
 
     public FunctionDebugInfo(string name, long rva, long size, string optLevel = null, int id = -1) {
-        Name = name;
+        Name = string.Intern(name);
         RVA = rva;
         Size = size;
         OptimizationLevel = optLevel;
@@ -40,8 +40,12 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
         Id = id;
     }
 
+    public void UpdateName(string newName) {
+        Name = string.Intern(newName);
+    }
+
     public void AddSourceLine(SourceLineDebugInfo sourceLine) {
-        SourceLines ??= new List<SourceLineDebugInfo>();
+        SourceLines ??= new List<SourceLineDebugInfo>(1);
         SourceLines.Add(sourceLine);
 
         if (StartSourceLineDebug.IsUnknown) {
@@ -149,8 +153,8 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
 [ProtoContract(SkipConstructor = true)]
 public struct SourceFileDebugInfo : IEquatable<SourceFileDebugInfo> {
     public SourceFileDebugInfo(string filePath, string originalFilePath, int startLine = 0, bool hasChecksumMismatch = false) {
-        FilePath = filePath;
-        OriginalFilePath = originalFilePath;
+        FilePath = string.Intern(filePath);
+        OriginalFilePath = string.Intern(originalFilePath);
         StartLine = startLine;
         HasChecksumMismatch = hasChecksumMismatch;
     }
@@ -170,8 +174,8 @@ public struct SourceFileDebugInfo : IEquatable<SourceFileDebugInfo> {
     public bool HasOriginalFilePath => !string.IsNullOrEmpty(OriginalFilePath);
 
     public bool Equals(SourceFileDebugInfo other) {
-        return FilePath == other.FilePath &&
-               OriginalFilePath == other.OriginalFilePath &&
+        return FilePath.Equals(other.FilePath, StringComparison.Ordinal) &&
+               OriginalFilePath.Equals(other.OriginalFilePath, StringComparison.Ordinal) &&
                StartLine == other.StartLine &&
                HasChecksumMismatch == other.HasChecksumMismatch;
     }
@@ -196,7 +200,7 @@ public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
     [ProtoMember(4)]
     public int Column { get; set; }
     [ProtoMember(5)]
-    public string FilePath { get; set; }
+    public string FilePath { get; private set; }
 
     public static readonly SourceLineDebugInfo Unknown = new SourceLineDebugInfo(-1, -1);
     public bool IsUnknown => Line == -1;
@@ -206,12 +210,13 @@ public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
         OffsetEnd = offsetStart;
         Line = line;
         Column = column;
-        FilePath = filePath;
+        FilePath = filePath != null ? string.Intern(filePath) : null;
     }
 
     public bool Equals(SourceLineDebugInfo other) {
         return OffsetStart == other.OffsetStart && Line == other.Line &&
-               Column == other.Column && FilePath == other.FilePath;
+               Column == other.Column &&
+               FilePath.Equals(other.FilePath, StringComparison.Ordinal);
     }
 
     public override bool Equals(object obj) {

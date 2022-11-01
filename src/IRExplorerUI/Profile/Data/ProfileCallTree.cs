@@ -42,7 +42,7 @@ public sealed class ProfileCallTree {
     // Comparer used for the root nodes in order to ignore the ID part.
     private class ProfileCallTreeNodeComparer : IEqualityComparer<ProfileCallTreeNode> {
         public bool Equals(ProfileCallTreeNode x, ProfileCallTreeNode y) {
-            return x.Equals(y.FunctionDebugInfo, y.Function);
+            return x.Equals(y.FunctionDebugInfo);
         }
 
         public int GetHashCode(ProfileCallTreeNode obj) {
@@ -534,7 +534,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     //? TODO: Renumber, 2
     private List<ProfileCallTreeNode> children_;
     [ProtoMember(3)]
-    private Dictionary<long, ProfileCallSite> callSites_;
+    private Dictionary<long, ProfileCallSite> callSites_; //? Use Hybrid array/dict to save space
 
     private List<ProfileCallTreeNode> callers_; // Can't be serialized, reconstructed.
     private ReaderWriterLockSlim lock_; // Lock for updating children, callers, call sites.
@@ -762,8 +762,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     private ProfileCallTreeNode FindExistingNode(List<ProfileCallTreeNode> list,
                                                  FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
         if (list != null) {
-            foreach (var child in list) {
-                if (child.Equals(functionDebugInfo, function)) {
+            foreach (var child in list) { //? TODO: Assuming single child often, use hybrid DS
+                if (child.Equals(functionDebugInfo)) {
                     return child;
                 }
             }
@@ -799,9 +799,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         //}
     }
 
-    public bool Equals(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
-        return //Function.Equals(function) &&
-               FunctionDebugInfo.Equals(functionDebugInfo);
+    public bool Equals(FunctionDebugInfo functionDebugInfo) {
+        return FunctionDebugInfo.Equals(functionDebugInfo);
     }
 
     public bool Equals(ProfileCallTreeNode other) {

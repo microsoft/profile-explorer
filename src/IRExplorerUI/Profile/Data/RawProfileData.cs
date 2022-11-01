@@ -129,11 +129,11 @@ public class RawProfileData {
         if (data.managedMethodsMap_.TryGetValue(initialName, out var other)) {
             if (other.FunctionDebugInfo.HasOptimizationLevel &&
                 !other.FunctionDebugInfo.Name.EndsWith(other.FunctionDebugInfo.OptimizationLevel)) {
-                other.FunctionDebugInfo.Name = $"{other.FunctionDebugInfo.Name}_{other.FunctionDebugInfo.OptimizationLevel}";
+                other.FunctionDebugInfo.UpdateName($"{other.FunctionDebugInfo.Name}_{other.FunctionDebugInfo.OptimizationLevel}");
             }
 
             if (functionDebugInfo.HasOptimizationLevel) {
-                functionDebugInfo.Name = $"{functionDebugInfo.Name}_{functionDebugInfo.OptimizationLevel}";
+                functionDebugInfo.UpdateName($"{functionDebugInfo.Name}_{functionDebugInfo.OptimizationLevel}");
             }
         }
 
