@@ -45,7 +45,7 @@
 
 
                     <ToggleButton
-                        IsChecked="{Binding CombineNodes, ElementName=CalleCalleePanel}"
+                        IsChecked="{Binding CombineNodes, Mode=TwoWay}"
                         ToolTip="Combine all function instances into one"
                         Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">

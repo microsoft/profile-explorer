@@ -14,7 +14,7 @@ namespace IRExplorerCore {
         private int hashCode_;
 
         public IRTextFunction(string name) {
-            Name =  string.Intern(name);
+            Name = string.Intern(name);
             Sections = new List<IRTextSection>();
         }
 
@@ -72,7 +72,7 @@ namespace IRExplorerCore {
             if (ReferenceEquals(ParentSummary, other.ParentSummary)) {
                 return true;
             }
-            
+
             if (ParentSummary != null && other.ParentSummary != null) {
                 return ParentSummary.ModuleName.Equals(other.ParentSummary.ModuleName, StringComparison.Ordinal);
             }

@@ -88,7 +88,8 @@ namespace IRExplorerUI {
                     return functionName_;
                 }
 
-                if (CallTreeNode != null) {
+                // Headers don't have a function.
+                if (CallTreeNode != null && CallTreeNode.Function != null) {
                     if (funcNameFormatter_ != null) {
                         return funcNameFormatter_(CallTreeNode.FunctionName);
                     }
@@ -104,7 +105,8 @@ namespace IRExplorerUI {
 
         public override string ModuleName {
             get {
-                if (CallTreeNode != null) {
+                // Headers don't have a function.
+                if (CallTreeNode != null && CallTreeNode.Function != null) {
                     return CallTreeNode.ModuleName;
                 }
 
@@ -194,7 +196,7 @@ namespace IRExplorerUI {
                     var funcNode = treeItem.Node?.Tag as ChildFunctionEx;
                     var callNode = funcNode?.CallTreeNode;
 
-                    if (callNode != null) {
+                    if (callNode != null && callNode.Function != null) {
                         // If popup already opened for this node reuse the instance.
                         if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup popup) {
                             popup.UpdatePosition(previewPoint, CallTree);
@@ -377,7 +379,7 @@ namespace IRExplorerUI {
                     //percentageFunc = PickPercentageFunction(instance.Weight);
                     var (childrenWeight, childrentExcWeight) = instance.ChildrenWeight;
                     var childrenNode = CreateProfileCallTreeHeader("Called", childrenWeight, childrentExcWeight, percentageFunc, 1);
-
+                    
                     if (nodeList.Count > 1) {
                         instanceNode.Children.Add(childrenNode);
                     }
@@ -386,7 +388,7 @@ namespace IRExplorerUI {
                     }
 
                     foreach (var childNode in instance.Children) {
-                        CreateProfileCallTree(childNode, childrenNode, ChildFunctionExKind.CalleeNode,
+                        CreateProfileCallTree(childNode, childrenNode, instanceNode, ChildFunctionExKind.CalleeNode,
                             visitedNodes, percentageFunc);
                     }
                 }
@@ -403,9 +405,9 @@ namespace IRExplorerUI {
                         rootNode.Children.Add(callersNode);
                     }
 
-                    foreach (var n in instance.Callers) {
-                        CreateProfileCallTree(n, callersNode, ChildFunctionExKind.CallerNode,
-                            visitedNodes, percentageFunc);
+                    foreach (var callerNode in instance.Callers) {
+                        CreateProfileCallTree(callerNode, callersNode, instanceNode, ChildFunctionExKind.CallerNode,
+                                              visitedNodes, percentageFunc);
                     }
                 }
 
@@ -434,9 +436,16 @@ namespace IRExplorerUI {
         }
 
         private ChildFunctionEx CreateProfileCallTree(ProfileCallTreeNode node, ChildFunctionEx parentNodeEx,
-            ChildFunctionExKind kind,
-            HashSet<ProfileCallTreeNode> visitedNodes,
-            Func<TimeSpan, double> percentageFunc) {
+                                                      ChildFunctionExKind kind,
+                                                      HashSet<ProfileCallTreeNode> visitedNodes,
+                                                      Func<TimeSpan, double> percentageFunc) {
+            return CreateProfileCallTree(node, parentNodeEx, parentNodeEx, kind, visitedNodes, percentageFunc);
+        }
+
+        private ChildFunctionEx CreateProfileCallTree(ProfileCallTreeNode node, ChildFunctionEx parentNodeEx,
+                                                      ChildFunctionEx actualParentNode, ChildFunctionExKind kind,
+                                                      HashSet<ProfileCallTreeNode> visitedNodes,
+                                                      Func<TimeSpan, double> percentageFunc) {
             bool newFunc = visitedNodes.Add(node);
             var nodeEx = CreateProfileCallTreeChild(node, kind, percentageFunc);
             parentNodeEx.Children.Add(nodeEx);
@@ -447,31 +456,35 @@ namespace IRExplorerUI {
 
             //? TODO: This is still not quite right, the selected nodes
             //? shoud be found on a path that has the current stack frame as a prefix in theirs.
-            if (kind == ChildFunctionExKind.CalleeNode) {
-                node = GetChildCallTreeNode(node, parentNodeEx.CallTreeNode, Session.ProfileData.CallTree);
+            if (kind == ChildFunctionExKind.CalleeNode ||
+                kind == ChildFunctionExKind.CallerNode) {
+                node = GetChildCallTreeNode(node, actualParentNode.CallTreeNode, Session.ProfileData.CallTree);
                 nodeEx.CallTreeNode = node;
             }
 
-            if (node.HasChildren) {
-                if (kind == ChildFunctionExKind.CalleeNode) {
+            switch (kind) {
+                case ChildFunctionExKind.CallTreeNode when node.HasChildren: {
+                    foreach (var childNode in node.Children) {
+                        CreateProfileCallTree(childNode, nodeEx, nodeEx, kind, visitedNodes, percentageFunc);
+                    }
+                    break;
+                }
+                case ChildFunctionExKind.CalleeNode when node.HasChildren: {
                     // For caller-callee mode, use a placeholder than when the tree gets expanded,
                     // gets replaced by the real callee nodes.
                     var dummyChildNode = CreateProfileCallTreeHeader(ChildFunctionExKind.ChildrenPlaceholder, "Placeholder", 0);
                     dummyChildNode.CallTreeNode = node;
                     nodeEx.Children.Add(dummyChildNode);
+                    break;
                 }
-                else {
-                    foreach (var childNode in node.Children) {
-                        CreateProfileCallTree(childNode, nodeEx, kind, visitedNodes, percentageFunc);
-                    }
+                case ChildFunctionExKind.CallerNode when node.HasCallers: {
+                    // For caller-callee mode, use a placeholder than when tree gets expanded,
+                    // gets replaced by the real caller (backtrace) nodes.
+                    var dummyChildNode = CreateProfileCallTreeHeader(ChildFunctionExKind.ChildrenPlaceholder, "Placeholder", 0);
+                    dummyChildNode.CallTreeNode = node;
+                    nodeEx.Children.Add(dummyChildNode);
+                    break;
                 }
-            }
-            else if (node.HasCallers && kind == ChildFunctionExKind.CallerNode) {
-                // For caller-callee mode, use a placeholder than when tree gets expanded,
-                // gets replaced by the real caller (backtrace) nodes.
-                var dummyChildNode = CreateProfileCallTreeHeader(ChildFunctionExKind.ChildrenPlaceholder, "Placeholder", 0);
-                dummyChildNode.CallTreeNode = node;
-                nodeEx.Children.Add(dummyChildNode);
             }
 
             SortCallTreeNodes(parentNodeEx);

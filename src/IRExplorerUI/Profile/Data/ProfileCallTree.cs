@@ -335,6 +335,7 @@ public sealed class ProfileCallTree {
         var callSiteMap = new Dictionary<long, ProfileCallSite>();
         TimeSpan weight = TimeSpan.Zero;
         TimeSpan excWeight = TimeSpan.Zero;
+        var kind = ProfileCallTreeNodeKind.Unset;
 
         foreach (var node in nodes) {
             // When the function is a callee, consider only the nodes that are actually being called
@@ -346,6 +347,7 @@ public sealed class ProfileCallTree {
 
             weight += node.Weight;
             excWeight += node.ExclusiveWeight;
+            kind = node.Kind;
 
             if (node.HasChildren) {
                 foreach (var childNode in node.Children) {
@@ -388,6 +390,7 @@ public sealed class ProfileCallTree {
         return new ProfileCallTreeGroupNode(nodes[0].FunctionDebugInfo, nodes[0].Function, nodes,
                                             childrenSet.ToList(), callersSet.ToList(), callSiteMap) {
             Weight = weight, ExclusiveWeight = excWeight,
+            Kind = kind
         };
     }
 
@@ -812,8 +815,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             return true;
         }
 
-        return Id == other.Id &&
-               FunctionDebugInfo.Equals(other.FunctionDebugInfo) &&
+        return FunctionDebugInfo.Equals(other.FunctionDebugInfo) &&
                Kind == other.Kind;
     }
 
@@ -834,7 +836,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Id, FunctionDebugInfo, Kind);
+        return HashCode.Combine(FunctionDebugInfo, Kind);
     }
 
     public static bool operator ==(ProfileCallTreeNode left, ProfileCallTreeNode right) {
