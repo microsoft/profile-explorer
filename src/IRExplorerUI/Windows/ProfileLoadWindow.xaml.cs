@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -819,6 +820,20 @@ namespace IRExplorerUI {
         private void SamplingFrequencySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
             // Hack to get the label to update, since RecordingOptions doesn't notify.
             OnPropertyChange(nameof(RecordingOptions));
+        }
+
+        private void ProcessListMenuItem_OnClick(object sender, RoutedEventArgs e) {
+            var proc = ProcessList.SelectedItem as ProcessSummary;
+
+            if (proc != null) {
+                var sb = new StringBuilder();
+                sb.AppendLine($"Name: {proc.Process.Name}");
+                sb.AppendLine($"Id: {proc.Process.ProcessId}");
+                sb.AppendLine($"Command line: {proc.Process.CommandLine}");
+                sb.AppendLine($"Duration: {proc.Duration}");
+                sb.AppendLine($"Weight: {proc.Weight}");
+                Clipboard.SetText(sb.ToString());
+            }
         }
     }
 }
