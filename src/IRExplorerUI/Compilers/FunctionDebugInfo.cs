@@ -27,11 +27,11 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     public bool HasSourceLines => SourceLines != null && SourceLines.Count > 0;
     public bool HasOptimizationLevel => !string.IsNullOrEmpty(OptimizationLevel);
 
-    public static readonly FunctionDebugInfo Unknown = new FunctionDebugInfo("", 0, 0);
+    public static readonly FunctionDebugInfo Unknown = new FunctionDebugInfo(null, 0, 0);
     public bool IsUnknown => RVA == 0 && Size == 0;
 
     public FunctionDebugInfo(string name, long rva, long size, string optLevel = null, int id = -1) {
-        Name = string.Intern(name);
+        Name = name != null ? string.Intern(name) : null;
         RVA = rva;
         Size = size;
         OptimizationLevel = optLevel;
@@ -153,8 +153,8 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
 [ProtoContract(SkipConstructor = true)]
 public struct SourceFileDebugInfo : IEquatable<SourceFileDebugInfo> {
     public SourceFileDebugInfo(string filePath, string originalFilePath, int startLine = 0, bool hasChecksumMismatch = false) {
-        FilePath = string.Intern(filePath);
-        OriginalFilePath = string.Intern(originalFilePath);
+        FilePath = filePath != null ? string.Intern(filePath) : null;
+        OriginalFilePath = originalFilePath != null ? string.Intern(originalFilePath) : null;
         StartLine = startLine;
         HasChecksumMismatch = hasChecksumMismatch;
     }

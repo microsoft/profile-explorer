@@ -28,7 +28,7 @@ namespace IRExplorerUI.Compilers {
         public bool UseDefaultSymbolSource { get; set; }
         [ProtoMember(2)]
         public bool UseSymbolCache { get; set; }
-        [ProtoMember(3)] 
+        [ProtoMember(3)]
         public bool SymbolSearchPathsEnabled { get; set; }
         [ProtoMember(4)]
         public string SymbolCachePath { get; set; }
@@ -108,7 +108,7 @@ namespace IRExplorerUI.Compilers {
         public Guid Id { get; set; }
         [ProtoMember(3)]
         public int Age { get; set; }
-        
+
         public override string ToString() {
             return $"{Id}:{FileName}";
         }
@@ -148,13 +148,13 @@ namespace IRExplorerUI.Compilers {
         }
 
         public SymbolFileDescriptor(string fileName, Guid id, int age) {
-            FileName = string.Intern(fileName);
+            FileName = fileName != null ? string.Intern(fileName) : null;
             Id = id;
             Age = age;
         }
 
         public SymbolFileDescriptor(string fileName) {
-            FileName = string.Intern(fileName);
+            FileName = fileName != null ? string.Intern(fileName) : null;
         }
     }
 }
