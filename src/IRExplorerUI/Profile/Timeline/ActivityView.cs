@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
@@ -51,10 +52,12 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     const double SliceWidth = 8;
     const double TimeBarHeight = 18;
+    const double MinTimeBarHeight = 4;
     const double TopMarginY = 1 + TimeBarHeight;
     const double BottomMarginY = 0;
     const string DefaultFont = "Segoe UI";
     const double DefaultTextSize = 11;
+    const double MarkerHeight = 8;
 
     private bool initialized_;
     private DrawingVisual visual_;
@@ -64,6 +67,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     private double sliceWidth_;
     private double sampleHeight_;
     private double maxWidth_;
+    private double prevMaxWidth_;
     private double topMargin_;
     private double bottomMargin_;
     private Rect visibleArea_;
@@ -81,6 +85,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     private Typeface font_;
     private double fontSize_;
     private Brush backColor_;
+    private Brush markerBrush_;
     private TimeSpan startTime_;
     private TimeSpan endTime_;
 
@@ -88,6 +93,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         filteredOutColor_ = ColorBrushes.GetTransparentBrush(Colors.Gray, 120);
         selectionBackColor_ = ColorBrushes.GetTransparentBrush(Colors.Gold, 120);
         selectionBorderColor_ = ColorPens.GetPen(Colors.Black);
+        markerBrush_ = ColorBrushes.GetTransparentBrush(Colors.DarkRed, 200);
 
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         MouseLeftButtonUp += ActivityView_MouseLeftButtonUp;
@@ -354,9 +360,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         }
 
         samplingInterval_ = profile_.Report.SamplingInterval;
-        Trace.WriteLine($"samplingInterval_ {samplingInterval_}");
-
-        maxWidth_ = visibleArea.Width;
+        maxWidth_ = prevMaxWidth_ = visibleArea.Width;
         visual_ = new DrawingVisual();
         visual_.Drawing?.Freeze();
         AddVisualChild(visual_);
@@ -366,9 +370,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         fontSize_ = DefaultTextSize;
         glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual_).PixelsPerDip);
 
-        sliceWidth_ = SliceWidth;
-        //? TODO: Separate ComputeSlices to run on multiple threads
-        slices_ = await Task.Run(() => ComputeSampleSlices(profile, threadId));
+        StartComputeSampleSlices(SliceWidth);
 
         OnPropertyChanged(nameof(ThreadWeight));
         OnPropertyChanged(nameof(ThreadId));
@@ -383,7 +385,9 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
         startTime_ = profile.Samples[0].Sample.Time;
         endTime_ = profile.Samples[^1].Sample.Time;
-        double slices = maxWidth_ / sliceWidth_;
+        double slices = (maxWidth_ / sliceWidth_) * (prevMaxWidth_ / maxWidth_);
+        prevMaxWidth_ = maxWidth_;
+        
         var timeDiff = endTime_ - startTime_;
         double timePerSlice = (double)timeDiff.Ticks / slices;
         var sliceSeriesDict = new Dictionary<int, SliceList>();
@@ -453,6 +457,8 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         Redraw();
     }
 
+    private CancelableTaskInstance sliceTask_;
+
     private void Redraw() {
         if (!initialized_) {
             return;
@@ -462,6 +468,11 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         using var graphDC = visual_.RenderOpen();
         var area = new Rect(0, 0, visibleArea_.Width, visibleArea_.Height);
         graphDC.DrawRectangle(backColor_, null, area);
+
+        // Wait for sample slices to be computed.
+        if (sliceTask_ != null) {
+            sliceTask_.WaitForTask();
+        }
 
         if (slices_ == null) {
             return;
@@ -494,29 +505,54 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                     }
                 }
 
+                height = Math.Max(height, MinTimeBarHeight);
                 var rect = new Rect(i * scaledSliceWidth - visibleArea_.Left,
                                     sampleHeight_ - height + topMargin_,
                                     scaledSliceWidth, height);
                 graphDC.DrawRectangle(backColor, borderColor, rect);
             }
 
-            //if (scaledSliceWidth > 2 * sliceWidth_) {
-            //    sliceWidth_ = Math.Max(1, sliceWidth_ / 2);
-            //    ComputeSampleSlices(profile_, ThreadId);
-            //}
+            if (scaledSliceWidth > 3 * SliceWidth) {
+                double newWidth = Math.Max(1, SliceWidth * (SliceWidth / scaledSliceWidth));
+                if (newWidth < sliceWidth_) {
+                    StartComputeSampleSlices(newWidth);
+                }
+            }
         }
 
         if (markedSamples_ != null) {
-            var markerPen = ColorBrushes.GetTransparentBrush(Colors.Red, 50);
-                
+            double startX = double.MaxValue;
+            double endX = double.MaxValue;
+            bool first = true;
 
             foreach (var sample in markedSamples_) {
-                var startX = TimeToPosition(sample.Time - startTime_);
+                var x = TimeToPosition(sample.Time - startTime_);
 
-                if (startX > 0 && startX < visibleArea_.Width) {
-                    var rect = new Rect(startX, topMargin_ + sampleHeight_/2, 1, sampleHeight_/2);
-                    graphDC.DrawRectangle(markerPen, null, rect);
+                if (x < 0)
+                    continue;
+                else if (x >= visibleArea_.Width)
+                    break;
+
+                if (x - endX > 1) {
+                    double width = Math.Ceiling(endX - startX);
+                    var rect = Utils.SnapRectToPixels(startX, visibleArea_.Height - MarkerHeight, width, MarkerHeight);
+                    graphDC.DrawRectangle(markerBrush_, null, rect);
+                    startX = x;
+                    endX = x;
                 }
+                else if(first) {
+                    startX = x;
+                    endX = x;
+                    first = false;
+                }
+                else {
+                    endX = x;
+                }
+            }
+
+            if (endX - startX > 1) {
+                var rect = new Rect(startX, topMargin_ + sampleHeight_ - 4, endX - startX, 4);
+                graphDC.DrawRectangle(markerBrush_, null, rect);
             }
         }
 
@@ -595,6 +631,19 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             //    }
             //}
         }
+    }
+
+    private void StartComputeSampleSlices(double newWidth)
+    {
+        sliceTask_ ??= new CancelableTaskInstance();
+        sliceTask_.CreateTask();
+
+        Task.Run(() =>
+        {
+            sliceWidth_ = newWidth;
+            slices_ = ComputeSampleSlices(profile_, ThreadId);
+            sliceTask_.CompleteTask();
+        });
     }
 
     private void DrawTimeBar(DrawingContext graphDC) {
