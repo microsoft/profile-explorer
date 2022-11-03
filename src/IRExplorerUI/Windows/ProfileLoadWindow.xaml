@@ -433,6 +433,15 @@
                                     <EventSetter Event="MouseDoubleClick" Handler="LoadButton_Click" />
                                 </Style>
                             </ListView.ItemContainerStyle>
+
+                            <ListView.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem
+                                        Header="Copy Process Details" Click="ProcessListMenuItem_OnClick" />
+                                    <MenuItem
+                                        Header="Copy Process List" Click="ProcessListMenuItem_OnClick" IsEnabled="False" />
+                                    </ContextMenu>
+                                </ListView.ContextMenu>
                         </ListView>
 
                         <Grid Margin="8,8,8,0">
