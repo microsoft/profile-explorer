@@ -815,8 +815,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             return true;
         }
 
-        return FunctionDebugInfo.Equals(other.FunctionDebugInfo) &&
-               Kind == other.Kind;
+        return Id == other.Id;
     }
 
     public override bool Equals(object obj) {
@@ -836,7 +835,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(FunctionDebugInfo, Kind);
+        return Id.GetHashCode();
     }
 
     public static bool operator ==(ProfileCallTreeNode left, ProfileCallTreeNode right) {

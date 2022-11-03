@@ -51,7 +51,7 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
         public FunctionDebugInfo FindFunction(string functionName) {
-            return functionMap_.GetValueOrDefault(functionName);
+            return functionMap_.GetValueOr(functionName, FunctionDebugInfo.Unknown);
         }
 
         public void Dispose() {

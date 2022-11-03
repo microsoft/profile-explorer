@@ -12,6 +12,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using IRExplorerCore;
+using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI.Profile;
 
@@ -112,6 +114,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private DraggablePopupHoverPreview stackHoverPreview_;
     private List<FlameGraphNode> searchResultNodes_;
     private List<ActivityTimelineView> threadActivityViews_;
+    private Dictionary<int, ActivityTimelineView> threadActivityViewsMap_;
 
     private double zoomPointX_;
     private double initialWidth_;
@@ -245,6 +248,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
                 var threadActivityArea = new Rect(0, 0, ActivityView.ActualWidth, 40);
                 threadActivityViews_ = new List<ActivityTimelineView>();
+                threadActivityViewsMap_ = new Dictionary<int, ActivityTimelineView>();
                 int limit = 0;
 
                 foreach (var thread in threads) {
@@ -265,6 +269,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                     // }
 
                     threadActivityViews_.Add(threadView);
+                    threadActivityViewsMap_[thread.ThreadId] = threadView;
                     await threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea, thread.ThreadId);
 
                     //await threadView.TimelineViewer.Initialize(callTree, GraphArea, settings_,
@@ -430,11 +435,16 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             }
         }
 
-        if (isTimelineView_ && GraphViewer.IsInitialized) {
-            var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
-            GraphViewer.SelectNodes(nodes);
+        if (GraphViewer.IsInitialized) {
+            if (isTimelineView_) {
+                var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
+                GraphViewer.SelectNodes(nodes);
+            }
+            else {
+                var nodes = FindCallTreeNodesForSamples(e.StartSampleIndex, e.EndSampleIndex, e.ThreadId, Session.ProfileData);
+                GraphViewer.SelectNodes(nodes);
+            }
         }
-
     }
 
     private void ActivityView_OnSelectingTimeRange(object sender, SampleTimeRangeInfo e) {
@@ -469,7 +479,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     private void NodeDetailsPanel_NodesSelected(object sender, List<ProfileCallTreeNode> e) {
         var nodes = GraphViewer.SelectNodes(e);
-        BringNodeIntoView(nodes[0], false);
+        if (nodes.Count > 0) {
+            BringNodeIntoView(nodes[0], false);
+        }
     }
 
     private async void NodeDetailsPanel_NodeInstanceChanged(object sender, ProfileCallTreeNode e) {
@@ -479,7 +491,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     private async void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
         var nodes = GraphViewer.SelectNodes(e);
-        BringNodeIntoView(nodes[0], false);
+        if (nodes.Count > 0) {
+            BringNodeIntoView(nodes[0], false);
+        }
     }
 
     private async void NodeDetailsPanel_NodeDoubleClick(object sender, ProfileCallTreeNode e) {
@@ -780,8 +794,26 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         if (pointedNode == null) {
             GraphViewer.ClearSelection(); // Click outside graph is captured here.
+
+            ActivityView.ClearMarkedSamples();
+            threadActivityViews_.ForEach(threadView => threadView.ActivityHost.ClearMarkedSamples());
         }
         else if (pointedNode.HasFunction) {
+            var threadSamples = FindFunctionSamples(pointedNode.CallTreeNode, Session.ProfileData);
+
+            ActivityView.ClearMarkedSamples();
+            threadActivityViews_.ForEach(threadView => threadView.ActivityHost.ClearMarkedSamples());
+
+            foreach (var (threadId, sampleList) in threadSamples) {
+                if (threadId == -1) {
+                    ActivityView.MarkSamples(sampleList);
+                }
+                else if (threadActivityViewsMap_.TryGetValue(threadId, out var threadView)) {
+                    threadView.ActivityHost.MarkSamples(sampleList);
+                }
+            }
+            
+
             await NodeDetailsPanel.ShowWithDetailsAsync(pointedNode.CallTreeNode);
 
             if (settings_.SyncSourceFile) {
@@ -1195,4 +1227,79 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             ShowSearchSection = false;
         }
     }
+
+
+    private Dictionary<int, List<SampleIndex>> 
+        FindFunctionSamples(ProfileCallTreeNode node, ProfileData profile) {
+        var sw = Stopwatch.StartNew();
+        var allThreadsList = new List<SampleIndex>();
+        var threadListMap = new Dictionary<int, List<SampleIndex>>();
+        threadListMap[-1] = allThreadsList;
+
+        if (node.Function == null) {
+            return threadListMap;
+        }
+
+        int index = 0;
+
+        //? Also here - Abstract parallel run chunks to take action per sample
+
+        foreach (var (sample, stack) in profile.Samples) {
+            foreach (var stackFrame in stack.StackFrames) {
+                if (stackFrame.IsUnknown) continue;
+
+                if (stackFrame.Info.Function.Value.Equals(node.Function)) {
+                    var threadList = threadListMap.GetOrAddValue(stack.Context.ThreadId);
+                    threadList.Add(new SampleIndex(index, sample.Time));
+                    allThreadsList.Add(new SampleIndex(index, sample.Time));
+
+                    break;
+                }
+            }
+
+            index++;
+        }
+        
+        Trace.WriteLine($"FindSamples took: {sw.ElapsedMilliseconds} for {allThreadsList.Count} samples");
+        return threadListMap;
+    }
+
+    private HashSet<IRTextFunction> FindFunctionsForSamples(int sampleStartIndex, int sampleEndIndex, int threadId, ProfileData profile) {
+        var funcSet = new HashSet<IRTextFunction>();
+        
+        //? Abstract parallel run chunks to take action per sample (ComputeFunctionProfile)
+        for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
+            var (sample, stack) = profile.Samples[i];
+
+            if (threadId != -1 && stack.Context.ThreadId != threadId) {
+                continue;
+            }
+            
+            foreach (var stackFrame in stack.StackFrames) {
+                if (stackFrame.IsUnknown)
+                    continue;
+                funcSet.Add(stackFrame.Info.Function);
+            }
+        }
+
+        return funcSet;
+    }
+
+    private List<ProfileCallTreeNode> FindCallTreeNodesForSamples(int sampleStartIndex, int sampleEndIndex, int threadId, ProfileData profile) {
+        var sw = Stopwatch.StartNew();
+        var funcs = FindFunctionsForSamples(sampleStartIndex, sampleEndIndex, threadId, profile);
+        var callNodes = new List<ProfileCallTreeNode>(funcs.Count);
+
+        foreach (var func in funcs) {
+            var nodes = profile.CallTree.GetCallTreeNodes(func);
+            if (nodes != null) {
+                callNodes.AddRange(nodes);
+            }
+        }
+
+        Trace.WriteLine($"FindCallTreeNodesForSamples took: {sw.ElapsedMilliseconds} for {callNodes.Count} call nodes");
+        return callNodes;
+    }
+
 }
+    

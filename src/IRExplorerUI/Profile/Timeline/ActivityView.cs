@@ -19,6 +19,8 @@ public record SampleTimeRangeInfo(TimeSpan StartTime, TimeSpan EndTime,
 
 public record SampleTimePointInfo(TimeSpan Time, int SampleIndex, int ThreadId);
 
+public record SampleIndex(int Index, TimeSpan Time);
+
 public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     struct Slice {
         public TimeSpan Weight;
@@ -439,6 +441,18 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         InvalidateMeasure();
     }
 
+    private List<SampleIndex> markedSamples_;
+
+    public void MarkSamples(List<SampleIndex> samples) {
+        markedSamples_ = samples;
+        Redraw();
+    }
+
+    public void ClearMarkedSamples() {
+        markedSamples_ = null;
+        Redraw();
+    }
+
     private void Redraw() {
         if (!initialized_) {
             return;
@@ -490,6 +504,20 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             //    sliceWidth_ = Math.Max(1, sliceWidth_ / 2);
             //    ComputeSampleSlices(profile_, ThreadId);
             //}
+        }
+
+        if (markedSamples_ != null) {
+            var markerPen = ColorBrushes.GetTransparentBrush(Colors.Red, 50);
+                
+
+            foreach (var sample in markedSamples_) {
+                var startX = TimeToPosition(sample.Time - startTime_);
+
+                if (startX > 0 && startX < visibleArea_.Width) {
+                    var rect = new Rect(startX, topMargin_ + sampleHeight_/2, 1, sampleHeight_/2);
+                    graphDC.DrawRectangle(markerPen, null, rect);
+                }
+            }
         }
 
         if (IsTimeBarVisible) {
@@ -747,7 +775,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         return 0;
     }
 
-    double EstimateCpuUsage(Slice slice, TimeSpan timePerSlice, TimeSpan samplingInterval) {
+    private double EstimateCpuUsage(Slice slice, TimeSpan timePerSlice, TimeSpan samplingInterval) {
         if (samplingInterval == TimeSpan.Zero) {
             return 0;
         }

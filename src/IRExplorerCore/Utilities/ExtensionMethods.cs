@@ -44,15 +44,7 @@ namespace IRExplorerCore.Utilities {
 
             return null;
         }
-
-        public static V GetValueOrDefault<K, V>(this Dictionary<K, V> dict, K key) {
-            if (dict.TryGetValue(key, out V currentValue)) {
-                return currentValue;
-            }
-
-            return default(V);
-        }
-
+        
         public static V GetValueOr<K, V>(this Dictionary<K, V> dict, K key, V defaultValue) {
             if (dict.TryGetValue(key, out V currentValue)) {
                 return currentValue;

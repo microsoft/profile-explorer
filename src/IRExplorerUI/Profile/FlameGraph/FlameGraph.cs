@@ -117,18 +117,26 @@ namespace IRExplorerUI.Profile {
         }
 
         public List<FlameGraphNode> GetNodes(ProfileCallTreeNode node) {
+            var list = new List<FlameGraphNode>();
+            AppendNodes(node, list);
+            return list;
+        }
+
+        public void AppendNodes(ProfileCallTreeNode node, List<FlameGraphNode> resultList) {
             if (!node.IsGroup) {
-                return new List<FlameGraphNode>() { treeNodeToFgNodeMap_.GetValueOrDefault(node) };
+                if (treeNodeToFgNodeMap_.TryGetValue(node, out var fgNode)) {
+                    resultList.Add(fgNode);
+                }
+                return;
             }
 
             var groupNode = node as ProfileCallTreeGroupNode;
-            var list = new List<FlameGraphNode>(groupNode.Nodes.Count);
-
+            
             foreach (var childNode in groupNode.Nodes) {
-                list.Add(treeNodeToFgNodeMap_.GetValueOrDefault(childNode));
+                if (treeNodeToFgNodeMap_.TryGetValue(childNode, out var fgNode)) {
+                    resultList.Add(fgNode);
+                }
             }
-
-            return list;
         }
 
         public List<FlameGraphNode> SearchNodes(string text, bool includeModuleName = true) {
