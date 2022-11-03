@@ -906,16 +906,16 @@ namespace IRExplorerUI {
             OptionalStatusText.Visibility = !string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        void ComputeFunctionProfile(ProfileData data, int sampleStartIndex, int sampleEndIndex, int threadId) {
-            data.ModuleWeights.Clear();
-            data.ProfileWeight = TimeSpan.Zero;
-            data.TotalWeight = TimeSpan.Zero;
+        void ComputeFunctionProfile(ProfileData profile, int sampleStartIndex, int sampleEndIndex, int threadId) {
+            profile.ModuleWeights.Clear();
+            profile.ProfileWeight = TimeSpan.Zero;
+            profile.TotalWeight = TimeSpan.Zero;
 
-            foreach (var funcProfile in data.FunctionProfiles) {
+            foreach (var funcProfile in profile.FunctionProfiles) {
                 funcProfile.Value.Reset();
             }
 
-            data.CallTree = null; //? Recycle nodes
+            profile.CallTree = null; //? Recycle nodes
             ProfileCallTree callTree = new();
 
             int sampleCount = sampleEndIndex - sampleStartIndex;
@@ -935,14 +935,14 @@ namespace IRExplorerUI {
                     HashSet<IRTextFunction> stackFuncts = new();
 
                     for (int i = start; i < end; i++) {
-                        var (sample, stack) = data.Samples[i];
+                        var (sample, stack) = profile.Samples[i];
 
                         if (threadId != -1 && stack.Context.ThreadId != threadId) {
                             continue;
                         }
 
-                        data.TotalWeight += sample.Weight;
-                        data.ProfileWeight += sample.Weight;
+                        profile.TotalWeight += sample.Weight;
+                        profile.ProfileWeight += sample.Weight;
 
                         bool isTopFrame = true;
                         stackModules.Clear();
@@ -956,7 +956,7 @@ namespace IRExplorerUI {
                             if (isTopFrame && stackModules.Add(resolvedFrame.Info.Image.Id)) {
                                 //? TODO: Avoid lock by summing per thread, accumulate at the end
                                 //? TODO: Also, don't use mod name as key, use imageId
-                                data.AddModuleSample(resolvedFrame.Info.Image.ModuleName, sample.Weight);
+                                profile.AddModuleSample(resolvedFrame.Info.Image.ModuleName, sample.Weight);
                             }
 
                             var funcRva = resolvedFrame.Info.DebugInfo.RVA;
@@ -965,7 +965,7 @@ namespace IRExplorerUI {
                             var funcProfile = resolvedFrame.Info.Profile;
 
                             if (funcProfile == null) {
-                                funcProfile = data.GetOrCreateFunctionProfile(resolvedFrame.Info.Function, null);
+                                funcProfile = profile.GetOrCreateFunctionProfile(resolvedFrame.Info.Function, null);
                                 resolvedFrame.Info.Profile = funcProfile;
                             }
 
@@ -994,7 +994,7 @@ namespace IRExplorerUI {
             }
 
             Task.WhenAll(tasks.ToArray()).Wait();
-            data.CallTree = callTree;
+            profile.CallTree = callTree;
         }
 
         private class MainWindowState {

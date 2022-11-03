@@ -251,9 +251,9 @@ public partial class FlameGraphViewer : FrameworkElement {
         var fgNodes = new List<FlameGraphNode>(nodes.Count);
 
         foreach (var node in nodes) {
-            fgNodes.AddRange(flameGraph_.GetNodes(node));
+            flameGraph_.AppendNodes(node, fgNodes);
         }
-
+        
         SelectNodes(fgNodes);
         return fgNodes;
     }
@@ -262,6 +262,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         ResetHighlightedNodes(HighlighingType.Hovered);
         ResetHighlightedNodes(HighlighingType.Selected, true);
         selectedNode_ = null;
+        renderer_.Redraw();
     }
 
     public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode,
