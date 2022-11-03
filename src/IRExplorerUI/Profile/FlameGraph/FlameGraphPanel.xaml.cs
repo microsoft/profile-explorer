@@ -246,7 +246,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                 ActivityView.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
                 ActivityView.SamplesBackColor = Brushes.DeepSkyBlue;
 
-                var threadActivityArea = new Rect(0, 0, ActivityView.ActualWidth, 40);
+                var threadActivityArea = new Rect(0, 0, ActivityView.ActualWidth, 32);
                 threadActivityViews_ = new List<ActivityTimelineView>();
                 threadActivityViewsMap_ = new Dictionary<int, ActivityTimelineView>();
                 int limit = 0;
@@ -471,9 +471,15 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         GraphViewer.ClearSelection();
 
-        if (isTimelineView_ && GraphViewer.IsInitialized) {
-            var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
-            GraphViewer.SelectNodes(nodes);
+        if (GraphViewer.IsInitialized) {
+            if (isTimelineView_) {
+                var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
+                GraphViewer.SelectNodes(nodes);
+            }
+            else {
+                var nodes = FindCallTreeNodesForSamples(e.StartSampleIndex, e.EndSampleIndex, e.ThreadId, Session.ProfileData);
+                GraphViewer.SelectNodes(nodes);
+            }
         }
     }
 
