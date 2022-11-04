@@ -170,9 +170,9 @@ public class ProfileData {
         return GetFunctionProfile(function) != null;
     }
 
-    public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function, string sourceFile) {
+    public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function) {
         if (!FunctionProfiles.TryGetValue(function, out var profile)) {
-            profile = new FunctionProfileData(sourceFile);
+            profile = new FunctionProfileData();
             FunctionProfiles.TryAdd(function, profile);
         }
 

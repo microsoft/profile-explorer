@@ -41,7 +41,7 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     }
 
     public void UpdateName(string newName) {
-        Name = string.Intern(newName);
+        Name = newName != null ? string.Intern(newName) : null;
     }
 
     public void AddSourceLine(SourceLineDebugInfo sourceLine) {
@@ -113,12 +113,11 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     public bool Equals(FunctionDebugInfo other) {
         return RVA == other.RVA &&
                Size == other.Size &&
-               Id == other.Id &&
                Name.Equals(other.Name, StringComparison.Ordinal);
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Name, Id, RVA, Size);
+        return HashCode.Combine(Name, RVA, Size);
     }
 
     public int CompareTo(FunctionDebugInfo other) {

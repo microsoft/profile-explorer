@@ -38,17 +38,7 @@ public sealed class ProfileCallTree {
             NextNodeId = callTree.nextNodeId_;
         }
     }
-
-    // Comparer used for the root nodes in order to ignore the ID part.
-    private class ProfileCallTreeNodeComparer : IEqualityComparer<ProfileCallTreeNode> {
-        public bool Equals(ProfileCallTreeNode x, ProfileCallTreeNode y) {
-            return x.Equals(y.FunctionDebugInfo);
-        }
-
-        public int GetHashCode(ProfileCallTreeNode obj) {
-            return HashCode.Combine(obj.Function, obj.FunctionDebugInfo);
-        }
-    }
+    
 
     private HashSet<ProfileCallTreeNode> rootNodes_;
     private Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcToNodesMap_;
@@ -330,8 +320,9 @@ public sealed class ProfileCallTree {
             return nodes[0];
         }
 
-        var childrenSet = new HashSet<ProfileCallTreeNode>();
-        var callersSet = new HashSet<ProfileCallTreeNode>();
+        var comparer = new ProfileCallTreeNodeComparer();
+        var childrenSet = new HashSet<ProfileCallTreeNode>(comparer);
+        var callersSet = new HashSet<ProfileCallTreeNode>(comparer);
         var callSiteMap = new Dictionary<long, ProfileCallSite>();
         TimeSpan weight = TimeSpan.Zero;
         TimeSpan excWeight = TimeSpan.Zero;
@@ -341,7 +332,7 @@ public sealed class ProfileCallTree {
             // When the function is a callee, consider only the nodes that are actually being called
             // by the parent node - by default the list contains every node representing the function,
             // on all paths through the call tree.
-            if (parentNode != null && !node.HasParent(parentNode)) {
+            if (parentNode != null && !node.HasParent(parentNode, comparer)) {
                 continue;
             }
 
@@ -533,6 +524,7 @@ public enum ProfileCallTreeNodeKind {
 [ProtoContract(SkipConstructor = true)]
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 [ProtoMember(1)]
+    //? Remove reference once no longer serialized
     private IRTextFunctionReference functionRef_ { get; set; }
     //? TODO: Renumber, 2
     private List<ProfileCallTreeNode> children_;
@@ -702,12 +694,18 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         callers_.Add(parentNode);
     }
 
-    public bool HasParent(ProfileCallTreeNode parentNode) {
+    public bool HasParent(ProfileCallTreeNode parentNode, ProfileCallTreeNodeComparer comparer) {
         if (Callers == null) {
             return false;
         }
 
-        return Callers.IndexOf(parentNode) != -1;
+        foreach (var node in Callers) {
+            if (comparer.Equals(node, parentNode)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private (ProfileCallTreeNode, bool) GetOrCreateChildNode(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
@@ -815,7 +813,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             return true;
         }
 
-        return Id == other.Id;
+        return FunctionDebugInfo.Equals(other.FunctionDebugInfo);
     }
 
     public override bool Equals(object obj) {
@@ -835,7 +833,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public override int GetHashCode() {
-        return Id.GetHashCode();
+        return FunctionDebugInfo.GetHashCode();
     }
 
     public static bool operator ==(ProfileCallTreeNode left, ProfileCallTreeNode right) {
@@ -956,6 +954,17 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
 
     public static bool operator !=(ProfileCallSite left, ProfileCallSite right) {
         return !Equals(left, right);
+    }
+}
+
+// Comparer used for the root nodes in order to ignore the ID part.
+public class ProfileCallTreeNodeComparer : IEqualityComparer<ProfileCallTreeNode> {
+    public bool Equals(ProfileCallTreeNode x, ProfileCallTreeNode y) {
+        return x.Equals(y.FunctionDebugInfo);
+    }
+
+    public int GetHashCode(ProfileCallTreeNode obj) {
+        return HashCode.Combine(obj.Function, obj.FunctionDebugInfo);
     }
 }
 

@@ -398,6 +398,7 @@ namespace IRExplorerUI {
             }
 
             using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
             var report = new ProfileDataReport();
             report.RunningProcesses = processList_;
             report.SymbolOptions = symbolOptions_.Clone();
@@ -407,6 +408,7 @@ namespace IRExplorerUI {
             LoadProgressBar.Value = 0;
 
             if (selectedProcSummary_ == null) {
+                IsLoadingProfile = false;
                 return false;
             }
 
@@ -422,13 +424,13 @@ namespace IRExplorerUI {
                 }
 
                 success = await Session.LoadProfileData(recordedProfile_, processIds,
-                                                        options_, binSearchOptions, report,
-                                                        ProfileLoadProgressCallback, task);
+                    options_, binSearchOptions, report,
+                    ProfileLoadProgressCallback, task);
             }
             else {
                 success = await Session.LoadProfileData(ProfileFilePath, processIds,
-                                                        options_, symbolOptions_, report,
-                                                        ProfileLoadProgressCallback, task);
+                    options_, symbolOptions_, report,
+                    ProfileLoadProgressCallback, task);
             }
 
             report.TraceInfo ??= new ProfileTraceInfo(); // Not set on failure.
@@ -461,6 +463,8 @@ namespace IRExplorerUI {
                     return;
                 }
 
+                // With multi-threaded processing, current value is not always increasing...
+                progressInfo.Current = Math.Max(progressInfo.Current, (int)LoadProgressBar.Value);
                 LoadProgressBar.Maximum = progressInfo.Total;
                 LoadProgressBar.Value = progressInfo.Current;
                 LoadProgressLabel.Text = progressInfo.Stage switch {
@@ -524,8 +528,7 @@ namespace IRExplorerUI {
         }
 
         private async Task CancelLoadingTask() {
-            loadTask_.CancelTask();
-            await loadTask_.WaitForTaskAsync();
+            await loadTask_.CancelTaskAndWaitAsync();
         }
 
         private void ProfileBrowseButton_Click(object sender, RoutedEventArgs e) {
@@ -550,9 +553,9 @@ namespace IRExplorerUI {
                 IsLoadingProcessList = false;
 
                 if (task.IsCanceled) {
-                    return true;
+                    return false;
                 }
-
+                
                 return processList_ != null;
             }
 
@@ -808,6 +811,13 @@ namespace IRExplorerUI {
         }
 
         private void LoadPreviousSession(ProfileDataReport report) {
+            if (report.Process != null) {
+                // Set previous selected process.
+                selectedProcSummary_ = new List<ProcessSummary>() {
+                    new ProcessSummary(report.Process, TimeSpan.Zero)
+                };
+            }
+
             if (IsRecordMode) {
                 RecordingOptions = report.SessionOptions.Clone();
             }

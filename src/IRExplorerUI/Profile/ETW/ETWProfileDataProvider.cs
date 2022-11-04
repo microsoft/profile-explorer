@@ -175,7 +175,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                     tasks.Add(taskFactory.StartNew(() => {
                         ProcessSamplesChunk(profile, start, end, 
                                             processIds, options.IncludeKernelEvents, callTree, 
-                                            symbolOptions, progressCallback, cancelableTask);
+                                            symbolOptions, progressCallback, cancelableTask, chunks);
                     }));
                 }
 
@@ -233,7 +233,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                                      bool includeKernelEvents, ProfileCallTree callTree,
                                      SymbolFileSourceOptions symbolOptions,
                                      ProfileLoadProgressHandler progressCallback, 
-                                     CancelableTask cancelableTask) {
+                                     CancelableTask cancelableTask, int chunks) {
         int index = 0;
         var stackFuncts = new HashSet<IRTextFunction>();
         var stackModules = new HashSet<int>();
@@ -257,7 +257,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                 }
 
                 progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
-                    Total = (int)profile.Samples.Count, Current = index
+                    Total = (int)profile.Samples.Count, Current = index * chunks
                 });
             }
 
@@ -429,7 +429,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
             lock (profileData_) {
                 //? TODO:  Use RW lock
-                funcProfile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
+                funcProfile = profileData_.GetOrCreateFunctionProfile(textFunction);
             }
 
             lock (funcProfile) {
@@ -807,7 +807,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
                     //? TODO: Use RW lock
                     lock (profileData_) {
-                        profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
+                        profile = profileData_.GetOrCreateFunctionProfile(textFunction);
                     }
 
                     profile.AddCounterSample(offset, counter.CounterId, 1);

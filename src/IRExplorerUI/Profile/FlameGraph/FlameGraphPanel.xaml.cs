@@ -1246,11 +1246,21 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             return threadListMap;
         }
 
+        int sampleStartIndex = 0;
+        int sampleEndIndex = profile.Samples.Count;
+        var funcProfile = profile.GetFunctionProfile(node.Function);
+
+        if (funcProfile != null && funcProfile.SampleStartIndex != int.MaxValue) {
+            sampleStartIndex = funcProfile.SampleStartIndex;
+            sampleEndIndex = funcProfile.SampleEndIndex;
+        }
+
         int index = 0;
 
         //? Also here - Abstract parallel run chunks to take action per sample
 
-        foreach (var (sample, stack) in profile.Samples) {
+        for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
+            var (sample, stack) = profile.Samples[i];
             foreach (var stackFrame in stack.StackFrames) {
                 if (stackFrame.IsUnknown) continue;
 

@@ -29,6 +29,9 @@ public class FunctionProfileData {
     [ProtoMember(8)]
     public FunctionDebugInfo FunctionDebugInfo { get; set; }
 
+    public int SampleStartIndex { get; set; }
+    public int SampleEndIndex { get; set; }
+
     public bool HasPerformanceCounters => InstructionCounters.Count > 0;
     public bool HasCallers => CallerWeights != null && CallerWeights.Count > 0;
     public bool HasCallees => CalleesWeights != null && CalleesWeights.Count > 0;
@@ -37,9 +40,7 @@ public class FunctionProfileData {
     //? TODO
     //? - save unique stacks with inclusive samples for each frame
 
-    public FunctionProfileData(string filePath) {
-        SourceFilePath = filePath;
-        Weight = TimeSpan.Zero;
+    public FunctionProfileData() {
         InitializeReferenceMembers();
     }
 
@@ -54,6 +55,9 @@ public class FunctionProfileData {
         CalleesWeights ??= new Dictionary<IRTextFunctionId, TimeSpan>();
         CallerWeights ??= new Dictionary<IRTextFunctionId, TimeSpan>();
         InstructionCounters ??= new Dictionary<long, PerformanceCounterSet>();
+        
+        SampleStartIndex = int.MaxValue;
+        SampleEndIndex = int.MinValue;
     }
 
     public void AddInstructionSample(long instrOffset, TimeSpan weight) {
@@ -190,6 +194,8 @@ public class FunctionProfileData {
     public void Reset() {
         Weight = TimeSpan.Zero;
         ExclusiveWeight = TimeSpan.Zero;
+        SampleStartIndex = int.MaxValue;
+        SampleEndIndex = int.MinValue;
         InstructionWeight?.Clear();
         CalleesWeights?.Clear();
         CallerWeights?.Clear();

@@ -339,8 +339,8 @@ public sealed class ProfileImage : IEquatable<ProfileImage>, IComparable<Profile
         long baseAddress, long defaultBaseAddress,
         int size, int timeStamp, long checksum) {
         Size = size;
-        FilePath = filePath;
-        OriginalFileName = originalFileName;
+        FilePath = filePath != null ? string.Intern(filePath) : null;
+        OriginalFileName = originalFileName != null ? string.Intern(originalFileName) : null;
         BaseAddress = baseAddress;
         DefaultBaseAddress = defaultBaseAddress;
         TimeStamp = timeStamp;

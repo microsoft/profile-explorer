@@ -965,7 +965,7 @@ namespace IRExplorerUI {
                             var funcProfile = resolvedFrame.Info.Profile;
 
                             if (funcProfile == null) {
-                                funcProfile = profile.GetOrCreateFunctionProfile(resolvedFrame.Info.Function, null);
+                                funcProfile = profile.GetOrCreateFunctionProfile(resolvedFrame.Info.Function);
                                 resolvedFrame.Info.Profile = funcProfile;
                             }
 
@@ -976,6 +976,8 @@ namespace IRExplorerUI {
                                 if (stackFuncts.Add(textFunction)) {
                                     funcProfile.AddInstructionSample(offset, sample.Weight);
                                     funcProfile.Weight += sample.Weight;
+                                    funcProfile.SampleStartIndex = Math.Min(funcProfile.SampleStartIndex, i);
+                                    funcProfile.SampleEndIndex = Math.Max(funcProfile.SampleEndIndex, i);
                                 }
 
                                 // Count the exclusive time for the top frame function.

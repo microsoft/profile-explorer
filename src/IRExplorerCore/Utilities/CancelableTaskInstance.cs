@@ -104,7 +104,6 @@ namespace IRExplorerCore {
             unregisterAction_?.Invoke(canceledTask);
 
             await canceledTask.WaitToCompleteAsync();
-            canceledTask.Dispose();
         }
 
         public void CompleteTask(CancelableTask task) {
