@@ -20,6 +20,7 @@ public record SampleTimeRangeInfo(TimeSpan StartTime, TimeSpan EndTime,
 
 public record SampleTimePointInfo(TimeSpan Time, int SampleIndex, int ThreadId);
 
+//? TODO: Use SampleIndex in SampleTimePointInfo/Range
 public record SampleIndex(int Index, TimeSpan Time);
 
 public class ActivityView : FrameworkElement, INotifyPropertyChanged {
@@ -435,7 +436,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             return new List<SliceList>() { new SliceList(threadId) };
         }
 
-        Trace.WriteLine($"ComputeSampleSlices {sw3.ElapsedMilliseconds}ms");
+        //Trace.WriteLine($"ComputeSampleSlices {sw3.ElapsedMilliseconds}ms");
         return sliceSeriesDict.ToValueList();
     }
 
@@ -512,12 +513,13 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 graphDC.DrawRectangle(backColor, borderColor, rect);
             }
 
-            if (scaledSliceWidth > 3 * SliceWidth) {
-                double newWidth = Math.Max(1, SliceWidth * (SliceWidth / scaledSliceWidth));
-                if (newWidth < sliceWidth_) {
-                    StartComputeSampleSlices(newWidth);
-                }
-            }
+            //? RE-ENABLE and implement shrinking
+            //if (scaledSliceWidth > 3 * SliceWidth) {
+            //    double newWidth = Math.Max(1, SliceWidth * (SliceWidth / scaledSliceWidth));
+            //    if (newWidth < sliceWidth_) {
+            //        StartComputeSampleSlices(newWidth);
+            //    }
+            //}
         }
 
         if (markedSamples_ != null) {

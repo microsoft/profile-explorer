@@ -454,11 +454,15 @@ namespace IRExplorerUI {
                 return nodeEx; // Recursion in the call graph.
             }
 
-            //? TODO: This is still not quite right, the selected nodes
-            //? shoud be found on a path that has the current stack frame as a prefix in theirs.
-            if (kind == ChildFunctionExKind.CalleeNode ||
-                kind == ChildFunctionExKind.CallerNode) {
+            if (kind == ChildFunctionExKind.CalleeNode) {
+                //? TODO: This is still not quite right, the selected nodes
+                //? shoud be found on a path that has the current stack frame as a prefix in theirs.
+                //? actualParentNode is just the last in that list
                 node = GetChildCallTreeNode(node, actualParentNode.CallTreeNode, Session.ProfileData.CallTree);
+                nodeEx.CallTreeNode = node;
+            }
+            else if (kind == ChildFunctionExKind.CallerNode) {
+                node = GetChildCallTreeNode(node, null, Session.ProfileData.CallTree);
                 nodeEx.CallTreeNode = node;
             }
 

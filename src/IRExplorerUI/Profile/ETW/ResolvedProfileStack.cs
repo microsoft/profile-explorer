@@ -49,6 +49,7 @@ public sealed class ResolvedProfileStackInfo : IEquatable<ResolvedProfileStackIn
     [ProtoMember(1)]
     public FunctionDebugInfo DebugInfo { get; set; }
     [ProtoMember(2)]
+    //? TODO: Remove Reference, bloated, needed only to serialize
     public IRTextFunctionReference Function { get; set; }
     [ProtoMember(3)]
     public ProfileImage Image { get; set; }
