@@ -238,7 +238,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         var stackFuncts = new HashSet<IRTextFunction>();
         var stackModules = new HashSet<int>();
 
-        foreach (var sample in profile.Samples.Enumerate(start, end)) {
+        foreach (var sample in profile.Samples.Enumerate(start, end, recompress: false)) {
             if (!includeKernelEvents && sample.IsKernelCode) {
                 continue;
             }
