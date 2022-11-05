@@ -14,17 +14,19 @@ namespace IRExplorerUI.Utilities;
 
 public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
     sealed class Segment {
-        CompressedSegmentedList<T> parent_;
-        Task activeTask_; // Task used to (de)compress, null if no pending task.
-        byte[] data_;     // Compressed value data.
-        public T[] values_;      // Decompressed values, if null in compressed state.
-        int count_;       // Number of values < capacity.
-        int size_;        // Size in bytes of uncompressed capacity.
+        private CompressedSegmentedList<T> parent_;
+        private Task activeTask_; // Task used to (de)compress, null if no pending task.
+        private byte[] data_;     // Compressed value data.
+        private T[] values_;      // Decompressed values, if null in compressed state.
+        private int count_;       // Number of values < capacity.
+        private int size_;        // Size in bytes of uncompressed capacity.
+        private object lockObject_;
 
         public Segment(CompressedSegmentedList<T> parent, int capacity) {
             parent_ = parent;
             values_ = ArrayPool<T>.Shared.Rent(capacity);
             size_ = capacity * Unsafe.SizeOf<T>();
+            lockObject_ = new object();
         }
 
         public int Count => count_;
@@ -62,7 +64,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
             // If the values were compressed before, discard the data
             // since it doesn't match the current values anymore.
             if(WasCompressed) {
-                lock(this) {
+                lock(lockObject_) {
                     data_ = null;
                 }
             }
@@ -96,7 +98,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
             //? TODO: Could use Interlocked.MemoryBarrierProcessWide?
             Task task = null;
 
-            lock(this) {
+            lock(lockObject_) {
                 task = activeTask_;
             }
 
@@ -120,7 +122,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
                     activeTask_ = parent_.ScheduleCompressionTask(() => {
                         var result = DecompressImpl(data_, size_);
 
-                        lock(this) {
+                        lock(lockObject_) {
                             values_ = result;
                             activeTask_ = null;
                         }
@@ -204,6 +206,10 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
             DecompressValues();
             values_.CopyTo(array, arrayIndex);
         }
+
+        public override string ToString() {
+            return $"Segment size {size_}, count {count_}, task {activeTask_ != null}, compressed {IsCompressed}, being/was compressed {IsBeingCompressed}/{WasCompressed}";
+        }
     }
 
     private List<Segment> segments_;
@@ -245,6 +251,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
     public void Wait(bool reset = true) {
         taskQueue_.CompleteAdding();
         Task.WhenAll(taskQueueThreadTasks_);
+        Task.WhenAll(taskQueueThreadTasks_).Wait();
 
         if (reset) {
             SetupCompressionThreads();
@@ -317,7 +324,8 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
                     while (!taskQueue_.IsCompleted) {
                         if (taskQueue_.TryTake(out var task, 1000)) {
                             // Execute the actual (de)compression task.
-                            task.RunSynchronously();
+                            task.Start();
+                            task.Wait();
                         }
                     }
                 }
@@ -450,8 +458,8 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
         return Enumerate(0, Count).GetEnumerator();
     }
 
-    public RangeEnumerator Enumerate(int rangeStart, int rangeEnd) {
-        return new RangeEnumerator(this, rangeStart, rangeEnd);
+    public RangeEnumerator Enumerate(int rangeStart, int rangeEnd, bool recompress = true) {
+        return new RangeEnumerator(this, rangeStart, rangeEnd, recompress);
     }
 
     IEnumerator IEnumerable.GetEnumerator() {
@@ -475,8 +483,9 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
         private int rangeEnd_;
         private int segmentStart_;
         private int segmentEnd_;
+        private bool recompress_;
 
-        public RangeEnumerator(CompressedSegmentedList<T> target, int rangeStart, int rangeEnd) {
+        public RangeEnumerator(CompressedSegmentedList<T> target, int rangeStart, int rangeEnd, bool recompress) {
             Debug.Assert(rangeStart <= target.Count);
             Debug.Assert(rangeEnd <= target.Count);
             Debug.Assert(rangeEnd >= rangeStart);
@@ -485,6 +494,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
             rangeEnd_ = rangeEnd;
             segmentStart_ = rangeStart / target.segmentLength_;
             segmentEnd_ = rangeEnd / target.segmentLength_;
+            recompress_ = recompress_;
         }
 
         public IEnumerator<T> GetEnumerator() {
@@ -530,7 +540,10 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
 
                 // Re-compress the values, done on another thread.
                 // Don't compress the last segment, it's likely that more values are added to it.
-                prevSegment?.CompressValues();
+                if (recompress_) {
+                    prevSegment?.CompressValues();
+                }
+
                 prevSegment = segment;
             }
         }
