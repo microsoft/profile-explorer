@@ -262,6 +262,7 @@ namespace IRExplorerUI {
         private int enabledPerfCounters_;
         private ICollectionView perfCountersFilter_;
         private ICollectionView metricsFilter_;
+        private ICollectionView processFilter_;
         private string profileFilePath_;
         private string binaryFilePath_;
 
@@ -438,6 +439,7 @@ namespace IRExplorerUI {
             IsLoadingProfile = false;
 
             if (!success && !task.IsCanceled) {
+                using var centerForm = new DialogCenteringHelper(this);
                 MessageBox.Show($"Failed to load profile file {ProfileFilePath}", "IR Explorer",
                     MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 ProfileReportPanel.ShowReport(report, Session);
@@ -573,7 +575,6 @@ namespace IRExplorerUI {
         private void ProcessList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (ProcessList.SelectedItems.Count > 0) {
                 selectedProcSummary_ = new List<ProcessSummary>(ProcessList.SelectedItems.OfType<ProcessSummary>());
-                Trace.WriteLine($"Selected {selectedProcSummary_.Count}");
                 BinaryFilePath = selectedProcSummary_[0].Process.Name;
             }
             else {
@@ -591,7 +592,6 @@ namespace IRExplorerUI {
             }
 
             recordingOptions_.ApplicationPath = appPath;
-            SaveCurrentOptions();
             return appPath;
         }
 
@@ -600,14 +600,29 @@ namespace IRExplorerUI {
         }
 
         private async Task StartRecordingSession() {
-            var appPath = SetSessionApplicationPath();
+            if (recordingOptions_.SessionKind == ProfileSessionKind.StartProcess) {
+                var appPath = SetSessionApplicationPath();
 
-            if (options_.RecordingSessionOptions.SessionKind ==   ProfileSessionKind.StartProcess &&
-                !File.Exists(appPath)) {
-                MessageBox.Show($"Could not find profiled application: {appPath}", "IR Explorer",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                if (!File.Exists(appPath)) {
+                    using var centerForm = new DialogCenteringHelper(this);
+                    MessageBox.Show($"Could not find profiled application: {appPath}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
             }
+            else if (recordingOptions_.SessionKind == ProfileSessionKind.AttachToProcess) {
+                if (selectedProcSummary_ == null) {
+                    using var centerForm = new DialogCenteringHelper(this);
+                    MessageBox.Show($"Select a running process to attach to", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                recordingOptions_.TargetProcessId = selectedProcSummary_[0].Process.ProcessId;
+            }
+
+            // Commit the recording options to the profiling ones.
+            SaveCurrentOptions();
 
             if (recordingOptions_.RecordPerformanceCounters) {
                 options_.IncludePerformanceCounters = true;
@@ -642,6 +657,7 @@ namespace IRExplorerUI {
                 DisplayProcessList(processList_);
             }
             else {
+                using var centerForm = new DialogCenteringHelper(this);
                 MessageBox.Show("Failed to record ETW sampling profile!", "IR Explorer",
                     MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
@@ -696,6 +712,7 @@ namespace IRExplorerUI {
             if (!string.IsNullOrEmpty(ProfileFilePath)) {
                 if (await LoadProcessList()) {
                     if (processList_ == null) {
+                        using var centerForm = new DialogCenteringHelper(this);
                         MessageBox.Show("Failed to load ETL process list!", "IR Explorer",
                             MessageBoxButton.OK, MessageBoxImage.Exclamation);
                     }
@@ -724,11 +741,11 @@ namespace IRExplorerUI {
         }
 
         private void CounterFilter_TextChanged(object sender, TextChangedEventArgs e) {
-            perfCountersFilter_.Refresh();
+            perfCountersFilter_?.Refresh();
         }
 
         private void MetricFilter_TextChanged(object sender, TextChangedEventArgs e) {
-            metricsFilter_.Refresh();
+            metricsFilter_?.Refresh();
         }
 
         private void SessionReportButton_Click(object sender, RoutedEventArgs e) {
@@ -844,6 +861,73 @@ namespace IRExplorerUI {
                 sb.AppendLine($"Weight: {proc.Weight}");
                 Clipboard.SetText(sb.ToString());
             }
+        }
+
+        private async void RefreshProcessButton_OnClick(object sender, RoutedEventArgs e) {
+            UpdateRunningProcessList();
+        }
+
+        private void UpdateRunningProcessList() {
+            var runningProcs = Process.GetProcesses();
+            var list = new List<ProcessSummary>();
+
+            foreach (var proc in runningProcs)
+            {
+                try
+                {
+                    var procProfile = new ProfileProcess(proc.Id, -1, proc.ProcessName, proc.ProcessName, "");
+                    list.Add(new ProcessSummary(procProfile, TimeSpan.Zero));
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"Failed to add proc {proc.ProcessName}: {ex.Message}");
+                }
+            }
+
+            list.Sort((a, b) => a.Process.Name.CompareTo(b.Process.Name));
+            var procList = new ObservableCollectionRefresh<ProcessSummary>(list);
+            processFilter_ = procList.GetFilterView();
+            processFilter_.Filter = FilterRunningProcessList;
+            RunningProcessList.ItemsSource = null;
+            RunningProcessList.ItemsSource = processFilter_;
+        }
+
+        private bool FilterRunningProcessList(object value) {
+            var text = ProcessFilter.Text.Trim();
+
+            if (text.Length < 2) {
+                return true;
+            }
+
+            var proc = (ProcessSummary)value;
+
+            if (proc.Process.Name.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+                proc.Process.ProcessId.ToString().Contains(text)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        private void ProcessFilter_TextChanged(object sender, TextChangedEventArgs e) {
+            processFilter_?.Refresh();
+        }
+
+        private void RunningProcessList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (RunningProcessList.SelectedItems.Count > 0) {
+                selectedProcSummary_ = new List<ProcessSummary>(RunningProcessList.SelectedItems.OfType<ProcessSummary>());
+            }
+            else {
+                selectedProcSummary_ = null;
+            }
+        }
+
+        private void AttachRadioButton_Click(object sender, RoutedEventArgs e) {
+            UpdateRunningProcessList();
+        }
+
+        private async void RunningProcessList_DoubleClick(object sender, MouseButtonEventArgs e) {
+            await StartRecordingSession();
         }
     }
 }

@@ -1329,21 +1329,21 @@ namespace IRExplorerUI {
                 Trace.WriteLine($"3) RefreshProfile {sw2.ElapsedMilliseconds}");
             }
 
-            var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
+            //var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
 
-            if (panel != null) {
-                var sw2 = Stopwatch.StartNew();
-                await panel.DisplayProfileCallTree(true);
-                Trace.WriteLine($"4) DisplayProfileCallTree {sw2.ElapsedMilliseconds}");
-            }
+            //if (panel != null) {
+            //    var sw2 = Stopwatch.StartNew();
+            //    await panel.DisplayProfileCallTree(true);
+            //    Trace.WriteLine($"4) DisplayProfileCallTree {sw2.ElapsedMilliseconds}");
+            //}
 
-            var fgPanel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+            //var fgPanel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
 
-            if (fgPanel != null) {
-                var sw2 = Stopwatch.StartNew();
-                await fgPanel.DisplayFlameGraph();
-                Trace.WriteLine($"5) DisplayFlameGraph {sw2.ElapsedMilliseconds}");
-            }
+            //if (fgPanel != null) {
+            //    var sw2 = Stopwatch.StartNew();
+            //    await fgPanel.DisplayFlameGraph();
+            //    Trace.WriteLine($"5) DisplayFlameGraph {sw2.ElapsedMilliseconds}");
+            //}
 
             sw.Stop();
             Trace.WriteLine($"Total: {sw.ElapsedMilliseconds}");

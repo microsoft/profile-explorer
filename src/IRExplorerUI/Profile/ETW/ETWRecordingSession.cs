@@ -6,18 +6,24 @@ using System.Threading;
 using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerUI.Profile;
+using Microsoft.Diagnostics.NETCore.Client;
 using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Parsers;
+using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.Diagnostics.Tracing.Session;
 
 namespace IRExplorerUI.Profile {
     public sealed class ETWRecordingSession : IDisposable {
+        private static readonly string ProfilerPath = "irexplorer_profiler.dll";
+        private static readonly string ProfilerGuid = "{805A308B-061C-47F3-9B30-F785C3186E81}";
+
         private TraceEventSession session_;
         private ProfileRecordingSessionOptions options_;
         private ProfileDataProviderOptions providerOptions_;
         private ProfileLoadProgressHandler progressCallback_;
         private DateTime lastEventTime_;
         private string sessionName_;
+        private string profilerPath_;
         private string managedAsmDir_;
 
         public static bool RequiresElevation => TraceEventSession.IsElevated() != true;
@@ -90,11 +96,11 @@ namespace IRExplorerUI.Profile {
             Process profiledProcess = null;
             WindowsThreadSuspender threadSuspender = null;
             var sessionStarted = new ManualResetEvent(false);
-            
+
             // The entire ETW processing must be done on the same thread.
+            // Start a task that runs the ETW session and captures the events.
             RawProfileData profile = null;
 
-            // Start a task that runs the ETW session and captures the events.
             var eventTask = Task.Run(() => {
                 try {
                     if (!CreateSession()) {
@@ -130,6 +136,15 @@ namespace IRExplorerUI.Profile {
                             break;
                         }
                         case ProfileSessionKind.AttachToProcess: {
+                            //var profilerPath = Path.Combine(App.ApplicationDirectory, ProfilerPath);
+                            //AttachProfiler(16636, Guid.Parse(ProfilerGuid), profilerPath);
+                            acceptedProcessId = options_.TargetProcessId;
+
+                            if (options_.ProfileDotNet) {
+                                if (!SetupDotNetProfilerPaths()) {
+
+                                }
+                            }
                             break;
                         }
                         default: {
@@ -162,18 +177,22 @@ namespace IRExplorerUI.Profile {
                             (ulong)(ClrTraceEventParser.Keywords.Jit |
                                     ClrTraceEventParser.Keywords.JittedMethodILToNativeMap |
                                     ClrTraceEventParser.Keywords.Loader));
-                        //? TODO: Needed when attaching to a running .net app.
-                        //session_.EnableProvider(
-                        //    ClrRundownTraceEventParser.ProviderGuid,
-                        //    TraceEventLevel.Verbose,
-                        //    (ulong)(ClrRundownTraceEventParser.Keywords.Jit |
-                        //            ClrRundownTraceEventParser.Keywords.JittedMethodILToNativeMap));
+
+                        if (options_.SessionKind == ProfileSessionKind.AttachToProcess) {
+                            // Needed when attaching to a running .net app.
+                            session_.EnableProvider(
+                                ClrRundownTraceEventParser.ProviderGuid,
+                                TraceEventLevel.Verbose,
+                                (ulong)(ClrRundownTraceEventParser.Keywords.Jit |
+                                        ClrRundownTraceEventParser.Keywords.JittedMethodILToNativeMap |
+                                        ClrRundownTraceEventParser.Keywords.Loader));
+                        }
                     }
 
                     // Start the ETW session.
                     using var eventProcessor =
                         new ETWEventProcessor(session_.Source, providerOptions_,
-                                              true, acceptedProcessId,
+                                              isRealTime: true, acceptedProcessId,
                                               options_.ProfileChildProcesses,
                                               options_.ProfileDotNet, managedAsmDir_);
 
@@ -278,23 +297,9 @@ namespace IRExplorerUI.Profile {
                 };
 
                 if (options_.ProfileDotNet) {
-                    var profilerPath = Path.Combine(App.ApplicationDirectory, "irexplorer_profiler.dll");
-
-                    try {
-                        var tempPath = Path.GetTempPath();
-                        managedAsmDir_ = Path.Combine(tempPath, sessionName_);
-                        Directory.CreateDirectory(managedAsmDir_);
-                        Trace.WriteLine($"Using managed ASM dir {managedAsmDir_}");
+                    if (!SetupStartupDotNetProfiler(procInfo)) {
+                        Trace.TraceError($"Failed to setup managed profiler");
                     }
-                    catch (Exception ex) {
-                        Trace.TraceError($"Failed to create session ASM dir:{managedAsmDir_}: {ex.Message}\n{ex.StackTrace}");
-                    }
-
-                    procInfo.EnvironmentVariables["CORECLR_ENABLE_PROFILING"] = "1";
-                    procInfo.EnvironmentVariables["CORECLR_PROFILER"] = "{805A308B-061C-47F3-9B30-F785C3186E81}";
-                    procInfo.EnvironmentVariables["CORECLR_PROFILER_PATH"] = profilerPath;
-                    procInfo.EnvironmentVariables["IRX_MANAGED_ASM_DIR"] = managedAsmDir_;
-                    Trace.WriteLine($"Using managed profiler {profilerPath}");
                 }
 
                 if (options_.EnableEnvironmentVars) {
@@ -305,7 +310,7 @@ namespace IRExplorerUI.Profile {
 
                 var process = new Process { StartInfo = procInfo, EnableRaisingEvents = true };
                 process.Start();
-                Trace.WriteLine($"=> started {options_.ApplicationPath}");
+                Trace.WriteLine($"Started process {options_.ApplicationPath}");
 
                 return (process, process.Id);
             }
@@ -315,6 +320,52 @@ namespace IRExplorerUI.Profile {
 
             return (null, 0);
         }
+
+        private bool SetupStartupDotNetProfiler(ProcessStartInfo procInfo) {
+            if (!SetupDotNetProfilerPaths()) {
+                return false;
+            }
+
+            procInfo.EnvironmentVariables["CORECLR_ENABLE_PROFILING"] = "1";
+            procInfo.EnvironmentVariables["CORECLR_PROFILER"] = ProfilerGuid;
+            procInfo.EnvironmentVariables["CORECLR_PROFILER_PATH"] = profilerPath_;
+            procInfo.EnvironmentVariables["IRX_MANAGED_ASM_DIR"] = managedAsmDir_;
+            Trace.WriteLine($"Using managed profiler {profilerPath_}");
+            return true;
+        }
+
+        private bool SetupDotNetProfilerPaths() {
+            profilerPath_ = Path.Combine(App.ApplicationDirectory, ProfilerPath);
+            return SetupDotNetASMDirectory();
+        }
+
+        private bool SetupDotNetASMDirectory() {
+            try {
+                var tempPath = Path.GetTempPath();
+                managedAsmDir_ = Path.Combine(tempPath, sessionName_);
+                Directory.CreateDirectory(managedAsmDir_);
+                Trace.WriteLine($"Using managed ASM dir {managedAsmDir_}");
+                return true;
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to create managed ASM dir: {ex.Message}\n{ex.StackTrace}");
+                return false;
+            }
+        }
+
+        //bool AttachProfiler(int processId, Guid profilerGuid, string profilerPath) {
+        //    try {
+        //        //? additionalData needed to pass IRX_MANAGED_ASM_DIR
+        //        var client = new DiagnosticsClient(processId);
+        //        client.AttachProfiler(TimeSpan.FromSeconds(10), profilerGuid, profilerPath);
+        //    }
+        //    catch (Exception ex) {
+        //        Trace.TraceError($"Failed to attach profiler to process {processId}");
+        //        return false;
+        //    }
+
+        //    return true;
+        //}
 
         private void CreateApplicationExitTask(Process process, CancelableTask task) {
             Task.Run(() => {
