@@ -1033,8 +1033,8 @@ namespace IRExplorerUI {
             }
         }
 
-        private List<Tuple<IRElement, TimeSpan>> profileElements_;
-        private List<Tuple<BlockIR, TimeSpan>> profileBlocks_;
+        private List<(IRElement, TimeSpan)> profileElements_;
+        private List<(BlockIR, TimeSpan)> profileBlocks_;
         private List<ElementRowValue> profileDataRows_;
         private List<(GridViewColumnHeader Header, GridViewColumn Column)> profileColumnHeaders_;
         private int profileElementIndex_;

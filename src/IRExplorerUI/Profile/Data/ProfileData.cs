@@ -259,7 +259,7 @@ public class ProfileData {
         }
     }
 
-    public List<Tuple<IRTextFunction, FunctionProfileData>> GetSortedFunctions() {
+    public List<(IRTextFunction, FunctionProfileData)> GetSortedFunctions() {
         var list = FunctionProfiles.ToList();
         list.Sort((a, b) => -a.Item2.ExclusiveWeight.CompareTo(b.Item2.ExclusiveWeight));
         return list;

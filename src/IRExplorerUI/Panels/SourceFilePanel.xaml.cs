@@ -48,7 +48,7 @@ namespace IRExplorerUI {
         private bool sourceMapperDisabled_;
         private bool columnsVisible_;
         private double previousVerticalOffset_;
-        private List<Tuple<IRElement, TimeSpan>> profileElements_;
+        private List<(IRElement, TimeSpan)> profileElements_;
         private int profileElementIndex_;
         private FunctionProfileData.ProcessingResult sourceProfileResult_;
         private IRDocumentColumnData sourceColumnData_;
@@ -553,14 +553,14 @@ namespace IRExplorerUI {
                     var documentLine = TextView.Document.GetLineByNumber(lineNumber);
                     var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
                     dummyTuple = MakeDummyTuple(location, documentLine);
-                    processingResult.SampledElements.Add(new Tuple<IRElement, TimeSpan>(dummyTuple, lineWeight));
+                    processingResult.SampledElements.Add((dummyTuple, lineWeight));
                 }
 
                 if (result.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
                     var documentLine = TextView.Document.GetLineByNumber(lineNumber);
                     var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
                     dummyTuple ??= MakeDummyTuple(location, documentLine);
-                    processingResult.CounterElements.Add(new Tuple<IRElement, PerformanceCounterSet>(dummyTuple, counters));
+                    processingResult.CounterElements.Add((dummyTuple, counters));
                 }
             }
 
@@ -826,14 +826,14 @@ namespace IRExplorerUI {
         }
 
         private IRElement FindTupleOnSourceLine(int line) {
-            var pair = sourceProfileResult_.SampledElements.Find(e => e.Item1.TextLocation.Line == line - 1);
+            var pair1 = sourceProfileResult_.SampledElements.Find(e => e.Item1.TextLocation.Line == line - 1);
 
-            if (pair != null) {
-                return pair.Item1;
+            if (pair1.Item1 != null) {
+                return pair1.Item1;
             }
 
             var pair2 = sourceProfileResult_.CounterElements.Find(e => e.Item1.TextLocation.Line == line - 1);
-            return pair2 != null ? pair2.Item1 : null;
+            return pair2.Item1;
         }
     }
 }

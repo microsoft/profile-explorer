@@ -1,18 +1,19 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
-using IRExplorerUI.Profile;
-using PEFile;
+using Microsoft.Diagnostics.Runtime;
 using ProtoBuf;
-using static IRExplorerUI.Profile.ETWProfileDataProvider;
 
 namespace IRExplorerUI.Profile;
 
@@ -38,21 +39,20 @@ public sealed class ProfileCallTree {
             NextNodeId = callTree.nextNodeId_;
         }
     }
-    
 
-    private HashSet<ProfileCallTreeNode> rootNodes_;
+    private ConcurrentDictionary<IRTextFunction, ProfileCallTreeNode> rootNodes_;
     private Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcToNodesMap_;
     private Dictionary<long, ProfileCallTreeNode> nodeIdMap_;
     private long nextNodeId_;
     private ReaderWriterLockSlim lock_;
     private ReaderWriterLockSlim funcLock_;
 
-    public HashSet<ProfileCallTreeNode> RootNodes => rootNodes_;
+    public List<ProfileCallTreeNode> RootNodes => rootNodes_.ToValueList();
     public TimeSpan TotalRootNodesWeight {
         get {
             TimeSpan sum = TimeSpan.Zero;
             foreach (var node in rootNodes_) {
-                sum += node.Weight;
+                sum += node.Value.Weight;
             }
             return sum;
         }
@@ -79,7 +79,10 @@ public sealed class ProfileCallTree {
             }
             else {
                 node = AddChildNode(prevNode, resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function);
-                prevNode.AddCallSite(node, prevFrame.FrameRVA, sample.Weight);
+
+                //? TODO: Call sites can be computed on-demand when opening a func
+                //? by going over the samples in the func, similar to how timeline selection works
+                //prevNode.AddCallSite(node, prevFrame.FrameRVA, sample.Weight);
             }
 
             node.AccumulateWeight(sample.Weight);
@@ -112,7 +115,7 @@ public sealed class ProfileCallTree {
         int index = 0;
 
         foreach (var node in rootNodes_) {
-            state.RootNodeIds[index++] = node.Id;
+            state.RootNodeIds[index++] = node.Value.Id;
         }
 
         foreach (var pair in funcToNodesMap_) {
@@ -169,24 +172,25 @@ public sealed class ProfileCallTree {
 
                 if (state.ChildrenIds.TryGetValue(nodeId, out var childrenIds)) {
                     var childrenNodes = new List<ProfileCallTreeNode>(childrenIds.Length);
-                    node.SetChildrenNoLock(childrenNodes);
 
                     foreach (var childNodeId in childrenIds) {
                         var childNode = state.NodeIdMap[childNodeId];
-                        childNode.AppendParentNoLock(node);
+                        childNode.SetParent(node);
                         childrenNodes.Add(childNode);
                     }
+
+                    node.SetChildrenNoLock(childrenNodes);
                 }
             }
 
             callTree.funcToNodesMap_[function] = nodeList;
         }
 
-        callTree.rootNodes_ = new HashSet<ProfileCallTreeNode>(state.RootNodeIds.Length);
+        callTree.rootNodes_ = new ConcurrentDictionary<IRTextFunction, ProfileCallTreeNode>();
 
         foreach (var nodeId in state.RootNodeIds) {
             var node = state.NodeIdMap[nodeId];
-            callTree.rootNodes_.Add(node);
+            callTree.rootNodes_.TryAdd(node.Function, node);
         }
 
         return callTree;
@@ -198,38 +202,19 @@ public sealed class ProfileCallTree {
 
     [ProtoAfterDeserialization]
     private void InitializeReferenceMembers() {
-        rootNodes_ ??= new HashSet<ProfileCallTreeNode>(new ProfileCallTreeNodeComparer());
+        rootNodes_ ??= new ConcurrentDictionary<IRTextFunction, ProfileCallTreeNode>();
         funcToNodesMap_ ??= new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();
         lock_ ??= new ReaderWriterLockSlim();
         funcLock_ ??= new ReaderWriterLockSlim();
     }
 
     public ProfileCallTreeNode AddRootNode(FunctionDebugInfo funcInfo, IRTextFunction function) {
-        var node = new ProfileCallTreeNode(funcInfo, function);
-        lock_.EnterUpgradeableReadLock();
-
-        try {
-            if (rootNodes_.TryGetValue(node, out var existingNode)) {
-                return existingNode;
-            }
-
-            lock_.EnterWriteLock();
-            try {
-                if (rootNodes_.TryGetValue(node, out existingNode)) {
-                    return existingNode;
-                }
-
-                rootNodes_.Add(node);
-                RegisterFunctionTreeNode(node);
-            }
-            finally {
-                lock_.ExitWriteLock();
-            }
-        }
-        finally {
-            lock_.ExitUpgradeableReadLock();
+        if (rootNodes_.TryGetValue(function, out var existingNode)) {
+            return existingNode;
         }
 
+        var node = rootNodes_.GetOrAdd(function, static (func, info) => new ProfileCallTreeNode(info, func), funcInfo);
+        RegisterFunctionTreeNode(node);
         return node;
     }
 
@@ -344,6 +329,7 @@ public sealed class ProfileCallTree {
                 foreach (var childNode in node.Children) {
                     if (!childrenSet.TryGetValue(childNode, out var existingNode)) {
                         existingNode = new ProfileCallTreeNode(childNode.FunctionDebugInfo, childNode.Function);
+                        existingNode.Id = childNode.Id;
                         childrenSet.Add(existingNode);
                     }
 
@@ -353,15 +339,14 @@ public sealed class ProfileCallTree {
             }
 
             if (node.HasCallers) {
-                foreach (var callerNode in node.Callers) {
-                    if (!callersSet.TryGetValue(callerNode, out var existingNode)) {
-                        existingNode = new ProfileCallTreeNode(callerNode.FunctionDebugInfo, callerNode.Function);
-                        callersSet.Add(existingNode);
-                    }
-
-                    existingNode.Weight += callerNode.Weight;
-                    existingNode.ExclusiveWeight += callerNode.ExclusiveWeight;
+                if (!callersSet.TryGetValue(node.Caller, out var existingNode)) {
+                    existingNode = new ProfileCallTreeNode(node.Caller.FunctionDebugInfo, node.Caller.Function);
+                    existingNode.Id = node.Caller.Id;
+                    callersSet.Add(existingNode);
                 }
+
+                existingNode.Weight += node.Caller.Weight;
+                existingNode.ExclusiveWeight += node.Caller.ExclusiveWeight;
             }
 
             if (node.HasCallSites) {
@@ -482,7 +467,7 @@ public sealed class ProfileCallTree {
         foreach (var node in rootNodes_) {
             builder.AppendLine("Call tree root node");
             builder.AppendLine("-----------------------");
-            node.Print(builder);
+            node.Value.Print(builder);
         }
 
         return builder.ToString();
@@ -493,7 +478,7 @@ public sealed class ProfileCallTree {
         var builder = new StringBuilder();
 
         foreach (var node in rootNodes_) {
-            node.CollectSamples(samples);
+            node.Value.CollectSamples(samples);
         }
 
         samples.Sort((a, b) => b.total.CompareTo(a.total));
@@ -521,17 +506,174 @@ public enum ProfileCallTreeNodeKind {
     Managed
 }
 
+struct TinyList<T> : IList<T> {
+    private object value_;
+    private int count_;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TinyList() {
+        value_ = null;
+        count_ = 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TinyList(T item) {
+        value_ = item;
+        count_ = 1;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TinyList(IList<T> list) {
+        if (list == null || list.Count == 0) {
+            value_ = null;
+            count_ = 0;
+        }
+        else if (list.Count == 1) {
+            value_ = list[0];
+            count_ = 1;
+        }
+        else {
+            var array = new T[list.Count];
+            list.CopyTo(array, 0);
+            value_ = array;
+            count_ = list.Count;
+        }
+    }
+
+    public IEnumerator<T> GetEnumerator() {
+        throw new NotImplementedException();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() {
+        return GetEnumerator();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Add(T item) {
+        if (count_ == 0) {
+            value_ = item;
+            count_ = 1;
+        }
+        else if (count_ == 1) {
+            var array = new T[2];
+            array[0] = (T)value_;
+            array[1] = item;
+            value_ = array;
+            count_ = 2;
+        }
+        else {
+            var array = (T[])value_;
+            if (array.Length == count_) {
+                var newArray = new T[array.Length * 2];
+                array.CopyTo(newArray, 0);
+                value_ = array = newArray;
+            }
+
+            array[count_] = item;
+            count_++;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Clear() {
+        value_ = null;
+        count_ = 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool Contains(T item) {
+        if (count_ == 0) {
+            return false;
+        }
+        else if (count_ == 1) {
+            return EqualityComparer<T>.Default.Equals((T)value_, item);
+        }
+        else {
+            var array = (T[])value_;
+            foreach (var value in array) {
+                if (EqualityComparer<T>.Default.Equals((T)value_, item)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    public void CopyTo(T[] array, int arrayIndex) {
+        throw new NotImplementedException();
+    }
+
+    public bool Remove(T item) {
+        throw new NotImplementedException();
+    }
+
+    public List<T> ToList() {
+        var list = new List<T>(count_);
+
+        if (count_ == 0) {
+            return list;
+        }
+        else if (count_ == 1) {
+            list.Add((T)value_);
+        }
+        else {
+            var array = (T[])value_;
+            for (int i = 0; i < count_; i++) {
+                list.Add(array[i]);
+            }
+        }
+
+        return list;
+    }
+
+    public int Count => count_;
+    public bool IsReadOnly => false;
+
+    public int IndexOf(T item) {
+        throw new NotImplementedException();
+    }
+
+    public void Insert(int index, T item) {
+        throw new NotImplementedException();
+    }
+
+    public void RemoveAt(int index) {
+        throw new NotImplementedException();
+    }
+
+    public T this[int index] {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get {
+#if DEBUG
+            if (index >= count_) {
+                throw new IndexOutOfRangeException();
+            }
+#endif
+            if (count_ == 1) {
+                return (T)value_;
+            }
+            else {
+                var array = (T[])value_;
+                return array[index];
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        set => throw new NotImplementedException();
+    }
+}
+
 [ProtoContract(SkipConstructor = true)]
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
-[ProtoMember(1)]
+    [ProtoMember(1)]
     //? Remove reference once no longer serialized
     private IRTextFunctionReference functionRef_ { get; set; }
-    //? TODO: Renumber, 2
-    private List<ProfileCallTreeNode> children_;
+
+    private TinyList<ProfileCallTreeNode> children_;
+
     [ProtoMember(3)]
     private Dictionary<long, ProfileCallSite> callSites_; //? Use Hybrid array/dict to save space
 
-    private List<ProfileCallTreeNode> callers_; // Can't be serialized, reconstructed.
+    private ProfileCallTreeNode caller_; // Can't be serialized, reconstructed.
     private ReaderWriterLockSlim lock_; // Lock for updating children, callers, call sites.
 
     [ProtoMember(4)]
@@ -559,13 +701,19 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         set => functionRef_ = value;
     }
 
-    public List<ProfileCallTreeNode> Children => children_;
-    public List<ProfileCallTreeNode> Callers => callers_;
+    public List<ProfileCallTreeNode> Children => children_.ToList(); //? Return collection directly, needs enum
+    public virtual List<ProfileCallTreeNode> Callers => new() { caller_ };
+
+#if DEBUG
+    public ProfileCallTreeNode Caller => !IsGroup ? caller_ : throw new InvalidOperationException("For group use Callers");
+#else
+    public ProfileCallTreeNode Caller => caller_;
+#endif
     public Dictionary<long, ProfileCallSite> CallSites => callSites_;
 
     public virtual bool IsGroup => false;
     public bool HasChildren => Children != null && Children.Count > 0;
-    public bool HasCallers => Callers != null && Callers.Count > 0;
+    public virtual bool HasCallers => caller_ != null;
     public bool HasCallSites => CallSites != null && CallSites.Count > 0;
     public string FunctionName => Function.Name;
     public string ModuleName => Function.ParentSummary.ModuleName;
@@ -593,7 +741,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
     public ProfileCallTreeNode(FunctionDebugInfo funcInfo, IRTextFunction function,
                                List<ProfileCallTreeNode> children = null,
-                               List<ProfileCallTreeNode> callers = null,
+                               ProfileCallTreeNode caller = null,
                                Dictionary<long, ProfileCallSite> callSites = null) {
         InitializeReferenceMembers();
         FunctionDebugInfo = funcInfo;
@@ -602,12 +750,13 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             Function = function;
         }
 
-        children_ = children;
-        callers_ = callers;
+        children_ = new TinyList<ProfileCallTreeNode>(children);
+        caller_ = caller;
         callSites_ = callSites;
     }
 
     [ProtoAfterDeserialization]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void InitializeReferenceMembers() {
         lock_ ??= new ReaderWriterLockSlim();
         functionRef_ ??= new IRTextFunctionReference();
@@ -636,83 +785,29 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public (ProfileCallTreeNode, bool) AddChild(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
-        var (childNode, isNewNode) = GetOrCreateChildNode(functionDebugInfo, function);
-
-        if (isNewNode) {
-            childNode.AddParent(this);
-        }
-
-        return (childNode, isNewNode);
+        return GetOrCreateChildNode(functionDebugInfo, function);
     }
 
     internal void SetChildrenNoLock(List<ProfileCallTreeNode> children) {
         // Used by ProfileCallTree.Deserialize.
-        children_ = children;
+        children_ = new TinyList<ProfileCallTreeNode>(children);
     }
-
-    private void AddParent(ProfileCallTreeNode parentNode) {
-        try {
-            lock_.EnterUpgradeableReadLock();
-            var callerNode = FindExistingNode(callers_, parentNode.FunctionDebugInfo, parentNode.Function);
-            if (callerNode != null) {
-                return;
-            }
-
-            try {
-                // Check again if another thread added the parent in the meantime.
-                lock_.EnterWriteLock();
-                callerNode = FindExistingNode(callers_, parentNode.FunctionDebugInfo, parentNode.Function);
-                if (callerNode != null) {
-                    return;
-                }
-
-                callers_ ??= new List<ProfileCallTreeNode>();
-                callers_.Add(parentNode);
-            }
-            finally {
-                lock_.ExitWriteLock();
-            }
-        }
-        finally {
-            lock_.ExitUpgradeableReadLock();
-        }
-    }
-
-    internal void AddParentNoLock(ProfileCallTreeNode parentNode) {
-        var callerNode = FindExistingNode(callers_, parentNode.FunctionDebugInfo, parentNode.Function);
-        if (callerNode != null) {
-            return;
-        }
-
-        callers_ ??= new List<ProfileCallTreeNode>();
-        callers_.Add(parentNode);
-    }
-
-    internal void AppendParentNoLock(ProfileCallTreeNode parentNode) {
+    
+    internal void SetParent(ProfileCallTreeNode parentNode) {
         // Used by ProfileCallTree.Deserialize.
-        callers_ ??= new List<ProfileCallTreeNode>();
-        callers_.Add(parentNode);
+        caller_ = parentNode;
     }
 
     public bool HasParent(ProfileCallTreeNode parentNode, ProfileCallTreeNodeComparer comparer) {
-        if (Callers == null) {
-            return false;
-        }
-
-        foreach (var node in Callers) {
-            if (comparer.Equals(node, parentNode)) {
-                return true;
-            }
-        }
-
-        return false;
+        return caller_ != null && comparer.Equals(caller_, parentNode);
     }
 
     private (ProfileCallTreeNode, bool) GetOrCreateChildNode(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
         try {
             lock_.EnterUpgradeableReadLock();
-            var childNode = FindExistingNode(children_, functionDebugInfo, function);
 
+            var childNode = FindExistingNode(functionDebugInfo, function);
+            
             if (childNode != null) {
                 return (childNode, false);
             }
@@ -720,14 +815,13 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             try {
                 // Check again if another thread added the child in the meantime.
                 lock_.EnterWriteLock();
-                childNode = FindExistingNode(children_, functionDebugInfo, function);
+                childNode = FindExistingNode(functionDebugInfo, function);
 
                 if (childNode != null) {
                     return (childNode, false);
                 }
 
-                children_ ??= new List<ProfileCallTreeNode>();
-                childNode = new ProfileCallTreeNode(functionDebugInfo, function);
+                childNode = new ProfileCallTreeNode(functionDebugInfo, function, null, this);
                 children_.Add(childNode);
                 return (childNode, true);
             }
@@ -760,13 +854,12 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         }
     }
 
-    private ProfileCallTreeNode FindExistingNode(List<ProfileCallTreeNode> list,
-                                                 FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
-        if (list != null) {
-            foreach (var child in list) { //? TODO: Assuming single child often, use hybrid DS
-                if (child.Equals(functionDebugInfo)) {
-                    return child;
-                }
+    private ProfileCallTreeNode FindExistingNode(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
+        for(int i = 0; i < children_.Count; i++) {
+            var child = children_[i];
+
+            if (child.Equals(function)) {
+                return child;
             }
         }
 
@@ -800,8 +893,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         //}
     }
 
-    public bool Equals(FunctionDebugInfo functionDebugInfo) {
-        return FunctionDebugInfo.Equals(functionDebugInfo);
+    public bool Equals(IRTextFunction function) {
+        return Function.Equals(function);
     }
 
     public bool Equals(ProfileCallTreeNode other) {
@@ -809,11 +902,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             return false;
         }
 
-        if (ReferenceEquals(this, other)) {
-            return true;
-        }
-
-        return FunctionDebugInfo.Equals(other.FunctionDebugInfo);
+        return Id == other.Id;
     }
 
     public override bool Equals(object obj) {
@@ -833,7 +922,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public override int GetHashCode() {
-        return FunctionDebugInfo.GetHashCode();
+        return Id.GetHashCode();
     }
 
     public static bool operator ==(ProfileCallTreeNode left, ProfileCallTreeNode right) {
@@ -850,16 +939,23 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 }
 
 public sealed class ProfileCallTreeGroupNode : ProfileCallTreeNode {
+    private List<ProfileCallTreeNode> nodes_;
+    private List<ProfileCallTreeNode> callers_;
+
     public override bool IsGroup => true;
-    public List<ProfileCallTreeNode> Nodes { get; set; }
+    public List<ProfileCallTreeNode> Nodes => nodes_;
+    public override List<ProfileCallTreeNode> Callers => callers_;
+
+    public override bool HasCallers => callers_ != null && callers_.Count > 0;
 
     public ProfileCallTreeGroupNode(FunctionDebugInfo funcInfo, IRTextFunction function,
                                     List<ProfileCallTreeNode> nodes = null,
                                     List<ProfileCallTreeNode> children = null,
                                     List<ProfileCallTreeNode> callers = null,
                                     Dictionary<long, ProfileCallSite> callSites = null) :
-        base(funcInfo, function, children, callers, callSites) {
-        Nodes = nodes ?? new List<ProfileCallTreeNode>();
+        base(funcInfo, function, children, null, callSites) {
+        nodes_= nodes ?? new List<ProfileCallTreeNode>();
+        callers_ = callers ?? new List<ProfileCallTreeNode>();
     }
 }
 

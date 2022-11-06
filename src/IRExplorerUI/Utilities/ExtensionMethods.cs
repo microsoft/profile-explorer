@@ -103,21 +103,21 @@ namespace IRExplorerUI {
             return list;
         }
 
-        public static List<Tuple<K, V>> ToList<K, V>(this IDictionary<K, V> dict) {
-            var list = new List<Tuple<K, V>>(dict.Count);
+        public static List<(K, V)> ToList<K, V>(this IDictionary<K, V> dict) {
+            var list = new List<(K, V)>(dict.Count);
 
             foreach (var item in dict) {
-                list.Add(new Tuple<K, V>(item.Key, item.Value));
+                list.Add((item.Key, item.Value));
             }
 
             return list;
         }
 
-        public static List<(K, V)> ToKeyValueList<K, V>(this IDictionary<K, V> dict) {
-            var list = new List<(K, V)>(dict.Count);
+        public static List<K> ToKeyList<K, V>(this IDictionary<K, V> dict) {
+            var list = new List<K>(dict.Count);
 
             foreach (var item in dict) {
-                list.Add((item.Key, item.Value));
+                list.Add(item.Key);
             }
 
             return list;

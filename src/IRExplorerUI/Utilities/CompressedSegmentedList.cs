@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace IRExplorerUI.Utilities;
 
-public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
+public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T : struct {
     sealed class Segment {
         private CompressedSegmentedList<T> parent_;
         private Task activeTask_; // Task used to (de)compress, null if no pending task.
@@ -551,5 +551,10 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
         IEnumerator IEnumerable.GetEnumerator() {
             return GetEnumerator();
         }
+    }
+
+    public void Dispose() {
+        Wait(false);
+        taskQueue_?.Dispose();
     }
 }

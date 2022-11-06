@@ -13,15 +13,19 @@ namespace IRExplorerCore {
         private int hashCode_;
 
         public Guid Id { get; set; }
-        public string ModuleName { get; set; }
+        public string ModuleName { get; private set; }
         public List<IRTextFunction> Functions { get; set; }
 
         public IRTextSummary(string moduleName = null) {
-            ModuleName = moduleName;
+            SetModuleName(moduleName);
             Functions = new List<IRTextFunction>();
             functionNameMap_ = new Dictionary<string, IRTextFunction>();
             functionMap_ = new Dictionary<int, IRTextFunction>();
             sectionMap_ = new Dictionary<int, IRTextSection>();
+        }
+
+        public void SetModuleName(string moduleName) {
+            ModuleName = moduleName != null ? string.Intern(moduleName) : null;
         }
 
         public void AddFunction(IRTextFunction function) {
