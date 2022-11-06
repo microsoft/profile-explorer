@@ -9,7 +9,7 @@
     xmlns:profile="clr-namespace:IRExplorerUI.Profile"
     xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
     Title="Load profile trace"
-    Width="800"
+    Width="900"
     Height="600"
     MinWidth="600"
     MinHeight="500"
@@ -22,7 +22,7 @@
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
         <DockPanel>
-            <Grid Width="220" DockPanel.Dock="Left">
+            <Grid Width="300" DockPanel.Dock="Left">
                 <ListBox
                     x:Name="SessionList"
                     HorizontalAlignment="Stretch"
@@ -436,12 +436,13 @@
 
                             <ListView.ContextMenu>
                                 <ContextMenu>
+                                    <MenuItem Click="ProcessListMenuItem_OnClick" Header="Copy Process Details" />
                                     <MenuItem
-                                        Header="Copy Process Details" Click="ProcessListMenuItem_OnClick" />
-                                    <MenuItem
-                                        Header="Copy Process List" Click="ProcessListMenuItem_OnClick" IsEnabled="False" />
-                                    </ContextMenu>
-                                </ListView.ContextMenu>
+                                        Click="ProcessListMenuItem_OnClick"
+                                        Header="Copy Process List"
+                                        IsEnabled="False" />
+                                </ContextMenu>
+                            </ListView.ContextMenu>
                         </ListView>
 
                         <Grid Margin="8,8,8,0">
