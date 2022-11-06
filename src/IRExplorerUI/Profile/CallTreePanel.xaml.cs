@@ -185,7 +185,7 @@ namespace IRExplorerUI {
             CallTree.NodeExpanded += CallTreeOnNodeExpanded;
 
             stackHoverPreview_ = new DraggablePopupHoverPreview(CallTree,
-                CallTreeNodePopup.PopupHoverDuration,
+                CallTreeNodePopup.PopupHoverLongDuration,
                 (mousePoint, previewPoint) => {
                     var element = (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint);
 
@@ -391,6 +391,8 @@ namespace IRExplorerUI {
                         CreateProfileCallTree(childNode, childrenNode, instanceNode, ChildFunctionExKind.CalleeNode,
                             visitedNodes, percentageFunc);
                     }
+
+                    visitedNodes.Clear();
                 }
 
                 if (instance.HasCallers) {
@@ -409,6 +411,8 @@ namespace IRExplorerUI {
                         CreateProfileCallTree(callerNode, callersNode, instanceNode, ChildFunctionExKind.CallerNode,
                                               visitedNodes, percentageFunc);
                     }
+
+                    visitedNodes.Clear();
                 }
 
                 SortCallTreeNodes(instanceNode);
@@ -571,7 +575,6 @@ namespace IRExplorerUI {
 
             return funcName;
         }
-
 
         #region IToolPanel
 

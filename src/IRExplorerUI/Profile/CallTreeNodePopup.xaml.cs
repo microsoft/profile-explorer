@@ -24,6 +24,7 @@ namespace IRExplorerUI.Profile;
 
 public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged {
     public static readonly TimeSpan PopupHoverDuration = TimeSpan.FromMilliseconds(50);
+    public static readonly TimeSpan PopupHoverLongDuration = TimeSpan.FromMilliseconds(1000);
 
     public ISession Session { get; set; }
     public ProfileCallTreeNode CallTreeNode { get; set; }

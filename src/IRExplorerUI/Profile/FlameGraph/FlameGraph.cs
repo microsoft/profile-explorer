@@ -284,7 +284,8 @@ namespace IRExplorerUI.Profile {
                 }
 
                 if (targetNode == null) {
-                    var callNode = new ProfileCallTreeNode(resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function) {
+                    var callNode = new ProfileCallTreeNode(resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function,
+                                                           null, node.CallTreeNode) {
                         //? TODO: Kind = resolvedFrame.IsKernelCode
                     };
                     targetNode = new FlameGraphNode(callNode, TimeSpan.Zero, depth);
@@ -293,10 +294,6 @@ namespace IRExplorerUI.Profile {
                     targetNode.StartTime = sample.Time;
                     targetNode.EndTime = sample.Time + sample.Weight;
                     targetNode.Parent = node;
-
-                    if (node.HasFunction) {
-                        targetNode.CallTreeNode.AddParentNoLock(node.CallTreeNode);
-                    }
                 }
                 else {
                     targetNode.StartTime = TimeSpan.FromTicks(Math.Min(targetNode.StartTime.Ticks, sample.Time.Ticks));

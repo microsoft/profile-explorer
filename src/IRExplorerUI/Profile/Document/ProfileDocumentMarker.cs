@@ -357,7 +357,7 @@ namespace IRExplorerUI.Profile {
             return MarkProfiledElements(result, function, document);
         }
 
-        private void MarkProfiledBlocks(List<Tuple<BlockIR, TimeSpan>> blockWeights, MarkedDocument document) {
+        private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, MarkedDocument document) {
             document.SuspendUpdate();
             var overlayHeight = document.DefaultLineHeight;
             var blockPen = ColorPens.GetPen(options_.BlockOverlayBorderColor,
