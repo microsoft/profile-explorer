@@ -494,7 +494,7 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
             rangeEnd_ = rangeEnd;
             segmentStart_ = rangeStart / target.segmentLength_;
             segmentEnd_ = rangeEnd / target.segmentLength_;
-            recompress_ = recompress_;
+            recompress_ = recompress;
         }
 
         public IEnumerator<T> GetEnumerator() {

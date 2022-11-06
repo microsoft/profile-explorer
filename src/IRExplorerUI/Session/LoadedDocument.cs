@@ -69,7 +69,7 @@ namespace IRExplorerUI {
                 summary_ = value;
                 if (summary_ != null) {
                     summary_.Id = Id;
-                    summary_.ModuleName = ModuleName;
+                    summary_.SetModuleName(ModuleName);
                 }
             }
         }
