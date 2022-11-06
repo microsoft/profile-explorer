@@ -36,6 +36,8 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
     public List<PerformanceCounterConfig> PerformanceCounters { get; set; }
     [ProtoMember(12)]
     public string Title { get; set; }
+    [ProtoMember(13)]
+    public int TargetProcessId { get; set; }
 
     public List<PerformanceCounterConfig> EnabledPerformanceCounters => PerformanceCounters.FindAll(c => c.IsEnabled);
     public bool HasWorkingDirectory => Directory.Exists(WorkingDirectory);

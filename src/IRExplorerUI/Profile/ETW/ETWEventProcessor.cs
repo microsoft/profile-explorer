@@ -28,7 +28,6 @@ namespace IRExplorerUI.Profile;
 public sealed class ETWEventProcessor : IDisposable {
     const double SamplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
     const int SampleReportingInterval = 10000;
-    const int EventReportingInterval = 10000;
     const int MaxCoreCount = 4096;
 
     private ETWTraceEventSource source_;
