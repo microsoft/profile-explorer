@@ -598,8 +598,6 @@ public sealed class ETWEventProcessor : IDisposable {
     }
 
     private void ProcessDotNetEvents(RawProfileData profile) {
-        //var rundownParser = new ClrRundownTraceEventParser(source_);
-
         source_.Clr.LoaderModuleLoad += data => {
             ProcessLoaderModuleLoad(data, profile);
         };
@@ -612,25 +610,39 @@ public sealed class ETWEventProcessor : IDisposable {
             ProcessDotNetILToNativeMap(data, profile);
         };
 
-        //rundownParser.MethodILToNativeMapDCStart += data => {
-        //    ProcessDotNetILToNativeMap(data, profile);
-        //};
+        // Needed when attaching to a running process to get info
+        // about modules/methods loaded before the ETW session started.
+        var rundownParser = new ClrRundownTraceEventParser(source_);
 
-        //rundownParser.MethodILToNativeMapDCStop += data => {
-        //    ProcessDotNetILToNativeMap(data, profile);
-        //};
+        rundownParser.LoaderModuleDCStart += data => {
+            ProcessLoaderModuleLoad(data, profile, true);
+        };
 
-        //rundownParser.MethodDCStartVerbose += data => {
-        //    ProcessDotNetMethodLoad(data, profile);
-        //};
+        rundownParser.LoaderModuleDCStop += data => {
+            ProcessLoaderModuleLoad(data, profile, true);
+        };
+        
+        rundownParser.MethodDCStartVerbose += data => {
+            ProcessDotNetMethodLoad(data, profile, true);
+        };
 
-        //rundownParser.MethodDCStopVerbose += data => {
-        //    ProcessDotNetMethodLoad(data, profile);
-        //};
+        rundownParser.MethodDCStopVerbose += data => {
+            ProcessDotNetMethodLoad(data, profile, true);
+        };
+
+        rundownParser.MethodILToNativeMapDCStart += data => {
+            ProcessDotNetILToNativeMap(data, profile, true);
+        };
+
+        rundownParser.MethodILToNativeMapDCStop += data => {
+            ProcessDotNetILToNativeMap(data, profile, true);
+        };
     }
 
-    private void ProcessLoaderModuleLoad(ModuleLoadUnloadTraceData data, RawProfileData profile) {
-        Trace.WriteLine($"=> Managed module {data.ModuleID}, {data.ModuleILFileName} in proc {data.ProcessID}");
+    private void ProcessLoaderModuleLoad(ModuleLoadUnloadTraceData data, RawProfileData profile, bool rundown = false) {
+#if DEBUG
+        Trace.WriteLine($"=> R-{rundown} Managed module {data.ModuleID}, {data.ModuleILFileName} in proc {data.ProcessID}");
+#endif
         var runtimeArch = Machine.Amd64;
         var moduleName = data.ModuleILFileName;
         var moduleDebugInfo = profile.GetOrAddModuleDebugInfo(data.ProcessID, moduleName, data.ModuleID, runtimeArch);
@@ -641,14 +653,14 @@ public sealed class ETWEventProcessor : IDisposable {
         }
     }
 
-    private void ProcessDotNetILToNativeMap(MethodILToNativeMapTraceData data, RawProfileData profile) {
+    private void ProcessDotNetILToNativeMap(MethodILToNativeMapTraceData data, RawProfileData profile, bool rundown = false) {
         if (!IsAcceptedProcess(data.ProcessID)) {
             return; // Ignore events from other processes.
         }
 
-//#if DEBUG
-        //Trace.WriteLine($"=> ILMap token: {data.MethodID}, entries: {data.CountOfMapEntries}, ProcessID: {data.ProcessID}, name: {data.ProcessName}");
-//#endif
+#if DEBUG
+        Trace.WriteLine($"=> R-{rundown} ILMap token: {data.MethodID}, entries: {data.CountOfMapEntries}, ProcessID: {data.ProcessID}, name: {data.ProcessName}");
+#endif
         var methodMapping = profile.FindManagedMethod(data.MethodID, data.ProcessID);
 
         if (methodMapping == null) {
@@ -668,13 +680,13 @@ public sealed class ETWEventProcessor : IDisposable {
         }
     }
 
-    private void ProcessDotNetMethodLoad(MethodLoadUnloadVerboseTraceData data, RawProfileData profile) {
+    private void ProcessDotNetMethodLoad(MethodLoadUnloadVerboseTraceData data, RawProfileData profile, bool rundown = false) {
         if (!IsAcceptedProcess(data.ProcessID)) {
             return; // Ignore events from other processes.
         }
 
 #if DEBUG
-        Trace.WriteLine($"=> Load at {data.MethodStartAddress}: {data.MethodNamespace}.{data.MethodName}, {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
+        Trace.WriteLine($"=> R-{rundown} Load at {data.MethodStartAddress}: {data.MethodNamespace}.{data.MethodName}, {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
         Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
 #endif
 

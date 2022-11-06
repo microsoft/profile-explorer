@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using IRExplorerCore;
@@ -136,15 +137,27 @@ namespace IRExplorerUI.Profile {
                             break;
                         }
                         case ProfileSessionKind.AttachToProcess: {
-                            //var profilerPath = Path.Combine(App.ApplicationDirectory, ProfilerPath);
-                            //AttachProfiler(16636, Guid.Parse(ProfilerGuid), profilerPath);
-                            acceptedProcessId = options_.TargetProcessId;
-
+                            try {
+                                profiledProcess = Process.GetProcessById(acceptedProcessId);
+                                acceptedProcessId = options_.TargetProcessId;
+                            }
+                            catch (Exception ex) {
+                                Trace.WriteLine($"Failed to attach to process {options_.TargetProcessId}");
+                                StopSession();
+                                return null;
+                            }
+                            
                             if (options_.ProfileDotNet) {
-                                if (!SetupDotNetProfilerPaths()) {
-
+                                if (!SetupDotNetProfilerPaths() ||
+                                    !AttachProfiler(acceptedProcessId)) {
+                                    StopSession();
+                                    return null;
                                 }
                             }
+
+                            // Start task that waits for the process to exit,
+                            // which will stop the ETW session.
+                            CreateApplicationExitTask(profiledProcess, cancelableTask);
                             break;
                         }
                         default: {
@@ -180,12 +193,15 @@ namespace IRExplorerUI.Profile {
 
                         if (options_.SessionKind == ProfileSessionKind.AttachToProcess) {
                             // Needed when attaching to a running .net app.
+                            Trace.WriteLine("Enable ClrRundownTraceEventParser");
+                            
                             session_.EnableProvider(
                                 ClrRundownTraceEventParser.ProviderGuid,
                                 TraceEventLevel.Verbose,
                                 (ulong)(ClrRundownTraceEventParser.Keywords.Jit |
                                         ClrRundownTraceEventParser.Keywords.JittedMethodILToNativeMap |
-                                        ClrRundownTraceEventParser.Keywords.Loader));
+                                        ClrRundownTraceEventParser.Keywords.Loader |
+                                        ClrRundownTraceEventParser.Keywords.StartEnumeration));
                         }
                     }
 
@@ -266,7 +282,7 @@ namespace IRExplorerUI.Profile {
             try {
                 Debug.Assert(session_ == null);
                 session_ = new TraceEventSession(sessionName_);
-                //session_.BufferSizeMB = 256;
+                session_.BufferSizeMB = Math.Max(session_.BufferSizeMB, 128);
                 session_.CpuSampleIntervalMSec = 1000.0f / options_.SamplingFrequency;
 
                 Trace.WriteLine("Started ETW session:");
@@ -353,19 +369,19 @@ namespace IRExplorerUI.Profile {
             }
         }
 
-        //bool AttachProfiler(int processId, Guid profilerGuid, string profilerPath) {
-        //    try {
-        //        //? additionalData needed to pass IRX_MANAGED_ASM_DIR
-        //        var client = new DiagnosticsClient(processId);
-        //        client.AttachProfiler(TimeSpan.FromSeconds(10), profilerGuid, profilerPath);
-        //    }
-        //    catch (Exception ex) {
-        //        Trace.TraceError($"Failed to attach profiler to process {processId}");
-        //        return false;
-        //    }
+        bool AttachProfiler(int processId) {
+            try {
+                var client = new DiagnosticsClient(processId);
+                var profilerArgs = Encoding.ASCII.GetBytes(managedAsmDir_);
+                client.AttachProfiler(TimeSpan.FromSeconds(10), Guid.Parse(ProfilerGuid), profilerPath_, profilerArgs);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to attach profiler to process {processId}");
+                return false;
+            }
 
-        //    return true;
-        //}
+            return true;
+        }
 
         private void CreateApplicationExitTask(Process process, CancelableTask task) {
             Task.Run(() => {
