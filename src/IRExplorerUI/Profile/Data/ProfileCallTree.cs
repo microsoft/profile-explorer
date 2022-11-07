@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -401,7 +400,7 @@ public sealed class ProfileCallTree {
     }
 
     public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
-        var funcMap = new Dictionary<string, ProfileCallTreeNode>();
+        var funcMap = new Dictionary<IRTextFunction, ProfileCallTreeNode>();
         CollectFunctions(node, funcMap);
         var funcList = new List<ProfileCallTreeNode>(funcMap.Count);
 
@@ -413,12 +412,12 @@ public sealed class ProfileCallTree {
         return funcList;
     }
 
-    public void CollectFunctions(ProfileCallTreeNode node, Dictionary<string, ProfileCallTreeNode> funcMap) {
+    public void CollectFunctions(ProfileCallTreeNode node, Dictionary<IRTextFunction, ProfileCallTreeNode> funcMap) {
         //? TODO: Instead of making a fake CallTreeNode, have CallTreeNodePanel accept an interface
         //? implemented by both CallTreeNode and FGNode exposing weight/time info?
 
         // Combine all instances of a function under the node.
-        var entry = funcMap.GetOrAddValue(node.FunctionName,
+        var entry = funcMap.GetOrAddValue(node.Function,
             () => new ProfileCallTreeGroupNode(node.FunctionDebugInfo, node.Function) {
                 Kind = node.Kind
             });
@@ -426,7 +425,7 @@ public sealed class ProfileCallTree {
         var groupEntry = (ProfileCallTreeGroupNode)entry;
         groupEntry.Nodes.Add(node);
         groupEntry.Weight += node.Weight;
-        groupEntry.ExclusiveWeight = node.ExclusiveWeight;
+        groupEntry.ExclusiveWeight += node.ExclusiveWeight;
 
         if (node.HasChildren) {
             foreach (var childNode in node.Children) {
@@ -506,162 +505,6 @@ public enum ProfileCallTreeNodeKind {
     Managed
 }
 
-struct TinyList<T> : IList<T> {
-    private object value_;
-    private int count_;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TinyList() {
-        value_ = null;
-        count_ = 0;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TinyList(T item) {
-        value_ = item;
-        count_ = 1;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TinyList(IList<T> list) {
-        if (list == null || list.Count == 0) {
-            value_ = null;
-            count_ = 0;
-        }
-        else if (list.Count == 1) {
-            value_ = list[0];
-            count_ = 1;
-        }
-        else {
-            var array = new T[list.Count];
-            list.CopyTo(array, 0);
-            value_ = array;
-            count_ = list.Count;
-        }
-    }
-
-    public IEnumerator<T> GetEnumerator() {
-        throw new NotImplementedException();
-    }
-
-    IEnumerator IEnumerable.GetEnumerator() {
-        return GetEnumerator();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Add(T item) {
-        if (count_ == 0) {
-            value_ = item;
-            count_ = 1;
-        }
-        else if (count_ == 1) {
-            var array = new T[2];
-            array[0] = (T)value_;
-            array[1] = item;
-            value_ = array;
-            count_ = 2;
-        }
-        else {
-            var array = (T[])value_;
-            if (array.Length == count_) {
-                var newArray = new T[array.Length * 2];
-                array.CopyTo(newArray, 0);
-                value_ = array = newArray;
-            }
-
-            array[count_] = item;
-            count_++;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Clear() {
-        value_ = null;
-        count_ = 0;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Contains(T item) {
-        if (count_ == 0) {
-            return false;
-        }
-        else if (count_ == 1) {
-            return EqualityComparer<T>.Default.Equals((T)value_, item);
-        }
-        else {
-            var array = (T[])value_;
-            foreach (var value in array) {
-                if (EqualityComparer<T>.Default.Equals((T)value_, item)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-
-    public void CopyTo(T[] array, int arrayIndex) {
-        throw new NotImplementedException();
-    }
-
-    public bool Remove(T item) {
-        throw new NotImplementedException();
-    }
-
-    public List<T> ToList() {
-        var list = new List<T>(count_);
-
-        if (count_ == 0) {
-            return list;
-        }
-        else if (count_ == 1) {
-            list.Add((T)value_);
-        }
-        else {
-            var array = (T[])value_;
-            for (int i = 0; i < count_; i++) {
-                list.Add(array[i]);
-            }
-        }
-
-        return list;
-    }
-
-    public int Count => count_;
-    public bool IsReadOnly => false;
-
-    public int IndexOf(T item) {
-        throw new NotImplementedException();
-    }
-
-    public void Insert(int index, T item) {
-        throw new NotImplementedException();
-    }
-
-    public void RemoveAt(int index) {
-        throw new NotImplementedException();
-    }
-
-    public T this[int index] {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get {
-#if DEBUG
-            if (index >= count_) {
-                throw new IndexOutOfRangeException();
-            }
-#endif
-            if (count_ == 1) {
-                return (T)value_;
-            }
-            else {
-                var array = (T[])value_;
-                return array[index];
-            }
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => throw new NotImplementedException();
-    }
-}
-
 [ProtoContract(SkipConstructor = true)]
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     [ProtoMember(1)]
@@ -701,7 +544,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         set => functionRef_ = value;
     }
 
-    public List<ProfileCallTreeNode> Children => children_.ToList(); //? Return collection directly, needs enum
+    public IList<ProfileCallTreeNode> Children => children_;
     public virtual List<ProfileCallTreeNode> Callers => new() { caller_ };
 
 #if DEBUG

@@ -809,7 +809,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             var slice = slices_[0].Slices[i];
 
             if (slice.FirstSampleIndex >= 0) {
-                for(int sampleIndex = slice.FirstSampleIndex + slice.SampleCount; sampleIndex >= slice.FirstSampleIndex; sampleIndex--) {
+                for(int sampleIndex = slice.FirstSampleIndex + slice.SampleCount - 1; sampleIndex >= slice.FirstSampleIndex; sampleIndex--) {
                     if (profile_.Samples[sampleIndex].Sample.Time <= queryTime) {
                         if (!IsSingleThreadView || profile_.Samples[sampleIndex].Stack.Context.ThreadId == ThreadId) {
                             return sampleIndex;
