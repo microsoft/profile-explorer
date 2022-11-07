@@ -43,14 +43,19 @@ namespace IRExplorerUI.Controls {
         }
 
         public void UpdateSize(double width, double height) {
-            //Width = width;
-            //Height = height;
+            Width = width;
+            Height = height;
         }
 
         public void Initialize(Point position, double width, double height,
-            UIElement referenceElement) {
+                               UIElement referenceElement) {
             UpdatePosition(position, referenceElement);
             UpdateSize(width, height);
+        }
+
+        public void Initialize(Point position,
+                               UIElement referenceElement) {
+            UpdatePosition(position, referenceElement);
         }
 
         public virtual bool ShouldStartDragging(MouseButtonEventArgs e) {

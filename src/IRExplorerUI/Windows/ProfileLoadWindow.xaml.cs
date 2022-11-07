@@ -43,7 +43,6 @@ namespace IRExplorerUI {
         }
 
         private string title_;
-
         public string Title {
             get {
                 if (!string.IsNullOrEmpty(title_)) {
@@ -55,28 +54,54 @@ namespace IRExplorerUI {
                 else if (report_.SessionOptions.HasTitle) {
                     return report_.SessionOptions.Title;
                 }
+                else if (report_.IsAttachToProcessSession) {
+                    return $"Attached to {report_.Process.Name}";
+                }
+                else if (Report.IsStartProcessSession) {
+                    return Utils.TryGetFileName(report_.SessionOptions.ApplicationPath);
+                }
 
-                return Utils.TryGetFileName(report_.SessionOptions.ApplicationPath);
+                return null;
             }
             set => SetAndNotify(ref title_, value);
         }
 
         public string ToolTip {
-            get => isLoadedFile_ ? report_?.TraceInfo.TraceFilePath : $"{report_?.SessionOptions.ApplicationPath} {report_?.SessionOptions.ApplicationArguments}";
+            get {
+                if (report_ == null) {
+                    return null;
+                }
+
+                if (isLoadedFile_) {
+                    return report_?.TraceInfo.TraceFilePath;
+                }
+                else if (report_.IsStartProcessSession) {
+                    return $"{report_?.SessionOptions.ApplicationPath} {report_?.SessionOptions.ApplicationArguments}";
+                }
+
+                return null;
+            }
         }
 
         private string description_;
-
         public string Description {
             get {
                 if (!string.IsNullOrEmpty(description_)) {
                     return description_;
                 }
                 else if (!IsNewSession) {
-                    return isLoadedFile_ ? $"Process: {report_?.Process.ImageFileName}" : $"Args: {report_.SessionOptions.ApplicationArguments}";
+                    if (isLoadedFile_) {
+                        return $"Process: {report_?.Process.ImageFileName}";
+                    }
+                    else if (report_.IsAttachToProcessSession) {
+                        return $"Id: {report_.Process.ProcessId}";
+                    }
+                    else if (report_.IsStartProcessSession) {
+                        return $"Args: {report_.SessionOptions.ApplicationArguments}";
+                    }
                 }
 
-                return "";
+                return null;
             }
             set => SetAndNotify(ref description_, value);
         }
@@ -416,7 +441,6 @@ namespace IRExplorerUI {
             var processIds = selectedProcSummary_.ConvertAll(proc => proc.Process.ProcessId);
 
             if (IsRecordMode) {
-
                 report.SessionOptions = recordingOptions_.Clone();
                 var binSearchOptions = symbolOptions_.WithSymbolPaths(recordingOptions_.ApplicationPath);
 

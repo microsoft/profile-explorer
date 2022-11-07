@@ -847,9 +847,12 @@ namespace IRExplorerUI {
             if (parsedSection != null && parsedSection.Function != null) {
                 compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section);
                 addressTag_ = parsedSection.Function.GetTag<AssemblyMetadataTag>();
+                return parsedSection;
             }
 
-            return parsedSection;
+            var placeholderText = "Could not find function code";
+            var dummyFunc = new FunctionIR(section.ParentFunction.Name);
+            return new ParsedIRTextSection(section, placeholderText.AsMemory(), dummyFunc);
         }
 
         private Graph ComputeFlowGraph(FunctionIR function, IRTextSection section,

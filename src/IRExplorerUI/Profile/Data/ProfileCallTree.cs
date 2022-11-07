@@ -1056,11 +1056,11 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
 // Comparer used for the root nodes in order to ignore the ID part.
 public class ProfileCallTreeNodeComparer : IEqualityComparer<ProfileCallTreeNode> {
     public bool Equals(ProfileCallTreeNode x, ProfileCallTreeNode y) {
-        return x.Equals(y.FunctionDebugInfo);
+        return x.Equals(y.Function);
     }
 
     public int GetHashCode(ProfileCallTreeNode obj) {
-        return HashCode.Combine(obj.Function, obj.FunctionDebugInfo);
+        return HashCode.Combine(obj.Function);
     }
 }
 
