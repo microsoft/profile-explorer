@@ -384,7 +384,10 @@
 
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock FontWeight="Medium" Text="{Binding Name}" />
+                                        <TextBlock
+                                            FontWeight="Medium"
+                                            Text="{Binding Name}"
+                                            ToolTip="{Binding Name}" />
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>

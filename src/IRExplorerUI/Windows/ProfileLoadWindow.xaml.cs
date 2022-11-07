@@ -894,17 +894,36 @@ namespace IRExplorerUI {
         private void UpdateRunningProcessList() {
             var runningProcs = Process.GetProcesses();
             var list = new List<ProcessSummary>();
+            var currentProcId = Process.GetCurrentProcess().Id;
 
-            foreach (var proc in runningProcs)
-            {
-                try
-                {
-                    var procProfile = new ProfileProcess(proc.Id, -1, proc.ProcessName, proc.ProcessName, "");
-                    list.Add(new ProcessSummary(procProfile, TimeSpan.Zero));
+            foreach (var proc in runningProcs) {
+                if (proc.Id == currentProcId) {
+                    continue; // Ignore self.
                 }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine($"Failed to add proc {proc.ProcessName}: {ex.Message}");
+
+                var procProfile = new ProfileProcess(proc.Id, -1, proc.ProcessName, proc.ProcessName, "");
+                list.Add(new ProcessSummary(procProfile, TimeSpan.Zero));
+                
+                try {
+                    procProfile.ImageFileName = proc.MainWindowTitle;
+                    bool isnet = false;
+
+                    //? TODO: Extremely slow
+                    //foreach (var mod in proc.Modules) {
+                        
+                    //    if (mod is ProcessModule module &&
+                    //        module.ModuleName.Contains("mscor", StringComparison.OrdinalIgnoreCase)) {
+                    //        isnet = true;
+                    //        break;
+                    //    }
+                    //}
+
+                    if (isnet) {
+                        Trace.WriteLine($".NET proc: {proc.ProcessName}");
+                    }
+                }
+                catch (Exception ex) {
+                    Trace.WriteLine($"Failed to get proc title {proc.ProcessName}: {ex.Message}");
                 }
             }
 
@@ -926,7 +945,9 @@ namespace IRExplorerUI {
             var proc = (ProcessSummary)value;
 
             if (proc.Process.Name.Contains(text, StringComparison.OrdinalIgnoreCase) ||
-                proc.Process.ProcessId.ToString().Contains(text)) {
+                proc.Process.ProcessId.ToString().Contains(text) ||
+                (proc.Process.ImageFileName!=null &&
+                 proc.Process.ImageFileName.Contains(text, StringComparison.OrdinalIgnoreCase))) {
                 return true;
             }
 

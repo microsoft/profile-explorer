@@ -133,6 +133,56 @@
                             <Separator Margin="0,8,0,8" />
 
                             <StackPanel x:Name="AttachToProcessPanel" Visibility="{Binding ElementName=AttachRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Grid
+                                    Height="24"
+                                    MinHeight="24"
+                                    Margin="8,4,8,4">
+
+                                    <Button
+                                        x:Name="RefreshProcessButton"
+                                        Height="22"
+                                        Padding="4,2,4,2"
+                                        HorizontalAlignment="Right"
+                                        Click="RefreshProcessButton_OnClick"
+                                        Content="Refresh"
+                                        IsEnabled="{Binding InputControlsEnabled}"
+                                        ToolTip="Refresh running process list" />
+                                    <StackPanel
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        DockPanel.Dock="Right"
+                                        Orientation="Horizontal">
+                                        <Image Height="16" Source="{StaticResource SearchIcon}" />
+                                        <Grid x:Name="ProcessFilterGrid" Height="24">
+                                            <TextBox
+                                                Name="ProcessFilter"
+                                                Width="250"
+                                                Height="24"
+                                                MaxWidth="300"
+                                                Margin="4,0,0,0"
+                                                HorizontalAlignment="Stretch"
+                                                VerticalAlignment="Center"
+                                                VerticalContentAlignment="Center"
+                                                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                                TextChanged="ProcessFilter_TextChanged"
+                                                ToolTip="Filter processes list based on a case-insensitive substring">
+                                                <TextBox.InputBindings>
+                                                    <KeyBinding
+                                                        Key="Escape"
+                                                        Command="local:Command.ClearTextbox"
+                                                        CommandParameter="{Binding ElementName=ProcessFilter}" />
+                                                </TextBox.InputBindings>
+
+                                            </TextBox>
+                                            <TextBlock
+                                                Margin="8,4"
+                                                Foreground="DimGray"
+                                                IsHitTestVisible="False"
+                                                Text="Search processes by Name or Id"
+                                                Visibility="{Binding ElementName=ProcessFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Grid>
                                 <ListView
                                     x:Name="RunningProcessList"
                                     Height="300"
@@ -165,8 +215,8 @@
                                                 </GridViewColumn.HeaderContainerStyle>
                                             </GridViewColumn>
 
-                                            <GridViewColumn Width="100" DisplayMemberBinding="{Binding Process.CommandLine}">
-                                                <GridViewColumnHeader Content="Command line" />
+                                            <GridViewColumn Width="100" DisplayMemberBinding="{Binding Process.ImageFileName}">
+                                                <GridViewColumnHeader Content="Title" />
                                                 <GridViewColumn.HeaderContainerStyle>
                                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                                         <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -194,56 +244,7 @@
                                         </ContextMenu>
                                     </ListView.ContextMenu>
                                 </ListView>
-                                <Grid
-                                    Height="24"
-                                    MinHeight="24"
-                                    Margin="8,4,8,4">
 
-                                    <Button
-                                        x:Name="RefreshProcessButton"
-                                        Height="22"
-                                        Padding="4,2,4,2"
-                                        HorizontalAlignment="Left"
-                                        Click="RefreshProcessButton_OnClick"
-                                        Content="Refresh"
-                                        IsEnabled="{Binding InputControlsEnabled}"
-                                        ToolTip="Refresh running process list" />
-                                    <StackPanel
-                                        HorizontalAlignment="Right"
-                                        VerticalAlignment="Top"
-                                        DockPanel.Dock="Right"
-                                        Orientation="Horizontal">
-                                        <Image Height="16" Source="{StaticResource SearchIcon}" />
-                                        <Grid x:Name="ProcessFilterGrid" Height="24">
-                                            <TextBox
-                                                Name="ProcessFilter"
-                                                Width="200"
-                                                Height="24"
-                                                MaxWidth="300"
-                                                Margin="4,0,0,0"
-                                                HorizontalAlignment="Stretch"
-                                                VerticalAlignment="Center"
-                                                VerticalContentAlignment="Center"
-                                                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                                                TextChanged="ProcessFilter_TextChanged"
-                                                ToolTip="Filter processes list based on a case-insensitive substring">
-                                                <TextBox.InputBindings>
-                                                    <KeyBinding
-                                                        Key="Escape"
-                                                        Command="local:Command.ClearTextbox"
-                                                        CommandParameter="{Binding ElementName=ProcessFilter}" />
-                                                </TextBox.InputBindings>
-
-                                            </TextBox>
-                                            <TextBlock
-                                                Margin="8,4"
-                                                Foreground="DimGray"
-                                                IsHitTestVisible="False"
-                                                Text="Filter processes"
-                                                Visibility="{Binding ElementName=ProcessFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                        </Grid>
-                                    </StackPanel>
-                                </Grid>
                             </StackPanel>
 
                             <StackPanel x:Name="StartProcessPanel" Visibility="{Binding ElementName=StartAppRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
