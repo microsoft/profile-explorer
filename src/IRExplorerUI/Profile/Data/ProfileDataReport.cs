@@ -38,6 +38,8 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
     public ProfileRecordingSessionOptions SessionOptions { get; set; } // For recording mode
 
     public bool IsRecordingSession => SessionOptions != null;
+    public bool IsStartProcessSession => SessionOptions is { SessionKind: ProfileSessionKind.StartProcess };
+    public bool IsAttachToProcessSession => SessionOptions is { SessionKind: ProfileSessionKind.AttachToProcess };
     public List<ModuleStatus> Modules => moduleStatusMap_.ToValueList();
 
     public TimeSpan SamplingInterval {

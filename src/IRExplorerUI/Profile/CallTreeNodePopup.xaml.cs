@@ -32,11 +32,11 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     public event PropertyChangedEventHandler PropertyChanged;
 
     public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,
-        Point position, double width, double height,
-        UIElement referenceElement, ISession session) {
+                             Point position, double width, double height,
+                             UIElement referenceElement, ISession session) {
         
         InitializeComponent();
-        Initialize(position, width, height, referenceElement);
+        Initialize(position, referenceElement);
         PanelResizeGrip.ResizedControl = this;
 
         Session = session;

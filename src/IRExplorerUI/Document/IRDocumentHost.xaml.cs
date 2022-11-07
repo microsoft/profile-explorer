@@ -990,9 +990,11 @@ namespace IRExplorerUI {
                 await PassOutput.SwitchSection(parsedSection.Section, TextView);
             }
 
-            await ReloadProfile();
+            if (!await ReloadProfile()) {
+                await HideProfile();
+            }
+            
             await ReloadRemarks();
-
             TextView.ScrollToHorizontalOffset(horizontalOffset);
             TextView.ScrollToVerticalOffset(verticalOffset);
             duringSectionSwitching_ = false;
@@ -1122,16 +1124,16 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task ReloadProfile() {
+        private async Task<bool> ReloadProfile() {
             if (Session.ProfileData == null) {
-                return;
+                return false;
             }
 
             var funcProfile = Session.ProfileData.GetFunctionProfile(Section.ParentFunction);
             var metadataTag = Function.GetTag<AssemblyMetadataTag>();
 
             if (funcProfile == null || metadataTag == null) {
-                return;
+                return false;
             }
 
             var result = await Task.Run(() => funcProfile.Process(Function, Session.CompilerInfo.IR));
@@ -1148,7 +1150,7 @@ namespace IRExplorerUI {
             ColumnsVisible = columnData.HasData;
 
             if (!columnData.HasData) {
-                return;
+                return false;
             }
 
             int docLineCount = TextView.LineCount;
@@ -1286,6 +1288,7 @@ namespace IRExplorerUI {
             UpdateProfileDataColumnWidths();
             ColumnsList.ItemsSource = new ListCollectionView(elementValueList);
             ColumnsList.Background = settings_.BackgroundColor.AsBrush();
+            return true;
         }
 
         private void BuildProfileBlocksList(FunctionProfileData funcProfile, 
