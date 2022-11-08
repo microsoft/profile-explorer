@@ -522,10 +522,6 @@ namespace IRExplorerUI {
             //await ShowSectionPanelDiffs(result);
         }
 
-        public void AddModuleSummary(IRTextSummary summary) {
-            SectionPanel.AddModuleSummary(summary);
-        }
-
         private async Task<LoadedDocument> LoadDocument(string filePath, string modulePath, Guid id,
                                             ProgressInfoHandler progressHandler) {
             return await LoadDocument(filePath, modulePath, id, progressHandler,

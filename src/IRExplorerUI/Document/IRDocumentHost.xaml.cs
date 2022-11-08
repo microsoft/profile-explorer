@@ -1359,6 +1359,7 @@ namespace IRExplorerUI {
 
         private async Task HideProfile() {
             ProfileVisible = false;
+            ColumnsVisible = false;
             ProfileBlocksMenu.Items.Clear();
         }
 

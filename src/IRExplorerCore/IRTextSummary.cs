@@ -101,11 +101,6 @@ namespace IRExplorerCore {
             var sb = new StringBuilder();
             sb.AppendLine($"Summary: {ModuleName}");
             sb.AppendLine($"Functions: {Functions.Count}");
-
-            for (var i = 0; i < Functions.Count; i++) {
-                sb.AppendLine($"    {i}: {Functions[i].Name}, sections: {Functions[i].SectionCount}");
-            }
-
             return sb.ToString();
         }
     }
