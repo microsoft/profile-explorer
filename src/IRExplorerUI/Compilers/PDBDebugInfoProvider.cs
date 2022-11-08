@@ -141,7 +141,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         public bool LoadDebugInfo(DebugFileSearchResult debugFile) {
-            if (!debugFile.Found) {
+            if (debugFile == null || !debugFile.Found) {
                 return false;
             }
 

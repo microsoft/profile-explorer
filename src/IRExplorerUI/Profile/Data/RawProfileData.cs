@@ -126,16 +126,16 @@ public class RawProfileData {
         //? TODO: MethodID is identical between opt levels, either split by level or use time like TraceEvent
         var initialName = functionDebugInfo.Name;
 
-        if (data.managedMethodsMap_.TryGetValue(initialName, out var other)) {
-            if (other.FunctionDebugInfo.HasOptimizationLevel &&
-                !other.FunctionDebugInfo.Name.EndsWith(other.FunctionDebugInfo.OptimizationLevel)) {
-                other.FunctionDebugInfo.UpdateName($"{other.FunctionDebugInfo.Name}_{other.FunctionDebugInfo.OptimizationLevel}");
-            }
+        //if (data.managedMethodsMap_.TryGetValue(initialName, out var other)) {
+        //    if (other.FunctionDebugInfo.HasOptimizationLevel &&
+        //        !other.FunctionDebugInfo.Name.EndsWith(other.FunctionDebugInfo.OptimizationLevel)) {
+        //        other.FunctionDebugInfo.UpdateName($"{other.FunctionDebugInfo.Name}_{other.FunctionDebugInfo.OptimizationLevel}");
+        //    }
 
-            if (functionDebugInfo.HasOptimizationLevel) {
-                functionDebugInfo.UpdateName($"{functionDebugInfo.Name}_{functionDebugInfo.OptimizationLevel}");
-            }
-        }
+        //    if (functionDebugInfo.HasOptimizationLevel) {
+        //        functionDebugInfo.UpdateName($"{functionDebugInfo.Name}_{functionDebugInfo.OptimizationLevel}");
+        //    }
+        //}
 
         moduleDebugInfo.AddFunctionInfo(functionDebugInfo);
         data.managedMethodIdMap_[methodId] = mapping;
