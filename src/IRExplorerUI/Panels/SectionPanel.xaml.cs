@@ -1156,11 +1156,8 @@ namespace IRExplorerUI {
 
                 if (moduleStatus != null) {
                     moduleInfo.Status = moduleStatus;
-
-                    if (moduleStatus.State != ModuleLoadState.Loaded) {
-                        moduleInfo.BinaryFileMissing = !moduleStatus.HasBinaryLoaded;
-                        moduleInfo.DebugFileMissing = !moduleStatus.HasDebugInfoLoaded;
-                    }
+                    moduleInfo.BinaryFileMissing = !moduleStatus.HasBinaryLoaded;
+                    moduleInfo.DebugFileMissing = !moduleStatus.HasDebugInfoLoaded;
                 }
 
                 modulesEx.Add(moduleInfo);
