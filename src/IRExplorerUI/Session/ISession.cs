@@ -44,7 +44,6 @@ namespace IRExplorerUI {
         Task<bool> SetupNewSession(LoadedDocument mainDocument, List<LoadedDocument> otherDocuments);
 
         IRTextSummary GetDocumentSummary(IRTextSection section);
-        void AddModuleSummary(IRTextSummary summary);
         IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId);
         IRDocument FindAssociatedDocument(IToolPanel panel);
         IRDocumentHost FindAssociatedDocumentHost(IToolPanel panel);

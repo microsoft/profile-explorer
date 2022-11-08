@@ -1072,8 +1072,10 @@ namespace IRExplorerUI {
         }
 
         public void AddModuleSummary(IRTextSummary summary) {
-            moduleSummaries_.Add(summary);
-            sectionExtensionComputed_ = false;
+            if (!moduleSummaries_.Contains(summary)) {
+                moduleSummaries_.Add(summary);
+                sectionExtensionComputed_ = false;
+            }
         }
 
         public bool HasSummary(IRTextSummary summary) {
