@@ -596,15 +596,7 @@ namespace IRExplorerUI {
                 await OpenFunction(childInfo, openMode);
             }
         }
-
-        private void ChildClick(object sender, MouseButtonEventArgs e) {
-            var childInfo = ((ListViewItem)sender).Content as ChildFunctionEx;
-
-            if (childInfo != null) {
-                Session.SwitchActiveFunction(childInfo.Function);
-            }
-        }
-
+        
         private void ExpandHottestFunctionPath() {
             if (CallTree.Nodes.Count > 0) {
                 ExpandHottestFunctionPath(CallTree.Nodes[0]);
@@ -765,27 +757,7 @@ namespace IRExplorerUI {
         private void ClearSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
             ((TextBox)e.Parameter).Text = string.Empty;
         }
-
-        private FlameGraphViewer fgViewer_;
-
-        private async void Button_Click(object sender, RoutedEventArgs e) {
-            var fg = await CreateFlameGraph(800, 500);
-            //w.Content = fg;
-            //w.Show();
-
-            Session.DisplayFloatingPanel(fg);
-        }
-
-        private async Task<FlameGraphPanel> CreateFlameGraph(double width, double height) {
-            var panel = new FlameGraphPanel();
-            panel.Width = width;
-            panel.Height = height;
-            panel.HorizontalAlignment = HorizontalAlignment.Stretch;
-            panel.VerticalAlignment = VerticalAlignment.Stretch;
-            //await panel.Initialize(Session.ProfileData.CallTree);
-            return panel;
-        }
-
+        
         public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
             return Session.ProfileData.CallTree.GetBacktrace(node);
         }
@@ -796,6 +768,17 @@ namespace IRExplorerUI {
 
         public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
             return Session.ProfileData.CallTree.GetTopModules(node);
+        }
+
+        private void CallTree_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (!Utils.IsKeyboardModifierActive()) {
+                return;
+            }
+
+            if (CallTree.SelectedItem is TreeNode node &&
+                node.Tag is ChildFunctionEx funcEx) {
+                Session.SwitchActiveFunction(funcEx.Function);
+            }
         }
     }
 }
