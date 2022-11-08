@@ -111,13 +111,24 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     }
 
     public bool Equals(FunctionDebugInfo other) {
+        if (ReferenceEquals(null, other)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other)) {
+            return true;
+        }
+        
         return RVA == other.RVA &&
                Size == other.Size &&
-               Name.Equals(other.Name, StringComparison.Ordinal);
+               Name.Equals(other.Name, StringComparison.Ordinal) &&
+               ((OptimizationLevel == null && other.OptimizationLevel == null) ||
+                ((OptimizationLevel != null && other.OptimizationLevel != null) &&
+                  OptimizationLevel.Equals(other.OptimizationLevel, StringComparison.Ordinal)));
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Name, RVA, Size);
+        return HashCode.Combine(Name, RVA, Size, OptimizationLevel);
     }
 
     public int CompareTo(FunctionDebugInfo other) {

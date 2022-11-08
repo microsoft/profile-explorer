@@ -322,7 +322,8 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         for (; frameIndex < stackFrames.Length; frameIndex++) {
             var frameIp = stackFrames[frameIndex];
             ProfileImage frameImage = null;
-
+            isManagedCode = false;
+            
             if (ETWEventProcessor.IsKernelAddress((ulong)frameIp, pointerSize)) {
                 frameImage = profile.FindImageForIP(frameIp, ETWEventProcessor.KernelProcessId);
             }
