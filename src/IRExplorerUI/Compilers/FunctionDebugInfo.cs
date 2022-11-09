@@ -22,6 +22,10 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     [ProtoMember(7)]
     public string OptimizationLevel { get; set; }
 
+    //? TODO: Remove SourceFileName from SourceLineDebugInfo
+    public string SourceFileName { get; set; }
+    public string OriginalSourceFileName { get; set; }
+
     public long StartRVA => RVA;
     public long EndRVA => RVA + Size - 1;
     public bool HasSourceLines => SourceLines != null && SourceLines.Count > 0;
@@ -210,7 +214,7 @@ public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
     [ProtoMember(4)]
     public int Column { get; set; }
     [ProtoMember(5)]
-    public string FilePath { get; private set; }
+    public string FilePath { get; private set; } //? Move to FunctionDebugInfo, add OriginalFilePath for SourceLink
 
     public static readonly SourceLineDebugInfo Unknown = new SourceLineDebugInfo(-1, -1);
     public bool IsUnknown => Line == -1;
