@@ -96,7 +96,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         private bool EnsureHasSourceLines(FunctionDebugInfo functionDebugInfo) {
-            if (functionDebugInfo == null) {
+            if (functionDebugInfo == null || functionDebugInfo.IsUnknown) {
                 return false;
             }
             else if (functionDebugInfo.HasSourceLines) {
@@ -108,7 +108,7 @@ namespace IRExplorerUI.Compilers {
 
             //? TODO: Make async
             var options = SymbolOptions != null ? SymbolOptions :
-                          (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();
+                          App.Settings.SymbolOptions.Clone();
             if (File.Exists(ManagedSymbolFile.FileName)) {
                 options.InsertSymbolPath(ManagedSymbolFile.FileName);
             }
@@ -138,42 +138,22 @@ namespace IRExplorerUI.Compilers {
                 }
 
                 try {
-                    using var stream = File.OpenRead(debugFile);
-                    var mdp = MetadataReaderProvider.FromPortablePdbStream(stream);
-                    var md = mdp.GetMetadataReader();
-                    var debugHandle = MetadataTokens.MethodDebugInformationHandle((int)functionDebugInfo.Id);
+                    var pdb = symbolReader.OpenSymbolFile(debugFile);
+                    
+                    if (pdb != null) {
+                        foreach (var pair in ilOffsets) {
+                            var sourceLoc = pdb.SourceLocationForManagedCode((uint)functionDebugInfo.Id, pair.ILOffset);
+                            if (sourceLoc != null) {
+                                if (sourceLoc.SourceFile != null && functionDebugInfo.SourceFileName == null) {
+                                    functionDebugInfo.SourceFileName = sourceLoc.SourceFile.GetSourceFile();
+                                    functionDebugInfo.OriginalSourceFileName ??= sourceLoc.SourceFile.BuildTimeFilePath;
+                                }
 
-                    var managedDebugInfo = md.GetMethodDebugInformation(debugHandle);
-                    var sequencePoints = managedDebugInfo.GetSequencePoints();
-
-                    foreach (var pair in ilOffsets) {
-                        int closestDist = int.MaxValue;
-                        SequencePoint? closestPoint = null;
-
-                        // Search for exact or closes IL offset based on
-                        //? TODO: Slow, use map combined with bin search since most ILoffsets are found exactly
-                        foreach (var point in sequencePoints) {
-                            if (point.Offset == pair.ILOffset) {
-                                closestPoint = point;
-                                closestDist = 0;
-                                break;
+                                //? TODO: Remove SourceFileName from SourceLineDebugInfo
+                                var lineInfo = new SourceLineDebugInfo(pair.NativeOffset, sourceLoc.LineNumber,
+                                                                       sourceLoc.ColumnNumber, functionDebugInfo.SourceFileName);
+                                functionDebugInfo.AddSourceLine(lineInfo);
                             }
-
-                            int dist = Math.Abs(point.Offset - pair.ILOffset);
-
-                            if (dist < closestDist) {
-                                closestDist = dist;
-                                closestPoint = point;
-                            }
-                        }
-
-                        if (closestPoint.HasValue) {
-                            //Trace.WriteLine($"Using closest {closestPoint.Value.StartLine}");
-                            var doc = md.GetDocument(closestPoint.Value.Document);
-                            var docName = md.GetString(doc.Name);
-                            var lineInfo = new SourceLineDebugInfo(pair.NativeOffset, closestPoint.Value.StartLine,
-                                closestPoint.Value.StartColumn, docName);
-                            functionDebugInfo.AddSourceLine(lineInfo);
                         }
                     }
                 }
@@ -247,10 +227,10 @@ namespace IRExplorerUI.Compilers {
             return SourceFileDebugInfo.Unknown;
         }
 
-        private static SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info)
+        private SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info)
         {
-            return new SourceFileDebugInfo(info.StartSourceLineDebug.FilePath,
-                info.StartSourceLineDebug.FilePath,
+            return new SourceFileDebugInfo(info.SourceFileName,
+                info.OriginalSourceFileName,
                 info.StartSourceLineDebug.Line);
         }
 

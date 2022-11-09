@@ -13,6 +13,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
 using ICSharpCode.AvalonEdit.Document;
@@ -236,7 +237,7 @@ namespace IRExplorerUI {
             section_ = section;
 
             if (await LoadSourceFileForFunction(section_.ParentFunction)) {
-                ScrollToLine(hottestSourceLine_);
+                JumpToHottestProfiledElement();
             }
         }
 
@@ -245,7 +246,7 @@ namespace IRExplorerUI {
             section_ = section;
 
             if (await LoadSourceFileForFunction(section_.ParentFunction)) {
-                ScrollToLine(hottestSourceLine_);
+                JumpToHottestProfiledElement();
             }
         }
 
@@ -713,6 +714,10 @@ namespace IRExplorerUI {
 
         private void JumpToPreviousProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
             JumpToProfiledElement(1);
+        }
+
+        private void JumpToHottestProfiledElement() {
+            Dispatcher.BeginInvoke(() => JumpToProfiledElement(0), DispatcherPriority.Background);
         }
 
         private void JumpToProfiledElement(int offset) {
