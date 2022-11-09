@@ -112,7 +112,7 @@ namespace IRExplorerUI.Compilers.ASM {
         private void Initialize(bool checkValidCallAddress) {
             checkValidCallAddress_ = checkValidCallAddress;
             disasmHandle_ = Interop.Create(architecture_);
-            BuildFunctionRvaCache(false);
+            BuildFunctionRvaCache(true);
         }
 
         public string DisassembleToText(FunctionDebugInfo funcInfo) {

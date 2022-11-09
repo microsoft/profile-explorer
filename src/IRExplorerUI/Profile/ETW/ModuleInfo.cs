@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Wordprocessing;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
@@ -14,8 +15,7 @@ namespace IRExplorerUI.Profile {
         private BinaryFileDescriptor binaryInfo_;
         private List<FunctionDebugInfo> sortedFuncList_;
         private Dictionary<long, IRTextFunction> addressFuncMap_;
-        private Dictionary<long, string> externalsFuncMap_;
-        private Dictionary<string, IRTextFunction> externalFuncNames_;
+        private Dictionary<long, IRTextFunction> externalsFuncMap_;
         private ProfileDataReport report_;
         private ReaderWriterLockSlim lock_;
 
@@ -118,8 +118,7 @@ namespace IRExplorerUI.Profile {
             // An "external" function here is considered any func. that
             // has no associated IR in the module.
             addressFuncMap_ = new Dictionary<long, IRTextFunction>(Summary.Functions.Count);
-            externalsFuncMap_ = new Dictionary<long, string>();
-            externalFuncNames_ = new Dictionary<string, IRTextFunction>();
+            externalsFuncMap_ = new Dictionary<long, IRTextFunction>();
             sortedFuncList_ = new List<FunctionDebugInfo>();
 
             if (!HasDebugInfo) {
@@ -141,7 +140,7 @@ namespace IRExplorerUI.Profile {
                     addressFuncMap_[funcInfo.RVA] = func;
                 }
                 else {
-                    externalsFuncMap_[funcInfo.RVA] = funcInfo.Name;
+                    externalsFuncMap_[funcInfo.RVA] = ModuleDocument.AddDummyFunction(funcInfo.Name);
                 }
             }
 
@@ -222,15 +221,15 @@ namespace IRExplorerUI.Profile {
                     lock_.EnterReadLock();
                 }
 
-                if (externalsFuncMap_ == null || externalFuncNames_ == null) {
+                if (externalsFuncMap_ == null) {
                     return null;
                 }
 
-                if (!externalsFuncMap_.TryGetValue(funcAddress, out var externalFuncName)) {
-                    return null;
+                if (externalsFuncMap_.TryGetValue(funcAddress, out var externalFunc)) {
+                    return externalFunc;
                 }
 
-                return externalFuncNames_.GetValueOrNull(externalFuncName);
+                return null;
             }
             finally {
                 if (useLock) {
@@ -254,10 +253,7 @@ namespace IRExplorerUI.Profile {
                 }
 
                 func = ModuleDocument.AddDummyFunction(name);
-                externalFuncNames_ ??= new Dictionary<string, IRTextFunction>();
-                externalsFuncMap_ ??= new Dictionary<long, string>();
-                externalFuncNames_[name] = func;
-                externalsFuncMap_[funcAddress] = name;
+                externalsFuncMap_[funcAddress] = func;
                 return func;
             }
             finally {
