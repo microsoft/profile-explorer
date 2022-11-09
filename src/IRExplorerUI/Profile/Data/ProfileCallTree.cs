@@ -81,7 +81,7 @@ public sealed class ProfileCallTree {
 
                 //? TODO: Call sites can be computed on-demand when opening a func
                 //? by going over the samples in the func, similar to how timeline selection works
-                //prevNode.AddCallSite(node, prevFrame.FrameRVA, sample.Weight);
+                prevNode.AddCallSite(node, prevFrame.FrameRVA, sample.Weight);
             }
 
             node.AccumulateWeight(sample.Weight);
@@ -689,8 +689,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
             //? TODO: Use a signature to identify the node, merging the FunctionDebugInfos with same module:name.
             //? Use SHA for signature
-            long id = childNode.FunctionDebugInfo.Name.GetHashCode();
-            callsite.AddTarget(id, weight);
+            //long id = childNode.FunctionDebugInfo.Name.GetHashCode();
+            callsite.AddTarget(childNode.Id, weight);
         }
         finally {
             lock_.ExitWriteLock();
