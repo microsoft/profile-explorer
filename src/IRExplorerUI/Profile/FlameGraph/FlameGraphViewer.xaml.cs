@@ -311,11 +311,19 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     public void AdjustMaxWidth(double amount) {
+        if (!initialized_) {
+            return;
+        }
+        
         renderer_.UpdateMaxWidth(renderer_.MaxGraphWidth + amount);
         InvalidateMeasure();
     }
 
     public FlameGraphNode FindPointedNode(Point point) {
+        if (!initialized_) {
+            return null;
+        }
+
         return renderer_.HitTestNode(point);
     }
 
