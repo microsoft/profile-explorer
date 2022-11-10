@@ -819,7 +819,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                 }
             }
 
-
             await NodeDetailsPanel.ShowWithDetailsAsync(pointedNode.CallTreeNode);
 
             if (settings_.SyncSourceFile) {
@@ -829,6 +828,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                 if (panel != null) {
                     await panel.LoadSourceFile(pointedNode.CallTreeNode.Function.Sections[0]);
                 }
+
+                await Session.SwitchActiveFunction(pointedNode.CallTreeNode.Function);
             }
         }
     }

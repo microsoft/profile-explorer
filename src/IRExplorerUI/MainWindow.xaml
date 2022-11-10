@@ -957,7 +957,7 @@
                                     ContentId="CallTree"
                                     IsActiveChanged="LayoutAnchorable_IsActiveChanged"
                                     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                                    <local:CallTreePanel x:Name="CallTreePanel" />
+                                    <profile:CallTreePanel x:Name="CallTreePanel" />
                                 </avalonDock:LayoutAnchorable>
 
                                 <avalonDock:LayoutAnchorable
@@ -966,7 +966,7 @@
                                     ContentId="CallerCallee"
                                     IsActiveChanged="LayoutAnchorable_IsActiveChanged"
                                     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                                    <local:CallerCalleePanel x:Name="CallerCalleePanel" />
+                                    <profile:CallerCalleePanel x:Name="CallerCalleePanel" />
                                 </avalonDock:LayoutAnchorable>
 
                                 <avalonDock:LayoutAnchorable

@@ -15,11 +15,16 @@ namespace IRExplorerUI {
         public bool PrependModuleToFunction { get; set; }
         [ProtoMember(3)]
         public bool ShowTimeAfterPercentage { get; set; }
+        [ProtoMember(4)]
+        public bool ShowDetailsPanel { get; set; }
+        [ProtoMember(5)]
+        public bool SyncSourceFile { get; set; }
 
         public override void Reset() {
             CombineInstances = true;
             PrependModuleToFunction = true;
             ShowTimeAfterPercentage = true;
+            SyncSourceFile = true;
         }
 
         public CallTreeSettings Clone() {
@@ -31,7 +36,9 @@ namespace IRExplorerUI {
             return obj is CallTreeSettings settings &&
                    CombineInstances == settings.CombineInstances &&
                    PrependModuleToFunction == settings.PrependModuleToFunction &&
-                   ShowTimeAfterPercentage == settings.ShowTimeAfterPercentage;
+                   ShowTimeAfterPercentage == settings.ShowTimeAfterPercentage &&
+                   ShowDetailsPanel == settings.ShowDetailsPanel &&
+                   SyncSourceFile == settings.SyncSourceFile;
         }
     }
 }
