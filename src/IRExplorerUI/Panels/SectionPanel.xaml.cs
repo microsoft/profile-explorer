@@ -1400,7 +1400,7 @@ namespace IRExplorerUI {
                 await statisticsTask_.CancelTaskAndWaitAsync();
             }
             else {
-                Utils.WaitForDebugger(true);
+                //Utils.WaitForDebugger(true);
             }
             Trace.WriteLine($"Done cancel stats at {DateTime.Now}, ticks {Environment.TickCount64}");
             callGraphCache_ = null;

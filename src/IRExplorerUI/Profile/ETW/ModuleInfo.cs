@@ -253,6 +253,7 @@ namespace IRExplorerUI.Profile {
                 }
 
                 func = ModuleDocument.AddDummyFunction(name);
+                externalsFuncMap_ ??= new Dictionary<long, IRTextFunction>();
                 externalsFuncMap_[funcAddress] = func;
                 return func;
             }

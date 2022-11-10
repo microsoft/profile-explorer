@@ -405,7 +405,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                     }
                 }
 
-                funcDebugInfo = new FunctionDebugInfo(textFunction.Name, frameIp, 0);
+                funcDebugInfo = new FunctionDebugInfo(textFunction.Name, frameRva, 0);
             }
 
             // Find the corresponding text function in the module, which may
