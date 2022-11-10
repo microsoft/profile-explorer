@@ -12,10 +12,9 @@ using System.Windows.Documents;
 using Brush = System.Windows.Media.Brush;
 using Size = System.Windows.Size;
 using IRExplorerUI.Profile;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace IRExplorerUI.Profile {
-    public class FlameGraphNode {
+    public class FlameGraphNode : SearchableProfileItem {
         internal const double DefaultMargin = 4;
         internal const double ExtraValueMargin = 20;
         internal const double MinVisibleRectWidth = 4;
@@ -23,7 +22,11 @@ namespace IRExplorerUI.Profile {
         internal const double MinVisibleWidth = 1;
         internal const int MaxTextParts = 3;
 
-        public FlameGraphNode(ProfileCallTreeNode callTreeNode, TimeSpan weight, int depth) {
+        private string functionName_;
+
+        public FlameGraphNode(ProfileCallTreeNode callTreeNode, TimeSpan weight, int depth,
+                              FunctionNameFormatter funcNameFormatter) :
+                base(funcNameFormatter) {
             CallTreeNode = callTreeNode;
             Weight = weight;
             Depth = depth;
@@ -36,9 +39,6 @@ namespace IRExplorerUI.Profile {
         public FlameGraphRenderer Owner { get; set; }
         public FlameGraphNode Parent { get; set; }
         public List<FlameGraphNode> Children { get; set; }
-        public TextSearchResult? SearchResult { get; set; }
-
-        public TimeSpan Weight { get; set; }
         public TimeSpan ChildrenWeight { get; set; }
         public int Depth { get; set; }
         public int MaxDepthUnder { get; set; }
@@ -59,6 +59,14 @@ namespace IRExplorerUI.Profile {
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
         public TimeSpan Duration => EndTime - StartTime;
+
+        protected override string GetFunctionName() {
+            return CallTreeNode != null && CallTreeNode.Function != null ?
+                   CallTreeNode.FunctionName : null;
+        }
+
+        public override string ModuleName =>
+            CallTreeNode != null && CallTreeNode.Function != null ? CallTreeNode.ModuleName : null;
     }
 
     public sealed class FlameGraphGroupNode : FlameGraphNode {
@@ -69,7 +77,7 @@ namespace IRExplorerUI.Profile {
 
         public FlameGraphGroupNode(FlameGraphNode parentNode, int startIndex,
                                    int replacedNodeCount, TimeSpan weight, int depth) :
-            base(null, weight, depth) {
+            base(null, weight, depth, null) {
             Parent = parentNode;
             ReplacedStartIndex = startIndex;
             ReplacedNodeCount = replacedNodeCount;
@@ -85,6 +93,7 @@ namespace IRExplorerUI.Profile {
         private double rootWeightReciprocal_;
         private double rootDurationReciprocal_;
         private double profileDurationReciprocal_;
+        private SearchableProfileItem.FunctionNameFormatter nameFormatter_;
 
         public ProfileCallTree CallTree { get; set; }
 
@@ -111,9 +120,10 @@ namespace IRExplorerUI.Profile {
             }
         }
 
-        public FlameGraph(ProfileCallTree callTree) {
+        public FlameGraph(ProfileCallTree callTree, SearchableProfileItem.FunctionNameFormatter nameFormatter) {
             CallTree = callTree;
             treeNodeToFgNodeMap_ = new Dictionary<ProfileCallTreeNode, FlameGraphNode>();
+            nameFormatter_ = nameFormatter;
         }
 
         public List<FlameGraphNode> GetNodes(ProfileCallTreeNode node) {
@@ -131,7 +141,7 @@ namespace IRExplorerUI.Profile {
             }
 
             var groupNode = node as ProfileCallTreeGroupNode;
-            
+
             foreach (var childNode in groupNode.Nodes) {
                 if (treeNodeToFgNodeMap_.TryGetValue(childNode, out var fgNode)) {
                     resultList.Add(fgNode);
@@ -200,7 +210,7 @@ namespace IRExplorerUI.Profile {
             Trace.WriteLine($"Timeline Samples: {data.Samples.Count}");
             data.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
 
-            var flameNode = new FlameGraphNode(null, RootWeight, 0);
+            var flameNode = new FlameGraphNode(null, RootWeight, 0, nameFormatter_);
             flameNode.StartTime = TimeSpan.MaxValue;
             flameNode.EndTime = TimeSpan.MinValue;
 
@@ -288,7 +298,7 @@ namespace IRExplorerUI.Profile {
                                                            null, node.CallTreeNode) {
                         //? TODO: Kind = resolvedFrame.IsKernelCode
                     };
-                    targetNode = new FlameGraphNode(callNode, TimeSpan.Zero, depth);
+                    targetNode = new FlameGraphNode(callNode, TimeSpan.Zero, depth, nameFormatter_);
                     node.Children ??= new List<FlameGraphNode>();
                     node.Children.Add(targetNode);
                     targetNode.StartTime = sample.Time;
@@ -319,12 +329,12 @@ namespace IRExplorerUI.Profile {
             if (rootNode == null) {
                 // Make on dummy root node that hosts all real root nodes.
                 RootWeight = CallTree.TotalRootNodesWeight;
-                var flameNode = new FlameGraphNode(null, RootWeight, 0);
+                var flameNode = new FlameGraphNode(null, RootWeight, 0, nameFormatter_);
                 RootNode = Build(flameNode, CallTree.RootNodes, 0);
             }
             else {
                 RootWeight = rootNode.Weight;
-                var flameNode = new FlameGraphNode(rootNode, rootNode.Weight, 0);
+                var flameNode = new FlameGraphNode(rootNode, rootNode.Weight, 0, nameFormatter_);
                 RootNode = Build(flameNode, rootNode.Children, 0);
             }
         }
@@ -349,7 +359,7 @@ namespace IRExplorerUI.Profile {
             flameNode.ChildrenWeight = childrenWeight;
 
             foreach (var child in sortedChildren) {
-                var childFlameNode = new FlameGraphNode(child, child.Weight, depth + 1);
+                var childFlameNode = new FlameGraphNode(child, child.Weight, depth + 1, nameFormatter_);
                 var childNode = Build(childFlameNode, child.Children, depth + 1);
                 childNode.Parent = flameNode;
                 flameNode.Children.Add(childNode);

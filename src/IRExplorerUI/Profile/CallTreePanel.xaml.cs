@@ -65,9 +65,6 @@ namespace IRExplorerUI {
     }
 
     public class ChildFunctionEx : SearchableProfileItem, ITreeModel {
-        private string functionName_;
-        private FunctionNameFormatter funcNameFormatter_;
-
         public IRTextFunction Function { get; set; }
         public ProfileCallTreeNode CallTreeNode { get; set; }
         public TreeNode TreeNode { get; set; } // Associated UI tree node.
@@ -82,42 +79,18 @@ namespace IRExplorerUI {
         public override TimeSpan Weight => HasCallTreeNode ? CallTreeNode.Weight : TimeSpan.Zero;
         public override TimeSpan ExclusiveWeight => HasCallTreeNode ? CallTreeNode.ExclusiveWeight : TimeSpan.Zero;
 
-        public override string FunctionName {
-            get {
-                if (functionName_ != null) {
-                    return functionName_;
-                }
-
-                // Headers don't have a function.
-                if (CallTreeNode != null && CallTreeNode.Function != null) {
-                    if (funcNameFormatter_ != null) {
-                        return funcNameFormatter_(CallTreeNode.FunctionName);
-                    }
-                    return CallTreeNode.FunctionName;
-                }
-
-                return null;
-            }
-            set {
-                functionName_ = value;
-            }
+        protected override string GetFunctionName() {
+            return CallTreeNode != null && CallTreeNode.Function != null ?
+                   CallTreeNode.FunctionName : null;
         }
 
-        public override string ModuleName {
-            get {
-                // Headers don't have a function.
-                if (CallTreeNode != null && CallTreeNode.Function != null) {
-                    return CallTreeNode.ModuleName;
-                }
+        public override string ModuleName =>
+            CallTreeNode != null && CallTreeNode.Function != null ? CallTreeNode.ModuleName : null;
 
-                return null;
-            }
-        }
-
-        public ChildFunctionEx(ChildFunctionExKind kind, FunctionNameFormatter funcNameFormatter = null) {
+        public ChildFunctionEx(ChildFunctionExKind kind, FunctionNameFormatter funcNameFormatter = null) :
+                base(funcNameFormatter) {
             Children = new List<ChildFunctionEx>();
             Kind = kind;
-            funcNameFormatter_ = funcNameFormatter;
         }
 
         public IEnumerable GetChildren(object node) {
@@ -379,7 +352,7 @@ namespace IRExplorerUI {
                     //percentageFunc = PickPercentageFunction(instance.Weight);
                     var (childrenWeight, childrentExcWeight) = instance.ChildrenWeight;
                     var childrenNode = CreateProfileCallTreeHeader("Called", childrenWeight, childrentExcWeight, percentageFunc, 1);
-                    
+
                     if (nodeList.Count > 1) {
                         instanceNode.Children.Add(childrenNode);
                     }
@@ -522,7 +495,7 @@ namespace IRExplorerUI {
             double weightPercentage = percentageFunc(node.Weight);
             double exclusiveWeightPercentage = percentageFunc(node.ExclusiveWeight);
 
-            return new ChildFunctionEx(kind, FormatFunctionName) {
+            return new ChildFunctionEx(kind, Session.CompilerInfo.NameProvider.FormatFunctionName) {
                 Function = node.Function,
                 ModuleName = node.ModuleName,
                 Time = node.Weight.Ticks,
@@ -564,18 +537,6 @@ namespace IRExplorerUI {
             return result;
         }
 
-        private string FormatFunctionName(string funcName) {
-            if (App.Settings.SectionSettings.ShowDemangledNames) {
-                var nameProvider = Session.CompilerInfo.NameProvider;
-
-                if (nameProvider.IsDemanglingSupported) {
-                    funcName = nameProvider.DemangleFunctionName(funcName, nameProvider.GlobalDemanglingOptions);
-                }
-            }
-
-            return funcName;
-        }
-
         #region IToolPanel
 
         public override ToolPanelKind PanelKind => ToolPanelKind.CallTree;
@@ -596,7 +557,7 @@ namespace IRExplorerUI {
                 await OpenFunction(childInfo, openMode);
             }
         }
-        
+
         private void ExpandHottestFunctionPath() {
             if (CallTree.Nodes.Count > 0) {
                 ExpandHottestFunctionPath(CallTree.Nodes[0]);
@@ -757,7 +718,7 @@ namespace IRExplorerUI {
         private void ClearSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
             ((TextBox)e.Parameter).Text = string.Empty;
         }
-        
+
         public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
             return Session.ProfileData.CallTree.GetBacktrace(node);
         }

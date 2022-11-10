@@ -233,7 +233,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         Dispatcher.BeginInvoke(async () => {
             if (callTree != null && !GraphViewer.IsInitialized) {
-                await GraphViewer.Initialize(callTree, GraphArea, settings_);
+                await GraphViewer.Initialize(callTree, GraphArea, settings_, Session);
 
                 if (threadActivityViews_ != null) {
                     return;
@@ -706,7 +706,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         ResetHighlightedNodes();
         await GraphViewer.Initialize(GraphViewer.FlameGraph.CallTree, node.CallTreeNode,
-                                     GraphHostBounds, settings_, isTimelineView_);
+                                     GraphHostBounds, settings_, Session, isTimelineView_);
     }
 
     enum FlameGraphStateKind {
@@ -818,7 +818,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
                     threadView.ActivityHost.MarkSamples(sampleList);
                 }
             }
-            
+
 
             await NodeDetailsPanel.ShowWithDetailsAsync(pointedNode.CallTreeNode);
 
@@ -1235,7 +1235,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
 
-    private Dictionary<int, List<SampleIndex>> 
+    private Dictionary<int, List<SampleIndex>>
         FindFunctionSamples(ProfileCallTreeNode node, ProfileData profile) {
         var sw = Stopwatch.StartNew();
         var allThreadsList = new List<SampleIndex>();
@@ -1275,14 +1275,14 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
             index++;
         }
-        
+
         Trace.WriteLine($"FindSamples took: {sw.ElapsedMilliseconds} for {allThreadsList.Count} samples");
         return threadListMap;
     }
 
     private HashSet<IRTextFunction> FindFunctionsForSamples(int sampleStartIndex, int sampleEndIndex, int threadId, ProfileData profile) {
         var funcSet = new HashSet<IRTextFunction>();
-        
+
         //? Abstract parallel run chunks to take action per sample (ComputeFunctionProfile)
         for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
             var (sample, stack) = profile.Samples[i];
@@ -1290,7 +1290,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             if (threadId != -1 && stack.Context.ThreadId != threadId) {
                 continue;
             }
-            
+
             foreach (var stackFrame in stack.StackFrames) {
                 if (stackFrame.IsUnknown)
                     continue;
@@ -1318,4 +1318,3 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
 }
-    

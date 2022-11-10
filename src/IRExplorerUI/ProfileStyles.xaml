@@ -9,8 +9,8 @@
 
     <system:Boolean x:Key="TrueBool">True</system:Boolean>
     <SolidColorBrush x:Key="ProfilePercentageBackBrush" Color="#66FFFFFF" />
-    <SolidColorBrush x:Key="ProfilePercentageBrush" Color="#66bf6262" />
-    <SolidColorBrush x:Key="ProfilePercentageExclusiveBrush" Color="#662d7de0" />
+    <SolidColorBrush x:Key="ProfilePercentageBrush" Color="#88eb8888" />
+    <SolidColorBrush x:Key="ProfilePercentageExclusiveBrush" Color="#8866a0e8" />
 
     <DataTemplate x:Key="TimePercentageColumnValueTemplate">
         <Border

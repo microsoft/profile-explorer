@@ -21,7 +21,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     private Dictionary<FlameGraphNode, HighlightingStyle> hoverNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> markedNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> selectedNodes_;
-    
+
     public bool IsInitialized => initialized_;
     public FlameGraph FlameGraph => flameGraph_;
     public double MaxGraphWidth => renderer_.MaxGraphWidth;
@@ -38,9 +38,10 @@ public partial class FlameGraphViewer : FrameworkElement {
         };
     }
 
+    public ISession Session { get; set; }
+
     public FlameGraphViewer() {
         InitializeComponent();
-
         hoverNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
         markedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
         selectedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
@@ -253,7 +254,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         foreach (var node in nodes) {
             flameGraph_.AppendNodes(node, fgNodes);
         }
-        
+
         SelectNodes(fgNodes);
         return fgNodes;
     }
@@ -266,14 +267,15 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode,
-                                 Rect visibleArea, FlameGraphSettings settings,
+                                 Rect visibleArea, FlameGraphSettings settings, ISession session,
                                  bool isTimelineView = false, int threadId = -1) {
         if (graphVisual_ != null) {
             Reset();
         }
 
+        Session = session;
         initialized_ = true;
-        flameGraph_ = new FlameGraph(callTree);
+        flameGraph_ = new FlameGraph(callTree, Session.CompilerInfo.NameProvider.FormatFunctionName);
         isTimelineView_ = isTimelineView;
 
         if (isTimelineView_) {
@@ -297,15 +299,15 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     public async Task Initialize(ProfileCallTree callTree, Rect visibleArea, FlameGraphSettings settings,
-                                 bool isTimelineView = false, int threadId = -1) {
-        await Initialize(callTree, null, visibleArea, settings, isTimelineView, threadId);
+                                 ISession session, bool isTimelineView = false, int threadId = -1) {
+        await Initialize(callTree, null, visibleArea, settings, session, isTimelineView, threadId);
     }
 
     public void UpdateMaxWidth(double maxWidth) {
         if (!initialized_) {
             return;
         }
-        
+
         renderer_.UpdateMaxWidth(maxWidth);
         InvalidateMeasure();
     }
@@ -314,7 +316,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         if (!initialized_) {
             return;
         }
-        
+
         renderer_.UpdateMaxWidth(renderer_.MaxGraphWidth + amount);
         InvalidateMeasure();
     }
