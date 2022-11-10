@@ -128,7 +128,7 @@ public class FlameGraphRenderer {
         visibleArea_ = visibleArea;
         RedrawGraph(false);
     }
-    
+
     private void RedrawGraph(bool updateLayout = true) {
         if(!RedrawGraphImpl(updateLayout)) {
             nodeLayoutComputed_ = false;
@@ -428,7 +428,7 @@ public class FlameGraphRenderer {
         //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
         return dummyNode;
     }
-    
+
     public FlameGraphNode HitTestNode(Point point) {
         var queryRect = new Rect(point.X / maxWidth_, point.Y, 1.0 / maxWidth_, 1);
 
@@ -525,7 +525,7 @@ public class FlameGraphRenderer {
         rtb.Render(drawingVisual);
         return rtb;
     }
-    
+
     public void DrawNode(FlameGraphNode node, DrawingContext dc) {
         if (node.IsDummyNode) {
             return;
@@ -571,10 +571,10 @@ public class FlameGraphRenderer {
             switch (index) {
                 case 0: {
                     if (node.HasFunction) {
-                        label = node.CallTreeNode.FunctionName;
+                        label = node.FunctionName;
 
                         if (settings_.PrependModuleToFunction) {
-                            var moduleLabel = node.CallTreeNode.ModuleName + "!";
+                            var moduleLabel = node.ModuleName + "!";
                             var (modText, modGlyphs, modTextTrimmed, modTextSize) =
                                 TrimTextToWidth(moduleLabel, maxWidth - margin, false);
 

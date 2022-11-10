@@ -15,12 +15,14 @@ namespace IRExplorerUI {
 
     public interface INameProvider {
         bool IsDemanglingSupported { get; }
+        bool IsDemanglingEnabled { get; }
         FunctionNameDemanglingOptions GlobalDemanglingOptions { get; }
         string GetSectionName(IRTextSection section, bool includeNumber = true);
         string GetFunctionName(IRTextFunction function);
         string DemangleFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options);
         string DemangleFunctionName(string name, FunctionNameDemanglingOptions options);
-
-        // GetBlockName
+        string FormatFunctionName(IRTextFunction function);
+        string FormatFunctionName(string name);
+        //? TODO: GetBlockName
     }
 }

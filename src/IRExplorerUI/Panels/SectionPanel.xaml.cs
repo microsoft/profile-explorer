@@ -297,9 +297,16 @@ namespace IRExplorerUI {
     }
 
     public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
+        private string functionName_;
+
         public IRTextFunctionEx(IRTextFunction function, int index) : base(DiffKind.None) {
             Function = function;
             Index = index;
+
+            if (function == null) {
+                ;
+            }
+            functionName_ = function.Name;
             Statistics = new FunctionCodeStatistics();
         }
 
@@ -325,7 +332,11 @@ namespace IRExplorerUI {
         public Brush BackColor { get; set; }
         public Brush BackColor2 { get; set; }
 
-        public string Name => Function.Name;
+        public string Name {
+            get => functionName_;
+            set => functionName_ = value;
+        }
+
         public int SectionCount => Function.SectionCount;
         public FunctionCodeStatistics Statistics { get; set; }
         public FunctionCodeStatistics DiffStatistics { get; set; }
@@ -1115,7 +1126,7 @@ namespace IRExplorerUI {
         private void SetDemangledFunctionNames(List<IRTextFunctionEx> functions) {
             var nameProvider = Session.CompilerInfo.NameProvider;
 
-            if (!settings_.ShowDemangledNames || !nameProvider.IsDemanglingSupported) {
+            if (!nameProvider.IsDemanglingEnabled) {
                 AlternateNameColumnVisible = false;
                 return;
             }
@@ -1123,9 +1134,9 @@ namespace IRExplorerUI {
             var demanglingOptions = nameProvider.GlobalDemanglingOptions;
 
             foreach (var funcEx in functions) {
-                if (funcEx.AlternateName == null) {
-                    funcEx.AlternateName = nameProvider.DemangleFunctionName(funcEx.Function, demanglingOptions);
-                }
+                var funcName = funcEx.Function.Name;
+                funcEx.Name = nameProvider.DemangleFunctionName(funcName, demanglingOptions);
+                funcEx.AlternateName = funcName;
             }
 
             AlternateNameColumnVisible = true;
@@ -1439,7 +1450,7 @@ namespace IRExplorerUI {
         }
 
         private void SetupSectionList(IRTextFunction function, bool force = false) {
-            if (function.Equals(currentFunction_, false) && !force) {
+            if (function != null && function.Equals(currentFunction_, false) && !force) {
                 return;
             }
 

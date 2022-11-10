@@ -9,7 +9,27 @@ namespace IRExplorerUI;
 public class SearchableProfileItem : BindableObject {
     public delegate string FunctionNameFormatter(string name);
 
-    public virtual string FunctionName { get; set; }
+    private string functionName_;
+    private FunctionNameFormatter funcNameFormatter_;
+
+    public virtual string FunctionName {
+        get {
+            if (functionName_ != null) {
+                return functionName_; // Cached.
+            }
+
+            functionName_ = GetFunctionName();
+
+            if (funcNameFormatter_ != null) {
+                functionName_ = funcNameFormatter_(functionName_);
+            }
+            return functionName_;
+        }
+        set {
+            functionName_ = value;
+        }
+    }
+
     public virtual string ModuleName { get; set; }
     public double Percentage { get; set; }
     public double ExclusivePercentage { get; set; }
@@ -26,6 +46,14 @@ public class SearchableProfileItem : BindableObject {
             }
             return name_;
         }
+    }
+
+    public SearchableProfileItem(FunctionNameFormatter funcNameFormatter) {
+        funcNameFormatter_ = funcNameFormatter;
+    }
+
+    protected virtual string GetFunctionName() {
+        return null;
     }
 
     public virtual void ResetCachedName() {

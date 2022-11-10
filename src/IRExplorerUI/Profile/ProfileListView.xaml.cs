@@ -24,12 +24,18 @@ public class ProfileListViewItem : SearchableProfileItem {
     private bool prependModule_;
     public ProfileCallTreeNode CallTreeNode { get; set; }
 
+    public ProfileListViewItem(FunctionNameFormatter funcNameFormatter) :
+        base(funcNameFormatter) {
+
+    }
+
     protected override bool ShouldPrependModule() {
         return prependModule_ && App.Settings.CallTreeSettings.PrependModuleToFunction;
     }
 
-    public static ProfileListViewItem From(ProfileCallTreeNode node, ProfileData profileData) {
-        return new ProfileListViewItem() {
+    public static ProfileListViewItem From(ProfileCallTreeNode node, ProfileData profileData,
+                                           FunctionNameFormatter funcNameFormatter) {
+        return new ProfileListViewItem(funcNameFormatter) {
             //prependModule_ = true,
             CallTreeNode = node,
             FunctionName = node.FunctionName,
@@ -41,8 +47,9 @@ public class ProfileListViewItem : SearchableProfileItem {
         };
     }
 
-    public static ProfileListViewItem From(ModuleProfileInfo node, ProfileData profileData) {
-        return new ProfileListViewItem() {
+    public static ProfileListViewItem From(ModuleProfileInfo node, ProfileData profileData,
+                                           FunctionNameFormatter funcNameFormatter) {
+        return new ProfileListViewItem(funcNameFormatter) {
             FunctionName = node.Name,
             Weight = node.Weight,
             Percentage = node.Percentage,
@@ -129,7 +136,8 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
     public void Show(List<ProfileCallTreeNode> nodes, bool filter = true) {
         var list = new List<ProfileListViewItem>(nodes.Count);
-        nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData)));
+        nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData,
+            Session.CompilerInfo.NameProvider.FormatFunctionName)));
 
         //? TODO: Option for filtering
         IEnumerable<ProfileListViewItem> filteredList = list;
@@ -150,7 +158,8 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
     public void Show(List<ModuleProfileInfo> nodes) {
         var list = new List<ProfileListViewItem>(nodes.Count);
-        nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData)));
+        nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData,
+                Session.CompilerInfo.NameProvider.FormatFunctionName)));
         ItemList.ItemsSource = new ListCollectionView(list);
     }
 

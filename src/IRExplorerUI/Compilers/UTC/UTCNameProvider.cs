@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -32,8 +33,10 @@ namespace IRExplorerUI.UTC {
 
     public sealed class UTCNameProvider : INameProvider {
         private static List<FilteredSectionName> sectionNameFilters_;
+        private static ConcurrentDictionary<string, string> demangledNameMap_;
 
         static UTCNameProvider() {
+            demangledNameMap_ = new ConcurrentDictionary<string, string>();
             sectionNameFilters_ = new List<FilteredSectionName>();
             sectionNameFilters_.Add(new FilteredSectionName("* ", FilteredSectionNameKind.TrimPrefix));
             sectionNameFilters_.Add(new FilteredSectionName(" *", FilteredSectionNameKind.TrimSuffix));
@@ -44,12 +47,13 @@ namespace IRExplorerUI.UTC {
         }
 
         public bool IsDemanglingSupported => true;
+        public bool IsDemanglingEnabled => IsDemanglingSupported && App.Settings.SectionSettings.ShowDemangledNames;
         public FunctionNameDemanglingOptions GlobalDemanglingOptions => App.Settings.SectionSettings.DemanglingOptions;
 
         public string GetSectionName(IRTextSection section, bool includeNumber) {
             string sectionName = section.Name;
 
-            if (string.IsNullOrEmpty(sectionName)) { 
+            if (string.IsNullOrEmpty(sectionName)) {
                 var funcName = section.ParentFunction.Name;
                 if (!string.IsNullOrEmpty(funcName)) {
                     return funcName.Length <= 24 ? funcName : $"{funcName.Substring(0, 24)}...";
@@ -115,11 +119,28 @@ namespace IRExplorerUI.UTC {
         }
 
         public string DemangleFunctionName(string name, FunctionNameDemanglingOptions options) {
-            return PDBDebugInfoProvider.DemangleFunctionName(name, options);
+            if (!demangledNameMap_.TryGetValue(name, out var demangledName)) {
+                demangledName = PDBDebugInfoProvider.DemangleFunctionName(name, options);
+                demangledNameMap_.TryAdd(name, demangledName);
+            }
+
+            return demangledName;
         }
 
         public string DemangleFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options) {
             return DemangleFunctionName(function.Name, options);
+        }
+
+        public string FormatFunctionName(string name) {
+            if (!IsDemanglingEnabled) {
+                return name;
+            }
+
+            return DemangleFunctionName(name, GlobalDemanglingOptions);
+        }
+
+        public string FormatFunctionName(IRTextFunction function) {
+            return FormatFunctionName(function.Name);
         }
     }
 }

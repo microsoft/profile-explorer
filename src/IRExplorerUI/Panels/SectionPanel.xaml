@@ -458,7 +458,7 @@
                             </GridViewColumn>
 
                             <GridViewColumn Width="200" local:GridViewColumnVisibility.IsVisible="{Binding AlternateNameColumnVisible}">
-                                <GridViewColumnHeader x:Name="AlternateNameColumnHeader" Content="Demangled Name" />
+                                <GridViewColumnHeader x:Name="AlternateNameColumnHeader" Content="Mangled Name" />
 
                                 <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="{x:Type GridViewColumnHeader}">
