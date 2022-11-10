@@ -1,15 +1,16 @@
-﻿<local:ToolPanelControl
-    x:Class="IRExplorerUI.CallTreePanel"
+﻿<irExplorerUi:ToolPanelControl
+    x:Class="IRExplorerUI.Profile.CallTreePanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:IRExplorerUI"
+    xmlns:local="clr-namespace:IRExplorerUI.Profile"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:tree="clr-namespace:Aga.Controls.Tree;assembly=TreeListView"
+    xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
-    <local:ToolPanelControl.CommandBindings>
+    <irExplorerUi:ToolPanelControl.CommandBindings>
         <CommandBinding Command="local:CallTreeCommand.ExpandHottestCallPath" Executed="ExpandHottestCallPathExecuted" />
         <CommandBinding Command="local:CallTreeCommand.CollapseCallPath" Executed="CollapseCallPathExecuted" />
         <CommandBinding Command="local:CallTreeCommand.SelectFunction" Executed="SelectFunctionExecuted" />
@@ -17,7 +18,7 @@
         <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab" Executed="OpenFunctionInNewTab" />
         <CommandBinding Command="local:CallTreeCommand.FocusSearch" Executed="FocusSearchExecuted" />
         <CommandBinding Command="local:CallTreeCommand.ClearSearch" Executed="ClearSearchExecuted" />
-    </local:ToolPanelControl.CommandBindings>
+    </irExplorerUi:ToolPanelControl.CommandBindings>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -43,6 +44,28 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded">
 
+                    <Button
+                        Margin="4,0,0,0"
+                        Click="UndoButtoon_Click"
+                        CommandTarget="{Binding ElementName=GraphHost}"
+                        ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{StaticResource DockLeftIcon}" />
+                            <TextBlock Margin="4,0,0,0" Text="Back" />
+                        </StackPanel>
+                    </Button>
+                    <Separator/>
+
+                    <Button ToolTip="Expand hottest call path" Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+                        <Image Source="{StaticResource HotFlameIcon}" />
+                    </Button>
+                    <Separator />
+
+                    <ToggleButton
+                        Content="m!F"
+                        IsChecked="{Binding Path=PrependModuleToFunction, Mode=TwoWay}"
+                        ToolTip="Show the module name in front of the function name" />
+
                     <ToggleButton
                         IsChecked="{Binding CombineNodes, Mode=TwoWay}"
                         ToolTip="Combine all function instances into one"
@@ -57,16 +80,40 @@
                         </StackPanel>
                     </ToggleButton>
 
-                    <Button ToolTip="Expand hottest call path" Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
-                        <Image Source="{StaticResource HotFlameIcon}" />
-                    </Button>
+
+                    <ToggleButton
+                        Height="20"
+                        Margin="0,0,0,0"
+                        Padding="0,0,2,0"
+                        IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
+                        ToolTip="Enable/disable function details paenl">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource SourceIcon}" />
+                            <TextBlock Text="Sync" />
+                        </StackPanel>
+                    </ToggleButton>
                     <Separator />
 
                     <ToggleButton
-                        Content="m!F"
-                        IsChecked="{Binding Path=PrependModuleToFunction, Mode=TwoWay}"
-                        ToolTip="Show the module name in front of the function name" />
-                    <Separator />
+                        Height="20"
+                        Margin="0,0,0,0"
+                        IsEnabled="False"
+                        Padding="0,0,2,0"
+                        IsChecked="{Binding Path=ShowNodePanel, Mode=TwoWay}"
+                        ToolTip="Enable/disable function details paenl">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource ListIcon}" />
+                            <TextBlock Text="Details" />
+                        </StackPanel>
+                    </ToggleButton>
 
                     <Image Source="{StaticResource SearchIcon}" />
                     <Grid Height="24">
@@ -131,7 +178,7 @@
                 </ToolBar>
             </ToolBarTray>
 
-            <local:PanelToolbarTray
+            <irExplorerUi:PanelToolbarTray
                 DockPanel.Dock="Right"
                 DuplicateClicked="PanelToolbarTray_DuplicateClicked"
                 HasDuplicateButton="False"
@@ -262,21 +309,21 @@
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=CallTree}"
                         Header="Select Function"
-                        InputGestureText="Ctrl+Return"
+                        InputGestureText="Return"
                         ToolTip="" />
                     <MenuItem
                         Command="local:CallTreeCommand.OpenFunction"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=CallTree}"
                         Header="Open Function"
-                        InputGestureText="Return"
+                        InputGestureText="Ctrl+Return"
                         ToolTip="" />
                     <MenuItem
                         Command="local:CallTreeCommand.OpenFunctionInNewTab"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=CallTree}"
                         Header="Open Function in New Tab"
-                        InputGestureText="Shift+Return"
+                        InputGestureText="Ctrl+Shift+Return"
                         ToolTip="" />
 
                     <MenuItem
@@ -287,12 +334,21 @@
                         InputGestureText="Shift+Return"
                         IsEnabled="False"
                         ToolTip="" />
+
+                    <MenuItem
+                        Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=CallTree}"
+                        Header="Select Function in Flame Graph"
+                        InputGestureText="Shift+Return"
+                        IsEnabled="False"
+                        ToolTip="" />
                 </ContextMenu>
             </ListView.ContextMenu>
         </tree:TreeList>
     </Grid>
 
-    <local:ToolPanelControl.InputBindings>
+    <irExplorerUi:ToolPanelControl.InputBindings>
         <KeyBinding
             Key="OemPlus"
             Command="local:CallTreeCommand.ExpandHottestCallPath"
@@ -303,16 +359,15 @@
             Modifiers="Ctrl" />
         <KeyBinding
             Key="Return"
-            Command="local:CallTreeCommand.SelectFunction"
-            Modifiers="Ctrl" />
-        <KeyBinding Key="Return" Command="local:CallTreeCommand.OpenFunction" />
+            Command="local:CallTreeCommand.SelectFunction"/>
+        <KeyBinding Key="Return" Modifiers="Ctrl" Command="local:CallTreeCommand.OpenFunction" />
         <KeyBinding
             Key="Return"
             Command="local:CallTreeCommand.OpenFunctionInNewTab"
-            Modifiers="Shift" />
+            Modifiers="Ctrl+Shift" />
         <KeyBinding
             Key="F"
             Command="local:CallTreeCommand.FocusSearch"
             Modifiers="Ctrl" />
-    </local:ToolPanelControl.InputBindings>
-</local:ToolPanelControl>
+    </irExplorerUi:ToolPanelControl.InputBindings>
+</irExplorerUi:ToolPanelControl>

@@ -1,13 +1,13 @@
-﻿namespace IRExplorerUI {
-    public class CallerCalleePanel : CallTreePanel {
-        public CallerCalleePanel() : base() {
+﻿namespace IRExplorerUI.Profile;
 
-        }
+public class CallerCalleePanel : CallTreePanel {
+    public CallerCalleePanel() : base() {
 
-        public CallerCalleePanel(ISession session) {
-            Session = session;
-        }
-
-        public override ToolPanelKind PanelKind => ToolPanelKind.CallerCallee;
     }
+
+    public CallerCalleePanel(ISession session) {
+        Session = session;
+    }
+
+    public override ToolPanelKind PanelKind => ToolPanelKind.CallerCallee;
 }

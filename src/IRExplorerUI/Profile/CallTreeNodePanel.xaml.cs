@@ -220,10 +220,10 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         public TimeSpan AverageWeight { get; set; }
         public TimeSpan TotalWeight { get; set; }
         public List<ProfileCallTreeNode> Nodes { get; set; }
-        
+
         public BinHistogramItem(double rangeStart, double rangeEnd, double area, int count) : base(rangeStart, rangeEnd, area, count)
         {
-            
+
         }
 
         public BinHistogramItem(double rangeStart, double rangeEnd, double area, int count, OxyColor color) : base(rangeStart, rangeEnd, area, count, color)
@@ -231,7 +231,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         }
     }
 
-    private void SetupInstancesHistogram(List<ProfileCallTreeNode> nodes, 
+    private void SetupInstancesHistogram(List<ProfileCallTreeNode> nodes,
                                          ProfileCallTreeNode currentNode, bool useSelfTime) {
         if (useSelfTime) {
             SetupInstancesHistogramImpl(nodes, currentNode, node => node.ExclusiveWeight);
@@ -245,7 +245,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
                                              Func<ProfileCallTreeNode, TimeSpan> selectWeight) {
         nodes = new List<ProfileCallTreeNode>(nodes);
         nodes.Sort((a, b) => selectWeight(a).CompareTo(selectWeight(b)));
-        
+
         const double maxBinCount = 20;
         var maxWeight = selectWeight(nodes[^1]);
         var minWeight = selectWeight(nodes[0]);
@@ -293,8 +293,8 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
             var end = (bin.Weight + TimeSpan.FromTicks(weightPerBin)).Ticks;
             var height = (maxHeight / nodes.Count) * bin.Count;
             var item = new BinHistogramItem(start, end, bin.Count, bin.Count, OxyColors.Khaki) {
-                Count = bin.Count, 
-                TotalWeight = bin.TotalWeight, 
+                Count = bin.Count,
+                TotalWeight = bin.TotalWeight,
                 AverageWeight = TimeSpan.FromTicks(bin.TotalWeight.Ticks / bin.Count),
                 Nodes = nodes.GetRange(bin.StartIndex, bin.Count)
             };
@@ -327,7 +327,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         weightAxis.IsPanEnabled = false;
         weightAxis.IsZoomEnabled = false;
         model.Axes.Add(weightAxis);
-        
+
         // Setup vertical axis.
         var countAxis = new LinearAxis();
         countAxis.Position = AxisPosition.Right;
@@ -350,7 +350,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
             line.LineStyle = lineStyle;
             model.Annotations.Add(line);
         }
-        
+
         void AddPointAnnotation(double value, OxyColor color) {
             var point = new PointAnnotation();
             point.Shape = MarkerType.Diamond;
@@ -358,7 +358,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
             point.Fill = color;
             model.Annotations.Add(point);
         }
-        
+
         AddPointAnnotation(currentNode.Weight.Ticks, OxyColors.Green);
 
         // Add lines for median and average time.
@@ -367,7 +367,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
         var median = nodes[nodes.Count / 2].Weight.Ticks;
         AddLineAnnotation(median, OxyColors.DarkBlue, LineStyle.Dot);
-        
+
         var plotView = new OxyPlot.SkiaSharp.Wpf.PlotView();
         plotView.Model = model;
         model.IsLegendVisible = false;
@@ -377,7 +377,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         plotView.MinHeight = plotView.Height;
         model.PlotAreaBorderThickness = new OxyThickness(0, 0, 0, 0.5);
         plotView.Background = InstanceHistogramHost.Background;
-        
+
         // Override tooltip.
         plotView.Controller = new PlotController();
         plotView.Controller.UnbindMouseDown(OxyMouseButton.Left);
@@ -390,11 +390,11 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         InstanceHistogramHost.Children.Add(plotView);
         histogramVisible_ = true;
     }
-    
+
     private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {
         var nodeEx = new ProfileCallTreeNodeEx(node) {
-            FullFunctionName = node.FunctionName,
-            FunctionName = FormatFunctionName(node, demangle: true, MaxFunctionNameLength),
+            FullFunctionName = FormatFunctionName(node),
+            FunctionName = FormatFunctionName(node, MaxFunctionNameLength),
             ModuleName = FormatModuleName(node, MaxModuleNameLength),
             Percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight),
             ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight),
@@ -403,26 +403,20 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         return nodeEx;
     }
 
-    private string FormatFunctionName(ProfileCallTreeNode node, bool demangle = true, int maxLength = int.MaxValue) {
-        return FormatName(node.FunctionName, demangle, maxLength);
+    private string FormatFunctionName(ProfileCallTreeNode node, int maxLength = int.MaxValue) {
+        return FormatName(node.FunctionName, maxLength);
     }
 
     private string FormatModuleName(ProfileCallTreeNode node, int maxLength = int.MaxValue) {
-        return FormatName(node.ModuleName, false, maxLength);
+        return FormatName(node.ModuleName, maxLength);
     }
 
-    private string FormatName(string name, bool demangle, int maxLength) {
+    private string FormatName(string name, int maxLength) {
         if (string.IsNullOrEmpty(name)) {
             return name;
         }
 
-        if (demangle) {
-            var nameProvider = Session.CompilerInfo.NameProvider;
-
-            if (nameProvider.IsDemanglingSupported) {
-                name = nameProvider.DemangleFunctionName(name, nameProvider.GlobalDemanglingOptions);
-            }
-        }
+        name = Session.CompilerInfo.NameProvider.FormatFunctionName(name);
 
         if (name.Length > maxLength && name.Length > 2) {
             name = $"{name.Substring(0, maxLength - 2)}...";

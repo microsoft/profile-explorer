@@ -100,32 +100,6 @@
                     Loaded="ToolBar_Loaded">
                     <Button
                         Margin="4,0,0,0"
-                        Command="irExplorerUi:GraphCommand.GraphZoomOut"
-                        CommandTarget="{Binding ElementName=GraphHost}"
-                        ToolTip="Zoom Out (Ctrol+_">
-                        <Image Source="{StaticResource MinusIcon}" />
-                    </Button>
-                    <Button
-                        Command="irExplorerUi:GraphCommand.GraphZoomIn"
-                        CommandTarget="{Binding ElementName=GraphHost}"
-                        ToolTip="Zoom In (Ctrl+=)">
-                        <Image Source="{StaticResource PlusIcon}" />
-                    </Button>
-                    <Separator />
-
-                    <Button
-                        Command="irExplorerUi:GraphCommand.GraphResetWidth"
-                        CommandTarget="{Binding ElementName=GraphHost}"
-                        ToolTip="Zoom the graph view to 100% (Ctrl+R)">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="{StaticResource ResetWidthIcon}" />
-                            <TextBlock Margin="4,0,0,0" Text="Reset" />
-                        </StackPanel>
-                    </Button>
-
-                    <Separator />
-                    <Button
-                        Margin="4,0,0,0"
                         Click="UndoButtoon_Click"
                         CommandTarget="{Binding ElementName=GraphHost}"
                         ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
@@ -143,13 +117,52 @@
                             <TextBlock Margin="4,0,0,0" Text="Caller" />
                         </StackPanel>
                     </Button>
+                    <Separator/>
+                    <Button
+                        Margin="4,0,0,0"
+                        Command="irExplorerUi:GraphCommand.GraphZoomOut"
+                        CommandTarget="{Binding ElementName=GraphHost}"
+                        ToolTip="Zoom Out (Ctrol+_">
+                        <Image Source="{StaticResource MinusIcon}" />
+                    </Button>
+                    <Button
+                        Command="irExplorerUi:GraphCommand.GraphZoomIn"
+                        CommandTarget="{Binding ElementName=GraphHost}"
+                        ToolTip="Zoom In (Ctrl+=)">
+                        <Image Source="{StaticResource PlusIcon}" />
+                    </Button>
+
+                    <Button
+                        Command="irExplorerUi:GraphCommand.GraphResetWidth"
+                        CommandTarget="{Binding ElementName=GraphHost}"
+                        ToolTip="Zoom the graph view to 100% (Ctrl+R)">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{StaticResource ResetWidthIcon}" />
+                            <TextBlock Margin="4,0,0,0" Text="Reset" />
+                        </StackPanel>
+                    </Button>
                     <Separator />
 
                     <ToggleButton
                         Content="m!F"
                         IsChecked="{Binding Path=PrependModuleToFunction, Mode=TwoWay}"
                         ToolTip="Show the module name in front of the function name" />
-                    <Separator />
+
+                    <ToggleButton
+                        Height="20"
+                        Margin="0,0,0,0"
+                        Padding="0,0,2,0"
+                        IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
+                        ToolTip="Enable/disable function details paenl">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource SourceIcon}" />
+                            <TextBlock Text="Sync" />
+                        </StackPanel>
+                    </ToggleButton>
 
                     <ToggleButton
                         Height="20"
@@ -167,21 +180,6 @@
                         </StackPanel>
                     </ToggleButton>
 
-                    <ToggleButton
-                        Height="20"
-                        Margin="0,0,0,0"
-                        Padding="0,0,2,0"
-                        IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
-                        ToolTip="Enable/disable function details paenl">
-                        <StackPanel Orientation="Horizontal">
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Margin="0,1,0,0"
-                                Source="{StaticResource SourceIcon}" />
-                            <TextBlock Text="Sync" />
-                        </StackPanel>
-                    </ToggleButton>
                     <Separator />
 
                     <Image Source="{StaticResource SearchIcon}" />
@@ -200,7 +198,7 @@
                             <TextBox.InputBindings>
                                 <KeyBinding
                                     Key="Escape"
-                                    Command="irExplorerUi:CallTreeCommand.ClearSearch"
+                                    Command="local:CallTreeCommand.ClearSearch"
                                     CommandParameter="{Binding ElementName=FunctionFilter}" />
                             </TextBox.InputBindings>
                         </TextBox>
@@ -214,7 +212,7 @@
                     </Grid>
 
                     <Button
-                        Command="irExplorerUi:CallTreeCommand.ClearSearch"
+                        Command="local:CallTreeCommand.ClearSearch"
                         CommandParameter="{Binding ElementName=SectionFilter}"
                         TabIndex="5"
                         ToolTip="Reset section filter">
@@ -238,10 +236,10 @@
                         Text="{Binding Path=SearchResultText, UpdateSourceTrigger=PropertyChanged}"
                         Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
                     <Button ToolTip="Previous search result">
-                        <Image Source="{StaticResource DockLeftIcon}" Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <Image Source="{StaticResource UpArrowIcon}" Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </Button>
                     <Button ToolTip="Next search result">
-                        <Image Source="{StaticResource DockRightIcon}" Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <Image Source="{StaticResource DownArrowIcon}" Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </Button>
                 </ToolBar>
             </ToolBarTray>
@@ -331,7 +329,66 @@
                 HorizontalScrollBarVisibility="Auto"
                 ScrollChanged="GraphHost_OnScrollChanged"
                 VerticalScrollBarVisibility="Auto">
-                <local:FlameGraphViewer x:Name="GraphViewer" ContextMenu="{StaticResource GraphContextMenu}" />
+                <local:FlameGraphViewer x:Name="GraphViewer">
+                    <local:FlameGraphViewer.ContextMenu>
+                        <ContextMenu>
+                        <MenuItem
+                            Command="local:CallTreeCommand.ExpandHottestCallPath"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=CallTree}"
+                            Header="Expand Hottest Call Path"
+                            InputGestureText="Ctrl+="
+                            ToolTip="" />
+                        <MenuItem
+                            Command="local:CallTreeCommand.CollapseCallPath"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=CallTree}"
+                            Header="Collapse Call Path"
+                            InputGestureText="Ctrl+-"
+                            ToolTip="" />
+                        <Separator />
+                        <MenuItem
+                            Command="local:CallTreeCommand.SelectFunction"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=CallTree}"
+                            Header="Select Function"
+                            InputGestureText="Return"
+                            ToolTip="" />
+                        <MenuItem
+                            Command="local:CallTreeCommand.OpenFunction"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=CallTree}"
+                            Header="Open Function"
+                            InputGestureText="Ctrl+Return"
+                            ToolTip="" />
+                        <MenuItem
+                            Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=CallTree}"
+                            Header="Open Function in New Tab"
+                            InputGestureText="Ctrl+Shift+Return"
+                            ToolTip="" />
+
+                        <MenuItem
+                            Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=CallTree}"
+                            Header="Select Function in Call Tree"
+                            InputGestureText="Shift+Return"
+                            IsEnabled="False"
+                            ToolTip="" />
+
+                        <MenuItem
+                            Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=CallTree}"
+                            Header="Select Function in Flame Graph"
+                            InputGestureText="Shift+Return"
+                            IsEnabled="False"
+                            ToolTip="" />
+                    </ContextMenu>
+                    </local:FlameGraphViewer.ContextMenu>
+                </local:FlameGraphViewer>
             </irExplorerUi:ScrollViewerClickable>
 
             <GridSplitter
