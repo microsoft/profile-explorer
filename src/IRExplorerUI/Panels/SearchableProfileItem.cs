@@ -36,7 +36,15 @@ public class SearchableProfileItem : BindableObject {
     public virtual TimeSpan Weight { get; set; }
     public virtual TimeSpan ExclusiveWeight { get; set; }
     public TextSearchResult? SearchResult { get; set; }
-    public bool IsMarked { get; set; }
+
+    private bool isMarked_;
+    public bool IsMarked {
+        get => isMarked_;
+        set {
+            SetAndNotify(ref isMarked_, value);
+            ResetCachedName();
+        }
+    }
 
     private TextBlock name_;
     public TextBlock Name {

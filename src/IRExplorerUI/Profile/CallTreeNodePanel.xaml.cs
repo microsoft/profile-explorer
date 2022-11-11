@@ -125,7 +125,16 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     private bool showDetails_;
     public bool ShowDetails {
         get => showDetails_;
-        set => SetField(ref showDetails_, value);
+        set {
+            SetField(ref showDetails_, value);
+            OnPropertyChanged(nameof(ShowInstanceNavigation));
+        }
+    }
+
+    private bool showInstanceNavigation_;
+    public bool ShowInstanceNavigation {
+        get => showInstanceNavigation_ && showDetails_;
+        set => SetField(ref showInstanceNavigation_, value);
     }
 
     private bool isHistogramExpanded_;
@@ -147,6 +156,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     public CallTreeNodePanel() {
         InitializeComponent();
         SetupEvents();
+        ShowInstanceNavigation = true;
         DataContext = this;
     }
 
@@ -159,7 +169,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         InstancesList.NodeDoubleClick += (sender, node) => InstanceNodeDoubleClick?.Invoke(sender, node);
         ModuleList.NodeClick += (sender, node) => ModuleNodeClick?.Invoke(sender, node);
         ModuleList.NodeDoubleClick += (sender, node) => ModuleNodeDoubleClick?.Invoke(sender, node);
-
     }
 
     public void Show(ProfileCallTreeNode node) {
@@ -184,7 +193,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         //? TODO: IF same func, don't recompute
 
         var callTree = Session.ProfileData.CallTree;
-        instanceNodes_ = callTree.GetCallTreeNodes(node.Function);
+        instanceNodes_ = callTree.GetSortedCallTreeNodes(node.Function);
 
         if (instanceNodes_ == null) {
             return;
@@ -194,10 +203,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         InstancesNode = SetupNodeExtension(combinedNode);
         FunctionInstancesCount = instanceNodes_.Count;
 
-        // Show all instances. Make a copy of the list since it's shared
-        // with all other instances of the node and it may be iterated on another thread.
-        instanceNodes_ = new List<ProfileCallTreeNode>(instanceNodes_);
-        instanceNodes_.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+        // Show all instances.
         InstancesList.Show(instanceNodes_, false);
 
         nodeInstanceIndex_ = instanceNodes_.FindIndex(instanceNode => instanceNode == node);
