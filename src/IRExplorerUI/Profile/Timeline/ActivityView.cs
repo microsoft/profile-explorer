@@ -388,7 +388,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         endTime_ = profile.Samples[^1].Sample.Time;
         double slices = (maxWidth_ / sliceWidth_) * (prevMaxWidth_ / maxWidth_);
         prevMaxWidth_ = maxWidth_;
-        
+
         var timeDiff = endTime_ - startTime_;
         double timePerSlice = (double)timeDiff.Ticks / slices;
         var sliceSeriesDict = new Dictionary<int, SliceList>();
@@ -612,7 +612,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
             if (slice.HasValue) {
                 text += $"{EstimateCpuUsage(slice.Value, slices_[0].TimePerSlice, samplingInterval_):F2} C, {time.AsMillisecondsString()}";
-                text += $" (W {slice.Value.Weight.AsSecondsString()})";
+                //text += $" (W {slice.Value.Weight.AsSecondsString()})";
             }
             else {
                 text = time.AsMillisecondsString();

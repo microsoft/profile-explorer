@@ -182,9 +182,17 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     private void OnMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
+        SelectPointedNode(e);
+        e.Handled = true;
     }
 
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+        SelectPointedNode(e);
+        e.Handled = true;
+    }
+
+    private void SelectPointedNode(MouseButtonEventArgs e)
+    {
         var point = e.GetPosition(this);
         var graphNode = FindPointedNode(point);
 
@@ -194,8 +202,6 @@ public partial class FlameGraphViewer : FrameworkElement {
         else {
             ClearSelection();
         }
-
-        e.Handled = true;
     }
 
     public void SelectNode(FlameGraphNode graphNode) {

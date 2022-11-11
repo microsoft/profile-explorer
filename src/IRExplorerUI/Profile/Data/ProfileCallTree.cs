@@ -294,6 +294,20 @@ public sealed class ProfileCallTree {
         return null;
     }
 
+    public List<ProfileCallTreeNode> GetSortedCallTreeNodes(IRTextFunction function) {
+        var nodeList = GetCallTreeNodes(function);
+
+        if (nodeList == null) {
+            return nodeList;
+        }
+
+        // Make a copy of the list since it's shared with all other instances
+        // of the node and it may be iterated on another thread.
+        var nodeListCopy = new List<ProfileCallTreeNode>(nodeList);
+        nodeListCopy.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+        return nodeListCopy;
+    }
+
     public ProfileCallTreeNode GetCombinedCallTreeNode(IRTextFunction function, ProfileCallTreeNode parentNode = null) {
         var nodes = GetCallTreeNodes(function);
 
@@ -635,7 +649,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         // Used by ProfileCallTree.Deserialize.
         children_ = new TinyList<ProfileCallTreeNode>(children);
     }
-    
+
     internal void SetParent(ProfileCallTreeNode parentNode) {
         // Used by ProfileCallTree.Deserialize.
         caller_ = parentNode;
@@ -650,7 +664,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             lock_.EnterUpgradeableReadLock();
 
             var childNode = FindExistingNode(functionDebugInfo, function);
-            
+
             if (childNode != null) {
                 return (childNode, false);
             }

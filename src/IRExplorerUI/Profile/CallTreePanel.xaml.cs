@@ -54,6 +54,20 @@ public static class CallTreeCommand {
 
     public static readonly RoutedUICommand ClearSearch =
         new RoutedUICommand("ClearSearch", "ClearSearch", typeof(CallTreePanel));
+
+    public static readonly RoutedUICommand PreviousSearchResult =
+        new RoutedUICommand("PreviousSearchResult", "PreviousSearchResult", typeof(CallTreePanel));
+
+    public static readonly RoutedUICommand NextSearchResult =
+        new RoutedUICommand("NextSearchResult", "NextSearchResult", typeof(CallTreePanel));
+
+    public static readonly RoutedUICommand GoBack =
+        new RoutedUICommand("GoBack", "GoBack", typeof(CallTreePanel));
+
+    public static readonly RoutedUICommand CollapseNodes =
+        new RoutedUICommand("CollapseNodes", "CollapseNodes", typeof(CallTreePanel));
+    public static readonly RoutedUICommand ChangeRootNode =
+        new RoutedUICommand("ChangeRootNode", "ChangeRootNode", typeof(CallTreePanel));
 }
 
 public enum ChildFunctionExKind {
@@ -72,6 +86,7 @@ public class ChildFunctionEx : SearchableProfileItem, ITreeModel {
     public Brush TextColor { get; set; }
     public Brush BackColor { get; set; }
     public Brush BackColor2 { get; set; }
+    public ChildFunctionEx Parent { get; set; }
     public List<ChildFunctionEx> Children { get; set; }
     public long Time { get; set; }
     public ChildFunctionExKind Kind { get; set; }
@@ -81,8 +96,7 @@ public class ChildFunctionEx : SearchableProfileItem, ITreeModel {
     public override TimeSpan ExclusiveWeight => HasCallTreeNode ? CallTreeNode.ExclusiveWeight : TimeSpan.Zero;
 
     protected override string GetFunctionName() {
-        return CallTreeNode != null && CallTreeNode.Function != null ?
-            CallTreeNode.FunctionName : null;
+        return CallTreeNode != null && CallTreeNode.Function != null ? CallTreeNode.FunctionName : null;
     }
 
     public override string ModuleName =>
@@ -124,9 +138,11 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private DraggablePopupHoverPreview stackHoverPreview_;
     private ChildFunctionEx profileCallTree_;
     private List<ChildFunctionEx> searchResultNodes_;
+    private int searchResultIndex_;
     private CallTreeSettings settings_;
     private CancelableTaskInstance searchTask_;
     private Stack<IRTextFunction> stateStack_;
+    private Dictionary<ProfileCallTreeNode, ChildFunctionEx> callTreeNodeToNodeExMap_;
 
     public bool PrependModuleToFunction {
         get => settings_.PrependModuleToFunction;
@@ -162,6 +178,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         InitializeComponent();
         settings_ = App.Settings.CallTreeSettings;
         searchTask_ = new CancelableTaskInstance(false);
+        callTreeNodeToNodeExMap_ = new Dictionary<ProfileCallTreeNode, ChildFunctionEx>();
         stateStack_ = new Stack<IRTextFunction>();
         DataContext = this;
         SetupEvents();
@@ -256,6 +273,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private bool showSearchSection_;
+
     public bool ShowSearchSection {
         get => showSearchSection_;
         set {
@@ -267,6 +285,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private string searchResultText_;
+
     public string SearchResultText {
         get => searchResultText_;
         set {
@@ -289,9 +308,9 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         return weight => (double)weight.Ticks / (double)totalWeight.Ticks;
     }
 
-    public async Task DisplayProfileCallTree(bool forceUpdate = false) {
-        if (profileCallTree_ != null && !forceUpdate) {
-            return;
+    public async Task DisplayProfileCallTree() {
+        if (profileCallTree_ != null) {
+            Reset();
         }
 
         profileCallTree_ = await Task.Run(() => CreateProfileCallTree());
@@ -313,6 +332,29 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     public void Reset() {
         CallTree.Model = null;
         function_ = null;
+        callTreeNodeToNodeExMap_.Clear();
+        stateStack_.Clear();
+    }
+
+    public void SelectFunction(IRTextFunction function) {
+        var callTree = Session.ProfileData.CallTree;
+        var nodeList = callTree.GetSortedCallTreeNodes(function);
+
+        if (nodeList != null && nodeList.Count > 0) {
+            SelectCallTreeNode(nodeList[0]);
+        }
+    }
+
+    public void SelectCallTreeNode(ProfileCallTreeNode node) {
+        if (!callTreeNodeToNodeExMap_.TryGetValue(node, out var nodeEx)) {
+            return;
+        }
+
+        ExpandPathToNode(nodeEx, true);
+
+        if (nodeEx.TreeNode != null) {
+            CallTree.ScrollIntoView(nodeEx.TreeNode);
+        }
     }
 
     private List<ProfileCallTreeNode> GetCallTreeNodes(IRTextFunction function, ProfileCallTree callTree) {
@@ -437,7 +479,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         HashSet<ProfileCallTreeNode> visitedNodes,
         Func<TimeSpan, double> percentageFunc) {
         bool newFunc = visitedNodes.Add(node);
-        var nodeEx = CreateProfileCallTreeChild(node, kind, percentageFunc);
+        var nodeEx = CreateProfileCallTreeChild(node, kind, percentageFunc, parentNodeEx);
         parentNodeEx.Children.Add(nodeEx);
 
         if (!newFunc) {
@@ -461,6 +503,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                 foreach (var childNode in node.Children) {
                     CreateProfileCallTree(childNode, nodeEx, nodeEx, kind, visitedNodes, percentageFunc);
                 }
+
                 break;
             }
             case ChildFunctionExKind.CalleeNode when node.HasChildren: {
@@ -504,21 +547,25 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private ChildFunctionEx CreateProfileCallTreeChild(ProfileCallTreeNode node, ChildFunctionExKind kind,
-        Func<TimeSpan, double> percentageFunc) {
+        Func<TimeSpan, double> percentageFunc, ChildFunctionEx parentNodeEx = null) {
         double weightPercentage = percentageFunc(node.Weight);
         double exclusiveWeightPercentage = percentageFunc(node.ExclusiveWeight);
 
-        return new ChildFunctionEx(kind, Session.CompilerInfo.NameProvider.FormatFunctionName) {
+        var result = new ChildFunctionEx(kind, Session.CompilerInfo.NameProvider.FormatFunctionName) {
             Function = node.Function,
             ModuleName = node.ModuleName,
             Time = node.Weight.Ticks,
             CallTreeNode = node,
+            Parent = parentNodeEx,
             Percentage = weightPercentage,
             ExclusivePercentage = exclusiveWeightPercentage,
             TextColor = Brushes.Black,
             BackColor = ProfileDocumentMarkerOptions.Default.PickBrushForPercentage(weightPercentage),
             BackColor2 = ProfileDocumentMarkerOptions.Default.PickBrushForPercentage(exclusiveWeightPercentage),
         };
+
+        callTreeNodeToNodeExMap_[node] = result;
+        return result;
     }
 
     private ChildFunctionEx CreateProfileCallTreeHeader(string name, TimeSpan weight, TimeSpan exclusiveWeight,
@@ -557,7 +604,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     public override void OnSessionEnd() {
         base.OnSessionEnd();
-        CallTree.Model = null;
+        Reset();
     }
 
     #endregion
@@ -583,9 +630,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private void UnmarkAllFunctions() {
-        foreach (var node in CallTree.Nodes) {
-            var childInfo = node.Tag as ChildFunctionEx;
-            childInfo.IsMarked = false;
+        foreach(var funcEx in callTreeNodeToNodeExMap_.Values) {
+            funcEx.IsMarked = false;
         }
     }
 
@@ -604,11 +650,15 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         }
     }
 
-    private void CollapseFunctionPath(TreeNode node, bool recursive = false) {
-        if (recursive) {
-            foreach (var child in node.Nodes) {
-                CollapseFunctionPath(child, recursive);
-            }
+    private void CollapseAllFunctionPaths() {
+        foreach(var node in CallTree.Nodes) {
+            CollapseFunctionPath(node);
+        }
+    }
+
+    private void CollapseFunctionPath(TreeNode node) {
+        foreach (var child in node.Nodes) {
+            CollapseFunctionPath(child);
         }
 
         node.IsExpanded = false;
@@ -646,6 +696,10 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
             var childInfo = node.Tag as ChildFunctionEx;
             await OpenFunction(childInfo, OpenSectionKind.NewTabDockRight);
         }
+    }
+
+    private async void GoBackExecuted(object sender, ExecutedRoutedEventArgs e) {
+        await RestorePreviousState();
     }
 
     private async Task OpenFunction(ChildFunctionEx childInfo, OpenSectionKind openMode) {
@@ -692,29 +746,39 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
             searchResultNodes_ = new List<ChildFunctionEx>();
             await Task.Run(() => SearchCallTree(text, profileCallTree_, searchResultNodes_));
 
-            if(cancelableTask.IsCanceled) {
+            if (cancelableTask.IsCanceled) {
                 return;
             }
 
-            SearchResultText = searchResultNodes_.Count > 0 ? $"{searchResultNodes_.Count}" : "Not found";
-            ShowSearchSection = true;
-
             foreach (var node in searchResultNodes_) {
-                if (cancelableTask.IsCanceled) {
-                    return;
-                }
-
                 node.ResetCachedName();
-
-                // Expand path to the node.
-                for (var treeNode = node.TreeNode; treeNode != null; treeNode = treeNode.Parent) {
-                    treeNode.IsExpanded = true;
-                }
             }
+
+            searchResultIndex_ = -1;
+            SelectNextSearchResult();
+            ShowSearchSection = true;
         }
         else {
             searchResultNodes_ = null;
             ShowSearchSection = false;
+        }
+    }
+
+    private void UpdateSearchResultText() {
+        SearchResultText = searchResultNodes_ is { Count: > 0 } ? $"{searchResultIndex_ + 1} / {searchResultNodes_.Count}" : "Not found";
+    }
+
+    private static void ExpandPathToNode(ChildFunctionEx nodeEx, bool markPathNodes) {
+        // Expansion must be done starting from the root node,
+        // because the TreeNode is created on-demand by the control
+        // when a node is expanded, so walk parents recursively.
+        if (nodeEx.Parent != null) {
+            ExpandPathToNode(nodeEx.Parent, markPathNodes);
+        }
+
+        if (nodeEx.TreeNode != null) {
+            nodeEx.TreeNode.IsExpanded = true;
+            nodeEx.IsMarked = markPathNodes;
         }
     }
 
@@ -771,19 +835,42 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                 if (panel != null) {
                     await panel.LoadSourceFile(funcEx.Function.Sections[0]);
                 }
-
-                await SwitchFunction(funcEx);
             }
         }
-    }
-
-    private async void UndoButtoon_Click(object sender, RoutedEventArgs e) {
-        await RestorePreviousState();
     }
 
     private async Task RestorePreviousState() {
         if (stateStack_.TryPop(out var prevFunc)) {
             await Session.SwitchActiveFunction(prevFunc);
         }
+    }
+
+    private void PreviousSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
+        SelectPreviousSearchResult();
+    }
+
+    private void NextSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
+        SelectNextSearchResult();
+    }
+
+    private void SelectPreviousSearchResult() {
+        if (searchResultNodes_ != null && searchResultIndex_ > 0) {
+            searchResultIndex_--;
+            UpdateSearchResultText();
+            SelectCallTreeNode(searchResultNodes_[searchResultIndex_].CallTreeNode);
+        }
+    }
+
+    private void SelectNextSearchResult() {
+        if (searchResultNodes_ != null && searchResultIndex_ < searchResultNodes_.Count - 1) {
+            searchResultIndex_++;
+            UpdateSearchResultText();
+            SelectCallTreeNode(searchResultNodes_[searchResultIndex_].CallTreeNode);
+        }
+    }
+
+    private void CollapseNodesExecuted(object sender, ExecutedRoutedEventArgs e) {
+        CollapseAllFunctionPaths();
+        ExpandHottestFunctionPath();
     }
 }

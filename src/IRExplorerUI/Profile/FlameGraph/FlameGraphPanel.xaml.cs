@@ -113,6 +113,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private DateTime lastWheelZoomTime_;
     private DraggablePopupHoverPreview stackHoverPreview_;
     private List<FlameGraphNode> searchResultNodes_;
+    private int searchResultIndex_;
     private List<ActivityTimelineView> threadActivityViews_;
     private Dictionary<int, ActivityTimelineView> threadActivityViewsMap_;
 
@@ -471,16 +472,17 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         GraphViewer.ClearSelection();
 
-        if (GraphViewer.IsInitialized) {
-            if (isTimelineView_) {
-                var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
-                GraphViewer.SelectNodes(nodes);
-            }
-            else {
-                var nodes = FindCallTreeNodesForSamples(e.StartSampleIndex, e.EndSampleIndex, e.ThreadId, Session.ProfileData);
-                GraphViewer.SelectNodes(nodes);
-            }
-        }
+        //? TODO: Too slow
+        // if (GraphViewer.IsInitialized) {
+        //     if (isTimelineView_) {
+        //         var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
+        //         GraphViewer.SelectNodes(nodes);
+        //     }
+        //     else {
+        //         var nodes = FindCallTreeNodesForSamples(e.StartSampleIndex, e.EndSampleIndex, e.ThreadId, Session.ProfileData);
+        //         GraphViewer.SelectNodes(nodes);
+        //     }
+        // }
     }
 
     private void NodeDetailsPanel_NodesSelected(object sender, List<ProfileCallTreeNode> e) {
@@ -1076,10 +1078,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         ResetHighlightedNodes();
     }
 
-    private void ExecuteGraphFitAll(object sender, ExecutedRoutedEventArgs e) {
-        SetMaxWidth(GraphAreaWidth);
-    }
-
     private void ExecuteGraphZoomIn(object sender, ExecutedRoutedEventArgs e) {
         ZoomIn(CenterZoomPointX);
     }
@@ -1227,14 +1225,42 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             searchResultNodes_ = await Task.Run(() => GraphViewer.FlameGraph.SearchNodes(text));
             GraphViewer.MarkSearchResultNodes(searchResultNodes_);
 
+            searchResultIndex_ = -1;
+            SelectNextSearchResult();
             ShowSearchSection = true;
-            SearchResultText = searchResultNodes_.Count > 0 ? $"{searchResultNodes_.Count}" : "Not found";
         }
         else {
             ShowSearchSection = false;
         }
     }
 
+    private void UpdateSearchResultText() {
+        SearchResultText = searchResultNodes_ is { Count: > 0 } ? $"{searchResultIndex_ + 1} / {searchResultNodes_.Count}" : "Not found";
+    }
+
+    private void SelectPreviousSearchResult() {
+        if (searchResultNodes_ != null && searchResultIndex_ > 0) {
+            searchResultIndex_--;
+            UpdateSearchResultText();
+            BringNodeIntoView(searchResultNodes_[searchResultIndex_]);
+        }
+    }
+
+    private void SelectNextSearchResult() {
+        if (searchResultNodes_ != null && searchResultIndex_ < searchResultNodes_.Count - 1) {
+            searchResultIndex_++;
+            UpdateSearchResultText();
+            BringNodeIntoView(searchResultNodes_[searchResultIndex_]);
+        }
+    }
+
+    private void PreviousSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
+        SelectPreviousSearchResult();
+    }
+
+    private void NextSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
+        SelectNextSearchResult();
+    }
 
     private Dictionary<int, List<SampleIndex>>
         FindFunctionSamples(ProfileCallTreeNode node, ProfileData profile) {
@@ -1318,4 +1344,29 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         return callNodes;
     }
 
+    private async void SelectFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
+        if (GraphViewer.SelectedNode != null && GraphViewer.SelectedNode.HasFunction) {
+            await Session.SwitchActiveFunction(GraphViewer.SelectedNode.CallTreeNode.Function);
+        }
+    }
+
+    private async void OpenFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
+        await OpenFunction(GraphViewer.SelectedNode, OpenSectionKind.ReplaceCurrent);
+    }
+    private async Task OpenFunction(FlameGraphNode node, OpenSectionKind openMode) {
+        if (node != null && node.HasFunction) {
+            var args = new OpenSectionEventArgs(node.CallTreeNode.Function.Sections[0], openMode);
+            await Session.SwitchDocumentSectionAsync(args);
+        }
+    }
+
+    private async void OpenFunctionInNewTab(object sender, ExecutedRoutedEventArgs e) {
+        await OpenFunction(GraphViewer.SelectedNode, OpenSectionKind.NewTab);
+    }
+
+    private async void ChangeRootNodeExecuted(object sender, ExecutedRoutedEventArgs e) {
+        if (GraphViewer.SelectedNode != null) {
+            await ChangeRootNode(GraphViewer.SelectedNode);
+        }
+    }
 }

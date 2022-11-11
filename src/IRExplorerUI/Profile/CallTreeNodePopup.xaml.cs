@@ -34,12 +34,13 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,
                              Point position, double width, double height,
                              UIElement referenceElement, ISession session) {
-        
+
         InitializeComponent();
         Initialize(position, referenceElement);
         PanelResizeGrip.ResizedControl = this;
 
         Session = session;
+        PanelHost.ShowInstanceNavigation = false;
         PanelHost.Initialize(session, funcInfoProvider);
         UpdateNode(node);
         DataContext = this;

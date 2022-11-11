@@ -12,8 +12,8 @@ namespace Aga.Controls.Tree
     /// </summary>
 	internal class LevelToIndentConverter : IValueConverter
     {
-		private const double IndentSize = 19.0;
-		
+		private const double IndentSize = 10.0;
+
 		public object Convert(object o, Type type, object parameter, CultureInfo culture)
         {
             return new Thickness((int)o * IndentSize, 0, 0, 0);
