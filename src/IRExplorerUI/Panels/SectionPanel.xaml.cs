@@ -36,6 +36,7 @@ using System.Windows.Documents;
 using static SkiaSharp.HarfBuzz.SKShaper;
 using ClosedXML.Excel;
 using ICSharpCode.AvalonEdit.Rendering;
+using TimelinePanel = IRExplorerUI.Profile.TimelinePanel;
 
 namespace IRExplorerUI {
     //? TODo; Commands can be defined in code-behind with this pattern,
@@ -1272,6 +1273,12 @@ namespace IRExplorerUI {
 
             if (fgPanel != null) {
                 await fgPanel.DisplayFlameGraph();
+            }
+
+            var timelinePanel = Session.FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
+
+            if (timelinePanel != null) {
+                await timelinePanel.DisplayFlameGraph();
             }
         }
 

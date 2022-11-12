@@ -499,6 +499,7 @@ namespace IRExplorerUI {
                 ToolPanelKind.CallTree => "Call Tree",
                 ToolPanelKind.CallerCallee => "Caller/Callee",
                 ToolPanelKind.FlameGraph => "Flame Graph",
+                ToolPanelKind.Timeline => "Timeline",
                 ToolPanelKind.Developer => "Developer",
                 ToolPanelKind.Notes => "Notes",
                 ToolPanelKind.References => "References",
@@ -1040,10 +1041,15 @@ namespace IRExplorerUI {
                                 RegisterPanel(FlameGraphPanel, FlameGraphPanelHost);
                                 break;
                             }
+                            case ToolPanelKind.Timeline: {
+                                TimelinePanel = (TimelinePanel)panel;
+                                TimelinePanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(TimelinePanel, TimelinePanelHost);
+                                break;
+                            }
                             case ToolPanelKind.Bookmarks: {
                                 BookmarksPanel = (BookmarksPanel)panel;
                                 BookmarksPanelHost = (LayoutAnchorable)args.Model;
-                                RegisterPanel(BookmarksPanel, BookmarksPanelHost);
                                 break;
                             }
                             case ToolPanelKind.Definition: {

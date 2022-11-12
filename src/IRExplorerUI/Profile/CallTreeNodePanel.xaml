@@ -1,11 +1,7 @@
 ﻿<client:ToolPanelControl
-    SnapsToDevicePixels="True"
-    UseLayoutRounding="True"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
-    mc:Ignorable="d"
     x:Class="IRExplorerUI.Profile.CallTreeNodePanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:client="clr-namespace:IRExplorerUI"
     xmlns:controls="clr-namespace:IRExplorerUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -13,41 +9,45 @@
     xmlns:local="clr-namespace:IRExplorerUI.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:profile="clr-namespace:IRExplorerUI.Profile"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    SnapsToDevicePixels="True"
+    UseLayoutRounding="True"
+    mc:Ignorable="d">
     <DockPanel
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
         HorizontalAlignment="Stretch"
+        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
         LastChildFill="True">
-        <Grid DockPanel.Dock="Top" HorizontalAlignment="Stretch">
+        <Grid HorizontalAlignment="Stretch" DockPanel.Dock="Top">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel
                 Grid.Column="0"
-                HorizontalAlignment="Stretch"
-                Margin="4,2,4,2">
+                Margin="4,2,4,2"
+                HorizontalAlignment="Stretch">
                 <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
                     <TextBlock
-                        Text="Time (total)"
+                        Width="70"
                         VerticalAlignment="Center"
-                        Width="70" />
+                        Text="Time (total)" />
 
                     <ContentControl
-                        Content="{Binding Node}"
-                        ContentTemplate="{StaticResource ProfilePercentageTemplate}"
-                        HorizontalAlignment="Stretch"
+                        MinWidth="150"
                         MaxWidth="200"
-                        MinWidth="150" />
+                        HorizontalAlignment="Stretch"
+                        Content="{Binding Node}"
+                        ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Time (self)" Width="70" />
+                    <TextBlock Width="70" Text="Time (self)" />
                     <ContentControl
-                        Content="{Binding Node}"
-                        ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}"
-                        HorizontalAlignment="Stretch"
+                        MinWidth="150"
                         MaxWidth="200"
-                        MinWidth="150" />
+                        HorizontalAlignment="Stretch"
+                        Content="{Binding Node}"
+                        ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
                 </StackPanel>
             </StackPanel>
             <Grid
@@ -60,155 +60,155 @@
                     <TextBlock Text="{Binding FunctionInstancesCount}" />
                 </StackPanel>
                 <Button
+                    x:Name="PreviousInstanceButton"
+                    Margin="0,18,14,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
                     Background="{x:Null}"
                     BorderBrush="{x:Null}"
-                    Click="PreviousInstanceButton_Click"
-                    HorizontalAlignment="Right"
-                    Margin="0,18,14,0"
-                    VerticalAlignment="Top"
-                    x:Name="PreviousInstanceButton">
+                    Click="PreviousInstanceButton_Click">
                     <Image
+                        Width="14"
                         Height="14"
-                        Source="{StaticResource DockLeftIcon}"
-                        Width="14" />
+                        Source="{StaticResource DockLeftIcon}" />
                 </Button>
                 <Button
+                    x:Name="NextInstanceButton"
+                    Margin="0,18,-2,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
                     Background="{x:Null}"
                     BorderBrush="{x:Null}"
-                    Click="NextInstanceButton_Click"
-                    HorizontalAlignment="Right"
-                    Margin="0,18,-2,0"
-                    VerticalAlignment="Top"
-                    x:Name="NextInstanceButton">
+                    Click="NextInstanceButton_Click">
                     <Image
+                        Width="14"
                         Height="14"
-                        Source="{StaticResource DockRightIcon}"
-                        Width="14" />
+                        Source="{StaticResource DockRightIcon}" />
                 </Button>
             </Grid>
         </Grid>
 
         <TabControl
+            Padding="2"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
             Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
             DockPanel.Dock="Bottom"
-            HorizontalAlignment="Stretch"
-            Padding="2"
-            VerticalAlignment="Stretch"
             Visibility="{Binding ShowDetails, Converter={StaticResource BoolToVisibilityConverter}}">
             <TabItem
-                Header="Info"
                 HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
-                VerticalAlignment="Stretch">
+                Header="Info">
                 <ScrollViewer
                     HorizontalAlignment="Stretch"
                     HorizontalScrollBarVisibility="Disabled"
                     VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="0,4,0,0" MaxWidth="{Binding ActualWidth, ElementName=ContentHost}">
+                    <StackPanel MaxWidth="{Binding ActualWidth, ElementName=ContentHost}" Margin="0,4,0,0">
                         <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-                            <TextBlock Text="Instances" Width="70" />
+                            <TextBlock Width="70" Text="Instances" />
                             <TextBlock
-                                FontWeight="Medium"
                                 Margin="4,0,0,0"
+                                FontWeight="Medium"
                                 Text="{Binding FunctionInstancesCount}" />
                         </StackPanel>
 
                         <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-                            <TextBlock Text="Total time" Width="70" />
+                            <TextBlock Width="70" Text="Total time" />
                             <ContentControl
-                                Content="{Binding InstancesNode}"
-                                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
-                                HorizontalAlignment="Left"
+                                Width="200"
                                 Margin="4,0,0,0"
-                                Width="200" />
+                                HorizontalAlignment="Left"
+                                Content="{Binding InstancesNode}"
+                                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
                         </StackPanel>
 
                         <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-                            <TextBlock Text="Median time" Width="70" />
+                            <TextBlock Width="70" Text="Median time" />
                             <ContentControl
-                                Content="{Binding MedianNode}"
-                                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
-                                HorizontalAlignment="Left"
+                                Width="200"
                                 Margin="4,0,0,0"
-                                Width="200" />
+                                HorizontalAlignment="Left"
+                                Content="{Binding MedianNode}"
+                                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
                         </StackPanel>
 
                         <Expander
+                            x:Name="HistogramHost"
+                            Margin="4,2,0,8"
+                            HorizontalAlignment="Stretch"
                             Expanded="HistogramHost_Expanded"
                             Header="Histogram"
-                            HorizontalAlignment="Stretch"
-                            IsExpanded="{Binding IsHistogramExpanded, Mode=TwoWay}"
-                            Margin="4,2,0,8"
-                            x:Name="HistogramHost">
+                            IsExpanded="{Binding IsHistogramExpanded, Mode=TwoWay}">
                             <Border
-                                BorderBrush="DarkGray"
-                                BorderThickness="1"
                                 Height="150"
-                                Margin="0,4,0,0">
+                                Margin="0,4,0,0"
+                                BorderBrush="DarkGray"
+                                BorderThickness="1">
                                 <StackPanel>
                                     <Canvas
+                                        x:Name="InstanceHistogramHost"
                                         Height="130"
-                                        HorizontalAlignment="Stretch"
                                         Margin="0,-4,0,0"
-                                        VerticalAlignment="Stretch"
-                                        x:Name="InstanceHistogramHost" />
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch" />
                                     <Grid>
                                         <StackPanel
-                                            HorizontalAlignment="Left"
                                             Margin="4,2,4,2"
+                                            HorizontalAlignment="Left"
                                             Orientation="Horizontal">
                                             <RadioButton
+                                                VerticalAlignment="Center"
                                                 Content="Total"
-                                                IsChecked="{Binding UseSelfTimeHistogram, Mode=TwoWay, Converter={StaticResource InvertedBoolConverter}}"
-                                                VerticalAlignment="Center" />
+                                                IsChecked="{Binding UseSelfTimeHistogram, Mode=TwoWay, Converter={StaticResource InvertedBoolConverter}}" />
                                             <RadioButton
-                                                Content="Self"
-                                                IsChecked="{Binding UseSelfTimeHistogram, Mode=TwoWay}"
                                                 Margin="4,0,0,0"
-                                                VerticalAlignment="Center" />
+                                                VerticalAlignment="Center"
+                                                Content="Self"
+                                                IsChecked="{Binding UseSelfTimeHistogram, Mode=TwoWay}" />
                                         </StackPanel>
                                         <StackPanel
-                                            HorizontalAlignment="Right"
                                             Margin="4"
+                                            HorizontalAlignment="Right"
                                             Orientation="Horizontal">
                                             <Grid>
                                                 <Border
-                                                    Background="DarkGreen"
+                                                    Width="12"
                                                     Height="12"
                                                     HorizontalAlignment="Left"
                                                     VerticalAlignment="Center"
-                                                    Width="12" />
+                                                    Background="DarkGreen" />
                                                 <TextBlock
-                                                    FontSize="11"
                                                     Margin="16,0,0,0"
-                                                    Text="Instance"
-                                                    VerticalAlignment="Center" />
+                                                    VerticalAlignment="Center"
+                                                    FontSize="11"
+                                                    Text="Instance" />
                                             </Grid>
                                             <Grid Margin="6,0,0,0">
                                                 <Border
-                                                    Background="DarkBlue"
+                                                    Width="12"
                                                     Height="12"
                                                     HorizontalAlignment="Left"
                                                     VerticalAlignment="Center"
-                                                    Width="12" />
+                                                    Background="DarkBlue" />
                                                 <TextBlock
-                                                    FontSize="11"
                                                     Margin="16,0,0,0"
-                                                    Text="Median"
-                                                    VerticalAlignment="Center" />
+                                                    VerticalAlignment="Center"
+                                                    FontSize="11"
+                                                    Text="Median" />
                                             </Grid>
                                             <Grid Margin="6,0,0,0">
                                                 <Border
-                                                    Background="Firebrick"
+                                                    Width="12"
                                                     Height="12"
                                                     HorizontalAlignment="Left"
                                                     VerticalAlignment="Center"
-                                                    Width="12" />
+                                                    Background="Firebrick" />
                                                 <TextBlock
-                                                    FontSize="11"
                                                     Margin="16,0,0,0"
-                                                    Text="Avg"
-                                                    VerticalAlignment="Center" />
+                                                    VerticalAlignment="Center"
+                                                    FontSize="11"
+                                                    Text="Avg" />
                                             </Grid>
 
                                         </StackPanel>
@@ -218,15 +218,17 @@
                         </Expander>
 
                         <TextBlock
-                            HorizontalAlignment="Left"
                             Margin="4,2,0,0"
+                            HorizontalAlignment="Left"
                             Text="Module" />
                         <Canvas
+                            x:Name="ModuleCanvas"
                             Height="{Binding ElementName=ModuleTextBlock, Path=ActualHeight}"
                             HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch"
-                            x:Name="ModuleCanvas">
+                            VerticalAlignment="Stretch">
                             <TextBox
+                                x:Name="ModuleTextBlock"
+                                Width="{Binding ElementName=ModuleCanvas, Path=ActualWidth}"
                                 Background="{x:Null}"
                                 BorderBrush="{x:Null}"
                                 FontWeight="Medium"
@@ -236,91 +238,89 @@
                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                                 Text="{Binding Path=Node.ModuleName}"
-                                TextWrapping="Wrap"
-                                Width="{Binding ElementName=ModuleCanvas, Path=ActualWidth}"
-                                x:Name="ModuleTextBlock" />
+                                TextWrapping="Wrap" />
                         </Canvas>
 
                         <StackPanel Orientation="Horizontal">
                             <TextBlock
-                                HorizontalAlignment="Left"
                                 Margin="4,4,16,0"
-                                Text="Function name"
-                                VerticalAlignment="Center" />
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Function name" />
                             <ContentPresenter
+                                VerticalAlignment="Center"
                                 Content="{Binding}"
-                                ContentTemplate="{StaticResource ExecutionContextTemplate}"
-                                VerticalAlignment="Center" />
+                                ContentTemplate="{StaticResource ExecutionContextTemplate}" />
                         </StackPanel>
                         <Canvas
+                            x:Name="FunctionCanvas"
                             Height="{Binding ElementName=FunctionTextBlock, Path=ActualHeight}"
                             HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch"
-                            x:Name="FunctionCanvas">
+                            VerticalAlignment="Stretch">
                             <TextBox
+                                x:Name="FunctionTextBlock"
+                                Width="{Binding ElementName=FunctionCanvas, Path=ActualWidth}"
+                                HorizontalAlignment="Stretch"
                                 Background="{x:Null}"
                                 BorderBrush="{x:Null}"
                                 FontWeight="Medium"
-                                HorizontalAlignment="Stretch"
                                 IsReadOnly="True"
                                 ScrollViewer.CanContentScroll="True"
                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                                 Text="{Binding Path=Node.FullFunctionName}"
-                                TextWrapping="Wrap"
-                                Width="{Binding ElementName=FunctionCanvas, Path=ActualWidth}"
-                                x:Name="FunctionTextBlock" />
+                                TextWrapping="Wrap" />
                         </Canvas>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
             <TabItem
-                Header="Backtrace"
                 HorizontalAlignment="Stretch"
-                ToolTip="Reverse call stack for selected function"
-                VerticalAlignment="Stretch">
+                VerticalAlignment="Stretch"
+                Header="Backtrace"
+                ToolTip="Reverse call stack for selected function">
                 <profile:ProfileListView
+                    x:Name="BacktraceList"
                     NameColumnTitle="Function"
                     ShowCombinedTimeNameRow="True"
                     ShowContextColumn="True"
-                    ShowModuleColumn="True"
-                    x:Name="BacktraceList" />
+                    ShowModuleColumn="True" />
             </TabItem>
 
             <TabItem
-                Header="Functions"
                 HorizontalAlignment="Stretch"
-                ToolTip="Self time for functions under this instance"
-                VerticalAlignment="Stretch">
+                VerticalAlignment="Stretch"
+                Header="Functions"
+                ToolTip="Self time for functions under this instance">
                 <profile:ProfileListView
+                    x:Name="FunctionList"
                     NameColumnTitle="Function"
                     ShowContextColumn="True"
                     ShowExclusiveTimeNameRow="True"
-                    ShowModuleColumn="True"
-                    x:Name="FunctionList" />
+                    ShowModuleColumn="True" />
             </TabItem>
             <TabItem
-                Header="Modules"
                 HorizontalAlignment="Stretch"
-                ToolTip="Self time for modules under this instance"
-                VerticalAlignment="Stretch">
+                VerticalAlignment="Stretch"
+                Header="Modules"
+                ToolTip="Self time for modules under this instance">
                 <profile:ProfileListView
+                    x:Name="ModuleList"
                     ExclusiveTimeColumnTitle="Time"
                     NameColumnTitle="Module"
-                    ShowTimeNameRow="True"
-                    x:Name="ModuleList" />
+                    ShowTimeNameRow="True" />
             </TabItem>
 
             <TabItem
-                Header="Instances"
                 HorizontalAlignment="Stretch"
-                ToolTip="All unique instances of this function"
-                VerticalAlignment="Stretch">
+                VerticalAlignment="Stretch"
+                Header="Instances"
+                ToolTip="All unique instances of this function">
                 <profile:ProfileListView
+                    x:Name="InstancesList"
                     NameColumnTitle="Function"
                     ShowCombinedTimeNameRow="True"
-                    ShowContextColumn="True"
-                    x:Name="InstancesList" />
+                    ShowContextColumn="True" />
             </TabItem>
         </TabControl>
     </DockPanel>
