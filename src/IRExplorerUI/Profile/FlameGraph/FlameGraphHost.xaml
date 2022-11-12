@@ -1,0 +1,80 @@
+﻿<UserControl
+    x:Class="IRExplorerUI.Profile.FlameGraphHost"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:IRExplorerUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
+    xmlns:local="clr-namespace:IRExplorerUI.Profile"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <UserControl.CommandBindings>
+        <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomIn" Executed="ExecuteGraphZoomIn" />
+        <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomOut" Executed="ExecuteGraphZoomOut" />
+        <CommandBinding Command="local:CallTreeCommand.SelectFunction" Executed="SelectFunctionExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.OpenFunction" Executed="OpenFunctionExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab" Executed="OpenFunctionInNewTab" />
+        <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult" Executed="PreviousSearchResultExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.NextSearchResult" Executed="NextSearchResultExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.ChangeRootNode" Executed="ChangeRootNodeExecuted" />
+    </UserControl.CommandBindings>
+
+    <UserControl.InputBindings>
+        <KeyBinding
+            Key="R"
+            Command="irExplorerUi:GraphCommand.GraphResetWidth"
+            CommandTarget="{Binding ElementName=GraphHost}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="F3"
+            Command="local:CallTreeCommand.PreviousSearchResult"
+            Modifiers="Shift" />
+        <KeyBinding Key="F3" Command="local:CallTreeCommand.NextSearchResult" />
+    </UserControl.InputBindings>
+
+    <irExplorerUi:ScrollViewerClickable
+        x:Name="GraphHost"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+        HorizontalScrollBarVisibility="Auto"
+        ScrollChanged="GraphHost_OnScrollChanged"
+        VerticalScrollBarVisibility="Auto">
+        <local:FlameGraphViewer x:Name="GraphViewer" />
+        <irExplorerUi:ScrollViewerClickable.ContextMenu>
+            <ContextMenu>
+                <MenuItem
+                    Command="local:CallTreeCommand.ChangeRootNode"
+                    Header="Set Function as Root"
+                    ToolTip="" />
+                <MenuItem
+                    Command="local:CallTreeCommand.SelectFunction"
+                    Header="Select Function"
+                    InputGestureText="Return"
+                    ToolTip="" />
+                <MenuItem
+                    Command="local:CallTreeCommand.OpenFunction"
+                    Header="Open Function"
+                    InputGestureText="Ctrl+Return"
+                    ToolTip="" />
+                <MenuItem
+                    Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                    Header="Open Function in New Tab"
+                    InputGestureText="Ctrl+Shift+Return"
+                    ToolTip="" />
+                <MenuItem
+                    Command="irExplorerUi:GraphCommand.GraphZoomOut"
+                    Header="Select Function in Call Tree"
+                    InputGestureText="Shift+Return"
+                    ToolTip="" />
+                <MenuItem
+                    Command="irExplorerUi:GraphCommand.GraphZoomOut"
+                    Header="Mark Function Instances"
+                    InputGestureText="Shift+Return"
+                    IsEnabled="False"
+                    ToolTip="" />
+
+            </ContextMenu>
+        </irExplorerUi:ScrollViewerClickable.ContextMenu>
+    </irExplorerUi:ScrollViewerClickable>
+</UserControl>

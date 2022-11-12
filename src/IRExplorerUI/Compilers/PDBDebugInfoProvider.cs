@@ -253,9 +253,11 @@ namespace IRExplorerUI.Compilers {
                     if (sourceLine?.SourceFile != null) {
                         if (options_.HasAuthorizationToken) {
                             // SourceLink HTTP personal authentication token.
+                            //? TODO: New way for more recent TraceEvent versions:
+                            //? https://github.com/microsoft/perfview/blob/main/documentation/TraceEvent/SymbolReader/AzureDevOpsPATAuthenticationExample.cs
                             var token = $":{options_.AuthorizationToken}";
                             var tokenB64 = Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(token));
-                            //pdb.SymbolReader.AuthorizationHeaderForSourceLink = $"Basic {tokenB64}";
+                            pdb.SymbolReader.AuthorizationHeaderForSourceLink = $"Basic {tokenB64}";
                         }
 
                         // Download the source file.
@@ -363,7 +365,7 @@ namespace IRExplorerUI.Compilers {
                     return new FunctionDebugInfo(funcSym2.name, funcSym2.relativeVirtualAddress, (long)funcSym2.length);
                 }
             }
-            catch (Exception ex) { 
+            catch (Exception ex) {
                 Trace.TraceError($"Failed to find function for RVA {rva}: {ex.Message}");
             }
 
@@ -410,7 +412,7 @@ namespace IRExplorerUI.Compilers {
                                 inlineeFileName = inlineeLineNumber.sourceFile.fileName;
                             }
                             catch (Exception _) {
-                                
+
                             }
 
                             locationTag.AddInlinee(inlineFrame.name, inlineeFileName,
@@ -428,7 +430,7 @@ namespace IRExplorerUI.Compilers {
 
             return true;
         }
-        
+
         public IEnumerable<FunctionDebugInfo> EnumerateFunctions(bool includeExternal) {
             if (cachedFunctionList_ != null) {
                 foreach (var entry in cachedFunctionList_) {

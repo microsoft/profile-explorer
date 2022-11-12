@@ -978,6 +978,16 @@
                                     <profile:FlameGraphPanel x:Name="FlameGraphPanel" />
                                 </avalonDock:LayoutAnchorable>
 
+
+                                <avalonDock:LayoutAnchorable
+                                    x:Name="TimelinePanelHost"
+                                    Title="Timeline"
+                                    ContentId="Timeline"
+                                    IsActiveChanged="LayoutAnchorable_IsActiveChanged"
+                                    IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
+                                    <profile:TimelinePanel x:Name="TimelinePanel" />
+                                </avalonDock:LayoutAnchorable>
+
                                 <avalonDock:LayoutAnchorable
                                     x:Name="SearchResultsPanelHost"
                                     Title="Search Results"
