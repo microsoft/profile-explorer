@@ -242,66 +242,84 @@
                 <ColumnDefinition Style="{StaticResource NodePanelColumnsStyle}" />
             </Grid.ColumnDefinitions>
 
-            <Grid
-                Width="100"
-                Height="70"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Background="PapayaWhip">
-                <StackPanel Margin="2">
-                    <TextBlock
-                        Margin="0,1,0,0"
-                        FontWeight="Medium"
-                        Text="All Threads" />
-                    <TextBlock
-                        FontWeight="Medium"
-                        Foreground="MediumBlue"
-                        Text="Filter"
-                        Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
-                    <TextBlock
-                        Margin="0,-1,0,0"
-                        FontWeight="Medium"
-                        Foreground="MediumBlue"
-                        Text="{Binding FilteredTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}"
-                        Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
-                    <Button
-                        Height="16"
-                        Margin="0,1,0,0"
-                        Padding="-1"
-                        Content="Remove"
-                        Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
-                    <TextBlock Text="{Binding SelectionTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}" Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
-                </StackPanel>
-            </Grid>
 
-            <Grid x:Name="TimelineHost" Grid.Column="0">
-                <local:ActivityView
-                    x:Name="ActivityView"
+            <Grid x:Name="ActivityHost" Margin="0,0,0,20">
+                <Grid
+                    x:Name="ActivityViewHeader"
+                    Width="100"
                     Height="70"
-                    Margin="100,0,0,0"
-                    HorizontalAlignment="Stretch"
+                    HorizontalAlignment="Left"
                     VerticalAlignment="Top"
-                    BackColor="Linen" />
+                    Background="PapayaWhip">
+                    <StackPanel Margin="2">
+                        <TextBlock
+                            Margin="0,1,0,0"
+                            FontWeight="Medium"
+                            Text="All Threads" />
+                        <TextBlock
+                            FontWeight="Medium"
+                            Foreground="MediumBlue"
+                            Text="Filter"
+                            Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <TextBlock
+                            Margin="0,-1,0,0"
+                            FontWeight="Medium"
+                            Foreground="MediumBlue"
+                            Text="{Binding FilteredTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}"
+                            Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <Button
+                            Height="16"
+                            Margin="0,1,0,0"
+                            Padding="-1"
+                            Content="Remove"
+                            Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <TextBlock Text="{Binding SelectionTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}" Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
+                </Grid>
 
-                <ScrollViewer
-                    Margin="0,70,0,0"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
-                    CanContentScroll="True"
-                    HorizontalScrollBarVisibility="Disabled"
-                    VerticalScrollBarVisibility="Auto"
-                    VirtualizingStackPanel.IsVirtualizing="True"
-                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+                <Grid x:Name="TimelineHost" Grid.Column="0">
+                    <local:ActivityView
+                        x:Name="ActivityView"
+                        Height="70"
+                        Margin="100,0,0,0"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Top"
+                        BackColor="Linen" />
 
-                    <ItemsControl x:Name="ActivityViewList">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <VirtualizingStackPanel Orientation="Vertical" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
-                </ScrollViewer>
+                    <ScrollViewer
+                        Margin="0,70,0,0"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        CanContentScroll="True"
+                        HorizontalScrollBarVisibility="Disabled"
+                        VerticalScrollBarVisibility="Auto"
+                        VirtualizingStackPanel.IsVirtualizing="True"
+                        VirtualizingStackPanel.VirtualizationMode="Recycling">
+
+                        <ItemsControl x:Name="ActivityViewList">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
             </Grid>
+
+            <irExplorerUi:ScrollViewerClickable
+                x:Name="ActivityScrollBar"
+                Height="20"
+                VerticalAlignment="Bottom"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                HorizontalScrollBarVisibility="Auto"
+                ScrollChanged="GraphHost_OnScrollChanged"
+                VerticalScrollBarVisibility="Disabled">
+                <Grid
+                    x:Name="ScrollElement"
+                    Height="0"
+                    Background="Red" />
+            </irExplorerUi:ScrollViewerClickable>
 
             <GridSplitter
                 Grid.Column="1"

@@ -18,82 +18,9 @@ using IRExplorerCore.Utilities;
 namespace IRExplorerUI.Profile;
 
 public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider, INotifyPropertyChanged {
-    public static DependencyProperty FlameGraphWidthProperty =
-        DependencyProperty.Register(nameof(FlameGraphWidth), typeof(double), typeof(FlameGraphHost),
-            new PropertyMetadata(0.0, FlameGraphWeightChanged));
-
-    public static DependencyProperty FlameGraphZoomProperty =
-        DependencyProperty.Register(nameof(FlameGraphOffset), typeof(double), typeof(FlameGraphHost),
-            new PropertyMetadata(0.0, FlameGraphOffsetChanged));
-
-    public static DependencyProperty FlameGraphEnlargeNodeProperty =
-        DependencyProperty.Register(nameof(FlameGraphEnlargeNodeProperty), typeof(double), typeof(FlameGraphHost),
-            new PropertyMetadata(0.0, FlameGraphOffsetChanged));
-
-    public static DependencyProperty FlameGraphHorizontalOffsetProperty =
-        DependencyProperty.Register(nameof(FlameGraphHorizontalOffset), typeof(double), typeof(FlameGraphHost),
-            new PropertyMetadata(0.0, FlameGraphHorizontalOffsetChanged));
-
-    public static DependencyProperty FlameGraphVerticalOffsetProperty =
-        DependencyProperty.Register(nameof(FlameGraphVerticalOffset), typeof(double), typeof(FlameGraphHost),
-            new PropertyMetadata(0.0, FlameGraphVerticalOffsetChanged));
-
-    private static void FlameGraphWeightChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-        if (d is FlameGraphHost panel) {
-            panel.FlameGraphWidth = (double)e.NewValue;
-        }
-    }
-
-    private static void FlameGraphOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-        if (d is FlameGraphHost panel) {
-            if (e.Property == FlameGraphZoomProperty) {
-                panel.AdjustZoomPointOffset((double)e.NewValue);
-            }
-            else {
-                panel.AdjustEnlargeNodeOffset((double)e.NewValue);
-            }
-        }
-    }
-
-    private static void FlameGraphVerticalOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-        if (d is FlameGraphHost panel) {
-            panel.GraphHost.ScrollToVerticalOffset((double)e.NewValue);
-        }
-    }
-
-    private static void FlameGraphHorizontalOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-        if (d is FlameGraphHost panel) {
-            panel.GraphHost.ScrollToHorizontalOffset((double)e.NewValue);
-        }
-    }
-
-    public double FlameGraphWidth {
-        get {
-            return GraphViewer.MaxGraphWidth;
-        }
-        set {
-            GraphViewer.UpdateMaxWidth(value);
-        }
-    }
-
-    public double FlameGraphOffset {
-        get => 0;
-        set {}
-    }
-
-    public double FlameGraphVerticalOffset {
-        get => 0;
-        set {}
-    }
-
-    public double FlameGraphHorizontalOffset {
-        get => 0;
-        set { }
-    }
-
     private const double TimePerFrame = 1000.0 / 60; // ~16.6ms per frame at 60Hz.
-    private const double ZoomAmount = 500;
-    private const double ScrollWheelZoomAmount = 300;
+    public const double ZoomAmount = 500;
+    public const double ScrollWheelZoomAmount = 300;
     private const double FastPanOffset = 1000;
     private const double DefaultPanOffset = 100;
     private const double ZoomAnimationDuration = TimePerFrame * 10;
@@ -113,6 +40,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     private DraggablePopupHoverPreview stackHoverPreview_;
     private List<FlameGraphNode> searchResultNodes_;
     private int searchResultIndex_;
+    private bool ignoreScrollEvent_;
 
     private double zoomPointX_;
     private double initialWidth_;
@@ -131,7 +59,13 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     public ISession Session { get; set; }
-    
+
+    public event EventHandler<FlameGraphNode> NodeSelected;
+    public event EventHandler NodesDeselected;
+    public event EventHandler<double> HorizontalOffsetChanged;
+    public event EventHandler<double> MaxWidthChanged;
+
+
     private double GraphAreaWidth => Math.Max(0, GraphHost.ViewportWidth - 1);
     private double GraphAreaHeight=> GraphHost.ViewportHeight;
     private Rect GraphArea => new Rect(0, 0, GraphAreaWidth, GraphAreaHeight);
@@ -197,7 +131,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         }
     }
     
-    public void InitializeCallTree(ProfileCallTree callTree) {
+    public void InitializeFlameGraph(ProfileCallTree callTree) {
         callTree_ = callTree;
 
         Dispatcher.BeginInvoke(async () => {
@@ -207,6 +141,16 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         }, DispatcherPriority.Background);
     }
     
+    public void InitializeTimeline(ProfileCallTree callTree, int threadId) {
+        callTree_ = callTree;
+
+        Dispatcher.BeginInvoke(async () => {
+            if (callTree != null && !GraphViewer.IsInitialized) {
+                await GraphViewer.Initialize(callTree, GraphArea, settings_, Session, true, threadId);
+            }
+        }, DispatcherPriority.Background);
+    }
+
     private void SetupEvents() {
         GraphHost.SizeChanged += (sender, args) => UpdateGraphWidth(args.NewSize.Width);
         GraphHost.PreviewMouseWheel += OnPreviewMouseWheel;
@@ -352,6 +296,11 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
         animation1?.BeginAnimation(FlameGraphHorizontalOffsetProperty, animation1, HandoffBehavior.SnapshotAndReplace);
         animation2?.BeginAnimation(FlameGraphVerticalOffsetProperty, animation2, HandoffBehavior.SnapshotAndReplace);
+    }
+
+    public void SetHorizontalOffset(double offset) {
+        ignoreScrollEvent_ = true;
+        GraphHost.ScrollToHorizontalOffset(offset);
     }
 
     private DoubleAnimation ScrollToHorizontalOffset(double offset, bool triggerAnimation = true,
@@ -530,7 +479,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             e.Handled = true;
         }
     }
-
+    
     private async void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
         if (dragging_) {
             dragging_ = false;
@@ -543,10 +492,14 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         }
 
         var point = e.GetPosition(GraphHost);
-        var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
+        var pointedNode = GraphViewer.FindPointedNode(point);
 
         if (pointedNode == null) {
             GraphViewer.ClearSelection(); // Click outside graph is captured here.
+            NodesDeselected?.Invoke(this, EventArgs.Empty);
+        }
+        else {
+            NodeSelected?.Invoke(this, pointedNode);
         }
     }
 
@@ -654,10 +607,16 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     public void SetMaxWidth(double maxWidth, bool animate = true, double duration = ZoomAnimationDuration) {
+        if (Math.Abs(maxWidth - GraphViewer.MaxGraphWidth) < double.Epsilon) {
+            return;
+        }
+
         if (animate) {
             var animation = new DoubleAnimation(GraphViewer.MaxGraphWidth, maxWidth, TimeSpan.FromMilliseconds(duration));
             animation.Completed += (sender, args) => {
                 widthAnimation_ = null;
+                MaxWidthChanged?.Invoke(this, GraphViewer.MaxGraphWidth);
+
             };
 
             widthAnimation_ = animation;
@@ -666,6 +625,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         else {
             CancelWidthAnimation();
             GraphViewer.UpdateMaxWidth(maxWidth);
+            MaxWidthChanged?.Invoke(this, GraphViewer.MaxGraphWidth);
         }
     }
 
@@ -823,6 +783,13 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         }
 
         GraphViewer.UpdateVisibleArea(GraphVisibleArea);
+
+        if (!ignoreScrollEvent_) {
+            HorizontalOffsetChanged?.Invoke(this, GraphHost.HorizontalOffset);
+        }
+        else {
+            ignoreScrollEvent_ = false;
+        }
     }
     
     public async Task NavigateToParentNode() {
@@ -839,10 +806,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             GraphViewer.SelectNode(enlargedNode_.Children[0]);
             await EnlargeNode(enlargedNode_.Children[0]);
         }
-    }
-
-    public async Task DisplayFlameGraph() {
-        
     }
 
     public void Reset() {
@@ -963,4 +926,81 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             await ChangeRootNode(GraphViewer.SelectedNode);
         }
     }
+    
+    #region Animation support
+    
+    public static DependencyProperty FlameGraphWidthProperty =
+    DependencyProperty.Register(nameof(FlameGraphWidth), typeof(double), typeof(FlameGraphHost),
+        new PropertyMetadata(0.0, FlameGraphWidthChanged));
+
+    public static DependencyProperty FlameGraphZoomProperty =
+        DependencyProperty.Register(nameof(FlameGraphOffset), typeof(double), typeof(FlameGraphHost),
+            new PropertyMetadata(0.0, FlameGraphOffsetChanged));
+
+    public static DependencyProperty FlameGraphEnlargeNodeProperty =
+        DependencyProperty.Register(nameof(FlameGraphEnlargeNodeProperty), typeof(double), typeof(FlameGraphHost),
+            new PropertyMetadata(0.0, FlameGraphOffsetChanged));
+
+    public static DependencyProperty FlameGraphHorizontalOffsetProperty =
+        DependencyProperty.Register(nameof(FlameGraphHorizontalOffset), typeof(double), typeof(FlameGraphHost),
+            new PropertyMetadata(0.0, FlameGraphHorizontalOffsetChanged));
+
+    public static DependencyProperty FlameGraphVerticalOffsetProperty =
+        DependencyProperty.Register(nameof(FlameGraphVerticalOffset), typeof(double), typeof(FlameGraphHost),
+            new PropertyMetadata(0.0, FlameGraphVerticalOffsetChanged));
+
+    private static void FlameGraphWidthChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+        if (d is FlameGraphHost panel) {
+            panel.FlameGraphWidth = (double)e.NewValue;
+        }
+    }
+
+    private static void FlameGraphOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+        if (d is FlameGraphHost panel) {
+            if (e.Property == FlameGraphZoomProperty) {
+                panel.AdjustZoomPointOffset((double)e.NewValue);
+            }
+            else {
+                panel.AdjustEnlargeNodeOffset((double)e.NewValue);
+            }
+        }
+    }
+
+    private static void FlameGraphVerticalOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+        if (d is FlameGraphHost panel) {
+            panel.GraphHost.ScrollToVerticalOffset((double)e.NewValue);
+        }
+    }
+
+    private static void FlameGraphHorizontalOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+        if (d is FlameGraphHost panel) {
+            panel.GraphHost.ScrollToHorizontalOffset((double)e.NewValue);
+        }
+    }
+
+    public double FlameGraphWidth {
+        get {
+            return GraphViewer.MaxGraphWidth;
+        }
+        set {
+            GraphViewer.UpdateMaxWidth(value);
+            MaxWidthChanged?.Invoke(this, value);
+        }
+    }
+
+    public double FlameGraphOffset {
+        get => 0;
+        set { }
+    }
+
+    public double FlameGraphVerticalOffset {
+        get => 0;
+        set { }
+    }
+
+    public double FlameGraphHorizontalOffset {
+        get => 0;
+        set { }
+    }
+    #endregion
 }

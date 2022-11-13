@@ -127,7 +127,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     private void InitializeCallTree(ProfileCallTree callTree) {
         callTree_ = callTree;
-        GraphHost.InitializeCallTree(callTree);
+        GraphHost.InitializeFlameGraph(callTree);
     }
 
     public override void OnSessionStart() {
@@ -136,6 +136,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     private void SetupEvents() {
+        GraphHost.NodeSelected += GraphHost_NodeSelected;
+        GraphHost.NodesDeselected += GraphHost_NodesDeselected;
+
         // Setup events for the node details view.
         NodeDetailsPanel.NodeInstanceChanged += NodeDetailsPanel_NodeInstanceChanged;
         NodeDetailsPanel.BacktraceNodeClick += NodeDetailsPanel_NodeClick;
@@ -146,7 +149,31 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         NodeDetailsPanel.FunctionNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
         NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
     }
-    
+
+    private void GraphHost_NodesDeselected(object sender, EventArgs e) {
+        
+    }
+
+    private async void GraphHost_NodeSelected(object sender, FlameGraphNode node) {
+        if (!node.HasFunction) {
+            return;
+        }
+
+        await NodeDetailsPanel.ShowWithDetailsAsync(node.CallTreeNode);
+
+        if (settings_.SyncSourceFile) {
+            //? TODO: Delegate to ProfileSession
+            // Load the source file and scroll to the hottest line.
+            var panel = Session.FindAndActivatePanel(ToolPanelKind.Source) as SourceFilePanel;
+
+            if (panel != null) {
+                await panel.LoadSourceFile(node.CallTreeNode.Function.Sections[0]);
+            }
+
+            await Session.SwitchActiveFunction(node.CallTreeNode.Function);
+        }
+    }
+
     private void NodeDetailsPanel_NodesSelected(object sender, List<ProfileCallTreeNode> e) {
         var nodes = GraphHost.GraphViewer.SelectNodes(e);
         if (nodes.Count > 0) {
