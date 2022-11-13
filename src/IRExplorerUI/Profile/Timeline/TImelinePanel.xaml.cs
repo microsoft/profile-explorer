@@ -139,14 +139,14 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                     return;
                 }
 
-                var activityArea = new Rect(0, 0, ActivityView.ActualWidth, ActivityView.ActualHeight);
+                var activityArea = new Rect(0, 0, ActivityHost.ActualWidth, ActivityHost.ActualHeight);
                 var threads = Session.ProfileData.SortedThreadWeights;
                 await ActivityView.Initialize(Session.ProfileData, activityArea);
                 ActivityView.IsTimeBarVisible = true;
                 ActivityView.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
                 ActivityView.SamplesBackColor = Brushes.DeepSkyBlue;
 
-                var threadActivityArea = new Rect(0, 0, ActivityView.ActualWidth, 32);
+                var threadActivityArea = new Rect(0, 0, ActivityHost.ActualWidth, 32);
                 threadActivityViews_ = new List<ActivityTimelineView>();
                 threadActivityViewsMap_ = new Dictionary<int, ActivityTimelineView>();
                 int limit = 0;
@@ -172,8 +172,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                     threadActivityViewsMap_[thread.ThreadId] = threadView;
                     await threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea, thread.ThreadId);
 
-                    //await threadView.TimelineViewer.Initialize(callTree, GraphArea, settings_,
-                    //                                           isTimelineView_, thread.ThreadId);
+                    threadView.TimelineHost.Session = Session;
+                    threadView.TimelineHost.InitializeTimeline(callTree, thread.ThreadId);
+                    SetupTimelineViewEvents(threadView.TimelineHost);
                 }
 
                 ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
@@ -237,6 +238,19 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         view.FilteredTimeRange += ActivityView_FilteredTimeRange;
         view.ClearedSelectedTimeRange += ActivityView_ClearedSelectedTimeRange;
         view.ClearedFilteredTimeRange += ActivityView_ClearedFilteredTimeRange;
+    }
+
+    private void SetupTimelineViewEvents(FlameGraphHost view) {
+        view.MaxWidthChanged += TimelineView_MaxWidthChanged;
+        view.HorizontalOffsetChanged += TimelineView_HorizontalOffsetChanged;
+    }
+
+    private void TimelineView_HorizontalOffsetChanged(object sender, double offset) {
+        ActivityScrollBar.ScrollToHorizontalOffset(offset);
+    }
+
+    private void TimelineView_MaxWidthChanged(object sender, double width) {
+        SetMaxWidth(width, sender);
     }
 
     private async void ActivityView_ClearedFilteredTimeRange(object sender, EventArgs e) {
@@ -412,17 +426,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         set => SetField(ref showNodePanel_, value);
     }
     
-    private void SetMaxWidth(double maxWidth, bool animate = true, double duration = ZoomAnimationDuration) {
-        ActivityView.UpdateMaxWidth(maxWidth);
-
-        if (threadActivityViews_ != null) {
-            foreach (var view in threadActivityViews_) {
-                view.ActivityHost.UpdateMaxWidth(maxWidth);
-                view.TimelineViewer.UpdateMaxWidth(maxWidth);
-            }
-        }
-    }
-
     private void CancelWidthAnimation() {
         if(widthAnimation_ != null) {
             widthAnimation_.BeginTime = null;
@@ -442,13 +445,36 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private void ExecuteGraphResetWidth(object sender, ExecutedRoutedEventArgs e) {
         //? TODO: Buttons should be disabled
     }
-
+    
     private void ExecuteGraphZoomIn(object sender, ExecutedRoutedEventArgs e) {
-    //    ZoomIn(CenterZoomPointX);
+        AdjustMaxWidth(FlameGraphHost.ZoomAmount);
+    }
+
+    private void AdjustMaxWidth(double amount) {
+        var newWidth = ActivityView.MaxWidth + amount;
+        SetMaxWidth(newWidth);
+    }
+
+    private void SetMaxWidth(double newWidth, object source = null) {
+        Trace.WriteLine($"New width {newWidth}");
+        ActivityView.SetMaxWidth(newWidth);
+        ScrollElement.Width = newWidth + ActivityViewHeader.ActualWidth;
+        
+        if (threadActivityViews_ != null)
+        {
+            foreach (var threadView in threadActivityViews_)
+            {
+                threadView.ActivityHost.SetMaxWidth(newWidth);
+
+                if (source != threadView.TimelineHost) {
+                    threadView.TimelineHost.SetMaxWidth(newWidth, false);
+                }
+            }
+        }
     }
 
     private void ExecuteGraphZoomOut(object sender, ExecutedRoutedEventArgs e) {
-    //    ZoomOut(CenterZoomPointX);
+        AdjustMaxWidth(-FlameGraphHost.ZoomAmount);
     }
     
     private void PanelToolbarTray_SettingsClicked(object sender, EventArgs e) {
@@ -460,16 +486,15 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private void GraphHost_OnScrollChanged(object sender, ScrollChangedEventArgs e) {
-        //var activityArea = new Rect(TimelineHost.HorizontalOffset, 0, ActivityView.ActualWidth, ActivityView.ActualHeight);
-        //ActivityView.UpdateVisibleArea(activityArea);
+        var activityArea = new Rect(ActivityScrollBar.HorizontalOffset, 0, ActivityHost.ActualWidth, ActivityHost.ActualHeight);
+        ActivityView.UpdateVisibleArea(activityArea);
 
-        //if (threadActivityViews_ != null) {
-        //    foreach (var view in threadActivityViews_) {
-        //        activityArea = new Rect(GraphHost.HorizontalOffset, 0, view.ActivityHost.ActualWidth, view.ActivityHost.ActualHeight);
-        //        view.ActivityHost.UpdateVisibleArea(activityArea);
-        //        view.TimelineViewer.UpdateVisibleArea(activityArea);
-        //    }
-        //}
+        if (threadActivityViews_ != null) {
+            foreach (var view in threadActivityViews_) {
+                view.ActivityHost.UpdateVisibleArea(activityArea);
+                view.TimelineHost.SetHorizontalOffset(ActivityScrollBar.HorizontalOffset);
+            }
+        }
     }
 
     private async void UndoButtoon_Click(object sender, RoutedEventArgs e) {

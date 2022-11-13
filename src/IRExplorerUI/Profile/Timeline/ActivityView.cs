@@ -119,7 +119,8 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     public TimeSpan SelectionTime => selectionEndTime_ - selectionStartTime_;
     public bool HasFilter => hasFilter_;
     public TimeSpan FilteredTime => filterEndTime_ - filterStartTime_;
-
+    public new double MaxWidth => maxWidth_;
+    
     public double ThreadWeight => (slices_ == null || profile_ == null || profile_.TotalWeight.Ticks == 0) ? 0 :
                                   ((double)slices_[0].TotalWeight.Ticks / profile_.TotalWeight.Ticks);
 
@@ -440,7 +441,11 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         return sliceSeriesDict.ToValueList();
     }
 
-    public void UpdateMaxWidth(double maxWidth) {
+    public void SetMaxWidth(double maxWidth) {
+        if (Math.Abs(maxWidth - maxWidth_) < double.Epsilon) {
+            return;
+        }
+        
         maxWidth_ = maxWidth;
         Redraw();
         InvalidateMeasure();
