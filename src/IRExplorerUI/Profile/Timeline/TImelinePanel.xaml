@@ -110,7 +110,6 @@
                     </Button>
                     <Separator />
                     <Button
-                        Margin="4,0,0,0"
                         Command="irExplorerUi:GraphCommand.GraphZoomOut"
                         CommandTarget="{Binding ElementName=GraphHost}"
                         ToolTip="Zoom Out (Ctrol+_">
@@ -122,20 +121,46 @@
                         ToolTip="Zoom In (Ctrl+=)">
                         <Image Source="{StaticResource PlusIcon}" />
                     </Button>
-
                     <Separator />
+
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontWeight="Medium"
+                        Foreground="DarkBlue"
+                        Text="Filter:"
+                        Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <TextBlock
+                        Margin="4,0,4,0"
+                        VerticalAlignment="Center"
+                        FontWeight="Medium"
+                        Foreground="DarkBlue"
+                        Text="{Binding FilteredTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}"
+                        Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <Button
+                        Command="local:CallTreeCommand.ClearSearch"
+                        TabIndex="5"
+                        ToolTip="Remove timeline filter"
+                        Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Image
+                            Width="16"
+                            Height="16"
+                            Source="{StaticResource ClearIcon}" />
+                    </Button>
 
                     <ToggleButton
                         Content="m!F"
                         IsChecked="{Binding Path=PrependModuleToFunction, Mode=TwoWay}"
-                        ToolTip="Show the module name in front of the function name" />
+                        ToolTip="Show the module name in front of the function name"
+                        Visibility="Collapsed" />
 
                     <ToggleButton
                         Height="20"
                         Margin="0,0,0,0"
                         Padding="0,0,2,0"
                         IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
-                        ToolTip="Enable/disable function details paenl">
+                        ToolTip="Enable/disable function details panel"
+                        Visibility="Collapsed">
                         <StackPanel Orientation="Horizontal">
                             <Image
                                 Width="16"
@@ -151,7 +176,8 @@
                         Margin="0,0,0,0"
                         Padding="0,0,2,0"
                         IsChecked="{Binding Path=ShowNodePanel, Mode=TwoWay}"
-                        ToolTip="Enable/disable function details paenl">
+                        ToolTip="Enable/disable function details panel"
+                        Visibility="Collapsed">
                         <StackPanel Orientation="Horizontal">
                             <Image
                                 Width="16"
@@ -164,8 +190,8 @@
 
                     <Separator />
 
-                    <Image Source="{StaticResource SearchIcon}" />
-                    <Grid Height="24">
+                    <Image Source="{StaticResource SearchIcon}" Visibility="Collapsed" />
+                    <Grid Height="24" Visibility="Collapsed">
                         <TextBox
                             x:Name="FunctionFilter"
                             Width="200"
@@ -197,7 +223,8 @@
                         Command="local:CallTreeCommand.ClearSearch"
                         CommandParameter="{Binding ElementName=FunctionFilter}"
                         TabIndex="5"
-                        ToolTip="Reset searched function">
+                        ToolTip="Reset searched function"
+                        Visibility="Collapsed">
                         <Image
                             Width="16"
                             Height="16"
@@ -246,7 +273,7 @@
             <Grid x:Name="ActivityHost" Margin="0,0,0,20">
                 <Grid
                     x:Name="ActivityViewHeader"
-                    Width="100"
+                    Width="150"
                     Height="70"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
@@ -256,23 +283,11 @@
                             Margin="0,1,0,0"
                             FontWeight="Medium"
                             Text="All Threads" />
+
                         <TextBlock
-                            FontWeight="Medium"
-                            Foreground="MediumBlue"
-                            Text="Filter"
-                            Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
-                        <TextBlock
-                            Margin="0,-1,0,0"
-                            FontWeight="Medium"
-                            Foreground="MediumBlue"
-                            Text="{Binding FilteredTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}"
-                            Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
-                        <Button
-                            Height="16"
-                            Margin="0,1,0,0"
-                            Padding="-1"
-                            Content="Remove"
-                            Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            Margin="0,2,0,0"
+                            Text="Selection"
+                            Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
                         <TextBlock Text="{Binding SelectionTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}" Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </StackPanel>
                 </Grid>
@@ -281,7 +296,7 @@
                     <local:ActivityView
                         x:Name="ActivityView"
                         Height="70"
-                        Margin="100,0,0,0"
+                        Margin="150,0,0,0"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Top"
                         BackColor="Linen" />

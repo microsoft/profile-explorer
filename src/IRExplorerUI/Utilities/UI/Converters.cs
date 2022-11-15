@@ -180,6 +180,26 @@ class MillisecondTimeConverter : IValueConverter {
     }
 }
 
+class SecondTimeConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+        if (value is TimeSpan timeValue) {
+            return timeValue.AsSecondsString();
+        }
+        else if (value is long longValue) {
+            return TimeSpan.FromTicks(longValue).AsSecondsString();
+        }
+        else if (value is double doubleValue) {
+            return TimeSpan.FromTicks((long)doubleValue).AsSecondsString();
+        }
+
+        return value;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+        return null;
+    }
+}
+
 
 class PercentageConverter : IValueConverter {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {

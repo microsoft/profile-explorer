@@ -155,22 +155,13 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     private async void GraphHost_NodeSelected(object sender, FlameGraphNode node) {
-        if (!node.HasFunction) {
-            return;
-        }
+        if (node.HasFunction) {
+            await NodeDetailsPanel.ShowWithDetailsAsync(node.CallTreeNode);
 
-        await NodeDetailsPanel.ShowWithDetailsAsync(node.CallTreeNode);
-
-        if (settings_.SyncSourceFile) {
-            //? TODO: Delegate to ProfileSession
-            // Load the source file and scroll to the hottest line.
-            var panel = Session.FindAndActivatePanel(ToolPanelKind.Source) as SourceFilePanel;
-
-            if (panel != null) {
-                await panel.LoadSourceFile(node.CallTreeNode.Function.Sections[0]);
+            if (settings_.SyncSourceFile) {
+                // Load the source file and scroll to the hottest line.
+                await Session.OpenProfileSourceFile(node.CallTreeNode);
             }
-
-            await Session.SwitchActiveFunction(node.CallTreeNode.Function);
         }
     }
 
@@ -197,15 +188,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         await OpenFunction(e);
     }
     
-    private async Task OpenFunction(FlameGraphNode node) {
-        await OpenFunction(node.CallTreeNode);
-    }
-
     private async Task OpenFunction(ProfileCallTreeNode node) {
         if (node != null && node.Function.HasSections) {
             var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
-            var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
-            await Session.SwitchDocumentSectionAsync(args);
+            await Session.OpenProfileFunction(node, openMode);
         }
     }
     
@@ -419,23 +405,24 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     private async void SelectFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
-        if (GraphHost.GraphViewer.SelectedNode != null && GraphHost.GraphViewer.SelectedNode.HasFunction) {
-            await Session.SwitchActiveFunction(GraphHost.GraphViewer.SelectedNode.CallTreeNode.Function);
+        var selectedNode = GraphHost.GraphViewer.SelectedNode;
+        if (selectedNode != null && selectedNode.HasFunction) {
+            await Session.SwitchActiveProfileFunction(selectedNode.CallTreeNode);
         }
     }
 
     private async void OpenFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
         await OpenFunction(GraphHost.GraphViewer.SelectedNode, OpenSectionKind.ReplaceCurrent);
     }
+    
     private async Task OpenFunction(FlameGraphNode node, OpenSectionKind openMode) {
         if (node != null && node.HasFunction) {
-            var args = new OpenSectionEventArgs(node.CallTreeNode.Function.Sections[0], openMode);
-            await Session.SwitchDocumentSectionAsync(args);
+            await Session.OpenProfileFunction(node.CallTreeNode, openMode);
         }
     }
 
-    private async void OpenFunctionInNewTab(object sender, ExecutedRoutedEventArgs e) {
-        await OpenFunction(GraphHost.GraphViewer.SelectedNode, OpenSectionKind.NewTab);
+    private async void OpenFunctionInNewTabExecuted(object sender, ExecutedRoutedEventArgs e) {
+        await OpenFunction(GraphHost.GraphViewer.SelectedNode, OpenSectionKind.NewTabDockRight);
     }
 
     private async void ChangeRootNodeExecuted(object sender, ExecutedRoutedEventArgs e) {

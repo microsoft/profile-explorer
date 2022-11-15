@@ -111,8 +111,11 @@ namespace IRExplorerUI {
             ProfileLoadProgressHandler progressCallback,
             CancelableTask cancelableTask);
 
-        Task<bool> FilterProfileSamples(SampleTimeRangeInfo range);
+        Task<bool> FilterProfileSamples(ProfileSampleFilter filter);
         Task<bool> RemoveProfileSamplesFilter();
+        Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode);
+        Task<bool> SwitchActiveProfileFunction(ProfileCallTreeNode node);
+        Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node);
 
         bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);
         IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);
