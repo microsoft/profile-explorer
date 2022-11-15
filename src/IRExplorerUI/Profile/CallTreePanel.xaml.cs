@@ -91,7 +91,7 @@ public class ChildFunctionEx : SearchableProfileItem, ITreeModel {
     public long Time { get; set; }
     public ChildFunctionExKind Kind { get; set; }
 
-    public bool HasCallTreeNode => CallTreeNode != null;
+    public bool HasCallTreeNode => CallTreeNode?.Function != null;
     public override TimeSpan Weight => HasCallTreeNode ? CallTreeNode.Weight : TimeSpan.Zero;
     public override TimeSpan ExclusiveWeight => HasCallTreeNode ? CallTreeNode.ExclusiveWeight : TimeSpan.Zero;
 
@@ -703,20 +703,18 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private async Task OpenFunction(ChildFunctionEx childInfo, OpenSectionKind openMode) {
-        if (childInfo != null && childInfo.Function.HasSections) {
-            var args = new OpenSectionEventArgs(childInfo.Function.Sections[0], openMode);
-            await Session.SwitchDocumentSectionAsync(args);
+        if (childInfo.HasCallTreeNode) {
+            await Session.OpenProfileFunction(childInfo.CallTreeNode, openMode);
         }
     }
 
     private async Task SwitchFunction(ChildFunctionEx childInfo) {
-        if (childInfo != null && childInfo.Function.HasSections) {
+        if (childInfo.HasCallTreeNode) {
             if (function_ != null) {
                 stateStack_.Push(function_);
             }
-
-            function_ = childInfo.Function;
-            await Session.SwitchActiveFunction(childInfo.Function);
+            
+            await Session.SwitchActiveProfileFunction(childInfo.CallTreeNode);
         }
     }
 
@@ -799,15 +797,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         FunctionFilter.Focus();
         FunctionFilter.SelectAll();
     }
-
-    private async void CallTreeButton_OnClick(object sender, RoutedEventArgs e) {
-        var panel = Session.FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
-
-        if (panel != null) {
-            await panel.DisplayProfileCallTree();
-        }
-    }
-
+    
     private void ClearSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
         ((TextBox)e.Parameter).Text = string.Empty;
     }
@@ -826,15 +816,11 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     private async void CallTree_SelectionChanged(object sender, SelectionChangedEventArgs e) {
         if (CallTree.SelectedItem is TreeNode node &&
-            node.Tag is ChildFunctionEx funcEx) {
+            node.Tag is ChildFunctionEx funcEx &&
+            funcEx.HasCallTreeNode) {
             if (settings_.SyncSourceFile) {
-                //? TODO: Delegate to the ProfilingSession manager
                 // Load the source file and scroll to the hottest line.
-                var panel = Session.FindAndActivatePanel(ToolPanelKind.Source) as SourceFilePanel;
-
-                if (panel != null) {
-                    await panel.LoadSourceFile(funcEx.Function.Sections[0]);
-                }
+                await Session.OpenProfileSourceFile(funcEx.CallTreeNode);
             }
         }
     }

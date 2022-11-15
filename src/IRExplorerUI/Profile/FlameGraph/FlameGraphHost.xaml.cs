@@ -65,7 +65,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     public event EventHandler<double> HorizontalOffsetChanged;
     public event EventHandler<double> MaxWidthChanged;
 
-
+    public new bool IsInitialized => GraphViewer.IsInitialized;
     private double GraphAreaWidth => Math.Max(0, GraphHost.ViewportWidth - 1);
     private double GraphAreaHeight=> GraphHost.ViewportHeight;
     private Rect GraphArea => new Rect(0, 0, GraphAreaWidth, GraphAreaHeight);
@@ -135,7 +135,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         callTree_ = callTree;
 
         Dispatcher.BeginInvoke(async () => {
-            if (callTree != null && !GraphViewer.IsInitialized) {
+            if (callTree != null) {
                 await GraphViewer.Initialize(callTree, GraphArea, settings_, Session);
             }
         }, DispatcherPriority.Background);
@@ -299,6 +299,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     public void SetHorizontalOffset(double offset) {
+        if (!IsInitialized) {
+            return;
+        }
+        
         ignoreScrollEvent_ = true;
         GraphHost.ScrollToHorizontalOffset(offset);
     }
@@ -607,6 +611,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     public void SetMaxWidth(double maxWidth, bool animate = true, double duration = ZoomAnimationDuration) {
+        if (!IsInitialized) {
+            return;
+        }
+
         if (Math.Abs(maxWidth - GraphViewer.MaxGraphWidth) < double.Epsilon) {
             return;
         }

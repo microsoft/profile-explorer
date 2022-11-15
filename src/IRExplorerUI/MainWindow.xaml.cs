@@ -906,7 +906,7 @@ namespace IRExplorerUI {
             OptionalStatusText.Visibility = !string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        void ComputeFunctionProfile(ProfileData profile, int sampleStartIndex, int sampleEndIndex, int threadId) {
+        void ComputeFunctionProfile(ProfileData profile, ProfileSampleFilter filter) {
             profile.ModuleWeights.Clear();
             profile.ProfileWeight = TimeSpan.Zero;
             profile.TotalWeight = TimeSpan.Zero;
@@ -917,6 +917,9 @@ namespace IRExplorerUI {
 
             profile.CallTree = null; //? Recycle nodes
             ProfileCallTree callTree = new();
+
+            int sampleStartIndex = filter.TimeRange?.StartSampleIndex ?? 0;
+            int sampleEndIndex = filter.TimeRange?.EndSampleIndex ?? profile.Samples.Count;
 
             int sampleCount = sampleEndIndex - sampleStartIndex;
             int chunks = Math.Min(8, (Environment.ProcessorCount * 3) / 4);
@@ -937,7 +940,8 @@ namespace IRExplorerUI {
                     for (int i = start; i < end; i++) {
                         var (sample, stack) = profile.Samples[i];
 
-                        if (threadId != -1 && stack.Context.ThreadId != threadId) {
+                        if (filter.ThreadIds != null && 
+                            !filter.ThreadIds.Contains(stack.Context.ThreadId)) {
                             continue;
                         }
 
@@ -1311,15 +1315,15 @@ namespace IRExplorerUI {
             }
         }
         
-        public async Task<bool> FilterProfileSamples(SampleTimeRangeInfo range) {
+        public async Task<bool> FilterProfileSamples(ProfileSampleFilter filter) {
             var sw = Stopwatch.StartNew();
 
             Trace.WriteLine($"--------------------------------------------------------\n");
-            Trace.WriteLine($"Filter range {range.StartSampleIndex}-{range.EndSampleIndex} out of {ProfileData.Samples.Count}");
+            Trace.WriteLine($"Filter {filter}, samples {ProfileData.Samples.Count}");
 
             {
                 var sw2 = Stopwatch.StartNew();
-                ComputeFunctionProfile(this.ProfileData, range.StartSampleIndex, range.EndSampleIndex, range.ThreadId);
+                ComputeFunctionProfile(this.ProfileData, filter);
                 Trace.WriteLine($"1) ComputeFunctionProfile {sw2.ElapsedMilliseconds}");
             }
 
@@ -1352,9 +1356,37 @@ namespace IRExplorerUI {
         }
 
         public async Task<bool> RemoveProfileSamplesFilter() {
-            var range = new SampleTimeRangeInfo(TimeSpan.Zero, TimeSpan.Zero,
-                                                0, ProfileData.Samples.Count, -1);
-            return await FilterProfileSamples(range);
+            return await FilterProfileSamples(new ProfileSampleFilter());
+        }
+
+        public async Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode) {
+            if (node.Function == null) {
+                return false;
+            }
+
+            var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
+            await SwitchDocumentSectionAsync(args);
+            return true;
+        }
+
+        public async Task<bool> SwitchActiveProfileFunction(ProfileCallTreeNode node) {
+            if (node.Function == null) {
+                return false;
+            }
+
+            await SwitchActiveFunction(node.Function);
+            return true;
+        }
+
+        public async Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node) {
+            var panel = FindAndActivatePanel(ToolPanelKind.Source) as SourceFilePanel;
+
+            if (panel != null) {
+                await panel.LoadSourceFile(node.Function.Sections[0]);
+                return true;
+            }
+            
+            return false;
         }
     }
 }

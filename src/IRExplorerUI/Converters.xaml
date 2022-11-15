@@ -20,6 +20,7 @@
     <utils:TreeViewLineConverter x:Key="LineConverter" />
     <utils:ColorBrushOpacityConverter x:Key="ColorBrushOpacityConverter" />
     <utils:MillisecondTimeConverter x:Key="MillisecondTimeConverter" />
+    <utils:SecondTimeConverter x:Key="SecondTimeConverter" />
     <utils:PercentageConverter x:Key="PercentageConverter" />
     <utils:ExclusivePercentageConverter x:Key="ExclusivePercentageConverter" />
     <utils:ListToStringConverter x:Key="StringListConverter" />

@@ -11,12 +11,21 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace IRExplorerUI.Profile;
 
 public record SampleTimeRangeInfo(TimeSpan StartTime, TimeSpan EndTime,
-                                  int StartSampleIndex, int EndSampleIndex, int ThreadId);
+                                  int StartSampleIndex, int EndSampleIndex, 
+                                  int ThreadId);
+
+public class ProfileSampleFilter {
+    public SampleTimeRangeInfo TimeRange { get; set; }
+    public List<int> ThreadIds { get; set; }
+
+    public override string ToString() {
+        return $"time: {TimeRange}, threads: {ThreadIds}";
+    }
+}
 
 public record SampleTimePointInfo(TimeSpan Time, int SampleIndex, int ThreadId);
 
@@ -91,8 +100,8 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     private TimeSpan endTime_;
 
     public ActivityView() {
-        filteredOutColor_ = ColorBrushes.GetTransparentBrush(Colors.Gray, 120);
-        selectionBackColor_ = ColorBrushes.GetTransparentBrush(Colors.Gold, 120);
+        filteredOutColor_ = ColorBrushes.GetTransparentBrush(Colors.WhiteSmoke, 180);
+        selectionBackColor_ = ColorBrushes.GetTransparentBrush(Colors.Gold, 80);
         selectionBorderColor_ = ColorPens.GetPen(Colors.Black);
         markerBrush_ = ColorBrushes.GetTransparentBrush(Colors.DarkRed, 200);
 
@@ -105,6 +114,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     public event EventHandler<SampleTimeRangeInfo> SelectingTimeRange;
     public event EventHandler<SampleTimeRangeInfo> SelectedTimeRange;
     public event EventHandler<SampleTimeRangeInfo> FilteredTimeRange;
+    public event EventHandler<bool> ThreadIncludedChanged;
     public event EventHandler ClearedSelectedTimeRange;
     public event EventHandler ClearedFilteredTimeRange;
 
@@ -114,15 +124,36 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     public int ThreadId { get; private set; }
     public string ThreadName { get; set; }
+    public TimeSpan ThreadWeight => slices_ != null ? slices_[0].TotalWeight : TimeSpan.Zero;
     public bool IsSingleThreadView => ThreadId != -1;
+
     public bool HasSelection => hasSelection_;
+    public TimeSpan SelectionStartTime => selectionStartTime_;
     public TimeSpan SelectionTime => selectionEndTime_ - selectionStartTime_;
+    
     public bool HasFilter => hasFilter_;
     public TimeSpan FilteredTime => filterEndTime_ - filterStartTime_;
+    public SampleTimeRangeInfo FilteredRange => GetFilteredTimeRange();
     public new double MaxWidth => maxWidth_;
-    
-    public double ThreadWeight => (slices_ == null || profile_ == null || profile_.TotalWeight.Ticks == 0) ? 0 :
-                                  ((double)slices_[0].TotalWeight.Ticks / profile_.TotalWeight.Ticks);
+
+    private bool? prevIsThreadIncluded_;
+    private bool isThreadIncluded_;
+    public bool IsThreadIncluded {
+        get => isThreadIncluded_;
+        set {
+            if (value != isThreadIncluded_) {
+                prevIsThreadIncluded_ = null;
+                SetField(ref isThreadIncluded_, value);
+                ThreadIncludedChanged?.Invoke(this, value);
+            }
+        }
+    }
+
+    private void SetIsThreadIncluded(bool included) {
+        bool state = IsThreadIncluded;
+        IsThreadIncluded = included;
+        prevIsThreadIncluded_ = state;
+    }
 
     public Brush BackColor {
         get => backColor_;
@@ -234,6 +265,12 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                                        TimeToSampleIndexBack(selectionEndTime_, SelectionTimeDiff), ThreadId);
     }
 
+    private SampleTimeRangeInfo GetFilteredTimeRange() {
+        return new SampleTimeRangeInfo(filterStartTime_ + startTime_, filterEndTime_ + startTime_,
+            TimeToSampleIndex(selectionStartTime_, SelectionTimeDiff),
+            TimeToSampleIndexBack(selectionEndTime_, SelectionTimeDiff), ThreadId);
+    }
+
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
         var time = PositionToTime(e.GetPosition(this).X);
 
@@ -324,13 +361,15 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         filterStartTime_ = range.StartTime - startTime_;
         filterEndTime_ = range.EndTime - startTime_;
         hasFilter_ = true;
+        SetIsThreadIncluded(true);
         ClearSelectedTimeRange();
         UpdateFilterState();
     }
-
+    
     public void FilterAllOut() {
         filterStartTime_ = filterEndTime_ = TimeSpan.Zero;
         hasFilter_ = true;
+        SetIsThreadIncluded(false);
         ClearSelectedTimeRange();
         UpdateFilterState();
     }
@@ -338,6 +377,11 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     public void ClearTimeRangeFilter() {
         hasFilter_ = false;
         UpdateFilterState();
+
+        // Restore previous state if it wasn't changed since the filter was applied.
+        if (prevIsThreadIncluded_.HasValue) {
+            IsThreadIncluded = prevIsThreadIncluded_.Value;
+        }
     }
 
     private void UpdateFilterState() {
@@ -352,6 +396,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         }
 
         initialized_ = true;
+        isThreadIncluded_ = true;
         profile_ = profile;
         visibleArea_ = visibleArea;
         ThreadId = threadId;
@@ -519,9 +564,15 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             }
 
             //? RE-ENABLE and implement shrinking
-            //if (scaledSliceWidth > 3 * SliceWidth) {
+            //if (scaledSliceWidth > 2 * SliceWidth) {
             //    double newWidth = Math.Max(1, SliceWidth * (SliceWidth / scaledSliceWidth));
             //    if (newWidth < sliceWidth_) {
+            //        StartComputeSampleSlices(newWidth);
+            //    }
+            //}
+            //else if (scaledSliceWidth < SliceWidth / 2) {
+            //    double newWidth = Math.Max(1, SliceWidth * (SliceWidth / scaledSliceWidth));
+            //    if (newWidth > sliceWidth_) {
             //        StartComputeSampleSlices(newWidth);
             //    }
             //}
@@ -864,8 +915,8 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         RemoveLogicalChild(visual_);
     }
 
-    public void UpdateVisibleArea(Rect visibleArea) {
-        visibleArea_ = visibleArea;
+    public void SetHorizontalOffset(double offset) {
+        visibleArea_ = new Rect(offset, 0, ActualWidth, ActualHeight);
         Redraw();
     }
 
