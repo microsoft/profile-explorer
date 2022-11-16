@@ -234,22 +234,27 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
             // Remove the dummy node and add the real children.
             // If the children have children on their own, new dummy nodes will be used.
             funcNode.Children.Clear();
-
+            ChildFunctionEx firstNodeEx = null;
+            
             if (funcNode.Kind == ChildFunctionExKind.CalleeNode && callNode.HasChildren) {
                 var percentageFunc = PickPercentageFunction(callNode.Weight);
 
                 foreach (var childNode in callNode.Children) {
-                    CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
-                        visitedNodes, percentageFunc);
+                    firstNodeEx ??= CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
+                                                        visitedNodes, percentageFunc);
                 }
             }
             else if (funcNode.Kind == ChildFunctionExKind.CallerNode && callNode.HasCallers) {
                 var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
 
                 foreach (var childNode in callNode.Callers) {
-                    CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
-                        visitedNodes, percentageFunc);
+                    firstNodeEx = CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
+                                                      visitedNodes, percentageFunc);
                 }
+            }
+
+            if (firstNodeEx != null) {
+                BringIntoView(firstNodeEx);
             }
         }
     }
@@ -351,8 +356,11 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         }
 
         ExpandPathToNode(nodeEx, true);
+        BringIntoView(nodeEx);
+    }
 
-        if (nodeEx.TreeNode != null) {
+    private void BringIntoView(ChildFunctionEx nodeEx) {
+        if (nodeEx.TreeNode != null)         {
             CallTree.ScrollIntoView(nodeEx.TreeNode);
         }
     }

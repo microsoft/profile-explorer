@@ -280,7 +280,6 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
 
         Session = session;
-        initialized_ = true;
         flameGraph_ = new FlameGraph(callTree, Session.CompilerInfo.NameProvider.FormatFunctionName);
         isTimelineView_ = isTimelineView;
 
@@ -298,6 +297,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         AddVisualChild(graphVisual_);
         AddLogicalChild(graphVisual_);
         UpdateMaxWidth(renderer_.MaxGraphWidth);
+        initialized_ = true;
     }
 
     public void SettingsUpdated(FlameGraphSettings settings) {

@@ -181,7 +181,15 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
                 await Task.WhenAll(tasks.ToArray());
                 profileData_.CallTree = callTree;
-                profileData_.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
+
+                if (profileData_.Samples != null) {
+                    profileData_.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
+                }
+                else {
+                    // Make an empty list to keep other parts happy.
+                    profileData_.Samples = new List<(ProfileSample Sample, ResolvedProfileStack Stack)>();
+                }
+
                 Trace.WriteLine($"Done processing samples in {sw.Elapsed}");
 
                 if (options_.IncludePerformanceCounters) {
@@ -430,11 +438,10 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
             lock (profileData_) {
                 //? TODO:  Use RW lock
-                funcProfile = profileData_.GetOrCreateFunctionProfile(textFunction);
+                funcProfile = profileData_.GetOrCreateFunctionProfile(textFunction, funcDebugInfo);
             }
 
             lock (funcProfile) {
-                funcProfile.FunctionDebugInfo = funcDebugInfo;
                 var offset = frameRva - funcRva;
 
                 // Don't count the inclusive time for recursive functions multiple times.
@@ -531,6 +538,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                     exeDocument = pair.Value.ModuleDocument;
                 }
                 else if (pair.Value.ModuleDocument.ModuleName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
+                    // Pick the better match EXE.
                     otherDocuments.Add(exeDocument);
                     exeDocument = pair.Value.ModuleDocument;
                     continue;
@@ -808,7 +816,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
                     //? TODO: Use RW lock
                     lock (profileData_) {
-                        profile = profileData_.GetOrCreateFunctionProfile(textFunction);
+                        profile = profileData_.GetOrCreateFunctionProfile(textFunction, funcInfo);
                     }
 
                     profile.AddCounterSample(offset, counter.CounterId, 1);
