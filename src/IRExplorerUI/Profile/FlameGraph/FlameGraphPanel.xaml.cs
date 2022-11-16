@@ -351,11 +351,19 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     public void MarkFunctions(List<ProfileCallTreeNode> nodes) {
+        if (!IsInitialized) {
+            return;
+        }
+        
         GraphHost.GraphViewer.ClearSelection();
         GraphHost.GraphViewer.SelectNodes(nodes);
     }
 
     public void ClearMarkedFunctions() {
+        if (!IsInitialized) {
+            return;
+        }
+        
         GraphHost.GraphViewer.ClearSelection();
     }
 }

@@ -83,6 +83,14 @@ namespace IRExplorerUI.Compilers {
                     using var symbolReader = new SymbolReader(logWriter, userSearchPath);
                     symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
+                    //? TODO: Workaround for cases where the ETL file doesn't have a timestamp
+                    //? and SymbolReader would reject the bin even on the same machine...
+                    //? Better way to handle this is to have SymReader accept a func to check if PDB is valid to use
+                    if (binaryFile.TimeStamp == 0 && File.Exists(binaryFile.ImagePath)) {
+                        var binInfo = GetBinaryFileInfo(binaryFile.ImagePath);
+                        binaryFile.TimeStamp = binInfo.TimeStamp;
+                    }
+                    
                     result = symbolReader.FindExecutableFilePath(binaryFile.ImageName,
                         (int)binaryFile.TimeStamp,
                         (int)binaryFile.ImageSize);

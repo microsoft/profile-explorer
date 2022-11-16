@@ -12,6 +12,7 @@ using IRExplorerCore.Utilities;
 using ProtoBuf;
 using IRExplorerUI;
 using System.Threading.Tasks;
+using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.Profile;
 
@@ -171,9 +172,10 @@ public class ProfileData {
         return GetFunctionProfile(function) != null;
     }
 
-    public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function) {
+    public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function, 
+                                                          FunctionDebugInfo debugInfo) {
         if (!FunctionProfiles.TryGetValue(function, out var profile)) {
-            profile = new FunctionProfileData();
+            profile = new FunctionProfileData() { FunctionDebugInfo = debugInfo };
             FunctionProfiles.TryAdd(function, profile);
         }
 
@@ -353,7 +355,7 @@ public class ProfileData {
                         var funcRva = resolvedFrame.Info.DebugInfo.RVA;
                         var frameRva = resolvedFrame.FrameRVA;
                         var textFunction = resolvedFrame.Info.Function;
-                        var funcProfile = profile.GetOrCreateFunctionProfile(resolvedFrame.Info.Function);
+                        var funcProfile = profile.GetOrCreateFunctionProfile(resolvedFrame.Info.Function, resolvedFrame.Info.DebugInfo);
                         
                         //? TODO: Info.Profile ends up being the func profile in the previous run
                         //? resolvedFrame.Info.Profile = funcProfile;
