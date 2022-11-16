@@ -40,41 +40,42 @@
         HorizontalScrollBarVisibility="Auto"
         ScrollChanged="GraphHost_OnScrollChanged"
         VerticalScrollBarVisibility="Auto">
-        <local:FlameGraphViewer x:Name="GraphViewer" />
-        <irExplorerUi:ScrollViewerClickable.ContextMenu>
-            <ContextMenu>
-                <MenuItem
-                    Command="local:CallTreeCommand.ChangeRootNode"
-                    Header="Set Function as Root"
-                    ToolTip="" />
-                <MenuItem
-                    Command="local:CallTreeCommand.SelectFunction"
-                    Header="Select Function"
-                    InputGestureText="Return"
-                    ToolTip="" />
-                <MenuItem
-                    Command="local:CallTreeCommand.OpenFunction"
-                    Header="Open Function"
-                    InputGestureText="Ctrl+Return"
-                    ToolTip="" />
-                <MenuItem
-                    Command="local:CallTreeCommand.OpenFunctionInNewTab"
-                    Header="Open Function in New Tab"
-                    InputGestureText="Ctrl+Shift+Return"
-                    ToolTip="" />
-                <MenuItem
-                    Command="irExplorerUi:GraphCommand.GraphZoomOut"
-                    Header="Select Function in Call Tree"
-                    InputGestureText="Shift+Return"
-                    ToolTip="" />
-                <MenuItem
-                    Command="irExplorerUi:GraphCommand.GraphZoomOut"
-                    Header="Mark Function Instances"
-                    InputGestureText="Shift+Return"
-                    IsEnabled="False"
-                    ToolTip="" />
+        <local:FlameGraphViewer x:Name="GraphViewer">
+            <local:FlameGraphViewer.ContextMenu>
+                <ContextMenu>
+                    <MenuItem
+                        Command="local:CallTreeCommand.ChangeRootNode"
+                        Header="Set Function as Root"
+                        ToolTip="" />
+                    <MenuItem
+                        Command="local:CallTreeCommand.SelectFunction"
+                        Header="Select Function"
+                        InputGestureText="Return"
+                        ToolTip="" />
+                    <MenuItem
+                        Command="local:CallTreeCommand.OpenFunction"
+                        Header="Open Function"
+                        InputGestureText="Ctrl+Return"
+                        ToolTip="" />
+                    <MenuItem
+                        Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                        Header="Open Function in New Tab"
+                        InputGestureText="Ctrl+Shift+Return"
+                        ToolTip="" />
+                    <MenuItem
+                        Command="irExplorerUi:GraphCommand.GraphZoomOut"
+                        Header="Select Function in Call Tree"
+                        InputGestureText="Shift+Return"
+                        ToolTip="" />
+                    <MenuItem
+                        Command="irExplorerUi:GraphCommand.GraphZoomOut"
+                        Header="Mark Function Instances"
+                        InputGestureText="Shift+Return"
+                        IsEnabled="False"
+                        ToolTip="" />
 
-            </ContextMenu>
-        </irExplorerUi:ScrollViewerClickable.ContextMenu>
+                </ContextMenu>
+            </local:FlameGraphViewer.ContextMenu>
+        </local:FlameGraphViewer>
     </irExplorerUi:ScrollViewerClickable>
 </UserControl>

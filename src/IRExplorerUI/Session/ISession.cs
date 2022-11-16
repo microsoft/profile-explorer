@@ -116,6 +116,11 @@ namespace IRExplorerUI {
         Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode);
         Task<bool> SwitchActiveProfileFunction(ProfileCallTreeNode node);
         Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node);
+        Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range);
+        Task<bool> ProfileSampleRangeDeselected();
+        Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node);
+        Task<bool> ProfileFunctionSelected(IRTextFunction function);
+        Task<bool> ProfileFunctionDeselected();
 
         bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);
         IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);

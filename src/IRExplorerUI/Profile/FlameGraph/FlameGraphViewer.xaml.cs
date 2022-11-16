@@ -160,12 +160,12 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     private HighlightingStyle PickHoveredNodeStyle(HighlightingStyle style) {
-        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.85f);
+        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.9f);
         return new HighlightingStyle(newColor, style.Border);
     }
 
     private HighlightingStyle PickSelectedNodeStyle(HighlightingStyle style) {
-        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.85f);
+        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.9f);
         //var newColor = style.BackColor;
         return new HighlightingStyle(newColor, ColorPens.GetBoldPen(style.Border));
     }

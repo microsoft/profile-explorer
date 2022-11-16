@@ -2794,5 +2794,19 @@ namespace IRExplorerUI {
             var moduleEx = ModulesList.SelectedItem as ModuleEx;
             ProfileReportPanel.ShowReport(Session.ProfileData.Report, Session, moduleEx?.Status);
         }
+
+        public void MarkFunctions(List<IRTextFunction> list) {
+            foreach (var func in list) {
+                if (functionExtMap_.TryGetValue(func, out var funcEx)) {
+                    funcEx.IsMarked = true;
+                }
+            }
+        }
+
+        public void ClearMarkedFunctions() {
+            foreach (var funcEx in functionExtMap_.Values) {
+                funcEx.IsMarked = false;
+            }
+        }
     }
 }

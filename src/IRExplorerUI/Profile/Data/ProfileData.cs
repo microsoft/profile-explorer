@@ -11,6 +11,7 @@ using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using ProtoBuf;
 using IRExplorerUI;
+using System.Threading.Tasks;
 
 namespace IRExplorerUI.Profile;
 
@@ -276,6 +277,116 @@ public class ProfileData {
             return Threads.GetValueOrNull(threadId);
         }
         return null;
+    }
+
+    public void FilterFunctionProfile(ProfileSampleFilter filter) {
+        ModuleWeights.Clear();
+        ProfileWeight = TimeSpan.Zero;
+        TotalWeight = TimeSpan.Zero;
+        FunctionProfiles.Clear();
+        CallTree = null; //? Recycle nodes
+
+        //? TODO: Split ProfileData into a part that has the samples and other info that doesn't change,
+        //? while the rest is more like a processing result similar to FuncProfileData
+        var profile = ComputeFunctionProfile(this, filter);
+        ModuleWeights = profile.ModuleWeights;
+        ProfileWeight = profile.ProfileWeight;
+        TotalWeight = profile.TotalWeight;
+        FunctionProfiles = profile.FunctionProfiles;
+        CallTree = profile.CallTree;
+    }
+
+    public ProfileData ComputeFunctionProfile(ProfileData baseProfile, ProfileSampleFilter filter, int maxChunks = int.MaxValue) {
+        var profile = new ProfileData();
+        ProfileCallTree callTree = new();
+
+        int sampleStartIndex = filter.TimeRange?.StartSampleIndex ?? 0;
+        int sampleEndIndex = filter.TimeRange?.EndSampleIndex ?? baseProfile.Samples.Count;
+
+        int sampleCount = sampleEndIndex - sampleStartIndex;
+        int chunks = Math.Min(maxChunks, Math.Min(8, (Environment.ProcessorCount * 3) / 4));
+
+        int chunkSize = sampleCount / chunks;
+        var tasks = new List<Task>();
+        var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
+        var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
+
+        for (int k = 0; k < chunks; k++) {
+            int start = Math.Min(sampleStartIndex + k * chunkSize, sampleEndIndex);
+            int end = Math.Min(sampleStartIndex + (k + 1) * chunkSize, sampleEndIndex);
+
+            tasks.Add(taskFactory.StartNew(() => {
+                HashSet<int> stackModules = new();
+                HashSet<IRTextFunction> stackFuncts = new();
+
+                for (int i = start; i < end; i++) {
+                    var (sample, stack) = baseProfile.Samples[i];
+
+                    if (filter.ThreadIds != null &&
+                        !filter.ThreadIds.Contains(stack.Context.ThreadId)) {
+                        continue;
+                    }
+
+                    //? TODO: Use same Interlocked trick from CallTreeNode to avoid lock
+                    lock (profile) {
+                        profile.TotalWeight += sample.Weight;
+                        profile.ProfileWeight += sample.Weight;
+                    }
+
+                    bool isTopFrame = true;
+                    stackModules.Clear();
+                    stackFuncts.Clear();
+
+                    foreach (var resolvedFrame in stack.StackFrames) {
+                        if (resolvedFrame.IsUnknown) {
+                            continue;
+                        }
+
+                        if (isTopFrame && stackModules.Add(resolvedFrame.Info.Image.Id)) {
+                            //? TODO: Avoid lock by summing per thread, accumulate at the end
+                            //? TODO: Also, don't use mod name as key, use imageId
+                            lock (profile) {
+                                profile.AddModuleSample(resolvedFrame.Info.Image.ModuleName, sample.Weight);
+                            }
+                        }
+
+                        var funcRva = resolvedFrame.Info.DebugInfo.RVA;
+                        var frameRva = resolvedFrame.FrameRVA;
+                        var textFunction = resolvedFrame.Info.Function;
+                        var funcProfile = profile.GetOrCreateFunctionProfile(resolvedFrame.Info.Function);
+                        
+                        //? TODO: Info.Profile ends up being the func profile in the previous run
+                        //? resolvedFrame.Info.Profile = funcProfile;
+
+                        lock (funcProfile) {
+                            var offset = frameRva - funcRva;
+
+                            // Don't count the inclusive time for recursive functions multiple times.
+                            if (stackFuncts.Add(textFunction)) {
+                                funcProfile.AddInstructionSample(offset, sample.Weight);
+                                funcProfile.Weight += sample.Weight;
+                                funcProfile.SampleStartIndex = Math.Min(funcProfile.SampleStartIndex, i);
+                                funcProfile.SampleEndIndex = Math.Max(funcProfile.SampleEndIndex, i);
+                            }
+
+                            // Count the exclusive time for the top frame function.
+                            if (isTopFrame) {
+                                funcProfile.ExclusiveWeight += sample.Weight;
+                            }
+                        }
+
+                        isTopFrame = false;
+                    }
+
+                    callTree.UpdateCallTree(sample, stack);
+                }
+            }));
+
+        }
+
+        Task.WhenAll(tasks.ToArray()).Wait();
+        profile.CallTree = callTree;
+        return profile;
     }
 }
 

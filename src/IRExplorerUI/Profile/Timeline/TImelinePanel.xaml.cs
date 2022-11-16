@@ -35,6 +35,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private int searchResultIndex_;
     private List<ActivityTimelineView> threadActivityViews_;
     private Dictionary<int, ActivityTimelineView> threadActivityViewsMap_;
+    private Dictionary<int, DraggablePopupHoverPreview> threadHoverPreviewMap_;
 
     private DoubleAnimation widthAnimation_;
     private DoubleAnimation zoomAnimation_;
@@ -159,25 +160,26 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                     SetupActivityViewEvents(threadView.ActivityHost);
                     threadView.ActivityHost.BackColor = Brushes.WhiteSmoke;
                     threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
-                    threadView.ActivityHost.SamplesBackColor = ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(thread.ThreadId));
+                    threadView.ActivityHost.SamplesBackColor = ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor((uint)thread.ThreadId));
 
                      var threadInfo = Session.ProfileData.FindThread(thread.ThreadId);
                     
                      if (threadInfo != null && threadInfo.HasName) {
-                         var backColor = ColorUtils.GeneratePastelColor(threadInfo.Name.GetHashCode());
+                         var backColor = ColorUtils.GeneratePastelColor((uint)threadInfo.Name.GetHashCode());
                          threadView.Margin.Background = ColorBrushes.GetBrush(backColor);
                     }
 
                     threadActivityViews_.Add(threadView);
                     threadActivityViewsMap_[thread.ThreadId] = threadView;
                     await threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea, thread.ThreadId);
+                    SetupActivityHoverPreview(threadView.ActivityHost);
 
-                    //threadView.TimelineHost.Session = Session;
-                    //threadView.TimelineHost.InitializeTimeline(callTree, thread.ThreadId);
-                    //SetupTimelineViewEvents(threadView.TimelineHost);
+                //threadView.TimelineHost.Session = Session;
+                //threadView.TimelineHost.InitializeTimeline(callTree, thread.ThreadId);
+                //SetupTimelineViewEvents(threadView.TimelineHost);
                 }
-
-                ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
+                
+            ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
         }, DispatcherPriority.Background);
     }
 
@@ -198,38 +200,59 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
 
         SetupActivityViewEvents(ActivityView);
+        SetupActivityHoverPreview(ActivityView);
+    }
 
-        //stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
-        //    CallTreeNodePopup.PopupHoverDuration,
-        //    (mousePoint, previewPoint) => {
-        //        var pointedNode = GraphViewer.FindPointedNode(mousePoint);
-        //        var callNode = pointedNode?.CallTreeNode;
+    private void SetupActivityHoverPreview(ActivityView view) {
+        var preview = new DraggablePopupHoverPreview(view,
+            CallTreeNodePopup.PopupHoverLongDuration,
+            (mousePoint, previewPoint) => {
+                var timePoint = view.CurrentTimePoint;
+                ProfileCallTreeNode callNode = null;
 
-        //        if (callNode != null) {
-        //            // If popup already opened for this node reuse the instance.
-        //            if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup popup) {
-        //                popup.UpdatePosition(previewPoint, GraphViewer);
-        //                popup.UpdateNode(callNode);
-        //                return popup;
-        //            }
+                if (timePoint.SampleIndex < Session.ProfileData.Samples.Count) {
+                    var filter = new ProfileSampleFilter() {
+                        TimeRange = new SampleTimeRangeInfo(timePoint.Time, timePoint.Time,
+                            Math.Max(0, timePoint.SampleIndex - 20),
+                            Math.Min(timePoint.SampleIndex + 20, Session.ProfileData.Samples.Count), timePoint.ThreadId),
+                        ThreadIds = timePoint.ThreadId != -1 ? new List<int>() { timePoint.ThreadId } : null
+                    };
 
-        //            return new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, GraphViewer, Session);
-        //        }
+                    var rangeProfile = Session.ProfileData.ComputeFunctionProfile(Session.ProfileData, filter, 1);
+                    var funcs = rangeProfile.GetSortedFunctions();
 
-        //        return null;
-        //    },
-        //    (mousePoint, popup) => {
-        //        if (popup is CallTreeNodePopup previewPopup) {
-        //            // Hide if not over the same node anymore.
-        //            var pointedNode = GraphViewer.FindPointedNode(mousePoint);
-        //            return previewPopup.CallTreeNode != pointedNode?.CallTreeNode;
-        //        }
+                    if (funcs.Count > 0) {
+                        var nodes = rangeProfile.CallTree.GetCallTreeNodes(funcs[0].Item1);
+                        callNode = nodes[0];
+                    }
+                }
 
-        //        return true;
-        //    },
-        //    popup => {
-        //        Session.RegisterDetachedPanel(popup);
-        //    });
+                if (callNode != null) {
+                    // If popup already opened for this node reuse the instance.
+                    if (threadHoverPreviewMap_.TryGetValue(view.ThreadId, out var hoverPreview) &&
+                        hoverPreview.PreviewPopup is CallTreeNodePopup popup) {
+                        popup.UpdatePosition(previewPoint, view);
+                        popup.UpdateNode(callNode);
+                        return popup;
+                    }
+
+                    return new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, view, Session);
+                }
+
+                return null;
+            },
+            (mousePoint, popup) => {
+                if (popup is CallTreeNodePopup previewPopup) {
+                    return true;
+                }
+
+                return true;
+            },
+            popup => {
+                Session.RegisterDetachedPanel(popup);
+            });
+        threadHoverPreviewMap_ ??= new Dictionary<int, DraggablePopupHoverPreview>();
+        threadHoverPreviewMap_[view.ThreadId] = preview;
     }
 
     private void SetupActivityViewEvents(ActivityView view) {
@@ -298,12 +321,12 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         await Session.RemoveProfileSamplesFilter();
     }
 
-    private async void ActivityView_FilteredTimeRange(object sender, SampleTimeRangeInfo e) {
+    private async void ActivityView_FilteredTimeRange(object sender, SampleTimeRangeInfo range) {
         var view = sender as ActivityView;
         changingThreadFiltering_ = true;
         
         if (view.IsSingleThreadView) {
-            ActivityView.FilterTimeRange(e);
+            ActivityView.FilterTimeRange(range);
 
             foreach (var threadView in threadActivityViews_) {
                 if (threadView.ActivityHost != view) {
@@ -314,12 +337,12 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         else {
             if (threadActivityViews_ != null) {
                 foreach (var threadView in threadActivityViews_) {
-                    threadView.ActivityHost.FilterTimeRange(e);
+                    threadView.ActivityHost.FilterTimeRange(range);
                 }
             }
         }
 
-        var filter = ConstructSampleFilter(e);
+        var filter = ConstructSampleFilter(range);
         changingThreadFiltering_ = false;
         await Session.FilterProfileSamples(filter);
     }
@@ -349,7 +372,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         return filter;
     }
 
-    private void ActivityView_ClearedSelectedTimeRange(object sender, EventArgs e) {
+    private async void ActivityView_ClearedSelectedTimeRange(object sender, EventArgs e) {
         var view = sender as ActivityView;
 
         if (view.IsSingleThreadView) {
@@ -363,19 +386,17 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                 }
             }
         }
-
-        //? GraphViewer.ClearSelection();
+        
+        await Session.ProfileSampleRangeDeselected();
     }
 
-    private void ActivityView_OnSelectedTimeRange(object sender, SampleTimeRangeInfo e) {
-        Trace.WriteLine($"Selected {e.StartTime} / {e.EndTime}, range {e.StartSampleIndex}-{e.EndSampleIndex}");
-
-        //? GraphViewer.ClearSelection();
+    private void ActivityView_OnSelectedTimeRange(object sender, SampleTimeRangeInfo range) {
+        Trace.WriteLine($"Selected {range.StartTime} / {range.EndTime}, range {range.StartSampleIndex}-{range.EndSampleIndex}");
 
         var view = sender as ActivityView;
 
         if (view.IsSingleThreadView) {
-            ActivityView.SelectTimeRange(e);
+            ActivityView.SelectTimeRange(range);
 
             foreach (var threadView in threadActivityViews_) {
                 if (threadView.ActivityHost != view) {
@@ -386,30 +407,19 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         else {
             if (threadActivityViews_ != null) {
                 foreach (var threadView in threadActivityViews_) {
-                    threadView.ActivityHost.SelectTimeRange(e);
+                    threadView.ActivityHost.SelectTimeRange(range);
                 }
             }
         }
 
-        //if (GraphViewer.IsInitialized) {
-        //    if (isTimelineView_) {
-        //        var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
-        //        GraphViewer.SelectNodes(nodes);
-        //    }
-        //    else {
-        //        var nodes = FindCallTreeNodesForSamples(e.StartSampleIndex, e.EndSampleIndex, e.ThreadId, Session.ProfileData);
-        //        GraphViewer.SelectNodes(nodes);
-        //    }
-        //}
+        Session.ProfileSampleRangeSelected(range);
     }
 
-    private void ActivityView_OnSelectingTimeRange(object sender, SampleTimeRangeInfo e) {
-        //Trace.WriteLine($"Selecting {e.StartTime} / {e.EndTime}, range {e.StartSampleIndex}-{e.EndSampleIndex}");
-
+    private void ActivityView_OnSelectingTimeRange(object sender, SampleTimeRangeInfo range) {
         var view = sender as ActivityView;
 
         if (view.IsSingleThreadView) {
-            ActivityView.SelectTimeRange(e);
+            ActivityView.SelectTimeRange(range);
 
             foreach (var threadView in threadActivityViews_) {
                 if (threadView.ActivityHost != view) {
@@ -420,24 +430,10 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         else {
             if (threadActivityViews_ != null) {
                 foreach (var threadView in threadActivityViews_) {
-                    threadView.ActivityHost.SelectTimeRange(e);
+                    threadView.ActivityHost.SelectTimeRange(range);
                 }
             }
         }
-
-       // GraphViewer.ClearSelection();
-
-        //? TODO: Too slow
-        // if (GraphViewer.IsInitialized) {
-        //     if (isTimelineView_) {
-        //         var nodes = GraphViewer.FlameGraph.GetNodesInTimeRange(e.StartTime, e.EndTime);
-        //         GraphViewer.SelectNodes(nodes);
-        //     }
-        //     else {
-        //         var nodes = FindCallTreeNodesForSamples(e.StartSampleIndex, e.EndSampleIndex, e.ThreadId, Session.ProfileData);
-        //         GraphViewer.SelectNodes(nodes);
-        //     }
-        // }
     }
 
     private void NodeDetailsPanel_NodesSelected(object sender, List<ProfileCallTreeNode> e) {
@@ -463,10 +459,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         await OpenFunction(e);
     }
     
-    private async Task OpenFunction(FlameGraphNode node) {
-        await OpenFunction(node.CallTreeNode);
-    }
-
     private async Task OpenFunction(ProfileCallTreeNode node) {
         if (node != null && node.Function.HasSections) {
             var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
@@ -476,7 +468,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
     
     private bool showNodePanel_;
-    public bool ShowNodePanel {
+        public bool ShowNodePanel {
         get => showNodePanel_;
         set => SetField(ref showNodePanel_, value);
     }
@@ -647,85 +639,22 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         SelectNextSearchResult();
     }
 
-    private Dictionary<int, List<SampleIndex>>
-        FindFunctionSamples(ProfileCallTreeNode node, ProfileData profile) {
-        var sw = Stopwatch.StartNew();
-        var allThreadsList = new List<SampleIndex>();
-        var threadListMap = new Dictionary<int, List<SampleIndex>>();
-        threadListMap[-1] = allThreadsList;
+    public void MarkFunctionSamples(Dictionary<int, List<SampleIndex>> threadSamples) {
+        ClearMarkedFunctionSamples();
 
-        if (node.Function == null) {
-            return threadListMap;
-        }
-
-        int sampleStartIndex = 0;
-        int sampleEndIndex = profile.Samples.Count;
-        var funcProfile = profile.GetFunctionProfile(node.Function);
-
-        if (funcProfile != null && funcProfile.SampleStartIndex != int.MaxValue) {
-            sampleStartIndex = funcProfile.SampleStartIndex;
-            sampleEndIndex = funcProfile.SampleEndIndex;
-        }
-
-        int index = 0;
-
-        //? Also here - Abstract parallel run chunks to take action per sample
-
-        for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
-            var (sample, stack) = profile.Samples[i];
-            foreach (var stackFrame in stack.StackFrames) {
-                if (stackFrame.IsUnknown) continue;
-
-                if (stackFrame.Info.Function.Value.Equals(node.Function)) {
-                    var threadList = threadListMap.GetOrAddValue(stack.Context.ThreadId);
-                    threadList.Add(new SampleIndex(index, sample.Time));
-                    allThreadsList.Add(new SampleIndex(index, sample.Time));
-
-                    break;
-                }
+        foreach (var (threadId, sampleList) in threadSamples) {
+            if (threadId == -1) {
+                ActivityView.MarkSamples(sampleList);
             }
-
-            index++;
+            else if (threadActivityViewsMap_.TryGetValue(threadId, out var threadView)) {
+                threadView.ActivityHost.MarkSamples(sampleList);
+            }
         }
 
-        Trace.WriteLine($"FindSamples took: {sw.ElapsedMilliseconds} for {allThreadsList.Count} samples");
-        return threadListMap;
     }
 
-    private HashSet<IRTextFunction> FindFunctionsForSamples(int sampleStartIndex, int sampleEndIndex, int threadId, ProfileData profile) {
-        var funcSet = new HashSet<IRTextFunction>();
-
-        //? Abstract parallel run chunks to take action per sample (ComputeFunctionProfile)
-        for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
-            var (sample, stack) = profile.Samples[i];
-
-            if (threadId != -1 && stack.Context.ThreadId != threadId) {
-                continue;
-            }
-
-            foreach (var stackFrame in stack.StackFrames) {
-                if (stackFrame.IsUnknown)
-                    continue;
-                funcSet.Add(stackFrame.Info.Function);
-            }
-        }
-
-        return funcSet;
-    }
-
-    private List<ProfileCallTreeNode> FindCallTreeNodesForSamples(int sampleStartIndex, int sampleEndIndex, int threadId, ProfileData profile) {
-        var sw = Stopwatch.StartNew();
-        var funcs = FindFunctionsForSamples(sampleStartIndex, sampleEndIndex, threadId, profile);
-        var callNodes = new List<ProfileCallTreeNode>(funcs.Count);
-
-        foreach (var func in funcs) {
-            var nodes = profile.CallTree.GetCallTreeNodes(func);
-            if (nodes != null) {
-                callNodes.AddRange(nodes);
-            }
-        }
-
-        Trace.WriteLine($"FindCallTreeNodesForSamples took: {sw.ElapsedMilliseconds} for {callNodes.Count} call nodes");
-        return callNodes;
+    public void ClearMarkedFunctionSamples() {
+        ActivityView.ClearMarkedSamples();
+        threadActivityViews_.ForEach(threadView => threadView.ActivityHost.ClearMarkedSamples());
     }
 }

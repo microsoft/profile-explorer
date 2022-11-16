@@ -495,7 +495,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             return;
         }
 
-        var point = e.GetPosition(GraphHost);
+        var point = e.GetPosition(GraphViewer);
         var pointedNode = GraphViewer.FindPointedNode(point);
 
         if (pointedNode == null) {

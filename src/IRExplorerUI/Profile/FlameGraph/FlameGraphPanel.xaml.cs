@@ -150,13 +150,14 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
     }
 
-    private void GraphHost_NodesDeselected(object sender, EventArgs e) {
-        
+    private async void GraphHost_NodesDeselected(object sender, EventArgs e) {
+        await Session.ProfileFunctionDeselected();
     }
 
     private async void GraphHost_NodeSelected(object sender, FlameGraphNode node) {
         if (node.HasFunction) {
             await NodeDetailsPanel.ShowWithDetailsAsync(node.CallTreeNode);
+            await Session.ProfileFunctionSelected(node.CallTreeNode);
 
             if (settings_.SyncSourceFile) {
                 // Load the source file and scroll to the hottest line.
@@ -321,89 +322,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private void NextSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
         SelectNextSearchResult();
     }
-
-    private Dictionary<int, List<SampleIndex>>
-        FindFunctionSamples(ProfileCallTreeNode node, ProfileData profile) {
-        var sw = Stopwatch.StartNew();
-        var allThreadsList = new List<SampleIndex>();
-        var threadListMap = new Dictionary<int, List<SampleIndex>>();
-        threadListMap[-1] = allThreadsList;
-
-        if (node.Function == null) {
-            return threadListMap;
-        }
-
-        int sampleStartIndex = 0;
-        int sampleEndIndex = profile.Samples.Count;
-        var funcProfile = profile.GetFunctionProfile(node.Function);
-
-        if (funcProfile != null && funcProfile.SampleStartIndex != int.MaxValue) {
-            sampleStartIndex = funcProfile.SampleStartIndex;
-            sampleEndIndex = funcProfile.SampleEndIndex;
-        }
-
-        int index = 0;
-
-        //? Also here - Abstract parallel run chunks to take action per sample
-
-        for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
-            var (sample, stack) = profile.Samples[i];
-            foreach (var stackFrame in stack.StackFrames) {
-                if (stackFrame.IsUnknown) continue;
-
-                if (stackFrame.Info.Function.Value.Equals(node.Function)) {
-                    var threadList = threadListMap.GetOrAddValue(stack.Context.ThreadId);
-                    threadList.Add(new SampleIndex(index, sample.Time));
-                    allThreadsList.Add(new SampleIndex(index, sample.Time));
-
-                    break;
-                }
-            }
-
-            index++;
-        }
-
-        Trace.WriteLine($"FindSamples took: {sw.ElapsedMilliseconds} for {allThreadsList.Count} samples");
-        return threadListMap;
-    }
-
-    private HashSet<IRTextFunction> FindFunctionsForSamples(int sampleStartIndex, int sampleEndIndex, int threadId, ProfileData profile) {
-        var funcSet = new HashSet<IRTextFunction>();
-
-        //? Abstract parallel run chunks to take action per sample (ComputeFunctionProfile)
-        for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
-            var (sample, stack) = profile.Samples[i];
-
-            if (threadId != -1 && stack.Context.ThreadId != threadId) {
-                continue;
-            }
-
-            foreach (var stackFrame in stack.StackFrames) {
-                if (stackFrame.IsUnknown)
-                    continue;
-                funcSet.Add(stackFrame.Info.Function);
-            }
-        }
-
-        return funcSet;
-    }
-
-    private List<ProfileCallTreeNode> FindCallTreeNodesForSamples(int sampleStartIndex, int sampleEndIndex, int threadId, ProfileData profile) {
-        var sw = Stopwatch.StartNew();
-        var funcs = FindFunctionsForSamples(sampleStartIndex, sampleEndIndex, threadId, profile);
-        var callNodes = new List<ProfileCallTreeNode>(funcs.Count);
-
-        foreach (var func in funcs) {
-            var nodes = profile.CallTree.GetCallTreeNodes(func);
-            if (nodes != null) {
-                callNodes.AddRange(nodes);
-            }
-        }
-
-        Trace.WriteLine($"FindCallTreeNodesForSamples took: {sw.ElapsedMilliseconds} for {callNodes.Count} call nodes");
-        return callNodes;
-    }
-
+    
     private async void SelectFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
         var selectedNode = GraphHost.GraphViewer.SelectedNode;
         if (selectedNode != null && selectedNode.HasFunction) {
@@ -429,5 +348,14 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         if (GraphHost.GraphViewer.SelectedNode != null) {
             await GraphHost.ChangeRootNode(GraphHost.GraphViewer.SelectedNode);
         }
+    }
+
+    public void MarkFunctions(List<ProfileCallTreeNode> nodes) {
+        GraphHost.GraphViewer.ClearSelection();
+        GraphHost.GraphViewer.SelectNodes(nodes);
+    }
+
+    public void ClearMarkedFunctions() {
+        GraphHost.GraphViewer.ClearSelection();
     }
 }

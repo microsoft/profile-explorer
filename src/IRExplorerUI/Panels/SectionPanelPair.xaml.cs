@@ -496,5 +496,13 @@ namespace IRExplorerUI {
         public void ShowModuleReport() {
             MainPanel.ShowModuleReport();
         }
+
+        public void MarkFunctions(List<IRTextFunction> list) {
+            MainPanel.MarkFunctions(list);
+        }
+
+        public void ClearMarkedFunctions() {
+            MainPanel.ClearMarkedFunctions();
+        }
     }
 }

@@ -515,6 +515,10 @@
                                 <Trigger Property="ItemsControl.AlternationIndex" Value="1">
                                     <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
                                 </Trigger>
+
+                                <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                                    <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.1}" />
+                                </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </ListView.ItemContainerStyle>

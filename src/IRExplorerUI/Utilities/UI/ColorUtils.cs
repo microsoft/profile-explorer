@@ -82,7 +82,7 @@ namespace IRExplorerUI {
 #endif
         }
 
-        public static Color GeneratePastelColor(int id) {
+        public static Color GeneratePastelColor(uint id) {
             return Utils.ColorFromString(PastelColors[id % PastelColors.Length]);
         }
 
