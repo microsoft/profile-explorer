@@ -905,104 +905,7 @@ namespace IRExplorerUI {
             OptionalStatusText.ToolTip = tooltip;
             OptionalStatusText.Visibility = !string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
         }
-
-        void ComputeFunctionProfile(ProfileData profile, ProfileSampleFilter filter) {
-            profile.ModuleWeights.Clear();
-            profile.ProfileWeight = TimeSpan.Zero;
-            profile.TotalWeight = TimeSpan.Zero;
-
-            foreach (var funcProfile in profile.FunctionProfiles) {
-                funcProfile.Value.Reset();
-            }
-
-            profile.CallTree = null; //? Recycle nodes
-            ProfileCallTree callTree = new();
-
-            int sampleStartIndex = filter.TimeRange?.StartSampleIndex ?? 0;
-            int sampleEndIndex = filter.TimeRange?.EndSampleIndex ?? profile.Samples.Count;
-
-            int sampleCount = sampleEndIndex - sampleStartIndex;
-            int chunks = Math.Min(8, (Environment.ProcessorCount * 3) / 4);
-            
-            int chunkSize = sampleCount / chunks;
-            var tasks = new List<Task>();
-            var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
-            var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
-
-            for (int k = 0; k < chunks; k++) {
-                int start = Math.Min(sampleStartIndex + k * chunkSize, sampleEndIndex);
-                int end = Math.Min(sampleStartIndex + (k + 1) * chunkSize, sampleEndIndex);
-
-                tasks.Add(taskFactory.StartNew(() => {
-                    HashSet<int> stackModules = new();
-                    HashSet<IRTextFunction> stackFuncts = new();
-
-                    for (int i = start; i < end; i++) {
-                        var (sample, stack) = profile.Samples[i];
-
-                        if (filter.ThreadIds != null && 
-                            !filter.ThreadIds.Contains(stack.Context.ThreadId)) {
-                            continue;
-                        }
-
-                        profile.TotalWeight += sample.Weight;
-                        profile.ProfileWeight += sample.Weight;
-
-                        bool isTopFrame = true;
-                        stackModules.Clear();
-                        stackFuncts.Clear();
-
-                        foreach (var resolvedFrame in stack.StackFrames) {
-                            if (resolvedFrame.IsUnknown) {
-                                continue;
-                            }
-
-                            if (isTopFrame && stackModules.Add(resolvedFrame.Info.Image.Id)) {
-                                //? TODO: Avoid lock by summing per thread, accumulate at the end
-                                //? TODO: Also, don't use mod name as key, use imageId
-                                profile.AddModuleSample(resolvedFrame.Info.Image.ModuleName, sample.Weight);
-                            }
-
-                            var funcRva = resolvedFrame.Info.DebugInfo.RVA;
-                            var frameRva = resolvedFrame.FrameRVA;
-                            var textFunction = resolvedFrame.Info.Function;
-                            var funcProfile = resolvedFrame.Info.Profile;
-
-                            if (funcProfile == null) {
-                                funcProfile = profile.GetOrCreateFunctionProfile(resolvedFrame.Info.Function);
-                                resolvedFrame.Info.Profile = funcProfile;
-                            }
-
-                            lock (funcProfile) {
-                                var offset = frameRva - funcRva;
-
-                                // Don't count the inclusive time for recursive functions multiple times.
-                                if (stackFuncts.Add(textFunction)) {
-                                    funcProfile.AddInstructionSample(offset, sample.Weight);
-                                    funcProfile.Weight += sample.Weight;
-                                    funcProfile.SampleStartIndex = Math.Min(funcProfile.SampleStartIndex, i);
-                                    funcProfile.SampleEndIndex = Math.Max(funcProfile.SampleEndIndex, i);
-                                }
-
-                                // Count the exclusive time for the top frame function.
-                                if (isTopFrame) {
-                                    funcProfile.ExclusiveWeight += sample.Weight;
-                                }
-                            }
-
-                            isTopFrame = false;
-                        }
-
-                        callTree.UpdateCallTree(sample, stack);
-                    }
-                }));
-
-            }
-
-            Task.WhenAll(tasks.ToArray()).Wait();
-            profile.CallTree = callTree;
-        }
-
+        
         private class MainWindowState {
             public MainWindowState(MainWindow window) {
                 CurrentResizeMode = window.ResizeMode;
@@ -1323,40 +1226,28 @@ namespace IRExplorerUI {
 
             {
                 var sw2 = Stopwatch.StartNew();
-                ComputeFunctionProfile(this.ProfileData, filter);
+                await Task.Run(() => ProfileData.FilterFunctionProfile(filter));
                 Trace.WriteLine($"1) ComputeFunctionProfile {sw2.ElapsedMilliseconds}");
             }
 
             {
                 var sw2 = Stopwatch.StartNew();
                 await SectionPanel.RefreshProfile();
-                Trace.WriteLine($"3) RefreshProfile {sw2.ElapsedMilliseconds}");
+                Trace.WriteLine($"2) RefreshProfile {sw2.ElapsedMilliseconds}");
             }
-
-            //var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
-
-            //if (panel != null) {
-            //    var sw2 = Stopwatch.StartNew();
-            //    await panel.DisplayProfileCallTree(true);
-            //    Trace.WriteLine($"4) DisplayProfileCallTree {sw2.ElapsedMilliseconds}");
-            //}
-
-            //var fgPanel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
-
-            //if (fgPanel != null) {
-            //    var sw2 = Stopwatch.StartNew();
-            //    await fgPanel.DisplayFlameGraph();
-            //    Trace.WriteLine($"5) DisplayFlameGraph {sw2.ElapsedMilliseconds}");
-            //}
 
             sw.Stop();
             Trace.WriteLine($"Total: {sw.ElapsedMilliseconds}");
             Trace.Flush();
+
+            await ProfileSampleRangeDeselected();
             return true;
         }
 
         public async Task<bool> RemoveProfileSamplesFilter() {
-            return await FilterProfileSamples(new ProfileSampleFilter());
+            await FilterProfileSamples(new ProfileSampleFilter());
+            await ProfileSampleRangeDeselected();
+            return true;
         }
 
         public async Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode) {
@@ -1388,5 +1279,152 @@ namespace IRExplorerUI {
             
             return false;
         }
+
+        public async Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range) {
+            var panel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+
+            if (panel != null) {
+                var nodes = FindCallTreeNodesForSamples(range.StartSampleIndex, range.EndSampleIndex, range.ThreadId, ProfileData);
+                panel.MarkFunctions(nodes);
+            }
+
+            var sectinPanel = FindAndActivatePanel(ToolPanelKind.Section) as SectionPanelPair;
+
+            if (sectinPanel != null) {
+                var funcs = FindFunctionsForSamples(range.StartSampleIndex, range.EndSampleIndex, range.ThreadId, ProfileData);
+                sectinPanel.MarkFunctions(funcs.ToList());
+            }
+
+            return true;
+        }
+
+        public async Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node) {
+            var panel = FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
+
+            if (panel != null) {
+                //? TODO: Select only samples included only in this call node,
+                //? right now selects any instance of the func
+                var threadSamples = FindFunctionSamples(node, ProfileData);
+                panel.MarkFunctionSamples(threadSamples);
+            }
+            
+            //? TODO: Mark in call tree
+
+            return true;
+        }
+
+        public async Task<bool> ProfileFunctionSelected(IRTextFunction function) {
+            return true;
+        }
+
+        public async Task<bool> ProfileSampleRangeDeselected() {
+            var panel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+
+            if (panel != null) {
+                panel.ClearMarkedFunctions();
+            }
+
+            var sectinPanel = FindAndActivatePanel(ToolPanelKind.Section) as SectionPanelPair;
+
+            if (sectinPanel != null) {
+                sectinPanel.ClearMarkedFunctions();
+            }
+            return true;
+        }
+
+        public async Task<bool> ProfileFunctionDeselected() {
+            var panel = FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
+
+            if (panel != null) {
+                panel.ClearMarkedFunctionSamples();
+            }
+
+            return true;
+        }
+
+        private Dictionary<int, List<SampleIndex>>
+            FindFunctionSamples(ProfileCallTreeNode node, ProfileData profile) {
+            var sw = Stopwatch.StartNew();
+            var allThreadsList = new List<SampleIndex>();
+            var threadListMap = new Dictionary<int, List<SampleIndex>>();
+            threadListMap[-1] = allThreadsList;
+
+            if (node.Function == null) {
+                return threadListMap;
+            }
+
+            int sampleStartIndex = 0;
+            int sampleEndIndex = profile.Samples.Count;
+            var funcProfile = profile.GetFunctionProfile(node.Function);
+
+            if (funcProfile != null && funcProfile.SampleStartIndex != int.MaxValue) {
+                sampleStartIndex = funcProfile.SampleStartIndex;
+                sampleEndIndex = funcProfile.SampleEndIndex;
+            }
+
+            int index = 0;
+
+            //? Also here - Abstract parallel run chunks to take action per sample
+
+            for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
+                var (sample, stack) = profile.Samples[i];
+                foreach (var stackFrame in stack.StackFrames) {
+                    if (stackFrame.IsUnknown)
+                        continue;
+
+                    if (stackFrame.Info.Function.Value.Equals(node.Function)) {
+                        var threadList = threadListMap.GetOrAddValue(stack.Context.ThreadId);
+                        threadList.Add(new SampleIndex(index, sample.Time));
+                        allThreadsList.Add(new SampleIndex(index, sample.Time));
+
+                        break;
+                    }
+                }
+
+                index++;
+            }
+
+            Trace.WriteLine($"FindSamples took: {sw.ElapsedMilliseconds} for {allThreadsList.Count} samples");
+            return threadListMap;
+        }
+
+
+        private HashSet<IRTextFunction> FindFunctionsForSamples(int sampleStartIndex, int sampleEndIndex, int threadId, ProfileData profile) {
+            var funcSet = new HashSet<IRTextFunction>();
+
+            //? Abstract parallel run chunks to take action per sample (ComputeFunctionProfile)
+            for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
+                var (sample, stack) = profile.Samples[i];
+
+                if (threadId != -1 && stack.Context.ThreadId != threadId) {
+                    continue;
+                }
+
+                foreach (var stackFrame in stack.StackFrames) {
+                    if (stackFrame.IsUnknown)
+                        continue;
+                    funcSet.Add(stackFrame.Info.Function);
+                }
+            }
+
+            return funcSet;
+        }
+
+        private List<ProfileCallTreeNode> FindCallTreeNodesForSamples(int sampleStartIndex, int sampleEndIndex, int threadId, ProfileData profile) {
+            var sw = Stopwatch.StartNew();
+            var funcs = FindFunctionsForSamples(sampleStartIndex, sampleEndIndex, threadId, profile);
+            var callNodes = new List<ProfileCallTreeNode>(funcs.Count);
+
+            foreach (var func in funcs) {
+                var nodes = profile.CallTree.GetCallTreeNodes(func);
+                if (nodes != null) {
+                    callNodes.AddRange(nodes);
+                }
+            }
+
+            Trace.WriteLine($"FindCallTreeNodesForSamples took: {sw.ElapsedMilliseconds} for {callNodes.Count} call nodes");
+            return callNodes;
+        }
+
     }
 }

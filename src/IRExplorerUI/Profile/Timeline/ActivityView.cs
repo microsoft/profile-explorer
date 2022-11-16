@@ -23,7 +23,7 @@ public class ProfileSampleFilter {
     public List<int> ThreadIds { get; set; }
 
     public override string ToString() {
-        return $"time: {TimeRange}, threads: {ThreadIds}";
+        return $"TimeRange: {TimeRange}, ThreadIds: {ThreadIds}";
     }
 }
 
@@ -104,6 +104,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         selectionBackColor_ = ColorBrushes.GetTransparentBrush(Colors.Gold, 80);
         selectionBorderColor_ = ColorPens.GetPen(Colors.Black);
         markerBrush_ = ColorBrushes.GetTransparentBrush(Colors.DarkRed, 200);
+        ThreadId = -1;
 
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         MouseLeftButtonUp += ActivityView_MouseLeftButtonUp;
@@ -134,6 +135,8 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     public bool HasFilter => hasFilter_;
     public TimeSpan FilteredTime => filterEndTime_ - filterStartTime_;
     public SampleTimeRangeInfo FilteredRange => GetFilteredTimeRange();
+    public SampleTimePointInfo CurrentTimePoint => GetCurrentTimePoint();
+
     public new double MaxWidth => maxWidth_;
 
     private bool? prevIsThreadIncluded_;
@@ -259,6 +262,12 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                                        TimeToSampleIndex(selectionStartTime_), ThreadId);
     }
 
+    private SampleTimePointInfo GetCurrentTimePoint() {
+        var time = PositionToTime(positionLineX_);
+        return new SampleTimePointInfo(time + startTime_,
+                                       TimeToSampleIndex(time), ThreadId);
+    }
+
     private SampleTimeRangeInfo GetSelectedTimeRange() {
         return new SampleTimeRangeInfo(selectionStartTime_ + startTime_, selectionEndTime_ + startTime_,
                                        TimeToSampleIndex(selectionStartTime_, SelectionTimeDiff),
@@ -352,7 +361,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             positionLineX_ = e.GetPosition(this).X;
             Redraw();
 
-            HoveringTimePoint?.Invoke(this, GetSelectedTimePoint());
+            HoveringTimePoint?.Invoke(this, GetCurrentTimePoint());
         }
 
     }
@@ -809,7 +818,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     private int TimeToSampleIndex(TimeSpan time) {
         // Search for a nearby sample in both directions.
-        var searchRange = TimeSpan.FromMilliseconds(1);
+        var searchRange = TimeSpan.FromMilliseconds(10);
         int index = TimeToSampleIndex(time, searchRange);
 
         if (index != -1) {
@@ -830,15 +839,16 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
     private int TimeToSampleIndex(TimeSpan time, TimeSpan timeRange) {
-        int sliceIndex = (int)(time.Ticks / slices_[0].TimePerSlice.Ticks);
         var queryTime = time + startTime_;
+        int sliceIndex = (int)(queryTime.Ticks / slices_[0].TimePerSlice.Ticks);
         timeRange += startTime_;
 
         for (int i = sliceIndex; i < slices_[0].Slices.Count; i++) {
             var slice = slices_[0].Slices[i];
 
             if (slice.FirstSampleIndex >= 0) {
-                for(int sampleIndex = slice.FirstSampleIndex; sampleIndex < slice.FirstSampleIndex + slice.SampleCount; sampleIndex++) {
+                for(int sampleIndex = slice.FirstSampleIndex; 
+                    sampleIndex < slice.FirstSampleIndex + slice.SampleCount; sampleIndex++) {
                     if (profile_.Samples[sampleIndex].Sample.Time >= queryTime) {
                         if (!IsSingleThreadView || profile_.Samples[sampleIndex].Stack.Context.ThreadId == ThreadId) {
                             return sampleIndex;
@@ -856,9 +866,9 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
     private int TimeToSampleIndexBack(TimeSpan time, TimeSpan timeRange) {
-        int sliceIndex = (int)(time.Ticks / slices_[0].TimePerSlice.Ticks);
-        sliceIndex = Math.Min(sliceIndex, slices_[0].Slices.Count - 1);
         var queryTime = time + startTime_;
+        int sliceIndex = (int)(queryTime.Ticks / slices_[0].TimePerSlice.Ticks);
+        sliceIndex = Math.Min(sliceIndex, slices_[0].Slices.Count - 1);
         timeRange += startTime_;
 
         for (int i = sliceIndex; i >= 0; i--) {
