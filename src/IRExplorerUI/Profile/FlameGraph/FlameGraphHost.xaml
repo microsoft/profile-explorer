@@ -18,7 +18,10 @@
         <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab" Executed="OpenFunctionInNewTab" />
         <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult" Executed="PreviousSearchResultExecuted" />
         <CommandBinding Command="local:CallTreeCommand.NextSearchResult" Executed="NextSearchResultExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.EnlargeNode" Executed="EnlargeNodeExecuted" />
         <CommandBinding Command="local:CallTreeCommand.ChangeRootNode" Executed="ChangeRootNodeExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.MarkAllInstances" Executed="MarkAllInstancesExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.ClearMarkedNodes" Executed="ClearMarkedNodesExecuted" />
     </UserControl.CommandBindings>
 
     <UserControl.InputBindings>
@@ -44,36 +47,53 @@
             <local:FlameGraphViewer.ContextMenu>
                 <ContextMenu>
                     <MenuItem
+                        Command="local:CallTreeCommand.EnlargeNode"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Focus on Function"
+                        InputGestureText="Double-click"
+                        ToolTip="Enlarge the function in the view" />
+                    <MenuItem
                         Command="local:CallTreeCommand.ChangeRootNode"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Set Function as Root"
-                        ToolTip="" />
+                        InputGestureText="Alt+Double-click"
+                        ToolTip="Restrict the view to the function and its callees" />
+                    <Separator />
                     <MenuItem
                         Command="local:CallTreeCommand.SelectFunction"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Select Function"
                         InputGestureText="Return"
-                        ToolTip="" />
+                        ToolTip="Select function in the Summary panel" />
                     <MenuItem
                         Command="local:CallTreeCommand.OpenFunction"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Open Function"
                         InputGestureText="Ctrl+Return"
-                        ToolTip="" />
+                        ToolTip="Open the function ASM view" />
                     <MenuItem
                         Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Open Function in New Tab"
                         InputGestureText="Ctrl+Shift+Return"
-                        ToolTip="" />
+                        ToolTip="Open the function ASM view in a new tab" />
+                    <Separator />
                     <MenuItem
-                        Command="irExplorerUi:GraphCommand.GraphZoomOut"
-                        Header="Select Function in Call Tree"
-                        InputGestureText="Shift+Return"
-                        ToolTip="" />
-                    <MenuItem
-                        Command="irExplorerUi:GraphCommand.GraphZoomOut"
+                        Command="local:CallTreeCommand.MarkAllInstances"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Mark Function Instances"
-                        InputGestureText="Shift+Return"
+                        ToolTip="Mark all instances of the function" />
+                    <MenuItem
+                        Command="local:CallTreeCommand.ClearMarkedNodes"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Clear Marked Functions"
+                        ToolTip="Clear all marked functions" />
+                    <MenuItem
+                        Command="irExplorerUi:GraphCommand.GraphZoomOut"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Select Function in Call Tree"
                         IsEnabled="False"
-                        ToolTip="" />
-
+                        ToolTip="Select the function instance in the Call Tree panel" />
                 </ContextMenu>
             </local:FlameGraphViewer.ContextMenu>
         </local:FlameGraphViewer>

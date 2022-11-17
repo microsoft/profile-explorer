@@ -22,7 +22,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     private Dictionary<FlameGraphNode, HighlightingStyle> markedNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> selectedNodes_;
 
-    public bool IsInitialized => initialized_;
+    public new bool IsInitialized => initialized_;
     public FlameGraph FlameGraph => flameGraph_;
     public double MaxGraphWidth => renderer_.MaxGraphWidth;
     public Rect VisibleArea => renderer_.VisibleArea;
@@ -108,7 +108,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         node.Style = type switch {
             HighlighingType.Hovered => PickHoveredNodeStyle(node.Style),
             HighlighingType.Selected => PickSelectedNodeStyle(node.Style),
-            HighlighingType.Marked => PickSearchResultNodeStyle(node.Style),
+            HighlighingType.Marked => PickMarkedNodeStyle(node.Style),
             _ => node.Style
         };
     }
@@ -176,7 +176,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         return new HighlightingStyle(newColor, style.Border);
     }
 
-    private HighlightingStyle PickSearchResultNodeStyle(HighlightingStyle style) {
+    private HighlightingStyle PickMarkedNodeStyle(HighlightingStyle style) {
         var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.95f);
         return new HighlightingStyle(newColor, ColorPens.GetBoldPen(Colors.MediumBlue));
     }
@@ -240,6 +240,35 @@ public partial class FlameGraphViewer : FrameworkElement {
         if (redraw) {
             renderer_.Redraw();
         }
+    }
+
+    public void MarkNodes(List<ProfileCallTreeNode> nodes) {
+        foreach (var node in nodes) {
+            MarkNodeImpl(node, redraw: false);
+        }
+
+        renderer_.Redraw();
+    }
+
+
+    public void MarkNode(ProfileCallTreeNode node) {
+        MarkNodeImpl(node, redraw: true);
+    }
+
+    private void MarkNodeImpl(ProfileCallTreeNode node, bool redraw) {
+        var fgNodes = flameGraph_.GetNodes(node);
+
+        foreach (var fgNode in fgNodes) {
+            MarkNode(fgNode, HighlighingType.Marked);
+        }
+
+        if (redraw) {
+            renderer_.Redraw();
+        }
+    }
+
+    public void ResetMarkedNodes() {
+        ResetHighlightedNodes(HighlighingType.Marked);
     }
 
     public FlameGraphNode SelectNode(ProfileCallTreeNode graphNode) {

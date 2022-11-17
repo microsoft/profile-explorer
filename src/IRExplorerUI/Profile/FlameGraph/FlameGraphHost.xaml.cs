@@ -935,8 +935,49 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         }
     }
     
-    #region Animation support
+    private async void MarkAllInstancesExecuted(object sender, ExecutedRoutedEventArgs e) {
+        if (GraphViewer.SelectedNode != null &&
+            GraphViewer.SelectedNode.HasFunction) {
+            MarkFunction(GraphViewer.SelectedNode.CallTreeNode);
+        }
+    }
+
+    private void ClearMarkedNodesExecuted(object sender, ExecutedRoutedEventArgs e) {
+        ClearMarkedFunctions();
+    }
     
+    private async void EnlargeNodeExecuted(object sender, ExecutedRoutedEventArgs e) {
+        if (GraphViewer.SelectedNode != null) {
+            await EnlargeNode(GraphViewer.SelectedNode);
+        }
+    }
+
+    public void MarkFunctions(List<ProfileCallTreeNode> nodes) {
+        if (!IsInitialized) {
+            return;
+        }
+
+        GraphViewer.MarkNodes(nodes);
+    }
+
+    public void MarkFunction(ProfileCallTreeNode node) {
+        if (!IsInitialized) {
+            return;
+        }
+
+        GraphViewer.MarkNode(node);
+    }
+
+    public void ClearMarkedFunctions() {
+        if (!IsInitialized) {
+            return;
+        }
+
+        GraphViewer.ResetMarkedNodes();
+    }
+
+    #region Animation support
+
     public static DependencyProperty FlameGraphWidthProperty =
     DependencyProperty.Register(nameof(FlameGraphWidth), typeof(double), typeof(FlameGraphHost),
         new PropertyMetadata(0.0, FlameGraphWidthChanged));
