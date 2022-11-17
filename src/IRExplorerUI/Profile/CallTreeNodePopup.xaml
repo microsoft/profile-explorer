@@ -112,7 +112,21 @@
                 <profile:CallTreeNodePanel
                     x:Name="PanelHost"
                     HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch" />
+                    VerticalAlignment="Stretch"
+                    Visibility="{Binding ShowBacktraceView, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+                <TextBox
+                    Width="{Binding ElementName=ContentHost, Path=ActualWidth}"
+                    Background="{x:Null}"
+                    BorderBrush="{x:Null}"
+                    IsHitTestVisible="False"
+                    IsReadOnly="True"
+                    MaxLines="3"
+                    ScrollViewer.CanContentScroll="True"
+                    ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                    Text="{Binding Path=BacktraceText}"
+                    TextWrapping="Wrap"
+                    Visibility="{Binding ShowBacktraceView, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <controls:ResizeGrip
                     x:Name="PanelResizeGrip"

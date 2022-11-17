@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -26,7 +27,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private const double ZoomAnimationDuration = TimePerFrame * 10;
     private const double EnlargeAnimationDuration = TimePerFrame * 12;
     private const double ScrollWheelZoomAnimationDuration = TimePerFrame * 8;
-    
+
     private FlameGraphSettings settings_;
     private bool panelVisible_;
     private ProfileCallTree callTree_;
@@ -36,6 +37,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private List<ActivityTimelineView> threadActivityViews_;
     private Dictionary<int, ActivityTimelineView> threadActivityViewsMap_;
     private Dictionary<int, DraggablePopupHoverPreview> threadHoverPreviewMap_;
+    private SearchableProfileItem.FunctionNameFormatter nameFormatter_;
 
     private DoubleAnimation widthAnimation_;
     private DoubleAnimation zoomAnimation_;
@@ -48,7 +50,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     public override ToolPanelKind PanelKind => ToolPanelKind.Timeline;
-    
+
     public override ISession Session {
         get => base.Session;
         set {
@@ -134,6 +136,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     private void InitializeCallTree(ProfileCallTree callTree) {
         callTree_ = callTree;
+        nameFormatter_ = Session.CompilerInfo.NameProvider.FormatFunctionName;
 
         Dispatcher.BeginInvoke(async () => {
                 if (threadActivityViews_ != null) {
@@ -163,7 +166,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                     threadView.ActivityHost.SamplesBackColor = ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor((uint)thread.ThreadId));
 
                      var threadInfo = Session.ProfileData.FindThread(thread.ThreadId);
-                    
+
                      if (threadInfo != null && threadInfo.HasName) {
                          var backColor = ColorUtils.GeneratePastelColor((uint)threadInfo.Name.GetHashCode());
                          threadView.Margin.Background = ColorBrushes.GetBrush(backColor);
@@ -178,7 +181,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                 //threadView.TimelineHost.InitializeTimeline(callTree, thread.ThreadId);
                 //SetupTimelineViewEvents(threadView.TimelineHost);
                 }
-                
+
             ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
         }, DispatcherPriority.Background);
     }
@@ -233,10 +236,14 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                         hoverPreview.PreviewPopup is CallTreeNodePopup popup) {
                         popup.UpdatePosition(previewPoint, view);
                         popup.UpdateNode(callNode);
-                        return popup;
+                    }
+                    else {
+                        popup = new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, view, Session);
                     }
 
-                    return new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, view, Session);
+                    popup.ShowBacktraceView = true;
+                    popup.BacktraceText = CreateBacktraceText(callNode, 3);
+                    return popup;
                 }
 
                 return null;
@@ -255,6 +262,17 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         threadHoverPreviewMap_[view.ThreadId] = preview;
     }
 
+    private string CreateBacktraceText(ProfileCallTreeNode node, int maxLevel) {
+        var sb = new StringBuilder();
+
+        while (node.HasCallers && maxLevel-- > 0) {
+            node = node.Caller;
+            sb.AppendLine(nameFormatter_(node.FunctionName));
+        }
+
+        return sb.ToString().Trim();
+    }
+
     private void SetupActivityViewEvents(ActivityView view) {
         view.SelectedTimeRange += ActivityView_OnSelectedTimeRange;
         view.SelectingTimeRange += ActivityView_OnSelectingTimeRange;
@@ -268,7 +286,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     private async void View_ThreadIncludedChanged(object sender, bool included) {
         var view = sender as ActivityView;
-        
+
         if (included) {
             if (ActivityView.HasFilter) {
                 view.FilterTimeRange(ActivityView.FilteredRange);
@@ -316,7 +334,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                 }
             }
         }
-        
+
         changingThreadFiltering_ = false;
         await Session.RemoveProfileSamplesFilter();
     }
@@ -324,7 +342,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private async void ActivityView_FilteredTimeRange(object sender, SampleTimeRangeInfo range) {
         var view = sender as ActivityView;
         changingThreadFiltering_ = true;
-        
+
         if (view.IsSingleThreadView) {
             ActivityView.FilterTimeRange(range);
 
@@ -386,7 +404,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                 }
             }
         }
-        
+
         await Session.ProfileSampleRangeDeselected();
     }
 
@@ -458,7 +476,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private async void NodeDetailsPanel_NodeDoubleClick(object sender, ProfileCallTreeNode e) {
         await OpenFunction(e);
     }
-    
+
     private async Task OpenFunction(ProfileCallTreeNode node) {
         if (node != null && node.Function.HasSections) {
             var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
@@ -466,13 +484,13 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             await Session.SwitchDocumentSectionAsync(args);
         }
     }
-    
+
     private bool showNodePanel_;
         public bool ShowNodePanel {
         get => showNodePanel_;
         set => SetField(ref showNodePanel_, value);
     }
-    
+
     private void CancelWidthAnimation() {
         if(widthAnimation_ != null) {
             widthAnimation_.BeginTime = null;
@@ -488,11 +506,11 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             zoomAnimation_ = null;
         }
     }
-    
+
     private void ExecuteGraphResetWidth(object sender, ExecutedRoutedEventArgs e) {
         //? TODO: Buttons should be disabled
     }
-    
+
     private void ExecuteGraphZoomIn(object sender, ExecutedRoutedEventArgs e) {
         AdjustMaxWidth(FlameGraphHost.ZoomAmount);
     }
@@ -506,7 +524,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         Trace.WriteLine($"New width {newWidth}");
         ActivityView.SetMaxWidth(newWidth);
         ScrollElement.Width = newWidth + ActivityViewHeader.ActualWidth;
-        
+
         if (threadActivityViews_ != null)
         {
             foreach (var threadView in threadActivityViews_)
@@ -523,7 +541,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private void ExecuteGraphZoomOut(object sender, ExecutedRoutedEventArgs e) {
         AdjustMaxWidth(-FlameGraphHost.ZoomAmount);
     }
-    
+
     private void PanelToolbarTray_SettingsClicked(object sender, EventArgs e) {
         throw new NotImplementedException();
     }
@@ -547,7 +565,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private async void UndoButtoon_Click(object sender, RoutedEventArgs e) {
         //await RestorePreviousState();
     }
-    
+
     public async Task DisplayFlameGraph() {
         var callTree = Session.ProfileData.CallTree;
         SchedulePendingCallTree(callTree);

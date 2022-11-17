@@ -34,40 +34,49 @@ using VerticalAlignment = System.Windows.VerticalAlignment;
 namespace IRExplorerUI.Profile;
 
 public static class CallTreeCommand {
-    public static readonly RoutedUICommand ExpandHottestCallPath =
-        new RoutedUICommand("ExpandHottestCallPath", "ExpandHottestCallPath", typeof(CallTreePanel));
+    public static readonly RoutedCommand ExpandHottestCallPath =
+        new RoutedCommand("ExpandHottestCallPath", typeof(FrameworkElement));
 
-    public static readonly RoutedUICommand CollapseCallPath =
-        new RoutedUICommand("CollapseCallPath", "CollapseCallPath", typeof(CallTreePanel));
+    public static readonly RoutedCommand CollapseCallPath =
+        new RoutedCommand("CollapseCallPath", typeof(FrameworkElement));
 
-    public static readonly RoutedUICommand SelectFunction =
-        new RoutedUICommand("SelectFunction", "SelectFunction", typeof(CallTreePanel));
+    public static readonly RoutedCommand SelectFunction =
+        new RoutedCommand("SelectFunction", typeof(FrameworkElement));
 
-    public static readonly RoutedUICommand OpenFunction =
-        new RoutedUICommand("OpenFunction", "OpenFunction", typeof(CallTreePanel));
+    public static readonly RoutedCommand OpenFunction =
+        new RoutedCommand("OpenFunction", typeof(FrameworkElement));
 
-    public static readonly RoutedUICommand OpenFunctionInNewTab =
-        new RoutedUICommand("OpenFunctionInNewTab", "OpenFunctionInNewTab", typeof(CallTreePanel));
+    public static readonly RoutedCommand OpenFunctionInNewTab =
+        new RoutedCommand("OpenFunctionInNewTab", typeof(FrameworkElement));
 
-    public static readonly RoutedUICommand FocusSearch =
-        new RoutedUICommand("FocusSearch", "FocusSearch", typeof(CallTreePanel));
+    public static readonly RoutedCommand FocusSearch =
+        new RoutedCommand("FocusSearch", typeof(FrameworkElement));
 
-    public static readonly RoutedUICommand ClearSearch =
-        new RoutedUICommand("ClearSearch", "ClearSearch", typeof(CallTreePanel));
+    public static readonly RoutedCommand ClearSearch =
+        new RoutedCommand("ClearSearch", typeof(FrameworkElement));
 
-    public static readonly RoutedUICommand PreviousSearchResult =
-        new RoutedUICommand("PreviousSearchResult", "PreviousSearchResult", typeof(CallTreePanel));
+    public static readonly RoutedCommand PreviousSearchResult =
+        new RoutedCommand("PreviousSearchResult", typeof(FrameworkElement));
 
-    public static readonly RoutedUICommand NextSearchResult =
-        new RoutedUICommand("NextSearchResult", "NextSearchResult", typeof(CallTreePanel));
+    public static readonly RoutedCommand NextSearchResult =
+        new RoutedCommand("NextSearchResult", typeof(FrameworkElement));
 
-    public static readonly RoutedUICommand GoBack =
-        new RoutedUICommand("GoBack", "GoBack", typeof(CallTreePanel));
+    public static readonly RoutedCommand GoBack =
+        new RoutedCommand("GoBack", typeof(FrameworkElement));
 
-    public static readonly RoutedUICommand CollapseNodes =
-        new RoutedUICommand("CollapseNodes", "CollapseNodes", typeof(CallTreePanel));
-    public static readonly RoutedUICommand ChangeRootNode =
-        new RoutedUICommand("ChangeRootNode", "ChangeRootNode", typeof(CallTreePanel));
+    public static readonly RoutedCommand CollapseNodes =
+        new RoutedCommand("CollapseNodes", typeof(FrameworkElement));
+
+    // FlameGraph specific commands.
+    public static readonly RoutedCommand EnlargeNode =
+        new RoutedCommand("EnlargeNode", typeof(FrameworkElement));
+
+    public static readonly RoutedCommand ChangeRootNode =
+        new RoutedCommand("ChangeRootNode", typeof(FrameworkElement));
+    public static readonly RoutedCommand MarkAllInstances =
+        new RoutedCommand("MarkAllInstances", typeof(FrameworkElement));
+    public static readonly RoutedCommand ClearMarkedNodes =
+        new RoutedCommand("ClearMarkedNodes", typeof(FrameworkElement));
 }
 
 public enum ChildFunctionExKind {
@@ -235,7 +244,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
             // If the children have children on their own, new dummy nodes will be used.
             funcNode.Children.Clear();
             ChildFunctionEx firstNodeEx = null;
-            
+
             if (funcNode.Kind == ChildFunctionExKind.CalleeNode && callNode.HasChildren) {
                 var percentageFunc = PickPercentageFunction(callNode.Weight);
 
@@ -721,7 +730,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
             if (function_ != null) {
                 stateStack_.Push(function_);
             }
-            
+
             await Session.SwitchActiveProfileFunction(childInfo.CallTreeNode);
         }
     }
@@ -805,7 +814,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         FunctionFilter.Focus();
         FunctionFilter.SelectAll();
     }
-    
+
     private void ClearSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
         ((TextBox)e.Parameter).Text = string.Empty;
     }

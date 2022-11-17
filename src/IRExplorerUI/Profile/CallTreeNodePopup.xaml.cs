@@ -62,6 +62,18 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
         set => SetField(ref showResizeGrip_, value);
     }
 
+    private bool showBacktraceView_;
+    public bool ShowBacktraceView {
+        get => showBacktraceView_;
+        set => SetField(ref showBacktraceView_, value);
+    }
+
+    private string backtraceText_;
+    public string BacktraceText {
+        get => backtraceText_;
+        set => SetField(ref backtraceText_, value);
+    }
+
     public override bool ShouldStartDragging(MouseButtonEventArgs e) {
         if (e.LeftButton == MouseButtonState.Pressed && ToolbarPanel.IsMouseOver) {
             if (!IsDetached) {
