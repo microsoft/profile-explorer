@@ -21,6 +21,7 @@
         <CommandBinding Command="local:CallTreeCommand.EnlargeNode" Executed="EnlargeNodeExecuted" />
         <CommandBinding Command="local:CallTreeCommand.ChangeRootNode" Executed="ChangeRootNodeExecuted" />
         <CommandBinding Command="local:CallTreeCommand.MarkAllInstances" Executed="MarkAllInstancesExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.MarkInstance" Executed="MarkInstanceExecuted" />
         <CommandBinding Command="local:CallTreeCommand.ClearMarkedNodes" Executed="ClearMarkedNodesExecuted" />
     </UserControl.CommandBindings>
 
@@ -79,9 +80,14 @@
                         ToolTip="Open the function ASM view in a new tab" />
                     <Separator />
                     <MenuItem
+                        Command="local:CallTreeCommand.MarkInstance"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Mark Instance"
+                        ToolTip="Mark all instances of the function" />
+                    <MenuItem
                         Command="local:CallTreeCommand.MarkAllInstances"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                        Header="Mark Function Instances"
+                        Header="Mark All Function Instances"
                         ToolTip="Mark all instances of the function" />
                     <MenuItem
                         Command="local:CallTreeCommand.ClearMarkedNodes"

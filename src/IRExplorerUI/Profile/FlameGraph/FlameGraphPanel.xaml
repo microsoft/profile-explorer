@@ -127,7 +127,7 @@
                         Margin="4,0,0,0"
                         Command="irExplorerUi:GraphCommand.GraphZoomOut"
                         CommandTarget="{Binding ElementName=GraphHost}"
-                        ToolTip="Zoom Out (Ctrol+_">
+                        ToolTip="Zoom Out (Ctrl+_">
                         <Image Source="{StaticResource MinusIcon}" />
                     </Button>
                     <Button

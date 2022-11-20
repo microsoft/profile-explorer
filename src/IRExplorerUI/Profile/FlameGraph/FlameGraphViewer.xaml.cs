@@ -267,6 +267,10 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
     }
 
+    public void MarkNode(FlameGraphNode node) {
+        MarkNode(node, HighlighingType.Marked);
+    }
+
     public void ResetMarkedNodes() {
         ResetHighlightedNodes(HighlighingType.Marked);
     }

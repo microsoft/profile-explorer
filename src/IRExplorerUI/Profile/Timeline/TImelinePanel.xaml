@@ -16,6 +16,7 @@
         <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomOut" Executed="ExecuteGraphZoomOut" />
         <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult" Executed="PreviousSearchResultExecuted" />
         <CommandBinding Command="local:CallTreeCommand.NextSearchResult" Executed="NextSearchResultExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.RemoveFilters" Executed="RemoveFiltersExecuted" />
     </irExplorerUi:ToolPanelControl.CommandBindings>
 
     <irExplorerUi:ToolPanelControl.InputBindings>
@@ -112,7 +113,7 @@
                     <Button
                         Command="irExplorerUi:GraphCommand.GraphZoomOut"
                         CommandTarget="{Binding ElementName=GraphHost}"
-                        ToolTip="Zoom Out (Ctrol+_">
+                        ToolTip="Zoom Out (Ctrl+_">
                         <Image Source="{StaticResource MinusIcon}" />
                     </Button>
                     <Button
@@ -138,7 +139,7 @@
                         Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <Button
-                        Command="local:CallTreeCommand.ClearSearch"
+                        Command="local:CallTreeCommand.RemoveFilters"
                         TabIndex="5"
                         ToolTip="Remove timeline filter"
                         Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}">
