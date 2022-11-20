@@ -15,7 +15,7 @@ using IRExplorerCore.Utilities;
 namespace IRExplorerUI.Profile;
 
 public record SampleTimeRangeInfo(TimeSpan StartTime, TimeSpan EndTime,
-                                  int StartSampleIndex, int EndSampleIndex, 
+                                  int StartSampleIndex, int EndSampleIndex,
                                   int ThreadId);
 
 public class ProfileSampleFilter {
@@ -32,7 +32,7 @@ public record SampleTimePointInfo(TimeSpan Time, int SampleIndex, int ThreadId);
 //? TODO: Use SampleIndex in SampleTimePointInfo/Range
 public record SampleIndex(int Index, TimeSpan Time);
 
-public class ActivityView : FrameworkElement, INotifyPropertyChanged {
+public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     struct Slice {
         public TimeSpan Weight;
         public int FirstSampleIndex;
@@ -100,6 +100,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     private TimeSpan endTime_;
 
     public ActivityView() {
+        InitializeComponent();
         filteredOutColor_ = ColorBrushes.GetTransparentBrush(Colors.WhiteSmoke, 180);
         selectionBackColor_ = ColorBrushes.GetTransparentBrush(Colors.Gold, 80);
         selectionBorderColor_ = ColorPens.GetPen(Colors.Black);
@@ -131,7 +132,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     public bool HasSelection => hasSelection_;
     public TimeSpan SelectionStartTime => selectionStartTime_;
     public TimeSpan SelectionTime => selectionEndTime_ - selectionStartTime_;
-    
+
     public bool HasFilter => hasFilter_;
     public TimeSpan FilteredTime => filterEndTime_ - filterStartTime_;
     public SampleTimeRangeInfo FilteredRange => GetFilteredTimeRange();
@@ -374,7 +375,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         ClearSelectedTimeRange();
         UpdateFilterState();
     }
-    
+
     public void FilterAllOut() {
         filterStartTime_ = filterEndTime_ = TimeSpan.Zero;
         hasFilter_ = true;
@@ -411,7 +412,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         ThreadId = threadId;
 
         var thread = profile.FindThread(threadId);
-        if(thread != null) {
+        if (thread != null) {
             ThreadName = thread.Name;
         }
 
@@ -452,7 +453,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         int sampleIndex = 0;
 
         foreach (var (sample, stack) in profile.Samples) {
-            if(threadId != -1 && stack.Context.ThreadId != threadId) {
+            if (threadId != -1 && stack.Context.ThreadId != threadId) {
                 sampleIndex++;
                 continue;
             }
@@ -468,12 +469,13 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                     MaxSlices = (int)slices
                 });
 
-            if(sliceIndex < sliceList.Slices.Count) {
+            if (sliceIndex < sliceList.Slices.Count) {
                 var sliceSpan = CollectionsMarshal.AsSpan(sliceList.Slices);
                 sliceSpan[sliceIndex].Weight += sample.Weight;
                 sliceSpan[sliceIndex].SampleCount++;
-            } else {
-                for(int i = sliceList.Slices.Count; i < sliceIndex; i++) {
+            }
+            else {
+                for (int i = sliceList.Slices.Count; i < sliceIndex; i++) {
                     sliceList.Slices.Add(new Slice(TimeSpan.Zero, -1, 0));
                 }
 
@@ -499,7 +501,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         if (Math.Abs(maxWidth - maxWidth_) < double.Epsilon) {
             return;
         }
-        
+
         maxWidth_ = maxWidth;
         Redraw();
         InvalidateMeasure();
@@ -549,7 +551,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 var weight = list.Slices[i].Weight;
                 double height = ((double)weight.Ticks / (double)list.MaxWeight.Ticks) * sampleHeight_;
 
-                if(height < double.Epsilon) {
+                if (height < double.Epsilon) {
                     continue;
                 }
 
@@ -573,18 +575,18 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             }
 
             //? RE-ENABLE and implement shrinking
-            //if (scaledSliceWidth > 2 * SliceWidth) {
-            //    double newWidth = Math.Max(1, SliceWidth * (SliceWidth / scaledSliceWidth));
-            //    if (newWidth < sliceWidth_) {
-            //        StartComputeSampleSlices(newWidth);
-            //    }
-            //}
-            //else if (scaledSliceWidth < SliceWidth / 2) {
-            //    double newWidth = Math.Max(1, SliceWidth * (SliceWidth / scaledSliceWidth));
-            //    if (newWidth > sliceWidth_) {
-            //        StartComputeSampleSlices(newWidth);
-            //    }
-            //}
+            if (scaledSliceWidth > 2 * SliceWidth) {
+                double newWidth = Math.Max(1, SliceWidth * (SliceWidth / scaledSliceWidth));
+                if (newWidth < sliceWidth_) {
+                    StartComputeSampleSlices(newWidth);
+                }
+            }
+            else if (scaledSliceWidth < SliceWidth / 2) {
+                double newWidth = Math.Max(1, SliceWidth * (SliceWidth / scaledSliceWidth));
+                if (newWidth > sliceWidth_) {
+                    StartComputeSampleSlices(newWidth);
+                }
+            }
         }
 
         if (markedSamples_ != null) {
@@ -607,7 +609,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                     startX = x;
                     endX = x;
                 }
-                else if(first) {
+                else if (first) {
                     startX = x;
                     endX = x;
                     first = false;
@@ -676,7 +678,8 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             var slice = TimeToSlice(time);
 
             if (slice.HasValue) {
-                text += $"{EstimateCpuUsage(slice.Value, slices_[0].TimePerSlice, samplingInterval_):F2} C, {time.AsMillisecondsString()}";
+                double cpuUsage = EstimateCpuUsage(slice.Value, slices_[0].TimePerSlice, samplingInterval_);
+                text += $"{time.AsMillisecondsString()}, {(int)Math.Round(cpuUsage * 100)}%";
                 //text += $" (W {slice.Value.Weight.AsSecondsString()})";
             }
             else {
@@ -700,13 +703,11 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         }
     }
 
-    private void StartComputeSampleSlices(double newWidth)
-    {
+    private void StartComputeSampleSlices(double newWidth) {
         sliceTask_ ??= new CancelableTaskInstance();
         sliceTask_.CreateTask();
 
-        Task.Run(() =>
-        {
+        Task.Run(() => {
             sliceWidth_ = newWidth;
             slices_ = ComputeSampleSlices(profile_, ThreadId);
             sliceTask_.CompleteTask();
@@ -739,14 +740,15 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         startX = (currentSec * secondsTickDist) / secsPerTick;
 
         for (double x = startX; x < endX; x += secondsTickDist) {
-           // if (x >= realStartX) {
-                var tickRect = new Rect(x - visibleArea_.Left, visibleArea_.Top, 3, 4);
-                graphDC.DrawRectangle(Brushes.Black, null, tickRect);
-                DrawText($"{(int)Math.Round(currentSec)}s", tickRect.Left, tickRect.Top + TextMarginY, secTextColor, graphDC, false);
+            // if (x >= realStartX) {
+            var tickRect = new Rect(x - visibleArea_.Left, visibleArea_.Top, 3, 4);
+            graphDC.DrawRectangle(Brushes.Black, null, tickRect);
+            DrawText($"{(int)Math.Round(currentSec)}s", tickRect.Left, tickRect.Top + TextMarginY, secTextColor, graphDC, false);
             //}
 
             int subTicks = (int)(secondsTickDist / MinTickDistance);
-            if (subTicks > 1 && subTicks % 2 == 0) subTicks--;
+            if (subTicks > 1 && subTicks % 2 == 0)
+                subTicks--;
 
             double subTickDist = secondsTickDist / (subTicks + 1);
             double timePerSubTick = 1000.0 / (subTicks + 1);
@@ -782,7 +784,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                           Brush backColor = null, Pen borderColor = null,
                           HorizontalAlignment horizontalAlign = HorizontalAlignment.Center) {
         var glyphInfo = glyphs_.GetGlyphs(text);
-        var textMargin = new Thickness(2,4,4,0);
+        var textMargin = new Thickness(2, 4, 4, 0);
 
         if (horizontalAlign == HorizontalAlignment.Center) {
             x = x - glyphInfo.TextWidth / 2;
@@ -821,7 +823,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
         var searchRange = TimeSpan.FromMilliseconds(10);
         int index = TimeToSampleIndex(time, searchRange);
 
-        if (index != -1) {
+        if (index > 0) {
             return index;
         }
 
@@ -840,14 +842,14 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     private int TimeToSampleIndex(TimeSpan time, TimeSpan timeRange) {
         var queryTime = time + startTime_;
-        int sliceIndex = (int)(queryTime.Ticks / slices_[0].TimePerSlice.Ticks);
+        int sliceIndex = (int)(time.Ticks / slices_[0].TimePerSlice.Ticks);
         timeRange += startTime_;
 
         for (int i = sliceIndex; i < slices_[0].Slices.Count; i++) {
             var slice = slices_[0].Slices[i];
 
             if (slice.FirstSampleIndex >= 0) {
-                for(int sampleIndex = slice.FirstSampleIndex; 
+                for (int sampleIndex = slice.FirstSampleIndex;
                     sampleIndex < slice.FirstSampleIndex + slice.SampleCount; sampleIndex++) {
                     if (profile_.Samples[sampleIndex].Sample.Time >= queryTime) {
                         if (!IsSingleThreadView || profile_.Samples[sampleIndex].Stack.Context.ThreadId == ThreadId) {
@@ -857,7 +859,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 }
             }
 
-            if((i + 1) * slices_[0].TimePerSlice > timeRange) {
+            if ((i + 1) * slices_[0].TimePerSlice > timeRange) {
                 break;
             }
         }
@@ -867,7 +869,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     private int TimeToSampleIndexBack(TimeSpan time, TimeSpan timeRange) {
         var queryTime = time + startTime_;
-        int sliceIndex = (int)(queryTime.Ticks / slices_[0].TimePerSlice.Ticks);
+        int sliceIndex = (int)(time.Ticks / slices_[0].TimePerSlice.Ticks);
         sliceIndex = Math.Min(sliceIndex, slices_[0].Slices.Count - 1);
         timeRange += startTime_;
 
@@ -875,7 +877,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
             var slice = slices_[0].Slices[i];
 
             if (slice.FirstSampleIndex >= 0) {
-                for(int sampleIndex = slice.FirstSampleIndex + slice.SampleCount - 1; sampleIndex >= slice.FirstSampleIndex; sampleIndex--) {
+                for (int sampleIndex = slice.FirstSampleIndex + slice.SampleCount - 1; sampleIndex >= slice.FirstSampleIndex; sampleIndex--) {
                     if (profile_.Samples[sampleIndex].Sample.Time <= queryTime) {
                         if (!IsSingleThreadView || profile_.Samples[sampleIndex].Stack.Context.ThreadId == ThreadId) {
                             return sampleIndex;
@@ -884,7 +886,7 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 }
             }
 
-            if((sliceIndex - i + 1) * slices_[0].TimePerSlice > timeRange) {
+            if ((sliceIndex - i + 1) * slices_[0].TimePerSlice > timeRange) {
                 break;
             }
         }
@@ -937,7 +939,8 @@ public class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
     protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        if (EqualityComparer<T>.Default.Equals(field, value))
+            return false;
         field = value;
         OnPropertyChanged(propertyName);
         return true;

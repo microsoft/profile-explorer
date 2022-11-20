@@ -405,6 +405,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         }
 
         ResetHighlightedNodes();
+        SetHorizontalOffset(0);
         await GraphViewer.Initialize(GraphViewer.FlameGraph.CallTree, node.CallTreeNode,
                                      GraphHostBounds, settings_, Session);
     }
@@ -938,7 +939,14 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     private async void MarkAllInstancesExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (GraphViewer.SelectedNode != null &&
             GraphViewer.SelectedNode.HasFunction) {
-            MarkFunction(GraphViewer.SelectedNode.CallTreeNode);
+            MarkFunctionInstances(GraphViewer.SelectedNode.CallTreeNode.Function);
+        }
+    }
+
+    private async void MarkInstanceExecuted(object sender, ExecutedRoutedEventArgs e) {
+        if (GraphViewer.SelectedNode != null &&
+            GraphViewer.SelectedNode.HasFunction) {
+            GraphViewer.MarkNode(GraphViewer.SelectedNode);
         }
     }
 
@@ -960,12 +968,13 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         GraphViewer.MarkNodes(nodes);
     }
 
-    public void MarkFunction(ProfileCallTreeNode node) {
+    public void MarkFunctionInstances(IRTextFunction func) {
         if (!IsInitialized) {
             return;
         }
 
-        GraphViewer.MarkNode(node);
+        var nodes = callTree_.GetCallTreeNodes(func);
+        GraphViewer.MarkNodes(nodes);
     }
 
     public void ClearMarkedFunctions() {

@@ -83,6 +83,46 @@
                 Margin="150,32,0,0"
                 VerticalAlignment="Top"
                 Visibility="Collapsed" />
+
+            <Grid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem
+                        Command="{Binding IncludeThreadCommand}"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Include Thread">
+                        <MenuItem.Icon>
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource EyeIcon}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem
+                        Command="{Binding IncludeSameNameThreadCommand}"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Include Same Name Threads" />
+                    <Separator />
+                    <MenuItem
+                        Command="{Binding ExcludeThreadCommand}"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Exclude Thread">
+                        <MenuItem.Icon>
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource EyeIconTransparent}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem
+                        Command="{Binding ExcludeSameNameThreadCommand}"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Exclude Same Name Threads" />
+                    <MenuItem
+                        Command="{Binding ExcludeOtherThreadsCommand}"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Exclude All Other Threads" />
+                </ContextMenu>
+            </Grid.ContextMenu>
         </Grid>
     </Border>
 </UserControl>

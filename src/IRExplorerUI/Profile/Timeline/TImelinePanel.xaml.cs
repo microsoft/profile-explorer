@@ -164,6 +164,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                     threadView.ActivityHost.BackColor = Brushes.WhiteSmoke;
                     threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
                     threadView.ActivityHost.SamplesBackColor = ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor((uint)thread.ThreadId));
+                threadView.ThreadActivityAction += ThreadView_ThreadActivityAction;
 
                      var threadInfo = Session.ProfileData.FindThread(thread.ThreadId);
 
@@ -184,6 +185,10 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
             ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
         }, DispatcherPriority.Background);
+    }
+
+    private void ThreadView_ThreadActivityAction(object sender, ThreadActivityAction e) {
+        Trace.WriteLine($"Thread action {e}");
     }
 
     public override void OnSessionStart() {
@@ -321,9 +326,13 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     private async void ActivityView_ClearedFilteredTimeRange(object sender, EventArgs e) {
         var view = sender as ActivityView;
+        await RemoveFilters(view);
+    }
+
+    private async Task RemoveFilters(ActivityView view) {
         changingThreadFiltering_ = true;
 
-        if (view.IsSingleThreadView) {
+        if (view == null || view.IsSingleThreadView) {
             ActivityView.ClearTimeRangeFilter();
         }
 
@@ -508,7 +517,8 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private void ExecuteGraphResetWidth(object sender, ExecutedRoutedEventArgs e) {
-        //? TODO: Buttons should be disabled
+        ActivityView.SetHorizontalOffset(0);
+        SetMaxWidth(ActivityView.ActualWidth);
     }
 
     private void ExecuteGraphZoomIn(object sender, ExecutedRoutedEventArgs e) {
@@ -516,19 +526,16 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private void AdjustMaxWidth(double amount) {
-        var newWidth = ActivityView.MaxWidth + amount;
+        var newWidth = Math.Max(ActivityView.MaxWidth + amount, ActivityView.ActualWidth);
         SetMaxWidth(newWidth);
     }
 
     private void SetMaxWidth(double newWidth, object source = null) {
-        Trace.WriteLine($"New width {newWidth}");
         ActivityView.SetMaxWidth(newWidth);
         ScrollElement.Width = newWidth + ActivityViewHeader.ActualWidth;
 
-        if (threadActivityViews_ != null)
-        {
-            foreach (var threadView in threadActivityViews_)
-            {
+        if (threadActivityViews_ != null) {
+            foreach (var threadView in threadActivityViews_) {
                 threadView.ActivityHost.SetMaxWidth(newWidth);
 
                 if (source != threadView.TimelineHost) {
@@ -674,5 +681,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     public void ClearMarkedFunctionSamples() {
         ActivityView.ClearMarkedSamples();
         threadActivityViews_.ForEach(threadView => threadView.ActivityHost.ClearMarkedSamples());
+    }
+
+    private async void RemoveFiltersExecuted(object sender, ExecutedRoutedEventArgs e) {
+        await RemoveFilters(null);
     }
 }

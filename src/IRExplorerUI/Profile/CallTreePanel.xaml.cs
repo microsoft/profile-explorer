@@ -75,8 +75,14 @@ public static class CallTreeCommand {
         new RoutedCommand("ChangeRootNode", typeof(FrameworkElement));
     public static readonly RoutedCommand MarkAllInstances =
         new RoutedCommand("MarkAllInstances", typeof(FrameworkElement));
+    public static readonly RoutedCommand MarkInstance =
+        new RoutedCommand("MarkInstance", typeof(FrameworkElement));
     public static readonly RoutedCommand ClearMarkedNodes =
         new RoutedCommand("ClearMarkedNodes", typeof(FrameworkElement));
+
+    // Timeline specific commands.
+    public static readonly RoutedCommand RemoveFilters =
+        new RoutedCommand("RemoveFilters", typeof(FrameworkElement));
 }
 
 public enum ChildFunctionExKind {
@@ -327,7 +333,9 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
             Reset();
         }
 
+        Trace.WriteLine($"=> start display: {Environment.TickCount}");
         profileCallTree_ = await Task.Run(() => CreateProfileCallTree());
+        Trace.WriteLine($"=> done display: {Environment.TickCount}");
         CallTree.Model = profileCallTree_;
 
         if (true) {
@@ -647,9 +655,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private void UnmarkAllFunctions() {
-        foreach(var funcEx in callTreeNodeToNodeExMap_.Values) {
+        Trace.WriteLine($"=> start unmark: {Environment.TickCount}");
+        
+        foreach (var funcEx in callTreeNodeToNodeExMap_.Values) {
             funcEx.IsMarked = false;
         }
+
+        Trace.WriteLine($"=> done unmark: {Environment.TickCount}");
     }
 
     private void ExpandHottestFunctionPath(TreeNode node) {
@@ -683,7 +695,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     private void ExpandHottestCallPathExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (e.Parameter is TreeNode node) {
-            UnmarkAllFunctions();
             ExpandHottestFunctionPath(node);
         }
     }
