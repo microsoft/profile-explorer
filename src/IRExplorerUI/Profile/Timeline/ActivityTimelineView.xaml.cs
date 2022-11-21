@@ -43,4 +43,11 @@ public partial class ActivityTimelineView : UserControl {
         new((obj) => ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.ExcludeSameNameThread));
     public RelayCommand<object> ExcludeOtherThreadsCommand => 
         new((obj) => ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.ExcludeOtherThreads));
+
+    private void Margin_MouseDown(object sender, MouseButtonEventArgs e) {
+        if (e.LeftButton == MouseButtonState.Pressed &&
+            e.ClickCount >= 2) {
+            ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.ExcludeOtherThreads);
+        }
+    }
 }

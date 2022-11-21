@@ -10,8 +10,22 @@
     mc:Ignorable="d">
     <FrameworkElement.ContextMenu>
         <ContextMenu>
-            <MenuItem Header="Filter to Time Range" />
-            <MenuItem Header="Remove Time Range Filter" />
+            <MenuItem
+                Command="{Binding FilterTimeRangeCommand}"
+                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Filter to Selected Time Range"
+                InputGestureText="Double-click"
+                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <MenuItem
+                Command="{Binding ClearSelectionCommand}"
+                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Remove Time Range Filter"
+                Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <MenuItem
+                Command="{Binding RemoveTimeRangeFilterCommand}"
+                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Clear Selection"
+                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
         </ContextMenu>
     </FrameworkElement.ContextMenu>
 </FrameworkElement>

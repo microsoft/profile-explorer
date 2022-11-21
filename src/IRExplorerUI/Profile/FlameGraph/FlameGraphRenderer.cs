@@ -84,7 +84,11 @@ public class FlameGraphRenderer {
 
     public DrawingVisual Setup() {
         graphVisual_ = new DrawingVisual();
-        SetupNode(flameGraph_.RootNode);
+
+        if (flameGraph_.RootNode != null) {
+            SetupNode(flameGraph_.RootNode);
+        }
+
         glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(graphVisual_).PixelsPerDip);
         nameGlyphs_ = new GlyphRunCache(nameFont_, fontSize_, VisualTreeHelper.GetDpi(graphVisual_).PixelsPerDip);
 

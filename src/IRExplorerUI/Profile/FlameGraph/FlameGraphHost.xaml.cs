@@ -307,15 +307,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         GraphHost.ScrollToHorizontalOffset(offset);
     }
 
-    private DoubleAnimation ScrollToHorizontalOffset(double offset, bool triggerAnimation = true,
-                                                     bool animate = true, double duration = ZoomAnimationDuration) {
+    private DoubleAnimation ScrollToHorizontalOffset(double offset, bool animate = true, 
+                                                     double duration = ZoomAnimationDuration) {
         if (animate) {
-            var animation1 = new DoubleAnimation(GraphHost.HorizontalOffset, offset, TimeSpan.FromMilliseconds(duration));
-            if (triggerAnimation) {
-                BeginAnimation(FlameGraphHorizontalOffsetProperty, animation1, HandoffBehavior.SnapshotAndReplace);
-            }
-
-            return animation1;
+            var animation = new DoubleAnimation(GraphHost.HorizontalOffset, offset, TimeSpan.FromMilliseconds(duration));
+            BeginAnimation(FlameGraphHorizontalOffsetProperty, animation, HandoffBehavior.SnapshotAndReplace);
+            return animation;
         }
         else {
             GraphHost.ScrollToHorizontalOffset(offset);
@@ -730,7 +727,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         return (start + (end - start) * progress);
     }
 
-    private void AdjustEnlargeNodeOffset(double progress) {
+    private void AdjustEnlargedNodeOffset(double progress) {
         double offset = Lerp(initialOffsetX_, endOffsetX_, progress);
         GraphHost.ScrollToHorizontalOffset(offset);
     }
@@ -1019,7 +1016,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                 panel.AdjustZoomPointOffset((double)e.NewValue);
             }
             else {
-                panel.AdjustEnlargeNodeOffset((double)e.NewValue);
+                panel.AdjustEnlargedNodeOffset((double)e.NewValue);
             }
         }
     }
