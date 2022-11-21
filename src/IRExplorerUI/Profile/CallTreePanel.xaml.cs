@@ -83,6 +83,8 @@ public static class CallTreeCommand {
     // Timeline specific commands.
     public static readonly RoutedCommand RemoveFilters =
         new RoutedCommand("RemoveFilters", typeof(FrameworkElement));
+    public static readonly RoutedCommand RemoveThreadFilters =
+        new RoutedCommand("RemoveThreadFilters", typeof(FrameworkElement));
 }
 
 public enum ChildFunctionExKind {
@@ -354,6 +356,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     public void Reset() {
         CallTree.Model = null;
         function_ = null;
+        profileCallTree_ = null;
         callTreeNodeToNodeExMap_.Clear();
         stateStack_.Clear();
     }

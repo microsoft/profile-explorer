@@ -11,6 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI.Profile;
 
@@ -101,17 +102,30 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     public ActivityView() {
         InitializeComponent();
-        filteredOutColor_ = ColorBrushes.GetTransparentBrush(Colors.WhiteSmoke, 180);
-        selectionBackColor_ = ColorBrushes.GetTransparentBrush(Colors.Gold, 80);
+        filteredOutColor_ = ColorBrushes.GetTransparentBrush(Colors.WhiteSmoke, 190);
+        selectionBackColor_ = ColorBrushes.GetTransparentBrush(Colors.SkyBlue, 80);
+        filteredBackColor_ = ColorBrushes.GetBrush(Colors.Linen);
         selectionBorderColor_ = ColorPens.GetPen(Colors.Black);
         markerBrush_ = ColorBrushes.GetTransparentBrush(Colors.DarkRed, 200);
+        positionLinePen_ = ColorPens.GetBoldPen(Colors.DarkBlue);
+        filteredOutBorderColor_ = ColorPens.GetBoldPen(Colors.Black);
         ThreadId = -1;
+        DataContext = this;
 
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         MouseLeftButtonUp += ActivityView_MouseLeftButtonUp;
         MouseMove += ActivityView_MouseMove;
         MouseLeave += ActivityView_MouseLeave;
     }
+
+    public RelayCommand<object> FilterTimeRangeCommand => 
+        new((obj) => ApplyTimeRangeFilter());
+
+    public RelayCommand<object> ClearSelectionCommand =>
+        new((obj) => ClearSelectedTimeRange());
+
+    public RelayCommand<object> RemoveTimeRangeFilterCommand =>
+        new((obj) => RemoveTimeRangeFilter());
 
     public event EventHandler<SampleTimeRangeInfo> SelectingTimeRange;
     public event EventHandler<SampleTimeRangeInfo> SelectedTimeRange;
@@ -137,26 +151,20 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     public TimeSpan FilteredTime => filterEndTime_ - filterStartTime_;
     public SampleTimeRangeInfo FilteredRange => GetFilteredTimeRange();
     public SampleTimePointInfo CurrentTimePoint => GetCurrentTimePoint();
+    public double MaxViewWidth => maxWidth_;
+    public bool PreviousIsThreadIncluded { get; set; }
 
-    public new double MaxWidth => maxWidth_;
-
-    private bool? prevIsThreadIncluded_;
     private bool isThreadIncluded_;
     public bool IsThreadIncluded {
         get => isThreadIncluded_;
         set {
+            PreviousIsThreadIncluded = isThreadIncluded_;
+
             if (value != isThreadIncluded_) {
-                prevIsThreadIncluded_ = null;
                 SetField(ref isThreadIncluded_, value);
                 ThreadIncludedChanged?.Invoke(this, value);
             }
         }
-    }
-
-    private void SetIsThreadIncluded(bool included) {
-        bool state = IsThreadIncluded;
-        IsThreadIncluded = included;
-        prevIsThreadIncluded_ = state;
     }
 
     public Brush BackColor {
@@ -176,11 +184,29 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         }
     }
 
+    private Brush filteredBackColor_;
+    public Brush FilteredBackColor {
+        get => filteredBackColor_;
+        set {
+            SetField(ref filteredBackColor_, value);
+            Redraw();
+        }
+    }
+
     private Brush filteredOutColor_;
     public Brush FilteredOutColor {
         get => filteredOutColor_;
         set {
             SetField(ref filteredOutColor_, value);
+            Redraw();
+        }
+    }
+
+    private Pen filteredOutBorderColor_;
+    public Pen FilteredOutBorderColor {
+        get => filteredOutBorderColor_;
+        set {
+            SetField(ref filteredOutBorderColor_, value);
             Redraw();
         }
     }
@@ -226,6 +252,15 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         get => selectionBorderColor_;
         set {
             SetField(ref selectionBorderColor_, value);
+            Redraw();
+        }
+    }
+
+    private Pen positionLinePen_;
+    public Pen PositionLinePen {
+        get => positionLinePen_;
+        set {
+            SetField(ref positionLinePen_, value);
             Redraw();
         }
     }
@@ -288,9 +323,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
             if (time >= selectionStartTime_ && time <= selectionEndTime_) {
                 if (e.ClickCount > 1) {
-                    var range = GetSelectedTimeRange();
-                    FilterTimeRange(range);
-                    FilteredTimeRange?.Invoke(this, range);
+                    ApplyTimeRangeFilter();
                 }
 
                 return;
@@ -304,8 +337,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         if (hasFilter_) {
             if (time < filterStartTime_ || time > filterEndTime_) {
                 if (e.ClickCount > 1) {
-                    ClearTimeRangeFilter();
-                    ClearedFilteredTimeRange?.Invoke(this, EventArgs.Empty);
+                    RemoveTimeRangeFilter();
                 }
             }
         }
@@ -317,6 +349,17 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         selectionEndTime_ = selectionStartTime_;
         CaptureMouse();
         Redraw();
+    }
+
+    private void RemoveTimeRangeFilter() {
+        ClearTimeRangeFilter();
+        ClearedFilteredTimeRange?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ApplyTimeRangeFilter() {
+        var range = GetSelectedTimeRange();
+        FilterTimeRange(range);
+        FilteredTimeRange?.Invoke(this, range);
     }
 
     private void ActivityView_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
@@ -371,7 +414,6 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         filterStartTime_ = range.StartTime - startTime_;
         filterEndTime_ = range.EndTime - startTime_;
         hasFilter_ = true;
-        SetIsThreadIncluded(true);
         ClearSelectedTimeRange();
         UpdateFilterState();
     }
@@ -379,7 +421,6 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     public void FilterAllOut() {
         filterStartTime_ = filterEndTime_ = TimeSpan.Zero;
         hasFilter_ = true;
-        SetIsThreadIncluded(false);
         ClearSelectedTimeRange();
         UpdateFilterState();
     }
@@ -387,11 +428,6 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     public void ClearTimeRangeFilter() {
         hasFilter_ = false;
         UpdateFilterState();
-
-        // Restore previous state if it wasn't changed since the filter was applied.
-        if (prevIsThreadIncluded_.HasValue) {
-            IsThreadIncluded = prevIsThreadIncluded_.Value;
-        }
     }
 
     private void UpdateFilterState() {
@@ -407,6 +443,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
         initialized_ = true;
         isThreadIncluded_ = true;
+        PreviousIsThreadIncluded = true;
         profile_ = profile;
         visibleArea_ = visibleArea;
         ThreadId = threadId;
@@ -540,7 +577,16 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             return;
         }
 
-        //? lay on top technique for multiple threads
+        if (hasFilter_) {
+            var startX = TimeToPosition(filterStartTime_);
+            var endX = TimeToPosition(filterEndTime_);
+            double height = sampleHeight_ + topMargin_;
+
+            startX = Math.Max(0, startX);
+            endX = Math.Min(endX, visibleArea_.Width);
+            var rect = new Rect(startX, 0, endX - startX, height);
+            graphDC.DrawRectangle(filteredBackColor_, null, rect);
+        }
 
         foreach (var list in slices_) {
             var scaledSliceWidth = maxWidth_ / list.MaxSlices;
@@ -560,8 +606,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 var borderColor = sampleBorderColor_;
 
                 if (showPositionLine_ && !startedSelection_) {
-                    if (positionLineX_ > i * scaledSliceWidth &&
-                        positionLineX_ < (i + 1) * scaledSliceWidth) {
+                    if ((positionLineX_ - visibleArea_.Left) > i * scaledSliceWidth &&
+                        (positionLineX_ - visibleArea_.Left) < (i + 1) * scaledSliceWidth) {
                         var newColor = ColorUtils.AdjustLight(((SolidColorBrush)sampleBackColor_).Color, 0.75f);
                         backColor = ColorBrushes.GetBrush(newColor);
                     }
@@ -632,15 +678,18 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         if (hasFilter_) {
             var startX = TimeToPosition(filterStartTime_);
             var endX = TimeToPosition(filterEndTime_);
+            double height = sampleHeight_ + topMargin_;
 
             if (startX > 0) {
-                var beforeRect = new Rect(0, 0, startX, sampleHeight_ + topMargin_);
+                var beforeRect = new Rect(0, 0, startX, height);
                 graphDC.DrawRectangle(filteredOutColor_, null, beforeRect);
+                graphDC.DrawLine(filteredOutBorderColor_, new Point(startX, 0), new Point(startX, height));
             }
 
             if (endX < visibleArea_.Width) {
-                var afterRect = new Rect(endX, 0, visibleArea_.Width - endX, sampleHeight_ + topMargin_);
+                var afterRect = new Rect(endX, 0, visibleArea_.Width - endX, height);
                 graphDC.DrawRectangle(filteredOutColor_, null, afterRect);
+                graphDC.DrawLine(filteredOutBorderColor_, new Point(endX, 0), new Point(endX, height));
             }
         }
 
@@ -669,7 +718,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         if (showPositionLine_ && !startedSelection_) {
             var lineStart = new Point(positionLineX_, 0);
             var lineEnd = new Point(positionLineX_, sampleHeight_ + topMargin_);
-            graphDC.DrawLine(ColorPens.GetBoldPen(Colors.DarkBlue), lineStart, lineEnd);
+            graphDC.DrawLine(positionLinePen_, lineStart, lineEnd);
 
             var time = PositionToTime(positionLineX_);
             var textY = topMargin_ + 2;
@@ -928,7 +977,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
     public void SetHorizontalOffset(double offset) {
-        visibleArea_ = new Rect(offset, 0, ActualWidth, ActualHeight);
+        visibleArea_ = new Rect(offset, 0, visibleArea_.Width, visibleArea_.Height);
         Redraw();
     }
 

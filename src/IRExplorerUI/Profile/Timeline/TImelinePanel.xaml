@@ -17,6 +17,7 @@
         <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult" Executed="PreviousSearchResultExecuted" />
         <CommandBinding Command="local:CallTreeCommand.NextSearchResult" Executed="NextSearchResultExecuted" />
         <CommandBinding Command="local:CallTreeCommand.RemoveFilters" Executed="RemoveFiltersExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.RemoveThreadFilters" Executed="RemoveThreadFiltersExecuted" />
     </irExplorerUi:ToolPanelControl.CommandBindings>
 
     <irExplorerUi:ToolPanelControl.InputBindings>
@@ -128,7 +129,7 @@
                         VerticalAlignment="Center"
                         FontWeight="Medium"
                         Foreground="DarkBlue"
-                        Text="Filter:"
+                        Text="Time:"
                         Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
                     <TextBlock
                         Margin="4,0,4,0"
@@ -141,8 +142,34 @@
                     <Button
                         Command="local:CallTreeCommand.RemoveFilters"
                         TabIndex="5"
-                        ToolTip="Remove timeline filter"
+                        ToolTip="Remove time range filter"
                         Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Image
+                            Width="16"
+                            Height="16"
+                            Source="{StaticResource ClearIcon}" />
+                    </Button>
+                    <Separator Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontWeight="Medium"
+                        Foreground="Purple"
+                        Text="Threads: "
+                        Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <TextBlock
+                        Margin="4,0,4,0"
+                        VerticalAlignment="Center"
+                        FontWeight="Medium"
+                        Foreground="Purple"
+                        Text="{Binding ThreadFilterText, Converter={StaticResource MillisecondTimeConverter}}"
+                        Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <Button
+                        Command="local:CallTreeCommand.RemoveThreadFilters"
+                        TabIndex="5"
+                        ToolTip="Remove thread exclusions"
+                        Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Image
                             Width="16"
                             Height="16"
@@ -188,8 +215,6 @@
                             <TextBlock Text="Details" />
                         </StackPanel>
                     </ToggleButton>
-
-                    <Separator />
 
                     <Image Source="{StaticResource SearchIcon}" Visibility="Collapsed" />
                     <Grid Height="24" Visibility="Collapsed">
@@ -278,6 +303,7 @@
                     Height="70"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
+                    MouseDown="ActivityViewHeader_MouseDown"
                     Background="PapayaWhip">
                     <StackPanel Margin="2">
                         <TextBlock
@@ -303,6 +329,7 @@
                         BackColor="Linen" />
 
                     <ScrollViewer
+                        x:Name="ActivityViewHost"
                         Margin="0,70,0,0"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
@@ -329,7 +356,7 @@
                 VerticalAlignment="Bottom"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 HorizontalScrollBarVisibility="Auto"
-                ScrollChanged="GraphHost_OnScrollChanged"
+                ScrollChanged="ActivityScrollBar_OnScrollChanged"
                 VerticalScrollBarVisibility="Disabled">
                 <Grid
                     x:Name="ScrollElement"

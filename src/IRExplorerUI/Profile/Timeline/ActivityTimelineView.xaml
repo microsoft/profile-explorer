@@ -39,7 +39,8 @@
                 Height="30"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Background="PapayaWhip">
+                Background="PapayaWhip"
+                MouseDown="Margin_MouseDown">
                 <CheckBox
                     Width="16"
                     Height="16"
@@ -87,6 +88,18 @@
             <Grid.ContextMenu>
                 <ContextMenu>
                     <MenuItem
+                        Command="{Binding ExcludeOtherThreadsCommand}"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Filter to Thread"
+                        ToolTip="Display activity from only this thread and exclude all others">
+                        <MenuItem.Icon>
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource QueryIcon}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem
                         Command="{Binding IncludeThreadCommand}"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Include Thread">
@@ -102,6 +115,7 @@
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Include Same Name Threads" />
                     <Separator />
+
                     <MenuItem
                         Command="{Binding ExcludeThreadCommand}"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
@@ -117,10 +131,6 @@
                         Command="{Binding ExcludeSameNameThreadCommand}"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Exclude Same Name Threads" />
-                    <MenuItem
-                        Command="{Binding ExcludeOtherThreadsCommand}"
-                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                        Header="Exclude All Other Threads" />
                 </ContextMenu>
             </Grid.ContextMenu>
         </Grid>
