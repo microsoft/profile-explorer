@@ -348,29 +348,23 @@
                     <Separator />
 
                     <MenuItem
-                        Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                        Command="{Binding SelectFunctionCallTreeCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=CallTree}"
                         Header="Select in Call Tree"
-                        IsEnabled="False"
-                        ToolTip=""
                         Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <MenuItem
-                        Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                        Command="{Binding SelectFunctionFlameGraphCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=CallTree}"
-                        Header="Select in Flame Graph"
-                        IsEnabled="False"
-                        ToolTip="" />
+                        Header="Select in Flame Graph" />
 
                     <MenuItem
-                        Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                        Command="{Binding SelectFunctionTimelineCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=CallTree}"
-                        Header="Select in Timeline"
-                        IsEnabled="False"
-                        ToolTip="" />
+                        Header="Select in Timeline" />
                 </ContextMenu>
             </ListView.ContextMenu>
         </tree:TreeList>

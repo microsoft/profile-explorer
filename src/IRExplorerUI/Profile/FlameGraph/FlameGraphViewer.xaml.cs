@@ -18,7 +18,8 @@ public partial class FlameGraphViewer : FrameworkElement {
     private bool isTimelineView_;
     private bool initialized_;
     private Brush markedNodeBackColor_;
-    private Brush searchResultNodeBackColor_;
+    private Pen searchResultBorderColor_;
+    private Pen selectedNodeBorderColor_;
 
     private Dictionary<FlameGraphNode, HighlightingStyle> hoverNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> markedNodes_;
@@ -30,16 +31,6 @@ public partial class FlameGraphViewer : FrameworkElement {
     public Rect VisibleArea => renderer_.VisibleArea;
     public bool IsZoomed => Math.Abs(MaxGraphWidth - VisibleArea.Width) > 1;
     public FlameGraphNode SelectedNode => selectedNode_;
-
-    private Dictionary<FlameGraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
-        return type switch {
-            HighlighingType.Hovered => hoverNodes_,
-            HighlighingType.Selected => selectedNodes_,
-            HighlighingType.Marked => markedNodes_,
-            _ => throw new InvalidOperationException("Unsupported highlighting type")
-        };
-    }
-
     public ISession Session { get; set; }
 
     public FlameGraphViewer() {
@@ -48,7 +39,8 @@ public partial class FlameGraphViewer : FrameworkElement {
         markedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
         selectedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
         markedNodeBackColor_ = ColorBrushes.GetBrush("#D0E3F1");
-        searchResultNodeBackColor_ = Brushes.Khaki;
+        selectedNodeBorderColor_ = ColorPens.GetPen("#0F92EF", 2);
+        searchResultBorderColor_ = ColorPens.GetPen(Brushes.Gold, 2);
         SetupEvents();
     }
 
@@ -147,6 +139,15 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
     }
 
+    private Dictionary<FlameGraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
+        return type switch {
+            HighlighingType.Hovered => hoverNodes_,
+            HighlighingType.Selected => selectedNodes_,
+            HighlighingType.Marked => markedNodes_,
+            _ => throw new InvalidOperationException("Unsupported highlighting type")
+        };
+    }
+
     public void ResetNodeHighlighting() {
         ResetHighlightedNodes(HighlighingType.Hovered, true);
         ResetHighlightedNodes(HighlighingType.Selected, true);
@@ -170,8 +171,7 @@ public partial class FlameGraphViewer : FrameworkElement {
 
     private HighlightingStyle PickSelectedNodeStyle(HighlightingStyle style) {
         var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.9f);
-        //var newColor = style.BackColor;
-        return new HighlightingStyle(newColor, ColorPens.GetBoldPen(style.Border));
+        return new HighlightingStyle(newColor, selectedNodeBorderColor_);
     }
 
     private HighlightingStyle PickSelectedParentNodeStyle(HighlightingStyle style) {
@@ -181,8 +181,8 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     private HighlightingStyle PickMarkedNodeStyle(FlameGraphNode node, HighlightingStyle style) {
-        var newColor = node.SearchResult.HasValue ? searchResultNodeBackColor_ : markedNodeBackColor_;
-        var newPen = node.SearchResult.HasValue ? ColorPens.GetBoldPen(Colors.Black) : ColorPens.GetPen(Colors.Black);
+        var newColor = node.SearchResult.HasValue ? node.Style.BackColor : markedNodeBackColor_;
+        var newPen = node.SearchResult.HasValue  ? searchResultBorderColor_ : ColorPens.GetPen(Colors.Black);
         return new HighlightingStyle(newColor, newPen);
     }
 
@@ -217,7 +217,7 @@ public partial class FlameGraphViewer : FrameworkElement {
             selectedNode_ = graphNode;
         }
     }
-
+    
     public void SelectNodes(List<FlameGraphNode> nodes) {
         ResetHighlightedNodes(HighlighingType.Hovered);
         ResetHighlightedNodes(HighlighingType.Selected);

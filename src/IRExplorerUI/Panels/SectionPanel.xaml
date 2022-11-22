@@ -571,21 +571,21 @@
 
                             <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                             <MenuItem
-                                Command="local:Command.SaveFunctionText"
+                                Command="{Binding SelectFunctionCallTreeCommand}"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Select in Call Tree"
                                 ToolTip="Select the function instance in the Call Tree panel"
                                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                             <MenuItem
-                                Command="local:Command.SaveFunctionText"
+                                Command="{Binding SelectFunctionFlameGraphCommand}"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Select in Flame Graph"
                                 ToolTip="Select the function instance in the Flame Graph panel"
                                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                             <MenuItem
-                                Command="local:Command.SaveFunctionText"
+                                Command="{Binding SelectFunctionTimelineCommand}"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Select in Timeline"

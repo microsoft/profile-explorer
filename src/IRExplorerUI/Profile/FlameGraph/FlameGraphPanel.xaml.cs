@@ -193,7 +193,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         GraphHost.BringNodeIntoView(node);
     }
 
-    private async void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
+    private void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
         var nodes = GraphHost.GraphViewer.SelectNodes(e);
         if (nodes.Count > 0) {
             GraphHost.BringNodeIntoView(nodes[0], false);
@@ -318,7 +318,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         if (searchResultNodes_ != null && searchResultIndex_ > 0) {
             searchResultIndex_--;
             UpdateSearchResultText();
-            GraphHost.BringNodeIntoView(searchResultNodes_[searchResultIndex_]);
+            GraphHost.SelectNode(searchResultNodes_[searchResultIndex_]);
         }
     }
 
@@ -326,7 +326,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         if (searchResultNodes_ != null && searchResultIndex_ < searchResultNodes_.Count - 1) {
             searchResultIndex_++;
             UpdateSearchResultText();
-            GraphHost.BringNodeIntoView(searchResultNodes_[searchResultIndex_]);
+            GraphHost.SelectNode(searchResultNodes_[searchResultIndex_]);
         }
     }
 
@@ -371,5 +371,17 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     public void ClearMarkedFunctions() {
         GraphHost.ClearMarkedFunctions();
+    }
+    
+    public void SelectFunction(IRTextFunction function) {
+        var nodeList = callTree_.GetSortedCallTreeNodes(function);
+
+        if (nodeList != null && nodeList.Count > 0) {
+            SelectFunction(nodeList[0]);
+        }
+    }
+
+    public void SelectFunction(ProfileCallTreeNode node) {
+        GraphHost.SelectNode(node);
     }
 }

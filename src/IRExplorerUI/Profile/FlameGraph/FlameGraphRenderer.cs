@@ -260,9 +260,8 @@ public class FlameGraphRenderer {
     }
 
     private void DrawDummyNode(FlameGraphGroupNode node, DrawingContext graphDC) {
-        double estimatedDepth = Math.Max(1, 1 + Math.Log10(node.MaxDepthUnder));
         var scaledBounds = new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top,
-            node.Bounds.Width * maxWidth_, node.Bounds.Height * estimatedDepth);
+                                    node.Bounds.Width * maxWidth_, node.Bounds.Height);
 
         if (cachedDummyNodeGuidelines_ == null) {
             cachedDummyNodeGuidelines_ = CreateGuidelineSet(scaledBounds, 0.5f);

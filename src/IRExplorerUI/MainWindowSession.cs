@@ -1477,11 +1477,22 @@ namespace IRExplorerUI {
             return Task.Run(() => docInfo.Loader.GetDocumentOutputText());
         }
 
+        public IToolPanel FindPanel(ToolPanelKind kind) {
+            var panelInfo = FindTargetPanel(null, kind);
+
+            if (panelInfo != null) {
+                return panelInfo.Panel;
+            }
+
+            return null;
+        }
+
         public IToolPanel FindAndActivatePanel(ToolPanelKind kind) {
             var panelInfo = FindTargetPanel(null, kind);
 
             if (panelInfo != null) {
-                //panelInfo.Host.IsSelected = true;
+                panelInfo.Host.IsActive = true;
+                panelInfo.Host.IsSelected = true;
                 return panelInfo.Panel;
             }
 
