@@ -301,6 +301,12 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         NodeDetailsPanel.FunctionNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
         NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
 
+        TimelineHost.SizeChanged += (sender, args) => {
+            if (IsInitialized && args.NewSize.Width > ActivityView.MaxViewWidth) {
+                SetMaxWidth(args.NewSize.Width, false);
+            }
+        };
+
         SetupActivityViewEvents(ActivityView);
         SetupActivityHoverPreview(ActivityView);
     }
@@ -337,7 +343,8 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                         popup.UpdateNode(callNode);
                     }
                     else {
-                        popup = new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, view, Session);
+                        popup = new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, view, 
+                                                      Session, canExpand: false);
                     }
 
                     popup.ShowBacktraceView = true;

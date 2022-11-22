@@ -13,7 +13,7 @@
             <MenuItem
                 Command="{Binding FilterTimeRangeCommand}"
                 CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                Header="Filter to Selected Time Range"
+                Header="Filter to Time Range"
                 InputGestureText="Double-click"
                 Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
             <MenuItem

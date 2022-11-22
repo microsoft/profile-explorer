@@ -44,7 +44,7 @@ public class ProfileCallTreeNodeEx : BindableObject {
     public string ModuleName { get; set; }
     public double Percentage { get; set; }
     public double ExclusivePercentage { get; set; }
-
+    public bool IsMarked { get; set; }
     public TimeSpan Weight => CallTreeNode.Weight;
     public TimeSpan ExclusiveWeight => CallTreeNode.ExclusiveWeight;
 
@@ -430,7 +430,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
         return name;
     }
-
     public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {
         Session = session;
         funcInfoProvider_ = funcInfoProvider;

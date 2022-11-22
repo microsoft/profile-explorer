@@ -135,7 +135,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
     }
 
-    private void InitializeCallTree(ProfileCallTree callTree) {
+    private void InitializeCallTree(ProfileCallTree callTree) {   
         callTree_ = callTree;
         GraphHost.InitializeFlameGraph(callTree);
     }
