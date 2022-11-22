@@ -87,19 +87,27 @@
                     <MenuItem
                         Command="local:CallTreeCommand.MarkAllInstances"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                        Header="Mark All Function Instances"
+                        Header="Mark All Instances"
                         ToolTip="Mark all instances of the function" />
                     <MenuItem
                         Command="local:CallTreeCommand.ClearMarkedNodes"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Clear Marked Functions"
                         ToolTip="Clear all marked functions" />
+                    <Separator />
+
                     <MenuItem
                         Command="irExplorerUi:GraphCommand.GraphZoomOut"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                        Header="Select Function in Call Tree"
+                        Header="Select in Call Tree"
                         IsEnabled="False"
                         ToolTip="Select the function instance in the Call Tree panel" />
+                    <MenuItem
+                        Command="irExplorerUi:GraphCommand.GraphZoomOut"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Select in Timeline"
+                        IsEnabled="False"
+                        ToolTip="Select the function instance in the Timeline panel" />
                 </ContextMenu>
             </local:FlameGraphViewer.ContextMenu>
         </local:FlameGraphViewer>

@@ -8,36 +8,56 @@ using System.Windows.Media;
 namespace IRExplorerUI {
     class ColorUtils {
         static readonly string[] PastelColors = new string[] {
-            "#FE9BA1",
-            "#FFABA0",
-            "#FFC69E",
-            "#D8BBCA",
-            "#D5A2BB",
-            "#EAA2B9",
-            "#FFAB9F",
-            "#FFBEA1",
-            "#FFE0A0",
-            "#DBD2CA",
-            "#D9B5B9",
-            "#EAB4B8",
-            "#FFBEA0",
-            "#FFFF9F",
-            "#C8F3A9",
-            "#D4F3D4",
-            "#CFD3BC",
-            "#AAC4C5",
-            "#99C4C6",
-            "#9AE2B3",
-            "#DCEFAC",
-            "#A4C7F0",
-            "#B7C6F0",
-            "#DEDCB8",
-            "#B6C9EE",
-            "#EAB4B8",
-            "#B0ABDB",
-            "#CCA9DB",
-            "#ACC6C5",
-            "#F1DCB8"
+            "#f4a3a3",
+            "#fbc29c",
+            "#dabdce",
+            "#b6c9e1",
+            "#ebacc2",
+            "#ebacd6",
+            "#fcb89b",
+            "#dbbcbe",
+            "#fbd397",
+            "#fcfc9b",
+            "#cbeea3",
+            "#abe6b1",
+            "#d3d5c2",
+            "#b9d9d7",
+            "#b1d0dc",
+            "#b1e6c2",
+            "#daedaa",
+            "#acbeeb",
+            "#dcdab6",
+            "#b5b5ed",
+            "#d3b8df",
+            "#ceb9de",
+            "#eed3af",
+
+        };
+
+        static readonly string[] LightPastelColors = new string[] {
+            "#fed7d7",
+            "#fee6d6",
+            "#f0e4eb",
+            "#e1e9f3",
+            "#f7dde6",
+            "#f7ddee",
+            "#fee2d6",
+            "#f1e4e5",
+            "#fee2d6",
+            "#fefed6",
+            "#e8f9db",
+            "#dff6df",
+            "#edeee6",
+            "#e4f0f1",
+            "#e6eeee",
+            "#dff5e6",
+            "#f0f8dc",
+            "#dde4f7",
+            "#f1f0e3",
+            "#dde6f7",
+            "#e4e2f2",
+            "#ede2f2",
+            "#f8eddc",
         };
         
         public static Color AdjustSaturation(Color color, float saturationAdjustment = 2f) {
@@ -66,24 +86,19 @@ namespace IRExplorerUI {
         }
 
         public static Color GenerateRandomPastelColor() {
-#if false
-            Random random = new Random();
-            int red = random.Next(256);
-            int green = random.Next(256);
-            int blue = random.Next(256);
-
-            Color mix = Colors.White;
-            red = (red + mix.R) / 2;
-            green = (green + mix.G) / 2;
-            blue = (blue + mix.B) / 2;
-            return Color.FromRgb((byte)red, (byte)green, (byte)blue);
-#else
             return Utils.ColorFromString(PastelColors[new Random().Next(PastelColors.Length)]);
-#endif
         }
 
         public static Color GeneratePastelColor(uint id) {
             return Utils.ColorFromString(PastelColors[id % PastelColors.Length]);
+        }
+
+        public static Color GenerateRandomLightPastelColor() {
+            return Utils.ColorFromString(LightPastelColors[new Random().Next(LightPastelColors.Length)]);
+        }
+
+        public static Color GenerateLightPastelColor(uint id) {
+            return Utils.ColorFromString(LightPastelColors[id % LightPastelColors.Length]);
         }
 
         private static void RGBToHSL(Color color, out float h, out float s, out float l) {

@@ -153,7 +153,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     private IRTextFunction function_;
     private DraggablePopupHoverPreview stackHoverPreview_;
-    private ChildFunctionEx profileCallTree_;
+    private ProfileCallTree callTree_;
+    private ChildFunctionEx callTreeEx_;
     private List<ChildFunctionEx> searchResultNodes_;
     private int searchResultIndex_;
     private CallTreeSettings settings_;
@@ -167,7 +168,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
             if (value != settings_.PrependModuleToFunction) {
                 settings_.PrependModuleToFunction = value;
                 OnPropertyChanged();
-                profileCallTree_ = null;
+                callTreeEx_ = null;
 
                 if (IsCallerCalleePanel) {
                     DisplaProfileCallerCalleeTree(function_);
@@ -179,6 +180,16 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         }
     }
 
+    public bool SyncSelection {
+        get => settings_.SyncSelection;
+        set {
+            if (value != settings_.SyncSelection) {
+                settings_.SyncSelection = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+    
     public bool SyncSourceFile {
         get => settings_.SyncSourceFile;
         set {
@@ -307,7 +318,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private string searchResultText_;
-
     public string SearchResultText {
         get => searchResultText_;
         set {
@@ -331,14 +341,15 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     public async Task DisplayProfileCallTree() {
-        if (profileCallTree_ != null) {
+        if (callTreeEx_ != null) {
             Reset();
         }
 
         Trace.WriteLine($"=> start display: {Environment.TickCount}");
-        profileCallTree_ = await Task.Run(() => CreateProfileCallTree());
+        callTree_ = Session.ProfileData.CallTree;
+        callTreeEx_ = await Task.Run(() => CreateProfileCallTree());
         Trace.WriteLine($"=> done display: {Environment.TickCount}");
-        CallTree.Model = profileCallTree_;
+        CallTree.Model = callTreeEx_;
 
         if (true) {
             //? TODO: Option
@@ -348,22 +359,23 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     public async Task DisplaProfileCallerCalleeTree(IRTextFunction function) {
         function_ = function;
-        profileCallTree_ = await Task.Run(() => CreateProfileCallerCalleeTree(function));
-        CallTree.Model = profileCallTree_;
+        callTree_ = Session.ProfileData.CallTree;
+        callTreeEx_ = await Task.Run(() => CreateProfileCallerCalleeTree(function));
+        CallTree.Model = callTreeEx_;
         ExpandCallTreeTop();
     }
 
     public void Reset() {
         CallTree.Model = null;
         function_ = null;
-        profileCallTree_ = null;
+        callTree_ = null;
+        callTreeEx_ = null;
         callTreeNodeToNodeExMap_.Clear();
         stateStack_.Clear();
     }
 
     public void SelectFunction(IRTextFunction function) {
-        var callTree = Session.ProfileData.CallTree;
-        var nodeList = callTree.GetSortedCallTreeNodes(function);
+        var nodeList = callTree_.GetSortedCallTreeNodes(function);
 
         if (nodeList != null && nodeList.Count > 0) {
             SelectCallTreeNode(nodeList[0]);
@@ -407,16 +419,14 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         var visitedNodes = new HashSet<ProfileCallTreeNode>();
         var rootNode = new ChildFunctionEx(ChildFunctionExKind.Root);
         rootNode.Children = new List<ChildFunctionEx>();
-
-        var callTree = Session.ProfileData.CallTree;
-        var nodeList = GetCallTreeNodes(function, callTree);
+        var nodeList = GetCallTreeNodes(function, callTree_);
 
         if (nodeList == null) {
             return null;
         }
 
         int index = 1;
-        var combinedWeight = callTree.GetCombinedCallTreeNodeWeight(function);
+        var combinedWeight = callTree_.GetCombinedCallTreeNodeWeight(function);
 
         foreach (var instance in nodeList) {
             bool isSelf = nodeList.Count == 1;
@@ -480,13 +490,12 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     private ChildFunctionEx CreateProfileCallTree() {
         var visitedNodes = new HashSet<ProfileCallTreeNode>();
+        var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
+
         var rootNode = new ChildFunctionEx(ChildFunctionExKind.Root);
         rootNode.Children = new List<ChildFunctionEx>();
 
-        var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
-        var callTree = Session.ProfileData.CallTree;
-
-        foreach (var node in callTree.RootNodes) {
+        foreach (var node in callTree_.RootNodes) {
             visitedNodes.Clear();
             CreateProfileCallTree(node, rootNode, ChildFunctionExKind.CallTreeNode,
                 visitedNodes, percentageFunc);
@@ -518,11 +527,11 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
             //? TODO: This is still not quite right, the selected nodes
             //? shoud be found on a path that has the current stack frame as a prefix in theirs.
             //? actualParentNode is just the last in that list
-            node = GetChildCallTreeNode(node, actualParentNode.CallTreeNode, Session.ProfileData.CallTree);
+            node = GetChildCallTreeNode(node, actualParentNode.CallTreeNode, callTree_);
             nodeEx.CallTreeNode = node;
         }
         else if (kind == ChildFunctionExKind.CallerNode) {
-            node = GetChildCallTreeNode(node, null, Session.ProfileData.CallTree);
+            node = GetChildCallTreeNode(node, null, callTree_);
             nodeEx.CallTreeNode = node;
         }
 
@@ -773,7 +782,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
         if (text.Length > 1) {
             searchResultNodes_ = new List<ChildFunctionEx>();
-            await Task.Run(() => SearchCallTree(text, profileCallTree_, searchResultNodes_));
+            await Task.Run(() => SearchCallTree(text, callTreeEx_, searchResultNodes_));
 
             if (cancelableTask.IsCanceled) {
                 return;
@@ -834,25 +843,32 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
-        return Session.ProfileData.CallTree.GetBacktrace(node);
+        return callTree_.GetBacktrace(node);
     }
 
     public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
-        return Session.ProfileData.CallTree.GetTopFunctions(node);
+        return callTree_.GetTopFunctions(node);
     }
 
     public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
-        return Session.ProfileData.CallTree.GetTopModules(node);
+        return callTree_.GetTopModules(node);
     }
 
     private async void CallTree_SelectionChanged(object sender, SelectionChangedEventArgs e) {
         if (CallTree.SelectedItem is TreeNode node &&
             node.Tag is ChildFunctionEx funcEx &&
             funcEx.HasCallTreeNode) {
+            if (SyncSelection) {
+                await Session.ProfileFunctionSelected(funcEx.CallTreeNode);
+            }
+            
             if (settings_.SyncSourceFile) {
                 // Load the source file and scroll to the hottest line.
                 await Session.OpenProfileSourceFile(funcEx.CallTreeNode);
             }
+        }
+        else if (SyncSelection) {
+            await Session.ProfileFunctionDeselected();
         }
     }
 

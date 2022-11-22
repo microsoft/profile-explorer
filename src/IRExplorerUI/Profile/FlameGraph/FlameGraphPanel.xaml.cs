@@ -71,6 +71,16 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
     }
 
+    public bool SyncSelection {
+        get => settings_.SyncSelection;
+        set {
+            if (value != settings_.SyncSelection) {
+                settings_.SyncSelection = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public bool UseCompactMode {
         get => settings_.UseCompactMode;
         set {
@@ -151,15 +161,20 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     private async void GraphHost_NodesDeselected(object sender, EventArgs e) {
-        await Session.ProfileFunctionDeselected();
+        if (SyncSelection) {
+            await Session.ProfileFunctionDeselected();
+        }
     }
 
     private async void GraphHost_NodeSelected(object sender, FlameGraphNode node) {
         if (node.HasFunction) {
             await NodeDetailsPanel.ShowWithDetailsAsync(node.CallTreeNode);
-            await Session.ProfileFunctionSelected(node.CallTreeNode);
 
-            if (settings_.SyncSourceFile) {
+            if (SyncSelection) {
+                await Session.ProfileFunctionSelected(node.CallTreeNode);
+            }
+
+            if (SyncSourceFile) {
                 // Load the source file and scroll to the hottest line.
                 await Session.OpenProfileSourceFile(node.CallTreeNode);
             }
@@ -216,7 +231,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
     
     private void PanelToolbarTray_SettingsClicked(object sender, EventArgs e) {
-        throw new NotImplementedException();
+        
     }
 
     private void ToolBar_Loaded(object sender, RoutedEventArgs e) {

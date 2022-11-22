@@ -95,6 +95,7 @@
                         Margin="4,0,0,0"
                         Click="UndoButtoon_Click"
                         CommandTarget="{Binding ElementName=GraphHost}"
+                        IsEnabled="False"
                         ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
                         <StackPanel Orientation="Horizontal">
                             <Image Source="{StaticResource DockLeftIcon}" />
@@ -123,6 +124,23 @@
                         ToolTip="Zoom In (Ctrl+=)">
                         <Image Source="{StaticResource PlusIcon}" />
                     </Button>
+                    <Separator />
+
+                    <ToggleButton
+                        Height="20"
+                        Margin="0,0,0,0"
+                        Padding="0,0,2,0"
+                        IsChecked="{Binding Path=SyncSelection, Mode=TwoWay}"
+                        ToolTip="Sync functions in other panels with selection">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource SwitchIcon}" />
+                            <TextBlock Text="Sync" />
+                        </StackPanel>
+                    </ToggleButton>
                     <Separator />
 
                     <TextBlock
@@ -154,14 +172,14 @@
                     <TextBlock
                         VerticalAlignment="Center"
                         FontWeight="Medium"
-                        Foreground="Purple"
+                        Foreground="Indigo"
                         Text="Threads: "
                         Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
                     <TextBlock
                         Margin="4,0,4,0"
                         VerticalAlignment="Center"
                         FontWeight="Medium"
-                        Foreground="Purple"
+                        Foreground="Indigo"
                         Text="{Binding ThreadFilterText, Converter={StaticResource MillisecondTimeConverter}}"
                         Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
 
@@ -182,22 +200,6 @@
                         ToolTip="Show the module name in front of the function name"
                         Visibility="Collapsed" />
 
-                    <ToggleButton
-                        Height="20"
-                        Margin="0,0,0,0"
-                        Padding="0,0,2,0"
-                        IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
-                        ToolTip="Enable/disable function details panel"
-                        Visibility="Collapsed">
-                        <StackPanel Orientation="Horizontal">
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Margin="0,1,0,0"
-                                Source="{StaticResource SourceIcon}" />
-                            <TextBlock Text="Sync" />
-                        </StackPanel>
-                    </ToggleButton>
 
                     <ToggleButton
                         Height="20"
@@ -296,60 +298,61 @@
             </Grid.ColumnDefinitions>
 
 
-            <Grid x:Name="ActivityHost" Margin="0,0,0,20">
-                <Grid
-                    x:Name="ActivityViewHeader"
-                    Width="150"
-                    Height="70"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    MouseDown="ActivityViewHeader_MouseDown"
-                    Background="PapayaWhip">
-                    <StackPanel Margin="2">
-                        <TextBlock
-                            Margin="0,1,0,0"
-                            FontWeight="Medium"
-                            Text="All Threads" />
-
-                        <TextBlock
-                            Margin="0,2,0,0"
-                            Text="Selection"
-                            Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
-                        <TextBlock Text="{Binding SelectionTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}" Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
-                    </StackPanel>
-                </Grid>
-
-                <Grid x:Name="TimelineHost" Grid.Column="0">
-                    <local:ActivityView
-                        x:Name="ActivityView"
+            <Border BorderBrush="Black" BorderThickness="0,0,1,0">
+                <Grid x:Name="ActivityHost" Margin="0,0,0,20">
+                    <Grid
+                        x:Name="ActivityViewHeader"
+                        Width="150"
                         Height="70"
-                        Margin="150,0,0,0"
-                        HorizontalAlignment="Stretch"
+                        HorizontalAlignment="Left"
                         VerticalAlignment="Top"
-                        BackColor="Linen" />
+                        Background="PapayaWhip"
+                        MouseDown="ActivityViewHeader_MouseDown">
+                        <StackPanel Margin="2">
+                            <TextBlock
+                                Margin="0,1,0,0"
+                                FontWeight="Medium"
+                                Text="All Threads" />
 
-                    <ScrollViewer
-                        x:Name="ActivityViewHost"
-                        Margin="0,70,0,0"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Stretch"
-                        CanContentScroll="True"
-                        HorizontalScrollBarVisibility="Disabled"
-                        VerticalScrollBarVisibility="Auto"
-                        VirtualizingStackPanel.IsVirtualizing="True"
-                        VirtualizingStackPanel.VirtualizationMode="Recycling">
+                            <TextBlock
+                                Margin="0,2,0,0"
+                                Text="Selection"
+                                Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            <TextBlock Text="{Binding SelectionTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}" Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        </StackPanel>
+                    </Grid>
 
-                        <ItemsControl x:Name="ActivityViewList">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <VirtualizingStackPanel Orientation="Vertical" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </ScrollViewer>
+                    <Grid x:Name="TimelineHost" Grid.Column="0">
+                        <local:ActivityView
+                            x:Name="ActivityView"
+                            Height="70"
+                            Margin="150,0,0,0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Top"
+                            BackColor="Linen" />
+
+                        <ScrollViewer
+                            x:Name="ActivityViewHost"
+                            Margin="0,70,0,0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            CanContentScroll="True"
+                            HorizontalScrollBarVisibility="Disabled"
+                            VerticalScrollBarVisibility="Auto"
+                            VirtualizingStackPanel.IsVirtualizing="True"
+                            VirtualizingStackPanel.VirtualizationMode="Recycling">
+
+                            <ItemsControl x:Name="ActivityViewList">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel Orientation="Vertical" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
                 </Grid>
-            </Grid>
-
+            </Border>
             <irExplorerUi:ScrollViewerClickable
                 x:Name="ActivityScrollBar"
                 Height="20"

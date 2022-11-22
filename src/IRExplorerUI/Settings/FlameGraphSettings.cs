@@ -16,10 +16,13 @@ namespace IRExplorerUI {
         [ProtoMember(3)]
         public bool SyncSourceFile { get; set; }
         [ProtoMember(4)]
+        public bool SyncSelection{ get; set; }
+        [ProtoMember(5)]
         public bool UseCompactMode { get; set; } // font size, node height
 
         public override void Reset() {
             PrependModuleToFunction = true;
+            SyncSelection = true;
             SyncSourceFile = false;
             ShowDetailsPanel = true;
         }
@@ -33,6 +36,7 @@ namespace IRExplorerUI {
             return obj is FlameGraphSettings settings &&
                    PrependModuleToFunction == settings.PrependModuleToFunction &&
                    ShowDetailsPanel == settings.ShowDetailsPanel &&
+                   SyncSelection == settings.SyncSelection &&
                    SyncSourceFile == settings.SyncSourceFile && 
                    UseCompactMode == settings.UseCompactMode;
         }
