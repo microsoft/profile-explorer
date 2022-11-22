@@ -14,12 +14,8 @@
         <CommandBinding Command="irExplorerUi:GraphCommand.GraphResetWidth" Executed="ExecuteGraphResetWidth" />
         <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomIn" Executed="ExecuteGraphZoomIn" />
         <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomOut" Executed="ExecuteGraphZoomOut" />
-        <CommandBinding Command="local:CallTreeCommand.SelectFunction" Executed="SelectFunctionExecuted" />
-        <CommandBinding Command="local:CallTreeCommand.OpenFunction" Executed="OpenFunctionExecuted" />
-        <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab" Executed="OpenFunctionInNewTabExecuted" />
         <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult" Executed="PreviousSearchResultExecuted" />
         <CommandBinding Command="local:CallTreeCommand.NextSearchResult" Executed="NextSearchResultExecuted" />
-        <CommandBinding Command="local:CallTreeCommand.ChangeRootNode" Executed="ChangeRootNodeExecuted" />
     </irExplorerUi:ToolPanelControl.CommandBindings>
 
     <irExplorerUi:ToolPanelControl.InputBindings>

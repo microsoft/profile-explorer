@@ -37,6 +37,7 @@ using static SkiaSharp.HarfBuzz.SKShaper;
 using ClosedXML.Excel;
 using ICSharpCode.AvalonEdit.Rendering;
 using TimelinePanel = IRExplorerUI.Profile.TimelinePanel;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI {
     //? TODo; Commands can be defined in code-behind with this pattern,
@@ -677,6 +678,21 @@ namespace IRExplorerUI {
                     });
         }
 
+
+        //? TODO: Replace all other commands with RelayCommand.
+        public RelayCommand<object> SelectFunctionCallTreeCommand =>
+            new(async (obj) => { await SelectFunctionInPanel(obj, ToolPanelKind.CallTree); });
+        public RelayCommand<object> SelectFunctionFlameGraphCommand =>
+            new(async (obj) => { await SelectFunctionInPanel(obj, ToolPanelKind.FlameGraph); });
+        public RelayCommand<object> SelectFunctionTimelineCommand =>
+            new(async (obj) => { await SelectFunctionInPanel(obj, ToolPanelKind.Timeline); });
+
+        private async Task SelectFunctionInPanel(object target, ToolPanelKind panelKind) {
+            if (target is IRTextFunctionEx funcEx) {
+                await Session.SelectProfileFunction(funcEx.Function, panelKind);
+            }
+        }
+
         public bool BottomSectionToolbar {
             get => (bool)GetValue(BottomSectionToolbarProperty);
             set => SetValue(BottomSectionToolbarProperty, value);
@@ -1263,19 +1279,19 @@ namespace IRExplorerUI {
             GridViewColumnVisibility.UpdateListView(FunctionList);
 
             // Create the call tree.
-            var panel = Session.FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
+            var panel = Session.FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
 
             if (panel != null) {
                 await panel.DisplayProfileCallTree();
             }
 
-            var fgPanel = Session.FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+            var fgPanel = Session.FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
 
             if (fgPanel != null) {
                 await fgPanel.DisplayFlameGraph();
             }
 
-            var timelinePanel = Session.FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
+            var timelinePanel = Session.FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
 
             if (timelinePanel != null) {
                 await timelinePanel.DisplayFlameGraph();
@@ -1983,7 +1999,7 @@ namespace IRExplorerUI {
 
                 if (funcProfile != null) {
                     //?var profileCallTree = await Task.Run(() => CreateProfileCallTree(function));
-                    var panel = Session.FindAndActivatePanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
+                    var panel = Session.FindPanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
 
                     if (panel != null) {
                         await panel.DisplaProfileCallerCalleeTree(function);
@@ -1999,7 +2015,7 @@ namespace IRExplorerUI {
                 else {
                     ProfileControlsVisible = true;
                     ChildTimeColumnVisible = false;
-                    var panel = Session.FindAndActivatePanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
+                    var panel = Session.FindPanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
                     panel?.Reset(); // Hide previous func.
                 }
             }

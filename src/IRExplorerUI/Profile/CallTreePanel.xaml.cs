@@ -30,6 +30,7 @@ using IRExplorerCore.IR;
 using System.Diagnostics;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using VerticalAlignment = System.Windows.VerticalAlignment;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI.Profile;
 
@@ -162,6 +163,23 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private Stack<IRTextFunction> stateStack_;
     private Dictionary<ProfileCallTreeNode, ChildFunctionEx> callTreeNodeToNodeExMap_;
 
+    //? TODO: Replace all other commands with RelayCommand.
+    public RelayCommand<object> SelectFunctionCallTreeCommand =>
+        new(async (obj) => { await SelectFunctionInPanel(obj, ToolPanelKind.CallTree); });
+    public RelayCommand<object> SelectFunctionFlameGraphCommand =>
+        new(async (obj) => { await SelectFunctionInPanel(obj, ToolPanelKind.FlameGraph); });
+    public RelayCommand<object> SelectFunctionTimelineCommand =>
+        new(async (obj) => { await SelectFunctionInPanel(obj, ToolPanelKind.Timeline); });
+    
+    private async Task SelectFunctionInPanel(object target, ToolPanelKind panelKind) {
+        if (target is TreeNode node) {
+            var childInfo = node.Tag as ChildFunctionEx;
+            if (childInfo?.CallTreeNode != null) {
+                await Session.SelectProfileFunction(childInfo.CallTreeNode, panelKind);
+            }
+        }
+    }
+    
     public bool PrependModuleToFunction {
         get => settings_.PrependModuleToFunction;
         set {
@@ -378,17 +396,18 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         var nodeList = callTree_.GetSortedCallTreeNodes(function);
 
         if (nodeList != null && nodeList.Count > 0) {
-            SelectCallTreeNode(nodeList[0]);
+            SelectFunction(nodeList[0], markPath: false);
         }
     }
 
-    public void SelectCallTreeNode(ProfileCallTreeNode node) {
+    public void SelectFunction(ProfileCallTreeNode node, bool markPath = true) {
         if (!callTreeNodeToNodeExMap_.TryGetValue(node, out var nodeEx)) {
             return;
         }
 
-        ExpandPathToNode(nodeEx, true);
+        ExpandPathToNode(nodeEx, markPath);
         BringIntoView(nodeEx);
+        CallTree.SelectedItem = nodeEx.TreeNode;
     }
 
     private void BringIntoView(ChildFunctionEx nodeEx) {
@@ -890,7 +909,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         if (searchResultNodes_ != null && searchResultIndex_ > 0) {
             searchResultIndex_--;
             UpdateSearchResultText();
-            SelectCallTreeNode(searchResultNodes_[searchResultIndex_].CallTreeNode);
+            SelectFunction(searchResultNodes_[searchResultIndex_].CallTreeNode);
         }
     }
 
@@ -898,7 +917,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         if (searchResultNodes_ != null && searchResultIndex_ < searchResultNodes_.Count - 1) {
             searchResultIndex_++;
             UpdateSearchResultText();
-            SelectCallTreeNode(searchResultNodes_[searchResultIndex_].CallTreeNode);
+            SelectFunction(searchResultNodes_[searchResultIndex_].CallTreeNode);
         }
     }
 

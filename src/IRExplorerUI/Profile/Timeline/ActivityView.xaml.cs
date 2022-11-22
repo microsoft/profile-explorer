@@ -96,7 +96,6 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     private Typeface font_;
     private double fontSize_;
     private Brush backColor_;
-    private Brush markerBackColor_;
     private TimeSpan startTime_;
     private TimeSpan endTime_;
     private List<SampleIndex> markedSamples_;
@@ -108,7 +107,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         selectionBackColor_ = ColorBrushes.GetTransparentBrush("#D0E3F1", 150); // SelectedBackgroundBrush
         filteredBackColor_ = ColorBrushes.GetBrush(Colors.Linen);
         selectionBorderColor_ = ColorPens.GetPen(Colors.Black);
-        markerBackColor_ = ColorBrushes.GetTransparentBrush("#30A1F1", 200);;
+        markerBackColor_ = ColorBrushes.GetTransparentBrush("#0F92EF", 180);;
         positionLinePen_ = ColorPens.GetBoldPen(Colors.DarkBlue);
         filteredOutBorderColor_ = ColorPens.GetBoldPen(Colors.Black);
         ThreadId = -1;
@@ -208,6 +207,15 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         get => filteredOutBorderColor_;
         set {
             SetField(ref filteredOutBorderColor_, value);
+            Redraw();
+        }
+    }
+
+    private Brush markerBackColor_;
+    public Brush MarkerBackColor {
+        get => markerBackColor_;
+        set {
+            SetField(ref markerBackColor_, value);
             Redraw();
         }
     }

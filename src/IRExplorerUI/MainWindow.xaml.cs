@@ -1270,7 +1270,7 @@ namespace IRExplorerUI {
         }
 
         public async Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node) {
-            var panel = FindAndActivatePanel(ToolPanelKind.Source) as SourceFilePanel;
+            var panel = FindPanel(ToolPanelKind.Source) as SourceFilePanel;
 
             if (panel != null) {
                 await panel.LoadSourceFile(node.Function.Sections[0]);
@@ -1280,32 +1280,82 @@ namespace IRExplorerUI {
             return false;
         }
 
-        public async Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range) {
-            var panel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
-
-            if (panel != null) {
-                var nodes = FindCallTreeNodesForSamples(range.StartSampleIndex, range.EndSampleIndex, range.ThreadId, ProfileData);
-                panel.MarkFunctions(nodes);
+        public async Task<bool> SelectProfileFunction(ProfileCallTreeNode node, ToolPanelKind panelKind) {
+            switch (panelKind) {
+                case ToolPanelKind.CallTree: {
+                    var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
+                    panel.SelectFunction(node);
+                    break;
+                }
+                case ToolPanelKind.FlameGraph: {
+                    var panel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+                    panel.SelectFunction(node);
+                    break;
+                }
+                case ToolPanelKind.Timeline: {
+                    var panel = FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
+                    await MarkFunctionSamples(node, panel);
+                    break;
+                }
+                default: {
+                    throw new InvalidOperationException();
+                }
             }
+            
+            return true;
+        }
 
-            var sectinPanel = FindAndActivatePanel(ToolPanelKind.Section) as SectionPanelPair;
+        public async Task<bool> SelectProfileFunction(IRTextFunction func, ToolPanelKind panelKind) {
+            switch (panelKind) {
+                case ToolPanelKind.CallTree: {
+                    var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
+                    panel.SelectFunction(func);
+                    break;
+                }
+                case ToolPanelKind.FlameGraph: {
+                    var panel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+                    panel.SelectFunction(func);
+                    break;
+                }
+                case ToolPanelKind.Timeline: {
+                    var panel = FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
 
-            if (sectinPanel != null) {
-                var funcs = FindFunctionsForSamples(range.StartSampleIndex, range.EndSampleIndex, range.ThreadId, ProfileData);
-                sectinPanel.MarkFunctions(funcs.ToList());
+                    //? TODO: Should include samples from all func instances
+                    var nodeList = ProfileData.CallTree.GetSortedCallTreeNodes(func);
+
+                    if (nodeList != null && nodeList.Count > 0) {
+                        await MarkFunctionSamples(nodeList[0], panel);
+                    }
+                    break;
+                }
+                default: {
+                    throw new InvalidOperationException();
+                }
             }
 
             return true;
         }
 
+        
+        public async Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range) {
+            var funcs = await Task.Run(() => FindFunctionsForSamples(range.StartSampleIndex, range.EndSampleIndex, 
+                                                                     range.ThreadId, ProfileData));
+            var sectinPanel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
+            sectinPanel?.MarkFunctions(funcs.ToList());
+
+            var nodes = await Task.Run(() => FindCallTreeNodesForSamples(funcs, ProfileData));
+            var panel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+            panel?.MarkFunctions(nodes);
+            return true;
+        }
+
         public async Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node) {
-            var panel = FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
+            var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
 
             if (panel != null) {
                 //? TODO: Select only samples included only in this call node,
                 //? right now selects any instance of the func
-                var threadSamples = FindFunctionSamples(node, ProfileData);
-                panel.MarkFunctionSamples(threadSamples);
+                await MarkFunctionSamples(node, panel);
             }
             
             //? TODO: Mark in call tree
@@ -1313,32 +1363,27 @@ namespace IRExplorerUI {
             return true;
         }
 
+        private async Task MarkFunctionSamples(ProfileCallTreeNode node, TimelinePanel panel) {
+            var threadSamples = await Task.Run(() => FindFunctionSamples(node, ProfileData));
+            panel.MarkFunctionSamples(threadSamples);
+        }
+
         public async Task<bool> ProfileFunctionSelected(IRTextFunction function) {
             return true;
         }
 
         public async Task<bool> ProfileSampleRangeDeselected() {
-            var panel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+            var panel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+            panel?.ClearMarkedFunctions();
 
-            if (panel != null) {
-                panel.ClearMarkedFunctions();
-            }
-
-            var sectinPanel = FindAndActivatePanel(ToolPanelKind.Section) as SectionPanelPair;
-
-            if (sectinPanel != null) {
-                sectinPanel.ClearMarkedFunctions();
-            }
+            var sectinPanel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
+            sectinPanel?.ClearMarkedFunctions();
             return true;
         }
 
         public async Task<bool> ProfileFunctionDeselected() {
-            var panel = FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
-
-            if (panel != null) {
-                panel.ClearMarkedFunctionSamples();
-            }
-
+            var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
+            panel?.ClearMarkedFunctionSamples();
             return true;
         }
 
@@ -1410,9 +1455,7 @@ namespace IRExplorerUI {
             return funcSet;
         }
 
-        private List<ProfileCallTreeNode> FindCallTreeNodesForSamples(int sampleStartIndex, int sampleEndIndex, int threadId, ProfileData profile) {
-            var sw = Stopwatch.StartNew();
-            var funcs = FindFunctionsForSamples(sampleStartIndex, sampleEndIndex, threadId, profile);
+        private List<ProfileCallTreeNode> FindCallTreeNodesForSamples(HashSet<IRTextFunction> funcs, ProfileData profile) {
             var callNodes = new List<ProfileCallTreeNode>(funcs.Count);
 
             foreach (var func in funcs) {
@@ -1422,7 +1465,6 @@ namespace IRExplorerUI {
                 }
             }
 
-            Trace.WriteLine($"FindCallTreeNodesForSamples took: {sw.ElapsedMilliseconds} for {callNodes.Count} call nodes");
             return callNodes;
         }
 

@@ -16,27 +16,12 @@
         <CommandBinding Command="local:CallTreeCommand.SelectFunction" Executed="SelectFunctionExecuted" />
         <CommandBinding Command="local:CallTreeCommand.OpenFunction" Executed="OpenFunctionExecuted" />
         <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab" Executed="OpenFunctionInNewTab" />
-        <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult" Executed="PreviousSearchResultExecuted" />
-        <CommandBinding Command="local:CallTreeCommand.NextSearchResult" Executed="NextSearchResultExecuted" />
         <CommandBinding Command="local:CallTreeCommand.EnlargeNode" Executed="EnlargeNodeExecuted" />
         <CommandBinding Command="local:CallTreeCommand.ChangeRootNode" Executed="ChangeRootNodeExecuted" />
         <CommandBinding Command="local:CallTreeCommand.MarkAllInstances" Executed="MarkAllInstancesExecuted" />
         <CommandBinding Command="local:CallTreeCommand.MarkInstance" Executed="MarkInstanceExecuted" />
         <CommandBinding Command="local:CallTreeCommand.ClearMarkedNodes" Executed="ClearMarkedNodesExecuted" />
     </UserControl.CommandBindings>
-
-    <UserControl.InputBindings>
-        <KeyBinding
-            Key="R"
-            Command="irExplorerUi:GraphCommand.GraphResetWidth"
-            CommandTarget="{Binding ElementName=GraphHost}"
-            Modifiers="Ctrl" />
-        <KeyBinding
-            Key="F3"
-            Command="local:CallTreeCommand.PreviousSearchResult"
-            Modifiers="Shift" />
-        <KeyBinding Key="F3" Command="local:CallTreeCommand.NextSearchResult" />
-    </UserControl.InputBindings>
 
     <irExplorerUi:ScrollViewerClickable
         x:Name="GraphHost"
@@ -97,16 +82,14 @@
                     <Separator />
 
                     <MenuItem
-                        Command="irExplorerUi:GraphCommand.GraphZoomOut"
+                        Command="{Binding SelectFunctionCallTreeCommand}"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Select in Call Tree"
-                        IsEnabled="False"
                         ToolTip="Select the function instance in the Call Tree panel" />
                     <MenuItem
-                        Command="irExplorerUi:GraphCommand.GraphZoomOut"
+                        Command="{Binding SelectFunctionTimelineCommand}"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Select in Timeline"
-                        IsEnabled="False"
                         ToolTip="Select the function instance in the Timeline panel" />
                 </ContextMenu>
             </local:FlameGraphViewer.ContextMenu>

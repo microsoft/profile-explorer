@@ -60,7 +60,7 @@ namespace IRExplorerUI {
                             IRTextSection section, IRDocument document = null);
 
         void RedrawPanels(params ToolPanelKind[] kinds);
-        IToolPanel FindAndActivatePanel(ToolPanelKind kind);
+        IToolPanel FindPanel(ToolPanelKind kind);
         Task<IRDocumentHost> SwitchDocumentSectionAsync(OpenSectionEventArgs args);
         Task<IRDocumentHost> OpenDocumentSectionAsync(OpenSectionEventArgs args);
         bool SwitchToPreviousSection(IRTextSection section, IRDocument document);
@@ -115,6 +115,8 @@ namespace IRExplorerUI {
         Task<bool> RemoveProfileSamplesFilter();
         Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode);
         Task<bool> SwitchActiveProfileFunction(ProfileCallTreeNode node);
+        Task<bool> SelectProfileFunction(ProfileCallTreeNode node, ToolPanelKind panelKind);
+        Task<bool> SelectProfileFunction(IRTextFunction node, ToolPanelKind panelKind);
         Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node);
         Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range);
         Task<bool> ProfileSampleRangeDeselected();

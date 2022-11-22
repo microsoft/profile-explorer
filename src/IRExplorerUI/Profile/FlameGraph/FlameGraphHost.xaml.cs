@@ -14,6 +14,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI.Profile;
 
@@ -49,6 +50,17 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     private DoubleAnimation widthAnimation_;
     private DoubleAnimation zoomAnimation_;
 
+    public new bool IsInitialized => GraphViewer.IsInitialized;
+    private double GraphAreaWidth => Math.Max(0, GraphHost.ViewportWidth - 1);
+    private double GraphAreaHeight => GraphHost.ViewportHeight;
+    private Rect GraphArea => new Rect(0, 0, GraphAreaWidth, GraphAreaHeight);
+    private Rect GraphVisibleArea => new Rect(GraphHost.HorizontalOffset,
+        GraphHost.VerticalOffset,
+        GraphAreaWidth, GraphAreaHeight);
+    private Rect GraphHostBounds => new Rect(0, 0, GraphHost.ActualWidth, GraphHost.ActualHeight);
+    private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
+    private double CenterZoomPointX => GraphHost.HorizontalOffset + GraphAreaWidth / 2;
+    
     public FlameGraphHost() {
         InitializeComponent();
         settings_ = App.Settings.FlameGraphSettings;
@@ -64,73 +76,18 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     public event EventHandler NodesDeselected;
     public event EventHandler<double> HorizontalOffsetChanged;
     public event EventHandler<double> MaxWidthChanged;
-
-    public new bool IsInitialized => GraphViewer.IsInitialized;
-    private double GraphAreaWidth => Math.Max(0, GraphHost.ViewportWidth - 1);
-    private double GraphAreaHeight=> GraphHost.ViewportHeight;
-    private Rect GraphArea => new Rect(0, 0, GraphAreaWidth, GraphAreaHeight);
-    private Rect GraphVisibleArea => new Rect(GraphHost.HorizontalOffset,
-                                              GraphHost.VerticalOffset,
-                                              GraphAreaWidth, GraphAreaHeight);
-    private Rect GraphHostBounds => new Rect(0, 0, GraphHost.ActualWidth, GraphHost.ActualHeight);
-    private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
-    private double CenterZoomPointX => GraphHost.HorizontalOffset + GraphAreaWidth / 2;
-
-
-    public bool PrependModuleToFunction {
-        get => settings_.PrependModuleToFunction;
-        set {
-            if (value != settings_.PrependModuleToFunction) {
-                settings_.PrependModuleToFunction = value;
-                GraphViewer.SettingsUpdated(settings_);
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public bool SyncSourceFile {
-        get => settings_.SyncSourceFile;
-        set {
-            if (value != settings_.SyncSourceFile) {
-                settings_.SyncSourceFile = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public bool UseCompactMode {
-        get => settings_.UseCompactMode;
-        set {
-            if (value != settings_.UseCompactMode) {
-                settings_.UseCompactMode = value;
-                GraphViewer.SettingsUpdated(settings_);
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    private bool showSearchSection_;
-    public bool ShowSearchSection {
-        get => showSearchSection_;
-        set {
-            if (showSearchSection_ != value) {
-                showSearchSection_ = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    private string searchResultText_;
-    public string SearchResultText {
-        get => searchResultText_;
-        set {
-            if (searchResultText_ != value) {
-                searchResultText_ = value;
-                OnPropertyChanged();
-            }
-        }
-    }
     
+    public RelayCommand<object> SelectFunctionCallTreeCommand =>
+        new(async (obj) => { await SelectFunctionInPanel(ToolPanelKind.CallTree); });
+    public RelayCommand<object> SelectFunctionTimelineCommand =>
+        new(async (obj) => { await SelectFunctionInPanel(ToolPanelKind.Timeline); });
+
+    private async Task SelectFunctionInPanel(ToolPanelKind panelKind) {
+        if (GraphViewer.SelectedNode is { HasFunction: true }) {
+            await Session.SelectProfileFunction(GraphViewer.SelectedNode.CallTreeNode, panelKind);
+        }
+    }
+
     public void InitializeFlameGraph(ProfileCallTree callTree) {
         callTree_ = callTree;
 
@@ -857,56 +814,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         return true;
     }
     
-    private async Task SearchFlameGraph(string text) {
-        var prevSearchResultNodes = searchResultNodes_;
-        searchResultNodes_ = null;
-
-        if (prevSearchResultNodes != null) {
-            bool redraw = text.Length <= 1; // Prevent flicker by redrawing once when search is done.
-            GraphViewer.ResetSearchResultNodes(prevSearchResultNodes, redraw);
-        }
-
-        if (text.Length > 1) {
-            searchResultNodes_ = await Task.Run(() => GraphViewer.FlameGraph.SearchNodes(text));
-            GraphViewer.MarkSearchResultNodes(searchResultNodes_);
-
-            searchResultIndex_ = -1;
-            SelectNextSearchResult();
-            ShowSearchSection = true;
-        }
-        else {
-            ShowSearchSection = false;
-        }
-    }
-
-    private void UpdateSearchResultText() {
-        SearchResultText = searchResultNodes_ is { Count: > 0 } ? $"{searchResultIndex_ + 1} / {searchResultNodes_.Count}" : "Not found";
-    }
-
-    private void SelectPreviousSearchResult() {
-        if (searchResultNodes_ != null && searchResultIndex_ > 0) {
-            searchResultIndex_--;
-            UpdateSearchResultText();
-            BringNodeIntoView(searchResultNodes_[searchResultIndex_]);
-        }
-    }
-
-    private void SelectNextSearchResult() {
-        if (searchResultNodes_ != null && searchResultIndex_ < searchResultNodes_.Count - 1) {
-            searchResultIndex_++;
-            UpdateSearchResultText();
-            BringNodeIntoView(searchResultNodes_[searchResultIndex_]);
-        }
-    }
-
-    private void PreviousSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
-        SelectPreviousSearchResult();
-    }
-
-    private void NextSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
-        SelectNextSearchResult();
-    }
-    
     private async void SelectFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (GraphViewer.SelectedNode != null && GraphViewer.SelectedNode.HasFunction) {
             await Session.SwitchActiveFunction(GraphViewer.SelectedNode.CallTreeNode.Function);
@@ -933,14 +840,14 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         }
     }
     
-    private async void MarkAllInstancesExecuted(object sender, ExecutedRoutedEventArgs e) {
+    private void MarkAllInstancesExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (GraphViewer.SelectedNode != null &&
             GraphViewer.SelectedNode.HasFunction) {
             MarkFunctionInstances(GraphViewer.SelectedNode.CallTreeNode.Function);
         }
     }
 
-    private async void MarkInstanceExecuted(object sender, ExecutedRoutedEventArgs e) {
+    private void MarkInstanceExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (GraphViewer.SelectedNode != null &&
             GraphViewer.SelectedNode.HasFunction) {
             GraphViewer.MarkNode(GraphViewer.SelectedNode);
@@ -956,6 +863,21 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             await EnlargeNode(GraphViewer.SelectedNode);
         }
     }
+    
+    public void SelectNode(FlameGraphNode node) {
+        GraphViewer.SelectNode(node);
+        BringNodeIntoView(node);
+    }
+
+    public void SelectNode(ProfileCallTreeNode node) {
+        if (!IsInitialized) {
+            return;
+        }
+
+        var fgNode = GraphViewer.SelectNode(node);
+        BringNodeIntoView(fgNode);
+    }
+
 
     public void MarkFunctions(List<ProfileCallTreeNode> nodes) {
         if (!IsInitialized) {
