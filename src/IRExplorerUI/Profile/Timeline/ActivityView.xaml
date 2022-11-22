@@ -26,6 +26,13 @@
                 CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                 Header="Clear Selection"
                 Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <MenuItem
+                Command="{Binding RemoveTimeRangeFilterCommand}"
+                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Selection Functions"
+                IsEnabled="False"
+                ToolTip="Select the functions in the time range in the other panels"
+                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
         </ContextMenu>
     </FrameworkElement.ContextMenu>
 </FrameworkElement>

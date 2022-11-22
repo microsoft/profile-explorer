@@ -17,6 +17,8 @@ public partial class FlameGraphViewer : FrameworkElement {
     private FlameGraphNode selectedNode_;
     private bool isTimelineView_;
     private bool initialized_;
+    private Brush markedNodeBackColor_;
+    private Brush searchResultNodeBackColor_;
 
     private Dictionary<FlameGraphNode, HighlightingStyle> hoverNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> markedNodes_;
@@ -45,6 +47,8 @@ public partial class FlameGraphViewer : FrameworkElement {
         hoverNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
         markedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
         selectedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
+        markedNodeBackColor_ = ColorBrushes.GetBrush("#D0E3F1");
+        searchResultNodeBackColor_ = Brushes.Khaki;
         SetupEvents();
     }
 
@@ -108,7 +112,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         node.Style = type switch {
             HighlighingType.Hovered => PickHoveredNodeStyle(node.Style),
             HighlighingType.Selected => PickSelectedNodeStyle(node.Style),
-            HighlighingType.Marked => PickMarkedNodeStyle(node.Style),
+            HighlighingType.Marked => PickMarkedNodeStyle(node, node.Style),
             _ => node.Style
         };
     }
@@ -176,9 +180,10 @@ public partial class FlameGraphViewer : FrameworkElement {
         return new HighlightingStyle(newColor, style.Border);
     }
 
-    private HighlightingStyle PickMarkedNodeStyle(HighlightingStyle style) {
-        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.95f);
-        return new HighlightingStyle(newColor, ColorPens.GetBoldPen(Colors.MediumBlue));
+    private HighlightingStyle PickMarkedNodeStyle(FlameGraphNode node, HighlightingStyle style) {
+        var newColor = node.SearchResult.HasValue ? searchResultNodeBackColor_ : markedNodeBackColor_;
+        var newPen = node.SearchResult.HasValue ? ColorPens.GetBoldPen(Colors.Black) : ColorPens.GetPen(Colors.Black);
+        return new HighlightingStyle(newColor, newPen);
     }
 
     private void OnMouseRightButtonDown(object sender, MouseButtonEventArgs e) {

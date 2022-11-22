@@ -8,10 +8,10 @@ using System.Windows.Media;
 
 namespace IRExplorerUI {
     public static class ColorBrushes {
-       private static ThreadLocal<Dictionary<Color, SolidColorBrush>> brushes_ =
-           new ThreadLocal<Dictionary<Color, SolidColorBrush>>(() => {
-           return new Dictionary<Color, SolidColorBrush>();
-       });
+        private static readonly ThreadLocal<Dictionary<Color, SolidColorBrush>> brushes_ =
+            new ThreadLocal<Dictionary<Color, SolidColorBrush>>(() => {
+                return new Dictionary<Color, SolidColorBrush>();
+            });
 
         public static SolidColorBrush GetBrush(string colorName) {
             return GetBrush(Utils.ColorFromString(colorName));
@@ -35,6 +35,14 @@ namespace IRExplorerUI {
         public static SolidColorBrush GetTransparentBrush(Color baseColor, double opacity) {
             byte alpha = Math.Clamp((byte)(opacity * 255), (byte)0, (byte)255);
             return GetBrush(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B));
+        }
+
+        public static SolidColorBrush GetTransparentBrush(string baseColor, byte alpha) {
+            return GetTransparentBrush(Utils.ColorFromString(baseColor), alpha);
+        }
+
+        public static SolidColorBrush GetTransparentBrush(string baseColor, double opacity) {
+            return GetTransparentBrush(Utils.ColorFromString(baseColor), opacity);
         }
     }
 }

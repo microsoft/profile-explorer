@@ -94,19 +94,18 @@
                         </StackPanel>
                     </ToggleButton>
 
-
                     <ToggleButton
                         Height="20"
                         Margin="0,0,0,0"
                         Padding="0,0,2,0"
-                        IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
-                        ToolTip="Enable/disable function details paenl">
+                        IsChecked="{Binding Path=SyncSelection, Mode=TwoWay}"
+                        ToolTip="Sync functions in other panels with selection">
                         <StackPanel Orientation="Horizontal">
                             <Image
                                 Width="16"
                                 Height="16"
                                 Margin="0,1,0,0"
-                                Source="{StaticResource SourceIcon}" />
+                                Source="{StaticResource SwitchIcon}" />
                             <TextBlock Text="Sync" />
                         </StackPanel>
                     </ToggleButton>
@@ -115,9 +114,23 @@
                         Height="20"
                         Margin="0,0,0,0"
                         Padding="0,0,2,0"
+                        IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
+                        ToolTip="Sync Source File panel with selection">
+                        <Image
+                            Width="16"
+                            Height="16"
+                            Margin="0,1,0,0"
+                            Source="{StaticResource SourceIcon}" />
+                    </ToggleButton>
+
+
+                    <ToggleButton
+                        Height="20"
+                        Margin="0,0,0,0"
+                        Padding="0,0,2,0"
                         IsChecked="{Binding Path=ShowNodePanel, Mode=TwoWay}"
                         IsEnabled="False"
-                        ToolTip="Enable/disable function details paenl">
+                        ToolTip="Enable/disable function details panel">
                         <StackPanel Orientation="Horizontal">
                             <Image
                                 Width="16"
@@ -332,13 +345,22 @@
                         Header="Open Function in New Tab"
                         InputGestureText="Ctrl+Shift+Return"
                         ToolTip="" />
+                    <Separator />
 
                     <MenuItem
                         Command="local:CallTreeCommand.OpenFunctionInNewTab"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=CallTree}"
-                        Header="Select Function in Call Tree"
-                        InputGestureText="Shift+Return"
+                        Header="Select in Call Tree"
+                        IsEnabled="False"
+                        ToolTip=""
+                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <MenuItem
+                        Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=CallTree}"
+                        Header="Select in Flame Graph"
                         IsEnabled="False"
                         ToolTip="" />
 
@@ -346,8 +368,7 @@
                         Command="local:CallTreeCommand.OpenFunctionInNewTab"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=CallTree}"
-                        Header="Select Function in Flame Graph"
-                        InputGestureText="Shift+Return"
+                        Header="Select in Timeline"
                         IsEnabled="False"
                         ToolTip="" />
                 </ContextMenu>

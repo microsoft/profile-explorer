@@ -31,7 +31,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Border BorderBrush="Black" BorderThickness="0,1,0,0">
+    <Border BorderBrush="Black" BorderThickness="0,1,1,0">
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid
                 x:Name="Margin"
@@ -39,7 +39,7 @@
                 Height="30"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Background="PapayaWhip"
+                Background="{Binding MarginBackColor}"
                 MouseDown="Margin_MouseDown">
                 <CheckBox
                     Width="16"
@@ -88,10 +88,10 @@
             <Grid.ContextMenu>
                 <ContextMenu>
                     <MenuItem
-                        Command="{Binding ExcludeOtherThreadsCommand}"
+                        Command="{Binding FilterToThreadCommand}"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Filter to Thread"
-                        ToolTip="Display activity from only this thread and exclude all others">
+                        ToolTip="Display activity from only this thread">
                         <MenuItem.Icon>
                             <Image
                                 Width="16"
@@ -99,6 +99,13 @@
                                 Source="{StaticResource QueryIcon}" />
                         </MenuItem.Icon>
                     </MenuItem>
+                    <MenuItem
+                        Command="{Binding FilterToSameNameThreadCommand}"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Filter to Same Name Threads"
+                        ToolTip="Display activity from only threads with the same name" />
+                    <Separator />
+
                     <MenuItem
                         Command="{Binding IncludeThreadCommand}"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"

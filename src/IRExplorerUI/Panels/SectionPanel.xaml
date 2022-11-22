@@ -517,7 +517,7 @@
                                 </Trigger>
 
                                 <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                                    <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.1}" />
+                                    <Setter Property="Background" Value="#D0E3F1" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -568,6 +568,29 @@
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Open File in External Editor"
                                 ToolTip="Opens the IR document in the default external editor" />
+
+                            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            <MenuItem
+                                Command="local:Command.SaveFunctionText"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=FunctionList}"
+                                Header="Select in Call Tree"
+                                ToolTip="Select the function instance in the Call Tree panel"
+                                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            <MenuItem
+                                Command="local:Command.SaveFunctionText"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=FunctionList}"
+                                Header="Select in Flame Graph"
+                                ToolTip="Select the function instance in the Flame Graph panel"
+                                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            <MenuItem
+                                Command="local:Command.SaveFunctionText"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=FunctionList}"
+                                Header="Select in Timeline"
+                                ToolTip="Select the function instance in the Timeline panel"
+                                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                             <Separator Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
                             <MenuItem
