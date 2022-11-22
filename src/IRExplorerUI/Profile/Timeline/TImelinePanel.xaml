@@ -297,7 +297,6 @@
                 <ColumnDefinition Style="{StaticResource NodePanelColumnsStyle}" />
             </Grid.ColumnDefinitions>
 
-
             <Border BorderBrush="Black" BorderThickness="0,0,1,0">
                 <Grid x:Name="ActivityHost" Margin="0,0,0,20">
                     <Grid
@@ -362,9 +361,9 @@
                 ScrollChanged="ActivityScrollBar_OnScrollChanged"
                 VerticalScrollBarVisibility="Disabled">
                 <Grid
+                    HorizontalAlignment="Left"
                     x:Name="ScrollElement"
-                    Height="0"
-                    Background="Red" />
+                    Height="0"/>
             </irExplorerUi:ScrollViewerClickable>
 
             <GridSplitter

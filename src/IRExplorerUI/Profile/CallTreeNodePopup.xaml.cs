@@ -33,13 +33,14 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
 
     public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,
                              Point position, double width, double height,
-                             UIElement referenceElement, ISession session) {
+                             UIElement referenceElement, ISession session, bool canExpand = true) {
 
         InitializeComponent();
         Initialize(position, referenceElement);
         PanelResizeGrip.ResizedControl = this;
 
         Session = session;
+        CanExpand = canExpand;
         PanelHost.ShowInstanceNavigation = false;
         PanelHost.Initialize(session, funcInfoProvider);
         UpdateNode(node);
@@ -62,12 +63,18 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
         set => SetField(ref showResizeGrip_, value);
     }
 
+    private bool canExpand_;
+    public bool CanExpand {
+        get => canExpand_;
+        set => SetField(ref canExpand_, value);
+    }
+
     private bool showBacktraceView_;
     public bool ShowBacktraceView {
         get => showBacktraceView_;
         set => SetField(ref showBacktraceView_, value);
     }
-
+        
     private string backtraceText_;
     public string BacktraceText {
         get => backtraceText_;

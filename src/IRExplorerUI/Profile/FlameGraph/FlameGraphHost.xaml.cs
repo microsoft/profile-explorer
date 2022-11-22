@@ -89,10 +89,14 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     public void InitializeFlameGraph(ProfileCallTree callTree) {
+        if (IsInitialized) {
+            Reset();
+        }
+        
         callTree_ = callTree;
 
         Dispatcher.BeginInvoke(async () => {
-            if (callTree != null) {
+            if (callTree_ != null) {
                 await GraphViewer.Initialize(callTree, GraphArea, settings_, Session);
             }
         }, DispatcherPriority.Background);
@@ -109,7 +113,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     private void SetupEvents() {
-        GraphHost.SizeChanged += (sender, args) => UpdateGraphWidth(args.NewSize.Width);
+        GraphHost.SizeChanged += (sender, args) => {
+            if (IsInitialized && args.NewSize.Width > GraphViewer.MaxGraphWidth) {
+                SetMaxWidth(args.NewSize.Width, false);
+            }
+        };
+
         GraphHost.PreviewMouseWheel += OnPreviewMouseWheel;
         GraphHost.PreviewMouseDown += OnPreviewMouseDown;
 
@@ -774,6 +783,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     public void Reset() {
         callTree_ = null;
         pendingCallTree_ = null;
+        ScrollToOffsets(0, 0);
 
         if (!GraphViewer.IsInitialized) {
             return;
@@ -781,12 +791,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
         ResetHighlightedNodes();
         GraphViewer.Reset();
-    }
-
-    private void UpdateGraphWidth(double width) {
-        if (GraphViewer.IsInitialized && !GraphViewer.IsZoomed) {
-            SetMaxWidth(width, false);
-        }
     }
 
     public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {

@@ -354,6 +354,7 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         renderer_.UpdateMaxWidth(maxWidth);
         InvalidateMeasure();
+        InvalidateVisual();
     }
 
     public void AdjustMaxWidth(double amount) {
@@ -414,6 +415,10 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         RemoveVisualChild(graphVisual_);
         RemoveLogicalChild(graphVisual_);
+        hoverNodes_.Clear();
+        markedNodes_.Clear();
+        selectedNodes_.Clear();
+        selectedNode_ = null;
         graphVisual_ = null;
         flameGraph_ = null;
         renderer_ = null;

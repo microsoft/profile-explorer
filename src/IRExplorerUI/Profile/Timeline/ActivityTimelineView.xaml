@@ -31,9 +31,10 @@
         </Style>
     </UserControl.Resources>
 
-    <Border BorderBrush="Black" BorderThickness="0,1,1,0">
+    <Border BorderBrush="Black" BorderThickness="0,1,0,0">
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <Grid
+            <Border BorderBrush="Black" BorderThickness="0,0,1,0">
+                <Grid
                 x:Name="Margin"
                 Width="150"
                 Height="30"
@@ -72,6 +73,8 @@
                     TextTrimming="CharacterEllipsis"
                     ToolTip="{Binding ThreadName, ElementName=ActivityHost, Converter={StaticResource PercentageConverter}}" />
             </Grid>
+            </Border>
+
             <local:ActivityView
                 x:Name="ActivityHost"
                 Height="30"
