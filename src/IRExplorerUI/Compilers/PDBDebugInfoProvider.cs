@@ -35,7 +35,7 @@ namespace IRExplorerUI.Compilers {
         private IDiaDataSource diaSource_;
         private IDiaSession session_;
         private IDiaSymbol globalSymbol_;
-        private List<FunctionDebugInfo> cachedFunctionList_;
+        private List<FunctionDebugInfo> sortedFunctionList_;
 
         public PDBDebugInfoProvider(SymbolFileSourceOptions options) {
             options_ = options;
@@ -43,21 +43,6 @@ namespace IRExplorerUI.Compilers {
 
         public SymbolFileSourceOptions SymbolOptions { get; set; }
         public Machine? Architecture => null;
-
-        //? HttpHandler will be needed for the auth token with recent TraceEvent version
-        //public class HttpHandler : DelegatingHandler {
-        //    public HttpHandler(HttpMessageHandler h) : base(h) { }
-
-        //    protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken) {
-        //        var r = base.Send(request, cancellationToken);
-        //        return r;
-        //    }
-
-        //    protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
-        //        var r = await base.SendAsync(request, cancellationToken);
-        //        return r;
-        //    }
-        //}
 
         public static async Task<DebugFileSearchResult> LocateDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceOptions options) {
             if (symbolFile == null) {
@@ -431,47 +416,67 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
 
-        public IEnumerable<FunctionDebugInfo> EnumerateFunctions(bool includeExternal) {
-            if (cachedFunctionList_ != null) {
-                foreach (var entry in cachedFunctionList_) {
-                    yield return entry;
-                }
-            }
-            else {
-                cachedFunctionList_ = new List<FunctionDebugInfo>();
-                IDiaEnumSymbols symbolEnum;
-
-                try {
-                    globalSymbol_.findChildren(SymTagEnum.SymTagFunction, null, 0, out symbolEnum);
-                }
-                catch (Exception ex) {
-                    Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
-                    yield break;
-                }
-
-                foreach (IDiaSymbol sym in symbolEnum) {
-                    //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
-                    var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
-                    cachedFunctionList_.Add(funcInfo);
-                    yield return funcInfo;
+        public IEnumerable<FunctionDebugInfo> EnumerateFunctions() {
+            // Use cached list if available.
+            lock (this) {
+                if (sortedFunctionList_ != null) {
+                    return sortedFunctionList_;
                 }
             }
 
-            if (includeExternal) {
-                IDiaEnumSymbols publicSymbolEnum;
+            return EnumerateFunctionsImpl();
+        }
 
-                try {
-                    globalSymbol_.findChildren(SymTagEnum.SymTagPublicSymbol, null, 0, out publicSymbolEnum);
-                }
-                catch (Exception ex) {
-                    Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
-                    yield break;
+        private IEnumerable<FunctionDebugInfo> EnumerateFunctionsImpl() {
+            IDiaEnumSymbols symbolEnum;
+
+            try {
+                globalSymbol_.findChildren(SymTagEnum.SymTagFunction, null, 0, out symbolEnum);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
+                yield break;
+            }
+
+            foreach (IDiaSymbol sym in symbolEnum) {
+                //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
+                var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+                yield return funcInfo;
+            }
+
+            // Functions also show up as public symbols.
+            IDiaEnumSymbols publicSymbolEnum;
+
+            try {
+                globalSymbol_.findChildren(SymTagEnum.SymTagPublicSymbol, null, 0, out publicSymbolEnum);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
+                yield break;
+            }
+
+            foreach (IDiaSymbol sym in publicSymbolEnum) {
+                //Trace.WriteLine($" PublicSym {sym.name}: RVA {sym.relativeVirtualAddress:X} size {sym.length}");
+                yield return new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+            }
+        }
+
+        public List<FunctionDebugInfo> GetSortedFunctions() {
+            lock (this) {
+                if (sortedFunctionList_ != null) {
+                    return sortedFunctionList_;
                 }
 
-                foreach (IDiaSymbol sym in publicSymbolEnum) {
-                    //Trace.WriteLine($" PublicSym {sym.name}: RVA {sym.relativeVirtualAddress:X} size {sym.length}");
-                    yield return new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+                sortedFunctionList_ = new List<FunctionDebugInfo>();
+
+                foreach (var funcInfo in EnumerateFunctionsImpl()) {
+                    if (!funcInfo.IsUnknown) {
+                        sortedFunctionList_.Add(funcInfo);
+                    }
                 }
+
+                sortedFunctionList_.Sort();
+                return sortedFunctionList_;
             }
         }
 

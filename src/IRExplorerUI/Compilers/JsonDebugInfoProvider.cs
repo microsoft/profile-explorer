@@ -40,7 +40,7 @@ namespace IRExplorerUI.Compilers {
             foreach (var pair in metadataTag.OffsetToElementMap) {
                 var lineInfo = funcInfo.FindNearestLine(pair.Key);
 
-                if(!lineInfo.IsUnknown) {
+                if (!lineInfo.IsUnknown) {
                     var locationTag = pair.Value.GetOrAddTag<SourceLocationTag>();
                     locationTag.Reset(); // Tag may be already populated.
                     locationTag.Line = lineInfo.Line;
@@ -50,26 +50,24 @@ namespace IRExplorerUI.Compilers {
 
             return true;
         }
+
         public FunctionDebugInfo FindFunction(string functionName) {
             return functionMap_.GetValueOr(functionName, FunctionDebugInfo.Unknown);
         }
 
         public void Dispose() {
-            
         }
 
-        public IEnumerable<FunctionDebugInfo> EnumerateFunctions(bool includeExternal) {
+        public IEnumerable<FunctionDebugInfo> EnumerateFunctions() {
+            return functions_;
+        }
+
+        public List<FunctionDebugInfo> GetSortedFunctions() {
             return functions_;
         }
 
         public FunctionDebugInfo FindFunctionByRVA(long rva) {
-            foreach (var func in functions_) {
-                if (func.StartRVA >= rva && func.EndRVA < rva) {
-                    return func;
-                }
-            }
-
-            return null;
+            return FunctionDebugInfo.BinarySearch(functions_, rva);
         }
 
         public SourceFileDebugInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
@@ -84,8 +82,7 @@ namespace IRExplorerUI.Compilers {
             return SourceFileDebugInfo.Unknown;
         }
 
-        private static SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info)
-        {
+        private static SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info) {
             return new SourceFileDebugInfo(info.StartSourceLineDebug.FilePath,
                 info.StartSourceLineDebug.FilePath,
                 info.StartSourceLineDebug.Line);
@@ -111,12 +108,13 @@ namespace IRExplorerUI.Compilers {
 
             return SourceLineDebugInfo.Unknown;
         }
-        
+
         public bool LoadDebugInfo(string debugFilePath) {
             if (!JsonUtils.DeserializeFromFile(debugFilePath, out functions_)) {
                 return false;
             }
 
+            functions_.Sort();
             functionMap_ = new Dictionary<string, FunctionDebugInfo>(functions_.Count);
 
             foreach (var func in functions_) {

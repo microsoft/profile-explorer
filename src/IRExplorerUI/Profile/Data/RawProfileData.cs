@@ -28,7 +28,7 @@ namespace IRExplorerUI.Profile;
 
 //? TODO Perf
 //? - use chunked list for samples and stack
-//? - use chunked dict?  
+//? - use chunked dict?
 //? - compress stacks?
 //? - Per-process stacks and samples, reduces dict pressure
 //?     - also removes need to have ProcessId in sample
@@ -694,6 +694,10 @@ public class ManagedData {
 
     public void LoadingCompleted(int processId, string managedAsmDir) {
         managedMethods_.Sort();
+
+        foreach (var debugInfo in imageDebugInfo_.Values) {
+            debugInfo.LoadingCompleted();
+        }
 
         if (!string.IsNullOrEmpty(managedAsmDir)) {
             foreach (var debugInfo in moduleDebugInfoMap_.Values) {
