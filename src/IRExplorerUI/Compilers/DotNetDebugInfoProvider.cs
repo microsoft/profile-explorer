@@ -62,7 +62,7 @@ namespace IRExplorerUI.Compilers {
                 return null;
             }
         }
-        
+
         private Dictionary<string, FunctionDebugInfo> functionMap_;
         private List<FunctionDebugInfo> functions_;
         private Machine architecture_;
@@ -76,9 +76,9 @@ namespace IRExplorerUI.Compilers {
             functions_ = new List<FunctionDebugInfo>();
             methodILNativeMap_ = new Dictionary<FunctionDebugInfo, List<(int ILOffset, int NativeOffset)>>();
         }
-        
+
         public Machine? Architecture => architecture_;
-        public SymbolFileSourceOptions SymbolOptions { get; set;  }
+        public SymbolFileSourceOptions SymbolOptions { get; set; }
         public SymbolFileDescriptor ManagedSymbolFile { get; set; }
         public string ManagedAsmFilePath { get; set; }
 
@@ -100,21 +100,20 @@ namespace IRExplorerUI.Compilers {
                 return false;
             }
             else if (functionDebugInfo.HasSourceLines) {
-                return true;
+                return true; // Already populated.
             }
             else if (ManagedSymbolFile == null || hasManagedSymbolFileFailure_) {
-                return false;
+                return false; // Previous attempt failed.
             }
 
-            //? TODO: Make async
-            var options = SymbolOptions != null ? SymbolOptions :
-                          App.Settings.SymbolOptions.Clone();
+            // Locate the managed debug file.
+            var options = SymbolOptions != null ? SymbolOptions : App.Settings.SymbolOptions.Clone();
             if (File.Exists(ManagedSymbolFile.FileName)) {
                 options.InsertSymbolPath(ManagedSymbolFile.FileName);
             }
 
             var symbolSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);
-            
+
             using var logWriter = new StringWriter();
             using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
             symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
@@ -129,31 +128,35 @@ namespace IRExplorerUI.Compilers {
             if (!File.Exists(debugFile)) {
                 // Don't try again if PDB not found.
                 hasManagedSymbolFileFailure_ = true;
-                return functionDebugInfo.HasSourceLines;
+                return false;
             }
 
             lock (functionDebugInfo) {
                 if (!methodILNativeMap_.TryGetValue(functionDebugInfo, out var ilOffsets)) {
-                    return functionDebugInfo.HasSourceLines;
+                    return false;
                 }
 
                 try {
                     var pdb = symbolReader.OpenSymbolFile(debugFile);
-                    
-                    if (pdb != null) {
-                        foreach (var pair in ilOffsets) {
-                            var sourceLoc = pdb.SourceLocationForManagedCode((uint)functionDebugInfo.Id, pair.ILOffset);
-                            if (sourceLoc != null) {
-                                if (sourceLoc.SourceFile != null && functionDebugInfo.SourceFileName == null) {
-                                    functionDebugInfo.SourceFileName = sourceLoc.SourceFile.GetSourceFile();
-                                    functionDebugInfo.OriginalSourceFileName ??= sourceLoc.SourceFile.BuildTimeFilePath;
-                                }
 
-                                //? TODO: Remove SourceFileName from SourceLineDebugInfo
-                                var lineInfo = new SourceLineDebugInfo(pair.NativeOffset, sourceLoc.LineNumber,
-                                                                       sourceLoc.ColumnNumber, functionDebugInfo.SourceFileName);
-                                functionDebugInfo.AddSourceLine(lineInfo);
+                    if (pdb == null) {
+                        hasManagedSymbolFileFailure_ = true;
+                        return false;
+                    }
+
+                    // Find the source lines and native code offset mapping for each IL offset.
+                    foreach (var pair in ilOffsets) {
+                        var sourceLoc = pdb.SourceLocationForManagedCode((uint)functionDebugInfo.Id, pair.ILOffset);
+                        if (sourceLoc != null) {
+                            if (sourceLoc.SourceFile != null && functionDebugInfo.SourceFileName == null) {
+                                functionDebugInfo.SourceFileName = sourceLoc.SourceFile.GetSourceFile();
+                                functionDebugInfo.OriginalSourceFileName ??= sourceLoc.SourceFile.BuildTimeFilePath;
                             }
+
+                            //? TODO: Remove SourceFileName from SourceLineDebugInfo
+                            var lineInfo = new SourceLineDebugInfo(pair.NativeOffset, sourceLoc.LineNumber,
+                                sourceLoc.ColumnNumber, functionDebugInfo.SourceFileName);
+                            functionDebugInfo.AddSourceLine(lineInfo);
                         }
                     }
                 }
@@ -182,7 +185,7 @@ namespace IRExplorerUI.Compilers {
             foreach (var pair in metadataTag.OffsetToElementMap) {
                 var lineInfo = funcInfo.FindNearestLine(pair.Key);
 
-                if(!lineInfo.IsUnknown) {
+                if (!lineInfo.IsUnknown) {
                     var locationTag = pair.Value.GetOrAddTag<SourceLocationTag>();
                     locationTag.Reset(); // Tag may be already populated.
                     locationTag.Line = lineInfo.Line;
@@ -192,27 +195,24 @@ namespace IRExplorerUI.Compilers {
 
             return true;
         }
+
         public FunctionDebugInfo FindFunction(string functionName) {
             return functionMap_.GetValueOr(functionName, FunctionDebugInfo.Unknown);
         }
 
         public void Dispose() {
-            
         }
 
-        public IEnumerable<FunctionDebugInfo> EnumerateFunctions(bool includeExternal) {
+        public IEnumerable<FunctionDebugInfo> EnumerateFunctions() {
+            return functions_;
+        }
+
+        public List<FunctionDebugInfo> GetSortedFunctions() {
             return functions_;
         }
 
         public FunctionDebugInfo FindFunctionByRVA(long rva) {
-            //? TODO: BinSearch
-            foreach (var func in functions_) {
-                if (rva >= func.StartRVA  && rva < func.EndRVA) {
-                    return func;
-                }
-            }
-
-            return FunctionDebugInfo.Unknown;
+            return FunctionDebugInfo.BinarySearch(functions_, rva);
         }
 
         public SourceFileDebugInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
@@ -227,8 +227,7 @@ namespace IRExplorerUI.Compilers {
             return SourceFileDebugInfo.Unknown;
         }
 
-        private SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info)
-        {
+        private SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info) {
             return new SourceFileDebugInfo(info.SourceFileName,
                 info.OriginalSourceFileName,
                 info.StartSourceLineDebug.Line);
@@ -254,7 +253,7 @@ namespace IRExplorerUI.Compilers {
 
             return SourceLineDebugInfo.Unknown;
         }
-        
+
         public bool LoadDebugInfo(string debugFilePath) {
             if (!File.Exists(ManagedAsmFilePath)) {
                 Trace.TraceError($"Missing managed ASM file: {ManagedAsmFilePath}");
@@ -281,6 +280,10 @@ namespace IRExplorerUI.Compilers {
 
         public void AddMethodILToNativeMap(FunctionDebugInfo functionDebugInfo, List<(int ILOffset, int NativeOffset)> ilOffsets) {
             methodILNativeMap_[functionDebugInfo] = ilOffsets;
+        }
+
+        public void LoadingCompleted() {
+            functions_.Sort();
         }
     }
 }

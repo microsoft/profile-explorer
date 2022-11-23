@@ -37,7 +37,7 @@ namespace IRExplorerUI.Profile {
         }
 
         public async Task<bool> Initialize(BinaryFileDescriptor binaryInfo, SymbolFileSourceOptions symbolOptions,
-                                            IDebugInfoProvider debugInfo) {
+                                           IDebugInfoProvider debugInfo) {
             if (Initialized) {
                 return true;
             }
@@ -55,8 +55,6 @@ namespace IRExplorerUI.Profile {
                 return false;
             }
 
-            IsManaged = binFile.BinaryFile != null && binFile.BinaryFile.IsManagedImage;
-
             var loadedDoc = await session_.LoadBinaryDocument(binFile.FilePath, binaryInfo.ImageName, debugInfo).ConfigureAwait(false);
 
             if (loadedDoc == null) {
@@ -72,6 +70,9 @@ namespace IRExplorerUI.Profile {
 
             ModuleDocument = loadedDoc;
             Summary = loadedDoc.Summary;
+
+            // .Net debug info is passed in by the client.
+            IsManaged = binFile.BinaryFile != null && binFile.BinaryFile.IsManagedImage;
 
             if (IsManaged && debugInfo != null) {
                 Trace.TraceInformation($"  Has managed debug {imageName}");
@@ -119,21 +120,16 @@ namespace IRExplorerUI.Profile {
             // has no associated IR in the module.
             addressFuncMap_ = new Dictionary<long, IRTextFunction>(Summary.Functions.Count);
             externalsFuncMap_ = new Dictionary<long, IRTextFunction>();
-            sortedFuncList_ = new List<FunctionDebugInfo>();
 
             if (!HasDebugInfo) {
                 return false;
             }
 
             Trace.WriteLine($"Building address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFile}");
+            sortedFuncList_ = DebugInfo.GetSortedFunctions();
 
-            foreach (var funcInfo in DebugInfo.EnumerateFunctions(true)) {
+            foreach (var funcInfo in sortedFuncList_) {
                 //Trace.WriteLine($"{funcInfo.Name}, {funcInfo.RVA}");
-
-                if (funcInfo.RVA != 0) {
-                    sortedFuncList_.Add(funcInfo);
-                }
-
                 var func = Summary.FindFunction(funcInfo.Name);
 
                 if (func != null) {
@@ -143,9 +139,6 @@ namespace IRExplorerUI.Profile {
                     externalsFuncMap_[funcInfo.RVA] = ModuleDocument.AddDummyFunction(funcInfo.Name);
                 }
             }
-
-            sortedFuncList_.Sort();
-
 #if DEBUG
             //Trace.WriteLine($"Address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFilePath}");
             //

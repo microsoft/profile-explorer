@@ -60,7 +60,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     private Rect GraphHostBounds => new Rect(0, 0, GraphHost.ActualWidth, GraphHost.ActualHeight);
     private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
     private double CenterZoomPointX => GraphHost.HorizontalOffset + GraphAreaWidth / 2;
-    
+
     public FlameGraphHost() {
         InitializeComponent();
         settings_ = App.Settings.FlameGraphSettings;
@@ -76,7 +76,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     public event EventHandler NodesDeselected;
     public event EventHandler<double> HorizontalOffsetChanged;
     public event EventHandler<double> MaxWidthChanged;
-    
+
     public RelayCommand<object> SelectFunctionCallTreeCommand =>
         new(async (obj) => { await SelectFunctionInPanel(ToolPanelKind.CallTree); });
     public RelayCommand<object> SelectFunctionTimelineCommand =>
@@ -92,7 +92,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         if (IsInitialized) {
             Reset();
         }
-        
+
         callTree_ = callTree;
 
         Dispatcher.BeginInvoke(async () => {
@@ -101,7 +101,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             }
         }, DispatcherPriority.Background);
     }
-    
+
     public void InitializeTimeline(ProfileCallTree callTree, int threadId) {
         callTree_ = callTree;
 
@@ -129,7 +129,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         MouseDoubleClick += OnMouseDoubleClick;
         MouseMove += OnMouseMove;
         MouseDown += OnMouseDown;
-        
+
         stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
             CallTreeNodePopup.PopupHoverDuration,
             (mousePoint, previewPoint) => {
@@ -162,7 +162,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                 Session.RegisterDetachedPanel(popup);
             });
     }
-    
+
     private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) {
         HidePreviewPopup();
 
@@ -268,12 +268,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         if (!IsInitialized) {
             return;
         }
-        
+
         ignoreScrollEvent_ = true;
         GraphHost.ScrollToHorizontalOffset(offset);
     }
 
-    private DoubleAnimation ScrollToHorizontalOffset(double offset, bool animate = true, 
+    private DoubleAnimation ScrollToHorizontalOffset(double offset, bool animate = true,
                                                      double duration = ZoomAnimationDuration) {
         if (animate) {
             var animation = new DoubleAnimation(GraphHost.HorizontalOffset, offset, TimeSpan.FromMilliseconds(duration));
@@ -316,7 +316,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             return;
         }
 
-        double zoomPointX = bounds.Left + bounds.Width / 2;
+        double zoomPointX = bounds.Left;
         double nodeRation = GraphViewer.FlameGraph.InverseScaleWeight(node.Weight);
         double zoomAmount = zoomX * nodeRation;
         AdjustZoom(zoomAmount, zoomPointX, true, ZoomAnimationDuration);
@@ -447,7 +447,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             e.Handled = true;
         }
     }
-    
+
     private async void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
         if (dragging_) {
             dragging_ = false;
@@ -748,7 +748,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
         AdjustZoom(-ZoomAmount * GraphZoomRatio, zoomPointX, true, ZoomAnimationDuration);
     }
-    
+
     private void GraphHost_OnScrollChanged(object sender, ScrollChangedEventArgs e) {
         if (!GraphViewer.IsInitialized) {
             return;
@@ -763,10 +763,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             ignoreScrollEvent_ = false;
         }
     }
-    
+
     public async Task NavigateToParentNode() {
         if (enlargedNode_ != null && enlargedNode_.Parent != null) {
-            GraphViewer.SelectNode(enlargedNode_.Parent);
+            SelectNode(enlargedNode_.Parent);
             await EnlargeNode(enlargedNode_.Parent);
         }
     }
@@ -817,7 +817,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         OnPropertyChanged(propertyName);
         return true;
     }
-    
+
     private async void SelectFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (GraphViewer.SelectedNode != null && GraphViewer.SelectedNode.HasFunction) {
             await Session.SwitchActiveFunction(GraphViewer.SelectedNode.CallTreeNode.Function);
@@ -843,7 +843,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             await ChangeRootNode(GraphViewer.SelectedNode);
         }
     }
-    
+
     private void MarkAllInstancesExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (GraphViewer.SelectedNode != null &&
             GraphViewer.SelectedNode.HasFunction) {
@@ -861,13 +861,13 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     private void ClearMarkedNodesExecuted(object sender, ExecutedRoutedEventArgs e) {
         ClearMarkedFunctions();
     }
-    
+
     private async void EnlargeNodeExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (GraphViewer.SelectedNode != null) {
             await EnlargeNode(GraphViewer.SelectedNode);
         }
     }
-    
+
     public void SelectNode(FlameGraphNode node) {
         GraphViewer.SelectNode(node);
         BringNodeIntoView(node);

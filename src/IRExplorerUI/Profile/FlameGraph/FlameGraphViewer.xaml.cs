@@ -310,10 +310,11 @@ public partial class FlameGraphViewer : FrameworkElement {
     public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode,
                                  Rect visibleArea, FlameGraphSettings settings, ISession session,
                                  bool isTimelineView = false, int threadId = -1) {
-        if (graphVisual_ != null) {
+        if (initialized_) {
             Reset();
         }
 
+        initialized_ = true;
         Session = session;
         flameGraph_ = new FlameGraph(callTree, Session.CompilerInfo.NameProvider.FormatFunctionName);
         isTimelineView_ = isTimelineView;
@@ -330,7 +331,6 @@ public partial class FlameGraphViewer : FrameworkElement {
         AddVisualChild(graphVisual_);
         AddLogicalChild(graphVisual_);
         UpdateMaxWidth(renderer_.MaxGraphWidth);
-        initialized_ = true;
     }
 
     public void SettingsUpdated(FlameGraphSettings settings) {
@@ -404,7 +404,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     public void Reset() {
-        if (graphVisual_ == null) {
+        if (!initialized_) {
             return;
         }
 
