@@ -48,14 +48,14 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private double ActivityViewZoomRatio => ActivityView.MaxViewWidth / ActivityViewAreaWidth;
     private double ActivityViewAreaWidth => Math.Max(0, ActivityViewHost.ViewportWidth - ActivityViewHeader.ActualWidth - 1);
     private double CenterZoomPointX => ActivityScrollBar.HorizontalOffset + ActivityViewAreaWidth / 2;
-    
+
     public TimelinePanel() {
         InitializeComponent();
         settings_ = App.Settings.FlameGraphSettings;
         threadActivityViews_ = new List<ActivityTimelineView>();
         threadActivityViewsMap_ = new Dictionary<int, ActivityTimelineView>();
         threadHoverPreviewMap_ = new Dictionary<int, DraggablePopupHoverPreview>();
-        
+
         SetupEvents();
         DataContext = this;
     }
@@ -80,7 +80,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             }
         }
     }
-    
+
     public bool SyncSelection {
         get => settings_.SyncSelection;
         set {
@@ -181,7 +181,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         if (callTree_ != null) {
             return;
         }
-        
+
         callTree_ = callTree;
         nameFormatter_ = Session.CompilerInfo.NameProvider.FormatFunctionName;
 
@@ -234,7 +234,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private async void ThreadView_ThreadActivityAction(object sender, ThreadActivityAction action) {
         var view = sender as ActivityTimelineView;
         Trace.WriteLine($"Thread action {action} for tread {view.ThreadId}");
-        
+
         bool changed = false;
         changingThreadFiltering_ = true;
 
@@ -302,8 +302,11 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
 
         TimelineHost.SizeChanged += (sender, args) => {
-            if (IsInitialized && args.NewSize.Width > ActivityView.MaxViewWidth) {
-                SetMaxWidth(args.NewSize.Width, false);
+            if (IsInitialized) {
+                // Resize activity view to fit the new region.
+                double newWidth = args.NewSize.Width - ActivityViewHeader.ActualWidth - 1;
+                SetMaxWidth(Math.Max(newWidth, ActivityView.MaxViewWidth), false);
+                SetVisibleWidth(newWidth);
             }
         };
 
@@ -343,12 +346,12 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                         popup.UpdateNode(callNode);
                     }
                     else {
-                        popup = new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, view, 
+                        popup = new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, view,
                                                       Session, canExpand: false);
                     }
 
                     popup.ShowBacktraceView = true;
-                    popup.BacktraceText = CreateBacktraceText(callNode, 3);
+                    popup.BacktraceText = CreateBacktraceText(callNode, 4);
                     return popup;
                 }
 
@@ -364,7 +367,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             popup => {
                 Session.RegisterDetachedPanel(popup);
             });
-        
+
         threadHoverPreviewMap_[view.ThreadId] = preview;
     }
 
@@ -376,12 +379,16 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             sb.AppendLine(nameFormatter_(node.FunctionName));
         }
 
+        if (node.HasCallers) {
+            sb.AppendLine("...");
+        }
+
         return sb.ToString().Trim();
     }
 
     private void SetupActivityViewEvents(ActivityView view) {
         view.PreviewMouseWheel += ActivityView_PreviewMouseWheel;
-
+        view.SelectedTimePoint += ActivityView_SelectedTimePoint;
         view.SelectedTimeRange += ActivityView_SelectedTimeRange;
         view.SelectingTimeRange += ActivityView_SelectingTimeRange;
         view.FilteredTimeRange += ActivityView_FilteredTimeRange;
@@ -389,7 +396,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         view.ClearedFilteredTimeRange += ActivityView_ClearedFilteredTimeRange;
         view.ThreadIncludedChanged += ActivityView_ThreadIncludedChanged;
     }
-    
+
     private void ActivityView_PreviewMouseWheel(object sender, MouseWheelEventArgs e) {
         HidePreviewPopup();
 
@@ -410,6 +417,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         double step = amount * Math.CopySign(1 + e.Delta / 1000.0, e.Delta);
         double zoomPointX = e.GetPosition(ActivityView).X;
         AdjustZoom(step, zoomPointX, animate, ScrollWheelZoomAnimationDuration);
+        e.Handled = true;
     }
 
     private void AdjustZoom(double step, double zoomPointX, bool animate = false, double duration = 0.0) {
@@ -430,7 +438,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             popup.Hide();
         }
     }
-    
+
     private async void ActivityView_ThreadIncludedChanged(object sender, bool included) {
         var view = sender as ActivityView;
         UpdateThreadFilter(view, included);
@@ -442,7 +450,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     private void UpdateFilteredThreads() {
         int excludedCount = CountExcludedThreads();
-        
+
         if (excludedCount == 0) {
             HasThreadFilter = false;
             ThreadFilterText = null;
@@ -454,11 +462,11 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
         if (excludedCount < threadActivityViews_.Count / 2) {
             sb.Append("All - ");
-            
+
             foreach (var threadView in threadActivityViews_) {
                 if (!threadView.IsThreadIncluded) {
                     sb.Append($"{threadView.ThreadId} ");
-                    
+
                     if (added++ > 10) {
                         sb.Append("...");
                         break;
@@ -470,7 +478,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             foreach (var threadView in threadActivityViews_) {
                 if (threadView.IsThreadIncluded) {
                     sb.Append($"{threadView.ThreadId} ");
-                    
+
                     if (added++ > 10) {
                         sb.Append("...");
                         break;
@@ -552,7 +560,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     private async Task RemoveThreadFilters() {
         changingThreadFiltering_ = true;
-        
+
         foreach (var threadView in threadActivityViews_) {
             UpdateThreadFilter(threadView, true);
         }
@@ -604,7 +612,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     private ProfileSampleFilter ConstructProfileSampleFilter(SampleTimeRangeInfo timeRange) {
         var filter = new ProfileSampleFilter { TimeRange = timeRange };
-        
+
         if (HasExcludedThreads()) {
             // Make a list of the non-excluded threads.
             filter.ThreadIds = new List<int>();
@@ -660,6 +668,13 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         }
 
         if (SyncSelection) {
+            await Session.ProfileSampleRangeSelected(range);
+        }
+    }
+
+    private async void ActivityView_SelectedTimePoint(object sender, SampleTimePointInfo point) {
+        if (SyncSelection) {
+            var range = new SampleTimeRangeInfo(point.Time, point.Time, point.SampleIndex, point.SampleIndex, point.ThreadId);
             await Session.ProfileSampleRangeSelected(range);
         }
     }
@@ -741,7 +756,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private async void ExecuteGraphResetWidth(object sender, ExecutedRoutedEventArgs e) {
         ActivityScrollBar.ScrollToHorizontalOffset(0);
         SetMaxWidth(ActivityViewAreaWidth);
-        await RemoveTimeRangeFilters();
     }
 
     private void ExecuteGraphZoomIn(object sender, ExecutedRoutedEventArgs e) {
@@ -778,8 +792,16 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         }
     }
 
+    private void SetVisibleWidth(double newWidth) {
+        ActivityView.SetVisibleWidth(newWidth);
+
+        foreach (var threadView in threadActivityViews_) {
+            threadView.ActivityHost.SetVisibleWidth(newWidth);
+        }
+    }
+
     private void PanelToolbarTray_SettingsClicked(object sender, EventArgs e) {
-        
+
     }
 
     private void ToolBar_Loaded(object sender, RoutedEventArgs e) {

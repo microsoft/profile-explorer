@@ -40,7 +40,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         selectedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
         markedNodeBackColor_ = ColorBrushes.GetBrush("#D0E3F1");
         selectedNodeBorderColor_ = ColorPens.GetPen("#0F92EF", 2);
-        searchResultBorderColor_ = ColorPens.GetPen(Brushes.Gold, 2);
+        searchResultBorderColor_ = ColorPens.GetPen(Colors.Black, 2);
         SetupEvents();
     }
 
@@ -55,7 +55,6 @@ public partial class FlameGraphViewer : FrameworkElement {
         var graphNode = FindPointedNode(point);
 
         if (graphNode != null) {
-            //Trace.WriteLine($"Over {graphNode.Node?.FunctionName}");
             if (hoveredNode_ != graphNode) {
                 ResetHighlightedNodes(HighlighingType.Hovered);
                 HighlightNode(graphNode, HighlighingType.Hovered, false);
@@ -176,13 +175,12 @@ public partial class FlameGraphViewer : FrameworkElement {
 
     private HighlightingStyle PickSelectedParentNodeStyle(HighlightingStyle style) {
         var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.95f);
-        //var newColor = style.BackColor;
         return new HighlightingStyle(newColor, style.Border);
     }
 
     private HighlightingStyle PickMarkedNodeStyle(FlameGraphNode node, HighlightingStyle style) {
         var newColor = node.SearchResult.HasValue ? node.Style.BackColor : markedNodeBackColor_;
-        var newPen = node.SearchResult.HasValue  ? searchResultBorderColor_ : ColorPens.GetPen(Colors.Black);
+        var newPen = node.SearchResult.HasValue  ? searchResultBorderColor_ : ColorPens.GetBoldPen(Colors.Black);
         return new HighlightingStyle(newColor, newPen);
     }
 
@@ -196,8 +194,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         e.Handled = true;
     }
 
-    private void SelectPointedNode(MouseButtonEventArgs e)
-    {
+    private void SelectPointedNode(MouseButtonEventArgs e) {
         var point = e.GetPosition(this);
         var graphNode = FindPointedNode(point);
 
@@ -217,7 +214,7 @@ public partial class FlameGraphViewer : FrameworkElement {
             selectedNode_ = graphNode;
         }
     }
-    
+
     public void SelectNodes(List<FlameGraphNode> nodes) {
         ResetHighlightedNodes(HighlighingType.Hovered);
         ResetHighlightedNodes(HighlighingType.Selected);
@@ -322,14 +319,12 @@ public partial class FlameGraphViewer : FrameworkElement {
         isTimelineView_ = isTimelineView;
 
         if (isTimelineView_) {
-            var profile = (App.Current.MainWindow as ISession).ProfileData;
-            flameGraph_.BuildTimeline(profile, threadId);
+            flameGraph_.BuildTimeline(Session.ProfileData, threadId);
         }
         else {
             await Task.Run(() => flameGraph_.Build(rootNode));
         }
 
-        Trace.WriteLine($"Init FlameGraph with visible area {visibleArea}");
         renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea, settings, isTimelineView_);
         graphVisual_ = renderer_.Setup();
         AddVisualChild(graphVisual_);

@@ -68,7 +68,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     const double BottomMarginY = 0;
     const string DefaultFont = "Segoe UI";
     const double DefaultTextSize = 11;
-    const double MarkerHeight = MinSampleHeight;
+    const double MarkerHeight = 8;
 
     private bool initialized_;
     private DrawingVisual visual_;
@@ -104,7 +104,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     public ActivityView() {
         InitializeComponent();
         filteredOutColor_ = ColorBrushes.GetTransparentBrush(Colors.WhiteSmoke, 190);
-        selectionBackColor_ = ColorBrushes.GetTransparentBrush("#D0E3F1", 150); // SelectedBackgroundBrush
+        selectionBackColor_ = ColorBrushes.GetTransparentBrush("#A7D5F5", 150); // SelectedBackgroundBrush
         filteredBackColor_ = ColorBrushes.GetBrush(Colors.Linen);
         selectionBorderColor_ = ColorPens.GetPen(Colors.Black);
         markerBackColor_ = ColorBrushes.GetTransparentBrush("#0F92EF", 180);;
@@ -112,14 +112,15 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         filteredOutBorderColor_ = ColorPens.GetBoldPen(Colors.Black);
         ThreadId = -1;
         DataContext = this;
-        
+
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         MouseLeftButtonUp += ActivityView_MouseLeftButtonUp;
         MouseMove += ActivityView_MouseMove;
         MouseLeave += ActivityView_MouseLeave;
+        PreviewMouseWheel += ActivityView_PreviewMouseWheel;
     }
 
-    public RelayCommand<object> FilterTimeRangeCommand => 
+    public RelayCommand<object> FilterTimeRangeCommand =>
         new((obj) => ApplyTimeRangeFilter());
 
     public RelayCommand<object> ClearSelectionCommand =>
@@ -356,8 +357,15 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         startedSelection_ = true;
         selectionStartTime_ = time;
         selectionEndTime_ = selectionStartTime_;
+        e.Handled = true;
         CaptureMouse();
         Redraw();
+    }
+
+    private void ActivityView_PreviewMouseWheel(object sender, MouseWheelEventArgs e) {
+        // Cancel any selection action.
+        startedSelection_ = false;
+        ReleaseMouseCapture();
     }
 
     private void RemoveTimeRangeFilter() {
@@ -393,6 +401,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         else {
             SelectedTimePoint?.Invoke(this, GetSelectedTimePoint());
         }
+
+        e.Handled = true;
     }
 
     private void ActivityView_MouseLeave(object sender, MouseEventArgs e) {
@@ -535,7 +545,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         ClearSelectedTimeRange();
         UpdateFilterState();
     }
-    
+
     public void ClearTimeRangeFilter() {
         hasFilter_ = false;
         UpdateFilterState();
@@ -761,7 +771,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 endX = x;
             }
         }
-        
+
         if (endX - startX > 1) {
             var rect = new Rect(startX, y, endX - startX, MarkerHeight);
             graphDC.DrawRectangle(markerBackColor_, null, rect);
@@ -999,6 +1009,11 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     public void SetHorizontalOffset(double offset) {
         visibleArea_ = new Rect(offset, 0, visibleArea_.Width, visibleArea_.Height);
+        Redraw();
+    }
+
+    public void SetVisibleWidth(double width) {
+        visibleArea_ = new Rect(visibleArea_.Left, 0, width, visibleArea_.Height);
         Redraw();
     }
 

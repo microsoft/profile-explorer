@@ -35,13 +35,13 @@ namespace IRExplorerUI {
         };
 
         static readonly string[] LightPastelColors = new string[] {
-            "#fed7d7",
             "#fee6d6",
             "#f0e4eb",
             "#e1e9f3",
             "#f7dde6",
             "#f7ddee",
             "#fee2d6",
+            "#fed7d7",
             "#f1e4e5",
             "#fee2d6",
             "#fefed6",
@@ -59,7 +59,7 @@ namespace IRExplorerUI {
             "#ede2f2",
             "#f8eddc",
         };
-        
+
         public static Color AdjustSaturation(Color color, float saturationAdjustment = 2f) {
             RGBToHSL(color, out float h, out float s, out float l);
             s = Math.Clamp(s * saturationAdjustment, 0, 1);
