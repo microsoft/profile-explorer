@@ -120,8 +120,8 @@ namespace IRExplorerUI {
         Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node);
         Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range);
         Task<bool> ProfileSampleRangeDeselected();
-        Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node);
-        Task<bool> ProfileFunctionSelected(IRTextFunction function);
+        Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node, ToolPanelKind sourcePanelKind);
+        Task<bool> ProfileFunctionSelected(IRTextFunction function, ToolPanelKind sourcePanelKind);
         Task<bool> ProfileFunctionDeselected();
 
         bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);

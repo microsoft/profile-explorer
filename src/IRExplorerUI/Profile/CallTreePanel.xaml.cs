@@ -162,6 +162,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private CancelableTaskInstance searchTask_;
     private Stack<IRTextFunction> stateStack_;
     private Dictionary<ProfileCallTreeNode, ChildFunctionEx> callTreeNodeToNodeExMap_;
+    private bool ignoreNextSelectionEvent_;
 
     //? TODO: Replace all other commands with RelayCommand.
     public RelayCommand<object> SelectFunctionCallTreeCommand =>
@@ -324,7 +325,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private bool showSearchSection_;
-
     public bool ShowSearchSection {
         get => showSearchSection_;
         set {
@@ -407,6 +407,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
         ExpandPathToNode(nodeEx, markPath);
         BringIntoView(nodeEx);
+
+        ignoreNextSelectionEvent_ = true;
         CallTree.SelectedItem = nodeEx.TreeNode;
     }
 
@@ -874,11 +876,16 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private async void CallTree_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+        if (ignoreNextSelectionEvent_) {
+            ignoreNextSelectionEvent_ = false;
+            return;
+        }
+
         if (CallTree.SelectedItem is TreeNode node &&
             node.Tag is ChildFunctionEx funcEx &&
             funcEx.HasCallTreeNode) {
             if (SyncSelection) {
-                await Session.ProfileFunctionSelected(funcEx.CallTreeNode);
+                await Session.ProfileFunctionSelected(funcEx.CallTreeNode, this.PanelKind);
             }
             
             if (settings_.SyncSourceFile) {

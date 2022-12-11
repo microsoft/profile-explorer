@@ -369,11 +369,12 @@ namespace IRExplorerUI.Profile {
         bool AttachProfiler(int processId) {
             try {
                 diagClient_ = new DiagnosticsClient(processId);
-                var profilerArgs = Encoding.ASCII.GetBytes(managedAsmDir_);
+                //var profilerArgs = Encoding.ASCII.GetBytes(managedAsmDir_);
+                var profilerArgs = new byte[0];
                 diagClient_.AttachProfiler(TimeSpan.FromSeconds(10), Guid.Parse(ProfilerGuid), profilerPath_, profilerArgs);
             }
             catch (Exception ex) {
-                Trace.TraceError($"Failed to attach profiler to process {processId}");
+                Trace.TraceError($"Failed to attach profiler to process {processId}: {ex.Message}");
                 return false;
             }
 
