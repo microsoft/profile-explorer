@@ -171,7 +171,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             await NodeDetailsPanel.ShowWithDetailsAsync(node.CallTreeNode);
 
             if (SyncSelection) {
-                await Session.ProfileFunctionSelected(node.CallTreeNode);
+                await Session.ProfileFunctionSelected(node.CallTreeNode, this.PanelKind);
             }
 
             if (SyncSourceFile) {

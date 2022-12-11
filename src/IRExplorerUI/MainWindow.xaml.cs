@@ -1349,7 +1349,7 @@ namespace IRExplorerUI {
             return true;
         }
 
-        public async Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node) {
+        public async Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node, ToolPanelKind sourcePanelKind) {
             var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
 
             if (panel != null) {
@@ -1357,9 +1357,13 @@ namespace IRExplorerUI {
                 //? right now selects any instance of the func
                 await MarkFunctionSamples(node, panel);
             }
-            
-            //? TODO: Mark in call tree
 
+            if (sourcePanelKind != ToolPanelKind.CallerCallee) {
+                await SwitchActiveFunction(node.Function);
+            }
+
+            var callTreePanel = FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
+            callTreePanel?.SelectFunction(node.Function);
             return true;
         }
 
@@ -1368,7 +1372,7 @@ namespace IRExplorerUI {
             panel.MarkFunctionSamples(threadSamples);
         }
 
-        public async Task<bool> ProfileFunctionSelected(IRTextFunction function) {
+        public async Task<bool> ProfileFunctionSelected(IRTextFunction function, ToolPanelKind sourcePanelKind) {
             return true;
         }
 
