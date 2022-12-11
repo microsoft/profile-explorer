@@ -27,6 +27,11 @@ namespace IRExplorerUI.Compilers {
         public struct AddressNamePair {
             public long Address { get; set; }
             public string Name { get; set; }
+
+            public AddressNamePair(long address, string name) {
+                Address = address;
+                Name = name;
+            }
         }
 
         class ManagedProcessCode {
@@ -36,20 +41,17 @@ namespace IRExplorerUI.Compilers {
         }
 
         public class MethodCode {
+            public MethodCode(long address, int size, byte[] code) {
+                Address = address;
+                Size = size;
+                Code = code;
+                CallTargets = new List<AddressNamePair>();
+            }
+
             public long Address { get; set; }
             public int Size { get; set; }
-            public string CodeB64 { get; set; }
+            public byte[] Code { get; set; }
             public List<AddressNamePair> CallTargets { get; set; }
-
-            public byte[] GetCodeBytes() {
-                try {
-                    return Convert.FromBase64String(CodeB64);
-                }
-                catch (Exception ex) {
-                    Trace.TraceError($"Failed to convert Base64: {ex.Message}\n{ex.StackTrace}");
-                    return null;
-                }
-            }
 
             public string FindCallTarget(long address) {
                 //? TODO: Map
@@ -81,6 +83,12 @@ namespace IRExplorerUI.Compilers {
         public SymbolFileSourceOptions SymbolOptions { get; set; }
         public SymbolFileDescriptor ManagedSymbolFile { get; set; }
         public string ManagedAsmFilePath { get; set; }
+
+        public void UpdateArchitecture(Machine architecture) {
+            if (architecture_ == Machine.Unknown) {
+                architecture_ = architecture;
+            }
+        }
 
         public MethodCode FindMethodCode(FunctionDebugInfo funcInfo) {
             return methodCodeMap_?.GetValueOrNull(funcInfo.RVA);
@@ -230,7 +238,7 @@ namespace IRExplorerUI.Compilers {
         private SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info) {
             return new SourceFileDebugInfo(info.SourceFileName,
                 info.OriginalSourceFileName,
-                info.StartSourceLineDebug.Line);
+                info.StartSourceLine.Line);
         }
 
         public SourceFileDebugInfo FindSourceFilePathByRVA(long rva) {
@@ -255,27 +263,11 @@ namespace IRExplorerUI.Compilers {
         }
 
         public bool LoadDebugInfo(string debugFilePath) {
-            if (!File.Exists(ManagedAsmFilePath)) {
-                Trace.TraceError($"Missing managed ASM file: {ManagedAsmFilePath}");
-                return false;
-            }
-
-            if (!JsonUtils.DeserializeFromFile(ManagedAsmFilePath, out ManagedProcessCode processCode)) {
-                return false;
-            }
-
-            architecture_ = (Machine)processCode.MachineType;
-            methodCodeMap_ = new Dictionary<long, MethodCode>(processCode.Methods.Count);
-
-            foreach (var method in processCode.Methods) {
-                methodCodeMap_[method.Address] = method;
-            }
-
             return true;
         }
 
         public bool LoadDebugInfo(DebugFileSearchResult debugFile) {
-            return LoadDebugInfo(debugFile.FilePath);
+            return true;
         }
 
         public void AddMethodILToNativeMap(FunctionDebugInfo functionDebugInfo, List<(int ILOffset, int NativeOffset)> ilOffsets) {
@@ -284,6 +276,11 @@ namespace IRExplorerUI.Compilers {
 
         public void LoadingCompleted() {
             functions_.Sort();
+        }
+
+        public void AddMethodCode(long codeAddress, MethodCode code) {
+            methodCodeMap_ ??= new Dictionary<long, MethodCode>();
+            methodCodeMap_[codeAddress] = code;
         }
     }
 }

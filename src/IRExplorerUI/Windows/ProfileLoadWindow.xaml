@@ -125,6 +125,7 @@
                             <RadioButton
                                 x:Name="SystemWideRadioButton"
                                 Margin="8,4,8,0"
+                                Click="SystemWideRadioButton_Click"
                                 Content="System-wide"
                                 IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
                                 IsEnabled="{Binding InputControlsEnabled}"
@@ -185,7 +186,7 @@
                                 </Grid>
                                 <ListView
                                     x:Name="RunningProcessList"
-                                    Height="300"
+                                    Height="200"
                                     Margin="8,4,8,0"
                                     VerticalAlignment="Stretch"
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
@@ -327,7 +328,8 @@
                                     <CheckBox
                                         Margin="0,8,0,0"
                                         Content="Profile managed (.NET) applications"
-                                        IsChecked="{Binding Path=RecordingOptions.ProfileDotNet, Mode=TwoWay}" />
+                                        IsChecked="{Binding Path=RecordingOptions.ProfileDotNet, Mode=TwoWay}"
+                                        IsEnabled="{Binding ElementName=SystemWideRadioButton, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
                                     <CheckBox
                                         Margin="0,4,0,0"
                                         Content="Profile child processes"

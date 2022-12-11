@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -9,16 +10,21 @@ using IRExplorerCore;
 using IRExplorerUI.Profile;
 using Microsoft.Diagnostics.NETCore.Client;
 using Microsoft.Diagnostics.Tracing;
+using Microsoft.Diagnostics.Tracing.EventPipe;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.Diagnostics.Tracing.Session;
 
 namespace IRExplorerUI.Profile {
     public sealed class ETWRecordingSession : IDisposable {
-        private static readonly string ProfilerPath = "irexplorer_profiler.dll";
+        //private static readonly string ProfilerPath = "irexplorer_profiler.dll";
+        private static readonly string ProfilerPath = @"D:\DotNextMoscow2019\x64\Debug\irexplorer_profiler.dll";
         private static readonly string ProfilerGuid = "{805A308B-061C-47F3-9B30-F785C3186E81}";
 
         private TraceEventSession session_;
+        private DiagnosticsClient diagClient_;
+        private ProfilerNamedPipeServer pipeServer_;
+
         private ProfileRecordingSessionOptions options_;
         private ProfileDataProviderOptions providerOptions_;
         private ProfileLoadProgressHandler progressCallback_;
@@ -67,14 +73,14 @@ namespace IRExplorerUI.Profile {
 
                         list.Add(new PerformanceCounterConfig(counter.Value.ID, counter.Value.Name,
                                                               counter.Value.Interval,
-                                                              counter.Value.MinInterval, 
+                                                              counter.Value.MinInterval,
                                                               counter.Value.MaxInterval, true));
                     }
                 }
                 catch (Exception ex) {
                     Trace.TraceError($"Failed to get CPU perf counters: {ex.Message}");
                 }
-                
+
                 return list;
             }
         }
@@ -91,7 +97,7 @@ namespace IRExplorerUI.Profile {
             }
         }
 
-        public Task<RawProfileData> StartRecording(ProfileLoadProgressHandler progressCallback, 
+        public Task<RawProfileData> StartRecording(ProfileLoadProgressHandler progressCallback,
                                                    CancelableTask cancelableTask) {
             int acceptedProcessId = 0;
             Process profiledProcess = null;
@@ -104,7 +110,7 @@ namespace IRExplorerUI.Profile {
 
             var eventTask = Task.Run(() => {
                 try {
-                    if (!CreateSession()) {
+                    if (!CreateSession(cancelableTask)) {
                         return null;
                     }
 
@@ -146,10 +152,9 @@ namespace IRExplorerUI.Profile {
                                 StopSession();
                                 return null;
                             }
-                            
+
                             if (options_.ProfileDotNet) {
-                                if (!SetupDotNetProfilerPaths() ||
-                                    !AttachProfiler(acceptedProcessId)) {
+                                if (!AttachProfiler(acceptedProcessId)) {
                                     StopSession();
                                     return null;
                                 }
@@ -157,7 +162,9 @@ namespace IRExplorerUI.Profile {
 
                             // Start task that waits for the process to exit,
                             // which will stop the ETW session.
-                            CreateApplicationExitTask(profiledProcess, cancelableTask);
+
+                            //? TODO: Doesns't work for attached process!
+                            //? CreateApplicationExitTask(profiledProcess, cancelableTask);
                             break;
                         }
                         default: {
@@ -194,7 +201,7 @@ namespace IRExplorerUI.Profile {
                         if (options_.SessionKind == ProfileSessionKind.AttachToProcess) {
                             // Needed when attaching to a running .net app.
                             Trace.WriteLine("Enable ClrRundownTraceEventParser");
-                            
+
                             session_.EnableProvider(
                                 ClrRundownTraceEventParser.ProviderGuid,
                                 TraceEventLevel.Verbose,
@@ -210,7 +217,7 @@ namespace IRExplorerUI.Profile {
                         new ETWEventProcessor(session_.Source, providerOptions_,
                                               isRealTime: true, acceptedProcessId,
                                               options_.ProfileChildProcesses,
-                                              options_.ProfileDotNet, managedAsmDir_);
+                                              options_.ProfileDotNet, pipeServer_);
 
                     sessionStarted.Set();
                     progressCallback_ = progressCallback;
@@ -251,7 +258,7 @@ namespace IRExplorerUI.Profile {
                     profiledProcess?.Dispose();
                     profiledProcess = null;
                 }
-                
+
                 return profile;
             });
         }
@@ -277,7 +284,20 @@ namespace IRExplorerUI.Profile {
             TraceEventProfileSources.Set(counterIds, frequencyCounts);
         }
 
-        private bool CreateSession() {
+        private bool CreateSession(CancelableTask cancelableTask) {
+            if (options_.ProfileDotNet) {
+                profilerPath_ = Path.Combine(App.ApplicationDirectory, ProfilerPath);
+
+                try {
+                    pipeServer_ = new ProfilerNamedPipeServer();
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to start named pipe: {ex.Message}\n{ex.StackTrace}");
+                    StopSession();
+                    return false;
+                }
+            }
+
             // Start a new in-memory session.
             try {
                 Debug.Assert(session_ == null);
@@ -338,10 +358,6 @@ namespace IRExplorerUI.Profile {
         }
 
         private bool SetupStartupDotNetProfiler(ProcessStartInfo procInfo) {
-            if (!SetupDotNetProfilerPaths()) {
-                return false;
-            }
-
             procInfo.EnvironmentVariables["CORECLR_ENABLE_PROFILING"] = "1";
             procInfo.EnvironmentVariables["CORECLR_PROFILER"] = ProfilerGuid;
             procInfo.EnvironmentVariables["CORECLR_PROFILER_PATH"] = profilerPath_;
@@ -350,30 +366,11 @@ namespace IRExplorerUI.Profile {
             return true;
         }
 
-        private bool SetupDotNetProfilerPaths() {
-            profilerPath_ = Path.Combine(App.ApplicationDirectory, ProfilerPath);
-            return SetupDotNetASMDirectory();
-        }
-
-        private bool SetupDotNetASMDirectory() {
-            try {
-                var tempPath = Path.GetTempPath();
-                managedAsmDir_ = Path.Combine(tempPath, sessionName_);
-                Directory.CreateDirectory(managedAsmDir_);
-                Trace.WriteLine($"Using managed ASM dir {managedAsmDir_}");
-                return true;
-            }
-            catch (Exception ex) {
-                Trace.TraceError($"Failed to create managed ASM dir: {ex.Message}\n{ex.StackTrace}");
-                return false;
-            }
-        }
-
         bool AttachProfiler(int processId) {
             try {
-                var client = new DiagnosticsClient(processId);
+                diagClient_ = new DiagnosticsClient(processId);
                 var profilerArgs = Encoding.ASCII.GetBytes(managedAsmDir_);
-                client.AttachProfiler(TimeSpan.FromSeconds(10), Guid.Parse(ProfilerGuid), profilerPath_, profilerArgs);
+                diagClient_.AttachProfiler(TimeSpan.FromSeconds(10), Guid.Parse(ProfilerGuid), profilerPath_, profilerArgs);
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to attach profiler to process {processId}");
@@ -391,7 +388,7 @@ namespace IRExplorerUI.Profile {
                             break;
                         }
                     }
-                    
+
                     // Once the app exits, wait until no more ETW events are arriving
                     // to be processed, then stop the session.
                     int waitCount = 0;
@@ -425,6 +422,7 @@ namespace IRExplorerUI.Profile {
         private void StopSession() {
             if (session_ != null) {
                 try {
+                    pipeServer_?.Stop();
                     session_.Stop();
                     session_.Dispose();
                 }
