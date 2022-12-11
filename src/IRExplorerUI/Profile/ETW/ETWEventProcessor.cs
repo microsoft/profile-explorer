@@ -18,6 +18,7 @@ using System.Windows;
 using System.Windows.Controls.Ribbon.Primitives;
 using CSScriptLib;
 using System.Net;
+using System.Threading.Tasks;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Diagnostics.Tracing.AutomatedAnalysis;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
@@ -35,7 +36,7 @@ public sealed class ETWEventProcessor : IDisposable {
     private bool handleDotNetEvents_;
     private int acceptedProcessId_;
     private bool handleChildProcesses_;
-    private string managedAsmDir_;
+    private ProfilerNamedPipeServer pipeServer_;
     private List<int> childAcceptedProcessIds_;
     private ProfileDataProviderOptions providerOptions_;
 
@@ -48,7 +49,7 @@ public sealed class ETWEventProcessor : IDisposable {
                              bool isRealTime = true,
                              int acceptedProcessId = 0, bool handleChildProcesses = false,
                              bool handleDotNetEvents = false,
-                             string managedAsmDir = null) {
+                             ProfilerNamedPipeServer pipeServer = null) {
         Trace.WriteLine($"New ETWEventProcessor: ProcId {acceptedProcessId}, handleDotNet: {handleDotNetEvents}");
         source_ = source;
         providerOptions_ = providerOptions;
@@ -56,7 +57,7 @@ public sealed class ETWEventProcessor : IDisposable {
         acceptedProcessId_ = acceptedProcessId;
         handleDotNetEvents_ = handleDotNetEvents;
         handleChildProcesses_ = handleChildProcesses;
-        managedAsmDir_ = managedAsmDir;
+        pipeServer_ = pipeServer;
         childAcceptedProcessIds_ = new List<int>();
     }
 
@@ -543,7 +544,7 @@ public sealed class ETWEventProcessor : IDisposable {
         }
 
         if (handleDotNetEvents_) {
-            ProcessDotNetEvents(profile);
+            ProcessDotNetEvents(profile, cancelableTask);
         }
 
         // Go over all ETW events, which will call the registered handlers.
@@ -576,7 +577,7 @@ public sealed class ETWEventProcessor : IDisposable {
         profile.LoadingCompleted();
 
         if (handleDotNetEvents_) {
-            profile.ManagedLoadingCompleted(managedAsmDir_);
+            profile.ManagedLoadingCompleted();
         }
 
 #if DEBUG
@@ -593,7 +594,21 @@ public sealed class ETWEventProcessor : IDisposable {
         return profile;
     }
 
-    private void ProcessDotNetEvents(RawProfileData profile) {
+    private void ProcessDotNetEvents(RawProfileData profile, CancelableTask cancelableTask) {
+        if (pipeServer_ != null) {
+            pipeServer_.FunctionCodeReceived += (functionId, rejitId, processId, address, codeSize, codeBytes) => {
+                Trace.WriteLine($"PipeServer_OnFunctionCodeReceived: {functionId}, {rejitId}, {address}, {codeSize}");
+                profile.AddManagedMethodCode(functionId, rejitId, processId, address, codeSize, codeBytes);
+            };
+
+            pipeServer_.FunctionCallTargetsReceived += (functionId, rejitId, processId, address, name) => {
+                Trace.WriteLine($"PipeServer_OnFunctionCallTargetsReceived: {functionId}, {rejitId}, {address}, {name}");
+                profile.AddManagedMethodCallTarget(functionId, rejitId, processId, address, name);
+            };
+
+            Task.Run(() => pipeServer_.Start(cancelableTask.Token));
+        }
+
         source_.Clr.LoaderModuleLoad += data => {
             ProcessLoaderModuleLoad(data, profile);
         };
@@ -617,7 +632,7 @@ public sealed class ETWEventProcessor : IDisposable {
         rundownParser.LoaderModuleDCStop += data => {
             ProcessLoaderModuleLoad(data, profile, true);
         };
-        
+
         rundownParser.MethodDCStartVerbose += data => {
             ProcessDotNetMethodLoad(data, profile, true);
         };
@@ -636,6 +651,10 @@ public sealed class ETWEventProcessor : IDisposable {
     }
 
     private void ProcessLoaderModuleLoad(ModuleLoadUnloadTraceData data, RawProfileData profile, bool rundown = false) {
+        if (!IsAcceptedProcess(data.ProcessID)) {
+            return; // Ignore events from other processes.
+        }
+
 #if DEBUG
         Trace.WriteLine($"=> R-{rundown} Managed module {data.ModuleID}, {data.ModuleILFileName} in proc {data.ProcessID}");
 #endif
@@ -657,7 +676,7 @@ public sealed class ETWEventProcessor : IDisposable {
 #if DEBUG
         Trace.WriteLine($"=> R-{rundown} ILMap token: {data.MethodID}, entries: {data.CountOfMapEntries}, ProcessID: {data.ProcessID}, name: {data.ProcessName}");
 #endif
-        var methodMapping = profile.FindManagedMethod(data.MethodID, data.ProcessID);
+        var methodMapping = profile.FindManagedMethod(data.MethodID, data.ReJITID, data.ProcessID);
 
         if (methodMapping == null) {
             return;
@@ -681,6 +700,7 @@ public sealed class ETWEventProcessor : IDisposable {
             return; // Ignore events from other processes.
         }
 
+
 #if DEBUG
         Trace.WriteLine($"=> R-{rundown} Load at {data.MethodStartAddress}: {data.MethodNamespace}.{data.MethodName}, {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
         Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
@@ -690,8 +710,8 @@ public sealed class ETWEventProcessor : IDisposable {
         //var funcName = data.MethodSignature;
         var funcName = $"{data.MethodNamespace}.{data.MethodName}";
         var funcInfo = new FunctionDebugInfo(funcName, (long)funcRva, data.MethodSize,
-                                             ToOptimizationLevel(data.OptimizationTier), data.MethodToken);
-        profile.AddManagedMethodMapping(data.ModuleID, data.MethodID, funcInfo,
+                                             (short)data.OptimizationTier, data.MethodToken, (short)data.ReJITID);
+        profile.AddManagedMethodMapping(data.ModuleID, data.MethodID, data.ReJITID, funcInfo,
                                         (long)data.MethodStartAddress, data.MethodSize, data.ProcessID);
     }
 

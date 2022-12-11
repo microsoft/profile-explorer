@@ -974,5 +974,10 @@ namespace IRExplorerUI {
         private async void RunningProcessList_DoubleClick(object sender, MouseButtonEventArgs e) {
             await StartRecordingSession();
         }
+
+        private void SystemWideRadioButton_Click(object sender, RoutedEventArgs e) {
+            RecordingOptions.ProfileDotNet = false;
+            OnPropertyChange(nameof(RecordingOptions));
+        }
     }
 }

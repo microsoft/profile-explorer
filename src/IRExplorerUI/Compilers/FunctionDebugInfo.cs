@@ -8,7 +8,7 @@ namespace IRExplorerUI.Compilers;
 [ProtoContract(SkipConstructor = true)]
 public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<FunctionDebugInfo>, IComparable<long> {
     [ProtoMember(1)]
-    public long Id { get; set; }
+    public long Id { get; set; } // Used for MethodToken in managed code.
     [ProtoMember(2)]
     public string Name { get; private set; }
     [ProtoMember(3)]
@@ -16,11 +16,13 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     [ProtoMember(4)]
     public long Size { get; set; }
     [ProtoMember(5)]
-    public SourceLineDebugInfo StartSourceLineDebug { get; set; }
+    public SourceLineDebugInfo StartSourceLine { get; set; }
     [ProtoMember(6)]
     public List<SourceLineDebugInfo> SourceLines { get; set; }
     [ProtoMember(7)]
-    public string OptimizationLevel { get; set; }
+    public long AuxiliaryId { get; set; } // Used for RejitID in managed code.
+    [ProtoMember(8)]
+    public short OptimizationLevel { get; set; } // Used for OptimizationTier in managed code.
 
     //? TODO: Remove SourceFileName from SourceLineDebugInfo
     public string SourceFileName { get; set; }
@@ -29,19 +31,19 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     public long StartRVA => RVA;
     public long EndRVA => RVA + Size - 1;
     public bool HasSourceLines => SourceLines != null && SourceLines.Count > 0;
-    public bool HasOptimizationLevel => !string.IsNullOrEmpty(OptimizationLevel);
 
     public static readonly FunctionDebugInfo Unknown = new FunctionDebugInfo(null, 0, 0);
     public bool IsUnknown => RVA == 0 && Size == 0;
 
-    public FunctionDebugInfo(string name, long rva, long size, string optLevel = null, int id = -1) {
+    public FunctionDebugInfo(string name, long rva, long size, short optLevel = 0, int id = -1, short auxId = -1) {
         Name = name != null ? string.Intern(name) : null;
         RVA = rva;
         Size = size;
         OptimizationLevel = optLevel;
-        StartSourceLineDebug = SourceLineDebugInfo.Unknown;
+        StartSourceLine = SourceLineDebugInfo.Unknown;
         SourceLines = null;
         Id = id;
+        AuxiliaryId = auxId;
     }
 
     public void UpdateName(string newName) {
@@ -52,8 +54,8 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
         SourceLines ??= new List<SourceLineDebugInfo>(1);
         SourceLines.Add(sourceLine);
 
-        if (StartSourceLineDebug.IsUnknown) {
-            StartSourceLineDebug = sourceLine;
+        if (StartSourceLine.IsUnknown) {
+            StartSourceLine = sourceLine;
         }
     }
 
@@ -122,17 +124,16 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
         if (ReferenceEquals(this, other)) {
             return true;
         }
-        
+
         return RVA == other.RVA &&
                Size == other.Size &&
                Name.Equals(other.Name, StringComparison.Ordinal) &&
-               ((OptimizationLevel == null && other.OptimizationLevel == null) ||
-                ((OptimizationLevel != null && other.OptimizationLevel != null) &&
-                  OptimizationLevel.Equals(other.OptimizationLevel, StringComparison.Ordinal)));
+               Id == other.Id &&
+               AuxiliaryId == other.AuxiliaryId;
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Name, RVA, Size, OptimizationLevel);
+        return HashCode.Combine(Name, RVA, Id, AuxiliaryId);
     }
 
     public int CompareTo(FunctionDebugInfo other) {
@@ -160,7 +161,7 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     }
 
     public override string ToString() {
-        return $"{Name}, RVA: {RVA:X}, Size: {Size}, Id: {Id}";
+        return $"{Name}, RVA: {RVA:X}, Size: {Size}, Id: {Id}, AuxId: {AuxiliaryId}";
     }
 }
 

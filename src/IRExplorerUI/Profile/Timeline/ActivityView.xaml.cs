@@ -76,8 +76,9 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     private ProfileData profile_;
     private TimeSpan samplingInterval_;
     private double sliceWidth_;
-    private double sampleHeight_;
+    private double maxSampleHeight_;
     private double maxWidth_;
+    private double maxHeight_;
     private double prevMaxWidth_;
     private double topMargin_;
     private double bottomMargin_;
@@ -278,7 +279,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     private void UpdateSizes() {
         topMargin_ = IsTimeBarVisible ? TopMarginY : 2;
         bottomMargin_ = BottomMarginY;
-        sampleHeight_ = visibleArea_.Height - topMargin_;
+        maxSampleHeight_ = visibleArea_.Height - topMargin_;
+        maxHeight_ = Math.Max(visibleArea_.Height, TimeBarHeight);
     }
 
     public void SelectTimeRange(SampleTimeRangeInfo range) {
@@ -599,7 +601,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
             for (int i = startSlice; i < endSlice; i++) {
                 var weight = list.Slices[i].Weight;
-                double height = ((double)weight.Ticks / (double)list.MaxWeight.Ticks) * sampleHeight_;
+                double height = ((double)weight.Ticks / (double)list.MaxWeight.Ticks) * maxSampleHeight_;
 
                 if (height < double.Epsilon) {
                     continue;
@@ -619,7 +621,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
                 height = Math.Max(height, MinSampleHeight);
                 var rect = new Rect(i * scaledSliceWidth - visibleArea_.Left,
-                                    sampleHeight_ - height + topMargin_,
+                                    maxSampleHeight_ - height + topMargin_,
                                     scaledSliceWidth, height);
                 graphDC.DrawRectangle(backColor, borderColor, rect);
             }
@@ -659,21 +661,20 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             DrawPositionLine(graphDC);
         }
     }
-
+    
     private void DrawTimeRangeFilter(DrawingContext graphDC) {
         var startX = TimeToPosition(filterStartTime_);
         var endX = TimeToPosition(filterEndTime_);
-        double height = sampleHeight_ + topMargin_;
 
         startX = Math.Max(0, startX);
         endX = Math.Min(endX, visibleArea_.Width);
-        var rect = new Rect(startX, 0, endX - startX, height);
+        var rect = new Rect(startX, 0, endX - startX, maxHeight_);
         graphDC.DrawRectangle(filteredBackColor_, null, rect);
     }
 
     private void DrawPositionLine(DrawingContext graphDC) {
         var lineStart = new Point(positionLineX_, 0);
-        var lineEnd = new Point(positionLineX_, sampleHeight_ + topMargin_);
+        var lineEnd = new Point(positionLineX_, maxHeight_);
         graphDC.DrawLine(positionLinePen_, lineStart, lineEnd);
 
         var time = PositionToTime(positionLineX_);
@@ -703,7 +704,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         }
 
         var selectionWidth = Math.Max(1, endX - startX);
-        var selectionHeight = sampleHeight_ + topMargin_;
+        var selectionHeight = maxHeight_;
         var rect = new Rect(startX, 0, selectionWidth, selectionHeight);
         graphDC.DrawRectangle(selectionBackColor_, selectionBorderColor_, rect);
 
@@ -721,18 +722,17 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         if (isThreadIncluded_) {
             var startX = TimeToPosition(filterStartTime_);
             var endX = TimeToPosition(filterEndTime_);
-            double height = sampleHeight_ + topMargin_;
 
             if (startX > 0) {
-                var beforeRect = new Rect(0, 0, startX, height);
+                var beforeRect = new Rect(0, 0, startX, maxHeight_);
                 graphDC.DrawRectangle(filteredOutColor_, null, beforeRect);
-                graphDC.DrawLine(filteredOutBorderColor_, new Point(startX, 0), new Point(startX, height));
+                graphDC.DrawLine(filteredOutBorderColor_, new Point(startX, 0), new Point(startX, maxHeight_));
             }
 
             if (endX < visibleArea_.Width) {
-                var afterRect = new Rect(endX, 0, visibleArea_.Width - endX, height);
+                var afterRect = new Rect(endX, 0, visibleArea_.Width - endX, maxHeight_);
                 graphDC.DrawRectangle(filteredOutColor_, null, afterRect);
-                graphDC.DrawLine(filteredOutBorderColor_, new Point(endX, 0), new Point(endX, height));
+                graphDC.DrawLine(filteredOutBorderColor_, new Point(endX, 0), new Point(endX, maxHeight_));
             }
         }
         else {
@@ -867,7 +867,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         }
 
         if (verticalAlign == VerticalAlignment.Center) {
-            y = y + sampleHeight_ / 2 - glyphInfo.TextHeight / 2;
+            y = y + maxSampleHeight_ / 2 - glyphInfo.TextHeight / 2;
         }
 
         if (keepInView) {

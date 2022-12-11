@@ -83,9 +83,9 @@ namespace IRExplorerUI.Compilers {
         }
 
         private static SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info) {
-            return new SourceFileDebugInfo(info.StartSourceLineDebug.FilePath,
-                info.StartSourceLineDebug.FilePath,
-                info.StartSourceLineDebug.Line);
+            return new SourceFileDebugInfo(info.StartSourceLine.FilePath,
+                info.StartSourceLine.FilePath,
+                info.StartSourceLine.Line);
         }
 
         public SourceFileDebugInfo FindSourceFilePathByRVA(long rva) {

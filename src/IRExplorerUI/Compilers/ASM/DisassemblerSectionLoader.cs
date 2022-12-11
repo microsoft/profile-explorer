@@ -128,7 +128,7 @@ namespace IRExplorerUI.Compilers {
                 var methodCode = ((DotNetDebugInfoProvider)debugInfo_).FindMethodCode(funcInfo);
 
                 if (methodCode != null) {
-                    var code = methodCode.GetCodeBytes();
+                    var code = methodCode.Code;
 
                     if (code != null) {
                         disassembler_.UseSymbolNameResolver(address => methodCode.FindCallTarget(address));
