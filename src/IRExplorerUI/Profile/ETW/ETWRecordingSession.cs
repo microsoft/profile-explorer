@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Tracing;
 using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using IRExplorerCore;
-using IRExplorerUI.Profile;
 using Microsoft.Diagnostics.NETCore.Client;
 using Microsoft.Diagnostics.Tracing;
-using Microsoft.Diagnostics.Tracing.EventPipe;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.Diagnostics.Tracing.Session;
@@ -18,6 +14,7 @@ using Microsoft.Diagnostics.Tracing.Session;
 namespace IRExplorerUI.Profile {
     public sealed class ETWRecordingSession : IDisposable {
         //private static readonly string ProfilerPath = "irexplorer_profiler.dll";
+        //private static readonly string ProfilerPath = @"D:\DotNextMoscow2019\x64\Release\irexplorer_profiler.dll";
         private static readonly string ProfilerPath = @"D:\DotNextMoscow2019\x64\Debug\irexplorer_profiler.dll";
         private static readonly string ProfilerGuid = "{805A308B-061C-47F3-9B30-F785C3186E81}";
 
@@ -31,7 +28,6 @@ namespace IRExplorerUI.Profile {
         private DateTime lastEventTime_;
         private string sessionName_;
         private string profilerPath_;
-        private string managedAsmDir_;
 
         public static bool RequiresElevation => TraceEventSession.IsElevated() != true;
 
