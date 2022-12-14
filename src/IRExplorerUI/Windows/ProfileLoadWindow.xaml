@@ -138,7 +138,11 @@
                                     Height="24"
                                     MinHeight="24"
                                     Margin="8,4,8,4">
-
+                                    <CheckBox
+                                        Margin="0,0,60,0"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center"
+                                        Content="Only .NET" />
                                     <Button
                                         x:Name="RefreshProcessButton"
                                         Height="22"

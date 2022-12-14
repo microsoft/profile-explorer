@@ -2,27 +2,15 @@
 using System.Collections.Generic;
 using IRExplorerCore;
 using Microsoft.Diagnostics.Tracing;
-using static IRExplorerUI.Profile.ETWProfileDataProvider;
 using Microsoft.Diagnostics.Tracing.Parsers.Symbol;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using System.Diagnostics;
 using System.IO;
 using IRExplorerUI.Compilers;
-using Microsoft.Diagnostics.Runtime;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
-using System.Windows.Documents;
 using System.Text;
-using System.Windows;
-using System.Windows.Controls.Ribbon.Primitives;
-using CSScriptLib;
-using System.Net;
 using System.Threading.Tasks;
-using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
-using Microsoft.Diagnostics.Tracing.AutomatedAnalysis;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
-using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Profile;
 
@@ -700,6 +688,12 @@ public sealed class ETWEventProcessor : IDisposable {
             return; // Ignore events from other processes.
         }
 
+        if (rundown) {
+            if (pipeServer_ != null) {
+                Trace.WriteLine($"=> Request {data.MethodStartAddress:x}: {data.MethodSignature}");
+                pipeServer_.RequestFunctionCode((long)data.MethodStartAddress, data.MethodID, (int)data.ReJITID, data.ProcessID);
+            }
+        }
 
 #if DEBUG
         Trace.WriteLine($"=> R-{rundown} Load at {data.MethodStartAddress}: {data.MethodNamespace}.{data.MethodName}, {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
