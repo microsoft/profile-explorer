@@ -17,21 +17,14 @@
                 InputGestureText="Double-click"
                 Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
             <MenuItem
-                Command="{Binding ClearSelectionCommand}"
+                Command="{Binding RemoveTimeRangeFilterCommand}"
                 CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                 Header="Remove Time Range Filter"
                 Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
             <MenuItem
-                Command="{Binding RemoveTimeRangeFilterCommand}"
+                Command="{Binding ClearSelectionCommand}"
                 CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                 Header="Clear Selection"
-                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
-            <MenuItem
-                Command="{Binding RemoveTimeRangeFilterCommand}"
-                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                Header="Selection Functions"
-                IsEnabled="False"
-                ToolTip="Select the functions in the time range in the other panels"
                 Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
         </ContextMenu>
     </FrameworkElement.ContextMenu>

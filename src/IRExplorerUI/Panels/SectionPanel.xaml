@@ -509,12 +509,12 @@
                                     <Setter Property="BorderThickness" Value="1" />
                                 </DataTrigger>
 
-                                <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                                </Trigger>
-                                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
-                                </Trigger>
+                                <!-- <Trigger Property="ItemsControl.AlternationIndex" Value="0"> -->
+                                <!--     <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" /> -->
+                                <!-- </Trigger> -->
+                                <!-- <Trigger Property="ItemsControl.AlternationIndex" Value="1"> -->
+                                <!--     <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" /> -->
+                                <!-- </Trigger> -->
 
                                 <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
                                     <Setter Property="Background" Value="#D0E3F1" />
