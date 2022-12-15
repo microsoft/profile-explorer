@@ -1338,6 +1338,12 @@ namespace IRExplorerUI {
 
         
         public async Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range) {
+            //? TODO: If an event fires during the call tree/sample filtering,
+            //? either ignore it or better ruin it after the filtering is done
+            if (ProfileData.CallTree == null) {
+                return false;
+            }
+            
             var funcs = await Task.Run(() => FindFunctionsForSamples(range.StartSampleIndex, range.EndSampleIndex, 
                                                                      range.ThreadId, ProfileData));
             var sectinPanel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
@@ -1350,6 +1356,12 @@ namespace IRExplorerUI {
         }
 
         public async Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node, ToolPanelKind sourcePanelKind) {
+            //? TODO: If an event fires during the call tree/sample filtering,
+            //? either ignore it or better ruin it after the filtering is done
+            if (ProfileData.CallTree == null) {
+                return false;
+            }
+            
             var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
 
             if (panel != null) {

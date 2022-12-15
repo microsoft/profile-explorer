@@ -357,7 +357,6 @@ namespace IRExplorerUI.Profile {
             procInfo.EnvironmentVariables["CORECLR_ENABLE_PROFILING"] = "1";
             procInfo.EnvironmentVariables["CORECLR_PROFILER"] = ProfilerGuid;
             procInfo.EnvironmentVariables["CORECLR_PROFILER_PATH"] = profilerPath_;
-            procInfo.EnvironmentVariables["IRX_MANAGED_ASM_DIR"] = managedAsmDir_;
             Trace.WriteLine($"Using managed profiler {profilerPath_}");
             return true;
         }

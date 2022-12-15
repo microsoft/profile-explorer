@@ -492,27 +492,40 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
         var timeDiff = endTime_ - startTime_;
         double timePerSlice = (double)timeDiff.Ticks / slices;
+        double timePerSliceReciproc = 1.0 / timePerSlice;
         var sliceSeriesDict = new Dictionary<int, SliceList>();
 
         var sw3 = Stopwatch.StartNew();
         int sampleIndex = 0;
 
+        int prevSliceIndex = -1;
+        SliceList prevSliceList = null;
+        
         foreach (var (sample, stack) in profile.Samples) {
             if (threadId != -1 && stack.Context.ThreadId != threadId) {
                 sampleIndex++;
                 continue;
             }
 
-            var sliceIndex = (int)((sample.Time - startTime_).Ticks / timePerSlice);
+            var sliceIndex = (int)((double)(sample.Time - startTime_).Ticks * timePerSliceReciproc);
 
             //int queryThreadId = stack.Context.ThreadId;
             int queryThreadId = 0;
-
-            var sliceList = sliceSeriesDict.GetOrAddValue(queryThreadId,
+            SliceList sliceList = null;
+            
+            if (sliceIndex == prevSliceIndex) {
+                sliceList = prevSliceList;
+            }
+            else {
+                sliceList = sliceSeriesDict.GetOrAddValue(queryThreadId,
                 () => new SliceList(queryThreadId) {
                     TimePerSlice = TimeSpan.FromTicks((long)timePerSlice),
                     MaxSlices = (int)slices
                 });
+                
+                prevSliceIndex = sliceIndex;
+                prevSliceList = sliceList;
+            }
 
             if (sliceIndex < sliceList.Slices.Count) {
                 var sliceSpan = CollectionsMarshal.AsSpan(sliceList.Slices);
