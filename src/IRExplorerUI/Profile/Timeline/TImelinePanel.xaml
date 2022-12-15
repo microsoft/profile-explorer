@@ -306,9 +306,8 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Top"
                         Width="150">
-                        <Grid>
+                        <Grid Background="PapayaWhip">
                             <Grid
-                                Background="PapayaWhip"
                                 HorizontalAlignment="Stretch"
                                 Margin="0,0,30,0"
                                 MouseDown="ActivityViewHeader_MouseDown"
@@ -326,9 +325,9 @@
                                     <TextBlock Text="{Binding SelectionTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}" Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 </StackPanel>
                             </Grid>
-                            <Grid Width="30" HorizontalAlignment="Right" Background="LightGoldenrodYellow">
-                                <TextBlock Text="{Binding Path=MaxCpuUsage, ElementName=ActivityView}" VerticalAlignment="Top" Margin="2" HorizontalAlignment="Right"></TextBlock>
-                                <TextBlock Text="0" VerticalAlignment="Bottom" Margin="2" HorizontalAlignment="Right"></TextBlock> 
+                            <Grid Width="30" HorizontalAlignment="Right">
+                                <TextBlock Text="{Binding Path=MaxCpuUsage, ElementName=ActivityView}" VerticalAlignment="Top" Margin="0,0,4,0" HorizontalAlignment="Right"></TextBlock>
+                                <TextBlock Text="0" VerticalAlignment="Bottom" Margin="0,0,4,0" HorizontalAlignment="Right"></TextBlock> 
                             </Grid>
                         </Grid>
                     </Border>
