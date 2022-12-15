@@ -169,6 +169,19 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         }
     }
 
+    public double MaxCpuUsage {
+        get {
+            double maxValue = double.MinValue;
+
+            foreach (var slice in slices_[0].Slices) {
+                double sliceCpuUsage = EstimateCpuUsage(slice, slices_[0].TimePerSlice, samplingInterval_); 
+                maxValue = Math.Max(sliceCpuUsage, maxValue);
+            }
+
+            return maxValue;
+        }
+    }
+
     public Brush BackColor {
         get => backColor_;
         set {
@@ -786,6 +799,9 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             sliceWidth_ = newWidth;
             slices_ = ComputeSampleSlices(profile_, ThreadId);
             sliceTask_.CompleteTask();
+
+            // Update UI.
+            Dispatcher.BeginInvoke(() => OnPropertyChanged(nameof(MaxCpuUsage)));
         });
     }
 

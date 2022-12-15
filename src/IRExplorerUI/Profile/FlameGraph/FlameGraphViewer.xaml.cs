@@ -169,8 +169,9 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     private HighlightingStyle PickSelectedNodeStyle(HighlightingStyle style) {
-        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.9f);
-        return new HighlightingStyle(newColor, selectedNodeBorderColor_);
+        var newColor = markedNodeBackColor_;
+        var newPen = ColorPens.GetBoldPen(Colors.Black);
+        return new HighlightingStyle(newColor, newPen);
     }
 
     private HighlightingStyle PickSelectedParentNodeStyle(HighlightingStyle style) {
