@@ -12,6 +12,7 @@ public class ProfilerNamedPipeServer : IDisposable {
         EndSession,
         FunctionCode,
         FunctionCallTarget,
+        RequestFunctionCode,
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -32,6 +33,14 @@ public class ProfilerNamedPipeServer : IDisposable {
         public int ProcessId; // 20
         public int NameLength; // 20
         // UTF-8 name bytes start here at offset 28.
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    struct RequestFunctionCodeMessage {
+        public long FunctionId; // 0
+        public long Address; // 8
+        public int ReJITId; // 16
+        public int ProcessId; // 20
     }
 
     public delegate void FunctionCodeReceivedDelegate(long functionId, int rejitId, int processId, long address,
@@ -84,11 +93,29 @@ public class ProfilerNamedPipeServer : IDisposable {
             return true;
         }
         catch (Exception ex) {
-            Trace.WriteLine("Failed to receive messages: " + ex);
+            Trace.WriteLine($"Failed to receive messages: {ex}");
             return false;
         }
     }
 
+    public bool RequestFunctionCode(long address, long functionId, int rejitId, int processId) {
+        try {
+            var message = new RequestFunctionCodeMessage() {
+                FunctionId = functionId,
+                ReJITId = rejitId,
+                Address = address,
+                ProcessId = processId
+            };
+
+            instance_.SendMessage((int)MessageKind.RequestFunctionCode, message);
+            return true;
+        }
+        catch (Exception ex) {
+            Trace.WriteLine($"Failed to send message: {ex}");
+            return false;
+        }
+    }
+    
     public void Stop() {
         instance_.Dispose();
         instance_ = null;
