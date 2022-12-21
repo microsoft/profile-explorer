@@ -496,6 +496,10 @@ public sealed class ETWEventProcessor : IDisposable {
             }
         };
 
+        //source_.Kernel.ThreadCSwitch += data => {
+        //    Trace.WriteLine($"ThreadCSwitch {data}");
+        //};
+
 #if false
         GC.Collect();
         GC.WaitForPendingFinalizers();
@@ -593,8 +597,11 @@ public sealed class ETWEventProcessor : IDisposable {
                 Trace.WriteLine($"PipeServer_OnFunctionCallTargetsReceived: {functionId}, {rejitId}, {address}, {name}");
                 profile.AddManagedMethodCallTarget(functionId, rejitId, processId, address, name);
             };
-
-            Task.Run(() => pipeServer_.Start(cancelableTask.Token));
+            
+            Task.Run(() => {
+                // Receive messages from the pipe client with the managed method code.
+                pipeServer_.StartReceiving(cancelableTask.Token);
+            });
         }
 
         source_.Clr.LoaderModuleLoad += data => {
@@ -608,6 +615,14 @@ public sealed class ETWEventProcessor : IDisposable {
         source_.Clr.MethodILToNativeMap += data => {
             ProcessDotNetILToNativeMap(data, profile);
         };
+
+        //source_.Clr.GCStart += data => {
+        //    Trace.WriteLine($"GCStart: {data}");
+            
+        //};
+        //source_.Clr.GCStop += data => {
+        //    Trace.WriteLine($"GCStop: {data}");
+        //};
 
         // Needed when attaching to a running process to get info
         // about modules/methods loaded before the ETW session started.
@@ -690,8 +705,11 @@ public sealed class ETWEventProcessor : IDisposable {
 
         if (rundown) {
             if (pipeServer_ != null) {
-                Trace.WriteLine($"=> Request {data.MethodStartAddress:x}: {data.MethodSignature}");
-                pipeServer_.RequestFunctionCode((long)data.MethodStartAddress, data.MethodID, (int)data.ReJITID, data.ProcessID);
+                Trace.WriteLine($"Request {data.MethodStartAddress:x}: {data.MethodSignature}");
+
+                if (!pipeServer_.RequestFunctionCode((long)data.MethodStartAddress, data.MethodID, (int)data.ReJITID, data.ProcessID)) {
+                    Trace.WriteLine($"Failed to request rundown method {data.MethodStartAddress:x}");
+                }
             }
         }
 

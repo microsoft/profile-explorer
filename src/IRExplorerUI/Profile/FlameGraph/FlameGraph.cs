@@ -41,7 +41,6 @@ namespace IRExplorerUI.Profile {
         public List<FlameGraphNode> Children { get; set; }
         public TimeSpan ChildrenWeight { get; set; }
         public int Depth { get; set; }
-        public int MaxDepthUnder { get; set; }
 
         public HighlightingStyle Style { get; set; }
         public Brush TextColor { get; set; }

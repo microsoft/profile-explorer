@@ -13,9 +13,9 @@ using Microsoft.Diagnostics.Tracing.Session;
 
 namespace IRExplorerUI.Profile {
     public sealed class ETWRecordingSession : IDisposable {
-        //private static readonly string ProfilerPath = "irexplorer_profiler.dll";
+        private static readonly string ProfilerPath = "irexplorer_profiler.dll";
         //private static readonly string ProfilerPath = @"D:\DotNextMoscow2019\x64\Release\irexplorer_profiler.dll";
-        private static readonly string ProfilerPath = @"D:\DotNextMoscow2019\x64\Debug\irexplorer_profiler.dll";
+        //private static readonly string ProfilerPath = @"D:\DotNextMoscow2019\x64\Debug\irexplorer_profiler.dll";
         private static readonly string ProfilerGuid = "{805A308B-061C-47F3-9B30-F785C3186E81}";
 
         private TraceEventSession session_;
@@ -160,7 +160,7 @@ namespace IRExplorerUI.Profile {
                             // which will stop the ETW session.
 
                             //? TODO: Doesns't work for attached process!
-                            //? CreateApplicationExitTask(profiledProcess, cancelableTask);
+                            CreateApplicationExitTask(profiledProcess, cancelableTask);
                             break;
                         }
                         default: {
@@ -171,7 +171,7 @@ namespace IRExplorerUI.Profile {
                     var capturedEvents = KernelTraceEventParser.Keywords.ImageLoad |
                                                 KernelTraceEventParser.Keywords.Process |
                                                 KernelTraceEventParser.Keywords.Thread |
-                                                //KernelTraceEventParser.Keywords.ContextSwitch |
+                                                //? KernelTraceEventParser.Keywords.ContextSwitch |
                                                 KernelTraceEventParser.Keywords.Profile;
 
                     if (options_.RecordPerformanceCounters && options_.PerformanceCounters.Count > 0) {
@@ -192,6 +192,7 @@ namespace IRExplorerUI.Profile {
                             TraceEventLevel.Verbose,
                             (ulong)(ClrTraceEventParser.Keywords.Jit |
                                     ClrTraceEventParser.Keywords.JittedMethodILToNativeMap |
+                                    ClrTraceEventParser.Keywords.GC |
                                     ClrTraceEventParser.Keywords.Loader));
 
                         if (options_.SessionKind == ProfileSessionKind.AttachToProcess) {
@@ -342,8 +343,8 @@ namespace IRExplorerUI.Profile {
 
                 var process = new Process { StartInfo = procInfo, EnableRaisingEvents = true };
                 process.Start();
+                
                 Trace.WriteLine($"Started process {options_.ApplicationPath}");
-
                 return (process, process.Id);
             }
             catch (Exception ex) {
@@ -363,10 +364,11 @@ namespace IRExplorerUI.Profile {
 
         bool AttachProfiler(int processId) {
             try {
+                Trace.WriteLine($"Attaching managed profiler to proc {processId}: {profilerPath_}");
+                var profilerArgs = Array.Empty<byte>();
                 diagClient_ = new DiagnosticsClient(processId);
-                //var profilerArgs = Encoding.ASCII.GetBytes(managedAsmDir_);
-                var profilerArgs = new byte[0];
-                diagClient_.AttachProfiler(TimeSpan.FromSeconds(10), Guid.Parse(ProfilerGuid), profilerPath_, profilerArgs);
+                diagClient_.AttachProfiler(TimeSpan.FromSeconds(10), 
+                                           Guid.Parse(ProfilerGuid), profilerPath_, profilerArgs);
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to attach profiler to process {processId}: {ex.Message}");
@@ -374,6 +376,17 @@ namespace IRExplorerUI.Profile {
             }
 
             return true;
+        }
+
+        void DetachProfiler() {
+            if (pipeServer_ == null) {
+                return;
+            }
+
+            // Request .NET profiler detach.
+            pipeServer_.EndSession();
+            pipeServer_.Stop();
+            diagClient_ = null;
         }
 
         private void CreateApplicationExitTask(Process process, CancelableTask task) {
@@ -418,15 +431,18 @@ namespace IRExplorerUI.Profile {
         private void StopSession() {
             if (session_ != null) {
                 try {
-                    pipeServer_?.Stop();
                     session_.Stop();
                     session_.Dispose();
+
+                    // Stop profiler named pipe after no more write requests are made.
+                    DetachProfiler();
                 }
                 catch (Exception ex) {
                     Trace.TraceError($"Failed to stop ETW session: {ex.Message}");
                 }
 
                 session_ = null;
+                pipeServer_ = null;
             }
         }
 
