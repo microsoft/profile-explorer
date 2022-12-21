@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using Microsoft.Diagnostics.Tracing.AutomatedAnalysis;
 
 namespace IRExplorerUI.Profile;
 
@@ -59,10 +61,13 @@ public class ProfilerNamedPipeServer : IDisposable {
     public event FunctionCodeReceivedDelegate FunctionCodeReceived;
     public event FunctionCallTargetsReceivedDelegate FunctionCallTargetsReceived;
 
-    public bool Start(CancellationToken cancellationToken) {
+    public bool StartReceiving(CancellationToken cancellationToken) {
         try {
+            Trace.WriteLine("Start pipe reading thread");
+
             instance_.ReceiveMessages((header, body) => {
                 if (cancellationToken.IsCancellationRequested) {
+                    Trace.WriteLine($"Canceled {Environment.CurrentManagedThreadId}");
                     return;
                 }
 
@@ -94,6 +99,17 @@ public class ProfilerNamedPipeServer : IDisposable {
         }
         catch (Exception ex) {
             Trace.WriteLine($"Failed to receive messages: {ex}");
+            return false;
+        }
+    }
+
+    public bool EndSession() {
+        try {
+            instance_.SendMessage((int)MessageKind.EndSession);
+            return true;
+        }
+        catch (Exception ex) {
+            Trace.WriteLine($"Failed to send message: {ex}");
             return false;
         }
     }

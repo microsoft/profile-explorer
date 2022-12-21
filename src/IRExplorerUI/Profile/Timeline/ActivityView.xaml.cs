@@ -171,6 +171,10 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     public double MaxCpuUsage {
         get {
+            if (slices_ == null) {
+                return 0;
+            }
+
             double maxValue = double.MinValue;
 
             foreach (var slice in slices_[0].Slices) {
@@ -692,9 +696,14 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         var startX = TimeToPosition(filterStartTime_);
         var endX = TimeToPosition(filterEndTime_);
 
+        if (startX > visibleArea_.Width) {
+            return;
+        }
+
         startX = Math.Max(0, startX);
         endX = Math.Min(endX, visibleArea_.Width);
-        var rect = new Rect(startX, 0, endX - startX, maxHeight_);
+        var width = Math.Max(1, endX - startX);
+        var rect = new Rect(startX, 0, width, maxHeight_);
         graphDC.DrawRectangle(filteredBackColor_, null, rect);
     }
 
@@ -727,6 +736,10 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
         if (endX < startX) {
             (startX, endX) = (endX, startX);
+        }
+
+        if (startX > visibleArea_.Width) {
+            return;
         }
 
         var selectionWidth = Math.Max(1, endX - startX);

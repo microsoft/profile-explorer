@@ -169,6 +169,7 @@ public class FlameGraphRenderer {
 
         foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
             node.Owner.DrawNode(node, graphDC);
+            
             if (layoutChanged && ScaleNode(node) < minVisibleRectWidth_) {
                 shrinkingNodes++;
             }
@@ -298,8 +299,6 @@ public class FlameGraphRenderer {
 
         var prevBounds = node.Bounds;
         node.Bounds = new Rect(x, y, width, nodeHeight_);
-
-        //node.Bounds = Utils.SnapToPixels(node.Bounds);
         node.IsDummyNode = !redraw;
 
         if (redraw) {
@@ -347,7 +346,8 @@ public class FlameGraphRenderer {
                      totalSkippedChildren += skippedChildren;
 
                     //? TODO: When called from enlarged dummy node,
-                    //? if all children part of new (same) dummy node skip going recursively.
+                    //? if all children part of new (same) dummy node skip going recursively
+                    //? since they are also too small and will not be displayed.
                  }
             }
             else {
@@ -359,12 +359,6 @@ public class FlameGraphRenderer {
                 UpdateNodeLayout(childNode, x, y + nodeHeight_, skippedChildren == 0);
             }
 
-            childNode.MaxDepthUnder = maxNodeDepth_ - childNode.Depth;
-
-            if (dummyNode != null) {
-                dummyNode.MaxDepthUnder = maxNodeDepth_ - dummyNode.Depth;
-            }
-
             x += childWidth;
 
             if (skippedChildren > 0) {
@@ -373,7 +367,6 @@ public class FlameGraphRenderer {
             }
         }
 
-        node.MaxDepthUnder = maxNodeDepth_ - node.Depth;
         return totalSkippedChildren < range;
     }
 
@@ -607,7 +600,6 @@ public class FlameGraphRenderer {
 
                     break;
                 }
-
                 case 2: {
                     if (node.ShowWeight) {
                         label = $"({node.Weight.AsMillisecondsString()})";
