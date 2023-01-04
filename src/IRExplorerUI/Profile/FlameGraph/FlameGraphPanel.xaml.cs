@@ -148,6 +148,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private void SetupEvents() {
         GraphHost.NodeSelected += GraphHost_NodeSelected;
         GraphHost.NodesDeselected += GraphHost_NodesDeselected;
+        GraphHost.SetupKeyboardEvents(this);
 
         // Setup events for the node details view.
         NodeDetailsPanel.NodeInstanceChanged += NodeDetailsPanel_NodeInstanceChanged;

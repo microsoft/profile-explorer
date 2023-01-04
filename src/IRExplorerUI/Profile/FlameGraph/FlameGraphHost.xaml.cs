@@ -37,6 +37,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     private ProfileCallTree callTree_;
     private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
     private FlameGraphNode enlargedNode_;
+    private FlameGraphNode rootNode_;
     private DateTime lastWheelZoomTime_;
     private DraggablePopupHoverPreview stackHoverPreview_;
     private List<FlameGraphNode> searchResultNodes_;
@@ -112,6 +113,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         }, DispatcherPriority.Background);
     }
 
+    public void SetupKeyboardEvents(FrameworkElement host) {
+        host.PreviewKeyDown += OnPreviewKeyDown;
+    }
+
     private void SetupEvents() {
         GraphHost.SizeChanged += (sender, args) => {
             if (IsInitialized && args.NewSize.Width > GraphViewer.MaxGraphWidth) {
@@ -123,12 +128,11 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         GraphHost.PreviewMouseDown += OnPreviewMouseDown;
 
         // Setup events for the flame graph area.
-        KeyDown += OnKeyDown;
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         MouseLeftButtonUp += OnMouseLeftButtonUp;
         MouseDoubleClick += OnMouseDoubleClick;
         MouseMove += OnMouseMove;
-        MouseDown += OnMouseDown;
+        MouseDown += OnMouseDown; // Handles back button.
 
         stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
             CallTreeNodePopup.PopupHoverDuration,
@@ -369,6 +373,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
         ResetHighlightedNodes();
         SetHorizontalOffset(0);
+        rootNode_ = node;
         await GraphViewer.Initialize(GraphViewer.FlameGraph.CallTree, node.CallTreeNode,
                                      GraphHostBounds, settings_, Session);
     }
@@ -492,10 +497,14 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                point.Y >= GraphHost.ViewportHeight;
     }
 
-    private async void OnKeyDown(object sender, KeyEventArgs e) {
-        HidePreviewPopup();
-
+    private async void OnPreviewKeyDown(object sender, KeyEventArgs e) {
         switch (e.Key) {
+            case Key.Return: {
+                if (Utils.IsAltModifierActive()) {
+                    Trace.WriteLine("ENTER ALT");
+                }
+                break;
+            }
             case Key.Left: {
                 ScrollToRelativeOffsets(-PanOffset, 0);
                 e.Handled = true;
@@ -522,7 +531,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                     await NavigateToChildNode();
                 }
                 else {
-                    ScrollToOffsets(0, PanOffset);
+                    ScrollToRelativeOffsets(0, PanOffset);
                 }
 
                 e.Handled = true;
@@ -534,8 +543,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                     ZoomIn(CenterZoomPointX);
                     e.Handled = true;
                 }
-
-                return;
+                break;
             }
             case Key.OemMinus:
             case Key.Subtract: {
@@ -543,14 +551,17 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                     ZoomOut(CenterZoomPointX);
                     e.Handled = true;
                 }
-
-                return;
+                break;
             }
             case Key.Back: {
                 await RestorePreviousState();
                 e.Handled = true;
-                return;
+                break;
             }
+        }
+
+        if (e.Handled) {
+            HidePreviewPopup();
         }
     }
 
@@ -769,14 +780,18 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             SelectNode(enlargedNode_.Parent);
             await EnlargeNode(enlargedNode_.Parent);
         }
+        else if (rootNode_ != null && rootNode_.Parent != null) {
+            await ChangeRootNode(rootNode_.Parent);
+        }
     }
 
     private async Task NavigateToChildNode() {
         if (enlargedNode_ != null && enlargedNode_.HasChildren) {
-            Trace.WriteLine($"Go to child");
-
             GraphViewer.SelectNode(enlargedNode_.Children[0]);
             await EnlargeNode(enlargedNode_.Children[0]);
+        }
+        else if (rootNode_ != null && rootNode_.HasChildren) {
+            await ChangeRootNode(rootNode_.Children[0]);
         }
     }
 
@@ -929,7 +944,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     public static DependencyProperty FlameGraphVerticalOffsetProperty =
         DependencyProperty.Register(nameof(FlameGraphVerticalOffset), typeof(double), typeof(FlameGraphHost),
             new PropertyMetadata(0.0, FlameGraphVerticalOffsetChanged));
-
+    
     private static void FlameGraphWidthChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
         if (d is FlameGraphHost panel) {
             panel.FlameGraphWidth = (double)e.NewValue;

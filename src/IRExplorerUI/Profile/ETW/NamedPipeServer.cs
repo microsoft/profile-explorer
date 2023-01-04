@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Runtime.InteropServices;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Diagnostics.Runtime;
@@ -23,19 +25,29 @@ public class NamedPipeServer : IDisposable {
             $"Message Kind: {Kind}, Size: {Size}";
     }
 
-    private NamedPipeServerStream stream_;
+    private NamedPipeServerStream pipeStream_;
     private BinaryReader reader_;
     private BinaryWriter writer_;
     private bool connected_;
+    private bool connectionTimeout_;
     private static readonly int HeaderSize = Marshal.SizeOf<PipeMessageHeader>();
 
     public delegate void MessageReceivedDelegate(PipeMessageHeader messageHeader, byte[] messageBody);
 
     public NamedPipeServer(string pipeName) {
-        stream_ = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte,
-                                            PipeOptions.Asynchronous);
-    }
+        // Allow non-admins to connect to the pipe.
+        var securityIdentifier = new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null);
+        var pipeSecurity = new PipeSecurity();
+        pipeSecurity.AddAccessRule(new PipeAccessRule(securityIdentifier, 
+                                                      PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
+                                                      AccessControlType.Allow));
 
+        pipeStream_ = NamedPipeServerStreamAcl.Create(pipeName, PipeDirection.InOut,
+                                                      NamedPipeServerStream.MaxAllowedServerInstances,
+                                                      PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 
+                                                      0, 0, pipeSecurity);
+    }
+    
     public void ReceiveMessages(MessageReceivedDelegate action, CancellationToken cancellationToken) {
         if (!Connect()) {
             throw new Exception("Failed to connect to pipe");
@@ -43,7 +55,7 @@ public class NamedPipeServer : IDisposable {
 
         var buffer = new byte[HeaderSize];
 
-        while (stream_.IsConnected && !cancellationToken.IsCancellationRequested) {
+        while (pipeStream_.IsConnected && !cancellationToken.IsCancellationRequested) {
             var bytesRead = reader_.Read(buffer);
 
             if (bytesRead == 0) {
@@ -103,9 +115,12 @@ public class NamedPipeServer : IDisposable {
         writer_.Write(headerSpan);
     }
 
-    private bool Connect() {
+    private bool Connect(int timeoutMs = 10000) {
         if (connected_) {
             return true;
+        }
+        else if (connectionTimeout_) {
+            return false; // Failed to connect previously, don't try again.
         }
 
         lock (this) {
@@ -113,10 +128,27 @@ public class NamedPipeServer : IDisposable {
                 return true;
             }
 
-            stream_.WaitForConnection();
-            reader_ = new BinaryReader(stream_);
-            writer_ = new BinaryWriter(stream_);
-            connected_ = true;
+            try {
+                // Wait for a connection for a certain amount of time.
+                var result = pipeStream_.BeginWaitForConnection((e) => {}, null);
+
+                if (result.AsyncWaitHandle.WaitOne(timeoutMs)) {
+                    Trace.WriteLine("Connected to pipe");
+                    pipeStream_.EndWaitForConnection(result);
+                    reader_ = new BinaryReader(pipeStream_);
+                    writer_ = new BinaryWriter(pipeStream_);
+                    connected_ = true;
+                }
+                else {
+                    Trace.WriteLine("Pipe connection timeout");
+                    connected_ = false;
+                    connectionTimeout_ = true;
+                }
+            }
+            catch (Exception ex) {
+                Trace.WriteLine($"Failed to connect to pipe: {ex}");
+                connected_ = false;
+            }
         }
 
         return connected_;
@@ -127,11 +159,11 @@ public class NamedPipeServer : IDisposable {
             reader_?.Dispose();
             writer_?.Dispose();
 
-            if (stream_.IsConnected) {
-                stream_.Disconnect();
+            if (pipeStream_.IsConnected) {
+                pipeStream_.Disconnect();
             }
         }
 
-        stream_.Dispose();
+        pipeStream_.Dispose();
     }
 }
