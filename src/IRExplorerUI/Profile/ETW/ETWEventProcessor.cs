@@ -632,25 +632,25 @@ public sealed class ETWEventProcessor : IDisposable {
             ProcessLoaderModuleLoad(data, profile, true);
         };
 
-        rundownParser.LoaderModuleDCStop += data => {
-            ProcessLoaderModuleLoad(data, profile, true);
-        };
+        //rundownParser.LoaderModuleDCStop += data => {
+        //    ProcessLoaderModuleLoad(data, profile, true);
+        //};
 
         rundownParser.MethodDCStartVerbose += data => {
             ProcessDotNetMethodLoad(data, profile, true);
         };
 
-        rundownParser.MethodDCStopVerbose += data => {
-            ProcessDotNetMethodLoad(data, profile, true);
-        };
+        //rundownParser.MethodDCStopVerbose += data => {
+        //    ProcessDotNetMethodLoad(data, profile, true);
+        //};
 
         rundownParser.MethodILToNativeMapDCStart += data => {
             ProcessDotNetILToNativeMap(data, profile, true);
         };
 
-        rundownParser.MethodILToNativeMapDCStop += data => {
-            ProcessDotNetILToNativeMap(data, profile, true);
-        };
+        //rundownParser.MethodILToNativeMapDCStop += data => {
+        //    ProcessDotNetILToNativeMap(data, profile, true);
+        //};
     }
 
     private void ProcessLoaderModuleLoad(ModuleLoadUnloadTraceData data, RawProfileData profile, bool rundown = false) {

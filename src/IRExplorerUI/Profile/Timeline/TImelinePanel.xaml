@@ -24,7 +24,7 @@
         <KeyBinding
             Key="R"
             Command="irExplorerUi:GraphCommand.GraphResetWidth"
-            CommandTarget="{Binding ElementName=GraphHost}"
+            CommandTarget="{Binding ElementName=ActivityView}"
             Modifiers="Ctrl" />
         <KeyBinding
             Key="F3"
@@ -94,7 +94,7 @@
                     <Button
                         Margin="4,0,0,0"
                         Click="UndoButtoon_Click"
-                        CommandTarget="{Binding ElementName=GraphHost}"
+                        CommandTarget="{Binding ElementName=ActivityView}"
                         IsEnabled="False"
                         ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
                         <StackPanel Orientation="Horizontal">
@@ -104,7 +104,7 @@
                     </Button>
                     <Button
                         Command="irExplorerUi:GraphCommand.GraphResetWidth"
-                        CommandTarget="{Binding ElementName=GraphHost}"
+                        CommandTarget="{Binding ElementName=ActivityView}"
                         ToolTip="Zoom the graph view to 100% (Ctrl+R)">
                         <StackPanel Orientation="Horizontal">
                             <Image Source="{StaticResource ResetWidthIcon}" />
@@ -114,13 +114,13 @@
                     <Separator />
                     <Button
                         Command="irExplorerUi:GraphCommand.GraphZoomOut"
-                        CommandTarget="{Binding ElementName=GraphHost}"
+                        CommandTarget="{Binding ElementName=ActivityView}"
                         ToolTip="Zoom Out (Ctrl+_">
                         <Image Source="{StaticResource MinusIcon}" />
                     </Button>
                     <Button
                         Command="irExplorerUi:GraphCommand.GraphZoomIn"
-                        CommandTarget="{Binding ElementName=GraphHost}"
+                        CommandTarget="{Binding ElementName=ActivityView}"
                         ToolTip="Zoom In (Ctrl+=)">
                         <Image Source="{StaticResource PlusIcon}" />
                     </Button>
