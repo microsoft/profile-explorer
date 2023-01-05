@@ -570,7 +570,7 @@ namespace IRExplorerUI {
             sourceProfileResult_ = processingResult;
 
             var profileOptions = ProfileDocumentMarkerOptions.Default;
-            var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, Session.CompilerInfo.IR);
+            var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, Session.CompilerInfo);
             var columnData = await profileMarker.MarkSourceLines(this, dummyFunc, processingResult);
 
             sourceColumnData_ = columnData;

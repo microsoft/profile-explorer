@@ -370,7 +370,7 @@ public sealed class ProfileCallTree {
                     }
 
                     foreach (var target in pair.Value.Targets) {
-                        callsite.AddTarget(target.NodeId, target.Weight);
+                        callsite.AddTarget(target.Node, target.Weight);
                     }
                 }
             }
@@ -483,31 +483,6 @@ public sealed class ProfileCallTree {
             node.Value.Print(builder);
         }
 
-        return builder.ToString();
-    }
-
-    public string PrintSamples() {
-        var samples = new List<(int total, int unique, string name)>();
-        var builder = new StringBuilder();
-
-        foreach (var node in rootNodes_) {
-            node.Value.CollectSamples(samples);
-        }
-
-        samples.Sort((a, b) => b.total.CompareTo(a.total));
-        int total = 0;
-        int unique = 0;
-
-        foreach (var sample in samples) {
-            builder.AppendLine($"{sample.name}");
-            builder.AppendLine($"   {sample.total} samples, {sample.unique} unique");
-            builder.AppendLine($"   {100 * (double)sample.unique / sample.total:F4} unique");
-            total += sample.total;
-            unique += sample.unique;
-        }
-
-        builder.AppendLine($"{total} total samples, {unique} unique");
-        builder.AppendLine($"     {100 * (double)unique / total:F4} unique");
         return builder.ToString();
     }
 }
@@ -701,10 +676,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
                 callSites_[rva] = callsite;
             }
 
-            //? TODO: Use a signature to identify the node, merging the FunctionDebugInfos with same module:name.
-            //? Use SHA for signature
-            //long id = childNode.FunctionDebugInfo.Name.GetHashCode();
-            callsite.AddTarget(childNode.Id, weight);
+            callsite.AddTarget(childNode, weight);
         }
         finally {
             lock_.ExitWriteLock();
@@ -739,17 +711,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             }
         }
     }
-
-    public void CollectSamples(List<(int total, int unique, string name)> list) {
-        //list.Add((sampleCount_, samples_.Count, FunctionName));
-
-        //if (HasChildren) {
-        //    foreach (var child in Children) {
-        //        child.CollectSamples(list);
-        //    }
-        //}
-    }
-
+    
     public bool Equals(IRTextFunction function) {
         return Function.Equals(function);
     }
@@ -823,11 +785,11 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
     [ProtoMember(2)]
     public TimeSpan Weight { get; set; }
     [ProtoMember(3)]
-    public List<(long NodeId, TimeSpan Weight)> Targets { get; set; }
+    public List<(ProfileCallTreeNode Node, TimeSpan Weight)> Targets { get; set; }
 
     private bool isSorted_;
 
-    public List<(long NodeId, TimeSpan Weight)> SortedTargets {
+    public List<(ProfileCallTreeNode Node, TimeSpan Weight)> SortedTargets {
         get {
             if (!HasSingleTarget && !isSorted_) {
                 Targets.Sort((a, b) => b.Weight.CompareTo(a.Weight));
@@ -849,24 +811,22 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
         return (double)weight.Ticks / (double)Weight.Ticks;
     }
 
-    public void AddTarget(long nodeId, TimeSpan weight) {
-        //? TODO: Use a signature to identify the node, merging the FunctionDebugInfos with same module:name.
-        // Use SHA for signature
+    public void AddTarget(ProfileCallTreeNode node, TimeSpan weight) {
         Weight += weight; // Total weight of targets.
-        int index = Targets.FindIndex(item => item.NodeId == nodeId);
+        int index = Targets.FindIndex(item => item.Equals(node.Function));
 
         if (index != -1) {
             var span = CollectionsMarshal.AsSpan(Targets);
             span[index].Weight += weight; // Modify in-place per-target weight.
         }
         else {
-            Targets.Add((nodeId, weight));
+            Targets.Add((node, weight));
         }
     }
 
     [ProtoAfterDeserialization]
     private void InitializeReferenceMembers() {
-        Targets ??= new List<(long NodeId, TimeSpan Weight)>();
+        Targets ??= new List<(ProfileCallTreeNode NodeId, TimeSpan Weight)>();
     }
 
     public bool Equals(ProfileCallSite other) {

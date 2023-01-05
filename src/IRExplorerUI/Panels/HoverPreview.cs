@@ -28,7 +28,7 @@ public abstract class HoverPreview {
 
     protected abstract void OnHidePopup();
     protected abstract void OnShowPopup(Point mousePoint, Point position);
-    protected abstract bool OnHoverStoppped(Point mousePosition);
+    protected abstract bool OnHoverStopped(Point mousePosition);
 
     public void Hide() {
         HidePreviewPopup(true);
@@ -71,7 +71,7 @@ public abstract class HoverPreview {
     }
 
     private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {
-        if (OnHoverStoppped(e.GetPosition(control_))) {
+        if (OnHoverStopped(e.GetPosition(control_))) {
             HidePreviewPopupDelayed();
         }
     }
@@ -117,7 +117,7 @@ public class DraggablePopupHoverPreview : HoverPreview {
         }
     }
 
-    protected override bool OnHoverStoppped(Point mousePosition) {
+    protected override bool OnHoverStopped(Point mousePosition) {
         if (hoverStopped_ != null) {
             return hoverStopped_(mousePosition, PreviewPopup);
         }
@@ -169,7 +169,7 @@ public class ToolTipHoverPreview : HoverPreview {
         }
     }
 
-    protected override bool OnHoverStoppped(Point mousePosition) {
+    protected override bool OnHoverStopped(Point mousePosition) {
         return true;
     }
 }

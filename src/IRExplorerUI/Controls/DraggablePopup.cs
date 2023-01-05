@@ -53,8 +53,7 @@ namespace IRExplorerUI.Controls {
             UpdateSize(width, height);
         }
 
-        public void Initialize(Point position,
-                               UIElement referenceElement) {
+        public void Initialize(Point position, UIElement referenceElement) {
             UpdatePosition(position, referenceElement);
         }
 

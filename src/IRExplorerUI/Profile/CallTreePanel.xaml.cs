@@ -254,7 +254,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                         return popup;
                     }
 
-                    return new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, CallTree, Session);
+                    return new CallTreeNodePopup(callNode, this, previewPoint, CallTree, Session);
                 }
 
                 return null;

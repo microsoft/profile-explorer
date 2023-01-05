@@ -257,14 +257,14 @@ namespace IRExplorerUI.Profile {
         private FunctionProfileData profile_;
         private ProfileData globalProfile_;
         private ProfileDocumentMarkerOptions options_;
-        private ICompilerIRInfo ir_;
+        private ICompilerInfoProvider irInfo_;
 
         public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile,
-                                     ProfileDocumentMarkerOptions options, ICompilerIRInfo ir) {
+                                     ProfileDocumentMarkerOptions options, ICompilerInfoProvider ir) {
             profile_ = profile;
             globalProfile_ = globalProfile;
             options_ = options;
-            ir_ = ir;
+            irInfo_ = ir;
         }
 
         public async Task<IRDocumentColumnData> Mark(MarkedDocument document, FunctionIR function, IRTextFunction textFunction) {
@@ -275,7 +275,7 @@ namespace IRExplorerUI.Profile {
 
             //? TODO: Make async
             if (hasInstrOffsetMetadata) {
-                var result = profile_.Process(function, ir_);
+                var result = profile_.Process(function, irInfo_.IR);
                 columnData = MarkProfiledElements(result, function, document);
                 MarkProfiledBlocks(result.BlockSampledElements, document);
                 MarkCallSites(document, function, textFunction, metadataTag);
@@ -284,8 +284,10 @@ namespace IRExplorerUI.Profile {
             document.ResumeUpdate();
             return columnData;
         }
-
+        
         private void MarkCallSites(MarkedDocument document, FunctionIR function, IRTextFunction textFunction, AssemblyMetadataTag metadataTag) {
+            // Mark indirect call sites and list the hottest call targets.
+            // Useful especially for virtual function calls.
             var callTree = globalProfile_.CallTree;
 
             if (callTree == null) {
@@ -299,16 +301,20 @@ namespace IRExplorerUI.Profile {
                 return;
             }
 
+            SearchableProfileItem.FunctionNameFormatter nameFormatter =  irInfo_.NameProvider.FormatFunctionName;
+
             foreach (var callsite in node.CallSites.Values) {
-                if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA - profile_.FunctionDebugInfo.RVA, ir_, out var element)) {
+                if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA - profile_.FunctionDebugInfo.RVA,
+                                                                irInfo_.IR, out var element)) {
                     //Trace.WriteLine($"Found CS for elem at RVA {callsite.RVA}, weight {callsite.Weight}: {element}");
                     var instr = element as InstructionIR;
-                    if (instr == null || !ir_.IsCallInstruction(instr))
+                    if (instr == null || !irInfo_.IR.IsCallInstruction(instr))
                         continue;
 
                     // Skip over direct calls.
-                    var callTarget = ir_.GetCallTarget(instr);
+                    var callTarget = irInfo_.IR.GetCallTarget(instr);
 
+                    //? TODO: Could add an icon for all calls and clicking it selects the func
                     if (callTarget != null && callTarget.HasName) {
                         continue;
                     }
@@ -321,14 +327,13 @@ namespace IRExplorerUI.Profile {
                             sb.AppendLine();
                         }
 
-                        var targetNode = callTree.FindNode(target.NodeId);
                         double weightPercentage = callsite.ScaleWeight(target.Weight);
-                        sb.Append($"{weightPercentage.AsPercentageString().PadLeft(6)} | {target.Weight.AsMillisecondsString()} | {targetNode.FunctionName}");
+                        var targetName = nameFormatter(target.Node.FunctionName);
+                        sb.Append($"{weightPercentage.AsPercentageString().PadLeft(6)} | {target.Weight.AsMillisecondsString()} | {targetName}");
                     }
 
-                    var label = $"Indirect call targets:\n{sb}";
-                    var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16, label, "");
-
+                    var label = $"Indirect call targets";
+                    var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16, label, sb.ToString());
                     var color = App.Settings.DocumentSettings.BackgroundColor;
 
                     if (instr.ParentBlock != null && !instr.ParentBlock.HasEvenIndexInFunction) {
@@ -342,11 +347,11 @@ namespace IRExplorerUI.Profile {
                     overlay.ShowBackgroundOnMouseOverOnly = true;
                     overlay.ShowBorderOnMouseOverOnly = true;
                     overlay.AlignmentX = HorizontalAlignment.Left;
-
-                    // Place before the opcode.
+                    
+                    // Place before the call opcode.
                     int lineOffset = lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
                     overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
-                                                          App.Settings.DocumentSettings.FontSize).Width - 16 - 4;
+                                                          App.Settings.DocumentSettings.FontSize).Width - 20;
                     overlay.MarginY = 1;
                 }
             }
