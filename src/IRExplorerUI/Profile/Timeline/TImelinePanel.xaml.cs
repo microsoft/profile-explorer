@@ -29,6 +29,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private const double ZoomAnimationDuration = TimePerFrame * 10;
     private const double EnlargeAnimationDuration = TimePerFrame * 12;
     private const double ScrollWheelZoomAnimationDuration = TimePerFrame * 8;
+    private const int MaxPreviewNameLength = 80;
+    internal const double DefaultTextSize = 12;
+    private static readonly Typeface DefaultTextFont = new Typeface("Segoe UI");
 
     private FlameGraphSettings settings_;
     private bool panelVisible_;
@@ -55,7 +58,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         threadActivityViews_ = new List<ActivityTimelineView>();
         threadActivityViewsMap_ = new Dictionary<int, ActivityTimelineView>();
         threadHoverPreviewMap_ = new Dictionary<int, DraggablePopupHoverPreview>();
-
+        
         SetupEvents();
         DataContext = this;
     }
@@ -321,69 +324,74 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                 var timePoint = view.CurrentTimePoint;
                 ProfileCallTreeNode callNode = null;
 
-                if (timePoint.SampleIndex < Session.ProfileData.Samples.Count) {
-                    var filter = new ProfileSampleFilter() {
-                        TimeRange = new SampleTimeRangeInfo(timePoint.Time, timePoint.Time,
-                            Math.Max(0, timePoint.SampleIndex - 20),
-                            Math.Min(timePoint.SampleIndex + 20, Session.ProfileData.Samples.Count), timePoint.ThreadId),
-                        ThreadIds = timePoint.ThreadId != -1 ? new List<int>() { timePoint.ThreadId } : null
-                    };
+                // Find the call node at the current time point.
+                // Pick the hottest function in a small range of samples around the time point.
+                var filter = new ProfileSampleFilter() {
+                    TimeRange = new SampleTimeRangeInfo(timePoint.Time, timePoint.Time,
+                        Math.Max(0, timePoint.SampleIndex - 20),
+                        Math.Min(timePoint.SampleIndex + 20, Session.ProfileData.Samples.Count), timePoint.ThreadId),
+                    ThreadIds = timePoint.ThreadId != -1 ? new List<int>() { timePoint.ThreadId } : null
+                };
 
-                    var rangeProfile = Session.ProfileData.ComputeFunctionProfile(Session.ProfileData, filter, 1);
-                    var funcs = rangeProfile.GetSortedFunctions();
+                var rangeProfile = Session.ProfileData.ComputeFunctionProfile(Session.ProfileData, filter, 1);
+                var funcs = rangeProfile.GetSortedFunctions();
 
-                    if (funcs.Count > 0) {
-                        var nodes = rangeProfile.CallTree.GetCallTreeNodes(funcs[0].Item1);
-                        callNode = nodes[0];
-                    }
+                if (funcs.Count > 0) {
+                    var nodes = rangeProfile.CallTree.GetCallTreeNodes(funcs[0].Item1);
+                    callNode = nodes[0];
                 }
 
-                if (callNode != null) {
-                    // If popup already opened for this node reuse the instance.
-                    if (threadHoverPreviewMap_.TryGetValue(view.ThreadId, out var hoverPreview) &&
-                        hoverPreview.PreviewPopup is CallTreeNodePopup popup) {
-                        popup.UpdatePosition(previewPoint, view);
-                        popup.UpdateNode(callNode);
-                    }
-                    else {
-                        popup = new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, view,
-                                                      Session, canExpand: false);
-                    }
-
-                    popup.ShowBacktraceView = true;
-                    popup.BacktraceText = CreateBacktraceText(callNode, 4);
-                    return popup;
+                if (callNode == null) {
+                    return null;
                 }
 
-                return null;
+                var (text, textWidth) = CreateBacktraceText(callNode, 4);
+
+                // If popup already opened for this node reuse the instance.
+                if (threadHoverPreviewMap_.TryGetValue(view.ThreadId, out var hoverPreview) &&
+                    hoverPreview.PreviewPopup is CallTreeNodePopup popup) {
+                    popup.UpdatePosition(previewPoint, view);
+                    popup.UpdateNode(callNode);
+                }
+                else {
+                    popup = new CallTreeNodePopup(callNode, this, previewPoint, view,
+                                                  Session, canExpand: false);
+                }
+
+                popup.ShowBacktraceView = true;
+                popup.BacktraceText = text;
+                popup.Width = textWidth + 50;
+                return popup;
+
             },
-            (mousePoint, popup) => {
-                if (popup is CallTreeNodePopup previewPopup) {
-                    return true;
-                }
-
-                return true;
-            },
-            popup => {
-                Session.RegisterDetachedPanel(popup);
-            });
+            (mousePoint, popup) => true,
+            popup => Session.RegisterDetachedPanel(popup));
 
         threadHoverPreviewMap_[view.ThreadId] = preview;
     }
 
-    private string CreateBacktraceText(ProfileCallTreeNode node, int maxLevel) {
+    private (string, double) CreateBacktraceText(ProfileCallTreeNode node, int maxLevel) {
         var sb = new StringBuilder();
+        double maxTextWidth = 0;
 
         while (node.HasCallers && maxLevel-- > 0) {
             node = node.Caller;
-            sb.AppendLine(nameFormatter_(node.FunctionName));
+            var funcName = nameFormatter_(node.FunctionName);
+
+            if (funcName.Length > MaxPreviewNameLength) {
+                funcName = $"{funcName[..MaxPreviewNameLength]}...";
+            }
+
+            var textSize = Utils.MeasureString(funcName, DefaultTextFont, DefaultTextSize);
+            maxTextWidth = Math.Max(maxTextWidth, textSize.Width);
+            sb.AppendLine(funcName);
         }
 
         if (node.HasCallers) {
             sb.AppendLine("...");
         }
 
-        return sb.ToString().Trim();
+        return (sb.ToString().Trim(), maxTextWidth);
     }
 
     private void SetupActivityViewEvents(ActivityView view) {

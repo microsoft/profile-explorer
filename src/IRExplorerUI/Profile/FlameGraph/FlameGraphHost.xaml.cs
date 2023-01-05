@@ -148,7 +148,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                         return popup;
                     }
 
-                    return new CallTreeNodePopup(callNode, this, previewPoint, 350, 68, GraphViewer, Session);
+                    return new CallTreeNodePopup(callNode, this, previewPoint, GraphViewer, Session);
                 }
 
                 return null;

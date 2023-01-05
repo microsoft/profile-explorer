@@ -37,6 +37,23 @@ namespace IRExplorerUI {
         bool IsMarkedSection(IRTextSection section, out MarkedSectionName result);
     }
 
+    class DummySectionStyleProvider : ISectionStyleProvider {
+        public string SettingsFilePath { get; }
+        
+        public bool SaveSettings() {
+            return true;
+        }
+
+        public bool LoadSettings() {
+            return true;
+        }
+
+        public bool IsMarkedSection(IRTextSection section, out MarkedSectionName result) {
+            result = null;
+            return false;
+        }
+    }
+
     class SectionStyleProviderSerializer {
         public bool Save(List<MarkedSectionName> sectionNameMarkers, string path) {
             var data = new SerializedData {

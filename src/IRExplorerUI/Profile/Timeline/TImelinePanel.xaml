@@ -159,6 +159,7 @@
 
                     <Button
                         Command="local:CallTreeCommand.RemoveFilters"
+                        CommandTarget="{Binding ElementName=ActivityView}"
                         TabIndex="5"
                         ToolTip="Remove time range filter"
                         Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -186,6 +187,7 @@
 
                     <Button
                         Command="local:CallTreeCommand.RemoveThreadFilters"
+                        CommandTarget="{Binding ElementName=ActivityView}"
                         TabIndex="5"
                         ToolTip="Remove thread exclusions"
                         Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -331,7 +333,8 @@
                                     Margin="0,0,4,0"
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Top"
-                                    Text="{Binding Path=MaxCpuUsage, ElementName=ActivityView}" />
+                                    Text="{Binding Path=MaxCpuUsage, ElementName=ActivityView}"
+                                    ToolTip="Maximum cores used" />
                                 <TextBlock
                                     Margin="0,0,4,0"
                                     HorizontalAlignment="Right"

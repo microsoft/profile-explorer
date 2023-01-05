@@ -32,8 +32,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     public event PropertyChangedEventHandler PropertyChanged;
 
     public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,
-                             Point position, double width, double height,
-                             UIElement referenceElement, ISession session, bool canExpand = true) {
+                             Point position, UIElement referenceElement, ISession session, bool canExpand = true) {
 
         InitializeComponent();
         Initialize(position, referenceElement);
@@ -46,7 +45,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
         UpdateNode(node);
         DataContext = this;
     }
-
+    
     public void UpdateNode(ProfileCallTreeNode node) {
         if (node == CallTreeNode) {
             return;

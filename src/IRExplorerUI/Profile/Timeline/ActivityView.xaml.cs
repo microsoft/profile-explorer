@@ -169,7 +169,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         }
     }
 
-    public double MaxCpuUsage {
+    public int MaxCpuUsage {
         get {
             if (slices_ == null) {
                 return 0;
@@ -178,11 +178,11 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             double maxValue = double.MinValue;
 
             foreach (var slice in slices_[0].Slices) {
-                double sliceCpuUsage = EstimateCpuUsage(slice, slices_[0].TimePerSlice, samplingInterval_); 
+                double sliceCpuUsage = EstimateCpuUsage(slice, slices_[0].TimePerSlice, samplingInterval_);
                 maxValue = Math.Max(sliceCpuUsage, maxValue);
             }
 
-            return maxValue;
+            return (int)Math.Ceiling(maxValue);
         }
     }
 
@@ -656,7 +656,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 graphDC.DrawRectangle(backColor, borderColor, rect);
             }
 
-            //? RE-ENABLE and implement shrinking
+            // Recompute the slices if zooming in/out, this will increase/reduces their number.
             if (scaledSliceWidth > 2 * SliceWidth) {
                 double newWidth = Math.Max(1, SliceWidth * (SliceWidth / scaledSliceWidth));
                 if (newWidth < sliceWidth_) {
@@ -719,7 +719,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
         if (slice.HasValue) {
             double cpuUsage = EstimateCpuUsage(slice.Value, slices_[0].TimePerSlice, samplingInterval_);
-            text += $"{time.AsMillisecondsString()}, CPU {cpuUsage:F2}";
+            text += $"{cpuUsage:F2}, {time.AsMillisecondsString()}";
             //text += $" (W {slice.Value.Weight.AsSecondsString()})";
         }
         else {
@@ -842,27 +842,29 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                            visibleArea_.Width, TimeBarHeight);
         graphDC.DrawRectangle(timeBarBackColor_, null, bar);
 
+        // Decide how many major (per second) ticks to use for the entire time range.
         var timeDiff = endTime_ - startTime_;
-        double maxSecTicks = maxWidth_ / MinSecondTickDistance;
-        double secsTicksCount = Math.Ceiling(Math.Min(maxSecTicks, timeDiff.TotalSeconds));
-        double secsPerTick = timeDiff.TotalSeconds / secsTicksCount;
-        secsTicksCount = timeDiff.TotalSeconds / Math.Ceiling(secsPerTick);
-        secsPerTick = timeDiff.TotalSeconds / secsTicksCount;
-        double secondsTickDist = maxWidth_ / secsTicksCount;
+        double maxTicks = maxWidth_ / MinSecondTickDistance;
+        double tickCount = Math.Ceiling(Math.Min(maxTicks, timeDiff.TotalSeconds));
+        double secondsPerTick = timeDiff.TotalSeconds / tickCount;
+
+        // Recompute the tick count and duration after rounding up
+        // to ensure each tick corresponds to an integer number of seconds.
+        tickCount = timeDiff.TotalSeconds / Math.Ceiling(secondsPerTick);
+        secondsPerTick = timeDiff.TotalSeconds / tickCount;
+        double secondsTickDist = maxWidth_ / tickCount;
 
         // Adjust start position to the nearest multiple of the tick time.
         double startX = visibleArea_.Left;
         double endX = Math.Min(visibleArea_.Right, maxWidth_);
-        double currentSec = Math.Floor(startX / secondsTickDist) * secsPerTick;
-        startX = (currentSec * secondsTickDist) / secsPerTick;
+        double currentSec = Math.Floor(startX / secondsTickDist) * secondsPerTick;
+        startX = (currentSec * secondsTickDist) / secondsPerTick;
 
         for (double x = startX; x < endX; x += secondsTickDist) {
-            // if (x >= realStartX) {
             var tickRect = new Rect(x - visibleArea_.Left, visibleArea_.Top, 3, 4);
             graphDC.DrawRectangle(Brushes.Black, null, tickRect);
             DrawText($"{(int)Math.Round(currentSec)}s", tickRect.Left, tickRect.Top + TextMarginY, secTextColor, graphDC, false);
-            //}
-
+            
             int subTicks = (int)(secondsTickDist / MinTickDistance);
             if (subTicks > 1 && subTicks % 2 == 0)
                 subTicks--;
@@ -877,7 +879,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 graphDC.DrawRectangle(Brushes.DimGray, null, msTickRect);
                 double time = (currentSec + currentMs / 1000);
 
-                if (subTicks <= 1) {
+                if (subTicks <= 10) {
                     DrawText($"{time:0.0}", msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC, false);
                 }
                 else if (subTicks <= 100) {
@@ -892,7 +894,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 currentMs += timePerSubTick;
             }
 
-            currentSec += secsPerTick;
+            currentSec += secondsPerTick;
         }
     }
 
