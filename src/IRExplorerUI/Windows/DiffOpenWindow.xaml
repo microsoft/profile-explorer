@@ -45,14 +45,14 @@
                 <Button
                     x:Name="BaseBrowseButton"
                     Height="22"
-                    Padding="4,0,4,0"
+                    Padding="2,2,2,2"
                     HorizontalAlignment="Right"
                     Click="BaseBrowseButton_Click"
                     Content="Browse"
                     TabIndex="9" />
             </Grid>
 
-            <TextBlock Margin="16,4,16,0" Text="Diff file path (right side)" />
+            <TextBlock Margin="16,8,16,0" Text="Diff file path (right side)" />
             <Grid Margin="16,4,16,0">
                 <controls:FileSystemTextBox
                     x:Name="DiffAutocompleteBox"
@@ -70,7 +70,7 @@
                 <Button
                     x:Name="DiffBrowseButton"
                     Height="22"
-                    Padding="4,0,4,0"
+                    Padding="2,2,2,2"
                     HorizontalAlignment="Right"
                     Click="DiffBrowseButton_Click"
                     Content="Browse"
@@ -92,6 +92,7 @@
                 Padding="4,0,4,0"
                 Click="RecentButton_Click"
                 Content="Recent Files"
+                Width="80"
                 TabIndex="5">
                 <Button.ContextMenu>
                     <ContextMenu />

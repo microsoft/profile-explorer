@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Diff {
     public class DiffStatistics {
@@ -564,6 +565,7 @@ namespace IRExplorerUI.Diff {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Crashed while re-parsing diffed section: {ex}");
+                diffResult.DiffFunction = new FunctionIR();
             }
         }
     }

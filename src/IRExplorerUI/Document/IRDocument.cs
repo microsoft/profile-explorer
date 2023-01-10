@@ -2494,10 +2494,10 @@ namespace IRExplorerUI {
         private void ComputeElementLists() {
             // In case the function couldn't be parsed, bail
             // after creating the elements, this should prevent further issues.
-            int blocks = Function != null ? Function.Blocks.Count : 1;
+            int blocks = Function != null ? Function.Blocks.Count + 1 : 1;
             blockElements_ = new List<IRElement>(blocks);
-            tupleElements_ = new List<IRElement>(blockElements_.Count * 4);
-            operandElements_ = new List<IRElement>(tupleElements_.Count * 3);
+            tupleElements_ = new List<IRElement>(blocks * 4);
+            operandElements_ = new List<IRElement>(blocks * 12);
             selectedElements_ = new HashSet<IRElement>();
 
             if (Function == null) {
