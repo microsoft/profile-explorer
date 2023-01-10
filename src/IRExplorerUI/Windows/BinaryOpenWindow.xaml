@@ -50,16 +50,11 @@
                     x:Name="BinaryBrowseButton" />
             </Grid>
 
-            <Expander
-                IsExpanded="True"
-                Margin="16,8,16,0"
+            <Grid
+                Margin="16,0,16,0"
                 Visibility="{Binding InDiffMode, Converter={StaticResource BoolToVisibilityConverter}}">
-                <Expander.Header>
-                    <TextBlock FontWeight="Medium" Text="Diff file" />
-                </Expander.Header>
-
                 <StackPanel>
-                    <TextBlock Margin="0,8,0,0" Text="Binary file path" />
+                    <TextBlock Margin="0,8,0,0" Text="Diff binary file path" />
                     <Grid Margin="0,4,0,0">
                         <controls:FileSystemTextBox
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -82,7 +77,7 @@
                             x:Name="DiffBinaryBrowseButton" />
                     </Grid>
                 </StackPanel>
-            </Expander>
+            </Grid>
         </StackPanel>
 
         <StackPanel
@@ -142,7 +137,7 @@
                 Height="24"
                 IsCancel="True"
                 Margin="0,0,4,0"
-                Padding="4,1,4,1"
+                Padding="4,0,4,0"
                 TabIndex="4"
                 x:Name="CancelButton" />
             <Button
@@ -151,7 +146,7 @@
                 Content="Open File"
                 Height="24"
                 IsEnabled="{Binding InputControlsEnabled}"
-                Padding="4,1,4,1"
+                Padding="4,0,4,0"
                 TabIndex="3"
                 x:Name="OpenButton" />
         </StackPanel>

@@ -302,6 +302,10 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     public void ClearSelection() {
+        if (!initialized_) {
+            return;
+        }
+        
         ResetHighlightedNodes(HighlighingType.Hovered);
         ResetHighlightedNodes(HighlighingType.Selected, true);
         selectedNode_ = null;

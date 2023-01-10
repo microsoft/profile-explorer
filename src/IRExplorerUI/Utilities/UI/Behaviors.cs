@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -77,7 +79,8 @@ public class GridViewColumnVisibility {
         // If some of the removed columns got re-enabled, insert them back.
         foreach (var removedColumn in columnList) {
             if (GetIsVisible(removedColumn.Column)) {
-                gridview.Columns.Insert(removedColumn.Index, removedColumn.Column);
+                int columnIndex = Math.Min(removedColumn.Index, gridview.Columns.Count);
+                gridview.Columns.Insert(columnIndex, removedColumn.Column);
                 addedColumns.Add(removedColumn.Column);
             }
         }
@@ -91,7 +94,7 @@ public class GridViewColumnVisibility {
         }
 
         // Remove disabled columns and save them for later
-        // inc ase they get re-enabled.
+        // in case they get re-enabled.
         List<GridViewColumn> toRemove = new List<GridViewColumn>();
 
         foreach (GridViewColumn gc in gridview.Columns) {

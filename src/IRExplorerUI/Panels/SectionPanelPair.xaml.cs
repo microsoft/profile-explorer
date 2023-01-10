@@ -192,8 +192,9 @@ namespace IRExplorerUI {
 
             if (otherFunc != null) {
                 await otherPanel.SelectFunction(otherFunc);
-                await ComputePanelSectionDiff();
             }
+            
+            await ComputePanelSectionDiff();
         }
 
         private void MainPanel_EnterDiffMode(object sender, DiffModeEventArgs e) {
@@ -315,6 +316,11 @@ namespace IRExplorerUI {
             var panel = SelectSectionPanel(section);
             var otherPanel = panel == MainPanel ? DiffPanel : MainPanel;
             int sectionIndex = panel.Sections.FindIndex(item => item.Section == section);
+
+            if (sectionIndex == -1) {
+                return null;
+            }
+            
             var otherSection = otherPanel.Sections[sectionIndex];
 
             if (!otherSection.IsPlaceholderDiff) {
@@ -330,7 +336,7 @@ namespace IRExplorerUI {
                 }
             }
 
-            return null;
+            return otherSection.Section;
         }
 
         public event EventHandler<OpenSectionEventArgs> OpenSection;
@@ -385,19 +391,19 @@ namespace IRExplorerUI {
 
                     newDiffList.Add(
                         new IRTextSectionEx(diffSection.Section, DiffKind.Insertion,
-                                                   diffSection.Name, index++));
+                                                diffSection.Name, index++));
 
-                    newBaseList.Add(new IRTextSectionEx(null, DiffKind.Placeholder, "", index++));
+                    var placeholderSection = new IRTextSection(diffSection.Section.ParentFunction, "", IRPassOutput.Empty);
+                    newBaseList.Add(new IRTextSectionEx(placeholderSection, DiffKind.Placeholder, "", index++));
                     y--;
                 }
                 else if (x > 0 && (y == 0 || m[x, y - 1] < m[x - 1, y])) {
                     // Not found in diff, removed from base.
                     var baseSection = baseList[x - 1];
 
-                    newBaseList.Add(
-                        new IRTextSectionEx(baseSection.Section, DiffKind.Deletion, baseSection.Name, index++));
-
-                    newDiffList.Add(new IRTextSectionEx(null, DiffKind.Placeholder, "", index++));
+                    newBaseList.Add(new IRTextSectionEx(baseSection.Section, DiffKind.Deletion, baseSection.Name, index++));
+                    var placeholderSection = new IRTextSection(baseSection.Section.ParentFunction, "", IRPassOutput.Empty);
+                    newDiffList.Add(new IRTextSectionEx(placeholderSection, DiffKind.Placeholder, "", index++));
                     x--;
                 }
                 else {
