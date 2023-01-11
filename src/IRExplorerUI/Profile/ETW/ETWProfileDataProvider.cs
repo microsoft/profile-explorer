@@ -192,7 +192,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
                 Trace.WriteLine($"Done processing samples in {sw.Elapsed}");
 
-                if (options_.IncludePerformanceCounters) {
+                if (profile.PerformanceCountersEvents.Count > 0) {
                     // Process performance counters.
                     ProcessPerformanceCounters(profile, processIds, symbolOptions, progressCallback, cancelableTask);
                 }
@@ -306,7 +306,6 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
             //? TODO: Use multiple lists, merge and sort at the end to avoid lock.
             lock (this) {
-                profileData_.Samples ??= new List<(ProfileSample, ResolvedProfileStack)>();
                 profileData_.Samples.Add((sample, resolvedStack));
             }
         }
@@ -822,6 +821,8 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                     profile.AddCounterSample(offset, counter.CounterId, 1);
                 }
             }
+
+            profileData_.Events.Add((counter, null));
         }
 
         Trace.WriteLine($"Done process PMC in {sw.Elapsed}");

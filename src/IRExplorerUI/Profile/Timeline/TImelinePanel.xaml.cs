@@ -801,6 +801,10 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     private void SetVisibleWidth(double newWidth) {
+        if (newWidth <= 0) {
+            return; // Ignore value during panel undocking.
+        }
+
         ActivityView.SetVisibleWidth(newWidth);
 
         foreach (var threadView in threadActivityViews_) {

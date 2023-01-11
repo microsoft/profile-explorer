@@ -813,7 +813,7 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
 
     public void AddTarget(ProfileCallTreeNode node, TimeSpan weight) {
         Weight += weight; // Total weight of targets.
-        int index = Targets.FindIndex(item => item.Equals(node.Function));
+        int index = Targets.FindIndex(item => item.Node.Equals(node.Function));
 
         if (index != -1) {
             var span = CollectionsMarshal.AsSpan(Targets);
