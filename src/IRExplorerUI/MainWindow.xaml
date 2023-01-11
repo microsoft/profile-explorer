@@ -386,6 +386,14 @@
                             Click="ShowPanelMenuClicked"
                             Header="Caller/Callee Panel"
                             Tag="CallerCallee" />
+                        <MenuItem
+                            Click="ShowPanelMenuClicked"
+                            Header="Flame Graph Panel"
+                            Tag="FlameGraph" />
+                        <MenuItem
+                            Click="ShowPanelMenuClicked"
+                            Header="Timeline Panel"
+                            Tag="Timeline" />
                     </MenuItem>
 
                     <MenuItem Header="Profiling">

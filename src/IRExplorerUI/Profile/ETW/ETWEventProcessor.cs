@@ -517,12 +517,7 @@ public sealed class ETWEventProcessor : IDisposable {
                 //if (cancelableTask != null && cancelableTask.IsCanceled) {
                 //    source_.StopProcessing();
                 //}
-
-                // Skip unknown process.
-                if (data.ProcessID < 0) {
-                    return;
-                }
-
+                
                 var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
                 int contextId = profile.AddContext(context);
                 double timestamp = data.TimeStampRelativeMSec;

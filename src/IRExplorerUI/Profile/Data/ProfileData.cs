@@ -55,6 +55,7 @@ public class ProfileData {
     public ProfileDataReport Report { get; set; }
 
     public List<(ProfileSample Sample, ResolvedProfileStack Stack)> Samples { get; set; }
+    public List<(PerformanceCounterEvent Sample, ResolvedProfileStack Stack)> Events { get; set; }
     public ProfileProcess Process { get; set; }
     public Dictionary<int, ProfileThread> Threads { get; set; }
 
@@ -96,6 +97,8 @@ public class ProfileData {
         PerformanceCounters = new Dictionary<int, PerformanceCounterInfo>();
         ModuleCounters = new Dictionary<string, PerformanceCounterSet>();
         Threads = new Dictionary<int, ProfileThread>();
+        Samples = new List<(ProfileSample, ResolvedProfileStack)>();
+        Events = new List<(PerformanceCounterEvent Sample, ResolvedProfileStack Stack)>();
     }
 
     public void AddModuleSample(string moduleName, TimeSpan weight) {
