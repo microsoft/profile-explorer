@@ -502,7 +502,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
     private TinyList<ProfileCallTreeNode> children_;
 
-    [ProtoMember(3)]
+    //? TODO: ProfileCallSite not serialized properly, references CallTreeNode and should use Id instead
+    //[ProtoMember(3)]
     private Dictionary<long, ProfileCallSite> callSites_; //? Use Hybrid array/dict to save space
 
     private ProfileCallTreeNode caller_; // Can't be serialized, reconstructed.

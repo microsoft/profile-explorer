@@ -38,6 +38,7 @@ using ClosedXML.Excel;
 using ICSharpCode.AvalonEdit.Rendering;
 using TimelinePanel = IRExplorerUI.Profile.TimelinePanel;
 using IRExplorerUI.Utilities;
+using PerformanceCounter = IRExplorerUI.Profile.PerformanceCounter;
 
 namespace IRExplorerUI {
     //? TODo; Commands can be defined in code-behind with this pattern,
@@ -600,7 +601,7 @@ namespace IRExplorerUI {
                                 return direction == ListSortDirection.Ascending ? -result : result;
                             }
                             case FunctionFieldKind.PerformanceCounter: {
-                                if (tag is PerformanceCounterInfo counter) {
+                                if (tag is PerformanceCounter counter) {
                                     int result = 0;
 
                                     if (functionX.Counters != null &&
@@ -1233,7 +1234,7 @@ namespace IRExplorerUI {
                         foreach (var counter in profile.SortedPerformanceCounters) {
                             if (counter.IsMetric) {
                                 var counterEx = new PerformanceCounterSetEx.PerformanceCounterValueEx() { CounterId = counter.Id };
-                                var metric = counter as PerformanceMetricInfo;
+                                var metric = counter as PerformanceMetric;
                                 counterEx.Value = metric.ComputeMetric(counters, out var _, out var _);
                                 counterEx.Label = ProfileDocumentMarker.FormatPerformanceMetric(counterEx.Value, metric);
                                 funcEx.Counters.Add(counterEx);
@@ -2601,7 +2602,7 @@ namespace IRExplorerUI {
                 }
 
                 var name = $"{ProfileDocumentMarker.ShortenPerfCounterName(counter.Name)}";
-                var tooltip = counter?.Config?.Description != null ? $"{counter.Config.Description}" : $"{counter.Name}";
+                var tooltip = /*counter?.Config?.Description != null ? $"{counter.Config.Description}" : */ $"{counter.Name}";
                 int insertionIndex = -1;
 
                 // Insert before the demangled func name column.

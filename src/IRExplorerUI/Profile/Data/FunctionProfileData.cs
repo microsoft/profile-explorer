@@ -25,7 +25,7 @@ public class FunctionProfileData {
     [ProtoMember(6)]
     public Dictionary<IRTextFunctionId, TimeSpan> CallerWeights { get; set; } //? TODO: Remove, unused
     [ProtoMember(7)]
-    public Dictionary<long, PerformanceCounterSet> InstructionCounters { get; set; }
+    public Dictionary<long, PerformanceCounterValueSet> InstructionCounters { get; set; }
     [ProtoMember(8)]
     public FunctionDebugInfo FunctionDebugInfo { get; set; }
 
@@ -53,7 +53,7 @@ public class FunctionProfileData {
         InstructionWeight ??= new Dictionary<long, TimeSpan>();
         CalleesWeights ??= new Dictionary<IRTextFunctionId, TimeSpan>();
         CallerWeights ??= new Dictionary<IRTextFunctionId, TimeSpan>();
-        InstructionCounters ??= new Dictionary<long, PerformanceCounterSet>();
+        InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>();
         
         SampleStartIndex = int.MaxValue;
         SampleEndIndex = int.MinValue;
@@ -122,7 +122,7 @@ public class FunctionProfileData {
                 result.CounterElements.Add((element, pair.Value));
             }
 
-            result.FunctionCounters.Add(pair.Value);
+            result.FunctionCountersValue.Add(pair.Value);
         }
 
         result.BlockSampledElements = result.BlockSampledElementsMap.ToList();
@@ -157,7 +157,7 @@ public class FunctionProfileData {
                 result.SourceLineCounters.AccumulateValue(lineInfo.Line, pair.Value);
             }
 
-            result.FunctionCounters.Add(pair.Value);
+            result.FunctionCountersValue.Add(pair.Value);
         }
 
         result.FirstLineIndex = firstLine;
@@ -165,8 +165,8 @@ public class FunctionProfileData {
         return result;
     }
 
-    public PerformanceCounterSet ComputeFunctionTotalCounters() {
-        var result = new PerformanceCounterSet();
+    public PerformanceCounterValueSet ComputeFunctionTotalCounters() {
+        var result = new PerformanceCounterValueSet();
 
         foreach (var pair in InstructionCounters) {
             result.Add(pair.Value);
@@ -205,20 +205,20 @@ public class FunctionProfileData {
         public List<(IRElement, TimeSpan)> SampledElements { get; set; }
         public Dictionary<BlockIR, TimeSpan> BlockSampledElementsMap { get; set; }
         public List<(BlockIR, TimeSpan)> BlockSampledElements { get; set; }
-        public List<(IRElement, PerformanceCounterSet)> CounterElements { get; set; }
-        public List<(BlockIR, PerformanceCounterSet)> BlockCounterElements { get; set; }
-        public PerformanceCounterSet FunctionCounters { get; set; }
+        public List<(IRElement, PerformanceCounterValueSet)> CounterElements { get; set; }
+        public List<(BlockIR, PerformanceCounterValueSet)> BlockCounterElements { get; set; }
+        public PerformanceCounterValueSet FunctionCountersValue { get; set; }
 
         public ProcessingResult(int capacity = 0) {
             SampledElements = new List<(IRElement, TimeSpan)>(capacity);
             BlockSampledElementsMap = new Dictionary<BlockIR, TimeSpan>(capacity);
             BlockSampledElements = new List<(BlockIR, TimeSpan)>();
-            CounterElements = new List<(IRElement, PerformanceCounterSet)>(capacity);
-            FunctionCounters = new PerformanceCounterSet(); 
+            CounterElements = new List<(IRElement, PerformanceCounterValueSet)>(capacity);
+            FunctionCountersValue = new PerformanceCounterValueSet(); 
         }
 
-        public double ScaleCounterValue(long value, PerformanceCounterInfo counter) {
-            var total = FunctionCounters.FindCounterValue(counter);
+        public double ScaleCounterValue(long value, PerformanceCounter counter) {
+            var total = FunctionCountersValue.FindCounterValue(counter);
             return total > 0 ? (double)value / (double)total : 0;
         }
 
@@ -230,16 +230,16 @@ public class FunctionProfileData {
 
     public class SourceLineProcessingResult {
         public Dictionary<int, TimeSpan> SourceLineWeight { get; set; } // Line number mapping
-        public Dictionary<int, PerformanceCounterSet> SourceLineCounters { get; set; } // Line number mapping
-        public PerformanceCounterSet FunctionCounters { get; set; }
+        public Dictionary<int, PerformanceCounterValueSet> SourceLineCounters { get; set; } // Line number mapping
+        public PerformanceCounterValueSet FunctionCountersValue { get; set; }
         public List<(int LineNumber, TimeSpan Weight)> SourceLineWeightList => SourceLineWeight.ToList();
         public int FirstLineIndex { get; set; }
         public int LastLineIndex { get; set; }
 
         public SourceLineProcessingResult() {
             SourceLineWeight = new Dictionary<int, TimeSpan>();
-            SourceLineCounters = new Dictionary<int, PerformanceCounterSet>();
-            FunctionCounters = new PerformanceCounterSet();
+            SourceLineCounters = new Dictionary<int, PerformanceCounterValueSet>();
+            FunctionCountersValue = new PerformanceCounterValueSet();
         }
     }
 }

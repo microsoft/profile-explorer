@@ -809,7 +809,7 @@ namespace IRExplorerUI {
             // the dock layout to a previous state, it creates another layout tree
             // that is different than the initial layout defined in the XAML file.
             var documentGroup = DockManager.Layout.Descendents().
-                OfType<LayoutDocumentPaneGroup>().SingleOrDefault();
+                OfType<LayoutDocumentPaneGroup>().FirstOrDefault();
 
             switch (kind) {
                 case OpenSectionKind.ReplaceCurrent:
@@ -1220,6 +1220,10 @@ namespace IRExplorerUI {
                 }
                 case "FlameGraph": {
                     panelHost = FlameGraphPanelHost;
+                    break;
+                }
+                case "Timeline": {
+                    panelHost = TimelinePanelHost;
                     break;
                 }
             }

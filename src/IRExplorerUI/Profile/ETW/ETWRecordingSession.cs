@@ -14,8 +14,8 @@ using Microsoft.Diagnostics.Tracing.Session;
 namespace IRExplorerUI.Profile {
     public sealed class ETWRecordingSession : IDisposable {
         //private static readonly string ProfilerPath = "irexplorer_profiler.dll";
-        //private static readonly string ProfilerPath = @"D:\DotNextMoscow2019\x64\Release\irexplorer_profiler.dll";
-        private static readonly string ProfilerPath = @"D:\DotNextMoscow2019\x64\Debug\irexplorer_profiler.dll";
+        private static readonly string ProfilerPath = @"D:\DotNextMoscow2019\x64\Release\irexplorer_profiler.dll";
+        //private static readonly string ProfilerPath = @"D:\DotNextMoscow2019\x64\Debug\irexplorer_profiler.dll";
         private static readonly string ProfilerGuid = "{805A308B-061C-47F3-9B30-F785C3186E81}";
 
         private TraceEventSession session_;
@@ -171,7 +171,12 @@ namespace IRExplorerUI.Profile {
                     var capturedEvents = KernelTraceEventParser.Keywords.ImageLoad |
                                                 KernelTraceEventParser.Keywords.Process |
                                                 KernelTraceEventParser.Keywords.Thread |
-                                                //? KernelTraceEventParser.Keywords.ContextSwitch |
+                                                //KernelTraceEventParser.Keywords.ContextSwitch |
+                                                //KernelTraceEventParser.Keywords.DiskIO |
+                                                //KernelTraceEventParser.Keywords.DiskFileIO |
+                                                //KernelTraceEventParser.Keywords.DiskIOInit |
+                                                //KernelTraceEventParser.Keywords.FileIO |
+                                                //KernelTraceEventParser.Keywords.FileIOInit |
                                                 KernelTraceEventParser.Keywords.Profile;
 
                     if (options_.RecordPerformanceCounters && options_.PerformanceCounters.Count > 0) {
