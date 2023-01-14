@@ -544,7 +544,7 @@ namespace IRExplorerUI.Profile {
                 var counterInfo = perfCounters[k];
                 counterColumns[k] = OptionalColumn.Template($"[CounterHeader{counterInfo.Id}]", "TimePercentageColumnValueTemplate",
                     $"CounterHeader{counterInfo.Id}", $"{ShortenPerfCounterName(counterInfo.Name)}",
-                    counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" : $"{counterInfo.Name}",
+                    /*counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" :*/ $"{counterInfo.Name}",
                     null, 50, "TimeColumnHeaderTemplate",
                     new OptionalColumnAppearance() {
                         ShowPercentageBar = true,
@@ -588,7 +588,7 @@ namespace IRExplorerUI.Profile {
                     bool isValueBasedMetric = false;
 
                     if (counter.IsMetric) {
-                        var metric = counter as PerformanceMetricInfo;
+                        var metric = counter as PerformanceMetric;
                         valuePercentage = metric.ComputeMetric(counterSet, out var baseValue, out var relativeValue);
 
                         // Don't show metrics for counters with few hits,
@@ -654,12 +654,12 @@ namespace IRExplorerUI.Profile {
             return columnData;
         }
 
-        public static bool IsPerfCounterVisible(PerformanceCounterInfo counterInfo) {
+        public static bool IsPerfCounterVisible(PerformanceCounter counter) {
             //? TODO: Use a filter list from options
-            return counterInfo.Name != "Timer";
+            return counter.Name != "Timer";
         }
 
-        public static string FormatPerformanceMetric(double value, PerformanceMetricInfo metric) {
+        public static string FormatPerformanceMetric(double value, PerformanceMetric metric) {
             if (value == 0) {
                 return "";
             }
@@ -667,7 +667,7 @@ namespace IRExplorerUI.Profile {
             return metric.Config.IsPercentage ? value.AsPercentageString() : $"{value:F2}";
         }
 
-        public static string FormatPerformanceCounter(long value, PerformanceCounterInfo counter) {
+        public static string FormatPerformanceCounter(long value, PerformanceCounter counter) {
             if (counter.Frequency > 1000) {
                 double valueK = (double)(value * counter.Frequency) / 1000;
                 return $"{valueK:##}K";

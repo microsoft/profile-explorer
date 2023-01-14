@@ -496,10 +496,75 @@ public sealed class ETWEventProcessor : IDisposable {
             }
         };
 
-        //source_.Kernel.ThreadCSwitch += data => {
-        //    Trace.WriteLine($"ThreadCSwitch {data}");
-        //};
+    //    source_.Kernel.ThreadCSwitch += data => {
+    //        if (!(IsAcceptedProcess(data.OldProcessID) || IsAcceptedProcess(data.NewProcessID))) {
+    //            return; // Ignore events from other processes.
+    //        }
+            
+    //        Trace.WriteLine($"ThreadCSwitch {data}");
+    //        Trace.WriteLine($"   switch from TId/PId: {data.OldThreadID}/{data.OldProcessID} to new TId/PId {data.NewThreadID}/{data.NewProcessID}, old reason {data.OldThreadWaitReason}, oldstate {data.OldThreadState}");
 
+
+    //        //var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+    //        //int contextId = profile.AddContext(context);
+    //        //double timestamp = data.TimeStampRelativeMSec;
+
+    //        //bool isScheduledOut = data.OldThreadState == ThreadState.Wait ||
+    //        //                      data.OldThreadState == ThreadState.Standby;
+
+    //        //var counterEvent = new PerformanceCounterEvent(0,
+    //        //    TimeSpan.FromMilliseconds(timestamp),
+    //        //    contextId, (short)(isScheduledOut ? 1 : 0));
+    //        //profile.AddPerformanceCounterEvent(counterEvent);
+    //    };
+
+    ////FileIOCreate: < Event MSec = "7331.6505" PID = "10344" PName = "threads" TID = "10392" EventName = "FileIO/Create" IrpPtr = "0xFFFFD58C43FBDB48" FileObject = "0xFFFFD58C608455D0" CreateOptions = "FILE_ATTRIBUTE_ARCHIVE, FILE_ATTRIBUTE_DEVICE" CreateDisposition = "OPEN_EXISTING" FileAttributes = "Normal" ShareAccess = "ReadWrite" FileName = "C:\test\results.log" />
+    ////FileIORead: < Event MSec = "7332.1418" PID = "10344" PName = "threads" TID = "10392" EventName = "FileIO/Read" FileName = "C:\test\results.log" Offset = "53,248" IrpPtr = "0xFFFFD58C43FBDB48" FileObject = "0xFFFFD58C608455D0" FileKey = "0xFFFF8C891339EB10" IoSize = "4,096" IoFlags = "0" />
+    //                                                                                                                                                                                                                                                                                            source_.Kernel.FileIOCreate += data => {
+    //        if (!IsAcceptedProcess(data.ProcessID)) {
+    //            return; // Ignore events from other processes.
+    //        }
+    //        Trace.WriteLine($"FileIOCreate: {data}\n");
+    //    };
+
+    //    source_.Kernel.FileIOClose += data => {
+    //        if (!IsAcceptedProcess(data.ProcessID)) {
+    //            return; // Ignore events from other processes.
+    //        }
+    //        Trace.WriteLine($"FileIOClose: {data}\n");
+    //    };
+    //    source_.Kernel.FileIORead += data => {
+    //        if (!IsAcceptedProcess(data.ProcessID)) {
+    //            return; // Ignore events from other processes.
+    //        }
+    //        Trace.WriteLine($"FileIORead: {data}\n");
+    //        //double timestamp = data.TimeStampRelativeMSec;
+    //        //var counterEvent = new PerformanceCounterEvent(0,
+    //        //    TimeSpan.FromMilliseconds(timestamp),
+    //        //    1, (short)(1));
+    //        //profile.AddPerformanceCounterEvent(counterEvent);
+    //    };
+    //    source_.Kernel.FileIOName+= data => {
+    //        if (!IsAcceptedProcess(data.ProcessID)) {
+    //            return; // Ignore events from other processes.
+    //        }
+    //        Trace.WriteLine($"FileIOName: {data}\n");
+    //    };
+
+    //    source_.Kernel.DiskIOReadInit += data => {
+    //        if (!IsAcceptedProcess(data.ProcessID)) {
+    //            return; // Ignore events from other processes.
+    //        }
+    //        Trace.WriteLine($"DiskIOReadInit: {data}\n");
+    //    };
+
+    //    source_.Kernel.DiskIORead += data => {
+    //        if (!IsAcceptedProcess(data.ProcessID)) {
+    //            return; // Ignore events from other processes.
+    //        }
+    //        Trace.WriteLine($"DiskIORead: {data}\n");
+    //    };
+        
 #if false
         GC.Collect();
         GC.WaitForPendingFinalizers();
@@ -599,12 +664,31 @@ public sealed class ETWEventProcessor : IDisposable {
             });
         }
 
+        //source_.Clr.GCStart += data => {
+        //    Trace.WriteLine($"GCStart: {data}");
+        //    double timestamp = data.TimeStampRelativeMSec;
+        //    var counterEvent = new PerformanceCounterEvent(0,
+        //        TimeSpan.FromMilliseconds(timestamp),
+        //        1, (short)(1));
+        //    profile.AddPerformanceCounterEvent(counterEvent);
+        //};
+
+
+        //source_.Clr.GCStop += data => {
+        //    Trace.WriteLine($"GCStop: {data}");
+        //    double timestamp = data.TimeStampRelativeMSec;
+        //    var counterEvent = new PerformanceCounterEvent(0,
+        //        TimeSpan.FromMilliseconds(timestamp),
+        //        1, (short)(0));
+        //    profile.AddPerformanceCounterEvent(counterEvent);
+        //};
+
         source_.Clr.LoaderModuleLoad += data => {
             ProcessLoaderModuleLoad(data, profile);
         };
 
         source_.Clr.MethodLoadVerbose += data => {
-            ProcessDotNetMethodLoad(data, profile);
+            ProcessDotNetMethodLoad(data, profile, cancelableTask);
         };
 
         source_.Clr.MethodILToNativeMap += data => {
@@ -632,7 +716,7 @@ public sealed class ETWEventProcessor : IDisposable {
         //};
 
         rundownParser.MethodDCStartVerbose += data => {
-            ProcessDotNetMethodLoad(data, profile, true);
+            ProcessDotNetMethodLoad(data, profile, cancelableTask, true);
         };
 
         //rundownParser.MethodDCStopVerbose += data => {
@@ -693,13 +777,13 @@ public sealed class ETWEventProcessor : IDisposable {
         }
     }
 
-    private void ProcessDotNetMethodLoad(MethodLoadUnloadVerboseTraceData data, RawProfileData profile, bool rundown = false) {
+    private void ProcessDotNetMethodLoad(MethodLoadUnloadVerboseTraceData data, RawProfileData profile, CancelableTask cancelableTask, bool rundown = false) {
         if (!IsAcceptedProcess(data.ProcessID)) {
             return; // Ignore events from other processes.
         }
 
         if (rundown) {
-            if (pipeServer_ != null) {
+            if (pipeServer_ != null && !cancelableTask.IsCanceled) {
                 Trace.WriteLine($"Request {data.MethodStartAddress:x}: {data.MethodSignature}");
 
                 if (!pipeServer_.RequestFunctionCode((long)data.MethodStartAddress, data.MethodID, (int)data.ReJITID, data.ProcessID)) {

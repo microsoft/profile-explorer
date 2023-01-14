@@ -32,6 +32,11 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
     private object[] imageLocks;
     private ConcurrentDictionary<int, ModuleInfo> imageModuleMap_;
 
+    [ThreadStatic]
+    private static ProfileImage prevImage_;
+    [ThreadStatic]
+    private static ModuleInfo prevModule_;
+
     public ETWProfileDataProvider(ISession session) {
         session_ = session;
         profileData_ = new ProfileData();
@@ -663,10 +668,10 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
     private ModuleInfo FindModuleInfo(RawProfileData prof, ProfileImage queryImage, int processId,
                                       SymbolFileSourceOptions symbolOptions) {
-        //? TODO: thread-local
-        //if (queryImage == prevImage) {
-        //    return prevModule;
-        //}
+        // prevImage_/prevModule_ are TLS variables since this is called from multiple threads.
+        if (queryImage == prevImage_) {
+            return prevModule_;
+        }
 
         if (!imageModuleMap_.TryGetValue(queryImage.Id, out var imageModule)) {
             lock (imageLocks[queryImage.Id % IMAGE_LOCK_COUNT]) {
@@ -703,8 +708,8 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             }
         }
 
-        //prevImage = queryImage;
-        //prevModule = imageModule;
+        prevImage_ = queryImage;
+        prevModule_ = imageModule;
         return imageModule;
     }
 
@@ -714,11 +719,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                                             CancelableTask cancelableTask) {
         // Register the counters found in the trace.
         foreach (var counter in prof.PerformanceCounters) {
-            var counterInfo = new PerformanceCounterInfo(counter.Id, counter.Name, counter.Frequency);
-
-            lock (profileData_) {
-                profileData_.RegisterPerformanceCounter(counterInfo);
-            }
+            profileData_.RegisterPerformanceCounter(counter);
         }
 
         // Try to register the metrics.

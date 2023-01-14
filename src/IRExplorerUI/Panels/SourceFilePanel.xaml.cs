@@ -566,7 +566,7 @@ namespace IRExplorerUI {
             }
 
             processingResult.SortSampledElements(); // Used for ordering.
-            processingResult.FunctionCounters = result.FunctionCounters;
+            processingResult.FunctionCountersValue = result.FunctionCountersValue;
             sourceProfileResult_ = processingResult;
 
             var profileOptions = ProfileDocumentMarkerOptions.Default;

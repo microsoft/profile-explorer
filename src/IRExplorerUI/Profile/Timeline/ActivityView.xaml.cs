@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Utilities;
+using static IRExplorerUI.NativeMethods;
 
 namespace IRExplorerUI.Profile;
 
@@ -477,7 +478,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual_).PixelsPerDip);
 
         StartComputeSampleSlices(SliceWidth);
-
+        
         OnPropertyChanged(nameof(ThreadWeight));
         OnPropertyChanged(nameof(ThreadId));
         OnPropertyChanged(nameof(ThreadName));
@@ -689,6 +690,17 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
         if (showPositionLine_ && !startedSelection_) {
             DrawPositionLine(graphDC);
+        }
+
+        foreach (var ev in profile_.Events) {
+            var startX = TimeToPosition(ev.Sample.Time);
+
+            if (startX > visibleArea_.Width) {
+                return;
+            }
+
+            graphDC.DrawRectangle(ev.Sample.CounterId != 0 ? Brushes.Red : Brushes.Blue, selectionBorderColor_,
+                new Rect(startX, 0, 2, visibleArea_.Height));
         }
     }
     
