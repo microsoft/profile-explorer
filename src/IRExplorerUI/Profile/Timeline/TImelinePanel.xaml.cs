@@ -345,7 +345,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                     return null;
                 }
 
-                var (text, textWidth) = CreateBacktraceText(callNode, 4);
+                var (text, textWidth) = CreateBacktraceText(callNode, 5);
 
                 // If popup already opened for this node reuse the instance.
                 if (threadHoverPreviewMap_.TryGetValue(view.ThreadId, out var hoverPreview) &&
@@ -374,8 +374,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         var sb = new StringBuilder();
         double maxTextWidth = 0;
 
-        while (node.HasCallers && maxLevel-- > 0) {
-            node = node.Caller;
+        while (maxLevel-- > 0) {
             var funcName = nameFormatter_(node.FunctionName);
 
             if (funcName.Length > MaxPreviewNameLength) {
@@ -385,6 +384,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             var textSize = Utils.MeasureString(funcName, DefaultTextFont, DefaultTextSize);
             maxTextWidth = Math.Max(maxTextWidth, textSize.Width);
             sb.AppendLine(funcName);
+            node = node.Caller;
         }
 
         if (node.HasCallers) {

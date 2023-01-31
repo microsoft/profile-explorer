@@ -501,7 +501,8 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         switch (e.Key) {
             case Key.Return: {
                 if (Utils.IsAltModifierActive()) {
-                    Trace.WriteLine("ENTER ALT");
+                    //? TODO: Enter - focus on function
+                    //? ctrl-enter - make root node
                 }
                 break;
             }
@@ -554,8 +555,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                 break;
             }
             case Key.Back: {
-                await RestorePreviousState();
-                e.Handled = true;
+                if (Utils.IsControlModifierActive()) {
+                    await RestorePreviousState();
+                    e.Handled = true;
+                }
                 break;
             }
         }
@@ -883,9 +886,9 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         }
     }
 
-    public void SelectNode(FlameGraphNode node) {
+    public void SelectNode(FlameGraphNode node, bool fitSize = true) {
         GraphViewer.SelectNode(node);
-        BringNodeIntoView(node);
+        BringNodeIntoView(node, fitSize);
     }
 
     public void SelectNode(ProfileCallTreeNode node) {

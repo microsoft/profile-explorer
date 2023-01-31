@@ -303,7 +303,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             GraphHost.GraphViewer.MarkSearchResultNodes(searchResultNodes_);
 
             searchResultIndex_ = -1;
-            SelectNextSearchResult();
+            SelectNextSearchResult(false);
             ShowSearchSection = true;
         }
         else {
@@ -323,11 +323,11 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
     }
 
-    private void SelectNextSearchResult() {
+    private void SelectNextSearchResult(bool fitSize = true) {
         if (searchResultNodes_ != null && searchResultIndex_ < searchResultNodes_.Count - 1) {
             searchResultIndex_++;
             UpdateSearchResultText();
-            GraphHost.SelectNode(searchResultNodes_[searchResultIndex_]);
+            GraphHost.SelectNode(searchResultNodes_[searchResultIndex_], fitSize);
         }
     }
 

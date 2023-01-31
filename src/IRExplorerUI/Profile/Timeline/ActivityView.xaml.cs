@@ -643,8 +643,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 var borderColor = sampleBorderColor_;
 
                 if (showPositionLine_ && !startedSelection_) {
-                    if ((positionLineX_ - visibleArea_.Left) > i * scaledSliceWidth &&
-                        (positionLineX_ - visibleArea_.Left) < (i + 1) * scaledSliceWidth) {
+                    if ((positionLineX_ + visibleArea_.Left) > i * scaledSliceWidth &&
+                        (positionLineX_ + visibleArea_.Left) < (i + 1) * scaledSliceWidth) {
                         var newColor = ColorUtils.AdjustLight(((SolidColorBrush)sampleBackColor_).Color, 0.75f);
                         backColor = ColorBrushes.GetBrush(newColor);
                     }
@@ -845,7 +845,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     private void DrawTimeBar(DrawingContext graphDC) {
         const double MinTickDistance = 60;
-        const double MinSecondTickDistance = 50;
+        const double MinSecondTickDistance = 40;
         const double TextMarginY = 7;
         var secTextColor = Brushes.Black;
         var msTextColor = Brushes.DimGray;
@@ -862,7 +862,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
         // Recompute the tick count and duration after rounding up
         // to ensure each tick corresponds to an integer number of seconds.
-        tickCount = timeDiff.TotalSeconds / Math.Ceiling(secondsPerTick);
+        tickCount = timeDiff.TotalSeconds / Math.Round(secondsPerTick);
         secondsPerTick = timeDiff.TotalSeconds / tickCount;
         double secondsTickDist = maxWidth_ / tickCount;
 
@@ -882,7 +882,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 subTicks--;
 
             double subTickDist = secondsTickDist / (subTicks + 1);
-            double timePerSubTick = 1000.0 / (subTicks + 1);
+            double timePerSubTick = (secondsPerTick * 1000.0) / (subTicks + 1);
             double msEndX = Math.Min(secondsTickDist - subTickDist, endX);
             double currentMs = timePerSubTick;
 
@@ -891,15 +891,18 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 graphDC.DrawRectangle(Brushes.DimGray, null, msTickRect);
                 double time = (currentSec + currentMs / 1000);
 
-                if (subTicks <= 10) {
+                if (subTicks == 1) {
                     DrawText($"{time:0.0}", msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC, false);
                 }
-                else if (subTicks <= 100) {
+                else if (subTicks <= 10) {
                     DrawText($"{time:0.00}", msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC, false);
+                }
+                else if (subTicks <= 100) {
+                    DrawText($"{time:0.000}", msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC, false);
                 }
                 else {
                     int digits = (int)Math.Ceiling(Math.Log10(subTicks));
-                    var timeStr = String.Format("{0:0." + new string('0', digits) + "}", time);
+                    var timeStr = String.Format("{0:0." + new string('0', digits + 1) + "}", time);
                     DrawText(timeStr, msTickRect.Left, msTickRect.Top + TextMarginY, msTextColor, graphDC, false);
                 }
 
