@@ -197,6 +197,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             ActivityView.SamplesBackColor = ColorBrushes.GetBrush("#F4A0A0");
 
             var threadActivityArea = new Rect(0, 0, ActivityViewAreaWidth, 30);
+            var initTasks = new List<Task>(threads.Count);
 
             foreach (var thread in threads) {
                 var threadView = new ActivityTimelineView();
@@ -215,7 +216,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
                 threadActivityViews_.Add(threadView);
                 threadActivityViewsMap_[thread.ThreadId] = threadView;
-                await threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea, thread.ThreadId);
+                initTasks.Add(threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea, thread.ThreadId));
                 SetupActivityHoverPreview(threadView.ActivityHost);
 
                 //threadView.TimelineHost.Session = Session;
@@ -223,6 +224,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                 //SetupTimelineViewEvents(threadView.TimelineHost);
             }
 
+            await Task.WhenAll(initTasks);
             ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
         }, DispatcherPriority.Background);
     }
