@@ -478,7 +478,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual_).PixelsPerDip);
 
         StartComputeSampleSlices(SliceWidth);
-        
+
         OnPropertyChanged(nameof(ThreadWeight));
         OnPropertyChanged(nameof(ThreadId));
         OnPropertyChanged(nameof(ThreadName));
@@ -493,19 +493,17 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         startTime_ = profile.Samples[0].Sample.Time;
         endTime_ = profile.Samples[^1].Sample.Time;
         double slices = (maxWidth_ / sliceWidth_) * (prevMaxWidth_ / maxWidth_);
-        prevMaxWidth_ = maxWidth_;
 
         var timeDiff = endTime_ - startTime_;
         double timePerSlice = (double)timeDiff.Ticks / slices;
         double timePerSliceReciproc = 1.0 / timePerSlice;
         var sliceSeriesDict = new Dictionary<int, SliceList>();
 
-        var sw3 = Stopwatch.StartNew();
         int sampleIndex = 0;
-
         int prevSliceIndex = -1;
         SliceList prevSliceList = null;
-        
+        Slice currentSlice = new Slice(TimeSpan.Zero, -1, 0);
+
         foreach (var (sample, stack) in profile.Samples) {
             if (threadId != -1 && stack.Context.ThreadId != threadId) {
                 sampleIndex++;
@@ -517,38 +515,46 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             //int queryThreadId = stack.Context.ThreadId;
             int queryThreadId = 0;
             SliceList sliceList = null;
-            
+
             if (sliceIndex == prevSliceIndex) {
                 sliceList = prevSliceList;
             }
             else {
+                if (currentSlice.FirstSampleIndex != -1 && prevSliceList != null) {
+                    prevSliceList.Slices.Add(currentSlice);
+                    prevSliceList.TotalWeight += currentSlice.Weight;
+                    prevSliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(prevSliceList.MaxWeight.Ticks,
+                                                                          currentSlice.Weight.Ticks));
+                }
+
                 sliceList = sliceSeriesDict.GetOrAddValue(queryThreadId,
                 () => new SliceList(queryThreadId) {
                     TimePerSlice = TimeSpan.FromTicks((long)timePerSlice),
                     MaxSlices = (int)slices
                 });
-                
+
                 prevSliceIndex = sliceIndex;
                 prevSliceList = sliceList;
-            }
 
-            if (sliceIndex < sliceList.Slices.Count) {
-                var sliceSpan = CollectionsMarshal.AsSpan(sliceList.Slices);
-                sliceSpan[sliceIndex].Weight += sample.Weight;
-                sliceSpan[sliceIndex].SampleCount++;
-            }
-            else {
-                for (int i = sliceList.Slices.Count; i < sliceIndex; i++) {
-                    sliceList.Slices.Add(new Slice(TimeSpan.Zero, -1, 0));
+                if (sliceIndex >= sliceList.Slices.Count) {
+                    for (int i = sliceList.Slices.Count; i < sliceIndex; i++) {
+                        sliceList.Slices.Add(new Slice(TimeSpan.Zero, -1, 0));
+                    }
                 }
 
-                sliceList.Slices.Add(new Slice(sample.Weight, sampleIndex, 1));
+                currentSlice = new Slice(TimeSpan.Zero, sampleIndex, 0);
             }
 
-            sliceList.TotalWeight += sample.Weight;
-            sliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(sliceList.MaxWeight.Ticks,
-                                                              sliceList.Slices[sliceIndex].Weight.Ticks));
+            currentSlice.Weight += sample.Weight;
+            currentSlice.SampleCount++;
             sampleIndex++;
+        }
+
+        if (currentSlice.FirstSampleIndex != -1 && prevSliceList != null) {
+            prevSliceList.Slices.Add(currentSlice);
+            prevSliceList.TotalWeight += currentSlice.Weight;
+            prevSliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(prevSliceList.MaxWeight.Ticks,
+                                                                  currentSlice.Weight.Ticks));
         }
 
         if (sliceSeriesDict.Count == 0) {
@@ -556,7 +562,6 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             return new List<SliceList>() { new SliceList(threadId) };
         }
 
-        //Trace.WriteLine($"ComputeSampleSlices {sw3.ElapsedMilliseconds}ms");
         return sliceSeriesDict.ToValueList();
     }
 
@@ -703,7 +708,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                 new Rect(startX, 0, 2, visibleArea_.Height));
         }
     }
-    
+
     private void DrawTimeRangeFilter(DrawingContext graphDC) {
         var startX = TimeToPosition(filterStartTime_);
         var endX = TimeToPosition(filterEndTime_);
@@ -876,7 +881,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             var tickRect = new Rect(x - visibleArea_.Left, visibleArea_.Top, 3, 4);
             graphDC.DrawRectangle(Brushes.Black, null, tickRect);
             DrawText($"{(int)Math.Round(currentSec)}s", tickRect.Left, tickRect.Top + TextMarginY, secTextColor, graphDC, false);
-            
+
             int subTicks = (int)(secondsTickDist / MinTickDistance);
             if (subTicks > 1 && subTicks % 2 == 0)
                 subTicks--;

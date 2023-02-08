@@ -65,34 +65,25 @@ public class ProfileData {
         [ProtoMember(1)] public List<(ProfileSample Sample, ResolvedProfileStack Stack)> Samples { get; set; }
     }
 
-    public void SaveSamples(string path) {
-        int parts = 2;
+    public static ProfileData MakeDummySamples(int countM, TimeSpan duration) {
+        countM *= 1000 * 1000;
+        var samples = new List<(ProfileSample Sample, ResolvedProfileStack Stack)>(countM);
+        var timePerSample = (double)duration.Ticks / countM;
 
-        while (true) {
-            try {
-                var newlist = new List<(ProfileSample Sample, ResolvedProfileStack Stack)>();
-                for (int i = 0; i < Samples.Count / parts; i++) {
-                    newlist.Add(Samples[i]);
-                }
+        var stack = new ResolvedProfileStack(0, new ProfileContext());
 
-                var state = new SampleStore() { Samples = newlist };
-                var data = StateSerializer.Serialize(state);
-                File.WriteAllBytes(path, data);
-                Trace.WriteLine($"Done with {parts}: {data.Length}");
-                return;
-            }
-            catch (Exception ex) {
-                Trace.WriteLine($"Failed with {parts}");
-                parts++;
-            }
+        for (int i = 0; i < countM; i++) {
+            var sample = new ProfileSample() {
+                Time = TimeSpan.FromTicks((long)(timePerSample * i)),
+                Weight = TimeSpan.FromTicks(10000)
+            };
+
+            samples.Add((sample, stack));
         }
+
+        return new ProfileData() { Samples = samples };
     }
 
-    public static ProfileData LoadSamples(string path) {
-        var state = StateSerializer.Deserialize<SampleStore>(path);
-        return new ProfileData() { Samples = state.Samples };
-    }  
-    
     public List<PerformanceCounter> SortedPerformanceCounters {
         get {
             var list = PerformanceCounters.ToValueList();
@@ -209,7 +200,7 @@ public class ProfileData {
         return GetFunctionProfile(function) != null;
     }
 
-    public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function, 
+    public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function,
                                                           FunctionDebugInfo debugInfo) {
         if (!FunctionProfiles.TryGetValue(function, out var profile)) {
             profile = new FunctionProfileData() { FunctionDebugInfo = debugInfo };
@@ -393,7 +384,7 @@ public class ProfileData {
                         var frameRva = resolvedFrame.FrameRVA;
                         var textFunction = resolvedFrame.Info.Function;
                         var funcProfile = profile.GetOrCreateFunctionProfile(resolvedFrame.Info.Function, resolvedFrame.Info.DebugInfo);
-                        
+
                         //? TODO: Info.Profile ends up being the func profile in the previous run
                         //? resolvedFrame.Info.Profile = funcProfile;
 
