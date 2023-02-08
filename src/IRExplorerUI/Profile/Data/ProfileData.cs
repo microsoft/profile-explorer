@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -59,6 +60,39 @@ public class ProfileData {
     public ProfileProcess Process { get; set; }
     public Dictionary<int, ProfileThread> Threads { get; set; }
 
+    [ProtoContract(SkipConstructor = true)]
+    class SampleStore {
+        [ProtoMember(1)] public List<(ProfileSample Sample, ResolvedProfileStack Stack)> Samples { get; set; }
+    }
+
+    public void SaveSamples(string path) {
+        int parts = 2;
+
+        while (true) {
+            try {
+                var newlist = new List<(ProfileSample Sample, ResolvedProfileStack Stack)>();
+                for (int i = 0; i < Samples.Count / parts; i++) {
+                    newlist.Add(Samples[i]);
+                }
+
+                var state = new SampleStore() { Samples = newlist };
+                var data = StateSerializer.Serialize(state);
+                File.WriteAllBytes(path, data);
+                Trace.WriteLine($"Done with {parts}: {data.Length}");
+                return;
+            }
+            catch (Exception ex) {
+                Trace.WriteLine($"Failed with {parts}");
+                parts++;
+            }
+        }
+    }
+
+    public static ProfileData LoadSamples(string path) {
+        var state = StateSerializer.Deserialize<SampleStore>(path);
+        return new ProfileData() { Samples = state.Samples };
+    }  
+    
     public List<PerformanceCounter> SortedPerformanceCounters {
         get {
             var list = PerformanceCounters.ToValueList();
