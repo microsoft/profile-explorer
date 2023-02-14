@@ -163,6 +163,10 @@ public class ProfileTraceInfo {
     public bool Is64Bit => PointerSize == 8;
     public TimeSpan ProfileDuration => ProfileEndTime - ProfileStartTime;
 
+    public ProfileTraceInfo(string tracePath = null) {
+        TraceFilePath = tracePath;
+    }
+
     public bool HasSameTraceFilePath(ProfileTraceInfo other) {
         if (!string.IsNullOrEmpty(TraceFilePath) &&
             !string.IsNullOrEmpty(other.TraceFilePath)) {

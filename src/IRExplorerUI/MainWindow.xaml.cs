@@ -478,10 +478,15 @@ namespace IRExplorerUI {
 
             if (sessionState_.Info.IsFileSession) {
                 title += $" - {sessionState_.Info.FilePath}";
-
+                
                 if (sessionState_.MainDocument != null &&
                     sessionState_.MainDocument.BinaryFileExists) {
-                    title += $" ({sessionState_.MainDocument.BinaryFile})";
+                    if (ProfileData != null && !string.IsNullOrEmpty(ProfileData.Report.TraceInfo.TraceFilePath)) {
+                        title += $" ({Utils.TryGetFileName(ProfileData.Report.TraceInfo.TraceFilePath)}, {sessionState_.MainDocument.BinaryFile})";
+                    }
+                    else {
+                        title += $" ({sessionState_.MainDocument.BinaryFile})";
+                    }
                 }
             }
             else {
@@ -1135,8 +1140,11 @@ namespace IRExplorerUI {
             }
 
             if (result != null) {
+                Utils.WaitForDebugger();
+
                 result.Report = report;
                 sessionState_.ProfileData = result;
+                UpdateWindowTitle();
             }
 
             return result != null;
@@ -1157,8 +1165,11 @@ namespace IRExplorerUI {
             }
 
             if (result != null) {
+                Utils.WaitForDebugger();
+                
                 result.Report = report;
                 sessionState_.ProfileData = result;
+                UpdateWindowTitle();
             }
 
             return result != null;
@@ -1214,7 +1225,7 @@ namespace IRExplorerUI {
 
         private void ViewProfileReportExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (ProfileData?.Report != null) {
-                ProfileReportPanel.ShowReport(ProfileData.Report, this);
+                ProfileReportPanel.ShowReportWindow(ProfileData.Report, this);
             }
         }
         
@@ -1295,6 +1306,10 @@ namespace IRExplorerUI {
                 case ToolPanelKind.Timeline: {
                     var panel = FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
                     await MarkFunctionSamples(node, panel);
+                    break;
+                }
+                case ToolPanelKind.Source: {
+                    await OpenProfileSourceFile(node);
                     break;
                 }
                 default: {

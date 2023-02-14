@@ -46,8 +46,8 @@ namespace IRExplorerUI.Profile {
             }
         }
 
-        public static void ShowReport(ProfileDataReport report, ISession session,
-                                      ProfileDataReport.ModuleStatus selectedModule = null) {
+        public static void ShowReportWindow(ProfileDataReport report, ISession session,
+                                            ProfileDataReport.ModuleStatus selectedModule = null) {
             var panel = new ProfileReportPanel(session);
             panel.TitleSuffix = $"Profile report";
 

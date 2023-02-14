@@ -350,6 +350,59 @@ namespace IRExplorerUI {
             return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
         }
 
+        public static string AsTimeString(this TimeSpan value, int digits = 2) {
+            return AsTimeString(value, value, digits);
+        }
+
+        public static string AsTimeString(this TimeSpan value, TimeSpan totalValue, int digits = 2) {
+            if (totalValue.TotalMinutes >= 60) {
+                return value.ToString("h\\:mm\\:ss");
+            }
+            else if (totalValue.TotalMinutes >= 10) {
+                return value.ToString("mm\\:ss");
+            }
+            else if (totalValue.TotalSeconds >= 60) {
+                return $"{value.Minutes}:{value.Seconds}";
+            }
+            else if (totalValue.TotalSeconds >= 10) {
+                return value.ToString("ss");
+            }
+            else if (totalValue.TotalSeconds >= 1) {
+                return $"{value.Seconds}";
+            }
+            else {
+                var roundedValue = value.TotalMilliseconds.TruncateToDigits(digits);
+                return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + " ms";
+            }
+        }
+
+        public static string AsTimeStringWithMilliseconds(this TimeSpan value, int digits = 2) {
+            return AsTimeStringWithMilliseconds(value, value, digits);
+        }
+
+        public static string AsTimeStringWithMilliseconds(this TimeSpan value, TimeSpan totalValue, int digits = 2) {
+            if (totalValue.TotalMinutes >= 60) {
+                return value.ToString("h\\:mm\\:ss\\.fff");
+            }
+            else if (totalValue.TotalMinutes >= 10) {
+                return value.ToString("mm\\:ss\\.fff");
+            }
+            else if (totalValue.TotalSeconds >= 60) {
+                return $"{value.Minutes}:{value:ss\\.fff}";
+            }
+            else if (totalValue.TotalSeconds >= 10) {
+                return value.ToString("ss\\.fff");
+            }
+            else if (totalValue.TotalSeconds >= 1) {
+                return $"{value.Seconds}:{value:\\.fff}";
+            }
+            else {
+                var roundedValue = value.TotalMilliseconds.TruncateToDigits(digits);
+                return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + " ms";
+            }
+        }
+
+
         public static double TruncateToDigits(this double value, int digits) {
             double factor = Math.Pow(10, digits);
             value *= factor;

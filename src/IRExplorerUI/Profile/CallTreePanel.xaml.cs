@@ -171,7 +171,28 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         new(async (obj) => { await SelectFunctionInPanel(obj, ToolPanelKind.FlameGraph); });
     public RelayCommand<object> SelectFunctionTimelineCommand =>
         new(async (obj) => { await SelectFunctionInPanel(obj, ToolPanelKind.Timeline); });
-    
+    public RelayCommand<object> SelectFunctionSourceCommand =>
+        new(async (obj) => { await SelectFunctionInPanel(obj, ToolPanelKind.Source); });
+
+    public RelayCommand<object> CopyFunctionNameCommand =>
+        new(async (obj) => {
+            if (obj is TreeNode node &&
+                node.Tag is ChildFunctionEx childInfo) {
+                var text = Session.CompilerInfo.NameProvider.GetFunctionName(childInfo.Function);
+                Clipboard.SetText(text);
+            }
+        });
+
+    public RelayCommand<object> CopyDemangledFunctionNameCommand =>
+        new(async (obj) => {
+            if (obj is TreeNode node &&
+                node.Tag is ChildFunctionEx childInfo) {
+                var options = FunctionNameDemanglingOptions.Default;
+                var text = Session.CompilerInfo.NameProvider.DemangleFunctionName(childInfo.Function, options);
+                Clipboard.SetText(text);
+            }
+        });
+
     private async Task SelectFunctionInPanel(object target, ToolPanelKind panelKind) {
         if (target is TreeNode node) {
             var childInfo = node.Tag as ChildFunctionEx;

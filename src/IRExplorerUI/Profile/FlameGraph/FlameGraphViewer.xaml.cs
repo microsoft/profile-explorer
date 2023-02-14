@@ -18,8 +18,10 @@ public partial class FlameGraphViewer : FrameworkElement {
     private bool isTimelineView_;
     private bool initialized_;
     private Brush markedNodeBackColor_;
+    private Brush selectedNodeBackColor_;
     private Pen searchResultBorderColor_;
     private Pen selectedNodeBorderColor_;
+    private Pen markedNodeBorderColor_;
 
     private Dictionary<FlameGraphNode, HighlightingStyle> hoverNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> markedNodes_;
@@ -38,8 +40,10 @@ public partial class FlameGraphViewer : FrameworkElement {
         hoverNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
         markedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
         selectedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
-        markedNodeBackColor_ = ColorBrushes.GetBrush("#D0E3F1");
-        selectedNodeBorderColor_ = ColorPens.GetPen("#0F92EF", 2);
+        markedNodeBackColor_ = ColorBrushes.GetBrush("#c3ebbc");
+        selectedNodeBackColor_ = ColorBrushes.GetBrush("#D0E3F1");
+        selectedNodeBorderColor_ = ColorPens.GetBoldPen(Colors.Black);
+        markedNodeBorderColor_ = ColorPens.GetPen(Colors.Black, 2);
         searchResultBorderColor_ = ColorPens.GetPen(Colors.Black, 2);
         SetupEvents();
     }
@@ -169,8 +173,8 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     private HighlightingStyle PickSelectedNodeStyle(HighlightingStyle style) {
-        var newColor = markedNodeBackColor_;
-        var newPen = ColorPens.GetBoldPen(Colors.Black);
+        var newColor = selectedNodeBackColor_;
+        var newPen = selectedNodeBorderColor_;
         return new HighlightingStyle(newColor, newPen);
     }
 
@@ -181,7 +185,7 @@ public partial class FlameGraphViewer : FrameworkElement {
 
     private HighlightingStyle PickMarkedNodeStyle(FlameGraphNode node, HighlightingStyle style) {
         var newColor = node.SearchResult.HasValue ? node.Style.BackColor : markedNodeBackColor_;
-        var newPen = node.SearchResult.HasValue  ? searchResultBorderColor_ : ColorPens.GetBoldPen(Colors.Black);
+        var newPen = node.SearchResult.HasValue  ? searchResultBorderColor_ : markedNodeBorderColor_;
         return new HighlightingStyle(newColor, newPen);
     }
 

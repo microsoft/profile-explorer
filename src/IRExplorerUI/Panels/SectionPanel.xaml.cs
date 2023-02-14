@@ -2809,7 +2809,7 @@ namespace IRExplorerUI {
 
         private void ModuleWarningImage_MouseUp(object sender, MouseButtonEventArgs e) {
             var moduleEx = ModulesList.SelectedItem as ModuleEx;
-            ProfileReportPanel.ShowReport(Session.ProfileData.Report, Session, moduleEx?.Status);
+            ProfileReportPanel.ShowReportWindow(Session.ProfileData.Report, Session, moduleEx?.Status);
         }
 
         public void MarkFunctions(List<IRTextFunction> list) {

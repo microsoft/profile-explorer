@@ -82,6 +82,25 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         new(async (obj) => { await SelectFunctionInPanel(ToolPanelKind.CallTree); });
     public RelayCommand<object> SelectFunctionTimelineCommand =>
         new(async (obj) => { await SelectFunctionInPanel(ToolPanelKind.Timeline); });
+    public RelayCommand<object> SelectFunctionSourceCommand =>
+        new(async (obj) => { await SelectFunctionInPanel(ToolPanelKind.Source); });
+
+    public RelayCommand<object> CopyFunctionNameCommand =>
+        new(async (obj) => {
+            if (GraphViewer.SelectedNode is { HasFunction: true }) {
+                var text = Session.CompilerInfo.NameProvider.GetFunctionName(GraphViewer.SelectedNode.CallTreeNode.Function);
+                Clipboard.SetText(text);
+            }
+        });
+
+    public RelayCommand<object> CopyDemangledFunctionNameCommand =>
+        new(async (obj) => {
+            if (GraphViewer.SelectedNode is { HasFunction: true }) {
+                var options = FunctionNameDemanglingOptions.Default;
+                var text = Session.CompilerInfo.NameProvider.DemangleFunctionName(GraphViewer.SelectedNode.CallTreeNode.Function, options);
+                Clipboard.SetText(text);
+            }
+        });
 
     private async Task SelectFunctionInPanel(ToolPanelKind panelKind) {
         if (GraphViewer.SelectedNode is { HasFunction: true }) {

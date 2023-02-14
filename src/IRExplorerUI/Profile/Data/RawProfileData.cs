@@ -228,8 +228,8 @@ public class RawProfileData {
         return (debugInfo, image);
     }
 
-    public RawProfileData(bool handlesDotNetEvents = false) {
-        traceInfo_ = new ProfileTraceInfo();
+    public RawProfileData(string tracePath, bool handlesDotNetEvents = false) {
+        traceInfo_ = new ProfileTraceInfo(tracePath);
         contexts_ = new List<ProfileContext>();
         contextsMap_ = new Dictionary<ProfileContext, int>();
         images_ = new List<ProfileImage>();
