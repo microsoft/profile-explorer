@@ -438,6 +438,8 @@ namespace IRExplorerUI {
                 return false;
             }
 
+            Trace.WriteLine($"Using data {ProfileFilePath}");
+
             var processIds = selectedProcSummary_.ConvertAll(proc => proc.Process.ProcessId);
 
             if (IsRecordMode) {
@@ -458,15 +460,18 @@ namespace IRExplorerUI {
                     ProfileLoadProgressCallback, task);
             }
 
-            report.TraceInfo ??= new ProfileTraceInfo(); // Not set on failure.
-            report.TraceInfo.TraceFilePath = ProfileFilePath;
+            if (report.TraceInfo == null) {
+                report.TraceInfo = new ProfileTraceInfo(); // Not set on failure.
+                report.TraceInfo.TraceFilePath = ProfileFilePath;
+            }
+
             IsLoadingProfile = false;
 
             if (!success && !task.IsCanceled) {
                 using var centerForm = new DialogCenteringHelper(this);
                 MessageBox.Show($"Failed to load profile file {ProfileFilePath}", "IR Explorer",
                     MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                ProfileReportPanel.ShowReport(report, Session);
+                ProfileReportPanel.ShowReportWindow(report, Session);
             }
 
             if (success) {
@@ -777,7 +782,7 @@ namespace IRExplorerUI {
             var report = sessionEx?.Report;
 
             if (report != null) {
-                ProfileReportPanel.ShowReport(report, Session);
+                ProfileReportPanel.ShowReportWindow(report, Session);
             }
         }
 

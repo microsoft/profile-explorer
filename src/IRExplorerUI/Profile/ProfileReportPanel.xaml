@@ -17,6 +17,17 @@
                         <Expander Header="Trace" IsExpanded="True">
                             <StackPanel Margin="0,4,0,0">
                                 <Grid>
+                                    <TextBlock VerticalAlignment="Center" Text="Trace source" />
+                                    <TextBox
+                                        Margin="100,1,0,1"
+                                        VerticalAlignment="Center"
+                                        Background="Transparent"
+                                        BorderBrush="Transparent"
+                                        Foreground="DarkBlue"
+                                        IsReadOnly="True"
+                                        Text="{Binding TraceInfo.TraceFilePath}" />
+                                </Grid>
+                                <Grid>
                                     <TextBlock VerticalAlignment="Center" Text="Process" />
                                     <TextBox
                                         Margin="100,1,0,1"

@@ -20,6 +20,7 @@ public sealed class ETWEventProcessor : IDisposable {
     const int MaxCoreCount = 4096;
 
     private ETWTraceEventSource source_;
+    private string tracePath_;
     private bool isRealTime_;
     private bool handleDotNetEvents_;
     private int acceptedProcessId_;
@@ -53,6 +54,7 @@ public sealed class ETWEventProcessor : IDisposable {
         Debug.Assert(File.Exists(tracePath));
         childAcceptedProcessIds_ = new List<int>();
         source_ = new ETWTraceEventSource(tracePath);
+        tracePath_ = tracePath;
         providerOptions_ = providerOptions;
         acceptedProcessId_ = acceptedProcessId;
     }
@@ -87,7 +89,7 @@ public sealed class ETWEventProcessor : IDisposable {
         };
 
         // Use a dummy process summary to collect all the process info.
-        RawProfileData profile = new();
+        RawProfileData profile = new(tracePath_);
         var summaryBuilder = new ProcessSummaryBuilder(profile);
 
         int lastReportedSample = 0;
@@ -213,7 +215,7 @@ public sealed class ETWEventProcessor : IDisposable {
             }
         };
 
-        RawProfileData profile = new(handleDotNetEvents_);
+        RawProfileData profile = new(tracePath_, handleDotNetEvents_);
 
         source_.Kernel.ProcessStartGroup += data => {
             var proc = new ProfileProcess(data.ProcessID, data.ParentID,

@@ -733,14 +733,14 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         var textY = topMargin_ + 2;
         string text = "";
         var slice = TimeToSlice(time);
+        var timeDiff = endTime_ - startTime_;
 
         if (slice.HasValue) {
             double cpuUsage = EstimateCpuUsage(slice.Value, slices_[0].TimePerSlice, samplingInterval_);
-            text += $"{cpuUsage:F2}, {time.AsMillisecondsString()}";
-            //text += $" (W {slice.Value.Weight.AsSecondsString()})";
+            text += $"{cpuUsage:F2}, {time.AsTimeStringWithMilliseconds(timeDiff)}";
         }
         else {
-            text = time.AsMillisecondsString();
+            text = time.AsTimeStringWithMilliseconds(timeDiff);
         }
 
         DrawText(text, positionLineX_, textY, Brushes.Black, graphDC, true, backColor_, sampleBorderColor_,
@@ -880,7 +880,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         for (double x = startX; x < endX; x += secondsTickDist) {
             var tickRect = new Rect(x - visibleArea_.Left, visibleArea_.Top, 3, 4);
             graphDC.DrawRectangle(Brushes.Black, null, tickRect);
-            DrawText($"{(int)Math.Round(currentSec)}s", tickRect.Left, tickRect.Top + TextMarginY, secTextColor, graphDC, false);
+            DrawText(TimeSpan.FromSeconds(currentSec).AsTimeString(timeDiff), 
+                     tickRect.Left, tickRect.Top + TextMarginY, secTextColor, graphDC, false);
 
             int subTicks = (int)(secondsTickDist / MinTickDistance);
             if (subTicks > 1 && subTicks % 2 == 0)

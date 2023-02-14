@@ -63,7 +63,25 @@
                         Header="Open Function in New Tab"
                         InputGestureText="Ctrl+Shift+Return"
                         ToolTip="Open the function ASM view in a new tab" />
+                    <MenuItem
+                        Command="{Binding SelectFunctionSourceCommand}"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Open Source File"
+                        ToolTip="Open function in Source File panel" />
                     <Separator />
+
+                    <MenuItem
+                        Command="{Binding CopyFunctionNameCommand}"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Copy Function Name"
+                        ToolTip="Copy the function name to the clipboard" />
+                    <MenuItem
+                        Command="{Binding CopyDemangledFunctionNameCommand}"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Copy Demangled Function Name"
+                        ToolTip="Copy the demangled function name to the clipboard (C/C++)" />
+                    <Separator />
+
                     <MenuItem
                         Command="local:CallTreeCommand.MarkInstance"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"

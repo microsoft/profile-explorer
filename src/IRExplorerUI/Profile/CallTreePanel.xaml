@@ -1,15 +1,15 @@
 ﻿<irExplorerUi:ToolPanelControl
-    d:DesignHeight="450"
-    d:DesignWidth="800"
-    mc:Ignorable="d"
     x:Class="IRExplorerUI.Profile.CallTreePanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
     xmlns:local="clr-namespace:IRExplorerUI.Profile"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:tree="clr-namespace:Aga.Controls.Tree;assembly=TreeListView"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
     <irExplorerUi:ToolPanelControl.CommandBindings>
         <CommandBinding Command="local:CallTreeCommand.ExpandHottestCallPath" Executed="ExpandHottestCallPathExecuted" />
         <CommandBinding Command="local:CallTreeCommand.CollapseCallPath" Executed="CollapseCallPathExecuted" />
@@ -31,27 +31,27 @@
         </Grid.RowDefinitions>
 
         <DockPanel
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
             Grid.Row="0"
-            HorizontalAlignment="Stretch">
+            HorizontalAlignment="Stretch"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
             <ToolBarTray
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                Grid.Column="2"
                 Grid.Row="0"
+                Grid.Column="2"
                 Height="28"
                 HorizontalAlignment="Stretch"
-                IsLocked="True"
-                VerticalAlignment="Top">
+                VerticalAlignment="Top"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                IsLocked="True">
                 <ToolBar
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     HorizontalAlignment="Stretch"
-                    Loaded="ToolBar_Loaded"
-                    VerticalAlignment="Top">
+                    VerticalAlignment="Top"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Loaded="ToolBar_Loaded">
 
                     <Button
+                        Margin="4,0,0,0"
                         Command="local:CallTreeCommand.GoBack"
                         CommandTarget="{Binding ElementName=GraphHost}"
-                        Margin="4,0,0,0"
                         ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
                         <StackPanel Orientation="Horizontal">
                             <Image Source="{StaticResource DockLeftIcon}" />
@@ -86,57 +86,57 @@
                         Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <Image
+                                Width="16"
                                 Height="16"
                                 Margin="0,1,0,0"
-                                Source="{StaticResource MergeIcon}"
-                                Width="16" />
+                                Source="{StaticResource MergeIcon}" />
                             <TextBlock Text="Combine" />
                         </StackPanel>
                     </ToggleButton>
 
                     <ToggleButton
                         Height="20"
-                        IsChecked="{Binding Path=SyncSelection, Mode=TwoWay}"
                         Margin="0,0,0,0"
                         Padding="0,0,2,0"
+                        IsChecked="{Binding Path=SyncSelection, Mode=TwoWay}"
                         ToolTip="Sync functions in other panels with selection">
                         <StackPanel Orientation="Horizontal">
                             <Image
+                                Width="16"
                                 Height="16"
                                 Margin="0,1,0,0"
-                                Source="{StaticResource SwitchIcon}"
-                                Width="16" />
+                                Source="{StaticResource SwitchIcon}" />
                             <TextBlock Text="Sync" />
                         </StackPanel>
                     </ToggleButton>
 
                     <ToggleButton
                         Height="20"
-                        IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
                         Margin="0,0,0,0"
                         Padding="0,0,2,0"
+                        IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
                         ToolTip="Sync Source File panel with selection">
                         <Image
+                            Width="16"
                             Height="16"
                             Margin="0,1,0,0"
-                            Source="{StaticResource SourceIcon}"
-                            Width="16" />
+                            Source="{StaticResource SourceIcon}" />
                     </ToggleButton>
 
 
                     <ToggleButton
                         Height="20"
-                        IsChecked="{Binding Path=ShowNodePanel, Mode=TwoWay}"
-                        IsEnabled="False"
                         Margin="0,0,0,0"
                         Padding="0,0,2,0"
+                        IsChecked="{Binding Path=ShowNodePanel, Mode=TwoWay}"
+                        IsEnabled="False"
                         ToolTip="Enable/disable function details panel">
                         <StackPanel Orientation="Horizontal">
                             <Image
+                                Width="16"
                                 Height="16"
                                 Margin="0,1,0,0"
-                                Source="{StaticResource ListIcon}"
-                                Width="16" />
+                                Source="{StaticResource ListIcon}" />
                             <TextBlock Text="Details" />
                         </StackPanel>
                     </ToggleButton>
@@ -145,27 +145,27 @@
                     <Image Source="{StaticResource SearchIcon}" />
                     <Grid Height="24">
                         <TextBox
+                            x:Name="FunctionFilter"
+                            Width="200"
+                            Margin="4,0,0,0"
+                            HorizontalAlignment="Center"
+                            VerticalContentAlignment="Center"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                            HorizontalAlignment="Center"
-                            Margin="4,0,0,0"
                             TabIndex="4"
                             TextChanged="FunctionFilter_TextChanged"
-                            ToolTip="Search functions based on a case-insensitive string (Ctrl+F)"
-                            VerticalContentAlignment="Center"
-                            Width="200"
-                            x:Name="FunctionFilter">
+                            ToolTip="Search functions based on a case-insensitive string (Ctrl+F)">
                             <TextBox.InputBindings>
                                 <KeyBinding
+                                    Key="Escape"
                                     Command="local:CallTreeCommand.ClearSearch"
-                                    CommandParameter="{Binding ElementName=FunctionFilter}"
-                                    Key="Escape" />
+                                    CommandParameter="{Binding ElementName=FunctionFilter}" />
                             </TextBox.InputBindings>
                         </TextBox>
                         <TextBlock
+                            Margin="8,4"
                             Foreground="DimGray"
                             IsHitTestVisible="False"
-                            Margin="8,4"
                             Text="Search functions"
                             Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
 
@@ -178,9 +178,9 @@
                         TabIndex="5"
                         ToolTip="Reset searched function">
                         <Image
+                            Width="16"
                             Height="16"
-                            Source="{StaticResource ClearIcon}"
-                            Width="16" />
+                            Source="{StaticResource ClearIcon}" />
                     </Button>
 
                     <Button
@@ -197,10 +197,10 @@
                     </Button>
 
                     <TextBlock
-                        HorizontalAlignment="Center"
                         Margin="4,0,0,0"
-                        Text="{Binding Path=SearchResultText, UpdateSourceTrigger=PropertyChanged}"
+                        HorizontalAlignment="Center"
                         VerticalAlignment="Center"
+                        Text="{Binding Path=SearchResultText, UpdateSourceTrigger=PropertyChanged}"
                         Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
                 </ToolBar>
             </ToolBarTray>
@@ -213,19 +213,19 @@
         </DockPanel>
 
         <tree:TreeList
+            x:Name="CallTree"
+            Grid.Row="1"
+            Panel.ZIndex="2"
             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             BorderBrush="{x:Null}"
             BorderThickness="0,0,0,0"
-            Grid.Row="1"
             IsTextSearchEnabled="False"
-            Panel.ZIndex="2"
             SelectionChanged="CallTree_SelectionChanged"
-            SelectionMode="Single"
-            x:Name="CallTree">
+            SelectionMode="Single">
             <tree:TreeList.View>
                 <GridView>
                     <GridViewColumn Width="300">
-                        <GridViewColumnHeader Content="Function" x:Name="ChildColumnHeader" />
+                        <GridViewColumnHeader x:Name="ChildColumnHeader" Content="Function" />
                         <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -243,7 +243,7 @@
                     </GridViewColumn>
 
                     <GridViewColumn Width="150">
-                        <GridViewColumnHeader Content="Time (total)" x:Name="ChildTimeColumnHeader" />
+                        <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="Time (total)" />
 
                         <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -253,11 +253,11 @@
 
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <Border Background="{Binding BackColor}" HorizontalAlignment="Stretch">
+                                <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
                                     <ContentControl
+                                        HorizontalAlignment="Stretch"
                                         Content="{Binding}"
                                         ContentTemplate="{StaticResource ProfilePercentageTemplate}"
-                                        HorizontalAlignment="Stretch"
                                         Visibility="{Binding HasCallTreeNode, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 </Border>
                             </DataTemplate>
@@ -265,7 +265,7 @@
                     </GridViewColumn>
 
                     <GridViewColumn Width="150">
-                        <GridViewColumnHeader Content="Time (self)" x:Name="ExclusiveChildTimeColumnHeader" />
+                        <GridViewColumnHeader x:Name="ExclusiveChildTimeColumnHeader" Content="Time (self)" />
 
                         <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -275,11 +275,11 @@
 
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <Border Background="{Binding BackColor2}" HorizontalAlignment="Stretch">
+                                <Border HorizontalAlignment="Stretch" Background="{Binding BackColor2}">
                                     <ContentControl
+                                        HorizontalAlignment="Stretch"
                                         Content="{Binding}"
                                         ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}"
-                                        HorizontalAlignment="Stretch"
                                         Visibility="{Binding HasCallTreeNode, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 </Border>
                             </DataTemplate>
@@ -287,7 +287,7 @@
                     </GridViewColumn>
 
                     <GridViewColumn Width="120">
-                        <GridViewColumnHeader Content="Module" x:Name="ChildAlternateNameColumnHeader" />
+                        <GridViewColumnHeader x:Name="ChildAlternateNameColumnHeader" Content="Module" />
 
                         <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -352,6 +352,26 @@
                         Header="Open Function in New Tab"
                         InputGestureText="Ctrl+Shift+Return"
                         ToolTip="" />
+                    <MenuItem
+                        Command="{Binding SelectFunctionSourceCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=CallTree}"
+                        Header="Open Source File"
+                        ToolTip="Open function in Source File panel" />
+                    <Separator />
+
+                    <MenuItem
+                        Command="{Binding CopyFunctionNameCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=CallTree}"
+                        Header="Copy Function Name"
+                        ToolTip="Copy the function name to the clipboard" />
+                    <MenuItem
+                        Command="{Binding CopyDemangledFunctionNameCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=CallTree}"
+                        Header="Copy Demangled Function Name"
+                        ToolTip="Copy the demangled function name to the clipboard (C/C++)" />
                     <Separator />
 
                     <MenuItem
@@ -359,19 +379,22 @@
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=CallTree}"
                         Header="Select in Call Tree"
+                        ToolTip="Select the function instance in the Call Tree panel"
                         Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <MenuItem
                         Command="{Binding SelectFunctionFlameGraphCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=CallTree}"
-                        Header="Select in Flame Graph" />
+                        Header="Select in Flame Graph"
+                        ToolTip="Select the function instance in the Flame Graph panel" />
 
                     <MenuItem
                         Command="{Binding SelectFunctionTimelineCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=CallTree}"
-                        Header="Select in Timeline" />
+                        Header="Select in Timeline"
+                        ToolTip="Select the function instance in the Timeline panel" />
                 </ContextMenu>
             </ListView.ContextMenu>
         </tree:TreeList>
@@ -379,35 +402,35 @@
 
     <irExplorerUi:ToolPanelControl.InputBindings>
         <KeyBinding
-            Command="local:CallTreeCommand.ExpandHottestCallPath"
             Key="OemPlus"
+            Command="local:CallTreeCommand.ExpandHottestCallPath"
             Modifiers="Ctrl" />
         <KeyBinding
-            Command="local:CallTreeCommand.CollapseCallPath"
             Key="OemMinus"
+            Command="local:CallTreeCommand.CollapseCallPath"
             Modifiers="Ctrl" />
-        <KeyBinding Command="local:CallTreeCommand.SelectFunction" Key="Return" />
+        <KeyBinding Key="Return" Command="local:CallTreeCommand.SelectFunction" />
         <KeyBinding
+            Key="Return"
             Command="local:CallTreeCommand.OpenFunction"
-            Key="Return"
             Modifiers="Ctrl" />
         <KeyBinding
-            Command="local:CallTreeCommand.OpenFunctionInNewTab"
             Key="Return"
+            Command="local:CallTreeCommand.OpenFunctionInNewTab"
             Modifiers="Ctrl+Shift" />
         <KeyBinding
-            Command="local:CallTreeCommand.FocusSearch"
             Key="F"
+            Command="local:CallTreeCommand.FocusSearch"
             Modifiers="Ctrl" />
-        <KeyBinding Command="local:CallTreeCommand.GoBack" Key="Back" />
+        <KeyBinding Key="Back" Command="local:CallTreeCommand.GoBack" />
         <KeyBinding
-            Command="local:CallTreeCommand.PreviousSearchResult"
             Key="F3"
+            Command="local:CallTreeCommand.PreviousSearchResult"
             Modifiers="Shift" />
-        <KeyBinding Command="local:CallTreeCommand.NextSearchResult" Key="F3" />
+        <KeyBinding Key="F3" Command="local:CallTreeCommand.NextSearchResult" />
         <KeyBinding
-            Command="local:CallTreeCommand.CollapseNodes"
             Key="R"
+            Command="local:CallTreeCommand.CollapseNodes"
             Modifiers="Ctrl" />
     </irExplorerUi:ToolPanelControl.InputBindings>
 </irExplorerUi:ToolPanelControl>
