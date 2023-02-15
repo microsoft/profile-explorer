@@ -1140,8 +1140,6 @@ namespace IRExplorerUI {
             }
 
             if (result != null) {
-                Utils.WaitForDebugger();
-
                 result.Report = report;
                 sessionState_.ProfileData = result;
                 UpdateWindowTitle();
@@ -1165,8 +1163,6 @@ namespace IRExplorerUI {
             }
 
             if (result != null) {
-                Utils.WaitForDebugger();
-                
                 result.Report = report;
                 sessionState_.ProfileData = result;
                 UpdateWindowTitle();
