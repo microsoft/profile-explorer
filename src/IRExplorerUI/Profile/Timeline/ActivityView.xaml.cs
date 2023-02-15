@@ -976,7 +976,10 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
     private Slice? TimeToSlice(TimeSpan time) {
-        int sliceIndex = (int)(time.Ticks / slices_[0].TimePerSlice.Ticks);
+        var ticks = slices_[0].TimePerSlice.Ticks;
+        if (ticks == 0) return null;
+        
+        int sliceIndex = (int)(time.Ticks / ticks);
 
         if (sliceIndex >= slices_[0].Slices.Count) {
             return null;
