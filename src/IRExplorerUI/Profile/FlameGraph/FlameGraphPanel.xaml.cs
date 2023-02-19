@@ -339,35 +339,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         SelectNextSearchResult();
     }
     
-    private async void SelectFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
-        var selectedNode = GraphHost.GraphViewer.SelectedNode;
-        if (selectedNode != null && selectedNode.HasFunction) {
-            await Session.SwitchActiveProfileFunction(selectedNode.CallTreeNode);
-        }
-    }
-
-    private async void OpenFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
-        await OpenFunction(GraphHost.GraphViewer.SelectedNode, OpenSectionKind.ReplaceCurrent);
-    }
-    
-    private async Task OpenFunction(FlameGraphNode node, OpenSectionKind openMode) {
-        if (node != null && node.HasFunction) {
-            await Session.OpenProfileFunction(node.CallTreeNode, openMode);
-        }
-    }
-
-    private async void OpenFunctionInNewTabExecuted(object sender, ExecutedRoutedEventArgs e) {
-        await OpenFunction(GraphHost.GraphViewer.SelectedNode, OpenSectionKind.NewTabDockRight);
-    }
-
-    private async void ChangeRootNodeExecuted(object sender, ExecutedRoutedEventArgs e) {
-        if (GraphHost.GraphViewer.SelectedNode != null) {
-            await GraphHost.ChangeRootNode(GraphHost.GraphViewer.SelectedNode);
-        }
-    }
-
     public void MarkFunctions(List<ProfileCallTreeNode> nodes) {
-        GraphHost.MarkFunctions(nodes);
+        GraphHost.MarkFunctions(nodes, GraphHost.GraphViewer.SelectedNodeStyle);
     }
 
     public void ClearMarkedFunctions() {
