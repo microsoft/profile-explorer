@@ -884,14 +884,15 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     private void MarkAllInstancesExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (GraphViewer.SelectedNode != null &&
             GraphViewer.SelectedNode.HasFunction) {
-            MarkFunctionInstances(GraphViewer.SelectedNode.CallTreeNode.Function);
+            MarkFunctionInstances(GraphViewer.SelectedNode.CallTreeNode.Function,
+                                  GraphViewer.MarkedNodeStyle);
         }
     }
 
     private void MarkInstanceExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (GraphViewer.SelectedNode != null &&
             GraphViewer.SelectedNode.HasFunction) {
-            GraphViewer.MarkNode(GraphViewer.SelectedNode);
+            GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedNodeStyle);
         }
     }
 
@@ -920,21 +921,21 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
 
-    public void MarkFunctions(List<ProfileCallTreeNode> nodes) {
+    public void MarkFunctions(List<ProfileCallTreeNode> nodes, HighlightingStyle style) {
         if (!IsInitialized) {
             return;
         }
 
-        GraphViewer.MarkNodes(nodes);
+        GraphViewer.MarkNodes(nodes, style);
     }
 
-    public void MarkFunctionInstances(IRTextFunction func) {
+    public void MarkFunctionInstances(IRTextFunction func, HighlightingStyle style) {
         if (!IsInitialized) {
             return;
         }
 
         var nodes = callTree_.GetCallTreeNodes(func);
-        GraphViewer.MarkNodes(nodes);
+        GraphViewer.MarkNodes(nodes, style);
     }
 
     public void ClearMarkedFunctions() {

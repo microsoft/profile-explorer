@@ -98,13 +98,7 @@ public class FlameGraphRenderer {
     }
 
     private void SetupNode(FlameGraphNode node) {
-        //? TODO: Palette based on module
-        //? int colorIndex = Math.Min(node.Depth, palettes_.Count - 1);
-        var palette = node.HasFunction ? palettes_[node.CallTreeNode.Kind] : palettes_[ProfileCallTreeNodeKind.Unset];
-
-        int colorIndex = node.Depth % palette.Count;
-        var backColor = palette[palette.Count - colorIndex - 1];
-        node.Style = new HighlightingStyle(backColor, defaultBorder_);
+        node.Style = GetNodeStyle(node);
         node.TextColor = Brushes.DarkBlue;
         node.ModuleTextColor = Brushes.DimGray;
         node.WeightTextColor = Brushes.Maroon;
@@ -115,6 +109,16 @@ public class FlameGraphRenderer {
                 SetupNode(childNode);
             }
         }
+    }
+
+    public HighlightingStyle GetNodeStyle(FlameGraphNode node) {
+        //? TODO: Palette based on module
+        //? int colorIndex = Math.Min(node.Depth, palettes_.Count - 1);
+        //? TODO: Cache style based on colorIndex
+        var palette = node.HasFunction ? palettes_[node.CallTreeNode.Kind] : palettes_[ProfileCallTreeNodeKind.Unset];
+        int colorIndex = node.Depth % palette.Count;
+        var backColor = palette[palette.Count - colorIndex - 1];
+        return new HighlightingStyle(backColor, defaultBorder_);
     }
 
     public void Redraw() {
