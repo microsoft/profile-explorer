@@ -28,8 +28,8 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
     private ProfileData profileData_;
 
     private const int IMAGE_LOCK_COUNT = 64;
-    private object lockObject;
-    private object[] imageLocks;
+    private object lockObject_;
+    private object[] imageLocks_;
     private ConcurrentDictionary<int, ModuleInfo> imageModuleMap_;
 
     [ThreadStatic]
@@ -42,12 +42,12 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         profileData_ = new ProfileData();
 
         // Data structs used for module loading.
-        lockObject = new();
+        lockObject_ = new();
         imageModuleMap_ = new ConcurrentDictionary<int, ModuleInfo>();
-        imageLocks = new object[IMAGE_LOCK_COUNT];
+        imageLocks_ = new object[IMAGE_LOCK_COUNT];
 
-        for (int i = 0; i < imageLocks.Length; i++) {
-            imageLocks[i] = new object();
+        for (int i = 0; i < imageLocks_.Length; i++) {
+            imageLocks_[i] = new object();
         }
     }
 
@@ -280,7 +280,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
             // Count time in the profile image.
             //? TODO: Avoid lock by summing per thread, accumulate at the end
-            lock (profileData_) {
+            lock (lockObject_) {
                 profileData_.TotalWeight += sampleWeight;
 
                 if (stack.IsUnknown) {
@@ -367,7 +367,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
             // Count exclusive time for each module in the executable.
             if (isTopFrame && stackModules.Add(frameImage.Id)) {
-                lock (profileData_) {
+                lock (lockObject_) {
                     profileData_.AddModuleSample(frameImage.ModuleName, sampleWeight);
                 }
             }
@@ -440,7 +440,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             // of the func. across all call stacks.
             FunctionProfileData funcProfile = null;
 
-            lock (profileData_) {
+            lock (lockObject_) {
                 //? TODO:  Use RW lock
                 funcProfile = profileData_.GetOrCreateFunctionProfile(textFunction, funcDebugInfo);
             }
@@ -488,7 +488,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
             // Count exclusive time for each module in the executable.
             if (isTopFrame && stackModules.Add(resolvedFrame.Info.Image.Id)) {
-                lock (lockObject) {
+                lock (lockObject_) {
                     //? TODO: Avoid lock by summing per thread, accumulate at the end
                     //? TODO: Also, don't use mod name as key, use imageId
                     profileData_.AddModuleSample(resolvedFrame.Info.Image.ModuleName, sampleWeight);
@@ -674,7 +674,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         }
 
         if (!imageModuleMap_.TryGetValue(queryImage.Id, out var imageModule)) {
-            lock (imageLocks[queryImage.Id % IMAGE_LOCK_COUNT]) {
+            lock (imageLocks_[queryImage.Id % IMAGE_LOCK_COUNT]) {
                 if (imageModuleMap_.TryGetValue(queryImage.Id, out imageModule)) {
                     return imageModule;
                 }
@@ -770,7 +770,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             }
 
             if (frameImage != null) {
-                lock (profileData_) {
+                lock (lockObject_) {
                     profileData_.AddModuleCounter(frameImage.ModuleName, counter.CounterId, 1);
                 }
 
@@ -815,7 +815,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                     FunctionProfileData profile = null;
 
                     //? TODO: Use RW lock
-                    lock (profileData_) {
+                    lock (lockObject_) {
                         profile = profileData_.GetOrCreateFunctionProfile(textFunction, funcInfo);
                     }
 
