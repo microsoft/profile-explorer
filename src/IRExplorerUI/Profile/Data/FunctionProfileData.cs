@@ -21,10 +21,6 @@ public class FunctionProfileData {
     [ProtoMember(4)]
     public Dictionary<long, TimeSpan> InstructionWeight { get; set; } // Instr. offset mapping
     [ProtoMember(5)]
-    public Dictionary<IRTextFunctionId, TimeSpan> CalleesWeights { get; set; } //? TODO: Remove, unused
-    [ProtoMember(6)]
-    public Dictionary<IRTextFunctionId, TimeSpan> CallerWeights { get; set; } //? TODO: Remove, unused
-    [ProtoMember(7)]
     public Dictionary<long, PerformanceCounterValueSet> InstructionCounters { get; set; }
     [ProtoMember(8)]
     public FunctionDebugInfo FunctionDebugInfo { get; set; }
@@ -33,8 +29,6 @@ public class FunctionProfileData {
     public int SampleEndIndex { get; set; }
 
     public bool HasPerformanceCounters => InstructionCounters.Count > 0;
-    public bool HasCallers => CallerWeights != null && CallerWeights.Count > 0;
-    public bool HasCallees => CalleesWeights != null && CalleesWeights.Count > 0;
 
     //? TODO
     //? - save unique stacks with inclusive samples for each frame
@@ -51,8 +45,6 @@ public class FunctionProfileData {
     [ProtoAfterDeserialization]
     private void InitializeReferenceMembers() {
         InstructionWeight ??= new Dictionary<long, TimeSpan>();
-        CalleesWeights ??= new Dictionary<IRTextFunctionId, TimeSpan>();
-        CallerWeights ??= new Dictionary<IRTextFunctionId, TimeSpan>();
         InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>();
         
         SampleStartIndex = int.MaxValue;
@@ -69,33 +61,7 @@ public class FunctionProfileData {
     }
 
     //? TODO: Dead
-    public void AddChildSample(IRTextFunction childFunc, TimeSpan weight) {
-        lock (CalleesWeights) {
-            var key = new IRTextFunctionId(childFunc);
-
-            if (CalleesWeights.TryGetValue(key, out var currentWeight)) {
-                CalleesWeights[key] = currentWeight + weight;
-            }
-            else {
-                CalleesWeights[key] = weight;
-            }
-        }
-    }
-
-    //? TODO: Dead
-    public void AddCallerSample(IRTextFunction callerFunc, TimeSpan weight) {
-        lock (CallerWeights) {
-            var key = new IRTextFunctionId(callerFunc);
-
-            if (CallerWeights.TryGetValue(key, out var currentWeight)) {
-                CallerWeights[key] = currentWeight + weight;
-            }
-            else {
-                CallerWeights[key] = weight;
-            }
-        }
-    }
-
+    
     public double ScaleWeight(TimeSpan weight) {
         return (double)weight.Ticks / (double)Weight.Ticks;
     }
@@ -196,8 +162,6 @@ public class FunctionProfileData {
         SampleStartIndex = int.MaxValue;
         SampleEndIndex = int.MinValue;
         InstructionWeight?.Clear();
-        CalleesWeights?.Clear();
-        CallerWeights?.Clear();
         InstructionCounters?.Clear();
     }
 
