@@ -9,13 +9,15 @@ using System.Windows.Media;
 using System.Diagnostics;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using IRExplorerCore.Utilities;
 using Brush = System.Windows.Media.Brush;
 using Size = System.Windows.Size;
 using IRExplorerUI.Profile;
+using IRExplorerCore;
 
 namespace IRExplorerUI.Profile {
-    public class FlameGraphNode : SearchableProfileItem {
-        internal const double DefaultMargin = 4;
+    public class FlameGraphNode : SearchableProfileItem, IEquatable<FlameGraphNode> {
+       internal const double DefaultMargin = 4;
         internal const double ExtraValueMargin = 20;
         internal const double MinVisibleRectWidth = 4;
         internal const double RecomputeVisibleRectWidth = MinVisibleRectWidth * 4;
@@ -54,6 +56,7 @@ namespace IRExplorerUI.Profile {
 
         public bool HasFunction => CallTreeNode != null;
         public bool HasChildren => Children is { Count: > 0 };
+        public IRTextFunction Function => CallTreeNode?.Function;
 
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
@@ -66,6 +69,46 @@ namespace IRExplorerUI.Profile {
 
         public override string ModuleName =>
             CallTreeNode != null && CallTreeNode.Function != null ? CallTreeNode.ModuleName : null;
+
+        public bool Equals(FlameGraphNode other) {
+            if (ReferenceEquals(null, other)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other)) {
+                return true;
+            }
+
+            return Equals(CallTreeNode, other.CallTreeNode);
+        }
+
+        public override bool Equals(object obj) {
+            if (ReferenceEquals(null, obj)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj)) {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType()) {
+                return false;
+            }
+
+            return Equals((FlameGraphNode)obj);
+        }
+
+        public override int GetHashCode() {
+            return (CallTreeNode != null ? CallTreeNode.GetHashCode() : 0);
+        }
+
+        public static bool operator ==(FlameGraphNode left, FlameGraphNode right) {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(FlameGraphNode left, FlameGraphNode right) {
+            return !Equals(left, right);
+        }
     }
 
     public sealed class FlameGraphGroupNode : FlameGraphNode {
@@ -146,6 +189,10 @@ namespace IRExplorerUI.Profile {
                     resultList.Add(fgNode);
                 }
             }
+        }
+
+        public FlameGraphNode GetFlameGraphNode(ProfileCallTreeNode callNode) {
+            return treeNodeToFgNodeMap_.GetValueOrNull(callNode);
         }
 
         public List<FlameGraphNode> SearchNodes(string text, bool includeModuleName = true) {
