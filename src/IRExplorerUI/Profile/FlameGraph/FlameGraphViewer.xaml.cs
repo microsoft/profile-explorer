@@ -25,6 +25,7 @@ public partial class FlameGraphViewer : FrameworkElement {
 
     private Dictionary<FlameGraphNode, HighlightingStyle> hoverNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> markedNodes_;
+    private Dictionary<FlameGraphNode, HighlightingStyle> fixedMarkedNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> selectedNodes_;
 
     public new bool IsInitialized => initialized_;
@@ -35,16 +36,25 @@ public partial class FlameGraphViewer : FrameworkElement {
     public FlameGraphNode SelectedNode => selectedNode_;
     public ISession Session { get; set; }
 
+    public HighlightingStyle SelectedNodeStyle { get; private set; }
+    public HighlightingStyle MarkedNodeStyle { get; private set; }
+    public HighlightingStyle MarkedColoredNodeStyle(Color color) => new HighlightingStyle(color, markedNodeBorderColor_);
+
     public FlameGraphViewer() {
         InitializeComponent();
         hoverNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
         markedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
+        fixedMarkedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
         selectedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
         markedNodeBackColor_ = ColorBrushes.GetBrush("#c3ebbc");
         selectedNodeBackColor_ = ColorBrushes.GetBrush("#D0E3F1");
         selectedNodeBorderColor_ = ColorPens.GetBoldPen(Colors.Black);
         markedNodeBorderColor_ = ColorPens.GetPen(Colors.Black, 2);
         searchResultBorderColor_ = ColorPens.GetPen(Colors.Black, 2);
+
+        SelectedNodeStyle = new HighlightingStyle(selectedNodeBackColor_, selectedNodeBorderColor_);
+        MarkedNodeStyle = new HighlightingStyle(markedNodeBackColor_, markedNodeBorderColor_);
+
         SetupEvents();
     }
 
@@ -82,9 +92,6 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     private void HighlightNode(FlameGraphNode node, HighlighingType type, bool includeParents = false, bool isParent = false) {
-        var group = GetHighlightedNodeGroup(type);
-        group[node] = node.Style;
-
         node.Style = type switch {
             HighlighingType.Hovered => isParent ? PickHoveredParentNodeStyle(node.Style) : PickHoveredNodeStyle(node.Style),
             HighlighingType.Selected => isParent ? PickSelectedParentNodeStyle(node.Style) : PickSelectedNodeStyle(node.Style),
@@ -95,21 +102,33 @@ public partial class FlameGraphViewer : FrameworkElement {
             HighlightNode(node.Parent, type, includeParents, true);
         }
 
+        var group = GetHighlightedNodeGroup(type);
+        group[node] = node.Style;
+
         if (!isParent) {
             renderer_.Redraw();
         }
     }
 
-    private void MarkNode(FlameGraphNode node, HighlighingType type) {
+    private void MarkNodeImpl(FlameGraphNode node, HighlighingType type, HighlightingStyle style = null, bool overwriteStyle = false) {
+        if (type == HighlighingType.Marked && !overwriteStyle &&
+            markedNodes_.TryGetValue(node, out var markedStyle)) {
+            fixedMarkedNodes_[node] = markedStyle; // Save current marked style.
+        }
+
+        node.Style = type switch {
+            HighlighingType.Hovered => PickHoveredNodeStyle(style),
+            HighlighingType.Selected => PickSelectedNodeStyle(style),
+            HighlighingType.Marked => PickMarkedNodeStyle(node, style),
+            _ => node.Style
+        };
+
         var group = GetHighlightedNodeGroup(type);
         group[node] = node.Style;
 
-        node.Style = type switch {
-            HighlighingType.Hovered => PickHoveredNodeStyle(node.Style),
-            HighlighingType.Selected => PickSelectedNodeStyle(node.Style),
-            HighlighingType.Marked => PickMarkedNodeStyle(node, node.Style),
-            _ => node.Style
-        };
+        if (type == HighlighingType.Marked && overwriteStyle) {
+            fixedMarkedNodes_[node] = style;
+        }
     }
 
     private void ResetHighlightedNodes(HighlighingType type, bool includeParents = false, bool redraw = true) {
@@ -119,10 +138,9 @@ public partial class FlameGraphViewer : FrameworkElement {
             return;
         }
 
-        foreach (var pair in group) {
-            pair.Key.Style = pair.Value;
+        if (includeParents) {
+            foreach (var pair in group) {
 
-            if (includeParents) {
                 FlameGraphNode parentNode = pair.Key.Parent;
 
                 while (parentNode != null) {
@@ -135,11 +153,54 @@ public partial class FlameGraphViewer : FrameworkElement {
             }
         }
 
+        var tempNodes = new List<FlameGraphNode>(group.Keys);
         group.Clear();
+
+        foreach (var node in tempNodes) {
+            RestoreNodeStyle(node);
+        }
 
         if (redraw) {
             renderer_.Redraw();
         }
+    }
+    
+    public void RestoreFixedMarkedNodes() {
+        if (fixedMarkedNodes_.Count == 0) {
+            return;
+        }
+
+        foreach (var pair in fixedMarkedNodes_) {
+            if (pair.Key.HasFunction) {
+                // Map the call tree node to the current flame graph node,
+                // needed in case the flame graph got rebuilt.
+                var node = flameGraph_.GetFlameGraphNode(pair.Key.CallTreeNode);
+                
+                if (node != null) {
+                    MarkNodeImpl(node, HighlighingType.Marked, pair.Value);
+                }
+            }
+        }
+
+        renderer_.Redraw();
+    }
+    
+    private void RestoreNodeStyle(FlameGraphNode node) {
+        HighlightingStyle style;
+
+        if (!markedNodes_.TryGetValue(node, out style) &&
+            !selectedNodes_.TryGetValue(node, out style) &&
+            !hoverNodes_.TryGetValue(node, out style)) {
+            if (fixedMarkedNodes_.TryGetValue(node, out style)) {
+                MarkNodeImpl(node, HighlighingType.Marked, style);
+                return;
+            }
+
+
+            style = renderer_.GetNodeStyle(node);
+        }
+
+        node.Style = style;
     }
 
     private Dictionary<FlameGraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
@@ -152,8 +213,8 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     public void ResetNodeHighlighting() {
-        ResetHighlightedNodes(HighlighingType.Hovered, true);
         ResetHighlightedNodes(HighlighingType.Selected, true);
+        ResetHighlightedNodes(HighlighingType.Hovered, true);
         hoveredNode_ = null;
         selectedNode_ = null;
     }
@@ -183,9 +244,19 @@ public partial class FlameGraphViewer : FrameworkElement {
         return new HighlightingStyle(newColor, style.Border);
     }
 
-    private HighlightingStyle PickMarkedNodeStyle(FlameGraphNode node, HighlightingStyle style) {
-        var newColor = node.SearchResult.HasValue ? node.Style.BackColor : markedNodeBackColor_;
-        var newPen = node.SearchResult.HasValue  ? searchResultBorderColor_ : markedNodeBorderColor_;
+    private HighlightingStyle PickMarkedNodeStyle(FlameGraphNode node, HighlightingStyle style = null) {
+        if (style != null) {
+            return style;
+        }
+
+        var newColor = markedNodeBackColor_;
+        var newPen = markedNodeBorderColor_;
+
+
+        if (node.SearchResult.HasValue) {
+            newPen = searchResultBorderColor_;
+        }
+
         return new HighlightingStyle(newColor, newPen);
     }
 
@@ -213,8 +284,11 @@ public partial class FlameGraphViewer : FrameworkElement {
 
     public void SelectNode(FlameGraphNode graphNode) {
         if (selectedNode_ != graphNode) {
-            ResetHighlightedNodes(HighlighingType.Hovered);
-            ResetHighlightedNodes(HighlighingType.Selected);
+            if (selectedNode_ != null) {
+                ResetHighlightedNodes(HighlighingType.Hovered);
+                ResetHighlightedNodes(HighlighingType.Selected);
+            }
+            
             HighlightNode(graphNode, HighlighingType.Selected, true);
             selectedNode_ = graphNode;
         }
@@ -225,8 +299,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         ResetHighlightedNodes(HighlighingType.Selected);
 
         foreach (var node in nodes) {
-            MarkNode(node, HighlighingType.Selected);
-
+            MarkNodeImpl(node, HighlighingType.Selected);
         }
 
         renderer_.Redraw();
@@ -234,7 +307,7 @@ public partial class FlameGraphViewer : FrameworkElement {
 
     public void MarkSearchResultNodes(List<FlameGraphNode> searchResultNodes) {
         foreach (var node in searchResultNodes) {
-            MarkNode(node, HighlighingType.Marked);
+            MarkNodeImpl(node, HighlighingType.Marked);
         }
 
         renderer_.Redraw();
@@ -249,36 +322,32 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
     }
 
-    public void MarkNodes(List<ProfileCallTreeNode> nodes) {
+    public void MarkNodes(List<ProfileCallTreeNode> nodes, HighlightingStyle style, bool overwriteStyle) {
         foreach (var node in nodes) {
-            MarkNodeImpl(node, redraw: false);
+            MarkNodeNoRedraw(node, style, overwriteStyle);
         }
 
         renderer_.Redraw();
     }
 
-
-    public void MarkNode(ProfileCallTreeNode node) {
-        MarkNodeImpl(node, redraw: true);
+    public void MarkNode(FlameGraphNode node, HighlightingStyle style) {
+        MarkNodeImpl(node, HighlighingType.Marked, style, true);
+        renderer_.Redraw();
     }
 
-    private void MarkNodeImpl(ProfileCallTreeNode node, bool redraw) {
+    private void MarkNodeNoRedraw(ProfileCallTreeNode node, HighlightingStyle style, bool overwriteStyle) {
         var fgNodes = flameGraph_.GetNodes(node);
 
         foreach (var fgNode in fgNodes) {
-            MarkNode(fgNode, HighlighingType.Marked);
-        }
-
-        if (redraw) {
-            renderer_.Redraw();
+            MarkNodeImpl(fgNode, HighlighingType.Marked, style, overwriteStyle);
         }
     }
 
-    public void MarkNode(FlameGraphNode node) {
-        MarkNode(node, HighlighingType.Marked);
-    }
-
-    public void ResetMarkedNodes() {
+    public void ResetMarkedNodes(bool clearFixedNodes) {
+        if (clearFixedNodes) {
+            fixedMarkedNodes_.Clear();
+        }
+        
         ResetHighlightedNodes(HighlighingType.Marked);
     }
 

@@ -331,13 +331,7 @@
                         InputGestureText="Ctrl+-"
                         ToolTip="" />
                     <Separator />
-                    <MenuItem
-                        Command="local:CallTreeCommand.SelectFunction"
-                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                        CommandTarget="{Binding ElementName=CallTree}"
-                        Header="Select Function"
-                        InputGestureText="Return"
-                        ToolTip="" />
+
                     <MenuItem
                         Command="local:CallTreeCommand.OpenFunction"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -374,6 +368,13 @@
                         ToolTip="Copy the demangled function name to the clipboard (C/C++)" />
                     <Separator />
 
+                    <MenuItem
+                        Command="local:CallTreeCommand.SelectFunction"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=CallTree}"
+                        Header="Select in Summary"
+                        InputGestureText="Return"
+                        ToolTip="" />
                     <MenuItem
                         Command="{Binding SelectFunctionCallTreeCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"

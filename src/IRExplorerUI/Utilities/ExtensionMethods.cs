@@ -355,14 +355,17 @@ namespace IRExplorerUI {
         }
 
         public static string AsTimeString(this TimeSpan value, TimeSpan totalValue, int digits = 2) {
-            if (totalValue.TotalMinutes >= 60) {
+            if(value.Ticks == 0) {
+                return "0";
+            }
+            else if (totalValue.TotalMinutes >= 60) {
                 return value.ToString("h\\:mm\\:ss");
             }
             else if (totalValue.TotalMinutes >= 10) {
                 return value.ToString("mm\\:ss");
             }
             else if (totalValue.TotalSeconds >= 60) {
-                return $"{value.Minutes}:{value.Seconds}";
+                return $"{value.Minutes}:{value.Seconds:D2}";
             }
             else if (totalValue.TotalSeconds >= 10) {
                 return value.ToString("ss");
@@ -381,7 +384,10 @@ namespace IRExplorerUI {
         }
 
         public static string AsTimeStringWithMilliseconds(this TimeSpan value, TimeSpan totalValue, int digits = 2) {
-            if (totalValue.TotalMinutes >= 60) {
+            if (value.Ticks == 0) {
+                return "0";
+            }
+            else if (totalValue.TotalMinutes >= 60) {
                 return value.ToString("h\\:mm\\:ss\\.fff");
             }
             else if (totalValue.TotalMinutes >= 10) {
