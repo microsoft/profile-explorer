@@ -45,12 +45,7 @@
                         InputGestureText="Alt+Double-click"
                         ToolTip="Restrict the view to the function and its callees" />
                     <Separator />
-                    <MenuItem
-                        Command="local:CallTreeCommand.SelectFunction"
-                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                        Header="Select Function"
-                        InputGestureText="Return"
-                        ToolTip="Select function in the Summary panel" />
+
                     <MenuItem
                         Command="local:CallTreeCommand.OpenFunction"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
@@ -86,12 +81,25 @@
                         Command="local:CallTreeCommand.MarkInstance"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Mark Instance"
-                        ToolTip="Mark all instances of the function" />
+                        ToolTip="Mark all instances of the function">
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <irExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkFunctionSourceCommand}" />
+                            </MenuItem.Header>
+                        </MenuItem>
+                    </MenuItem>
+
                     <MenuItem
                         Command="local:CallTreeCommand.MarkAllInstances"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Mark All Instances"
-                        ToolTip="Mark all instances of the function" />
+                        ToolTip="Mark all instances of the function">
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <irExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkAllFunctionsCommand}" />
+                            </MenuItem.Header>
+                        </MenuItem>
+                    </MenuItem>
                     <MenuItem
                         Command="local:CallTreeCommand.ClearMarkedNodes"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
@@ -99,6 +107,12 @@
                         ToolTip="Clear all marked functions" />
                     <Separator />
 
+                    <MenuItem
+                        Command="local:CallTreeCommand.SelectFunction"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Select in Summary"
+                        InputGestureText="Return"
+                        ToolTip="Select function in the Summary panel" />
                     <MenuItem
                         Command="{Binding SelectFunctionCallTreeCommand}"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"

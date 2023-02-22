@@ -88,7 +88,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     public RelayCommand<object> CopyFunctionNameCommand =>
         new(async (obj) => {
             if (GraphViewer.SelectedNode is { HasFunction: true }) {
-                var text = Session.CompilerInfo.NameProvider.GetFunctionName(GraphViewer.SelectedNode.CallTreeNode.Function);
+                var text = Session.CompilerInfo.NameProvider.GetFunctionName(GraphViewer.SelectedNode.Function);
                 Clipboard.SetText(text);
             }
         });
@@ -97,10 +97,28 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         new(async (obj) => {
             if (GraphViewer.SelectedNode is { HasFunction: true }) {
                 var options = FunctionNameDemanglingOptions.Default;
-                var text = Session.CompilerInfo.NameProvider.DemangleFunctionName(GraphViewer.SelectedNode.CallTreeNode.Function, options);
+                var text = Session.CompilerInfo.NameProvider.DemangleFunctionName(GraphViewer.SelectedNode.Function, options);
                 Clipboard.SetText(text);
             }
         });
+
+    public RelayCommand<object> MarkFunctionCommand =>
+        new(async (obj) => {
+            if (obj is SelectedColorEventArgs e &&
+                GraphViewer.SelectedNode is { HasFunction: true }) {
+                GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
+            }
+        });
+
+    public RelayCommand<object> MarkAllFunctionsCommand =>
+        new(async (obj) => {
+            if (obj is SelectedColorEventArgs e &&
+                GraphViewer.SelectedNode is { HasFunction: true }) {
+                MarkFunctionInstances(GraphViewer.SelectedNode.Function, 
+                                      GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
+            }
+        });
+
 
     private async Task SelectFunctionInPanel(ToolPanelKind panelKind) {
         if (GraphViewer.SelectedNode is { HasFunction: true }) {
@@ -395,6 +413,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         rootNode_ = node;
         await GraphViewer.Initialize(GraphViewer.FlameGraph.CallTree, node.CallTreeNode,
                                      GraphHostBounds, settings_, Session);
+        GraphViewer.RestoreFixedMarkedNodes();
     }
 
     enum FlameGraphStateKind {
@@ -447,6 +466,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             }
             case FlameGraphStateKind.ChangeRootNode: {
                 await ChangeRootNode(state.Node);
+                GraphViewer.RestoreFixedMarkedNodes();
                 break;
             }
             default: {
@@ -458,7 +478,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         }
     }
 
-    void ResetHighlightedNodes() {
+    private void ResetHighlightedNodes() {
         GraphViewer.ResetNodeHighlighting();
     }
 
@@ -857,7 +877,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
     private async void SelectFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (GraphViewer.SelectedNode != null && GraphViewer.SelectedNode.HasFunction) {
-            await Session.SwitchActiveFunction(GraphViewer.SelectedNode.CallTreeNode.Function);
+            await Session.SwitchActiveFunction(GraphViewer.SelectedNode.Function);
         }
     }
 
@@ -866,7 +886,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
     private async Task OpenFunction(FlameGraphNode node, OpenSectionKind openMode) {
         if (node != null && node.HasFunction) {
-            var args = new OpenSectionEventArgs(node.CallTreeNode.Function.Sections[0], openMode);
+            var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
             await Session.SwitchDocumentSectionAsync(args);
         }
     }
@@ -884,19 +904,20 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     private void MarkAllInstancesExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (GraphViewer.SelectedNode != null &&
             GraphViewer.SelectedNode.HasFunction) {
-            MarkFunctionInstances(GraphViewer.SelectedNode.CallTreeNode.Function);
+            MarkFunctionInstances(GraphViewer.SelectedNode.Function,
+                                  GraphViewer.MarkedNodeStyle);
         }
     }
 
     private void MarkInstanceExecuted(object sender, ExecutedRoutedEventArgs e) {
         if (GraphViewer.SelectedNode != null &&
             GraphViewer.SelectedNode.HasFunction) {
-            GraphViewer.MarkNode(GraphViewer.SelectedNode);
+            GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedNodeStyle);
         }
     }
 
     private void ClearMarkedNodesExecuted(object sender, ExecutedRoutedEventArgs e) {
-        ClearMarkedFunctions();
+        ClearMarkedFunctions(true);
     }
 
     private async void EnlargeNodeExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -920,29 +941,29 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
 
-    public void MarkFunctions(List<ProfileCallTreeNode> nodes) {
+    public void MarkFunctions(List<ProfileCallTreeNode> nodes, HighlightingStyle style) {
         if (!IsInitialized) {
             return;
         }
 
-        GraphViewer.MarkNodes(nodes);
+        GraphViewer.MarkNodes(nodes, style, false);
     }
 
-    public void MarkFunctionInstances(IRTextFunction func) {
+    public void MarkFunctionInstances(IRTextFunction func, HighlightingStyle style) {
         if (!IsInitialized) {
             return;
         }
 
         var nodes = callTree_.GetCallTreeNodes(func);
-        GraphViewer.MarkNodes(nodes);
+        GraphViewer.MarkNodes(nodes, style, true);
     }
 
-    public void ClearMarkedFunctions() {
+    public void ClearMarkedFunctions(bool clearFixedNodes = false) {
         if (!IsInitialized) {
             return;
         }
 
-        GraphViewer.ResetMarkedNodes();
+        GraphViewer.ResetMarkedNodes(clearFixedNodes);
     }
 
     #region Animation support
