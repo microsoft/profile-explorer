@@ -1226,8 +1226,12 @@ namespace IRExplorerUI {
         }
         
         public async Task<bool> FilterProfileSamples(ProfileSampleFilter filter) {
-            var sw = Stopwatch.StartNew();
+            using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+            
+            SetApplicationProgress(true, double.NaN, "Filtering");
+            StartUIUpdate();
 
+            var sw = Stopwatch.StartNew();
             Trace.WriteLine($"--------------------------------------------------------\n");
             Trace.WriteLine($"Filter {filter}, samples {ProfileData.Samples.Count}");
 
@@ -1248,6 +1252,9 @@ namespace IRExplorerUI {
             Trace.Flush();
 
             await ProfileSampleRangeDeselected();
+            
+            SetApplicationProgress(false, double.NaN);
+            StopUIUpdate();
             return true;
         }
 
@@ -1288,6 +1295,8 @@ namespace IRExplorerUI {
         }
 
         public async Task<bool> SelectProfileFunction(ProfileCallTreeNode node, ToolPanelKind panelKind) {
+            using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+            
             switch (panelKind) {
                 case ToolPanelKind.CallTree: {
                     var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
@@ -1317,6 +1326,8 @@ namespace IRExplorerUI {
         }
 
         public async Task<bool> SelectProfileFunction(IRTextFunction func, ToolPanelKind panelKind) {
+            using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+            
             switch (panelKind) {
                 case ToolPanelKind.CallTree: {
                     var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
@@ -1347,8 +1358,11 @@ namespace IRExplorerUI {
             return true;
         }
 
+        private CancelableTaskInstance updateProfileTask_ = new CancelableTaskInstance();
         
         public async Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range) {
+            using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+            
             //? TODO: If an event fires during the call tree/sample filtering,
             //? either ignore it or better ruin it after the filtering is done
             if (ProfileData.CallTree == null) {
@@ -1367,6 +1381,8 @@ namespace IRExplorerUI {
         }
 
         public async Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node, ToolPanelKind sourcePanelKind) {
+            using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+            
             //? TODO: If an event fires during the call tree/sample filtering,
             //? either ignore it or better ruin it after the filtering is done
             if (ProfileData.CallTree == null) {
@@ -1391,6 +1407,7 @@ namespace IRExplorerUI {
         }
 
         private async Task MarkFunctionSamples(ProfileCallTreeNode node, TimelinePanel panel) {
+            using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
             var threadSamples = await Task.Run(() => FindFunctionSamples(node, ProfileData));
             panel.MarkFunctionSamples(threadSamples);
         }
@@ -1400,6 +1417,8 @@ namespace IRExplorerUI {
         }
 
         public async Task<bool> ProfileSampleRangeDeselected() {
+            using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+            
             var panel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
             panel?.ClearMarkedFunctions();
 
@@ -1409,6 +1428,8 @@ namespace IRExplorerUI {
         }
 
         public async Task<bool> ProfileFunctionDeselected() {
+            using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+            
             var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
             panel?.ClearMarkedFunctionSamples();
             return true;
@@ -1475,6 +1496,12 @@ namespace IRExplorerUI {
                 foreach (var stackFrame in stack.StackFrames) {
                     if (stackFrame.IsUnknown)
                         continue;
+
+                    if (stackFrame.Info.Function == null) {
+                        Utils.WaitForDebugger();
+                        continue;
+                    }
+                    
                     funcSet.Add(stackFrame.Info.Function);
                 }
             }
@@ -1485,7 +1512,17 @@ namespace IRExplorerUI {
         private List<ProfileCallTreeNode> FindCallTreeNodesForSamples(HashSet<IRTextFunction> funcs, ProfileData profile) {
             var callNodes = new List<ProfileCallTreeNode>(funcs.Count);
 
+            //? TODO: If an event fires during the call tree/sample filtering,
+            //? either ignore it or better ruin it after the filtering is done
+            if (ProfileData.CallTree == null) {
+                return callNodes;
+            }
+            
             foreach (var func in funcs) {
+                if (func == null) {
+                    Utils.WaitForDebugger();
+                }
+                
                 var nodes = profile.CallTree.GetCallTreeNodes(func);
                 if (nodes != null) {
                     callNodes.AddRange(nodes);
