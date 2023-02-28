@@ -1179,7 +1179,10 @@ namespace IRExplorerUI {
         }
 
         private void UpdateUIBeforeReadSession(string documentTitle) {
-            Title = $"IR Explorer - Reading {documentTitle}";
+            if (!string.IsNullOrEmpty(documentTitle)) {
+                Title = $"IR Explorer - Reading {documentTitle}";
+            }
+
             Utils.DisableControl(DockManager, 0.85);
             Utils.DisableControl(StartPage, 0.85);
             Mouse.OverrideCursor = Cursors.Wait;
@@ -1187,19 +1190,30 @@ namespace IRExplorerUI {
         }
 
         private void UpdateUIBeforeLoadDocument(string documentTitle) {
-            Title = $"IR Explorer - Loading {documentTitle}";
+            if (!string.IsNullOrEmpty(documentTitle)) {
+                Title = $"IR Explorer - Loading {documentTitle}";
+            }
+
+            StartUIUpdate();
+        }
+
+        private void StartUIUpdate() {
             Utils.DisableControl(DockManager, 0.85);
             Utils.DisableControl(StartPage, 0.85);
             Mouse.OverrideCursor = Cursors.Wait;
         }
 
-        private void UpdateUIAfterLoadDocument() {
-            loadingDocuments_ = false;
+        private void StopUIUpdate() {
             Mouse.OverrideCursor = null;
+            Utils.EnableControl(DockManager);
+        }
+
+        private void UpdateUIAfterLoadDocument() {
+            StopUIUpdate();
+            loadingDocuments_ = false;
 
             if (sessionState_ != null) {
                 UpdateWindowTitle();
-                Utils.EnableControl(DockManager);
             }
             else {
                 Title = "IR Explorer - Failed to load file";
@@ -1208,7 +1222,6 @@ namespace IRExplorerUI {
 
             // Hide temporary UI.
             HideProgressBar();
-            Utils.EnableControl(StartPage);
         }
 
         private IRDocumentHost FindDocumentWithSection(IRTextSection section) {
