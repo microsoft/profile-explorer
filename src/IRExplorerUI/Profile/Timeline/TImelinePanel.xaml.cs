@@ -376,7 +376,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         var sb = new StringBuilder();
         double maxTextWidth = 0;
 
-        while (maxLevel-- > 0) {
+        while (node != null && maxLevel-- > 0) {
             var funcName = nameFormatter_(node.FunctionName);
 
             if (funcName.Length > MaxPreviewNameLength) {
@@ -389,7 +389,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             node = node.Caller;
         }
 
-        if (node.HasCallers) {
+        if (node != null && node.HasCallers) {
             sb.AppendLine("...");
         }
 
