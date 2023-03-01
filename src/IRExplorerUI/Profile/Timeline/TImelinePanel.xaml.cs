@@ -191,13 +191,14 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         Dispatcher.BeginInvoke(async () => {
             var activityArea = new Rect(0, 0, ActivityViewAreaWidth, ActivityView.ActualHeight);
             var threads = Session.ProfileData.SortedThreadWeights;
-            await ActivityView.Initialize(Session.ProfileData, activityArea);
+            var initTasks = new List<Task>(threads.Count);
+
+            initTasks.Add(ActivityView.Initialize(Session.ProfileData, activityArea));
             ActivityView.IsTimeBarVisible = true;
             ActivityView.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
             ActivityView.SamplesBackColor = ColorBrushes.GetBrush("#F4A0A0");
 
             var threadActivityArea = new Rect(0, 0, ActivityViewAreaWidth, 30);
-            var initTasks = new List<Task>(threads.Count);
 
             foreach (var thread in threads) {
                 var threadView = new ActivityTimelineView();

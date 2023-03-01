@@ -55,9 +55,9 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         public List<Slice> Slices { get; set; }
         public int MaxSlices { get; set; }
 
-        public SliceList(int threadId) {
+        public SliceList(int threadId, int slices = 0) {
             ThreadId = threadId;
-            Slices = new List<Slice>();
+            Slices = new List<Slice>(slices);
             MaxWeight = TimeSpan.MinValue;
         }
     }
@@ -514,12 +514,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
             //int queryThreadId = stack.Context.ThreadId;
             int queryThreadId = 0;
-            SliceList sliceList = null;
 
-            if (sliceIndex == prevSliceIndex) {
-                sliceList = prevSliceList;
-            }
-            else {
+            if (sliceIndex != prevSliceIndex) {
                 if (currentSlice.FirstSampleIndex != -1 && prevSliceList != null) {
                     prevSliceList.Slices.Add(currentSlice);
                     prevSliceList.TotalWeight += currentSlice.Weight;
@@ -527,8 +523,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                                                                           currentSlice.Weight.Ticks));
                 }
 
-                sliceList = sliceSeriesDict.GetOrAddValue(queryThreadId,
-                () => new SliceList(queryThreadId) {
+                var sliceList = sliceSeriesDict.GetOrAddValue(queryThreadId,
+                () => new SliceList(queryThreadId, (int)Math.Ceiling(slices)) {
                     TimePerSlice = TimeSpan.FromTicks((long)timePerSlice),
                     MaxSlices = (int)slices
                 });
