@@ -59,6 +59,7 @@ public class ProfileData {
     public List<(PerformanceCounterEvent Sample, ResolvedProfileStack Stack)> Events { get; set; }
     public ProfileProcess Process { get; set; }
     public Dictionary<int, ProfileThread> Threads { get; set; }
+    public Dictionary<string, IDebugInfoProvider> ModuleDebugInfo { get; set; }
 
     [ProtoContract(SkipConstructor = true)]
     class SampleStore {
@@ -124,6 +125,11 @@ public class ProfileData {
         Threads = new Dictionary<int, ProfileThread>();
         Samples = new List<(ProfileSample, ResolvedProfileStack)>();
         Events = new List<(PerformanceCounterEvent Sample, ResolvedProfileStack Stack)>();
+        ModuleDebugInfo = new Dictionary<string, IDebugInfoProvider>();
+    }
+
+    public void RegisterModuleDebugInfo(string moduleName, IDebugInfoProvider provider) {
+        
     }
 
     public void AddModuleSample(string moduleName, TimeSpan weight) {

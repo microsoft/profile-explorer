@@ -1350,6 +1350,7 @@ namespace IRExplorerUI {
                     }
                     break;
                 }
+                //? TODO: Source panel once button in Summary added
                 default: {
                     throw new InvalidOperationException();
                 }

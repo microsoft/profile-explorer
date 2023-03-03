@@ -491,7 +491,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
             if (instance.HasCallers) {
                 // Percentage relative to entire profile for callers.
                 percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
-                var callersNode = CreateProfileCallTreeHeader(ChildFunctionExKind.Header, "Calling", 2);
+                var callersNode = CreateProfileCallTreeHeader(ChildFunctionExKind.Header, "Callers", 2);
 
                 if (nodeList.Count > 1) {
                     instanceNode.Children.Add(callersNode);
@@ -512,7 +512,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                 // Percentage relative to current function callers.
                 //percentageFunc = PickPercentageFunction(instance.Weight);
                 var (childrenWeight, childrentExcWeight) = instance.ChildrenWeight;
-                var childrenNode = CreateProfileCallTreeHeader("Callers", childrenWeight, childrentExcWeight, percentageFunc, 1);
+                var childrenNode = CreateProfileCallTreeHeader("Calling", childrenWeight, childrentExcWeight, percentageFunc, 1);
 
                 if (nodeList.Count > 1) {
                     instanceNode.Children.Add(childrenNode);
@@ -911,13 +911,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         if (CallTree.SelectedItem is TreeNode node &&
             node.Tag is ChildFunctionEx funcEx &&
             funcEx.HasCallTreeNode) {
-            if (SyncSelection) {
-                await Session.ProfileFunctionSelected(funcEx.CallTreeNode, this.PanelKind);
-            }
-            
             if (settings_.SyncSourceFile) {
                 // Load the source file and scroll to the hottest line.
                 await Session.OpenProfileSourceFile(funcEx.CallTreeNode);
+            }
+            
+            if (SyncSelection) {
+                await Session.ProfileFunctionSelected(funcEx.CallTreeNode, this.PanelKind);
             }
         }
         else if (SyncSelection) {
