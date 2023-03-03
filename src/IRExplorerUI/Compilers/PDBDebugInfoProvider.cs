@@ -157,6 +157,26 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
 
+        public void Unload() {
+            if (session_ != null) {
+                Marshal.ReleaseComObject(session_);
+                session_ = null;
+            }
+
+            if (diaSource_ != null) {
+                Marshal.ReleaseComObject(diaSource_);
+                diaSource_ = null;
+            }
+        }
+
+        private bool EnsureLoaded() {
+            if (session_ != null) {
+                return true;
+            }
+
+            return LoadDebugInfo(debugFilePath_);
+        }
+        
         public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {
             return AnnotateSourceLocations(function, textFunc.Name);
         }
@@ -278,6 +298,10 @@ namespace IRExplorerUI.Compilers {
         }
 
         private (SourceLineDebugInfo, IDiaSourceFile) FindSourceLineByRVAImpl(long rva) {
+            if (!EnsureLoaded()) {
+                return (SourceLineDebugInfo.Unknown, null);
+            }
+            
             try {
                 session_.findLinesByRVA((uint)rva, 0, out var lineEnum);
 
@@ -336,6 +360,10 @@ namespace IRExplorerUI.Compilers {
         }
 
         public FunctionDebugInfo FindFunctionByRVA(long rva) {
+            if (!EnsureLoaded()) {
+                return null;
+            }
+            
             try {
                 session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
 
@@ -363,6 +391,10 @@ namespace IRExplorerUI.Compilers {
         }
 
         private bool AnnotateInstructionSourceLocation(IRElement instr, uint instrRVA, IDiaSymbol funcSymbol) {
+            if (!EnsureLoaded()) {
+                return false;
+            }
+            
             try {
                 session_.findLinesByRVA(instrRVA, 0, out var lineEnum);
 
@@ -461,6 +493,221 @@ namespace IRExplorerUI.Compilers {
             }
         }
 
+        public class FileTypeInfo {
+            public List<(string TypeName, int Line)> Types = new List<(string TypeName, int Line)>();
+            public int TotalTypeNameLength;
+            public int MaxTypeNameLength;
+            public int AvgTypeNameLength;
+        }
+
+        public void EnumerateTypes() {
+            IDiaEnumSymbols symbolEnum;
+
+            {
+                try {
+                    globalSymbol_.findChildren(SymTagEnum.SymTagUDT, null, 0, out symbolEnum);
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to enumerate types: {ex.Message}");
+                    return;
+                }
+
+                DumpSymbols(symbolEnum, false, "types", "D:\\out\\types");
+            }
+
+            {
+                try {
+                    globalSymbol_.findChildren(SymTagEnum.SymTagFunction, null, 0, out symbolEnum);
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to enumerate types: {ex.Message}");
+                    return;
+                }
+
+                DumpSymbols(symbolEnum, true, "func", "D:\\out\\functions");
+            }
+
+            {
+                try {
+                    globalSymbol_.findChildren(SymTagEnum.SymTagEnum, null, 0, out symbolEnum);
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to enumerate types: {ex.Message}");
+                    return;
+                }
+
+                DumpSymbols(symbolEnum, true, "enum", "D:\\out\\enums");
+            }
+
+            {
+                try {
+                    globalSymbol_.findChildren(SymTagEnum.SymTagPublicSymbol, null, 0, out symbolEnum);
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to enumerate types: {ex.Message}");
+                    return;
+                }
+
+                DumpSymbols(symbolEnum, true, "publics", "D:\\out\\publics");
+            }
+        }
+
+        private void DumpSymbols(IDiaEnumSymbols symbolEnum, bool useRva, string prefix, string outDir) {
+            int count = 0;
+            int hasSource = 0;
+            var sw = Stopwatch.StartNew();
+
+            var filesMap = new Dictionary<string, FileTypeInfo>();
+
+            try {
+                foreach (IDiaSymbol sym in symbolEnum) {
+                    // Trace.WriteLine($"UDT: {sym.name}");
+
+                    if (sym.name == null) {
+                        continue;
+                    }
+
+                    string fileName = "";
+                    int lineNumber = 0;
+
+                    if (useRva) {
+                        session_.findLinesByRVA(sym.relativeVirtualAddress, 0, out var lineEnum);
+
+                        while (true) {
+                            lineEnum.Next(1, out var line, out var retrieved);
+
+                            if (retrieved == 0) {
+                                break;
+                            }
+
+                            fileName = line.sourceFile.fileName;
+                            lineNumber = (int)line.lineNumber;
+                            hasSource++;
+                            break;
+                        }
+                    }
+                    else {
+                        sym.getSrcLineOnTypeDefn(out var line);
+
+                        if (line != null && line.sourceFile != null) {
+                            hasSource++;
+                            fileName = line.sourceFile.fileName;
+                            lineNumber = (int)line.lineNumber;
+                            //   Trace.WriteLine($"  at {line.sourceFile.fileName}, line {line.lineNumber}");
+                        }
+                    }
+
+                    if (!filesMap.TryGetValue(fileName, out var typeList)) {
+                        typeList = new FileTypeInfo();
+                        filesMap[fileName] = typeList;
+                    }
+
+                    typeList.Types.Add((sym.name, lineNumber));
+
+                    if ((count++ % 1000) == 0) {
+                        Trace.WriteLine($"----- at {count} with sources {hasSource}");
+                        Trace.Flush();
+                    }
+
+                    //if (count > 1000 * 10)
+                    //    break;
+                }
+
+            }
+            catch (Exception ex) {
+                Trace.WriteLine("Failed enum\n");
+                Trace.Flush();
+                MessageBox.Show($"Failed {ex.Message}");
+            }
+
+            Trace.WriteLine($"----- done in {sw.Elapsed} at {count} with sources {hasSource}");
+            Trace.Flush();
+
+            int maxLengthAll = 0;
+            int sumAll = 0;
+
+            foreach (var pair in filesMap) {
+                int sum = 0;
+                int maxLength = 0;
+
+                foreach (var (typeName, line) in pair.Value.Types) {
+                    sum += typeName.Length;
+                    sumAll += typeName.Length;
+                    maxLength = Math.Max(maxLength, typeName.Length);
+                    maxLengthAll = Math.Max(maxLengthAll, maxLength);
+                }
+
+                pair.Value.TotalTypeNameLength = sum;
+                pair.Value.MaxTypeNameLength = maxLength;
+                if (sum > 0) {
+                    pair.Value.AvgTypeNameLength = sum / pair.Value.Types.Count;
+                }
+            }
+
+            var totalSb = new StringBuilder();
+            totalSb.AppendLine($"Count: {count}");
+            totalSb.AppendLine($"Total name length: {sumAll}");
+            totalSb.AppendLine($"Max name length: {maxLengthAll}");
+            if (sumAll > 0) {
+                totalSb.AppendLine($"Avg name length: {sumAll / count}");
+            }
+
+            File.WriteAllText(Path.Combine(outDir, $"{prefix}_summary.txt"), totalSb.ToString());
+
+            var fileList = new List<(string File, FileTypeInfo Info)>();
+            foreach (var pair in filesMap) {
+                fileList.Add((pair.Key, pair.Value));
+            }
+
+            fileList.Sort((a, b) => b.Info.TotalTypeNameLength - a.Info.TotalTypeNameLength);
+
+            var summarySb = new StringBuilder();
+            summarySb.AppendLine("File name,Types,Max name length,Avg name length,Total name length");
+
+            foreach (var (file, info) in fileList) {
+                //summarySb.AppendLine($"File: {file}");
+                //summarySb.AppendLine($"   - types:          {info.Types.Count}");
+                //summarySb.AppendLine($"   - max name len:   {info.MaxTypeNameLength}");
+                //summarySb.AppendLine($"   - avg name len:   {info.AvgTypeNameLength}");
+                //summarySb.AppendLine($"   - total name len: {info.TotalTypeNameLength}");
+                var name = file;
+                if (string.IsNullOrEmpty(name)) {
+                    name = "no_file_info";
+                }
+                summarySb.AppendLine($"{name},{info.Types.Count},{info.MaxTypeNameLength},{info.AvgTypeNameLength},{info.TotalTypeNameLength}");
+            }
+
+            File.WriteAllText(Path.Combine(outDir, $"{prefix}_summary.csv"), summarySb.ToString());
+
+            for (int i = 0; i < Math.Min(10, fileList.Count); i++) {
+                var sb = new StringBuilder();
+
+                sb.AppendLine($"File: {fileList[i].File}");
+                var info = fileList[i].Info;
+                sb.AppendLine($"   - types:          {info.Types.Count}");
+                sb.AppendLine($"   - max name len:   {info.MaxTypeNameLength}");
+                sb.AppendLine($"   - avg name len:   {info.AvgTypeNameLength}");
+                sb.AppendLine($"   - total name len: {info.TotalTypeNameLength}");
+
+                sb.AppendLine($"\n--------------------------------");
+                sb.AppendLine($"Line number: Name");
+                sb.AppendLine($"--------------------------------");
+
+                info.Types.Sort((a, b) => b.TypeName.Length - a.TypeName.Length);
+
+                foreach (var (typeName, line) in info.Types) {
+                    sb.AppendLine($"{line}: {typeName}");
+                }
+
+                var name = fileList[i].File;
+                if(string.IsNullOrEmpty(name)) {
+                    name = "no_file_info";
+                }
+                name = name.Replace('\\', '_').Replace('/', '_').Replace(':', '_');
+                File.WriteAllText(Path.Combine(outDir, $"{prefix}_{i+1}_{name}.txt"), sb.ToString());
+            }
+        }
+
         public List<FunctionDebugInfo> GetSortedFunctions() {
             lock (this) {
                 if (sortedFunctionList_ != null) {
@@ -555,15 +802,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         public void Dispose() {
-            if (session_ != null) {
-                Marshal.ReleaseComObject(session_);
-                session_ = null;
-            }
-
-            if (diaSource_ != null) {
-                Marshal.ReleaseComObject(diaSource_);
-                diaSource_ = null;
-            }
+            Unload();
         }
     }
 }

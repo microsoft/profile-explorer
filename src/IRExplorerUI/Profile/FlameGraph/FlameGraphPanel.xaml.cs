@@ -170,14 +170,14 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private async void GraphHost_NodeSelected(object sender, FlameGraphNode node) {
         if (node.HasFunction) {
             await NodeDetailsPanel.ShowWithDetailsAsync(node.CallTreeNode);
-
-            if (SyncSelection) {
-                await Session.ProfileFunctionSelected(node.CallTreeNode, this.PanelKind);
-            }
-
+            
             if (SyncSourceFile) {
                 // Load the source file and scroll to the hottest line.
                 await Session.OpenProfileSourceFile(node.CallTreeNode);
+            }
+            
+            if (SyncSelection) {
+                await Session.ProfileFunctionSelected(node.CallTreeNode, this.PanelKind);
             }
         }
     }

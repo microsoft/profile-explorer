@@ -550,6 +550,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             }
 
             otherDocuments.Add(pair.Value.ModuleDocument);
+            profileData_.RegisterModuleDebugInfo(pair.Value.ModuleDocument.ModuleName, pair.Value.DebugInfo);
         }
 
         return exeDocument;

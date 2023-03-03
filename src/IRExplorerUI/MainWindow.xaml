@@ -403,6 +403,7 @@
                         <Separator />
 
                         <MenuItem Command="local:AppCommand.ViewProfileReport" Header="Open profiling report" />
+                        <MenuItem Click="UnloadAllPDBsClicked" Header="Unload all PDBs" />
                         <MenuItem
                             Click="ShowPanelMenuClicked"
                             Header="Call Tree Panel"
