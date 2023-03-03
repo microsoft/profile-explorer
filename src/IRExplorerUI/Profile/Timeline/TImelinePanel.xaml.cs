@@ -226,6 +226,14 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             }
 
             await Task.WhenAll(initTasks);
+            
+            // Redraw everything once all views are initialized.
+            ActivityView.InitializeDone();
+            
+            foreach (var thread in threads) {
+                threadActivityViewsMap_[thread.ThreadId].ActivityHost.InitializeDone();
+            }
+
             ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
         }, DispatcherPriority.Background);
     }
