@@ -449,9 +449,9 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     }
 
-    public async Task Initialize(ProfileData profile, Rect visibleArea, int threadId = -1) {
+    public Task Initialize(ProfileData profile, Rect visibleArea, int threadId = -1) {
         if (initialized_) {
-            return;
+            return Task.CompletedTask;
         }
 
         initialized_ = true;
@@ -476,15 +476,16 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         font_ = new Typeface(DefaultFont);
         fontSize_ = DefaultTextSize;
         glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual_).PixelsPerDip);
+        return StartComputeSampleSlices(SliceWidth);
+    }
 
-        StartComputeSampleSlices(SliceWidth);
-
+    public void InitializeDone() {
         OnPropertyChanged(nameof(ThreadWeight));
         OnPropertyChanged(nameof(ThreadId));
         OnPropertyChanged(nameof(ThreadName));
         Redraw();
     }
-
+    
     private List<SliceList> ComputeSampleSlices(ProfileData profile, int threadId = -1) {
         if (profile.Samples.Count == 0) {
             return new List<SliceList>();
@@ -503,7 +504,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         int prevSliceIndex = -1;
         SliceList prevSliceList = null;
         Slice currentSlice = new Slice(TimeSpan.Zero, -1, 0);
-
+        Slice dummySlice = new Slice(TimeSpan.Zero, -1, 0);
+        
         foreach (var (sample, stack) in profile.Samples) {
             if (threadId != -1 && stack.Context.ThreadId != threadId) {
                 sampleIndex++;
@@ -534,7 +536,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
                 if (sliceIndex >= sliceList.Slices.Count) {
                     for (int i = sliceList.Slices.Count; i < sliceIndex; i++) {
-                        sliceList.Slices.Add(new Slice(TimeSpan.Zero, -1, 0));
+                        sliceList.Slices.Add(dummySlice);
                     }
                 }
 
@@ -830,11 +832,11 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         }
     }
 
-    private void StartComputeSampleSlices(double newWidth) {
+    private Task StartComputeSampleSlices(double newWidth) {
         sliceTask_ ??= new CancelableTaskInstance();
         sliceTask_.CreateTask();
 
-        Task.Run(() => {
+        return Task.Run(() => {
             sliceWidth_ = newWidth;
             slices_ = ComputeSampleSlices(profile_, ThreadId);
             sliceTask_.CompleteTask();
