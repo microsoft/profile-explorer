@@ -1298,7 +1298,48 @@ namespace IRExplorerUI {
                 await timelinePanel.DisplayFlameGraph();
             }
         }
+        
+        private CallTreeNodePopup funcBacktracePreviewPopup_;
+        
+        private void SetupStackFunctionHoverPreview() {
+            var preview = new DraggablePopupHoverPreview(FunctionList, CallTreeNodePopup.PopupHoverLongDuration,
+                (mousePoint, previewPoint) => {
+                    var element = FunctionList.GetObjectAtPoint<ListViewItem>(mousePoint);
 
+                    if (element.Content is not IRTextFunctionEx funcEx) {
+                        return null;
+                    }
+
+                    var nodeList = Session.ProfileData.CallTree.GetSortedCallTreeNodes(funcEx.Function);
+
+                    if (nodeList is not { Count: > 0 }) {
+                        return null;
+                    }
+
+                    var callNode = nodeList[0];
+                    var (text, textWidth) = 
+                        CallTreeNodePopup.CreateBacktraceText(callNode, 10, 
+                            Session.CompilerInfo.NameProvider.FormatFunctionName);
+
+                    if (funcBacktracePreviewPopup_ != null) {
+                        funcBacktracePreviewPopup_.UpdatePosition(previewPoint, FunctionList);
+                        funcBacktracePreviewPopup_.UpdateNode(callNode);
+                    }
+                    else {
+                        funcBacktracePreviewPopup_ = new CallTreeNodePopup(callNode, null, previewPoint, 
+                                                                           FunctionList, Session, canExpand: false);
+                    }
+
+                    funcBacktracePreviewPopup_.ShowBacktraceView = true;
+                    funcBacktracePreviewPopup_.BacktraceText = text;
+                    funcBacktracePreviewPopup_.Width = textWidth + 50;
+                    return funcBacktracePreviewPopup_;
+
+                },
+                (mousePoint, popup) => true,
+                popup => Session.RegisterDetachedPanel(popup));
+        }
+        
         public async Task Update(bool force = false) {
             if (summary_ != null) {
                 await SetupFunctionList(force);
@@ -1329,6 +1370,7 @@ namespace IRExplorerUI {
 
             // Attach additional data to the UI.
             await SetFunctionProfileInfo(functionsEx);
+            SetupStackFunctionHoverPreview();
 
             if (analyzeFunctions) {
                 await RunFunctionAnalysis();

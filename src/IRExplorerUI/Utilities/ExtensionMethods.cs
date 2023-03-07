@@ -421,7 +421,7 @@ namespace IRExplorerUI {
                              value.Y + SystemParameters.CursorHeight / 2);
         }
 
-        public static object GetObjectAtPoint<ItemContainer>(this ItemsControl control, Point p)
+        public static ItemContainer GetObjectAtPoint<ItemContainer>(this ItemsControl control, Point p)
             where ItemContainer : DependencyObject         {
             // ItemContainer - can be ListViewItem, or TreeViewItem and so on(depends on control)
             return control.GetContainerAtPoint<ItemContainer>(p);

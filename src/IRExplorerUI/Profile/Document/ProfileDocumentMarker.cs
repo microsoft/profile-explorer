@@ -301,7 +301,7 @@ namespace IRExplorerUI.Profile {
                 return;
             }
 
-            SearchableProfileItem.FunctionNameFormatter nameFormatter =  irInfo_.NameProvider.FormatFunctionName;
+            FunctionNameFormatter nameFormatter =  irInfo_.NameProvider.FormatFunctionName;
 
             foreach (var callsite in node.CallSites.Values) {
                 if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA - profile_.FunctionDebugInfo.RVA,

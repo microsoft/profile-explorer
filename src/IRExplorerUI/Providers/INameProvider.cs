@@ -13,6 +13,8 @@ namespace IRExplorerUI {
         NoSpecialKeywords = 1 << 2,
     }
 
+    public delegate string FunctionNameFormatter(string name);
+
     public interface INameProvider {
         bool IsDemanglingSupported { get; }
         bool IsDemanglingEnabled { get; }
