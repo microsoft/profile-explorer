@@ -84,7 +84,7 @@
                         ToolTip="Mark all instances of the function">
                         <MenuItem>
                             <MenuItem.Header>
-                                <irExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkFunctionSourceCommand}" />
+                                <irExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkFunctionCommand}" />
                             </MenuItem.Header>
                         </MenuItem>
                     </MenuItem>
@@ -123,6 +123,15 @@
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Select in Timeline"
                         ToolTip="Select the function instance in the Timeline panel" />
+                    <MenuItem
+                        Header="Mark in Timeline"
+                        ToolTip="Mark the function instance in the Timeline panel">
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <irExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkTimelineCommand}" />
+                            </MenuItem.Header>
+                        </MenuItem>
+                    </MenuItem>
                 </ContextMenu>
             </local:FlameGraphViewer.ContextMenu>
         </local:FlameGraphViewer>
