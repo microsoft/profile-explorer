@@ -135,7 +135,7 @@ namespace IRExplorerUI.Profile {
         private double rootWeightReciprocal_;
         private double rootDurationReciprocal_;
         private double profileDurationReciprocal_;
-        private SearchableProfileItem.FunctionNameFormatter nameFormatter_;
+        private FunctionNameFormatter nameFormatter_;
 
         public ProfileCallTree CallTree { get; set; }
 
@@ -162,7 +162,7 @@ namespace IRExplorerUI.Profile {
             }
         }
 
-        public FlameGraph(ProfileCallTree callTree, SearchableProfileItem.FunctionNameFormatter nameFormatter) {
+        public FlameGraph(ProfileCallTree callTree, FunctionNameFormatter nameFormatter) {
             CallTree = callTree;
             treeNodeToFgNodeMap_ = new Dictionary<ProfileCallTreeNode, FlameGraphNode>();
             nameFormatter_ = nameFormatter;

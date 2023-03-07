@@ -42,7 +42,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private List<ActivityTimelineView> threadActivityViews_;
     private Dictionary<int, ActivityTimelineView> threadActivityViewsMap_;
     private Dictionary<int, DraggablePopupHoverPreview> threadHoverPreviewMap_;
-    private SearchableProfileItem.FunctionNameFormatter nameFormatter_;
     private bool changingThreadFiltering_;
 
     private DoubleAnimation widthAnimation_;
@@ -186,8 +185,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         }
 
         callTree_ = callTree;
-        nameFormatter_ = Session.CompilerInfo.NameProvider.FormatFunctionName;
-
         Dispatcher.BeginInvoke(async () => {
             var activityArea = new Rect(0, 0, ActivityViewAreaWidth, ActivityView.ActualHeight);
             var threads = Session.ProfileData.SortedThreadWeights;
@@ -356,7 +353,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                     return null;
                 }
 
-                var (text, textWidth) = CreateBacktraceText(callNode, 5);
+                var (text, textWidth) = 
+                    CallTreeNodePopup.CreateBacktraceText(callNode, 10, 
+                                                          Session.CompilerInfo.NameProvider.FormatFunctionName);
 
                 // If popup already opened for this node reuse the instance.
                 if (threadHoverPreviewMap_.TryGetValue(view.ThreadId, out var hoverPreview) &&
@@ -379,30 +378,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             popup => Session.RegisterDetachedPanel(popup));
 
         threadHoverPreviewMap_[view.ThreadId] = preview;
-    }
-
-    private (string, double) CreateBacktraceText(ProfileCallTreeNode node, int maxLevel) {
-        var sb = new StringBuilder();
-        double maxTextWidth = 0;
-
-        while (node != null && maxLevel-- > 0) {
-            var funcName = nameFormatter_(node.FunctionName);
-
-            if (funcName.Length > MaxPreviewNameLength) {
-                funcName = $"{funcName[..MaxPreviewNameLength]}...";
-            }
-
-            var textSize = Utils.MeasureString(funcName, DefaultTextFont, DefaultTextSize);
-            maxTextWidth = Math.Max(maxTextWidth, textSize.Width);
-            sb.AppendLine(funcName);
-            node = node.Caller;
-        }
-
-        if (node != null && node.HasCallers) {
-            sb.AppendLine("...");
-        }
-
-        return (sb.ToString().Trim(), maxTextWidth);
     }
 
     private void SetupActivityViewEvents(ActivityView view) {
