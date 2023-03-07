@@ -375,7 +375,10 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
             },
             (mousePoint, popup) => true,
-            popup => Session.RegisterDetachedPanel(popup));
+            popup => {
+                threadHoverPreviewMap_.Remove(view.ThreadId);
+                Session.RegisterDetachedPanel(popup);
+            });
 
         threadHoverPreviewMap_[view.ThreadId] = preview;
     }

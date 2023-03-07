@@ -1337,7 +1337,10 @@ namespace IRExplorerUI {
 
                 },
                 (mousePoint, popup) => true,
-                popup => Session.RegisterDetachedPanel(popup));
+                popup => {
+                    Session.RegisterDetachedPanel(popup);
+                    funcBacktracePreviewPopup_ = null;
+                });
         }
         
         public async Task Update(bool force = false) {
