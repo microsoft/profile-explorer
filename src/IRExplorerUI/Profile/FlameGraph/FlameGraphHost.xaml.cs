@@ -118,14 +118,23 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                                       GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
             }
         });
-
+    
+    public RelayCommand<object> MarkTimelineCommand =>
+        new(async (obj) => {
+            if (obj is SelectedColorEventArgs e &&
+                GraphViewer.SelectedNode is { HasFunction: true }) {
+                await Session.MarkProfileFunction(GraphViewer.SelectedNode.CallTreeNode, ToolPanelKind.Timeline, 
+                                                  GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
+                
+            }
+        });
 
     private async Task SelectFunctionInPanel(ToolPanelKind panelKind) {
         if (GraphViewer.SelectedNode is { HasFunction: true }) {
             await Session.SelectProfileFunction(GraphViewer.SelectedNode.CallTreeNode, panelKind);
         }
     }
-
+    
     public void InitializeFlameGraph(ProfileCallTree callTree) {
         if (IsInitialized) {
             Reset();

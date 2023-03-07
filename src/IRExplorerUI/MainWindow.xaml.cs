@@ -1310,7 +1310,7 @@ namespace IRExplorerUI {
                 }
                 case ToolPanelKind.Timeline: {
                     var panel = FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
-                    await MarkFunctionSamples(node, panel);
+                    await SelectFunctionSamples(node, panel);
                     break;
                 }
                 case ToolPanelKind.Source: {
@@ -1346,7 +1346,7 @@ namespace IRExplorerUI {
                     var nodeList = ProfileData.CallTree.GetSortedCallTreeNodes(func);
 
                     if (nodeList != null && nodeList.Count > 0) {
-                        await MarkFunctionSamples(nodeList[0], panel);
+                        await SelectFunctionSamples(nodeList[0], panel);
                     }
                     break;
                 }
@@ -1395,7 +1395,7 @@ namespace IRExplorerUI {
             if (panel != null) {
                 //? TODO: Select only samples included only in this call node,
                 //? right now selects any instance of the func
-                await MarkFunctionSamples(node, panel);
+                await SelectFunctionSamples(node, panel);
             }
 
             if (sourcePanelKind != ToolPanelKind.CallerCallee) {
@@ -1407,10 +1407,22 @@ namespace IRExplorerUI {
             return true;
         }
 
-        private async Task MarkFunctionSamples(ProfileCallTreeNode node, TimelinePanel panel) {
-            using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+        private async Task SelectFunctionSamples(ProfileCallTreeNode node, TimelinePanel panel) {
             var threadSamples = await Task.Run(() => FindFunctionSamples(node, ProfileData));
-            panel.MarkFunctionSamples(threadSamples);
+            panel.SelectFunctionSamples(threadSamples);
+        }
+
+        public async Task<bool> MarkProfileFunction(ProfileCallTreeNode node, ToolPanelKind sourcePanelKind,
+                                                    HighlightingStyle style) {
+            if (sourcePanelKind == ToolPanelKind.Timeline) {
+                var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
+
+                if (panel != null) {
+                    var threadSamples = await Task.Run(() => FindFunctionSamples(node, ProfileData));
+                    panel.MarkFunctionSamples(node, threadSamples, style);
+                }
+            }
+            return true;
         }
 
         public async Task<bool> ProfileFunctionSelected(IRTextFunction function, ToolPanelKind sourcePanelKind) {
@@ -1432,7 +1444,7 @@ namespace IRExplorerUI {
             using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
             
             var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
-            panel?.ClearMarkedFunctionSamples();
+            panel?.ClearSelectedFunctionSamples();
             return true;
         }
 

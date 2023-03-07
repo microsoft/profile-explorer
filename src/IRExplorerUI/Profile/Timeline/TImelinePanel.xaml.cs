@@ -914,20 +914,38 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         SelectNextSearchResult();
     }
 
-    public void MarkFunctionSamples(Dictionary<int, List<SampleIndex>> threadSamples) {
+    public void SelectFunctionSamples(Dictionary<int, List<SampleIndex>> threadSamples) {
+        ClearSelectedFunctionSamples();
+
+        foreach (var (threadId, sampleList) in threadSamples) {
+            if (threadId == -1) {
+                ActivityView.SelectSamples(sampleList);
+            }
+            else if (threadActivityViewsMap_.TryGetValue(threadId, out var threadView)) {
+                threadView.ActivityHost.SelectSamples(sampleList);
+            }
+        }
+    }
+
+    public void MarkFunctionSamples(ProfileCallTreeNode node, Dictionary<int, List<SampleIndex>> threadSamples,
+                                    HighlightingStyle style) {
         ClearMarkedFunctionSamples();
 
         foreach (var (threadId, sampleList) in threadSamples) {
             if (threadId == -1) {
-                ActivityView.MarkSamples(sampleList);
+                ActivityView.MarkSamples(node, sampleList, style);
             }
             else if (threadActivityViewsMap_.TryGetValue(threadId, out var threadView)) {
-                threadView.ActivityHost.MarkSamples(sampleList);
+                threadView.ActivityHost.MarkSamples(node, sampleList, style);
             }
         }
-
     }
-
+    
+    public void ClearSelectedFunctionSamples() {
+        ActivityView.ClearSelectedSamples();
+        threadActivityViews_.ForEach(threadView => threadView.ActivityHost.ClearSelectedSamples());
+    }
+    
     public void ClearMarkedFunctionSamples() {
         ActivityView.ClearMarkedSamples();
         threadActivityViews_.ForEach(threadView => threadView.ActivityHost.ClearMarkedSamples());
