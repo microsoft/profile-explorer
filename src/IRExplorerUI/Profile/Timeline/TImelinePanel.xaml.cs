@@ -12,11 +12,13 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Presentation;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
+using IRExplorerUI.Document;
 
 namespace IRExplorerUI.Profile;
 
@@ -929,8 +931,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     public void MarkFunctionSamples(ProfileCallTreeNode node, Dictionary<int, List<SampleIndex>> threadSamples,
                                     HighlightingStyle style) {
-        ClearMarkedFunctionSamples();
-
         foreach (var (threadId, sampleList) in threadSamples) {
             if (threadId == -1) {
                 ActivityView.MarkSamples(node, sampleList, style);
@@ -964,5 +964,53 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             e.ClickCount >= 2) {
             await RemoveThreadFilters();
         }
+    }
+
+    private void MarkersMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
+        var defaultItems = DocumentUtils.SaveDefaultMenuItems(MarkersMenuItem);
+        MarkersMenuItem.Items.Clear();
+
+        foreach (var samples in ActivityView.MarkedSamples) {
+            var item = new MenuItem() {
+                OverridesDefaultStyle = true,
+                Header = samples.Node.FormatFunctionName(Session.CompilerInfo.NameProvider.FormatFunctionName, 50),
+                Icon = CreateMarkerMenuIcon(samples),
+                //Icon = IconDrawing.FromIconResource("StarIcon").AsImage(),
+                Tag = samples
+            };
+
+            item.Click += (s, args) => {
+                var samples = (MarkedSamples)((MenuItem)s).Tag;
+                ActivityView.RemoveMarkedSamples(samples.Node);
+
+                foreach (var threadView in threadActivityViews_) {
+                    threadView.ActivityHost.RemoveMarkedSamples(samples.Node);
+                }
+            };
+
+            MarkersMenuItem.Items.Add(item);
+        }
+
+        DocumentUtils.RestoreDefaultMenuItems(MarkersMenuItem, defaultItems);
+    }
+
+    private void ClearMarkers_OnClick(object sender, RoutedEventArgs e) {
+        ActivityView.ClearMarkedSamples();
+
+        foreach (var threadView in threadActivityViews_) {
+            threadView.ActivityHost.ClearMarkedSamples();
+        }
+    }
+
+    private Image CreateMarkerMenuIcon(MarkedSamples samples) {
+        DrawingVisual visual = new DrawingVisual();
+
+        using (DrawingContext dc = visual.RenderOpen()) {
+            dc.DrawRectangle(samples.Style.BackColor, ColorPens.GetPen(Colors.Black), new Rect(0, 0, 16, 16));
+        }
+
+        RenderTargetBitmap targetBitmap = new RenderTargetBitmap(16, 16, 96, 96, PixelFormats.Default);
+        targetBitmap.Render(visual);
+        return new Image() { Source = targetBitmap };
     }
 }

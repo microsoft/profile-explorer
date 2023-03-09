@@ -1977,7 +1977,7 @@ namespace IRExplorerUI {
         }
 
         private void QueryMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
-            var defaultItems = SaveDefaultMenuItems(QueryMenuItem);
+            var defaultItems = DocumentUtils.SaveDefaultMenuItems(QueryMenuItem);
             QueryMenuItem.Items.Clear();
 
             // Append the available queries.
@@ -1995,32 +1995,9 @@ namespace IRExplorerUI {
             }
 
             // Add back the default menu items.
-            RestoreDefaultMenuItems(QueryMenuItem, defaultItems);
+            DocumentUtils.RestoreDefaultMenuItems(QueryMenuItem, defaultItems);
         }
-
-        private List<object> SaveDefaultMenuItems(MenuItem menu) {
-            // Save the menu items that are always present, they are either
-            // separators or menu items without an object tag.
-            var defaultItems = new List<object>();
-
-            foreach (var item in menu.Items) {
-                if (item is MenuItem menuItem) {
-                    if (menuItem.Tag == null) {
-                        defaultItems.Add(item);
-                    }
-                }
-                else if (item is Separator) {
-                    defaultItems.Add(item);
-                }
-            }
-
-            return defaultItems;
-        }
-
-        private void RestoreDefaultMenuItems(MenuItem menu, List<object> defaultItems) {
-            defaultItems.ForEach(item => menu.Items.Add(item));
-        }
-
+        
         private void QueryMenuItem_Click(object sender, System.Windows.RoutedEventArgs e) {
             var menuItem = (MenuItem)sender;
             var query = (QueryDefinition)menuItem.Tag;
@@ -2111,7 +2088,7 @@ namespace IRExplorerUI {
         }
 
         private async void TaskMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
-            var defaultItems = SaveDefaultMenuItems(TaskMenuItem);
+            var defaultItems = DocumentUtils.SaveDefaultMenuItems(TaskMenuItem);
             TaskMenuItem.Items.Clear();
 
             foreach (var action in Session.CompilerInfo.BuiltinFunctionTasks) {
@@ -2133,7 +2110,7 @@ namespace IRExplorerUI {
                 AddFunctionTaskDefinitionMenuItem(action);
             }
 
-            RestoreDefaultMenuItems(TaskMenuItem, defaultItems);
+            DocumentUtils.RestoreDefaultMenuItems(TaskMenuItem, defaultItems);
             TaskMenuItem.Items.Remove(item);
         }
 

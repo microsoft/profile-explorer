@@ -84,17 +84,12 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     }
     
     public static (string, double) CreateBacktraceText(ProfileCallTreeNode node, int maxLevel,
-                                                       FunctionNameFormatter funcNameFormatter) {
+                                                       FunctionNameFormatter nameFormatter) {
         var sb = new StringBuilder();
         double maxTextWidth = 0;
 
         while (node != null && maxLevel-- > 0) {
-            var funcName = funcNameFormatter != null ? 
-                                funcNameFormatter(node.FunctionName): node.FunctionName;
-            if (funcName.Length > MaxPreviewNameLength) {
-                funcName = $"{funcName[..MaxPreviewNameLength]}...";
-            }
-
+            var funcName = node.FormatFunctionName(nameFormatter, MaxPreviewNameLength);
             var textSize = Utils.MeasureString(funcName, DefaultTextFont, DefaultTextSize);
             maxTextWidth = Math.Max(maxTextWidth, textSize.Width);
             sb.AppendLine(funcName);

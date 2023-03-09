@@ -123,6 +123,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         new(async (obj) => {
             if (obj is SelectedColorEventArgs e &&
                 GraphViewer.SelectedNode is { HasFunction: true }) {
+                GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
                 await Session.MarkProfileFunction(GraphViewer.SelectedNode.CallTreeNode, ToolPanelKind.Timeline, 
                                                   GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
                 
