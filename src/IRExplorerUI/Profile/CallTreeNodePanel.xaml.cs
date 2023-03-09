@@ -23,6 +23,7 @@ using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
+using Xceed.Wpf.Toolkit;
 
 namespace IRExplorerUI.Profile;
 
@@ -399,37 +400,16 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {
         var nodeEx = new ProfileCallTreeNodeEx(node) {
-            FullFunctionName = FormatFunctionName(node),
-            FunctionName = FormatFunctionName(node, MaxFunctionNameLength),
-            ModuleName = FormatModuleName(node, MaxModuleNameLength),
+            FullFunctionName = node.FormatFunctionName(Session.CompilerInfo.NameProvider.FormatFunctionName),
+            FunctionName = node.FormatFunctionName(Session.CompilerInfo.NameProvider.FormatFunctionName, MaxFunctionNameLength),
+            ModuleName = node.FormatModuleName(Session.CompilerInfo.NameProvider.FormatFunctionName, MaxModuleNameLength),
             Percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight),
             ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight),
         };
 
         return nodeEx;
     }
-
-    private string FormatFunctionName(ProfileCallTreeNode node, int maxLength = int.MaxValue) {
-        return FormatName(node.FunctionName, maxLength);
-    }
-
-    private string FormatModuleName(ProfileCallTreeNode node, int maxLength = int.MaxValue) {
-        return FormatName(node.ModuleName, maxLength);
-    }
-
-    private string FormatName(string name, int maxLength) {
-        if (string.IsNullOrEmpty(name)) {
-            return name;
-        }
-
-        name = Session.CompilerInfo.NameProvider.FormatFunctionName(name);
-
-        if (name.Length > maxLength && name.Length > 2) {
-            name = $"{name.Substring(0, maxLength - 2)}...";
-        }
-
-        return name;
-    }
+    
     public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {
         Session = session;
         funcInfoProvider_ = funcInfoProvider;
