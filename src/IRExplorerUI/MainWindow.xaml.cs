@@ -1468,26 +1468,43 @@ namespace IRExplorerUI {
                 sampleEndIndex = funcProfile.SampleEndIndex;
             }
 
-            int index = 0;
-
             //? Also here - Abstract parallel run chunks to take action per sample
-
+            
             for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
                 var (sample, stack) = profile.Samples[i];
-                foreach (var stackFrame in stack.StackFrames) {
-                    if (stackFrame.IsUnknown)
+
+                ProfileCallTreeNode currentNode = node;
+                bool match = false;
+                
+                for(int k = 0; k < stack.StackFrames.Count; k++) {
+                    var stackFrame = stack.StackFrames[k];
+                    if (stackFrame.IsUnknown) {
                         continue;
+                    }
 
-                    if (stackFrame.Info.Function.Value.Equals(node.Function)) {
-                        var threadList = threadListMap.GetOrAddValue(stack.Context.ThreadId);
-                        threadList.Add(new SampleIndex(index, sample.Time));
-                        allThreadsList.Add(new SampleIndex(index, sample.Time));
-
+                    if (currentNode == null) {
+                        // Mismatch along the call path leading to the function. 
+                        match = false;
+                        break;
+                    }
+                    else if (stackFrame.Info.Function.Value.Equals(currentNode.Function)) {
+                        // Continue checking if the callers show up on the stack trace
+                        // to make the search context-sensitive.
+                        match = true;
+                        currentNode = currentNode.Caller;
+                    }
+                    else if (match) {
+                        // Mismatch along the call path leading to the function.
+                        match = false;
                         break;
                     }
                 }
 
-                index++;
+                if (match) {
+                    var threadList = threadListMap.GetOrAddValue(stack.Context.ThreadId);
+                    threadList.Add(new SampleIndex(i, sample.Time));
+                    allThreadsList.Add(new SampleIndex(i, sample.Time));
+                }
             }
 
             Trace.WriteLine($"FindSamples took: {sw.ElapsedMilliseconds} for {allThreadsList.Count} samples");

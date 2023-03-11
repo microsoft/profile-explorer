@@ -5,7 +5,6 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Text;
 using System.Windows;
@@ -16,26 +15,13 @@ using System.Windows.Media;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerCore;
 using ProtoBuf;
-using Microsoft.Win32;
 using System.IO;
 using System.Diagnostics;
 using System.Globalization;
 using System.Threading.Tasks;
-using Aga.Controls.Tree;
-using DiffPlex;
-using Grpc.Core;
 using IRExplorerUI.Profile;
-using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Analysis;
-using Xceed.Wpf.Toolkit;
-using MessageBox = System.Windows.MessageBox;
-using System.Dynamic;
-using System.Runtime.CompilerServices;
-using IRExplorerCore.Graph;
-using System.Windows.Documents;
-using static SkiaSharp.HarfBuzz.SKShaper;
 using ClosedXML.Excel;
-using ICSharpCode.AvalonEdit.Rendering;
 using TimelinePanel = IRExplorerUI.Profile.TimelinePanel;
 using IRExplorerUI.Utilities;
 using PerformanceCounter = IRExplorerUI.Profile.PerformanceCounter;
@@ -1306,7 +1292,8 @@ namespace IRExplorerUI {
                 (mousePoint, previewPoint) => {
                     var element = FunctionList.GetObjectAtPoint<ListViewItem>(mousePoint);
 
-                    if (element.Content is not IRTextFunctionEx funcEx) {
+                    if (element == null ||
+                        element.Content is not IRTextFunctionEx funcEx) {
                         return null;
                     }
 
