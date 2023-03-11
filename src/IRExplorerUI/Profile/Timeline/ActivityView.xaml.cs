@@ -888,7 +888,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     private void DrawMarkedSamples(MarkedSamples samples, DrawingContext graphDC) {
         double y = visibleArea_.Height - MarkerHeight;
-        y = Math.Max(0, y - samples.Index * MarkerHeight);
+        y = Math.Max(0, y - samples.Index * (MarkerHeight / 2));
         DrawMarkedSamplesImpl(samples.Samples, samples.Style.BackColor, sampleBorderColor_, y, MarkerHeight, graphDC);
     }
 
