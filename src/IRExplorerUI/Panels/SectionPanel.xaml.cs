@@ -1264,6 +1264,7 @@ namespace IRExplorerUI {
 
             UseProfileCallTree = true;
             GridViewColumnVisibility.UpdateListView(FunctionList);
+            SetupStackFunctionHoverPreview();
 
             // Create the call tree.
             var panel = Session.FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
@@ -1360,7 +1361,6 @@ namespace IRExplorerUI {
 
             // Attach additional data to the UI.
             await SetFunctionProfileInfo(functionsEx);
-            SetupStackFunctionHoverPreview();
 
             if (analyzeFunctions) {
                 await RunFunctionAnalysis();
