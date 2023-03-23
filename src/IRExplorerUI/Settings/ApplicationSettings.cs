@@ -188,7 +188,7 @@ namespace IRExplorerUI {
                 list.Remove(report);
             }
             else if (list.Count >= 10) {
-                list.RemoveAt(ProfileOptions.PreviousRecordingSessions.Count - 1);
+                list.RemoveAt(list.Count - 1);
             }
 
             list.Insert(0, report);
