@@ -309,7 +309,7 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
         if(!taskQueue_.TryAdd(task)) {
             task.RunSynchronously();
         }
-        
+
         return task;
     }
 
@@ -441,7 +441,7 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
             int startIndex = segments_.Count * segmentLength_;
 
             if (index >= startIndex &&
-                index < startIndex + segments_[^1].Count) {
+                index < startIndex + activeSegment_.Count) {
                 return index - startIndex;
             }
         }
@@ -554,7 +554,15 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
     }
 
     public void Dispose() {
+        // End compression tasks and free memory.
         Wait(false);
         taskQueue_?.Dispose();
+        taskQueue_ = null;
+
+        foreach (var task in taskQueueThreadTasks_) {
+            task.Dispose();
+        }
+
+        taskQueueThreadTasks_ = null;
     }
 }

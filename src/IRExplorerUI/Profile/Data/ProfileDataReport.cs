@@ -61,9 +61,11 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
     }
 
     public void AddModuleInfo(BinaryFileDescriptor binaryInfo, BinaryFileSearchResult binaryFile, ModuleLoadState state) {
-        var status = GetOrCreateModuleStatus(binaryInfo);
-        status.BinaryFileInfo = binaryFile;
-        status.State = state;
+        lock (this) {
+            var status = GetOrCreateModuleStatus(binaryInfo);
+            status.BinaryFileInfo = binaryFile;
+            status.State = state;
+        }
     }
 
     private ModuleStatus GetOrCreateModuleStatus(BinaryFileDescriptor binaryInfo) {
@@ -77,12 +79,16 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
     }
 
     public void AddDebugInfo(BinaryFileDescriptor binaryInfo, DebugFileSearchResult searchResult) {
-        var status = GetOrCreateModuleStatus(binaryInfo);
-        status.DebugInfoFile = searchResult;
+        lock (this) {
+            var status = GetOrCreateModuleStatus(binaryInfo);
+            status.DebugInfoFile = searchResult;
+        }
     }
 
     public ModuleStatus GetModuleStatus(string moduleName) {
-        return Modules.Find(module => module.ImageFileInfo.ImageName.Equals(moduleName, StringComparison.OrdinalIgnoreCase));
+        lock (this) {
+            return Modules.Find(module => module.ImageFileInfo.ImageName.Equals(moduleName, StringComparison.OrdinalIgnoreCase));
+        }
     }
 
     public bool Equals(ProfileDataReport other) {

@@ -40,7 +40,7 @@ namespace IRExplorerUI.Compilers.LLVM {
         public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
             return new BasicBlockFoldingStrategy(function);
         }
-        
+
         public IDiffInputFilter CreateDiffInputFilter() {
             return null;
         }
@@ -51,6 +51,10 @@ namespace IRExplorerUI.Compilers.LLVM {
 
         public IDebugInfoProvider CreateDebugInfoProvider(string imagePath) {
             return new PDBDebugInfoProvider(App.Settings.SymbolOptions);
+        }
+
+        public IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile) {
+            return null;
         }
 
         public async Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options) {
