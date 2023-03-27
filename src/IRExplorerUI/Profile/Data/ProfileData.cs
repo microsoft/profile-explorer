@@ -14,6 +14,7 @@ using ProtoBuf;
 using IRExplorerUI;
 using System.Threading.Tasks;
 using IRExplorerUI.Compilers;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace IRExplorerUI.Profile;
 
@@ -207,6 +208,8 @@ public class ProfileData {
 
     public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function,
                                                           FunctionDebugInfo debugInfo) {
+        //? TODO: Use GetOrAdd since TryAdd may fail
+
         if (!FunctionProfiles.TryGetValue(function, out var profile)) {
             profile = new FunctionProfileData() { FunctionDebugInfo = debugInfo };
             FunctionProfiles.TryAdd(function, profile);
@@ -324,10 +327,10 @@ public class ProfileData {
 
     public void FilterFunctionProfile(ProfileSampleFilter filter) {
         ModuleWeights.Clear();
+        FunctionProfiles.Clear();
         ProfileWeight = TimeSpan.Zero;
         TotalWeight = TimeSpan.Zero;
-        FunctionProfiles.Clear();
-        CallTree = null; //? Recycle nodes
+        CallTree = null; //? TODO: Recycle nodes?
 
         //? TODO: Split ProfileData into a part that has the samples and other info that doesn't change,
         //? while the rest is more like a processing result similar to FuncProfileData
@@ -345,9 +348,11 @@ public class ProfileData {
 
         int sampleStartIndex = filter.TimeRange?.StartSampleIndex ?? 0;
         int sampleEndIndex = filter.TimeRange?.EndSampleIndex ?? baseProfile.Samples.Count;
+        // Trace.WriteLine($"Sample range: {sampleStartIndex} - {sampleEndIndex}");
 
         int sampleCount = sampleEndIndex - sampleStartIndex;
         int chunks = Math.Min(maxChunks, Math.Min(8, (Environment.ProcessorCount * 3) / 4));
+        // Trace.WriteLine($"Using {chunks} chunks");
 
         int chunkSize = sampleCount / chunks;
         var tasks = new List<Task>();
