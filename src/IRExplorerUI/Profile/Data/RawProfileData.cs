@@ -34,7 +34,7 @@ namespace IRExplorerUI.Profile;
 //?     - also removes need to have ProcessId in sample
 
 [ProtoContract(SkipConstructor = true)]
-public class RawProfileData {
+public class RawProfileData : IDisposable {
     private static ProfileContext tempContext_ = new();
     private static ProfileStack tempStack_ = new();
 
@@ -622,6 +622,11 @@ public class RawProfileData {
 
             return hash;
         }
+    }
+
+    public void Dispose() {
+        samples_?.Dispose();
+        perfCountersEvents_?.Dispose();
     }
 }
 

@@ -158,6 +158,7 @@ public sealed class ETWEventProcessor : IDisposable {
             return new List<ProcessSummary>();
         }
 
+        profile.Dispose();
         return summaryBuilder.MakeSummaries();
     }
 
@@ -502,7 +503,7 @@ public sealed class ETWEventProcessor : IDisposable {
     //        if (!(IsAcceptedProcess(data.OldProcessID) || IsAcceptedProcess(data.NewProcessID))) {
     //            return; // Ignore events from other processes.
     //        }
-            
+
     //        Trace.WriteLine($"ThreadCSwitch {data}");
     //        Trace.WriteLine($"   switch from TId/PId: {data.OldThreadID}/{data.OldProcessID} to new TId/PId {data.NewThreadID}/{data.NewProcessID}, old reason {data.OldThreadWaitReason}, oldstate {data.OldThreadState}");
 
@@ -566,7 +567,7 @@ public sealed class ETWEventProcessor : IDisposable {
     //        }
     //        Trace.WriteLine($"DiskIORead: {data}\n");
     //    };
-        
+
 #if false
         GC.Collect();
         GC.WaitForPendingFinalizers();
@@ -584,7 +585,7 @@ public sealed class ETWEventProcessor : IDisposable {
                 //if (cancelableTask != null && cancelableTask.IsCanceled) {
                 //    source_.StopProcessing();
                 //}
-                
+
                 var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
                 int contextId = profile.AddContext(context);
                 double timestamp = data.TimeStampRelativeMSec;
@@ -659,7 +660,7 @@ public sealed class ETWEventProcessor : IDisposable {
                 Trace.WriteLine($"PipeServer_OnFunctionCallTargetsReceived: {functionId}, {rejitId}, {address}, {name}");
                 profile.AddManagedMethodCallTarget(functionId, rejitId, processId, address, name);
             };
-            
+
             Task.Run(() => {
                 // Receive messages from the pipe client with the managed method code.
                 pipeServer_.StartReceiving(cancelableTask.Token);
@@ -699,7 +700,7 @@ public sealed class ETWEventProcessor : IDisposable {
 
         //source_.Clr.GCStart += data => {
         //    Trace.WriteLine($"GCStart: {data}");
-            
+
         //};
         //source_.Clr.GCStop += data => {
         //    Trace.WriteLine($"GCStop: {data}");

@@ -28,7 +28,7 @@ public class ProfileData {
 
         [ProtoMember(4)] public Dictionary<int, PerformanceCounter> PerformanceCounters { get; set; }
 
-        [ProtoMember(5)] public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
+        [ProtoMember(5)] public Dictionary<int, TimeSpan> ModuleWeights { get; set; }
 
         [ProtoMember(6)] public ProfileDataReport Report { get; set; }
 
@@ -38,6 +38,8 @@ public class ProfileData {
         [ProtoMember(9)] public ProfileProcess Process { get; set; }
         [ProtoMember(10)]
         public Dictionary<int, ProfileThread> Threads { get; set; }
+        [ProtoMember(10)]
+        public Dictionary<int, ProfileImage> Modules { get; set; }
 
         public ProfileDataState(TimeSpan profileWeight, TimeSpan totalWeight) {
             ProfileWeight = profileWeight;
@@ -49,7 +51,7 @@ public class ProfileData {
     public TimeSpan ProfileWeight { get; set; }
     public TimeSpan TotalWeight { get; set; }
     public ConcurrentDictionary<IRTextFunction, FunctionProfileData> FunctionProfiles { get; set; }
-    public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
+    public Dictionary<int, TimeSpan> ModuleWeights { get; set; }
     public Dictionary<string, PerformanceCounterValueSet> ModuleCounters { get; set; }
     public Dictionary<int, PerformanceCounter> PerformanceCounters { get; set; }
     public ProfileCallTree CallTree { get; set; }
@@ -59,6 +61,7 @@ public class ProfileData {
     public List<(PerformanceCounterEvent Sample, ResolvedProfileStack Stack)> Events { get; set; }
     public ProfileProcess Process { get; set; }
     public Dictionary<int, ProfileThread> Threads { get; set; }
+    public Dictionary<int, ProfileImage> Modules { get; set; }
     public Dictionary<string, IDebugInfoProvider> ModuleDebugInfo { get; set; }
 
     [ProtoContract(SkipConstructor = true)]
@@ -119,26 +122,22 @@ public class ProfileData {
     public ProfileData() {
         ProfileWeight = TimeSpan.Zero;
         FunctionProfiles = new ConcurrentDictionary<IRTextFunction, FunctionProfileData>();
-        ModuleWeights = new Dictionary<string, TimeSpan>();
+        ModuleWeights = new Dictionary<int, TimeSpan>();
         PerformanceCounters = new Dictionary<int, PerformanceCounter>();
         ModuleCounters = new Dictionary<string, PerformanceCounterValueSet>();
         Threads = new Dictionary<int, ProfileThread>();
+        Modules = new Dictionary<int, ProfileImage>();
         Samples = new List<(ProfileSample, ResolvedProfileStack)>();
         Events = new List<(PerformanceCounterEvent Sample, ResolvedProfileStack Stack)>();
         ModuleDebugInfo = new Dictionary<string, IDebugInfoProvider>();
     }
 
     public void RegisterModuleDebugInfo(string moduleName, IDebugInfoProvider provider) {
-        
+
     }
 
-    public void AddModuleSample(string moduleName, TimeSpan weight) {
-        if (ModuleWeights.TryGetValue(moduleName, out var currentWeight)) {
-            ModuleWeights[moduleName] = currentWeight + weight;
-        }
-        else {
-            ModuleWeights[moduleName] = weight;
-        }
+    public void AddModuleSample(int moduleId, TimeSpan weight) {
+        ModuleWeights.AccumulateValue(moduleId, weight);
     }
 
     public void AddModuleCounter(string moduleName, int perfCounterId, long value) {
@@ -225,6 +224,7 @@ public class ProfileData {
         state.Samples = Samples;
         state.Process = Process;
         state.Threads = Threads;
+        state.Modules = Modules;
 
         foreach (var pair in FunctionProfiles) {
             var funcId = new IRTextFunctionId(pair.Key);
@@ -260,6 +260,7 @@ public class ProfileData {
 
         profileData.Process = state.Process;
         profileData.Threads = state.Threads;
+        profileData.Modules = state.Modules;
         profileData.Report = state.Report;
         profileData.CallTree = ProfileCallTree.Deserialize(state.CallTreeState, summaryMap);
         DeserializeSamples(profileData, state, summaryMap);
@@ -305,6 +306,12 @@ public class ProfileData {
     public void AddThreads(IEnumerable<ProfileThread> threads) {
         foreach (var thread in threads) {
             Threads[thread.ThreadId] = thread;
+        }
+    }
+
+    public void AddModules(IEnumerable<ProfileImage> modules) {
+        foreach (var module in modules) {
+            Modules[module.Id] = module;
         }
     }
 
@@ -355,6 +362,10 @@ public class ProfileData {
                 HashSet<int> stackModules = new();
                 HashSet<IRTextFunction> stackFuncts = new();
 
+                var moduleWeights = new Dictionary<int, TimeSpan>();
+                TimeSpan totalWeight = TimeSpan.Zero;
+                TimeSpan profileWeight = TimeSpan.Zero;
+
                 for (int i = start; i < end; i++) {
                     var (sample, stack) = baseProfile.Samples[i];
 
@@ -363,11 +374,8 @@ public class ProfileData {
                         continue;
                     }
 
-                    //? TODO: Use same Interlocked trick from CallTreeNode to avoid lock
-                    lock (profile) {
-                        profile.TotalWeight += sample.Weight;
-                        profile.ProfileWeight += sample.Weight;
-                    }
+                    totalWeight += sample.Weight;
+                    profileWeight += sample.Weight;
 
                     bool isTopFrame = true;
                     stackModules.Clear();
@@ -379,11 +387,7 @@ public class ProfileData {
                         }
 
                         if (isTopFrame && stackModules.Add(resolvedFrame.Info.Image.Id)) {
-                            //? TODO: Avoid lock by summing per thread, accumulate at the end
-                            //? TODO: Also, don't use mod name as key, use imageId
-                            lock (profile) {
-                                profile.AddModuleSample(resolvedFrame.Info.Image.ModuleName, sample.Weight);
-                            }
+                            moduleWeights.AccumulateValue(resolvedFrame.Info.Image.Id, sample.Weight);
                         }
 
                         var funcRva = resolvedFrame.Info.DebugInfo.RVA;
@@ -415,6 +419,15 @@ public class ProfileData {
                     }
 
                     callTree.UpdateCallTree(sample, stack);
+                }
+
+                lock (profile) {
+                    profile.TotalWeight += totalWeight;
+                    profile.ProfileWeight += profileWeight;
+
+                    foreach(var (moduleId, weight) in moduleWeights) {
+                        profile.AddModuleSample(moduleId, weight);
+                    }
                 }
             }));
 

@@ -71,16 +71,9 @@ namespace IRExplorerUI.Compilers {
                 return true;
             }
 
-            debugInfo_ = compilerInfo_.CreateDebugInfoProvider(binaryFilePath_);
             debugInfoFile_ = compilerInfo_.FindDebugInfoFile(binaryFilePath_).Result;
-
-            if (debugInfoFile_.Found && debugInfo_.LoadDebugInfo(debugInfoFile_)) {
-                return true;
-            }
-
-            debugInfo_.Dispose();
-            debugInfo_ = null;
-            return false;
+            debugInfo_ = compilerInfo_.CreateDebugInfoProvider(debugInfoFile_);
+            return debugInfo_ != null;
         }
 
         public override string GetDocumentOutputText() {

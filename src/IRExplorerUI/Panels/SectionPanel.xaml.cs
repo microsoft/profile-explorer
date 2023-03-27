@@ -1160,16 +1160,18 @@ namespace IRExplorerUI {
 
             foreach (var pair in profile.ModuleWeights) {
                 double weightPercentage = profile.ScaleModuleWeight(pair.Value);
+
                 var moduleInfo = new ModuleEx() {
-                    Name = pair.Key,
+                    Name = profile.Modules[pair.Key].ModuleName,
                     ExclusivePercentage = weightPercentage,
                     ExclusiveWeight = pair.Value
                 };
 
                 // Set warnings for missing binary/debug files.
-                var moduleStatus = profile.Report?.GetModuleStatus(pair.Key);
+                var moduleStatus = profile.Report?.GetModuleStatus(profile.Modules[pair.Key].ModuleName);
 
                 if (moduleStatus != null) {
+
                     moduleInfo.Status = moduleStatus;
                     moduleInfo.BinaryFileMissing = !moduleStatus.HasBinaryLoaded;
                     moduleInfo.DebugFileMissing = !moduleStatus.HasDebugInfoLoaded;
@@ -1285,9 +1287,9 @@ namespace IRExplorerUI {
                 await timelinePanel.DisplayFlameGraph();
             }
         }
-        
+
         private CallTreeNodePopup funcBacktracePreviewPopup_;
-        
+
         private void SetupStackFunctionHoverPreview() {
             var preview = new DraggablePopupHoverPreview(FunctionList, CallTreeNodePopup.PopupHoverLongDuration,
                 (mousePoint, previewPoint) => {
@@ -1305,8 +1307,8 @@ namespace IRExplorerUI {
                     }
 
                     var callNode = nodeList[0];
-                    var (text, textWidth) = 
-                        CallTreeNodePopup.CreateBacktraceText(callNode, 10, 
+                    var (text, textWidth) =
+                        CallTreeNodePopup.CreateBacktraceText(callNode, 10,
                             Session.CompilerInfo.NameProvider.FormatFunctionName);
 
                     if (funcBacktracePreviewPopup_ != null) {
@@ -1314,7 +1316,7 @@ namespace IRExplorerUI {
                         funcBacktracePreviewPopup_.UpdateNode(callNode);
                     }
                     else {
-                        funcBacktracePreviewPopup_ = new CallTreeNodePopup(callNode, null, previewPoint, 
+                        funcBacktracePreviewPopup_ = new CallTreeNodePopup(callNode, null, previewPoint,
                                                                            FunctionList, Session, canExpand: false);
                     }
 
@@ -1330,7 +1332,7 @@ namespace IRExplorerUI {
                     funcBacktracePreviewPopup_ = null;
                 });
         }
-        
+
         public async Task Update(bool force = false) {
             if (summary_ != null) {
                 await SetupFunctionList(force);
