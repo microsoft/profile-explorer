@@ -478,7 +478,7 @@ namespace IRExplorerUI {
 
             if (sessionState_.Info.IsFileSession) {
                 title += $" - {sessionState_.Info.FilePath}";
-                
+
                 if (sessionState_.MainDocument != null &&
                     sessionState_.MainDocument.BinaryFileExists) {
                     if (ProfileData != null && !string.IsNullOrEmpty(ProfileData.Report.TraceInfo.TraceFilePath)) {
@@ -910,7 +910,7 @@ namespace IRExplorerUI {
             OptionalStatusText.ToolTip = tooltip;
             OptionalStatusText.Visibility = !string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
         }
-        
+
         private class MainWindowState {
             public MainWindowState(MainWindow window) {
                 CurrentResizeMode = window.ResizeMode;
@@ -1224,10 +1224,10 @@ namespace IRExplorerUI {
                 ProfileReportPanel.ShowReportWindow(ProfileData.Report, this);
             }
         }
-        
+
         public async Task<bool> FilterProfileSamples(ProfileSampleFilter filter) {
             using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
-            
+
             SetApplicationProgress(true, double.NaN, "Filtering");
             StartUIUpdate();
 
@@ -1252,7 +1252,7 @@ namespace IRExplorerUI {
             Trace.Flush();
 
             await ProfileSampleRangeDeselected();
-            
+
             SetApplicationProgress(false, double.NaN);
             StopUIUpdate();
             return true;
@@ -1290,13 +1290,13 @@ namespace IRExplorerUI {
                 await panel.LoadSourceFile(node.Function.Sections[0]);
                 return true;
             }
-            
+
             return false;
         }
 
         public async Task<bool> SelectProfileFunction(ProfileCallTreeNode node, ToolPanelKind panelKind) {
             using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
-            
+
             switch (panelKind) {
                 case ToolPanelKind.CallTree: {
                     var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
@@ -1321,13 +1321,13 @@ namespace IRExplorerUI {
                     throw new InvalidOperationException();
                 }
             }
-            
+
             return true;
         }
 
         public async Task<bool> SelectProfileFunction(IRTextFunction func, ToolPanelKind panelKind) {
             using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
-            
+
             switch (panelKind) {
                 case ToolPanelKind.CallTree: {
                     var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
@@ -1360,17 +1360,17 @@ namespace IRExplorerUI {
         }
 
         private CancelableTaskInstance updateProfileTask_ = new CancelableTaskInstance();
-        
+
         public async Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range) {
             using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
-            
+
             //? TODO: If an event fires during the call tree/sample filtering,
             //? either ignore it or better ruin it after the filtering is done
             if (ProfileData.CallTree == null) {
                 return false;
             }
-            
-            var funcs = await Task.Run(() => FindFunctionsForSamples(range.StartSampleIndex, range.EndSampleIndex, 
+
+            var funcs = await Task.Run(() => FindFunctionsForSamples(range.StartSampleIndex, range.EndSampleIndex,
                                                                      range.ThreadId, ProfileData));
             var sectinPanel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
             sectinPanel?.MarkFunctions(funcs.ToList());
@@ -1383,13 +1383,13 @@ namespace IRExplorerUI {
 
         public async Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node, ToolPanelKind sourcePanelKind) {
             using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
-            
+
             //? TODO: If an event fires during the call tree/sample filtering,
             //? either ignore it or better ruin it after the filtering is done
             if (ProfileData.CallTree == null) {
                 return false;
             }
-            
+
             var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
 
             if (panel != null) {
@@ -1431,7 +1431,7 @@ namespace IRExplorerUI {
 
         public async Task<bool> ProfileSampleRangeDeselected() {
             using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
-            
+
             var panel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
             panel?.ClearMarkedFunctions();
 
@@ -1442,7 +1442,7 @@ namespace IRExplorerUI {
 
         public async Task<bool> ProfileFunctionDeselected() {
             using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
-            
+
             var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
             panel?.ClearSelectedFunctionSamples();
             return true;
@@ -1469,13 +1469,13 @@ namespace IRExplorerUI {
             }
 
             //? Also here - Abstract parallel run chunks to take action per sample
-            
+
             for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
                 var (sample, stack) = profile.Samples[i];
 
                 ProfileCallTreeNode currentNode = node;
                 bool match = false;
-                
+
                 for(int k = 0; k < stack.StackFrames.Count; k++) {
                     var stackFrame = stack.StackFrames[k];
                     if (stackFrame.IsUnknown) {
@@ -1483,11 +1483,11 @@ namespace IRExplorerUI {
                     }
 
                     if (currentNode == null) {
-                        // Mismatch along the call path leading to the function. 
+                        // Mismatch along the call path leading to the function.
                         match = false;
                         break;
                     }
-                    else if (stackFrame.Info.Function.Value.Equals(currentNode.Function)) {
+                    else if (stackFrame.FrameDetails.Function.Value.Equals(currentNode.Function)) {
                         // Continue checking if the callers show up on the stack trace
                         // to make the search context-sensitive.
                         match = true;
@@ -1527,12 +1527,12 @@ namespace IRExplorerUI {
                     if (stackFrame.IsUnknown)
                         continue;
 
-                    if (stackFrame.Info.Function == null) {
+                    if (stackFrame.FrameDetails.Function == null) {
                         Utils.WaitForDebugger();
                         continue;
                     }
-                    
-                    funcSet.Add(stackFrame.Info.Function);
+
+                    funcSet.Add(stackFrame.FrameDetails.Function);
                 }
             }
 
@@ -1547,12 +1547,12 @@ namespace IRExplorerUI {
             if (ProfileData.CallTree == null) {
                 return callNodes;
             }
-            
+
             foreach (var func in funcs) {
                 if (func == null) {
                     Utils.WaitForDebugger();
                 }
-                
+
                 var nodes = profile.CallTree.GetCallTreeNodes(func);
                 if (nodes != null) {
                     callNodes.AddRange(nodes);

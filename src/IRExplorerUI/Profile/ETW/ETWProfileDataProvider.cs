@@ -182,6 +182,9 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                 //? This should only resolve the stack frames and ComputeFunctionProfile do the rest...
                 var callTree = new ProfileCallTree();
 
+                List<(ProfileSample Sample, ResolvedProfileStack Stack)>[] samples =
+                    new List<(ProfileSample, ResolvedProfileStack)>[chunks];
+
                 for (int k = 0; k < chunks; k++) {
                     int start = Math.Min(k * chunkSize, (int)profile.Samples.Count);
                     int end = Math.Min((k + 1) * chunkSize, (int)profile.Samples.Count);
@@ -191,15 +194,31 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                     }
 
                     tasks.Add(taskFactory.StartNew(() => {
-                        ProcessSamplesChunk(profile, start, end,
-                                            processIds, options.IncludeKernelEvents, callTree,
-                                            symbolOptions, progressCallback, cancelableTask, chunks);
+                        var chunkSamples = ProcessSamplesChunk(profile, start, end,
+                                                               processIds, options.IncludeKernelEvents, callTree,
+                                                               symbolOptions, progressCallback, cancelableTask, chunks);
+                        lock (profileData_) {
+                            samples[k] = chunkSamples;
+                        }
                     }));
                 }
 
                 await Task.WhenAll(tasks.ToArray());
 
-                Trace.WriteLine($"Done stacks in {sw.Elapsed}");
+                // Merge the samples from all chunks and sort them by time.
+                int totalSamples = 0;
+
+                lock (profileData_) {
+                    foreach (var chunkSamples in samples) {
+                        totalSamples += chunkSamples.Count;
+                    }
+
+                    profileData_.Samples.EnsureCapacity(totalSamples);
+
+                    foreach (var chunkSamples in samples) {
+                        profileData_.Samples.AddRange(chunkSamples);
+                    }
+                }
 
                 if (profileData_.Samples != null) {
                     profileData_.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
@@ -260,11 +279,12 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         }
     }
 
-    private void ProcessSamplesChunk(RawProfileData profile, int start, int end, List<int> processIds,
-                                     bool includeKernelEvents, ProfileCallTree callTree,
-                                     SymbolFileSourceOptions symbolOptions,
-                                     ProfileLoadProgressHandler progressCallback,
-                                     CancelableTask cancelableTask, int chunks) {
+    private List<(ProfileSample Sample, ResolvedProfileStack Stack)>
+        ProcessSamplesChunk(RawProfileData profile, int start, int end, List<int> processIds,
+                            bool includeKernelEvents, ProfileCallTree callTree,
+                            SymbolFileSourceOptions symbolOptions,
+                            ProfileLoadProgressHandler progressCallback,
+                            CancelableTask cancelableTask, int chunks) {
         int index = 0;
         var stackFuncts = new HashSet<IRTextFunction>();
         var stackModules = new HashSet<int>();
@@ -330,8 +350,9 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         lock (lockObject_) {
             profileData_.TotalWeight += totalWeight;
             profileData_.ProfileWeight += profileWeight;
-            profileData_.Samples.AddRange(samples);
         }
+
+        return samples;
     }
 
     private ResolvedProfileStack ProcessUnresolvedStack(ProfileStack stack, TimeSpan sampleWeight,
@@ -377,7 +398,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                         Trace.WriteLine($"  ! no frameImage");
                     }
 
-                    resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackInfo.Unknown, frameIndex, stack);
+                    resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
                     isTopFrame = false;
                     continue;
                 }
@@ -402,7 +423,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                     Trace.WriteLine($"  ! no module for {frameImage.ModuleName}");
                 }
 
-                resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackInfo.Unknown, frameIndex, stack);
+                resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
                 isTopFrame = false;
                 continue;
             }
@@ -446,7 +467,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                         Trace.WriteLine($"  ! no text func in frame RVA {frameRva} {frameImage.ModuleName}");
                     }
 
-                    resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackInfo.Unknown, frameIndex, stack);
+                    resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
                     isTopFrame = false;
                     continue;
                 }
@@ -454,64 +475,14 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
             // Create the function profile data, with the merged weight of all instances
             // of the func. across all call stacks.
-            var resolvedFrame = new ResolvedProfileStackInfo(funcDebugInfo, textFunction,
-                                                                  frameImage, module.IsManaged, null);
+            var resolvedFrame = new ResolvedProfileStackFrameDetails(funcDebugInfo, textFunction,
+                                                                  frameImage, module.IsManaged);
                 resolvedStack.AddFrame(frameIp, frameRva, resolvedFrame, frameIndex, stack);
 
             isTopFrame = false;
         }
 
         return resolvedStack;
-    }
-
-    private void ProcessResolvedStack(ResolvedProfileStack resolvedStack, TimeSpan sampleWeight,
-                                      HashSet<int> stackModules, HashSet<IRTextFunction> stackFuncts) {
-        bool isTopFrame = true;
-
-        foreach (var resolvedFrame in resolvedStack.StackFrames) {
-            if (resolvedFrame.IsUnknown) {
-                continue;
-            }
-
-            // Count exclusive time for each module in the executable.
-            if (isTopFrame && stackModules.Add(resolvedFrame.Info.Image.Id)) {
-                lock (lockObject_) {
-                    //? TODO: Avoid lock by summing per thread, accumulate at the end
-                    //? TODO: Also, don't use mod name as key, use imageId
-                    profileData_.AddModuleSample(resolvedFrame.Info.Image.Id, sampleWeight);
-                }
-            }
-
-            //Trace.WriteLine($"Resolved image {resolvedFrame.Image.ModuleName}m {resolvedFrame.DebugInfo.Name}, profile func {resolvedFrame.Profile.FunctionDebugInfo.Name}, rva {resolvedFrame.FrameRVA}, ip {resolvedFrame.FrameIP}");
-            var funcRva = resolvedFrame.Info.DebugInfo.RVA;
-            var frameRva = resolvedFrame.FrameRVA;
-            var textFunction = resolvedFrame.Info.Function;
-            var funcProfile = resolvedFrame.Info.Profile;
-
-            lock (funcProfile) {
-                var offset = frameRva - funcRva;
-
-                // Don't count the inclusive time for recursive functions multiple times.
-                if (stackFuncts.Add(textFunction)) {
-                    funcProfile.AddInstructionSample(offset, sampleWeight);
-                    funcProfile.Weight += sampleWeight;
-                }
-
-                // Count the exclusive time for the top frame function.
-                if (isTopFrame) {
-                    funcProfile.ExclusiveWeight += sampleWeight;
-                }
-
-                //? TODO: Expensive, do as post-processing
-                // Try to map the sample to all the inlined functions.
-                //if (options_.MarkInlinedFunctions && resolvedFrame.Module.HasDebugInfo &&
-                //    textFunction.Sections.Count > 0) {
-                //    ProcessInlineeSample(sampleWeight, offset, textFunction, resolvedFrame.Module);
-                //}
-            }
-
-            isTopFrame = false;
-        }
     }
 
     private LoadedDocument FindSessionDocuments(string imageName, out List<LoadedDocument> otherDocuments) {
