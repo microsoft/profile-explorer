@@ -279,23 +279,23 @@ public class ProfileData {
 
         foreach (var pair in profileData.Samples) {
             foreach (var frame in pair.Stack.StackFrames) {
-                if (frame.Info.Function == null) {
+                if (frame.FrameDetails.Function == null) {
                     continue; // Unknown frame.
                 }
 
-                if (!summaryMap.ContainsKey(frame.Info.Function.Id.SummaryId)) {
+                if (!summaryMap.ContainsKey(frame.FrameDetails.Function.Id.SummaryId)) {
                     continue;
                 }
 
-                var summary = summaryMap[frame.Info.Function.Id.SummaryId];
-                var function = summary.GetFunctionWithId(frame.Info.Function.Id.FunctionNumber);
+                var summary = summaryMap[frame.FrameDetails.Function.Id.SummaryId];
+                var function = summary.GetFunctionWithId(frame.FrameDetails.Function.Id.FunctionNumber);
 
                 if (function == null) {
                     Debug.Assert(false, "Could not find node for func");
                     continue;
                 }
 
-                frame.Info.Function = function;
+                frame.FrameDetails.Function = function;
             }
         }
     }
@@ -391,14 +391,14 @@ public class ProfileData {
                             continue;
                         }
 
-                        if (isTopFrame && stackModules.Add(resolvedFrame.Info.Image.Id)) {
-                            moduleWeights.AccumulateValue(resolvedFrame.Info.Image.Id, sample.Weight);
+                        if (isTopFrame && stackModules.Add(resolvedFrame.FrameDetails.Image.Id)) {
+                            moduleWeights.AccumulateValue(resolvedFrame.FrameDetails.Image.Id, sample.Weight);
                         }
 
-                        var funcRva = resolvedFrame.Info.DebugInfo.RVA;
+                        var funcRva = resolvedFrame.FrameDetails.DebugInfo.RVA;
                         var frameRva = resolvedFrame.FrameRVA;
-                        var textFunction = resolvedFrame.Info.Function;
-                        var funcProfile = profile.GetOrCreateFunctionProfile(resolvedFrame.Info.Function, resolvedFrame.Info.DebugInfo);
+                        var textFunction = resolvedFrame.FrameDetails.Function;
+                        var funcProfile = profile.GetOrCreateFunctionProfile(resolvedFrame.FrameDetails.Function, resolvedFrame.FrameDetails.DebugInfo);
 
                         //? TODO: Info.Profile ends up being the func profile in the previous run
                         //? resolvedFrame.Info.Profile = funcProfile;

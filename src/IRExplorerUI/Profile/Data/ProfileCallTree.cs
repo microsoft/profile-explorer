@@ -66,18 +66,18 @@ public sealed class ProfileCallTree {
         for (int k = resolvedStack.FrameCount - 1; k >= 0; k--) {
             var resolvedFrame = resolvedStack.StackFrames[k];
 
-            if (resolvedFrame.FrameRVA == 0 &&  resolvedFrame.Info.DebugInfo == null) {
+            if (resolvedFrame.FrameRVA == 0 &&  resolvedFrame.FrameDetails.DebugInfo == null) {
                 continue;
             }
 
             ProfileCallTreeNode node = null;
 
             if (isRootFrame) {
-                node = AddRootNode(resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function);
+                node = AddRootNode(resolvedFrame.FrameDetails.DebugInfo, resolvedFrame.FrameDetails.Function);
                 isRootFrame = false;
             }
             else {
-                node = AddChildNode(prevNode, resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function);
+                node = AddChildNode(prevNode, resolvedFrame.FrameDetails.DebugInfo, resolvedFrame.FrameDetails.Function);
 
                 //? TODO: Call sites can be computed on-demand when opening a func
                 //? by going over the samples in the func, similar to how timeline selection works
@@ -88,10 +88,10 @@ public sealed class ProfileCallTree {
 
             // Set the user/kernel-mode context of the function.
             if (node.Kind == ProfileCallTreeNodeKind.Unset) {
-                if (resolvedFrame.Info.IsKernelCode) {
+                if (resolvedFrame.FrameDetails.IsKernelCode) {
                     node.Kind = ProfileCallTreeNodeKind.NativeKernel;
                 }
-                else if (resolvedFrame.Info.IsManagedCode) {
+                else if (resolvedFrame.FrameDetails.IsManagedCode) {
                     node.Kind = ProfileCallTreeNodeKind.Managed;
                 }
                 else {
@@ -712,7 +712,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             }
         }
     }
-    
+
     public bool Equals(IRTextFunction function) {
         return Function.Equals(function);
     }

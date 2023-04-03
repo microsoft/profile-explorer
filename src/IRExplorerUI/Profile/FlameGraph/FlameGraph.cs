@@ -317,7 +317,7 @@ namespace IRExplorerUI.Profile {
                 //     continue;
                 // }
 
-                if (resolvedFrame.Info.Function == null) {
+                if (resolvedFrame.FrameDetails.Function == null) {
                     continue;
                 }
 
@@ -327,7 +327,7 @@ namespace IRExplorerUI.Profile {
                     for (int i = node.Children.Count - 1; i >= 0; i--) {
                         var child = node.Children[i];
 
-                        if (!child.CallTreeNode.Function.Equals(resolvedFrame.Info.Function)) {
+                        if (!child.CallTreeNode.Function.Equals(resolvedFrame.FrameDetails.Function)) {
                             break; // Last func is different, stop and start a new stack.
                         }
 
@@ -340,7 +340,7 @@ namespace IRExplorerUI.Profile {
                 }
 
                 if (targetNode == null) {
-                    var callNode = new ProfileCallTreeNode(resolvedFrame.Info.DebugInfo, resolvedFrame.Info.Function,
+                    var callNode = new ProfileCallTreeNode(resolvedFrame.FrameDetails.DebugInfo, resolvedFrame.FrameDetails.Function,
                                                            null, node.CallTreeNode) {
                         //? TODO: Kind = resolvedFrame.IsKernelCode
                     };
