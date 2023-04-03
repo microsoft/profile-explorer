@@ -193,12 +193,14 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                         continue;
                     }
 
+                    int chunkIndex = k; // Copy needed for lambda.
+
                     tasks.Add(taskFactory.StartNew(() => {
                         var chunkSamples = ProcessSamplesChunk(profile, start, end,
                                                                processIds, options.IncludeKernelEvents, callTree,
                                                                symbolOptions, progressCallback, cancelableTask, chunks);
                         lock (profileData_) {
-                            samples[k] = chunkSamples;
+                            samples[chunkIndex] = chunkSamples;
                         }
                     }));
                 }
@@ -307,7 +309,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             //? TODO: Replace %?
             if (index++ % 10000 == 0) {
                 if (cancelableTask is { IsCanceled: true }) {
-                    return;
+                    return samples;
                 }
 
                 progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
