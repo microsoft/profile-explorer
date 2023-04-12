@@ -174,16 +174,13 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                 int chunkSize = profile.ComputeSampleChunkLength(chunks);
 
                 Trace.WriteLine($"Using {chunks} threads");
-                var tasks = new List<Task>();
+                var tasks = new List<Task<List<(ProfileSample Sample, ResolvedProfileStack Stack)>>>();
                 var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
                 var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
 
                 //? TODO: Build call tree outside, with sample filtering
                 //? This should only resolve the stack frames and ComputeFunctionProfile do the rest...
                 var callTree = new ProfileCallTree();
-
-                List<(ProfileSample Sample, ResolvedProfileStack Stack)>[] samples =
-                    new List<(ProfileSample, ResolvedProfileStack)>[chunks];
 
                 for (int k = 0; k < chunks; k++) {
                     int start = Math.Min(k * chunkSize, (int)profile.Samples.Count);
@@ -199,26 +196,31 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                         var chunkSamples = ProcessSamplesChunk(profile, start, end,
                                                                processIds, options.IncludeKernelEvents, callTree,
                                                                symbolOptions, progressCallback, cancelableTask, chunks);
-                        lock (profileData_) {
-                            samples[chunkIndex] = chunkSamples;
-                        }
+                        return chunkSamples;
                     }));
                 }
 
                 await Task.WhenAll(tasks.ToArray());
+                
+                // Collect samples from tasks.
+                var samples = new List<(ProfileSample, ResolvedProfileStack)>[tasks.Count];
+
+                for (int k = 0; k < tasks.Count; k++) {
+                    samples[k] = tasks[k].Result;
+                }
 
                 // Merge the samples from all chunks and sort them by time.
                 int totalSamples = 0;
 
                 lock (profileData_) {
                     foreach (var chunkSamples in samples) {
-                        totalSamples += chunkSamples.Count;
+                            totalSamples += chunkSamples.Count;
                     }
 
                     profileData_.Samples.EnsureCapacity(totalSamples);
 
                     foreach (var chunkSamples in samples) {
-                        profileData_.Samples.AddRange(chunkSamples);
+                            profileData_.Samples.AddRange(chunkSamples);
                     }
                 }
 
