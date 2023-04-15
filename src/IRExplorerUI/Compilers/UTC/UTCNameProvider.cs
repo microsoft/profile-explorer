@@ -34,9 +34,11 @@ namespace IRExplorerUI.UTC {
     public sealed class UTCNameProvider : INameProvider {
         private static List<FilteredSectionName> sectionNameFilters_;
         private static ConcurrentDictionary<string, string> demangledNameMap_;
+        private static ConcurrentDictionary<string, string> functionNameMap_;
 
         static UTCNameProvider() {
             demangledNameMap_ = new ConcurrentDictionary<string, string>();
+            functionNameMap_ = new ConcurrentDictionary<string, string>();
             sectionNameFilters_ = new List<FilteredSectionName>();
             sectionNameFilters_.Add(new FilteredSectionName("* ", FilteredSectionNameKind.TrimPrefix));
             sectionNameFilters_.Add(new FilteredSectionName(" *", FilteredSectionNameKind.TrimSuffix));
@@ -136,7 +138,12 @@ namespace IRExplorerUI.UTC {
                 return name;
             }
 
-            return DemangleFunctionName(name, GlobalDemanglingOptions);
+            if (!functionNameMap_.TryGetValue(name, out var demangledName)) {
+                demangledName = PDBDebugInfoProvider.DemangleFunctionName(name, FunctionNameDemanglingOptions.OnlyName);
+                functionNameMap_.TryAdd(name, demangledName);
+            }
+
+            return demangledName;
         }
 
         public string FormatFunctionName(IRTextFunction function) {

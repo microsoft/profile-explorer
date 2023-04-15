@@ -11,13 +11,15 @@ using System.Windows;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 
-namespace IRExplorerUI.Compilers.ASM; 
+namespace IRExplorerUI.Compilers.ASM;
 
 public sealed class ASMNameProvider : INameProvider {
     private static ConcurrentDictionary<string, string> demangledNameMap_;
+    private static ConcurrentDictionary<string, string> functionNameMap_;
 
     static ASMNameProvider() {
         demangledNameMap_ = new ConcurrentDictionary<string, string>();
+        functionNameMap_ = new ConcurrentDictionary<string, string>();
     }
 
     public bool IsDemanglingSupported => true;
@@ -35,7 +37,7 @@ public sealed class ASMNameProvider : INameProvider {
 
             return "<UNTITLED>";
         }
-            
+
         if(includeNumber) {
             return $"({section.Number}) {sectionName}";
         }
@@ -65,7 +67,12 @@ public sealed class ASMNameProvider : INameProvider {
             return name;
         }
 
-        return DemangleFunctionName(name, GlobalDemanglingOptions);
+        if (!functionNameMap_.TryGetValue(name, out var demangledName)) {
+            demangledName = PDBDebugInfoProvider.DemangleFunctionName(name, FunctionNameDemanglingOptions.OnlyName);
+            functionNameMap_.TryAdd(name, demangledName);
+        }
+
+        return demangledName;
     }
 
     public string FormatFunctionName(IRTextFunction function) {
