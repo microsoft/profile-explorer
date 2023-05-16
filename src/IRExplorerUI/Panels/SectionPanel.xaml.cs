@@ -1380,7 +1380,7 @@ namespace IRExplorerUI {
             await SetFunctionProfileInfo(functionsEx);
 
             if (analyzeFunctions) {
-                await RunFunctionAnalysis();
+                await RunFunctionAnalysis(functionsEx);
             }
         }
 
@@ -1440,9 +1440,9 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task RunFunctionAnalysis() {
+        private async Task RunFunctionAnalysis(List<IRTextFunctionEx> functions) {
             if (settings_.ComputeStatistics) {
-                await ComputeFunctionStatistics();
+                await ComputeFunctionStatistics(functions);
             }
         }
 
@@ -2469,15 +2469,19 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task ComputeFunctionStatistics() {
+        private async Task ComputeFunctionStatistics(List<IRTextFunctionEx> functions) {
+            Trace.TraceInformation("ComputeFunctionStatistics: start");
             using var cancelableTask = await statisticsTask_.CancelPreviousAndCreateTaskAsync();
-            var functionStatMap = await ComputeFunctionStatisticsImpl(cancelableTask);
 
-            if (cancelableTask.IsCanceled) {
-                return;
+            if (functionStatMap_ == null || functionStatMap_.Count < functions.Count) {
+                functionStatMap_ = await ComputeFunctionStatisticsImpl(functions, cancelableTask);
+
+                if (cancelableTask.IsCanceled) {
+                    return;
+                }
             }
 
-            foreach (var pair in functionStatMap) {
+            foreach (var pair in functionStatMap_) {
                 var functionEx = GetFunctionExtension(pair.Key);
                 functionEx.Statistics = pair.Value;
             }
@@ -2485,29 +2489,26 @@ namespace IRExplorerUI {
             Trace.TraceInformation("ComputeFunctionStatistics: done");
             statisticsTask_.CompleteTask();
 
-            AddStatisticsFunctionListColumns(false);
+            AddStatisticsFunctionListColumns(addDiffColumn: false);
             RefreshFunctionList();
             Session.SetApplicationProgress(false, double.NaN);
         }
 
         private async Task<ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>>
-            ComputeFunctionStatisticsImpl(CancelableTask cancelableTask) {
-            if (functionStatMap_ != null) {
-                return functionStatMap_;
-            }
+            ComputeFunctionStatisticsImpl(List<IRTextFunctionEx> functions, CancelableTask cancelableTask) {
+            var functionStatMap = new ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>();
 
-            var loadedDoc = Session.SessionState.FindLoadedDocument(summary_);
-            Trace.TraceInformation("ComputeFunctionStatistics: start");
+            if (functions.Count == 0) {
+                return functionStatMap;
+            }
 
             var tasks = new List<Task>();
             var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
             var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
-            var callGraph = settings_.IncludeCallGraphStatistics ? await GenerateCallGraph(summary_) : null;
 
             Session.SetApplicationProgress(true, double.NaN, "Computing statistics");
-            functionStatMap_ = new ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>();
 
-            foreach (var function in summary_.Functions) {
+            foreach (var function in functions) {
                 if (function.SectionCount == 0) {
                     continue;
                 }
@@ -2522,11 +2523,19 @@ namespace IRExplorerUI {
                             return;
                         }
 
-                        var section = function.Sections[0];
+                        var section = function.Function.Sections[0];
+                        var summary = function.Function.ParentSummary;
+                        CallGraph callGraph = null;
+
+                        if (settings_.IncludeCallGraphStatistics) {
+                            callGraph = GenerateCallGraph(summary).Result;
+                        }
+
+                        var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
                         var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
 
                         if (sectionStats != null) {
-                            functionStatMap_.TryAdd(function, sectionStats);
+                            functionStatMap.TryAdd(function.Function, sectionStats);
                         }
                     }
                     catch (Exception ex) {
@@ -2545,7 +2554,7 @@ namespace IRExplorerUI {
             }
 
             Session.SetApplicationProgress(false, double.NaN);
-            return functionStatMap_;
+            return functionStatMap;
         }
 
         public async Task WaitForStatistics() {
