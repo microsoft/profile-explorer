@@ -549,10 +549,17 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     private async void OnPreviewKeyDown(object sender, KeyEventArgs e) {
         switch (e.Key) {
             case Key.Return: {
-                if (Utils.IsAltModifierActive()) {
-                    //? TODO: Enter - focus on function
-                    //? ctrl-enter - make root node
+                if (GraphViewer.SelectedNode != null) {
+                    if (Utils.IsControlModifierActive()) {
+                        await OpenFunction(GraphViewer.SelectedNode);
+                        e.Handled = true;
+                    }
+                    else {
+                        await EnlargeNode(GraphViewer.SelectedNode);
+                        e.Handled = true;
+                    }
                 }
+
                 break;
             }
             case Key.Left: {
@@ -603,11 +610,17 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                 }
                 break;
             }
-            case Key.Back: {
+            case Key.D0: 
+            case Key.NumPad0: {
                 if (Utils.IsControlModifierActive()) {
-                    await RestorePreviousState();
+                    ResetWidth();
                     e.Handled = true;
                 }
+                break;
+            }
+            case Key.Back: {
+                await RestorePreviousState();
+                e.Handled = true;
                 break;
             }
         }
