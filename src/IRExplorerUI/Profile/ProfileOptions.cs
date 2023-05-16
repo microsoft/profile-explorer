@@ -38,6 +38,8 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
     public string Title { get; set; }
     [ProtoMember(13)]
     public int TargetProcessId { get; set; }
+    [ProtoMember(14)]
+    public bool RecordDotNetAssembly { get; set; }
 
     public List<PerformanceCounterConfig> EnabledPerformanceCounters => PerformanceCounters.FindAll(c => c.IsEnabled);
     public bool HasWorkingDirectory => Directory.Exists(WorkingDirectory);
