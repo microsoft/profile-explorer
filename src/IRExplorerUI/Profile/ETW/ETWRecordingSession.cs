@@ -149,7 +149,7 @@ namespace IRExplorerUI.Profile {
                                 return null;
                             }
 
-                            if (options_.ProfileDotNet) {
+                            if (options_.ProfileDotNet && options_.RecordDotNetAssembly) {
                                 if (!AttachProfiler(acceptedProcessId)) {
                                     StopSession();
                                     return null;
@@ -290,13 +290,15 @@ namespace IRExplorerUI.Profile {
             if (options_.ProfileDotNet) {
                 profilerPath_ = Path.Combine(App.ApplicationDirectory, ProfilerPath);
 
-                try {
-                    pipeServer_ = new ProfilerNamedPipeServer();
-                }
-                catch (Exception ex) {
-                    Trace.TraceError($"Failed to start named pipe: {ex.Message}\n{ex.StackTrace}");
-                    StopSession();
-                    return false;
+                if (options_.RecordDotNetAssembly) {
+                    try {
+                        pipeServer_ = new ProfilerNamedPipeServer();
+                    }
+                    catch (Exception ex) {
+                        Trace.TraceError($"Failed to start named pipe: {ex.Message}\n{ex.StackTrace}");
+                        StopSession();
+                        return false;
+                    }
                 }
             }
 
@@ -391,6 +393,7 @@ namespace IRExplorerUI.Profile {
             // Request .NET profiler detach.
             pipeServer_.EndSession();
             pipeServer_.Stop();
+            pipeServer_ = null;
             diagClient_ = null;
         }
 
@@ -447,7 +450,6 @@ namespace IRExplorerUI.Profile {
                 }
 
                 session_ = null;
-                pipeServer_ = null;
             }
         }
 

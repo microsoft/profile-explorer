@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace IRExplorerCore {
-    public class IRTextSection {
+    public class IRTextSection : IEquatable<IRTextSection> {
         private CompressedObject<Dictionary<int, string>> lineMetadata_;
 
         public IRTextSection() { }
@@ -14,7 +14,7 @@ namespace IRExplorerCore {
         public IRTextSection(IRTextFunction parent, string name,
                              IRPassOutput sectionOutput, int blocks = 0) {
             ParentFunction = parent;
-            Name = name;
+            Name = string.Intern(name);
             Output = sectionOutput;
             BlockCount = blocks;
         }
@@ -68,12 +68,25 @@ namespace IRExplorerCore {
         }
 
         public override bool Equals(object obj) {
-            return obj is IRTextSection section &&
-                   Id == section.Id &&
-                   Number == section.Number &&
-                   Name == section.Name &&
-                   ((ParentFunction == null && section.ParentFunction == null) ||
-                    (ParentFunction != null && ParentFunction.Equals(section.ParentFunction)));
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((IRTextSection)obj);
+        }
+
+        public bool Equals(IRTextSection other) {
+            if (ReferenceEquals(null, other)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other)) {
+                return true;
+            }
+
+            return Id == other.Id && Number == other.Number &&
+                   Name.Equals(other.Name, StringComparison.Ordinal) &&
+                   ((ParentFunction == null && other.ParentFunction == null) ||
+                    (ParentFunction != null && ParentFunction.Equals(other.ParentFunction)));
         }
 
         public override int GetHashCode() {

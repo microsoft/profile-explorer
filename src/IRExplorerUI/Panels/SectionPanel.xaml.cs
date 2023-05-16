@@ -1171,7 +1171,6 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var settings = App.Settings.DocumentSettings;
             var modulesEx = new List<ModuleEx>();
 
             foreach (var pair in profile.ModuleWeights) {
@@ -1449,7 +1448,11 @@ namespace IRExplorerUI {
 
         private void CreateFunctionExtensions(IRTextSummary summary, List<IRTextFunctionEx> functionsEx) {
             foreach (var func in summary.Functions) {
-                if(!functionExtMap_.TryGetValue(func, out var funcEx)) {
+                if (IsHiddenFunction(func)) {
+                    continue;
+                }
+
+                if (!functionExtMap_.TryGetValue(func, out var funcEx)) {
                     funcEx = new IRTextFunctionEx(func, functionsEx.Count, Session.CompilerInfo.NameProvider.FormatFunctionName);
                     functionExtMap_[func] = funcEx;
                 }
@@ -1458,6 +1461,17 @@ namespace IRExplorerUI {
                 }
                 functionsEx.Add(funcEx);
             }
+        }
+
+        private bool IsHiddenFunction(IRTextFunction func) {
+            // Don't display functions that have no profile data.
+            if (Session.ProfileData != null) {
+                var funcProfile = Session.ProfileData.GetFunctionProfile(func);
+                return funcProfile == null ||
+                       funcProfile.Weight == TimeSpan.Zero;
+            }
+
+            return false;
         }
 
         private void ResetSectionPanel() {
@@ -1512,6 +1526,10 @@ namespace IRExplorerUI {
 
         private void SetupSectionExtensions(IRTextSummary summary) {
             foreach (var func in summary.Functions) {
+                if (IsHiddenFunction(func)) {
+                    continue;
+                }
+
                 int index = 0;
 
                 foreach (var section in func.Sections) {
