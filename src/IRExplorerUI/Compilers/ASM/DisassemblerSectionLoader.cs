@@ -44,7 +44,9 @@ namespace IRExplorerUI.Compilers {
                 disassembler_ = Disassembler.CreateForBinary(binaryFilePath_, debugInfo_);
             }
 
-            foreach (var funcInfo in debugInfo_.EnumerateFunctions()) {
+            var functs = debugInfo_.GetSortedFunctions();
+            
+            foreach (var funcInfo in functs) {
                 if (funcInfo.RVA == 0) {
                     continue; // Some entries don't represent real functions.
                 }

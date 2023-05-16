@@ -287,15 +287,14 @@ namespace IRExplorerUI {
 
     public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
         private string functionName_;
+        private FunctionNameFormatter funcNameFormatter_;
 
-        public IRTextFunctionEx(IRTextFunction function, int index) : base(DiffKind.None) {
+        public IRTextFunctionEx(IRTextFunction function, int index,
+                                FunctionNameFormatter funcNameFormatter) : base(DiffKind.None) {
             Function = function;
             Index = index;
-
-            if (function == null) {
-                ;
-            }
-            functionName_ = function.Name;
+            funcNameFormatter_ = funcNameFormatter;
+            
             Statistics = new FunctionCodeStatistics();
         }
 
@@ -321,9 +320,22 @@ namespace IRExplorerUI {
         public Brush BackColor { get; set; }
         public Brush BackColor2 { get; set; }
 
-        public string Name {
-            get => functionName_;
-            set => functionName_ = value;
+        public virtual string Name {
+            get {
+                if (functionName_ != null) {
+                    return functionName_; // Cached.
+                }
+
+                functionName_ = Function.Name;
+
+                if (funcNameFormatter_ != null) {
+                    functionName_ = funcNameFormatter_(functionName_);
+                }
+                return functionName_;
+            }
+            set {
+                functionName_ = value;
+            }
         }
 
         public int SectionCount => Function.SectionCount;
@@ -1132,15 +1144,19 @@ namespace IRExplorerUI {
 
             if (!nameProvider.IsDemanglingEnabled) {
                 AlternateNameColumnVisible = false;
+
+                // Clear the cached names.
+                foreach (var funcEx in functions) {
+                    var funcName = funcEx.Function.Name;
+                    funcEx.Name = null;
+                }
+
                 return;
             }
 
-            var demanglingOptions = nameProvider.GlobalDemanglingOptions;
-
+            // Set mangled name as alternate.
             foreach (var funcEx in functions) {
-                var funcName = funcEx.Function.Name;
-                funcEx.Name = nameProvider.DemangleFunctionName(funcName, demanglingOptions);
-                funcEx.AlternateName = funcName;
+                funcEx.AlternateName = funcEx.Function.Name;
             }
 
             AlternateNameColumnVisible = true;
@@ -1376,7 +1392,7 @@ namespace IRExplorerUI {
             if (otherSummary_ != null) {
                 foreach (var function in summary_.Functions) {
                     //? TODO: Use CreateFunctionExtensions
-                    var funcEx = new IRTextFunctionEx(function, index++);
+                    var funcEx = new IRTextFunctionEx(function, index++, Session.CompilerInfo.NameProvider.FormatFunctionName);
                     functionExtMap_[function] = funcEx;
                     functionsEx.Add(funcEx);
 
@@ -1389,7 +1405,7 @@ namespace IRExplorerUI {
                 foreach (var function in otherSummary_.Functions) {
                     if (summary_.FindFunction(function) == null) {
                         // Function missing in left document (new).
-                        var funcEx = new IRTextFunctionEx(function, index++);
+                        var funcEx = new IRTextFunctionEx(function, index++, Session.CompilerInfo.NameProvider.FormatFunctionName);
                         functionExtMap_[function] = funcEx;
                         functionsEx.Add(funcEx);
                         funcEx.FunctionDiffKind = DiffKind.Insertion;
@@ -1434,7 +1450,7 @@ namespace IRExplorerUI {
         private void CreateFunctionExtensions(IRTextSummary summary, List<IRTextFunctionEx> functionsEx) {
             foreach (var func in summary.Functions) {
                 if(!functionExtMap_.TryGetValue(func, out var funcEx)) {
-                    funcEx = new IRTextFunctionEx(func, functionsEx.Count);
+                    funcEx = new IRTextFunctionEx(func, functionsEx.Count, Session.CompilerInfo.NameProvider.FormatFunctionName);
                     functionExtMap_[func] = funcEx;
                 }
                 else {

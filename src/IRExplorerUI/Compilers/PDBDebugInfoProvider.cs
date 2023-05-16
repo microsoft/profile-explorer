@@ -80,7 +80,7 @@ namespace IRExplorerUI.Compilers {
                 DebugFileSearchResult searchResult;
 
                 if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
-                    searchResult =DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
+                    searchResult = DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
                 }
                 else {
                     searchResult = DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
@@ -92,7 +92,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         public static string ConstructSymbolSearchPath(SymbolFileSourceOptions options) {
-            //? TODO: Option for var ret = Environment.GetEnvironmentVariable("_NT_SYMBOL_PATH");
+            //? TODO: Also consider Environment.GetEnvironmentVariable("_NT_SYMBOL_PATH")?
             var defaultSearchPath = "";
 
             if (options.UseDefaultSymbolSource) {
@@ -498,16 +498,10 @@ namespace IRExplorerUI.Compilers {
 
         public List<FunctionDebugInfo> GetSortedFunctions() {
             lock (this) {
-                Trace.WriteLine($"Get functs for {debugFilePath_} on provider {ObjectTracker.Track(this)}");
-
                 if (sortedFunctionList_ != null) {
-                    Trace.WriteLine($"   - found list");
-                    Trace.Flush();
                     return sortedFunctionList_;
                 }
 
-                Trace.WriteLine($"   - build list");
-                Trace.Flush();
                 sortedFunctionList_ = new List<FunctionDebugInfo>();
 
                 foreach (var funcInfo in EnumerateFunctionsImpl()) {
