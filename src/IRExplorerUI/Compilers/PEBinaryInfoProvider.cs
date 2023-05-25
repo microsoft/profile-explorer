@@ -9,6 +9,7 @@ using System.IO;
 using System.Net.Http;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using DocumentFormat.OpenXml.Office2016.Word.Symex;
@@ -130,6 +131,7 @@ namespace IRExplorerUI.Compilers {
                                         fileInfo.TimeStamp == binaryFile.TimeStamp &&
                                         fileInfo.ImageSize == binaryFile.ImageSize) {
                                         result = file;
+                                        break;
                                     }
                                 }
                             }
@@ -228,10 +230,18 @@ namespace IRExplorerUI.Compilers {
                     }
                 }
 
+                // For AMR64 EC binaries, they may show up as AMD64, but have the hybrid metadata table set,
+                // consider them ARM64 binaries instead so that disassembly works as expected.
+                var architecture = reader_.PEHeaders.CoffHeader.Machine;
+
+                if (architecture == Machine.Amd64 && IsARM64ECBinary()) {
+                    architecture = Machine.Arm64;
+                }
+
                 return new BinaryFileDescriptor() {
                     ImageName = Utils.TryGetFileName(filePath_),
                     ImagePath = filePath_,
-                    Architecture = reader_.PEHeaders.CoffHeader.Machine,
+                    Architecture = architecture,
                     FileKind = fileKind,
                     Checksum = reader_.PEHeaders.PEHeader.CheckSum,
                     TimeStamp = reader_.PEHeaders.CoffHeader.TimeDateStamp,
@@ -245,8 +255,77 @@ namespace IRExplorerUI.Compilers {
             }
         }
 
+        private bool IsARM64ECBinary() {
+            if (reader_.PEHeaders.PEHeader == null ||
+                reader_.PEHeaders.PEHeader.LoadConfigTableDirectory.Size <= 0 ||
+                !reader_.PEHeaders.TryGetDirectoryOffset(reader_.PEHeaders.PEHeader.LoadConfigTableDirectory, out int offset)) {
+                return false;
+            }
+            
+            var imageData = reader_.GetEntireImage();
+            var configTableData = imageData.GetContent(offset, reader_.PEHeaders.PEHeader.LoadConfigTableDirectory.Size);
+            var span = MemoryMarshal.Cast<byte, IMAGE_LOAD_CONFIG_DIRECTORY64>(configTableData.AsSpan());
+            return span.Length > 0 && span[0].CHPEMetadataPointer != 0;
+        }
+
         public void Dispose() {
             reader_?.Dispose();
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        public struct IMAGE_LOAD_CONFIG_DIRECTORY64 {
+            public uint Size;
+            public uint TimeDateStamp;
+            public ushort MajorVersion;
+            public ushort MinorVersion;
+            public uint GlobalFlagsClear;
+            public uint GlobalFlagsSet;
+            public uint CriticalSectionDefaultTimeout;
+            public ulong DeCommitFreeBlockThreshold;
+            public ulong DeCommitTotalFreeThreshold;
+            public ulong LockPrefixTable;
+            public ulong MaximumAllocationSize;
+            public ulong VirtualMemoryThreshold;
+            public ulong ProcessAffinityMask;
+            public uint ProcessHeapFlags;
+            public ushort CSDVersion;
+            public ushort DependentLoadFlags;
+            public ulong EditList;
+            public ulong SecurityCookie;
+            public ulong SEHandlerTable;
+            public ulong SEHandlerCount;
+            public ulong GuardCFCheckFunctionPointer;
+            public ulong GuardCFDispatchFunctionPointer;
+            public ulong GuardCFFunctionTable;
+            public ulong GuardCFFunctionCount;
+            public uint GuardFlags;
+            public IMAGE_LOAD_CONFIG_CODE_INTEGRITY CodeIntegrity;
+            public ulong GuardAddressTakenIatEntryTable;
+            public ulong GuardAddressTakenIatEntryCount;
+            public ulong GuardLongJumpTargetTable;
+            public ulong GuardLongJumpTargetCount;
+            public ulong DynamicValueRelocTable;
+            public ulong CHPEMetadataPointer;
+            public ulong GuardRFFailureRoutine;
+            public ulong GuardRFFailureRoutineFunctionPointer;
+            public uint DynamicValueRelocTableOffset;
+            public ushort DynamicValueRelocTableSection;
+            public ushort Reserved2;
+            public ulong GuardRFVerifyStackPointerFunctionPointer;
+            public uint HotPatchTableOffset;
+            public uint Reserved3;
+            public ulong EnclaveConfigurationPointer;
+            public ulong VolatileMetadataPointer;
+            public ulong GuardEHContinuationTable;
+            public ulong GuardEHContinuationCount;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct IMAGE_LOAD_CONFIG_CODE_INTEGRITY {
+            public ushort Flags;
+            public ushort Catalog;
+            public uint CatalogOffset;
+            public uint Reserved;
         }
     }
 }

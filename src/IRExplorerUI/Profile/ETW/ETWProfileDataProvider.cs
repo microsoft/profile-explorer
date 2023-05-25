@@ -80,6 +80,8 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
         var profile = await Task.Run(() => {
             int acceptedProcessId = processIds.Count == 1 ? processIds[0] : 0;
+            symbolOptions.InsertSymbolPath(tracePath); // Include the trace path in the symbol search path.
+
             using var eventProcessor = new ETWEventProcessor(tracePath, options, acceptedProcessId);
             return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
         });
