@@ -185,8 +185,9 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         await SetupInstanceInfo(CallTreeNode);
         ShowDetails = true;
 
-        BacktraceList.Show(await Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode)), filter: false);
-        FunctionList.Show(await Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode)));
+        BacktraceList.Show(await Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode)));
+        FunctionList.Show(await Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode)),
+                          App.Settings.ProfileOptions.FunctionListViewFilter);
         ModuleList.Show(await Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode)));
     }
 
@@ -205,7 +206,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         FunctionInstancesCount = instanceNodes_.Count;
 
         // Show all instances.
-        InstancesList.Show(instanceNodes_, false);
+        InstancesList.Show(instanceNodes_);
 
         nodeInstanceIndex_ = instanceNodes_.FindIndex(instanceNode => instanceNode == node);
         CurrentInstanceIndex = nodeInstanceIndex_ + 1;
@@ -409,7 +410,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
         return nodeEx;
     }
-    
+
     public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {
         Session = session;
         funcInfoProvider_ = funcInfoProvider;
