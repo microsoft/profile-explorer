@@ -1288,10 +1288,14 @@ namespace IRExplorerUI {
 
             if (panel != null) {
                 await panel.LoadSourceFile(node.Function.Sections[0]);
-                return true;
             }
 
-            return false;
+            //? TODO: Option to also open new document if there is no active document.
+            if (FindActiveDocumentHost() != null) {
+                await OpenProfileFunction(node, OpenSectionKind.ReplaceCurrent);
+            }
+
+            return true;
         }
 
         public async Task<bool> SelectProfileFunction(ProfileCallTreeNode node, ToolPanelKind panelKind) {
