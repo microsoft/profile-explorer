@@ -259,19 +259,19 @@ namespace IRExplorerUI {
 
             ssaUserStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(settings_.UseValueColor);
             ssaUserStyle_.ChildStyle.Border = borderPen;
-            
+
             iteratedUserStyle_ ??= new PairHighlightingStyle();
             iteratedUserStyle_.ParentStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.UseValueColor, 0);
             iteratedUserStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.UseValueColor, 50);
             iteratedUserStyle_.ChildStyle.Border = lightBorderPen;
-            
+
             ssaDefinitionStyle_ ??= new PairHighlightingStyle();
             ssaDefinitionStyle_.ParentStyle.BackColor = ColorBrushes.GetBrush(
                 ColorUtils.AdjustLight(settings_.DefinitionValueColor, ParentStyleLightAdjustment));
 
             ssaDefinitionStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(settings_.DefinitionValueColor);
             ssaDefinitionStyle_.ChildStyle.Border = borderPen;
-            
+
             iteratedDefinitionStyle_ ??= new PairHighlightingStyle();
             iteratedDefinitionStyle_.ParentStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.DefinitionValueColor, 0);
             iteratedDefinitionStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.DefinitionValueColor, 50);
@@ -631,7 +631,7 @@ namespace IRExplorerUI {
 
         public void SelectElementsOnSourceLine(int lineNumber, IRExplorerCore.IR.StackFrame inlinee = null) {
             ClearTemporaryHighlighting();
-            MarkElementsOnSourceLine(selectedHighlighter_, lineNumber, Colors.Transparent, 
+            MarkElementsOnSourceLine(selectedHighlighter_, lineNumber, Colors.Transparent,
                                      false, true, inlinee);
         }
 
@@ -708,7 +708,7 @@ namespace IRExplorerUI {
             SectionText = ReadOnlyMemory<char>.Empty;
             ColumnData = null;
         }
-        
+
         public bool InitializeFromDocument(IRDocument doc, bool copyTemporaryHighlighting = true, string text = null) {
             if (Section == doc.Section) {
                 return false;
@@ -732,7 +732,7 @@ namespace IRExplorerUI {
             bookmarks_.CopyFrom(doc.bookmarks_);
             margin_.CopyFrom(doc.margin_);
             ignoreNextCaretEvent_ = true;
-            
+
             if (text != null) {
                 Text = text;
                 SectionText = text.AsMemory();
@@ -741,7 +741,7 @@ namespace IRExplorerUI {
                 Text = doc.SectionText.ToString();
                 SectionText = doc.SectionText;
             }
-            
+
             SetupBlockFolding();
             //await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
             return true;
@@ -771,7 +771,7 @@ namespace IRExplorerUI {
             markedHighlighter_.LoadState(savedState.MarkedHighlighter, Function);
             overlayRenderer_.LoadState(savedState.ElementOverlays, Function, SetupElementOverlayEvents);
             margin_.LoadState(savedState.Margin);
-            
+
             bookmarks_.Bookmarks.ForEach(item => RaiseBookmarkAddedEvent(item));
             SetCaretAtOffset(savedState.CaretOffset);
 
@@ -1191,7 +1191,7 @@ namespace IRExplorerUI {
                     break;
                 }
                 case Key.Delete: {
-                    if (Utils.IsControlModifierActive() || 
+                    if (Utils.IsControlModifierActive() ||
                         Utils.IsShiftModifierActive()) {
                         ClearAllMarkersExecuted(this, null);
                     }
@@ -1308,7 +1308,7 @@ namespace IRExplorerUI {
         public void AddBookmark(IRElement selectedElement, string text = null) {
             var bookmark = bookmarks_.AddBookmark(selectedElement);
             bookmark.Text = text;
-            
+
             margin_.AddBookmark(bookmark);
             margin_.SelectBookmark(bookmark);
             UpdateMargin();
@@ -1914,7 +1914,7 @@ namespace IRExplorerUI {
                     HandleOperandElement(destOp, highlighter, markExpression, false, action);
                 }
             }
-            
+
             return true;
         }
 
@@ -1938,7 +1938,7 @@ namespace IRExplorerUI {
                 var useList = refFinder.FindAllUses(op);
                 List<IRElement> iteratedUseList = null;
                 bool handled = false;
-                
+
                 //? TODO: Default expansion needs an option
                 if (markExpression) {
                     // Collect the transitive set of users, marking instructions
@@ -1955,11 +1955,11 @@ namespace IRExplorerUI {
                     handled = true;
 
                     if (iteratedUseList != null && iteratedUseList.Count > 0) {
-                        HighlightUsers(op, iteratedUseList, highlighter, iteratedUserStyle_, action);    
+                        HighlightUsers(op, iteratedUseList, highlighter, iteratedUserStyle_, action);
                     }
                 }
 
-                // If the operand is an indirection, also try to mark 
+                // If the operand is an indirection, also try to mark
                 // the definition of the base address value below.
                 if (!op.IsIndirection) {
                     return handled;
@@ -2001,13 +2001,13 @@ namespace IRExplorerUI {
             int maxLevel = currentExprLevel_;
             var refFinder = CreateReferenceFinder();
             var newUseList = new List<IRElement>(useList);
-            
+
             ExpandIteratedUseList(newUseList, handledElements, 0, maxLevel, refFinder);
             newUseList.RemoveRange(0, useList.Count);
             return newUseList;
         }
 
-        private void ExpandIteratedUseList(List<IRElement> useList, HashSet<IRElement> handledElements, 
+        private void ExpandIteratedUseList(List<IRElement> useList, HashSet<IRElement> handledElements,
                                            int level, int maxLevel, ReferenceFinder refFinder) {
             if (level > maxLevel) {
                 return;
@@ -2066,7 +2066,7 @@ namespace IRExplorerUI {
 
         private void HidePreviewPopup(bool force = false) {
             ignoreNextPreviewElement_ = null;
-            
+
             if (previewPopup_ != null && (force || !previewPopup_.IsMouseOver)) {
                 previewPopup_.ClosePopup();
                 previewPopup_ = null;
@@ -2135,7 +2135,7 @@ namespace IRExplorerUI {
         private bool HighlightDefinition(OperandIR op, ElementHighlighter highlighter,
                                          PairHighlightingStyle style, HighlightingEventAction action,
                                          bool highlightDefInstr = true) {
-            // First look for an SSA definition, if not found 
+            // First look for an SSA definition, if not found
             // highlight every store to the same symbol.
             var refFinder = CreateReferenceFinder();
             var defList = refFinder.FindAllDefinitions(op);
@@ -2187,7 +2187,7 @@ namespace IRExplorerUI {
             int styleIndex = currentExprStyleIndex_;
             var refFinder = CreateReferenceFinder();
             HighlightExpression(element, null, handledElements,
-                                highlighter, style, instrStyle, styleIndex, 
+                                highlighter, style, instrStyle, styleIndex,
                                 0, maxLevel, refFinder);
         }
 
@@ -2216,7 +2216,7 @@ namespace IRExplorerUI {
 
                         if (sourceDefOp.ParentInstruction != null) {
                             HighlightExpression(sourceDefOp.ParentInstruction, parent, handledElements,
-                                                highlighter, style, instrStyle, styleIndex, 
+                                                highlighter, style, instrStyle, styleIndex,
                                                 level, maxLevel, refFinder);
                         }
                     }
@@ -2249,7 +2249,7 @@ namespace IRExplorerUI {
         }
 
         private void ResetExpressionLevel(IRElement element = null) {
-            if (element == null || element != currentExprElement_ || 
+            if (element == null || element != currentExprElement_ ||
                  !Utils.IsControlModifierActive()) {
                 currentExprElement_ = null;
                 currentExprLevel_ = 0;
@@ -2425,7 +2425,7 @@ namespace IRExplorerUI {
 
             CreateRightMarkerMargin();
             MarkLoopBlocks();
-            
+
             UpdateHighlighting();
             NotifyPropertyChanged("Blocks"); // Force block dropdown to update.
             duringSectionLoading_ = false;
@@ -2471,7 +2471,7 @@ namespace IRExplorerUI {
                             if (equivElement != null) {
                                 group.Add(equivElement);
                             }
-                            
+
                         }
 
                         if (!group.IsEmpty()) {
@@ -2732,11 +2732,11 @@ namespace IRExplorerUI {
                 JumpToBookmark(bookmarks_.JumpToFirstBookmark());
             }
         }
-         
+
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-        
+
         private HighlightingStyle PickMarkerLightStyle() {
             return markerParentStyle_.GetNext();
         }
@@ -3137,7 +3137,7 @@ namespace IRExplorerUI {
         public void SetCaretAtElement(IRElement element) {
             SetCaretAtOffset(element.TextLocation.Offset);
         }
-        
+
         public void SetCaretAtOffset(int offset) {
             if (offset < Document.TextLength) {
                 ignoreNextCaretEvent_ = true;
@@ -3198,7 +3198,7 @@ namespace IRExplorerUI {
             eventSetupDone_ = true;
             AllowDrop = true; // Enable drag-and-drop handilng.
         }
-        
+
         private void IRDocument_MouseLeave(object sender, MouseEventArgs e) {
             HideTemporaryUI();
         }
@@ -3211,16 +3211,16 @@ namespace IRExplorerUI {
             var funcProfile = Session.ProfileData.GetFunctionProfile(Section.ParentFunction);
             var metadataTag = Function.GetTag<AssemblyMetadataTag>();
             bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
-            
+
             if (funcProfile == null || !hasInstrOffsetMetadata) {
                 Session.SetApplicationStatus("");
                 return;
             }
-            
+
             int startLine = TextArea.Selection.StartPosition.Line;
             int endLine = TextArea.Selection.EndPosition.Line;
             TimeSpan weightSum = TimeSpan.Zero;
-            
+
             foreach (var tuple in tupleElements_) {
                 if (tuple.TextLocation.Line >= startLine &&
                     tuple.TextLocation.Line <= endLine) {
@@ -3234,7 +3234,7 @@ namespace IRExplorerUI {
             }
 
             var weightPercentage = funcProfile.ScaleWeight(weightSum);
-            var text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weightSum.TotalMilliseconds, 2):#,#} ms)";
+            var text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
             Session.SetApplicationStatus(text, "Sum of selected instructions time");
         }
 
@@ -3619,12 +3619,12 @@ namespace IRExplorerUI {
             if (element == null) {
                 return; // Valid case for search results.
             }
-            
+
             if (previewPopup_ != null) {
                 if (previewPopup_.PreviewedElement == element) {
                     return; // Already showing preview for this element.
                 }
-                
+
                 HidePreviewPopup();
             }
 
@@ -3695,7 +3695,7 @@ namespace IRExplorerUI {
                 previewPopup_ = null; // Prevent automatic closing.
             }
         }
-        
+
         private void ShowUsesExecuted(object sender, ExecutedRoutedEventArgs e) {
             var defOp = GetSelectedElementDefinition();
 
@@ -3746,7 +3746,7 @@ namespace IRExplorerUI {
         }
 
         public IconElementOverlay AddIconElementOverlay(IRElement element, IconDrawing icon,
-                                          double width = 16, double height = 0, 
+                                          double width = 16, double height = 0,
                                           string label = "", string tooltip = "",
                                           HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                           VerticalAlignment alignmentY = VerticalAlignment.Center,
@@ -3767,7 +3767,7 @@ namespace IRExplorerUI {
                                                        Brushes.Transparent,
                                                        selectedStyle_.BackColor,
                                                        selectedStyle_.Border,
-                                                       label, tooltip, 
+                                                       label, tooltip,
                                                        alignmentX, alignmentY,
                                                        marginX, marginY);
             return (IconElementOverlay)RegisterElementOverlay(element, overlay);

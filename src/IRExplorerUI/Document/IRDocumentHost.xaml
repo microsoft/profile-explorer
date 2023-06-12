@@ -504,7 +504,7 @@
                                     <Image Source="{StaticResource HotFlameIcon}" />
                                 </Button>
                                 <Button
-                                    Command="local:DocumentHostCommand.JumpToNextProfiledElement"
+                                    Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
                                     CommandTarget="{Binding ElementName=TextView}"
                                     Margin="2,0,0,0"
                                     Padding="0"
@@ -512,7 +512,7 @@
                                     <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
                                 </Button>
                                 <Button
-                                    Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
+                                    Command="local:DocumentHostCommand.JumpToNextProfiledElement"
                                     CommandTarget="{Binding ElementName=TextView}"
                                     Padding="0"
                                     ToolTip="Jump to next hotter instruction (Shift+F2)">
@@ -566,6 +566,7 @@
                                 <Separator />
 
                                 <TextBlock
+                                    IsEnabled="False"
                                     Margin="2,0,0,0"
                                     Text="Columns"
                                     VerticalAlignment="Center" />
