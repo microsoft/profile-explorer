@@ -165,11 +165,10 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     private void RestoreNodeStyle(FlameGraphNode node) {
-        HighlightingStyle style;
-
-        if (!markedNodes_.TryGetValue(node, out style) &&
+        if (!markedNodes_.TryGetValue(node, out var style) &&
             !selectedNodes_.TryGetValue(node, out style) &&
             !hoverNodes_.TryGetValue(node, out style)) {
+            // Check marked directly by user.
             if (fixedMarkedNodes_.TryGetValue(node, out style)) {
                 MarkNodeImpl(node, HighlighingType.Marked, style);
                 return;
@@ -204,11 +203,6 @@ public partial class FlameGraphViewer : FrameworkElement {
         return new HighlightingStyle(style.BackColor, border);
     }
 
-    private HighlightingStyle PickHoveredParentNodeStyle(HighlightingStyle style) {
-        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.95f);
-        return new HighlightingStyle(newColor, style.Border);
-    }
-
     private HighlightingStyle PickHoveredNodeStyle(HighlightingStyle style) {
         var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.9f);
         return new HighlightingStyle(newColor, style.Border);
@@ -218,11 +212,6 @@ public partial class FlameGraphViewer : FrameworkElement {
         var newColor = selectedNodeBackColor_;
         var newPen = selectedNodeBorderColor_;
         return new HighlightingStyle(newColor, newPen);
-    }
-
-    private HighlightingStyle PickSelectedParentNodeStyle(HighlightingStyle style) {
-        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.95f);
-        return new HighlightingStyle(newColor, style.Border);
     }
 
     private HighlightingStyle PickMarkedNodeStyle(FlameGraphNode node, HighlightingStyle style = null) {
@@ -271,15 +260,20 @@ public partial class FlameGraphViewer : FrameworkElement {
 
             HighlightNode(graphNode, HighlighingType.Selected);
             selectedNode_ = graphNode; // Last selected node.
+        }
+        else if (append && selectedNodes_.ContainsKey(graphNode)) {
+            selectedNodes_.Remove(graphNode);
+            selectedNode_ = null;
+        }
 
+        if (selectedNodes_.Count > 1) {
             var selectionWeight = ComputeSelectedNodeWeight();
             var weightPercentage = Session.ProfileData.ScaleFunctionWeight(selectionWeight);
             var text = $"{weightPercentage.AsPercentageString()} ({selectionWeight.AsMillisecondsString()})";
             Session.SetApplicationStatus(text, "Sum of selected flame graph nodes");
         }
-        else if (append && selectedNodes_.ContainsKey(graphNode)) {
-            selectedNodes_.Remove(graphNode);
-            selectedNode_ = null;
+        else {
+            Session.SetApplicationStatus("");
         }
     }
 

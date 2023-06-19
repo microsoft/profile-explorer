@@ -56,7 +56,7 @@ namespace IRExplorerUI {
         object LoadDocumentState(IRTextSection section);
         object LoadPanelState(IToolPanel panel, IRTextSection section, IRDocument document = null);
         void SaveDocumentState(object stateObject, IRTextSection section);
-        void SavePanelState(object stateObject, IToolPanel panel, 
+        void SavePanelState(object stateObject, IToolPanel panel,
                             IRTextSection section, IRDocument document = null);
 
         void RedrawPanels(params ToolPanelKind[] kinds);
@@ -77,8 +77,8 @@ namespace IRExplorerUI {
 
         Task SwitchGraphsAsync(GraphPanel flowGraphPanel, IRTextSection section, IRDocument document);
 
-        Task<Graph> ComputeGraphAsync(GraphKind kind, IRTextSection section, 
-                                      IRDocument document, CancelableTask loadTask = null, 
+        Task<Graph> ComputeGraphAsync(GraphKind kind, IRTextSection section,
+                                      IRDocument document, CancelableTask loadTask = null,
                                       object options = null);
 
         Task<SectionSearchResult> SearchSectionAsync(SearchInfo searchInfo, IRTextSection section,
@@ -97,7 +97,7 @@ namespace IRExplorerUI {
 
         //? TODO: Extract into an IProfilingSession, connecting all profile panels
         //? and sending the activity/timeline events to all of them.
-        Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, 
+        Task<bool> LoadProfileData(string profileFilePath, List<int> processIds,
                                     ProfileDataProviderOptions options,
                                     SymbolFileSourceOptions symbolOptions,
                                     ProfileDataReport report,
@@ -118,6 +118,7 @@ namespace IRExplorerUI {
         Task<bool> SelectProfileFunction(ProfileCallTreeNode node, ToolPanelKind panelKind);
         Task<bool> SelectProfileFunction(IRTextFunction node, ToolPanelKind panelKind);
         Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node);
+        Task<bool> OpenProfileSourceFile(IRTextFunction function);
         Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range);
         Task<bool> ProfileSampleRangeDeselected();
         Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node, ToolPanelKind sourcePanelKind);
