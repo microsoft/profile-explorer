@@ -18,6 +18,7 @@ using ProtoBuf;
 using System.IO;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using IRExplorerUI.Profile;
 using IRExplorerCore.Analysis;
@@ -167,7 +168,7 @@ namespace IRExplorerUI {
             get => borderThickness_;
             set {
                 borderThickness_ = value;
-                OnPropertyChange(nameof(BorderThickness));
+                OnPropertyChanged(nameof(BorderThickness));
             }
         }
 
@@ -179,7 +180,7 @@ namespace IRExplorerUI {
             get => borderBrush_;
             set {
                 borderBrush_ = value;
-                OnPropertyChange(nameof(BorderBrush));
+                OnPropertyChanged(nameof(BorderBrush));
             }
         }
 
@@ -188,7 +189,7 @@ namespace IRExplorerUI {
             get => name_;
             set {
                 name_ = value;
-                OnPropertyChange(nameof(Name));
+                OnPropertyChanged(nameof(Name));
             }
         }
 
@@ -196,10 +197,10 @@ namespace IRExplorerUI {
             get => diffKind_;
             set {
                 diffKind_ = value;
-                OnPropertyChange(nameof(IsInsertionDiff));
-                OnPropertyChange(nameof(IsDeletionDiff));
-                OnPropertyChange(nameof(IsPlaceholderDiff));
-                OnPropertyChange(nameof(HasDiffs));
+                OnPropertyChanged(nameof(IsInsertionDiff));
+                OnPropertyChanged(nameof(IsDeletionDiff));
+                OnPropertyChanged(nameof(IsPlaceholderDiff));
+                OnPropertyChanged(nameof(HasDiffs));
             }
         }
 
@@ -207,7 +208,7 @@ namespace IRExplorerUI {
             get => isTagged_;
             set {
                 isTagged_ = value;
-                OnPropertyChange(nameof(IsTagged));
+                OnPropertyChanged(nameof(IsTagged));
             }
         }
 
@@ -216,7 +217,7 @@ namespace IRExplorerUI {
             get => isDiffFromPrevious_;
             set {
                 isDiffFromPrevious_ = value;
-                OnPropertyChange(nameof(IsDiffFromPrevious));
+                OnPropertyChanged(nameof(IsDiffFromPrevious));
             }
         }
 
@@ -224,7 +225,7 @@ namespace IRExplorerUI {
             get => isSelected_;
             set {
                 isSelected_ = value;
-                OnPropertyChange(nameof(IsSelected));
+                OnPropertyChanged(nameof(IsSelected));
             }
         }
 
@@ -234,7 +235,7 @@ namespace IRExplorerUI {
             get => isMarked_;
             set {
                 isMarked_ = value;
-                OnPropertyChange(nameof(IsMarked));
+                OnPropertyChanged(nameof(IsMarked));
             }
         }
 
@@ -250,7 +251,7 @@ namespace IRExplorerUI {
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void OnPropertyChange(string propertyname) {
+        public void OnPropertyChanged(string propertyname) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }
     }
@@ -294,7 +295,7 @@ namespace IRExplorerUI {
             Function = function;
             Index = index;
             funcNameFormatter_ = funcNameFormatter;
-            
+
             Statistics = new FunctionCodeStatistics();
         }
 
@@ -312,7 +313,7 @@ namespace IRExplorerUI {
             get => isMarked_;
             set {
                 isMarked_ = value;
-                OnPropertyChange(nameof(IsMarked));
+                OnPropertyChanged(nameof(IsMarked));
             }
         }
 
@@ -347,16 +348,16 @@ namespace IRExplorerUI {
             get => diffKind_;
             set {
                 diffKind_ = value;
-                OnPropertyChange(nameof(IsInsertionDiff));
-                OnPropertyChange(nameof(IsDeletionDiff));
-                OnPropertyChange(nameof(IsPlaceholderDiff));
-                OnPropertyChange(nameof(HasDiffs));
+                OnPropertyChanged(nameof(IsInsertionDiff));
+                OnPropertyChanged(nameof(IsDeletionDiff));
+                OnPropertyChanged(nameof(IsPlaceholderDiff));
+                OnPropertyChanged(nameof(HasDiffs));
             }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void OnPropertyChange(string propertyname) {
+        public void OnPropertyChanged(string propertyname) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }
     }
@@ -712,7 +713,7 @@ namespace IRExplorerUI {
             set {
                 if (isFunctionListVisible_ != value) {
                     isFunctionListVisible_ = value;
-                    OnPropertyChange(nameof(IsFunctionListVisible));
+                    OnPropertyChanged(nameof(IsFunctionListVisible));
                 }
             }
         }
@@ -722,7 +723,7 @@ namespace IRExplorerUI {
             set {
                 if (isSectionListVisible_ != value) {
                     isSectionListVisible_ = value;
-                    OnPropertyChange(nameof(IsSectionListVisible));
+                    OnPropertyChanged(nameof(IsSectionListVisible));
                 }
             }
         }
@@ -732,7 +733,7 @@ namespace IRExplorerUI {
             set {
                 if (documentTitle_ != value) {
                     documentTitle_ = value;
-                    OnPropertyChange(nameof(DocumentTitle));
+                    OnPropertyChanged(nameof(DocumentTitle));
                 }
             }
         }
@@ -742,7 +743,7 @@ namespace IRExplorerUI {
             set {
                 if (isDiffModeEnabled_ != value) {
                     isDiffModeEnabled_ = value;
-                    OnPropertyChange(nameof(IsDiffModeEnabled));
+                    OnPropertyChanged(nameof(IsDiffModeEnabled));
                 }
             }
         }
@@ -752,7 +753,7 @@ namespace IRExplorerUI {
             set {
                 if (syncDiffedDocuments_ != value) {
                     syncDiffedDocuments_ = value;
-                    OnPropertyChange(nameof(SyncDiffedDocuments));
+                    OnPropertyChanged(nameof(SyncDiffedDocuments));
                     SyncDiffedDocumentsChanged?.Invoke(this, value);
                 }
             }
@@ -765,7 +766,7 @@ namespace IRExplorerUI {
             set {
                 if (filterTagged_ != value) {
                     filterTagged_ = value;
-                    OnPropertyChange(nameof(FilterTagged));
+                    OnPropertyChanged(nameof(FilterTagged));
                     RefreshSectionList();
                 }
             }
@@ -778,7 +779,7 @@ namespace IRExplorerUI {
             set {
                 if (filterDiffFromPrevious_ != value) {
                     filterDiffFromPrevious_ = value;
-                    OnPropertyChange(nameof(FilterDiffFromPrevious));
+                    OnPropertyChanged(nameof(FilterDiffFromPrevious));
                     RefreshSectionList();
                 }
             }
@@ -789,8 +790,8 @@ namespace IRExplorerUI {
             set {
                 if (useProfileCallTree_ != value) {
                     useProfileCallTree_ = value;
-                    OnPropertyChange(nameof(UseProfileCallTree));
-                    OnPropertyChange(nameof(UseIRCallTree));
+                    OnPropertyChanged(nameof(UseProfileCallTree));
+                    OnPropertyChanged(nameof(UseIRCallTree));
                 }
             }
         }
@@ -800,8 +801,28 @@ namespace IRExplorerUI {
             set {
                 if (useProfileCallTree_ == value) {
                     useProfileCallTree_ = !value;
-                    OnPropertyChange(nameof(UseProfileCallTree));
-                    OnPropertyChange(nameof(UseIRCallTree));
+                    OnPropertyChanged(nameof(UseProfileCallTree));
+                    OnPropertyChanged(nameof(UseIRCallTree));
+                }
+            }
+        }
+
+        public bool SyncSourceFile {
+            get => settings_.SyncSourceFile;
+            set {
+                if (value != settings_.SyncSourceFile) {
+                    settings_.SyncSourceFile = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool SyncSelection {
+            get => settings_.SyncSelection;
+            set {
+                if (value != settings_.SyncSelection) {
+                    settings_.SyncSelection = value;
+                    OnPropertyChanged();
                 }
             }
         }
@@ -838,7 +859,7 @@ namespace IRExplorerUI {
             set {
                 if (optionalDataColumnName_ != value) {
                     optionalDataColumnName_ = value;
-                    OnPropertyChange(nameof(OptionalDataColumnName));
+                    OnPropertyChanged(nameof(OptionalDataColumnName));
                 }
             }
         }
@@ -850,7 +871,7 @@ namespace IRExplorerUI {
             set {
                 if (optionalDataColumnVisible_ != value) {
                     optionalDataColumnVisible_ = value;
-                    OnPropertyChange(nameof(OptionalDataColumnVisible));
+                    OnPropertyChanged(nameof(OptionalDataColumnVisible));
                 }
             }
         }
@@ -862,7 +883,7 @@ namespace IRExplorerUI {
             set {
                 if (optionalDataColumnName2_ != value) {
                     optionalDataColumnName2_ = value;
-                    OnPropertyChange(nameof(OptionalDataColumnName2));
+                    OnPropertyChanged(nameof(OptionalDataColumnName2));
                 }
             }
         }
@@ -874,7 +895,7 @@ namespace IRExplorerUI {
             set {
                 if (optionalDataColumnVisible2_ != value) {
                     optionalDataColumnVisible2_ = value;
-                    OnPropertyChange(nameof(OptionalDataColumnVisible2));
+                    OnPropertyChanged(nameof(OptionalDataColumnVisible2));
                 }
             }
         }
@@ -886,7 +907,7 @@ namespace IRExplorerUI {
             set {
                 if (alternateNameColumnVisible_ != value) {
                     alternateNameColumnVisible_ = value;
-                    OnPropertyChange(nameof(AlternateNameColumnVisible));
+                    OnPropertyChanged(nameof(AlternateNameColumnVisible));
                 }
             }
         }
@@ -898,7 +919,7 @@ namespace IRExplorerUI {
             set {
                 if (childTimeColumnVisible_ != value) {
                     childTimeColumnVisible_ = value;
-                    OnPropertyChange(nameof(ChildTimeColumnVisible));
+                    OnPropertyChanged(nameof(ChildTimeColumnVisible));
                 }
             }
         }
@@ -910,7 +931,7 @@ namespace IRExplorerUI {
             set {
                 if (showModules_ != value) {
                     showModules_ = value;
-                    OnPropertyChange(nameof(ShowModules));
+                    OnPropertyChanged(nameof(ShowModules));
                     ResizeFunctionFilter(FunctionToolbar.RenderSize.Width);
                 }
             }
@@ -932,9 +953,9 @@ namespace IRExplorerUI {
                         IsSectionListVisible = false;
                     }
 
-                    OnPropertyChange(nameof(ShowSections));
-                    OnPropertyChange(nameof(ShowChildren));
-                    OnPropertyChange(nameof(IsSectionListVisible));
+                    OnPropertyChanged(nameof(ShowSections));
+                    OnPropertyChanged(nameof(ShowChildren));
+                    OnPropertyChanged(nameof(IsSectionListVisible));
                     ResizeFunctionFilter(FunctionToolbar.RenderSize.Width);
                 }
             }
@@ -956,9 +977,9 @@ namespace IRExplorerUI {
                         IsSectionListVisible = false;
                     }
 
-                    OnPropertyChange(nameof(ShowSections));
-                    OnPropertyChange(nameof(ShowChildren));
-                    OnPropertyChange(nameof(IsSectionListVisible));
+                    OnPropertyChanged(nameof(ShowSections));
+                    OnPropertyChanged(nameof(ShowChildren));
+                    OnPropertyChanged(nameof(IsSectionListVisible));
                     ResizeFunctionFilter(FunctionToolbar.RenderSize.Width);
                 }
             }
@@ -971,7 +992,7 @@ namespace IRExplorerUI {
             set {
                 if (profileControlsVisible_ != value) {
                     profileControlsVisible_ = value;
-                    OnPropertyChange(nameof(ProfileControlsVisible));
+                    OnPropertyChanged(nameof(ProfileControlsVisible));
                 }
             }
         }
@@ -983,7 +1004,7 @@ namespace IRExplorerUI {
             set {
                 if (sectionCountColumnVisible_ != value) {
                     sectionCountColumnVisible_ = value;
-                    OnPropertyChange(nameof(SectionCountColumnVisible));
+                    OnPropertyChanged(nameof(SectionCountColumnVisible));
                 }
             }
         }
@@ -995,7 +1016,7 @@ namespace IRExplorerUI {
             set {
                 if (moduleControlsVisible_ != value) {
                     moduleControlsVisible_ = value;
-                    OnPropertyChange(nameof(ModuleControlsVisible));
+                    OnPropertyChanged(nameof(ModuleControlsVisible));
                 }
             }
         }
@@ -1117,8 +1138,8 @@ namespace IRExplorerUI {
         public event EventHandler<bool> SyncDiffedDocumentsChanged;
         public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
 
-        public void OnPropertyChange(string propertyname) {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public void RegisterSectionListScrollEvent() {
@@ -2067,19 +2088,17 @@ namespace IRExplorerUI {
                 var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
                 if (funcProfile != null) {
-                    //?var profileCallTree = await Task.Run(() => CreateProfileCallTree(function));
-                    var panel = Session.FindPanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
+                    if (SyncSelection) {
+                        var panel = Session.FindPanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
 
-                    if (panel != null) {
-                        await panel.DisplaProfileCallerCalleeTree(function);
+                        if (panel != null) {
+                            await panel.DisplaProfileCallerCalleeTree(function);
+                        }
                     }
 
-                    //? TODO: Select instance(s) in flame graph
-                    //var panel = Session.FindAndActivatePanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
-                    //
-                    //if (panel != null) {
-                    //    await panel.DisplaProfileCallerCalleeTree(function);
-                    //}
+                    if (SyncSourceFile) {
+                        await Session.OpenProfileSourceFile(function);
+                    }
                 }
                 else {
                     ProfileControlsVisible = true;

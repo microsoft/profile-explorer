@@ -1269,7 +1269,11 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
+            return await OpenProfileFunction(node.Function, openMode);
+        }
+
+        public async Task<bool> OpenProfileFunction(IRTextFunction function, OpenSectionKind openMode) {
+            var args = new OpenSectionEventArgs(function.Sections[0], openMode);
             await SwitchDocumentSectionAsync(args);
             return true;
         }
@@ -1284,15 +1288,23 @@ namespace IRExplorerUI {
         }
 
         public async Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node) {
+            if (node.Function == null) {
+                return false;
+            }
+
+            return await OpenProfileSourceFile(node.Function);
+        }
+
+        public async Task<bool> OpenProfileSourceFile(IRTextFunction function) {
             var panel = FindPanel(ToolPanelKind.Source) as SourceFilePanel;
 
             if (panel != null) {
-                await panel.LoadSourceFile(node.Function.Sections[0]);
+                await panel.LoadSourceFile(function.Sections[0]);
             }
 
             //? TODO: Option to also open new document if there is no active document.
             if (FindActiveDocumentHost() != null) {
-                await OpenProfileFunction(node, OpenSectionKind.ReplaceCurrent);
+                await OpenProfileFunction(function, OpenSectionKind.ReplaceCurrent);
             }
 
             return true;

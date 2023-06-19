@@ -31,6 +31,8 @@ namespace IRExplorerUI {
         [ProtoMember(20)] public bool DemangleNoSpecialKeywords { get; set; }
         [ProtoMember(21)] public bool ComputeStatistics { get; set; }
         [ProtoMember(22)] public bool IncludeCallGraphStatistics { get; set; }
+        [ProtoMember(23)] public bool SyncSourceFile { get; set; }
+        [ProtoMember(24)] public bool SyncSelection{ get; set; }
 
         public FunctionNameDemanglingOptions DemanglingOptions {
             get {
