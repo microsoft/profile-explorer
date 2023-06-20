@@ -210,13 +210,13 @@
 
                         <Grid Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" Width="8" />
                         <ToggleButton
-                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                            BorderThickness="0"
                             Height="20"
                             IsChecked="{Binding Path=SyncSelection, Mode=TwoWay}"
                             Margin="0,0,0,0"
-                            BorderThickness="0"
                             Padding="0,0,2,0"
-                            ToolTip="Sync functions in other panels with selection">
+                            ToolTip="Sync functions in other panels with selection"
+                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                             <StackPanel Orientation="Horizontal">
                                 <Image
                                     Height="16"
@@ -228,13 +228,13 @@
                         </ToggleButton>
 
                         <ToggleButton
-                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                            BorderThickness="0"
                             Height="20"
                             IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
                             Margin="0,0,0,0"
                             Padding="0,0,2,0"
-                            BorderThickness="0"
-                            ToolTip="Sync Source File panel with selection">
+                            ToolTip="Sync Source File panel with selection"
+                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                             <Image
                                 Height="16"
                                 Margin="0,1,0,0"
@@ -513,6 +513,7 @@
                         <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                             <EventSetter Event="MouseDoubleClick" Handler="FunctionDoubleClick" />
+                            <EventSetter Event="MouseLeftButtonUp" Handler="FunctionClick" />
                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
 
                             <Style.Triggers>

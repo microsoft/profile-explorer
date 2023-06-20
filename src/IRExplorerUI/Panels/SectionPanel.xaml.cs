@@ -18,6 +18,7 @@ using ProtoBuf;
 using System.IO;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using IRExplorerUI.Profile;
@@ -1847,6 +1848,18 @@ namespace IRExplorerUI {
             }
         }
 
+        private (TimeSpan Weight, TimeSpan ExclusiveWeight) ComputeSelectedFunctionsWeight() {
+            var weight = TimeSpan.Zero;
+            var exclusiveWeight = TimeSpan.Zero;
+
+            foreach (var functionEx in FunctionList.SelectedItems.Cast<IRTextFunctionEx>()) {
+                weight += functionEx.Weight;
+                exclusiveWeight += functionEx.ExclusiveWeight;
+            }
+
+            return (weight, exclusiveWeight);
+        }
+
         private void SectionFilter_TextChanged(object sender, TextChangedEventArgs e) {
             SectionList.Focus();
             RefreshSectionList();
@@ -2919,6 +2932,20 @@ namespace IRExplorerUI {
         public void ClearMarkedFunctions() {
             foreach (var funcEx in functionExtMap_.Values) {
                 funcEx.IsMarked = false;
+            }
+        }
+
+        private void FunctionClick(object sender, MouseButtonEventArgs e) {
+            if (FunctionList.SelectedItems.Count > 1) {
+                var (weight, exclusiveWeight) = ComputeSelectedFunctionsWeight();
+                var weightPercentage = Session.ProfileData.ScaleFunctionWeight(weight);
+                var exclusiveWeightPercentage = Session.ProfileData.ScaleFunctionWeight(exclusiveWeight);
+                var text = $"{weightPercentage.AsPercentageString()} ({weight.AsMillisecondsString()})";
+                text += $", excl {exclusiveWeightPercentage.AsPercentageString()} ({exclusiveWeight.AsMillisecondsString()})";
+                Session.SetApplicationStatus(text, "Sum of selected functions");
+            }
+            else {
+                Session.SetApplicationStatus("");
             }
         }
     }
