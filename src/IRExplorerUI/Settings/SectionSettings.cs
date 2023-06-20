@@ -76,6 +76,7 @@ namespace IRExplorerUI {
             DemangleNoSpecialKeywords = true;
             DemangleNoReturnType = true;
             ComputeStatistics = true;
+            SyncSelection = true;
             NewSectionColor = Utils.ColorFromString("#007200");
             MissingSectionColor = Utils.ColorFromString("#BB0025");
             ChangedSectionColor = Utils.ColorFromString("#DE8000");

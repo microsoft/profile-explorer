@@ -801,7 +801,6 @@ public sealed class ETWEventProcessor : IDisposable {
 #endif
 
         var funcRva = data.MethodStartAddress;
-        //var funcName = data.MethodSignature;
         var funcName = $"{data.MethodNamespace}.{data.MethodName}";
         var funcInfo = new FunctionDebugInfo(funcName, (long)funcRva, data.MethodSize,
                                              (short)data.OptimizationTier, data.MethodToken, (short)data.ReJITID);
