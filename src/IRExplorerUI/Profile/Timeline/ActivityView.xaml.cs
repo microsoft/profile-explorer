@@ -503,6 +503,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         int prevSliceIndex = -1;
         SliceList prevSliceList = null;
         Slice currentSlice = new Slice(TimeSpan.Zero, -1, 0);
+        Slice dummySlice = new Slice(TimeSpan.Zero, -1, 0);
 
         foreach (var (sample, stack) in profile.Samples) {
             if (threadId != -1 && stack.Context.ThreadId != threadId) {
@@ -534,7 +535,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
                 if (sliceIndex >= sliceList.Slices.Count) {
                     for (int i = sliceList.Slices.Count; i < sliceIndex; i++) {
-                        sliceList.Slices.Add(new Slice(TimeSpan.Zero, -1, 0));
+                        sliceList.Slices.Add(dummySlice);
                     }
                 }
 
