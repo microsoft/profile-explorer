@@ -38,6 +38,8 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
     public string Title { get; set; }
     [ProtoMember(13)]
     public int TargetProcessId { get; set; }
+    [ProtoMember(14)]
+    public bool RecordDotNetAssembly { get; set; }
 
     public List<PerformanceCounterConfig> EnabledPerformanceCounters => PerformanceCounters.FindAll(c => c.IsEnabled);
     public bool HasWorkingDirectory => Directory.Exists(WorkingDirectory);
@@ -88,11 +90,11 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
         }
 
         return SessionKind == other.SessionKind && ApplicationPath == other.ApplicationPath && Title == other.Title &&
-               ApplicationArguments == other.ApplicationArguments && WorkingDirectory == other.WorkingDirectory && 
+               ApplicationArguments == other.ApplicationArguments && WorkingDirectory == other.WorkingDirectory &&
                SamplingFrequency == other.SamplingFrequency && ProfileDotNet == other.ProfileDotNet &&
-               ProfileChildProcesses == other.ProfileChildProcesses && 
-               RecordPerformanceCounters == other.RecordPerformanceCounters && 
-               EnableEnvironmentVars == other.EnableEnvironmentVars && 
+               ProfileChildProcesses == other.ProfileChildProcesses &&
+               RecordPerformanceCounters == other.RecordPerformanceCounters &&
+               EnableEnvironmentVars == other.EnableEnvironmentVars &&
                Enumerable.SequenceEqual(EnvironmentVariables, other.EnvironmentVariables) &&
                Enumerable.SequenceEqual(PerformanceCounters, other.PerformanceCounters);
     }
@@ -135,6 +137,34 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
     }
 }
 
+
+[ProtoContract(SkipConstructor = true)]
+public class ProfileListViewFilter : SettingsBase {
+    [ProtoMember(1)]
+    public bool IsEnabled { get; set; }
+    [ProtoMember(2)]
+    public bool FilterByWeight { get; set; }
+    [ProtoMember(3)]
+    public bool SortByExclusiveTime { get; set; }
+    [ProtoMember(4)]
+    public int MinItems { get; set; }
+    [ProtoMember(5)]
+    public int MinWeight { get; set; }
+
+    public ProfileListViewFilter() {
+        Reset();
+    }
+
+    public override void Reset() {
+        IsEnabled = true;
+        FilterByWeight = true;
+        SortByExclusiveTime = true;
+        MinItems = 20;
+        MinWeight = 1;
+    }
+}
+
+
 [ProtoContract(SkipConstructor = true)]
 public class ProfileDataProviderOptions : SettingsBase {
     [ProtoMember(1)]
@@ -161,6 +191,8 @@ public class ProfileDataProviderOptions : SettingsBase {
     public List<ProfileDataReport> PreviousRecordingSessions { get; set; }
     [ProtoMember(12)]
     public List<ProfileDataReport> PreviousLoadedSessions { get; set; }
+    [ProtoMember(13)]
+    public ProfileListViewFilter FunctionListViewFilter { get; set; }
 
     public bool HasBinaryNameWhitelist => BinaryNameWhitelistEnabled && BinaryNameWhitelist.Count > 0;
     public bool HasBinarySearchPaths => BinarySearchPathsEnabled && BinarySearchPaths.Count > 0;
@@ -208,12 +240,14 @@ public class ProfileDataProviderOptions : SettingsBase {
         PerformanceMetrics ??= new List<PerformanceMetricConfig>();
         PreviousRecordingSessions ??= new List<ProfileDataReport>();
         PreviousLoadedSessions ??= new List<ProfileDataReport>();
+        FunctionListViewFilter ??= new ProfileListViewFilter();
     }
 
     private void ResetAndInitializeReferenceMembers() {
         BinarySearchPaths?.Clear();
         BinaryNameWhitelist?.Clear();
         RecordingSessionOptions?.Reset();
+        FunctionListViewFilter?.Reset();
         InitializeReferenceMembers();
     }
 

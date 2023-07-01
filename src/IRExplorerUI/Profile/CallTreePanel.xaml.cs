@@ -473,6 +473,12 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         foreach (var instance in nodeList) {
             bool isSelf = nodeList.Count == 1;
             var name = isSelf ? "Function" : $"Function instance {index++}";
+            var funcName = Session.CompilerInfo.NameProvider.FormatFunctionName(instance.Function);
+
+            if (isSelf && !string.IsNullOrEmpty(funcName)) {
+                name = funcName;
+            }
+            
             var percentageFunc = PickPercentageFunction(combinedWeight);
             var instanceNode = CreateProfileCallTreeInstance(name, instance, percentageFunc);
 
@@ -481,27 +487,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
             }
 
             rootNode.Children.Add(instanceNode);
-
-            if (instance.HasChildren) {
-                // Percentage relative to current function callers.
-                //percentageFunc = PickPercentageFunction(instance.Weight);
-                var (childrenWeight, childrentExcWeight) = instance.ChildrenWeight;
-                var childrenNode = CreateProfileCallTreeHeader("Called", childrenWeight, childrentExcWeight, percentageFunc, 1);
-
-                if (nodeList.Count > 1) {
-                    instanceNode.Children.Add(childrenNode);
-                }
-                else {
-                    rootNode.Children.Add(childrenNode);
-                }
-
-                foreach (var childNode in instance.Children) {
-                    CreateProfileCallTree(childNode, childrenNode, instanceNode, ChildFunctionExKind.CalleeNode,
-                        visitedNodes, percentageFunc);
-                }
-
-                visitedNodes.Clear();
-            }
 
             if (instance.HasCallers) {
                 // Percentage relative to entire profile for callers.
@@ -523,6 +508,27 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                 visitedNodes.Clear();
             }
 
+            if (instance.HasChildren) {
+                // Percentage relative to current function callers.
+                //percentageFunc = PickPercentageFunction(instance.Weight);
+                var (childrenWeight, childrentExcWeight) = instance.ChildrenWeight;
+                var childrenNode = CreateProfileCallTreeHeader("Calling", childrenWeight, childrentExcWeight, percentageFunc, 1);
+
+                if (nodeList.Count > 1) {
+                    instanceNode.Children.Add(childrenNode);
+                }
+                else {
+                    rootNode.Children.Add(childrenNode);
+                }
+
+                foreach (var childNode in instance.Children) {
+                    CreateProfileCallTree(childNode, childrenNode, instanceNode, ChildFunctionExKind.CalleeNode,
+                        visitedNodes, percentageFunc);
+                }
+
+                visitedNodes.Clear();
+            }
+            
             SortCallTreeNodes(instanceNode);
         }
 
@@ -905,13 +911,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         if (CallTree.SelectedItem is TreeNode node &&
             node.Tag is ChildFunctionEx funcEx &&
             funcEx.HasCallTreeNode) {
-            if (SyncSelection) {
-                await Session.ProfileFunctionSelected(funcEx.CallTreeNode, this.PanelKind);
-            }
-            
             if (settings_.SyncSourceFile) {
                 // Load the source file and scroll to the hottest line.
                 await Session.OpenProfileSourceFile(funcEx.CallTreeNode);
+            }
+            
+            if (SyncSelection) {
+                await Session.ProfileFunctionSelected(funcEx.CallTreeNode, this.PanelKind);
             }
         }
         else if (SyncSelection) {

@@ -173,7 +173,7 @@ public class FlameGraphRenderer {
 
         foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
             node.Owner.DrawNode(node, graphDC);
-            
+
             if (layoutChanged && ScaleNode(node) < minVisibleRectWidth_) {
                 shrinkingNodes++;
             }
@@ -668,21 +668,21 @@ public class FlameGraphRenderer {
     private GuidelineSet cachedDummyNodeGuidelines_;
 
     private void DrawText(GlyphRun glyphs, Rect bounds, Brush textColor, double offsetX, double offsetY,
-            Size textSize, DrawingContext dc) {
-            double x = offsetX;
-            double y = bounds.Height / 2 + textSize.Height / 4 + offsetY;
+                          Size textSize, DrawingContext dc) {
+        double x = offsetX;
+        double y = bounds.Height / 2 + textSize.Height / 4 + offsetY;
 
-            if (cachedTextGuidelines_ == null) {
-                var rect = glyphs.ComputeAlignmentBox();
-                cachedTextGuidelines_ = CreateGuidelineSet(rect, 1.0f);
-            }
-
-            dc.PushGuidelineSet(cachedTextGuidelines_);
-            dc.PushTransform(new TranslateTransform(x, y));
-            dc.DrawGlyphRun(textColor, glyphs);
-            dc.Pop();
-            dc.Pop(); // PushGuidelineSet
+        if (cachedTextGuidelines_ == null) {
+            var rect = glyphs.ComputeAlignmentBox();
+            cachedTextGuidelines_ = CreateGuidelineSet(rect, 1.0f);
         }
+
+        dc.PushGuidelineSet(cachedTextGuidelines_);
+        dc.PushTransform(new TranslateTransform(x, y));
+        dc.DrawGlyphRun(textColor, glyphs);
+        dc.Pop();
+        dc.Pop(); // PushGuidelineSet
+    }
 
     private (string Text, GlyphRun glyphs, bool Trimmed, Size TextSize)
             TrimTextToWidth(string text, double maxWidth, bool useNameFont) {

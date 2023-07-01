@@ -23,6 +23,7 @@ using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
+using Xceed.Wpf.Toolkit;
 
 namespace IRExplorerUI.Profile;
 
@@ -184,8 +185,9 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         await SetupInstanceInfo(CallTreeNode);
         ShowDetails = true;
 
-        BacktraceList.Show(await Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode)), filter: false);
-        FunctionList.Show(await Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode)));
+        BacktraceList.Show(await Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode)));
+        FunctionList.Show(await Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode)),
+                          App.Settings.ProfileOptions.FunctionListViewFilter);
         ModuleList.Show(await Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode)));
     }
 
@@ -204,7 +206,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         FunctionInstancesCount = instanceNodes_.Count;
 
         // Show all instances.
-        InstancesList.Show(instanceNodes_, false);
+        InstancesList.Show(instanceNodes_);
 
         nodeInstanceIndex_ = instanceNodes_.FindIndex(instanceNode => instanceNode == node);
         CurrentInstanceIndex = nodeInstanceIndex_ + 1;
@@ -399,9 +401,9 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {
         var nodeEx = new ProfileCallTreeNodeEx(node) {
-            FullFunctionName = FormatFunctionName(node),
-            FunctionName = FormatFunctionName(node, MaxFunctionNameLength),
-            ModuleName = FormatModuleName(node, MaxModuleNameLength),
+            FullFunctionName = node.FormatFunctionName(Session.CompilerInfo.NameProvider.FormatFunctionName),
+            FunctionName = node.FormatFunctionName(Session.CompilerInfo.NameProvider.FormatFunctionName, MaxFunctionNameLength),
+            ModuleName = node.FormatModuleName(Session.CompilerInfo.NameProvider.FormatFunctionName, MaxModuleNameLength),
             Percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight),
             ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight),
         };
@@ -409,27 +411,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         return nodeEx;
     }
 
-    private string FormatFunctionName(ProfileCallTreeNode node, int maxLength = int.MaxValue) {
-        return FormatName(node.FunctionName, maxLength);
-    }
-
-    private string FormatModuleName(ProfileCallTreeNode node, int maxLength = int.MaxValue) {
-        return FormatName(node.ModuleName, maxLength);
-    }
-
-    private string FormatName(string name, int maxLength) {
-        if (string.IsNullOrEmpty(name)) {
-            return name;
-        }
-
-        name = Session.CompilerInfo.NameProvider.FormatFunctionName(name);
-
-        if (name.Length > maxLength && name.Length > 2) {
-            name = $"{name.Substring(0, maxLength - 2)}...";
-        }
-
-        return name;
-    }
     public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {
         Session = session;
         funcInfoProvider_ = funcInfoProvider;

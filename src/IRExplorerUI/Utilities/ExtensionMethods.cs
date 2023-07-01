@@ -9,6 +9,7 @@ using Grpc.Core.Logging;
 using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore.IR;
 using IRExplorerUI;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI {
     static class ExtensionMethods {
@@ -421,7 +422,7 @@ namespace IRExplorerUI {
                              value.Y + SystemParameters.CursorHeight / 2);
         }
 
-        public static object GetObjectAtPoint<ItemContainer>(this ItemsControl control, Point p)
+        public static ItemContainer GetObjectAtPoint<ItemContainer>(this ItemsControl control, Point p)
             where ItemContainer : DependencyObject         {
             // ItemContainer - can be ListViewItem, or TreeViewItem and so on(depends on control)
             return control.GetContainerAtPoint<ItemContainer>(p);
@@ -442,6 +443,30 @@ namespace IRExplorerUI {
 
             // Will return null if not found
             return obj as ItemContainer;
+        }
+
+        public static string FormatFunctionName(this ProfileCallTreeNode node, FunctionNameFormatter nameFormatter,
+                                                int maxLength = int.MaxValue) {
+            return FormatName(node.FunctionName, nameFormatter, maxLength);
+        }
+
+        public static string FormatModuleName(this ProfileCallTreeNode node, FunctionNameFormatter nameFormatter,
+                                              int maxLength = int.MaxValue) {
+            return FormatName(node.ModuleName, nameFormatter, maxLength);
+        }
+
+        private static string FormatName(string name, FunctionNameFormatter nameFormatter, int maxLength) {
+            if (string.IsNullOrEmpty(name)) {
+                return name;
+            }
+
+            name = nameFormatter != null ? nameFormatter(name) : name;
+
+            if (name.Length > maxLength && name.Length > 2) {
+                name = $"{name.Substring(0, maxLength - 2)}...";
+            }
+
+            return name;
         }
     }
 }

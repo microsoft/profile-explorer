@@ -8,6 +8,7 @@ using ProtoBuf;
 namespace IRExplorerUI.Compilers {
     public interface IDebugInfoProvider : IDisposable {
         bool LoadDebugInfo(string debugFilePath);
+        void Unload();
         bool LoadDebugInfo(DebugFileSearchResult debugFile);
         bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc);
         bool AnnotateSourceLocations(FunctionIR function, string functionName);

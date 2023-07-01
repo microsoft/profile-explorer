@@ -44,7 +44,9 @@ namespace IRExplorerUI.Compilers {
         public SymbolFileSourceOptions SymbolOptions { get; set; }
         public Machine? Architecture => null;
 
-        public static async Task<DebugFileSearchResult> LocateDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceOptions options) {
+        public static async Task<DebugFileSearchResult>
+            LocateDebugInfoFile(SymbolFileDescriptor symbolFile,
+                                SymbolFileSourceOptions options) {
             if (symbolFile == null) {
                 return DebugFileSearchResult.None;
             }
@@ -78,7 +80,7 @@ namespace IRExplorerUI.Compilers {
                 DebugFileSearchResult searchResult;
 
                 if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
-                    searchResult =DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
+                    searchResult = DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
                 }
                 else {
                     searchResult = DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
@@ -90,7 +92,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         public static string ConstructSymbolSearchPath(SymbolFileSourceOptions options) {
-            //? TODO: Option for var ret = Environment.GetEnvironmentVariable("_NT_SYMBOL_PATH");
+            //? TODO: Also consider Environment.GetEnvironmentVariable("_NT_SYMBOL_PATH")?
             var defaultSearchPath = "";
 
             if (options.UseDefaultSymbolSource) {
@@ -115,7 +117,8 @@ namespace IRExplorerUI.Compilers {
             return symbolSearchPath;
         }
 
-        public static async Task<DebugFileSearchResult> LocateDebugInfoFile(string imagePath, SymbolFileSourceOptions options) {
+        public static async Task<DebugFileSearchResult>
+            LocateDebugInfoFile(string imagePath, SymbolFileSourceOptions options) {
             using var binaryInfo = new PEBinaryInfoProvider(imagePath);
 
             if (binaryInfo.Initialize()) {
@@ -155,6 +158,26 @@ namespace IRExplorerUI.Compilers {
             }
 
             return true;
+        }
+
+        public void Unload() {
+            if (session_ != null) {
+                Marshal.ReleaseComObject(session_);
+                session_ = null;
+            }
+
+            if (diaSource_ != null) {
+                Marshal.ReleaseComObject(diaSource_);
+                diaSource_ = null;
+            }
+        }
+
+        private bool EnsureLoaded() {
+            if (session_ != null) {
+                return true;
+            }
+
+            return LoadDebugInfo(debugFilePath_);
         }
 
         public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {
@@ -278,6 +301,10 @@ namespace IRExplorerUI.Compilers {
         }
 
         private (SourceLineDebugInfo, IDiaSourceFile) FindSourceLineByRVAImpl(long rva) {
+            if (!EnsureLoaded()) {
+                return (SourceLineDebugInfo.Unknown, null);
+            }
+
             try {
                 session_.findLinesByRVA((uint)rva, 0, out var lineEnum);
 
@@ -336,6 +363,10 @@ namespace IRExplorerUI.Compilers {
         }
 
         public FunctionDebugInfo FindFunctionByRVA(long rva) {
+            if (!EnsureLoaded()) {
+                return null;
+            }
+
             try {
                 session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
 
@@ -363,6 +394,10 @@ namespace IRExplorerUI.Compilers {
         }
 
         private bool AnnotateInstructionSourceLocation(IRElement instr, uint instrRVA, IDiaSymbol funcSymbol) {
+            if (!EnsureLoaded()) {
+                return false;
+            }
+
             try {
                 session_.findLinesByRVA(instrRVA, 0, out var lineEnum);
 
@@ -555,15 +590,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         public void Dispose() {
-            if (session_ != null) {
-                Marshal.ReleaseComObject(session_);
-                session_ = null;
-            }
-
-            if (diaSource_ != null) {
-                Marshal.ReleaseComObject(diaSource_);
-                diaSource_ = null;
-            }
+            Unload();
         }
     }
 }

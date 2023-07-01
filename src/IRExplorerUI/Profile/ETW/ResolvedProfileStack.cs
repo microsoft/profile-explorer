@@ -14,24 +14,24 @@ public sealed class ResolvedProfileStack {
     public List<ResolvedProfileStackFrame> StackFrames { get; set; }
     [ProtoMember(2)]
     public ProfileContext Context { get; set; }
-    
+
     public int FrameCount => StackFrames.Count;
 
     // Used to deduplicate stack frames for the same function running in the same context.
-    public static ConcurrentDictionary<ResolvedProfileStackInfo, ResolvedProfileStackInfo> uniqueFrames_ = new();
+    public static ConcurrentDictionary<ResolvedProfileStackFrameDetails, ResolvedProfileStackFrameDetails> uniqueFrames_ = new();
 
     // Stack frames with the same IP have a unique instance shared among all call stacks.
     private static ConcurrentDictionary<long, ResolvedProfileStackFrame> frameInstances_ = new();
     private static ConcurrentDictionary<long, ResolvedProfileStackFrame> kernelFrameInstances_ = new();
-    
-    public void AddFrame(long frameIP, long frameRVA, ResolvedProfileStackInfo info, int frameIndex, ProfileStack stack) {
+
+    public void AddFrame(long frameIP, long frameRVA, ResolvedProfileStackFrameDetails frameDetails, int frameIndex, ProfileStack stack) {
         // Deduplicate the frame.
-        var uniqueFrame = uniqueFrames_.GetOrAdd(info, info);
+        var uniqueFrame = uniqueFrames_.GetOrAdd(frameDetails, frameDetails);
         var rvaFrame = new ResolvedProfileStackFrame(frameRVA, uniqueFrame);
 
         // A stack frame IP can be called from both user and kernel mode code.
-        info.IsKernelCode = frameIndex < stack.UserModeTransitionIndex;
-        var existingFrame = info.IsKernelCode ?
+        frameDetails.IsKernelCode = frameIndex < stack.UserModeTransitionIndex;
+        var existingFrame = frameDetails.IsKernelCode ?
             kernelFrameInstances_.GetOrAdd(frameIP, rvaFrame) :
             frameInstances_.GetOrAdd(frameIP, rvaFrame);
         StackFrames.Add(existingFrame);
@@ -45,7 +45,7 @@ public sealed class ResolvedProfileStack {
 
 
 [ProtoContract(SkipConstructor = true)]
-public sealed class ResolvedProfileStackInfo : IEquatable<ResolvedProfileStackInfo> {
+public sealed class ResolvedProfileStackFrameDetails : IEquatable<ResolvedProfileStackFrameDetails> {
     [ProtoMember(1)]
     public FunctionDebugInfo DebugInfo { get; set; }
     [ProtoMember(2)]
@@ -53,26 +53,24 @@ public sealed class ResolvedProfileStackInfo : IEquatable<ResolvedProfileStackIn
     public IRTextFunctionReference Function { get; set; }
     [ProtoMember(3)]
     public ProfileImage Image { get; set; }
-    public FunctionProfileData Profile { get; set; }
     public bool IsKernelCode { get; set; }
     public bool IsManagedCode { get; set; }
 
     public bool IsUnknown => Image == null;
 
-    private ResolvedProfileStackInfo() { }
+    private ResolvedProfileStackFrameDetails() { }
 
-    public ResolvedProfileStackInfo(FunctionDebugInfo debugInfo, IRTextFunction function,
-        ProfileImage image, bool isManagedCode, FunctionProfileData profile = null) {
+    public ResolvedProfileStackFrameDetails(FunctionDebugInfo debugInfo, IRTextFunction function,
+                                            ProfileImage image, bool isManagedCode) {
         DebugInfo = debugInfo;
         Function = function;
         Image = image;
         IsManagedCode = isManagedCode;
-        Profile = profile;
     }
 
-    public static readonly ResolvedProfileStackInfo Unknown = new();
+    public static readonly ResolvedProfileStackFrameDetails Unknown = new();
 
-    public bool Equals(ResolvedProfileStackInfo other) {
+    public bool Equals(ResolvedProfileStackFrameDetails other) {
         if (ReferenceEquals(null, other)) {
             return false;
         }
@@ -88,18 +86,18 @@ public sealed class ResolvedProfileStackInfo : IEquatable<ResolvedProfileStackIn
     }
 
     public override bool Equals(object obj) {
-        return ReferenceEquals(this, obj) || obj is ResolvedProfileStackInfo other && Equals(other);
+        return ReferenceEquals(this, obj) || obj is ResolvedProfileStackFrameDetails other && Equals(other);
     }
 
     public override int GetHashCode() {
         return HashCode.Combine(DebugInfo, Image, IsKernelCode, IsManagedCode);
     }
 
-    public static bool operator ==(ResolvedProfileStackInfo left, ResolvedProfileStackInfo right) {
+    public static bool operator ==(ResolvedProfileStackFrameDetails left, ResolvedProfileStackFrameDetails right) {
         return Equals(left, right);
     }
 
-    public static bool operator !=(ResolvedProfileStackInfo left, ResolvedProfileStackInfo right) {
+    public static bool operator !=(ResolvedProfileStackFrameDetails left, ResolvedProfileStackFrameDetails right) {
         return !Equals(left, right);
     }
 }
@@ -109,12 +107,12 @@ public struct ResolvedProfileStackFrame {
     [ProtoMember(1)]
     public long FrameRVA { get; set; }
     [ProtoMember(2)]
-    public ResolvedProfileStackInfo Info { get; set; }
+    public ResolvedProfileStackFrameDetails FrameDetails { get; set; }
 
-    public ResolvedProfileStackFrame(long frameRva, ResolvedProfileStackInfo info) {
+    public ResolvedProfileStackFrame(long frameRva, ResolvedProfileStackFrameDetails frameDetails) {
         FrameRVA = frameRva;
-        Info = info;
+        FrameDetails = frameDetails;
     }
 
-    public bool IsUnknown => Info.IsUnknown;
+    public bool IsUnknown => FrameDetails.IsUnknown;
 }

@@ -12,11 +12,13 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Presentation;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
+using IRExplorerUI.Document;
 
 namespace IRExplorerUI.Profile;
 
@@ -42,7 +44,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     private List<ActivityTimelineView> threadActivityViews_;
     private Dictionary<int, ActivityTimelineView> threadActivityViewsMap_;
     private Dictionary<int, DraggablePopupHoverPreview> threadHoverPreviewMap_;
-    private SearchableProfileItem.FunctionNameFormatter nameFormatter_;
     private bool changingThreadFiltering_;
 
     private DoubleAnimation widthAnimation_;
@@ -186,8 +187,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         }
 
         callTree_ = callTree;
-        nameFormatter_ = Session.CompilerInfo.NameProvider.FormatFunctionName;
-
         Dispatcher.BeginInvoke(async () => {
             var activityArea = new Rect(0, 0, ActivityViewAreaWidth, ActivityView.ActualHeight);
             var threads = Session.ProfileData.SortedThreadWeights;
@@ -226,6 +225,14 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             }
 
             await Task.WhenAll(initTasks);
+            
+            // Redraw everything once all views are initialized.
+            ActivityView.InitializeDone();
+            
+            foreach (var thread in threads) {
+                threadActivityViewsMap_[thread.ThreadId].ActivityHost.InitializeDone();
+            }
+
             ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
         }, DispatcherPriority.Background);
     }
@@ -348,7 +355,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
                     return null;
                 }
 
-                var (text, textWidth) = CreateBacktraceText(callNode, 5);
+                var (text, textWidth) = 
+                    CallTreeNodePopup.CreateBacktraceText(callNode, 10, 
+                                                          Session.CompilerInfo.NameProvider.FormatFunctionName);
 
                 // If popup already opened for this node reuse the instance.
                 if (threadHoverPreviewMap_.TryGetValue(view.ThreadId, out var hoverPreview) &&
@@ -368,33 +377,12 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
             },
             (mousePoint, popup) => true,
-            popup => Session.RegisterDetachedPanel(popup));
+            popup => {
+                threadHoverPreviewMap_.Remove(view.ThreadId);
+                Session.RegisterDetachedPanel(popup);
+            });
 
         threadHoverPreviewMap_[view.ThreadId] = preview;
-    }
-
-    private (string, double) CreateBacktraceText(ProfileCallTreeNode node, int maxLevel) {
-        var sb = new StringBuilder();
-        double maxTextWidth = 0;
-
-        while (node != null && maxLevel-- > 0) {
-            var funcName = nameFormatter_(node.FunctionName);
-
-            if (funcName.Length > MaxPreviewNameLength) {
-                funcName = $"{funcName[..MaxPreviewNameLength]}...";
-            }
-
-            var textSize = Utils.MeasureString(funcName, DefaultTextFont, DefaultTextSize);
-            maxTextWidth = Math.Max(maxTextWidth, textSize.Width);
-            sb.AppendLine(funcName);
-            node = node.Caller;
-        }
-
-        if (node != null && node.HasCallers) {
-            sb.AppendLine("...");
-        }
-
-        return (sb.ToString().Trim(), maxTextWidth);
     }
 
     private void SetupActivityViewEvents(ActivityView view) {
@@ -928,20 +916,36 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         SelectNextSearchResult();
     }
 
-    public void MarkFunctionSamples(Dictionary<int, List<SampleIndex>> threadSamples) {
-        ClearMarkedFunctionSamples();
+    public void SelectFunctionSamples(Dictionary<int, List<SampleIndex>> threadSamples) {
+        ClearSelectedFunctionSamples();
 
         foreach (var (threadId, sampleList) in threadSamples) {
             if (threadId == -1) {
-                ActivityView.MarkSamples(sampleList);
+                ActivityView.SelectSamples(sampleList);
             }
             else if (threadActivityViewsMap_.TryGetValue(threadId, out var threadView)) {
-                threadView.ActivityHost.MarkSamples(sampleList);
+                threadView.ActivityHost.SelectSamples(sampleList);
             }
         }
-
     }
 
+    public void MarkFunctionSamples(ProfileCallTreeNode node, Dictionary<int, List<SampleIndex>> threadSamples,
+                                    HighlightingStyle style) {
+        foreach (var (threadId, sampleList) in threadSamples) {
+            if (threadId == -1) {
+                ActivityView.MarkSamples(node, sampleList, style);
+            }
+            else if (threadActivityViewsMap_.TryGetValue(threadId, out var threadView)) {
+                threadView.ActivityHost.MarkSamples(node, sampleList, style);
+            }
+        }
+    }
+    
+    public void ClearSelectedFunctionSamples() {
+        ActivityView.ClearSelectedSamples();
+        threadActivityViews_.ForEach(threadView => threadView.ActivityHost.ClearSelectedSamples());
+    }
+    
     public void ClearMarkedFunctionSamples() {
         ActivityView.ClearMarkedSamples();
         threadActivityViews_.ForEach(threadView => threadView.ActivityHost.ClearMarkedSamples());
@@ -960,5 +964,53 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             e.ClickCount >= 2) {
             await RemoveThreadFilters();
         }
+    }
+
+    private void MarkersMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
+        var defaultItems = DocumentUtils.SaveDefaultMenuItems(MarkersMenuItem);
+        MarkersMenuItem.Items.Clear();
+
+        foreach (var samples in ActivityView.MarkedSamples) {
+            var item = new MenuItem() {
+                OverridesDefaultStyle = true,
+                Header = samples.Node.FormatFunctionName(Session.CompilerInfo.NameProvider.FormatFunctionName, 50),
+                Icon = CreateMarkerMenuIcon(samples),
+                //Icon = IconDrawing.FromIconResource("StarIcon").AsImage(),
+                Tag = samples
+            };
+
+            item.Click += (s, args) => {
+                var samples = (MarkedSamples)((MenuItem)s).Tag;
+                ActivityView.RemoveMarkedSamples(samples.Node);
+
+                foreach (var threadView in threadActivityViews_) {
+                    threadView.ActivityHost.RemoveMarkedSamples(samples.Node);
+                }
+            };
+
+            MarkersMenuItem.Items.Add(item);
+        }
+
+        DocumentUtils.RestoreDefaultMenuItems(MarkersMenuItem, defaultItems);
+    }
+
+    private void ClearMarkers_OnClick(object sender, RoutedEventArgs e) {
+        ActivityView.ClearMarkedSamples();
+
+        foreach (var threadView in threadActivityViews_) {
+            threadView.ActivityHost.ClearMarkedSamples();
+        }
+    }
+
+    private Image CreateMarkerMenuIcon(MarkedSamples samples) {
+        DrawingVisual visual = new DrawingVisual();
+
+        using (DrawingContext dc = visual.RenderOpen()) {
+            dc.DrawRectangle(samples.Style.BackColor, ColorPens.GetPen(Colors.Black), new Rect(0, 0, 16, 16));
+        }
+
+        RenderTargetBitmap targetBitmap = new RenderTargetBitmap(16, 16, 96, 96, PixelFormats.Default);
+        targetBitmap.Render(visual);
+        return new Image() { Source = targetBitmap };
     }
 }

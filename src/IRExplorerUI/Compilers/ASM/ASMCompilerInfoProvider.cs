@@ -9,6 +9,7 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.ASM;
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
@@ -19,7 +20,7 @@ using System.Threading.Tasks;
 using System.Windows.Media.Animation;
 using static IRExplorerUI.ModuleReportPanel;
 
-namespace IRExplorerUI.Compilers.ASM; 
+namespace IRExplorerUI.Compilers.ASM;
 
 public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     private readonly ISession session_;
@@ -98,6 +99,8 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
             return new JsonDebugInfoProvider();
         }
 
+        //? Cache
+
         switch (info.BinaryFileInfo.FileKind) {
             case BinaryFileKind.Native: {
                 return new PDBDebugInfoProvider(App.Settings.SymbolOptions);
@@ -109,6 +112,29 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
             default: {
                 throw new InvalidOperationException();
             }
+        }
+    }
+
+    private static Dictionary<DebugFileSearchResult, IDebugInfoProvider> loadedDebugInfo_ = new();
+
+    public IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile) {
+        if (!debugFile.Found) {
+            return null;
+        }
+
+        lock (this) {
+            if (loadedDebugInfo_.TryGetValue(debugFile, out var provider)) {
+                return provider;
+            }
+
+            provider = new PDBDebugInfoProvider(App.Settings.SymbolOptions);
+
+            if (provider.LoadDebugInfo(debugFile.FilePath)) {
+                loadedDebugInfo_[debugFile] = provider;
+                return provider;
+            }
+
+            return null;
         }
     }
 

@@ -356,7 +356,7 @@ public sealed class ProfileImage : IEquatable<ProfileImage>, IComparable<Profile
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Size, FilePath, BaseAddress, DefaultBaseAddress, Checksum);
+        return HashCode.Combine(Size, FilePath, Checksum);
     }
 
     public bool Equals(ProfileImage other) {
@@ -368,8 +368,6 @@ public sealed class ProfileImage : IEquatable<ProfileImage>, IComparable<Profile
 
         return Size == other.Size &&
                FilePath == other.FilePath &&
-               BaseAddress == other.BaseAddress &&
-               DefaultBaseAddress == other.DefaultBaseAddress &&
                Checksum == other.Checksum;
     }
 
@@ -417,7 +415,7 @@ public sealed class ProfileImage : IEquatable<ProfileImage>, IComparable<Profile
     }
 
     public override string ToString() {
-        return $"{FilePath}, Id: {Id}, Base: {BaseAddress:X}, DefaultBase: {DefaultBaseAddress:X} Size: {Size}";
+        return $"ModuleName: {ModuleName}, FilePath: {FilePath}, Id: {Id}, Base: {BaseAddress:X}, DefaultBase: {DefaultBaseAddress:X} Size: {Size}, Checksum {Checksum:X}";
     }
 }
 

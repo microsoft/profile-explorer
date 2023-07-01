@@ -25,7 +25,10 @@ namespace IRExplorerUI.Profile;
 public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged {
     public static readonly TimeSpan PopupHoverDuration = TimeSpan.FromMilliseconds(50);
     public static readonly TimeSpan PopupHoverLongDuration = TimeSpan.FromMilliseconds(1000);
-
+    private const int MaxPreviewNameLength = 80;
+    internal const double DefaultTextSize = 12;
+    private static readonly Typeface DefaultTextFont = new Typeface("Segoe UI");
+    
     public ISession Session { get; set; }
     public ProfileCallTreeNode CallTreeNode { get; set; }
     public ProfileCallTreeNodeEx Node => PanelHost.Node;
@@ -79,7 +82,27 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
         get => backtraceText_;
         set => SetField(ref backtraceText_, value);
     }
+    
+    public static (string, double) CreateBacktraceText(ProfileCallTreeNode node, int maxLevel,
+                                                       FunctionNameFormatter nameFormatter) {
+        var sb = new StringBuilder();
+        double maxTextWidth = 0;
 
+        while (node != null && maxLevel-- > 0) {
+            var funcName = node.FormatFunctionName(nameFormatter, MaxPreviewNameLength);
+            var textSize = Utils.MeasureString(funcName, DefaultTextFont, DefaultTextSize);
+            maxTextWidth = Math.Max(maxTextWidth, textSize.Width);
+            sb.AppendLine(funcName);
+            node = node.Caller;
+        }
+
+        if (node != null && node.HasCallers) {
+            sb.AppendLine("...");
+        }
+
+        return (sb.ToString().Trim(), maxTextWidth);
+    }
+    
     public override bool ShouldStartDragging(MouseButtonEventArgs e) {
         if (e.LeftButton == MouseButtonState.Pressed && ToolbarPanel.IsMouseOver) {
             if (!IsDetached) {

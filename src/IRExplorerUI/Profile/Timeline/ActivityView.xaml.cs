@@ -34,6 +34,20 @@ public record SampleTimePointInfo(TimeSpan Time, int SampleIndex, int ThreadId);
 //? TODO: Use SampleIndex in SampleTimePointInfo/Range
 public record SampleIndex(int Index, TimeSpan Time);
 
+public class MarkedSamples {
+    public int Index { get; set; }
+    public ProfileCallTreeNode Node { get; set; }
+    public List<SampleIndex> Samples { get; set; }
+    public HighlightingStyle Style { get; set; }
+
+    public MarkedSamples(int index, ProfileCallTreeNode node, List<SampleIndex> samples, HighlightingStyle style) {
+        Index = index;
+        Node = node;
+        Samples = samples;
+        Style = style;
+    }
+}
+
 public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     struct Slice {
         public TimeSpan Weight;
@@ -100,7 +114,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     private Brush backColor_;
     private TimeSpan startTime_;
     private TimeSpan endTime_;
-    private List<SampleIndex> markedSamples_;
+    private List<MarkedSamples> markedSamples_;
+    private List<SampleIndex> selectedSamples_;
     private CancelableTaskInstance sliceTask_;
 
     public ActivityView() {
@@ -109,9 +124,11 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         selectionBackColor_ = ColorBrushes.GetTransparentBrush("#A7D5F5", 150); // SelectedBackgroundBrush
         filteredBackColor_ = ColorBrushes.GetBrush(Colors.Linen);
         selectionBorderColor_ = ColorPens.GetPen(Colors.Black);
-        markerBackColor_ = ColorBrushes.GetTransparentBrush("#0F92EF", 180);;
+        markerBackColor_ = ColorBrushes.GetTransparentBrush("#0F92EF", 120);;
+        markerBorderColor_= ColorPens.GetPen(Colors.DimGray);
         positionLinePen_ = ColorPens.GetBoldPen(Colors.DarkBlue);
         filteredOutBorderColor_ = ColorPens.GetBoldPen(Colors.Black);
+        markedSamples_ = new List<MarkedSamples>();
         ThreadId = -1;
         DataContext = this;
 
@@ -121,6 +138,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         MouseLeave += ActivityView_MouseLeave;
         PreviewMouseWheel += ActivityView_PreviewMouseWheel;
     }
+
+    public List<MarkedSamples> MarkedSamples => markedSamples_;
 
     public RelayCommand<object> FilterTimeRangeCommand =>
         new((obj) => ApplyTimeRangeFilter());
@@ -281,6 +300,15 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         get => selectionBorderColor_;
         set {
             SetField(ref selectionBorderColor_, value);
+            Redraw();
+        }
+    }
+
+    private Pen markerBorderColor_;
+    public Pen MarkerBorderColor {
+        get => markerBorderColor_;
+        set {
+            SetField(ref markerBorderColor_, value);
             Redraw();
         }
     }
@@ -449,9 +477,9 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     }
 
-    public async Task Initialize(ProfileData profile, Rect visibleArea, int threadId = -1) {
+    public Task Initialize(ProfileData profile, Rect visibleArea, int threadId = -1) {
         if (initialized_) {
-            return;
+            return Task.CompletedTask;
         }
 
         initialized_ = true;
@@ -476,15 +504,16 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         font_ = new Typeface(DefaultFont);
         fontSize_ = DefaultTextSize;
         glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual_).PixelsPerDip);
+        return StartComputeSampleSlices(SliceWidth);
+    }
 
-        StartComputeSampleSlices(SliceWidth);
-
+    public void InitializeDone() {
         OnPropertyChanged(nameof(ThreadWeight));
         OnPropertyChanged(nameof(ThreadId));
         OnPropertyChanged(nameof(ThreadName));
         Redraw();
     }
-
+    
     private List<SliceList> ComputeSampleSlices(ProfileData profile, int threadId = -1) {
         if (profile.Samples.Count == 0) {
             return new List<SliceList>();
@@ -593,16 +622,31 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
 
-    public void MarkSamples(List<SampleIndex> samples) {
-        markedSamples_ = samples;
+    public void SelectSamples(List<SampleIndex> samples) {
+        selectedSamples_ = samples;
+        Redraw();
+    }
+    
+    public void MarkSamples(ProfileCallTreeNode node, List<SampleIndex> samples, HighlightingStyle style) {
+        markedSamples_.RemoveAll(s => s.Node == node);
+        markedSamples_.Add(new MarkedSamples(markedSamples_.Count, node, samples, style));
+        Redraw();
+    }
+
+    public void RemoveMarkedSamples(ProfileCallTreeNode node) {
+        markedSamples_.RemoveAll(s => s.Node == node);
         Redraw();
     }
 
     public void ClearMarkedSamples() {
-        markedSamples_ = null;
+        markedSamples_.Clear();
         Redraw();
     }
-
+    
+    public void ClearSelectedSamples() {
+        selectedSamples_ = null;
+        Redraw();
+    }
 
     private void Redraw() {
         if (!initialized_) {
@@ -674,14 +718,20 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             }
         }
 
-        if (markedSamples_ != null) {
-            DrawMarkedSamples(graphDC);
+        foreach (var samples in markedSamples_) {
+            DrawMarkedSamples(samples, graphDC);
+        }
+
+        // Draw selected samples on top of marked samples.
+        if (selectedSamples_ != null) {
+            DrawSelectedSamples(selectedSamples_, graphDC);
         }
 
         if (IsTimeBarVisible) {
             DrawTimeBar(graphDC);
         }
 
+        // Draw filter overlays and selection.
         if (hasFilter_ || !isThreadIncluded_) {
             DrawExcludedTimeRangeFilter(graphDC);
         }
@@ -694,16 +744,16 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             DrawPositionLine(graphDC);
         }
 
-        foreach (var ev in profile_.Events) {
-            var startX = TimeToPosition(ev.Sample.Time);
-
-            if (startX > visibleArea_.Width) {
-                return;
-            }
-
-            graphDC.DrawRectangle(ev.Sample.CounterId != 0 ? Brushes.Red : Brushes.Blue, selectionBorderColor_,
-                new Rect(startX, 0, 2, visibleArea_.Height));
-        }
+        // foreach (var ev in profile_.Events) {
+        //     var startX = TimeToPosition(ev.Sample.Time);
+        //
+        //     if (startX > visibleArea_.Width) {
+        //         return;
+        //     }
+        //
+        //     graphDC.DrawRectangle(ev.Sample.CounterId != 0 ? Brushes.Red : Brushes.Blue, selectionBorderColor_,
+        //         new Rect(startX, 0, 2, visibleArea_.Height));
+        // }
     }
 
     private void DrawTimeRangeFilter(DrawingContext graphDC) {
@@ -720,7 +770,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         var rect = new Rect(startX, 0, width, maxHeight_);
         graphDC.DrawRectangle(filteredBackColor_, null, rect);
     }
-
+    
     private void DrawPositionLine(DrawingContext graphDC) {
         var lineStart = new Point(positionLineX_, 0);
         var lineEnd = new Point(positionLineX_, maxHeight_);
@@ -742,6 +792,41 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
         DrawText(text, positionLineX_, textY, Brushes.Black, graphDC, true, backColor_, sampleBorderColor_,
                  HorizontalAlignment.Center, VerticalAlignment.Center);
+
+        //? TODO: Use binSearch to find first sample in toher parts
+
+        var markedSamples = FindMarkedSamples(time);
+        
+        if (markedSamples != null) {
+            var markedText = markedSamples.Node.FunctionName;
+            DrawText(markedText, positionLineX_, topMargin_, Brushes.Black, graphDC, true, backColor_, sampleBorderColor_,
+                     HorizontalAlignment.Center, VerticalAlignment.Center);
+        }
+    }
+
+    private MarkedSamples FindMarkedSamples(TimeSpan time) {
+        var closeTimeDiff = TimeSpan.FromMilliseconds(1); //? Based on zoom
+        var querySample = new SampleIndex(0, time); 
+
+        foreach (var markedSamples in markedSamples_) {
+            int index = markedSamples.Samples.BinarySearch(querySample,
+                Comparer<SampleIndex>.Create((a, b) => {
+                    var timeDiff = (a.Time - startTime_) - b.Time;
+                    if (timeDiff > closeTimeDiff) {
+                        return 1;
+                    }
+                    else if (timeDiff < -closeTimeDiff) {
+                        return -1;
+                    }
+
+                    return 0;
+                }));
+            if (index >= 0) {
+                return markedSamples;
+            }
+        }
+
+        return null;
     }
 
     private void DrawSelection(DrawingContext graphDC) {
@@ -765,7 +850,9 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             var time = TimeSpan.FromTicks(Math.Abs((selectionEndTime_ - selectionStartTime_).Ticks));
             var textX = startX + selectionWidth / 2;
             var textY = topMargin_ + 2;
-            var text = time.AsMillisecondsString();
+            
+            var timeDiff = endTime_ - startTime_;
+            var text = time.AsTimeStringWithMilliseconds(timeDiff);
             DrawText(text, textX, textY, Brushes.Black, graphDC, true, backColor_, sampleBorderColor_,
                      HorizontalAlignment.Center, VerticalAlignment.Center);
         }
@@ -794,13 +881,24 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         }
     }
 
-    private void DrawMarkedSamples(DrawingContext graphDC) {
+    private void DrawSelectedSamples(List<SampleIndex> samples, DrawingContext graphDC) {
+        double y = visibleArea_.Height - MarkerHeight;
+        DrawMarkedSamplesImpl(samples, markerBackColor_, null, topMargin_, maxSampleHeight_, graphDC);
+    }
+
+    private void DrawMarkedSamples(MarkedSamples samples, DrawingContext graphDC) {
+        double y = visibleArea_.Height - MarkerHeight;
+        y = Math.Max(0, y - samples.Index * (MarkerHeight / 2));
+        DrawMarkedSamplesImpl(samples.Samples, samples.Style.BackColor, sampleBorderColor_, y, MarkerHeight, graphDC);
+    }
+
+    private void DrawMarkedSamplesImpl(List<SampleIndex> samples, Brush backColor, Pen borderColor, 
+                                       double y, double height, DrawingContext graphDC) {
         double startX = double.MaxValue;
         double endX = double.MaxValue;
-        double y = visibleArea_.Height - MarkerHeight;
         bool first = true;
 
-        foreach (var sample in markedSamples_) {
+        foreach (var sample in samples) {
             var x = TimeToPosition(sample.Time - startTime_);
 
             if (x < 0)
@@ -810,8 +908,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
             if (x - endX > 1) {
                 double width = Math.Max(2, Math.Ceiling(endX - startX));
-                var rect = new Rect(startX, y, width, MarkerHeight);
-                graphDC.DrawRectangle(markerBackColor_, null, rect);
+                var rect = new Rect(startX, y, width, height);
+                graphDC.DrawRectangle(backColor, borderColor, rect);
                 startX = x;
                 endX = x;
             }
@@ -826,16 +924,16 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         }
 
         if (endX - startX > 1) {
-            var rect = new Rect(startX, y, endX - startX, MarkerHeight);
-            graphDC.DrawRectangle(markerBackColor_, null, rect);
+            var rect = new Rect(startX, y, endX - startX, height);
+            graphDC.DrawRectangle(backColor, borderColor, rect);
         }
     }
 
-    private void StartComputeSampleSlices(double newWidth) {
+    private Task StartComputeSampleSlices(double newWidth) {
         sliceTask_ ??= new CancelableTaskInstance();
         sliceTask_.CreateTask();
 
-        Task.Run(() => {
+        return Task.Run(() => {
             sliceWidth_ = newWidth;
             slices_ = ComputeSampleSlices(profile_, ThreadId);
             sliceTask_.CompleteTask();
