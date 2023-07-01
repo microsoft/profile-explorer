@@ -179,6 +179,7 @@ public class ProfileTraceInfo {
 }
 
 [ProtoContract(SkipConstructor = true)]
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct ProfileSample : IEquatable<ProfileSample> {
     [ProtoMember(1)]
     public long IP { get; set; }
@@ -593,6 +594,7 @@ public sealed class ProfileThread : IEquatable<ProfileThread> {
 }
 
 [ProtoContract(SkipConstructor = true)]
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct PerformanceCounterEvent : IEquatable<PerformanceCounterEvent> {
     [ProtoMember(1)]
     public long IP { get; set; }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
@@ -41,6 +42,23 @@ public sealed class ResolvedProfileStack {
         StackFrames = new List<ResolvedProfileStackFrame>(frameCount);
         Context = context;
     }
+}
+
+
+[ProtoContract(SkipConstructor = true)]
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct ResolvedProfileStackFrame {
+    [ProtoMember(1)]
+    public long FrameRVA { get; set; }
+    [ProtoMember(2)]
+    public ResolvedProfileStackFrameDetails FrameDetails { get; set; }
+
+    public ResolvedProfileStackFrame(long frameRva, ResolvedProfileStackFrameDetails frameDetails) {
+        FrameRVA = frameRva;
+        FrameDetails = frameDetails;
+    }
+
+    public bool IsUnknown => FrameDetails.IsUnknown;
 }
 
 
@@ -100,19 +118,4 @@ public sealed class ResolvedProfileStackFrameDetails : IEquatable<ResolvedProfil
     public static bool operator !=(ResolvedProfileStackFrameDetails left, ResolvedProfileStackFrameDetails right) {
         return !Equals(left, right);
     }
-}
-
-[ProtoContract(SkipConstructor = true)]
-public struct ResolvedProfileStackFrame {
-    [ProtoMember(1)]
-    public long FrameRVA { get; set; }
-    [ProtoMember(2)]
-    public ResolvedProfileStackFrameDetails FrameDetails { get; set; }
-
-    public ResolvedProfileStackFrame(long frameRva, ResolvedProfileStackFrameDetails frameDetails) {
-        FrameRVA = frameRva;
-        FrameDetails = frameDetails;
-    }
-
-    public bool IsUnknown => FrameDetails.IsUnknown;
 }
