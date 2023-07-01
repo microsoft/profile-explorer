@@ -57,6 +57,7 @@ public class PerformanceMetric : PerformanceCounter {
 
 
 [ProtoContract(SkipConstructor = true)]
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct PerformanceCounterValue : IEquatable<PerformanceCounterValue> {
     [ProtoMember(1)] public int CounterId { get; set; }
     [ProtoMember(2)] public long Value { get; set; }
