@@ -15,8 +15,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using DocumentFormat.OpenXml.Drawing.Diagrams;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Profile;
+using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
 
@@ -56,6 +58,7 @@ public class ProfileListViewItem : SearchableProfileItem {
         };
     }
 }
+
 
 public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     public ProfileListView() {
@@ -134,26 +137,52 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
         set => SetField(ref showContextColumn_, value);
     }
 
-    public void Show(List<ProfileCallTreeNode> nodes, bool filter = true) {
-        var list = new List<ProfileListViewItem>(nodes.Count);
-        nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData,
-            Session.CompilerInfo.NameProvider.FormatFunctionName)));
 
-        //? TODO: Option for filtering
-        IEnumerable<ProfileListViewItem> filteredList = list;
+    public void Show(List<ProfileCallTreeNode> nodes, ProfileListViewFilter filter = null) {
+        var filteredNodes = new List<ProfileCallTreeNode>();
 
-        if (filter) {
-            filteredList = list.TakeWhile(value => value.Weight.TotalMilliseconds > 1);
-
-            if (!filteredList.Any()) {
-                filteredList = list.Take(10);
+        if (filter is { IsEnabled: true }) {
+            if (filter.SortByExclusiveTime) {
+                nodes.Sort((a, b) => b.ExclusiveWeight.CompareTo(a.ExclusiveWeight));
             }
             else {
-                filteredList = filteredList.Take(50);
+                nodes.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+            }
+
+            if (filter.FilterByWeight) {
+                if (filter.SortByExclusiveTime) {
+                    foreach(var node in nodes) {
+                        if (node.ExclusiveWeight.TotalMilliseconds > filter.MinWeight) {
+                            filteredNodes.Add(node);
+                        }
+                        else break;
+                    }
+                }
+                else {
+                    foreach(var node in nodes) {
+                        if (node.Weight.TotalMilliseconds > filter.MinWeight) {
+                            filteredNodes.Add(node);
+                        }
+                        else break;
+                    }
+                }
+            }
+
+            // Have at least MinItems functs, even if they are below the MinWeight threshold
+            if (filteredNodes.Count < filter.MinItems && nodes.Count > filter.MinItems) {
+                for(int i = filteredNodes.Count; i < nodes.Count && filteredNodes.Count < filter.MinItems; i++) {
+                    filteredNodes.Add(nodes[i]);
+                }
             }
         }
+        else {
+            filteredNodes = nodes;
+        }
 
-        ItemList.ItemsSource = new ListCollectionView(filteredList.ToList());
+        var list = new List<ProfileListViewItem>(nodes.Count);
+        filteredNodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData,
+            Session.CompilerInfo.NameProvider.FormatFunctionName)));
+        ItemList.ItemsSource = new ListCollectionView(list);
     }
 
     public void Show(List<ModuleProfileInfo> nodes) {
@@ -174,7 +203,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
         return true;
     }
 
-    private void ItemList_ModuleDoubleClick(object sender, MouseButtonEventArgs e) {
+    private void ItemList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
         var node = ((ListViewItem)sender).Content as ProfileListViewItem;
         if (node?.CallTreeNode != null) {
             NodeDoubleClick?.Invoke(this, node.CallTreeNode);

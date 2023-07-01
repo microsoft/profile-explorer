@@ -99,8 +99,8 @@ namespace IRExplorerUI.Profile {
                 return HasDebugInfo;
             }
 
-            DebugInfo = session_.CompilerInfo.CreateDebugInfoProvider(ModuleDocument.BinaryFile.FilePath);
-            HasDebugInfo = await Task.Run(() => DebugInfo.LoadDebugInfo(ModuleDocument.DebugInfoFile)).ConfigureAwait(false);
+            DebugInfo = session_.CompilerInfo.CreateDebugInfoProvider(ModuleDocument.DebugInfoFile);
+            HasDebugInfo = DebugInfo != null;
 
             if (HasDebugInfo) {
                 HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);

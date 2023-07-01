@@ -1256,5 +1256,13 @@ namespace IRExplorerUI {
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
+
+        private void UnloadAllPDBsClicked(object sender, RoutedEventArgs e) {
+            if (ProfileData != null) {
+                foreach (var (module, debugInfo) in ProfileData.ModuleDebugInfo) {
+                    debugInfo.Unload();
+                }
+            }
+        }
     }
 }

@@ -130,13 +130,13 @@ namespace IRExplorerUI {
         protected override Size MeasureOverride(Size constraint) {
             //Trace.WriteLine($"Measure {constraint}");
             //var sw = Stopwatch.StartNew();
-             
+
             var result = base.MeasureOverride(constraint);
-            
+
             //sw.Stop();
             //Trace.WriteLine($"Measured  {x} in {sw.ElapsedMilliseconds}");
             //Trace.Flush(;
-           
+
             return result;
         }
 
@@ -390,7 +390,7 @@ namespace IRExplorerUI {
                 }
             }
         }
-        
+
         public double ColumnsListItemHeight {
             get => columnsListItemHeight_;
             set {
@@ -497,7 +497,7 @@ namespace IRExplorerUI {
                 HideActionPanel(true);
                 return;
             }
-            
+
             if (element != hoveredElement_ && !actionPanelHovered_) {
                 await ShowActionPanel(element, true);
             }
@@ -993,7 +993,7 @@ namespace IRExplorerUI {
             if (!await ReloadProfile()) {
                 await HideProfile();
             }
-            
+
             await ReloadRemarks();
             TextView.ScrollToHorizontalOffset(horizontalOffset);
             TextView.ScrollToVerticalOffset(verticalOffset);
@@ -1014,7 +1014,7 @@ namespace IRExplorerUI {
                 }
             }
         }
-        
+
         public bool ColumnsVisible {
             get => columnsVisible_;
             set {
@@ -1062,7 +1062,7 @@ namespace IRExplorerUI {
                 foreach (var columnValue in rowValues.ColumnValues) {
                     columnValue.Value.TextFont = font;
                     columnValue.Value.TextSize = fontSize;
-                    
+
                     // Remember the max text length for each column
                     // to later set the MinWidth for alignment.
                     maxColumnTextSize.CollectMaxValue(columnValue.Key, columnValue.Value.Text.Length);
@@ -1291,7 +1291,7 @@ namespace IRExplorerUI {
             return true;
         }
 
-        private void BuildProfileBlocksList(FunctionProfileData funcProfile, 
+        private void BuildProfileBlocksList(FunctionProfileData funcProfile,
                                             FunctionProfileData.ProcessingResult result) {
             profileBlocks_ = result.BlockSampledElements;
             var list = new List<ProfiledBlockEx>(result.BlockSampledElements.Count);
@@ -1342,7 +1342,7 @@ namespace IRExplorerUI {
         }
 
         private void ColumnHeaderOnClick(object sender, RoutedEventArgs e) {
-            if (((GridViewColumnHeader)sender).Tag is OptionalColumn column && 
+            if (((GridViewColumnHeader)sender).Tag is OptionalColumn column &&
                 column.HeaderClickHandler != null) {
                 column.HeaderClickHandler(column);
                 UpdateProfileDataColumnWidths();
@@ -1377,7 +1377,7 @@ namespace IRExplorerUI {
 
             await AddRemarks(remarkList_);
         }
-        
+
         private async Task<List<Remark>> FindRemarks(CancelableTask cancelableTask) {
             var remarkProvider = Session.CompilerInfo.RemarkProvider;
 
@@ -1718,7 +1718,7 @@ namespace IRExplorerUI {
         private void SearchSymbolAllSectionsExecuted(object sender, ExecutedRoutedEventArgs e) {
             SearchSymbolImpl(true);
         }
-        
+
         private void JumpToProfiledElement(IRElement element) {
             TextView.SetCaretAtElement(element);
             TextView.BringElementIntoView(element);
@@ -1932,7 +1932,7 @@ namespace IRExplorerUI {
         private async void RemarkOptionsPanel_PanelClosed(object sender, EventArgs e) {
             await CloseRemarkOptionsPanel();
         }
-        
+
         private void PassOutput_ScrollChanged(object sender, ScrollChangedEventArgs e) {
             PassOutputVerticalScrollChanged?.Invoke(this, (e.VerticalOffset, e.VerticalChange));
         }
@@ -1962,7 +1962,7 @@ namespace IRExplorerUI {
 
         public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
             await TextView.LoadDiffedFunction(diffResult, newSection);
-            
+
             if (PassOutputVisible) {
                 await PassOutput.SwitchSection(newSection, TextView);
             }
@@ -1977,7 +1977,7 @@ namespace IRExplorerUI {
         }
 
         private void QueryMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
-            var defaultItems = SaveDefaultMenuItems(QueryMenuItem);
+            var defaultItems = DocumentUtils.SaveDefaultMenuItems(QueryMenuItem);
             QueryMenuItem.Items.Clear();
 
             // Append the available queries.
@@ -1995,30 +1995,7 @@ namespace IRExplorerUI {
             }
 
             // Add back the default menu items.
-            RestoreDefaultMenuItems(QueryMenuItem, defaultItems);
-        }
-
-        private List<object> SaveDefaultMenuItems(MenuItem menu) {
-            // Save the menu items that are always present, they are either
-            // separators or menu items without an object tag.
-            var defaultItems = new List<object>();
-
-            foreach (var item in menu.Items) {
-                if (item is MenuItem menuItem) {
-                    if (menuItem.Tag == null) {
-                        defaultItems.Add(item);
-                    }
-                }
-                else if (item is Separator) {
-                    defaultItems.Add(item);
-                }
-            }
-
-            return defaultItems;
-        }
-
-        private void RestoreDefaultMenuItems(MenuItem menu, List<object> defaultItems) {
-            defaultItems.ForEach(item => menu.Items.Add(item));
+            DocumentUtils.RestoreDefaultMenuItems(QueryMenuItem, defaultItems);
         }
 
         private void QueryMenuItem_Click(object sender, System.Windows.RoutedEventArgs e) {
@@ -2041,7 +2018,7 @@ namespace IRExplorerUI {
                 position = new Point(left, top);
             }
 
-            var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, 
+            var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight,
                                             documentHost, Session);
             queryPanel.PanelActivated += QueryPanel_PanelActivated;
             queryPanel.PanelTitle = "Queries";
@@ -2111,7 +2088,7 @@ namespace IRExplorerUI {
         }
 
         private async void TaskMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
-            var defaultItems = SaveDefaultMenuItems(TaskMenuItem);
+            var defaultItems = DocumentUtils.SaveDefaultMenuItems(TaskMenuItem);
             TaskMenuItem.Items.Clear();
 
             foreach (var action in Session.CompilerInfo.BuiltinFunctionTasks) {
@@ -2133,7 +2110,7 @@ namespace IRExplorerUI {
                 AddFunctionTaskDefinitionMenuItem(action);
             }
 
-            RestoreDefaultMenuItems(TaskMenuItem, defaultItems);
+            DocumentUtils.RestoreDefaultMenuItems(TaskMenuItem, defaultItems);
             TaskMenuItem.Items.Remove(item);
         }
 
@@ -2350,7 +2327,7 @@ namespace IRExplorerUI {
             if (duringSectionSwitching_ || Math.Abs(e.VerticalChange) < double.Epsilon) {
                 return;
             }
-            
+
             TextView.ScrollToVerticalOffset(e.VerticalOffset);
         }
 
@@ -2378,7 +2355,7 @@ namespace IRExplorerUI {
                    profileBlockIndex_ + offset >= 0 &&
                    profileBlockIndex_ + offset < profileElements_.Count;
         }
-        
+
         private void JumpToNextProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
             JumpToProfiledElement(-1);
         }

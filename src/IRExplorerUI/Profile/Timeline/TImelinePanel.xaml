@@ -143,6 +143,30 @@
                     </ToggleButton>
                     <Separator />
 
+                    <Menu Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" VerticalAlignment="Center">
+                        <MenuItem
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                            Header="Markers"
+                            OverridesDefaultStyle="True"
+                            Padding="0,0,0,0"
+                            SubmenuOpened="MarkersMenuItem_SubmenuOpened"
+                            x:Name="MarkersMenuItem">
+                            <MenuItem.Icon>
+                                <Image
+                                    Height="16"
+                                    HorizontalAlignment="Center"
+                                    Margin="-2,0,-2,0"
+                                    Source="{StaticResource TasklistIcon}"
+                                    VerticalAlignment="Center"
+                                    Width="16" />
+                            </MenuItem.Icon>
+                            <Separator />
+                            <MenuItem Header="Clear All Markers" Click="ClearMarkers_OnClick"/>
+                        </MenuItem>
+                    </Menu>
+                    <Separator/>
+
                     <TextBlock
                         VerticalAlignment="Center"
                         FontWeight="Medium"

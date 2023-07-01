@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
@@ -150,6 +151,29 @@ namespace IRExplorerUI.Document {
             }
 
             return new ReferenceFinder(function, irInfo, filter);
+        }
+
+        public static List<object> SaveDefaultMenuItems(MenuItem menu) {
+            // Save the menu items that are always present, they are either
+            // separators or menu items without an object tag.
+            var defaultItems = new List<object>();
+
+            foreach (var item in menu.Items) {
+                if (item is MenuItem menuItem) {
+                    if (menuItem.Tag == null) {
+                        defaultItems.Add(item);
+                    }
+                }
+                else if (item is Separator) {
+                    defaultItems.Add(item);
+                }
+            }
+
+            return defaultItems;
+        }
+
+        public static void RestoreDefaultMenuItems(MenuItem menu, List<object> defaultItems) {
+            defaultItems.ForEach(item => menu.Items.Add(item));
         }
     }
 }

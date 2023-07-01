@@ -118,14 +118,24 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                                       GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
             }
         });
-
+    
+    public RelayCommand<object> MarkTimelineCommand =>
+        new(async (obj) => {
+            if (obj is SelectedColorEventArgs e &&
+                GraphViewer.SelectedNode is { HasFunction: true }) {
+                GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
+                await Session.MarkProfileFunction(GraphViewer.SelectedNode.CallTreeNode, ToolPanelKind.Timeline, 
+                                                  GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
+                
+            }
+        });
 
     private async Task SelectFunctionInPanel(ToolPanelKind panelKind) {
         if (GraphViewer.SelectedNode is { HasFunction: true }) {
             await Session.SelectProfileFunction(GraphViewer.SelectedNode.CallTreeNode, panelKind);
         }
     }
-
+    
     public void InitializeFlameGraph(ProfileCallTree callTree) {
         if (IsInitialized) {
             Reset();
@@ -539,10 +549,17 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     private async void OnPreviewKeyDown(object sender, KeyEventArgs e) {
         switch (e.Key) {
             case Key.Return: {
-                if (Utils.IsAltModifierActive()) {
-                    //? TODO: Enter - focus on function
-                    //? ctrl-enter - make root node
+                if (GraphViewer.SelectedNode != null) {
+                    if (Utils.IsControlModifierActive()) {
+                        await OpenFunction(GraphViewer.SelectedNode);
+                        e.Handled = true;
+                    }
+                    else {
+                        await EnlargeNode(GraphViewer.SelectedNode);
+                        e.Handled = true;
+                    }
                 }
+
                 break;
             }
             case Key.Left: {
@@ -593,11 +610,17 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                 }
                 break;
             }
-            case Key.Back: {
+            case Key.D0: 
+            case Key.NumPad0: {
                 if (Utils.IsControlModifierActive()) {
-                    await RestorePreviousState();
+                    ResetWidth();
                     e.Handled = true;
                 }
+                break;
+            }
+            case Key.Back: {
+                await RestorePreviousState();
+                e.Handled = true;
                 break;
             }
         }

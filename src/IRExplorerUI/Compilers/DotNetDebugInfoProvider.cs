@@ -266,6 +266,10 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
 
+        public void Unload() {
+            
+        }
+
         public bool LoadDebugInfo(DebugFileSearchResult debugFile) {
             return true;
         }

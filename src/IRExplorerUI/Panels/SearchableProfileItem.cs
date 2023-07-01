@@ -7,8 +7,6 @@ using System.Windows.Media;
 namespace IRExplorerUI;
 
 public class SearchableProfileItem : BindableObject {
-    public delegate string FunctionNameFormatter(string name);
-
     private string functionName_;
     private FunctionNameFormatter funcNameFormatter_;
 

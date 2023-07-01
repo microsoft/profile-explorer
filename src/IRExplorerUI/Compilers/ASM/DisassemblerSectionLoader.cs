@@ -44,7 +44,9 @@ namespace IRExplorerUI.Compilers {
                 disassembler_ = Disassembler.CreateForBinary(binaryFilePath_, debugInfo_);
             }
 
-            foreach (var funcInfo in debugInfo_.EnumerateFunctions()) {
+            var functs = debugInfo_.GetSortedFunctions();
+            
+            foreach (var funcInfo in functs) {
                 if (funcInfo.RVA == 0) {
                     continue; // Some entries don't represent real functions.
                 }
@@ -71,16 +73,9 @@ namespace IRExplorerUI.Compilers {
                 return true;
             }
 
-            debugInfo_ = compilerInfo_.CreateDebugInfoProvider(binaryFilePath_);
             debugInfoFile_ = compilerInfo_.FindDebugInfoFile(binaryFilePath_).Result;
-
-            if (debugInfoFile_.Found && debugInfo_.LoadDebugInfo(debugInfoFile_)) {
-                return true;
-            }
-
-            debugInfo_.Dispose();
-            debugInfo_ = null;
-            return false;
+            debugInfo_ = compilerInfo_.CreateDebugInfoProvider(debugInfoFile_);
+            return debugInfo_ != null;
         }
 
         public override string GetDocumentOutputText() {

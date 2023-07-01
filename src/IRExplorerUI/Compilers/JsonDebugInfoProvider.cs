@@ -131,5 +131,9 @@ namespace IRExplorerUI.Compilers {
 
             return LoadDebugInfo(debugFile.FilePath);
         }
+        
+        public void Unload() {
+            
+        }
     }
 }

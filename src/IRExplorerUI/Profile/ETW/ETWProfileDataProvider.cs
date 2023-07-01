@@ -31,6 +31,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
     private object lockObject_;
     private object[] imageLocks_;
     private ConcurrentDictionary<int, ModuleInfo> imageModuleMap_;
+    private ConcurrentDictionary<int, Task<ModuleInfo>> imageModuleLoadTasks_;
 
     [ThreadStatic]
     private static ProfileImage prevImage_;
@@ -44,6 +45,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         // Data structs used for module loading.
         lockObject_ = new();
         imageModuleMap_ = new ConcurrentDictionary<int, ModuleInfo>();
+        imageModuleLoadTasks_ = new ConcurrentDictionary<int, Task<ModuleInfo>>();
         imageLocks_ = new object[IMAGE_LOCK_COUNT];
 
         for (int i = 0; i < imageLocks_.Length; i++) {
@@ -78,14 +80,18 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
         var profile = await Task.Run(() => {
             int acceptedProcessId = processIds.Count == 1 ? processIds[0] : 0;
+            symbolOptions.InsertSymbolPath(tracePath); // Include the trace path in the symbol search path.
+
             using var eventProcessor = new ETWEventProcessor(tracePath, options, acceptedProcessId);
             return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
         });
 
-        return await LoadTraceAsync(profile, processIds, options, symbolOptions,
-                                    report, progressCallback, cancelableTask);
+        var result = await LoadTraceAsync(profile, processIds, options, symbolOptions,
+                                          report, progressCallback, cancelableTask);
+        profile.Dispose();
+        return result;
     }
-    
+
     public async Task<ProfileData> LoadTraceAsync(RawProfileData profile, List<int> processIds,
                                                 ProfileDataProviderOptions options,
                                                 SymbolFileSourceOptions symbolOptions,
@@ -108,6 +114,10 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                 profileData_.AddThreads(proc.Threads(profile));
             }
         }
+
+        // Save all modules to include the ones loaded in the kernel only,
+        // which would show up in stack traces if kernel samples are enabled.
+        profileData_.AddModules((profile.Images));
 
         try {
             options_ = options;
@@ -146,27 +156,32 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                 profile.PrintProcess(mainProcessId);
                 //profile.PrintSamples(mainProcessId);
 
-                await LoadBinaryAndDebugFiles(profile, mainProcess, imageName, 
+                await LoadBinaryAndDebugFiles(profile, mainProcess, imageName,
                                               symbolOptions, progressCallback, cancelableTask);
                 if (cancelableTask is { IsCanceled: true }) {
                     return false;
                 }
 
+                // Start early load of all modules that are used by the binary
+                // to reduce the wait time when resolving the stack frame functions.
+                StartEarlyModuleLoad(profile, mainProcess, symbolOptions);
+
                 var sw = Stopwatch.StartNew();
 
                 // Split sample processing in multiple chunk, each done by another thread.
-                int chunks = Math.Min(8, (Environment.ProcessorCount * 3) / 4);
+                int chunks = Math.Min(24, (Environment.ProcessorCount * 3) / 4);
 #if DEBUG
                 chunks = 1;
 #endif
                 int chunkSize = profile.ComputeSampleChunkLength(chunks);
 
                 Trace.WriteLine($"Using {chunks} threads");
-                var tasks = new List<Task>();
+                var tasks = new List<Task<List<(ProfileSample Sample, ResolvedProfileStack Stack)>>>();
                 var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
                 var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
 
                 //? TODO: Build call tree outside, with sample filtering
+                //? This should only resolve the stack frames and ComputeFunctionProfile do the rest...
                 var callTree = new ProfileCallTree();
 
                 for (int k = 0; k < chunks; k++) {
@@ -177,15 +192,39 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                         continue;
                     }
 
+                    int chunkIndex = k; // Copy needed for lambda.
+
                     tasks.Add(taskFactory.StartNew(() => {
-                        ProcessSamplesChunk(profile, start, end, 
-                                            processIds, options.IncludeKernelEvents, callTree, 
-                                            symbolOptions, progressCallback, cancelableTask, chunks);
+                        var chunkSamples = ProcessSamplesChunk(profile, start, end,
+                                                               processIds, options.IncludeKernelEvents, callTree,
+                                                               symbolOptions, progressCallback, cancelableTask, chunks);
+                        return chunkSamples;
                     }));
                 }
 
                 await Task.WhenAll(tasks.ToArray());
-                profileData_.CallTree = callTree;
+                
+                // Collect samples from tasks.
+                var samples = new List<(ProfileSample, ResolvedProfileStack)>[tasks.Count];
+
+                for (int k = 0; k < tasks.Count; k++) {
+                    samples[k] = tasks[k].Result;
+                }
+
+                // Merge the samples from all chunks and sort them by time.
+                int totalSamples = 0;
+
+                lock (profileData_) {
+                    foreach (var chunkSamples in samples) {
+                            totalSamples += chunkSamples.Count;
+                    }
+
+                    profileData_.Samples.EnsureCapacity(totalSamples);
+
+                    foreach (var chunkSamples in samples) {
+                            profileData_.Samples.AddRange(chunkSamples);
+                    }
+                }
 
                 if (profileData_.Samples != null) {
                     profileData_.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
@@ -195,6 +234,10 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                     profileData_.Samples = new List<(ProfileSample Sample, ResolvedProfileStack Stack)>();
                 }
 
+                var sw2 = Stopwatch.StartNew();
+                profileData_.FilterFunctionProfile(new ProfileSampleFilter());
+
+                Trace.WriteLine($"Done compute profile in {sw2.Elapsed}");
                 Trace.WriteLine($"Done processing samples in {sw.Elapsed}");
 
                 if (profile.PerformanceCountersEvents.Count > 0) {
@@ -242,14 +285,18 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         }
     }
 
-    private void ProcessSamplesChunk(RawProfileData profile, int start, int end, List<int> processIds,
-                                     bool includeKernelEvents, ProfileCallTree callTree,
-                                     SymbolFileSourceOptions symbolOptions,
-                                     ProfileLoadProgressHandler progressCallback, 
-                                     CancelableTask cancelableTask, int chunks) {
+    private List<(ProfileSample Sample, ResolvedProfileStack Stack)>
+        ProcessSamplesChunk(RawProfileData profile, int start, int end, List<int> processIds,
+                            bool includeKernelEvents, ProfileCallTree callTree,
+                            SymbolFileSourceOptions symbolOptions,
+                            ProfileLoadProgressHandler progressCallback,
+                            CancelableTask cancelableTask, int chunks) {
         int index = 0;
         var stackFuncts = new HashSet<IRTextFunction>();
         var stackModules = new HashSet<int>();
+        TimeSpan totalWeight = TimeSpan.Zero;
+        TimeSpan profileWeight = TimeSpan.Zero;
+        var samples = new List<(ProfileSample Sample, ResolvedProfileStack Stack)>(end - start + 1);
 
         foreach (var sample in profile.Samples.Enumerate(start, end, recompress: false)) {
             if (!includeKernelEvents && sample.IsKernelCode) {
@@ -266,7 +313,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             //? TODO: Replace %?
             if (index++ % 10000 == 0) {
                 if (cancelableTask is { IsCanceled: true }) {
-                    return;
+                    return samples;
                 }
 
                 progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
@@ -279,15 +326,11 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             var stack = sample.GetStack(profile);
 
             // Count time in the profile image.
-            //? TODO: Avoid lock by summing per thread, accumulate at the end
-            lock (lockObject_) {
-                profileData_.TotalWeight += sampleWeight;
+            totalWeight += sample.Weight;
+            profileWeight += sample.Weight;
 
-                if (stack.IsUnknown) {
-                    continue; // Ignore sample without a stack.
-                }
-
-                profileData_.ProfileWeight += sampleWeight; //? Remove, keep only TotalWeight?
+            if (stack.IsUnknown) {
+                continue; // Ignore sample without a stack.
             }
 
             // Process each stack frame to map it to a module:function
@@ -299,26 +342,28 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
             if (resolvedStack != null) {
-                ProcessResolvedStack(resolvedStack, sampleWeight, stackModules, stackFuncts);
+                //ProcessResolvedStack(resolvedStack, sampleWeight, stackModules, stackFuncts);
             }
             else {
-                resolvedStack = ProcessUnresolvedStack(stack, sampleWeight, context, profile, 
+                resolvedStack = ProcessUnresolvedStack(stack, sampleWeight, context, profile,
                                                        stackModules, stackFuncts, symbolOptions);
                 stack.SetOptionalData(resolvedStack); // Cache resolved stack.
             }
 
-            callTree.UpdateCallTree(sample, resolvedStack);
-
-            //? TODO: Use multiple lists, merge and sort at the end to avoid lock.
-            lock (this) {
-                profileData_.Samples.Add((sample, resolvedStack));
-            }
+            samples.Add((sample, resolvedStack));
         }
+
+        lock (lockObject_) {
+            profileData_.TotalWeight += totalWeight;
+            profileData_.ProfileWeight += profileWeight;
+        }
+
+        return samples;
     }
 
-    private ResolvedProfileStack ProcessUnresolvedStack(ProfileStack stack, TimeSpan sampleWeight, 
-                                                        ProfileContext context, RawProfileData profile, 
-                                                        HashSet<int> stackModules, HashSet<IRTextFunction> stackFuncts, 
+    private ResolvedProfileStack ProcessUnresolvedStack(ProfileStack stack, TimeSpan sampleWeight,
+                                                        ProfileContext context, RawProfileData profile,
+                                                        HashSet<int> stackModules, HashSet<IRTextFunction> stackFuncts,
                                                         SymbolFileSourceOptions symbolOptions) {
         bool isTopFrame = true;
         var resolvedStack = new ResolvedProfileStack(stack.FrameCount, context);
@@ -335,7 +380,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             var frameIp = stackFrames[frameIndex];
             ProfileImage frameImage = null;
             isManagedCode = false;
-            
+
             if (ETWEventProcessor.IsKernelAddress((ulong)frameIp, pointerSize)) {
                 frameImage = profile.FindImageForIP(frameIp, ETWEventProcessor.KernelProcessId);
             }
@@ -359,7 +404,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                         Trace.WriteLine($"  ! no frameImage");
                     }
 
-                    resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackInfo.Unknown, frameIndex, stack);
+                    resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
                     isTopFrame = false;
                     continue;
                 }
@@ -367,11 +412,9 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
             // Count exclusive time for each module in the executable.
             if (isTopFrame && stackModules.Add(frameImage.Id)) {
-                lock (lockObject_) {
-                    profileData_.AddModuleSample(frameImage.ModuleName, sampleWeight);
-                }
+
             }
-            
+
             // Try to resolve the frame using the lists of processes/images and debug info.
             long frameRva = 0;
             long funcRva = 0;
@@ -386,7 +429,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                     Trace.WriteLine($"  ! no module for {frameImage.ModuleName}");
                 }
 
-                resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackInfo.Unknown, frameIndex, stack);
+                resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
                 isTopFrame = false;
                 continue;
             }
@@ -430,7 +473,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                         Trace.WriteLine($"  ! no text func in frame RVA {frameRva} {frameImage.ModuleName}");
                     }
 
-                    resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackInfo.Unknown, frameIndex, stack);
+                    resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
                     isTopFrame = false;
                     continue;
                 }
@@ -438,93 +481,14 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
             // Create the function profile data, with the merged weight of all instances
             // of the func. across all call stacks.
-            FunctionProfileData funcProfile = null;
-
-            lock (lockObject_) {
-                //? TODO:  Use RW lock
-                funcProfile = profileData_.GetOrCreateFunctionProfile(textFunction, funcDebugInfo);
-            }
-
-            lock (funcProfile) {
-                var offset = frameRva - funcRva;
-
-                // Don't count the inclusive time for recursive functions multiple times.
-                if (stackFuncts.Add(textFunction)) {
-                    funcProfile.AddInstructionSample(offset, sampleWeight);
-                    funcProfile.Weight += sampleWeight;
-                }
-
-                // Count the exclusive time for the top frame function.
-                if (isTopFrame) {
-                    funcProfile.ExclusiveWeight += sampleWeight;
-                }
-
-                //? TODO: Expensive, do as post-processing
-                // Try to map the sample to all the inlined functions.
-                //if (options_.MarkInlinedFunctions && module.HasDebugInfo &&
-                //    textFunction.Sections.Count > 0) {
-                //    ProcessInlineeSample(sampleWeight, offset, textFunction, module);
-                //}
-
-                var resolvedFrame = new ResolvedProfileStackInfo(funcDebugInfo, textFunction, 
-                                                                  frameImage, module.IsManaged, funcProfile);
+            var resolvedFrame = new ResolvedProfileStackFrameDetails(funcDebugInfo, textFunction,
+                                                                  frameImage, module.IsManaged);
                 resolvedStack.AddFrame(frameIp, frameRva, resolvedFrame, frameIndex, stack);
-            }
 
             isTopFrame = false;
         }
 
         return resolvedStack;
-    }
-
-    private void ProcessResolvedStack(ResolvedProfileStack resolvedStack, TimeSpan sampleWeight, 
-                                      HashSet<int> stackModules, HashSet<IRTextFunction> stackFuncts) {
-        bool isTopFrame = true;
-
-        foreach (var resolvedFrame in resolvedStack.StackFrames) {
-            if (resolvedFrame.IsUnknown) {
-                continue;
-            }
-
-            // Count exclusive time for each module in the executable.
-            if (isTopFrame && stackModules.Add(resolvedFrame.Info.Image.Id)) {
-                lock (lockObject_) {
-                    //? TODO: Avoid lock by summing per thread, accumulate at the end
-                    //? TODO: Also, don't use mod name as key, use imageId
-                    profileData_.AddModuleSample(resolvedFrame.Info.Image.ModuleName, sampleWeight);
-                }
-            }
-
-            //Trace.WriteLine($"Resolved image {resolvedFrame.Image.ModuleName}m {resolvedFrame.DebugInfo.Name}, profile func {resolvedFrame.Profile.FunctionDebugInfo.Name}, rva {resolvedFrame.FrameRVA}, ip {resolvedFrame.FrameIP}");
-            var funcRva = resolvedFrame.Info.DebugInfo.RVA;
-            var frameRva = resolvedFrame.FrameRVA;
-            var textFunction = resolvedFrame.Info.Function;
-            var funcProfile = resolvedFrame.Info.Profile;
-
-            lock (funcProfile) {
-                var offset = frameRva - funcRva;
-
-                // Don't count the inclusive time for recursive functions multiple times.
-                if (stackFuncts.Add(textFunction)) {
-                    funcProfile.AddInstructionSample(offset, sampleWeight);
-                    funcProfile.Weight += sampleWeight;
-                }
-
-                // Count the exclusive time for the top frame function.
-                if (isTopFrame) {
-                    funcProfile.ExclusiveWeight += sampleWeight;
-                }
-
-                //? TODO: Expensive, do as post-processing
-                // Try to map the sample to all the inlined functions.
-                //if (options_.MarkInlinedFunctions && resolvedFrame.Module.HasDebugInfo &&
-                //    textFunction.Sections.Count > 0) {
-                //    ProcessInlineeSample(sampleWeight, offset, textFunction, resolvedFrame.Module);
-                //}
-            }
-
-            isTopFrame = false;
-        }
     }
 
     private LoadedDocument FindSessionDocuments(string imageName, out List<LoadedDocument> otherDocuments) {
@@ -550,6 +514,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             }
 
             otherDocuments.Add(pair.Value.ModuleDocument);
+            profileData_.RegisterModuleDebugInfo(pair.Value.ModuleDocument.ModuleName, pair.Value.DebugInfo);
         }
 
         return exeDocument;
@@ -650,6 +615,38 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         }
     }
 
+    private void StartEarlyModuleLoad(RawProfileData prof, ProfileProcess mainProcess,
+                                      SymbolFileSourceOptions symbolOptions) {
+        var imageList = mainProcess.Images(prof).ToList();
+
+        foreach(var image in imageList) {
+            imageModuleLoadTasks_[image.Id] = Task.Run(() => {
+                var imageModule = LoadModuleInfo(image, prof, mainProcess.ProcessId, symbolOptions);
+                imageModuleMap_.TryAdd(image.Id, imageModule);
+                return imageModule;
+            });
+        }
+    }
+
+    private ModuleInfo LoadModuleInfo(ProfileImage image, RawProfileData prof, int processId,
+                                      SymbolFileSourceOptions symbolOptions) {
+        var imageModule = new ModuleInfo(report_, session_);
+        var imageDebugInfo = prof.GetDebugInfoForImage(image, processId);
+
+        if (imageDebugInfo != null) {
+            imageDebugInfo.SymbolOptions = symbolOptions;
+        }
+
+        if (imageModule.Initialize(FromProfileImage(image), symbolOptions, imageDebugInfo)
+            .ConfigureAwait(false).GetAwaiter().GetResult()) {
+            if (!imageModule.InitializeDebugInfo().ConfigureAwait(false).GetAwaiter().GetResult()) {
+                Trace.TraceWarning($"Failed to load debug debugInfo for image: {image.FilePath}");
+            }
+        }
+
+        return imageModule;
+    }
+
     private bool IsAcceptedModule(string name) {
         if (!options_.HasBinaryNameWhitelist) {
             return true;
@@ -674,37 +671,22 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         }
 
         if (!imageModuleMap_.TryGetValue(queryImage.Id, out var imageModule)) {
-            lock (imageLocks_[queryImage.Id % IMAGE_LOCK_COUNT]) {
-                if (imageModuleMap_.TryGetValue(queryImage.Id, out imageModule)) {
-                    return imageModule;
-                }
+            Trace.TraceWarning($"Waiting for image: {queryImage.FilePath}");
 
-                Trace.WriteLine($"Start loading image {queryImage.FilePath}");
-                imageModule = new ModuleInfo(report_, session_);
-
-                if (!IsAcceptedModule(queryImage.FilePath)) {
-                    imageModuleMap_.TryAdd(queryImage.Id, imageModule);
-
-                    Trace.TraceInformation($"Ignore not whitelisted image {queryImage.FilePath}");
-                    return null;
-                }
-
-                // Used with managed images.
-                var imageDebugInfo = prof.GetDebugInfoForImage(queryImage, processId);
-
-                if (imageDebugInfo != null) {
-                    imageDebugInfo.SymbolOptions = symbolOptions;
-                }
-
-                if (imageModule.Initialize(FromProfileImage(queryImage), symbolOptions, imageDebugInfo)
-                    .ConfigureAwait(false).GetAwaiter().GetResult()) {
-
-                    if (!imageModule.InitializeDebugInfo().ConfigureAwait(false).GetAwaiter().GetResult()) {
-                        Trace.TraceWarning($"Failed to load debug debugInfo for image: {queryImage.FilePath}");
+            if (imageModuleLoadTasks_.ContainsKey(queryImage.Id)) {
+                // Wait for module to load, started in StartEarlyModuleLoad.
+                imageModule = imageModuleLoadTasks_[queryImage.Id].ConfigureAwait(false).GetAwaiter().GetResult();
+            }
+            else {
+                // Load module on-demand, this usually happens with kernel images.
+                lock (imageLocks_[queryImage.Id % IMAGE_LOCK_COUNT]) {
+                    if (imageModuleMap_.TryGetValue(queryImage.Id, out imageModule)) {
+                        return imageModule;
                     }
-                }
 
-                imageModuleMap_.TryAdd(queryImage.Id, imageModule);
+                    imageModule = LoadModuleInfo(queryImage, prof, processId, symbolOptions);
+                    imageModuleMap_.TryAdd(queryImage.Id, imageModule);
+                }
             }
         }
 

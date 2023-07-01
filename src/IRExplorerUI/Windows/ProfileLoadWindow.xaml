@@ -335,7 +335,12 @@
                                         IsChecked="{Binding Path=RecordingOptions.ProfileDotNet, Mode=TwoWay}"
                                         IsEnabled="{Binding ElementName=SystemWideRadioButton, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
                                     <CheckBox
-                                        Margin="0,4,0,0"
+                                        Margin="20,4,0,0"
+                                        Content="Record JIT output assembly"
+                                        IsChecked="{Binding Path=RecordingOptions.RecordDotNetAssembly, Mode=TwoWay}"
+                                        IsEnabled="{Binding ElementName=SystemWideRadioButton, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                                    <CheckBox
+                                        Margin="0,8,0,0"
                                         Content="Profile child processes"
                                         IsChecked="{Binding Path=RecordingOptions.ProfileChildProcesses, Mode=TwoWay}" />
                                     <CheckBox
