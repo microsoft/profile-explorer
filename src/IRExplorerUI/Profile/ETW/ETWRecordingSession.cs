@@ -336,7 +336,7 @@ namespace IRExplorerUI.Profile {
                     //RedirectStandardOutput = true
                 };
 
-                if (options_.ProfileDotNet) {
+                if (options_.ProfileDotNet && options_.RecordDotNetAssembly) {
                     if (!SetupStartupDotNetProfiler(procInfo)) {
                         Trace.TraceError($"Failed to setup managed profiler");
                     }
