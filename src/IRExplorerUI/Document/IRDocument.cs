@@ -3747,52 +3747,56 @@ namespace IRExplorerUI {
         }
 
         private void SelectCurrentWord(Point position) {
+            bool IsVariableLetter(char c) => char.IsLetterOrDigit(c) || c == '%' || c == '_';
             int offset = DocumentUtils.GetOffsetFromMousePosition(position, this, out _);
 
-            if (offset != -1) {
-                var line = Document.GetLineByOffset(offset);
-                if (line != null) {
-                    var startOffset = offset - line.Offset;
-                    var endOffset = startOffset;
-                    var lineText = Document.GetText(line);
+            if (offset == -1) {
+                return;
+            }
 
-                    bool IsVariableLetter(char c) => char.IsLetterOrDigit(c) || c == '%' || c == '_';
+            var line = Document.GetLineByOffset(offset);
 
-                    if (startOffset >= lineText.Length || !IsVariableLetter(lineText[startOffset])) {
-                        ClearAllMarkers();
+            if (line == null) {
+                return;
+            }
+
+            var startOffset = offset - line.Offset;
+            var endOffset = startOffset;
+            var lineText = Document.GetText(line);
+
+            if (startOffset >= lineText.Length || !IsVariableLetter(lineText[startOffset])) {
+                ClearAllMarkers();
+                return;
+            }
+
+            while (startOffset > 0 && IsVariableLetter(lineText[startOffset])) {
+                startOffset--;
+            }
+
+            while (endOffset < lineText.Length - 1 && IsVariableLetter(lineText[endOffset + 1])) {
+                endOffset++;
+            }
+
+            var selectionLength = endOffset - startOffset;
+            var selectedText = lineText.Substring(startOffset + 1, selectionLength);
+
+            if (selectedText.StartsWith("%")) {
+                ClearAllMarkers();
+                var results = TextSearcher.AllIndexesOf(SectionText, selectedText);
+
+                foreach (var result in results) {
+                    int resultEndOffset = result.Offset + result.Length;
+
+                    if (resultEndOffset + 1 < SectionText.Length &&
+                        (SectionText.Span[resultEndOffset] == '_' ||
+                         char.IsDigit(SectionText.Span[resultEndOffset]))) {
+                        continue; // Ignore partial match.
                     }
 
-                    while (startOffset > 0 && IsVariableLetter(lineText[startOffset])) {
-                        startOffset--;
-                    }
-
-                    while (endOffset < lineText.Length - 1 && IsVariableLetter(lineText[endOffset + 1])) {
-                        endOffset++;
-                    }
-
-                    var selectionLength = endOffset - startOffset;
-                    var selectedText = lineText.Substring(startOffset + 1, selectionLength);
-
-                    if (selectedText.StartsWith("%")) {
-                        ClearAllMarkers();
-                        var results = TextSearcher.AllIndexesOf(SectionText, selectedText);
-
-                        foreach (var result in results) {
-                            //Trace.WriteLine($"Found at {result.Offset} text {result.Length}");
-
-                            int resultEndOffset = result.Offset + result.Length;
-
-                            if (resultEndOffset + 1 < SectionText.Length &&
-                                SectionText.Span[resultEndOffset] == '_') {
-                                continue;
-                            }
-
-                            MarkTextRange(result.Offset, result.Length, settings_.SelectedValueColor);
-                        }
-
-                        UpdateHighlighting();
-                    }
+                    MarkTextRange(result.Offset, result.Length, settings_.DefinitionValueColor);
                 }
+
+                UpdateHighlighting();
             }
         }
 

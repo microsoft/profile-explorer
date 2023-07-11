@@ -28,8 +28,8 @@ namespace IRExplorerUI.Compilers.LLVM {
 
         public string CompilerIRName => "LLVM";
         public string CompilerDisplayName => "LLVM";
-        public string DefaultSyntaxHighlightingFile => "LLVM";
-        public string OpenFileFilter => "IR Files|*.txt;*.log;*.ir;*.tup;*.out;*.irx|IR Explorer Session Files|*.irx|All Files|*.*";
+        public string DefaultSyntaxHighlightingFile => "LLVM IR";
+        public string OpenFileFilter => "IR Files|*.mlir;*.log;*.ir;*.out;*.irx|IR Explorer Session Files|*.irx|All Files|*.*";
         public string OpenDebugFileFilter => "Debug Files|*.pdb|All Files|*.*";
         public ISession Session => session_;
         public ICompilerIRInfo IR => ir_;

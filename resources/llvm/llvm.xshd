@@ -2,27 +2,23 @@
 
 <!-- Syntax definition for LLVM IR -->
 <SyntaxDefinition name="LLVM IR" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
-    <Color name="String" foreground="DarkOrange" />
-	<Color name="Digits" foreground="Blue" />
+    <Color name="String" foreground="Olive" />
+	<Color name="Digits" foreground="DarkBlue" />
 	<Color name="Comment" foreground="Silver" />
 	<Color name="Keywords" foreground="DarkBlue" fontWeight="bold"/>
 	<Color name="Opcodes" foreground="Crimson" fontWeight="bold"/>
 	<Color name="TransferOpcodes" foreground="DarkGreen" fontWeight="bold"/>
 	<Color name="CallOpcodes" foreground="DarkOrchid" fontWeight="bold" />
-    <Color name="ArrayType" foreground="DarkMagenta" />
-    <Color name="PointerType" foreground="DarkMagenta" />
-    <Color name="StructType" foreground="DarkMagenta" />
 	<Color name="Type" foreground="Maroon" />
-	<Color name="Attributes" foreground="DarkGreen" fontWeight="bold" />
-	<Color name="Annotation" foreground="Silver" />
+	<Color name="Annotation" foreground="Black" />
 	<Color name="Variable" foreground="Black" fontWeight="bold" />
 	<Color name="CallTarget" foreground="DarkGreen" fontWeight="bold" />
 	<Color name="Block" foreground="DarkBlue" fontWeight="bold" />
-	<Color name="Arith" foreground="Brown" fontWeight="bold" />
-	<Color name="Nepal" foreground="DarkOrange" fontWeight="bold" />
-	<Color name="Memref" foreground="DarkMagenta" fontWeight="bold" />
-	<Color name="Affine" foreground="DarkBlue" fontWeight="bold" />
-	<Color name="Linalg" foreground="DarkBlue" fontWeight="bold" />
+	<Color name="Arith" foreground="DarkBlue" fontWeight="bold" />
+	<Color name="Nepal" foreground="DarkBlue" fontWeight="bold" />
+	<Color name="Memref" foreground="DarkRed" fontWeight="bold" />
+	<Color name="Affine" foreground="Purple" fontWeight="bold" />
+	<Color name="Linalg" foreground="Indigo" fontWeight="bold" />
 	<Color name="Vector" foreground="DarkGreen" fontWeight="bold" />
 	<Color name="Tvp" foreground="DarkGreen" fontWeight="bold" />
 	
@@ -45,13 +41,19 @@
 			<Word>func</Word>
         </Keywords>
 		
-		<Rule color="Arith">arith.\w+</Rule>
-		<Rule color="Nepal">nepal.\w+</Rule>
-		<Rule color="Memref">memref.\w+</Rule>
-		<Rule color="Affine">affine.\w+</Rule>
-		<Rule color="Linalg">linalg.\w+</Rule>
-		<Rule color="Vector">vector.\w+</Rule>
-		<Rule color="Tvp">tvp.\w+</Rule>
+		<Span color="Annotation">
+            <Begin>\{</Begin>
+            <End>\}</End>
+		</Span>
+		
+		
+		<Rule color="Arith">arith\.\w+</Rule>
+		<Rule color="Nepal">nepal\.\w+</Rule>
+		<Rule color="Memref">memref\.\w+</Rule>
+		<Rule color="Affine">affine\.\w+</Rule>
+		<Rule color="Linalg">linalg\.\w+</Rule>
+		<Rule color="Vector">vector\.\w+</Rule>
+		<Rule color="Tvp">tvp\.\w+</Rule>
 		
 		<Keywords color="Type">
             <Word>type</Word>
@@ -68,67 +70,13 @@
 			<Word>f64</Word>
 			<Word>void</Word>
 			<Word>undef</Word>
-			<Word>tensor</Word>
-			<Word>memref&lt;</Word>
 			<Word>index</Word>
         </Keywords>
         
-		<Span color="ArrayType">
-            <Begin>\[</Begin>
-            <End>\]</End>
-		</Span>
-		
-		<Span color="StructType">
-            <Begin>\{</Begin>
-            <End>\}</End>
-		</Span>
-		
-		<Keywords color="Attributes">
-            <Word>nsw</Word>
-            <Word>nuw</Word>
-			<Word>volatile</Word>
-			<Word>align</Word>
-			<Word>tail</Word>
-			<Word>zeroinitializer</Word>
-			<Word>byval</Word>
-			<Word>zeroext</Word>
-			<Word>signext</Word>
-			<Word>inreg</Word>
-			<Word>sret</Word>
-			<Word>noalias</Word>
-			<Word>nocapture</Word>
-			<Word>nonnull</Word>
-			<Word>alwaysinline</Word>
-			<Word>noinline</Word>
-			<Word>noreturn</Word>
-			<Word>nounwind</Word>
-			<Word>optnone</Word>
-			<Word>optsize</Word>
-			<Word>readnone</Word>
-			<Word>readonly</Word>
-			<Word>writeonly</Word>
-			<Word>argmemonly</Word>
-			<Word>external</Word>
-			<Word>internal</Word>
-			<Word>linkonce</Word>
-			<Word>weak</Word>
-			<Word>private</Word>
-			<Word>dllimport</Word>
-			<Word>dllexport</Word>
-			<Word>atomic</Word>
-			<Word>metadata</Word>
-			<Word>inbounds</Word>
-        </Keywords>
-		
 		<Rule color="Variable">%\w+</Rule>
 		<Rule color="CallTarget">@\w+(.\w+)*</Rule>	
 		<Rule color="Block">\^\w+</Rule>
 		
         <Rule color="Digits">\b0[xX][0-9a-fA-F]+|(\b(?&lt;!\$)\d+(\.[0-9]+)?|\.[0-9]+)([eE][+-]?[0-9]+)?</Rule>
-        
-        <Keywords color="Attributes">
-            <Word>true</Word>
-            <Word>false</Word>
-        </Keywords> 
    </RuleSet>
 </SyntaxDefinition>
