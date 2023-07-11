@@ -53,4 +53,41 @@ namespace IRExplorerUI {
                                     CancelableTask cancelableTask);
         OptimizationRemark GetOptimizationRemarkInfo(Remark remark);
     }
+
+    public class DummyIRRemarkProvider : IRRemarkProvider {
+        public string SettingsFilePath { get; }
+
+        public List<RemarkCategory> RemarkCategories { get; }
+        public List<RemarkSectionBoundary> RemarkSectionBoundaries { get; }
+        public List<RemarkTextHighlighting> RemarkTextHighlighting { get; }
+
+        public bool SaveSettings() {
+            return true;
+        }
+
+        public bool LoadSettings() {
+            return true;
+        }
+
+        public List<IRTextSection> GetSectionList(IRTextSection currentSection, int maxDepth, bool stopAtSectionBoundaries) {
+            return null;
+        }
+
+        public List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function, LoadedDocument document, RemarkProviderOptions options, CancelableTask cancelableTask) {
+            return null;
+        }
+
+        public List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section, RemarkProviderOptions options, CancelableTask cancelableTask) {
+            return null;
+        }
+
+        public List<Remark> ExtractRemarks(List<string> textLines, FunctionIR function, IRTextSection section, RemarkProviderOptions options, CancelableTask cancelableTask) {
+            return null;
+        }
+
+        public OptimizationRemark GetOptimizationRemarkInfo(Remark remark) {
+            return null;
+        }
+    }
+
 }

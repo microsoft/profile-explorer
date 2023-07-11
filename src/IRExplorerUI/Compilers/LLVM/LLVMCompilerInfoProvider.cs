@@ -15,15 +15,15 @@ namespace IRExplorerUI.Compilers.LLVM {
     public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
         private LLVMCompilerIRInfo ir_;
         private ISession session_;
-        private UTCNameProvider names_;
-        private UTCRemarkProvider remarks_;
-        private UTCSectionStyleProvider styles_;
+        private INameProvider names_;
+        private IRRemarkProvider remarks_;
+        private ISectionStyleProvider styles_;
 
         public LLVMCompilerInfoProvider() {
             ir_ = new LLVMCompilerIRInfo();
             styles_ = new UTCSectionStyleProvider();
             names_ = new UTCNameProvider();
-            remarks_ = new UTCRemarkProvider(null);
+            remarks_ = new DummyIRRemarkProvider();
         }
 
         public string CompilerIRName => "LLVM";

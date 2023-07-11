@@ -1371,7 +1371,7 @@ namespace IRExplorerUI {
             using var cancelableTask = loadTask_.CreateTask();
             remarkList_ = await FindRemarks(cancelableTask);
 
-            if(cancelableTask.IsCanceled) {
+            if(remarkList_ == null || cancelableTask.IsCanceled) {
                 return;
             }
 

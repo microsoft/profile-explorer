@@ -3733,11 +3733,67 @@ namespace IRExplorerUI {
             }
 
             var element = FindPointedElement(position, out int textOffset);
-            SelectElement(element, true, true, textOffset);
+
+            if (element != null) {
+                SelectElement(element, true, true, textOffset);
+            }
+            else {
+                SelectCurrentWord(position);
+            }
 
             //? TODO: This would prevent selection of text from working,
             //? but allowing it also sometimes selects a letter of the element...
             // e.Handled = element != null;
+        }
+
+        private void SelectCurrentWord(Point position) {
+            int offset = DocumentUtils.GetOffsetFromMousePosition(position, this, out _);
+
+            if (offset != -1) {
+                var line = Document.GetLineByOffset(offset);
+                if (line != null) {
+                    var startOffset = offset - line.Offset;
+                    var endOffset = startOffset;
+                    var lineText = Document.GetText(line);
+
+                    bool IsVariableLetter(char c) => char.IsLetterOrDigit(c) || c == '%' || c == '_';
+
+                    if (startOffset >= lineText.Length || !IsVariableLetter(lineText[startOffset])) {
+                        ClearAllMarkers();
+                    }
+
+                    while (startOffset > 0 && IsVariableLetter(lineText[startOffset])) {
+                        startOffset--;
+                    }
+
+                    while (endOffset < lineText.Length - 1 && IsVariableLetter(lineText[endOffset + 1])) {
+                        endOffset++;
+                    }
+
+                    var selectionLength = endOffset - startOffset;
+                    var selectedText = lineText.Substring(startOffset + 1, selectionLength);
+
+                    if (selectedText.StartsWith("%")) {
+                        ClearAllMarkers();
+                        var results = TextSearcher.AllIndexesOf(SectionText, selectedText);
+
+                        foreach (var result in results) {
+                            //Trace.WriteLine($"Found at {result.Offset} text {result.Length}");
+
+                            int resultEndOffset = result.Offset + result.Length;
+
+                            if (resultEndOffset + 1 < SectionText.Length &&
+                                SectionText.Span[resultEndOffset] == '_') {
+                                continue;
+                            }
+
+                            MarkTextRange(result.Offset, result.Length, settings_.SelectedValueColor);
+                        }
+
+                        UpdateHighlighting();
+                    }
+                }
+            }
         }
 
         public void AddElementOverlay(IRElement element, IElementOverlay overlay) {

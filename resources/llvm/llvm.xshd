@@ -9,14 +9,23 @@
 	<Color name="Opcodes" foreground="Crimson" fontWeight="bold"/>
 	<Color name="TransferOpcodes" foreground="DarkGreen" fontWeight="bold"/>
 	<Color name="CallOpcodes" foreground="DarkOrchid" fontWeight="bold" />
-    <Color name="ArrayType" foreground="DarkMagenta" fontWeight="bold" />
-    <Color name="PointerType" foreground="DarkMagenta" fontWeight="bold" />
-    <Color name="StructType" foreground="DarkMagenta" fontWeight="bold" />
+    <Color name="ArrayType" foreground="DarkMagenta" />
+    <Color name="PointerType" foreground="DarkMagenta" />
+    <Color name="StructType" foreground="DarkMagenta" />
 	<Color name="Type" foreground="Maroon" />
 	<Color name="Attributes" foreground="DarkGreen" fontWeight="bold" />
 	<Color name="Annotation" foreground="Silver" />
 	<Color name="Variable" foreground="Black" fontWeight="bold" />
 	<Color name="CallTarget" foreground="DarkGreen" fontWeight="bold" />
+	<Color name="Block" foreground="DarkBlue" fontWeight="bold" />
+	<Color name="Arith" foreground="Brown" fontWeight="bold" />
+	<Color name="Nepal" foreground="DarkOrange" fontWeight="bold" />
+	<Color name="Memref" foreground="DarkMagenta" fontWeight="bold" />
+	<Color name="Affine" foreground="DarkBlue" fontWeight="bold" />
+	<Color name="Linalg" foreground="DarkBlue" fontWeight="bold" />
+	<Color name="Vector" foreground="DarkGreen" fontWeight="bold" />
+	<Color name="Tvp" foreground="DarkGreen" fontWeight="bold" />
+	
     <RuleSet ignoreCase="false">
 		<Span color="Comment" begin=";" />
         <Span color="String">
@@ -32,72 +41,17 @@
             <Word>define</Word>
             <Word>global</Word>
 			<Word>declare</Word>
+			<Word>module</Word>
+			<Word>func</Word>
         </Keywords>
 		
-		<Keywords color="Opcodes">
-            <Word>load</Word>
-            <Word>store</Word>
-            <Word>alloca</Word>
-            <Word>icmp</Word>
-            <Word>select</Word>
-            <Word>bitcast</Word>
-            <Word>add</Word>
-            <Word>sub</Word>
-            <Word>mul</Word>
-            <Word>sdiv</Word>
-            <Word>udiv</Word>
-            <Word>fdiv</Word>
-            <Word>urem</Word>
-            <Word>srem</Word>
-            <Word>frem</Word>
-            <Word>fneg</Word>
-            <Word>shl</Word>
-            <Word>lshr</Word>
-            <Word>ashr</Word>
-            <Word>and</Word>
-            <Word>or</Word>
-            <Word>xor</Word>
-            <Word>phi</Word>
-            <Word>trunc</Word>
-            <Word>zext</Word>
-            <Word>sext</Word>
-            <Word>fcmp</Word>
-            <Word>extractelement</Word>
-            <Word>insertelement</Word>
-            <Word>shufflevector</Word>
-            <Word>extractvalue</Word>
-            <Word>insertvalue</Word>
-            <Word>getelementptr</Word>
-            <Word>inttoptr</Word>
-            <Word>sitofp</Word>
-            <Word>uitofp</Word>
-            <Word>fptosi</Word>
-            <Word>fptoui</Word>
-            <Word>fpext</Word>
-            <Word>fptrunc</Word>
-            <Word>fmul</Word>
-            <Word>fadd</Word>
-            <Word>fsub</Word>
-        </Keywords>
-        
-		<Keywords color="TransferOpcodes">
-			<Word>br</Word>
-			<Word>indirectbr</Word>
-			<Word>callbr</Word>
-			<Word>switch</Word>
-			<Word>ret</Word>
-			<Word>label</Word>
-			<Word>resume</Word>
-			<Word>catchret</Word>
-			<Word>cleanupret</Word>
-			<Word>unreachable</Word>
-        </Keywords>
-		
-		<Keywords color="CallOpcodes">
-            <Word>call</Word>
-            <Word>invoke</Word>
-            <Word>va_arg</Word>
-        </Keywords>
+		<Rule color="Arith">arith.\w+</Rule>
+		<Rule color="Nepal">nepal.\w+</Rule>
+		<Rule color="Memref">memref.\w+</Rule>
+		<Rule color="Affine">affine.\w+</Rule>
+		<Rule color="Linalg">linalg.\w+</Rule>
+		<Rule color="Vector">vector.\w+</Rule>
+		<Rule color="Tvp">tvp.\w+</Rule>
 		
 		<Keywords color="Type">
             <Word>type</Word>
@@ -108,8 +62,15 @@
 			<Word>i64</Word>
 			<Word>float</Word>
 			<Word>double</Word>
+			<Word>f8</Word>
+			<Word>f16</Word>
+			<Word>f32</Word>
+			<Word>f64</Word>
 			<Word>void</Word>
 			<Word>undef</Word>
+			<Word>tensor</Word>
+			<Word>memref&lt;</Word>
+			<Word>index</Word>
         </Keywords>
         
 		<Span color="ArrayType">
@@ -159,9 +120,9 @@
 			<Word>inbounds</Word>
         </Keywords>
 		
-		<Rule color="Variable">%\w+(.\w+)*</Rule>
+		<Rule color="Variable">%\w+</Rule>
 		<Rule color="CallTarget">@\w+(.\w+)*</Rule>	
-		<Rule color="Annotation">!\w+([a-z]|[A-Z]|[0-9]|\(|\))*</Rule>
+		<Rule color="Block">\^\w+</Rule>
 		
         <Rule color="Digits">\b0[xX][0-9a-fA-F]+|(\b(?&lt;!\$)\d+(\.[0-9]+)?|\.[0-9]+)([eE][+-]?[0-9]+)?</Rule>
         
