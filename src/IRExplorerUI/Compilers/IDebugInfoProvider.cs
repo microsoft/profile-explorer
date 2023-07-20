@@ -47,8 +47,8 @@ namespace IRExplorerUI.Compilers {
         public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
 
         public bool HasSymbolPath(string path) {
-            path = Utils.TryGetDirectoryName(path).ToLowerInvariant();
-            return SymbolSearchPaths.Find(item => item.ToLowerInvariant() == path) != null;
+            path = Utils.TryGetDirectoryName(path);
+            return SymbolSearchPaths.Find(item => Utils.TryGetDirectoryName(item).Equals(path, StringComparison.InvariantCultureIgnoreCase)) != null;
         }
 
         public void InsertSymbolPath(string path) {

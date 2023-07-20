@@ -55,6 +55,7 @@ namespace IRExplorerUI.Profile {
 
                 var sb = new StringBuilder();
                 var tooltipSb = new StringBuilder();
+                tooltipSb.AppendLine("Inlinees list:");
 
                 for (int k = 0; k < tag.Inlinees.Count; k++) {
                     var inlinee = tag.Inlinees[k];
@@ -69,7 +70,6 @@ namespace IRExplorerUI.Profile {
                     }
                 }
 
-                AppendInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
                 var inlineeOverlay = document.RegisterIconElementOverlay(element, null, 16, 0, sb.ToString(), tooltipSb.ToString());
                 inlineeOverlay.TextColor = options_.InlineeOverlayTextColor;
                 inlineeOverlay.Background = options_.ElementOverlayBackColor;

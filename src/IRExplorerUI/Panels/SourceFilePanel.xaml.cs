@@ -46,7 +46,7 @@ namespace IRExplorerUI {
         private int firstSourceLineIndex_;
         private int lastSourceLineIndex_;
         private IRExplorerCore.IR.StackFrame currentInlinee_;
-        private bool sourceMapperDisabled_;
+        private HashSet<string> sourceMapperDisabled_;
         private bool columnsVisible_;
         private double previousVerticalOffset_;
         private List<(IRElement, TimeSpan)> profileElements_;
@@ -72,6 +72,7 @@ namespace IRExplorerUI {
 
             TextView.TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
             TextView.TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
+            sourceMapperDisabled_ = new HashSet<string>();
         }
 
         private void ProfileColumns_ScrollChanged(object sender, ScrollChangedEventArgs e) {
@@ -224,7 +225,7 @@ namespace IRExplorerUI {
 
             if (path != null) {
                 var sourceInfo = new SourceFileDebugInfo(path, path);
-                await LoadSourceFile(sourceInfo, section_.ParentFunction);
+                await LoadSourceFile(sourceInfo, section_?.ParentFunction);
             }
         }
 
@@ -291,7 +292,7 @@ namespace IRExplorerUI {
                 }
 
                 if (sourceInfo.IsUnknown) {
-                    // Try again using the function name.
+                    // Try again using just function name.
                     sourceInfo = debugInfo.FindFunctionSourceFilePath(function);
                 }
                 else {
@@ -300,30 +301,21 @@ namespace IRExplorerUI {
 
                 if (sourceInfo.HasFilePath) {
                     funcLoaded = await LoadSourceFile(sourceInfo, function);
+
+                    if (funcLoaded && funcProfile != null) {
+                        await AnnotateProfilerData(funcProfile, debugInfo);
+                    }
                 }
                 else {
                     failureText = $"Missing file path in debug info for function:\n{function.Name}";
                 }
+
+                if (funcLoaded && funcProfile != null) {
+                    await AnnotateProfilerData(funcProfile, debugInfo);
+                }
             }
             else {
                 failureText = $"Could not find debug info for module:\n{loadedDoc.ModuleName}";
-            }
-
-            if (funcProfile == null) {
-                // Check if there is profile info.
-                // This path is taken only if there is no debug info.
-                funcProfile = Session.ProfileData?.GetFunctionProfile(function);
-            }
-
-            if (funcProfile != null) {
-                if (!funcLoaded && !string.IsNullOrEmpty(funcProfile.SourceFilePath)) {
-                    var sourceInfo = new SourceFileDebugInfo(funcProfile.SourceFilePath, funcProfile.SourceFilePath, 0);
-                    funcLoaded = await LoadSourceFile(sourceInfo, function);
-                }
-
-                if (debugInfo != null) {
-                    await AnnotateProfilerData(funcProfile, debugInfo);
-                }
             }
 
             if (!funcLoaded) {
@@ -353,7 +345,7 @@ namespace IRExplorerUI {
             if (File.Exists(sourceInfo.FilePath)) {
                 mappedSourceFilePath = sourceInfo.FilePath;
             }
-            else if(!sourceMapperDisabled_) {
+            else if(!sourceMapperDisabled_.Contains(sourceInfo.FilePath)) {
                 mappedSourceFilePath = sourceFileMapper_.Map(sourceInfo.FilePath, () =>
                     BrowseSourceFile(filter: $"Source File|{Path.GetFileName(sourceInfo.OriginalFilePath)}",
                                      title: $"Open {sourceInfo.OriginalFilePath}"));
@@ -361,10 +353,10 @@ namespace IRExplorerUI {
                 if (string.IsNullOrEmpty(mappedSourceFilePath)) {
                     using var centerForm = new DialogCenteringHelper(this);
 
-                    if (MessageBox.Show("Continue asking for source file location during this session?", "IR Explorer",
+                    if (MessageBox.Show("Continue asking for this source file location during this session?", "IR Explorer",
                                         MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) ==
                                         MessageBoxResult.No) {
-                        sourceMapperDisabled_ = true;
+                        sourceMapperDisabled_.Add(sourceInfo.FilePath);
                     }
                 }
             }
@@ -429,14 +421,17 @@ namespace IRExplorerUI {
             var tag = instr?.GetTag<SourceLocationTag>();
 
             if (tag != null) {
-                if (tag.HasInlinees) {
-                    if(await LoadInlineeSourceFile(tag)) {
-                        return;
-                    }
-                }
-                else {
-                    ResetInlinee();
-                }
+                //? TODO: Fix inlinee source file loading,
+                //? it needs a diff way of marking using just the line number info from the main function ASM to line mapping,
+                //? since the inlinee ASM may not be available if func got inlined everywhere.
+                //if (tag.HasInlinees) {
+                //    if(await LoadInlineeSourceFile(tag)) {
+                //        return;
+                //    }
+                //}
+                //else {
+                //    ResetInlinee();
+                //}
 
                 if (await LoadSourceFileForFunction(section_.ParentFunction)) {
                     ScrollToLine(tag.Line);
@@ -645,9 +640,6 @@ namespace IRExplorerUI {
             if (section_ == null) {
                 return; //? TODO: Button should be disabled, needs commands
             }
-
-            // Re-enable source mapper if it was disabled before.
-            sourceMapperDisabled_ = false;
 
             if (await LoadSourceFileForFunction(section_.ParentFunction)) {
                 ScrollToLine(hottestSourceLine_);

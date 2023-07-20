@@ -184,7 +184,7 @@ public struct SourceFileDebugInfo : IEquatable<SourceFileDebugInfo> {
     public bool HasChecksumMismatch { get; set; }
     public static readonly SourceFileDebugInfo Unknown = new(null, null, -1);
 
-    public bool IsUnknown => FilePath == null;
+    public bool IsUnknown => !HasFilePath;
     public bool HasFilePath => !string.IsNullOrEmpty(FilePath);
     public bool HasOriginalFilePath => !string.IsNullOrEmpty(OriginalFilePath);
 
