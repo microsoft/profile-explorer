@@ -7,7 +7,7 @@ using System.Text;
 
 namespace IRExplorerCore.IR {
     public interface ISSAValue {
-        int DefinitionId { get; set; }
+        long DefinitionId { get; set; }
         OperandIR DefinitionOperand { get; }
         TupleIR DefinitionTuple { get; }
 
@@ -15,13 +15,13 @@ namespace IRExplorerCore.IR {
     }
 
     public sealed class SSAUseTag : ITag, ISSAValue {
-        public SSAUseTag(int definitionId, SSADefinitionTag definition) {
+        public SSAUseTag(long definitionId, SSADefinitionTag definition) {
             DefinitionId = definitionId;
             Definition = definition;
         }
 
         public SSADefinitionTag Definition { get; set; }
-        public int DefinitionId { get; set; }
+        public long DefinitionId { get; set; }
 
         public OperandIR DefinitionOperand => Definition?.Owner as OperandIR;
         public TupleIR DefinitionTuple => DefinitionOperand.ParentTuple;
@@ -48,14 +48,14 @@ namespace IRExplorerCore.IR {
     public sealed class SSADefinitionTag : ITag, ISSAValue {
         public List<SSAUseTag> Users { get; }
 
-        public SSADefinitionTag(int defId) {
+        public SSADefinitionTag(long defId) {
             DefinitionId = defId;
             Users = new List<SSAUseTag>();
         }
 
         public bool HasUsers => Users.Count > 0;
         public bool HasSingleUser => Users.Count == 1;
-        public int DefinitionId { get; set; }
+        public long DefinitionId { get; set; }
         public OperandIR DefinitionOperand => Owner as OperandIR;
         public TupleIR DefinitionTuple => ((IRElement)Owner).ParentTuple;
         public InstructionIR DefinitionInstruction => ((IRElement)Owner).ParentTuple as InstructionIR;

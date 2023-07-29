@@ -56,7 +56,7 @@ namespace IRExplorerCore.Analysis {
         private FunctionIR function_;
         private ICompilerIRInfo irInfo_;
         private IReachableReferenceFilter referenceFilter_;
-        private Dictionary<int, SSADefinitionTag> ssaDefTagMap_;
+        private Dictionary<long, SSADefinitionTag> ssaDefTagMap_;
 
         public ReferenceFinder(FunctionIR function, ICompilerIRInfo irInfo = null,
                                IReachableReferenceFilter referenceFilter = null) {
@@ -108,7 +108,7 @@ namespace IRExplorerCore.Analysis {
                 }
             }
 
-            // For non-SSA values, search the entire function 
+            // For non-SSA values, search the entire function
             // for a symbol with the same name and type.
             //? TODO: inefficient, use a symbol table indexed by name (PrecomputeAllReferences)
             return onlySSA ? null : FindBestMatchingOperand(EnumerateAllOperands(), op);
@@ -138,7 +138,7 @@ namespace IRExplorerCore.Analysis {
                     int opBlockIndex = op.ParentTuple.IndexInBlock;
                     int useBlockIndex = useOp.ParentTuple.IndexInBlock;
                     int distance = Math.Abs(useBlockIndex - opBlockIndex);
-                    
+
                     if (distance < bestUseDistance) {
                         bestUse = useOp;
                         bestUseDistance = distance;
@@ -194,11 +194,11 @@ namespace IRExplorerCore.Analysis {
             }
         }
 
-        public OperandIR FindOperandWithSSADefinitionID(int defId) {
+        public OperandIR FindOperandWithSSADefinitionID(long defId) {
             // Build a cache mapping the definition IDs to the tag
             // to speed up lookup and avoid n-squared behavior.
             if (ssaDefTagMap_ == null) {
-                ssaDefTagMap_ = new Dictionary<int, SSADefinitionTag>();
+                ssaDefTagMap_ = new Dictionary<long, SSADefinitionTag>();
 
                 foreach (var destOp in EnumerateAllOperands(true, false)) {
                     var ssaDefTag = GetSSADefinitionTag(destOp);
@@ -436,7 +436,7 @@ namespace IRExplorerCore.Analysis {
             return tag != null ? tag.DefinitionInstruction : null;
         }
 
-        public static int? GetSSADefinitionId(OperandIR op) {
+        public static long? GetSSADefinitionId(OperandIR op) {
             var tag = GetSSADefinitionTag(op);
             return tag?.DefinitionId;
         }

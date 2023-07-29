@@ -294,7 +294,7 @@ namespace IRExplorerUI {
             Function = function;
             Index = index;
             funcNameFormatter_ = funcNameFormatter;
-            
+
             Statistics = new FunctionCodeStatistics();
         }
 
@@ -2577,6 +2577,11 @@ namespace IRExplorerUI {
         }
 
         private FunctionCodeStatistics ComputeFunctionStatistics(IRTextSection section, IRTextSectionLoader loader, CallGraph callGraph) {
+            //? TODO: REMOVE
+            //? TODO: REMOVE
+            //? TODO: REMOVE
+            return new FunctionCodeStatistics();
+
             var result = loader.LoadSection(section);
 
             if (result == null) {

@@ -8,10 +8,11 @@ using System.Text;
 
 namespace IRExplorerCore.IR {
     public sealed class BlockIR : IRElement {
-        public BlockIR(IRElementId elementId, int number, FunctionIR parent) :
+        public BlockIR(IRElementId elementId, int number, FunctionIR parent, RegionIR parentRegion = null) :
             base(elementId) {
             Number = number;
             Parent = parent;
+            ParentRegion = parentRegion;
             Tuples = new List<TupleIR>();
             Successors = new List<BlockIR>();
             Predecessors = new List<BlockIR>();
@@ -26,6 +27,7 @@ namespace IRExplorerCore.IR {
         public List<BlockIR> Predecessors { get; }
         public BlockLabelIR Label { get; set; }
         public FunctionIR Parent { get; set; }
+        public RegionIR ParentRegion { get; set; }
 
         public bool IsEmpty => Tuples == null || Tuples.Count == 0;
 

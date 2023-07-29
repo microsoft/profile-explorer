@@ -224,14 +224,14 @@ namespace IRExplorerCore.UTC {
         };
 
         private static readonly TokenKind[] NoSourceOperandsTokens = {
-            TokenKind.OpenParen, TokenKind.Hash, 
+            TokenKind.OpenParen, TokenKind.Hash,
             TokenKind.Tilde, TokenKind.LineEnd
         };
 
         private Dictionary<string, BlockLabelIR> labelMap_;
         private Dictionary<int, string> lineMetadataMap_;
         private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;
-        private int nextBlockNumber;
+        private int nextBlockNumber_;
 
         public UTCParser(ICompilerIRInfo irInfo, ParsingErrorHandler errorHandler,
                          IRTextSection section,
@@ -293,7 +293,7 @@ namespace IRExplorerCore.UTC {
             base.Reset();
             labelMap_ = new Dictionary<string, BlockLabelIR>();
             ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
-            nextBlockNumber = 0;
+            nextBlockNumber_ = 0;
         }
 
         //? TODO: Handle SWITCH
@@ -423,7 +423,7 @@ namespace IRExplorerCore.UTC {
             SkipToken();
             return value;
         }
-        
+
         private void ParseMetadata(IRElement element, int lineNumber) {
             if (lineMetadataMap_ != null &&
                 lineMetadataMap_.TryGetValue(lineNumber, out string metadata)) {
@@ -435,8 +435,8 @@ namespace IRExplorerCore.UTC {
 
         private void ParseMetadata(IRElement element, AssemblyMetadataTag tag) {
             // Metadata starts with /// followed by irx:metadata_type
-            if (!TokenIs(TokenKind.Div) || 
-                !NextTokenIs(TokenKind.Div) || 
+            if (!TokenIs(TokenKind.Div) ||
+                !NextTokenIs(TokenKind.Div) ||
                 !NextAfterTokenIs(TokenKind.Div)) {
                 return;
             }
@@ -471,13 +471,13 @@ namespace IRExplorerCore.UTC {
             SkipToken(); // address
             long? address = ParseHexAddress();
 
-            if (!address.HasValue || 
+            if (!address.HasValue ||
                !(element is InstructionIR instr)) {
                 return;
             }
 
             tag.AddressToElementMap[address.Value] = element;
-            
+
             if (!ExpectAndSkipToken(TokenKind.SemiColon)) {
                 return;
             }
@@ -568,7 +568,7 @@ namespace IRExplorerCore.UTC {
             if (!TokenIntNumber(out int blockNumber)) {
                 // Unknown block ID, flow graph not built.
                 // Generate a new block ID so parsing continues.
-                blockNumber = nextBlockNumber++;
+                blockNumber = nextBlockNumber_++;
                 cfgAvailable = false;
             }
 
@@ -778,7 +778,7 @@ namespace IRExplorerCore.UTC {
         private bool ParsePointsAtSetLine(BlockIR parent) {
             // Check if the line is actually an CALL/INTRINSIC instruction
             // starting with PAS like PAS(90) = OPCALL ...
-            // Look ahead in the token stream for = 
+            // Look ahead in the token stream for =
             bool isInstr = false;
 
             lexer_.PeekTokenWhile(token => {
@@ -800,7 +800,7 @@ namespace IRExplorerCore.UTC {
             TryParseType(); // A type can also follow a PAS.
             SkipToLineStart(); // Ignore the rest of the line.
 
-            if (pasTag == null || parent.Tuples.Count == 0 || 
+            if (pasTag == null || parent.Tuples.Count == 0 ||
                 !(parent.Tuples[^1] is InstructionIR prevInstr)) {
                 return true; // No instr. found before this.
             }
@@ -882,7 +882,7 @@ namespace IRExplorerCore.UTC {
                         var inlineeName = TokenString();
                         tag.AddInlinee(inlineeName, null, lastLineNumber, 0);
                         SkipToken();
-                        
+
                         if (!ExpectAndSkipToken(TokenKind.CloseParen)) {
                             return null;
                         }
@@ -1273,7 +1273,7 @@ namespace IRExplorerCore.UTC {
                 SymbolAnnotationKind kind = SymbolAnnotationKind.None;
 
                 if (TokenIs(TokenKind.Xor)) { // ^
-                    kind = SymbolAnnotationKind.Volatile;    
+                    kind = SymbolAnnotationKind.Volatile;
                 }
                 else if (TokenIs(TokenKind.Tilde)) { // ^
                     kind = SymbolAnnotationKind.Writethrough;
@@ -1396,7 +1396,7 @@ namespace IRExplorerCore.UTC {
                 ParseSpecialName(arrowLevel);
             }
 
-            
+
             SetTextRange(operand, startToken);
 
             // Parse type and other attributes.

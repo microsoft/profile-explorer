@@ -60,6 +60,16 @@ namespace IRExplorerCore.IR {
             }
         }
 
+        public RegionIR ParentRegion {
+            get {
+                if (this is RegionIR) {
+                    return this as RegionIR;
+                }
+
+                return ParentBlock?.ParentRegion;
+            }
+        }
+
         public FunctionIR ParentFunction {
             get {
                 var block = ParentBlock;
@@ -95,7 +105,7 @@ namespace IRExplorerCore.IR {
         public override bool Equals(object obj) {
             return ReferenceEquals(this, obj) || obj is IRElement other && Equals(other);
         }
-        
+
         protected bool Equals(IRElement other) {
             return Id == other.Id;
         }

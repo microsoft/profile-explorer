@@ -13,15 +13,15 @@ namespace IRExplorerCore.LLVM {
         public InstrOffsetData InstructionOffsetData => InstrOffsetData.VariableSize(1, 16);
 
         public IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders) {
-            return new LLVMSectionReader(filePath, expectSectionHeaders);
+            return new LLVMSectionReader(filePath, false);
         }
 
         public IRSectionReader CreateSectionReader(byte[] textData, bool expectSectionHeaders) {
-            return new LLVMSectionReader(textData, expectSectionHeaders);
+            return new LLVMSectionReader(textData, false);
         }
 
         public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler, long functionSize) {
-            return null;
+            return new MLIRSectionParser(this, errorHandler);
         }
 
         public IRParsingErrorHandler CreateParsingErrorHandler() {

@@ -9,6 +9,7 @@ namespace IRExplorerCore.IR {
         void Visit(BlockLabelIR value);
         void Visit(InstructionIR value);
         void Visit(BlockIR value);
+        void Visit(RegionIR value);
         void Visit(FunctionIR value);
     }
 }

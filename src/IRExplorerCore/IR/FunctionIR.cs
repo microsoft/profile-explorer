@@ -38,6 +38,7 @@ namespace IRExplorerCore.IR {
         public List<BlockIR> SortedBlocks { get; private set; }
         public BlockIR EntryBlock => Blocks.Count > 0 ? Blocks[0] : null;
         public BlockIR ExitBlock => Blocks.Count > 0 ? Blocks[^1] : null;
+        public RegionIR RootRegion { get; set; }
 
         public IRElement GetElementWithId(ulong id) {
             BuildElementIdMap();
@@ -162,7 +163,7 @@ namespace IRExplorerCore.IR {
 
             }
         }
-    
+
         public void ForEachInstruction(Func<InstructionIR, bool> action) {
             foreach (var instr in AllInstructions) {
                 if (!action(instr)) {

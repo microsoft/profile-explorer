@@ -28,12 +28,12 @@ namespace IRExplorerCore {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TextLocation(int offset, int line, int column) {
+        public TextLocation(int offset, int line, int column = 0) {
             Offset = offset;
             Line = line;
             Column = column;
         }
-        
+
         public override string ToString() {
             return $"offset: {Offset}, line: {Line}";
         }

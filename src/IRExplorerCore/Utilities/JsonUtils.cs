@@ -7,20 +7,8 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Windows.Media;
 
 namespace IRExplorerUI {
-    public class JsonColorConverter : JsonConverter<Color> {
-        public override Color Read(ref Utf8JsonReader reader, Type typeToConvert,
-                                   JsonSerializerOptions options) {
-            return Utils.ColorFromString(reader.GetString());
-        }
-
-        public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options) {
-            writer.WriteStringValue(Utils.ColorToString(value));
-        }
-    }
-
     public class StringInterningConverter : JsonConverter<string> {
         public override string Read(ref Utf8JsonReader reader, Type typeToConvert,
             JsonSerializerOptions options) {
@@ -35,22 +23,20 @@ namespace IRExplorerUI {
     public class JsonUtils {
         public static JsonSerializerOptions GetJsonOptions() {
             var options = new JsonSerializerOptions {
-                WriteIndented = true, 
-                PropertyNameCaseInsensitive = true, 
+                WriteIndented = true,
+                PropertyNameCaseInsensitive = true,
                 IgnoreReadOnlyProperties = true,
 
             };
 
-            options.Converters.Add(new JsonColorConverter());
             options.Converters.Add(new StringInterningConverter());
             options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
             return options;
         }
 
-        public static bool SerializeToFile<T>(T data, string path) {
+        public static bool SerializeToFile<T>(T data, string path, JsonSerializerOptions options = null) {
             try {
-                var options = GetJsonOptions();
-                string result = JsonSerializer.Serialize(data, options);
+                string result = JsonSerializer.Serialize(data, options ?? GetJsonOptions());
                 File.WriteAllText(path, result);
                 return true;
             }
@@ -60,10 +46,9 @@ namespace IRExplorerUI {
             }
         }
 
-        public static string Serialize<T>(T data) {
+        public static string Serialize<T>(T data, JsonSerializerOptions options = null) {
             try {
-                var options = GetJsonOptions();
-                return JsonSerializer.Serialize(data, options);
+                return JsonSerializer.Serialize(data, options ?? GetJsonOptions());
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to save JSON: {ex.Message}");
@@ -71,16 +56,15 @@ namespace IRExplorerUI {
             }
         }
 
-        public static byte[] SerializeToBytes<T>(T data) {
-            var text = Serialize(data);
+        public static byte[] SerializeToBytes<T>(T data, JsonSerializerOptions options = null) {
+            var text = Serialize(data, options);
             return text != null ? Encoding.UTF8.GetBytes(text) : null;
         }
 
-        public static bool DeserializeFromFile<T>(string path, out T data) where T : class {
+        public static bool DeserializeFromFile<T>(string path, out T data, JsonSerializerOptions options = null) where T : class {
             try {
-                var options = GetJsonOptions();
                 string text = File.ReadAllText(path);
-                data = JsonSerializer.Deserialize<T>(text, options);
+                data = JsonSerializer.Deserialize<T>(text, options ?? GetJsonOptions());
                 return true;
             }
             catch (Exception ex) {
@@ -90,10 +74,9 @@ namespace IRExplorerUI {
             }
         }
 
-        public static bool Deserialize<T>(string text, out T data) where T : class {
+        public static bool Deserialize<T>(string text, out T data, JsonSerializerOptions options = null) where T : class {
             try {
-                var options = GetJsonOptions();
-                data = JsonSerializer.Deserialize<T>(text, options);
+                data = JsonSerializer.Deserialize<T>(text, options ?? GetJsonOptions());
                 return true;
             }
             catch (Exception ex) {
@@ -103,8 +86,8 @@ namespace IRExplorerUI {
             }
         }
 
-        public static bool DeserializeFromBytes<T>(byte[] textData, out T data) where T : class {
-            return Deserialize(Encoding.UTF8.GetString(textData), out data);
+        public static bool DeserializeFromBytes<T>(byte[] textData, out T data, JsonSerializerOptions options = null) where T : class {
+            return Deserialize(Encoding.UTF8.GetString(textData), out data, options);
         }
     }
 }

@@ -5,8 +5,8 @@ using System.Collections.Generic;
 
 namespace IRExplorerUI {
     class RemarksDefinitionSerializer {
-        public bool Save(List<RemarkCategory> categories, 
-                         List<RemarkSectionBoundary> boundaries, 
+        public bool Save(List<RemarkCategory> categories,
+                         List<RemarkSectionBoundary> boundaries,
                          List<RemarkTextHighlighting> highlighting,
                          string path) {
             var data = new SerializedData {
@@ -14,18 +14,18 @@ namespace IRExplorerUI {
                 SectionBoundaryList = boundaries,
             };
 
-            return JsonUtils.SerializeToFile(data, path);
+            return JsonUtils.SerializeToFile(data, path, Utils.GetDefaultJsonOptions());
         }
 
-        public bool Load(string path, 
-                         out List<RemarkCategory> categories, 
+        public bool Load(string path,
+                         out List<RemarkCategory> categories,
                          out List<RemarkSectionBoundary> boundaries,
                          out List<RemarkTextHighlighting> highlighting) {
-            if (JsonUtils.DeserializeFromFile(path, out SerializedData data)) {
+            if (JsonUtils.DeserializeFromFile(path, out SerializedData data, Utils.GetDefaultJsonOptions())) {
                 categories = data.RemarkCategoryList;
                 boundaries = data.SectionBoundaryList;
                 highlighting = data.RemarkHighlightingList;
-                return categories != null && 
+                return categories != null &&
                        boundaries != null &&
                        highlighting != null;
             }

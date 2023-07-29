@@ -7,11 +7,11 @@ using IRExplorerCore.IR;
 namespace IRExplorerCore.Analysis {
     public class SimilarValueFinder {
         private FunctionIR function_;
-        private Dictionary<int, InstructionIR> ssaDefTable_;
+        private Dictionary<long, InstructionIR> ssaDefTable_;
 
         public SimilarValueFinder(FunctionIR function) {
             function_ = function;
-            ssaDefTable_ = new Dictionary<int, InstructionIR>();
+            ssaDefTable_ = new Dictionary<long, InstructionIR>();
             BuildSSADefinitionTable();
         }
 

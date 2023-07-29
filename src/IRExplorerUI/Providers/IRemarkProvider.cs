@@ -48,8 +48,8 @@ namespace IRExplorerUI {
         List<Remark> ExtractRemarks(string text, FunctionIR function,
                                     IRTextSection section, RemarkProviderOptions options,
                                     CancelableTask cancelableTask);
-        List<Remark> ExtractRemarks(List<string> textLines, FunctionIR function, 
-                                    IRTextSection section, RemarkProviderOptions options, 
+        List<Remark> ExtractRemarks(List<string> textLines, FunctionIR function,
+                                    IRTextSection section, RemarkProviderOptions options,
                                     CancelableTask cancelableTask);
         OptimizationRemark GetOptimizationRemarkInfo(Remark remark);
     }
@@ -70,19 +70,19 @@ namespace IRExplorerUI {
         }
 
         public List<IRTextSection> GetSectionList(IRTextSection currentSection, int maxDepth, bool stopAtSectionBoundaries) {
-            return null;
+            return new List<IRTextSection>();
         }
 
         public List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function, LoadedDocument document, RemarkProviderOptions options, CancelableTask cancelableTask) {
-            return null;
+            return new List<Remark>();
         }
 
         public List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section, RemarkProviderOptions options, CancelableTask cancelableTask) {
-            return null;
+            return new List<Remark>();
         }
 
         public List<Remark> ExtractRemarks(List<string> textLines, FunctionIR function, IRTextSection section, RemarkProviderOptions options, CancelableTask cancelableTask) {
-            return null;
+            return new List<Remark>();
         }
 
         public OptimizationRemark GetOptimizationRemarkInfo(Remark remark) {

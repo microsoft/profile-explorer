@@ -34,6 +34,7 @@ namespace IRExplorerCore.IR {
         public TextLocation OpcodeLocation { get; set; }
         public List<OperandIR> Sources { get; }
         public List<OperandIR> Destinations { get; }
+        public List<RegionIR> NestedRegions { get; set; }
 
         public bool IsUnary => Kind == InstructionKind.Unary;
         public bool IsBinary => Kind == InstructionKind.Binary;
@@ -42,6 +43,7 @@ namespace IRExplorerCore.IR {
         public bool IsSwitch => Kind == InstructionKind.Switch;
         public bool IsCall => Kind == InstructionKind.Call;
         public bool IsReturn => Kind == InstructionKind.Return;
+        public bool HasNestedRegions => NestedRegions != null && NestedRegions.Count > 0;
 
         public T OpcodeAs<T>() where T : Enum {
             return (T)Opcode;

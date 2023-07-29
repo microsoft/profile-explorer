@@ -11,6 +11,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -689,7 +691,7 @@ namespace IRExplorerUI {
             if (!File.Exists(path)) {
                 return false;
             }
-            
+
             try {
                 File.Delete(path);
             }
@@ -1073,6 +1075,23 @@ namespace IRExplorerUI {
 
             var dummyString = new string('X', letterCount);
             return MeasureString(dummyString, font, fontSize, fontWeight);
+        }
+
+        public static JsonSerializerOptions GetDefaultJsonOptions() {
+            var options = JsonUtils.GetJsonOptions();
+            options.Converters.Add(new JsonColorConverter());
+            return options;
+        }
+    }
+
+    public class JsonColorConverter : JsonConverter<Color> {
+        public override Color Read(ref Utf8JsonReader reader, Type typeToConvert,
+            JsonSerializerOptions options) {
+            return Utils.ColorFromString(reader.GetString());
+        }
+
+        public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options) {
+            writer.WriteStringValue(Utils.ColorToString(value));
         }
     }
 }

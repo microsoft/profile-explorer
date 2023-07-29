@@ -23,7 +23,7 @@ namespace IRExplorerUI.Query {
                     fields[property.Name] = property.GetValue(inputObject);
                 }
 
-                return JsonUtils.SerializeToBytes(fields);
+                return JsonUtils.SerializeToBytes(fields, Utils.GetDefaultJsonOptions());
             }
             catch(Exception ex) {
                 return null;
@@ -32,7 +32,7 @@ namespace IRExplorerUI.Query {
 
         public static IFunctionTaskOptions Deserialize(byte[] data, Type outputType) {
             try {
-                if(!JsonUtils.DeserializeFromBytes<Dictionary<string, object>>(data, out var state)) {
+                if(!JsonUtils.DeserializeFromBytes<Dictionary<string, object>>(data, out var state, Utils.GetDefaultJsonOptions())) {
                     return null;
                 }
 

@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows.Media;
 using IRExplorerCore;
 
@@ -39,7 +41,7 @@ namespace IRExplorerUI {
 
     class DummySectionStyleProvider : ISectionStyleProvider {
         public string SettingsFilePath { get; }
-        
+
         public bool SaveSettings() {
             return true;
         }
@@ -55,16 +57,18 @@ namespace IRExplorerUI {
     }
 
     class SectionStyleProviderSerializer {
+
+
         public bool Save(List<MarkedSectionName> sectionNameMarkers, string path) {
             var data = new SerializedData {
                 List = sectionNameMarkers
             };
 
-            return JsonUtils.SerializeToFile(data, path);
+            return JsonUtils.SerializeToFile(data, path, Utils.GetDefaultJsonOptions());
         }
 
         public bool Load(string path, out List<MarkedSectionName> sectionNameMarkers) {
-            if (JsonUtils.DeserializeFromFile(path, out SerializedData data)) {
+            if (JsonUtils.DeserializeFromFile(path, out SerializedData data, Utils.GetDefaultJsonOptions())) {
                 sectionNameMarkers = data.List;
                 return true;
             }
