@@ -35,7 +35,7 @@ namespace IRExplorerUI.Utilities {
                 UseExternalNode = true
             };
 
-            var printer = new CallGraphPrinter(cg, options);
+            var printer = new CallGraphPrinter(cg, options, null);
             var result = printer.PrintGraph();
             var graphText = printer.CreateGraph(result, new CancelableTask());
 
@@ -57,7 +57,7 @@ namespace IRExplorerUI.Utilities {
             cg.CallGraphNodeCreated += (sender, e) => {
                 //? TODO: Should be customizable through a script
                 //? and have an option in the UI to pick what to show (profile, func size, script)
-               
+
                 //var funcProfile = profileData?.GetFunctionProfile(e.TextFunction);
 
                 //if (funcProfile != null) {

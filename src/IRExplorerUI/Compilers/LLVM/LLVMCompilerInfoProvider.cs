@@ -7,6 +7,7 @@ using IRExplorerUI.Diff;
 using IRExplorerUI.UTC;
 using IRExplorerUI.Query;
 using IRExplorerCore;
+using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.LLVM;
 using IRExplorerUI.Compilers.ASM;
@@ -36,6 +37,25 @@ namespace IRExplorerUI.Compilers.LLVM {
         public INameProvider NameProvider => names_;
         public ISectionStyleProvider SectionStyleProvider => styles_;
         public IRRemarkProvider RemarkProvider => remarks_;
+
+        public GraphVizPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind) {
+            return new GraphVizPrinterNameProvider();
+        }
+
+        public IGraphStyleProvider CreateGraphStyleProvider(Graph graph, GraphSettings settings) {
+            return graph.Kind switch {
+                GraphKind.FlowGraph =>
+                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                GraphKind.DominatorTree =>
+                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                GraphKind.PostDominatorTree =>
+                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                GraphKind.ExpressionGraph =>
+                    new MLIRExpressionGraphStyleProvider(graph, (ExpressionGraphSettings)settings, this),
+                GraphKind.CallGraph =>
+                    new CallGraphStyleProvider(graph)
+            };
+        }
 
         public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
             return new BasicBlockFoldingStrategy(function);

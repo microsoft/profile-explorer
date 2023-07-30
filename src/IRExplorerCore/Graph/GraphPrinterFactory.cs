@@ -9,14 +9,17 @@ using IRExplorerCore.IR;
 namespace IRExplorerCore.Graph {
     public static class GraphPrinterFactory {
         public static GraphVizPrinter CreateInstance<T, U>(
-            GraphKind kind, T element, U options) where T : class where U : class {
+            GraphKind kind, T element, U options,
+            GraphVizPrinterNameProvider nameProvider) where T : class where U : class {
             if (typeof(T) == typeof(FunctionIR)) {
                 return kind switch {
-                    GraphKind.FlowGraph => new FlowGraphPrinter(element as FunctionIR),
+                    GraphKind.FlowGraph => new FlowGraphPrinter(element as FunctionIR, nameProvider),
                     GraphKind.DominatorTree => new DominatorTreePrinter(element as FunctionIR,
-                                                                        DominatorAlgorithmOptions.Dominators),
+                                                                        DominatorAlgorithmOptions.Dominators,
+                                                                        nameProvider),
                     GraphKind.PostDominatorTree => new DominatorTreePrinter(element as FunctionIR,
-                                                                            DominatorAlgorithmOptions.PostDominators),
+                                                                            DominatorAlgorithmOptions.PostDominators,
+                                                                            nameProvider),
                     _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
                 };
             }
@@ -24,7 +27,8 @@ namespace IRExplorerCore.Graph {
                 switch (kind) {
                     case GraphKind.ExpressionGraph: {
                         return new ExpressionGraphPrinter(element as IRElement,
-                                                          options as ExpressionGraphPrinterOptions);
+                                                          options as ExpressionGraphPrinterOptions,
+                                                          nameProvider);
                     }
                 }
             }
@@ -32,7 +36,8 @@ namespace IRExplorerCore.Graph {
                 switch (kind) {
                     case GraphKind.CallGraph: {
                         return new CallGraphPrinter(element as CallGraph,
-                                                    options as CallGraphPrinterOptions);
+                                                    options as CallGraphPrinterOptions,
+                                                    nameProvider);
                     }
                 }
             }

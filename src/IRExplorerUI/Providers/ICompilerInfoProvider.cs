@@ -12,6 +12,7 @@ using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
 using ProtoBuf;
 using DocumentFormat.OpenXml.EMMA;
+using IRExplorerCore.Graph;
 
 namespace IRExplorerUI {
     public interface ICompilerInfoProvider {
@@ -24,6 +25,7 @@ namespace IRExplorerUI {
         INameProvider NameProvider { get; }
         ISectionStyleProvider SectionStyleProvider { get; }
         IRRemarkProvider RemarkProvider { get; }
+
         List<QueryDefinition> BuiltinQueries { get; }
         List<FunctionTaskDefinition> BuiltinFunctionTasks { get; }
         List<FunctionTaskDefinition> ScriptFunctionTasks { get; }
@@ -36,6 +38,8 @@ namespace IRExplorerUI {
         Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section);
         Task HandleLoadedDocument(LoadedDocument document, string modulePath);
         IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);
+        GraphVizPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind);
+        IGraphStyleProvider CreateGraphStyleProvider(Graph graph, GraphSettings settings);
         IDiffInputFilter CreateDiffInputFilter();
         IDiffOutputFilter CreateDiffOutputFilter();
         IDebugInfoProvider CreateDebugInfoProvider(string imagePath);

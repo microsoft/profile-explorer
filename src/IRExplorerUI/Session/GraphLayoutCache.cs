@@ -11,13 +11,15 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
     public class GraphLayoutCache {
+        private ICompilerInfoProvider compilerInfo_;
         private GraphKind graphKind_;
         private Dictionary<IRTextSection, CompressedString> graphLayout_;
         private Dictionary<byte[], CompressedString> shapeGraphLayout_;
         private ReaderWriterLockSlim rwLock_;
 
-        public GraphLayoutCache(GraphKind graphKind) {
+        public GraphLayoutCache(GraphKind graphKind, ICompilerInfoProvider compilerInfo) {
             graphKind_ = graphKind;
+            compilerInfo_ = compilerInfo;
             shapeGraphLayout_ = new Dictionary<byte[], CompressedString>();
             graphLayout_ = new Dictionary<IRTextSection, CompressedString>();
             rwLock_ = new ReaderWriterLockSlim();
@@ -41,7 +43,8 @@ namespace IRExplorerUI {
                 else {
                     // Check if the same Graphviz input was used before, since
                     // the resulting graph will be identical even though the function is not.
-                    printer ??= GraphPrinterFactory.CreateInstance(graphKind_, element, options);
+                    printer ??= GraphPrinterFactory.CreateInstance(graphKind_, element, options,
+                        compilerInfo_.CreateGraphNameProvider(graphKind_));
                     string inputText = printer.PrintGraph();
 
                     if (string.IsNullOrEmpty(inputText)) {
@@ -81,7 +84,8 @@ namespace IRExplorerUI {
 
             // Parse the graph layout output from Graphviz to build
             // the actual Graph object with nodes and edges.
-            printer ??= GraphPrinterFactory.CreateInstance(graphKind_, element, options);
+            printer ??= GraphPrinterFactory.CreateInstance(graphKind_, element, options,
+                compilerInfo_.CreateGraphNameProvider(graphKind_));
             var blockNodeMap = printer.CreateNodeDataMap();
             var blockNodeGroupsMap = printer.CreateNodeDataGroupsMap();
             var graphReader = new GraphvizReader(graphKind_, graphText, blockNodeMap);

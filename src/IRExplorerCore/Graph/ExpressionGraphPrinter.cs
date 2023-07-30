@@ -17,6 +17,13 @@ namespace IRExplorerCore.Graph {
         public bool SkipCopyInstructions { get; set; }
         public int MaxExpressionDepth { get; set; }
         public ICompilerIRInfo IR { get; set; }
+
+        //? TODO:
+        // - Handlers for overriding operand/instr labels
+        //   (virtual func return bool on handled)
+        // - Handle regions, option to group by region
+        //   (blocks as subregions, link instr to subregion)
+        // -
     }
 
     public sealed class ExpressionGraphPrinter : GraphVizPrinter {
@@ -32,7 +39,9 @@ namespace IRExplorerCore.Graph {
         private Dictionary<TaggedObject, List<TaggedObject>> blockNodeGroupsMap_;
 
         public ExpressionGraphPrinter(IRElement startElement,
-                                      ExpressionGraphPrinterOptions options) {
+                                      ExpressionGraphPrinterOptions options,
+                                      GraphVizPrinterNameProvider nameProvider) :
+            base(nameProvider) {
             startElement_ = startElement;
             options_ = options;
             visitedElements_ = new Dictionary<IRElement, IRElement>();
@@ -302,8 +311,8 @@ namespace IRExplorerCore.Graph {
                 }
 
                 if (!string.IsNullOrEmpty(variableName)) {
-                    return !string.IsNullOrEmpty(ssaNumber) ? 
-                        $"{variableName}<{ssaNumber}> = {label}" : 
+                    return !string.IsNullOrEmpty(ssaNumber) ?
+                        $"{variableName}<{ssaNumber}> = {label}" :
                         $"{variableName} = {label}";
                 }
                 else if (!string.IsNullOrEmpty(ssaNumber)) {

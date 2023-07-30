@@ -61,7 +61,7 @@ namespace IRExplorerUI {
                                          FlowDirection.LeftToRight, TextFont, DefaultTextSize, textColor,
                                          VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
 
-            dc.DrawText(text, new Point(NodeInfo.CenterX - text.Width / 2,  
+            dc.DrawText(text, new Point(NodeInfo.CenterX - text.Width / 2,
                                         NodeInfo.CenterY - text.Height / 2));
 
             // Display the label under the node if there is a tag.
@@ -73,7 +73,7 @@ namespace IRExplorerUI {
                 dc.DrawRectangle(textBackground, null, new Rect(NodeInfo.CenterX - labelText.Width / 2,
                                                  region.Bottom + labelText.Height / 4,
                                                  labelText.Width, labelText.Height));
-            
+
                 //? TODO: Use LabelPlacement
                 dc.DrawText(labelText, new Point(NodeInfo.CenterX - labelText.Width / 2,
                                                  region.Bottom + labelText.Height / 4));
@@ -92,13 +92,13 @@ namespace IRExplorerUI {
 
     public interface IGraphStyleProvider {
         Brush GetDefaultTextColor();
-        Brush GetDefaultNodeBackground();
         HighlightingStyle GetDefaultNodeStyle();
-        HighlightingStyle GetNodeStyle(Node node);
-        Pen GetEdgeStyle(GraphEdgeKind kind);
-        GraphEdgeKind GetEdgeKind(Edge edge);
+        public HighlightingStyle GetNodeStyle(Node node);
+        public Pen GetEdgeStyle(GraphEdgeKind kind);
+        public GraphEdgeKind GetEdgeKind(Edge edge);
         bool ShouldRenderEdges(GraphEdgeKind kind);
         bool ShouldUsePolylines();
+        Brush GetDefaultNodeBackground();
     }
 
     public class GraphRenderer {
@@ -119,21 +119,7 @@ namespace IRExplorerUI {
             graph_ = graph;
             edgeFont_ = new Typeface("Verdana");
             defaultNodeFont_ = new Typeface("Verdana");
-
-            graphStyle_ = graph.Kind switch
-            {
-                GraphKind.FlowGraph => 
-                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
-                GraphKind.DominatorTree =>
-                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
-                GraphKind.PostDominatorTree =>
-                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
-                GraphKind.ExpressionGraph =>
-                    new ExpressionGraphStyleProvider(graph_, (ExpressionGraphSettings)settings, compilerInfo),
-                GraphKind.CallGraph =>
-                    new CallGraphStyleProvider(graph),
-                _ => throw new InvalidOperationException("Unknown graph kind!")
-            };
+            graphStyle_ = compilerInfo.CreateGraphStyleProvider(graph, settings);
         }
 
         public DrawingVisual Render() {
@@ -337,7 +323,7 @@ namespace IRExplorerUI {
         }
 
         private Vector FindArrowOrientation(Point[] tempPoints, out Point start) {
-            for(int i = tempPoints.Length - 1; i > 0; i--) { 
+            for(int i = tempPoints.Length - 1; i > 0; i--) {
                 start = tempPoints[i];
                 var v = start - tempPoints[i - 1];
 

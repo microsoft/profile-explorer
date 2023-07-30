@@ -24,7 +24,8 @@ nslimit=2;
         private FunctionIR function_;
         private Dictionary<string, TaggedObject> blockNameMap_;
 
-        public FlowGraphPrinter(FunctionIR function) {
+        public FlowGraphPrinter(FunctionIR function, GraphVizPrinterNameProvider nameProvider) :
+            base(nameProvider) {
             function_ = function;
             blockNameMap_ = new Dictionary<string, TaggedObject>();
         }

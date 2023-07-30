@@ -8,7 +8,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.UTC;
 
 namespace IRExplorerUI {
-    public sealed class ExpressionGraphStyleProvider : IGraphStyleProvider {
+    public class ExpressionGraphStyleProvider : IGraphStyleProvider {
         private const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;
         private HighlightingStyle addressOperandNodeStyle_;
@@ -94,7 +94,7 @@ namespace IRExplorerUI {
             return defaultTextColor_;
         }
 
-        public HighlightingStyle GetNodeStyle(Node node) {
+        public virtual HighlightingStyle GetNodeStyle(Node node) {
             var element = node.ElementData;
 
             switch (element) {
@@ -150,7 +150,7 @@ namespace IRExplorerUI {
             return defaultNodeStyle_;
         }
 
-        public GraphEdgeKind GetEdgeKind(Edge edge) {
+        public virtual GraphEdgeKind GetEdgeKind(Edge edge) {
             if (!options_.ColorizeEdges) {
                 return GraphEdgeKind.Default;
             }
@@ -172,7 +172,7 @@ namespace IRExplorerUI {
             return GraphEdgeKind.Default;
         }
 
-        public Pen GetEdgeStyle(GraphEdgeKind kind) {
+        public virtual Pen GetEdgeStyle(GraphEdgeKind kind) {
             if (kind == GraphEdgeKind.Loop) {
                 return loopEdgeStyle_;
             }

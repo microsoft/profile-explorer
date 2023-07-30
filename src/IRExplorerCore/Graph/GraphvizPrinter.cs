@@ -10,9 +10,32 @@ using System.Text;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.Graph {
+    public class GraphVizPrinterNameProvider {
+        public virtual string GetBlockNodeLabel(BlockIR block) {
+            return string.Empty;
+        }
+
+        public virtual string GetInstructionNodeLabel(InstructionIR instr) {
+            return string.Empty;
+        }
+
+        public virtual string GetOperandNodeLabel(OperandIR operand) {
+            return string.Empty;
+        }
+
+        public virtual string GetFunctionNodeLabel(FunctionIR function) {
+            return string.Empty;
+        }
+    }
+
     public class GraphVizPrinter {
         private int subgraphIndex_;
         private int nextInvisibleId_;
+        protected GraphVizPrinterNameProvider nameProvider_;
+
+        public GraphVizPrinter(GraphVizPrinterNameProvider nameProvider) {
+            nameProvider_ = nameProvider;
+        }
 
         protected string CreateNode(int id, string label, StringBuilder builder,
                                     string labelPrefix = null) {
@@ -24,7 +47,7 @@ namespace IRExplorerCore.Graph {
             string nodeName = $"n{id}";
 
             if (!string.IsNullOrEmpty(labelPrefix)) {
-                builder.AppendFormat(CultureInfo.InvariantCulture, 
+                builder.AppendFormat(CultureInfo.InvariantCulture,
                                      "{0}[shape=rectangle, label=\"{1}{2}\"];\n", nodeName,
                                      labelPrefix, label);
             }
@@ -48,12 +71,12 @@ namespace IRExplorerCore.Graph {
             string nodeName = $"n{id}";
 
             if (!string.IsNullOrEmpty(labelPrefix)) {
-                builder.AppendFormat(CultureInfo.InvariantCulture, 
+                builder.AppendFormat(CultureInfo.InvariantCulture,
                     "{0}[shape=rectangle, margin=\"{1},{2}\", label=\"{3}{4}\"];\n", nodeName,
                     horizontalMargin, verticalMargin, labelPrefix, label);
             }
             else {
-                builder.AppendFormat(CultureInfo.InvariantCulture, 
+                builder.AppendFormat(CultureInfo.InvariantCulture,
                     "{0}[shape=rectangle, margin=\"{1},{2}\", label=\"{3}\"];\n", nodeName,
                     horizontalMargin, verticalMargin, label);
             }

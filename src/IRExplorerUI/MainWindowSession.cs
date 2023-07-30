@@ -356,10 +356,10 @@ namespace IRExplorerUI {
 
             // Wait for any pending tasks to complete.
             await sessionState_.CancelPendingTasks();
-            
+
             // Close all documents and notify all panels.
             NotifyPanelsOfSessionEnd();
-            
+
             foreach (var docHostInfo in sessionState_.DocumentHosts) {
                 CloseDocument(docHostInfo);
             }
@@ -898,10 +898,10 @@ namespace IRExplorerUI {
 
         private void SetupGraphLayoutCache() {
             graphLayout_ = new Dictionary<GraphKind, GraphLayoutCache>();
-            graphLayout_.Add(GraphKind.FlowGraph, new GraphLayoutCache(GraphKind.FlowGraph));
-            graphLayout_.Add(GraphKind.DominatorTree, new GraphLayoutCache(GraphKind.DominatorTree));
-            graphLayout_.Add(GraphKind.PostDominatorTree, new GraphLayoutCache(GraphKind.PostDominatorTree));
-            graphLayout_.Add(GraphKind.ExpressionGraph, new GraphLayoutCache(GraphKind.ExpressionGraph));
+            graphLayout_.Add(GraphKind.FlowGraph, new GraphLayoutCache(GraphKind.FlowGraph, compilerInfo_));
+            graphLayout_.Add(GraphKind.DominatorTree, new GraphLayoutCache(GraphKind.DominatorTree, compilerInfo_));
+            graphLayout_.Add(GraphKind.PostDominatorTree, new GraphLayoutCache(GraphKind.PostDominatorTree, compilerInfo_));
+            graphLayout_.Add(GraphKind.ExpressionGraph, new GraphLayoutCache(GraphKind.ExpressionGraph, compilerInfo_));
         }
 
         private void ClearGraphLayoutCache() {

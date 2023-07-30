@@ -18,6 +18,7 @@ using IRExplorerCore.IR.Tags;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Media.Animation;
+using IRExplorerCore.Graph;
 using static IRExplorerUI.ModuleReportPanel;
 
 namespace IRExplorerUI.Compilers.ASM;
@@ -59,6 +60,25 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>();
 
     public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>();
+
+    public GraphVizPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind) {
+        return new GraphVizPrinterNameProvider();
+    }
+
+    public IGraphStyleProvider CreateGraphStyleProvider(Graph graph, GraphSettings settings) {
+        return graph.Kind switch {
+            GraphKind.FlowGraph =>
+                new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+            GraphKind.DominatorTree =>
+                new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+            GraphKind.PostDominatorTree =>
+                new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+            GraphKind.ExpressionGraph =>
+                new ExpressionGraphStyleProvider(graph, (ExpressionGraphSettings)settings, this),
+            GraphKind.CallGraph =>
+                new CallGraphStyleProvider(graph)
+        };
+    }
 
     public bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
         // Annotate the instructions with debug info (line numbers, source files)

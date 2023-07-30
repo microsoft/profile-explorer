@@ -35,7 +35,9 @@ nslimit=2;
         private Dictionary<string, TaggedObject> nodeNameMap_;
         private HashSet<CallGraphNode> incomingEdgeNodes_;
 
-        public CallGraphPrinter(CallGraph callGraph, CallGraphPrinterOptions options) {
+        public CallGraphPrinter(CallGraph callGraph, CallGraphPrinterOptions options,
+                                GraphVizPrinterNameProvider nameProvider) :
+            base(nameProvider) {
             callGraph_ = callGraph;
             options_ = options;
             nodeNameMap_ = new Dictionary<string, TaggedObject>();

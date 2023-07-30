@@ -50,7 +50,9 @@ namespace IRExplorerCore.IR {
         }
 
         public bool OpcodeIs<T>(T value) where T : Enum {
-            return Opcode != null && ((T)Opcode).Equals(value);
+            return (Opcode != null) &&
+                   (Opcode is T) &&
+                   ((T)Opcode).Equals(value);
         }
 
         public override void Accept(IRVisitor visitor) {

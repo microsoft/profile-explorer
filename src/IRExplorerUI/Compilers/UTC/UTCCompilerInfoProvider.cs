@@ -14,6 +14,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using IRExplorerCore.Graph;
 using IRExplorerUI.Compilers.ASM;
 
 namespace IRExplorerUI.Compilers.UTC {
@@ -48,6 +49,25 @@ namespace IRExplorerUI.Compilers.UTC {
 
         public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
             return new BasicBlockFoldingStrategy(function);
+        }
+
+        public GraphVizPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind) {
+            return new GraphVizPrinterNameProvider();
+        }
+
+        public IGraphStyleProvider CreateGraphStyleProvider(Graph graph, GraphSettings settings) {
+            return graph.Kind switch {
+                GraphKind.FlowGraph =>
+                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                GraphKind.DominatorTree =>
+                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                GraphKind.PostDominatorTree =>
+                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                GraphKind.ExpressionGraph =>
+                    new ExpressionGraphStyleProvider(graph, (ExpressionGraphSettings)settings, this),
+                GraphKind.CallGraph =>
+                    new CallGraphStyleProvider(graph)
+            };
         }
 
         public IDiffInputFilter CreateDiffInputFilter() {
