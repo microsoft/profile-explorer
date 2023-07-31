@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
 using IRExplorerCore.IR;
@@ -26,7 +27,33 @@ namespace IRExplorerCore.LLVM {
         }
 
         public FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText) {
-            var jsonData = File.ReadAllText(@"C:\test\ir.json");
+            var inputFile = Path.GetTempFileName();
+            var outputFile = Path.ChangeExtension(Path.GetTempFileName(), ".json");
+
+            var parserPath = @"D:\llvm-project\build\Debug\bin\mlir-lsp-server.exe";
+            var psi = new ProcessStartInfo(parserPath) {
+                Arguments = $"\"{inputFile}\" \"{outputFile}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            try {
+                File.WriteAllText(inputFile, sectionText.ToString());
+
+                using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+                process.Start();
+                process.WaitForExit();
+
+                if (!File.Exists(outputFile)) {
+                    return null;
+                }
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to parse MLIR for section: {section.Name}");
+                return null;
+            }
+
+            var jsonData = File.ReadAllText(outputFile);
 
             if (JsonUtils.Deserialize(jsonData, out IRExplorerCore.RawIRModel.ModuleIR module)) {
                 var parser = new MLIRParser(irInfo_, errorHandler_, null, section);

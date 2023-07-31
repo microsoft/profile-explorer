@@ -155,7 +155,6 @@ namespace IRExplorerUI {
             lockObject_ = new object();
 
             SetupMainWindow();
-            SetupGraphLayoutCache();
 
             ContentRendered += MainWindow_ContentRendered;
             StateChanged += MainWindow_StateChanged;
@@ -980,6 +979,7 @@ namespace IRExplorerUI {
             compilerInfo_ = compilerInfo;
             compilerInfo_.ReloadSettings();
             App.Settings.CompilerIRSwitched(compilerInfo_.CompilerIRName, compilerInfo.IR.Mode);
+            SetupGraphLayoutCache();
             SetupMainWindowCompilerTarget();
         }
 

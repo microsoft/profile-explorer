@@ -6,8 +6,8 @@ using System;
 namespace IRExplorerCore.LLVM {
     public sealed class LLVMSectionReader : SectionReaderBase, IDisposable {
         private static readonly char[] WhitespaceChars = { ' ', '\t' };
-        private const string SectionStartLine = "// -----// IR Dump";
-        private const string SectionEndLine = "//----- //";
+        private const string SectionStartLine = "// -----";
+        private const string SectionEndLine = "// -----";
 
         public LLVMSectionReader(string filePath, bool expectSectionHeaders = true) :
             base(filePath, expectSectionHeaders) { }
