@@ -128,10 +128,27 @@ namespace IRExplorerCore.LLVM {
         }
 
         public BlockIR ParseBlock(RawIRModel.BlockIR rawBlock, RegionIR parentRegion) {
-            BlockIR block = new BlockIR(NextElementId.NewBlock(nextBlockNumber_), nextBlockNumber_++, function_, parentRegion);
+            BlockIR block = GetOrCreateBlock(rawBlock.Id);
+            block.ParentRegion = parentRegion;
 
             foreach (var rawOperation in rawBlock.Operations) {
                 block.Tuples.Add(ParseOperation(rawOperation, block));
+            }
+
+            foreach(var predBlock in rawBlock.Predecessors) {
+                block.Predecessors.Add(GetOrCreateBlock(predBlock));
+            }
+
+            foreach(var succBlock in rawBlock.Successors) {
+                block.Successors.Add(GetOrCreateBlock(succBlock));
+            }
+
+            block.BlockArguments = new List<OperandIR>();
+            InstructionIR dummyInstr = null;
+
+            foreach(var blockArg in rawBlock.Arguments) {
+                dummyInstr ??= new InstructionIR(IRElementId.FromLong(0), InstructionKind.Other, block);
+                block.BlockArguments.Add(ParseResult(blockArg, dummyInstr));
             }
 
             function_.Blocks.Add(block);
@@ -182,7 +199,7 @@ namespace IRExplorerCore.LLVM {
 
             if (rawResult.Uses != null) {
                 foreach (var use in rawResult.Uses) {
-                    var ssaDefTag = GetOrCreateSSADefinition(use.UseId);
+                    var ssaDefTag = GetOrCreateSSADefinition(rawResult.Id);
                     ssaDefTag.Owner = result;
                     result.AddTag(ssaDefTag);
 
@@ -194,6 +211,16 @@ namespace IRExplorerCore.LLVM {
             }
 
             return result;
+        }
+
+        private BlockIR GetOrCreateBlock(long id) {
+            if(!idToBlockMap_.TryGetValue(id, out var block)) {
+                block = new BlockIR(NextElementId.NewBlock(nextBlockNumber_), nextBlockNumber_, function_, null);
+                idToBlockMap_.Add(id, block);
+                nextBlockNumber_++;
+            }
+
+            return block;
         }
 
         private OperandIR GetOrCreateSourceOperand(long id) {
