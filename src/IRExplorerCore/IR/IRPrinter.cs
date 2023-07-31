@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Linq;
 using System.Text;
 
 namespace IRExplorerCore.IR {
@@ -54,6 +55,12 @@ namespace IRExplorerCore.IR {
             builder_.Append(", S");
             block.Successors.ForEach((p) => builder_.Append($" {p.Number}"));
             builder_.AppendLine();
+
+            if (block.BlockArguments != null) {
+                builder_.Append((", Args: "));
+                block.BlockArguments.ForEach((arg) => builder_.Append($" {arg.Id}, offset {arg.TextLocation.Offset} |"));
+                builder_.AppendLine();
+            }
 
             foreach (var tuple in block.Tuples) {
                 PrintTuple(tuple);

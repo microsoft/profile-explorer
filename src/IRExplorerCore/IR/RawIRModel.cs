@@ -18,6 +18,9 @@ namespace IRExplorerCore.RawIRModel {
 
     public class BlockIR {
         public long Id { get; set; }
+        public List<ResultIR> Arguments { get; set; }
+        public List<long> Predecessors { get; set; }
+        public List<long> Successors { get; set; }
         public List<OperationIR> Operations { get; set; }
     }
 

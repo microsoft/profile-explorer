@@ -59,7 +59,7 @@ namespace IRExplorerCore.LLVM {
                 var parser = new MLIRParser(irInfo_, errorHandler_, null, section);
 
                 if (module.Functions.Count > 0) {
-                    return parser.Parse(module.Functions[0]);
+                    return parser.Parse(module.Functions[0], sectionText);
                 }
             }
 
@@ -90,6 +90,7 @@ namespace IRExplorerCore.LLVM {
     public sealed class MLIRParser : ParserBase {
         private int nextBlockNumber_;
         private FunctionIR function_;
+        private ReadOnlyMemory<char> functionText_;
 
         public MLIRParser(ICompilerIRInfo irInfo, IRParsingErrorHandler errorHandler,
                           RegisterTable registerTable, IRTextSection section) :
@@ -101,8 +102,9 @@ namespace IRExplorerCore.LLVM {
             ssaDefinitionMap_ = new Dictionary<long, SSADefinitionTag>();
         }
 
-        public FunctionIR Parse(RawIRModel.FunctionIR rawFunction) {
+        public FunctionIR Parse(RawIRModel.FunctionIR rawFunction, ReadOnlyMemory<char> functionText) {
             Reset();
+            functionText_ = functionText;
             function_ = new FunctionIR(rawFunction.Name);
 
             if(rawFunction.Regions.Count > 0) {
@@ -128,10 +130,27 @@ namespace IRExplorerCore.LLVM {
         }
 
         public BlockIR ParseBlock(RawIRModel.BlockIR rawBlock, RegionIR parentRegion) {
-            BlockIR block = new BlockIR(NextElementId.NewBlock(nextBlockNumber_), nextBlockNumber_++, function_, parentRegion);
+            BlockIR block = GetOrCreateBlock(rawBlock.Id);
+            block.ParentRegion = parentRegion;
 
             foreach (var rawOperation in rawBlock.Operations) {
                 block.Tuples.Add(ParseOperation(rawOperation, block));
+            }
+
+            foreach(var predBlock in rawBlock.Predecessors) {
+                block.Predecessors.Add(GetOrCreateBlock(predBlock));
+            }
+
+            foreach(var succBlock in rawBlock.Successors) {
+                block.Successors.Add(GetOrCreateBlock(succBlock));
+            }
+
+            block.BlockArguments = new List<OperandIR>();
+            InstructionIR dummyInstr = null;
+
+            foreach(var blockArg in rawBlock.Arguments) {
+                dummyInstr ??= new InstructionIR(IRElementId.FromLong(0), InstructionKind.Other, block);
+                block.BlockArguments.Add(ParseResult(blockArg, dummyInstr));
             }
 
             function_.Blocks.Add(block);
@@ -168,7 +187,7 @@ namespace IRExplorerCore.LLVM {
             source.TextLocation = new TextLocation(rawSource.StartOffset, rawSource.LineNumber, 0);
             source.TextLength = rawSource.EndOffset - rawSource.StartOffset;
             source.Role = OperandRole.Source;
-            source.Value = new ReadOnlyMemory<char>("src".ToCharArray());
+            source.Value = functionText_.Slice(source.TextLocation.Offset, source.TextLength);
             return source;
         }
 
@@ -178,11 +197,11 @@ namespace IRExplorerCore.LLVM {
             result.TextLocation = new TextLocation(rawResult.StartOffset, rawResult.LineNumber, 0);
             result.TextLength = rawResult.EndOffset - rawResult.StartOffset;
             result.Role = OperandRole.Destination;
-            result.Value = new ReadOnlyMemory<char>("dest".ToCharArray());
+            result.Value = functionText_.Slice(result.TextLocation.Offset, result.TextLength);
 
             if (rawResult.Uses != null) {
                 foreach (var use in rawResult.Uses) {
-                    var ssaDefTag = GetOrCreateSSADefinition(use.UseId);
+                    var ssaDefTag = GetOrCreateSSADefinition(rawResult.Id);
                     ssaDefTag.Owner = result;
                     result.AddTag(ssaDefTag);
 
@@ -194,6 +213,16 @@ namespace IRExplorerCore.LLVM {
             }
 
             return result;
+        }
+
+        private BlockIR GetOrCreateBlock(long id) {
+            if(!idToBlockMap_.TryGetValue(id, out var block)) {
+                block = new BlockIR(NextElementId.NewBlock(nextBlockNumber_), nextBlockNumber_, function_, null);
+                idToBlockMap_.Add(id, block);
+                nextBlockNumber_++;
+            }
+
+            return block;
         }
 
         private OperandIR GetOrCreateSourceOperand(long id) {

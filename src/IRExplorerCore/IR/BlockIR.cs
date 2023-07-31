@@ -22,9 +22,12 @@ namespace IRExplorerCore.IR {
         public int IndexInFunction { get; set; }
         public bool HasOddIndexInFunction => (IndexInFunction & 1) == 1;
         public bool HasEvenIndexInFunction => (IndexInFunction & 1) == 0;
+
         public List<TupleIR> Tuples { get; }
         public List<BlockIR> Successors { get; }
         public List<BlockIR> Predecessors { get; }
+        public List<OperandIR> BlockArguments { get; set; }
+
         public BlockLabelIR Label { get; set; }
         public FunctionIR Parent { get; set; }
         public RegionIR ParentRegion { get; set; }
