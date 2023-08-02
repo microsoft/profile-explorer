@@ -61,8 +61,8 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
 
     public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>();
 
-    public GraphVizPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind) {
-        return new GraphVizPrinterNameProvider();
+    public GraphPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind) {
+        return new GraphPrinterNameProvider();
     }
 
     public IGraphStyleProvider CreateGraphStyleProvider(Graph graph, GraphSettings settings) {

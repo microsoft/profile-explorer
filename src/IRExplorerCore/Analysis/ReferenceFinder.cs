@@ -477,12 +477,14 @@ namespace IRExplorerCore.Analysis {
                 }
             }
 
-            // For source operands, go to the linked definition SSA tag.
-            var ssaDefUseTag = op.GetTag<SSAUseTag>();
+            if (op.Role != OperandRole.Parameter) {
+                // For source operands, go to the linked definition SSA tag.
+                var ssaDefUseTag = op.GetTag<SSAUseTag>();
 
-            if (ssaDefUseTag != null) {
-                foreach (var use in ssaDefUseTag.Definition.Users) {
-                    yield return use.OwnerElement;
+                if (ssaDefUseTag != null) {
+                    foreach (var use in ssaDefUseTag.Definition.Users) {
+                        yield return use.OwnerElement;
+                    }
                 }
             }
         }

@@ -93,7 +93,8 @@ namespace IRExplorerCore.IR {
                 return Kind switch {
                     OperandKind.Address when Value is OperandIR ir => ir.NameValue,
                     OperandKind.LabelAddress => BlockLabelValue.NameValue,
-                    _ => (ReadOnlyMemory<char>)Value
+                    _ => (Value is ReadOnlyMemory<char> value) ? value :
+                             ReadOnlyMemory<char>.Empty
                 };
             }
         }
@@ -132,10 +133,31 @@ namespace IRExplorerCore.IR {
                 _ => "<unexpected>"
             };
 
-            var ssaTag = GetTag<ISSAValue>();
+            var ssaUseTag = GetTag<SSAUseTag>();
 
-            if (ssaTag != null) {
-                result += $"<{ssaTag.DefinitionId}>";
+            if (ssaUseTag != null) {
+                result += $", def {ssaUseTag.DefinitionOperand.Name}";
+                var defInstr = ssaUseTag.DefinitionInstruction;
+
+                if (defInstr != null) {
+                    result += $" ({defInstr.OpcodeText})";
+                }
+            }
+
+            var ssaDefTag = GetTag<SSADefinitionTag>();
+
+            if (ssaDefTag != null) {
+                result += $", uses {ssaDefTag.Users.Count} {{";
+                foreach (var useOp in ssaDefTag.Users) {
+                    result += $", {useOp.OwnerElement.Name}";
+                    var userInstr = useOp.OwnerInstruction;
+
+                    if (userInstr != null) {
+                        result += $" ({userInstr.OpcodeText})";
+                    }
+                }
+
+                result += "}}";
             }
 
             return $"{result}, id: {Id}";

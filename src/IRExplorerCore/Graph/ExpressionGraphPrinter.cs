@@ -40,7 +40,7 @@ namespace IRExplorerCore.Graph {
 
         public ExpressionGraphPrinter(IRElement startElement,
                                       ExpressionGraphPrinterOptions options,
-                                      GraphVizPrinterNameProvider nameProvider) :
+                                      GraphPrinterNameProvider nameProvider) :
             base(nameProvider) {
             startElement_ = startElement;
             options_ = options;
@@ -268,59 +268,11 @@ namespace IRExplorerCore.Graph {
         }
 
         private string GetOperandLabel(OperandIR op) {
-            if (!op.HasName) {
-                return "<Untitled>";
-            }
-
-            string label = op.Name;
-
-            if (options_.PrintSSANumbers) {
-                var ssaNumber = ReferenceFinder.GetSSADefinitionId(op);
-
-                if (ssaNumber.HasValue) {
-                    return $"{label}<{ssaNumber.Value.ToString(CultureInfo.InvariantCulture)}>";
-                }
-            }
-
-            if (op.IsAddress || op.IsLabelAddress) {
-                return $"&{label}";
-            }
-            else if (op.IsIndirection) {
-                return $"[{label}]";
-            }
-
-            return label;
+            return nameProvider_.GetOperandNodeLabel(op, options_.PrintSSANumbers);
         }
 
         private string GetInstructionLabel(InstructionIR instr) {
-            string label = instr.OpcodeText.ToString();
-
-            if (instr.Destinations.Count > 0) {
-                var destOp = instr.Destinations[0];
-                string variableName = "";
-                string ssaNumber = "";
-
-                if (destOp.HasName && options_.PrintVariableNames) {
-                    variableName = destOp.Name;
-                }
-
-                var ssaTag = destOp.GetTag<SSADefinitionTag>();
-
-                if (ssaTag != null && options_.PrintSSANumbers) {
-                    ssaNumber = ssaTag.DefinitionId.ToString(CultureInfo.InvariantCulture);
-                }
-
-                if (!string.IsNullOrEmpty(variableName)) {
-                    return !string.IsNullOrEmpty(ssaNumber) ?
-                        $"{variableName}<{ssaNumber}> = {label}" :
-                        $"{variableName} = {label}";
-                }
-                else if (!string.IsNullOrEmpty(ssaNumber)) {
-                    return $"<{ssaNumber}> = {label}";
-                }
-            }
-
-            return label;
+            return nameProvider_.GetInstructionNodeLabel(instr, options_.PrintVariableNames, options_.PrintSSANumbers);
         }
 
         public override Dictionary<string, TaggedObject> CreateNodeDataMap() {

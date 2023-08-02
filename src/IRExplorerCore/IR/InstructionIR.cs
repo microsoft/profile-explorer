@@ -13,7 +13,7 @@ namespace IRExplorerCore.IR {
         Branch,
         Goto,
         Switch,
-        Phi,
+        BlockArgumentsMerge,
         Call,
         Return,
         Exception,

@@ -14,7 +14,7 @@ namespace IRExplorerCore.Graph {
         private Dictionary<string, TaggedObject> blockNameMap_;
 
         public DominatorTreePrinter(FunctionIR function, DominatorAlgorithmOptions options,
-                                    GraphVizPrinterNameProvider nameProvider) :
+                                    GraphPrinterNameProvider nameProvider) :
             base(nameProvider) {
             function_ = function;
             options_ = options;

@@ -36,7 +36,7 @@ nslimit=2;
         private HashSet<CallGraphNode> incomingEdgeNodes_;
 
         public CallGraphPrinter(CallGraph callGraph, CallGraphPrinterOptions options,
-                                GraphVizPrinterNameProvider nameProvider) :
+                                GraphPrinterNameProvider nameProvider) :
             base(nameProvider) {
             callGraph_ = callGraph;
             options_ = options;

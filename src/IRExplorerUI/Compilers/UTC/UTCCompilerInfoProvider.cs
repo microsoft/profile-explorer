@@ -51,8 +51,8 @@ namespace IRExplorerUI.Compilers.UTC {
             return new BasicBlockFoldingStrategy(function);
         }
 
-        public GraphVizPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind) {
-            return new GraphVizPrinterNameProvider();
+        public GraphPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind) {
+            return new GraphPrinterNameProvider();
         }
 
         public IGraphStyleProvider CreateGraphStyleProvider(Graph graph, GraphSettings settings) {

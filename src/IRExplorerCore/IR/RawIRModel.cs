@@ -18,10 +18,21 @@ namespace IRExplorerCore.RawIRModel {
 
     public class BlockIR {
         public long Id { get; set; }
-        public List<ResultIR> Arguments { get; set; }
+        public string Label { get; set; }
+        public List<BlockArgument> Arguments { get; set; }
         public List<long> Predecessors { get; set; }
         public List<long> Successors { get; set; }
         public List<OperationIR> Operations { get; set; }
+    }
+
+    public class BlockArgument {
+      public ResultIR Argument { get; set; }
+      public List<IncomingValue> IncomingValues { get; set; }
+    }
+
+    public class IncomingValue {
+        public long BlockId { get; set; }
+        public long OperandId { get; set; }
     }
 
     public class OperationIR {

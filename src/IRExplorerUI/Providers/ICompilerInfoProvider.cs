@@ -38,7 +38,7 @@ namespace IRExplorerUI {
         Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section);
         Task HandleLoadedDocument(LoadedDocument document, string modulePath);
         IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);
-        GraphVizPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind);
+        GraphPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind);
         IGraphStyleProvider CreateGraphStyleProvider(Graph graph, GraphSettings settings);
         IDiffInputFilter CreateDiffInputFilter();
         IDiffOutputFilter CreateDiffOutputFilter();

@@ -1921,16 +1921,14 @@ namespace IRExplorerUI {
         private bool HandleOperandElement(OperandIR op, ElementHighlighter highlighter,
                                           bool markExpression, bool markReferences,
                                           HighlightingEventAction action) {
-            if (op.Role == OperandRole.Source) {
-                if (markExpression) {
-                    // Mark an entire SSA def-use expression DAG.
-                    HighlightExpression(op, highlighter, expressionOperandStyle_, expressionStyle_);
-                    return true;
-                }
-
-                // Further handling of sources is done below.
+            if (markExpression) {
+                // Mark an entire SSA def-use expression DAG.
+                HighlightExpression(op, highlighter, expressionOperandStyle_, expressionStyle_);
+                return true;
             }
-            else if ((op.Role == OperandRole.Destination || op.Role == OperandRole.Parameter) &&
+
+            if ((op.Role == OperandRole.Destination ||
+                 op.Role == OperandRole.Parameter) &&
                      settings_.HighlightDestinationUses) {
                 // First look for an SSA definition and its uses,
                 // if not found highlight every load of the same symbol.
@@ -1961,14 +1959,29 @@ namespace IRExplorerUI {
 
                 // If the operand is an indirection, also try to mark
                 // the definition of the base address value below.
-                if (!op.IsIndirection) {
-                    return handled;
+                if (!op.IsIndirection &&
+                    !op.IsParameterOperand &&
+                    !(op.ParentInstruction is { Kind: InstructionKind.BlockArgumentsMerge })) {
+                     return handled;
                 }
             }
 
             if (settings_.HighlightSourceDefinition) {
                 if (op.IsLabelAddress) {
                     return HighlightBlockLabel(op, highlighter, ssaUserStyle_, action);
+                }
+
+
+                // For instructions merging block argument values,
+                // mark the sources from predecessor blocks.
+                if (op.ParentInstruction is { Kind: InstructionKind.BlockArgumentsMerge } instr) {
+                    var group = new HighlightedGroup(op, ssaDefinitionStyle_.ChildStyle);
+
+                    foreach (var sourceOp in instr.Sources) {
+                        group.Add(sourceOp);
+                    }
+
+                    highlighter.Add(group);
                 }
 
                 if (markReferences) {
@@ -2272,13 +2285,13 @@ namespace IRExplorerUI {
                 var useInstr = use.ParentTuple;
 
                 if (useInstr != null) {
-                    instrGroup.Add(useInstr);
+                    //instrGroup.Add(useInstr);
                 }
 
                 // overlayRenderer_.AddConnectedElement(use.Element, arrowStyle);
             }
 
-            highlighter.Add(instrGroup);
+            //highlighter.Add(instrGroup);
             highlighter.Add(useGroup);
             RaiseElementHighlightingEvent(op, useGroup, highlighter.Type, action);
         }
@@ -2531,11 +2544,11 @@ namespace IRExplorerUI {
                     }
                 }
 
-                if (block.BlockArguments != null) {
-                    foreach (var blockArg in block.BlockArguments) {
-                        operandElements_.Add(blockArg);
-                    }
-                }
+                // if (block.BlockArguments != null) {
+                //     foreach (var blockArg in block.BlockArguments) {
+                //         operandElements_.Add(blockArg);
+                //     }
+                // }
             }
 
             //? TODO: Automation support.

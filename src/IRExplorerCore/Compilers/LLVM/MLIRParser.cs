@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
+using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerUI;
 
@@ -30,7 +31,7 @@ namespace IRExplorerCore.LLVM {
             var inputFile = Path.GetTempFileName();
             var outputFile = Path.ChangeExtension(Path.GetTempFileName(), ".json");
 
-            var parserPath = @"D:\llvm-project\build\Debug\bin\mlir-lsp-server.exe";
+            var parserPath = @"C:\github\llvm-project\build\Debug\bin\mlir-lsp-server.exe";
             var psi = new ProcessStartInfo(parserPath) {
                 Arguments = $"\"{inputFile}\" \"{outputFile}\"",
                 UseShellExecute = false,
@@ -97,9 +98,9 @@ namespace IRExplorerCore.LLVM {
             base(irInfo, errorHandler, registerTable, section) {
             idToBlockMap_ = new Dictionary<long, BlockIR>();
             idToInstrMap_ = new Dictionary<long, InstructionIR>();
-            idToSourceOperandMap_ = new Dictionary<long, OperandIR>();
-            idToResultOperandMap_ = new Dictionary<long, OperandIR>();
+            idToOperandMap_ = new Dictionary<long, OperandIR>();
             ssaDefinitionMap_ = new Dictionary<long, SSADefinitionTag>();
+            idToRawBlockMap_ = new Dictionary<long, RawIRModel.BlockIR>();
         }
 
         public FunctionIR Parse(RawIRModel.FunctionIR rawFunction, ReadOnlyMemory<char> functionText) {
@@ -111,7 +112,70 @@ namespace IRExplorerCore.LLVM {
                 function_.RootRegion = ParseRegion(rawFunction.Regions[0]);
             }
 
+            ResolveBlockArgumentUses(rawFunction);
+
             return function_;
+        }
+
+        private void ResolveBlockArgumentUses(RawIRModel.FunctionIR rawFunction) {
+            if(rawFunction.Regions.Count > 0) {
+                ResolveBlockArgumentUses(rawFunction.Regions[0]);
+            }
+        }
+
+        private Dictionary<long, RawIRModel.BlockIR> idToRawBlockMap_;
+
+        private void ResolveBlockArgumentUses(RawIRModel.RegionIR rawRegion) {
+            // foreach (var block in rawRegion.Blocks) {
+            //     if (block.Arguments != null) {
+            //         var blockIR = GetOrCreateBlock(block.Id);
+            //         int blockArgIndex = 0;
+            //
+            //         foreach (var blockArg in block.Arguments) {
+            //             var blockArgIR = GetOrCreateResultOperand(blockArg.Id);
+            //             var operands = new List<OperandIR>();
+            //
+            //             foreach (var predBlockId in block.Predecessors) {
+            //                 var predBlock = idToRawBlockMap_[predBlockId];
+            //                 var terminatorInstr = predBlock.Operations.Count > 0 ? predBlock.Operations[^1] : null;
+            //
+            //                 if (terminatorInstr != null) {
+            //                     if (terminatorInstr.Sources.Count > blockArgIndex) {
+            //                         var sourceOp = terminatorInstr.Sources[blockArgIndex];
+            //                         var sourceOpIR = GetOrCreateSourceOperand(sourceOp.Id);
+            //                         operands.Add(sourceOpIR);
+            //
+            //                         // var ssaDefTag = ReferenceFinder.GetSSADefinitionTag(sourceOpIR);
+            //                         //
+            //                         // if (ssaDefTag == null) {
+            //                         var     ssaDefTag = GetOrCreateSSADefinition(sourceOp.Id, sourceOpIR);
+            //                         // }
+            //                         //
+            //                         var ssaUDLinkTag = new SSAUseTag(blockArg.Id, ssaDefTag) {
+            //                              Owner = sourceOpIR
+            //                         };
+            //                         ssaDefTag.Users.Add(ssaUDLinkTag);
+            //                         blockArgIR.AddTag(ssaUDLinkTag);
+            //                     }
+            //                 }
+            //
+            //                 var dummyInstr = blockArgIR.ParentInstruction;
+            //                 dummyInstr.Sources.AddRange(operands);
+            //                 blockArgIR.Parent = dummyInstr;
+            //             }
+            //
+            //             blockArgIndex++;
+            //         }
+            //     }
+            //
+            //     foreach (var op in block.Operations) {
+            //         if (op.Regions != null) {
+            //             foreach (var region in op.Regions) {
+            //                 ResolveBlockArgumentUses(region);
+            //             }
+            //         }
+            //     }
+            // }
         }
 
         protected override void Reset() {
@@ -130,6 +194,7 @@ namespace IRExplorerCore.LLVM {
         }
 
         public BlockIR ParseBlock(RawIRModel.BlockIR rawBlock, RegionIR parentRegion) {
+            idToRawBlockMap_[rawBlock.Id] = rawBlock;
             BlockIR block = GetOrCreateBlock(rawBlock.Id);
             block.ParentRegion = parentRegion;
 
@@ -146,11 +211,33 @@ namespace IRExplorerCore.LLVM {
             }
 
             block.BlockArguments = new List<OperandIR>();
-            InstructionIR dummyInstr = null;
 
-            foreach(var blockArg in rawBlock.Arguments) {
-                dummyInstr ??= new InstructionIR(IRElementId.FromLong(0), InstructionKind.Other, block);
-                block.BlockArguments.Add(ParseResult(blockArg, dummyInstr));
+            foreach (var blockArg in rawBlock.Arguments) {
+                var dummyInstr = new InstructionIR(NextElementId.NextTuple(), InstructionKind.Other, block);
+                var blockArgOp = ParseResult(blockArg.Argument, dummyInstr);
+
+                // No incoming values means it's the list of parameters in the entry block.
+                if (blockArg.IncomingValues != null) {
+                    foreach (var incomingValue in blockArg.IncomingValues) {
+                        var incomingOp = GetOrCreateOperand(incomingValue.OperandId);
+                        incomingOp.Role = OperandRole.Parameter;
+                        dummyInstr.Sources.Add(incomingOp);
+
+                        var ssaDefTag = GetOrCreateSSADefinition(incomingValue.OperandId, incomingOp);
+                        var ssaUDLinkTag = new SSAUseTag(blockArg.Argument.Id, ssaDefTag) {
+                            Owner = blockArgOp
+                        };
+                        ssaDefTag.Users.Add(ssaUDLinkTag);
+                    }
+                }
+
+                if (dummyInstr.Sources.Count > 0) {
+                    dummyInstr.Kind = InstructionKind.BlockArgumentsMerge;
+                }
+
+                dummyInstr.Destinations.Add(blockArgOp);
+                block.BlockArguments.Add(blockArgOp);
+                block.Tuples.Add(dummyInstr);
             }
 
             function_.Blocks.Add(block);
@@ -178,11 +265,27 @@ namespace IRExplorerCore.LLVM {
                 instr.NestedRegions.Add(ParseRegion(rawRegion, parentBlock.ParentRegion, instr));
             }
 
+            if (instr.OpcodeText.ToString().Contains("br")) {
+                instr.Kind = InstructionKind.Goto;
+            }
+            else if (instr.OpcodeText.ToString().Contains("cond_br")) {
+                instr.Kind = InstructionKind.Branch;
+            }
+            else if (instr.OpcodeText.ToString().Contains("return")) {
+                instr.Kind = InstructionKind.Return;
+            }
+            else if (instr.Sources.Count == 1) {
+                instr.Kind = InstructionKind.Unary;
+            }
+            else if (instr.Sources.Count == 2) {
+                instr.Kind = InstructionKind.Binary;
+            }
+
             return instr;
         }
 
         public OperandIR ParseSource(RawIRModel.SourceIR rawSource, InstructionIR parentInstr) {
-            OperandIR source = GetOrCreateSourceOperand(rawSource.Id);
+            OperandIR source = GetOrCreateOperand(rawSource.Id);
             source.Parent = parentInstr;
             source.TextLocation = new TextLocation(rawSource.StartOffset, rawSource.LineNumber, 0);
             source.TextLength = rawSource.EndOffset - rawSource.StartOffset;
@@ -192,7 +295,7 @@ namespace IRExplorerCore.LLVM {
         }
 
         public OperandIR ParseResult(RawIRModel.ResultIR rawResult, InstructionIR parentInstr) {
-            OperandIR result = GetOrCreateResultOperand(rawResult.Id);
+            OperandIR result = GetOrCreateOperand(rawResult.Id);
             result.Parent = parentInstr;
             result.TextLocation = new TextLocation(rawResult.StartOffset, rawResult.LineNumber, 0);
             result.TextLength = rawResult.EndOffset - rawResult.StartOffset;
@@ -201,11 +304,8 @@ namespace IRExplorerCore.LLVM {
 
             if (rawResult.Uses != null) {
                 foreach (var use in rawResult.Uses) {
-                    var ssaDefTag = GetOrCreateSSADefinition(rawResult.Id);
-                    ssaDefTag.Owner = result;
-                    result.AddTag(ssaDefTag);
-
-                    var useOp = GetOrCreateSourceOperand(use.UseId);
+                    var ssaDefTag = GetOrCreateSSADefinition(rawResult.Id, result);
+                    var useOp = GetOrCreateOperand(use.UseId);
                     var ssaUDLinkTag = new SSAUseTag(use.UseId, ssaDefTag) { Owner = result };
                     ssaDefTag.Users.Add(ssaUDLinkTag);
                     useOp.AddTag(ssaUDLinkTag);
@@ -225,19 +325,10 @@ namespace IRExplorerCore.LLVM {
             return block;
         }
 
-        private OperandIR GetOrCreateSourceOperand(long id) {
-            if(!idToSourceOperandMap_.TryGetValue(id, out var operand)) {
+        private OperandIR GetOrCreateOperand(long id) {
+            if(!idToOperandMap_.TryGetValue(id, out var operand)) {
                 operand = new OperandIR(NextElementId.NextOperand(), OperandKind.Temporary, TypeIR.GetUnknown(), null);
-                idToSourceOperandMap_.Add(id, operand);
-            }
-
-            return operand;
-        }
-
-        private OperandIR GetOrCreateResultOperand(long id) {
-            if(!idToResultOperandMap_.TryGetValue(id, out var operand)) {
-                operand = new OperandIR(NextElementId.NextOperand(), OperandKind.Temporary, TypeIR.GetUnknown(), null);
-                idToResultOperandMap_.Add(id, operand);
+                idToOperandMap_.Add(id, operand);
             }
 
             return operand;
@@ -252,17 +343,18 @@ namespace IRExplorerCore.LLVM {
             return instr;
         }
 
-        private SSADefinitionTag GetOrCreateSSADefinition(long id) {
-            if(!ssaDefinitionMap_.TryGetValue((int)id, out var ssaDefTag)) {
+        private SSADefinitionTag GetOrCreateSSADefinition(long id, OperandIR operand) {
+            if(!ssaDefinitionMap_.TryGetValue(id, out var ssaDefTag)) {
                 ssaDefTag = new SSADefinitionTag(id);
                 ssaDefinitionMap_.Add(id, ssaDefTag);
+                ssaDefTag.Owner = operand;
+                operand.AddTag(ssaDefTag);
             }
 
             return ssaDefTag;
         }
 
-        private Dictionary<long, OperandIR> idToSourceOperandMap_;
-        private Dictionary<long, OperandIR> idToResultOperandMap_;
+        private Dictionary<long, OperandIR> idToOperandMap_;
         private Dictionary<long, BlockIR> idToBlockMap_;
         private Dictionary<long, InstructionIR> idToInstrMap_;
         private Dictionary<long, SSADefinitionTag> ssaDefinitionMap_;

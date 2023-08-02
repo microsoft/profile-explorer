@@ -41,7 +41,8 @@ namespace IRExplorerCore.IR {
         }
 
         public override string ToString() {
-            return $"SSA UD-link: {DefinitionId}";
+            return "";
+            //return $"SSA UD-link: {DefinitionId}";
         }
     }
 
@@ -73,13 +74,13 @@ namespace IRExplorerCore.IR {
 
         public override string ToString() {
             var builder = new StringBuilder();
-            builder.AppendLine($"SSA definition: {DefinitionId}");
-            builder.AppendLine($"  - parent: {((IRElement)Owner).Id}");
-            builder.AppendLine($"  - users: {Users.Count}");
-
-            foreach (var user in Users) {
-                builder.AppendLine($"    - {((IRElement)user.Owner).Id}");
-            }
+            // builder.AppendLine($"SSA definition: {DefinitionId}");
+            // builder.AppendLine($"  - parent: {((IRElement)Owner).Id}");
+            // builder.AppendLine($"  - users: {Users.Count}");
+            //
+            // foreach (var user in Users) {
+            //     builder.Append($"    - {((IRElement)user.Owner).Id}");
+            // }
 
             return builder.ToString();
         }

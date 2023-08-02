@@ -38,8 +38,8 @@ namespace IRExplorerUI.Compilers.LLVM {
         public ISectionStyleProvider SectionStyleProvider => styles_;
         public IRRemarkProvider RemarkProvider => remarks_;
 
-        public GraphVizPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind) {
-            return new GraphVizPrinterNameProvider();
+        public GraphPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind) {
+            return new MLIRGraphPrinterNameProvider();
         }
 
         public IGraphStyleProvider CreateGraphStyleProvider(Graph graph, GraphSettings settings) {

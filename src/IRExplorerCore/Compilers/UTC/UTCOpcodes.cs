@@ -204,7 +204,7 @@ namespace IRExplorerCore.UTC {
                     "OPMBVOLATILEASSIGN",
                     new UTCOpcodeInfo(UTCOpcode.OPMBVOLATILEASSIGN, InstructionKind.Unary)
                 },
-                {"OPPHI", new UTCOpcodeInfo(UTCOpcode.OPPHI, InstructionKind.Phi)},
+                {"OPPHI", new UTCOpcodeInfo(UTCOpcode.OPPHI, InstructionKind.BlockArgumentsMerge)},
                 {"OPRHO", new UTCOpcodeInfo(UTCOpcode.OPRHO, InstructionKind.Other)}, {
                     "OPINLINEARGS",
                     new UTCOpcodeInfo(UTCOpcode.OPINLINEARGS, InstructionKind.Other)

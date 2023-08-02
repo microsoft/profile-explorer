@@ -7,20 +7,53 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.Graph {
-    public class GraphVizPrinterNameProvider {
+    public class GraphPrinterNameProvider {
         public virtual string GetBlockNodeLabel(BlockIR block) {
-            return string.Empty;
+            return $"B{block.Number}";
         }
 
-        public virtual string GetInstructionNodeLabel(InstructionIR instr) {
-            return string.Empty;
+        public virtual string GetInstructionNodeLabel(InstructionIR instr, bool appendVarNames, bool appendSSANumber) {
+            string label = instr.OpcodeText.ToString();
+
+            if (appendVarNames && instr.Destinations.Count > 0) {
+                var destOp = instr.Destinations[0];
+                var variableName = GetOperandNodeLabel(destOp, appendSSANumber);
+
+                if (!string.IsNullOrEmpty(variableName)) {
+                    return $"{variableName} = {label}";
+                }
+            }
+
+            return label;
         }
 
-        public virtual string GetOperandNodeLabel(OperandIR operand) {
-            return string.Empty;
+        public virtual string GetOperandNodeLabel(OperandIR op, bool appendSSANumber) {
+            if (!op.HasName) {
+                return "<Untitled>";
+            }
+
+            string label = op.Name;
+
+            if (appendSSANumber) {
+                var ssaNumber = ReferenceFinder.GetSSADefinitionId(op);
+
+                if (ssaNumber.HasValue) {
+                    return $"{label}<{ssaNumber.Value.ToString(CultureInfo.InvariantCulture)}>";
+                }
+            }
+
+            if (op.IsAddress || op.IsLabelAddress) {
+                return $"&{label}";
+            }
+            else if (op.IsIndirection) {
+                return $"[{label}]";
+            }
+
+            return label;
         }
 
         public virtual string GetFunctionNodeLabel(FunctionIR function) {
@@ -31,9 +64,9 @@ namespace IRExplorerCore.Graph {
     public class GraphVizPrinter {
         private int subgraphIndex_;
         private int nextInvisibleId_;
-        protected GraphVizPrinterNameProvider nameProvider_;
+        protected GraphPrinterNameProvider nameProvider_;
 
-        public GraphVizPrinter(GraphVizPrinterNameProvider nameProvider) {
+        public GraphVizPrinter(GraphPrinterNameProvider nameProvider) {
             nameProvider_ = nameProvider;
         }
 

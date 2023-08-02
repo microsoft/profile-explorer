@@ -24,9 +24,10 @@ nslimit=2;
         private FunctionIR function_;
         private Dictionary<string, TaggedObject> blockNameMap_;
 
-        public FlowGraphPrinter(FunctionIR function, GraphVizPrinterNameProvider nameProvider) :
+        public FlowGraphPrinter(FunctionIR function, GraphPrinterNameProvider nameProvider) :
             base(nameProvider) {
             function_ = function;
+            nameProvider_ = nameProvider;
             blockNameMap_ = new Dictionary<string, TaggedObject>();
         }
 
@@ -41,7 +42,7 @@ nslimit=2;
         }
 
         private void CreateNode(BlockIR block, StringBuilder builder) {
-            string blockName = CreateNode(block.Id, block.Number.ToString(), builder, "B");
+            string blockName = CreateNode(block.Id, nameProvider_.GetBlockNodeLabel(block), builder);
             blockNameMap_[blockName] = block;
         }
 

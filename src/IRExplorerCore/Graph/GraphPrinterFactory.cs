@@ -10,7 +10,7 @@ namespace IRExplorerCore.Graph {
     public static class GraphPrinterFactory {
         public static GraphVizPrinter CreateInstance<T, U>(
             GraphKind kind, T element, U options,
-            GraphVizPrinterNameProvider nameProvider) where T : class where U : class {
+            GraphPrinterNameProvider nameProvider) where T : class where U : class {
             if (typeof(T) == typeof(FunctionIR)) {
                 return kind switch {
                     GraphKind.FlowGraph => new FlowGraphPrinter(element as FunctionIR, nameProvider),
