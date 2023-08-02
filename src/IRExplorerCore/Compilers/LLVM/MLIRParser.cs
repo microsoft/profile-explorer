@@ -55,6 +55,7 @@ namespace IRExplorerCore.LLVM {
             }
 
             var jsonData = File.ReadAllText(outputFile);
+            File.WriteAllText(@"C:\test\out.json", jsonData);
 
             if (JsonUtils.Deserialize(jsonData, out IRExplorerCore.RawIRModel.ModuleIR module)) {
                 var parser = new MLIRParser(irInfo_, errorHandler_, null, section);
@@ -100,7 +101,6 @@ namespace IRExplorerCore.LLVM {
             idToInstrMap_ = new Dictionary<long, InstructionIR>();
             idToOperandMap_ = new Dictionary<long, OperandIR>();
             ssaDefinitionMap_ = new Dictionary<long, SSADefinitionTag>();
-            idToRawBlockMap_ = new Dictionary<long, RawIRModel.BlockIR>();
         }
 
         public FunctionIR Parse(RawIRModel.FunctionIR rawFunction, ReadOnlyMemory<char> functionText) {
@@ -112,70 +112,7 @@ namespace IRExplorerCore.LLVM {
                 function_.RootRegion = ParseRegion(rawFunction.Regions[0]);
             }
 
-            ResolveBlockArgumentUses(rawFunction);
-
             return function_;
-        }
-
-        private void ResolveBlockArgumentUses(RawIRModel.FunctionIR rawFunction) {
-            if(rawFunction.Regions.Count > 0) {
-                ResolveBlockArgumentUses(rawFunction.Regions[0]);
-            }
-        }
-
-        private Dictionary<long, RawIRModel.BlockIR> idToRawBlockMap_;
-
-        private void ResolveBlockArgumentUses(RawIRModel.RegionIR rawRegion) {
-            // foreach (var block in rawRegion.Blocks) {
-            //     if (block.Arguments != null) {
-            //         var blockIR = GetOrCreateBlock(block.Id);
-            //         int blockArgIndex = 0;
-            //
-            //         foreach (var blockArg in block.Arguments) {
-            //             var blockArgIR = GetOrCreateResultOperand(blockArg.Id);
-            //             var operands = new List<OperandIR>();
-            //
-            //             foreach (var predBlockId in block.Predecessors) {
-            //                 var predBlock = idToRawBlockMap_[predBlockId];
-            //                 var terminatorInstr = predBlock.Operations.Count > 0 ? predBlock.Operations[^1] : null;
-            //
-            //                 if (terminatorInstr != null) {
-            //                     if (terminatorInstr.Sources.Count > blockArgIndex) {
-            //                         var sourceOp = terminatorInstr.Sources[blockArgIndex];
-            //                         var sourceOpIR = GetOrCreateSourceOperand(sourceOp.Id);
-            //                         operands.Add(sourceOpIR);
-            //
-            //                         // var ssaDefTag = ReferenceFinder.GetSSADefinitionTag(sourceOpIR);
-            //                         //
-            //                         // if (ssaDefTag == null) {
-            //                         var     ssaDefTag = GetOrCreateSSADefinition(sourceOp.Id, sourceOpIR);
-            //                         // }
-            //                         //
-            //                         var ssaUDLinkTag = new SSAUseTag(blockArg.Id, ssaDefTag) {
-            //                              Owner = sourceOpIR
-            //                         };
-            //                         ssaDefTag.Users.Add(ssaUDLinkTag);
-            //                         blockArgIR.AddTag(ssaUDLinkTag);
-            //                     }
-            //                 }
-            //
-            //                 var dummyInstr = blockArgIR.ParentInstruction;
-            //                 dummyInstr.Sources.AddRange(operands);
-            //                 blockArgIR.Parent = dummyInstr;
-            //             }
-            //
-            //             blockArgIndex++;
-            //         }
-            //     }
-            //
-            //     foreach (var op in block.Operations) {
-            //         if (op.Regions != null) {
-            //             foreach (var region in op.Regions) {
-            //                 ResolveBlockArgumentUses(region);
-            //             }
-            //         }
-            //     }
-            // }
         }
 
         protected override void Reset() {
@@ -194,7 +131,6 @@ namespace IRExplorerCore.LLVM {
         }
 
         public BlockIR ParseBlock(RawIRModel.BlockIR rawBlock, RegionIR parentRegion) {
-            idToRawBlockMap_[rawBlock.Id] = rawBlock;
             BlockIR block = GetOrCreateBlock(rawBlock.Id);
             block.ParentRegion = parentRegion;
 

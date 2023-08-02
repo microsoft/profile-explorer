@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using IRExplorerCore.IR;
 
 namespace IRExplorerCore.RawIRModel {
     public class ModuleIR {
@@ -36,10 +37,9 @@ namespace IRExplorerCore.RawIRModel {
     }
 
     public class OperationIR {
-        //? kind - temp/var, param, global
-
         public long Id { get; set; }
         public string Opcode { get; set; }
+        public InstructionKind Kind { get; set; }
         public int LineNumber { get; set; }
         public int StartOffset { get; set; }
         public int EndOffset { get; set; }
@@ -51,6 +51,7 @@ namespace IRExplorerCore.RawIRModel {
     public class SourceIR {
         public long Id { get; set; }
         public long DefinitionId { get; set; }
+        public OperandKind Kind { get; set; }
         public int LineNumber { get; set; }
         public int StartOffset { get; set; }
         public int EndOffset { get; set; }
@@ -58,6 +59,7 @@ namespace IRExplorerCore.RawIRModel {
 
     public class ResultIR {
         public long Id { get; set; }
+        public OperandKind Kind { get; set; }
         public int LineNumber { get; set; }
         public int StartOffset { get; set; }
         public int EndOffset { get; set; }

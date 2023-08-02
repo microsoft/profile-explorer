@@ -11,6 +11,7 @@ namespace IRExplorerCore.IR {
         Temporary,
         IntConstant,
         FloatConstant,
+        Constant,
         Indirection,
         Address,
         LabelAddress,

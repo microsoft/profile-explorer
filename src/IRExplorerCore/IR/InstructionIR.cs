@@ -17,6 +17,7 @@ namespace IRExplorerCore.IR {
         Call,
         Return,
         Exception,
+        Loop,
         Other
     }
 

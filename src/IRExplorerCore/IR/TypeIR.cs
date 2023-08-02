@@ -9,6 +9,8 @@ namespace IRExplorerCore.IR {
         Integer,
         Float,
         Vector,
+        Tensor,
+        MemoryReference,
         Multibyte,
         Array,
         Struct,
@@ -95,7 +97,7 @@ namespace IRExplorerCore.IR {
         public static TypeIR GetFloat() {
             return floatType_;
         }
-        
+
         public static TypeIR GetInt(int size) {
             return size switch
             {
