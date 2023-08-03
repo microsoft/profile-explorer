@@ -6,8 +6,9 @@ using System;
 namespace IRExplorerCore.LLVM {
     public sealed class LLVMSectionReader : SectionReaderBase, IDisposable {
         private static readonly char[] WhitespaceChars = { ' ', '\t' };
-        private const string SectionStartLine = "// -----";
-        private const string SectionEndLine = "// -----";
+        private const string SectionStartLine = "// -----//";
+        // \s*\/\/(-|\s*)----*\s*\/?\/?
+        private const string SectionEndLine = "//----- //";
 
         public LLVMSectionReader(string filePath, bool expectSectionHeaders = true) :
             base(filePath, expectSectionHeaders) { }
@@ -60,6 +61,11 @@ namespace IRExplorerCore.LLVM {
             }
 
             int end = line.LastIndexOf(SectionEndLine);
+
+            if (end == -1) {
+                end = line.Length;
+            }
+
             int length = end - start - SectionStartLine.Length;
 
             if (length > 0) {
@@ -71,20 +77,20 @@ namespace IRExplorerCore.LLVM {
 
         protected override string ExtractFunctionName(string line) {
             // Function names start with @ and end before the ( starting the parameter list.
-            //int start = line.IndexOf('@');
+            int start = line.IndexOf('@');
 
-            //if (start == -1) {
-            //    return "";
-            //}
+            if (start == -1) {
+                return "";
+            }
 
-            //int end = line.IndexOf('(', start + 1);
-            //int length = end - start - 1;
+            int end = line.IndexOf('(', start + 1);
+            int length = end - start - 1;
 
-            //if (length > 0) {
-            //    return line.Substring(start + 1, length);
-            //}
+            if (length > 0) {
+                return line.Substring(start + 1, length);
+            }
 
-            return "All";
+            return null;
         }
 
         protected override string PreprocessLine(string line) {
@@ -98,6 +104,6 @@ namespace IRExplorerCore.LLVM {
         protected override bool IsMetadataLine(string line) => false;
 
         protected override bool FunctionEndIsFunctionStart(string line) => false;
-        protected override bool SectionStartIsFunctionStart(string line) => false;
+        protected override bool FunctionStartIsSectionStart(string line) => true;
     }
 }

@@ -89,6 +89,6 @@ namespace IRExplorerCore.UTC {
         }
 
         protected override bool FunctionEndIsFunctionStart(string line) => false;
-        protected override bool SectionStartIsFunctionStart(string line) => false;
+        protected override bool FunctionStartIsSectionStart(string line) => false;
     }
 }

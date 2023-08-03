@@ -54,6 +54,6 @@ namespace IRExplorerCore.ASM {
         protected override bool ShouldSkipOutputLine(string line) => string.IsNullOrEmpty(line);
 
         protected override bool FunctionEndIsFunctionStart(string line) => !string.IsNullOrEmpty(line);
-        protected override bool SectionStartIsFunctionStart(string line) => true;
+        protected override bool FunctionStartIsSectionStart(string line) => true;
     }
 }

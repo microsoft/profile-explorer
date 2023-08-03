@@ -31,7 +31,16 @@ namespace IRExplorerCore.LLVM {
             var inputFile = Path.GetTempFileName();
             var outputFile = Path.ChangeExtension(Path.GetTempFileName(), ".json");
 
-            var parserPath = @"C:\github\llvm-project\build\Debug\bin\mlir-lsp-server.exe";
+            //? TODO:
+            // - section should include all functs
+            // - when parsing, combine before/after pass output with main output
+            //      - based on compilerIRInfo flag
+            //      - prefix func name with module name
+            //          - support for modules needed in reader, nested modules  mod1.mod2.func
+            //      - adjust offsets and line numnbers in raw IR afterwards
+            //      -
+
+            var parserPath = @"D:\github\llvm-project\build\Debug\bin\mlir-lsp-server.exe";
             var psi = new ProcessStartInfo(parserPath) {
                 Arguments = $"\"{inputFile}\" \"{outputFile}\"",
                 UseShellExecute = false,
@@ -46,6 +55,7 @@ namespace IRExplorerCore.LLVM {
                 process.WaitForExit();
 
                 if (!File.Exists(outputFile)) {
+                    Trace.WriteLine($"Failed to generate MLIR JSON file for section: {section.Name}");
                     return null;
                 }
             }
@@ -55,6 +65,7 @@ namespace IRExplorerCore.LLVM {
             }
 
             var jsonData = File.ReadAllText(outputFile);
+            File.WriteAllText(@"C:\test\in.mlir", sectionText.ToString());
             File.WriteAllText(@"C:\test\out.json", jsonData);
 
             if (JsonUtils.Deserialize(jsonData, out IRExplorerCore.RawIRModel.ModuleIR module)) {
