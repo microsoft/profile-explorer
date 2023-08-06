@@ -39,5 +39,9 @@ namespace IRExplorerCore
         public override int GetHashCode() {
             return HashCode.Combine(DataStartOffset, DataEndOffset);
         }
+
+        public override string ToString() {
+            return $"startLine {StartLine}, endLine {EndLine}, lines {LineCount}";
+        }
     }
 }

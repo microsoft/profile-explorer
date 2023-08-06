@@ -48,7 +48,8 @@ namespace IRExplorerCore.IR {
         }
 
         private void PrintBlock(BlockIR block) {
-            builder_.Append($"block {{#{block.IndexInFunction}, B{block.Number}}}:");
+            builder_.Append($"block {{#{block.IndexInFunction}, B{block.Number}}}, ");
+            builder_.Append($" loc: {block.TextLocation}, len: {block.TextLength}");
 
             builder_.Append(" P");
             block.Predecessors.ForEach((p) => builder_.Append($" {p.Number}"));

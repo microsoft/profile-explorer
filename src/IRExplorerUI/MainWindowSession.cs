@@ -840,9 +840,16 @@ namespace IRExplorerUI {
             var docInfo = sessionState_.FindLoadedDocument(section);
             var parsedSection = docInfo.Loader.LoadSection(section);
 
-            if (parsedSection != null && parsedSection.Function != null) {
-                compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section);
-                addressTag_ = parsedSection.Function.GetTag<AssemblyMetadataTag>();
+            if (parsedSection != null) {
+                if (parsedSection.Function != null) {
+                    compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section);
+                    addressTag_ = parsedSection.Function.GetTag<AssemblyMetadataTag>();
+                }
+                else {
+                    // Create a dummy func. to at least be able to show the text.
+                    parsedSection.Function = new FunctionIR(section.ParentFunction.Name);
+                }
+
                 return parsedSection;
             }
 

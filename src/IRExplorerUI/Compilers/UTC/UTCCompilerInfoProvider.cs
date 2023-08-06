@@ -47,8 +47,8 @@ namespace IRExplorerUI.Compilers.UTC {
         public ISectionStyleProvider SectionStyleProvider => styles_;
         public IRRemarkProvider RemarkProvider => remarks_;
 
-        public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
-            return new BasicBlockFoldingStrategy(function);
+        public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function, IRTextSection section) {
+            return new BasicBlockFoldingStrategy(function, section);
         }
 
         public GraphPrinterNameProvider CreateGraphNameProvider(GraphKind graphKind) {

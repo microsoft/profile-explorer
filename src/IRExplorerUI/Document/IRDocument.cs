@@ -176,7 +176,7 @@ namespace IRExplorerUI {
             Settings = settings;
         }
 
-        public List<BlockIR> Blocks => Function.Blocks;
+        public List<BlockIR> Blocks => Function?.Blocks;
         public BookmarkManager BookmarkManager => bookmarks_;
         public ISession Session { get; private set; }
         public FunctionIR Function { get; set; }
@@ -1915,6 +1915,10 @@ namespace IRExplorerUI {
                 }
             }
 
+            var arrowStyle = new HighlightingStyle(Colors.Transparent, ColorPens.GetDashedPen(Colors.DimGray, DashStyles.Dash, 1));
+            var instrGroup = new HighlightedGroup(instr, arrowStyle);
+            highlighter.Add(instrGroup);
+            UpdateHighlighting();
             return true;
         }
 
@@ -2285,13 +2289,13 @@ namespace IRExplorerUI {
                 var useInstr = use.ParentTuple;
 
                 if (useInstr != null) {
-                    //instrGroup.Add(useInstr);
+                    instrGroup.Add(useInstr);
                 }
 
                 // overlayRenderer_.AddConnectedElement(use.Element, arrowStyle);
             }
 
-            //highlighter.Add(instrGroup);
+            highlighter.Add(instrGroup);
             highlighter.Add(useGroup);
             RaiseElementHighlightingEvent(op, useGroup, highlighter.Type, action);
         }
@@ -2650,6 +2654,10 @@ namespace IRExplorerUI {
         }
 
         private void MarkLoopBlocks() {
+            if (Function == null) {
+                return;
+            }
+
             var dummyGraph = new Graph(GraphKind.FlowGraph);
             var graphStyle = new FlowGraphStyleProvider(dummyGraph, App.Settings.FlowGraphSettings);
             var loopGroups = new Dictionary<HighlightingStyle, HighlightedGroup>();
@@ -3319,7 +3327,7 @@ namespace IRExplorerUI {
 
             UninstallBlockFolding();
             folding_ = FoldingManager.Install(TextArea);
-            var foldingStrategy = Session.CompilerInfo.CreateFoldingStrategy(Function);
+            var foldingStrategy = Session.CompilerInfo.CreateFoldingStrategy(Function, Section);
             foldingStrategy.UpdateFoldings(folding_, Document);
         }
 

@@ -23,11 +23,13 @@ namespace IRExplorerCore {
         public int Number { get; set; }
         public string Name { get; set; }
         public int BlockCount { get; set; }
+        public int IndexInModule { get; set; }
         public IRTextFunction ParentFunction { get; set; }
         public int LineCount => Output.LineCount;
         public IRPassOutput Output { get; set; }
         public IRPassOutput OutputAfter { get; set; }
         public IRPassOutput OutputBefore { get; set; }
+        public IRPassOutput ModuleOutput { get; set; }
 
         public Dictionary<int, string> LineMetadata {
             get => lineMetadata_?.GetValue();

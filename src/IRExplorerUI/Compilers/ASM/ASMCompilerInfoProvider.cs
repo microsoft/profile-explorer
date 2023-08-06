@@ -199,8 +199,8 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
 
     //? TODO: << Debug/Binary related functs should not be part of CompilerInfoProvider
 
-    public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
-        return new BasicBlockFoldingStrategy(function);
+    public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function, IRTextSection section) {
+        return new BasicBlockFoldingStrategy(function, section);
     }
 
     public virtual Task HandleLoadedDocument(LoadedDocument document, string modulePath) {

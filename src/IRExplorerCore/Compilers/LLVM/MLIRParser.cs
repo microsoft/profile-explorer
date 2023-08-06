@@ -40,7 +40,11 @@ namespace IRExplorerCore.LLVM {
             //      - adjust offsets and line numnbers in raw IR afterwards
             //      -
 
-            var parserPath = @"D:\github\llvm-project\build\Debug\bin\mlir-lsp-server.exe";
+            if (section.OutputBefore != null) {
+                Trace.WriteLine($" > before pass output for section: {section.Name}\n {section.OutputBefore}");
+            }
+
+            var parserPath = @"C:\github\llvm-project\build\Debug\bin\mlir-lsp-server.exe";
             var psi = new ProcessStartInfo(parserPath) {
                 Arguments = $"\"{inputFile}\" \"{outputFile}\"",
                 UseShellExecute = false,
@@ -49,6 +53,7 @@ namespace IRExplorerCore.LLVM {
 
             try {
                 File.WriteAllText(inputFile, sectionText.ToString());
+                File.WriteAllText(@"C:\test\in.mlir", sectionText.ToString());
 
                 using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
                 process.Start();
@@ -65,14 +70,13 @@ namespace IRExplorerCore.LLVM {
             }
 
             var jsonData = File.ReadAllText(outputFile);
-            File.WriteAllText(@"C:\test\in.mlir", sectionText.ToString());
             File.WriteAllText(@"C:\test\out.json", jsonData);
 
             if (JsonUtils.Deserialize(jsonData, out IRExplorerCore.RawIRModel.ModuleIR module)) {
                 var parser = new MLIRParser(irInfo_, errorHandler_, null, section);
 
-                if (module.Functions.Count > 0) {
-                    return parser.Parse(module.Functions[0], sectionText);
+                if (module.Functions.Count >= section.IndexInModule) {
+                    return parser.Parse(module.Functions[section.IndexInModule], sectionText);
                 }
             }
 

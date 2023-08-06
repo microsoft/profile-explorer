@@ -78,7 +78,7 @@ namespace IRExplorerCore {
 
             sectionInfo.Output.Signature = sha.Hash;
         }
-        
+
 
         public override string GetDocumentOutputText() {
             var data = documentReader_.GetDocumentTextData();
@@ -120,11 +120,15 @@ namespace IRExplorerCore {
         }
 
         public override string GetSectionText(IRTextSection section) {
-            return documentReader_.GetSectionText(section);
+            return section.ModuleOutput != null ?
+                documentReader_.GetPassOutputText(section.ModuleOutput) :
+                documentReader_.GetSectionText(section);
         }
 
         public override ReadOnlyMemory<char> GetSectionTextSpan(IRTextSection section) {
-            return documentReader_.GetSectionTextSpan(section);
+            return section.ModuleOutput != null ?
+                documentReader_.GetPassOutputTextSpan(section.ModuleOutput) :
+                documentReader_.GetSectionTextSpan(section);
         }
 
         public override string GetSectionOutputText(IRPassOutput output) {

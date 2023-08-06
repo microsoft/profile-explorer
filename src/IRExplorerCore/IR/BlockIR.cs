@@ -173,6 +173,7 @@ namespace IRExplorerCore.IR {
         public override string ToString() {
             var result = new StringBuilder();
             result.AppendLine($"block number: {Number},  id: {Id}");
+            result.AppendLine($"   location {TextLocation}, length {TextLength}");
 
             if (Predecessors.Count > 0) {
                 result.AppendLine("o preds: ".Indent(2));
