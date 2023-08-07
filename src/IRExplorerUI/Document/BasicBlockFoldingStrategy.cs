@@ -66,7 +66,6 @@ namespace IRExplorerUI {
             BlockIR lastBlock = null;
             int lastOffset = 0;
             int textLength = document.TextLength;
-            bool sorted = true;
 
             foreach (var block in Function.Blocks) {
                 int offset = block.TextLocation.Offset;
@@ -79,18 +78,11 @@ namespace IRExplorerUI {
                     }
                 }
 
-                if (offset < lastOffset) {
-                    sorted = false;
-                }
-
                 lastOffset = offset;
                 lastBlock = block;
             }
 
-            if (!sorted) {
-                foldings.Sort((a, b) => a.StartOffset - b.StartOffset);
-            }
-
+            foldings.Sort((a, b) => a.StartOffset - b.StartOffset);
             return foldings;
         }
 
