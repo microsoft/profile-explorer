@@ -9,19 +9,19 @@ using IRExplorerUI.Query;
 using IRExplorerCore;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
-using IRExplorerCore.LLVM;
+using IRExplorerCore.MLIR;
 using IRExplorerUI.Compilers.ASM;
 
 namespace IRExplorerUI.Compilers.LLVM {
     public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
-        private LLVMCompilerIRInfo ir_;
+        private MLIRCompilerIRInfo ir_;
         private ISession session_;
         private INameProvider names_;
         private IRRemarkProvider remarks_;
         private ISectionStyleProvider styles_;
 
         public LLVMCompilerInfoProvider() {
-            ir_ = new LLVMCompilerIRInfo();
+            ir_ = new MLIRCompilerIRInfo();
             styles_ = new UTCSectionStyleProvider();
             names_ = new UTCNameProvider();
             remarks_ = new DummyIRRemarkProvider();

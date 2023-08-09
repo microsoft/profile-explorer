@@ -7,7 +7,7 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerUI;
 
-namespace IRExplorerCore.LLVM {
+namespace IRExplorerCore.MLIR {
 
     public sealed class MLIRSectionParser : IRSectionParser {
         private IRParsingErrorHandler errorHandler_;
@@ -44,7 +44,7 @@ namespace IRExplorerCore.LLVM {
                 Trace.WriteLine($" > before pass output for section: {section.Name}\n {section.OutputBefore}");
             }
 
-            var parserPath = @"C:\github\llvm-project\build\Debug\bin\mlir-lsp-server.exe";
+            var parserPath = @"C:\github\llvm-project\build\RelWithDebInfo\bin\mlir-lsp-server.exe";
             var psi = new ProcessStartInfo(parserPath) {
                 Arguments = $"\"{inputFile}\" \"{outputFile}\"",
                 UseShellExecute = false,
@@ -127,6 +127,7 @@ namespace IRExplorerCore.LLVM {
                 function_.RootRegion = ParseRegion(rawFunction.Regions[0]);
             }
 
+            function_.AssignBlockIndices();
             return function_;
         }
 
@@ -138,8 +139,14 @@ namespace IRExplorerCore.LLVM {
         public RegionIR ParseRegion(RawIRModel.RegionIR rawRegion, RegionIR parentRegion = null, IRElement owner = null) {
             RegionIR region = new RegionIR(NextElementId.NewBlock(nextBlockNumber_), owner, parentRegion);
 
-            foreach (var rawBlock in rawRegion.Blocks) {
-                region.Blocks.Add(ParseBlock(rawBlock, region));
+            if (rawRegion == null) {
+                ;
+            }
+
+            if (rawRegion.Blocks != null) {
+                foreach (var rawBlock in rawRegion.Blocks) {
+                    region.Blocks.Add(ParseBlock(rawBlock, region));
+                }
             }
 
             return region;
@@ -149,46 +156,54 @@ namespace IRExplorerCore.LLVM {
             BlockIR block = GetOrCreateBlock(rawBlock.Id);
             block.ParentRegion = parentRegion;
 
-            foreach (var rawOperation in rawBlock.Operations) {
-                block.Tuples.Add(ParseOperation(rawOperation, block));
+            if (rawBlock.Operations != null) {
+                foreach (var rawOperation in rawBlock.Operations) {
+                    block.Tuples.Add(ParseOperation(rawOperation, block));
+                }
             }
 
-            foreach(var predBlock in rawBlock.Predecessors) {
-                block.Predecessors.Add(GetOrCreateBlock(predBlock));
+            if (rawBlock.Predecessors != null) {
+                foreach (var predBlock in rawBlock.Predecessors) {
+                    block.Predecessors.Add(GetOrCreateBlock(predBlock));
+                }
             }
 
-            foreach(var succBlock in rawBlock.Successors) {
-                block.Successors.Add(GetOrCreateBlock(succBlock));
+            if (rawBlock.Successors != null) {
+                foreach (var succBlock in rawBlock.Successors) {
+                    block.Successors.Add(GetOrCreateBlock(succBlock));
+                }
             }
 
             block.BlockArguments = new List<OperandIR>();
 
-            foreach (var blockArg in rawBlock.Arguments) {
-                var dummyInstr = new InstructionIR(NextElementId.NextTuple(), InstructionKind.Other, block);
-                var blockArgOp = ParseResult(blockArg.Argument, dummyInstr);
+            if (rawBlock.Arguments != null) {
+                foreach (var blockArg in rawBlock.Arguments) {
+                    var dummyInstr = new InstructionIR(NextElementId.NextTuple(), InstructionKind.Other, block);
+                    var blockArgOp = ParseResult(blockArg.Argument, dummyInstr);
 
-                // No incoming values means it's the list of parameters in the entry block.
-                if (blockArg.IncomingValues != null) {
-                    foreach (var incomingValue in blockArg.IncomingValues) {
-                        var incomingOp = GetOrCreateOperand(incomingValue.OperandId);
-                        incomingOp.Role = OperandRole.Parameter;
-                        dummyInstr.Sources.Add(incomingOp);
+                    // No incoming values means it's the list of parameters in the entry block.
+                    if (blockArg.IncomingValues != null) {
+                        foreach (var incomingValue in blockArg.IncomingValues) {
+                            var incomingOp = GetOrCreateOperand(incomingValue.OperandId);
+                            incomingOp.Role = OperandRole.Parameter;
+                            dummyInstr.Sources.Add(incomingOp);
 
-                        var ssaDefTag = GetOrCreateSSADefinition(incomingValue.OperandId, incomingOp);
-                        var ssaUDLinkTag = new SSAUseTag(blockArg.Argument.Id, ssaDefTag) {
-                            Owner = blockArgOp
-                        };
-                        ssaDefTag.Users.Add(ssaUDLinkTag);
+                            var ssaDefTag = GetOrCreateSSADefinition(incomingValue.OperandId, incomingOp);
+                            var ssaUDLinkTag = new SSAUseTag(blockArg.Argument.Id, ssaDefTag) {
+                                Owner = blockArgOp
+                            };
+                            ssaDefTag.Users.Add(ssaUDLinkTag);
+                        }
                     }
-                }
 
-                if (dummyInstr.Sources.Count > 0) {
-                    dummyInstr.Kind = InstructionKind.BlockArgumentsMerge;
-                }
+                    if (dummyInstr.Sources.Count > 0) {
+                        dummyInstr.Kind = InstructionKind.BlockArgumentsMerge;
+                    }
 
-                dummyInstr.Destinations.Add(blockArgOp);
-                block.BlockArguments.Add(blockArgOp);
-                block.Tuples.Add(dummyInstr);
+                    dummyInstr.Destinations.Add(blockArgOp);
+                    block.BlockArguments.Add(blockArgOp);
+                    block.Tuples.Add(dummyInstr);
+                }
             }
 
             function_.Blocks.Add(block);
@@ -203,17 +218,24 @@ namespace IRExplorerCore.LLVM {
             instr.TextLocation = new TextLocation(rawInstr.StartOffset, rawInstr.LineNumber, 0);
             instr.TextLength = rawInstr.EndOffset - rawInstr.StartOffset;
 
-            foreach(var rawSource in rawInstr.Sources) {
-                instr.Sources.Add(ParseSource(rawSource, instr));
+            if (rawInstr.Sources != null) {
+                foreach (var rawSource in rawInstr.Sources) {
+                    instr.Sources.Add(ParseSource(rawSource, instr));
+                }
             }
 
-            foreach(var rawResult in rawInstr.Results) {
-                instr.Destinations.Add(ParseResult(rawResult, instr));
+            if (rawInstr.Results != null) {
+                foreach (var rawResult in rawInstr.Results) {
+                    instr.Destinations.Add(ParseResult(rawResult, instr));
+                }
             }
 
-            foreach(var rawRegion in rawInstr.Regions) {
-                instr.NestedRegions ??= new List<RegionIR>();
-                instr.NestedRegions.Add(ParseRegion(rawRegion, parentBlock.ParentRegion, instr));
+            if (rawInstr.Regions != null) {
+                foreach (var rawRegion in rawInstr.Regions) {
+                    if(rawRegion == null) continue;
+                    instr.NestedRegions ??= new List<RegionIR>();
+                    instr.NestedRegions.Add(ParseRegion(rawRegion, parentBlock.ParentRegion, instr));
+                }
             }
 
             if (instr.OpcodeText.ToString().Contains("br")) {

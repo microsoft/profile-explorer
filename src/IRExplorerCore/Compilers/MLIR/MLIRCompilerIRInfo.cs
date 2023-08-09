@@ -6,18 +6,18 @@ using System.Diagnostics;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
-namespace IRExplorerCore.LLVM {
-    public class LLVMCompilerIRInfo : ICompilerIRInfo {
+namespace IRExplorerCore.MLIR {
+    public class MLIRCompilerIRInfo : ICompilerIRInfo {
         public IRMode Mode { get; set; }
 
         public InstrOffsetData InstructionOffsetData => InstrOffsetData.VariableSize(1, 16);
 
         public IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders) {
-            return new LLVMSectionReader(filePath, false);
+            return new MLIRSectionReader(filePath, false);
         }
 
         public IRSectionReader CreateSectionReader(byte[] textData, bool expectSectionHeaders) {
-            return new LLVMSectionReader(textData, false);
+            return new MLIRSectionReader(textData, false);
         }
 
         public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler, long functionSize) {

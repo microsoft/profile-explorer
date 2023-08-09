@@ -2,18 +2,25 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Text.RegularExpressions;
 
-namespace IRExplorerCore.LLVM {
-    public sealed class LLVMSectionReader : SectionReaderBase, IDisposable {
+namespace IRExplorerCore.MLIR {
+    public sealed class MLIRSectionReader : SectionReaderBase, IDisposable {
         private static readonly char[] WhitespaceChars = { ' ', '\t' };
         private const string SectionStartLine = "// -----//";
         // \s*\/\/(-|\s*)----*\s*\/?\/?
         private const string SectionEndLine = "//----- //";
 
-        public LLVMSectionReader(string filePath, bool expectSectionHeaders = true) :
+        static readonly Regex SectionStartLineRegex;
+
+        static MLIRSectionReader() {
+            SectionStartLineRegex = new Regex(@"\s*\/\/(-|\s*)----*\s*\/?\/?", RegexOptions.Compiled);
+        }
+
+        public MLIRSectionReader(string filePath, bool expectSectionHeaders = true) :
             base(filePath, expectSectionHeaders) { }
 
-        public LLVMSectionReader(byte[] textData, bool expectSectionHeaders = true) :
+        public MLIRSectionReader(byte[] textData, bool expectSectionHeaders = true) :
             base(textData, expectSectionHeaders) { }
 
         protected override bool IsSectionStart(string line) {
@@ -90,7 +97,7 @@ namespace IRExplorerCore.LLVM {
                 return line.Substring(start + 1, length);
             }
 
-            return null;
+            return "";
         }
 
         protected override string PreprocessLine(string line) {
@@ -103,7 +110,15 @@ namespace IRExplorerCore.LLVM {
 
         protected override bool IsMetadataLine(string line) => false;
 
-        protected override bool FunctionEndIsFunctionStart(string line) => false;
+        protected override bool IsModuleStart(string line) {
+            return line.StartsWith("module");
+        }
+
+        protected override string ExtractModuleName(string line) {
+            return ExtractFunctionName(line);
+        }
+
+        protected override bool FunctionEndIsFunctionStart(string line) => true;
         protected override bool FunctionStartIsSectionStart(string line) => true;
     }
 }

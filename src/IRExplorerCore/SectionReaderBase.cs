@@ -123,6 +123,7 @@ namespace IRExplorerCore {
         private bool hasPreprocessedLines_;
         private bool hasMetadataLines_;
         private IRTextSummary summary_;
+        private Stack<IRTextModule> moduleStack_;
 
         public SectionReaderBase(string filePath, bool expectSectionHeaders = true) {
             expectSectionHeaders_ = expectSectionHeaders;
@@ -158,7 +159,13 @@ namespace IRExplorerCore {
 
         protected abstract bool IsFunctionEnd(string line);
 
-        protected abstract bool IsBlockStart(string line);
+        protected virtual bool IsBlockStart(string line) => false;
+
+        protected virtual bool IsModuleStart(string line) => false;
+
+        protected virtual bool IsModuleEnd(string line) => false;
+
+        protected virtual string ExtractModuleName(string line) => null;
 
         protected abstract string ExtractSectionName(string line);
 
@@ -298,7 +305,31 @@ namespace IRExplorerCore {
             prevLines_ = new string[3];
             summary_ = new IRTextSummary();
             functionMap_ = new Dictionary<string, IRTextFunction>();
+            moduleStack_ = new Stack<IRTextModule>();
             lockObject_ = new object();
+        }
+
+        protected IRTextModule BeginModule(string name) {
+            var module = new IRTextModule(name, GetCurrentModule());
+            moduleStack_.Push(module);
+            return module;
+        }
+
+        protected void EndModule() {
+            if (moduleStack_.Count == 0) {
+                return;
+            }
+
+            var module = moduleStack_.Pop();
+            summary_.Modules.Add(module);
+        }
+
+        protected IRTextModule GetCurrentModule() {
+            if (moduleStack_.Count == 0) {
+                return null;
+            }
+
+            return moduleStack_.Peek();
         }
 
         public byte[] GetDocumentTextData() {
@@ -574,6 +605,20 @@ namespace IRExplorerCore {
             return false;
         }
 
+        private string BuildFunctionName(string name) {
+            var module = GetCurrentModule();
+
+            while (module != null) {
+                if (module.HasName) {
+                    name = $"{module.Name}.{name}";
+                }
+
+                module = module.ParentModule;
+            }
+
+            return name;
+        }
+
         private bool FindNextSection(SectionTextHandler sectionTextHandler) {
             bool hasSectionName = true;
 
@@ -618,6 +663,7 @@ namespace IRExplorerCore {
             int funcStartLine = 0;
             int funcEndLine = 0;
             int blockCount = 0;
+            bool foundNextFunction = false;
 
             IRPassOutput moduleOutput = null;
 
@@ -626,6 +672,8 @@ namespace IRExplorerCore {
             }
 
             while (true) {
+                foundNextFunction = false;
+
                 if (currentLine_ == null) {
                     sectionEndLine = lineIndex_ + 1;
                     funcEndLine = lineIndex_ + 1;
@@ -641,21 +689,32 @@ namespace IRExplorerCore {
                         }
                     }
 
-                    //? TODO: If empty line and not recorded yet, ignore it
                     //? TODO: Wrong line numbers from MLIR, reason why preview popup shows up for uses
-                    //? TODO: Region and block folding, folding of module text before/after loaded function, closed by default
                     moduleOutput = AddOptionalOutputLine(currentLine_, funcInitialOffset, moduleOutput);
 
-                    if (!foundFunctionStart && IsFunctionStart(currentLine_)) {
-                        // Extract function name.
-                        funcName = ExtractFunctionName(currentLine_);
-                        funcStartLine = lineIndex_;
-                        funcStartOffset = previousOffset_; //? Or TextOffset() - currentLine.Length?
-                        foundFunctionStart = true;
-
-                        Trace.WriteLine($"  > start func at {lineIndex_}: {funcName}");
+                    if (IsModuleStart(currentLine_)) {
+                        BeginModule(ExtractModuleName(currentLine_));
                     }
-                    else if (IsFunctionEnd(currentLine_)) {
+                    else if (IsModuleEnd(currentLine_)) {
+                        EndModule();
+                    }
+
+                    if (IsFunctionStart(currentLine_)) {
+                        if (foundFunctionStart) {
+                            foundNextFunction = true;
+                        }
+                        else {
+                            // Extract function name.
+                            funcName = ExtractFunctionName(currentLine_);
+                            funcStartLine = lineIndex_;
+                            funcStartOffset = previousOffset_; //? Or TextOffset() - currentLine.Length?
+                            foundFunctionStart = true;
+
+                            Trace.WriteLine($"  > start func at {lineIndex_}: {funcName}");
+                        }
+                    }
+
+                    if (foundNextFunction || IsFunctionEnd(currentLine_)) {
                         // Found function end.
                         funcEndOffset = FunctionEndIsFunctionStart(currentLine_) ? previousOffset_ : TextOffset();
                         sectionEndLine = lineIndex_ + 1;
@@ -686,7 +745,7 @@ namespace IRExplorerCore {
                         HasPreprocessedLines = hasPreprocessedLines_ || lineMetadata != null,
                     };
 
-                    var textFunc = GetOrCreateFunction(funcName);
+                    var textFunc = GetOrCreateFunction(BuildFunctionName(funcName));
                     functions.Add(textFunc);
 
                     var section = new IRTextSection(textFunc, sectionName, output, blockCount);
@@ -725,16 +784,17 @@ namespace IRExplorerCore {
                     foundFunctionStart = foundFunctionEnd = false;
                 }
 
-                currentLine_ = NextLine();
-                lineIndex_++;
+                if (!foundNextFunction) {
+                    currentLine_ = NextLine();
+                    lineIndex_++;
+                }
 
                 if (currentLine_ == null || IsSectionStart(currentLine_)) {
                     break;
                 }
             }
 
-            //? TODO: for reach func, set the after output to cover rest of entire section
-
+            EndModule();
             return true;
         }
 

@@ -125,7 +125,7 @@ namespace IRExplorerUI.Profile {
                 return false;
             }
 
-            Trace.WriteLine($"Building address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFile}");
+            Trace.WriteLine($"Building address mapping for {Summary.Name}, PDB {ModuleDocument.DebugInfoFile}");
             sortedFuncList_ = DebugInfo.GetSortedFunctions();
 
             foreach (var funcInfo in sortedFuncList_) {

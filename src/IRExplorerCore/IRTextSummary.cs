@@ -13,26 +13,28 @@ namespace IRExplorerCore {
         private int hashCode_;
 
         public Guid Id { get; set; }
-        public string ModuleName { get; private set; }
+        public string Name { get; private set; }
         public List<IRTextFunction> Functions { get; set; }
+        public List<IRTextModule> Modules { get; set; }
 
         public IRTextSummary(string moduleName = null) {
             SetModuleName(moduleName);
             Functions = new List<IRTextFunction>();
+            Modules = new List<IRTextModule>();
             functionNameMap_ = new Dictionary<string, IRTextFunction>();
             functionMap_ = new Dictionary<int, IRTextFunction>();
             sectionMap_ = new Dictionary<int, IRTextSection>();
         }
 
         public void SetModuleName(string moduleName) {
-            ModuleName = moduleName != null ? string.Intern(moduleName) : null;
+            Name = moduleName != null ? string.Intern(moduleName) : null;
         }
 
         public void AddFunction(IRTextFunction function) {
             if (functionNameMap_.ContainsKey(function.Name)) {
                 return; //? remove
             }
-            
+
             function.Number = Functions.Count;
             Functions.Add(function);
             functionNameMap_.Add(function.Name, function);
@@ -91,7 +93,7 @@ namespace IRExplorerCore {
 
         public override int GetHashCode() {
             if (hashCode_ == 0) {
-                hashCode_ = HashCode.Combine(ModuleName);
+                hashCode_ = HashCode.Combine(Name);
             }
 
             return hashCode_;
@@ -99,7 +101,7 @@ namespace IRExplorerCore {
 
         public override string ToString() {
             var sb = new StringBuilder();
-            sb.AppendLine($"Summary: {ModuleName}");
+            sb.AppendLine($"Summary: {Name}");
             sb.AppendLine($"Functions: {Functions.Count}");
             return sb.ToString();
         }

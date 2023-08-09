@@ -11,11 +11,17 @@ namespace IRExplorerCore {
         public int Number { get; set; }
         public string Name { get; }
         public IRTextSummary ParentSummary { get; set; }
+        public IRTextModule ParentModule { get; set; }
         private int hashCode_;
 
-        public IRTextFunction(string name) {
+        public IRTextFunction(string name, IRTextModule parentModule = null) {
             Name = string.Intern(name);
+            ParentModule = parentModule;
             Sections = new List<IRTextSection>();
+
+            if (parentModule != null) {
+                parentModule.Functions.Add(this);
+            }
         }
 
         public int MaxBlockCount {
@@ -74,7 +80,7 @@ namespace IRExplorerCore {
             }
 
             if (ParentSummary != null && other.ParentSummary != null) {
-                return ParentSummary.ModuleName.Equals(other.ParentSummary.ModuleName, StringComparison.Ordinal);
+                return ParentSummary.Name.Equals(other.ParentSummary.Name, StringComparison.Ordinal);
             }
 
             return ParentSummary == null && other.ParentSummary == null;

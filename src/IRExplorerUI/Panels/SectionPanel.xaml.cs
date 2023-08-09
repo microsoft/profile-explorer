@@ -300,7 +300,7 @@ namespace IRExplorerUI {
 
         public int Index { get; set; }
         public IRTextFunction Function { get; set; }
-        public string ModuleName => Function.ParentSummary.ModuleName;
+        public string ModuleName => Function.ParentSummary.Name;
         public TimeSpan Weight { get; set; }
         public TimeSpan ExclusiveWeight { get; set; }
         public string AlternateName { get; set; }
