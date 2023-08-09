@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -23,12 +24,14 @@ nslimit=2;
 
         private FunctionIR function_;
         private Dictionary<string, TaggedObject> blockNameMap_;
+        private Dictionary<TaggedObject, List<TaggedObject>> blockNodeGroupsMap_;
 
         public FlowGraphPrinter(FunctionIR function, GraphPrinterNameProvider nameProvider) :
             base(nameProvider) {
             function_ = function;
             nameProvider_ = nameProvider;
             blockNameMap_ = new Dictionary<string, TaggedObject>();
+            blockNodeGroupsMap_ = new Dictionary<TaggedObject, List<TaggedObject>>();
         }
 
         protected override string GetExtraSettings() {
@@ -42,6 +45,9 @@ nslimit=2;
         }
 
         private void CreateNode(BlockIR block, StringBuilder builder) {
+            if (block == null) {
+                ;
+            }
             string blockName = CreateNode(block.Id, nameProvider_.GetBlockNodeLabel(block), builder);
             blockNameMap_[blockName] = block;
         }
@@ -55,9 +61,23 @@ nslimit=2;
             CreateEdgeWithStyle(block1.Id, block2.Id, "dotted", builder);
         }
 
+        private void AddElementToGroupMap(IRElement region, BlockIR block) {
+            if (!blockNodeGroupsMap_.TryGetValue(region, out var group)) {
+                group = new List<TaggedObject>();
+                blockNodeGroupsMap_[region] = group;
+            }
+
+            group.Add(block);
+        }
+
         protected override void PrintGraph(StringBuilder builder) {
-            foreach (var block in function_.Blocks) {
-                CreateNode(block, builder);
+            if (function_.RootRegion != null) {
+                PrintRegions(function_.RootRegion, builder);
+            }
+            else {
+                foreach (var block in function_.Blocks) {
+                    CreateNode(block, builder);
+                }
             }
 
             foreach (var block in function_.Blocks) {
@@ -68,6 +88,28 @@ nslimit=2;
 
             //string domEdges = PrintDominatorEdges(DominatorAlgorithmOptions.Dominators);
             //builder.AppendLine(domEdges);
+        }
+
+        private void PrintRegions(RegionIR region, StringBuilder builder) {
+            int margin = Math.Min(100, 50);
+            StartSubgraph(margin, builder);
+
+            foreach(var block in region.Blocks) {
+                var parentRegion = block.ParentRegion;
+
+                while (parentRegion != null) {
+                    AddElementToGroupMap(parentRegion, block);
+                    parentRegion = parentRegion.ParentRegion;
+                }
+
+                CreateNode(block, builder);
+            }
+
+            foreach (var childRegion in region.ChildRegions) {
+                PrintRegions(childRegion, builder);
+            }
+
+            EndSubgraph(builder);
         }
 
         private string PrintDominatorEdges(DominatorAlgorithmOptions options) {
@@ -112,7 +154,7 @@ nslimit=2;
         }
 
         public override Dictionary<TaggedObject, List<TaggedObject>> CreateNodeDataGroupsMap() {
-            return null;
+            return blockNodeGroupsMap_;
         }
     }
 }

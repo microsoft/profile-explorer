@@ -266,6 +266,8 @@ namespace IRExplorerCore.Graph {
                 return null;
             }
 
+            File.Copy(inputFilePath, $"C:\\test\\cfg_{Environment.TickCount}.dot", true);
+
 #if !DEBUG
             // Clean up temporary files.
             try {

@@ -149,8 +149,9 @@ namespace IRExplorerCore.Graph {
 
         private void PrintNode(IRElement element, string label) {
             // Numbers picked by trial and error for graph to look good...
-            double verticalMargin = 0.055;
-            double horizontalMargin = Math.Min(Math.Max(0.1, label.Length * 0.03), 1.0);
+            bool isMultiline = label.Contains("\\n");
+            double verticalMargin = isMultiline ? 0.12 : 0.06;
+            double horizontalMargin = Math.Min(Math.Max(0.1, label.Length * (isMultiline ? 0.02 : 0.03)), 2.0);
 
             string elementName = CreateNodeWithMargins(element.Id, label, builder_,
                                                        horizontalMargin, verticalMargin);

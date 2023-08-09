@@ -25,7 +25,12 @@ public class MLIRGraphPrinterNameProvider : GraphPrinterNameProvider {
                     }
                 }
 
-                return $"{variableName} = {label}";
+                var result = $"{variableName} = {label}";
+                if(result.Length > 32) {
+                    result = $"{variableName} =\\n    {label}";
+                }
+
+                return result;
             }
         }
 

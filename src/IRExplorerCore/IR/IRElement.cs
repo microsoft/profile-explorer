@@ -35,6 +35,7 @@ namespace IRExplorerCore.IR {
                 return this switch {
                     TupleIR _ => this as TupleIR,
                     OperandIR _ => ((OperandIR)this).Parent,
+                    RegionIR _ => ((RegionIR)this).Owner,
                     _ => null
                 };
             }

@@ -124,6 +124,9 @@ namespace IRExplorerCore.MLIR {
             function_ = new FunctionIR(rawFunction.Name);
 
             if(rawFunction.Regions.Count > 0) {
+                if (rawFunction.Regions.Count > 1) {
+                    ;
+                }
                 function_.RootRegion = ParseRegion(rawFunction.Regions[0]);
             }
 
@@ -136,16 +139,40 @@ namespace IRExplorerCore.MLIR {
             nextBlockNumber_ = 0;
         }
 
-        public RegionIR ParseRegion(RawIRModel.RegionIR rawRegion, RegionIR parentRegion = null, IRElement owner = null) {
+        public RegionIR ParseRegion(RawIRModel.RegionIR rawRegion, RegionIR parentRegion = null, TupleIR owner = null) {
             RegionIR region = new RegionIR(NextElementId.NewBlock(nextBlockNumber_), owner, parentRegion);
-
-            if (rawRegion == null) {
-                ;
-            }
+            function_.Regions.Add(region);
 
             if (rawRegion.Blocks != null) {
                 foreach (var rawBlock in rawRegion.Blocks) {
                     region.Blocks.Add(ParseBlock(rawBlock, region));
+                }
+
+                if (parentRegion != null) {
+                    // Connect the entry block of the region to the block
+                    // holding the operation that has the region as a child.
+                    BlockIR parentBlock = owner?.ParentBlock;
+
+                    if (parentBlock == null) {
+                        // Function root region is not owned by any operation.
+                        parentBlock = function_.EntryBlock;
+                    }
+
+                    if (parentBlock != null) {
+                        var entryBlock = region.Blocks[0];
+                        parentBlock.Successors.Add(entryBlock);
+                        entryBlock.Predecessors.Add(parentBlock);
+                    }
+                }
+
+                if (region.Blocks.Count > 0) {
+                    region.TextLocation = region.Blocks[0].TextLocation;
+                    var lastTuple = region.Blocks.FindLast((tuple) => tuple.TextLocation.Offset >= region.TextLocation.Offset);
+
+                    if (lastTuple != null) {
+                        region.TextLength = lastTuple.TextLocation.Offset + lastTuple.TextLength - region.TextLocation.Offset;
+                    }
+                    else region.TextLength = 0;
                 }
             }
 
@@ -204,6 +231,16 @@ namespace IRExplorerCore.MLIR {
                     block.BlockArguments.Add(blockArgOp);
                     block.Tuples.Add(dummyInstr);
                 }
+            }
+
+            if (block.Tuples.Count > 0) {
+                block.TextLocation = block.Tuples[0].TextLocation;
+                var lastTuple = block.Tuples.FindLast((tuple) => tuple.TextLocation.Offset >= block.TextLocation.Offset);
+
+                if (lastTuple != null) {
+                    block.TextLength = lastTuple.TextLocation.Offset + lastTuple.TextLength - block.TextLocation.Offset;
+                }
+                else block.TextLength = 0;
             }
 
             function_.Blocks.Add(block);

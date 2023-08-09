@@ -16,6 +16,7 @@ namespace IRExplorerCore.IR {
             ReturnType = TypeIR.GetUnknown();
             Parameters = new List<OperandIR>();
             Blocks = new List<BlockIR>();
+            Regions = new List<RegionIR>();
             name_ = name;
         }
 
@@ -36,6 +37,7 @@ namespace IRExplorerCore.IR {
         public List<OperandIR> Parameters { get; }
         public List<BlockIR> Blocks { get; }
         public List<BlockIR> SortedBlocks { get; private set; }
+        public List<RegionIR> Regions { get; set; }
         public BlockIR EntryBlock => Blocks.Count > 0 ? Blocks[0] : null;
         public BlockIR ExitBlock => Blocks.Count > 0 ? Blocks[^1] : null;
         public RegionIR RootRegion { get; set; }

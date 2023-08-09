@@ -57,6 +57,10 @@ namespace IRExplorerUI {
             // Draw node and text.
             dc.DrawRectangle(backColor, Style.Border, region);
 
+            if (NodeInfo.Label.Contains("\\n")) {
+                NodeInfo.Label = NodeInfo.Label.Replace("\\n", "\n");
+            }
+
             var text = new FormattedText(NodeInfo.Label, CultureInfo.InvariantCulture,
                                          FlowDirection.LeftToRight, TextFont, DefaultTextSize, textColor,
                                          VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
@@ -109,7 +113,7 @@ namespace IRExplorerUI {
         private Typeface edgeFont_;
         private Graph graph_;
         private IGraphStyleProvider graphStyle_;
-
+        private ICompilerInfoProvider compilerInfo_;
         private GraphSettings settings_;
         private DrawingVisual visual_;
 
@@ -117,6 +121,7 @@ namespace IRExplorerUI {
                              ICompilerInfoProvider compilerInfo) {
             settings_ = settings;
             graph_ = graph;
+            compilerInfo_ = compilerInfo;
             edgeFont_ = new Typeface("Verdana");
             defaultNodeFont_ = new Typeface("Verdana");
             graphStyle_ = compilerInfo.CreateGraphStyleProvider(graph, settings);
@@ -146,10 +151,33 @@ namespace IRExplorerUI {
                 var groupVisual = new DrawingVisual();
 
                 using (var dc = groupVisual.RenderOpen()) {
-                    dc.DrawRectangle(Brushes.Transparent, pen, boundingBox);
+                    string boxLabel = "";
+                    Brush boxColor = Brushes.Transparent;
+
+                    if (group.Key is BlockIR block) {
+                        boxLabel = $"B{((BlockIR)group.Key).Number}";
+                    }
+                    else if (group.Key is RegionIR region) {
+                        if (region.ParentRegion == null) {
+                            continue; // Don't draw the root region.
+                        }
+
+                        if (region.Owner is InstructionIR instr) {
+                            boxLabel = instr.OpcodeText.ToString();
+
+                            if (boxLabel.Contains("for")) {
+                                boxColor = Brushes.LightBlue;
+                            }
+                        }
+                        else {
+                            boxLabel = "region";
+                        }
+                    }
+
+                    dc.DrawRectangle(boxColor, pen, boundingBox);
                     double textSize = 0.25;
 
-                    var text = new FormattedText($"B{((BlockIR)group.Key).Number}",
+                    var text = new FormattedText(boxLabel,
                                                  CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
                                                  defaultNodeFont_, textSize, Brushes.DimGray,
                                                  VisualTreeHelper.GetDpi(groupVisual).PixelsPerDip);

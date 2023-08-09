@@ -3,15 +3,19 @@ using System.Text;
 
 namespace IRExplorerCore.IR {
     public class RegionIR : IRElement {
-        public RegionIR(IRElementId elementId, IRElement owner, RegionIR parentRegion) : base(elementId) {
+        public RegionIR(IRElementId elementId, TupleIR owner, RegionIR parentRegion) : base(elementId) {
             ParentRegion = parentRegion;
             Owner = owner;
             Blocks = new List<BlockIR>();
             ChildRegions = new List<RegionIR>();
+
+            if (parentRegion != null) {
+                parentRegion.ChildRegions.Add(this);
+            }
         }
 
+        public TupleIR Owner { get; set; }
         public RegionIR ParentRegion { get; set; }
-        public IRElement Owner { get; set; }
         public List<RegionIR> ChildRegions { get; set;}
         public List<BlockIR> Blocks { get; set; }
 

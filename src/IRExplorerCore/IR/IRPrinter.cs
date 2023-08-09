@@ -144,7 +144,9 @@ namespace IRExplorerCore.IR {
 
         private void PrintRegion(RegionIR region) {
             indentLevel_++;
-            AppendLine($"region {region.Id} {{");
+            Append($"region {region.Id} {{");
+            AppendNI($"  loc: {region.TextLocation}, len: {region.TextLength} ");
+            AppendLine();
 
             foreach (var block in region.Blocks) {
                 PrintBlock(block);

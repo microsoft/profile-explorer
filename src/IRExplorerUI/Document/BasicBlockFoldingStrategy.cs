@@ -36,8 +36,8 @@ namespace IRExplorerUI {
         private IEnumerable<NewFolding> CreateNewFoldings(ITextSource document) {
             var foldings = new List<NewFolding>(Function.Blocks.Count);
 
+            // With modules, collapse the text before/after the function.
             if (Section.ModuleOutput != null) {
-                // With modules, collapse the text before/after the function.
                 long offsetInDoc = Section.Output.DataStartOffset - Section.ModuleOutput.DataStartOffset;
 
                 if (Section.Output.DataStartOffset > Section.ModuleOutput.DataStartOffset) {
@@ -59,7 +59,12 @@ namespace IRExplorerUI {
 
             // Add foldings for regions.
             if (Function.RootRegion != null) {
-                CreateRegionFoldings(Function.RootRegion, document, foldings);
+                foreach (var region in Function.Regions) {
+                    foldings.Add(new NewFolding((int)region.TextLocation.Offset,
+                        (int)(region.TextLocation.Offset + region.TextLength)) {
+                        Name = "Region",
+                    });
+                }
             }
 
             // Add folding for each basic block.
@@ -68,13 +73,19 @@ namespace IRExplorerUI {
             int textLength = document.TextLength;
 
             foreach (var block in Function.Blocks) {
+                if (block.ParentRegion != null && block.ParentRegion.Blocks.Count == 1) {
+                    continue; // Don't fold single-block regions.
+                }
+
                 int offset = block.TextLocation.Offset;
                 int foldingLength = offset - lastOffset;
 
                 if (lastBlock != null && foldingLength > 1 && lastBlock.Tuples.Count > 0) {
                     //? TODO: This seems to be a bug with diff mode
                     if (offset + foldingLength < textLength) {
-                        foldings.Add(new NewFolding(lastOffset, offset - 2));
+                        foldings.Add(new NewFolding(lastOffset, offset - 2) {
+                            Name = "Block"
+                        });
                     }
                 }
 
@@ -84,15 +95,6 @@ namespace IRExplorerUI {
 
             foldings.Sort((a, b) => a.StartOffset - b.StartOffset);
             return foldings;
-        }
-
-        private void CreateRegionFoldings(RegionIR region, ITextSource document, List<NewFolding> foldings) {
-            foldings.Add(new NewFolding((int)region.TextLocation.Offset,
-                                        (int)(region.TextLocation.Offset + region.TextLength)));
-
-            // foreach (var childRegion in region.ChildRegions) {
-            //     CreateRegionFoldings(childRegion, document, foldings);
-            // }
         }
     }
 }
