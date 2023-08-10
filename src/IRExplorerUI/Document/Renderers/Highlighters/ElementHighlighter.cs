@@ -166,10 +166,11 @@ namespace IRExplorerUI {
                     geoBuilder.AddSegment(textView, segment);
                 }
                 else if (segment.Element is TupleIR) {
-                    // Extend width to cover entire line.
+                    // For a multi-line tuple, consider only the first line.
                     foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
-                        var actualRect = Utils.SnapRectToPixels(rect.X - 1, rect.Y, textView.ActualWidth, rect.Height);
-                        geoBuilder.AddRectangle(textView, actualRect);
+                         var actualRect = Utils.SnapRectToPixels(rect.X - 1, rect.Y, textView.ActualWidth, rect.Height);
+                         geoBuilder.AddRectangle(textView, actualRect);
+                         break;
                     }
                 }
                 else {
