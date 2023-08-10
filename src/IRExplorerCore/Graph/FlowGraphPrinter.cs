@@ -90,8 +90,8 @@ nslimit=2;
             //builder.AppendLine(domEdges);
         }
 
-        private void PrintRegions(RegionIR region, StringBuilder builder) {
-            int margin = Math.Min(100, 50);
+        private void PrintRegions(RegionIR region, StringBuilder builder, int depth = 0) {
+            int margin = Math.Max(10, 6 * depth);
             StartSubgraph(margin, builder);
 
             foreach(var block in region.Blocks) {
@@ -106,7 +106,7 @@ nslimit=2;
             }
 
             foreach (var childRegion in region.ChildRegions) {
-                PrintRegions(childRegion, builder);
+                PrintRegions(childRegion, builder, depth + 1);
             }
 
             EndSubgraph(builder);

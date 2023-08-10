@@ -49,6 +49,7 @@ namespace IRExplorerUI {
         public string Label { get; set; }
         public string ToolTip { get; set; }
         public LabelPlacementKind LabelPlacement { get; set; }
+        public double LabelMargin { get; set; }
         public Color? LabelFontColor { get; set; }
 
         public static GraphNodeTag MakeLabel(string label, string tooltip = null, Color? fontColor = null,

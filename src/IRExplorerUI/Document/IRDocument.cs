@@ -2065,7 +2065,7 @@ namespace IRExplorerUI {
 
         private void HandleOtherElement(IRElement element, ElementHighlighter highlighter,
                                         HighlightingEventAction action) {
-            var style = element is BlockIR ? selectedBlockStyle_ : selectedStyle_;
+            var style = ((element is BlockIR) || (element is RegionIR)) ? selectedBlockStyle_ : selectedStyle_;
             HandleOtherElement(element, highlighter, style, action);
         }
 
@@ -2139,7 +2139,8 @@ namespace IRExplorerUI {
                 highlighter.Add(new HighlightedGroup(op.Parent, definitionStyle_.ParentStyle));
             }
 
-            if (element is BlockIR && highlighter.Type == HighlighingType.Hovered) {
+            if (((element is BlockIR) || (element is RegionIR)) &&
+                highlighter.Type == HighlighingType.Hovered) {
                 highlighter.Add(new HighlightedGroup(element, selectedBlockStyle_));
             }
             else {

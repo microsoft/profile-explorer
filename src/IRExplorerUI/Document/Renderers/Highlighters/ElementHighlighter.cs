@@ -161,7 +161,8 @@ namespace IRExplorerUI {
                     };
                 }
 
-                if (segment.Element is BlockIR) {
+                if (segment.Element is BlockIR || segment.Element is RegionIR) {
+                    // Highlight blocks and regions as one unit.
                     geoBuilder.AddSegment(textView, segment);
                 }
                 else if (segment.Element is TupleIR) {
@@ -172,6 +173,7 @@ namespace IRExplorerUI {
                     }
                 }
                 else {
+                    // Highlight each line the element text covers.
                     foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
                         var actualRect = Utils.SnapRectToPixels(rect, -1, 0, 2, 1);
                         geoBuilder.AddRectangle(textView, actualRect);

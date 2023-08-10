@@ -32,14 +32,9 @@ namespace IRExplorerUI {
             var textColor = TextColor;
 
             if (graphTag != null) {
-                if (graphTag.BackgroundColor.HasValue) {
-                    backColor = graphTag.BackgroundColor.Value.AsBrush();
-                }
-
-                if (graphTag.LabelFontColor.HasValue) {
-                    //? TODO: Intended only for label, text needs another property
-                    backColor = graphTag.LabelFontColor.Value.AsBrush();
-                }
+                // if (graphTag.BackgroundColor.HasValue) {
+                //     backColor = graphTag.BackgroundColor.Value.AsBrush();
+                // }
             }
 
             var region = new Rect(NodeInfo.CenterX - NodeInfo.Width / 2,
@@ -57,30 +52,49 @@ namespace IRExplorerUI {
             // Draw node and text.
             dc.DrawRectangle(backColor, Style.Border, region);
 
-            if (NodeInfo.Label.Contains("\\n")) {
-                NodeInfo.Label = NodeInfo.Label.Replace("\\n", "\n");
+            if (!string.IsNullOrEmpty(NodeInfo.Label)) {
+                var text = new FormattedText(NodeInfo.Label, CultureInfo.InvariantCulture,
+                    FlowDirection.LeftToRight, TextFont, DefaultTextSize, textColor,
+                    VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
+
+                dc.DrawText(text, new Point(NodeInfo.CenterX - text.Width / 2,
+                    NodeInfo.CenterY - text.Height / 2));
             }
-
-            var text = new FormattedText(NodeInfo.Label, CultureInfo.InvariantCulture,
-                                         FlowDirection.LeftToRight, TextFont, DefaultTextSize, textColor,
-                                         VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
-
-            dc.DrawText(text, new Point(NodeInfo.CenterX - text.Width / 2,
-                                        NodeInfo.CenterY - text.Height / 2));
 
             // Display the label under the node if there is a tag.
             if(graphTag != null && !string.IsNullOrEmpty(graphTag.Label)) {
+                var labelColor = graphTag.LabelFontColor.HasValue ? ColorBrushes.GetBrush(graphTag.LabelFontColor.Value) : textColor;
                 var labelText = new FormattedText(graphTag.Label, CultureInfo.InvariantCulture,
-                                                  FlowDirection.LeftToRight, TextFont, DefaultLabelTextSize, textColor,
+                                                  FlowDirection.LeftToRight, TextFont, DefaultLabelTextSize, labelColor,
                                                   VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
-                var textBackground = ColorBrushes.GetBrush(Settings.BackgroundColor);
-                dc.DrawRectangle(textBackground, null, new Rect(NodeInfo.CenterX - labelText.Width / 2,
-                                                 region.Bottom + labelText.Height / 4,
-                                                 labelText.Width, labelText.Height));
+                // var textBackground = ColorBrushes.GetBrush(Settings.BackgroundColor);
+                // dc.DrawRectangle(textBackground, null, new Rect(NodeInfo.CenterX - labelText.Width / 2,
+                //                                   region.Bottom + labelText.Height / 4,
+                //                                   labelText.Width, labelText.Height));
 
                 //? TODO: Use LabelPlacement
-                dc.DrawText(labelText, new Point(NodeInfo.CenterX - labelText.Width / 2,
-                                                 region.Bottom + labelText.Height / 4));
+                switch (graphTag.LabelPlacement) {
+                    case GraphNodeTag.LabelPlacementKind.Top: {
+                        dc.DrawText(labelText, new Point(NodeInfo.CenterX - labelText.Width / 2,
+                            region.Top - labelText.Height - graphTag.LabelMargin));
+                        break;
+                    }
+                    case GraphNodeTag.LabelPlacementKind.Bottom: {
+                        dc.DrawText(labelText, new Point(NodeInfo.CenterX - labelText.Width / 2,
+                            region.Bottom + graphTag.LabelMargin));
+                        break;
+                    }
+                    case GraphNodeTag.LabelPlacementKind.Left: {
+                        dc.DrawText(labelText, new Point(region.Left - labelText.Width - graphTag.LabelMargin,
+                            region.Top + graphTag.LabelMargin));
+                        break;
+                    }
+                    case GraphNodeTag.LabelPlacementKind.Right: {
+                        dc.DrawText(labelText, new Point(region.Right + graphTag.LabelMargin,
+                            region.Top + graphTag.LabelMargin));
+                        break;
+                    }
+                }
             }
         }
     }
@@ -108,7 +122,7 @@ namespace IRExplorerUI {
     public class GraphRenderer {
         private const double DefaultEdgeThickness = 0.025;
         private const double GroupBoundingBoxMargin = 0.20;
-        private const double GroupBoundingBoxTextMargin = 0.10;
+        private const double GroupBoundingBoxTextMargin = 0.07;
         private Typeface defaultNodeFont_;
         private Typeface edgeFont_;
         private Graph graph_;
@@ -150,46 +164,90 @@ namespace IRExplorerUI {
                 boundingBox.Inflate(GroupBoundingBoxMargin, GroupBoundingBoxMargin);
                 var groupVisual = new DrawingVisual();
 
-                using (var dc = groupVisual.RenderOpen()) {
-                    string boxLabel = "";
-                    Brush boxColor = Brushes.Transparent;
+                string label = "";
+                GraphNodeTag.LabelPlacementKind labelPlacement = GraphNodeTag.LabelPlacementKind.Right;
+                Brush boxColor = Brushes.Transparent;
 
-                    if (group.Key is BlockIR block) {
-                        boxLabel = $"B{((BlockIR)group.Key).Number}";
-                    }
-                    else if (group.Key is RegionIR region) {
-                        if (region.ParentRegion == null) {
-                            continue; // Don't draw the root region.
-                        }
-
-                        if (region.Owner is InstructionIR instr) {
-                            boxLabel = instr.OpcodeText.ToString();
-
-                            if (boxLabel.Contains("for")) {
-                                boxColor = Brushes.LightBlue;
-                            }
-                        }
-                        else {
-                            boxLabel = "region";
-                        }
+                if (group.Key is BlockIR block) {
+                    label = $"B{((BlockIR)group.Key).Number}";
+                }
+                else if (group.Key is RegionIR region) {
+                    if (region.ParentRegion == null) {
+                        continue; // Don't draw the root region.
                     }
 
-                    dc.DrawRectangle(boxColor, pen, boundingBox);
-                    double textSize = 0.25;
+                    if (region.HasChildRegions) {
+                        labelPlacement = GraphNodeTag.LabelPlacementKind.Top;
+                    }
+                    else {
+                        labelPlacement = GraphNodeTag.LabelPlacementKind.Bottom;
+                    }
 
-                    var text = new FormattedText(boxLabel,
-                                                 CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
-                                                 defaultNodeFont_, textSize, Brushes.DimGray,
-                                                 VisualTreeHelper.GetDpi(groupVisual).PixelsPerDip);
-                    //? TODO: Text placement can overlap with other elements,
-                    //? try each corner of the bounding box to find one that's free
-                    //? (it's a greedy approach, but would work in most cases).
-                    dc.DrawText(text, new Point(boundingBox.Right + GroupBoundingBoxTextMargin,
-                                                boundingBox.Top + GroupBoundingBoxTextMargin));
+                    if (region.Owner is InstructionIR instr) {
+                        label = instr.OpcodeText.ToString();
+
+                        if (label.Contains("for")) {
+                            boxColor = Brushes.LightBlue;
+                        }
+                    }
+                    else {
+                        label = "region";
+                    }
                 }
 
-                visual_.Children.Add(groupVisual);
+                var graphTag = group.Key.GetOrAddTag<GraphNodeTag>();
+                graphTag.Label = label;
+                graphTag.LabelFontColor = Colors.DimGray;
+                graphTag.LabelPlacement = labelPlacement;
+                graphTag.LabelMargin = GroupBoundingBoxTextMargin;
+
+                var node = new Node() {
+                    Data = group.Key,
+                    CenterX = boundingBox.Left + boundingBox.Width / 2,
+                    CenterY = boundingBox.Top + boundingBox.Height / 2,
+                    Width = boundingBox.Width,
+                    Height = boundingBox.Height,
+
+                };
+
+                var nodeVisual = new DrawingVisual();
+                var graphNode = new GraphNode {
+                    NodeInfo = node,
+                    Settings = settings_,
+                    Visual = nodeVisual,
+                    TextFont = defaultNodeFont_,
+                    TextColor = Brushes.Black,
+                    Style = GetBoundingBoxNodeStyle(node)
+                };
+
+                graphNode.Draw();
+                node.Tag = graphNode;
+                nodeVisual.SetValue(FrameworkElement.TagProperty, graphNode);
+                visual_.Children.Add(nodeVisual);
             }
+        }
+
+        private HighlightingStyle GetBoundingBoxNodeStyle(Node node) {
+            var border = ColorPens.GetDashedPen(Colors.Gray, DashStyles.Dot, DefaultEdgeThickness);
+            var fillColor = ColorBrushes.GetTransparentBrush(Colors.LightGray, 10);
+
+            if (node.Data is RegionIR region) {
+                if (region.Owner is InstructionIR instr) {
+                    var label = instr.OpcodeText.ToString();
+
+                    if (label.Contains("scf")) {
+                        fillColor = ColorBrushes.GetTransparentBrush(Colors.SkyBlue, 20);
+                    }
+                    else if (label.Contains("linalg")) {
+                        fillColor = ColorBrushes.GetTransparentBrush(Colors.Orchid, 20);
+                    }
+                    else if (label.Contains("affine")) {
+                        fillColor = ColorBrushes.GetTransparentBrush(Colors.PaleGreen, 20);
+                    }
+                }
+            }
+
+            return new HighlightingStyle(fillColor, border);
         }
 
         private Rect ComputeBoundingBox(List<TaggedObject> nodeElements) {
@@ -237,6 +295,10 @@ namespace IRExplorerUI {
 
                 var nodeVisual = new DrawingVisual();
 
+                if (node.Label.Contains("\\n")) {
+                    node.Label = node.Label.Replace("\\n", "\n");
+                }
+
                 var graphNode = new GraphNode {
                     NodeInfo = node,
                     Settings = settings_,
@@ -263,7 +325,9 @@ namespace IRExplorerUI {
             var branchPen = graphStyle_.GetEdgeStyle(GraphEdgeKind.Branch);
             var returnPen = graphStyle_.GetEdgeStyle(GraphEdgeKind.Return);
             var immDomPen = graphStyle_.GetEdgeStyle(GraphEdgeKind.ImmediateDominator);
-            var dc = visual_.RenderOpen();
+
+            var lineVisual = new DrawingVisual();
+            var dc = lineVisual.RenderOpen();
             var defaultEdgeGeometry = new StreamGeometry();
             var loopEdgeGeometry = new StreamGeometry();
             var branchEdgeGeometry = new StreamGeometry();
@@ -334,6 +398,7 @@ namespace IRExplorerUI {
             }
 
             dc.Close();
+            visual_.Children.Add(lineVisual);
         }
 
         private void DrawEdgeArrow(Edge edge, Point[] tempPoints, StreamGeometryContext sc) {

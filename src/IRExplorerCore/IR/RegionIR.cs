@@ -20,7 +20,7 @@ namespace IRExplorerCore.IR {
         public List<BlockIR> Blocks { get; set; }
 
         public bool IsEmpty => Blocks == null || Blocks.Count == 0;
-        public bool HasNestedRegions => ChildRegions != null && ChildRegions.Count > 0;
+        public bool HasChildRegions => ChildRegions != null && ChildRegions.Count > 0;
 
         public override void Accept(IRVisitor visitor) {
             visitor.Visit(this);

@@ -126,11 +126,15 @@ namespace IRExplorerUI {
             e.Handled = graphNode != null;
         }
 
+        private bool ShouldHoverNode(GraphNode node) {
+            return !((node.NodeInfo.Data is BlockIR && graph_.Kind == GraphKind.ExpressionGraph) || node.NodeInfo.Data is RegionIR);
+        }
+
         private void GraphViewer_MouseMove(object sender, MouseEventArgs e) {
             var point = e.GetPosition(this);
             var graphNode = FindPointedNode(point);
 
-            if (graphNode != null) {
+            if (graphNode != null && ShouldHoverNode(graphNode)) {
                 if (hoveredNode_ != graphNode) {
                     HighlightConnectedNodes(graphNode, hoverNodes_, settings_.HighlightConnectedNodesOnHover);
                     hoveredNode_ = graphNode;
