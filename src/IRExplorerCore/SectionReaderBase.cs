@@ -124,7 +124,7 @@ namespace IRExplorerCore {
         private bool hasMetadataLines_;
         private IRTextSummary summary_;
         private Stack<IRTextModule> moduleStack_;
-        private IRTextSection previousSection_;
+        private List<IRTextSection> previousSections_;
 
         public SectionReaderBase(string filePath, bool expectSectionHeaders = true) {
             expectSectionHeaders_ = expectSectionHeaders;
@@ -628,7 +628,6 @@ namespace IRExplorerCore {
             }
 
             // Extract section and function names.
-            IRTextSection section = null;
             string sectionName = string.Empty;
             string funcName = string.Empty;
 
@@ -658,13 +657,14 @@ namespace IRExplorerCore {
             bool foundFunctionStart = false;
             bool foundFunctionEnd = false;
 
-            List<IRTextFunction> functions = new List<IRTextFunction>();
+            List<IRTextSection> sections = new List<IRTextSection>(1);
             long funcInitialOffset = hasSectionName ? TextOffset() : nextInitialOffset_;
             long funcStartOffset = 0;
             long funcEndOffset = 0;
             int funcStartLine = 0;
             int funcEndLine = 0;
             int blockCount = 0;
+            int functionIndex = 0;
             bool foundNextFunction = false;
 
             IRPassOutput moduleOutput = null;
@@ -748,11 +748,10 @@ namespace IRExplorerCore {
                     };
 
                     var textFunc = GetOrCreateFunction(BuildFunctionName(funcName));
-                    functions.Add(textFunc);
 
-                    section = new IRTextSection(textFunc, sectionName, output, blockCount);
-                    section.IndexInModule = functions.Count - 1;
-
+                    var section = new IRTextSection(textFunc, sectionName, output, blockCount);
+                    section.IndexInModule = functionIndex++;
+                    sections.Add(section);
                     summary_.AddSection(section);
                     textFunc.AddSection(section);
 
@@ -764,8 +763,10 @@ namespace IRExplorerCore {
                         Trace.WriteLine($"  - section output before: {section.ModuleOutput}");
                     }
 
-                    if (previousSection_ != null) {
-                        previousSection_.OutputAfter = GetAdditionalOutput();
+                    if (previousSections_ != null) {
+                        foreach(var prevSection in previousSections_) {
+                            prevSection.OutputAfter = GetAdditionalOutput();
+                        }
                     }
 
                     // Notify client a new section has been read.
@@ -799,7 +800,7 @@ namespace IRExplorerCore {
             }
 
             EndModule();
-            previousSection_ = section;
+            previousSections_ = sections;
             return true;
         }
 

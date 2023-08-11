@@ -151,7 +151,7 @@ namespace IRExplorerUI {
         }
 
         public virtual GraphEdgeKind GetEdgeKind(Edge edge) {
-            if (!options_.ColorizeEdges) {
+            if (!options_.ColorizeEdges || edge.NodeTo.ElementData == null) {
                 return GraphEdgeKind.Default;
             }
 

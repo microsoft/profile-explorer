@@ -1,8 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
 using IRExplorerUI.Diff;
 using IRExplorerUI.UTC;
 using IRExplorerUI.Query;
@@ -20,7 +26,8 @@ namespace IRExplorerUI.Compilers.LLVM {
         private IRRemarkProvider remarks_;
         private ISectionStyleProvider styles_;
 
-        public MLIRCompilerInfoProvider() {
+        public MLIRCompilerInfoProvider(ISession session) {
+            session_ = session;
             ir_ = new MLIRCompilerIRInfo();
             styles_ = new UTCSectionStyleProvider();
             names_ = new UTCNameProvider();
@@ -99,6 +106,67 @@ namespace IRExplorerUI.Compilers.LLVM {
             }
 
             return true;
+        }
+
+        public sealed class RawIRGraphPrinter : GraphVizPrinter {
+            private IRExplorerCore.RawIRModel.Graph graph_;
+            private StringBuilder builder_;
+            private FunctionIR func_;
+
+            public RawIRGraphPrinter(IRExplorerCore.RawIRModel.Graph graph, FunctionIR func, GraphPrinterNameProvider nameProvider) : base(nameProvider) {
+                graph_ = graph;
+                func_ = func;
+            }
+
+            protected override void PrintGraph(StringBuilder builder) {
+                builder_ = builder;
+                // rootElement_ = CreateFakeIRElement();
+                // CreateNode(rootElement_, null, "ROOT");
+                // CreateEdge(rootElement_, exprNode);
+
+                PrintNodes();
+                PrintEdges();
+            }
+
+            public override Dictionary<string, TaggedObject> CreateNodeDataMap() {
+                return new Dictionary<string, TaggedObject>();
+            }
+
+            public override Dictionary<TaggedObject, List<TaggedObject>> CreateNodeDataGroupsMap() {
+                return new Dictionary<TaggedObject, List<TaggedObject>>();
+            }
+
+            private void PrintEdges() {
+                foreach (var node in graph_.Nodes) {
+                    foreach (var edge in node.Edges) {
+                        CreateEdge((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, builder_);
+                    }
+                }
+            }
+
+            private void PrintNodes() {
+                foreach (var node in graph_.Nodes) {
+                    string label = "";
+
+                    if (!string.IsNullOrEmpty(node.Operation)) {
+                        if (node.Operation.Length > 20) {
+                            label = $"{node.Name.ToString()}\\n{node.Operation.Substring(0, 20)}";
+                        }
+                        else {
+                            label = $"{node.Name.ToString()}\\n{node.Operation}";
+                        }
+                    }
+                    else {
+                        label = $"{node.Name.ToString()}\\nfunc.entry";
+                    }
+
+                    bool isMultiline = label.Contains("\\n");
+                    double verticalMargin = isMultiline ? 0.12 : 0.06;
+                    double horizontalMargin = Math.Min(Math.Max(0.1, label.Length * (isMultiline ? 0.02 : 0.03)), 2.0);
+
+                    var nodeName = CreateNodeWithMargins((ulong)node.Id, label, builder_, horizontalMargin, verticalMargin);
+                }
+            }
         }
 
         public Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section) {

@@ -1023,7 +1023,7 @@ namespace IRExplorerUI {
                     break;
                 }
                 case "LLVM": {
-                    await SwitchCompilerTarget(new MLIRCompilerInfoProvider());
+                    await SwitchCompilerTarget(new MLIRCompilerInfoProvider(this));
                     break;
                 }
                 case "ASM": {

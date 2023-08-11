@@ -939,19 +939,91 @@ namespace IRExplorerUI {
             var previousSection = Document?.Section;
             InitializeFromDocument(document);
 
+
+
+            //? TODO: Implement switching for expressions
+            if (PanelKind == ToolPanelKind.ExpressionGraph) {
+                //HideGraph();
+                if (section.OutputAfter != null) {
+                var textLines = Session.GetSectionOutputTextLinesAsync(section.OutputAfter, section).Result; //? TODO: await
+                int index = 0;
+
+                while(index < textLines.Count) {
+                    var line = textLines[index];
+
+                    while(!line.StartsWith("/// irx: json_start", System.StringComparison.Ordinal)) {
+                        index++;
+                        if (index == textLines.Count) break;
+                        line = textLines[index];
+                    }
+
+                    if(index == textLines.Count) {
+                        break;
+                    }
+
+                    int startIndex = index + 1;
+                    var jsonBuilder = new StringBuilder();
+
+                    while(!line.EndsWith("/// irx: json_end", System.StringComparison.Ordinal)) {
+                        index++;
+                        if (index == textLines.Count) break;
+                        line = textLines[index];
+                    }
+
+                    if (index - startIndex > 0) {
+                        for (int i = startIndex; i < index; i++) {
+                            jsonBuilder.AppendLine(textLines[i]);
+                        }
+
+                        if (JsonUtils.Deserialize(jsonBuilder.ToString(), out IRExplorerCore.RawIRModel.Graph graph)) {
+                            Trace.WriteLine($"Found graph: {graph.Kind}, func {graph.Function}");
+
+                            if (graph.Function.Equals(section.ParentFunction.Name, StringComparison.Ordinal)) {
+                                Trace.WriteLine($"  match");
+
+                                var funcLines = Session.GetSectionOutputTextLinesAsync(section.Output, section).Result; //? TODO: await
+
+                                foreach (var node in graph.Nodes) {
+                                    if (!string.IsNullOrEmpty(node.Operation)) {
+                                        for(int i = 0; i < funcLines.Count; i++) {
+                                            var funcLine = funcLines[i];
+                                            if (funcLine.Contains(node.Operation)) {
+                                                Trace.WriteLine($"Found at {i} matching {node.Operation}");
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                var printer = new MLIRCompilerInfoProvider.RawIRGraphPrinter(graph, document.Function, null);
+                                var graphText = printer.PrintGraph();
+                                File.WriteAllText(@"C:\test\graph.dot", graphText);
+
+
+                                var result = printer.CreateGraph(graphText, new CancelableTask());
+                                var graphReader = new GraphvizReader(GraphKind.ExpressionGraph, result, printer.CreateNodeDataMap());
+                                var layoutGraph = graphReader.ReadGraph();
+
+                                if (layoutGraph != null) {
+                                    DisplayGraph(layoutGraph);
+                                }
+                            }
+                        }
+                    }
+
+                    index++;
+                }
+            }
+                return;
+            }
+            else if (PanelKind == ToolPanelKind.CallGraph) {
+                return;
+            }
+
             if (document.DuringSectionLoading) {
                 Trace.TraceInformation(
                     $"Graph panel {ObjectTracker.Track(this)}: Ignore graph reload during section switch");
 
-                return;
-            }
-
-            //? TODO: Implement switching for expressions
-            if (PanelKind == ToolPanelKind.ExpressionGraph) {
-                HideGraph();
-                return;
-            }
-            else if (PanelKind == ToolPanelKind.CallGraph) {
                 return;
             }
 

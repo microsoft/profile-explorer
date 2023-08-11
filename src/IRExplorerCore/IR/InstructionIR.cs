@@ -63,6 +63,7 @@ namespace IRExplorerCore.IR {
         public override string ToString() {
             var builder = new StringBuilder();
             builder.AppendLine($"instr kind: {Kind}, opcode: {OpcodeText} ({Opcode}), id: {Id}");
+            builder.AppendLine($"   location {TextLocation}, length {TextLength}");
 
             for (int i = 0; i < Destinations.Count; i++) {
                 builder.AppendLine($"o dest {i}: {Destinations[i]}".Indent(2));
