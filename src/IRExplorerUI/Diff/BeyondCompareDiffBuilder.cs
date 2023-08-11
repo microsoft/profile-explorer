@@ -175,7 +175,7 @@ namespace IRExplorerUI.Diff {
                 // BC breaks down diffs by sections. If a section is a single row, the row's class is
                 // SectionAll, otherwise the class is SectionBegin, SectionMiddle, or SectionEnd.
                 // Only the SectionAll and SectionBegin rows have the section type noted (unchanged,
-                // insert, delete, modify, etc). 
+                // insert, delete, modify, etc).
                 Section rowSection = GetRowSection(row);
                 Debug.Assert(rowSection != Section.Middle || NodeIsEmpty(diffNode));
 
@@ -271,6 +271,8 @@ namespace IRExplorerUI.Diff {
 
         private static DiffPiece DiffPieceFromHtmlText(HtmlNode node, ChangeType type, int position) {
             string text = WebUtility.HtmlDecode(node.InnerText);
+            // Replace non-breaking spaces with regular spaces, can break other tools.
+            text = text.Replace((char)0xA0, ' ');
             return new DiffPiece(text, type, position);
         }
 

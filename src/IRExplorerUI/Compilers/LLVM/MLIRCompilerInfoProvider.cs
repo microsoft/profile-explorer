@@ -13,20 +13,21 @@ using IRExplorerCore.MLIR;
 using IRExplorerUI.Compilers.ASM;
 
 namespace IRExplorerUI.Compilers.LLVM {
-    public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
+    public class MLIRCompilerInfoProvider : ICompilerInfoProvider {
         private MLIRCompilerIRInfo ir_;
         private ISession session_;
         private INameProvider names_;
         private IRRemarkProvider remarks_;
         private ISectionStyleProvider styles_;
 
-        public LLVMCompilerInfoProvider() {
+        public MLIRCompilerInfoProvider() {
             ir_ = new MLIRCompilerIRInfo();
             styles_ = new UTCSectionStyleProvider();
             names_ = new UTCNameProvider();
             remarks_ = new DummyIRRemarkProvider();
         }
 
+        //? TODO: Rename to MLIR
         public string CompilerIRName => "LLVM";
         public string CompilerDisplayName => "LLVM";
         public string DefaultSyntaxHighlightingFile => "LLVM IR";
@@ -92,6 +93,11 @@ namespace IRExplorerUI.Compilers.LLVM {
         public bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
             //? TODO: var loopGraph = new LoopGraph(function);
             //loopGraph.FindLoops();
+
+            if (section.OutputBefore != null) {
+
+            }
+
             return true;
         }
 

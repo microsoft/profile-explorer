@@ -124,6 +124,7 @@ namespace IRExplorerCore {
         private bool hasMetadataLines_;
         private IRTextSummary summary_;
         private Stack<IRTextModule> moduleStack_;
+        private IRTextSection previousSection_;
 
         public SectionReaderBase(string filePath, bool expectSectionHeaders = true) {
             expectSectionHeaders_ = expectSectionHeaders;
@@ -152,6 +153,8 @@ namespace IRExplorerCore {
 
         // Methods to be implemented by an IR reader implementation.
         protected abstract bool IsSectionStart(string line);
+
+        protected virtual bool IsSectionEnd(string line) => false;
 
         protected abstract bool FunctionStartIsSectionStart(string line);
 
@@ -566,15 +569,14 @@ namespace IRExplorerCore {
 
         private bool SkipToSectionStart(SectionTextHandler sectionTextHandler, out bool hasSectionName) {
             prevLineCount_ = 0;
+            long initialOffset = nextInitialOffset_;
 
-            while (true) {
+            while(true) {
                 // Find the start of the next section.
-                long initialOffset = nextInitialOffset_;
 
                 if (currentLine_ == null ||
                     (!IsSectionStart(currentLine_) && !IsFunctionEnd(currentLine_))) {
                     currentLine_ = NextLine();
-                    Trace.WriteLine($"consider line {lineIndex_}: {currentLine_}");
                 }
 
                 if (currentLine_ == null) {
@@ -598,7 +600,6 @@ namespace IRExplorerCore {
                     // Skip over text in-between sections.
                     optionalOutput_ = AddOptionalOutputLine(currentLine_, initialOffset, optionalOutput_);
                     lineIndex_++;
-                    continue;
                 }
             }
 
@@ -627,6 +628,7 @@ namespace IRExplorerCore {
             }
 
             // Extract section and function names.
+            IRTextSection section = null;
             string sectionName = string.Empty;
             string funcName = string.Empty;
 
@@ -748,7 +750,7 @@ namespace IRExplorerCore {
                     var textFunc = GetOrCreateFunction(BuildFunctionName(funcName));
                     functions.Add(textFunc);
 
-                    var section = new IRTextSection(textFunc, sectionName, output, blockCount);
+                    section = new IRTextSection(textFunc, sectionName, output, blockCount);
                     section.IndexInModule = functions.Count - 1;
 
                     summary_.AddSection(section);
@@ -762,9 +764,9 @@ namespace IRExplorerCore {
                         Trace.WriteLine($"  - section output before: {section.ModuleOutput}");
                     }
 
-                    // if (previousSection != null) {
-                    //     previousSection.OutputAfter = GetAdditionalOutput();
-                    // }
+                    if (previousSection_ != null) {
+                        previousSection_.OutputAfter = GetAdditionalOutput();
+                    }
 
                     // Notify client a new section has been read.
                     if (sectionTextHandler != null) {
@@ -789,12 +791,15 @@ namespace IRExplorerCore {
                     lineIndex_++;
                 }
 
-                if (currentLine_ == null || IsSectionStart(currentLine_)) {
+                if (currentLine_ == null ||
+                    IsSectionEnd(currentLine_) ||
+                    IsSectionStart(currentLine_)) {
                     break;
                 }
             }
 
             EndModule();
+            previousSection_ = section;
             return true;
         }
 

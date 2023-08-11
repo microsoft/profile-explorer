@@ -100,13 +100,15 @@ namespace IRExplorerCore {
 
             var text = GetSectionTextSpan(section);
             var (sectionParser, errorHandler) = InitializeParser();
-            FunctionIR function;
+            FunctionIR function = null;
 
-            if (sectionParser == null) {
-                function = new FunctionIR(); //? TODO: Workaround for not having an LLVM parser
-            }
-            else {
+            if (sectionParser != null) {
                 function = sectionParser.ParseSection(section, text);
+            }
+
+            if (function == null) {
+                // Parsing failed, create a dummy function to avoid issues in the UI.
+                function = new FunctionIR();
             }
 
             result = new ParsedIRTextSection(section, text, function);

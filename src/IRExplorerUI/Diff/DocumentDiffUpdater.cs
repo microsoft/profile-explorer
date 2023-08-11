@@ -565,6 +565,10 @@ namespace IRExplorerUI.Diff {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Crashed while re-parsing diffed section: {ex}");
+            }
+
+            if (diffResult.DiffFunction == null) {
+                // Parsing failed, create a dummy function to avoid issues in the UI.
                 diffResult.DiffFunction = new FunctionIR();
             }
         }

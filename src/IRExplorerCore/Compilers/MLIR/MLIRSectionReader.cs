@@ -9,6 +9,7 @@ namespace IRExplorerCore.MLIR {
         private static readonly char[] WhitespaceChars = { ' ', '\t' };
         private const string SectionStartLine = "// -----//";
         // \s*\/\/(-|\s*)----*\s*\/?\/?
+        private const string SectionStartLineEnd = "//----- //";
         private const string SectionEndLine = "//----- //";
 
         static readonly Regex SectionStartLineRegex;
@@ -24,7 +25,13 @@ namespace IRExplorerCore.MLIR {
             base(textData, expectSectionHeaders) { }
 
         protected override bool IsSectionStart(string line) {
+            //? TODO: Use Regex
             return line.StartsWith(SectionStartLine, StringComparison.Ordinal);
+        }
+
+        protected override bool IsSectionEnd(string line) {
+            //? TODO: Use Regex
+            return line.StartsWith(SectionEndLine, StringComparison.Ordinal);
         }
 
         protected override bool IsFunctionStart(string line) {

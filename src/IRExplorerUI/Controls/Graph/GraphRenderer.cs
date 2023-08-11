@@ -161,6 +161,11 @@ namespace IRExplorerUI {
 
             foreach (var group in graph_.DataNodeGroupsMap) {
                 var boundingBox = ComputeBoundingBox(group.Value);
+
+                if (boundingBox.IsEmpty) {
+                    return;
+                }
+
                 boundingBox.Inflate(GroupBoundingBoxMargin, GroupBoundingBoxMargin);
                 var groupVisual = new DrawingVisual();
 
@@ -267,6 +272,12 @@ namespace IRExplorerUI {
                 yMin = Math.Min(yMin, node.CenterY - node.Height / 2);
                 xMax = Math.Max(xMax, node.CenterX + node.Width / 2);
                 yMax = Math.Max(yMax, node.CenterY + node.Height / 2);
+            }
+
+            if(xMax - xMin < 0 || yMax - yMin < 0) {
+                Trace.TraceError($"ComputeBoundingBox invalid bounding box: {xMin}, {yMin}, {xMax}, {yMax}");
+                Utils.WaitForDebugger();
+                return Rect.Empty;
             }
 
             return new Rect(xMin, yMin, xMax - xMin, yMax - yMin);

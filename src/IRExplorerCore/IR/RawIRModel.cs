@@ -70,4 +70,25 @@ namespace IRExplorerCore.RawIRModel {
         public long UseId { get; set; }
         public long UserId { get; set; }
     }
+
+    public class Graph {
+        public string Kind { get; set; }
+        public string Title { get; set; }
+        public string Function { get; set; }
+        public List<GraphNode> Nodes { get; set; }
+    }
+
+    public class GraphNode {
+        public long Id { get; set; }
+        public string Name { get; set; }
+        public string Operation { get; set; }
+        public List<GraphEdge> Edges { get; set; }
+    }
+
+    public class GraphEdge {
+        public long FromNodeId { get; set; }
+        public long ToNodeId { get; set; }
+        public string Operation { get; set; }
+        public string Label { get; set; }
+    }
 }
