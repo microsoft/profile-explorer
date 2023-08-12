@@ -646,12 +646,11 @@ namespace IRExplorerCore {
             // Go back and find the name of the section.
             int sectionStartLine = lineIndex_ + (hasSectionName ? 1 : 0);
             int sectionEndLine = sectionStartLine;
+            // Trace.WriteLine($"New section at line {lineIndex_}: {sectionName}, {currentLine_}");
 
             // A section can have metadata associated with the previous line.
             Dictionary<int, string> lineMetadata = null;
             int metadataLines = 0;
-
-            Trace.WriteLine($"=> New section at line {lineIndex_}: {sectionName}, {currentLine_}");
 
             // Collect all functions in the section.
             bool foundFunctionStart = false;
@@ -681,13 +680,11 @@ namespace IRExplorerCore {
                     funcEndLine = lineIndex_ + 1;
                     funcEndOffset = TextOffset();
                     foundFunctionEnd = true;
-                    Trace.WriteLine($"  - at doc end on line {lineIndex_}");
                 }
                 else {
                     if (sectionTextHandler != null) {
                         if (!IsFunctionEnd(currentLine_) || !FunctionEndIsFunctionStart(currentLine_)) {
                             sectionLines.Add(currentLine_);
-                            Trace.WriteLine($"   - func line: {currentLine_}");
                         }
                     }
 
@@ -712,7 +709,7 @@ namespace IRExplorerCore {
                             funcStartOffset = previousOffset_; //? Or TextOffset() - currentLine.Length?
                             foundFunctionStart = true;
 
-                            Trace.WriteLine($"  > start func at {lineIndex_}: {funcName}");
+                            //Trace.WriteLine($"Start func at {lineIndex_}: {funcName}");
                         }
                     }
 
@@ -724,7 +721,7 @@ namespace IRExplorerCore {
                         nextInitialOffset_ = funcEndOffset;
                         foundFunctionEnd = true;
 
-                        Trace.WriteLine($"  < end func at {lineIndex_}, lines {funcStartLine}-{funcEndLine}");
+                        //Trace.WriteLine($"End func at {lineIndex_}, lines {funcStartLine}-{funcEndLine}");
                     }
                     else if (IsBlockStart(currentLine_)) {
                         blockCount++;
@@ -758,10 +755,6 @@ namespace IRExplorerCore {
                     // Attach additional output text.
                     section.OutputBefore = GetAdditionalOutput();
                     section.ModuleOutput = moduleOutput;
-
-                    if(section.ModuleOutput  != null) {
-                        Trace.WriteLine($"  - section output before: {section.ModuleOutput}");
-                    }
 
                     if (previousSections_ != null) {
                         foreach(var prevSection in previousSections_) {

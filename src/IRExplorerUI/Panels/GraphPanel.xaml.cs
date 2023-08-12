@@ -4,17 +4,21 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
+using IRExplorerUI.Compilers.LLVM;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Utilities.UI;
 using ProtoBuf;
@@ -113,7 +117,7 @@ namespace IRExplorerUI {
             PreviewKeyDown += GraphPanel_PreviewKeyDown;
             GraphHost.ScrollChanged += GraphHost_ScrollChanged;
 
-            var hover = new MouseHoverLogic(this);
+            var hover = new Utilities.UI.MouseHoverLogic(this);
             hover.MouseHover += Hover_MouseHover;
             hover.MouseHoverStopped += Hover_MouseHoverStopped;
         }

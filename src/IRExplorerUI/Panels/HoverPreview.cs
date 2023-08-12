@@ -16,7 +16,7 @@ public abstract class HoverPreview {
 
     public HoverPreview(UIElement control, TimeSpan hoverDuration) {
         control_ = control;
-        var hover = new MouseHoverLogic(control, hoverDuration);
+        var hover = new Utilities.UI.MouseHoverLogic(control, hoverDuration);
         hover.MouseHover += Hover_MouseHover;
         hover.MouseHoverStopped += Hover_MouseHoverStopped;
         control.MouseLeave += OnMouseLeave;
@@ -86,11 +86,11 @@ public class DraggablePopupHoverPreview : HoverPreview {
         get => (DraggablePopup)previewPopup_;
         set => previewPopup_ = value;
     }
-    
+
     public DraggablePopupHoverPreview(UIElement control, TimeSpan hoverDuration,
                                 Func<Point, Point, DraggablePopup> createPopup,
                                 Func<Point, DraggablePopup, bool> hoverStopped,
-                                Action<DraggablePopup> detachPopup) : 
+                                Action<DraggablePopup> detachPopup) :
         base(control, hoverDuration) {
         createPopup_ = createPopup;
         hoverStopped_ = hoverStopped;
@@ -100,7 +100,7 @@ public class DraggablePopupHoverPreview : HoverPreview {
     public DraggablePopupHoverPreview(UIElement control,
         Func<Point, Point, DraggablePopup> createPopup,
         Func<Point, DraggablePopup, bool> hoverStopped,
-        Action<DraggablePopup> detachPopup) : 
+        Action<DraggablePopup> detachPopup) :
         this(control, TimeSpan.MaxValue, createPopup, hoverStopped, detachPopup) {
     }
 
@@ -148,7 +148,7 @@ public class ToolTipHoverPreview : HoverPreview {
     private ToolTip PreviewPopup => (ToolTip)previewPopup_;
     private Func<Point, Point, string> createPopup_;
 
-    public ToolTipHoverPreview(UIElement control, Func<Point, Point, string> createPopup) : 
+    public ToolTipHoverPreview(UIElement control, Func<Point, Point, string> createPopup) :
         base(control, TimeSpan.MaxValue) {
         createPopup_ = createPopup;
     }
@@ -162,8 +162,8 @@ public class ToolTipHoverPreview : HoverPreview {
 
         if (!string.IsNullOrEmpty(text)) {
             previewPopup_ = new ToolTip() {
-                Content = text, 
-                IsOpen = true, 
+                Content = text,
+                IsOpen = true,
                 FontFamily = new FontFamily("Consolas")
             };
         }

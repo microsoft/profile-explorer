@@ -50,7 +50,9 @@ namespace IRExplorerUI.Utilities.UI {
 
             // If animations are disabled in Windows, the hover duration is set to 0,
             // make sure there is some short duration.
-            hoverDuration = TimeSpan.FromTicks(Math.Max(TimeSpan.FromMilliseconds(500).Ticks, SystemParameters.MouseHoverTime.Ticks));
+            var minHoverDuration = TimeSpan.FromMilliseconds(200);
+            hoverDuration = TimeSpan.FromTicks(Math.Max(minHoverDuration.Ticks,
+                                                        SystemParameters.MouseHoverTime.Ticks));
         }
 
         public MouseHoverLogic(UIElement target, TimeSpan hoverDuration) : this(target) {

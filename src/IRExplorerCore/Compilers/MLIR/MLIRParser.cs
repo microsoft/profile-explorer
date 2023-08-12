@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Dynamic;
 using System.IO;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
@@ -28,36 +27,49 @@ namespace IRExplorerCore.MLIR {
         }
 
         public FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText) {
+            bool wslEnabled = false;
+            string wslDistroName = "Ubuntu-20.04";
+            string wslParserPath = "/home/gratilup/triton-irx";
+
             var inputFile = Path.GetTempFileName();
             var outputFile = Path.ChangeExtension(Path.GetTempFileName(), ".json");
-
-            //? TODO:
-            // - section should include all functs
-            // - when parsing, combine before/after pass output with main output
-            //      - based on compilerIRInfo flag
-            //      - prefix func name with module name
-            //          - support for modules needed in reader, nested modules  mod1.mod2.func
-            //      - adjust offsets and line numnbers in raw IR afterwards
-            //      -
-
-            if (section.OutputBefore != null) {
-                Trace.WriteLine($" > before pass output for section: {section.Name}\n {section.OutputBefore}");
-            }
-
-            var parserPath = @"C:\github\llvm-project\build\RelWithDebInfo\bin\mlir-lsp-server.exe";
-            var psi = new ProcessStartInfo(parserPath) {
-                Arguments = $"\"{inputFile}\" \"{outputFile}\"",
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
 
             try {
                 File.WriteAllText(inputFile, sectionText.ToString());
                 File.WriteAllText(@"C:\test\in.mlir", sectionText.ToString());
 
-                using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
-                process.Start();
-                process.WaitForExit();
+                if (wslEnabled) {
+                    var wslInputFileName = Path.GetFileName(inputFile);
+                    var wslOutputFileName = Path.GetFileName(outputFile);
+                    var wslInputFile = Path.Combine($"\\\\wsl.localhost\\{wslDistroName}\\tmp", wslInputFileName);
+                    var wslOutputFile = Path.Combine($"\\\\wsl.localhost\\{wslDistroName}\\tmp", wslOutputFileName);
+                    File.Copy(inputFile, wslInputFile, true);
+
+                    var parserPath = @"wsl";
+                    var psi = new ProcessStartInfo(parserPath) {
+                        Arguments = $"--distribution {wslDistroName} {wslParserPath} \"/tmp/{wslInputFileName}\" \"/tmp/{wslOutputFileName}\"",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+
+                    using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+                    process.Start();
+                    process.WaitForExit();
+
+                    File.Copy(wslOutputFile, outputFile, true);
+                }
+                else {
+                    var parserPath = @"C:\github\llvm-project\build\Debug\bin\mlir-lsp-server.exe";
+                    var psi = new ProcessStartInfo(parserPath) {
+                        Arguments = $"\"{inputFile}\" \"{outputFile}\"",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+
+                   using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+                   process.Start();
+                   process.WaitForExit();
+                }
 
                 if (!File.Exists(outputFile)) {
                     Trace.WriteLine($"Failed to generate MLIR JSON file for section: {section.Name}");
@@ -75,9 +87,13 @@ namespace IRExplorerCore.MLIR {
             if (JsonUtils.Deserialize(jsonData, out IRExplorerCore.RawIRModel.ModuleIR module)) {
                 var parser = new MLIRParser(irInfo_, errorHandler_, null, section);
 
-                if (module.Functions.Count >= section.IndexInModule) {
-                    return parser.Parse(module.Functions[section.IndexInModule], sectionText);
+                foreach(var func in module.Functions) {
+                    if (func.Name == section.ParentFunction.Name) {
+                        return parser.Parse(func, sectionText);
+                    }
                 }
+
+                Trace.TraceError($"Failed to parse MLIR for section: {section.Name}");
             }
 
             return null;

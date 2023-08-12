@@ -91,13 +91,13 @@ namespace IRExplorerUI {
         //? TODO: Should match editor font
         private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
 
-        private static (TextBlock, string) 
+        private static (TextBlock, string)
             CreatePreviewTextBlock(OperandIR operand, Reference reference, string documentText) {
             // Mark every instance of the symbol name in the preview text (usually an instr).
             string text = FindPreviewText(reference, documentText);
             string symbolName = Utils.GetSymbolName(operand);
             int index = 0;
-            
+
             var textBlock = new TextBlock();
             textBlock.FontFamily = PreviewFont;
             textBlock.Foreground = Brushes.Black;
@@ -226,7 +226,7 @@ namespace IRExplorerUI {
             MouseLeave += OnMouseLeave;
 
             //? TODO: Replace with DraggablePopupHoverPreview
-            var hover = new MouseHoverLogic(this);
+            var hover = new Utilities.UI.MouseHoverLogic(this);
             hover.MouseHover += Hover_MouseHover;
             hover.MouseHoverStopped += Hover_MouseHoverStopped;
         }
@@ -297,7 +297,7 @@ namespace IRExplorerUI {
                     ignoreNextElement_ = false;
                     return;
                 }
-                
+
                 var operand = FindReferenceOperand(value);
 
                 if (element_ != operand) {
@@ -497,7 +497,7 @@ namespace IRExplorerUI {
                 previewPopup_ = null;
             }
         }
-        
+
         private void Popup_PopupDetached(object sender, EventArgs e) {
             var popup = (IRDocumentPopup)sender;
 
@@ -620,11 +620,11 @@ namespace IRExplorerUI {
                 ShowPreviewPopup(refInfo.Info.Element, hoveredItem);
             }
         }
-        
+
         private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {
             HidePreviewPopupDelayed();
         }
-        
+
         private void HidePreviewPopupDelayed() {
             removeHoveredAction_ = DelayedAction.StartNew(() => {
                 if (removeHoveredAction_ != null) {
@@ -633,7 +633,7 @@ namespace IRExplorerUI {
                 }
             });
         }
-        
+
         ListViewItem FindPointedListItem(UIElement source) {
             var mousePosition = Mouse.GetPosition(source);
             var result = ReferenceList.GetObjectAtPoint<ListViewItem>(mousePosition);

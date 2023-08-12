@@ -10,9 +10,8 @@ namespace IRExplorerCore.Graph {
     public sealed class Node {
         //? Commented properties are currently not used.
         public ReadOnlyMemory<char> Name { get; set; }
-        //public ReadOnlyMemory<char> Label { get; set; }
         public string Label { get; set; }
-        //public ReadOnlyMemory<char> Style { get; set; }
+        public ReadOnlyMemory<char> Style { get; set; }
         //public ReadOnlyMemory<char> Shape { get; set; }
         //public ReadOnlyMemory<char> BackgroundColor { get; set; }
         //public ReadOnlyMemory<char> BorderColor { get; set; }
@@ -41,7 +40,7 @@ namespace IRExplorerCore.Graph {
 
         //public ReadOnlyMemory<char> NodeNameFrom { get; set; }
         //public ReadOnlyMemory<char> NodeNameTo { get; set; }
-        //public ReadOnlyMemory<char> Label { get; set; }
+        public string Label { get; set; }
         public double LabelX { get; set; }
         public double LabelY { get; set; }
         public Tuple<double, double>[] LinePoints { get; set; }

@@ -259,7 +259,7 @@ namespace IRExplorerCore.Graph {
             }
 
             node.Label = label.ToString();
-            //node.Style = style;
+            node.Style = style;
             //node.Shape = shape;
             //node.BorderColor = borderColor;
             //node.BackgroundColor = backgroundColor;
@@ -315,7 +315,7 @@ namespace IRExplorerCore.Graph {
                 return null;
             }
 
-            //edge.Label = label;
+            edge.Label = label.ToString();
             edge.LabelX = labelX;
             edge.LabelY = labelY;
             edge.Style = Edge.GetEdgeStyle(style);

@@ -10,6 +10,7 @@ namespace IRExplorerCore.RawIRModel {
     public class FunctionIR {
         public string Name { get; set; }
         public string Opcode { get; set; }
+        public List<string> ParentModules { get; set; }
         public List<RegionIR> Regions { get; set; }
     }
 
@@ -80,7 +81,7 @@ namespace IRExplorerCore.RawIRModel {
 
     public class GraphNode {
         public long Id { get; set; }
-        public string Name { get; set; }
+        public long Label { get; set; }
         public string Operation { get; set; }
         public List<GraphEdge> Edges { get; set; }
     }

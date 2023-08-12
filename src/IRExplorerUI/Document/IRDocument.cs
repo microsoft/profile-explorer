@@ -2344,15 +2344,13 @@ namespace IRExplorerUI {
                     !(element is InstructionIR)) {
                     bool previewDisplayed = await ShowDefinitionPreview(element);
 
-                    if (previewDisplayed) {
-                        HideHoverHighlighting();
-                        hoveredElement_ = element;
-                        HandleElement(element, hoverHighlighter_,
-                            markExpression: Utils.IsControlModifierActive(),
-                            markReferences: Utils.IsShiftModifierActive());
-                        UpdateHighlighting();
-                        return;
-                    }
+                    HideHoverHighlighting();
+                    hoveredElement_ = element;
+                    HandleElement(element, hoverHighlighter_,
+                        markExpression: Utils.IsControlModifierActive(),
+                        markReferences: Utils.IsShiftModifierActive());
+                    UpdateHighlighting();
+                    return;
                 }
             }
 
@@ -3207,13 +3205,15 @@ namespace IRExplorerUI {
                 return;
             }
 
+            var hover = new Utilities.UI.MouseHoverLogic(this);
+            hover.MouseHover += IRDocument_PreviewMouseHover;
+            hover.MouseHoverStopped += IRDocument_PreviewMouseHoverStopped;
+
             TextArea.SelectionChanged += TextAreaOnSelectionChanged;
             MouseDown += IRDocument_MouseDown;
             PreviewMouseLeftButtonDown += IRDocument_PreviewMouseLeftButtonDown;
             PreviewMouseRightButtonDown += IRDocument_PreviewMouseRightButtonDown;
             PreviewMouseLeftButtonUp += IRDocument_PreviewMouseLeftButtonUp;
-            PreviewMouseHover += IRDocument_PreviewMouseHover;
-            PreviewMouseHoverStopped += IRDocument_PreviewMouseHoverStopped;
             PreviewMouseDoubleClick += IRDocument_PreviewMouseDoubleClick;
             PreviewMouseMove += IRDocument_PreviewMouseMove;
             MouseLeave += IRDocument_MouseLeave;

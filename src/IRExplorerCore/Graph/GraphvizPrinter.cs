@@ -152,6 +152,11 @@ namespace IRExplorerCore.Graph {
             builder.AppendFormat(CultureInfo.InvariantCulture, "n{0} -> n{1} {2};\n", id1, id2, attribute);
         }
 
+        protected void CreateEdgeWithLabel(ulong id1, ulong id2, string label,
+            StringBuilder builder) {
+            builder.AppendFormat(CultureInfo.InvariantCulture, "n{0} -> n{1}[label=\"{2}\"];\n", id1, id2, label);
+        }
+
         protected void CreateEdgeWithStyle(int id1, int id2, string style,
                                            StringBuilder builder) {
             CreateEdgeWithStyle((ulong)id1, (ulong)id2, style, builder);

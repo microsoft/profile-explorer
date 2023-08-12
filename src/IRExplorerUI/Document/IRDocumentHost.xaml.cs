@@ -30,7 +30,6 @@ using IRExplorerCore.IR.Tags;
 using ClosedXML.Excel;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerUI.Profile;
-using MouseHoverLogic = IRExplorerUI.Utilities.UI.MouseHoverLogic;
 
 namespace IRExplorerUI {
     public static class DocumentHostCommand {
@@ -342,7 +341,7 @@ namespace IRExplorerUI {
             SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
             Unloaded += IRDocumentHost_Unloaded;
 
-            var hover = new MouseHoverLogic(this);
+            var hover = new Utilities.UI.MouseHoverLogic(this);
             hover.MouseHover += Hover_MouseHover;
             loadTask_ = new CancelableTaskInstance(true, Session.SessionState.RegisterCancelableTask,
                                                          Session.SessionState.UnregisterCancelableTask);

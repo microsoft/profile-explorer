@@ -28,7 +28,7 @@ namespace IRExplorerUI.Controls {
         private UIElement owner_;
 
         public event PropertyChangedEventHandler PropertyChanged;
-        
+
         public IRDocumentPopup(Point position, double width, double height,
                                UIElement owner, ISession session) {
             InitializeComponent();
@@ -136,7 +136,7 @@ namespace IRExplorerUI.Controls {
                 document.MarkElementWithDefaultStyle(PreviewedElement);
                 return;
             }
-            
+
             document.BringElementIntoView(PreviewedElement, BringIntoViewStyle.FirstLine);
         }
 
@@ -251,7 +251,7 @@ namespace IRExplorerUI.Controls {
 
         public void SetupHoverEvents(UIElement target, Func<PreviewPopupArgs> previewedElementFinder) {
             previewedElementFinder_ = previewedElementFinder;
-            var hover = new MouseHoverLogic(target);
+            var hover = new Utilities.UI.MouseHoverLogic(target);
             hover.MouseHover += Hover_MouseHover;
             hover.MouseHoverStopped += Hover_MouseHoverStopped;
         }
