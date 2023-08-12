@@ -37,7 +37,7 @@ using IRExplorerUI.Panels;
 using IRExplorerUI.Scripting;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Compilers.UTC;
-using IRExplorerUI.Compilers.LLVM;
+using IRExplorerUI.Compilers.MLIR;
 using IRExplorerUI.Controls;
 using System.Windows.Media.Imaging;
 using System.Threading.Tasks;

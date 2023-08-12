@@ -86,6 +86,10 @@ namespace IRExplorerUI {
             return defaultNodeStyle_;
         }
 
+        public HighlightingStyle GetEdgeLabelStyle(Edge edge) {
+            return defaultNodeStyle_;
+        }
+
         public bool ShouldRenderEdges(GraphEdgeKind kind) {
             return true;
         }

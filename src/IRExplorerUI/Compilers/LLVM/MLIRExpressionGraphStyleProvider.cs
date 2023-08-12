@@ -1,7 +1,7 @@
 ﻿using System.Windows.Media;
 using IRExplorerCore.Graph;
 
-namespace IRExplorerUI.Compilers.LLVM;
+namespace IRExplorerUI.Compilers.MLIR;
 
 public class MLIRExpressionGraphStyleProvider : ExpressionGraphStyleProvider {
     public MLIRExpressionGraphStyleProvider(Graph graph, ExpressionGraphSettings options,
@@ -11,6 +11,10 @@ public class MLIRExpressionGraphStyleProvider : ExpressionGraphStyleProvider {
 
     public override HighlightingStyle GetNodeStyle(Node node) {
         return base.GetNodeStyle(node);
+    }
+
+    public HighlightingStyle GetDefaultEdgeLabelStyle(Edge edge) {
+        return base.GetEdgeLabelStyle(edge);
     }
 
     public override Pen GetEdgeStyle(GraphEdgeKind kind) {

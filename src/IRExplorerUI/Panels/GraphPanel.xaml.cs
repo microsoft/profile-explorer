@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -18,7 +19,7 @@ using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
-using IRExplorerUI.Compilers.LLVM;
+using IRExplorerUI.Compilers.MLIR;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Utilities.UI;
 using ProtoBuf;
@@ -181,7 +182,7 @@ namespace IRExplorerUI {
         public void BringIntoView(IRElement element) {
             var node = GraphViewer.FindElementNode(element);
 
-            if (node == null) {
+            if (node == null || node is GraphEdgeLabel) {
                 return;
             }
 
@@ -548,7 +549,7 @@ namespace IRExplorerUI {
 
             var node = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
-            if (node?.NodeInfo.ElementData != null) {
+            if (node?.ElementData != null) {
                 ShowPreviewPopup(node);
                 hoveredNode_ = node;
             }
@@ -614,7 +615,7 @@ namespace IRExplorerUI {
 
         private void SelectQueryBlock1Executed(object sender, ExecutedRoutedEventArgs e) {
             if (hoveredNode_ != null) {
-                if (hoveredNode_.NodeInfo.ElementData is BlockIR block) {
+                if (hoveredNode_.ElementData is BlockIR block) {
                     SetQueryBlock1(block);
                 }
             }
@@ -622,7 +623,7 @@ namespace IRExplorerUI {
 
         private void SelectQueryBlock2Executed(object sender, ExecutedRoutedEventArgs e) {
             if (hoveredNode_ != null) {
-                if (hoveredNode_.NodeInfo.ElementData is BlockIR block) {
+                if (hoveredNode_.ElementData is BlockIR block) {
                     SetQueryBlock2(block);
                 }
             }
@@ -853,7 +854,7 @@ namespace IRExplorerUI {
             }
 
             var position = Mouse.GetPosition(GraphHost).AdjustForMouseCursor();
-            previewPopup_ = IRDocumentPopup.CreateNew(Document, node.NodeInfo.ElementData,
+            previewPopup_ = IRDocumentPopup.CreateNew(Document, node.ElementData,
                                                       position, 500, 150, GraphHost, "Block ");
             previewPopup_.PopupDetached += Popup_PopupDetached;
             previewPopup_.ShowPopup();
@@ -985,27 +986,67 @@ namespace IRExplorerUI {
                             if (graph.Function.Equals(section.ParentFunction.Name, StringComparison.Ordinal)) {
                                 Trace.WriteLine($"  match");
 
+
                                 var funcLines = Session.GetSectionOutputTextLinesAsync(section.Output, section).Result; //? TODO: await
+                                var nodeElementMap = new Dictionary<IRExplorerCore.RawIRModel.GraphNode, IRElement>();
+                                var edgeElementMap = new Dictionary<IRExplorerCore.RawIRModel.GraphEdge, IRElement>();
+
+                                IRElement FindElement(string operation) {
+                                    for(int i = 0; i < funcLines.Count; i++) {
+                                        var funcLine = funcLines[i];
+                                        if (funcLine.Contains(operation)) {
+                                            int startLine = section.Output.StartLine;
+
+                                            if (section.ModuleOutput != null) {
+                                                startLine -= section.ModuleOutput.StartLine;
+                                            }
+
+                                            int targetLine = i + startLine;
+                                            Trace.WriteLine($"Found text at {targetLine} matching {operation}");
+
+                                            foreach(var instr in document.Function.AllTuples) {
+                                                if (instr.TextLocation.Line == targetLine + 1) {
+                                                    Trace.WriteLine($"Found element {instr}");
+                                                    return instr;
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+
+                                    return null;
+                                }
 
                                 foreach (var node in graph.Nodes) {
                                     if (!string.IsNullOrEmpty(node.Operation)) {
-                                        for(int i = 0; i < funcLines.Count; i++) {
-                                            var funcLine = funcLines[i];
-                                            if (funcLine.Contains(node.Operation)) {
-                                                Trace.WriteLine($"Found at {i} matching {node.Operation}");
-                                                break;
+                                        var element = FindElement(node.Operation);
+
+                                        if (element != null) {
+                                            nodeElementMap[node] = element;
+                                        }
+                                    }
+
+                                    foreach(var edge in node.Edges) {
+                                        if (!string.IsNullOrEmpty(edge.Label)) {
+                                            var element = FindElement(edge.Label);
+
+                                            if (element != null) {
+                                                edgeElementMap[edge] = element;
                                             }
                                         }
                                     }
                                 }
 
-                                var printer = new MLIRCompilerInfoProvider.RawIRGraphPrinter(graph, document.Function, null);
+
+                                var printer = new RawIRGraphPrinter(graph, document.Function,
+                                                nodeElementMap, edgeElementMap, null);
                                 var graphText = printer.PrintGraph();
                                 File.WriteAllText(@"C:\test\graph.dot", graphText);
 
 
                                 var result = printer.CreateGraph(graphText, new CancelableTask());
-                                var graphReader = new GraphvizReader(GraphKind.ExpressionGraph, result, printer.CreateNodeDataMap());
+                                var graphReader = new GraphvizReader(GraphKind.ExpressionGraph, result,
+                                    printer.CreateNodeDataMap(), printer.CreateEdgeDataMap());
                                 var layoutGraph = graphReader.ReadGraph();
 
                                 if (layoutGraph != null) {

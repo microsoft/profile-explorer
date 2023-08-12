@@ -201,11 +201,15 @@ namespace IRExplorerCore.Graph {
         }
 
         public virtual Dictionary<string, TaggedObject> CreateNodeDataMap() {
-            throw new NotImplementedException();
+            return new Dictionary<string, TaggedObject>();
+        }
+
+        public virtual Dictionary<(string, string), TaggedObject> CreateEdgeDataMap() {
+            return new Dictionary<(string, string), TaggedObject>();
         }
 
         public virtual Dictionary<TaggedObject, List<TaggedObject>> CreateNodeDataGroupsMap() {
-            throw new NotImplementedException();
+            return new Dictionary<TaggedObject, List<TaggedObject>>();
         }
 
         public string CreateGraph(CancelableTask task) {

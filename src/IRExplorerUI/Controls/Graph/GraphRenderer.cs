@@ -12,18 +12,51 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
+    public class GraphEdgeLabel : GraphNode {
+        private const double DefaultLabelTextSize = 0.190;
+        private const double LabelMargin = 0.1;
+        private const double LabelToEdgeMargin = 1.0;
+
+        public Edge EdgeInfo { get; set; }
+        public override TaggedObject Data => EdgeInfo.Data;
+        public override List<Edge> InEdges => new List<Edge>() { EdgeInfo };
+        public override List<Edge> OutEdges => new List<Edge>() { EdgeInfo };
+
+        public override void Draw() {
+            using var dc = Visual.RenderOpen();
+
+            var labelText = new FormattedText(EdgeInfo.Label, CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight, TextFont, DefaultLabelTextSize, TextColor,
+                VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
+            double x = EdgeInfo.LabelX - labelText.Width / 2 + LabelToEdgeMargin;
+            double y = EdgeInfo.LabelY - labelText.Height / 2;
+
+            var region = new Rect(x - LabelMargin, y - LabelMargin,
+                                  labelText.Width + 2*LabelMargin, labelText.Height + 2*LabelMargin);
+            dc.DrawRectangle(Style.BackColor, Style.Border, region);
+
+            dc.DrawText(labelText, new Point(x, y));
+        }
+    }
+
     public class GraphNode {
         private const double DefaultTextSize = 0.225;
         private const double DefaultLabelTextSize = 0.190;
 
         public Node NodeInfo { get; set; }
-        public GraphSettings Settings{ get; set; }
+        public GraphSettings Settings { get; set; }
         public DrawingVisual Visual { get; set; }
         public HighlightingStyle Style { get; set; }
         public Typeface TextFont { get; set; }
         public Brush TextColor { get; set; }
 
-        public void Draw() {
+        public virtual List<Edge> InEdges => NodeInfo.InEdges;
+        public virtual List<Edge> OutEdges => NodeInfo.OutEdges;
+        public virtual TaggedObject Data => NodeInfo.Data;
+        public bool DataIsElement => Data is IRElement;
+        public IRElement ElementData => Data as IRElement;
+
+        public virtual void Draw() {
             using var dc = Visual.RenderOpen();
             var graphTag = NodeInfo.Data?.GetTag<GraphNodeTag>();
 
@@ -111,6 +144,7 @@ namespace IRExplorerUI {
     public interface IGraphStyleProvider {
         Brush GetDefaultTextColor();
         HighlightingStyle GetDefaultNodeStyle();
+        public HighlightingStyle GetEdgeLabelStyle(Edge edge);
         public HighlightingStyle GetNodeStyle(Node node);
         public Pen GetEdgeStyle(GraphEdgeKind kind);
         public GraphEdgeKind GetEdgeKind(Edge edge);
@@ -288,11 +322,10 @@ namespace IRExplorerUI {
         }
 
         public HighlightingStyle GetDefaultNodeStyle(GraphNode node) {
+            if (node is GraphEdgeLabel edgeLabel) {
+                return graphStyle_.GetEdgeLabelStyle(edgeLabel.EdgeInfo);
+            }
             return graphStyle_.GetNodeStyle(node.NodeInfo);
-        }
-
-        public HighlightingStyle GetDefaultNodeStyle(Node node) {
-            return graphStyle_.GetNodeStyle(node);
         }
 
         private void DrawNodes() {
@@ -316,7 +349,7 @@ namespace IRExplorerUI {
                     Visual = nodeVisual,
                     TextFont = defaultNodeFont_,
                     TextColor = textColor,
-                    Style = GetDefaultNodeStyle(node)
+                    Style = graphStyle_.GetNodeStyle(node)
                 };
 
                 graphNode.Draw();
@@ -387,6 +420,10 @@ namespace IRExplorerUI {
                 // Draw arrow head with a slope matching the line,
                 // but only if the target node is visible.
                 DrawEdgeArrow(edge, tempPoints, sc);
+
+                if(!string.IsNullOrEmpty(edge.Label)) {
+                    CreateEdgeLabelVisual(edge);
+                }
             }
 
             defaultSC.Close();
@@ -410,6 +447,32 @@ namespace IRExplorerUI {
 
             dc.Close();
             visual_.Children.Add(lineVisual);
+        }
+
+        private void CreateEdgeLabelVisual(Edge edge)
+        {
+            Brush textColor;
+            var nodeVisual = new DrawingVisual();
+
+            if (edge.Label.Contains("\\n"))
+            {
+                edge.Label = edge.Label.Replace("\\n", "\n");
+            }
+
+            var graphNode = new GraphEdgeLabel()
+            {
+                EdgeInfo = edge,
+                Settings = settings_,
+                Visual = nodeVisual,
+                TextFont = defaultNodeFont_,
+                TextColor = graphStyle_.GetDefaultTextColor(),
+                Style = graphStyle_.GetEdgeLabelStyle(edge)
+            };
+
+            graphNode.Draw();
+            edge.Tag = graphNode;
+            nodeVisual.SetValue(FrameworkElement.TagProperty, graphNode);
+            visual_.Children.Add(nodeVisual);
         }
 
         private void DrawEdgeArrow(Edge edge, Point[] tempPoints, StreamGeometryContext sc) {

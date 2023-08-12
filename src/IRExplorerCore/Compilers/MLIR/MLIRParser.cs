@@ -27,7 +27,7 @@ namespace IRExplorerCore.MLIR {
         }
 
         public FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText) {
-            bool wslEnabled = false;
+            bool wslEnabled = true;
             string wslDistroName = "Ubuntu-20.04";
             string wslParserPath = "/home/gratilup/triton-irx";
 
@@ -55,6 +55,11 @@ namespace IRExplorerCore.MLIR {
                     using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
                     process.Start();
                     process.WaitForExit();
+
+                    if (process.ExitCode != 0) {
+                        Trace.WriteLine($"Running WSL parser failed with code: {process.ExitCode}");
+                        return null;
+                    }
 
                     File.Copy(wslOutputFile, outputFile, true);
                 }
@@ -89,6 +94,7 @@ namespace IRExplorerCore.MLIR {
 
                 foreach(var func in module.Functions) {
                     if (func.Name == section.ParentFunction.Name) {
+                        //? TODO: Also check parent method names to match.
                         return parser.Parse(func, sectionText);
                     }
                 }

@@ -24,6 +24,7 @@ namespace IRExplorerCore.Graph {
 
         private readonly Dictionary<string, Node> nodeMap_;
         private readonly Dictionary<string, TaggedObject> dataNameMap_;
+        private readonly Dictionary<(string, string), TaggedObject> edgeDataNameMap_;
         private Token current_;
         private Graph graph_;
 
@@ -31,9 +32,11 @@ namespace IRExplorerCore.Graph {
         private Lexer.Lexer lexer_;
 
         public GraphvizReader(GraphKind kind, string text,
-                              Dictionary<string, TaggedObject> dataNameMap) {
+                              Dictionary<string, TaggedObject> dataNameMap,
+                              Dictionary<(string, string), TaggedObject>  edgeDataNameMap = null) {
             graphKind_ = kind;
             dataNameMap_ = dataNameMap;
+            edgeDataNameMap_ = edgeDataNameMap;
 
             nodeMap_ = new Dictionary<string, Node>();
             lexer_ = new Lexer.Lexer();
@@ -269,7 +272,7 @@ namespace IRExplorerCore.Graph {
             // Associate with IR objects.
             if (dataNameMap_.TryGetValue(name.ToString(), out var data)) {
                 node.Data = data;
-                graph_.DataNodeMap.Add(data, node);
+                graph_.DataNodeMap[data] = node;
             }
             else {
                 //Debug.Assert(false, $"Could not find block {name}");
@@ -340,6 +343,7 @@ namespace IRExplorerCore.Graph {
                 }
             }
 
+            // Associate with pointed nodes.
             if (dataNameMap_.TryGetValue(toNode.ToString(), out var toBlock)) {
                 var node = graph_.DataNodeMap[toBlock];
                 edge.NodeTo = node;
@@ -355,6 +359,20 @@ namespace IRExplorerCore.Graph {
                 else {
                     Debug.Assert(false, $"Could not find block {fromNode}");
                     Trace.TraceError($"Could not find Graphviz output block {fromNode}");
+                }
+            }
+
+            // Associate with IR objects.
+            if (edgeDataNameMap_ != null) {
+                var key = (fromNode.ToString(), toNode.ToString());
+
+                if (edgeDataNameMap_.TryGetValue(key, out var data)) {
+                    edge.Data = data;
+                    graph_.EdgeDataNodeMap[data] = edge;
+                }
+                else {
+                    //Debug.Assert(false, $"Could not find block {name}");
+                    Trace.TraceError($"Could not find Graphviz output for {fromNode}, {toNode}");
                 }
             }
 

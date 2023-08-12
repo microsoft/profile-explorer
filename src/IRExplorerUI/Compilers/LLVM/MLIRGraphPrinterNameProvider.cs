@@ -1,7 +1,7 @@
 ﻿using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
-namespace IRExplorerUI.Compilers.LLVM;
+namespace IRExplorerUI.Compilers.MLIR;
 
 public class MLIRGraphPrinterNameProvider : GraphPrinterNameProvider {
     public override string GetBlockNodeLabel(BlockIR block) {

@@ -46,6 +46,10 @@ namespace IRExplorerCore.Graph {
         public Tuple<double, double>[] LinePoints { get; set; }
         public EdgeKind Style { get; set; }
         public ReadOnlyMemory<char> Color { get; set; }
+        public TaggedObject Data { get; set; }
+        public bool DataIsElement => Data is IRElement;
+        public IRElement ElementData => Data as IRElement;
+        public object Tag { get; set; }
 
         public static EdgeKind GetEdgeStyle(ReadOnlyMemory<char> style) {
             if (style.Span.Equals("dotted", StringComparison.Ordinal)) {
@@ -73,6 +77,7 @@ namespace IRExplorerCore.Graph {
             Nodes = new List<Node>();
             Edges = new List<Edge>();
             DataNodeMap = new Dictionary<TaggedObject, Node>();
+            EdgeDataNodeMap = new Dictionary<TaggedObject, Edge>();
         }
 
         public GraphKind Kind { get; set; }
@@ -85,6 +90,7 @@ namespace IRExplorerCore.Graph {
 
         //? TODO: Move below out so it's easy to discard them and free memory for large graphs
         public Dictionary<TaggedObject, Node> DataNodeMap { get; set; }
+        public Dictionary<TaggedObject, Edge> EdgeDataNodeMap { get; set; }
         public Dictionary<TaggedObject, List<TaggedObject>> DataNodeGroupsMap { get; set; }
     }
 }

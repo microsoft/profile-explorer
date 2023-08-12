@@ -106,6 +106,10 @@ namespace IRExplorerUI {
             };
         }
 
+        public HighlightingStyle GetEdgeLabelStyle(Edge edge) {
+            return defaultNodeStyle_;
+        }
+
         public GraphEdgeKind GetEdgeKind(Edge edge) {
             if (!options_.ColorizeEdges) {
                 return GraphEdgeKind.Default;

@@ -688,7 +688,6 @@ namespace IRExplorerCore {
                         }
                     }
 
-                    //? TODO: Wrong line numbers from MLIR, reason why preview popup shows up for uses
                     moduleOutput = AddOptionalOutputLine(currentLine_, funcInitialOffset, moduleOutput);
 
                     if (IsModuleStart(currentLine_)) {

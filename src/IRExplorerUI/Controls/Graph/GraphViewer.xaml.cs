@@ -120,14 +120,14 @@ namespace IRExplorerUI {
             var graphNode = FindPointedNode(point);
 
             if (graphNode != null) {
-                SelectElement(graphNode.NodeInfo.ElementData);
+                SelectElement(graphNode.ElementData);
             }
 
             e.Handled = graphNode != null;
         }
 
         private bool ShouldHoverNode(GraphNode node) {
-            return !((node.NodeInfo.Data is BlockIR && graph_.Kind == GraphKind.ExpressionGraph) || node.NodeInfo.Data is RegionIR);
+            return !((node.Data is BlockIR && graph_.Kind == GraphKind.ExpressionGraph) || node.Data is RegionIR);
         }
 
         private void GraphViewer_MouseMove(object sender, MouseEventArgs e) {
@@ -159,8 +159,8 @@ namespace IRExplorerUI {
                 return;
             }
 
-            if (graphNode.NodeInfo.InEdges != null) {
-                foreach (var edge in graphNode.NodeInfo.InEdges) {
+            if (graphNode.InEdges != null) {
+                foreach (var edge in graphNode.InEdges) {
                     var node = edge.NodeFrom?.Tag as GraphNode;
 
                     if (node == null) {
@@ -171,8 +171,8 @@ namespace IRExplorerUI {
                 }
             }
 
-            if (graphNode.NodeInfo.OutEdges != null) {
-                foreach (var edge in graphNode.NodeInfo.OutEdges) {
+            if (graphNode.OutEdges != null) {
+                foreach (var edge in graphNode.OutEdges) {
                     var node = edge.NodeTo?.Tag as GraphNode;
 
                     if (node == null) {
@@ -195,14 +195,14 @@ namespace IRExplorerUI {
             var graphNode = FindPointedNode(point);
 
             if (graphNode != null) {
-                if (graphNode.NodeInfo.DataIsElement) {
-                    SelectElement(graphNode.NodeInfo.ElementData);
+                if (graphNode.DataIsElement) {
+                    SelectElement(graphNode.ElementData);
                     BlockSelected?.Invoke(this, new IRElementEventArgs {
-                        Element = graphNode.NodeInfo.ElementData
+                        Element = graphNode.ElementData
                     });
                 }
                 else {
-                    NodeSelected?.Invoke(this, graphNode.NodeInfo.Data);
+                    NodeSelected?.Invoke(this, graphNode.Data);
                 }
 
                 e.Handled = true;
@@ -263,14 +263,14 @@ namespace IRExplorerUI {
             HighlightNode(node, style, HighlighingType.Marked);
 
             BlockMarked?.Invoke(this, new IRElementMarkedEventArgs {
-                Element = node.NodeInfo.ElementData,
+                Element = node.ElementData,
                 Style = style
             });
         }
 
         public void MarkNodePredecessors(GraphNode node, HighlightingStyle style) {
-            if (node?.NodeInfo.InEdges != null) {
-                foreach (var edge in node.NodeInfo.InEdges) {
+            if (node?.InEdges != null) {
+                foreach (var edge in node.InEdges) {
                     var fromNode = edge.NodeFrom?.Tag as GraphNode;
                     MarkNode(fromNode, style);
                 }
@@ -278,8 +278,8 @@ namespace IRExplorerUI {
         }
 
         public void MarkNodeSuccessors(GraphNode node, HighlightingStyle style) {
-            if (node?.NodeInfo.InEdges != null) {
-                foreach (var edge in node.NodeInfo.OutEdges) {
+            if (node?.InEdges != null) {
+                foreach (var edge in node.OutEdges) {
                     var toNode = edge.NodeTo?.Tag as GraphNode;
                     MarkNode(toNode, style);
                 }
@@ -291,7 +291,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var block = (BlockIR)node.NodeInfo.ElementData;
+            var block = (BlockIR)node.ElementData;
             var cache = FunctionAnalysisCache.Get(block.ParentFunction);
             var dominatorAlgorithm = await getDominators(cache).ConfigureAwait(true);
 
@@ -305,7 +305,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var block = (BlockIR)node.NodeInfo.ElementData;
+            var block = (BlockIR)node.ElementData;
             var cache = FunctionAnalysisCache.Get(block.ParentFunction);
             var dominanceFrontierAlgorithm = await getDominanceFrontier(cache).ConfigureAwait(true);
 
@@ -315,7 +315,7 @@ namespace IRExplorerUI {
         }
 
         public void MarkNodeLoop(GraphNode node, HighlightingStyle style) {
-            var loopTag = node?.NodeInfo.ElementData.GetTag<LoopBlockTag>();
+            var loopTag = node?.ElementData.GetTag<LoopBlockTag>();
 
             if (loopTag == null) {
                 return;
@@ -327,7 +327,7 @@ namespace IRExplorerUI {
         }
 
         public void MarkNodeLoopNest(GraphNode node, HighlightingStyle style) {
-            var loopTag = node?.NodeInfo.ElementData.GetTag<LoopBlockTag>();
+            var loopTag = node?.ElementData.GetTag<LoopBlockTag>();
 
             if (loopTag == null) {
                 return;
@@ -515,7 +515,7 @@ namespace IRExplorerUI {
                 RestoreNodeStyle(node);
 
                 BlockUnmarked?.Invoke(this, new IRElementMarkedEventArgs {
-                    Element = node.NodeInfo.ElementData
+                    Element = node.ElementData
                 });
             }
         }
@@ -524,7 +524,7 @@ namespace IRExplorerUI {
             if (BlockUnmarked != null) {
                 foreach (var node in markedNodes_.Keys) {
                     BlockUnmarked(this, new IRElementMarkedEventArgs {
-                        Element = node.NodeInfo.ElementData
+                        Element = node.ElementData
                     });
                 }
             }
