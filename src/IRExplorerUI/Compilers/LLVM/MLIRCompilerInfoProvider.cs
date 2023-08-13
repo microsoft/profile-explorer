@@ -52,11 +52,11 @@ namespace IRExplorerUI.Compilers.MLIR {
         public IGraphStyleProvider CreateGraphStyleProvider(Graph graph, GraphSettings settings) {
             return graph.Kind switch {
                 GraphKind.FlowGraph =>
-                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                    new MLIRFlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
                 GraphKind.DominatorTree =>
-                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                    new MLIRFlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
                 GraphKind.PostDominatorTree =>
-                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                    new MLIRFlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
                 GraphKind.ExpressionGraph =>
                     new MLIRExpressionGraphStyleProvider(graph, (ExpressionGraphSettings)settings, this),
                 GraphKind.CallGraph =>

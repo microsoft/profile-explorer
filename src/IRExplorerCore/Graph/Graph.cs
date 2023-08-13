@@ -29,7 +29,7 @@ namespace IRExplorerCore.Graph {
     }
 
     public sealed class Edge {
-        public enum EdgeKind {
+        public enum EdgeStyle {
             Default,
             Dotted,
             Dashed
@@ -44,22 +44,22 @@ namespace IRExplorerCore.Graph {
         public double LabelX { get; set; }
         public double LabelY { get; set; }
         public Tuple<double, double>[] LinePoints { get; set; }
-        public EdgeKind Style { get; set; }
+        public EdgeStyle Style { get; set; }
         public ReadOnlyMemory<char> Color { get; set; }
         public TaggedObject Data { get; set; }
         public bool DataIsElement => Data is IRElement;
         public IRElement ElementData => Data as IRElement;
         public object Tag { get; set; }
 
-        public static EdgeKind GetEdgeStyle(ReadOnlyMemory<char> style) {
+        public static EdgeStyle GetEdgeStyle(ReadOnlyMemory<char> style) {
             if (style.Span.Equals("dotted", StringComparison.Ordinal)) {
-                return EdgeKind.Dotted;
+                return EdgeStyle.Dotted;
             }
             else if (style.Span.Equals("dashed", StringComparison.Ordinal)) {
-                return EdgeKind.Dashed;
+                return EdgeStyle.Dashed;
             }
 
-            return EdgeKind.Default;
+            return EdgeStyle.Default;
         }
     }
 

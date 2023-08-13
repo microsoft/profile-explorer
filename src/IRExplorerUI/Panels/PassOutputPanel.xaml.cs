@@ -143,7 +143,7 @@ namespace IRExplorerUI {
             get => TextView.SearchMode == LightIRDocument.TextSearchMode.Filter;
             set {
                 var prevSearchMode = TextView.SearchMode;
-                TextView.SearchMode = value ? LightIRDocument.TextSearchMode.Filter : 
+                TextView.SearchMode = value ? LightIRDocument.TextSearchMode.Filter :
                                               LightIRDocument.TextSearchMode.Mark;
                 if (TextView.SearchMode != prevSearchMode) {
                     Dispatcher.InvokeAsync(async () => await SearchText());
@@ -248,7 +248,7 @@ namespace IRExplorerUI {
         #region IToolPanel
 
         public override ToolPanelKind PanelKind => ToolPanelKind.PassOutput;
-        
+
         public void OnPropertyChange(string propertyname) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }
@@ -308,9 +308,15 @@ namespace IRExplorerUI {
                 }
 
                 // Restore position in document.
-                TextView.TextArea.Caret.Offset = state.CaretOffset;
-                TextView.ScrollToVerticalOffset(state.VerticalOffset);
-                TextView.ScrollToHorizontalOffset(state.HorizontalOffset);
+                if (state.CaretOffset < TextView.TextArea.Document.TextLength) {
+                    TextView.TextArea.Caret.Offset = state.CaretOffset;
+                    TextView.ScrollToVerticalOffset(state.VerticalOffset);
+                    TextView.ScrollToHorizontalOffset(state.HorizontalOffset);
+                }
+                else {
+                    // TODO: Should not happen
+                    Utils.WaitForDebugger();
+                }
             }
             else {
                 await SwitchText(section, document.Function, document);

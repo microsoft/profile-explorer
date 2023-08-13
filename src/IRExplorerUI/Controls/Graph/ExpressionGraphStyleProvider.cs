@@ -31,6 +31,7 @@ namespace IRExplorerUI {
         private HighlightingStyle callNodeStyle_;
         private HighlightingStyle unaryNodeStyle_;
         private HighlightingStyle edgeLabelNodeStyle_;
+        private HighlightingStyle boundingBoxStyle_;
 
         public ExpressionGraphStyleProvider(Graph graph, ExpressionGraphSettings options,
                                             ICompilerInfoProvider compilerInfo) {
@@ -82,6 +83,12 @@ namespace IRExplorerUI {
 
             edgeStyle_ = ColorPens.GetPen(options.EdgeColor, DefaultEdgeThickness);
             loopEdgeStyle_ = ColorPens.GetPen(options.LoopPhiBackedgeColor, BoldEdgeThickness);
+            boundingBoxStyle_ = new HighlightingStyle(ColorBrushes.GetTransparentBrush(Colors.LightGray, 10),
+                ColorPens.GetDashedPen(Colors.Gray, DashStyles.Dot, DefaultEdgeThickness));
+        }
+
+        public Brush GetDefaultEdgeLabelTextColor() {
+            return Brushes.DarkBlue;
         }
 
         public HighlightingStyle GetDefaultNodeStyle() {
@@ -154,6 +161,10 @@ namespace IRExplorerUI {
             }
 
             return defaultNodeStyle_;
+        }
+
+        public HighlightingStyle GetBoundingBoxStyle(Node node) {
+            return boundingBoxStyle_;
         }
 
         public virtual GraphEdgeKind GetEdgeKind(Edge edge) {

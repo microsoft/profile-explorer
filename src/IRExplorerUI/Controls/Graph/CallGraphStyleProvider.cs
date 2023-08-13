@@ -40,6 +40,10 @@ namespace IRExplorerUI {
             return defaultNodeBackground_;
         }
 
+        public Brush GetDefaultEdgeLabelTextColor() {
+            return Brushes.DarkBlue;
+        }
+
         public HighlightingStyle GetDefaultNodeStyle() {
             return defaultNodeStyle_;
         }
@@ -50,6 +54,10 @@ namespace IRExplorerUI {
 
         public GraphEdgeKind GetEdgeKind(Edge edge) {
             return GraphEdgeKind.Default;
+        }
+
+        public HighlightingStyle GetBoundingBoxStyle(Node node) {
+            return null;
         }
 
         public Pen GetEdgeStyle(GraphEdgeKind kind) {

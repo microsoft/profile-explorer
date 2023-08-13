@@ -8,9 +8,9 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
-    public sealed class FlowGraphStyleProvider : IGraphStyleProvider {
+    public class FlowGraphStyleProvider : IGraphStyleProvider {
         private const int PolylineEdgeThreshold = 100;
-        private const double DefaultEdgeThickness = 0.025;
+        public const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;
         private const double DashedEdgeThickness = 0.035;
 
@@ -31,6 +31,7 @@ namespace IRExplorerUI {
         private HighlightingStyle returnBlockStyle_;
         private Pen returnEdgeStyle_;
         private HighlightingStyle switchBlockStyle_;
+        private HighlightingStyle boundingBoxStyle_;
 
         public FlowGraphStyleProvider(Graph graph, FlowGraphSettings options) {
             graph_ = graph;
@@ -71,6 +72,8 @@ namespace IRExplorerUI {
                 ColorPens.GetDashedPen(options.DominatorEdgeColor, DashStyles.Dot, DashedEdgeThickness);
 
             returnEdgeStyle_ = ColorPens.GetPen(options.ReturnNodeBorderColor, DefaultEdgeThickness);
+            boundingBoxStyle_ = new HighlightingStyle(ColorBrushes.GetTransparentBrush(Colors.LightGray, 10),
+                ColorPens.GetDashedPen(Colors.Gray, DashStyles.Dot, DefaultEdgeThickness));
 
             if (options.MarkLoopBlocks) {
                 loopBlockStyles_ = new List<HighlightingStyle>();
@@ -81,6 +84,10 @@ namespace IRExplorerUI {
                             color, ColorPens.GetPen(options.NodeBorderColor, DefaultEdgeThickness)));
                 }
             }
+        }
+
+        public Brush GetDefaultEdgeLabelTextColor() {
+            return Brushes.DarkBlue;
         }
 
         public HighlightingStyle GetDefaultNodeStyle() {
@@ -106,6 +113,10 @@ namespace IRExplorerUI {
             };
         }
 
+        public virtual HighlightingStyle GetBoundingBoxStyle(Node node) {
+            return boundingBoxStyle_;
+        }
+
         public HighlightingStyle GetEdgeLabelStyle(Edge edge) {
             return defaultNodeStyle_;
         }
@@ -115,7 +126,7 @@ namespace IRExplorerUI {
                 return GraphEdgeKind.Default;
             }
 
-            if (edge.Style == Edge.EdgeKind.Dotted) {
+            if (edge.Style == Edge.EdgeStyle.Dotted) {
                 return GraphEdgeKind.ImmediateDominator;
             }
 

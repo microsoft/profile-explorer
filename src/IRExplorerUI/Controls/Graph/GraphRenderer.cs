@@ -143,14 +143,15 @@ namespace IRExplorerUI {
 
     public interface IGraphStyleProvider {
         Brush GetDefaultTextColor();
+        Brush GetDefaultEdgeLabelTextColor();
         HighlightingStyle GetDefaultNodeStyle();
-        public HighlightingStyle GetEdgeLabelStyle(Edge edge);
-        public HighlightingStyle GetNodeStyle(Node node);
-        public Pen GetEdgeStyle(GraphEdgeKind kind);
-        public GraphEdgeKind GetEdgeKind(Edge edge);
+        HighlightingStyle GetEdgeLabelStyle(Edge edge);
+        HighlightingStyle GetNodeStyle(Node node);
+        HighlightingStyle GetBoundingBoxStyle(Node node);
+        Pen GetEdgeStyle(GraphEdgeKind kind);
+        GraphEdgeKind GetEdgeKind(Edge edge);
         bool ShouldRenderEdges(GraphEdgeKind kind);
         bool ShouldUsePolylines();
-        Brush GetDefaultNodeBackground();
     }
 
     public class GraphRenderer {
@@ -256,7 +257,7 @@ namespace IRExplorerUI {
                     Visual = nodeVisual,
                     TextFont = defaultNodeFont_,
                     TextColor = Brushes.Black,
-                    Style = GetBoundingBoxNodeStyle(node)
+                    Style = graphStyle_.GetBoundingBoxStyle(node)
                 };
 
                 graphNode.Draw();
@@ -264,29 +265,6 @@ namespace IRExplorerUI {
                 nodeVisual.SetValue(FrameworkElement.TagProperty, graphNode);
                 visual_.Children.Add(nodeVisual);
             }
-        }
-
-        private HighlightingStyle GetBoundingBoxNodeStyle(Node node) {
-            var border = ColorPens.GetDashedPen(Colors.Gray, DashStyles.Dot, DefaultEdgeThickness);
-            var fillColor = ColorBrushes.GetTransparentBrush(Colors.LightGray, 10);
-
-            if (node.Data is RegionIR region) {
-                if (region.Owner is InstructionIR instr) {
-                    var label = instr.OpcodeText.ToString();
-
-                    if (label.Contains("scf")) {
-                        fillColor = ColorBrushes.GetTransparentBrush(Colors.SkyBlue, 20);
-                    }
-                    else if (label.Contains("linalg")) {
-                        fillColor = ColorBrushes.GetTransparentBrush(Colors.Orchid, 20);
-                    }
-                    else if (label.Contains("affine")) {
-                        fillColor = ColorBrushes.GetTransparentBrush(Colors.PaleGreen, 20);
-                    }
-                }
-            }
-
-            return new HighlightingStyle(fillColor, border);
         }
 
         private Rect ComputeBoundingBox(List<TaggedObject> nodeElements) {
@@ -449,23 +427,20 @@ namespace IRExplorerUI {
             visual_.Children.Add(lineVisual);
         }
 
-        private void CreateEdgeLabelVisual(Edge edge)
-        {
+        private void CreateEdgeLabelVisual(Edge edge) {
             Brush textColor;
             var nodeVisual = new DrawingVisual();
 
-            if (edge.Label.Contains("\\n"))
-            {
+            if (edge.Label.Contains("\\n")) {
                 edge.Label = edge.Label.Replace("\\n", "\n");
             }
 
-            var graphNode = new GraphEdgeLabel()
-            {
+            var graphNode = new GraphEdgeLabel() {
                 EdgeInfo = edge,
                 Settings = settings_,
                 Visual = nodeVisual,
                 TextFont = defaultNodeFont_,
-                TextColor = graphStyle_.GetDefaultTextColor(),
+                TextColor = graphStyle_.GetDefaultEdgeLabelTextColor(),
                 Style = graphStyle_.GetEdgeLabelStyle(edge)
             };
 

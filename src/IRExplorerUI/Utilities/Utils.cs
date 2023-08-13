@@ -669,6 +669,7 @@ namespace IRExplorerUI {
         }
 
         public static void WaitForDebugger(bool showMessageBox = true) {
+#if DEBUG
             if(Debugger.IsAttached) {
                 return;
             }
@@ -685,6 +686,7 @@ namespace IRExplorerUI {
             }
 
             Debugger.Break();
+#endif
         }
 
         public static bool TryDeleteFile(string path) {
