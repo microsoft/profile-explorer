@@ -81,7 +81,7 @@ namespace IRExplorerCore.RawIRModel {
 
     public class GraphNode {
         public long Id { get; set; }
-        public long Label { get; set; }
+        public string Label { get; set; }
         public string Operation { get; set; }
         public List<GraphEdge> Edges { get; set; }
     }

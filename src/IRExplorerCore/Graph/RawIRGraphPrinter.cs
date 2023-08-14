@@ -48,11 +48,22 @@ public sealed class RawIRGraphPrinter : GraphVizPrinter {
     private void PrintEdges() {
         foreach (var node in graph_.Nodes) {
             foreach (var edge in node.Edges) {
-                if (!string.IsNullOrEmpty(edge.Label)) {
-                    CreateEdgeWithLabel((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, ShortenString(edge.Label, 20), builder_);
+                if (!string.IsNullOrEmpty(edge.Operation)) {
+                    if (edge.Label == "BackEdge") {
+                        CreateEdgeWithLabelAndStyle((ulong)edge.FromNodeId, (ulong)edge.ToNodeId,
+                            ShortenString(edge.Operation, 20), "dashed", builder_);
+                    }
+                    else {
+                        CreateEdgeWithLabel((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, ShortenString(edge.Operation, 20), builder_);
+                    }
                 }
                 else {
-                    CreateEdge((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, builder_);
+                    if (edge.Label == "BackEdge") {
+                        CreateEdgeWithStyle((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, "dashed", builder_);
+                    }
+                    else {
+                        CreateEdge((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, builder_);
+                    }
                 }
 
                 if (edgeElementMap_.TryGetValue(edge, out var element)) {
@@ -72,7 +83,7 @@ public sealed class RawIRGraphPrinter : GraphVizPrinter {
         string label = "";
 
         if (!string.IsNullOrEmpty(node.Operation)) {
-            label = $"{ShortenString(node.Label.ToString(), 20)}\\n{ShortenString(node.Operation, 40)}";
+            label = $"{ShortenString(node.Label, 30)}\\n{ShortenString(node.Operation, 30)}";
         }
         else {
             label = $"{node.Label.ToString()}\\nfunc.entry";
@@ -80,7 +91,7 @@ public sealed class RawIRGraphPrinter : GraphVizPrinter {
 
         bool isMultiline = label.Contains("\\n");
         double verticalMargin = isMultiline ? 0.12 : 0.06;
-        double horizontalMargin = Math.Min(Math.Max(0.1, label.Length * 0.025), 2.0);
+        double horizontalMargin = Math.Min(Math.Max(0.1, label.Length * 0.02), 2.0);
 
         var nodeName = CreateNodeWithMargins((ulong)node.Id, label, builder_, horizontalMargin, verticalMargin);
         nodeNameMap_[node.Id] = nodeName;
@@ -92,6 +103,12 @@ public sealed class RawIRGraphPrinter : GraphVizPrinter {
 
     private string ShortenString(string str, int maxLength) {
         if (str.Length > maxLength) {
+            int colonIndex = str.LastIndexOf(':');
+
+            if (colonIndex != -1) {
+                return ShortenString(str.Substring(0, colonIndex).Trim(), maxLength);
+            }
+
             return str.Substring(0, maxLength);
         }
 

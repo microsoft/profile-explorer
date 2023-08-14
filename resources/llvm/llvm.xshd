@@ -15,7 +15,7 @@
 	<Color name="CallTarget" foreground="DarkGreen" fontWeight="bold" />
 	<Color name="Block" foreground="DarkBlue" fontWeight="bold" />
 	<Color name="Arith" foreground="DarkBlue" fontWeight="bold" />
-	<Color name="Nepal" foreground="DarkBlue" fontWeight="bold" />
+	<Color name="Nepal" foreground="Purple" fontWeight="bold" />
 	<Color name="Memref" foreground="DarkRed" fontWeight="bold" />
 	<Color name="Affine" foreground="Purple" fontWeight="bold" />
 	<Color name="Linalg" foreground="Indigo" fontWeight="bold" />

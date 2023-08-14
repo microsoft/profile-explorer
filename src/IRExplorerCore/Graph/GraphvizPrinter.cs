@@ -167,6 +167,11 @@ namespace IRExplorerCore.Graph {
             builder.AppendFormat(CultureInfo.InvariantCulture, "n{0} -> n{1}[style={2}];\n", id1, id2, style);
         }
 
+        protected void CreateEdgeWithLabelAndStyle(ulong id1, ulong id2, string label, string style,
+                                                   StringBuilder builder) {
+            builder.AppendFormat(CultureInfo.InvariantCulture, "n{0} -> n{1}[label=\"{2}\",style={style}];\n", id1, id2, label);
+        }
+
         protected void StartSubgraph(int margin, StringBuilder builder) {
             builder.AppendLine($"subgraph cluster_{subgraphIndex_} {{");
             builder.AppendLine($"margin={margin};");

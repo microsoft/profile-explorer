@@ -22,6 +22,11 @@ public class MLIRExpressionGraphStyleProvider : ExpressionGraphStyleProvider {
     }
 
     public override GraphEdgeKind GetEdgeKind(Edge edge) {
+        //? TODO: Find a better way to pass the info
+        if (edge.Style == Edge.EdgeStyle.Dashed) {
+            return GraphEdgeKind.Loop;
+        }
+
         return base.GetEdgeKind(edge);
     }
 }

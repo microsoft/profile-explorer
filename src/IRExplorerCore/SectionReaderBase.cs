@@ -102,7 +102,7 @@ namespace IRExplorerCore {
 
         private static readonly int FILE_BUFFER_SIZE = 512 * 1024;
         private static readonly int STREAM_BUFFER_SIZE = 16 * 1024;
-        public static readonly long MAX_PRELOADED_FILE_SIZE = 0*256 * 1024 * 1024; // 256 MB
+        public static readonly long MAX_PRELOADED_FILE_SIZE = 256 * 1024 * 1024; // 256 MB
 
         private StreamReader dataReader_;
         private Stream dataStream_;
@@ -491,6 +491,10 @@ namespace IRExplorerCore {
                     continue;
                 }
 
+                if (line == null) {
+                    continue; //? TODO: Output has one extra line in thesec cases somehow...
+                }
+
                 builder.AppendLine(line);
             }
 
@@ -513,6 +517,16 @@ namespace IRExplorerCore {
 
                 if (isOptionalOutput && ShouldSkipOutputLine(line)) {
                     continue;
+                }
+
+                // Skip over metadata lines, they are not supposed to be part of the IR
+                // and are already saved in the LineMetadata table of the IRTextSection.
+                if (IsMetadataLine(line)) {
+                    continue;
+                }
+
+                if (line == null) {
+                    continue; //? TODO: Output has one extra line in thesec cases somehow...
                 }
 
                 list.Add(line);

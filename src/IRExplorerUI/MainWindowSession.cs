@@ -959,9 +959,18 @@ namespace IRExplorerUI {
                 return null;
             }
 
+            string ExtractInstruction(string str) {
+                int colonIndex = str.LastIndexOf(':');
+
+                if (colonIndex != -1) {
+                    return str.Substring(0, colonIndex).Trim();
+                }
+                return str;
+            }
+
             foreach (var node in graph.Nodes) {
                 if (!string.IsNullOrEmpty(node.Operation)) {
-                    var element = FindElement(node.Operation);
+                    var element = FindElement(ExtractInstruction(node.Operation));
 
                     if (element != null) {
                         nodeElementMap[node] = element;
@@ -969,8 +978,8 @@ namespace IRExplorerUI {
                 }
 
                 foreach (var edge in node.Edges) {
-                    if (!string.IsNullOrEmpty(edge.Label)) {
-                        var element = FindElement(edge.Label);
+                    if (!string.IsNullOrEmpty(edge.Operation)) {
+                        var element = FindElement(ExtractInstruction(edge.Operation));
 
                         if (element != null) {
                             edgeElementMap[edge] = element;
@@ -986,7 +995,7 @@ namespace IRExplorerUI {
 
 
             var result = printer.CreateGraph(graphText, new CancelableTask());
-            var graphReader = new GraphvizReader(GraphKind.ExpressionGraph, result,
+            var graphReader = new GraphvizReader(GraphKind.OutputGraph, result,
                 printer.CreateNodeDataMap(), printer.CreateEdgeDataMap());
             var layoutGraph = graphReader.ReadGraph();
             return layoutGraph;

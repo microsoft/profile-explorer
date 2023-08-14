@@ -121,7 +121,7 @@ namespace IRExplorerUI {
             return defaultNodeStyle_;
         }
 
-        public GraphEdgeKind GetEdgeKind(Edge edge) {
+        public virtual GraphEdgeKind GetEdgeKind(Edge edge) {
             if (!options_.ColorizeEdges) {
                 return GraphEdgeKind.Default;
             }

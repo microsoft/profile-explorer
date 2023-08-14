@@ -60,7 +60,7 @@ namespace IRExplorerUI.Compilers.MLIR {
                 GraphKind.ExpressionGraph =>
                     new MLIRExpressionGraphStyleProvider(graph, (ExpressionGraphSettings)settings, this),
                 GraphKind.OutputGraph =>
-                    new MLIRFlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                    new MLIRExpressionGraphStyleProvider(graph, (ExpressionGraphSettings)settings, this),
                 GraphKind.CallGraph =>
                     new CallGraphStyleProvider(graph)
             };
