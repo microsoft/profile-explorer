@@ -313,10 +313,6 @@ namespace IRExplorerUI {
                     TextView.ScrollToVerticalOffset(state.VerticalOffset);
                     TextView.ScrollToHorizontalOffset(state.HorizontalOffset);
                 }
-                else {
-                    // TODO: Should not happen
-                    Utils.WaitForDebugger();
-                }
             }
             else {
                 await SwitchText(section, document.Function, document);

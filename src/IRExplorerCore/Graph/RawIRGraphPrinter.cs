@@ -49,7 +49,7 @@ public sealed class RawIRGraphPrinter : GraphVizPrinter {
         foreach (var node in graph_.Nodes) {
             foreach (var edge in node.Edges) {
                 if (!string.IsNullOrEmpty(edge.Label)) {
-                    CreateEdgeWithLabel((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, edge.Label, builder_);
+                    CreateEdgeWithLabel((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, ShortenString(edge.Label, 20), builder_);
                 }
                 else {
                     CreateEdge((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, builder_);
@@ -72,12 +72,7 @@ public sealed class RawIRGraphPrinter : GraphVizPrinter {
         string label = "";
 
         if (!string.IsNullOrEmpty(node.Operation)) {
-            if (node.Operation.Length > 20) {
-                label = $"{node.Label.ToString()}\\n{node.Operation.Substring(0, 20)}";
-            }
-            else {
-                label = $"{node.Label.ToString()}\\n{node.Operation}";
-            }
+            label = $"{ShortenString(node.Label.ToString(), 20)}\\n{ShortenString(node.Operation, 40)}";
         }
         else {
             label = $"{node.Label.ToString()}\\nfunc.entry";
@@ -85,7 +80,7 @@ public sealed class RawIRGraphPrinter : GraphVizPrinter {
 
         bool isMultiline = label.Contains("\\n");
         double verticalMargin = isMultiline ? 0.12 : 0.06;
-        double horizontalMargin = Math.Min(Math.Max(0.1, label.Length * (isMultiline ? 0.02 : 0.03)), 2.0);
+        double horizontalMargin = Math.Min(Math.Max(0.1, label.Length * 0.025), 2.0);
 
         var nodeName = CreateNodeWithMargins((ulong)node.Id, label, builder_, horizontalMargin, verticalMargin);
         nodeNameMap_[node.Id] = nodeName;
@@ -93,5 +88,13 @@ public sealed class RawIRGraphPrinter : GraphVizPrinter {
         if (nodeElementMap_.TryGetValue(node, out var element)) {
             nodeDataMap_[nodeName] = element;
         }
+    }
+
+    private string ShortenString(string str, int maxLength) {
+        if (str.Length > maxLength) {
+            return str.Substring(0, maxLength);
+        }
+
+        return str;
     }
 }

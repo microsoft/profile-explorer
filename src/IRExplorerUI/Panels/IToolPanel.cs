@@ -16,6 +16,7 @@ namespace IRExplorerUI {
         DominatorTree,
         PostDominatorTree,
         ExpressionGraph,
+        OutputGraph,
         CallGraph,
         CallTree,
         CallerCallee,

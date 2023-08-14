@@ -208,9 +208,15 @@ namespace IRExplorerUI {
                     flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
                     break;
                 }
+                case ToolPanelKind.OutputGraph: {
+                    var flowGraphPanel = panelHost.Panel as GraphPanel;
+                    flowGraphPanel.GraphViewer.BlockSelected += GraphViewer_GraphNodeSelected;
+                    flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
+                    break;
+                }
                 case ToolPanelKind.CallGraph: {
                     var callGraphPanel = panelHost.Panel as CallGraphPanel;
-                    callGraphPanel.GraphViewer.NodeSelected += GraphViewer_NodeSelected;
+                    callGraphPanel.GraphViewer.NodeSelected += GraphViewer_CallGraphNodeSelected;
                     break;
                 }
             }
@@ -237,9 +243,15 @@ namespace IRExplorerUI {
                     flowGraphPanel.GraphViewer.GraphLoaded -= GraphViewer_GraphLoaded;
                     break;
                 }
+                case ToolPanelKind.OutputGraph: {
+                    var flowGraphPanel = panelHost.Panel as GraphPanel;
+                    flowGraphPanel.GraphViewer.BlockSelected -= GraphViewer_GraphNodeSelected;
+                    flowGraphPanel.GraphViewer.GraphLoaded -= GraphViewer_GraphLoaded;
+                    break;
+                }
                 case ToolPanelKind.CallGraph: {
                     var callGraphPanel = panelHost.Panel as CallGraphPanel;
-                    callGraphPanel.GraphViewer.NodeSelected -= GraphViewer_NodeSelected;
+                    callGraphPanel.GraphViewer.NodeSelected -= GraphViewer_CallGraphNodeSelected;
                     break;
                 }
             }
@@ -495,6 +507,7 @@ namespace IRExplorerUI {
                 ToolPanelKind.DominatorTree => "Dominator Tree",
                 ToolPanelKind.PostDominatorTree => "Post-Dominator Tree",
                 ToolPanelKind.ExpressionGraph => "Expression Graph",
+                ToolPanelKind.OutputGraph => "Output Graph",
                 ToolPanelKind.CallGraph => "Call Graph",
                 ToolPanelKind.CallTree => "Call Tree",
                 ToolPanelKind.CallerCallee => "Caller/Callee",
@@ -570,6 +583,7 @@ namespace IRExplorerUI {
                 ToolPanelKind.DominatorTree => new GraphPanel(),
                 ToolPanelKind.PostDominatorTree => new GraphPanel(),
                 ToolPanelKind.ExpressionGraph => new ExpressionGraphPanel(),
+                ToolPanelKind.OutputGraph => new OutputGraphPanel(),
                 ToolPanelKind.SearchResults => new SearchResultsPanel(),
                 ToolPanelKind.Scripting => new ScriptingPanel(),
                 _ => throw new InvalidOperationException()
@@ -944,7 +958,7 @@ namespace IRExplorerUI {
         private async Task SetupSectionPanel() {
             if (SectionPanel.MainSummary == null) {
                 SectionPanel.CompilerInfo = compilerInfo_;
-                
+
                 foreach (var doc in sessionState_.Documents) {
                     if (doc != sessionState_.MainDocument &&
                         doc != sessionState_.DiffDocument) {
@@ -1080,6 +1094,12 @@ namespace IRExplorerUI {
                                 ExpressionGraphPanel = (ExpressionGraphPanel)panel;
                                 ExpressionGraphPanelHost = (LayoutAnchorable)args.Model;
                                 RegisterPanel(ExpressionGraphPanel, ExpressionGraphPanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.OutputGraph: {
+                                OutputGraphPanel = (OutputGraphPanel)panel;
+                                OutputGraphPanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(OutputGraphPanel, OutputGraphPanelHost);
                                 break;
                             }
                             case ToolPanelKind.Developer: {

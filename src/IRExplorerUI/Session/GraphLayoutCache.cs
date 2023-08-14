@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using IRExplorerCore;
+using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
@@ -43,8 +44,7 @@ namespace IRExplorerUI {
                 else {
                     // Check if the same Graphviz input was used before, since
                     // the resulting graph will be identical even though the function is not.
-                    printer ??= GraphPrinterFactory.CreateInstance(graphKind_, element, options,
-                        compilerInfo_.CreateGraphNameProvider(graphKind_));
+                    printer ??= CreateInstance(graphKind_, element, options);
                     string inputText = printer.PrintGraph();
 
                     if (string.IsNullOrEmpty(inputText)) {
@@ -54,7 +54,11 @@ namespace IRExplorerUI {
 
                     // The input text is looked up using a SHA256 hash that basically makes each
                     // input unique, use justs 32 bytes of memory and faster to look up.
-                    var inputTextHash = CompressionUtils.CreateSHA256(inputText);
+                    byte[] inputTextHash = null;
+
+                    if (useCache) {
+                        inputTextHash = CompressionUtils.CreateSHA256(inputText);
+                    }
 
                     if (useCache && shapeGraphLayout_.TryGetValue(inputTextHash, out var shapeGraphData)) {
                         Trace.TraceInformation($"Graph cache: Loading cached graph layout for {section}");
@@ -72,9 +76,11 @@ namespace IRExplorerUI {
                             return null; // Failed or canceled by user.
                         }
 
-                        if (useCache) {
-                            CacheGraphLayoutAndShape(section, graphText, inputTextHash);
-                        }
+
+                    }
+
+                    if (useCache) {
+                        CacheGraphLayoutAndShape(section, graphText, inputTextHash);
                     }
                 }
             }
@@ -84,8 +90,7 @@ namespace IRExplorerUI {
 
             // Parse the graph layout output from Graphviz to build
             // the actual Graph object with nodes and edges.
-            printer ??= GraphPrinterFactory.CreateInstance(graphKind_, element, options,
-                compilerInfo_.CreateGraphNameProvider(graphKind_));
+            printer ??= CreateInstance(graphKind_, element, options);
             var blockNodeMap = printer.CreateNodeDataMap();
             var blockNodeGroupsMap = printer.CreateNodeDataGroupsMap();
             var graphReader = new GraphvizReader(graphKind_, graphText, blockNodeMap);
@@ -97,6 +102,42 @@ namespace IRExplorerUI {
             }
 
             return layoutGraph;
+        }
+
+        public GraphVizPrinter CreateInstance<T, U>(
+            GraphKind kind, T element, U options) where T : class where U : class {
+            if (typeof(T) == typeof(FunctionIR)) {
+                return kind switch {
+                    GraphKind.FlowGraph => new FlowGraphPrinter(element as FunctionIR, compilerInfo_.CreateGraphNameProvider(kind)),
+                    GraphKind.DominatorTree => new DominatorTreePrinter(element as FunctionIR,
+                                                                        DominatorAlgorithmOptions.Dominators,
+                                                                        compilerInfo_.CreateGraphNameProvider(kind)),
+                    GraphKind.PostDominatorTree => new DominatorTreePrinter(element as FunctionIR,
+                                                                            DominatorAlgorithmOptions.PostDominators,
+                                                                            compilerInfo_.CreateGraphNameProvider(kind)),
+                    _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+                };
+            }
+            else if (typeof(T) == typeof(IRElement)) {
+                switch (kind) {
+                    case GraphKind.ExpressionGraph: {
+                        return new ExpressionGraphPrinter(element as IRElement,
+                                                          options as ExpressionGraphPrinterOptions,
+                                                          compilerInfo_.CreateGraphNameProvider(kind));
+                    }
+                }
+            }
+            else if (typeof(T) == typeof(IRTextSummary)) {
+                switch (kind) {
+                    case GraphKind.CallGraph: {
+                        return new CallGraphPrinter(element as CallGraph,
+                                                    options as CallGraphPrinterOptions,
+                                                    compilerInfo_.CreateGraphNameProvider(kind));
+                    }
+                }
+            }
+
+            throw new NotImplementedException("Unsupported graph type");
         }
 
         private void CacheGraphLayoutAndShape(IRTextSection section, CompressedString shapeGraphData) {

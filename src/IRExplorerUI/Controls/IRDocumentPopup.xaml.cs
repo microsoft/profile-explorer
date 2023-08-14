@@ -129,15 +129,13 @@ namespace IRExplorerUI.Controls {
             if (PreviewedElement is BlockIR block) {
                 if (block.HasLabel) {
                     document.MarkElementWithDefaultStyle(block.Label);
-                    return;
                 }
             }
             else {
                 document.MarkElementWithDefaultStyle(PreviewedElement);
-                return;
             }
 
-            document.BringElementIntoView(PreviewedElement, BringIntoViewStyle.FirstLine);
+            document.BringElementIntoView(PreviewedElement, BringIntoViewStyle.Default);
         }
 
         public void CaptureMouseWheel() {

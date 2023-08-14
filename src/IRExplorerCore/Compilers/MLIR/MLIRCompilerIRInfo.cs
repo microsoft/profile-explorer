@@ -33,19 +33,20 @@ namespace IRExplorerCore.MLIR {
         }
 
         public bool IsCopyInstruction(InstructionIR instr) {
-            return SkipCopyInstruction(instr) != null;
+            return MemoryExtensions.Contains(instr.OpcodeText.Span, "copy", StringComparison.OrdinalIgnoreCase);
         }
 
         public bool IsLoadInstruction(InstructionIR instr) {
-            return false;
+            return MemoryExtensions.Contains(instr.OpcodeText.Span, "load", StringComparison.OrdinalIgnoreCase);
         }
 
         public bool IsStoreInstruction(InstructionIR instr) {
-            return false;
+            return MemoryExtensions.Contains(instr.OpcodeText.Span, "store", StringComparison.OrdinalIgnoreCase);
         }
 
         public bool IsCallInstruction(InstructionIR instr) {
-            return false;
+            return MemoryExtensions.Contains(instr.OpcodeText.Span, "call", StringComparison.OrdinalIgnoreCase) ||
+                   MemoryExtensions.Contains(instr.OpcodeText.Span, "launch", StringComparison.OrdinalIgnoreCase);
         }
 
         public OperandIR GetCallTarget(InstructionIR instr) {

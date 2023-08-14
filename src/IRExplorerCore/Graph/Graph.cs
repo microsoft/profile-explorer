@@ -68,6 +68,7 @@ namespace IRExplorerCore.Graph {
         DominatorTree,
         PostDominatorTree,
         ExpressionGraph,
+        OutputGraph,
         CallGraph
     }
 

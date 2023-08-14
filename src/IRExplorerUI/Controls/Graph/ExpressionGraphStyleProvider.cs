@@ -28,6 +28,7 @@ namespace IRExplorerUI {
         private ExpressionGraphSettings options_;
         private HighlightingStyle phiNodeStyle_;
         private HighlightingStyle loadNodeStyle_;
+        //? TODO: Add store style
         private HighlightingStyle callNodeStyle_;
         private HighlightingStyle unaryNodeStyle_;
         private HighlightingStyle edgeLabelNodeStyle_;

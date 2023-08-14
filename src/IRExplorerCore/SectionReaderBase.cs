@@ -102,8 +102,7 @@ namespace IRExplorerCore {
 
         private static readonly int FILE_BUFFER_SIZE = 512 * 1024;
         private static readonly int STREAM_BUFFER_SIZE = 16 * 1024;
-        public static readonly long MAX_PRELOADED_FILE_SIZE = 256 * 1024 * 1024; // 256 MB
-        private static readonly int MAX_LINE_LENGTH = 2000;
+        public static readonly long MAX_PRELOADED_FILE_SIZE = 0*256 * 1024 * 1024; // 256 MB
 
         private StreamReader dataReader_;
         private Stream dataStream_;
@@ -120,6 +119,7 @@ namespace IRExplorerCore {
         private string[] prevLines_;
         private string currentLine_;
         private long nextInitialOffset_;
+        private int nextInitialLineIndex_;
         private bool hasPreprocessedLines_;
         private bool hasMetadataLines_;
         private IRTextSummary summary_;
@@ -491,10 +491,6 @@ namespace IRExplorerCore {
                     continue;
                 }
 
-                if (line.Length > MAX_LINE_LENGTH) {
-                    line = line.Substring(0, MAX_LINE_LENGTH);
-                }
-
                 builder.AppendLine(line);
             }
 
@@ -519,17 +515,13 @@ namespace IRExplorerCore {
                     continue;
                 }
 
-                if (line.Length > MAX_LINE_LENGTH) {
-                    line = line.Substring(0, MAX_LINE_LENGTH);
-                }
-
                 list.Add(line);
             }
 
             return list;
         }
 
-        private IRPassOutput AddOptionalOutputLine(string line, long initialOffset, IRPassOutput output) {
+        private IRPassOutput AddOptionalOutputLine(string line, long initialOffset, int initalLine, IRPassOutput output) {
             if (output == null) {
                 if (string.IsNullOrWhiteSpace(line)) {
                     return null; // Ignore empty lines at the start.
@@ -537,7 +529,7 @@ namespace IRExplorerCore {
 
                 // Start a new optional section.
                 long offset = TextOffset();
-                output = new IRPassOutput(initialOffset, offset, lineIndex_, lineIndex_);
+                output = new IRPassOutput(initialOffset, offset, initalLine, lineIndex_);
             }
 
             output.DataEndOffset = TextOffset();
@@ -569,19 +561,16 @@ namespace IRExplorerCore {
 
         private bool SkipToSectionStart(SectionTextHandler sectionTextHandler, out bool hasSectionName) {
             prevLineCount_ = 0;
-            long initialOffset = nextInitialOffset_;
 
             while(true) {
                 // Find the start of the next section.
-
-                if (currentLine_ == null ||
-                    (!IsSectionStart(currentLine_) && !IsFunctionEnd(currentLine_))) {
-                    currentLine_ = NextLine();
-                }
-
                 if (currentLine_ == null) {
-                    hasSectionName = false;
-                    return false;
+                    currentLine_ = NextLine();
+
+                    if (currentLine_ == null) {
+                        hasSectionName = false;
+                        return false;
+                    }
                 }
 
                 // Each section is expected to start with a name,
@@ -598,8 +587,8 @@ namespace IRExplorerCore {
                 }
                 else {
                     // Skip over text in-between sections.
-                    optionalOutput_ = AddOptionalOutputLine(currentLine_, initialOffset, optionalOutput_);
-                    lineIndex_++;
+                    optionalOutput_ = AddOptionalOutputLine(currentLine_, nextInitialOffset_, nextInitialLineIndex_, optionalOutput_);
+                    currentLine_ = NextLine();
                 }
             }
 
@@ -658,6 +647,7 @@ namespace IRExplorerCore {
 
             List<IRTextSection> sections = new List<IRTextSection>(1);
             long funcInitialOffset = hasSectionName ? TextOffset() : nextInitialOffset_;
+            int funcInitialLine = hasSectionName ? lineIndex_ : nextInitialLineIndex_;
             long funcStartOffset = 0;
             long funcEndOffset = 0;
             int funcStartLine = 0;
@@ -688,7 +678,7 @@ namespace IRExplorerCore {
                         }
                     }
 
-                    moduleOutput = AddOptionalOutputLine(currentLine_, funcInitialOffset, moduleOutput);
+                    moduleOutput = AddOptionalOutputLine(currentLine_, funcInitialOffset, funcInitialLine, moduleOutput);
 
                     if (IsModuleStart(currentLine_)) {
                         BeginModule(ExtractModuleName(currentLine_));
@@ -718,6 +708,7 @@ namespace IRExplorerCore {
                         sectionEndLine = lineIndex_ + 1;
                         funcEndLine = lineIndex_ + 1;
                         nextInitialOffset_ = funcEndOffset;
+                        nextInitialLineIndex_ = funcEndLine;
                         foundFunctionEnd = true;
 
                         //Trace.WriteLine($"End func at {lineIndex_}, lines {funcStartLine}-{funcEndLine}");
@@ -747,7 +738,6 @@ namespace IRExplorerCore {
 
                     var section = new IRTextSection(textFunc, sectionName, output, blockCount);
                     section.IndexInModule = functionIndex++;
-                    sections.Add(section);
                     summary_.AddSection(section);
                     textFunc.AddSection(section);
 
@@ -755,11 +745,15 @@ namespace IRExplorerCore {
                     section.OutputBefore = GetAdditionalOutput();
                     section.ModuleOutput = moduleOutput;
 
+                    // Also attach it to the other functions in the section,
+                    // where each function got its own section object.
                     if (previousSections_ != null) {
-                        foreach(var prevSection in previousSections_) {
+                        foreach (var prevSection in previousSections_) {
                             prevSection.OutputAfter = GetAdditionalOutput();
                         }
                     }
+
+                    sections.Add(section);
 
                     // Notify client a new section has been read.
                     if (sectionTextHandler != null) {
@@ -781,17 +775,19 @@ namespace IRExplorerCore {
 
                 if (!foundNextFunction) {
                     currentLine_ = NextLine();
-                    lineIndex_++;
                 }
 
                 if (currentLine_ == null ||
                     IsSectionEnd(currentLine_) ||
                     IsSectionStart(currentLine_)) {
+                    nextInitialOffset_ = textOffset_;
+                    nextInitialLineIndex_ = lineIndex_;
                     break;
                 }
             }
 
             EndModule();
+            ResetAdditionalOutput();
             previousSections_ = sections;
             return true;
         }
@@ -821,6 +817,7 @@ namespace IRExplorerCore {
                 textOffset_ = ((SpanStringReader)reader).Position;
             }
 
+            lineIndex_++;
             return line;
         }
 

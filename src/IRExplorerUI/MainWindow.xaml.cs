@@ -836,7 +836,7 @@ namespace IRExplorerUI {
             panel.DisplayGraph(layoutGraph);
         }
 
-        private async void GraphViewer_NodeSelected(object sender, TaggedObject e) {
+        private async void GraphViewer_CallGraphNodeSelected(object sender, TaggedObject e) {
             var graphNode = e as CallGraphNode;
 
             if (graphNode != null && graphNode.Function != null) {

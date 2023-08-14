@@ -99,7 +99,8 @@ namespace IRExplorerUI {
             SetupEvents();
 
             //? TODO: No context menu for expr graph yet, don't show CFG one.
-            if (PanelKind == ToolPanelKind.ExpressionGraph) {
+            if (PanelKind == ToolPanelKind.ExpressionGraph ||
+                PanelKind == ToolPanelKind.OutputGraph) {
                 GraphViewer.ContextMenu = null;
             }
 
@@ -326,6 +327,9 @@ namespace IRExplorerUI {
                 GraphHost.ScrollToVerticalOffset(0);
                 var animation = new DoubleAnimation(1.0, TimeSpan.FromSeconds(0.2));
                 GraphViewer.BeginAnimation(OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
+            }
+            else {
+                HideGraph();
             }
 
             var animation2 = new DoubleAnimation(0, TimeSpan.FromSeconds(0.2));
@@ -742,23 +746,30 @@ namespace IRExplorerUI {
                 return;
             }
 
-            if (PanelKind == ToolPanelKind.ExpressionGraph) {
-                var width = Math.Max(ExpressionGraphOptionsPanel.MinimumWidth,
-                    Math.Min(GraphHost.ActualWidth, ExpressionGraphOptionsPanel.DefaultWidth));
-                var height = Math.Max(ExpressionGraphOptionsPanel.MinimumHeight,
-                    Math.Min(GraphHost.ActualHeight, ExpressionGraphOptionsPanel.DefaultHeight));
-                var position = new Point(GraphHost.ActualWidth - width, 0);
-                graphOptionsPanel_ = new OptionsPanelHostWindow(new ExpressionGraphOptionsPanel(),
-                                                                  position, width, height, GraphHost);
-            }
-            else {
-                var width = Math.Max(FlowGraphOptionsPanel.MinimumWidth,
-                    Math.Min(GraphHost.ActualWidth, FlowGraphOptionsPanel.DefaultWidth));
-                var height = Math.Max(FlowGraphOptionsPanel.MinimumHeight,
-                    Math.Min(GraphHost.ActualHeight, FlowGraphOptionsPanel.DefaultHeight));
-                var position = new Point(GraphHost.ActualWidth - width, 0);
-                graphOptionsPanel_ = new OptionsPanelHostWindow(new FlowGraphOptionsPanel(),
-                                                                  position, width, height, GraphHost);
+            switch (PanelKind) {
+                case ToolPanelKind.ExpressionGraph: {
+                    var width = Math.Max(ExpressionGraphOptionsPanel.MinimumWidth,
+                        Math.Min(GraphHost.ActualWidth, ExpressionGraphOptionsPanel.DefaultWidth));
+                    var height = Math.Max(ExpressionGraphOptionsPanel.MinimumHeight,
+                        Math.Min(GraphHost.ActualHeight, ExpressionGraphOptionsPanel.DefaultHeight));
+                    var position = new Point(GraphHost.ActualWidth - width, 0);
+                    graphOptionsPanel_ = new OptionsPanelHostWindow(new ExpressionGraphOptionsPanel(),
+                        position, width, height, GraphHost);
+                    break;
+                }
+                case ToolPanelKind.OutputGraph: {
+                    return; //? TODO: Implement options
+                }
+                default: {
+                    var width = Math.Max(FlowGraphOptionsPanel.MinimumWidth,
+                        Math.Min(GraphHost.ActualWidth, FlowGraphOptionsPanel.DefaultWidth));
+                    var height = Math.Max(FlowGraphOptionsPanel.MinimumHeight,
+                        Math.Min(GraphHost.ActualHeight, FlowGraphOptionsPanel.DefaultHeight));
+                    var position = new Point(GraphHost.ActualWidth - width, 0);
+                    graphOptionsPanel_ = new OptionsPanelHostWindow(new FlowGraphOptionsPanel(),
+                        position, width, height, GraphHost);
+                    break;
+                }
             }
 
             graphOptionsPanel_.PanelClosed += OptionsPanel_PanelClosed;
@@ -778,22 +789,29 @@ namespace IRExplorerUI {
             graphOptionsPanel_.PanelClosed -= OptionsPanel_PanelClosed;
             graphOptionsPanel_.PanelReset -= OptionsPanel_PanelReset;
 
-            if (PanelKind == ToolPanelKind.ExpressionGraph) {
-                var newSettings = (ExpressionGraphSettings)graphOptionsPanel_.Settings;
+            switch (PanelKind) {
+                case ToolPanelKind.ExpressionGraph: {
+                    var newSettings = (ExpressionGraphSettings)graphOptionsPanel_.Settings;
 
-                if (newSettings.HasChanges(Settings)) {
-                    App.Settings.ExpressionGraphSettings = newSettings;
-                    App.SaveApplicationSettings();
-                    ReloadSettings();
+                    if (newSettings.HasChanges(Settings)) {
+                        App.Settings.ExpressionGraphSettings = newSettings;
+                        App.SaveApplicationSettings();
+                        ReloadSettings();
+                    }
+                    break;
                 }
-            }
-            else {
-                var newSettings = (FlowGraphSettings)graphOptionsPanel_.Settings;
+                case ToolPanelKind.OutputGraph: {
+                    break; //? TODO: Implement options
+                }
+                default: {
+                    var newSettings = (FlowGraphSettings)graphOptionsPanel_.Settings;
 
-                if (newSettings.HasChanges(Settings)) {
-                    App.Settings.FlowGraphSettings = newSettings;
-                    App.SaveApplicationSettings();
-                    ReloadSettings();
+                    if (newSettings.HasChanges(Settings)) {
+                        App.Settings.FlowGraphSettings = newSettings;
+                        App.SaveApplicationSettings();
+                        ReloadSettings();
+                    }
+                    break;
                 }
             }
 
@@ -830,6 +848,7 @@ namespace IRExplorerUI {
             double zoom = value;
             zoom = Math.Min(Math.Max(MinZoomLevel, zoom), MaxZoomLevel);
             GraphViewer.ZoomLevel = zoom;
+
             UpdateLayout();
             GraphHost.ScrollToHorizontalOffset(offsetX * zoom - centerX);
             GraphHost.ScrollToVerticalOffset(offsetY * zoom - centerY);
@@ -844,7 +863,7 @@ namespace IRExplorerUI {
                 HidePreviewPopup();
             }
 
-            if (node == null) {
+            if (node == null || node.ElementData == null) {
                 return;
             }
 
@@ -853,6 +872,7 @@ namespace IRExplorerUI {
                 removeHoveredAction_ = null;
             }
 
+            //? TODO: Instead of "Block " call into some name provider
             var position = Mouse.GetPosition(GraphHost).AdjustForMouseCursor();
             previewPopup_ = IRDocumentPopup.CreateNew(Document, node.ElementData,
                                                       position, 500, 150, GraphHost, "Block ");
@@ -921,10 +941,15 @@ namespace IRExplorerUI {
         public override HandledEventKind HandledEvents =>
             HandledEventKind.ElementSelection | HandledEventKind.ElementHighlighting;
 
-        public GraphSettings Settings =>
-            PanelKind == ToolPanelKind.ExpressionGraph
-                ? App.Settings.ExpressionGraphSettings
-                : (GraphSettings)App.Settings.FlowGraphSettings;
+        public GraphSettings Settings {
+            get {
+                return PanelKind switch {
+                    ToolPanelKind.ExpressionGraph => App.Settings.ExpressionGraphSettings,
+                    ToolPanelKind.OutputGraph => App.Settings.ExpressionGraphSettings,
+                    _ => App.Settings.FlowGraphSettings
+                };
+            }
+        }
 
         public override void OnRegisterPanel() {
             IsPanelEnabled = false;
@@ -944,124 +969,13 @@ namespace IRExplorerUI {
             var previousSection = Document?.Section;
             InitializeFromDocument(document);
 
-
-
             //? TODO: Implement switching for expressions
             if (PanelKind == ToolPanelKind.ExpressionGraph) {
-                //HideGraph();
-                if (section.OutputAfter != null) {
-                var textLines = Session.GetSectionOutputTextLinesAsync(section.OutputAfter, section).Result; //? TODO: await
-                int index = 0;
-
-                while(index < textLines.Count) {
-                    var line = textLines[index];
-
-                    while(!line.StartsWith("/// irx: json_start", System.StringComparison.Ordinal)) {
-                        index++;
-                        if (index == textLines.Count) break;
-                        line = textLines[index];
-                    }
-
-                    if(index == textLines.Count) {
-                        break;
-                    }
-
-                    int startIndex = index + 1;
-                    var jsonBuilder = new StringBuilder();
-
-                    while(!line.EndsWith("/// irx: json_end", System.StringComparison.Ordinal)) {
-                        index++;
-                        if (index == textLines.Count) break;
-                        line = textLines[index];
-                    }
-
-                    if (index - startIndex > 0) {
-                        for (int i = startIndex; i < index; i++) {
-                            jsonBuilder.AppendLine(textLines[i]);
-                        }
-
-                        if (JsonUtils.Deserialize(jsonBuilder.ToString(), out IRExplorerCore.RawIRModel.Graph graph)) {
-                            Trace.WriteLine($"Found graph: {graph.Kind}, func {graph.Function}");
-
-                            if (graph.Function.Equals(section.ParentFunction.Name, StringComparison.Ordinal)) {
-                                Trace.WriteLine($"  match");
-
-
-                                var funcLines = Session.GetSectionOutputTextLinesAsync(section.Output, section).Result; //? TODO: await
-                                var nodeElementMap = new Dictionary<IRExplorerCore.RawIRModel.GraphNode, IRElement>();
-                                var edgeElementMap = new Dictionary<IRExplorerCore.RawIRModel.GraphEdge, IRElement>();
-
-                                IRElement FindElement(string operation) {
-                                    for(int i = 0; i < funcLines.Count; i++) {
-                                        var funcLine = funcLines[i];
-                                        if (funcLine.Contains(operation)) {
-                                            int startLine = section.Output.StartLine;
-
-                                            if (section.ModuleOutput != null) {
-                                                startLine -= section.ModuleOutput.StartLine;
-                                            }
-
-                                            int targetLine = i + startLine;
-                                            Trace.WriteLine($"Found text at {targetLine} matching {operation}");
-
-                                            foreach(var instr in document.Function.AllTuples) {
-                                                if (instr.TextLocation.Line == targetLine + 1) {
-                                                    Trace.WriteLine($"Found element {instr}");
-                                                    return instr;
-                                                }
-                                            }
-                                            break;
-                                        }
-                                    }
-
-                                    return null;
-                                }
-
-                                foreach (var node in graph.Nodes) {
-                                    if (!string.IsNullOrEmpty(node.Operation)) {
-                                        var element = FindElement(node.Operation);
-
-                                        if (element != null) {
-                                            nodeElementMap[node] = element;
-                                        }
-                                    }
-
-                                    foreach(var edge in node.Edges) {
-                                        if (!string.IsNullOrEmpty(edge.Label)) {
-                                            var element = FindElement(edge.Label);
-
-                                            if (element != null) {
-                                                edgeElementMap[edge] = element;
-                                            }
-                                        }
-                                    }
-                                }
-
-
-                                var printer = new RawIRGraphPrinter(graph, document.Function,
-                                                nodeElementMap, edgeElementMap, null);
-                                var graphText = printer.PrintGraph();
-                                File.WriteAllText(@"C:\test\graph.dot", graphText);
-
-
-                                var result = printer.CreateGraph(graphText, new CancelableTask());
-                                var graphReader = new GraphvizReader(GraphKind.ExpressionGraph, result,
-                                    printer.CreateNodeDataMap(), printer.CreateEdgeDataMap());
-                                var layoutGraph = graphReader.ReadGraph();
-
-                                if (layoutGraph != null) {
-                                    DisplayGraph(layoutGraph);
-                                }
-                            }
-                        }
-                    }
-
-                    index++;
-                }
-            }
+                HideGraph();
                 return;
             }
-            else if (PanelKind == ToolPanelKind.CallGraph) {
+            else if (PanelKind == ToolPanelKind.CallGraph ||
+                     PanelKind == ToolPanelKind.OutputGraph) {
                 return;
             }
 

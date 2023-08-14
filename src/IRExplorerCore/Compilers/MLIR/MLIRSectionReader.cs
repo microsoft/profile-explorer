@@ -112,7 +112,8 @@ namespace IRExplorerCore.MLIR {
         }
 
         protected override bool ShouldSkipOutputLine(string line) {
-            return string.IsNullOrWhiteSpace(line);
+            //return string.IsNullOrWhiteSpace(line);
+            return false;
         }
 
         protected override bool IsMetadataLine(string line) => false;

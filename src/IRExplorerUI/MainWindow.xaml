@@ -839,24 +839,36 @@
                                 </avalonDock:LayoutAnchorable>
 
                                 <avalonDock:LayoutAnchorable
-                                    Title="Loop Graph"
-                                    ContentId="LoopGraph"
+                                    x:Name="OutputGraphPanelHost"
+                                    Title="Output Graph"
+                                    CanAutoHide="False"
+                                    CanDockAsTabbedDocument="False"
+                                    CanHide="False"
+                                    ContentId="OutputGraph"
                                     IsActiveChanged="LayoutAnchorable_IsActiveChanged"
                                     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                                    <Grid>
-                                        <Button Content="Placeholder" />
-                                    </Grid>
+                                    <local:OutputGraphPanel x:Name="OutputGraphPanel" />
                                 </avalonDock:LayoutAnchorable>
 
-                                <avalonDock:LayoutAnchorable
-                                    Title="Control Dependence Graph"
-                                    ContentId="ControlDependenceGraph"
-                                    IsActiveChanged="LayoutAnchorable_IsActiveChanged"
-                                    IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                                    <Grid>
-                                        <Button Content="Placeholder" />
-                                    </Grid>
-                                </avalonDock:LayoutAnchorable>
+                                <!-- <avalonDock:LayoutAnchorable -->
+                                <!--     Title="Loop Graph" -->
+                                <!--     ContentId="LoopGraph" -->
+                                <!--     IsActiveChanged="LayoutAnchorable_IsActiveChanged" -->
+                                <!--     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged"> -->
+                                <!--     <Grid> -->
+                                <!--         <Button Content="Placeholder" /> -->
+                                <!--     </Grid> -->
+                                <!-- </avalonDock:LayoutAnchorable> -->
+                                <!-- -->
+                                <!-- <avalonDock:LayoutAnchorable -->
+                                <!--     Title="Control Dependence Graph" -->
+                                <!--     ContentId="ControlDependenceGraph" -->
+                                <!--     IsActiveChanged="LayoutAnchorable_IsActiveChanged" -->
+                                <!--     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged"> -->
+                                <!--     <Grid> -->
+                                <!--         <Button Content="Placeholder" /> -->
+                                <!--     </Grid> -->
+                                <!-- </avalonDock:LayoutAnchorable> -->
 
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>

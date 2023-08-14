@@ -59,6 +59,8 @@ namespace IRExplorerUI.Compilers.MLIR {
                     new MLIRFlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
                 GraphKind.ExpressionGraph =>
                     new MLIRExpressionGraphStyleProvider(graph, (ExpressionGraphSettings)settings, this),
+                GraphKind.OutputGraph =>
+                    new MLIRFlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
                 GraphKind.CallGraph =>
                     new CallGraphStyleProvider(graph)
             };

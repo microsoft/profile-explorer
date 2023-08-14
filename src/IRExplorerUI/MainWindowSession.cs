@@ -767,7 +767,8 @@ namespace IRExplorerUI {
             var tasks = new[] {
                 GenerateGraphs(GraphKind.FlowGraph, section, document),
                 GenerateGraphs(GraphKind.DominatorTree, section, document),
-                GenerateGraphs(GraphKind.PostDominatorTree, section, document)
+                GenerateGraphs(GraphKind.PostDominatorTree, section, document),
+                GenerateGraphs(GraphKind.OutputGraph, section, document)
             };
 
             if (awaitTasks) {
@@ -781,6 +782,7 @@ namespace IRExplorerUI {
                 GraphKind.FlowGraph => ToolPanelKind.FlowGraph,
                 GraphKind.DominatorTree => ToolPanelKind.DominatorTree,
                 GraphKind.PostDominatorTree => ToolPanelKind.PostDominatorTree,
+                GraphKind.OutputGraph => ToolPanelKind.OutputGraph,
                 _ => throw new InvalidOperationException("Unexpected graph kind!")
             };
 
@@ -799,6 +801,7 @@ namespace IRExplorerUI {
                 GraphKind.FlowGraph => ComputeFlowGraph,
                 GraphKind.DominatorTree => ComputeDominatorTree,
                 GraphKind.PostDominatorTree => ComputePostDominatorTree,
+                GraphKind.OutputGraph => ComputeOutputGraph,
                 _ => throw new InvalidOperationException("Unexpected graph kind!")
             };
         }
@@ -810,6 +813,7 @@ namespace IRExplorerUI {
                 ToolPanelKind.FlowGraph => ComputeFlowGraph,
                 ToolPanelKind.DominatorTree => ComputeDominatorTree,
                 ToolPanelKind.PostDominatorTree => ComputePostDominatorTree,
+                ToolPanelKind.OutputGraph => ComputeOutputGraph,
                 _ => throw new InvalidOperationException("Unexpected graph kind!")
             };
         }
@@ -824,7 +828,6 @@ namespace IRExplorerUI {
                 graphPanel.OnGenerateGraphDone(loadTask);
             }
             else {
-                //? TODO: Handle CFG failure
                 graphPanel.OnGenerateGraphDone(loadTask, true);
                 Trace.TraceError($"Document {ObjectTracker.Track(document)}: Failed to load CFG");
             }
@@ -874,6 +877,119 @@ namespace IRExplorerUI {
                                                CancelableTask loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.PostDominatorTree);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
+        }
+
+        private Graph ComputeOutputGraph(FunctionIR function, IRTextSection section,
+                                         CancelableTask loadTask) {
+            if (section.OutputAfter == null) {
+                return null;
+            }
+
+            var textLines = GetSectionOutputTextLinesAsync(section.OutputAfter, section).Result; //? TODO: await
+            int index = 0;
+
+            while(index < textLines.Count) {
+                var line = textLines[index];
+
+                while(!line.StartsWith("/// irx: json_start", System.StringComparison.Ordinal)) {
+                    index++;
+                    if (index == textLines.Count) break;
+                    line = textLines[index];
+                }
+
+                if(index == textLines.Count) {
+                    break;
+                }
+
+                int startIndex = index + 1;
+                var jsonBuilder = new StringBuilder();
+
+                while(!line.EndsWith("/// irx: json_end", System.StringComparison.Ordinal)) {
+                    index++;
+                    if (index == textLines.Count) break;
+                    line = textLines[index];
+                }
+
+                if (index - startIndex > 0) {
+                    for (int i = startIndex; i < index; i++) {
+                        jsonBuilder.AppendLine(textLines[i]);
+                    }
+
+                    if (JsonUtils.Deserialize(jsonBuilder.ToString(), out IRExplorerCore.RawIRModel.Graph graph)) {
+                        Trace.WriteLine($"Found graph: {graph.Kind}, func {graph.Function}");
+
+                        if (graph.Function.Equals(section.ParentFunction.Name, StringComparison.Ordinal)) {
+                            return GenerateRawIRLayoutGraph(function, section, graph);
+                        }
+                    }
+                }
+
+                index++;
+            }
+
+            return null;
+        }
+
+        private Graph GenerateRawIRLayoutGraph(FunctionIR function, IRTextSection section, IRExplorerCore.RawIRModel.Graph graph) {
+            var funcLines = GetSectionOutputTextLinesAsync(section.Output, section).Result; //? TODO: await
+            var nodeElementMap = new Dictionary<IRExplorerCore.RawIRModel.GraphNode, IRElement>();
+            var edgeElementMap = new Dictionary<IRExplorerCore.RawIRModel.GraphEdge, IRElement>();
+
+            IRElement FindElement(string operation) {
+                for (int i = 0; i < funcLines.Count; i++) {
+                    var funcLine = funcLines[i];
+                    if (funcLine.Contains(operation)) {
+                        int startLine = section.Output.StartLine;
+
+                        if (section.ModuleOutput != null) {
+                            startLine -= section.ModuleOutput.StartLine;
+                        }
+
+                        int targetLine = i + startLine;
+
+                        foreach (var instr in function.AllTuples) {
+                            if (instr.TextLocation.Line == targetLine) {
+                                return instr;
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                return null;
+            }
+
+            foreach (var node in graph.Nodes) {
+                if (!string.IsNullOrEmpty(node.Operation)) {
+                    var element = FindElement(node.Operation);
+
+                    if (element != null) {
+                        nodeElementMap[node] = element;
+                    }
+                }
+
+                foreach (var edge in node.Edges) {
+                    if (!string.IsNullOrEmpty(edge.Label)) {
+                        var element = FindElement(edge.Label);
+
+                        if (element != null) {
+                            edgeElementMap[edge] = element;
+                        }
+                    }
+                }
+            }
+
+            var printer = new RawIRGraphPrinter(graph, function, nodeElementMap, edgeElementMap,
+                                                compilerInfo_.CreateGraphNameProvider(GraphKind.OutputGraph));
+            var graphText = printer.PrintGraph();
+            File.WriteAllText(@"C:\test\graph.dot", graphText);
+
+
+            var result = printer.CreateGraph(graphText, new CancelableTask());
+            var graphReader = new GraphvizReader(GraphKind.ExpressionGraph, result,
+                printer.CreateNodeDataMap(), printer.CreateEdgeDataMap());
+            var layoutGraph = graphReader.ReadGraph();
+            return layoutGraph;
         }
 
         public async Task<Graph> ComputeGraphAsync(GraphKind kind, IRTextSection section,

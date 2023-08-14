@@ -74,7 +74,7 @@ namespace IRExplorerUI {
             PrintVariableNames = true;
             PrintSSANumbers = true;
             GroupInstructions = true;
-            PrintBottomUp = false;
+            PrintBottomUp = true;
             SkipCopyInstructions = false;
             MaxExpressionDepth = 8;
         }
@@ -83,7 +83,7 @@ namespace IRExplorerUI {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<ExpressionGraphSettings>(serialized);
         }
-        
+
         protected override GraphSettings MakeClone() {
             return Clone();
         }

@@ -13,9 +13,9 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
     public class GraphEdgeLabel : GraphNode {
-        private const double DefaultLabelTextSize = 0.190;
+        private const double DefaultLabelTextSize = 0.170;
         private const double LabelMargin = 0.1;
-        private const double LabelToEdgeMargin = 1.0;
+        private const double LabelToEdgeMargin = 0.15;
 
         public Edge EdgeInfo { get; set; }
         public override TaggedObject Data => EdgeInfo.Data;
@@ -30,6 +30,8 @@ namespace IRExplorerUI {
                 VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
             double x = EdgeInfo.LabelX - labelText.Width / 2 + LabelToEdgeMargin;
             double y = EdgeInfo.LabelY - labelText.Height / 2;
+
+            // dc.DrawEllipse(Brushes.Red, null, new Point(EdgeInfo.LabelX, EdgeInfo.LabelY), 0.2, 0.2);
 
             var region = new Rect(x - LabelMargin, y - LabelMargin,
                                   labelText.Width + 2*LabelMargin, labelText.Height + 2*LabelMargin);
@@ -158,7 +160,7 @@ namespace IRExplorerUI {
         private const double DefaultEdgeThickness = 0.025;
         private const double GroupBoundingBoxMargin = 0.20;
         private const double GroupBoundingBoxTextMargin = 0.07;
-        private Typeface defaultNodeFont_;
+        private Typeface nodeFont_;
         private Typeface edgeFont_;
         private Graph graph_;
         private IGraphStyleProvider graphStyle_;
@@ -172,7 +174,7 @@ namespace IRExplorerUI {
             graph_ = graph;
             compilerInfo_ = compilerInfo;
             edgeFont_ = new Typeface("Verdana");
-            defaultNodeFont_ = new Typeface("Verdana");
+            nodeFont_ = new Typeface("Verdana");
             graphStyle_ = compilerInfo.CreateGraphStyleProvider(graph, settings);
         }
 
@@ -255,7 +257,7 @@ namespace IRExplorerUI {
                     NodeInfo = node,
                     Settings = settings_,
                     Visual = nodeVisual,
-                    TextFont = defaultNodeFont_,
+                    TextFont = nodeFont_,
                     TextColor = Brushes.Black,
                     Style = graphStyle_.GetBoundingBoxStyle(node)
                 };
@@ -325,7 +327,7 @@ namespace IRExplorerUI {
                     NodeInfo = node,
                     Settings = settings_,
                     Visual = nodeVisual,
-                    TextFont = defaultNodeFont_,
+                    TextFont = nodeFont_,
                     TextColor = textColor,
                     Style = graphStyle_.GetNodeStyle(node)
                 };
@@ -439,7 +441,7 @@ namespace IRExplorerUI {
                 EdgeInfo = edge,
                 Settings = settings_,
                 Visual = nodeVisual,
-                TextFont = defaultNodeFont_,
+                TextFont = edgeFont_,
                 TextColor = graphStyle_.GetDefaultEdgeLabelTextColor(),
                 Style = graphStyle_.GetEdgeLabelStyle(edge)
             };
