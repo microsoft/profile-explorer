@@ -11,6 +11,7 @@ using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 
 namespace IRExplorerUI.Profile;
 
@@ -182,6 +183,10 @@ public sealed class ETWEventProcessor : IDisposable {
         int oldestCompressedSample = 0;
         var perContextLastSample = new Dictionary<int, int>();
         int lastReportedSample = 0;
+
+        // Info used to handle compressed stack event
+        Dictionary<ulong, List<int>> kernelStackKeyToPendingSamples = new Dictionary<ulong, List<int>>();
+        Dictionary<ulong, List<int>> userStackKeyToPendingSamples = new Dictionary<ulong, List<int>>();
 
         // For ETL file, the image timestamp (needed to find a binary on a symbol server)
         // can show up in the ImageID event instead the usual Kernel.ImageGroup.
@@ -390,7 +395,7 @@ public sealed class ETWEventProcessor : IDisposable {
                     if (perContextLastSample.TryGetValue(contextId, out sampleId)) {
                         profile.SetSampleStack(sampleId, stackId, contextId);
                     }
-                }
+                }  
 
                 if (isKernelStack) {
                     perCoreLastKernelStack[data.ProcessorNumber] = (stackId, data.EventTimeStampQPC);
@@ -401,6 +406,152 @@ public sealed class ETWEventProcessor : IDisposable {
 
             profile.ReturnContext(contextId);
         };
+
+        source_.Kernel.StackWalkStackKeyKernel += data => {
+            if (!IsAcceptedProcess(data.ProcessID)) {
+                return; // Ignore events from other processes.
+            }
+
+            var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+            int contextId = profile.AddContext(context);
+
+            int sampleId = perCoreLastSample[data.ProcessorNumber];
+            TimeSpan triggeringEventTimestamp = TimeSpan.FromMilliseconds(data.EventTimeStampRelativeMSec);
+
+            // Check if the last sample on the core did not trigger this stack collection
+            if (sampleId == 0 || profile.Samples[sampleId - 1].Time != triggeringEventTimestamp) {
+                // Check if the last sample from the context did not trigger this stack collection
+                if (!perContextLastSample.TryGetValue(contextId, out sampleId) ||
+                    profile.Samples[sampleId - 1].Time != triggeringEventTimestamp) {
+                    // We don't know what sample this stack belongs to so we won't collect it
+                    return;
+                }
+            }
+
+            // Add the sample id to our list of pending samples for this stack key so when the definition comes along we can add the stack to our profile
+            if (kernelStackKeyToPendingSamples.TryGetValue(data.StackKey, out List<int> pendingSamples)) {
+                pendingSamples.Add(sampleId);
+            }
+            else {
+                kernelStackKeyToPendingSamples.Add(data.StackKey, new List<int>{ sampleId });
+            }
+
+            profile.ReturnContext(contextId);
+        };
+
+        source_.Kernel.StackWalkStackKeyUser += delegate (StackWalkRefTraceData data)
+        {
+            if (!IsAcceptedProcess(data.ProcessID)) {
+                return; // Ignore events from other processes.
+            }
+
+            var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+            int contextId = profile.AddContext(context);
+
+            int sampleId = perCoreLastSample[data.ProcessorNumber];
+            TimeSpan triggeringEventTimestamp = TimeSpan.FromMilliseconds(data.EventTimeStampRelativeMSec);
+
+            // Check if the last sample on the core did not trigger this stack collection
+            if (sampleId == 0 || profile.Samples[sampleId - 1].Time != triggeringEventTimestamp) {
+                // Check if the last sample from the context did not trigger this stack collection
+                if (!perContextLastSample.TryGetValue(contextId, out sampleId) ||
+                    profile.Samples[sampleId - 1].Time != triggeringEventTimestamp) {
+
+                    // We don't know what sample this stack belongs to so we won't collect it
+                    return;
+                }
+            }
+
+            // Add the sample id to our list of pending samples for this stack key so when the definition comes along we can add the stack to our profile
+            if (userStackKeyToPendingSamples.TryGetValue(data.StackKey, out List<int> pendingSamples)) {
+                pendingSamples.Add(sampleId);
+            }
+            else {
+                userStackKeyToPendingSamples.Add(data.StackKey, new List<int> { sampleId });
+            }
+
+            profile.ReturnContext(contextId);
+        };
+
+        source_.Kernel.AddCallbackForEvents<StackWalkDefTraceData>(delegate (StackWalkDefTraceData data)
+        {
+            if (data.FrameCount == 0 ||
+                (userStackKeyToPendingSamples.Count == 0 && kernelStackKeyToPendingSamples.Count == 0)) {
+                return; // Ignore data that won't fulfill any pending samples
+            }
+
+            bool isKernelAddress = IsKernelAddress(data.InstructionPointer(0), data.PointerSize);
+            List<int> pendingSamples;
+
+            if (isKernelAddress && !kernelStackKeyToPendingSamples.TryGetValue(data.StackKey, out pendingSamples)) {
+                return;
+            }
+            else if (!userStackKeyToPendingSamples.TryGetValue(data.StackKey, out pendingSamples)) {
+                return;
+            }
+
+            foreach (int sampleId in pendingSamples) {
+                ProfileSample sample = profile.Samples[sampleId - 1];
+
+                // Check if we already have part of the stack for this sample
+                if (sample.StackId == 0) {
+                    ProfileStack profileStack = profile.RentTemporaryStack(data.FrameCount, sample.ContextId);
+
+                    // Copy data from event to the temp. stack pointer array.
+                    // Slightly faster to copy the entire array as a whole.
+                    unsafe {
+                        void* ptr = (void*)((IntPtr)(void*)data.DataStart + 8);
+                        int bytes = data.PointerSize * data.FrameCount;
+                        var span = new Span<byte>(ptr, bytes);
+
+                        fixed (long* destPtr = profileStack.FramePointers) {
+                            var destSpan = new Span<byte>(destPtr, bytes);
+                            span.CopyTo(destSpan);
+                        }
+                    }
+
+                    int stackId = profile.AddStack(profileStack, profile.FindContext(sample.ContextId));
+                    profile.SetSampleStack(sampleId, stackId, sample.ContextId);
+
+                    profile.ReturnStack(stackId);
+                }
+                else if (isKernelAddress) {
+                    ProfileStack profileStack = profile.FindStack(sample.StackId);
+                    int ustackFrameCount = profileStack.FrameCount;
+                    int kstackFrameCount = data.FrameCount;
+                    long[] frames = new long[kstackFrameCount + ustackFrameCount];
+                    profileStack.FramePointers.CopyTo(frames, kstackFrameCount);
+
+                    for (int i = 0; i < kstackFrameCount; i++) {
+                        frames[i] = (long)data.InstructionPointer(i);
+                    }
+
+                    profileStack.FramePointers = frames;
+                    profileStack.UserModeTransitionIndex = kstackFrameCount; // Frames after kernel stack are user mode.
+                }
+                else {
+                    ProfileStack profileStack = profile.FindStack(sample.StackId);
+                    int ustackFrameCount = data.FrameCount;
+                    int kstackFrameCount = profileStack.FrameCount;
+                    long[] frames = new long[kstackFrameCount + ustackFrameCount];
+                    profileStack.FramePointers.CopyTo(frames, 0);
+
+                    for (int i = 0; i < ustackFrameCount; i++) {
+                        frames[i + kstackFrameCount] = (long)data.InstructionPointer(i);
+                    }
+
+                    profileStack.FramePointers = frames;
+                    profileStack.UserModeTransitionIndex = kstackFrameCount; // Frames after kernel stack are user mode.
+                }
+            }
+
+            if (isKernelAddress) {
+                kernelStackKeyToPendingSamples.Remove(data.StackKey);
+            }
+            else {
+                userStackKeyToPendingSamples.Remove(data.StackKey);
+            }
+        });
 
         source_.Kernel.PerfInfoCollectionStart += data => {
             if (data.SampleSource == 0) {

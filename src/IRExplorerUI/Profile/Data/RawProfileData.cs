@@ -348,6 +348,7 @@ public class RawProfileData : IDisposable {
         // Change the stack ID in-place in the array.
         Debug.Assert(samples_[sampleId - 1].ContextId == contextId);
         ref var sampleRef = ref samples_.GetValueRef(sampleId - 1);
+        Debug.Assert(sampleRef.StackId == 0); // We should not be overwriting any stack already on this sample
         sampleRef.StackId = stackId;
     }
 
