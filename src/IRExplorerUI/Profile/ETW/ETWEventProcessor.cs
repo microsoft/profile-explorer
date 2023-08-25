@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using IRExplorerCore;
 using Microsoft.Diagnostics.Tracing;
+using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Diagnostics.Tracing.Parsers.Symbol;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using System.Diagnostics;
@@ -11,7 +12,6 @@ using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 
 namespace IRExplorerUI.Profile;
 
@@ -75,7 +75,7 @@ public sealed class ETWEventProcessor : IDisposable {
         // Default 1ms sampling interval.
         UpdateSamplingInterval(SampleReportingInterval);
 
-        source_.Kernel.PerfInfoCollectionStart += data => {
+        source_.Kernel.PerfInfoCollectionStart += data => { // We don't recieve this event... why is it here?
             if (data.SampleSource == 0) {
                 UpdateSamplingInterval(data.NewInterval);
                 samplingIntervalSet_ = true;
@@ -553,7 +553,22 @@ public sealed class ETWEventProcessor : IDisposable {
             }
         });
 
-        source_.Kernel.PerfInfoCollectionStart += data => {
+        source_.Kernel.PerfInfoCollectionStart += data => { // I haven't really seen us recieve this event - was it just a mistake?
+            if (data.SampleSource == 0) {
+                UpdateSamplingInterval(data.NewInterval);
+                profile.TraceInfo.SamplingInterval = TimeSpan.FromMilliseconds(samplingIntervalMS_);
+                samplingIntervalSet_ = true;
+            }
+            else {
+                // The description of a PMC event.
+                var dataSpan = data.EventData().AsSpan();
+                string name = ReadWideString(dataSpan, 12);
+                var counterInfo = new PerformanceCounter(data.SampleSource, name, data.NewInterval);
+                profile.AddPerformanceCounter(counterInfo);
+            }
+        };
+
+        source_.Kernel.PerfInfoCollectionEnd += data => {
             if (data.SampleSource == 0) {
                 UpdateSamplingInterval(data.NewInterval);
                 profile.TraceInfo.SamplingInterval = TimeSpan.FromMilliseconds(samplingIntervalMS_);
