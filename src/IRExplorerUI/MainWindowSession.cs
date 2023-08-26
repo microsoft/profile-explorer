@@ -426,9 +426,6 @@ namespace IRExplorerUI {
         private DateTime lastDocumentLoadUpdate_;
 
         private void UpdateIRDocumentLoadProgress(IRSectionReader reader, SectionReaderProgressInfo info) {
-            Trace.WriteLine($"Set indeter {info.IsIndeterminate} at\n{Environment.StackTrace}");
-            Trace.WriteLine("===================================================\n");
-
             if (info.IsIndeterminate) {
                 Dispatcher.BeginInvoke(new Action(() => {
                     SetApplicationProgress(true, Double.NaN);
@@ -881,11 +878,24 @@ namespace IRExplorerUI {
 
         private Graph ComputeOutputGraph(FunctionIR function, IRTextSection section,
                                          CancelableTask loadTask) {
-            if (section.OutputAfter == null) {
+            IRPassOutput output = null;
+            string expectedName = null;
+
+            if (section.Name.Contains("MemoryPlanningStrategy") ||
+                section.Name.Contains("Before InsertSemaphores")) {
+                output = section.OutputAfter;
+                expectedName = "before";
+            }
+            else if (section.Name.Contains("After InsertSemaphores")) {
+                output = section.OutputBefore;
+                expectedName = "after";
+            }
+
+            if (output == null) {
                 return null;
             }
 
-            var textLines = GetSectionOutputTextLinesAsync(section.OutputAfter, section).Result; //? TODO: await
+            var textLines = GetSectionOutputTextLinesAsync(output, section).Result; //? TODO: await
             int index = 0;
 
             while(index < textLines.Count) {
@@ -916,7 +926,11 @@ namespace IRExplorerUI {
                     }
 
                     if (JsonUtils.Deserialize(jsonBuilder.ToString(), out IRExplorerCore.RawIRModel.Graph graph)) {
-                        Trace.WriteLine($"Found graph: {graph.Kind}, func {graph.Function}");
+                        Trace.WriteLine($"Found graph: {graph.Kind}, func {graph.Function}, name {graph.Title}");
+
+                        if(!graph.Title.Contains(expectedName, StringComparison.Ordinal)) {
+                            continue;
+                        }
 
                         if (graph.Function.Equals(section.ParentFunction.Name, StringComparison.Ordinal)) {
                             return GenerateRawIRLayoutGraph(function, section, graph);
@@ -977,12 +991,14 @@ namespace IRExplorerUI {
                     }
                 }
 
-                foreach (var edge in node.Edges) {
-                    if (!string.IsNullOrEmpty(edge.Operation)) {
-                        var element = FindElement(ExtractInstruction(edge.Operation));
+                if (node.Edges != null) {
+                    foreach (var edge in node.Edges) {
+                        if (!string.IsNullOrEmpty(edge.Operation)) {
+                            var element = FindElement(ExtractInstruction(edge.Operation));
 
-                        if (element != null) {
-                            edgeElementMap[edge] = element;
+                            if (element != null) {
+                                edgeElementMap[edge] = element;
+                            }
                         }
                     }
                 }

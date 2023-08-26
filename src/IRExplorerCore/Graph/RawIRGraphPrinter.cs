@@ -47,11 +47,19 @@ public sealed class RawIRGraphPrinter : GraphVizPrinter {
 
     private void PrintEdges() {
         foreach (var node in graph_.Nodes) {
+            if (node.Edges == null) {
+                continue;
+            }
+
             foreach (var edge in node.Edges) {
                 if (!string.IsNullOrEmpty(edge.Operation)) {
                     if (edge.Label == "BackEdge") {
                         CreateEdgeWithLabelAndStyle((ulong)edge.FromNodeId, (ulong)edge.ToNodeId,
                             ShortenString(edge.Operation, 20), "dashed", builder_);
+                    }
+                    else if (edge.Label == "Semaphore") {
+                        CreateEdgeWithLabelAndStyle((ulong)edge.FromNodeId, (ulong)edge.ToNodeId,
+                            ShortenString(edge.Operation, 20), "dotted", builder_);
                     }
                     else {
                         CreateEdgeWithLabel((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, ShortenString(edge.Operation, 20), builder_);
@@ -60,6 +68,9 @@ public sealed class RawIRGraphPrinter : GraphVizPrinter {
                 else {
                     if (edge.Label == "BackEdge") {
                         CreateEdgeWithStyle((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, "dashed", builder_);
+                    }
+                    else if (edge.Label == "Semaphore") {
+                        CreateEdgeWithStyle((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, "dotted", builder_);
                     }
                     else {
                         CreateEdge((ulong)edge.FromNodeId, (ulong)edge.ToNodeId, builder_);

@@ -169,7 +169,7 @@ namespace IRExplorerCore.Graph {
 
         protected void CreateEdgeWithLabelAndStyle(ulong id1, ulong id2, string label, string style,
                                                    StringBuilder builder) {
-            builder.AppendFormat(CultureInfo.InvariantCulture, "n{0} -> n{1}[label=\"{2}\",style={style}];\n", id1, id2, label);
+            builder.AppendFormat(CultureInfo.InvariantCulture, "n{0} -> n{1}[label=\"{2}\",style={3}];\n", id1, id2, label, style);
         }
 
         protected void StartSubgraph(int margin, StringBuilder builder) {
@@ -279,8 +279,6 @@ namespace IRExplorerCore.Graph {
                 Trace.TraceError($"Graphviz task {ObjectTracker.Track(task)}: Failed running GraphViz: {ex}");
                 return null;
             }
-
-            File.Copy(inputFilePath, $"C:\\test\\cfg_{Environment.TickCount}.dot", true);
 
 #if !DEBUG
             // Clean up temporary files.
