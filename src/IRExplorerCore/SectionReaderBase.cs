@@ -573,6 +573,15 @@ namespace IRExplorerCore {
             hasMetadataLines_ = false;
         }
 
+
+        private void SaveAfterAdditionalOutput() {
+            if (previousSections_ != null) {
+                foreach (var prevSection in previousSections_) {
+                    prevSection.OutputAfter = GetAdditionalOutput();
+                }
+            }
+        }
+
         private bool SkipToSectionStart(SectionTextHandler sectionTextHandler, out bool hasSectionName) {
             prevLineCount_ = 0;
 
@@ -627,6 +636,7 @@ namespace IRExplorerCore {
             bool hasSectionName = true;
 
             if (!SkipToSectionStart(sectionTextHandler, out hasSectionName)) {
+                SaveAfterAdditionalOutput();
                 return false;
             }
 
@@ -761,11 +771,7 @@ namespace IRExplorerCore {
 
                     // Also attach it to the other functions in the section,
                     // where each function got its own section object.
-                    if (previousSections_ != null) {
-                        foreach (var prevSection in previousSections_) {
-                            prevSection.OutputAfter = GetAdditionalOutput();
-                        }
-                    }
+                    SaveAfterAdditionalOutput();
 
                     sections.Add(section);
 
