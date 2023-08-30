@@ -25,8 +25,6 @@ namespace IRExplorerUI.Compilers {
     //? TODO: Use for-each iterators everywhere
     public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path
-        private const string DefaultSymbolSource = @"SRV*https://msdl.microsoft.com/download/symbols";
-        private const string DefaultSymbolCachePath = @"C:\Symbols";
 
         private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ = new();
 
@@ -95,12 +93,11 @@ namespace IRExplorerUI.Compilers {
             //? TODO: Also consider Environment.GetEnvironmentVariable("_NT_SYMBOL_PATH")?
             var defaultSearchPath = "";
 
-            if (options.UseDefaultSymbolSource) {
-                defaultSearchPath = DefaultSymbolSource;
+            if (options.HasSymbolSourcePath) {
+                defaultSearchPath = $"SRV*{options.SymbolSourcePath}";
 
-                if (options.UseSymbolCache) {
-                    var cachePath = options.HasSymbolCachePath ? options.SymbolCachePath : DefaultSymbolCachePath;
-                    defaultSearchPath = $"CACHE*{cachePath};{defaultSearchPath}";
+                if (options.HasSymbolCachePath) {
+                    defaultSearchPath = $"CACHE*{options.SymbolCachePath};{options.SymbolSourcePath}";
                 }
             }
 
