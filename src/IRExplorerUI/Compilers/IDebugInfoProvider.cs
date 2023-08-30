@@ -27,22 +27,25 @@ namespace IRExplorerUI.Compilers {
     [ProtoContract(SkipConstructor = true)]
     public class SymbolFileSourceOptions : SettingsBase {
         [ProtoMember(1)]
-        public bool UseDefaultSymbolSource { get; set; }
+        public bool SymbolSourcePathEnabled { get; set; }
         [ProtoMember(2)]
-        public bool UseSymbolCache { get; set; }
+        public string SymbolSourcePath { get; set; }
         [ProtoMember(3)]
-        public bool SymbolSearchPathsEnabled { get; set; }
+        public bool SymbolCachePathEnabled { get; set; }
         [ProtoMember(4)]
         public string SymbolCachePath { get; set; }
         [ProtoMember(5)]
-        public List<string> SymbolSearchPaths { get; set; }
+        public bool SymbolSearchPathsEnabled { get; set; }
         [ProtoMember(6)]
-        public bool SourceServerEnabled { get; set; }
+        public List<string> SymbolSearchPaths { get; set; }
         [ProtoMember(7)]
-        public bool AuthorizationTokenEnabled { get; set; }
+        public bool SourceServerEnabled { get; set; }
         [ProtoMember(8)]
+        public bool AuthorizationTokenEnabled { get; set; }
+        [ProtoMember(9)]
         public string AuthorizationToken { get; set; }
 
+        public bool HasSymbolSourcePath => !string.IsNullOrEmpty(SymbolSourcePath);
         public bool HasSymbolCachePath => !string.IsNullOrEmpty(SymbolCachePath);
         public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
 
@@ -87,8 +90,6 @@ namespace IRExplorerUI.Compilers {
 
         public override void Reset() {
             InitializeReferenceMembers();
-            UseDefaultSymbolSource = true;
-            UseSymbolCache = true;
         }
 
         [ProtoAfterDeserialization]
