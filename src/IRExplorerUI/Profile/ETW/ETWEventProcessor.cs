@@ -553,7 +553,7 @@ public sealed class ETWEventProcessor : IDisposable {
             }
         });
 
-        source_.Kernel.PerfInfoCollectionStart += data => { // I haven't really seen us recieve this event - was it just a mistake?
+        void HandlePerfInfoCollection(SampledProfileIntervalTraceData data, RawProfileData profile) {
             if (data.SampleSource == 0) {
                 UpdateSamplingInterval(data.NewInterval);
                 profile.TraceInfo.SamplingInterval = TimeSpan.FromMilliseconds(samplingIntervalMS_);
@@ -566,22 +566,11 @@ public sealed class ETWEventProcessor : IDisposable {
                 var counterInfo = new PerformanceCounter(data.SampleSource, name, data.NewInterval);
                 profile.AddPerformanceCounter(counterInfo);
             }
-        };
+        }
 
-        source_.Kernel.PerfInfoCollectionEnd += data => {
-            if (data.SampleSource == 0) {
-                UpdateSamplingInterval(data.NewInterval);
-                profile.TraceInfo.SamplingInterval = TimeSpan.FromMilliseconds(samplingIntervalMS_);
-                samplingIntervalSet_ = true;
-            }
-            else {
-                // The description of a PMC event.
-                var dataSpan = data.EventData().AsSpan();
-                string name = ReadWideString(dataSpan, 12);
-                var counterInfo = new PerformanceCounter(data.SampleSource, name, data.NewInterval);
-                profile.AddPerformanceCounter(counterInfo);
-            }
-        };
+        source_.Kernel.PerfInfoCollectionStart += data => HandlePerfInfoCollection(data, profile); // I haven't really seen us recieve this event - was it just a mistake?
+
+        source_.Kernel.PerfInfoCollectionEnd += data => HandlePerfInfoCollection(data, profile);
 
         source_.Kernel.PerfInfoSetInterval += data => {
             if (data.SampleSource == 0 && !samplingIntervalSet_) {
