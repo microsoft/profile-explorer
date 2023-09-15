@@ -41,6 +41,7 @@ namespace IRExplorerCore.IR {
         public BlockIR EntryBlock => Blocks.Count > 0 ? Blocks[0] : null;
         public BlockIR ExitBlock => Blocks.Count > 0 ? Blocks[^1] : null;
         public RegionIR RootRegion { get; set; }
+        public bool IsEmpty => Blocks.Count == 0;
 
         public IRElement GetElementWithId(ulong id) {
             BuildElementIdMap();

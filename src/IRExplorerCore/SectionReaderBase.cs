@@ -681,6 +681,7 @@ namespace IRExplorerCore {
             bool foundNextFunction = false;
 
             IRPassOutput moduleOutput = null;
+            bool sawModuleEnd = false;
 
             if (hasSectionName) {
                 currentLine_ = NextLine();
@@ -709,6 +710,7 @@ namespace IRExplorerCore {
                     }
                     else if (IsModuleEnd(currentLine_)) {
                         EndModule();
+                        sawModuleEnd = true;
                     }
 
                     if (IsFunctionStart(currentLine_)) {
@@ -748,49 +750,53 @@ namespace IRExplorerCore {
                     }
                 }
 
-                if (foundFunctionStart && foundFunctionEnd) {
-                    sectionEndLine = Math.Max(sectionEndLine, sectionStartLine);
-                    int lines = funcEndLine - funcStartLine;
+                if (foundFunctionStart && foundFunctionEnd && !sawModuleEnd) {
+                    //if (moduleStack_.Count > 0) {
 
-                    // Create the a new section and its corresponding function, if needed.
-                    var output = new IRPassOutput(funcStartOffset, funcEndOffset,
-                        funcStartLine, funcEndLine) {
-                        HasPreprocessedLines = hasPreprocessedLines_ || lineMetadata != null,
-                    };
+                        sectionEndLine = Math.Max(sectionEndLine, sectionStartLine);
+                        int lines = funcEndLine - funcStartLine;
 
-                    var textFunc = GetOrCreateFunction(BuildFunctionName(funcName));
+                        // Create the a new section and its corresponding function, if needed.
+                        var output = new IRPassOutput(funcStartOffset, funcEndOffset,
+                            funcStartLine, funcEndLine) {
+                            HasPreprocessedLines = hasPreprocessedLines_ || lineMetadata != null,
+                        };
 
-                    var section = new IRTextSection(textFunc, sectionName, output, blockCount);
-                    section.IndexInModule = functionIndex++;
-                    summary_.AddSection(section);
-                    textFunc.AddSection(section);
+                        var textFunc = GetOrCreateFunction(BuildFunctionName(funcName));
 
-                    // Attach additional output text.
-                    section.OutputBefore = GetAdditionalOutput();
-                    section.ModuleOutput = moduleOutput;
+                        var section = new IRTextSection(textFunc, sectionName, output, blockCount);
+                        section.IndexInModule = functionIndex++;
+                        summary_.AddSection(section);
+                        textFunc.AddSection(section);
 
-                    // Also attach it to the other functions in the section,
-                    // where each function got its own section object.
-                    SaveAfterAdditionalOutput();
+                        // Attach additional output text.
+                        section.OutputBefore = GetAdditionalOutput();
+                        section.ModuleOutput = moduleOutput;
 
-                    sections.Add(section);
+                        // Also attach it to the other functions in the section,
+                        // where each function got its own section object.
+                        SaveAfterAdditionalOutput();
 
-                    // Notify client a new section has been read.
-                    if (sectionTextHandler != null) {
-                        sectionTextHandler(this, new SectionReaderText(output, sectionLines));
-                    }
+                        sections.Add(section);
 
-                    // Attach any metadata lines.
-                    if (lineMetadata != null) {
-                        section.LineMetadata = lineMetadata;
-                        section.CompressLineMetadata();
-                    }
+                        // Notify client a new section has been read.
+                        if (sectionTextHandler != null) {
+                            sectionTextHandler(this, new SectionReaderText(output, sectionLines));
+                        }
+
+                        // Attach any metadata lines.
+                        if (lineMetadata != null) {
+                            section.LineMetadata = lineMetadata;
+                            section.CompressLineMetadata();
+                        }
+                    //}
 
                     funcStartOffset = TextOffset();
                     funcEndOffset = funcStartOffset;
                     funcStartLine = lineIndex_ + 1;
                     funcEndLine = funcStartLine;
                     foundFunctionStart = foundFunctionEnd = false;
+                    EndCurrentFunction();
                 }
 
                 if (!foundNextFunction) {
@@ -798,8 +804,12 @@ namespace IRExplorerCore {
                 }
 
                 if (currentLine_ == null ||
-                    IsSectionEnd(currentLine_) ||
-                    IsSectionStart(currentLine_)) {
+                    IsSectionEnd(currentLine_)) {
+                    if (currentLine_ != null) {
+                        //? TODO: Only if enabled
+                        moduleOutput = AddOptionalOutputLine(currentLine_, funcInitialOffset, funcInitialLine, moduleOutput);
+                    }
+
                     nextInitialOffset_ = textOffset_;
                     nextInitialLineIndex_ = lineIndex_;
                     break;
@@ -807,8 +817,13 @@ namespace IRExplorerCore {
             }
 
             EndModule();
-            ResetAdditionalOutput();
-            previousSections_ = sections;
+            EndCurrentSection();
+
+            if (sections.Count > 0) {
+                ResetAdditionalOutput();
+                previousSections_ = sections;
+            }
+
             return true;
         }
 
@@ -942,5 +957,17 @@ namespace IRExplorerCore {
         }
 
         #endregion
+
+        protected virtual void EndCurrentFunction() {
+
+        }
+
+        protected virtual void EndCurrentModule() {
+
+        }
+
+        protected virtual void EndCurrentSection() {
+
+        }
     }
 }

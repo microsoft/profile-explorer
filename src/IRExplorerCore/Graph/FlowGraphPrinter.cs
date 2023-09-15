@@ -42,14 +42,13 @@ nslimit=2;
             }
 
             return "";
+            //return "rankdir=LR;";
         }
 
-        private void CreateNode(BlockIR block, StringBuilder builder) {
-            if (block == null) {
-                ;
-            }
+        private string CreateNode(BlockIR block, StringBuilder builder) {
             string blockName = CreateNode(block.Id, nameProvider_.GetBlockNodeLabel(block), builder);
             blockNameMap_[blockName] = block;
+            return blockName;
         }
 
         private void CreateEdge(BlockIR block1, BlockIR block2, StringBuilder builder) {
@@ -90,9 +89,11 @@ nslimit=2;
             //builder.AppendLine(domEdges);
         }
 
-        private void PrintRegions(RegionIR region, StringBuilder builder, int depth = 0) {
+        private (string, string) PrintRegions(RegionIR region, StringBuilder builder, int depth = 0) {
             int margin = Math.Max(10, 6 * depth);
             StartSubgraph(margin, builder);
+            string firstBlockName = null;
+            string lastBlockName = null;
 
             foreach(var block in region.Blocks) {
                 var parentRegion = block.ParentRegion;
@@ -102,14 +103,32 @@ nslimit=2;
                     parentRegion = parentRegion.ParentRegion;
                 }
 
-                CreateNode(block, builder);
+                var blockName = CreateNode(block, builder);
+
+                if (firstBlockName == null) {
+                    firstBlockName = blockName;
+                }
+
+                lastBlockName = blockName;
             }
 
+            string prevChildFirstBlockName = null;
+            string prevChildLastBlockName = null;
+
             foreach (var childRegion in region.ChildRegions) {
-                PrintRegions(childRegion, builder, depth + 1);
+                var (childFirstBlockName, childLastBlockName) = PrintRegions(childRegion, builder, depth + 1);
+
+                //? TODO: Hack, use invisible edges to connect the subgraphs.
+                if (prevChildLastBlockName != null) {
+                   CreateEdgeWithStyle(prevChildLastBlockName, childFirstBlockName, "dotted", builder);
+                }
+
+                prevChildFirstBlockName = childFirstBlockName;
+                prevChildLastBlockName = childLastBlockName;
             }
 
             EndSubgraph(builder);
+            return (firstBlockName, lastBlockName);
         }
 
         private string PrintDominatorEdges(DominatorAlgorithmOptions options) {

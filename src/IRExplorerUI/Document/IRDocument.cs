@@ -3765,7 +3765,8 @@ namespace IRExplorerUI {
             if (element != null) {
                 SelectElement(element, true, true, textOffset);
             }
-            else {
+            else if(Function.IsEmpty) {
+                // Fall back to basic variable text selection if parsing the function failed.
                 SelectCurrentWord(position);
             }
 
@@ -3808,24 +3809,24 @@ namespace IRExplorerUI {
             var selectionLength = endOffset - startOffset;
             var selectedText = lineText.Substring(startOffset + 1, selectionLength);
 
-            // if (selectedText.StartsWith("%")) {
-            //     ClearAllMarkers();
-            //     var results = TextSearcher.AllIndexesOf(SectionText, selectedText);
-            //
-            //     foreach (var result in results) {
-            //         int resultEndOffset = result.Offset + result.Length;
-            //
-            //         if (resultEndOffset + 1 < SectionText.Length &&
-            //             (SectionText.Span[resultEndOffset] == '_' ||
-            //              char.IsDigit(SectionText.Span[resultEndOffset]))) {
-            //             continue; // Ignore partial match.
-            //         }
-            //
-            //         MarkTextRange(result.Offset, result.Length, settings_.DefinitionValueColor);
-            //     }
-            //
-            //     UpdateHighlighting();
-            // }
+            if (selectedText.StartsWith("%")) {
+                ClearAllMarkers();
+                var results = TextSearcher.AllIndexesOf(SectionText, selectedText);
+
+                foreach (var result in results) {
+                    int resultEndOffset = result.Offset + result.Length;
+
+                    if (resultEndOffset + 1 < SectionText.Length &&
+                        (SectionText.Span[resultEndOffset] == '_' ||
+                         char.IsDigit(SectionText.Span[resultEndOffset]))) {
+                        continue; // Ignore partial match.
+                    }
+
+                    MarkTextRange(result.Offset, result.Length, settings_.DefinitionValueColor);
+                }
+
+                UpdateHighlighting();
+            }
         }
 
         public void AddElementOverlay(IRElement element, IElementOverlay overlay) {

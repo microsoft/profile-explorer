@@ -14,6 +14,15 @@ namespace IRExplorerCore.MLIR {
 
         static readonly Regex SectionStartLineRegex;
 
+        private bool isParsingModule;
+        private bool isParsingSection;
+        private bool isParsingFunction;
+        private bool sawModule;
+        private bool sawFunction;
+        private int openBraces;
+        private int closedBraces;
+        private int functionStartOpenBraces;
+
         static MLIRSectionReader() {
             SectionStartLineRegex = new Regex(@"\s*\/\/(-|\s*)----*\s*\/?\/?", RegexOptions.Compiled);
         }
@@ -26,12 +35,16 @@ namespace IRExplorerCore.MLIR {
 
         protected override bool IsSectionStart(string line) {
             //? TODO: Use Regex
-            return line.StartsWith(SectionStartLine, StringComparison.Ordinal);
+            //? TODO: Without section names, having parsed a module should start a new section?
+            isParsingSection = !isParsingSection && line.StartsWith(SectionStartLine, StringComparison.Ordinal);
+            return isParsingSection;
         }
 
         protected override bool IsSectionEnd(string line) {
             //? TODO: Use Regex
-            return line.StartsWith(SectionEndLine, StringComparison.Ordinal);
+            return line.StartsWith(SectionEndLine, StringComparison.Ordinal)
+
+                   || (isParsingSection && (sawModule || sawFunction) && (closedBraces == openBraces));
         }
 
         protected override bool IsFunctionStart(string line) {
@@ -47,15 +60,27 @@ namespace IRExplorerCore.MLIR {
                 return false;
             }
 
-            if (funcIndex == index && (funcIndex + 4) < line.Length &&
-                line[funcIndex + 4] == '.') {
-                return line.EndsWith("{", StringComparison.Ordinal);
-            }
-            else if (funcIndex > 0 && line[funcIndex - 1] == '.') {
-                return line.EndsWith("{", StringComparison.Ordinal);
+            if (funcIndex > 0 && line[funcIndex - 1] == '\"') {
+                index++;
             }
 
-            return false;
+            bool result = false;
+
+            if (funcIndex == index && (funcIndex + 4) < line.Length &&
+                line[funcIndex + 4] == '.') {
+                result = line.EndsWith("{", StringComparison.Ordinal);
+            }
+            else if (funcIndex > 0 && line[funcIndex - 1] == '.') {
+                result = line.EndsWith("{", StringComparison.Ordinal);
+            }
+
+            if (result) {
+                functionStartOpenBraces = openBraces - closedBraces - 1;
+                isParsingFunction = true;
+                sawFunction = true;
+            }
+
+            return result;
         }
 
         protected override bool IsBlockStart(string line) {
@@ -64,7 +89,24 @@ namespace IRExplorerCore.MLIR {
         }
 
         protected override bool IsFunctionEnd(string line) {
-            return line.StartsWith("}", StringComparison.Ordinal);
+            return isParsingFunction && ((openBraces - closedBraces) == functionStartOpenBraces);
+        }
+
+        protected override void EndCurrentFunction() {
+            isParsingFunction = false;
+        }
+
+        protected override void EndCurrentModule() {
+            //? TODO: Assert !isParsingFunction
+            isParsingModule = false;
+            sawFunction = false;
+        }
+
+        protected override void EndCurrentSection() {
+            //? TODO: Assert !isParsingModule, !isParsingFunction
+            isParsingSection = false;
+            sawModule = false;
+            sawFunction = false;
         }
 
         protected override string ExtractSectionName(string line) {
@@ -108,6 +150,15 @@ namespace IRExplorerCore.MLIR {
         }
 
         protected override string PreprocessLine(string line) {
+            foreach(char c in line) {
+                if (c == '{') {
+                    openBraces++;
+                }
+                else if (c == '}') {
+                    closedBraces++;
+                }
+            }
+
             return line;
         }
 
@@ -119,14 +170,22 @@ namespace IRExplorerCore.MLIR {
         protected override bool IsMetadataLine(string line) => false;
 
         protected override bool IsModuleStart(string line) {
-            return line.StartsWith("module");
+            isParsingModule = !isParsingModule && line.StartsWith("module");
+            return isParsingModule;
+        }
+
+        protected override bool IsModuleEnd(string line) {
+            return isParsingModule && (closedBraces == openBraces);
         }
 
         protected override string ExtractModuleName(string line) {
             return ExtractFunctionName(line);
         }
 
-        protected override bool FunctionEndIsFunctionStart(string line) => true;
-        protected override bool FunctionStartIsSectionStart(string line) => true;
+        protected override bool FunctionEndIsFunctionStart(string line) => false;
+
+        //? TODO: If section headers seen, disable this
+        //? Actually use it in the parsing
+        protected override bool FunctionStartIsSectionStart(string line) => false;
     }
 }
