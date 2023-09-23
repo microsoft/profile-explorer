@@ -98,6 +98,18 @@ namespace IRExplorerUI {
             return defaultNodeStyle_;
         }
 
+        public Brush GetEdgeLabelTextColor(Edge edge) {
+            return defaultTextColor_;
+        }
+
+        public HighlightingStyle GetBoundingBoxLabelStyle(Node node) {
+            return null;
+        }
+
+        public Brush GetBoundingBoxLabelColor(Node node) {
+            return null;
+        }
+
         public bool ShouldRenderEdges(GraphEdgeKind kind) {
             return true;
         }

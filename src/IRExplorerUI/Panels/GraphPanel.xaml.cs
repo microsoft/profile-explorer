@@ -81,7 +81,7 @@ namespace IRExplorerUI {
         private Point draggingStart_;
         private Point draggingViewStart_;
         private Graph graph_;
-        private GraphNode hoveredNode_;
+        private GraphObject hoveredNode_;
 
         private bool ignoreNextHover_;
         private CancelableTask loadTask_;
@@ -148,6 +148,7 @@ namespace IRExplorerUI {
         }
 
         private void GraphPanel_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+            HidePreviewPopup();
             var position = e.GetPosition(GraphViewer);
             hoveredNode_ = GraphViewer.FindPointedNode(position);
 
@@ -173,6 +174,7 @@ namespace IRExplorerUI {
         }
 
         private void GraphPanel_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
+            HidePreviewPopup();
             hoveredNode_ = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
             if (hoveredNode_ != null) {
@@ -520,6 +522,8 @@ namespace IRExplorerUI {
         }
 
         private void GraphPanel_PreviewMouseWheel(object sender, MouseWheelEventArgs e) {
+            HidePreviewPopup();
+
             if (!Utils.IsKeyboardModifierActive()) {
                 return;
             }
@@ -553,10 +557,16 @@ namespace IRExplorerUI {
 
             var node = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
-            if (node?.ElementData != null) {
+            if (ShouldShowPreviewPopup(node)) {
                 ShowPreviewPopup(node);
                 hoveredNode_ = node;
             }
+        }
+
+        private bool ShouldShowPreviewPopup(GraphObject node) {
+            return node != null &&
+                   node.Kind != GraphObjectKind.BoundingBox &&
+                   node.DataAsElement != null;
         }
 
         private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {
@@ -619,7 +629,7 @@ namespace IRExplorerUI {
 
         private void SelectQueryBlock1Executed(object sender, ExecutedRoutedEventArgs e) {
             if (hoveredNode_ != null) {
-                if (hoveredNode_.ElementData is BlockIR block) {
+                if (hoveredNode_.DataAsElement is BlockIR block) {
                     SetQueryBlock1(block);
                 }
             }
@@ -627,7 +637,7 @@ namespace IRExplorerUI {
 
         private void SelectQueryBlock2Executed(object sender, ExecutedRoutedEventArgs e) {
             if (hoveredNode_ != null) {
-                if (hoveredNode_.ElementData is BlockIR block) {
+                if (hoveredNode_.DataAsElement is BlockIR block) {
                     SetQueryBlock2(block);
                 }
             }
@@ -854,7 +864,7 @@ namespace IRExplorerUI {
             GraphHost.ScrollToVerticalOffset(offsetY * zoom - centerY);
         }
 
-        private void ShowPreviewPopup(GraphNode node) {
+        private void ShowPreviewPopup(GraphObject node) {
             if (previewPopup_ != null) {
                 if (hoveredNode_ == node) {
                     return;
@@ -863,7 +873,7 @@ namespace IRExplorerUI {
                 HidePreviewPopup();
             }
 
-            if (node == null || node.ElementData == null) {
+            if (node == null || node.DataAsElement == null) {
                 return;
             }
 
@@ -874,7 +884,7 @@ namespace IRExplorerUI {
 
             //? TODO: Instead of "Block " call into some name provider
             var position = Mouse.GetPosition(GraphHost).AdjustForMouseCursor();
-            previewPopup_ = IRDocumentPopup.CreateNew(Document, node.ElementData,
+            previewPopup_ = IRDocumentPopup.CreateNew(Document, node.DataAsElement,
                                                       position, 500, 150, GraphHost, "Block ");
             previewPopup_.PopupDetached += Popup_PopupDetached;
             previewPopup_.ShowPopup();

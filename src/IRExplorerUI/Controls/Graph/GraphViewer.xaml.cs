@@ -26,10 +26,10 @@ namespace IRExplorerUI {
         private Graph graph_;
         private GraphRenderer graphRenderer_;
         private DrawingVisual graphVisual_;
-        private GraphNode hoveredNode_;
-        private Dictionary<GraphNode, HighlightingStyle> hoverNodes_;
-        private Dictionary<GraphNode, HighlightingStyle> markedNodes_;
-        private Dictionary<GraphNode, HighlightingStyle> selectedNodes_;
+        private GraphObject hoveredNode_;
+        private Dictionary<GraphObject, HighlightingStyle> hoverNodes_;
+        private Dictionary<GraphObject, HighlightingStyle> markedNodes_;
+        private Dictionary<GraphObject, HighlightingStyle> selectedNodes_;
 
         private HighlightingStyleCyclingCollection nodeStyles_;
 
@@ -49,9 +49,9 @@ namespace IRExplorerUI {
             VerticalAlignment = VerticalAlignment.Top;
             HorizontalAlignment = HorizontalAlignment.Center;
             MaxZoomLevel = double.PositiveInfinity;
-            markedNodes_ = new Dictionary<GraphNode, HighlightingStyle>();
-            hoverNodes_ = new Dictionary<GraphNode, HighlightingStyle>();
-            selectedNodes_ = new Dictionary<GraphNode, HighlightingStyle>();
+            markedNodes_ = new Dictionary<GraphObject, HighlightingStyle>();
+            hoverNodes_ = new Dictionary<GraphObject, HighlightingStyle>();
+            selectedNodes_ = new Dictionary<GraphObject, HighlightingStyle>();
 
             var stylesWithBorder =
                 DefaultHighlightingStyles.GetStyleSetWithBorder(DefaultHighlightingStyles.StyleSet, DefaultBoldPen);
@@ -101,7 +101,7 @@ namespace IRExplorerUI {
             return nodeStyles_.GetNext();
         }
 
-        public GraphNode GetSelectedNode() {
+        public GraphObject GetSelectedNode() {
             if (selectedNodes_.Count > 0) {
                 var selectedEnum = selectedNodes_.GetEnumerator();
                 selectedEnum.MoveNext();
@@ -120,13 +120,13 @@ namespace IRExplorerUI {
             var graphNode = FindPointedNode(point);
 
             if (graphNode != null) {
-                SelectElement(graphNode.ElementData);
+                SelectElement(graphNode.DataAsElement);
             }
 
             e.Handled = graphNode != null;
         }
 
-        private bool ShouldHoverNode(GraphNode node) {
+        private bool ShouldHoverNode(GraphObject node) {
             return !((node.Data is BlockIR && graph_.Kind == GraphKind.ExpressionGraph) || node.Data is RegionIR);
         }
 
@@ -149,19 +149,19 @@ namespace IRExplorerUI {
             return new HighlightingStyle(style.BackColor, border);
         }
 
-        private void HighlightConnectedNodes(GraphNode graphNode,
-                                             Dictionary<GraphNode, HighlightingStyle> group,
+        private void HighlightConnectedNodes(GraphObject GraphObject,
+                                             Dictionary<GraphObject, HighlightingStyle> group,
                                              bool highlightConnectedNodes) {
             ResetHighlightedNodes(HighlighingType.Hovered);
-            HighlightNode(graphNode, selectedNodeStyle, group);
+            HighlightNode(GraphObject, selectedNodeStyle, group);
 
             if (!highlightConnectedNodes) {
                 return;
             }
 
-            if (graphNode.InEdges != null) {
-                foreach (var edge in graphNode.InEdges) {
-                    var node = edge.NodeFrom?.Tag as GraphNode;
+            if (GraphObject.InEdges != null) {
+                foreach (var edge in GraphObject.InEdges) {
+                    var node = edge.NodeFrom?.Tag as GraphObject;
 
                     if (node == null) {
                         continue; // Part of graph is invalid, ignore.
@@ -171,9 +171,9 @@ namespace IRExplorerUI {
                 }
             }
 
-            if (graphNode.OutEdges != null) {
-                foreach (var edge in graphNode.OutEdges) {
-                    var node = edge.NodeTo?.Tag as GraphNode;
+            if (GraphObject.OutEdges != null) {
+                foreach (var edge in GraphObject.OutEdges) {
+                    var node = edge.NodeTo?.Tag as GraphObject;
 
                     if (node == null) {
                         continue; // Part of graph is invalid, ignore.
@@ -196,9 +196,9 @@ namespace IRExplorerUI {
 
             if (graphNode != null) {
                 if (graphNode.DataIsElement) {
-                    SelectElement(graphNode.ElementData);
+                    SelectElement(graphNode.DataAsElement);
                     BlockSelected?.Invoke(this, new IRElementEventArgs {
-                        Element = graphNode.ElementData
+                        Element = graphNode.DataAsElement
                     });
                 }
                 else {
@@ -246,16 +246,16 @@ namespace IRExplorerUI {
         }
 
         public void Mark(BlockIR block, Color selectedColor, bool useBoldBorder = true) {
-            var node = (GraphNode)graph_.DataNodeMap[block].Tag;
+            var node = (GraphObject)graph_.DataNodeMap[block].Tag;
             MarkNode(node, selectedColor);
         }
 
-        public void MarkNode(GraphNode node, Color selectedColor, bool useBoldBorder = true) {
+        public void MarkNode(GraphObject node, Color selectedColor, bool useBoldBorder = true) {
             var pen = useBoldBorder ? DefaultBoldPen : DefaultPen;
             MarkNode(node, new HighlightingStyle(selectedColor, pen));
         }
 
-        public void MarkNode(GraphNode node, HighlightingStyle style) {
+        public void MarkNode(GraphObject node, HighlightingStyle style) {
             if (node == null) {
                 return;
             }
@@ -263,35 +263,35 @@ namespace IRExplorerUI {
             HighlightNode(node, style, HighlighingType.Marked);
 
             BlockMarked?.Invoke(this, new IRElementMarkedEventArgs {
-                Element = node.ElementData,
+                Element = node.DataAsElement,
                 Style = style
             });
         }
 
-        public void MarkNodePredecessors(GraphNode node, HighlightingStyle style) {
+        public void MarkNodePredecessors(GraphObject node, HighlightingStyle style) {
             if (node?.InEdges != null) {
                 foreach (var edge in node.InEdges) {
-                    var fromNode = edge.NodeFrom?.Tag as GraphNode;
+                    var fromNode = edge.NodeFrom?.Tag as GraphObject;
                     MarkNode(fromNode, style);
                 }
             }
         }
 
-        public void MarkNodeSuccessors(GraphNode node, HighlightingStyle style) {
+        public void MarkNodeSuccessors(GraphObject node, HighlightingStyle style) {
             if (node?.InEdges != null) {
                 foreach (var edge in node.OutEdges) {
-                    var toNode = edge.NodeTo?.Tag as GraphNode;
+                    var toNode = edge.NodeTo?.Tag as GraphObject;
                     MarkNode(toNode, style);
                 }
             }
         }
 
-        private async Task MarkNodeDominatorsAsync(GraphNode node, HighlightingStyle style, Func<FunctionAnalysisCache, Task<DominatorAlgorithm>> getDominators) {
+        private async Task MarkNodeDominatorsAsync(GraphObject node, HighlightingStyle style, Func<FunctionAnalysisCache, Task<DominatorAlgorithm>> getDominators) {
             if (node == null) {
                 return;
             }
 
-            var block = (BlockIR)node.ElementData;
+            var block = (BlockIR)node.DataAsElement;
             var cache = FunctionAnalysisCache.Get(block.ParentFunction);
             var dominatorAlgorithm = await getDominators(cache).ConfigureAwait(true);
 
@@ -300,12 +300,12 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task MarkNodeDominanceFrontierAsync(GraphNode node, HighlightingStyle style, Func<FunctionAnalysisCache, Task<DominanceFrontier>> getDominanceFrontier) {
+        private async Task MarkNodeDominanceFrontierAsync(GraphObject node, HighlightingStyle style, Func<FunctionAnalysisCache, Task<DominanceFrontier>> getDominanceFrontier) {
             if (node == null) {
                 return;
             }
 
-            var block = (BlockIR)node.ElementData;
+            var block = (BlockIR)node.DataAsElement;
             var cache = FunctionAnalysisCache.Get(block.ParentFunction);
             var dominanceFrontierAlgorithm = await getDominanceFrontier(cache).ConfigureAwait(true);
 
@@ -314,8 +314,8 @@ namespace IRExplorerUI {
             }
         }
 
-        public void MarkNodeLoop(GraphNode node, HighlightingStyle style) {
-            var loopTag = node?.ElementData.GetTag<LoopBlockTag>();
+        public void MarkNodeLoop(GraphObject node, HighlightingStyle style) {
+            var loopTag = node?.DataAsElement.GetTag<LoopBlockTag>();
 
             if (loopTag == null) {
                 return;
@@ -326,8 +326,8 @@ namespace IRExplorerUI {
             }
         }
 
-        public void MarkNodeLoopNest(GraphNode node, HighlightingStyle style) {
-            var loopTag = node?.ElementData.GetTag<LoopBlockTag>();
+        public void MarkNodeLoopNest(GraphObject node, HighlightingStyle style) {
+            var loopTag = node?.DataAsElement.GetTag<LoopBlockTag>();
 
             if (loopTag == null) {
                 return;
@@ -338,7 +338,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private void HighlightNode(GraphNode node, HighlightingStyle style, HighlighingType type) {
+        private void HighlightNode(GraphObject node, HighlightingStyle style, HighlighingType type) {
             if (node == null) {
                 return;
             }
@@ -347,8 +347,8 @@ namespace IRExplorerUI {
             HighlightNode(node, style, group);
         }
 
-        private void HighlightNode(GraphNode node, HighlightingStyle style,
-                                   Dictionary<GraphNode, HighlightingStyle> group) {
+        private void HighlightNode(GraphObject node, HighlightingStyle style,
+                                   Dictionary<GraphObject, HighlightingStyle> group) {
             if (node == null) {
                 return;
             }
@@ -367,21 +367,28 @@ namespace IRExplorerUI {
             }
         }
 
-        public GraphNode FindPointedNode(Point point) {
-            var result = VisualTreeHelper.HitTest(this, point);
+        public GraphObject FindPointedNode(Point point) {
+            GraphObject result = null;
 
-            if (result == null) {
-                return null;
-            }
+            VisualTreeHelper.HitTest(this, null, testResult => {
+                if (testResult.VisualHit is DrawingVisual visual &&
+                    visual.ReadLocalValue(TagProperty) is GraphObject node) {
+                    result = node;
+                    return HitTestResultBehavior.Stop;
+                }
 
-            if (result.VisualHit is DrawingVisual visual) {
-                return visual.ReadLocalValue(TagProperty) as GraphNode;
-            }
+                return HitTestResultBehavior.Continue;
+            }, new PointHitTestParameters(point));
 
-            return null;
+            return result;
         }
 
         public GraphNode FindElementNode(IRElement element) {
+            if (graph_.Kind == GraphKind.ExpressionGraph ||
+                graph_.Kind == GraphKind.OutputGraph) {
+                return graph_.DataNodeMap.TryGetValue(element, out var node) ? node.Tag as GraphNode : null;
+            }
+
             var block = element.ParentBlock;
             return block == null ? null : GetBlockNode(block);
         }
@@ -412,8 +419,7 @@ namespace IRExplorerUI {
 
             if (block != null) {
                 if (graph_.DataNodeMap.TryGetValue(block, out var node)) {
-                    var graphNode = node.Tag as GraphNode;
-
+                    var graphNode = node.Tag as GraphObject;
                     HighlightConnectedNodes(graphNode, selectedNodes_,
                                             settings_.HighlightConnectedNodesOnSelection);
                 }
@@ -447,7 +453,7 @@ namespace IRExplorerUI {
 
                 if (block != null && graph_.DataNodeMap.ContainsKey(block)) {
                     var node = graph_.DataNodeMap[block];
-                    var graphNode = node.Tag as GraphNode;
+                    var graphNode = node.Tag as GraphObject;
 
                     // If it's a block not being marked, highlight
                     // the entire group of the block and its pred/succ. blocks.
@@ -473,7 +479,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private Dictionary<GraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
+        private Dictionary<GraphObject, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
             return type switch
             {
                 HighlighingType.Hovered => hoverNodes_,
@@ -492,8 +498,8 @@ namespace IRExplorerUI {
             }
         }
 
-        private void ResetHighlightedNodes(Dictionary<GraphNode, HighlightingStyle> group) {
-            var tempNodes = new List<GraphNode>(group.Keys);
+        private void ResetHighlightedNodes(Dictionary<GraphObject, HighlightingStyle> group) {
+            var tempNodes = new List<GraphObject>(group.Keys);
             group.Clear();
 
             foreach (var node in tempNodes) {
@@ -505,7 +511,7 @@ namespace IRExplorerUI {
             ResetMarkedNode(GetSelectedNode());
         }
 
-        public void ResetMarkedNode(GraphNode node) {
+        public void ResetMarkedNode(GraphObject node) {
             if (node == null) {
                 return;
             }
@@ -515,7 +521,7 @@ namespace IRExplorerUI {
                 RestoreNodeStyle(node);
 
                 BlockUnmarked?.Invoke(this, new IRElementMarkedEventArgs {
-                    Element = node.ElementData
+                    Element = node.DataAsElement
                 });
             }
         }
@@ -524,7 +530,7 @@ namespace IRExplorerUI {
             if (BlockUnmarked != null) {
                 foreach (var node in markedNodes_.Keys) {
                     BlockUnmarked(this, new IRElementMarkedEventArgs {
-                        Element = node.ElementData
+                        Element = node.DataAsElement
                     });
                 }
             }
@@ -532,7 +538,7 @@ namespace IRExplorerUI {
             ResetHighlightedNodes(markedNodes_);
         }
 
-        private void RestoreNodeStyle(GraphNode node) {
+        private void RestoreNodeStyle(GraphObject node) {
             HighlightingStyle style;
 
             if (!hoverNodes_.TryGetValue(node, out style) &&
@@ -545,7 +551,7 @@ namespace IRExplorerUI {
             node.Draw();
         }
 
-        private void SetNodeStyle(GraphNode node, HighlightingStyle style) {
+        private void SetNodeStyle(GraphObject node, HighlightingStyle style) {
             node.Style = style;
             node.Draw();
         }

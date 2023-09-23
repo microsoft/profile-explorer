@@ -51,7 +51,8 @@ namespace IRExplorerUI {
             return new ExpressionGraphPrinterOptions {
                 PrintVariableNames = PrintVariableNames,
                 PrintSSANumbers = PrintSSANumbers,
-                GroupInstructions = GroupInstructions,
+                GroupInstructionsByBlock = GroupInstructions,
+                GroupBlocksByRegion = true, //? TODO: Add UI settings
                 PrintBottomUp = PrintBottomUp,
                 SkipCopyInstructions = SkipCopyInstructions,
                 MaxExpressionDepth = MaxExpressionDepth

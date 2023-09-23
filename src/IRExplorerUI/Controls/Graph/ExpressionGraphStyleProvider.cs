@@ -85,10 +85,10 @@ namespace IRExplorerUI {
             edgeStyle_ = ColorPens.GetPen(options.EdgeColor, DefaultEdgeThickness);
             loopEdgeStyle_ = ColorPens.GetPen(options.LoopPhiBackedgeColor, BoldEdgeThickness);
             boundingBoxStyle_ = new HighlightingStyle(ColorBrushes.GetTransparentBrush(Colors.LightGray, 10),
-                ColorPens.GetDashedPen(Colors.Gray, DashStyles.Dot, DefaultEdgeThickness));
+                ColorPens.GetDashedPen(Colors.Gray, DashStyles.Dash, DefaultEdgeThickness));
         }
 
-        public Brush GetDefaultEdgeLabelTextColor() {
+        public Brush GetEdgeLabelTextColor(Edge edge) {
             return Brushes.DarkBlue;
         }
 
@@ -164,7 +164,7 @@ namespace IRExplorerUI {
             return defaultNodeStyle_;
         }
 
-        public HighlightingStyle GetBoundingBoxStyle(Node node) {
+        public virtual HighlightingStyle GetBoundingBoxStyle(Node node) {
             return boundingBoxStyle_;
         }
 
@@ -196,6 +196,14 @@ namespace IRExplorerUI {
             }
 
             return edgeStyle_;
+        }
+
+        public virtual HighlightingStyle GetBoundingBoxLabelStyle(Node node) {
+            return boundingBoxStyle_;
+        }
+
+        public virtual Brush GetBoundingBoxLabelColor(Node node) {
+            return defaultTextColor_;
         }
 
         public bool ShouldRenderEdges(GraphEdgeKind kind) {

@@ -11,6 +11,7 @@ namespace IRExplorerCore.MLIR {
         // \s*\/\/(-|\s*)----*\s*\/?\/?
         private const string SectionStartLineEnd = "//----- //";
         private const string SectionEndLine = "//----- //";
+        private const string SectionEndLine2 = "-----";
 
         static readonly Regex SectionStartLineRegex;
 
@@ -43,7 +44,7 @@ namespace IRExplorerCore.MLIR {
         protected override bool IsSectionEnd(string line) {
             //? TODO: Use Regex
             return line.StartsWith(SectionEndLine, StringComparison.Ordinal)
-
+            || line.StartsWith(SectionEndLine2, StringComparison.Ordinal)
                    || (isParsingSection && (sawModule || sawFunction) && (closedBraces == openBraces));
         }
 

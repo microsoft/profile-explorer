@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
@@ -12,7 +13,8 @@ namespace IRExplorerCore.Graph {
     public class ExpressionGraphPrinterOptions {
         public bool PrintVariableNames { get; set; }
         public bool PrintSSANumbers { get; set; }
-        public bool GroupInstructions { get; set; }
+        public bool GroupInstructionsByBlock { get; set; }
+        public bool GroupBlocksByRegion { get; set; }
         public bool PrintBottomUp { get; set; }
         public bool SkipCopyInstructions { get; set; }
         public int MaxExpressionDepth { get; set; }
@@ -28,34 +30,34 @@ namespace IRExplorerCore.Graph {
 
     public sealed class ExpressionGraphPrinter : GraphVizPrinter {
         private StringBuilder builder_;
-        private List<Tuple<IRElement, IRElement>> edges_;
+        private List<Tuple<IRElement, IRElement, int>> edges_;
         private List<Tuple<IRElement, IRElement, string>> nodes_;
         private ExpressionGraphPrinterOptions options_;
         private IRElement rootElement_;
         private IRElement startElement_;
         private Dictionary<IRElement, IRElement> visitedElements_;
         private Dictionary<string, TaggedObject> elementNameMap_;
-        private Dictionary<TaggedObject, List<TaggedObject>> blockNodeGroupsMap_;
+        private Dictionary<TaggedObject, GraphNodeGroup> blockNodeGroupsMap_;
 
         public ExpressionGraphPrinter(IRElement startElement,
-                                      ExpressionGraphPrinterOptions options,
-                                      GraphPrinterNameProvider nameProvider) :
+            ExpressionGraphPrinterOptions options,
+            GraphPrinterNameProvider nameProvider) :
             base(nameProvider) {
             startElement_ = startElement;
             options_ = options;
             visitedElements_ = new Dictionary<IRElement, IRElement>();
             nodes_ = new List<Tuple<IRElement, IRElement, string>>();
-            edges_ = new List<Tuple<IRElement, IRElement>>();
+            edges_ = new List<Tuple<IRElement, IRElement, int>>();
             elementNameMap_ = new Dictionary<string, TaggedObject>();
-            blockNodeGroupsMap_ = new Dictionary<TaggedObject, List<TaggedObject>>();
+            blockNodeGroupsMap_ = new Dictionary<TaggedObject, GraphNodeGroup>();
         }
 
         private void CreateNode(IRElement element, IRElement parent, string label) {
             nodes_.Add(new Tuple<IRElement, IRElement, string>(element, parent, label));
         }
 
-        private void CreateEdge(IRElement element1, IRElement element2) {
-            edges_.Add(new Tuple<IRElement, IRElement>(element1, element2));
+        private void CreateEdge(IRElement element1, IRElement element2, int index = -1) {
+            edges_.Add(new Tuple<IRElement, IRElement, int>(element1, element2, index));
         }
 
         protected override void PrintGraph(StringBuilder builder) {
@@ -66,11 +68,12 @@ namespace IRExplorerCore.Graph {
             CreateNode(rootElement_, null, "ROOT");
             CreateEdge(rootElement_, exprNode);
 
-            if (options_.GroupInstructions) {
+            if (options_.GroupInstructionsByBlock ||
+                options_.GroupBlocksByRegion) {
                 PrintGroupedNodes();
             }
             else {
-                PrintNodes();
+                PrintNodes(nodes_);
             }
 
             PrintEdges();
@@ -78,7 +81,7 @@ namespace IRExplorerCore.Graph {
 
         private TupleIR CreateFakeIRElement() {
             return new TupleIR(IRElementId.FromLong(1), TupleKind.Other,
-                               startElement_.ParentBlock);
+                startElement_.ParentBlock);
         }
 
         private void PrintGroupedNodes() {
@@ -87,7 +90,7 @@ namespace IRExplorerCore.Graph {
 
             foreach (var node in nodes_) {
                 switch (node.Item1) {
-                    case TupleIR tuple:
+                    case TupleIR tuple when tuple != rootElement_:
                         AddNodeToGroup(node, tuple, blockGroups);
                         AddElementToGroupMap(node.Item1, tuple);
                         break;
@@ -101,30 +104,78 @@ namespace IRExplorerCore.Graph {
                 }
             }
 
-            foreach (var (_, tuples) in blockGroups) {
-                int margin = Math.Min(10 * (tuples.Count + 1), 50);
-                StartSubgraph(margin, builder_);
+            if (options_.GroupBlocksByRegion) {
+                // Group blocks  by regions.
+                var regionGroups = BuildRegionGroups(blockGroups);
 
-                foreach ((var irElement, _, string label) in tuples) {
-                    PrintNode(irElement, label);
+                // Print nodes each region and its blocks.
+                foreach (var (region, blockGroup) in regionGroups) {
+                    PrintRegionGroup(region, blockGroup);
                 }
-
-                EndSubgraph(builder_);
+            }
+            else {
+                // Print nodes in reach block.
+                foreach (var (block, tuples) in blockGroups) {
+                    PrintBlockGroup(tuples);
+                }
             }
 
+            // Print anything left that's not in some region.
             foreach ((var irElement, _, string label) in noGroupNodes) {
                 PrintNode(irElement, label);
             }
         }
 
-        private void PrintNodes() {
-            foreach ((var element, _, string label) in nodes_) {
+        private static Dictionary<RegionIR, Dictionary<BlockIR, List<Tuple<IRElement, IRElement, string>>>> BuildRegionGroups(Dictionary<BlockIR, List<Tuple<IRElement, IRElement, string>>> blockGroups) {
+            var regionGroups = new Dictionary<RegionIR, Dictionary<BlockIR, List<Tuple<IRElement, IRElement, string>>>>();
+
+            foreach (var (block, tuples) in blockGroups) {
+                var region = block.ParentRegion;
+
+                if (region != null) {
+                    if (!regionGroups.TryGetValue(region, out var blockGroup)) {
+                        blockGroup = new Dictionary<BlockIR, List<Tuple<IRElement, IRElement, string>>>();
+                        regionGroups.Add(block.ParentRegion, blockGroup);
+                    }
+
+                    blockGroup.Add(block, tuples);
+                }
+            }
+
+            return regionGroups;
+        }
+
+        private void PrintRegionGroup(RegionIR region, Dictionary<BlockIR, List<Tuple<IRElement, IRElement, string>>> blockGroup) {
+            int regionMargin = 10;
+            StartSubgraph(regionMargin, builder_);
+
+            var nodeGroup = new GraphNodeGroup(region.ParentRegion != null); // Don't draw the root region.
+            nodeGroup.Label = nameProvider_.GetRegionNodeLabel(region);
+            blockNodeGroupsMap_[region] = nodeGroup;
+
+            foreach (var (block, tuples) in blockGroup) {
+                nodeGroup.Nodes.Add(block);
+                PrintBlockGroup(tuples);
+            }
+
+            EndSubgraph(builder_);
+        }
+
+        private void PrintBlockGroup(List<Tuple<IRElement, IRElement, string>> tuples) {
+            int margin = Math.Min(10 * (tuples.Count + 1), 50);
+            StartSubgraph(margin, builder_);
+            PrintNodes(tuples);
+            EndSubgraph(builder_);
+        }
+
+        private void PrintNodes(List<Tuple<IRElement, IRElement, string>> nodes) {
+            foreach ((var element, _, string label) in nodes) {
                 PrintNode(element, label);
             }
         }
 
         private void AddNodeToGroup(Tuple<IRElement, IRElement, string> node, TupleIR tuple,
-                                    Dictionary<BlockIR, List<Tuple<IRElement, IRElement, string>>> blockGroups) {
+            Dictionary<BlockIR, List<Tuple<IRElement, IRElement, string>>> blockGroups) {
             var block = tuple.ParentBlock;
 
             if (!blockGroups.TryGetValue(block, out var group)) {
@@ -135,15 +186,16 @@ namespace IRExplorerCore.Graph {
             group.Add(node);
         }
 
-        private void AddElementToGroupMap(IRElement element, TupleIR tuple) {
-            var block = tuple.ParentBlock;
+        private void AddElementToGroupMap(IRElement element, TupleIR parentTuple) {
+            var block = parentTuple.ParentBlock;
 
             if (!blockNodeGroupsMap_.TryGetValue(block, out var group)) {
-                group = new List<TaggedObject>();
+                group = new GraphNodeGroup(options_.GroupInstructionsByBlock);
+                group.Label = nameProvider_.GetBlockNodeLabel(block);
                 blockNodeGroupsMap_.Add(block, group);
             }
 
-            group.Add(element);
+            group.Nodes.Add(element);
         }
 
         private void PrintNode(IRElement element, string label) {
@@ -153,13 +205,18 @@ namespace IRExplorerCore.Graph {
             double horizontalMargin = Math.Min(Math.Max(0.1, label.Length * (isMultiline ? 0.02 : 0.03)), 2.0);
 
             string elementName = CreateNodeWithMargins(element.Id, label, builder_,
-                                                       horizontalMargin, verticalMargin);
+                horizontalMargin, verticalMargin);
             elementNameMap_[elementName] = element;
         }
 
         private void PrintEdges() {
-            foreach (var (element1, element2) in edges_) {
-                CreateEdge(element1.Id, element2.Id, builder_);
+            foreach (var (element1, element2, index) in edges_) {
+                if (index != -1) {
+                    CreateEdgeWithLabel(element1.Id, element2.Id, index.ToString(), builder_);
+                }
+                else {
+                    CreateEdge(element1.Id, element2.Id, builder_);
+                }
             }
         }
 
@@ -182,7 +239,7 @@ namespace IRExplorerCore.Graph {
         }
 
         private IRElement PrintExpression(IRElement element, IRElement parent,
-                                          int level, ReferenceFinder refFinder) {
+            int level, ReferenceFinder refFinder) {
             if (visitedElements_.TryGetValue(element, out var mappedElement)) {
                 return mappedElement;
             }
@@ -232,9 +289,12 @@ namespace IRExplorerCore.Graph {
                         return instr;
                     }
 
+                    int sourceIndex = 0;
+
                     foreach (var sourceOp in instr.Sources) {
                         var result = PrintExpression(sourceOp, instr, level + 1, refFinder);
-                        ConnectChildNode(instr, result);
+                        ConnectChildNode(instr, result, sourceIndex);
+                        sourceIndex++;
                     }
 
                     foreach (var destOp in instr.Destinations) {
@@ -256,13 +316,13 @@ namespace IRExplorerCore.Graph {
             return element;
         }
 
-        private void ConnectChildNode(InstructionIR instr, IRElement result) {
+        private void ConnectChildNode(InstructionIR instr, IRElement result, int index = -1) {
             if (result != null) {
                 if (options_.PrintBottomUp) {
-                    CreateEdge(instr, result);
+                    CreateEdge(instr, result, index);
                 }
                 else {
-                    CreateEdge(result, instr);
+                    CreateEdge(result, instr, index);
                 }
             }
         }
@@ -279,7 +339,7 @@ namespace IRExplorerCore.Graph {
             return elementNameMap_;
         }
 
-        public override Dictionary<TaggedObject, List<TaggedObject>> CreateNodeDataGroupsMap() {
+        public override Dictionary<TaggedObject, GraphNodeGroup> CreateNodeDataGroupsMap() {
             return blockNodeGroupsMap_;
         }
     }

@@ -1486,6 +1486,7 @@ namespace IRExplorerUI {
             moduleReport_ = null;
             sections_.Clear();
             sectionExtMap_.Clear();
+            functionExtMap_.Clear();
             annotatedSections_.Clear();
             sectionExtensionComputed_ = false;
 
@@ -1563,7 +1564,7 @@ namespace IRExplorerUI {
 
             foreach (var section in currentFunction_.Sections) {
                 if (!sectionExtMap_.ContainsKey(section)) {
-                    Utils.WaitForDebugger(true);
+                    Utils.WaitForDebugger(true, "One");
                 }
 
                 var sectionEx = sectionExtMap_[section];
@@ -2017,7 +2018,7 @@ namespace IRExplorerUI {
                 }
             }
 
-            Utils.WaitForDebugger();
+            Utils.WaitForDebugger(true, "Two");
             throw new InvalidOperationException();
         }
 

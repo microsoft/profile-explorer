@@ -24,14 +24,14 @@ nslimit=2;
 
         private FunctionIR function_;
         private Dictionary<string, TaggedObject> blockNameMap_;
-        private Dictionary<TaggedObject, List<TaggedObject>> blockNodeGroupsMap_;
+        private Dictionary<TaggedObject, GraphNodeGroup> blockNodeGroupsMap_;
 
         public FlowGraphPrinter(FunctionIR function, GraphPrinterNameProvider nameProvider) :
             base(nameProvider) {
             function_ = function;
             nameProvider_ = nameProvider;
             blockNameMap_ = new Dictionary<string, TaggedObject>();
-            blockNodeGroupsMap_ = new Dictionary<TaggedObject, List<TaggedObject>>();
+            blockNodeGroupsMap_ = new Dictionary<TaggedObject, GraphNodeGroup>();
         }
 
         protected override string GetExtraSettings() {
@@ -60,13 +60,14 @@ nslimit=2;
             CreateEdgeWithStyle(block1.Id, block2.Id, "dotted", builder);
         }
 
-        private void AddElementToGroupMap(IRElement region, BlockIR block) {
+        private void AddElementToGroupMap(RegionIR region, BlockIR block) {
             if (!blockNodeGroupsMap_.TryGetValue(region, out var group)) {
-                group = new List<TaggedObject>();
+                group = new GraphNodeGroup();
+                group.Label = nameProvider_.GetRegionNodeLabel(region);
                 blockNodeGroupsMap_[region] = group;
             }
 
-            group.Add(block);
+            group.Nodes.Add(block);
         }
 
         protected override void PrintGraph(StringBuilder builder) {
@@ -172,7 +173,7 @@ nslimit=2;
             return map;
         }
 
-        public override Dictionary<TaggedObject, List<TaggedObject>> CreateNodeDataGroupsMap() {
+        public override Dictionary<TaggedObject, GraphNodeGroup> CreateNodeDataGroupsMap() {
             return blockNodeGroupsMap_;
         }
     }

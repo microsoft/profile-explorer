@@ -668,14 +668,14 @@ namespace IRExplorerUI {
             public bool IsAlt;
         }
 
-        public static void WaitForDebugger(bool showMessageBox = true) {
+        public static void WaitForDebugger(bool showMessageBox = true, string message = null) {
 #if DEBUG
             if(Debugger.IsAttached) {
                 return;
             }
 
             if (showMessageBox) {
-                MessageBox.Show($"Waiting for debugger PID {Environment.ProcessId}", "Error",
+                MessageBox.Show($"Waiting for debugger PID {Environment.ProcessId}\nMessage: {message}", "Error",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 

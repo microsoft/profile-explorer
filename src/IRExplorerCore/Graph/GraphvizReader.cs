@@ -112,27 +112,36 @@ namespace IRExplorerCore.Graph {
             return false;
         }
 
-        private bool ReadLabel(out ReadOnlyMemory<char> value) {
+        private bool ReadLabel(out string value) {
+            value = null;
+
             if (current_.IsIdentifier() || current_.IsString()) {
-                value = TokenData();
-                SkipToken();
-                return true;
-            }
-
-            // The Graphviz output doesn't seem to quote integers,
-            // which also include negative values.
-            if (IsToken(TokenKind.Minus)) {
+                value = TokenData().ToString();
                 SkipToken();
             }
+            else {
+                // The Graphviz output doesn't seem to quote integers,
+                // which also include negative values.
+                if (IsToken(TokenKind.Minus)) {
+                    value = "-";
+                    SkipToken();
+                }
 
-            if (current_.IsNumber()) {
-                value = TokenData();
-                SkipToken();
-                return true;
+                if (current_.IsNumber()) {
+                    value = $"{value}{TokenData().ToString()}";
+                    SkipToken();
+                }
+                else if (!current_.IsEOF() && !current_.IsLineEnd()) {
+                    value = TokenData().ToString();
+                }
             }
 
-            value = default;
-            return false;
+            // Convert \n into proper new-line characters.
+            if (value != null) {
+                value = value.Replace("\\n", "\n");
+            }
+
+            return value != null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -261,7 +270,7 @@ namespace IRExplorerCore.Graph {
                 return null;
             }
 
-            node.Label = label.ToString();
+            node.Label = label;
             node.Style = style;
             //node.Shape = shape;
             //node.BorderColor = borderColor;
@@ -303,13 +312,14 @@ namespace IRExplorerCore.Graph {
                 edge.LinePoints[i] = new Tuple<double, double>(x, y);
             }
 
-            ReadOnlyMemory<char> label = default;
+            string label = null;
             double labelX = 0;
             double labelY = 0;
 
-            if (IsString() && NextTokenIs(TokenKind.Number)) {
+            if (NextTokenIs(TokenKind.Number)) {
                 // Edge has a label.
-                if (!ReadString(out label) || !ReadPoint(out labelX, out labelY)) {
+                if (!ReadLabel(out label) ||
+                    !ReadPoint(out labelX, out labelY)) {
                     return null;
                 }
             }
@@ -318,7 +328,7 @@ namespace IRExplorerCore.Graph {
                 return null;
             }
 
-            edge.Label = label.ToString();
+            edge.Label = label;
             edge.LabelX = labelX;
             edge.LabelY = labelY;
             edge.Style = Edge.GetEdgeStyle(style);

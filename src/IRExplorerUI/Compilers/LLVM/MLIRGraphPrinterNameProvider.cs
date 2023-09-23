@@ -35,8 +35,14 @@ public class MLIRGraphPrinterNameProvider : GraphPrinterNameProvider {
         }
 
         return label;
+    }
 
-        return base.GetInstructionNodeLabel(instr, appendVarNames, appendSSANumber);
+    public override string GetRegionNodeLabel(RegionIR region) {
+        if (region.Owner is InstructionIR instr) {
+            return instr.OpcodeText.ToString();
+        }
+
+        return string.Empty;
     }
 
     public override string GetOperandNodeLabel(OperandIR operand, bool appendSSANumber) {

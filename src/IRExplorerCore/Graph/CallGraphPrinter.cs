@@ -137,7 +137,7 @@ nslimit=2;
             return map;
         }
 
-        public override Dictionary<TaggedObject, List<TaggedObject>> CreateNodeDataGroupsMap() {
+        public override Dictionary<TaggedObject, GraphNodeGroup> CreateNodeDataGroupsMap() {
             return null;
         }
     }

@@ -11,7 +11,9 @@ namespace IRExplorerUI {
     public sealed class HighlightingStyle : IEquatable<HighlightingStyle> {
         [ProtoMember(1)] public Brush BackColor { get; set; }
         [ProtoMember(2)] public Pen Border { get; set; }
-        
+
+        public static readonly HighlightingStyle Empty = new HighlightingStyle(Colors.Transparent);
+
         public HighlightingStyle() { }
 
         public HighlightingStyle(Color color) : this(color, 1.0) { }

@@ -72,6 +72,18 @@ namespace IRExplorerCore.Graph {
         CallGraph
     }
 
+    // Objects grouped under the same block/region.
+    public class GraphNodeGroup {
+        public List<TaggedObject> Nodes { get; set; }
+        public string Label { get; set; }
+        public bool DrawBoundingBox { get; set; }
+
+        public GraphNodeGroup(bool drawBoundingBox = true) {
+            Nodes = new List<TaggedObject>();
+            DrawBoundingBox = drawBoundingBox;
+        }
+    }
+
     public sealed class Graph {
         public Graph(GraphKind kind) {
             Kind = kind;
@@ -92,6 +104,6 @@ namespace IRExplorerCore.Graph {
         //? TODO: Move below out so it's easy to discard them and free memory for large graphs
         public Dictionary<TaggedObject, Node> DataNodeMap { get; set; }
         public Dictionary<TaggedObject, Edge> EdgeDataNodeMap { get; set; }
-        public Dictionary<TaggedObject, List<TaggedObject>> DataNodeGroupsMap { get; set; }
+        public Dictionary<TaggedObject, GraphNodeGroup> DataNodeGroupsMap { get; set; }
     }
 }

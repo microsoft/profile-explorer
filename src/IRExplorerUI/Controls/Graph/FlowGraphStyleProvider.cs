@@ -117,8 +117,20 @@ namespace IRExplorerUI {
             return boundingBoxStyle_;
         }
 
-        public HighlightingStyle GetEdgeLabelStyle(Edge edge) {
-            return defaultNodeStyle_;
+        public virtual HighlightingStyle GetBoundingBoxLabelStyle(Node node) {
+            return null;
+        }
+
+        public virtual Brush GetBoundingBoxLabelColor(Node node) {
+            return null;
+        }
+
+        public virtual HighlightingStyle GetEdgeLabelStyle(Edge edge) {
+            return null;
+        }
+
+        public Brush GetEdgeLabelTextColor(Edge edge) {
+            throw new System.NotImplementedException();
         }
 
         public virtual GraphEdgeKind GetEdgeKind(Edge edge) {

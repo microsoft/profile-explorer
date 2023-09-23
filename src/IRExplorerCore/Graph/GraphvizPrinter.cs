@@ -56,6 +56,10 @@ namespace IRExplorerCore.Graph {
             return label;
         }
 
+        public virtual string GetRegionNodeLabel(RegionIR region) {
+            return string.Empty;
+        }
+
         public virtual string GetFunctionNodeLabel(FunctionIR function) {
             return string.Empty;
         }
@@ -219,8 +223,8 @@ namespace IRExplorerCore.Graph {
             return new Dictionary<(string, string), TaggedObject>();
         }
 
-        public virtual Dictionary<TaggedObject, List<TaggedObject>> CreateNodeDataGroupsMap() {
-            return new Dictionary<TaggedObject, List<TaggedObject>>();
+        public virtual Dictionary<TaggedObject, GraphNodeGroup> CreateNodeDataGroupsMap() {
+            return new Dictionary<TaggedObject, GraphNodeGroup>();
         }
 
         public string CreateGraph(CancelableTask task) {
