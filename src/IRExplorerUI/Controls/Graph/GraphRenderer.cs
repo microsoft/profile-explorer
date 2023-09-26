@@ -336,8 +336,11 @@ namespace IRExplorerUI {
                 if (element is BlockIR block) {
                     wrapsBlocks = true;
 
-                    foreach (var tuple in block.Tuples) {
-                        ComputeBoundingBox(tuple, ref xMin, ref yMin, ref xMax, ref yMax);
+                    if (!ComputeBoundingBox(block, ref xMin, ref yMin, ref xMax, ref yMax)) {
+                        // Consider each tuple in the block if the block itself doesn't have a node.
+                        foreach (var tuple in block.Tuples) {
+                            ComputeBoundingBox(tuple, ref xMin, ref yMin, ref xMax, ref yMax);
+                        }
                     }
                 }
                 else {
@@ -353,18 +356,17 @@ namespace IRExplorerUI {
             return new Rect(xMin, yMin, xMax - xMin, yMax - yMin);
         }
 
-        private void ComputeBoundingBox(TaggedObject element, ref double xMin, ref double yMin, ref double xMax,
+        private bool ComputeBoundingBox(TaggedObject element, ref double xMin, ref double yMin, ref double xMax,
             ref double yMax) {
-            if (!graph_.DataNodeMap.ContainsKey(element)) {
-                Trace.TraceError($"ComputeBoundingBox element not in node map: {element}");
-                return;
+            if (graph_.DataNodeMap.TryGetValue(element, out var node)) {
+                xMin = Math.Min(xMin, node.CenterX - node.Width / 2);
+                yMin = Math.Min(yMin, node.CenterY - node.Height / 2);
+                xMax = Math.Max(xMax, node.CenterX + node.Width / 2);
+                yMax = Math.Max(yMax, node.CenterY + node.Height / 2);
+                return true;
             }
 
-            var node = graph_.DataNodeMap[element];
-            xMin = Math.Min(xMin, node.CenterX - node.Width / 2);
-            yMin = Math.Min(yMin, node.CenterY - node.Height / 2);
-            xMax = Math.Max(xMax, node.CenterX + node.Width / 2);
-            yMax = Math.Max(yMax, node.CenterY + node.Height / 2);
+            return false;
         }
 
         public HighlightingStyle GetDefaultNodeStyle() {

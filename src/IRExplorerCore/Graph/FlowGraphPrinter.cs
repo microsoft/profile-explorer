@@ -42,7 +42,6 @@ nslimit=2;
             }
 
             return "";
-            //return "rankdir=LR;";
         }
 
         private string CreateNode(BlockIR block, StringBuilder builder) {
@@ -78,20 +77,21 @@ nslimit=2;
                 foreach (var block in function_.Blocks) {
                     CreateNode(block, builder);
                 }
-            }
 
-            foreach (var block in function_.Blocks) {
-                foreach (var successorBlock in block.Successors) {
-                    CreateEdge(block, successorBlock, builder);
+                foreach (var block in function_.Blocks) {
+                    foreach (var successorBlock in block.Successors) {
+                        CreateEdge(block, successorBlock, builder);
+                    }
                 }
-            }
 
-            //string domEdges = PrintDominatorEdges(DominatorAlgorithmOptions.Dominators);
-            //builder.AppendLine(domEdges);
+                string domEdges = PrintDominatorEdges(DominatorAlgorithmOptions.Dominators);
+                builder.AppendLine(domEdges);
+            }
         }
 
-        private (string, string) PrintRegions(RegionIR region, StringBuilder builder, int depth = 0) {
-            int margin = Math.Max(10, 6 * depth);
+        private (string, string) PrintRegions(RegionIR region, StringBuilder builder, int depth = 0,
+            bool extraMargin = true) {
+            int margin = Math.Max(extraMargin ? 50 : 30, 6 * depth);
             StartSubgraph(margin, builder);
             string firstBlockName = null;
             string lastBlockName = null;
@@ -117,11 +117,15 @@ nslimit=2;
             string prevChildLastBlockName = null;
 
             foreach (var childRegion in region.ChildRegions) {
-                var (childFirstBlockName, childLastBlockName) = PrintRegions(childRegion, builder, depth + 1);
+                var (childFirstBlockName, childLastBlockName) =
+                    PrintRegions(childRegion, builder, depth + 1, prevChildFirstBlockName == null);
 
                 //? TODO: Hack, use invisible edges to connect the subgraphs.
                 if (prevChildLastBlockName != null) {
-                   CreateEdgeWithStyle(prevChildLastBlockName, childFirstBlockName, "dotted", builder);
+                   CreateEdge(prevChildLastBlockName, childFirstBlockName, builder);
+                }
+                else {
+                    CreateEdge(firstBlockName, childFirstBlockName, builder);
                 }
 
                 prevChildFirstBlockName = childFirstBlockName;
