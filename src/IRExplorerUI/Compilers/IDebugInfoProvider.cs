@@ -26,6 +26,9 @@ namespace IRExplorerUI.Compilers {
 
     [ProtoContract(SkipConstructor = true)]
     public class SymbolFileSourceOptions : SettingsBase {
+        private const string DefaultSymbolSourcePath = @"https://msdl.microsoft.com/download/symbols";
+        private const string DefaultSymbolCachePath = @"C:\Symbols";
+
         [ProtoMember(1)]
         public bool SymbolSourcePathEnabled { get; set; }
         [ProtoMember(2)]
@@ -90,6 +93,11 @@ namespace IRExplorerUI.Compilers {
 
         public override void Reset() {
             InitializeReferenceMembers();
+
+            SymbolSourcePath = DefaultSymbolSourcePath;
+            SymbolSourcePathEnabled = true;
+            SymbolCachePath = DefaultSymbolCachePath;
+            SymbolCachePathEnabled = true;
         }
 
         [ProtoAfterDeserialization]
