@@ -965,7 +965,7 @@
                                 <CheckBox
                                     x:Name="SymbolServerCheckbox"
                                     Margin="0,4,0,0"
-                                    Content="Use Symbol Server"
+                                    Content="Use Symbol Server (e.g., https://msdl.microsoft.com/download/symbols, http://symweb)"
                                     ToolTip="Provide a Symbol Server to load symbols."
                                     IsChecked="{Binding Path=SymbolOptions.SymbolSourcePathEnabled, Mode=TwoWay}" />
                                 <TextBox
