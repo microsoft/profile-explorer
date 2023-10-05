@@ -97,7 +97,7 @@ namespace IRExplorerUI.Compilers {
                 defaultSearchPath = $"SRV*{options.SymbolSourcePath}";
 
                 if (options.HasSymbolCachePath) {
-                    defaultSearchPath = $"CACHE*{options.SymbolCachePath};{options.SymbolSourcePath}";
+                    defaultSearchPath = $"SRV*{options.SymbolCachePath}*{options.SymbolSourcePath}";
                 }
             }
 
