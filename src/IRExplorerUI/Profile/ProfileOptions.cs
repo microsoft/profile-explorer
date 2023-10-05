@@ -204,6 +204,8 @@ public class ProfileDataProviderOptions : SettingsBase {
     public override void Reset() {
         ResetAndInitializeReferenceMembers();
         DownloadBinaryFiles = true;
+        IncludeKernelEvents = true;
+        IncludePerformanceCounters = true;
     }
 
     public bool AddPerformanceMetric(PerformanceMetricConfig config) {
