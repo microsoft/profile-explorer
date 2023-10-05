@@ -26,7 +26,7 @@ namespace IRExplorerUI.Compilers {
 
     [ProtoContract(SkipConstructor = true)]
     public class SymbolFileSourceOptions : SettingsBase {
-        private const string DefaultSymbolSourcePath = @"https://msdl.microsoft.com/download/symbols";
+        private const string DefaultSymbolSourcePath = @"https://symweb";
         private const string DefaultSymbolCachePath = @"C:\Symbols";
 
         [ProtoMember(1)]
