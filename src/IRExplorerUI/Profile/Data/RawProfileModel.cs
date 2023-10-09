@@ -479,6 +479,11 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
         CommandLine = commandLine;
     }
 
+    public ProfileProcess(int processId, string imageFileName) : this() {
+        ProcessId = processId;
+        ImageFileName = imageFileName;
+    }
+
     public void AddImage(int imageId) {
         if (!ImageIds.Contains(imageId)) {
             ImageIds.Add(imageId);

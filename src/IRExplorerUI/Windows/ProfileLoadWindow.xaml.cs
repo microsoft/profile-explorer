@@ -163,12 +163,13 @@ namespace IRExplorerUI {
         private bool windowClosed_;
         private RecordingSessionEx currentSession_;
 
-        public ProfileLoadWindow(ISession session, bool recordMode) {
+        public ProfileLoadWindow(ISession session, bool recordMode, bool isOnLaunch = false) {
             InitializeComponent();
             DataContext = this;
             Session = session;
             loadTask_ = new CancelableTaskInstance(false);
             IsRecordMode = recordMode;
+            IsOnLaunch = isOnLaunch;
 
             if (IsRecordMode) {
                 Title = "Record profile trace";
@@ -180,6 +181,7 @@ namespace IRExplorerUI {
 
             UpdatePerfCounterList();
             SetupSessionList();
+            this.ContentRendered += ProfileLoadWindow_ContentRendered;
             this.Closing += ProfileLoadWindow_Closing;
         }
 
@@ -205,6 +207,32 @@ namespace IRExplorerUI {
             currentSession_ = sessionList[0];
             SessionList.ItemsSource = null; // Force update.
             SessionList.ItemsSource = new ListCollectionView(sessionList);
+        }
+
+        private void ProfileLoadWindow_ContentRendered(object sender, EventArgs e) {
+            if (IsOnLaunch) {
+                var args = Environment.GetCommandLineArgs();
+
+                if (args.Length >= 6 && args[1] == "--open-trace") {
+                    string traceFilePath = args[2];
+
+                    if (!File.Exists(traceFilePath) || Path.GetExtension(traceFilePath) != ".etl") {
+                        MessageBox.Show("Trace file does not exist.");
+                        return;
+                    }
+
+                    string symbolPath = args[3];
+
+                    if (!int.TryParse(args[4], out int processId)) {
+                        MessageBox.Show("Process ID is not an integer.");
+                        return;
+                    }
+
+                    string imageFileName = args[5];
+
+                    LoadProfileFromArgs(traceFilePath, symbolPath, processId, imageFileName);
+                }
+            }
         }
 
         private void ProfileLoadWindow_Closing(object sender, CancelEventArgs e) {
@@ -306,6 +334,8 @@ namespace IRExplorerUI {
         public bool RecordingControlsEnabled => !IsLoadingProfile && !IsRecordingProfile;
         public bool RecordingStopControlsEnabled => !IsLoadingProfile && IsRecordingProfile;
         public bool IsRecordMode { get; }
+
+        public bool IsOnLaunch { get; }
 
         public ProfileRecordingSessionOptions RecordingOptions {
             get {
@@ -808,6 +838,19 @@ namespace IRExplorerUI {
                 SetupSessionList();
                 SaveCurrentOptions();
             }
+        }
+
+        private async void LoadProfileFromArgs(string traceFilePath, string symbolPath, int processId, string imageFileName) {
+            ProfileFilePath = traceFilePath;
+            BinaryFilePath = imageFileName;
+            symbolOptions_.InsertSymbolPath(symbolPath);
+
+            ProfileProcess process = new ProfileProcess(processId, imageFileName);
+            selectedProcSummary_ = new List<ProcessSummary>() {
+                new ProcessSummary(process, TimeSpan.Zero)
+            };
+
+            await OpenFilesAndComplete();
         }
 
         private async void SessionList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
