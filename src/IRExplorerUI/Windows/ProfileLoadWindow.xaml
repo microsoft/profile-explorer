@@ -963,17 +963,34 @@
 
                             <StackPanel>
                                 <CheckBox
-                                    Margin="0,8,0,0"
-                                    Content="Enable default Symbol Server"
-                                    IsChecked="{Binding Path=SymbolOptions.UseDefaultSymbolSource, Mode=TwoWay}"
-                                    ToolTip="https://msdl.microsoft.com/download/symbols" />
+                                    x:Name="SymbolServerCheckbox"
+                                    Margin="0,4,0,0"
+                                    Content="Use Symbol Server (e.g., https://msdl.microsoft.com/download/symbols, http://symweb)"
+                                    ToolTip="Provide a Symbol Server to load symbols."
+                                    IsChecked="{Binding Path=SymbolOptions.SymbolSourcePathEnabled, Mode=TwoWay}" />
+                                <TextBox
+                                    Margin="20,4,55,0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                    IsEnabled="{Binding ElementName=SymbolServerCheckbox, Path=IsChecked}"
+                                    Text="{Binding Path=SymbolOptions.SymbolSourcePath, Mode=TwoWay}"
+                                    TextWrapping="Wrap" />
 
                                 <CheckBox
+                                    x:Name="SymbolCacheCheckbox"
                                     Margin="0,4,0,0"
-                                    Content="Cache symbol files locally"
-                                    IsChecked="{Binding Path=SymbolOptions.UseSymbolCache, Mode=TwoWay}"
-                                    IsEnabled="False"
-                                    ToolTip="C:\Symbols" />
+                                    Content="Use Symbol Cache"
+                                    ToolTip="Provide a Symbol Server to load symbols."
+                                    IsChecked="{Binding Path=SymbolOptions.SymbolCachePathEnabled, Mode=TwoWay}" />
+                                <TextBox
+                                    Margin="20,4,55,0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                    IsEnabled="{Binding ElementName=SymbolCacheCheckbox, Path=IsChecked}"
+                                    Text="{Binding Path=SymbolOptions.SymbolCachePath, Mode=TwoWay}"
+                                    TextWrapping="Wrap" />
 
                                 <CheckBox
                                     x:Name="SymbolSearchPathsCheckbox"
@@ -1037,12 +1054,6 @@
                             </Expander.Header>
 
                             <StackPanel>
-                                <CheckBox
-                                    Margin="0,8,0,0"
-                                    Content="Download binaries from Symbol Server"
-                                    IsChecked="{Binding Path=SymbolOptions.UseDefaultSymbolSource, Mode=TwoWay}"
-                                    ToolTip="https://msdl.microsoft.com/download/symbols" />
-
                                 <CheckBox
                                     x:Name="BinarySearchPathsCheckbox"
                                     Margin="0,4,0,0"
