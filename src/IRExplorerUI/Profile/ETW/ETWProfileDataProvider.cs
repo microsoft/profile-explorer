@@ -86,6 +86,11 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
         });
 
+        if (profile.FindProcess(processIds[0]) == null) {
+            Trace.WriteLine($"Failed to find main process id {processIds[0]} in trace.");
+            return null;
+        }
+
         var result = await LoadTraceAsync(profile, processIds, options, symbolOptions,
                                           report, progressCallback, cancelableTask);
         profile.Dispose();
