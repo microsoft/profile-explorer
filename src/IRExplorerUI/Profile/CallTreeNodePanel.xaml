@@ -38,6 +38,7 @@
                         MaxWidth="200"
                         HorizontalAlignment="Stretch"
                         Content="{Binding Node}"
+                        ToolTip="Inclusive time for this function instance"
                         ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
@@ -47,6 +48,7 @@
                         MaxWidth="200"
                         HorizontalAlignment="Stretch"
                         Content="{Binding Node}"
+                        ToolTip="Exclusive time for this function instance"
                         ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
                 </StackPanel>
             </StackPanel>
@@ -66,6 +68,7 @@
                     VerticalAlignment="Top"
                     Background="{x:Null}"
                     BorderBrush="{x:Null}"
+                    ToolTip="Jump to previous function instance"
                     Click="PreviousInstanceButton_Click">
                     <Image
                         Width="14"
@@ -79,6 +82,7 @@
                     VerticalAlignment="Top"
                     Background="{x:Null}"
                     BorderBrush="{x:Null}"
+                    ToolTip="Jump to next function instance"
                     Click="NextInstanceButton_Click">
                     <Image
                         Width="14"
@@ -120,6 +124,7 @@
                                 Margin="4,0,0,0"
                                 HorizontalAlignment="Left"
                                 Content="{Binding InstancesNode}"
+                                ToolTip="Total time across all function instances"
                                 ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
                         </StackPanel>
 
@@ -130,12 +135,13 @@
                                 Margin="4,0,0,0"
                                 HorizontalAlignment="Left"
                                 Content="{Binding MedianNode}"
+                                ToolTip="Median time across all function instances"
                                 ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
                         </StackPanel>
 
                         <Expander
                             x:Name="HistogramHost"
-                            Margin="4,2,0,8"
+                            Margin="0,4,0,8"
                             HorizontalAlignment="Stretch"
                             Expanded="HistogramHost_Expanded"
                             Header="Histogram"
@@ -244,12 +250,13 @@
 
                         <StackPanel Orientation="Horizontal">
                             <TextBlock
-                                Margin="4,0,6,0"
+                                Margin="4,4,6,0"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Center"
                                 Text="Function name" />
                             <ContentPresenter
                                 VerticalAlignment="Center"
+                                Margin="4,4,6,0"
                                 Content="{Binding}"
                                 ContentTemplate="{StaticResource ExecutionContextTemplate}" />
                         </StackPanel>
@@ -280,7 +287,7 @@
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 Header="Backtrace"
-                ToolTip="Reverse call stack for selected function">
+                ToolTip="Reverse call stack for current function instance">
                 <profile:ProfileListView
                     x:Name="BacktraceList"
                     NameColumnTitle="Function"
@@ -293,7 +300,7 @@
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 Header="Functions"
-                ToolTip="Self time for functions under this instance">
+                ToolTip="Exclusive (self) time for functions under this instance">
                 <profile:ProfileListView
                     x:Name="FunctionList"
                     NameColumnTitle="Function"
@@ -305,7 +312,7 @@
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 Header="Modules"
-                ToolTip="Self time for modules under this instance">
+                ToolTip="Exclusive (self) time for modules under this instance">
                 <profile:ProfileListView
                     x:Name="ModuleList"
                     ExclusiveTimeColumnTitle="Time"
@@ -317,7 +324,7 @@
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 Header="Instances"
-                ToolTip="All unique instances of this function">
+                ToolTip="All instances of this function">
                 <profile:ProfileListView
                     x:Name="InstancesList"
                     NameColumnTitle="Function"

@@ -1832,6 +1832,9 @@ namespace IRExplorerUI {
             }
 
             ((ListCollectionView)SectionList.ItemsSource).Refresh();
+            if (SectionList.Items.Count > 0) {
+                SectionList.ScrollIntoView(SectionList.Items[0]);
+            }
         }
 
         public void RefreshFunctionList() {
@@ -1840,6 +1843,9 @@ namespace IRExplorerUI {
             }
 
             ((ListCollectionView)FunctionList.ItemsSource).Refresh();
+            if (FunctionList.Items.Count > 0) {
+                FunctionList.ScrollIntoView(FunctionList.Items[0]);
+            }
         }
 
         private async void FunctionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
@@ -2102,11 +2108,7 @@ namespace IRExplorerUI {
 
                 if (funcProfile != null) {
                     if (SyncSelection) {
-                        var panel = Session.FindPanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
-
-                        if (panel != null) {
-                            await panel.DisplaProfileCallerCalleeTree(function);
-                        }
+                        await Session.ProfileFunctionSelected(function, ToolPanelKind.Section);
                     }
 
                     if (SyncSourceFile) {
@@ -2114,10 +2116,7 @@ namespace IRExplorerUI {
                     }
                 }
                 else {
-                    ProfileControlsVisible = true;
-                    ChildTimeColumnVisible = false;
-                    var panel = Session.FindPanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
-                    panel?.Reset(); // Hide previous func.
+                    await Session.ProfileFunctionDeselected();
                 }
             }
 

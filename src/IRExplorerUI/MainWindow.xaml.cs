@@ -1386,12 +1386,14 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            var funcs = await Task.Run(() => FindFunctionsForSamples(range.StartSampleIndex, range.EndSampleIndex,
-                                                                     range.ThreadId, ProfileData));
+            var funcs = await Task.Run(() => 
+                FindFunctionsForSamples(range.StartSampleIndex, range.EndSampleIndex,
+                                        range.ThreadId, ProfileData));
             var sectinPanel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
             sectinPanel?.MarkFunctions(funcs.ToList());
 
-            var nodes = await Task.Run(() => FindCallTreeNodesForSamples(funcs, ProfileData));
+            var nodes = await Task.Run(() => 
+                FindCallTreeNodesForSamples(funcs, ProfileData));
             var panel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
             panel?.MarkFunctions(nodes);
             return true;
@@ -1414,12 +1416,22 @@ namespace IRExplorerUI {
                 await SelectFunctionSamples(node, panel);
             }
 
-            if (sourcePanelKind != ToolPanelKind.CallerCallee) {
+            if (sourcePanelKind != ToolPanelKind.CallerCallee &&
+                sourcePanelKind != ToolPanelKind.Section) {
                 await SwitchActiveFunction(node.Function);
             }
 
             var callTreePanel = FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
             callTreePanel?.SelectFunction(node.Function);
+            
+            var callerCalleePanel = FindPanel(ToolPanelKind.CallerCallee) as CallTreePanel;
+            callerCalleePanel?.DisplayProfileCallerCalleeTree(node.Function);
+
+            if (sourcePanelKind != ToolPanelKind.FlameGraph) {
+                var flameGraphPanel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+                flameGraphPanel?.SelectFunction(node.Function);
+            }
+
             return true;
         }
 
@@ -1442,6 +1454,16 @@ namespace IRExplorerUI {
         }
 
         public async Task<bool> ProfileFunctionSelected(IRTextFunction function, ToolPanelKind sourcePanelKind) {
+            if (ProfileData.CallTree == null) {
+                return false;
+            }
+            
+            var funcNodes = ProfileData.CallTree.GetSortedCallTreeNodes(function);
+
+            if (funcNodes.Count > 0) {
+                await ProfileFunctionSelected(funcNodes[0], sourcePanelKind);
+            }
+
             return true;
         }
 
@@ -1461,6 +1483,9 @@ namespace IRExplorerUI {
 
             var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
             panel?.ClearSelectedFunctionSamples();
+            
+            var callerCalleePanel = FindPanel(ToolPanelKind.CallerCallee) as CallTreePanel;
+            callerCalleePanel?.Reset();
             return true;
         }
 
@@ -1498,7 +1523,7 @@ namespace IRExplorerUI {
                         continue;
                     }
 
-                    if (currentNode == null) {
+                    if (currentNode == null || currentNode.IsGroup) {
                         // Mismatch along the call path leading to the function.
                         match = false;
                         break;

@@ -341,6 +341,10 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         Redraw();
         OnPropertyChanged(nameof(HasSelection));
         OnPropertyChanged(nameof(SelectionTime));
+
+        if (!hasSelection_) {
+            ClearedSelectedTimeRange?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     public void ClearSelectedTimeRange() {
@@ -378,30 +382,24 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         var time = PositionToTime(e.GetPosition(this).X);
 
         if (hasSelection_) {
-
             if (time >= selectionStartTime_ && time <= selectionEndTime_) {
-                if (e.ClickCount > 1) {
-                    ApplyTimeRangeFilter();
-                }
-
+                ApplyTimeRangeFilter();
                 return;
             }
 
             hasSelection_ = false;
             UpdateSelectionState();
-            ClearedSelectedTimeRange?.Invoke(this, EventArgs.Empty);
         }
 
         if (hasFilter_) {
             if (time < filterStartTime_ || time > filterEndTime_) {
-                if (e.ClickCount > 1) {
+                if (e.ClickCount > 1) { // Check for double-click.
                     RemoveTimeRangeFilter();
                 }
             }
         }
 
         ClearedTimePoint?.Invoke(this, EventArgs.Empty);
-
         startedSelection_ = true;
         selectionStartTime_ = time;
         selectionEndTime_ = selectionStartTime_;
