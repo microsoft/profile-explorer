@@ -274,7 +274,7 @@ public class FlameGraphRenderer {
 
         graphDC.PushGuidelineSet(cachedDummyNodeGuidelines_);
         graphDC.DrawRectangle(node.Style.BackColor, node.Style.Border, scaledBounds);
-        //graphDC.DrawRectangle(CreatePlaceholderTiledBrush(8), null, scaledBounds);
+        graphDC.DrawRectangle(CreatePlaceholderTiledBrush(8), null, scaledBounds);
         graphDC.Pop();
     }
 
@@ -289,14 +289,10 @@ public class FlameGraphRenderer {
     }
 
       private void UpdateNodeLayout(FlameGraphNode node, double x, double y, bool redraw) {
-        double width;
+        double width = ScaleNode(node);
 
         if (isTimeline_) {
             x = flameGraph_.ScaleStartTime(node);
-            width = ScaleNode(node);
-        }
-        else {
-            width = flameGraph_.ScaleWeight(node);
         }
 
         //Trace.WriteLine($"Node at {x}, width {width}");
@@ -408,13 +404,12 @@ public class FlameGraphRenderer {
             return null; // Nothing to draw.
         }
 
-        if (isTimeline_)
-        {
+        if (isTimeline_) {
             x = flameGraph_.ScaleStartTime(startTime);
         }
 
 
-        //? TODO: Use a pool for FlameGraphGroupNode instead of new (JIT_New dominaates)
+        //? TODO: Use a pool for FlameGraphGroupNode instead of new (JIT_New dominates)
         var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
         var dummyNode = new FlameGraphGroupNode(node, startIndex, skippedChildren, totalWeight, node.Depth);
         dummyNode.IsDummyNode = true;
@@ -424,7 +419,7 @@ public class FlameGraphRenderer {
         dummyNode.EndTime = endTime;
         dummyNodesQuadTree_.Insert(dummyNode, replacement);
 
-        //? Could make color darker than level, or less satureded  better
+        //? Could make color darker than level, or less saturated better
         //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
         return dummyNode;
     }
@@ -486,7 +481,7 @@ public class FlameGraphRenderer {
         var drawing = new GeometryDrawing();
         drawing.Geometry = geometry;
 
-        var penBrush = ColorBrushes.GetBrush(Colors.DimGray);
+        var penBrush = ColorBrushes.GetBrush(Colors.Gray);
         drawing.Pen = new Pen(penBrush, 1.0f);
         drawing.Freeze();
         var brush = new DrawingBrush();

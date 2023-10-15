@@ -211,7 +211,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                 callTreeEx_ = null;
 
                 if (IsCallerCalleePanel) {
-                    DisplaProfileCallerCalleeTree(function_);
+                    DisplayProfileCallerCalleeTree(function_);
                 }
                 else {
                     DisplayProfileCallTree();
@@ -305,7 +305,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
             ChildFunctionEx firstNodeEx = null;
 
             if (funcNode.Kind == ChildFunctionExKind.CalleeNode && callNode.HasChildren) {
-                var percentageFunc = PickPercentageFunction(callNode.Weight);
+                var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
 
                 foreach (var childNode in callNode.Children) {
                     firstNodeEx ??= CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
@@ -339,7 +339,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                 OnPropertyChanged();
 
                 if (function_ != null) {
-                    DisplaProfileCallerCalleeTree(function_);
+                    DisplayProfileCallerCalleeTree(function_);
                 }
             }
         }
@@ -396,7 +396,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         }
     }
 
-    public async Task DisplaProfileCallerCalleeTree(IRTextFunction function) {
+    public async Task DisplayProfileCallerCalleeTree(IRTextFunction function) {
         function_ = function;
         callTree_ = Session.ProfileData.CallTree;
         callTreeEx_ = await Task.Run(() => CreateProfileCallerCalleeTree(function));
