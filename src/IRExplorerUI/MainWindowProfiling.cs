@@ -141,7 +141,6 @@ namespace IRExplorerUI {
 
             sw.Stop();
             Trace.WriteLine($"Total: {sw.ElapsedMilliseconds}");
-            Trace.Flush();
 
             await ProfileSampleRangeDeselected();
 

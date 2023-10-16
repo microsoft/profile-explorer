@@ -30,15 +30,15 @@ public sealed class ASMNameProvider : INameProvider {
         string sectionName = section.Name;
 
         if (string.IsNullOrEmpty(sectionName)) {
-            var funcName = section.ParentFunction.Name;
-            if (!string.IsNullOrEmpty(funcName)) {
-                return funcName.Length <= 24 ? funcName : $"{funcName.Substring(0, 24)}...";
-            }
-
-            return "<UNTITLED>";
+            sectionName = section.ParentFunction.Name;
         }
-
-        if(includeNumber) {
+        
+        if (!string.IsNullOrEmpty(sectionName)) {
+            sectionName = FormatFunctionName(sectionName);
+            sectionName = sectionName.Length <= 50 ? sectionName : $"{sectionName.Substring(0, 20)}...";
+        }
+        
+        if (includeNumber) {
             return $"({section.Number}) {sectionName}";
         }
 
