@@ -949,18 +949,24 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         }
     }
 
-    public void SelectNode(FlameGraphNode node, bool fitSize = true) {
+    public void SelectNode(FlameGraphNode node, bool fitSize = true, bool bringIntoView = true) {
         GraphViewer.SelectNode(node);
-        BringNodeIntoView(node, fitSize);
+
+        if (fitSize) {
+            BringNodeIntoView(node, fitSize);
+        }
     }
 
-    public void SelectNode(ProfileCallTreeNode node, bool fitSize = true) {
+    public void SelectNode(ProfileCallTreeNode node, bool fitSize = true, bool bringIntoView = true) {
         if (!IsInitialized) {
             return;
         }
 
         var fgNode = GraphViewer.SelectNode(node);
-        BringNodeIntoView(fgNode, fitSize);
+        
+        if (bringIntoView) {
+            BringNodeIntoView(fgNode, fitSize);
+        }
     }
 
 

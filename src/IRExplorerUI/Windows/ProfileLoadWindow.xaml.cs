@@ -508,7 +508,7 @@ namespace IRExplorerUI {
                 };
 
                 if (progressInfo.Total != 0 && progressInfo.Total != progressInfo.Current) {
-                    double percentage = (double)progressInfo.Current / (double)progressInfo.Total;
+                    double percentage = Math.Min(1.0, (double)progressInfo.Current / (double)progressInfo.Total);
                     ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
                     LoadProgressBar.IsIndeterminate = false;
                 }

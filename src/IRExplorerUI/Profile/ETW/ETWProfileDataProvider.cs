@@ -311,7 +311,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             }
 
             //? TODO: Replace %?
-            if (index++ % 10000 == 0) {
+            if (index++ % 1000 == 0) {
                 if (cancelableTask is { IsCanceled: true }) {
                     return samples;
                 }
@@ -410,11 +410,6 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                 }
             }
 
-            // Count exclusive time for each module in the executable.
-            if (isTopFrame && stackModules.Add(frameImage.Id)) {
-
-            }
-
             // Try to resolve the frame using the lists of processes/images and debug info.
             long frameRva = 0;
             long funcRva = 0;
@@ -482,9 +477,8 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             // Create the function profile data, with the merged weight of all instances
             // of the func. across all call stacks.
             var resolvedFrame = new ResolvedProfileStackFrameDetails(funcDebugInfo, textFunction,
-                                                                  frameImage, module.IsManaged);
-                resolvedStack.AddFrame(frameIp, frameRva, resolvedFrame, frameIndex, stack);
-
+                                                                     frameImage, module.IsManaged);
+            resolvedStack.AddFrame(frameIp, frameRva, resolvedFrame, frameIndex, stack);
             isTopFrame = false;
         }
 
