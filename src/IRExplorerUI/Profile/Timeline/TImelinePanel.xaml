@@ -178,6 +178,7 @@
                         VerticalAlignment="Center"
                         FontWeight="Medium"
                         Foreground="DarkBlue"
+                        ToolTip="Time range included in the view"
                         Text="{Binding FilteredTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}"
                         Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
 
@@ -206,6 +207,7 @@
                         VerticalAlignment="Center"
                         FontWeight="Medium"
                         Foreground="Indigo"
+                        ToolTip="Threads included in the view"
                         Text="{Binding ThreadFilterText, Converter={StaticResource MillisecondTimeConverter}}"
                         Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
 
@@ -226,7 +228,6 @@
                         IsChecked="{Binding Path=PrependModuleToFunction, Mode=TwoWay}"
                         ToolTip="Show the module name in front of the function name"
                         Visibility="Collapsed" />
-
 
                     <ToggleButton
                         Height="20"

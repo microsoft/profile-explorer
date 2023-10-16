@@ -243,10 +243,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         await GraphHost.RestorePreviousState();
     }
 
-    private async void SelectParent_Click(object sender, RoutedEventArgs e) {
-        await GraphHost.NavigateToParentNode();
-    }
-    
     public async Task DisplayFlameGraph() {
         var callTree = Session.ProfileData.CallTree;
         SchedulePendingCallTree(callTree);
@@ -356,6 +352,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     public void SelectFunction(ProfileCallTreeNode node) {
-        GraphHost.SelectNode(node);
+        GraphHost.SelectNode(node, false);
     }
 }

@@ -295,8 +295,6 @@ public class FlameGraphRenderer {
             x = flameGraph_.ScaleStartTime(node);
         }
 
-        //Trace.WriteLine($"Node at {x}, width {width}");
-
         var prevBounds = node.Bounds;
         node.Bounds = new Rect(x, y, width, nodeHeight_);
         node.IsDummyNode = !redraw;
@@ -311,7 +309,7 @@ public class FlameGraphRenderer {
             }
         }
 
-        if (node.Children == null) {
+        if (node.Children == null || node.Children.Count == 0) {
             return;
         }
 
@@ -360,11 +358,6 @@ public class FlameGraphRenderer {
             }
 
             x += childWidth;
-
-            if (skippedChildren > 0) {
-                childNode.IsDummyNode = true;
-                skippedChildren--;
-            }
         }
 
         return totalSkippedChildren < range;

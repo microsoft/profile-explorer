@@ -954,13 +954,13 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         BringNodeIntoView(node, fitSize);
     }
 
-    public void SelectNode(ProfileCallTreeNode node) {
+    public void SelectNode(ProfileCallTreeNode node, bool fitSize = true) {
         if (!IsInitialized) {
             return;
         }
 
         var fgNode = GraphViewer.SelectNode(node);
-        BringNodeIntoView(fgNode);
+        BringNodeIntoView(fgNode, fitSize);
     }
 
 

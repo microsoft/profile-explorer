@@ -76,25 +76,6 @@
                     <Separator />
 
                     <ToggleButton
-                        Content="m!F"
-                        IsChecked="{Binding Path=PrependModuleToFunction, Mode=TwoWay}"
-                        ToolTip="Show the module name in front of the function name" />
-
-                    <ToggleButton
-                        IsChecked="{Binding CombineNodes, Mode=TwoWay}"
-                        ToolTip="Combine all function instances into one"
-                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <StackPanel Orientation="Horizontal">
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Margin="0,1,0,0"
-                                Source="{StaticResource MergeIcon}" />
-                            <TextBlock Text="Combine" />
-                        </StackPanel>
-                    </ToggleButton>
-
-                    <ToggleButton
                         Height="20"
                         Margin="0,0,0,0"
                         Padding="0,0,2,0"
@@ -122,7 +103,26 @@
                             Margin="0,1,0,0"
                             Source="{StaticResource SourceIcon}" />
                     </ToggleButton>
+                    <Separator/>
 
+                    <ToggleButton
+                        IsChecked="{Binding CombineNodes, Mode=TwoWay}"
+                        ToolTip="Combine all function instances into one"
+                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource MergeIcon}" />
+                            <TextBlock Text="Combine" />
+                        </StackPanel>
+                    </ToggleButton>
+                    
+                    <ToggleButton
+                        Content="m!F"
+                        IsChecked="{Binding Path=PrependModuleToFunction, Mode=TwoWay}"
+                        ToolTip="Show the module name in front of the function name" />
 
                     <ToggleButton
                         Height="20"

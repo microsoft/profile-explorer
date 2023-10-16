@@ -661,7 +661,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             sliceTask_.WaitForTask();
         }
 
-        if (slices_ == null) {
+        if (slices_ == null || slices_.Count == 0) {
             return;
         }
 
@@ -791,8 +791,6 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         DrawText(text, positionLineX_, textY, Brushes.Black, graphDC, true, backColor_, sampleBorderColor_,
                  HorizontalAlignment.Center, VerticalAlignment.Center);
 
-        //? TODO: Use binSearch to find first sample in toher parts
-
         var markedSamples = FindMarkedSamples(time);
         
         if (markedSamples != null) {
@@ -803,7 +801,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
     private MarkedSamples FindMarkedSamples(TimeSpan time) {
-        var closeTimeDiff = TimeSpan.FromMilliseconds(1); //? Based on zoom
+        var closeTimeDiff = TimeSpan.FromMilliseconds(1); //? TODO: Adjust based on zoom?
         var querySample = new SampleIndex(0, time); 
 
         foreach (var markedSamples in markedSamples_) {
@@ -832,6 +830,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         var endX = TimeToPosition(selectionEndTime_);
 
         if (endX < startX) {
+            // Right-to-left mouse selection, ensure start < end.
             (startX, endX) = (endX, startX);
         }
 
@@ -1101,7 +1100,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             }
 
             if ((i + 1) * slices_[0].TimePerSlice > timeRange) {
-                break;
+                break; // Early stop.
             }
         }
 
@@ -1128,7 +1127,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             }
 
             if ((sliceIndex - i + 1) * slices_[0].TimePerSlice > timeRange) {
-                break;
+                break; // Early stop.
             }
         }
 
