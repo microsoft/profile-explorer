@@ -875,7 +875,8 @@ namespace IRExplorerUI {
             }
 
             // Cancel any running tasks and hide panels.
-            loadTask_.CancelTask();
+            loadTask_.CancelTaskAndWait();
+            
             //? TODO: used await loadTask_.CancelTaskAndWaitAsync(); when UnloadSection returns Task
             await HideRemarkPanel();
             HideActionPanel();
@@ -887,7 +888,6 @@ namespace IRExplorerUI {
                 }
 
                 await RemoveRemarks();
-                await HideProfile();
 
                 // Clear references to IR objects that would keep the previous function alive.
                 hoveredElement_ = null;
@@ -896,7 +896,6 @@ namespace IRExplorerUI {
                 selectedBlock_ = null;
                 profileDataRows_ = null;
                 profileColumnHeaders_ = null;
-                ProfileVisible = false;
                 PassOutputVisible = false;
                 BlockSelector.SelectedItem = null;
                 BlockSelector.ItemsSource = null;
@@ -1135,8 +1134,10 @@ namespace IRExplorerUI {
             if (funcProfile == null || metadataTag == null) {
                 return false;
             }
-
+            
+            using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
             var result = await Task.Run(() => funcProfile.Process(Function, Session.CompilerInfo.IR));
+            
             BuildProfileBlocksList(funcProfile, result);
             profileElements_ = result.SampledElements;
             ProfileVisible = true;
@@ -1200,6 +1201,10 @@ namespace IRExplorerUI {
                 profileDataRows_ = new List<ElementRowValue>();
 
                 foreach (var block in Function.SortedBlocks) {
+                    if (task.IsCanceled) {
+                        break;
+                    }
+                    
                     bool isOddBlock = block.HasOddIndexInFunction;
 
                     for (int i = 0; i < block.Tuples.Count; i++) {
@@ -1380,6 +1385,7 @@ namespace IRExplorerUI {
 
         private async Task<List<Remark>> FindRemarks(CancelableTask cancelableTask) {
             var remarkProvider = Session.CompilerInfo.RemarkProvider;
+            using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
 
             return await Task.Run(() => {
                 var sections = remarkProvider.GetSectionList(Section, remarkSettings_.SectionHistoryDepth,
@@ -1387,7 +1393,6 @@ namespace IRExplorerUI {
                 var document = Session.SessionState.FindLoadedDocument(Section);
                 var options = new RemarkProviderOptions();
                 var results = remarkProvider.ExtractAllRemarks(sections, Function, document, options, cancelableTask);
-                loadTask_.CompleteTask(cancelableTask);
                 return results;
             });
         }
