@@ -341,7 +341,7 @@ namespace IRExplorerUI {
             HideStartPage();
         }
 
-        private async Task EndSession(bool showStartPage = false) {
+        private async Task EndSession(bool showStartPage = true) {
             await BeginSessionStateChange();
 
             if (!IsSessionStarted) {

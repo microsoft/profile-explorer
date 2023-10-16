@@ -687,6 +687,7 @@ namespace IRExplorerUI {
         private void ShowStartPage() {
             StartPage.ReloadFileList();
             StartPage.Visibility = Visibility.Visible;
+            Utils.EnableControl(StartPage);
         }
 
         private void HideStartPage() {
