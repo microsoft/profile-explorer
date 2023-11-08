@@ -29,14 +29,14 @@ namespace IRExplorerCore.MLIR {
         public FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText) {
             bool wslEnabled = true;
             string wslDistroName = "Ubuntu-20.04";
-            string wslParserPath = "/home/gratilup/triton-irx";
+            string wslParserPath = "~/triton-irx";
 
             var inputFile = Path.GetTempFileName();
             var outputFile = Path.ChangeExtension(Path.GetTempFileName(), ".json");
 
             try {
                 File.WriteAllText(inputFile, sectionText.ToString());
-                File.WriteAllText(@"C:\test\in.mlir", sectionText.ToString());
+                //File.WriteAllText(@"C:\test\in.mlir", sectionText.ToString());
 
                 if (wslEnabled) {
                     var wslInputFileName = Path.GetFileName(inputFile);
@@ -87,7 +87,7 @@ namespace IRExplorerCore.MLIR {
             }
 
             var jsonData = File.ReadAllText(outputFile);
-            File.WriteAllText(@"C:\test\out.json", jsonData);
+            //File.WriteAllText(@"C:\test\out.json", jsonData);
 
             if (JsonUtils.Deserialize(jsonData, out IRExplorerCore.RawIRModel.ModuleIR module)) {
                 var parser = new MLIRParser(irInfo_, errorHandler_, null, section);

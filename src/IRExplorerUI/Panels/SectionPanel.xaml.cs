@@ -1434,6 +1434,7 @@ namespace IRExplorerUI {
             functionFilter.Filter = FilterFunctionList;
             FunctionList.ItemsSource = functionFilter;
             SectionList.ItemsSource = null;
+            functionValueSorter_.SortByField(FunctionFieldKind.Name, ListSortDirection.Ascending);
 
             if (summary_.Functions.Count == 1) {
                 await SelectFunction(summary_.Functions[0]);

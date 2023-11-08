@@ -31,11 +31,11 @@ namespace IRExplorerUI {
             GraphVizPrinter printer = null;
             string graphText;
 
+            //? TODO: Currently only FunctionIR graphs (flow, dominator, etc) are cached.
+            bool useCache = typeof(T) == typeof(FunctionIR);
+
             try {
                 rwLock_.EnterUpgradeableReadLock();
-
-                //? TODO: Currently only FunctionIR graphs (flow, dominator, etc) are cached.
-                bool useCache = typeof(T) == typeof(FunctionIR);
 
                 if (useCache && graphLayout_.TryGetValue(section, out var graphData)) {
                     Trace.TraceInformation($"Graph cache: Loading cached section graph for {section}");
@@ -44,7 +44,7 @@ namespace IRExplorerUI {
                 else {
                     // Check if the same Graphviz input was used before, since
                     // the resulting graph will be identical even though the function is not.
-                    printer ??= CreateInstance(graphKind_, element, options);
+                    printer = CreateInstance(graphKind_, element, options);
                     string inputText = printer.PrintGraph();
 
                     if (string.IsNullOrEmpty(inputText)) {
@@ -91,6 +91,11 @@ namespace IRExplorerUI {
             // Parse the graph layout output from Graphviz to build
             // the actual Graph object with nodes and edges.
             printer ??= CreateInstance(graphKind_, element, options);
+
+            if (useCache) {
+                printer.PrintGraph(); // Force creation of node/group maps.
+            }
+
             var blockNodeMap = printer.CreateNodeDataMap();
             var blockNodeGroupsMap = printer.CreateNodeDataGroupsMap();
             var graphReader = new GraphvizReader(graphKind_, graphText, blockNodeMap);
