@@ -323,13 +323,21 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             // Count time for each sample.
             var sampleWeight = sample.Weight;
             var stack = sample.GetStack(profile);
+            ResolvedProfileStack resolvedStack = null;
 
             // Count time in the profile image.
             totalWeight += sample.Weight;
             profileWeight += sample.Weight;
-
+            
+            // If no stack is associated, use a dummy stack that has
+            // a single frame with the sample IP, which is sufficient
+            // to count the sample in the proper function as exclusive time.
             if (stack.IsUnknown) {
-                continue; // Ignore sample without a stack.
+                stack = new ProfileStack() {
+                    ContextId = sample.ContextId,
+                    //? TODO: Avoid allocating a new array for each sample.
+                    FramePointers = new long[1] { sample.IP }
+                };
             }
 
             // Process each stack frame to map it to a module:function
@@ -338,14 +346,14 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             stackFuncts.Clear();
             stackModules.Clear();
 
-            var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
+            resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
             if (resolvedStack != null) {
                 //ProcessResolvedStack(resolvedStack, sampleWeight, stackModules, stackFuncts);
             }
             else {
                 resolvedStack = ProcessUnresolvedStack(stack, sampleWeight, context, profile,
-                                                       stackModules, stackFuncts, symbolOptions);
+                    stackModules, stackFuncts, symbolOptions);
                 stack.SetOptionalData(resolvedStack); // Cache resolved stack.
             }
 
@@ -566,11 +574,12 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                 }
             }
 
-            progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
-                Total = imageLimit,
-                Current = i,
-                Optional = Utils.TryGetFileName(binaryFile.BinaryFile.ImageName)
-            });
+            if (binaryFile.Found) {
+                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
+                    Total = imageLimit, Current = i, 
+                    Optional = Utils.TryGetFileName(binaryFile.BinaryFile.ImageName)
+                });
+            }
         }
 
         // Start a new session in the proper ASM mode.
@@ -609,12 +618,17 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             if (pdbTaskList[i] != null) {
                 var pdbPath = await pdbTaskList[i].ConfigureAwait(false);
                 downloadedPdbCount++;
-                
-                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
-                    Total = pdbCount,
-                    Current = downloadedPdbCount,
-                    Optional = Utils.TryGetFileName(pdbPath.SymbolFile.FileName)
-                });
+
+                if (pdbPath == null || pdbPath.SymbolFile == null) {
+                    Trace.WriteLine("Bad");
+                }
+
+                if (pdbPath.Found) {
+                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
+                        Total = pdbCount, Current = downloadedPdbCount, 
+                        Optional = Utils.TryGetFileName(pdbPath.SymbolFile.FileName)
+                    });
+                }
             }
         }
     }
