@@ -114,6 +114,17 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
     }
 
+    private bool hasRootNode;
+    public bool HasRootNode {
+        get => hasRootNode;
+        set {
+            if (hasRootNode != value) {
+                hasRootNode = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+    
     public override void OnShowPanel() {
         base.OnShowPanel();
         panelVisible_ = true;
@@ -148,6 +159,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     private void SetupEvents() {
         GraphHost.NodeSelected += GraphHost_NodeSelected;
         GraphHost.NodesDeselected += GraphHost_NodesDeselected;
+        GraphHost.RootNodeChanged += GraphHostOnRootNodeChanged;
+        GraphHost.RootNodeCleared += GraphHostOnRootNodeCleared;
         GraphHost.SetupKeyboardEvents(this);
 
         // Setup events for the node details view.
@@ -159,6 +172,14 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         NodeDetailsPanel.FunctionNodeClick += NodeDetailsPanel_NodeClick;
         NodeDetailsPanel.FunctionNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
         NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
+    }
+
+    private void GraphHostOnRootNodeCleared(object sender, EventArgs e) {
+        HasRootNode = false;
+    }
+
+    private void GraphHostOnRootNodeChanged(object sender, FlameGraphNode e) {
+        HasRootNode = true;
     }
 
     private async void GraphHost_NodesDeselected(object sender, EventArgs e) {

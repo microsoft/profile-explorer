@@ -77,6 +77,8 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     public event EventHandler NodesDeselected;
     public event EventHandler<double> HorizontalOffsetChanged;
     public event EventHandler<double> MaxWidthChanged;
+    public event EventHandler<FlameGraphNode> RootNodeChanged;
+    public event EventHandler RootNodeCleared;
 
     public RelayCommand<object> SelectFunctionCallTreeCommand =>
         new(async (obj) => { await SelectFunctionInPanel(ToolPanelKind.CallTree); });
@@ -424,6 +426,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         await GraphViewer.Initialize(GraphViewer.FlameGraph.CallTree, node.CallTreeNode,
                                      GraphHostBounds, settings_, Session);
         GraphViewer.RestoreFixedMarkedNodes();
+        RootNodeChanged?.Invoke(this, node);
     }
 
     enum FlameGraphStateKind {
@@ -477,6 +480,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             case FlameGraphStateKind.ChangeRootNode: {
                 await ChangeRootNode(state.Node);
                 GraphViewer.RestoreFixedMarkedNodes();
+                RootNodeCleared?.Invoke(this, EventArgs.Empty);
                 break;
             }
             default: {
