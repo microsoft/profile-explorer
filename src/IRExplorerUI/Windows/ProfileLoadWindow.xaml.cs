@@ -495,19 +495,27 @@ namespace IRExplorerUI {
                 }
 
                 // With multi-threaded processing, current value is not always increasing...
-                progressInfo.Current = Math.Max(progressInfo.Current, (int)LoadProgressBar.Value);
+                if (progressInfo.Stage == ProfileLoadStage.TraceProcessing) {
+                    progressInfo.Current = Math.Max(progressInfo.Current, (int)LoadProgressBar.Value);
+                }
+
                 LoadProgressBar.Maximum = progressInfo.Total;
                 LoadProgressBar.Value = progressInfo.Current;
+                
                 LoadProgressLabel.Text = progressInfo.Stage switch {
                     ProfileLoadStage.TraceLoading => "Loading trace",
                     ProfileLoadStage.TraceProcessing => "Processing trace",
-                    ProfileLoadStage.BinaryLoading => "Loading binaries",
-                    ProfileLoadStage.SymbolLoading => "Loading symbols",
+                    ProfileLoadStage.BinaryLoading => "Loading binaries" +
+                                                      (!string.IsNullOrEmpty(progressInfo.Optional) ?
+                                                          $" ({Utils.TrimToLength(progressInfo.Optional, 15)})" : ""),
+                    ProfileLoadStage.SymbolLoading => "Loading symbols" + 
+                                                      (!string.IsNullOrEmpty(progressInfo.Optional) ? 
+                                                          $" ({Utils.TrimToLength(progressInfo.Optional, 15)})" : ""),
                     ProfileLoadStage.PerfCounterProcessing => "Processing CPU perf. counters",
                     _ => ""
                 };
 
-                if (progressInfo.Total != 0 && progressInfo.Total != progressInfo.Current) {
+                if (progressInfo.Total != 0) {
                     double percentage = Math.Min(1.0, (double)progressInfo.Current / (double)progressInfo.Total);
                     ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
                     LoadProgressBar.IsIndeterminate = false;
@@ -527,7 +535,7 @@ namespace IRExplorerUI {
                 LoadProgressBar.Maximum = progressInfo.Total;
                 LoadProgressBar.Value = progressInfo.Current;
 
-                if (progressInfo.Total != 0 && progressInfo.Total != progressInfo.Current) {
+                if (progressInfo.Total != 0) {
                     double percentage = (double)progressInfo.Current / (double)progressInfo.Total;
                     ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
                     LoadProgressLabel.Text = "Building process list";

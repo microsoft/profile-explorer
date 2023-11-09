@@ -686,6 +686,14 @@ namespace IRExplorerUI {
             Debugger.Break();
 #endif
         }
+        
+        public static string TrimToLength(string text, int maxLength) {
+            if (text.Length <= maxLength) {
+                return text;
+            }
+
+            return $"{text.Substring(0, maxLength)}..";
+        }
 
         public static bool TryDeleteFile(string path) {
             if (!File.Exists(path)) {
