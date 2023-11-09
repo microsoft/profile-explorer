@@ -384,10 +384,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
             Reset();
         }
 
-        Trace.WriteLine($"=> start display: {Environment.TickCount}");
         callTree_ = Session.ProfileData.CallTree;
         callTreeEx_ = await Task.Run(() => CreateProfileCallTree());
-        Trace.WriteLine($"=> done display: {Environment.TickCount}");
         CallTree.Model = callTreeEx_;
 
         if (true) {
@@ -399,9 +397,12 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     public async Task DisplayProfileCallerCalleeTree(IRTextFunction function) {
         function_ = function;
         callTree_ = Session.ProfileData.CallTree;
+        ignoreNextSelectionEvent_ = true; // Prevent deselection even to be triggered.
+        
         callTreeEx_ = await Task.Run(() => CreateProfileCallerCalleeTree(function));
         CallTree.Model = callTreeEx_;
         ExpandCallTreeTop();
+        ignoreNextSelectionEvent_ = false;
     }
 
     public void Reset() {
@@ -429,8 +430,10 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         ExpandPathToNode(nodeEx, markPath);
         BringIntoView(nodeEx);
 
-        ignoreNextSelectionEvent_ = true;
-        CallTree.SelectedItem = nodeEx.TreeNode;
+        if (CallTree.SelectedItem != nodeEx.TreeNode) {
+            ignoreNextSelectionEvent_ = true;
+            CallTree.SelectedItem = nodeEx.TreeNode;
+        }
     }
 
     private void BringIntoView(ChildFunctionEx nodeEx) {
