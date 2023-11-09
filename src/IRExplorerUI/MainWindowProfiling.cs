@@ -243,7 +243,7 @@ namespace IRExplorerUI {
                 }
                 case ToolPanelKind.FlameGraph: {
                     var panel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
-                    panel.SelectFunction(func);
+                    await panel.SelectFunction(func);
                     break;
                 }
                 case ToolPanelKind.Timeline: {
@@ -305,8 +305,7 @@ namespace IRExplorerUI {
                 await SelectFunctionSamples(node, panel);
             }
 
-            if (//sourcePanelKind != ToolPanelKind.CallerCallee &&
-                sourcePanelKind != ToolPanelKind.Section) {
+            if (sourcePanelKind != ToolPanelKind.Section) {
                 await SwitchActiveFunction(node.Function, false);
             }
 
@@ -322,8 +321,9 @@ namespace IRExplorerUI {
             }
 
             if (sourcePanelKind != ToolPanelKind.FlameGraph) {
-                var flameGraphPanel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
-                flameGraphPanel?.SelectFunction(node.Function, false);
+                if(FindPanel(ToolPanelKind.FlameGraph) is FlameGraphPanel flameGraphPanel) {
+                    await flameGraphPanel.SelectFunction(node.Function, false);
+                }
             }
 
             return true;
