@@ -305,13 +305,15 @@ namespace IRExplorerUI {
                 await SelectFunctionSamples(node, panel);
             }
 
-            if (sourcePanelKind != ToolPanelKind.CallerCallee &&
+            if (//sourcePanelKind != ToolPanelKind.CallerCallee &&
                 sourcePanelKind != ToolPanelKind.Section) {
                 await SwitchActiveFunction(node.Function, false);
             }
 
-            var callTreePanel = FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
-            callTreePanel?.SelectFunction(node.Function);
+            if (sourcePanelKind != ToolPanelKind.CallTree) {
+                var callTreePanel = FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
+                callTreePanel?.SelectFunction(node.Function);
+            }
 
             if (sourcePanelKind != ToolPanelKind.CallerCallee) {
                 if (FindPanel(ToolPanelKind.CallerCallee) is CallTreePanel callerCalleePanel) {
