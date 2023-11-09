@@ -274,16 +274,16 @@ namespace IRExplorerUI {
             SelectSectionPanel(section).SetSectionAnnotationState(section, hasAnnotations);
         }
 
-        public async Task SelectSection(IRTextSection section, bool focus = true) {
-            await SelectFunction(section.ParentFunction);
+        public async Task SelectSection(IRTextSection section, bool handleProfiling = true, bool focus = true) {
+            await SelectFunction(section.ParentFunction, handleProfiling);
             SelectSectionPanel(section).SelectSection(section, focus);
         }
 
-        public async Task SelectFunction(IRTextFunction function) {
-            await MainPanel.SelectFunction(function);
+        public async Task SelectFunction(IRTextFunction function, bool handleProfiling = true) {
+            await MainPanel.SelectFunction(function, handleProfiling);
 
             if (DiffPanel.IsDiffModeEnabled) {
-                await DiffPanel.SelectFunction(function);
+                await DiffPanel.SelectFunction(function, handleProfiling);
             }
         }
 
