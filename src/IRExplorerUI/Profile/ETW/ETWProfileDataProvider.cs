@@ -310,8 +310,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
                 continue;
             }
 
-            //? TODO: Replace %?
-            if (index++ % 1000 == 0) {
+            if ((index++ & 1024) == 0) {
                 if (cancelableTask is { IsCanceled: true }) {
                     return samples;
                 }
@@ -535,6 +534,11 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         // Determine the compiler target for the new session.
         IRMode irMode = IRMode.Default;
 
+        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
+            Total = imageLimit,
+            Current = 0
+        });
+        
         for (int i = 0; i < imageLimit; i++) {
             if (cancelableTask is { IsCanceled: true }) {
                 return;
@@ -564,7 +568,8 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
             progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
                 Total = imageLimit,
-                Current = i
+                Current = i,
+                Optional = Utils.TryGetFileName(binaryFile.BinaryFile.ImageName)
             });
         }
 
@@ -574,11 +579,9 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
         // Locate the needed debug files, in parallel. This will download them
         // from the symbol server if not yet on local machine and enabled.
-        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
-            Total = 0,
-            Current = 0
-        });
-
+        int pdbCount = 0;
+        int downloadedPdbCount = 0;
+        
         for (int i = 0; i < imageLimit; i++) {
             if (cancelableTask is { IsCanceled: true }) {
                 return;
@@ -588,9 +591,15 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
             if (binaryFile is { Found: true }) {
                 pdbTaskList[i] = session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath);
+                pdbCount++;
             }
         }
 
+        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
+            Total = pdbCount,
+            Current = 0
+        });
+        
         // Wait for the PDBs to be loaded.
         for (int i = 0; i < imageLimit; i++) {
             if (cancelableTask is { IsCanceled: true }) {
@@ -599,13 +608,14 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
             if (pdbTaskList[i] != null) {
                 var pdbPath = await pdbTaskList[i].ConfigureAwait(false);
-                Trace.WriteLine($"Loaded PDB: {pdbPath}");
+                downloadedPdbCount++;
+                
+                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
+                    Total = pdbCount,
+                    Current = downloadedPdbCount,
+                    Optional = Utils.TryGetFileName(pdbPath.SymbolFile.FileName)
+                });
             }
-
-            progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
-                Total = imageLimit,
-                Current = i
-            });
         }
     }
 

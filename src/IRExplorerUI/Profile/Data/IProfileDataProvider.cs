@@ -73,6 +73,7 @@ public class ProfileLoadProgress {
     public ProfileLoadStage Stage { get; set; }
     public int Total { get; set; }
     public int Current { get; set; }
+    public string Optional { get; set; }
 }
 
 public class ProcessListProgress {
