@@ -364,15 +364,16 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         GraphHost.ClearMarkedFunctions();
     }
     
-    public void SelectFunction(IRTextFunction function, bool bringIntoView = true) {
+    public async Task SelectFunction(IRTextFunction function, bool bringIntoView = true) {
         var nodeList = callTree_.GetSortedCallTreeNodes(function);
 
         if (nodeList != null && nodeList.Count > 0) {
-            SelectFunction(nodeList[0], bringIntoView);
+            await SelectFunction(nodeList[0], bringIntoView);
         }
     }
 
-    public void SelectFunction(ProfileCallTreeNode node, bool bringIntoView = true) {
+    public async Task SelectFunction(ProfileCallTreeNode node, bool bringIntoView = true) {
         GraphHost.SelectNode(node, false, bringIntoView);
+        await NodeDetailsPanel.ShowWithDetailsAsync(node);
     }
 }
