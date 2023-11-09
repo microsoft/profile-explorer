@@ -846,8 +846,8 @@ namespace IRExplorerUI {
             }
         }
 
-        public Task SwitchActiveFunction(IRTextFunction function) {
-            return SectionPanel.SelectFunction(function);
+        public Task SwitchActiveFunction(IRTextFunction function, bool handleProfiling = true) {
+            return SectionPanel.SelectFunction(function, handleProfiling);
         }
 
         private void MenuItem_Click_3(object sender, RoutedEventArgs e) {

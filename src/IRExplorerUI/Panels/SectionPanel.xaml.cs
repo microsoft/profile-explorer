@@ -2091,7 +2091,7 @@ namespace IRExplorerUI {
             SectionFilter.Text = "";
         }
 
-        public async Task SelectFunction(IRTextFunction function) {
+        public async Task SelectFunction(IRTextFunction function, bool handleProfiling = true) {
             if (function.Equals(currentFunction_, false)) {
                 return;
             }
@@ -2103,7 +2103,7 @@ namespace IRExplorerUI {
             RefreshSectionList();
 
             //? TODO: A way to switch between the two modes?
-            if (useProfileCallTree_ && profileControlsVisible_ && Session.ProfileData != null) {
+            if (handleProfiling && profileControlsVisible_ && Session.ProfileData != null) {
                 var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
                 if (funcProfile != null) {

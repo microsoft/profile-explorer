@@ -83,7 +83,7 @@ namespace IRExplorerUI {
 
         Task<SectionSearchResult> SearchSectionAsync(SearchInfo searchInfo, IRTextSection section,
                                                      IRDocument document);
-        Task SwitchActiveFunction(IRTextFunction function);
+        Task SwitchActiveFunction(IRTextFunction function, bool handleProfiling = true);
 
         Task ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document);
         Task ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document);

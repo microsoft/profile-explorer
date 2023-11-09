@@ -307,15 +307,16 @@ namespace IRExplorerUI {
 
             if (sourcePanelKind != ToolPanelKind.CallerCallee &&
                 sourcePanelKind != ToolPanelKind.Section) {
-                await SwitchActiveFunction(node.Function);
+                await SwitchActiveFunction(node.Function, false);
             }
 
             var callTreePanel = FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
             callTreePanel?.SelectFunction(node.Function);
 
             if (sourcePanelKind != ToolPanelKind.CallerCallee) {
-                var callerCalleePanel = FindPanel(ToolPanelKind.CallerCallee) as CallTreePanel;
-                callerCalleePanel?.DisplayProfileCallerCalleeTree(node.Function);
+                if (FindPanel(ToolPanelKind.CallerCallee) is CallTreePanel callerCalleePanel) {
+                    await callerCalleePanel?.DisplayProfileCallerCalleeTree(node.Function);
+                }
             }
 
             if (sourcePanelKind != ToolPanelKind.FlameGraph) {
