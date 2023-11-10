@@ -102,10 +102,7 @@ public class FunctionProfileData {
         int lastLine = int.MinValue;
 
         foreach (var pair in InstructionWeight) {
-            //? The profile offset is set on the instr. following the one intended,
-            //? TryFindElementForOffset account for this but here the FunctionIR
-            //? is not being used, subtract 1 to end in that range of the right instr.
-            long rva = pair.Key + FunctionDebugInfo.RVA - 1;
+            long rva = pair.Key + FunctionDebugInfo.RVA;
             var lineInfo = debugInfo.FindSourceLineByRVA(rva);
 
             if (!lineInfo.IsUnknown) {
@@ -143,7 +140,7 @@ public class FunctionProfileData {
 
     public static bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset,
         ICompilerIRInfo ir, out IRElement element) {
-        int multiplier = 1;
+        int multiplier = 0;
         var offsetData = ir.InstructionOffsetData;
 
         do {
