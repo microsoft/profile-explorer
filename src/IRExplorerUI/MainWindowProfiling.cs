@@ -481,13 +481,13 @@ namespace IRExplorerUI {
         }
 
         private List<ProfileCallTreeNode> FindCallTreeNodesForSamples(HashSet<IRTextFunction> funcs, ProfileData profile) {
-            var callNodes = new List<ProfileCallTreeNode>(funcs.Count);
-
             //? TODO: If an event fires during the call tree/sample filtering,
             //? either ignore it or better run it after the filtering is done
             if (ProfileData.CallTree == null) {
-                return callNodes;
+                return new List<ProfileCallTreeNode>();
             }
+
+            var callNodes = new HashSet<ProfileCallTreeNode>(funcs.Count);
 
             foreach (var func in funcs) {
                 if (func == null) {
@@ -498,11 +498,30 @@ namespace IRExplorerUI {
 
                 var nodes = profile.CallTree.GetCallTreeNodes(func);
                 if (nodes != null) {
-                    callNodes.AddRange(nodes);
+                    // Filter out nodes that are not in the call path leading to the function,
+                    // meaning that all parents of the node instance must be in the initial set
+                    // of functions covered by the samples.
+                    foreach (var node in nodes) {
+                        var parentNode = node.Caller;
+                        bool addNode = true;
+
+                        while (parentNode != null) {
+                            if (!funcs.Contains(parentNode.Function)) {
+                                addNode = false;
+                                break;
+                            }
+
+                            parentNode = parentNode.Caller;
+                        }
+
+                        if (addNode) {
+                            callNodes.Add(node);
+                        }
+                    }
                 }
             }
 
-            return callNodes;
+            return callNodes.ToList();
         }
 
     }
