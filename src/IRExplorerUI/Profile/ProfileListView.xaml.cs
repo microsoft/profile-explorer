@@ -169,7 +169,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
             }
 
             // Have at least MinItems functs, even if they are below the MinWeight threshold
-            if (filteredNodes.Count < filter.MinItems && nodes.Count > filter.MinItems) {
+            if (filteredNodes.Count < filter.MinItems && nodes.Count > filteredNodes.Count) {
                 for(int i = filteredNodes.Count; i < nodes.Count && filteredNodes.Count < filter.MinItems; i++) {
                     filteredNodes.Add(nodes[i]);
                 }
