@@ -64,7 +64,7 @@
             HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="25" />
+                <ColumnDefinition Width="55" />
             </Grid.ColumnDefinitions>
             <ToolBarTray
                 Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"

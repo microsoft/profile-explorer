@@ -109,6 +109,16 @@
                 </MenuItem>
             </MenuItem>
         </Menu>
+        
+        <Button
+            x:Name="HelpButton"
+            Click="HelpButton_Click"
+            Focusable="False"
+            PreviewMouseLeftButtonDown="SettingsButton_PreviewMouseLeftButtonDown"
+            ToolBar.OverflowMode="Never"
+            ToolTip="Show panel documentation">
+            <Image Source="{StaticResource QuestionIcon}" />
+        </Button>
 
         <Button
             x:Name="SettingsButton"

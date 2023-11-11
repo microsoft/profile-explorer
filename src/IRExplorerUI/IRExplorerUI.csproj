@@ -73,6 +73,11 @@
 		  <XamlRuntime>Wpf</XamlRuntime>
 		  <SubType>Designer</SubType>
 		</Page>
+		<Page Update="Controls\WebViewPopup.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		  <XamlRuntime>Wpf</XamlRuntime>
+		  <SubType>Designer</SubType>
+		</Page>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -119,6 +124,7 @@
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2194-prerelease" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
 		<PackageReference Include="OxyPlot.SkiaSharp.Wpf" Version="2.1.2" />
 		<PackageReference Include="OxyPlot.Wpf" Version="2.1.2" />

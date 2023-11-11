@@ -40,10 +40,14 @@ namespace IRExplorerUI {
             DependencyProperty.Register("HasDuplicateButton", typeof(bool), typeof(PanelToolbarTray),
                                         new PropertyMetadata(true, OnHasDuplicateButtonPropertyChanged));
 
+        public static readonly DependencyProperty HasHelpButtonProperty =
+            DependencyProperty.Register("HasHelpButton", typeof(bool), typeof(PanelToolbarTray),
+                                        new PropertyMetadata(true, OnHasHelpButtonPropertyChanged));
         private bool registerLeftButtonDown_;
 
         public PanelToolbarTray() {
             InitializeComponent();
+            //HasHelpButton = false;
         }
 
         public bool HasPinButton {
@@ -55,6 +59,11 @@ namespace IRExplorerUI {
             get => (bool)GetValue(HasDuplicateButtonProperty);
             set => SetValue(HasDuplicateButtonProperty, value);
         }
+        
+        public bool HasHelpButton {
+            get => (bool)GetValue(HasHelpButtonProperty);
+            set => SetValue(HasHelpButtonProperty, value);
+        }
 
         public bool IsPinned {
             get => PinButton.IsChecked.HasValue && PinButton.IsChecked.Value;
@@ -64,6 +73,7 @@ namespace IRExplorerUI {
         public event EventHandler<PinEventArgs> PinnedChanged;
         public event EventHandler<DuplicateEventArgs> DuplicateClicked;
         public event EventHandler SettingsClicked;
+        public event EventHandler HelpClicked;
         public event EventHandler<BindMenuItemsArgs> BindMenuOpen;
         public event EventHandler<BindMenuItem> BindMenuItemSelected;
 
@@ -80,20 +90,12 @@ namespace IRExplorerUI {
             bool visible = (bool)e.NewValue;
             source.DuplicateButton.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         }
-
-        private static void OnHasPinButtonChanged(DependencyObject sender,
-                                                  DependencyPropertyChangedEventArgs e) {
-            if (sender is PanelToolbarTray control) {
-                bool visible = (bool)e.NewValue;
-            }
-        }
-
-        private static void OnHasDuplicateButtonChanged(DependencyObject sender,
-                                                        DependencyPropertyChangedEventArgs e) {
-            if (sender is PanelToolbarTray control) {
-                bool visible = (bool)e.NewValue;
-                control.DuplicateButton.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
-            }
+        
+        private static void OnHasHelpButtonPropertyChanged(DependencyObject d,
+            DependencyPropertyChangedEventArgs e) {
+            var source = d as PanelToolbarTray;
+            bool visible = (bool)e.NewValue;
+            source.HelpButton.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
@@ -117,8 +119,21 @@ namespace IRExplorerUI {
             }
 
             registerLeftButtonDown_ = false;
-            SettingsClicked?.Invoke(this, new EventArgs());
+            SettingsClicked?.Invoke(this, EventArgs.Empty);
         }
+        
+        private void HelpButton_Click(object sender, RoutedEventArgs e) {
+            // If popup was active when the click started, ignore it since
+            // the user most likely wants to close the popup panel.
+            if(!registerLeftButtonDown_) {
+                registerLeftButtonDown_ = false;
+                return;
+            }
+
+            registerLeftButtonDown_ = false;
+            HelpClicked?.Invoke(this, EventArgs.Empty);
+        }
+
 
         private void DuplicateMenu_Click(object sender, RoutedEventArgs e) {
             DuplicateClicked?.Invoke(this, new DuplicateEventArgs { Kind = DuplicatePanelKind.SameSet });

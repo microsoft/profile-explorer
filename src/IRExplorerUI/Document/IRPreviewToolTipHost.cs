@@ -7,6 +7,8 @@ using System.Windows.Controls;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
+    //? TODO: Replace with IRDocumentPopup,
+    //? used now only by BookmarkPanel and LightIRDocument
     public class IRPreviewToolTipHost : ToolTip {
         private IRDocument document_;
         private IRElement element_;
