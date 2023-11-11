@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
@@ -380,16 +381,21 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
         int pointerSize = profile.TraceInfo.PointerSize;
 
         bool trace = false;
-
+        bool skip = false;
+        ;
         //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
         //? for ex it never gets to main. Easy example is a quicksort impl
         for (; frameIndex < stackFrames.Length; frameIndex++) {
             var frameIp = stackFrames[frameIndex];
             ProfileImage frameImage = null;
             isManagedCode = false;
+            bool isKernel = false;
 
             if (ETWEventProcessor.IsKernelAddress((ulong)frameIp, pointerSize)) {
                 frameImage = profile.FindImageForIP(frameIp, ETWEventProcessor.KernelProcessId);
+                isKernel = true;
+                
+                
             }
             else {
                 frameImage = profile.FindImageForIP(frameIp, context.ProcessId);
@@ -464,6 +470,19 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
                 funcDebugInfo = new FunctionDebugInfo(textFunction.Name, frameRva, 0);
             }
+            
+            if(funcDebugInfo.Name.Contains("KeSetEvent")) {
+                Trace.WriteLine($"   index: {stack.UserModeTransitionIndex}");
+
+                // resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
+                // isTopFrame = false;
+                skip = true;
+                //continue;
+            }
+
+            if (skip) {
+                Trace.WriteLine($"{frameImage.ModuleName}!{funcDebugInfo.Name}: {funcRva:X}, {frameRva:X}");
+            }
 
             // Find the corresponding text function in the module, which may
             // be set already above for placeholders.
@@ -489,6 +508,10 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
             isTopFrame = false;
         }
 
+        if (skip) {
+            Trace.WriteLine("----------------------------------");
+            Trace.Flush();
+        }
         return resolvedStack;
     }
 

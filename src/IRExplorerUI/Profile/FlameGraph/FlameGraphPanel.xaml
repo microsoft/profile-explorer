@@ -277,8 +277,10 @@
                 Grid.Column="1"
                 HasDuplicateButton="False"
                 HasPinButton="False"
+                HasHelpButton="True"
                 MaxWidth="75"
-                SettingsClicked="PanelToolbarTray_SettingsClicked" />
+                SettingsClicked="PanelToolbarTray_SettingsClicked"
+                HelpClicked="PanelToolbarTray_OnHelpClicked"/>
         </Grid>
 
         <Grid Grid.Row="1">

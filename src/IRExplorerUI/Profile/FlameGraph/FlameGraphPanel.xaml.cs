@@ -14,6 +14,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.Profile;
 
@@ -365,6 +366,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
     
     public async Task SelectFunction(IRTextFunction function, bool bringIntoView = true) {
+        if (callTree_ == null) {
+            return; //? TODO: Maybe do the init now?
+        }
+        
         var nodeList = callTree_.GetSortedCallTreeNodes(function);
 
         if (nodeList != null && nodeList.Count > 0) {
@@ -373,7 +378,20 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     public async Task SelectFunction(ProfileCallTreeNode node, bool bringIntoView = true) {
+        if (callTree_ == null) {
+            return; //? TODO: Maybe do the init now?
+        }
+        
         GraphHost.SelectNode(node, false, bringIntoView);
         await NodeDetailsPanel.ShowWithDetailsAsync(node);
+    }
+
+    private void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
+        var view = new WebViewPopup(new Point(0, 0),
+            500, 200, null);
+        Session.RegisterDetachedPanel(view);
+
+        view.PanelTitle = "Panel Help";
+        view.IsOpen = true;
     }
 }

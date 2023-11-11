@@ -782,6 +782,7 @@
                         Grid.Column="1"
                         HasDuplicateButton="False"
                         HasPinButton="False"
+                        HasHelpButton="False"
                         SettingsClicked="FixedToolbar_SettingsClicked"
                         x:Name="FixedToolbar" />
                 </Grid>
