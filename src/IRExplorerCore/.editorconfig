@@ -1,7 +1,0 @@
-﻿[*.cs]
-
-# CA1303: Do not pass literals as localized parameters
-dotnet_diagnostic.CA1303.severity = none
-
-# CA1810: Initialize reference type static fields inline
-dotnet_diagnostic.CA1810.severity = none
