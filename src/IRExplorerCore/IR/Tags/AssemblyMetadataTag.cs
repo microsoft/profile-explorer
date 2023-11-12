@@ -1,43 +1,42 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-
 using System.Collections.Generic;
 using System.Text;
 
-namespace IRExplorerCore.IR.Tags {
-    public sealed class AssemblyMetadataTag : ITag {
-        public AssemblyMetadataTag() {
-            AddressToElementMap = new Dictionary<long, IRElement>();
-            OffsetToElementMap = new Dictionary<long, IRElement>();
-            ElementToOffsetMap = new Dictionary<IRElement, long>();
-            ElementSizeMap = new Dictionary<IRElement, int>();
-        }
+namespace IRExplorerCore.IR.Tags;
 
-        public Dictionary<long, IRElement> AddressToElementMap { get; set; }
-        public Dictionary<long, IRElement> OffsetToElementMap { get; set; }
-        public Dictionary<IRElement, long> ElementToOffsetMap { get; set; }
-        public Dictionary<IRElement, int> ElementSizeMap { get; set; }
-        public long FunctionSize { get; set; }
+public sealed class AssemblyMetadataTag : ITag {
+  public AssemblyMetadataTag() {
+    AddressToElementMap = new Dictionary<long, IRElement>();
+    OffsetToElementMap = new Dictionary<long, IRElement>();
+    ElementToOffsetMap = new Dictionary<IRElement, long>();
+    ElementSizeMap = new Dictionary<IRElement, int>();
+  }
 
-        public string Name => "Address metadata";
-        public TaggedObject Owner { get; set; }
+  public Dictionary<long, IRElement> AddressToElementMap { get; set; }
+  public Dictionary<long, IRElement> OffsetToElementMap { get; set; }
+  public Dictionary<IRElement, long> ElementToOffsetMap { get; set; }
+  public Dictionary<IRElement, int> ElementSizeMap { get; set; }
+  public long FunctionSize { get; set; }
 
-        public void EnsureCapacity(int length) {
-            AddressToElementMap.EnsureCapacity(length);
-            OffsetToElementMap.EnsureCapacity(length);
-            ElementToOffsetMap.EnsureCapacity(length);
-            ElementSizeMap.EnsureCapacity(length);
-        }
+  public string Name => "Address metadata";
+  public TaggedObject Owner { get; set; }
 
-        public override string ToString() {
-            var builder = new StringBuilder();
+  public void EnsureCapacity(int length) {
+    AddressToElementMap.EnsureCapacity(length);
+    OffsetToElementMap.EnsureCapacity(length);
+    ElementToOffsetMap.EnsureCapacity(length);
+    ElementSizeMap.EnsureCapacity(length);
+  }
 
-            foreach (var pair in OffsetToElementMap) {
-                builder.Append($"{pair.Key} = {pair.Value}");
-            }
+  public override string ToString() {
+    var builder = new StringBuilder();
 
-            return builder.ToString();
-        }
+    foreach (var pair in OffsetToElementMap) {
+      builder.Append($"{pair.Key} = {pair.Value}");
     }
+
+    return builder.ToString();
+  }
 }

@@ -1,52 +1,57 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-
-using IRExplorerCore.IR;
 using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 
-namespace IRExplorerCore {
-    public class InstrOffsetData {
-        public int OffsetAdjustIncrement { get; private set; }
-        public int MaxOffsetAdjust { get; private set; }
+namespace IRExplorerCore;
 
-        public static InstrOffsetData PointsToNextInstr() => new InstrOffsetData() {
-            OffsetAdjustIncrement = 0,
-            MaxOffsetAdjust = 0
-        };
+public interface ICompilerIRInfo {
+  IRMode Mode { get; set; }
+  InstrOffsetData InstructionOffsetData { get; }
+  IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders = true);
+  IRSectionReader CreateSectionReader(byte[] textData, bool expectSectionHeaders = true);
+  IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler, long functionSize = 0);
+  IRParsingErrorHandler CreateParsingErrorHandler();
+  IReachableReferenceFilter CreateReferenceFilter(FunctionIR function);
+  bool IsCopyInstruction(InstructionIR instr);
+  bool IsLoadInstruction(InstructionIR instr);
+  bool IsStoreInstruction(InstructionIR instr);
+  bool IsCallInstruction(InstructionIR instr);
+  bool IsIntrinsicCallInstruction(InstructionIR instr);
+  bool IsPhiInstruction(InstructionIR instr);
+  bool IsNOP(InstructionIR instr);
+  BlockIR GetIncomingPhiOperandBlock(InstructionIR phiInstr, int opIndex);
+  IRElement SkipCopyInstruction(InstructionIR instr);
+  OperandIR GetCallTarget(InstructionIR instr);
+  OperandIR GetBranchTarget(InstructionIR instr);
+  InstructionIR GetTransferInstruction(BlockIR block);
 
-        public static InstrOffsetData ConstantSize(int size) => new InstrOffsetData() {
-            OffsetAdjustIncrement = size,
-            MaxOffsetAdjust = size
-        };
+  bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck);
+}
 
-        public static InstrOffsetData VariableSize(int minSize, int maxSize) => new InstrOffsetData() {
-            OffsetAdjustIncrement = minSize,
-            MaxOffsetAdjust = maxSize
-        };
-    }
+public class InstrOffsetData {
+  public int OffsetAdjustIncrement { get; private set; }
+  public int MaxOffsetAdjust { get; private set; }
 
-    public interface ICompilerIRInfo {
-        IRMode Mode { get; set; }
-        IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders = true);
-        IRSectionReader CreateSectionReader(byte[] textData, bool expectSectionHeaders = true);
-        IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler, long functionSize = 0);
-        IRParsingErrorHandler CreateParsingErrorHandler();
-        IReachableReferenceFilter CreateReferenceFilter(FunctionIR function);
-        InstrOffsetData InstructionOffsetData { get; }
-        bool IsCopyInstruction(InstructionIR instr);
-        bool IsLoadInstruction(InstructionIR instr);
-        bool IsStoreInstruction(InstructionIR instr);
-        bool IsCallInstruction(InstructionIR instr);
-        bool IsIntrinsicCallInstruction(InstructionIR instr);
-        bool IsPhiInstruction(InstructionIR instr);
-        bool IsNOP(InstructionIR instr);
-        BlockIR GetIncomingPhiOperandBlock(InstructionIR phiInstr, int opIndex);
-        IRElement SkipCopyInstruction(InstructionIR instr);
-        OperandIR GetCallTarget(InstructionIR instr);
-        OperandIR GetBranchTarget(InstructionIR instr);
-        InstructionIR GetTransferInstruction(BlockIR block);
+  public static InstrOffsetData PointsToNextInstr() {
+    return new InstrOffsetData {
+      OffsetAdjustIncrement = 0,
+      MaxOffsetAdjust = 0
+    };
+  }
 
-        bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck);
-    }
+  public static InstrOffsetData ConstantSize(int size) {
+    return new InstrOffsetData {
+      OffsetAdjustIncrement = size,
+      MaxOffsetAdjust = size
+    };
+  }
+
+  public static InstrOffsetData VariableSize(int minSize, int maxSize) {
+    return new InstrOffsetData {
+      OffsetAdjustIncrement = minSize,
+      MaxOffsetAdjust = maxSize
+    };
+  }
 }
