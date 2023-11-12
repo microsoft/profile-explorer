@@ -1,32 +1,31 @@
 ﻿<ResourceDictionary
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:IRExplorerUI"
-    xmlns:utils="clr-namespace:IRExplorerUI.Utilities">
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:utils="clr-namespace:IRExplorerUI.Utilities">
 
-    <utils:BoolToVisibilityConverter
-        x:Key="BoolToVisibilityConverter"
-        False="Collapsed"
-        True="Visible" />
-    <utils:BoolToVisibilityConverter
-        x:Key="InvertedBoolToVisibilityConverter"
-        False="Visible"
-        True="Collapsed" />
-    <utils:EnumBooleanConverter x:Key="EnumToBoolConverter" />
-    <utils:BoolToParameterConverter x:Key="BooToParameter" />
-    <utils:DoubleScalingConverter x:Key="DoubleScalingConverter" />
-    <utils:DoubleScalingBoundConverter x:Key="DoubleScalingBoundConverter" />
-    <utils:DoubleDiffScalingBoundConverter x:Key="DoubleDiffScalingBoundConverter" />
-    <utils:TreeViewLineConverter x:Key="LineConverter" />
-    <utils:ColorBrushOpacityConverter x:Key="ColorBrushOpacityConverter" />
-    <utils:MillisecondTimeConverter x:Key="MillisecondTimeConverter" />
-    <utils:SecondTimeConverter x:Key="SecondTimeConverter" />
-    <utils:PercentageConverter x:Key="PercentageConverter" />
-    <utils:ExclusivePercentageConverter x:Key="ExclusivePercentageConverter" />
-    <utils:ListToStringConverter x:Key="StringListConverter" />
-    <utils:ListPairToStringConverter x:Key="StringListPairConverter" />
-    <utils:DictionaryToStringConverter x:Key="StringDictionaryConverter" />
-    <utils:PerformanceCounterListConverter x:Key="PerformanceCounterConverter" />
-    <utils:InvertedBooleanConverter x:Key="InvertedBoolConverter" />
-    <utils:ProfileCallTreeNodeKindConverter x:Key="CallTreeNodeKindConverter" />
+  <utils:BoolToVisibilityConverter
+    x:Key="BoolToVisibilityConverter"
+    False="Collapsed"
+    True="Visible" />
+  <utils:BoolToVisibilityConverter
+    x:Key="InvertedBoolToVisibilityConverter"
+    False="Visible"
+    True="Collapsed" />
+  <utils:EnumBooleanConverter x:Key="EnumToBoolConverter" />
+  <utils:BoolToParameterConverter x:Key="BooToParameter" />
+  <utils:DoubleScalingConverter x:Key="DoubleScalingConverter" />
+  <utils:DoubleScalingBoundConverter x:Key="DoubleScalingBoundConverter" />
+  <utils:DoubleDiffScalingBoundConverter x:Key="DoubleDiffScalingBoundConverter" />
+  <utils:TreeViewLineConverter x:Key="LineConverter" />
+  <utils:ColorBrushOpacityConverter x:Key="ColorBrushOpacityConverter" />
+  <utils:MillisecondTimeConverter x:Key="MillisecondTimeConverter" />
+  <utils:SecondTimeConverter x:Key="SecondTimeConverter" />
+  <utils:PercentageConverter x:Key="PercentageConverter" />
+  <utils:ExclusivePercentageConverter x:Key="ExclusivePercentageConverter" />
+  <utils:ListToStringConverter x:Key="StringListConverter" />
+  <utils:ListPairToStringConverter x:Key="StringListPairConverter" />
+  <utils:DictionaryToStringConverter x:Key="StringDictionaryConverter" />
+  <utils:PerformanceCounterListConverter x:Key="PerformanceCounterConverter" />
+  <utils:InvertedBooleanConverter x:Key="InvertedBoolConverter" />
+  <utils:ProfileCallTreeNodeKindConverter x:Key="CallTreeNodeKindConverter" />
 </ResourceDictionary>

@@ -12,18 +12,15 @@ namespace IRExplorerCore;
 
 public abstract class SectionReaderBase : IRSectionReader, IDisposable {
   public static readonly long MAX_PRELOADED_FILE_SIZE = 256 * 1024 * 1024; // 256 MB
-
   private static readonly int FILE_BUFFER_SIZE = 512 * 1024;
   private static readonly int STREAM_BUFFER_SIZE = 16 * 1024;
   private static readonly int MAX_LINE_LENGTH = 2000;
-
   private StreamReader dataReader_;
   private Stream dataStream_;
   private long dataStreamSize_;
   private Encoding dataStreamEncoding_;
   private bool expectSectionHeaders_;
   private object lockObject_;
-
   private Dictionary<string, IRTextFunction> functionMap_;
   private int lineIndex_;
   private IRPassOutput optionalOutput_;
@@ -165,25 +162,15 @@ public abstract class SectionReaderBase : IRSectionReader, IDisposable {
 
   // Methods to be implemented by an IR reader implementation.
   protected abstract bool IsSectionStart(string line);
-
   protected abstract bool SectionStartIsFunctionStart(string line);
-
   protected abstract bool IsFunctionStart(string line);
-
   protected abstract bool IsFunctionEnd(string line);
-
   protected abstract bool IsBlockStart(string line);
-
   protected abstract string ExtractSectionName(string line);
-
   protected abstract string ExtractFunctionName(string line);
-
   protected abstract string PreprocessLine(string line);
-
   protected abstract bool ShouldSkipOutputLine(string line);
-
   protected abstract bool IsMetadataLine(string line);
-
   protected abstract bool FunctionEndIsFunctionStart(string line);
 
   protected void MarkPreprocessedLine(int line) {

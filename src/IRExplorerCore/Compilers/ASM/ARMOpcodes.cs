@@ -78,7 +78,6 @@ public static class ARMOpcodes {
       {"BLR", new ARMOpcodeInfo(ARMOpcode.BLR, InstructionKind.Call)},
       {"NOP", new ARMOpcodeInfo(ARMOpcode.NOP, InstructionKind.Other)}
     };
-
   private static readonly StringTrie<ARMOpcodeInfo> opcodesTrie_ = new StringTrie<ARMOpcodeInfo>(opcodes_);
 
   public static bool GetOpcodeInfo(string value, out ARMOpcodeInfo info) {

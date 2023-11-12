@@ -8,7 +8,6 @@ namespace IRExplorerCore;
 
 public struct Optional<T> : IEquatable<Optional<T>> {
   private T value_;
-
   public bool HasValue { get; private set; }
 
   public T Value {

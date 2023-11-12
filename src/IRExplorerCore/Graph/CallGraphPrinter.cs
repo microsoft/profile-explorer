@@ -21,7 +21,6 @@ public class CallGraphPrinterOptions {
 public sealed class CallGraphPrinter : GraphVizPrinter {
   private const int ExternalNodeId = -1;
   private const int LargeGraphThresholdMin = 500;
-
   private const string StraightLinesSettings = @"
 splines = ortho;
 concentrate = true;
@@ -33,7 +32,6 @@ maxiter=4;
 mclimit=2;
 nslimit=2;
         ";
-
   private CallGraphPrinterOptions options_;
   private CallGraph callGraph_;
   private Dictionary<string, TaggedObject> nodeNameMap_;

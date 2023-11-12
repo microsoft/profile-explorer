@@ -23,7 +23,6 @@ public class ExpressionGraphPrinterOptions {
 public sealed class ExpressionGraphPrinter : GraphVizPrinter {
   private StringBuilder builder_;
   private List<Tuple<IRElement, IRElement>> edges_;
-
   private List<Tuple<IRElement, IRElement, string>> nodes_;
   private ExpressionGraphPrinterOptions options_;
   private IRElement rootElement_;

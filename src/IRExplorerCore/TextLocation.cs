@@ -13,14 +13,12 @@ public struct TextLocation : IComparable<TextLocation> {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set;
   }
-
   public int Line {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set;
   }
-
   public int Column {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get;

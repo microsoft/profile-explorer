@@ -19,7 +19,6 @@ public sealed class SourceLocationTag : ITag {
   public int Line { get; set; }
   public int Column { get; set; }
   public bool HasInlinees => Inlinees != null && Inlinees.Count > 0;
-
   public string Name => "Source location";
   public TaggedObject Owner { get; set; }
 

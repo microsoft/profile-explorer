@@ -1,55 +1,54 @@
 ﻿<FrameworkElement
-    x:Class="IRExplorerUI.Profile.ActivityView"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:IRExplorerUI.Profile"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
-    mc:Ignorable="d">
-    <FrameworkElement.ContextMenu>
-        <ContextMenu>
-            <MenuItem
-                Command="{Binding FilterTimeRangeCommand}"
-                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                Header="Filter to Time Range"
-                InputGestureText="Double-click"
-                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
-            <MenuItem
-                Command="{Binding RemoveTimeRangeFilterCommand}"
-                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                Header="Remove Time Range Filter"
-                Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
-            <MenuItem
-                Command="{Binding FilterTimeRangeCommand}"
-                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                Header="Zoom In to Time Range"
-                IsEnabled="False"
-                Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
-            <MenuItem
-                Command="{Binding FilterTimeRangeCommand}"
-                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                Header="Reset Zoom"
-                IsEnabled="False"
-                Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
-            <MenuItem
-                Command="{Binding ClearSelectionCommand}"
-                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                Header="Clear Selection"
-                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
-            <MenuItem
-                Command="{Binding FilterTimeRangeCommand}"
-                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                Header="Zoom In to Time Range"
-                IsEnabled="False"
-                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
-            <MenuItem
-                Command="{Binding FilterTimeRangeCommand}"
-                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                Header="Reset Zoom"
-                IsEnabled="False"
-                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
-        </ContextMenu>
-    </FrameworkElement.ContextMenu>
+  x:Class="IRExplorerUI.Profile.ActivityView"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  d:DesignHeight="450"
+  d:DesignWidth="800"
+  mc:Ignorable="d">
+  <FrameworkElement.ContextMenu>
+    <ContextMenu>
+      <MenuItem
+        Command="{Binding FilterTimeRangeCommand}"
+        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+        Header="Filter to Time Range"
+        InputGestureText="Double-click"
+        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
+      <MenuItem
+        Command="{Binding RemoveTimeRangeFilterCommand}"
+        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+        Header="Remove Time Range Filter"
+        Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+      <MenuItem
+        Command="{Binding FilterTimeRangeCommand}"
+        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+        Header="Zoom In to Time Range"
+        IsEnabled="False"
+        Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+      <MenuItem
+        Command="{Binding FilterTimeRangeCommand}"
+        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+        Header="Reset Zoom"
+        IsEnabled="False"
+        Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+      <MenuItem
+        Command="{Binding ClearSelectionCommand}"
+        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+        Header="Clear Selection"
+        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
+      <MenuItem
+        Command="{Binding FilterTimeRangeCommand}"
+        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+        Header="Zoom In to Time Range"
+        IsEnabled="False"
+        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
+      <MenuItem
+        Command="{Binding FilterTimeRangeCommand}"
+        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+        Header="Reset Zoom"
+        IsEnabled="False"
+        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
+    </ContextMenu>
+  </FrameworkElement.ContextMenu>
 </FrameworkElement>

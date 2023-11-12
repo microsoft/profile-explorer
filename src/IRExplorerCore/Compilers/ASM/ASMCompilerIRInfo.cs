@@ -13,7 +13,6 @@ public sealed class ASMCompilerIRInfo : ICompilerIRInfo {
   }
 
   public IRMode Mode { get; set; }
-
   public InstrOffsetData InstructionOffsetData => Mode switch {
     IRMode.ARM64 => InstrOffsetData.ConstantSize(4),
     _ => InstrOffsetData.VariableSize(1, 16)

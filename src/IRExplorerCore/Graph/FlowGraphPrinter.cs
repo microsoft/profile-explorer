@@ -15,13 +15,11 @@ public sealed class FlowGraphPrinter : GraphVizPrinter {
   private const string LargeGraphSettings = @"
 maxiter=8;
         ";
-
   private const string HugeGraphSettings = @"
 maxiter=4;
 mclimit=2;
 nslimit=2;
         ";
-
   private FunctionIR function_;
   private Dictionary<string, TaggedObject> blockNameMap_;
 

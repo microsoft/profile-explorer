@@ -13,7 +13,6 @@ public class FunctionAnalysisCache {
   private static Dictionary<FunctionIR, FunctionAnalysisCache> functionCacheMap_;
   private static bool cacheEnabled_;
   private static object lockObject_ = new object();
-
   private FunctionIR function_;
 
   //? TODO: Create IAnalysis as a common interface and keep a list,

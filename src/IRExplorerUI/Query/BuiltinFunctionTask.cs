@@ -1,81 +1,80 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-
+using System;
+using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.IR;
-using System.Threading.Tasks;
-using System;
 
-namespace IRExplorerUI.Query {
-    public class BuiltinFunctionTask : IFunctionTask {
-        public delegate bool TaskCallback(FunctionIR function, IRDocument document,
-                                          IFunctionTaskOptions options, ISession session,
-                                          CancelableTask cancelableTask);
-        private TaskCallback callback_;
+namespace IRExplorerUI.Query;
 
-        public ISession Session { get; private set; }
-        public IFunctionTaskOptions Options { get; private set; }
-        public FunctionTaskInfo TaskInfo { get; private set; }
+public class BuiltinFunctionTask : IFunctionTask {
+  private TaskCallback callback_;
 
-        public bool Result { get; set; }
-        public string ResultMessage { get; set; }
-        public string OutputText { get; set; }
+  public delegate bool TaskCallback(FunctionIR function, IRDocument document,
+                                    IFunctionTaskOptions options, ISession session,
+                                    CancelableTask cancelableTask);
 
-        public static FunctionTaskDefinition GetDefinition(FunctionTaskInfo taskInfo,
-                                                           TaskCallback callback) {
-            return new FunctionTaskDefinition(typeof(BuiltinFunctionTask), taskInfo, callback);
-        }
+  public ISession Session { get; private set; }
+  public IFunctionTaskOptions Options { get; private set; }
+  public FunctionTaskInfo TaskInfo { get; private set; }
+  public bool Result { get; set; }
+  public string ResultMessage { get; set; }
+  public string OutputText { get; set; }
 
-        public Task<bool> Execute(FunctionIR function, IRDocument document,
-                                  CancelableTask cancelableTask) {
-            return Task.Run(() => callback_(function, document, Options,
-                                            Session, cancelableTask));
-        }
+  public static FunctionTaskDefinition GetDefinition(FunctionTaskInfo taskInfo,
+                                                     TaskCallback callback) {
+    return new FunctionTaskDefinition(typeof(BuiltinFunctionTask), taskInfo, callback);
+  }
 
-        public bool Initialize(ISession session, FunctionTaskInfo taskInfo, object optionalData) {
-            Session = session;
-            TaskInfo = taskInfo;
-            callback_ = (TaskCallback)optionalData;
+  public Task<bool> Execute(FunctionIR function, IRDocument document,
+                            CancelableTask cancelableTask) {
+    return Task.Run(() => callback_(function, document, Options,
+                                    Session, cancelableTask));
+  }
 
-            LoadOptions();
-            return true;
-        }
+  public bool Initialize(ISession session, FunctionTaskInfo taskInfo, object optionalData) {
+    Session = session;
+    TaskInfo = taskInfo;
+    callback_ = (TaskCallback)optionalData;
 
-        private void LoadOptions() {
-            var options = Session.LoadFunctionTaskOptions(TaskInfo);
+    LoadOptions();
+    return true;
+  }
 
-            if (options != null) {
-                Options = options;
-            }
-            else {
-                ResetOptions();
-            }
-        }
-
-        public void SaveOptions() {
-            if (Options != null) {
-                Session.SaveFunctionTaskOptions(TaskInfo, Options);
-            }
-        }
-
-        public void ResetOptions() {
-            if (TaskInfo.OptionsType == null) {
-                return;
-            }
-
-            Options = (IFunctionTaskOptions)Activator.CreateInstance(TaskInfo.OptionsType);
-            Options.Reset();
-        }
-
-        public QueryData GetOptionsValues() {
-            var data = new QueryData();
-            data.AddInputs(Options);
-            return data;
-        }
-
-        public void LoadOptionsFromValues(QueryData data) {
-            Options = (IFunctionTaskOptions)data.ExtractInputs(TaskInfo.OptionsType);
-        }
+  public void SaveOptions() {
+    if (Options != null) {
+      Session.SaveFunctionTaskOptions(TaskInfo, Options);
     }
+  }
+
+  public void ResetOptions() {
+    if (TaskInfo.OptionsType == null) {
+      return;
+    }
+
+    Options = (IFunctionTaskOptions)Activator.CreateInstance(TaskInfo.OptionsType);
+    Options.Reset();
+  }
+
+  public QueryData GetOptionsValues() {
+    var data = new QueryData();
+    data.AddInputs(Options);
+    return data;
+  }
+
+  public void LoadOptionsFromValues(QueryData data) {
+    Options = (IFunctionTaskOptions)data.ExtractInputs(TaskInfo.OptionsType);
+  }
+
+  private void LoadOptions() {
+    var options = Session.LoadFunctionTaskOptions(TaskInfo);
+
+    if (options != null) {
+      Options = options;
+    }
+    else {
+      ResetOptions();
+    }
+  }
 }

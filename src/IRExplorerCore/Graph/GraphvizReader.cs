@@ -19,14 +19,11 @@ public sealed class GraphvizReader {
       {"edge", Keyword.Edge},
       {"stop", Keyword.Stop}
     };
-
   private static readonly StringTrie<Keyword> keywordTrie_ = new StringTrie<Keyword>(keywordMap_);
-
   private readonly Dictionary<string, Node> nodeMap_;
   private readonly Dictionary<string, TaggedObject> dataNameMap_;
   private Token current_;
   private Graph graph_;
-
   private GraphKind graphKind_;
   private Lexer.Lexer lexer_;
 

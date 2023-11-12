@@ -8,7 +8,6 @@ namespace IRExplorerCore;
 
 public class IRTextSection : IEquatable<IRTextSection> {
   private CompressedObject<Dictionary<int, string>> lineMetadata_;
-
   public IRTextSection() { }
 
   public IRTextSection(IRTextFunction parent, string name,

@@ -11,9 +11,7 @@ public class StreamLineReader : IDisposable {
   private const int BufferLength = 8192;
   private byte[] buffer_ = new byte[BufferLength];
   private int bytesRead_;
-
   private long currentPosition_;
-
   private Stream fileStream_;
   private int index_;
 
