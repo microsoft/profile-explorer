@@ -1137,7 +1137,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private async void MenuItem_OnClick2(object sender, RoutedEventArgs e) {
+        private void MenuItem_OnClick2(object sender, RoutedEventArgs e) {
             SectionPanel.ShowModuleReport();
         }
     }

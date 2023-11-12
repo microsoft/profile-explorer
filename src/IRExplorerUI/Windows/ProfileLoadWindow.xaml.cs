@@ -901,7 +901,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private async void RefreshProcessButton_OnClick(object sender, RoutedEventArgs e) {
+        private void RefreshProcessButton_OnClick(object sender, RoutedEventArgs e) {
             UpdateRunningProcessList();
         }
 

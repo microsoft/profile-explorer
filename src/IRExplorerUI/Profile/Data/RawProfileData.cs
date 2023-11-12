@@ -544,7 +544,7 @@ public class RawProfileData : IDisposable {
 
         foreach (var sample in samples_) {
             builder.AddSample(sample);
-        };
+        }
 
         return builder.MakeSummaries();
     }

@@ -128,7 +128,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         selectionBackColor_ = ColorBrushes.GetTransparentBrush("#A7D5F5", 150); // SelectedBackgroundBrush
         filteredBackColor_ = ColorBrushes.GetBrush(Colors.Linen);
         selectionBorderColor_ = ColorPens.GetPen(Colors.Black);
-        markerBackColor_ = ColorBrushes.GetTransparentBrush("#0F92EF", 120);;
+        markerBackColor_ = ColorBrushes.GetTransparentBrush("#0F92EF", 120);
         markerBorderColor_= ColorPens.GetPen(Colors.DimGray);
         positionLinePen_ = ColorPens.GetBoldPen(Colors.DarkBlue);
         filteredOutBorderColor_ = ColorPens.GetBoldPen(Colors.Black);
