@@ -36,9 +36,6 @@ namespace IRExplorerCmd {
         public INameProvider NameProvider => throw new NotImplementedException();
         public ISectionStyleProvider SectionStyleProvider => throw new NotImplementedException();
         public IRRemarkProvider RemarkProvider => throw new NotImplementedException();
-        List ICompilerInfoProvider.BuiltinQueries => BuiltinQueries;
-        List ICompilerInfoProvider.BuiltinFunctionTasks => BuiltinFunctionTasks;
-        List ICompilerInfoProvider.ScriptFunctionTasks => ScriptFunctionTasks;
 
         public bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
             throw new NotImplementedException();
@@ -95,7 +92,15 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
-        public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() { };
+    Task<DebugFileSearchResult> ICompilerInfoProvider.FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options) {
+      throw new NotImplementedException();
+    }
+
+    Task<BinaryFileSearchResult> ICompilerInfoProvider.FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceOptions options) {
+      throw new NotImplementedException();
+    }
+
+    public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() { };
         public List<FunctionTaskDefinition> BuiltinFunctionTasks => throw new NotImplementedException();
         public List<FunctionTaskDefinition> ScriptFunctionTasks => throw new NotImplementedException();
         public string OpenFileFilter { get; }
@@ -111,7 +116,7 @@ namespace IRExplorerCmd {
 
         public ConsoleSession(ICompilerInfoProvider compilerInfo) {
             compilerInfo_ = compilerInfo;
-            sessionState_ = new SessionStateManager("", SessionKind.FileSession);
+            sessionState_ = new SessionStateManager("", SessionKind.FileSession, compilerInfo);
         }
 
         public bool LoadMainDocument(string path, bool useCache = true) {
@@ -135,10 +140,19 @@ namespace IRExplorerCmd {
         public ICompilerInfoProvider CompilerInfo => compilerInfo_;
         public bool IsInDiffMode => false;
         public bool IsInTwoDocumentsDiffMode => diffDocument_ != null;
+        public bool IsInTwoDocumentsMode {
+          get;
+        }
         public DiffModeInfo DiffModeInfo => null;
         public IRTextSummary MainDocumentSummary => mainDocument_?.Summary;
         public IRTextSummary DiffDocumentSummary => diffDocument_?.Summary;
         public ETWProfileDataProvider ProfileData => throw new NotImplementedException();
+        public Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> SetupNewSession(LoadedDocument mainDocument, List<LoadedDocument> otherDocuments) {
+          throw new NotImplementedException();
+        }
 
         public Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null) {
             var docInfo = sessionState_.FindLoadedDocument(section);
@@ -147,7 +161,7 @@ namespace IRExplorerCmd {
 
         public Task<List<string>> GetSectionOutputTextLinesAsync(IRPassOutput output, IRTextSection section) {
             var docInfo = sessionState_.FindLoadedDocument(section);
-            return Task.Run(() => docInfo.Loader.GetSectionOutputTextLines(output));
+            return Task.Run(() => docInfo.Loader.GetSectionPassOutputTextLines(output));
         }
 
         public Task<string> GetDocumentTextAsync(IRTextSummary summary) {
@@ -210,15 +224,75 @@ namespace IRExplorerCmd {
         public Task<bool> OpenSessionDocument(string filePath) {
             throw new NotImplementedException();
         }
+        public Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceOptions symbolOptions, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> LoadProfileData(RawProfileData data, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceOptions symbolOptions, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> FilterProfileSamples(ProfileSampleFilter filter) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> RemoveProfileSamplesFilter() {
+          throw new NotImplementedException();
+        }
+        public Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> SwitchActiveProfileFunction(ProfileCallTreeNode node) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> SelectProfileFunction(ProfileCallTreeNode node, ToolPanelKind panelKind) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> SelectProfileFunction(IRTextFunction node, ToolPanelKind panelKind) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> OpenProfileSourceFile(IRTextFunction function) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> ProfileSampleRangeDeselected() {
+          throw new NotImplementedException();
+        }
+        public Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node, ToolPanelKind sourcePanelKind) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> MarkProfileFunction(ProfileCallTreeNode node, ToolPanelKind sourcePanelKind, HighlightingStyle style) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> ProfileFunctionSelected(IRTextFunction function, ToolPanelKind sourcePanelKind) {
+          throw new NotImplementedException();
+        }
+        public Task<bool> ProfileFunctionDeselected() {
+          throw new NotImplementedException();
+        }
 
         public void PopulateBindMenu(IToolPanel panel, BindMenuItemsArgs args) {
             throw new NotImplementedException();
         }
 
+        Task ISession.ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document) {
+          throw new NotImplementedException();
+        }
         public void RegisterDetachedPanel(DraggablePopup panel) {
             throw new NotImplementedException();
         }
 
+        public Task SwitchActiveFunction(IRTextFunction function, bool handleProfiling = true) {
+          throw new NotImplementedException();
+        }
+        Task ISession.ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document) {
+          throw new NotImplementedException();
+        }
         public void ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document) {
             throw new NotImplementedException();
         }
@@ -233,6 +307,18 @@ namespace IRExplorerCmd {
 
         public void SavePanelState(object stateObject, IToolPanel panel, IRTextSection section, IRDocument document) {
             throw new NotImplementedException();
+        }
+        public void RedrawPanels(params ToolPanelKind[] kinds) {
+          throw new NotImplementedException();
+        }
+        public IToolPanel FindPanel(ToolPanelKind kind) {
+          throw new NotImplementedException();
+        }
+        public Task<IRDocumentHost> SwitchDocumentSectionAsync(OpenSectionEventArgs args) {
+          throw new NotImplementedException();
+        }
+        public Task<IRDocumentHost> OpenDocumentSectionAsync(OpenSectionEventArgs args) {
+          throw new NotImplementedException();
         }
 
         public Task<bool> SaveSessionDocument(string filePath) {
@@ -343,6 +429,9 @@ namespace IRExplorerCmd {
         }
 
         public void SetApplicationProgress(bool visible, double percentage, string title = null) {
+        }
+        public void UpdatePanelTitles() {
+          throw new NotImplementedException();
         }
 
         #endregion

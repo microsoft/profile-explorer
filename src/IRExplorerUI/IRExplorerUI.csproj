@@ -139,7 +139,6 @@
 		<ProjectReference Include="..\ClientServer\GrpcLib.csproj" />
 		<ProjectReference Include="..\external\TreeListView\TreeListView.csproj" />
 		<ProjectReference Include="..\IRExplorerCore\IRExplorerCore.csproj" />
-		<ProjectReference Include="..\IRExplorerLib\IRExplorerLib.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
