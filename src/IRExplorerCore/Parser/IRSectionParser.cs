@@ -1,44 +1,43 @@
 // Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-
 using System;
 using System.Collections.Generic;
 using IRExplorerCore.IR;
 using IRExplorerCore.Lexer;
 
-namespace IRExplorerCore {
-    public class IRParsingError {
-        public IRParsingError(TextLocation location, string error) {
-            Location = location;
-            Error = error;
-        }
+namespace IRExplorerCore;
 
-        public TextLocation Location { get; set; }
-        public string Error { get; set; }
+public interface IRParsingErrorHandler {
+  IRSectionParser Parser { get; set; }
+  bool HadParsingErrors { get; set; }
+  List<IRParsingError> ParsingErrors { get; }
 
-        public override string ToString() {
-            return Error;
-        }
-    }
+  bool HandleError(TextLocation location, TokenKind expectedToken, Token actualToken,
+                   string message = "");
+}
 
-    public interface IRParsingErrorHandler {
-        IRSectionParser Parser { get; set; }
-        bool HadParsingErrors { get; set; }
-        List<IRParsingError> ParsingErrors { get; }
+public interface IRSectionParser {
+  void SkipCurrentToken();
+  void SkipToLineEnd();
+  void SkipToLineStart();
+  void SkipToNextBlock();
+  void SkipToFunctionEnd();
 
-        bool HandleError(TextLocation location, TokenKind expectedToken, Token actualToken,
-                         string message = "");
-    }
+  FunctionIR ParseSection(IRTextSection section, string sectionText);
+  FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText);
+}
 
-    public interface IRSectionParser {
-        void SkipCurrentToken();
-        void SkipToLineEnd();
-        void SkipToLineStart();
-        void SkipToNextBlock();
-        void SkipToFunctionEnd();
+public class IRParsingError {
+  public IRParsingError(TextLocation location, string error) {
+    Location = location;
+    Error = error;
+  }
 
-        FunctionIR ParseSection(IRTextSection section, string sectionText);
-        FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText);
-    }
+  public TextLocation Location { get; set; }
+  public string Error { get; set; }
+
+  public override string ToString() {
+    return Error;
+  }
 }
