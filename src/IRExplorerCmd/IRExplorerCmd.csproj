@@ -5,6 +5,7 @@
 		<TargetFramework>net7.0</TargetFramework>
 		<StartupObject>IRExplorerCmd.Program</StartupObject>
 		<Platforms>AnyCPU;ARM64</Platforms>
+		<LangVersion>default</LangVersion>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
