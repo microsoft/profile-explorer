@@ -460,6 +460,7 @@ namespace IRExplorerUI {
             }
             
             //? TODO: Abstract parallel run chunks to take action per sample (ComputeFunctionProfile)
+            //? Look at SearchAsync in SectionTextSearcher.cs for an example
             for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
                 var (sample, stack) = profile.Samples[i];
 

@@ -261,8 +261,8 @@ namespace IRExplorerUI {
 
             // CreateDefaultSideBySidePanels();
             ShowDiffsControlsPanel();
-            UpdateUIAfterSectionSwitch(leftDocument.Section, leftDocument);
-            UpdateUIAfterSectionSwitch(rightDocument.Section, rightDocument);
+            await UpdateUIAfterSectionSwitch(leftDocument.Section, leftDocument);
+            await UpdateUIAfterSectionSwitch(rightDocument.Section, rightDocument);
             return true;
         }
 
@@ -677,11 +677,11 @@ namespace IRExplorerUI {
             await EnableDocumentDiffState(sessionState_.SectionDiffState);
 
             if (newLeftSection != null) {
-                UpdateUIAfterSectionSwitch(newLeftSection, leftDocument);
+                await UpdateUIAfterSectionSwitch(newLeftSection, leftDocument);
             }
 
             if (newRightSection != null) {
-                UpdateUIAfterSectionSwitch(newRightSection, rightDocument);
+                await UpdateUIAfterSectionSwitch(newRightSection, rightDocument);
             }
 
             await DiffDocuments(leftDocument.TextView, rightDocument.TextView,
@@ -732,7 +732,6 @@ namespace IRExplorerUI {
             ignoreDiffModeButtonEvent_ = true;
             DiffModeButton.IsChecked = state;
             ignoreDiffModeButtonEvent_ = false;
-            ;
         }
         private void UpdateDiffStatus(DiffStatistics stats) {
             string text = "";
@@ -893,7 +892,6 @@ namespace IRExplorerUI {
                 var currentSegment = diffResults.DiffSegments[index];
                 int currentLine = document.TextView.Document.GetLineByOffset(offset).LineNumber;
                 bool found = false;
-                ;
 
                 //? TODO: Should use binary search
                 while (index >= 0) {
@@ -942,7 +940,6 @@ namespace IRExplorerUI {
                 var currentSegment = diffResults.DiffSegments[index];
                 int currentLine = document.TextView.Document.GetLineByOffset(offset).LineNumber;
                 bool found = false;
-                ;
 
                 //? TODO: Should use binary search
                 while (index < diffResults.DiffSegments.Count) {

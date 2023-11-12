@@ -386,7 +386,7 @@ public sealed partial class ETWProfileDataProvider : IProfileDataProvider, IDisp
 
         bool trace = false;
         bool skip = false;
-        ;
+        
         //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
         //? for ex it never gets to main. Easy example is a quicksort impl
         for (; frameIndex < stackFrames.Length; frameIndex++) {

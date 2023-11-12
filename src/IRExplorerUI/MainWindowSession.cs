@@ -729,7 +729,7 @@ namespace IRExplorerUI {
                 document.LoadSectionMinimal(result);
                 NotifyPanelsOfSectionLoad(section, document, true);
                 SetupDocumentEvents(document);
-                UpdateUIAfterSectionSwitch(section, document);
+                await UpdateUIAfterSectionSwitch(section, document);
 
                 // Load both the document and generate graphs in parallel,
                 // since both can be fairly time-consuming for huge functions.
