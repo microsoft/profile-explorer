@@ -269,10 +269,6 @@ namespace IRExplorerUI {
         private double Height;
 
         public static implicit operator RectSurrogate(Rect rect) {
-            if (rect == null) {
-                return null;
-            }
-
             return new RectSurrogate {
                 Top = rect.Top,
                 Left = rect.Left,
@@ -292,10 +288,6 @@ namespace IRExplorerUI {
         private int Weight;
 
         public static implicit operator FontWeightSurrogate(FontWeight fontWeigth) {
-            if (fontWeigth == null) {
-                return null;
-            }
-
             return new FontWeightSurrogate {
                 Weight = fontWeigth.ToOpenTypeWeight()
             };

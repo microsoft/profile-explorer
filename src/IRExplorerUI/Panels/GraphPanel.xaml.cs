@@ -761,7 +761,6 @@ namespace IRExplorerUI {
             graphOptionsPanel_.PanelReset += OptionsPanel_PanelReset;
             graphOptionsPanel_.Settings = Settings.Clone();
             graphOptionsPanel_.IsOpen = true;
-            ;
             optionsPanelVisible_ = true;
         }
 

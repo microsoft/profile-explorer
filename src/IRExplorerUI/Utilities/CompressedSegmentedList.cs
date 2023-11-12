@@ -470,7 +470,7 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
         return GetEnumerator();
     }
 
-    public override bool Equals(object? obj) {
+    public override bool Equals(object obj) {
         return obj is CompressedSegmentedList<T> list &&
                EqualityComparer<List<Segment>>.Default.Equals(segments_, list.segments_) &&
                count_ == list.count_ &&
