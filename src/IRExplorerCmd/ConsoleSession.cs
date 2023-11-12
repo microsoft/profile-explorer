@@ -36,9 +36,18 @@ namespace IRExplorerCmd {
         public INameProvider NameProvider => throw new NotImplementedException();
         public ISectionStyleProvider SectionStyleProvider => throw new NotImplementedException();
         public IRRemarkProvider RemarkProvider => throw new NotImplementedException();
+        List ICompilerInfoProvider.BuiltinQueries => BuiltinQueries;
+        List ICompilerInfoProvider.BuiltinFunctionTasks => BuiltinFunctionTasks;
+        List ICompilerInfoProvider.ScriptFunctionTasks => ScriptFunctionTasks;
 
         public bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
             throw new NotImplementedException();
+        }
+        Task ICompilerInfoProvider.HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section) {
+          return HandleLoadedSection(document, function, section);
+        }
+        Task ICompilerInfoProvider.HandleLoadedDocument(LoadedDocument document, String modulePath) {
+          return default;
         }
 
         public Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section) {
@@ -54,6 +63,18 @@ namespace IRExplorerCmd {
 
         public IDiffOutputFilter CreateDiffOutputFilter() {
             throw new NotImplementedException();
+        }
+        public IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile) {
+          return null;
+        }
+        public Task FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceOptions options = null) {
+          return default;
+        }
+        public Task FindDebugInfoFile(String imagePath, SymbolFileSourceOptions options = null) {
+          return default;
+        }
+        public IDebugInfoProvider CreateDebugInfoProvider(String imagePath) {
+          return null;
         }
 
         public IDebugInfoProvider CreateDebugInfoProvider() {
