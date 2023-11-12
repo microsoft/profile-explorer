@@ -23,7 +23,6 @@ public class TupleIR : IRElement {
   public bool HasOddIndexInBlock => (IndexInBlock & 1) == 1;
   public bool HasEvenIndexInBlock => (IndexInBlock & 1) == 0;
   public TupleKind Kind { get; set; }
-
   public bool IsInstruction => Kind == TupleKind.Instruction;
   public bool IsLabel => Kind == TupleKind.Label;
   public bool IsException => Kind == TupleKind.Exception;

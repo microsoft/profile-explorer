@@ -18,12 +18,10 @@ public enum SymbolAnnotationKind {
 
 public sealed class SymbolAnnotationTag : ITag {
   public SymbolAnnotationKind Kind { get; set; }
-
   public bool HasVolatile => Kind.HasFlag(SymbolAnnotationKind.Volatile);
   public bool HasWritethrough => Kind.HasFlag(SymbolAnnotationKind.Writethrough);
   public bool HasCantMakeSDSU => Kind.HasFlag(SymbolAnnotationKind.CantMakeSDSU);
   public string Name => "Symbol annotation";
-
   public TaggedObject Owner { get; set; }
 
   public void AddKind(SymbolAnnotationKind kind) {
@@ -100,7 +98,6 @@ public sealed class InterferenceTag : ITag {
   public Dictionary<int, HashSet<int>> InterferingPasMap { get; }
   public Dictionary<int, List<string>> PasToSymMap { get; }
   public Dictionary<string, int> SymToPasMap { get; }
-
   public string Name => "Interference";
   public TaggedObject Owner { get; set; }
 

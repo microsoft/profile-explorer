@@ -25,7 +25,6 @@ public enum ReferenceKind {
 public interface IReachableReferenceFilter {
   public bool FilterDefinitions { get; set; }
   public bool FilterUses { get; set; }
-
   public bool AcceptReference(IRElement element, IRElement startElement);
   public bool AcceptDefinitionReference(IRElement element, IRElement startSourceElement);
   public bool AcceptUseReference(IRElement element, IRElement startDestElement);

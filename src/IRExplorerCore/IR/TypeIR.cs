@@ -30,25 +30,21 @@ public sealed class TypeIR {
   private static readonly TypeIR boolType_ = new TypeIR(TypeKind.Integer, 0);
   private static readonly TypeIR doubleType_ = new TypeIR(TypeKind.Float, 8);
   private static readonly TypeIR floatType_ = new TypeIR(TypeKind.Float, 4);
-
   private static readonly TypeIR[] signedIntTypes_ = {
     new TypeIR(TypeKind.Integer, 1, TypeFlags.SignedInt),
     new TypeIR(TypeKind.Integer, 2, TypeFlags.SignedInt),
     new TypeIR(TypeKind.Integer, 4, TypeFlags.SignedInt),
     new TypeIR(TypeKind.Integer, 8, TypeFlags.SignedInt)
   };
-
   private static readonly ConcurrentDictionary<TypeIR, TypeIR> uniqueTypes_ =
     new ConcurrentDictionary<TypeIR, TypeIR>();
   private static readonly TypeIR unknownType_ = new TypeIR(TypeKind.Unknown, 0);
-
   private static readonly TypeIR[] unsignedIntTypes_ = {
     new TypeIR(TypeKind.Integer, 1, TypeFlags.UnsignedInt),
     new TypeIR(TypeKind.Integer, 2, TypeFlags.UnsignedInt),
     new TypeIR(TypeKind.Integer, 4, TypeFlags.UnsignedInt),
     new TypeIR(TypeKind.Integer, 8, TypeFlags.UnsignedInt)
   };
-
   private static readonly TypeIR voidType_ = new TypeIR(TypeKind.Void, 0);
 
   private TypeIR(TypeKind kind, int size, TypeFlags flags = TypeFlags.None) {
@@ -58,17 +54,12 @@ public sealed class TypeIR {
   }
 
   public bool IsFloat => Kind == TypeKind.Float;
-
   public bool IsInt => Kind == TypeKind.Integer && Flags != TypeFlags.UnsignedInt;
-
   public bool IsInteger => Kind == TypeKind.Integer;
   public bool IsMultibyte => Kind == TypeKind.Multibyte;
-
   public bool IsUInt => Kind == TypeKind.Integer && Flags == TypeFlags.UnsignedInt;
-
   public bool IsUnknown => Kind == TypeKind.Unknown;
   public bool IsVoid => Kind == TypeKind.Void;
-
   private TypeFlags Flags { get; set; }
   private TypeKind Kind { get; set; }
   private int Size { get; set; }

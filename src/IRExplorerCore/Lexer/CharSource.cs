@@ -9,13 +9,11 @@ namespace IRExplorerCore.Lexer;
 public sealed class CharSource {
   public static readonly char EOF = '\0';
   public static readonly char NewLine = '\n';
-
   public ReadOnlyMemory<char> TextSpan {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get;
     private set;
   }
-
   public int Position {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get;

@@ -53,21 +53,18 @@ public struct Token : IEquatable<Token> {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set;
   }
-
   public TextLocation Location {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set;
   }
-
   public int Length {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set;
   }
-
   public ReadOnlyMemory<char> Data {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get;

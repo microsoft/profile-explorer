@@ -1,171 +1,178 @@
 ﻿<UserControl
-    x:Class="IRExplorerUI.Profile.ProfileListView"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
-    xmlns:local="clr-namespace:IRExplorerUI.Profile"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:system="clr-namespace:System;assembly=System.Runtime"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
-    mc:Ignorable="d">
-    <ListView
-        x:Name="ItemList"
-        Panel.ZIndex="1"
-        irExplorerUi:GridViewColumnVisibility.Enabled="True"
-        AlternationCount="2"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-        BorderBrush="{x:Null}"
-        BorderThickness="0,0,0,0"
-        SelectionChanged="ItemList_SelectionChanged"
-        VirtualizingStackPanel.IsVirtualizing="True"
-        VirtualizingStackPanel.VirtualizationMode="Recycling">
-        <ListView.View>
-            <GridView>
-                <GridViewColumn
-                    Width="24"
-                    irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowContextColumn}"
-                    CellTemplate="{StaticResource ExecutionContextTemplate}">
-                    <GridViewColumnHeader
-                        x:Name="ContextColumnHeader"
-                        Content="C"
-                        ToolTip="Execution context" />
-                </GridViewColumn>
+  x:Class="IRExplorerUI.Profile.ProfileListView"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  d:DesignHeight="450"
+  d:DesignWidth="800"
+  mc:Ignorable="d">
+  <ListView
+    x:Name="ItemList"
+    Panel.ZIndex="1"
+    irExplorerUi:GridViewColumnVisibility.Enabled="True"
+    AlternationCount="2"
+    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+    BorderBrush="{x:Null}"
+    BorderThickness="0,0,0,0"
+    SelectionChanged="ItemList_SelectionChanged"
+    VirtualizingStackPanel.IsVirtualizing="True"
+    VirtualizingStackPanel.VirtualizationMode="Recycling">
+    <ListView.View>
+      <GridView>
+        <GridViewColumn
+          Width="24"
+          irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowContextColumn}"
+          CellTemplate="{StaticResource ExecutionContextTemplate}">
+          <GridViewColumnHeader
+            x:Name="ContextColumnHeader"
+            Content="C"
+            ToolTip="Execution context" />
+        </GridViewColumn>
 
-                <GridViewColumn Width="250">
-                    <GridViewColumnHeader x:Name="FunctionColumnHeader" Content="{Binding NameColumnTitle}" />
-                    <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                            <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                    </GridViewColumn.HeaderContainerStyle>
-                    <GridViewColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel>
-                                <ContentPresenter Content="{Binding Name}" ToolTip="{Binding FunctionName}" />
-                                <ContentControl
-                                    HorizontalAlignment="Stretch"
-                                    Content="{Binding}"
-                                    ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
-                                    Visibility="{Binding Path=DataContext.ShowCombinedTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                <ContentControl
-                                    HorizontalAlignment="Stretch"
-                                    Content="{Binding}"
-                                    ContentTemplate="{StaticResource ProfilePercentageTemplate}"
-                                    Visibility="{Binding Path=DataContext.ShowTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                <ContentControl
-                                    HorizontalAlignment="Stretch"
-                                    Content="{Binding}"
-                                    ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}"
-                                    Visibility="{Binding Path=DataContext.ShowExclusiveTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </GridViewColumn.CellTemplate>
-                </GridViewColumn>
-
-                <GridViewColumn Width="120" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowModuleColumn}">
-                    <GridViewColumnHeader x:Name="ModuleColumnHeader" Content="Module" />
-                    <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                            <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                    </GridViewColumn.HeaderContainerStyle>
-                    <GridViewColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock
-                                Margin="1,0,0,0"
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Center"
-                                FontWeight="Medium"
-                                Text="{Binding Path=ModuleName}">
-                                <TextBlock.Style>
-                                    <Style TargetType="{x:Type TextBlock}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                                                <Setter Property="FontWeight" Value="Bold" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </DataTemplate>
-                    </GridViewColumn.CellTemplate>
-                </GridViewColumn>
-
-                <GridViewColumn Width="150" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowExclusiveTimeColumn}">
-                    <GridViewColumnHeader x:Name="ChildExclusiveTimeColumnHeader" Content="{Binding ExclusiveTimeColumnTitle}" />
-                    <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                            <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                    </GridViewColumn.HeaderContainerStyle>
-
-                    <GridViewColumn.CellTemplate>
-                        <DataTemplate>
-                            <ContentControl
-                                HorizontalAlignment="Stretch"
-                                Content="{Binding}"
-                                ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
-                        </DataTemplate>
-                    </GridViewColumn.CellTemplate>
-                </GridViewColumn>
-
-                <GridViewColumn Width="150" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowTimeColumn}">
-                    <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="{Binding TimeColumnTitle}" />
-
-                    <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                            <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                    </GridViewColumn.HeaderContainerStyle>
-
-                    <GridViewColumn.CellTemplate>
-                        <DataTemplate>
-                            <ContentControl
-                                HorizontalAlignment="Stretch"
-                                Content="{Binding}"
-                                ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
-                        </DataTemplate>
-                    </GridViewColumn.CellTemplate>
-                </GridViewColumn>
-
-                <GridViewColumn Width="180" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowCombinedTimeColumn}">
-                    <GridViewColumnHeader x:Name="ChildCombinedTimeColumnHeader" Content="{Binding TimeColumnTitle}" />
-                    <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                            <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                    </GridViewColumn.HeaderContainerStyle>
-
-                    <GridViewColumn.CellTemplate>
-                        <DataTemplate>
-                            <ContentControl
-                                HorizontalAlignment="Stretch"
-                                Content="{Binding}"
-                                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
-                        </DataTemplate>
-                    </GridViewColumn.CellTemplate>
-                </GridViewColumn>
-
-            </GridView>
-        </ListView.View>
-
-        <ListView.ItemContainerStyle>
-            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                <EventSetter Event="MouseDoubleClick" Handler="ItemList_MouseDoubleClick" />
-                <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-
-                <Style.Triggers>
-                    <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                    </Trigger>
-                    <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
-                    </Trigger>
-                </Style.Triggers>
+        <GridViewColumn Width="250">
+          <GridViewColumnHeader x:Name="FunctionColumnHeader" Content="{Binding NameColumnTitle}" />
+          <GridViewColumn.HeaderContainerStyle>
+            <Style TargetType="{x:Type GridViewColumnHeader}">
+              <Setter Property="HorizontalContentAlignment" Value="Left" />
             </Style>
-        </ListView.ItemContainerStyle>
-    </ListView>
+          </GridViewColumn.HeaderContainerStyle>
+          <GridViewColumn.CellTemplate>
+            <DataTemplate>
+              <StackPanel>
+                <ContentPresenter Content="{Binding Name}" ToolTip="{Binding FunctionName}" />
+                <ContentControl
+                  HorizontalAlignment="Stretch"
+                  Content="{Binding}"
+                  ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
+                  Visibility="{Binding Path=DataContext.ShowCombinedTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                <ContentControl
+                  HorizontalAlignment="Stretch"
+                  Content="{Binding}"
+                  ContentTemplate="{StaticResource ProfilePercentageTemplate}"
+                  Visibility="{Binding Path=DataContext.ShowTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                <ContentControl
+                  HorizontalAlignment="Stretch"
+                  Content="{Binding}"
+                  ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}"
+                  Visibility="{Binding Path=DataContext.ShowExclusiveTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
+              </StackPanel>
+            </DataTemplate>
+          </GridViewColumn.CellTemplate>
+        </GridViewColumn>
+
+        <GridViewColumn Width="120"
+                        irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowModuleColumn}">
+          <GridViewColumnHeader x:Name="ModuleColumnHeader" Content="Module" />
+          <GridViewColumn.HeaderContainerStyle>
+            <Style TargetType="{x:Type GridViewColumnHeader}">
+              <Setter Property="HorizontalContentAlignment" Value="Left" />
+            </Style>
+          </GridViewColumn.HeaderContainerStyle>
+          <GridViewColumn.CellTemplate>
+            <DataTemplate>
+              <TextBlock
+                Margin="1,0,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                FontWeight="Medium"
+                Text="{Binding Path=ModuleName}">
+                <TextBlock.Style>
+                  <Style TargetType="{x:Type TextBlock}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                        <Setter Property="FontWeight" Value="Bold" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </DataTemplate>
+          </GridViewColumn.CellTemplate>
+        </GridViewColumn>
+
+        <GridViewColumn Width="150"
+                        irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowExclusiveTimeColumn}">
+          <GridViewColumnHeader x:Name="ChildExclusiveTimeColumnHeader"
+                                Content="{Binding ExclusiveTimeColumnTitle}" />
+          <GridViewColumn.HeaderContainerStyle>
+            <Style TargetType="{x:Type GridViewColumnHeader}">
+              <Setter Property="HorizontalContentAlignment" Value="Left" />
+            </Style>
+          </GridViewColumn.HeaderContainerStyle>
+
+          <GridViewColumn.CellTemplate>
+            <DataTemplate>
+              <ContentControl
+                HorizontalAlignment="Stretch"
+                Content="{Binding}"
+                ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
+            </DataTemplate>
+          </GridViewColumn.CellTemplate>
+        </GridViewColumn>
+
+        <GridViewColumn Width="150"
+                        irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowTimeColumn}">
+          <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="{Binding TimeColumnTitle}" />
+
+          <GridViewColumn.HeaderContainerStyle>
+            <Style TargetType="{x:Type GridViewColumnHeader}">
+              <Setter Property="HorizontalContentAlignment" Value="Left" />
+            </Style>
+          </GridViewColumn.HeaderContainerStyle>
+
+          <GridViewColumn.CellTemplate>
+            <DataTemplate>
+              <ContentControl
+                HorizontalAlignment="Stretch"
+                Content="{Binding}"
+                ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
+            </DataTemplate>
+          </GridViewColumn.CellTemplate>
+        </GridViewColumn>
+
+        <GridViewColumn Width="180"
+                        irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowCombinedTimeColumn}">
+          <GridViewColumnHeader x:Name="ChildCombinedTimeColumnHeader"
+                                Content="{Binding TimeColumnTitle}" />
+          <GridViewColumn.HeaderContainerStyle>
+            <Style TargetType="{x:Type GridViewColumnHeader}">
+              <Setter Property="HorizontalContentAlignment" Value="Left" />
+            </Style>
+          </GridViewColumn.HeaderContainerStyle>
+
+          <GridViewColumn.CellTemplate>
+            <DataTemplate>
+              <ContentControl
+                HorizontalAlignment="Stretch"
+                Content="{Binding}"
+                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
+            </DataTemplate>
+          </GridViewColumn.CellTemplate>
+        </GridViewColumn>
+
+      </GridView>
+    </ListView.View>
+
+    <ListView.ItemContainerStyle>
+      <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+        <EventSetter Event="MouseDoubleClick" Handler="ItemList_MouseDoubleClick" />
+        <Setter Property="Background"
+                Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+
+        <Style.Triggers>
+          <Trigger Property="ItemsControl.AlternationIndex" Value="0">
+            <Setter Property="Background"
+                    Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+          </Trigger>
+          <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+            <Setter Property="Background"
+                    Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
+          </Trigger>
+        </Style.Triggers>
+      </Style>
+    </ListView.ItemContainerStyle>
+  </ListView>
 </UserControl>

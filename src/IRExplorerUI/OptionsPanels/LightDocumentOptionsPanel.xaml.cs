@@ -1,73 +1,64 @@
 // Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Xml;
 
-namespace IRExplorerUI.OptionsPanels {
-    public partial class LightDocumentOptionsPanel : OptionsPanelBase {
-        public const double DefaultHeight = 500;
-        public const double MinimumHeight = 300;
-        public const double DefaultWidth = 360;
-        public const double MinimumWidth = 360;
+namespace IRExplorerUI.OptionsPanels;
 
-        private DocumentSettings settings_;
+public partial class LightDocumentOptionsPanel : OptionsPanelBase {
+  public const double DefaultHeight = 500;
+  public const double MinimumHeight = 300;
+  public const double DefaultWidth = 360;
+  public const double MinimumWidth = 360;
+  private DocumentSettings settings_;
 
-        public LightDocumentOptionsPanel() {
-            InitializeComponent();
-            PreviewMouseUp += DocumentOptionsPanel_PreviewMouseUp;
-            PreviewKeyUp += DocumentOptionsPanel_PreviewKeyUp;
-        }
+  public LightDocumentOptionsPanel() {
+    InitializeComponent();
+    PreviewMouseUp += DocumentOptionsPanel_PreviewMouseUp;
+    PreviewKeyUp += DocumentOptionsPanel_PreviewKeyUp;
+  }
 
-        public override void Initialize(FrameworkElement parent) {
-            base.Initialize(parent);
-            settings_ = (DocumentSettings)Settings;
-        }
+  public bool SyntaxFileChanged { get; set; }
 
-        public override void OnSettingsChanged(object newSettings) {
-            settings_ = (DocumentSettings)newSettings;
-        }
+  public override void Initialize(FrameworkElement parent) {
+    base.Initialize(parent);
+    settings_ = (DocumentSettings)Settings;
+  }
 
-        public bool SyntaxFileChanged { get; set; }
+  public override void OnSettingsChanged(object newSettings) {
+    settings_ = (DocumentSettings)newSettings;
+  }
 
-        private void DocumentOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
-            NotifySettingsChanged();
-        }
+  public override void PanelClosing() {
+  }
 
-        private void DocumentOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-            NotifySettingsChanged();
-        }
+  public override void PanelResetting() {
+  }
 
-        private void NotifySettingsChanged() {
-            DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-                RaiseSettingsChanged(null);
-            });
-        }
+  private void DocumentOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
+    NotifySettingsChanged();
+  }
 
-        public override void PanelClosing() {
-            
-        }
+  private void DocumentOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
+    NotifySettingsChanged();
+  }
 
-        public override void PanelResetting() {
-        }
+  private void NotifySettingsChanged() {
+    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
+      RaiseSettingsChanged(null);
+    });
+  }
 
-        private class ColorPickerInfo {
-            public ColorPickerInfo(string name, Color value) {
-                Name = name;
-                Value = value;
-            }
-
-            public string Name { get; set; }
-            public Color Value { get; set; }
-        }
+  private class ColorPickerInfo {
+    public ColorPickerInfo(string name, Color value) {
+      Name = name;
+      Value = value;
     }
+
+    public string Name { get; set; }
+    public Color Value { get; set; }
+  }
 }

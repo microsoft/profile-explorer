@@ -11,7 +11,6 @@ public interface ISSAValue {
   int DefinitionId { get; set; }
   OperandIR DefinitionOperand { get; }
   TupleIR DefinitionTuple { get; }
-
   InstructionIR DefinitionInstruction { get; }
 }
 
@@ -25,11 +24,9 @@ public sealed class SSAUseTag : ITag, ISSAValue {
   public IRElement OwnerElement => (IRElement)Owner;
   public InstructionIR OwnerInstruction => OwnerElement.ParentInstruction;
   public int DefinitionId { get; set; }
-
   public OperandIR DefinitionOperand => Definition?.Owner as OperandIR;
   public TupleIR DefinitionTuple => DefinitionOperand.ParentTuple;
   public InstructionIR DefinitionInstruction => DefinitionTuple as InstructionIR;
-
   public string Name => "SSA use-definition link";
   public TaggedObject Owner { get; set; } // Source operand.
 
@@ -53,7 +50,6 @@ public sealed class SSADefinitionTag : ITag, ISSAValue {
   }
 
   public List<SSAUseTag> Users { get; }
-
   public bool HasUsers => Users.Count > 0;
   public bool HasSingleUser => Users.Count == 1;
   public IRElement OwnerElement => (IRElement)Owner;

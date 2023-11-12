@@ -11,8 +11,6 @@ using IRExplorerCore.Lexer;
 namespace IRExplorerCore.ASM;
 
 public sealed class ASMParser : ParserBase {
-  //? TODO: ILT+foo func names not parsed properly
-
   private static Dictionary<string, Keyword> keywordMap_ =
     new Dictionary<string, Keyword> {
       {"byte", Keyword.Byte},
@@ -36,6 +34,7 @@ public sealed class ASMParser : ParserBase {
     };
   private static readonly StringTrie<Keyword> keywordTrie_ = new StringTrie<Keyword>(keywordMap_);
 
+  //? TODO: ILT+foo func names not parsed properly
   private long functionSize_;
   private long? initialAddress_;
   private bool makeNewBlock_;

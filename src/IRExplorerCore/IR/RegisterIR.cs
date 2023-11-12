@@ -28,7 +28,6 @@ public sealed class RegisterIR {
   }
 
   public object Register { get; set; }
-
   public string Name { get; set; }
   public int BitOffset { get; set; }
   public int BitSize { get; set; }

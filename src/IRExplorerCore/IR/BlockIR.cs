@@ -27,7 +27,6 @@ public sealed class BlockIR : IRElement {
   public List<BlockIR> Predecessors { get; }
   public BlockLabelIR Label { get; set; }
   public FunctionIR Parent { get; set; }
-
   public bool IsEmpty => Tuples == null || Tuples.Count == 0;
 
   public bool IsBranchBlock {

@@ -96,7 +96,6 @@ public static class x86Opcodes {
       {"CALL", new x86OpcodeInfo(x86Opcode.CALL, InstructionKind.Call)},
       {"NOP", new x86OpcodeInfo(x86Opcode.NOP, InstructionKind.Other)}
     };
-
   private static readonly StringTrie<x86OpcodeInfo> opcodesTrie_ = new StringTrie<x86OpcodeInfo>(opcodes_);
 
   public static bool GetOpcodeInfo(string value, out x86OpcodeInfo info) {

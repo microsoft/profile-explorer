@@ -34,7 +34,6 @@ public class ParserBase {
 
   protected RegisterTable RegisterTable => registerTable_;
   protected AssemblyMetadataTag MetadataTag => metadataTag_ ??= new AssemblyMetadataTag();
-
   protected IRElementId NextElementId => nextElementId_;
 
   public bool IsDone() {

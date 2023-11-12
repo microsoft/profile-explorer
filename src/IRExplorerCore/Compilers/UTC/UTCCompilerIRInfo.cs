@@ -9,7 +9,6 @@ namespace IRExplorerCore.UTC;
 
 public sealed class UTCCompilerIRInfo : ICompilerIRInfo {
   public IRMode Mode { get; set; }
-
   public InstrOffsetData InstructionOffsetData => InstrOffsetData.PointsToNextInstr();
 
   public IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders) {

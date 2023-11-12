@@ -104,7 +104,6 @@ public class CompressedString : IEquatable<CompressedString> {
   }
 
   public int Size => data_.Length;
-
   public byte[] UniqueId => CompressionUtils.CreateSHA256(data_);
 
   public static bool operator ==(CompressedString left, CompressedString right) {

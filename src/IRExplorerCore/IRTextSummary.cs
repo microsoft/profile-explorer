@@ -22,7 +22,6 @@ public class IRTextSummary {
   }
 
   public delegate bool FunctionNameMatchDelegate(string name);
-
   public Guid Id { get; set; }
   public string ModuleName { get; private set; }
   public List<IRTextFunction> Functions { get; set; }

@@ -28,7 +28,6 @@ public sealed class Node {
   public double CenterY { get; set; }
   public double Width { get; set; }
   public double Height { get; set; }
-
   public TaggedObject Data { get; set; }
   public bool DataIsElement => Data is IRElement;
   public IRElement ElementData => Data as IRElement;

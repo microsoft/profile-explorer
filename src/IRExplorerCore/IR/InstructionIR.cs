@@ -35,7 +35,6 @@ public sealed class InstructionIR : TupleIR {
   public TextLocation OpcodeLocation { get; set; }
   public List<OperandIR> Sources { get; }
   public List<OperandIR> Destinations { get; }
-
   public bool IsUnary => Kind == InstructionKind.Unary;
   public bool IsBinary => Kind == InstructionKind.Binary;
   public bool IsBranch => Kind == InstructionKind.Branch;

@@ -26,7 +26,6 @@ public interface ICompilerIRInfo {
   OperandIR GetCallTarget(InstructionIR instr);
   OperandIR GetBranchTarget(InstructionIR instr);
   InstructionIR GetTransferInstruction(BlockIR block);
-
   bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck);
 }
 

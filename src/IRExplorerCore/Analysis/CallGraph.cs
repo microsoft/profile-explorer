@@ -64,7 +64,6 @@ public class CallGraphNode : TaggedObject {
   public List<CallSite> Callers { get; set; }
   public List<CallSite> Callees { get; set; }
   public CallGraphNodeFlags Flags { get; set; }
-
   public bool HasKnownTarget => Function != null;
   public bool HasCallers => Callers != null && Callers.Count > 0;
   public bool HasCallees => Callees != null && Callees.Count > 0;
@@ -227,7 +226,6 @@ public class CallGraph {
                                         CallGraph callGraph, List<IRTextFunction> targetFuncts);
 
   public event EventHandler<CallGraphEventArgs> CallGraphNodeCreated;
-
   public List<CallGraphNode> EntryFunctionNodes => entryNodes_;
   public List<CallGraphNode> FunctionNodes => nodes_;
 

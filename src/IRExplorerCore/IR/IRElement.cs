@@ -34,7 +34,6 @@ public class IRElement : TaggedObject {
   public ulong Id { get; set; }
   public TextLocation TextLocation { get; set; }
   public int TextLength { get; set; }
-
   public ulong BlockId => IRElementId.FromLong(Id).BlockId;
   public ulong TupleId => IRElementId.FromLong(Id).TupleId;
   public ulong OperandId => IRElementId.FromLong(Id).OperandId;

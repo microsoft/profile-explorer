@@ -23,7 +23,6 @@ public interface IRSectionParser {
   void SkipToLineStart();
   void SkipToNextBlock();
   void SkipToFunctionEnd();
-
   FunctionIR ParseSection(IRTextSection section, string sectionText);
   FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText);
 }

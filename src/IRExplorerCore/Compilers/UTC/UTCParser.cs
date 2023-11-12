@@ -4,7 +4,6 @@
 
 //? TODO: Switch to pool
 //#define USE_POOL
-
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -150,7 +149,6 @@ public sealed class UTCParser : ParserBase {
       {"offset", Keyword.Offset}
     };
   private static readonly StringTrie<Keyword> keywordTrie_ = new StringTrie<Keyword>(keywordMap_);
-
   private static readonly Dictionary<Keyword, TypeIR> keywordTypeMap_ =
     new Dictionary<Keyword, TypeIR> {
       {Keyword.Int8, TypeIR.GetInt8()},
@@ -166,12 +164,10 @@ public sealed class UTCParser : ParserBase {
       {Keyword.Void, TypeIR.GetVoid()},
       {Keyword.CC, TypeIR.GetBool()}
     };
-
   private static readonly TokenKind[] SkipOperandFlagsTokens = {
     TokenKind.Xor, TokenKind.Tilde,
     TokenKind.Exclamation, TokenKind.Minus
   };
-
   private static readonly TokenKind[] SkipToTypeTokens = {
     TokenKind.Dot, TokenKind.Comma, TokenKind.Colon,
     TokenKind.OpenParen, TokenKind.CloseParen,
@@ -180,18 +176,15 @@ public sealed class UTCParser : ParserBase {
     TokenKind.Hash, TokenKind.Identifier,
     TokenKind.LineEnd
   };
-
   private static readonly TokenKind[] SkipToNextOperandTokens = {
     TokenKind.Comma, TokenKind.Equal,
     TokenKind.OpenParen, TokenKind.CloseParen,
     TokenKind.Hash, TokenKind.LineEnd
   };
-
   private static readonly TokenKind[] NoSourceOperandsTokens = {
     TokenKind.OpenParen, TokenKind.Hash,
     TokenKind.Tilde, TokenKind.LineEnd
   };
-
   private Dictionary<string, BlockLabelIR> labelMap_;
   private Dictionary<int, string> lineMetadataMap_;
   private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;

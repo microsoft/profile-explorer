@@ -20,7 +20,6 @@ public sealed class Loop {
   public LoopKind Kind { get; set; }
   public int NestingLevel { get; set; }
   public Loop ParentLoop { get; set; }
-
   public HashSet<BlockIR> Blocks { get; set; }
 
   // public List<BlockIR> ExitBlocks { get; set; }

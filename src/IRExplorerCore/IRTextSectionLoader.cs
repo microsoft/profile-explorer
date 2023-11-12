@@ -21,7 +21,6 @@ public class ParsedIRTextSection {
   public FunctionIR Function { get; set; }
   public List<IRParsingError> ParsingErrors { get; set; }
   public bool IsCached { get; set; }
-
   public bool HadParsingErrors => ParsingErrors != null && ParsingErrors.Count > 0;
 
   public override string ToString() {
@@ -31,17 +30,13 @@ public class ParsedIRTextSection {
 
 public abstract class IRTextSectionLoader : IDisposable {
   private const int CACHE_LIMIT = 32;
-
   protected LurchTable<IRTextSection, ParsedIRTextSection> sectionCache_;
   protected ICompilerIRInfo irInfo_;
   protected bool cacheEnabled_;
   protected object lockObject_;
   protected long sectionPreprocessingCompleted_;
-
   public event EventHandler<bool> SectionPreprocessingCompleted;
-
   public bool SectionSignaturesComputed => Interlocked.Read(ref sectionPreprocessingCompleted_) != 0;
-
   public abstract IRTextSummary LoadDocument(ProgressInfoHandler progressHandler);
   public abstract string GetDocumentOutputText();
   public abstract byte[] GetDocumentTextBytes();

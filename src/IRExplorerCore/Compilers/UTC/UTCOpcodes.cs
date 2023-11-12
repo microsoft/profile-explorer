@@ -514,7 +514,6 @@ public static class UTCOpcodes {
         new UTCOpcodeInfo(UTCOpcode.OPVECTREDUCEXOR, InstructionKind.Unary)
       }
     };
-
   private static readonly StringTrie<UTCOpcodeInfo> opcodesTrie_ = new StringTrie<UTCOpcodeInfo>(opcodes_);
 
   public static bool GetOpcodeInfo(string value, out UTCOpcodeInfo info) {

@@ -19,7 +19,6 @@ public sealed class AssemblyMetadataTag : ITag {
   public Dictionary<IRElement, long> ElementToOffsetMap { get; set; }
   public Dictionary<IRElement, int> ElementSizeMap { get; set; }
   public long FunctionSize { get; set; }
-
   public string Name => "Address metadata";
   public TaggedObject Owner { get; set; }
 
