@@ -17,9 +17,7 @@ using Microsoft.Diagnostics.Tracing.Session;
 namespace IRExplorerUI.Profile;
 
 public sealed class ETWRecordingSession : IDisposable {
-  //private static readonly string ProfilerPath = "irexplorer_profiler.dll";
-  private static readonly string ProfilerPath = @"D:\DotNextMoscow2019\x64\Release\irexplorer_profiler.dll";
-  //private static readonly string ProfilerPath = @"D:\DotNextMoscow2019\x64\Debug\irexplorer_profiler.dll";
+  private static readonly string ProfilerPath = "irexplorer_profiler.dll";
   private static readonly string ProfilerGuid = "{805A308B-061C-47F3-9B30-F785C3186E81}";
   private TraceEventSession session_;
   private DiagnosticsClient diagClient_;
@@ -303,6 +301,7 @@ public sealed class ETWRecordingSession : IDisposable {
 
       if (options_.RecordDotNetAssembly) {
         try {
+          Trace.WriteLine("Start .NET profiler named pipe server");
           pipeServer_ = new ProfilerNamedPipeServer();
         }
         catch (Exception ex) {
@@ -350,6 +349,7 @@ public sealed class ETWRecordingSession : IDisposable {
       if (options_.ProfileDotNet && options_.RecordDotNetAssembly) {
         if (!SetupStartupDotNetProfiler(procInfo)) {
           Trace.TraceError("Failed to setup managed profiler");
+          return (null, 0);
         }
       }
 
