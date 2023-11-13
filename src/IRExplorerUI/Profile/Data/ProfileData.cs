@@ -153,7 +153,7 @@ public class ProfileData {
       var function = summary.GetFunctionWithId(pair.Key.FunctionNumber);
 
       if (function == null) {
-        Trace.TraceWarning($"No func for {pair.Value.SourceFilePath}");
+        Trace.TraceWarning($"No func for {pair.Key}");
         continue;
       }
 
@@ -274,7 +274,7 @@ public class ProfileData {
 
   public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function,
                                                         FunctionDebugInfo debugInfo) {
-    return FunctionProfiles.GetOrAdd(function, () => {
+    return FunctionProfiles.GetOrAdd(function, (key) => {
       return new FunctionProfileData {FunctionDebugInfo = debugInfo};
     });
   }
