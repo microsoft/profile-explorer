@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "ConsoleTester": {
-      "commandName": "Project",
-      "commandLineArgs": "C:\\test\\results2-avx.log"
-    }
-  }
-}
