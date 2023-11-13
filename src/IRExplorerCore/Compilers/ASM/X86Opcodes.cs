@@ -102,7 +102,6 @@ public static class x86Opcodes {
     return opcodesTrie_.TryGetValue(value, out info, true);
   }
 
-  //? TODO: Needs a TryGetValueUpper that does the value.ToUpper() on each letter
   public static bool GetOpcodeInfo(ReadOnlyMemory<char> value, out x86OpcodeInfo info) {
     return opcodesTrie_.TryGetValue(value, out info, true);
   }

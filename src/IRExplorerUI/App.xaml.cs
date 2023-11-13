@@ -540,7 +540,6 @@ public partial class App : Application {
     base.OnStartup(e);
 
     if (!Debugger.IsAttached) {
-      //? TODO: Disable UI only when the /automation arg is used
       SetupExceptionHandling();
     }
 

@@ -48,7 +48,6 @@ public class DebugSectionLoader : IRTextSectionLoader {
   }
 
   public void AddSection(IRTextSection section, string text) {
-    //? TODO: Compress on another thread
     Trace.TraceInformation($"Adding section {section.Name}, length {text.Length}");
     sectionTextMap_[section] = new CompressedString(text);
     lastSection_ = section;

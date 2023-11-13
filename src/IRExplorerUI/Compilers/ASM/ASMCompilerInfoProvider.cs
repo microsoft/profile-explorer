@@ -45,8 +45,6 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>();
 
   public virtual Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
-    //? TODO: This could assign the FunctionDebugInfo to each IRTextFunction
-    //? instead of attaching it to FunctionProfileData
     return Task.CompletedTask;
   }
 
@@ -141,15 +139,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
           options.InsertSymbolPath(imagePath);
         }
 
-        var result = await PDBDebugInfoProvider.LocateDebugInfoFile(info.SymbolFileInfo, options).ConfigureAwait(false);
-
-        if (result != null) {
-          return result;
-        }
-
-        //? TODO: Shouldn't be needed anymore
-        // Do a simple search otherwise.
-        return Utils.LocateDebugInfoFile(imagePath, ".pdb");
+        return await PDBDebugInfoProvider.LocateDebugInfoFile(info.SymbolFileInfo, options).ConfigureAwait(false);
       }
     }
 
@@ -176,7 +166,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     // Since the ASM blocks don't have a number in the text,
     // attach an overlay label next to the first instr. in the block.
     double overlayHeight = document.TextArea.TextView.DefaultLineHeight;
-    var options = ProfileDocumentMarkerOptions.Default; //? TODO: App.Settings...
+    var options = ProfileDocumentMarkerOptions.Default; //? TODO: Use App.Settings...
     var blockPen = ColorPens.GetPen(options.BlockOverlayBorderColor,
                                     options.BlockOverlayBorderThickness);
 

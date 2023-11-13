@@ -285,8 +285,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     callTreeEx_ = await Task.Run(() => CreateProfileCallTree());
     CallTree.Model = callTreeEx_;
 
-    if (true) {
-      //? TODO: Option
+    if (true) { //? TODO: Use option from UI settings
       ExpandHottestFunctionPath();
     }
   }
