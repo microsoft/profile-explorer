@@ -1,2 +1,0 @@
-set path=%path%;"C:\Program Files\7-Zip"
-7z.exe  -bt -mx8  a %1.7z %cd%\* -r -x!*.obj  -x!*.exe  -x!*.pdb  -x!*.log  -x!*.dll  -x!*.VC -x!*.vc  -x!*.obj  -x!*.msi  -x!*.lib -x!*.so  -x!*.dylib  -x!*.a -x!*.7z
