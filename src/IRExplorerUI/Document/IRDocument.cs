@@ -77,9 +77,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     DocumentActionKind.GoToDefinition
   };
   private Stack<ReversibleDocumentAction> actionUndoStack_;
-  private int automationActionIndex_;
-  private IRElement automationPrevElement_;
-  private int automationSelectedIndex_;
   private List<IRElement> blockElements_;
   private BlockBackgroundHighlighter blockHighlighter_;
   private BookmarkManager bookmarks_;
@@ -144,7 +141,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     highlighterVersion_ = new MarkerMarginVersionInfo();
 
     // Setup styles and colors.
-    //? TODO: Expose as option
+    //? TODO: Expose colors as option
     definitionStyle_ = new PairHighlightingStyle {
       ParentStyle = new HighlightingStyle(Color.FromRgb(255, 215, 191)),
       ChildStyle = new HighlightingStyle(Color.FromRgb(255, 197, 163), ColorPens.GetBoldPen(Colors.Black))
@@ -204,47 +201,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public void Initalize(DocumentSettings settings, ISession session) {
     Session = session;
     Settings = settings;
-  }
-
-  public bool NextAutomationAction() {
-    if (automationSelectedIndex_ >= operandElements_.Count) {
-      return false;
-    }
-
-    if (automationPrevElement_ == null || automationActionIndex_ == AutomationActions.Length) {
-      automationPrevElement_ = operandElements_[automationSelectedIndex_++];
-      automationActionIndex_ = 0;
-    }
-
-    if (automationPrevElement_ != null) {
-      if (automationActionIndex_ < AutomationActions.Length) {
-        var action = AutomationActions[automationActionIndex_++];
-
-        switch (action) {
-          case DocumentActionKind.SelectElement:
-          case DocumentActionKind.ShowReferences:
-          case DocumentActionKind.GoToDefinition: {
-            ExecuteDocumentAction(new DocumentAction(action, automationPrevElement_));
-
-            if (action == DocumentActionKind.SelectElement) {
-              BringElementIntoView(automationPrevElement_);
-            }
-
-            break;
-          }
-          case DocumentActionKind.MarkElement: {
-            ExecuteDocumentAction(new DocumentAction(action, automationPrevElement_,
-                                                     PickPairMarkerStyle()));
-
-            break;
-          }
-        }
-
-        return true;
-      }
-    }
-
-    return true;
   }
 
   public void BookmarkInfoChanged(Bookmark bookmark) {
@@ -1100,7 +1056,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   //        MarkLoopNest(nestedLoop, handledBlocks);
   //    }
 
-  //    var gr = new GraphRenderer(null); //? TODO: Remove
   //    HighlightedGroup group = null;
 
   //    foreach (var block in loop.Blocks) {
@@ -1879,7 +1834,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private PairHighlightingStyle GetReferenceStyle(Reference reference) {
-    //? TODO: Make single instance styles
+    //? TODO: Expose colors in settings
     return reference.Kind switch {
       ReferenceKind.Address => new PairHighlightingStyle {
         ChildStyle = new HighlightingStyle("#FF9090", ColorPens.GetBoldPen(Colors.DarkRed)),
@@ -2726,11 +2681,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
         }
       }
     }
-
-    //? TODO: Automation support.
-    automationSelectedIndex_ = 0;
-    automationActionIndex_ = 0;
-    automationPrevElement_ = null;
   }
 
   private void Margin__BookmarkChanged(object sender, Bookmark bookmark) {

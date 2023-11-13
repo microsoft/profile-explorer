@@ -11,8 +11,6 @@ using IRExplorerUI.Compilers;
 namespace IRExplorerUI.Profile;
 
 public sealed class ModuleInfo {
-  //? TODO: Needed only for inlinee samples
-  public Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
   private ISession session_;
   private BinaryFileDescriptor binaryInfo_;
   private List<FunctionDebugInfo> sortedFuncList_;
@@ -95,8 +93,6 @@ public sealed class ModuleInfo {
 
     if (HasDebugInfo) {
       HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
-      //? TODO: Not thread safe, heap corruption from Undname
-      // BuildUnmangledFunctionNameMap();
     }
     else {
       Trace.TraceWarning($"Failed to load debug info: {ModuleDocument.DebugInfoFile}");
@@ -215,17 +211,6 @@ public sealed class ModuleInfo {
     //    Trace.WriteLine($"  {pair.Key:X}, RVA {pair.Value.Name}");
     //}
 #endif
-
-    return true;
-  }
-
-  private bool BuildUnmangledFunctionNameMap() {
-    unmangledFuncNamesMap_ = new Dictionary<string, IRTextFunction>(Summary.Functions.Count);
-
-    foreach (var function in Summary.Functions) {
-      string unmangledName = PDBDebugInfoProvider.DemangleFunctionName(function.Name);
-      unmangledFuncNamesMap_[unmangledName] = function;
-    }
 
     return true;
   }

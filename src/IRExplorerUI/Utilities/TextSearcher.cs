@@ -147,9 +147,7 @@ public class TextSearcher {
 
   private static Regex CreateRegex(string pattern, TextSearchKind searchKind) {
     try {
-      //? TODO: Regex should also honor the IgnoreCase/WholeWord flags
-      //? TODO: Check if compiled regex is faster (should be...)
-      var options = RegexOptions.None;
+      var options = RegexOptions.Compiled;
 
       if (searchKind.HasFlag(TextSearchKind.CaseInsensitive)) {
         options |= RegexOptions.IgnoreCase;
@@ -181,7 +179,7 @@ public class TextSearcher {
         }
       }
       catch (Exception ex) {
-        //? TODO: Handle invalid regex
+        //? TODO: Handle invalid regex, report in UI
         Debug.WriteLine($"Failed regex text search: {ex}");
       }
     }

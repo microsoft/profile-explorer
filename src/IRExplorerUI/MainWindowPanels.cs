@@ -962,8 +962,6 @@ public partial class MainWindow : Window, ISession {
       SectionPanel.DiffTitle = sessionState_.DiffDocument.ModuleName;
     }
 
-    //? TODO: not neeeded await SectionPanel.Update();
-
     if (sessionState_.IsInTwoDocumentsDiffMode) {
       await ShowSectionPanelDiffs(sessionState_.DiffDocument);
     }
@@ -1137,7 +1135,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void ShowPanelMenuClicked(object sender, RoutedEventArgs e) {
-    //? TODO: Panel hosts must be found at runtime because of deserialization
+    // Panel hosts must be found at runtime because of deserialization.
     LayoutAnchorable panelHost = null;
 
     switch (((MenuItem)sender).Tag) {

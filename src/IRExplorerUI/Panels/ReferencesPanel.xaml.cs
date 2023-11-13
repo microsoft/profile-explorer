@@ -39,7 +39,8 @@ public class ReferenceSummary {
 }
 
 public class ReferenceInfo {
-  //? TODO: Should match editor font
+  //? TODO: Should match editor font, not be hardcoded
+  //? Needs to listen to DocumentSettings event change to update font used too
   private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
   private OperandIR operand_;
   private string documentText_;

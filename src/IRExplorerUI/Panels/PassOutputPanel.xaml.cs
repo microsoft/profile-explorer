@@ -107,7 +107,6 @@ public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged 
     }
   }
 
-  //? TODO: Use Document?.Section
   public IRTextSection Section { get; set; }
 
   public bool SearchPanelVisible {

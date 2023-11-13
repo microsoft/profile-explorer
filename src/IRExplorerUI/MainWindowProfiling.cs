@@ -142,11 +142,7 @@ public partial class MainWindow : Window, ISession {
       await panel.LoadSourceFile(function.Sections[0]);
     }
 
-    //? TODO: Option to also open new document if there is no active document.
-    if (FindActiveDocumentHost() != null) {
-      await OpenProfileFunction(function, OpenSectionKind.ReplaceCurrent);
-    }
-
+    await OpenProfileFunction(function, OpenSectionKind.ReplaceCurrent);
     return true;
   }
 
@@ -207,7 +203,6 @@ public partial class MainWindow : Window, ISession {
 
         break;
       }
-      //? TODO: Source panel once button in Summary added
       default: {
         throw new InvalidOperationException();
       }
@@ -220,7 +215,7 @@ public partial class MainWindow : Window, ISession {
     using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
 
     //? TODO: If an event fires during the call tree/sample filtering,
-    //? either ignore it or better ruin it after the filtering is done
+    //? either ignore it or better run it after the filtering is done
     if (ProfileData.CallTree == null) {
       return false;
     }
@@ -242,7 +237,7 @@ public partial class MainWindow : Window, ISession {
     using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
 
     //? TODO: If an event fires during the call tree/sample filtering,
-    //? either ignore it or better ruin it after the filtering is done
+    //? either ignore it or better run it after the filtering is done
     if (ProfileData.CallTree == null) {
       return false;
     }
@@ -250,7 +245,7 @@ public partial class MainWindow : Window, ISession {
     var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
 
     if (panel != null) {
-      //? TODO: Select only samples included only in this call node,
+      //? TODO: Select only samples included in this call node,
       //? right now selects any instance of the func
       await SelectFunctionSamples(node, panel);
     }

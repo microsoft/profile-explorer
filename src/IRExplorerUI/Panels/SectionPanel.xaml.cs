@@ -75,7 +75,7 @@ public enum ModuleFieldKind {
   Time
 }
 
-//? TODo; Commands can be defined in code-behind with this pattern,
+//? TODo; Commands can be defined in code-behind with the RelayCommand pattern,
 //? will remove this and a lot of other Xaml code
 // https://www.c-sharpcorner.com/UploadFile/20c06b/icommand-and-relaycommand-in-wpf/
 // https://stackoverflow.com/questions/19573380/pass-different-commandparameters-to-same-command-using-relaycommand-wpf
@@ -1382,7 +1382,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   public void AddCountersFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "",
                                              double columnWidth = double.NaN) {
-    //? TODO: to remove, check tag is counter type
     var counters = Session.ProfileData.SortedPerformanceCounters;
 
     for (int i = 0; i < counters.Count; i++) {
@@ -1549,6 +1548,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     var markerOptions = ProfileDocumentMarkerOptions.Default;
     bool counterColumnsAdded = false;
 
+    //? TODO: Can be expensive, multithread and async
     foreach (var funcEx in functions) {
       var funcProfile = profile.GetFunctionProfile(funcEx.Function);
 
@@ -1563,7 +1563,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         funcEx.Weight = funcProfile.Weight;
         funcEx.BackColor2 = markerOptions.PickBrushForPercentage(percentage);
 
-        //? TODO: Can be expensive, do in background
         if (funcProfile.HasPerformanceCounters) {
           var counters = funcProfile.ComputeFunctionTotalCounters();
           funcEx.Counters = new PerformanceCounterSetEx(counters.Count);
@@ -1905,7 +1904,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
 
     // Don't filter with less than 2 letters.
-    //? TODO: FunctionFilter change should rather set a property with the trimmed text
     string text = FunctionFilter.Text.Trim();
 
     if (text.Length < 2) {
@@ -2169,7 +2167,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     //? TODO: Pass the LoadedDocument to the panel, not Summary.
     var loader = Session.SessionState.FindLoadedDocument(Summary).Loader;
     var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
-    var cancelableTask = new CancelableTask(); //? TODO: Fix
+    var cancelableTask = new CancelableTask();
     var results = await diffBuilder.AreSectionsDifferent(comparedSections, loader, loader,
                                                          Session.CompilerInfo, true, cancelableTask);
 
@@ -2214,15 +2212,11 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private async void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
     var newSettings = (SectionSettings)optionsPanelWindow_.Settings;
     await HandleNewSettings(newSettings, false);
-    optionsPanelWindow_.Settings = null;
     optionsPanelWindow_.Settings = settings_.Clone();
   }
 
   private async void OptionsPanel_PanelReset(object sender, EventArgs e) {
     await HandleNewSettings(new SectionSettings(), true);
-
-    //? TODO: Setting to null should be part of OptionsPanelBase and remove it in all places
-    optionsPanelWindow_.Settings = null;
     optionsPanelWindow_.Settings = settings_.Clone();
   }
 
@@ -2782,7 +2776,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
 
     if (IsDiffModeEnabled && function.ParentSummary == otherSummary_) {
-      //? TODO: Add name mapping
+      //? TODO: Add name mapping using dictionary
       foreach (var pair in functionExtMap_) {
         if (pair.Key.Name == function.Name) {
           return pair.Value;
@@ -2835,7 +2829,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     FunctionList.ScrollIntoView(FunctionList.SelectedItem);
     RefreshSectionList();
 
-    //? TODO: A way to switch between the two modes?
     if (handleProfiling && profileControlsVisible_ && Session.ProfileData != null) {
       var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 

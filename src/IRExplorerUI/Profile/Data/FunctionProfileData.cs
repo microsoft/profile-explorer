@@ -14,15 +14,12 @@ namespace IRExplorerUI.Profile;
 
 [ProtoContract(SkipConstructor = true)]
 public class FunctionProfileData {
-  //? TODO
-  //? - save unique stacks with inclusive samples for each frame
+  //? TODO: save unique stacks with inclusive samples for each frame
 
   public FunctionProfileData() {
     InitializeReferenceMembers();
   }
 
-  [ProtoMember(1)]
-  public string SourceFilePath { get; set; } //? TODO: Remove, unused
   [ProtoMember(2)]
   public TimeSpan Weight { get; set; }
   [ProtoMember(3)]

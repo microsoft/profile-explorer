@@ -850,7 +850,6 @@ public partial class MainWindow : Window, ISession {
 
   private async void DiffOptionsPanel_PanelReset(object sender, EventArgs e) {
     var newSettings = new DiffSettings();
-    diffOptionsPanelHost_.Settings = null;
     diffOptionsPanelHost_.Settings = newSettings;
     await HandleNewDiffSettings(newSettings, true);
   }
@@ -863,7 +862,6 @@ public partial class MainWindow : Window, ISession {
 
       // It's possible that the options panel closes before the async method returns.
       if (diffOptionsPanelHost_ != null) {
-        diffOptionsPanelHost_.Settings = null;
         diffOptionsPanelHost_.Settings = newSettings.Clone();
       }
     }
@@ -905,8 +903,9 @@ public partial class MainWindow : Window, ISession {
       return;
     }
 
-    //? TODO: Diff segments from left/right must be combined and sorted by offset
-    //? TODO: This is almost identical to the next case
+    //? TODO: Diff segments from left/right should be combined and sorted by offset,
+    //? right now considers only diff doc on right side.
+    //? TODO: Code here is almost identical to the next case segment case below.
     var diffResults = sessionState_.SectionDiffState.RightDiffResults;
     var document = sessionState_.SectionDiffState.RightDocument;
 
@@ -953,8 +952,9 @@ public partial class MainWindow : Window, ISession {
       return;
     }
 
-    // TODO: Diff segments from left/right must be combined and sorted by offset
-    // TODO: When next/prev segment is needed, start from the current carret offset
+    //? TODO: Diff segments from left/right should be combined and sorted by offset,
+    //? right now considers only diff doc on right side.
+    //? TODO: Code here is almost identical to the next case segment case below.
     var diffResults = sessionState_.SectionDiffState.RightDiffResults;
     var document = sessionState_.SectionDiffState.RightDocument;
 
