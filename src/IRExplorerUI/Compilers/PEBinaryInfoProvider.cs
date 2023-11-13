@@ -249,7 +249,6 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     byte[] copy = new byte[array.Length];
     array.CopyTo(copy);
     return copy;
-    //? TODO: return Unsafe.As<byte[]>(array);
   }
 
   public void Dispose() {

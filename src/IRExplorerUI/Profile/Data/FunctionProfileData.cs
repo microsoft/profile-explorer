@@ -68,8 +68,6 @@ public class FunctionProfileData {
     }
   }
 
-  //? TODO: Dead
-
   public double ScaleWeight(TimeSpan weight) {
     return weight.Ticks / (double)Weight.Ticks;
   }

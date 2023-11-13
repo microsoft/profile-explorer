@@ -9,13 +9,15 @@ namespace IRExplorerUI.Compilers.Default;
 
 public sealed class DefaultSectionStyleProvider : ISectionStyleProvider {
   private List<MarkedSectionName> sectionNameMarkers_;
+  private ICompilerInfoProvider compilerInfo_;
 
-  public DefaultSectionStyleProvider() {
+  public DefaultSectionStyleProvider(ICompilerInfoProvider compilerInfo) {
+    compilerInfo_ = compilerInfo;
     sectionNameMarkers_ = new List<MarkedSectionName>();
     LoadSettings();
   }
 
-  public string SettingsFilePath => App.GetSectionsDefinitionFilePath("utc");
+  public string SettingsFilePath => App.GetSectionsDefinitionFilePath(compilerInfo_.CompilerIRName);
 
   public bool IsMarkedSection(IRTextSection section, out MarkedSectionName result) {
     foreach (var nameMarker in sectionNameMarkers_) {
@@ -31,7 +33,7 @@ public sealed class DefaultSectionStyleProvider : ISectionStyleProvider {
 
   public bool LoadSettings() {
     var serializer = new SectionStyleProviderSerializer();
-    string settingsPath = App.GetSectionsDefinitionFilePath("utc");
+    string settingsPath = App.GetSectionsDefinitionFilePath(compilerInfo_.CompilerIRName);
 
     if (settingsPath == null) {
       return false;

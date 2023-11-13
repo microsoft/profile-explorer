@@ -130,7 +130,6 @@
 		<PackageReference Include="OxyPlot.SkiaSharp.Wpf" Version="2.1.2"/>
 		<PackageReference Include="OxyPlot.Wpf" Version="2.1.2"/>
 		<PackageReference Include="protobuf-net" Version="3.0.101"/>
-		<PackageReference Include="RangeTree" Version="3.0.1"/>
 		<PackageReference Include="System.IO" Version="4.3.0"/>
 		<PackageReference Include="HtmlAgilityPack" Version="1.11.42"/>
 	</ItemGroup>

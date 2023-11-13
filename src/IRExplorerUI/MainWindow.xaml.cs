@@ -81,22 +81,6 @@ public static class AppCommand {
     new RoutedUICommand("Untitled", "ShowProfileCallGraph", typeof(Window));
 }
 
-public class DummyWindowAutomationPeer : FrameworkElementAutomationPeer {
-  public DummyWindowAutomationPeer(FrameworkElement owner) : base(owner) { }
-
-  protected override string GetNameCore() {
-    return "CustomWindowAutomationPeer";
-  }
-
-  protected override AutomationControlType GetAutomationControlTypeCore() {
-    return AutomationControlType.Window;
-  }
-
-  protected override List<AutomationPeer> GetChildrenCore() {
-    return new List<AutomationPeer>();
-  }
-}
-
 public partial class MainWindow : Window, ISession {
   private LayoutDocumentPane activeDocumentPanel_;
   private AssemblyMetadataTag addressTag_;
@@ -110,7 +94,6 @@ public partial class MainWindow : Window, ISession {
   private Dictionary<ToolPanelKind, List<PanelHostInfo>> panelHostSet_;
   private IRTextSection previousDebugSection_;
   private SessionStateManager sessionState_;
-  private bool sideBySidePanelsCreated_;
   private DispatcherTimer updateTimer_;
   private List<DraggablePopup> detachedPanels_;
   private Point previousWindowPosition_;
@@ -198,10 +181,6 @@ public partial class MainWindow : Window, ISession {
 
   public Task SwitchActiveFunction(IRTextFunction function, bool handleProfiling = true) {
     return SectionPanel.SelectFunction(function, handleProfiling);
-  }
-
-  protected override AutomationPeer OnCreateAutomationPeer() {
-    return new DummyWindowAutomationPeer(this);
   }
 
   protected override void OnSourceInitialized(EventArgs e) {
@@ -755,47 +734,6 @@ public partial class MainWindow : Window, ISession {
 
   private async void MenuItem_Click_1(object sender, RoutedEventArgs e) {
     await EndSession();
-  }
-
-  private void CreateDefaultSideBySidePanels() {
-    if (sessionState_ == null) {
-      //? TODO: Avoid this by disabling UI
-      return; // Session not started yet.
-    }
-
-    Trace.TraceInformation("Creating default side-by-side panels");
-
-    if (sideBySidePanelsCreated_) {
-      return;
-    }
-
-    if (!PickLeftRightDocuments(out var leftDocument, out var rightDocument)) {
-    }
-
-    //var rightGraphPanel = FindActivePanel<GraphPanel>(ToolPanelKind.FlowGraph);
-    //var leftGraphPanel = CreateNewPanel<GraphPanel>(ToolPanelKind.FlowGraph);
-    //var panelHost = AddNewPanel(leftGraphPanel);
-    //panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Most);
-    //LeftPanelGroup.Children.Insert(0, new LayoutAnchorablePane(panelHost.Host));
-    //leftGraphPanel.Width = LeftPanelGroup.DockWidth.Value;
-    //panelHost.Host.IsVisible = true;
-    //leftGraphPanel.BoundDocument = leftDocument.TextView;
-    //rightGraphPanel.BoundDocument = rightDocument.TextView;
-    //leftGraphPanel.InitializeFromDocument(leftDocument.TextView);
-    //rightGraphPanel.InitializeFromDocument(rightDocument.TextView);
-    //await GenerateGraphs(leftDocument.Section, leftDocument.TextView);
-    //await GenerateGraphs(rightDocument.Section, rightDocument.TextView);
-    //var rightRefPanel = FindActivePanel<ReferencesPanel>(ToolPanelKind.References);
-    //var leftRefPanel = CreateNewPanel<ReferencesPanel>(ToolPanelKind.References);
-    //DisplayNewPanel(leftRefPanel, rightRefPanel, DuplicatePanelKind.NewSetDockedLeft);
-    //leftRefPanel.BoundDocument = leftDocument.TextView;
-    //rightRefPanel.BoundDocument = rightDocument.TextView;
-    //leftRefPanel.InitializeFromDocument(leftDocument.TextView);
-    //rightRefPanel.InitializeFromDocument(rightDocument.TextView);
-    //FindPanelHost(rightRefPanel).Host.IsSelected = true;
-    //FindPanelHost(leftRefPanel).Host.IsSelected = true;
-    //RenameAllPanels();
-    //sideBySidePanelsCreated_ = true;
   }
 
   private void OptionalStatusText_MouseDown(object sender, MouseButtonEventArgs e) {
