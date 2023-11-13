@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "IRExplorerCmd": {
-      "commandName": "Project",
-      "commandLineArgs": "d:\\diff\\base\\gopt\\master.amd64\\gvn.gvn9.asm d:\\diff\\diff\\gopt\\diffs.amd64\\gvn.gvn9.asm -script C:\\test\\irx-compare.cs -out gvn9"
-    }
-  }
-}
