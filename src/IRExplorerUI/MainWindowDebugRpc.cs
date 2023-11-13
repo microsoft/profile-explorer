@@ -340,11 +340,6 @@ public partial class MainWindow : Window, ISession {
 
       if (index != -1) {
         string line = text.Substring(startIndex, index - startIndex + 1);
-
-        if (line.StartsWith("ENTRY")) {
-          //? return UTCSectionReader.ExtractFunctionName(line);
-        }
-
         startIndex = index + 1;
       }
       else {
