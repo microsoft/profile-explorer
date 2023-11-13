@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "RLDiffViewer": {
-      "commandName": "Project",
-      "commandLineArgs": "D:\\diff\\base D:\\diff\\diff D:\\diff\\report.csv amd64"
-    }
-  }
-}

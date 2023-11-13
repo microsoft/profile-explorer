@@ -422,10 +422,6 @@
 
             <MenuItem Header="IR Kind">
               <MenuItem
-                Name="UTCMenuItem"
-                Click="UTCMenuItem_Click"
-                Header="UTC" />
-              <MenuItem
                 Name="LLVMMenuItem"
                 Click="LLVMMenuItem_Click"
                 Header="LLVM" />

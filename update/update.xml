@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <item>
-    <version>0.7.0.0</version>
-    <url>https://irexplorer.blob.core.windows.net/app/versions/ir_explorer_0_7_0.zip</url>
-    <changelog>https://irexplorer.blob.core.windows.net/app/release_notes.html</changelog>
+    <version>1.0.0.0</version>
+    <url>https://path/to/irexplorer_versionN.zip</url>
+    <changelog>https://path/to/irexplorer_release_notes.html</changelog>
     <mandatory>false</mandatory>
 </item>

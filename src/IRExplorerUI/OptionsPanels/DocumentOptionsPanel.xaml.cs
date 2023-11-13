@@ -261,8 +261,8 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
     }
 
     filePath ??= App.GetSyntaxHighlightingFilePath(selectedSyntaxFile_);
-    var utcStyle = ApplySyntaxHighlightingStyles(filePath);
-    PopulateSyntaxHighlightingColorPickers(utcStyle);
+    var compilerStyle = ApplySyntaxHighlightingStyles(filePath);
+    PopulateSyntaxHighlightingColorPickers(compilerStyle);
     SyntaxHighlightingPanel.Visibility = Visibility.Visible;
     SyntaxEditButton.IsChecked = true;
     syntaxEditPanelVisible_ = true;

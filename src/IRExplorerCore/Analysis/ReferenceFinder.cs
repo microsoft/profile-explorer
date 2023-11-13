@@ -143,7 +143,6 @@ public sealed class ReferenceFinder {
 
   //? TODO: Should be moved to the SimilarValueFinder
   public IRElement FindEquivalentValue(IRElement element, bool onlySSA = false) {
-    //? TODO: Handle t100 -> tv100 changes in UTC IR
     //? by querying an IR-level interface for "equivalent symbols"
     if (element.ParentFunction == function_) {
       return element;

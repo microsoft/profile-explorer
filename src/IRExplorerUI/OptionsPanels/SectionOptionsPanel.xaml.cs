@@ -36,7 +36,7 @@ public partial class SectionOptionsPanel : OptionsPanelBase {
   }
 
   private void EditButton_Click(object sender, RoutedEventArgs e) {
-    string settingsPath = App.GetSectionsDefinitionFilePath("utc");
+    string settingsPath = App.GetSectionsDefinitionFilePath(compilerInfo_.CompilerIRName);
     App.LaunchSettingsFileEditor(settingsPath);
   }
 

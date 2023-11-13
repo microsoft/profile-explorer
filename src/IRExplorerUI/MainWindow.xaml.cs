@@ -26,7 +26,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Compilers.LLVM;
-using IRExplorerUI.Compilers.UTC;
+using IRExplorerUI.Compilers.Default;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Scripting;
@@ -942,10 +942,6 @@ public partial class MainWindow : Window, ISession {
     await SwitchCompilerTarget("LLVM");
   }
 
-  private async void UTCMenuItem_Click(object sender, RoutedEventArgs e) {
-    await SwitchCompilerTarget("UTC");
-  }
-
   private async void ASMMenuItem_Click(object sender, RoutedEventArgs e) {
     await SwitchCompilerTarget("ASM", IRMode.x86_64);
   }
@@ -966,18 +962,11 @@ public partial class MainWindow : Window, ISession {
     if (!string.IsNullOrEmpty(App.Settings.DefaultCompilerIR)) {
       await SwitchCompilerTarget(App.Settings.DefaultCompilerIR, App.Settings.DefaultIRMode);
     }
-    else {
-      await SwitchCompilerTarget("UTC");
-    }
   }
 
   private async Task SwitchCompilerTarget(string name, IRMode irMode = IRMode.Default) {
     //? TODO: Use a list of registered IRs
     switch (name) {
-      case "UTC": {
-        await SwitchCompilerTarget(new UTCCompilerInfoProvider(this));
-        break;
-      }
       case "LLVM": {
         await SwitchCompilerTarget(new LLVMCompilerInfoProvider());
         break;
@@ -991,7 +980,7 @@ public partial class MainWindow : Window, ISession {
         break;
       }
       default: {
-        await SwitchCompilerTarget(new UTCCompilerInfoProvider(this));
+        await SwitchCompilerTarget(new ASMCompilerInfoProvider(irMode, this));
         break;
       }
     }

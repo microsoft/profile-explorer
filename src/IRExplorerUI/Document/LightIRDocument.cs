@@ -13,7 +13,6 @@ using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
-using IRExplorerCore.Utilities;
 using IRExplorerUI.Document;
 using TextLocation = IRExplorerCore.TextLocation;
 
@@ -21,27 +20,6 @@ using TextLocation = IRExplorerCore.TextLocation;
 // that one should be ignored if in the scroll bar bounds. GraphPanel does thats
 
 namespace IRExplorerUI;
-
-public class RemarkTag : ITag {
-  public RemarkTag() {
-    Remarks = new List<Remark>();
-  }
-
-  public List<Remark> Remarks { get; }
-  public string Name => "Remark tag";
-  public TaggedObject Owner { get; set; }
-
-  public override string ToString() {
-    var builder = new StringBuilder();
-    builder.AppendLine($"remarks count: {Remarks.Count}");
-
-    foreach (var remark in Remarks) {
-      builder.Append($"  o {remark}".Indent(4));
-    }
-
-    return builder.ToString();
-  }
-}
 
 public sealed class LightIRDocument : TextEditor {
   private ElementHighlighter elementMarker_;
