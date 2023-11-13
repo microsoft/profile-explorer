@@ -922,21 +922,16 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
       try {
         procProfile.ImageFileName = proc.MainWindowTitle;
-        bool isnet = false;
 
-        //? TODO: Extremely slow
+        //? TODO: Detecting .NET procs is extremely slow done like below
+        // bool isnet = false;
         //foreach (var mod in proc.Modules) {
-
         //    if (mod is ProcessModule module &&
         //        module.ModuleName.Contains("mscor", StringComparison.OrdinalIgnoreCase)) {
         //        isnet = true;
         //        break;
         //    }
         //}
-
-        if (isnet) {
-          Trace.WriteLine($".NET proc: {proc.ProcessName}");
-        }
       }
       catch (Exception ex) {
         Trace.WriteLine($"Failed to get proc title {proc.ProcessName}: {ex.Message}");

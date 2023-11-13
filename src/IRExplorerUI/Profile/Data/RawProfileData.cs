@@ -13,12 +13,10 @@ using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
 
-//? TODO Perf
-//? - use chunked list for samples and stack
-//? - use chunked dict?
-//? - compress stacks?
+//? TODO Perf improvements ideas
 //? - Per-process stacks and samples, reduces dict pressure
 //?     - also removes need to have ProcessId in sample
+//? - Check .NET 8 frozen collections
 
 [ProtoContract(SkipConstructor = true)]
 public class RawProfileData : IDisposable {

@@ -98,8 +98,10 @@ public partial class SearcheableIRDocument : UserControl, INotifyPropertyChanged
       }
       else {
         //? TODO: Should rather be an assert
+#if DEBUG
         MessageBox.Show("SearchText without searchPanelVisible_, attach debugger");
         Utils.WaitForDebugger();
+#endif
         return;
       }
     }

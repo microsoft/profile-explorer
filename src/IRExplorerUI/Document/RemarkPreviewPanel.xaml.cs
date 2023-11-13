@@ -591,7 +591,7 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
           previousOffset += searchText.Length;
 
           newInlines.Add(new Run(searchText) {
-            Background = ColorBrushes.GetBrush(Colors.Khaki) //? TODO: Customize
+            Background = ColorBrushes.GetBrush(Colors.Khaki) //? TODO: Customize from UI
           });
         }
 
