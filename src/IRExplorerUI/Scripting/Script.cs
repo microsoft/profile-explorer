@@ -18,7 +18,7 @@ public class Script {
                 "using System.Windows.Media;",
                 "using IRExplorerCore;", "using IRExplorerCore.IR;",
                 "using IRExplorerCore.Analysis;",
-                "using IRExplorerCore.UTC;", "using IRExplorerUI;",
+                "using IRExplorerUI;",
                 "using IRExplorerUI.Scripting;",
                 "public class Script {",
                 "    public bool Execute(ScriptSession s) {",

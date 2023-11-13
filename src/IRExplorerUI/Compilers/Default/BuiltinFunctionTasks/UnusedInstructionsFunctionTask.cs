@@ -10,7 +10,7 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerUI.Query;
 
-namespace IRExplorerUI.Compilers.UTC;
+namespace IRExplorerUI.Compilers.Default;
 
 class UnusedInstructionsTaskOptions : IFunctionTaskOptions {
   public UnusedInstructionsTaskOptions() {

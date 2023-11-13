@@ -11,7 +11,7 @@ using IRExplorerCore.IR;
 using IRExplorerUI.Diff;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Query;
-using IRExplorerUI.UTC;
+using IRExplorerUI.Compilers.Default;
 
 namespace IRExplorerUI.Compilers.ASM;
 
@@ -21,12 +21,12 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   private readonly ISession session_;
   private readonly ASMNameProvider names_ = new ASMNameProvider();
   private readonly DummySectionStyleProvider styles_ = new DummySectionStyleProvider();
-  private readonly UTCRemarkProvider remarks_;
+  private readonly DefaultRemarkProvider remarks_;
   private readonly ASMCompilerIRInfo ir_;
 
   public ASMCompilerInfoProvider(IRMode mode, ISession session) {
     session_ = session;
-    remarks_ = new UTCRemarkProvider(this);
+    remarks_ = new DefaultRemarkProvider(this);
     ir_ = new ASMCompilerIRInfo(mode);
   }
 

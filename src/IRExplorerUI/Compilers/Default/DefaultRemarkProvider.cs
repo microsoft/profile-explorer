@@ -10,31 +10,10 @@ using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
-using IRExplorerCore.UTC;
 
-namespace IRExplorerUI.UTC;
+namespace IRExplorerUI.Compilers.Default;
 
-public class UTCRemarkParser {
-  public static string ExtractVN(IRElement element) {
-    var tag = element.GetTag<RemarkTag>();
-
-    if (tag == null) {
-      return null;
-    }
-
-    foreach (var remark in tag.Remarks) {
-      if (remark.RemarkText.StartsWith("VN ")) {
-        string[] tokens = remark.RemarkText.Split(' ', ':');
-        string number = tokens[1];
-        return number;
-      }
-    }
-
-    return null;
-  }
-}
-
-public sealed class UTCRemarkProvider : IRRemarkProvider {
+public sealed class DefaultRemarkProvider : IRRemarkProvider {
   private const string MetadataStartString = "/// irx:";
   private const string RemarkContextStartString = "context_start";
   private const string RemarkContextEndString = "context_end";
@@ -45,7 +24,7 @@ public sealed class UTCRemarkProvider : IRRemarkProvider {
   private RemarkCategory defaultCategory_;
   private bool settingsLoaded_;
 
-  public UTCRemarkProvider(ICompilerInfoProvider compilerInfo) {
+  public DefaultRemarkProvider(ICompilerInfoProvider compilerInfo) {
     compilerInfo_ = compilerInfo;
     categories_ = new List<RemarkCategory>();
     boundaries_ = new List<RemarkSectionBoundary>();
@@ -53,7 +32,7 @@ public sealed class UTCRemarkProvider : IRRemarkProvider {
     settingsLoaded_ = LoadSettings();
   }
 
-  public string SettingsFilePath => App.GetRemarksDefinitionFilePath("utc");
+  public string SettingsFilePath => App.GetRemarksDefinitionFilePath(compilerInfo_.CompilerIRName);
 
   public List<RemarkCategory> RemarkCategories {
     get {
@@ -119,7 +98,7 @@ public sealed class UTCRemarkProvider : IRRemarkProvider {
     }
 
     var serializer = new RemarksDefinitionSerializer();
-    string settingsPath = App.GetRemarksDefinitionFilePath("utc");
+    string settingsPath = SettingsFilePath;
 
     if (settingsPath == null) {
       return false;
@@ -129,7 +108,7 @@ public sealed class UTCRemarkProvider : IRRemarkProvider {
                          out categories_,
                          out boundaries_,
                          out highlighting_)) {
-      Trace.TraceError("Failed to load UTCRemarkProvider data");
+      Trace.TraceError("Failed to load RemarkProvider data");
       return false;
     }
 
@@ -250,124 +229,122 @@ public sealed class UTCRemarkProvider : IRRemarkProvider {
     var similarValueFinder = new SimilarValueFinder(function);
     var refFinder = new ReferenceFinder(function, compilerInfo_.IR);
 
-    //? TODO: Extract "block N" as a block reference, at least
-
     // The split lines don't include the endline, but considering
     // the \r \n is needed to get the proper document offset.
     int newLineLength = Environment.NewLine.Length;
     int lineStartOffset = 0;
-    var lineParser = UTCParser.CreateRemarkParser();
-    var parser = UTCParser.CreateRemarkParser();
+    var lineParser = compilerInfo_.IR.CreateSectionParser(null);
+    var parser = compilerInfo_.IR.CreateSectionParser(null);
 
     //? TODO: For many lines, must be split in chunks and parallelized,
     //? it can take 5-7s even on 30-40k instruction functs, which is not that uncommon...
-    for (int i = 0; i < lines.Count; i++) {
-      if (cancelableTask.IsCanceled) {
-        return;
-      }
-
-      int index = 0;
-      string line = lines[i];
-
-      if (line.StartsWith(MetadataStartString, StringComparison.Ordinal)) {
-        if (HandleMetadata(line, i, state)) {
-          lineStartOffset += line.Length + newLineLength;
-          continue;
-        }
-      }
-
-      while (index < line.Length) {
-        // Find next chunk delimited by whitespace.
-        if (index > 0) {
-          int next = line.IndexOf(' ', index);
-
-          if (next != -1) {
-            index = next + 1;
-          }
-        }
-
-        // Skip all whitespace.
-        while (index < line.Length && char.IsWhiteSpace(line[index])) {
-          index++;
-        }
-
-        if (index == line.Length) {
-          break;
-        }
-
-        lineParser.Initialize(line.AsMemory(index));
-        var tuple = lineParser.ParseTuple(fakeBlock);
-
-        if (tuple is InstructionIR instr) {
-          var similarInstr = similarValueFinder.Find(instr);
-
-          if (similarInstr != null) {
-            var remarkLocation = new TextLocation(lineStartOffset, i, 0);
-
-            var location = new TextLocation(
-              instr.TextLocation.Offset + index + lineStartOffset, i, 0);
-
-            instr.TextLocation = location; // Set actual location in output text.
-
-            var remarkKind = FindRemarkKind(line, true);
-            var remark = new Remark(remarkKind, section, line.Trim(), line,
-                                    remarkLocation, true);
-            remark.ReferencedElements.Add(similarInstr);
-            remark.OutputElements.Add(instr);
-            remarks.Add(remark);
-            state.AttachToCurrentContext(remark);
-
-            index += instr.TextLength;
-            continue;
-          }
-          //? return pool
-        }
-
-        index++;
-      }
-
-      // Extract remarks mentioning only operands, not whole instructions.
-      //? TODO: If an operand is part of an instruction that was already matched
-      //? by a remark, don't include the operand anymore if it's the same remark text
-      if (!options.FindOperandRemarks) {
-        lineStartOffset += line.Length + newLineLength;
-        continue;
-      }
-
-      parser.Initialize(line);
-
-      while (!parser.IsDone()) {
-        var op = parser.ParseOperand(fakeTuple, false, false, true);
-
-        if (op != null) {
-          var value = refFinder.FindEquivalentValue(op, true);
-
-          if (value == null) {
-            parser.ReturnObject(op);
-            continue;
-          }
-
-          if (op.TextLocation.Line < lines.Count) {
-            var location = new TextLocation(op.TextLocation.Offset + lineStartOffset, i, 0);
-            op.TextLocation = location; // Set actual location in output text.
-
-            var remarkLocation = new TextLocation(lineStartOffset, i, 0);
-            var remarkKind = FindRemarkKind(line, false);
-            var remark = new Remark(remarkKind, section, line.Trim(), line,
-                                    remarkLocation, false);
-            remark.ReferencedElements.Add(value);
-            remark.OutputElements.Add(op);
-            remarks.Add(remark);
-            state.AttachToCurrentContext(remark);
-          }
-        }
-        else {
-          parser.SkipCurrentToken();
-        }
-      }
-
-      lineStartOffset += line.Length + newLineLength;
-    }
+    // for (int i = 0; i < lines.Count; i++) {
+    //   if (cancelableTask.IsCanceled) {
+    //     return;
+    //   }
+    //
+    //   int index = 0;
+    //   string line = lines[i];
+    //
+    //   if (line.StartsWith(MetadataStartString, StringComparison.Ordinal)) {
+    //     if (HandleMetadata(line, i, state)) {
+    //       lineStartOffset += line.Length + newLineLength;
+    //       continue;
+    //     }
+    //   }
+    //
+    //   while (index < line.Length) {
+    //     // Find next chunk delimited by whitespace.
+    //     if (index > 0) {
+    //       int next = line.IndexOf(' ', index);
+    //
+    //       if (next != -1) {
+    //         index = next + 1;
+    //       }
+    //     }
+    //
+    //     // Skip all whitespace.
+    //     while (index < line.Length && char.IsWhiteSpace(line[index])) {
+    //       index++;
+    //     }
+    //
+    //     if (index == line.Length) {
+    //       break;
+    //     }
+    //
+    //     lineParser.Initialize(line.AsMemory(index));
+    //     var tuple = lineParser.ParseTuple(fakeBlock);
+    //
+    //     if (tuple is InstructionIR instr) {
+    //       var similarInstr = similarValueFinder.Find(instr);
+    //
+    //       if (similarInstr != null) {
+    //         var remarkLocation = new TextLocation(lineStartOffset, i, 0);
+    //
+    //         var location = new TextLocation(
+    //           instr.TextLocation.Offset + index + lineStartOffset, i, 0);
+    //
+    //         instr.TextLocation = location; // Set actual location in output text.
+    //
+    //         var remarkKind = FindRemarkKind(line, true);
+    //         var remark = new Remark(remarkKind, section, line.Trim(), line,
+    //                                 remarkLocation, true);
+    //         remark.ReferencedElements.Add(similarInstr);
+    //         remark.OutputElements.Add(instr);
+    //         remarks.Add(remark);
+    //         state.AttachToCurrentContext(remark);
+    //
+    //         index += instr.TextLength;
+    //         continue;
+    //       }
+    //       //? return pool
+    //     }
+    //
+    //     index++;
+    //   }
+    //
+    //   // Extract remarks mentioning only operands, not whole instructions.
+    //   //? TODO: If an operand is part of an instruction that was already matched
+    //   //? by a remark, don't include the operand anymore if it's the same remark text
+    //   if (!options.FindOperandRemarks) {
+    //     lineStartOffset += line.Length + newLineLength;
+    //     continue;
+    //   }
+    //
+    //   parser.Initialize(line);
+    //
+    //   while (!parser.IsDone()) {
+    //     var op = parser.ParseOperand(fakeTuple, false, false, true);
+    //
+    //     if (op != null) {
+    //       var value = refFinder.FindEquivalentValue(op, true);
+    //
+    //       if (value == null) {
+    //         parser.ReturnObject(op);
+    //         continue;
+    //       }
+    //
+    //       if (op.TextLocation.Line < lines.Count) {
+    //         var location = new TextLocation(op.TextLocation.Offset + lineStartOffset, i, 0);
+    //         op.TextLocation = location; // Set actual location in output text.
+    //
+    //         var remarkLocation = new TextLocation(lineStartOffset, i, 0);
+    //         var remarkKind = FindRemarkKind(line, false);
+    //         var remark = new Remark(remarkKind, section, line.Trim(), line,
+    //                                 remarkLocation, false);
+    //         remark.ReferencedElements.Add(value);
+    //         remark.OutputElements.Add(op);
+    //         remarks.Add(remark);
+    //         state.AttachToCurrentContext(remark);
+    //       }
+    //     }
+    //     else {
+    //       parser.SkipCurrentToken();
+    //     }
+    //   }
+    //
+    //   lineStartOffset += line.Length + newLineLength;
+    // }
   }
 
   private bool HandleMetadata(string line, int lineNumber, RemarkContextState state) {

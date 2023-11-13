@@ -58,15 +58,5 @@ namespace IRExplorerUI.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] UTCSyntaxHighlighting {
-            get {
-                object obj = ResourceManager.GetObject("UTCSyntaxHighlighting", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
     }
 }

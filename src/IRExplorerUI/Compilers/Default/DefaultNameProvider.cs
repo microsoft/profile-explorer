@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 
-namespace IRExplorerUI.UTC;
+namespace IRExplorerUI.Compilers.Default;
 
 public enum FilteredSectionNameKind {
   TrimPrefix,
@@ -28,12 +28,12 @@ public class FilteredSectionName {
   public FilteredSectionNameKind FilterKind { get; set; }
 }
 
-public sealed class UTCNameProvider : INameProvider {
+public sealed class DefaultNameProvider : INameProvider {
   private static List<FilteredSectionName> sectionNameFilters_;
   private static ConcurrentDictionary<string, string> demangledNameMap_;
   private static ConcurrentDictionary<string, string> functionNameMap_;
 
-  static UTCNameProvider() {
+  static DefaultNameProvider() {
     demangledNameMap_ = new ConcurrentDictionary<string, string>();
     functionNameMap_ = new ConcurrentDictionary<string, string>();
     sectionNameFilters_ = new List<FilteredSectionName>();

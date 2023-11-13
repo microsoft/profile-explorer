@@ -5,12 +5,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using IRExplorerCore;
 
-namespace IRExplorerUI.UTC;
+namespace IRExplorerUI.Compilers.Default;
 
-public sealed class UTCSectionStyleProvider : ISectionStyleProvider {
+public sealed class DefaultSectionStyleProvider : ISectionStyleProvider {
   private List<MarkedSectionName> sectionNameMarkers_;
 
-  public UTCSectionStyleProvider() {
+  public DefaultSectionStyleProvider() {
     sectionNameMarkers_ = new List<MarkedSectionName>();
     LoadSettings();
   }
@@ -38,7 +38,7 @@ public sealed class UTCSectionStyleProvider : ISectionStyleProvider {
     }
 
     if (!serializer.Load(settingsPath, out sectionNameMarkers_)) {
-      Trace.TraceError("Failed to load UTCSectionStyleProvider data");
+      Trace.TraceError("Failed to load SectionStyleProvider data");
       return false;
     }
 

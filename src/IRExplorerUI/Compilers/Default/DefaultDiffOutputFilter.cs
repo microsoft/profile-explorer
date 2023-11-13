@@ -4,12 +4,11 @@
 using System;
 using DiffPlex.DiffBuilder.Model;
 using IRExplorerCore;
-using IRExplorerCore.UTC;
 using IRExplorerUI.Diff;
 
-namespace IRExplorerUI.UTC;
+namespace IRExplorerUI.Compilers.Default;
 
-public sealed class UTCDiffOutputFilter : IDiffOutputFilter {
+public sealed class DefaultDiffOutputFilter : IDiffOutputFilter {
   private DiffSettings settings_;
   private ICompilerIRInfo compilerInfo_;
   public char[] IgnoredDiffLetters => new[] {
@@ -59,21 +58,9 @@ public sealed class UTCDiffOutputFilter : IDiffOutputFilter {
         return DiffKind.MinorModification;
       }
     }
-    else if (IsEquivSymbolNumber(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeLineText) &&
-             IsEquivSymbolNumber(afterText, afterLeftStopIndex, afterRightStopIndex, afterLineText)) {
-      return DiffKind.MinorModification;
-    }
-    else if (IsEHRegionAnnotation(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeLineText) &&
-             IsEHRegionAnnotation(afterText, afterLeftStopIndex, afterRightStopIndex, afterLineText)) {
-      return DiffKind.MinorModification;
-    }
     else if (IsCommentText(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeLineText) ||
              IsCommentText(afterText, afterLeftStopIndex, afterRightStopIndex, afterLineText)) {
-      //? TODO: Doesn't always mark line numbers, and for calls it can mark
-      //? diffs after the opcode as comments for OPCALL(#ID) ...
-      return !beforeLineText.Contains("OPCALL", StringComparison.Ordinal) &&
-             !afterLineText.Contains("OPCALL", StringComparison.Ordinal) ?
-        DiffKind.MinorModification : DiffKind.Modification;
+      return DiffKind.MinorModification;
     }
 
     return DiffKind.Modification;
@@ -84,8 +71,7 @@ public sealed class UTCDiffOutputFilter : IDiffOutputFilter {
     string text = ExpandDiff(change.Text, lineOffset, lineText,
                              out int leftStopIndex, out int rightStopIndex);
 
-    if (IsTemporaryVariable(text, out int _) ||
-        UTCOpcodes.IsOpcode(text)) {
+    if (IsTemporaryVariable(text, out int _)) {
       // Enlarge diff marking to cover entire variable/opcode.
       int lineStartOffset = documentOffset - lineOffset;
       return new AdjustedDiffPiece(lineStartOffset + leftStopIndex, text.Length);
@@ -113,10 +99,8 @@ public sealed class UTCDiffOutputFilter : IDiffOutputFilter {
     var name = text.AsSpan();
     int prefixLength = 0;
 
-    if (name.StartsWith("tv".AsSpan()) || name.StartsWith("hv".AsSpan())) {
-      prefixLength = 2;
-    }
-    else if (name.StartsWith("t".AsSpan())) {
+    //? TODO: Should query ICompilerInfo instead of hardcoding this.
+    if (name.StartsWith("t".AsSpan())) {
       prefixLength = 1;
     }
     else {
@@ -171,33 +155,6 @@ public sealed class UTCDiffOutputFilter : IDiffOutputFilter {
       rightStopIndex -= !char.IsDigit(lineText[rightStopIndex]) ? 1 : 0;
       string defNumber = lineText.Substring(leftStopIndex, rightStopIndex - leftStopIndex + 1);
       return int.TryParse(defNumber, out int _);
-    }
-
-    return false;
-  }
-
-  private bool IsEquivSymbolNumber(string text, int leftStopIndex, int rightStopIndex, string lineText) {
-    if (!IsNumber(text)) {
-      return false;
-    }
-
-    if (leftStopIndex > 0) {
-      return lineText[leftStopIndex - 1] == ':';
-    }
-
-    return true;
-  }
-
-  private bool IsEHRegionAnnotation(string text, int leftStopIndex, int rightStopIndex, string lineText) {
-    if (leftStopIndex != 0) {
-      return false;
-    }
-
-    switch (text) {
-      case "":
-      case "r": {
-        return true;
-      }
     }
 
     return false;

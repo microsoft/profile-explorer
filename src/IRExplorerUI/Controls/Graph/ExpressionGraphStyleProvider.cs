@@ -4,7 +4,6 @@
 using System.Windows.Media;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
-using IRExplorerCore.UTC;
 
 namespace IRExplorerUI;
 
@@ -160,18 +159,18 @@ public sealed class ExpressionGraphStyleProvider : IGraphStyleProvider {
     }
 
     // Mark edges of PHIs with values incoming from loops.
-    var sourceInstr = edge.NodeTo.ElementData.ParentInstruction;
+    // var sourceInstr = edge.NodeTo.ElementData.ParentInstruction;
 
-    if (sourceInstr != null && sourceInstr.OpcodeIs(UTCOpcode.OPPHI)) {
-      var sourceBlock = sourceInstr.ParentBlock;
-      var destBlock = edge.NodeFrom.ElementData.ParentBlock;
-
-      if (destBlock != null) {
-        if (destBlock.Number >= sourceBlock.Number) {
-          return GraphEdgeKind.Loop;
-        }
-      }
-    }
+    // if (sourceInstr != null && sourceInstr.OpcodeIs(PHI)) {
+    //   var sourceBlock = sourceInstr.ParentBlock;
+    //   var destBlock = edge.NodeFrom.ElementData.ParentBlock;
+    //
+    //   if (destBlock != null) {
+    //     if (destBlock.Number >= sourceBlock.Number) {
+    //       return GraphEdgeKind.Loop;
+    //     }
+    //   }
+    // }
 
     return GraphEdgeKind.Default;
   }

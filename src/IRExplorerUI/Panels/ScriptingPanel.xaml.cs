@@ -56,7 +56,7 @@ public partial class ScriptingPanel : ToolPanelControl {
                 "using System.Windows.Media;",
                 "using IRExplorerCore;", "using IRExplorerCore.IR;",
                 "using IRExplorerCore.Analysis;",
-                "using IRExplorerCore.UTC;", "using IRExplorerUI;",
+                "using IRExplorerUI;",
                 "using IRExplorerUI.Scripting;",
                 "\n",
                 "public class Script {",

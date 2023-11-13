@@ -5,15 +5,16 @@ using System.Collections.Generic;
 using System.Windows.Media;
 using IRExplorerCore.IR;
 using IRExplorerUI.Query;
-using IRExplorerUI.UTC;
+using IRExplorerUI.Compilers.Default;
 
-namespace IRExplorerUI.Compilers.UTC;
+namespace IRExplorerUI.Compilers.Default;
 
-public class UTCValueNumberQuery : IElementQuery {
+public class ValueNumberQuery : IElementQuery {
+  private static readonly string ValueNumberPrefix = "vn ";
   public ISession Session { get; private set; }
 
   public static QueryDefinition GetDefinition() {
-    var query = new QueryDefinition(typeof(UTCValueNumberQuery), "Value Numbers",
+    var query = new QueryDefinition(typeof(ValueNumberQuery), "Value Numbers",
                                     "Details about values with SSA info");
     query.Data.AddInput("Operand", QueryValueKind.Element);
     query.Data.AddInput("Consider only dominated values", QueryValueKind.Bool);
@@ -30,7 +31,7 @@ public class UTCValueNumberQuery : IElementQuery {
   public bool Execute(QueryData data) {
     data.ResetResults();
     var element = data.GetInput<IRElement>("Operand");
-    string vn = UTCRemarkParser.ExtractVN(element);
+    string vn = DefaultRemarkParser.ExtractValueNumber(element, ValueNumberPrefix);
 
     if (vn == null) {
       return true;
@@ -40,7 +41,7 @@ public class UTCValueNumberQuery : IElementQuery {
     var sameVNInstrs = new HashSet<InstructionIR>();
 
     func.ForEachInstruction(instr => {
-      string instrVN = UTCRemarkParser.ExtractVN(instr);
+      string instrVN = DefaultRemarkParser.ExtractValueNumber(instr, ValueNumberPrefix);
 
       if (instrVN == vn) {
         sameVNInstrs.Add(instr);

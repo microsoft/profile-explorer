@@ -8,22 +8,22 @@ using IRExplorerCore.IR;
 using IRExplorerCore.LLVM;
 using IRExplorerUI.Diff;
 using IRExplorerUI.Query;
-using IRExplorerUI.UTC;
+using IRExplorerUI.Compilers.Default;
 
 namespace IRExplorerUI.Compilers.LLVM;
 
 public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
   private LLVMCompilerIRInfo ir_;
   private ISession session_;
-  private UTCNameProvider names_;
-  private UTCRemarkProvider remarks_;
-  private UTCSectionStyleProvider styles_;
+  private DefaultNameProvider names_;
+  private DefaultRemarkProvider remarks_;
+  private DefaultSectionStyleProvider styles_;
 
   public LLVMCompilerInfoProvider() {
     ir_ = new LLVMCompilerIRInfo();
-    styles_ = new UTCSectionStyleProvider();
-    names_ = new UTCNameProvider();
-    remarks_ = new UTCRemarkProvider(null);
+    styles_ = new DefaultSectionStyleProvider();
+    names_ = new DefaultNameProvider();
+    remarks_ = new DefaultRemarkProvider(null);
   }
 
   public string CompilerIRName => "LLVM";
@@ -50,7 +50,7 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
   }
 
   public IDiffOutputFilter CreateDiffOutputFilter() {
-    return new UTCDiffOutputFilter();
+    return new DefaultDiffOutputFilter();
   }
 
   public IDebugInfoProvider CreateDebugInfoProvider(string imagePath) {

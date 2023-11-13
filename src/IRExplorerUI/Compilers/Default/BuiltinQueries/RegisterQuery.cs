@@ -5,13 +5,13 @@ using System.Windows.Media;
 using IRExplorerCore.IR;
 using IRExplorerUI.Query;
 
-namespace IRExplorerUI.Compilers.UTC;
+namespace IRExplorerUI.Compilers.Default;
 
-public class UTCRegisterQuery : IElementQuery {
+public class RegisterQuery : IElementQuery {
   public ISession Session { get; private set; }
 
   public static QueryDefinition GetDefinition() {
-    var query = new QueryDefinition(typeof(UTCRegisterQuery), "Registers",
+    var query = new QueryDefinition(typeof(RegisterQuery), "Registers",
                                     "Details about post-lower registers");
     query.Data.AddInput("Operand", QueryValueKind.Element);
     query.Data.AddInput("Consider overlapping registers", QueryValueKind.Bool, true);

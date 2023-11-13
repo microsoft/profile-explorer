@@ -389,7 +389,6 @@ public partial class App : Application {
       string path = GetSettingsDirectoryPath();
       CreateDirectories(path);
 
-      InitializeSettingsFilesDirectory("utc");
       InitializeSettingsFilesDirectory("llvm");
       InitializeSettingsFilesDirectory("ASM");
       InitializeSettingsFilesDirectory("scripts");
