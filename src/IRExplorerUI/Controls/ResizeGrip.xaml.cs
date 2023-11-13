@@ -8,9 +8,6 @@ using System.Windows.Input;
 
 namespace IRExplorerUI.Controls;
 
-/// <summary>
-///   Interaction logic for ResizeGrip.xaml
-/// </summary>
 public partial class ResizeGrip : UserControl {
   private Cursor cursor_;
   private FrameworkElement control_;

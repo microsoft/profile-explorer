@@ -9,9 +9,6 @@ using Microsoft.Win32;
 
 namespace IRExplorerUI.OptionsPanels;
 
-/// <summary>
-///   Interaction logic for DiffOptionsPanel.xaml
-/// </summary>
 public partial class DiffOptionsPanel : OptionsPanelBase {
   public const double DefaultHeight = 650;
   public const double MinimumHeight = 200;

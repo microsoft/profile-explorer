@@ -12,9 +12,6 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Document;
 
-/// <summary>
-///   Interaction logic for SearcheableIRDocument.xaml
-/// </summary>
 public static class SearcheableIRDocumentCommand {
   public static readonly RoutedUICommand ToggleSearch =
     new RoutedUICommand("Untitled", "ToggleSearch", typeof(SearcheableIRDocument));

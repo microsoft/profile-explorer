@@ -5,9 +5,6 @@ using System.Windows.Controls;
 
 namespace IRExplorerUI.OptionsPanels;
 
-/// <summary>
-///   Interaction logic for WorkspaceOptionsPanel.xaml
-/// </summary>
 public partial class WorkspaceOptionsPanel : UserControl {
   public WorkspaceOptionsPanel() {
     InitializeComponent();

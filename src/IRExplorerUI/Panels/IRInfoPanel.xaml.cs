@@ -11,9 +11,6 @@ using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI;
 
-/// <summary>
-///   Interaction logic for SectionPanel.xaml
-/// </summary>
 public partial class IRInfoPanel : ToolPanelControl {
   public IRInfoPanel() {
     InitializeComponent();

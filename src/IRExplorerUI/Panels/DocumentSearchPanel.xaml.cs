@@ -13,9 +13,6 @@ using IRExplorerUI.Document;
 
 namespace IRExplorerUI.Panels;
 
-/// <summary>
-///   Interaction logic for SearchPanel.xaml
-/// </summary>
 public partial class DocumentSearchPanel : DraggablePopup {
   private ISession session_;
   private LoadedDocument document_;

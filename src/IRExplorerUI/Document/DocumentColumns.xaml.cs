@@ -13,9 +13,6 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Document;
 
-/// <summary>
-///   Interaction logic for DocumentColumns.xaml
-/// </summary>
 public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private DocumentSettings settings_;
   private double previousVerticalOffset_;

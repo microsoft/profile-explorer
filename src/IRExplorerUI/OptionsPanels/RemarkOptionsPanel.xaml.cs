@@ -9,9 +9,6 @@ using System.Windows.Input;
 
 namespace IRExplorerUI.OptionsPanels;
 
-/// <summary>
-///   Interaction logic for RemarkOptionsPanel.xaml
-/// </summary>
 public partial class RemarkOptionsPanel : OptionsPanelBase {
   public const double DefaultHeight = 480;
   public const double MinimumHeight = 300;
