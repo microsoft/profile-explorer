@@ -329,7 +329,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private async void ThreadView_ThreadActivityAction(object sender, ThreadActivityAction action) {
     var view = sender as ActivityTimelineView;
-    Trace.WriteLine($"Thread action {action} for tread {view.ThreadId}");
+    Trace.WriteLine($"Thread action {action} for thread {view.ThreadId}");
 
     bool changed = false;
     changingThreadFiltering_ = true;
@@ -408,63 +408,61 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void SetupActivityHoverPreview(ActivityView view) {
-    var preview = new DraggablePopupHoverPreview(view,
-                                                 CallTreeNodePopup.PopupHoverLongDuration,
-                                                 (mousePoint, previewPoint) => {
-                                                   var timePoint = view.CurrentTimePoint;
-                                                   ProfileCallTreeNode callNode = null;
+    var preview = new DraggablePopupHoverPreview(
+      view, CallTreeNodePopup.PopupHoverLongDuration,
+    (mousePoint, previewPoint) => {
+      var timePoint = view.CurrentTimePoint;
+      ProfileCallTreeNode callNode = null;
 
-                                                   // Find the call node at the current time point.
-                                                   // Pick the hottest function in a small range of samples around the time point.
-                                                   var filter = new ProfileSampleFilter {
-                                                     TimeRange = new SampleTimeRangeInfo(timePoint.Time, timePoint.Time,
-                                                       Math.Max(0, timePoint.SampleIndex - 20),
-                                                       Math.Min(timePoint.SampleIndex + 20,
-                                                                Session.ProfileData.Samples.Count), timePoint.ThreadId),
-                                                     ThreadIds = timePoint.ThreadId != -1
-                                                       ? new List<int> {timePoint.ThreadId} : null
-                                                   };
+      // Find the call node at the current time point.
+      // Pick the hottest function in a small range of samples around the time point.
+      var filter = new ProfileSampleFilter {
+        TimeRange = new SampleTimeRangeInfo(timePoint.Time, timePoint.Time,
+          Math.Max(0, timePoint.SampleIndex - 20),
+          Math.Min(timePoint.SampleIndex + 20,
+                  Session.ProfileData.Samples.Count), timePoint.ThreadId),
+        ThreadIds = timePoint.ThreadId != -1
+          ? new List<int> {timePoint.ThreadId} : null
+      };
 
-                                                   var rangeProfile =
-                                                     Session.ProfileData.ComputeFunctionProfile(
-                                                       Session.ProfileData, filter, 1);
-                                                   var funcs = rangeProfile.GetSortedFunctions();
+      var rangeProfile = Session.ProfileData.ComputeFunctionProfile(Session.ProfileData, filter, 1);
+      var funcs = rangeProfile.GetSortedFunctions();
 
-                                                   if (funcs.Count > 0) {
-                                                     var nodes = rangeProfile.CallTree.GetCallTreeNodes(funcs[0].Item1);
-                                                     callNode = nodes[0];
-                                                   }
+      if (funcs.Count > 0) {
+        var nodes = rangeProfile.CallTree.GetCallTreeNodes(funcs[0].Item1);
+        callNode = nodes[0];
+      }
 
-                                                   if (callNode == null) {
-                                                     return null;
-                                                   }
+      if (callNode == null) {
+        return null;
+      }
 
-                                                   (string text, double textWidth) =
-                                                     CallTreeNodePopup.CreateBacktraceText(callNode, 10,
-                                                       Session.CompilerInfo.NameProvider.FormatFunctionName);
+      (string text, double textWidth) =
+        CallTreeNodePopup.CreateBacktraceText(callNode, 10,
+          Session.CompilerInfo.NameProvider.FormatFunctionName);
 
-                                                   // If popup already opened for this node reuse the instance.
-                                                   if (threadHoverPreviewMap_.TryGetValue(
-                                                         view.ThreadId, out var hoverPreview) &&
-                                                       hoverPreview.PreviewPopup is CallTreeNodePopup popup) {
-                                                     popup.UpdatePosition(previewPoint, view);
-                                                     popup.UpdateNode(callNode);
-                                                   }
-                                                   else {
-                                                     popup = new CallTreeNodePopup(callNode, this, previewPoint, view,
-                                                       Session, false);
-                                                   }
+      // If popup already opened for this node reuse the instance.
+      if (threadHoverPreviewMap_.TryGetValue(
+            view.ThreadId, out var hoverPreview) &&
+          hoverPreview.PreviewPopup is CallTreeNodePopup popup) {
+        popup.UpdatePosition(previewPoint, view);
+        popup.UpdateNode(callNode);
+      }
+      else {
+        popup = new CallTreeNodePopup(callNode, this, previewPoint, view,
+          Session, false);
+      }
 
-                                                   popup.ShowBacktraceView = true;
-                                                   popup.BacktraceText = text;
-                                                   popup.Width = textWidth + 50;
-                                                   return popup;
-                                                 },
-                                                 (mousePoint, popup) => true,
-                                                 popup => {
-                                                   threadHoverPreviewMap_.Remove(view.ThreadId);
-                                                   Session.RegisterDetachedPanel(popup);
-                                                 });
+      popup.ShowBacktraceView = true;
+      popup.BacktraceText = text;
+      popup.Width = textWidth + 50;
+      return popup;
+    },
+    (mousePoint, popup) => true,
+    popup => {
+      threadHoverPreviewMap_.Remove(view.ThreadId);
+      Session.RegisterDetachedPanel(popup);
+    });
 
     threadHoverPreviewMap_[view.ThreadId] = preview;
   }
@@ -496,7 +494,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       return;
     }
 
-    bool animate = false;
+    bool animate = false; //? TODO: Option in UI
     double amount = ScrollWheelZoomAmount * ActivityViewZoomRatio; // Keep step consistent.
     double step = amount * Math.CopySign(1 + e.Delta / 1000.0, e.Delta);
     double zoomPointX = e.GetPosition(ActivityView).X;
@@ -897,7 +895,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
-  private async void UndoButtoon_Click(object sender, RoutedEventArgs e) {
+  private async void UndoButton_Click(object sender, RoutedEventArgs e) {
     //await RestorePreviousState();
   }
 
@@ -981,7 +979,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         OverridesDefaultStyle = true,
         Header = samples.Node.FormatFunctionName(Session.CompilerInfo.NameProvider.FormatFunctionName, 50),
         Icon = CreateMarkerMenuIcon(samples),
-        //Icon = IconDrawing.FromIconResource("StarIcon").AsImage(),
         Tag = samples
       };
 

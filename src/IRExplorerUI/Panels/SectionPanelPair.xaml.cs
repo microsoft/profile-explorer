@@ -11,9 +11,6 @@ using IRExplorerCore;
 
 namespace IRExplorerUI;
 
-/// <summary>
-///   Interaction logic for SectionPanelPair.xaml
-/// </summary>
 public partial class SectionPanelPair : ToolPanelControl {
   private bool diffModeEnabled_;
 

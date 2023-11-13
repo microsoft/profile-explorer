@@ -15,9 +15,6 @@ using IRExplorerUI.Utilities.UI;
 
 namespace IRExplorerUI.Controls;
 
-/// <summary>
-///   Interaction logic for IRDocumentPopup.xaml
-/// </summary>
 public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private string panelTitle_;
   private string panelToolTip_;

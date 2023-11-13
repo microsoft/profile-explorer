@@ -10,9 +10,6 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Controls;
 
-/// <summary>
-///   Interaction logic for NotesPopup.xaml
-/// </summary>
 public partial class NotesPopup : DraggablePopup, INotifyPropertyChanged {
   private string panelTitle_;
 

@@ -7,9 +7,6 @@ using AutoUpdaterDotNET;
 
 namespace IRExplorerUI;
 
-/// <summary>
-///   Interaction logic for UpdateWindow.xaml
-/// </summary>
 public partial class UpdateWindow : Window {
   private UpdateInfoEventArgs updateInfo_;
 

@@ -7,9 +7,6 @@ using System.Windows.Input;
 
 namespace IRExplorerUI.Controls;
 
-/// <summary>
-///   Interaction logic for NotesPopup.xaml
-/// </summary>
 public partial class WebViewPopup : DraggablePopup, INotifyPropertyChanged {
   private string panelTitle_;
 

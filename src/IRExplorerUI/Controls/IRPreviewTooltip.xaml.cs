@@ -7,9 +7,6 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI;
 
-/// <summary>
-///   Interaction logic for IRPreview.xaml
-/// </summary>
 public partial class IRPreviewToolTip : UserControl {
   private string headerText_;
   private bool isDocumentOnly_;

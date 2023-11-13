@@ -8,9 +8,6 @@ using System.Windows.Controls;
 
 namespace IRExplorerUI.Document;
 
-/// <summary>
-///   Interaction logic for ActionPanel.xaml
-/// </summary>
 public class ActionPanelButton {
   public ActionPanelButton(string name, object tag = null) {
     Name = name;

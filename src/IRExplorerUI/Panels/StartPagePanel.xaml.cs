@@ -9,9 +9,6 @@ using System.Windows.Input;
 
 namespace IRExplorerUI.Panels;
 
-/// <summary>
-///   Interaction logic for StartPagePanel.xaml
-/// </summary>
 public partial class StartPagePanel : UserControl {
   public StartPagePanel() {
     InitializeComponent();

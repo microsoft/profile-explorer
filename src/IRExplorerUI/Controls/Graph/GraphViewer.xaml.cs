@@ -14,9 +14,6 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI;
 
-/// <summary>
-///   Interaction logic for GraphViewer.xaml
-/// </summary>
 public partial class GraphViewer : FrameworkElement {
   public static Pen DefaultPen = ColorPens.GetPen(Colors.Black, 0.025);
   public static Pen DefaultBoldPen = ColorPens.GetPen(Colors.Black, 0.06);
