@@ -61,7 +61,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
   //private void ProcessInlineeSample(TimeSpan sampleWeight, long sampleOffset,
   //    IRTextFunction textFunction, ModuleInfo module) {
-  //    return; //? TODO: Reimplement
+  //    return; //? TODO: Reimplement, this needs to have the inlined func still in the binary
 
   //    // Load current function.
   //    var loader = module.ModuleDocument.Loader;
@@ -222,8 +222,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
         var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
 
-        //? TODO: Build call tree outside, with sample filtering
-        //? This should only resolve the stack frames and ComputeFunctionProfile do the rest...
+        // Process the raw samples and stacks by resolving stack frame symbols
+        // and creating the function profiles.
         var callTree = new ProfileCallTree();
 
         for (int k = 0; k < chunks; k++) {
@@ -256,16 +256,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         // Merge the samples from all chunks and sort them by time.
         int totalSamples = 0;
 
-        lock (profileData_) {
-          foreach (var chunkSamples in samples) {
-            totalSamples += chunkSamples.Count;
-          }
+        foreach (var chunkSamples in samples) {
+          totalSamples += chunkSamples.Count;
+        }
 
-          profileData_.Samples.EnsureCapacity(totalSamples);
+        profileData_.Samples.EnsureCapacity(totalSamples);
 
-          foreach (var chunkSamples in samples) {
-            profileData_.Samples.AddRange(chunkSamples);
-          }
+        foreach (var chunkSamples in samples) {
+          profileData_.Samples.AddRange(chunkSamples);
         }
 
         if (profileData_.Samples != null) {
@@ -421,9 +419,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     int frameIndex = 0;
     int pointerSize = profile.TraceInfo.PointerSize;
 
-    bool trace = false;
-    bool skip = false;
-
     //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
     //? for ex it never gets to main. Easy example is a quicksort impl
     for (; frameIndex < stackFrames.Length; frameIndex++) {
@@ -452,10 +447,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
         if (frameImage == null) {
-          if (trace) {
-            Trace.WriteLine("  ! no frameImage");
-          }
-
           resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
           isTopFrame = false;
           continue;
@@ -472,10 +463,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       module = FindModuleInfo(profile, frameImage, context.ProcessId, symbolOptions);
 
       if (module == null) {
-        if (trace) {
-          Trace.WriteLine($"  ! no module for {frameImage.ModuleName}");
-        }
-
         resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
         isTopFrame = false;
         continue;
@@ -501,26 +488,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         if (textFunction == null) {
           string placeholderName = $"{frameIp:X}";
           textFunction = module.AddPlaceholderFunction(placeholderName, frameIp);
-
-          if (trace) {
-            Trace.WriteLine($"New placeholder {placeholderName} in {frameImage.ModuleName} ");
-          }
         }
 
         funcDebugInfo = new FunctionDebugInfo(textFunction.Name, frameRva, 0);
-      }
-
-      if (funcDebugInfo.Name.Contains("KeSetEvent")) {
-        Trace.WriteLine($"   index: {stack.UserModeTransitionIndex}");
-
-        // resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
-        // isTopFrame = false;
-        skip = true;
-        //continue;
-      }
-
-      if (skip) {
-        Trace.WriteLine($"{frameImage.ModuleName}!{funcDebugInfo.Name}: {funcRva:X}, {frameRva:X}");
       }
 
       // Find the corresponding text function in the module, which may
@@ -529,10 +499,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         textFunction = module.FindFunction(funcDebugInfo.RVA, out bool isExternalFunc);
 
         if (textFunction == null) {
-          if (trace) {
-            Trace.WriteLine($"  ! no text func in frame RVA {frameRva} {frameImage.ModuleName}");
-          }
-
           resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
           isTopFrame = false;
           continue;
@@ -545,11 +511,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                                frameImage, module.IsManaged);
       resolvedStack.AddFrame(frameIp, frameRva, resolvedFrame, frameIndex, stack);
       isTopFrame = false;
-    }
-
-    if (skip) {
-      Trace.WriteLine("----------------------------------");
-      Trace.Flush();
     }
 
     return resolvedStack;
@@ -680,10 +641,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       if (pdbTaskList[i] != null) {
         var pdbPath = await pdbTaskList[i].ConfigureAwait(false);
         downloadedPdbCount++;
-
-        if (pdbPath == null || pdbPath.SymbolFile == null) {
-          Trace.WriteLine("Bad");
-        }
 
         if (pdbPath.Found) {
           progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
