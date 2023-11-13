@@ -8,15 +8,6 @@ using IRExplorerCore.Lexer;
 
 namespace IRExplorerCore;
 
-public interface IRParsingErrorHandler {
-  IRSectionParser Parser { get; set; }
-  bool HadParsingErrors { get; set; }
-  List<IRParsingError> ParsingErrors { get; }
-
-  bool HandleError(TextLocation location, TokenKind expectedToken, Token actualToken,
-                   string message = "");
-}
-
 public interface IRSectionParser {
   void SkipCurrentToken();
   void SkipToLineEnd();
@@ -25,6 +16,15 @@ public interface IRSectionParser {
   void SkipToFunctionEnd();
   FunctionIR ParseSection(IRTextSection section, string sectionText);
   FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText);
+}
+
+public interface IRParsingErrorHandler {
+  IRSectionParser Parser { get; set; }
+  bool HadParsingErrors { get; set; }
+  List<IRParsingError> ParsingErrors { get; }
+
+  bool HandleError(TextLocation location, TokenKind expectedToken, Token actualToken,
+                   string message = "");
 }
 
 public class IRParsingError {

@@ -21,9 +21,9 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
 
   public LLVMCompilerInfoProvider() {
     ir_ = new LLVMCompilerIRInfo();
-    styles_ = new DefaultSectionStyleProvider();
+    styles_ = new DefaultSectionStyleProvider(this);
     names_ = new DefaultNameProvider();
-    remarks_ = new DefaultRemarkProvider(null);
+    remarks_ = new DefaultRemarkProvider(this);
   }
 
   public string CompilerIRName => "LLVM";
