@@ -214,7 +214,6 @@ public partial class GraphPanel : ToolPanelControl {
 
   private void OptionsPanel_PanelReset(object sender, EventArgs e) {
     Settings.Reset();
-    graphOptionsPanel_.Settings = null;
     graphOptionsPanel_.Settings = Settings.Clone();
   }
 

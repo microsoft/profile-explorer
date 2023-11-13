@@ -274,14 +274,9 @@ public class ProfileData {
 
   public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function,
                                                         FunctionDebugInfo debugInfo) {
-    //? TODO: Use GetOrAdd since TryAdd may fail
-
-    if (!FunctionProfiles.TryGetValue(function, out var profile)) {
-      profile = new FunctionProfileData {FunctionDebugInfo = debugInfo};
-      FunctionProfiles.TryAdd(function, profile);
-    }
-
-    return profile;
+    return FunctionProfiles.GetOrAdd(function, () => {
+      return new FunctionProfileData {FunctionDebugInfo = debugInfo};
+    });
   }
 
   public byte[] Serialize() {

@@ -234,8 +234,7 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
     var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(rva);
     return FindFunctionSourceFilePathImpl(lineInfo, sourceFile, (uint)rva);
   }
-
-  //? TODO: file selected in source panel should also be checked
+  
   //? TODO: Integrate with SourceFileMapper
   public SourceFileDebugInfo FindFunctionSourceFilePath(string functionName) {
     var funcSymbol = FindFunctionSymbol(functionName);

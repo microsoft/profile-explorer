@@ -391,7 +391,7 @@ public partial class MainWindow : Window, ISession {
       var section = new IRTextSection(debugFunction_, sectionName, IRPassOutput.Empty);
       string filteredText = ExtractLineMetadata(section, e.Text);
 
-      //? TODO: Is this still needed?
+      // Ignore if nothing changed.
       try {
         if (previousDebugSection_ != null &&
             debugSections_.GetSectionText(previousDebugSection_) == filteredText) {
@@ -424,7 +424,7 @@ public partial class MainWindow : Window, ISession {
 
       await OpenDocumentSectionAsync(new OpenSectionEventArgs(section, OpenSectionKind.ReplaceCurrent), document);
 
-      //? TODO: Diff only if enabled
+      //? TODO: Have a proper option in the UI for diffing previous section
       if (previousDebugSection_ != null && document != null) {
         if (DiffPreviousSectionCheckbox.IsChecked.HasValue &&
             DiffPreviousSectionCheckbox.IsChecked.Value) {
@@ -439,7 +439,7 @@ public partial class MainWindow : Window, ISession {
     }));
   }
 
-  //? TODO: Not needed anymore, parser extracts
+  //? TODO: Not needed anymore, parser should have extracted metadata already
   private string ExtractLineMetadata(IRTextSection section, string text) {
     var builder = new StringBuilder(text.Length);
     string[] lines = text.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None);

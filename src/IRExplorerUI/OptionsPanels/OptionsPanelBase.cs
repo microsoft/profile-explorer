@@ -31,7 +31,8 @@ public class OptionsPanelBase : UserControl, IOptionsPanel {
     get => DataContext;
     set {
       if (DataContext != value) {
-        DataContext = value; //? TODO: Should first set to null and remove all Settings = null
+        DataContext = null;
+        DataContext = value;
 
         if (value != null && initialized_) {
           OnSettingsChanged(value);

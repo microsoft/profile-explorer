@@ -286,6 +286,7 @@ public partial class SectionPanelPair : ToolPanelControl {
     // When using the grid splitter to resize the left/right panels,
     // the event gets called for some reason with a 0 offset and 
     // the current vertical offset gets reset.
+    
     //? TODO: Ignoring 0 offset causes other scroll issues, likely fix is to ignore
     //? the event between grid splitter mouse down and up events.
 
@@ -501,7 +502,7 @@ public partial class SectionPanelPair : ToolPanelControl {
     var diffLoader = Session.SessionState.FindLoadedDocument(DiffPanel.Summary).Loader;
 
     var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
-    var cancelableTask = new CancelableTask(); //? TODO: Fix
+    var cancelableTask = new CancelableTask();
     return await diffBuilder.AreSectionsDifferent(comparedSections, baseLoader, diffLoader,
                                                   Session.CompilerInfo, true, cancelableTask);
   }

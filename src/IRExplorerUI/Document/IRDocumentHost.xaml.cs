@@ -433,7 +433,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     // Cancel any running tasks and hide panels.
     loadTask_.CancelTaskAndWait();
 
-    //? TODO: used await loadTask_.CancelTaskAndWaitAsync(); when UnloadSection returns Task
+    //? TODO: use await loadTask_.CancelTaskAndWaitAsync(); once UnloadSection returns Task
     await HideRemarkPanel();
     HideActionPanel();
     SaveSectionState(section);
@@ -652,9 +652,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     // Filter based on context, accept any context that is a child of the active context.
-    //if (activeRemarkContext_ != null) {
-    //    return IsActiveContextTreeRemark(remark);
-    //}
+    if (activeRemarkContext_ != null) {
+        return IsActiveContextTreeRemark(remark);
+    }
 
     return true;
   }
@@ -819,7 +819,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     //? TODO: If other panels are opened over the document, don't consider their area.
-
     var element = TextView.GetElementAt(point);
 
     if (element != null) {
@@ -1058,7 +1057,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
       if (newSettings != null) {
         LoadNewSettings(newSettings, optionsPanel_.SyntaxFileChanged, false);
-        optionsPanelWindow_.Settings = null;
         optionsPanelWindow_.Settings = newSettings.Clone();
       }
     }
@@ -1079,7 +1077,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private void OptionsPanel_PanelReset(object sender, EventArgs e) {
     var newOptions = new DocumentSettings();
     LoadNewSettings(newOptions, true, false);
-    optionsPanelWindow_.Settings = null;
     optionsPanelWindow_.Settings = newOptions;
   }
 
@@ -1341,7 +1338,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     double maxWidth = 0;
 
     var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
-    var valueStyle = ProfileDocumentMarkerOptions.Default; //? TODO: Use options
+    var valueStyle = ProfileDocumentMarkerOptions.Default; //? TODO: Use options from UI
     int index = 0;
 
     foreach (var pair in result.BlockSampledElements) {
@@ -1869,7 +1866,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
       if (newSettings != null) {
         await HandleNewRemarkSettings(newSettings, false);
-        remarkOptionsPanelWindow_.Settings = null;
         remarkOptionsPanelWindow_.Settings = remarkSettings_.Clone();
       }
     }
@@ -1877,7 +1873,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async void RemarkOptionsPanel_PanelReset(object sender, EventArgs e) {
     await HandleNewRemarkSettings(new RemarkSettings(), true);
-    remarkOptionsPanelWindow_.Settings = null;
     remarkOptionsPanelWindow_.Settings = remarkSettings_.Clone();
   }
 
@@ -1944,7 +1939,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private QueryPanel CreateQueryPanel() {
-    //? TODO: Create panel over the document
     var documentHost = this;
     var position = new Point();
 

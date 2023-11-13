@@ -411,14 +411,11 @@ public sealed class ProfileCallTree {
   }
 
   public void CollectFunctions(ProfileCallTreeNode node, Dictionary<IRTextFunction, ProfileCallTreeNode> funcMap) {
-    //? TODO: Instead of making a fake CallTreeNode, have CallTreeNodePanel accept an interface
-    //? implemented by both CallTreeNode and FGNode exposing weight/time info?
-
     // Combine all instances of a function under the node.
-    var entry = funcMap.GetOrAddValue(node.Function,
-                                      () => new ProfileCallTreeGroupNode(node.FunctionDebugInfo, node.Function) {
-                                        Kind = node.Kind
-                                      });
+    var entry = funcMap.GetOrAddValue(node.Function, () => 
+      new ProfileCallTreeGroupNode(node.FunctionDebugInfo, node.Function) {
+        Kind = node.Kind
+      });
 
     var groupEntry = (ProfileCallTreeGroupNode)entry;
     groupEntry.Nodes.Add(node);

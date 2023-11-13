@@ -269,9 +269,9 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
 
   private async Task AnnotateProfilerData(FunctionProfileData profile, IDebugInfoProvider debugInfo) {
     ResetProfileMarking();
-    //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
-
+    
     //? Accessing the PDB (DIA) from another thread fails.
+    //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
     var result = profile.ProcessSourceLines(debugInfo);
     var sourceLineWeights = result.SourceLineWeightList;
 
@@ -641,15 +641,8 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
       funcProfile = Session.ProfileData?.GetFunctionProfile(function);
     }
 
-    if (funcProfile != null) {
-      if (!funcLoaded && !string.IsNullOrEmpty(funcProfile.SourceFilePath)) {
-        var sourceInfo = new SourceFileDebugInfo(funcProfile.SourceFilePath, funcProfile.SourceFilePath);
-        funcLoaded = await LoadSourceFile(sourceInfo, function);
-      }
-
-      if (debugInfo != null) {
-        await AnnotateProfilerData(funcProfile, debugInfo);
-      }
+    if (funcProfile != null && debugInfo != null) {
+      await AnnotateProfilerData(funcProfile, debugInfo);
     }
 
     if (!funcLoaded) {

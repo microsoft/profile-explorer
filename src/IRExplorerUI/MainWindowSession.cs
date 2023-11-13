@@ -65,7 +65,7 @@ public partial class MainWindow : Window, ISession {
       graphPanel.OnGenerateGraphDone(loadTask);
     }
     else {
-      //? TODO: Handle CFG failure
+      //? TODO: Handle CFG failure in the UI
       graphPanel.OnGenerateGraphDone(loadTask, true);
       Trace.TraceError($"Document {ObjectTracker.Track(document)}: Failed to load CFG");
     }
@@ -545,8 +545,6 @@ public partial class MainWindow : Window, ISession {
 
     // Restore profile info.
     if (state.ProfileState != null) {
-      //? TODO: Support diff profile data providers
-      //var loader = idToDocumentMap[docState.Id].Loader;
       var summaries = sessionState_.Documents.ConvertAll(d => d.Summary);
       sessionState_.ProfileData = ProfileData.Deserialize(state.ProfileState, summaries);
     }
@@ -985,7 +983,6 @@ public partial class MainWindow : Window, ISession {
     var result = await Task.Run(() => LoadAndParseSection(section));
 
     if (result == null || result.Function == null) {
-      //? TODO: Handle load function failure better
       Trace.TraceError($"Document {ObjectTracker.Track(document)}: Failed to parse function");
       OptionalStatusText.Text = "Failed to parser section IR";
       OptionalStatusText.ToolTip = FormatParsingErrors(result, "Section IR parsing errors");
@@ -1507,7 +1504,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void StartAutoSaveTimer() {
-    //? TODO: Disable for now
+    //? TODO: Disabled for now
     return;
 
     try {

@@ -218,13 +218,9 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     var visual = new DrawingVisual();
     var overlayDC = visual.RenderOpen();
 
-    //? TODO: Only use for this seems to be the VS extension,
-    //? it should use a proper overlay instead of a NotesTag and remove this
-    if (highlighter_.Groups.Count > 0) {
-      // Query and draw visible segments from each group.
-      foreach (var group in highlighter_.Groups) {
-        DrawGroup(group, textView, overlayDC);
-      }
+    // Query and draw visible segments from each group.
+    foreach (var group in highlighter_.Groups) {
+      DrawGroup(group, textView, overlayDC);
     }
 
     Tuple<IElementOverlay, IRElement, Rect> hoverSegment = null;

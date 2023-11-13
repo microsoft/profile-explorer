@@ -10,8 +10,6 @@ using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
 
-//? TODO: EXTRACT SOURCE LOCATION MARKING TO OWN CLASS NOT PROFILE-DEPENDENT
-
 namespace IRExplorerUI.Profile;
 
 public class SourceDocumentMarker {
