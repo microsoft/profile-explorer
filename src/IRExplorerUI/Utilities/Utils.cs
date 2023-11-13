@@ -610,7 +610,7 @@ static class Utils {
   }
 
   public static string GetAutoSaveFilePath() {
-    string AUTO_SAVE_TEMP_FILE = "compiler_studio_autosave.csf";
+    string AUTO_SAVE_TEMP_FILE = "irx_autosave.irx";
     return Path.Combine(Path.GetTempPath(), AUTO_SAVE_TEMP_FILE);
   }
 

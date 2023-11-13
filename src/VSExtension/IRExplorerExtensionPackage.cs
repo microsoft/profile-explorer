@@ -232,8 +232,8 @@ public sealed class IRExplorerExtensionPackage : AsyncPackage {
       return;
     }
 
-    if (!DebuggerInstance.IsDebuggingUTC) {
-      Logger.Log("Not debugging UTC");
+    if (!DebuggerInstance.IsDebuggingCompiler) {
+      Logger.Log("Not debugging compiler");
       return;
     }
 

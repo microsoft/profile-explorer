@@ -83,7 +83,7 @@ sealed class AttachCommand : CommandBase {
         if (DebuggerInstance.InBreakMode) {
           command.Text = "Connect";
 
-          command.Enabled = DebuggerInstance.IsDebuggingUTC &&
+          command.Enabled = DebuggerInstance.IsDebuggingCompiler &&
                             !ClientInstance.IsConnected;
         }
         else {
@@ -119,7 +119,7 @@ sealed class AttachCommand : CommandBase {
         // Debugger already started, try to connect.
         Logger.Log("Debugger already attached, setting up IR Explorer session...");
 
-        if (DebuggerInstance.IsDebuggingUTC &&
+        if (DebuggerInstance.IsDebuggingCompiler &&
             await ClientInstance.SetupDebugSession()) {
           ClientInstance.UpdateIR();
         }
