@@ -191,7 +191,6 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
     using var concurrencySemaphore = new SemaphoreSlim(maxConcurrency);
     int index = 0;
 
-    //? TODO: Add per-function remark cache
     foreach (var section in sections) {
       concurrencySemaphore.Wait();
 

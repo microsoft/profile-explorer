@@ -448,6 +448,8 @@ public partial class MainWindow : Window, ISession {
 
     //? TODO: Abstract parallel run chunks to take action per sample (ComputeFunctionProfile)
     //? Look at SearchAsync in SectionTextSearcher.cs for an example
+    //? ConcurrentExclusiveSchedulerPair from DocSectionLoader is not the right solution
+    //? + AreSectionsDifferentImpl
     for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
       var (sample, stack) = profile.Samples[i];
 

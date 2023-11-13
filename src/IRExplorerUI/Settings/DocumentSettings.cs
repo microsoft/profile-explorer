@@ -24,9 +24,6 @@ public class DocumentSettings : SettingsBase {
   [ProtoMember(9)] public bool ShowInfoOnHover { get; set; }
   [ProtoMember(10)] public bool ShowInfoOnHoverWithModifier { get; set; }
   [ProtoMember(11)] public bool ShowPreviewPopup { get; set; }
-
-  //? TODO: REMOVE
-  //? [ProtoMember(12)] public bool ShowPreviewPopupWithModifier { get; set; }
   [ProtoMember(13)] public Color BackgroundColor { get; set; }
   [ProtoMember(14)] public Color AlternateBackgroundColor { get; set; }
   [ProtoMember(15)] public Color MarginBackgroundColor { get; set; }
@@ -41,8 +38,6 @@ public class DocumentSettings : SettingsBase {
   [ProtoMember(25)] public bool MarkMultipleDefinitionExpressions { get; set; }
   [ProtoMember(26)] public bool FilterSourceDefinitions { get; set; }
   [ProtoMember(27)] public bool FilterDestinationUses { get; set; }
-
-  //public event PropertyChangedEventHandler PropertyChanged;
 
   public override void Reset() {
     ShowBlockSeparatorLine = true;

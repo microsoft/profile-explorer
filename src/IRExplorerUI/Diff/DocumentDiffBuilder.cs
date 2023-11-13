@@ -59,11 +59,13 @@ public class DocumentDiffBuilder {
   }
 
   public SideBySideDiffModel ComputeInternalDiffs(string leftText, string rightText) {
-    //? TODO: Check first if text is identical
-    //? - Could use a per-section hash
     var diffBuilder = new SideBySideDiffBuilder(new Differ(), IgnoredDiffLetters);
-    var diff = diffBuilder.BuildDiffModel(leftText, rightText);
-    return diff;
+
+    if (leftText.Equals(rightText, StringComparison.Ordinal)) {
+      diffBuilder.BuildDiffModel("", "");
+    }
+    
+    return diffBuilder.BuildDiffModel(leftText, rightText);
   }
 
   public bool HasDiffs(SideBySideDiffModel diffModel) {
@@ -79,7 +81,6 @@ public class DocumentDiffBuilder {
   public async Task<List<DocumentDiffResult>> AreSectionsDifferent(
     List<(IRTextSection, IRTextSection)> comparedSections, IRTextSectionLoader leftDocLoader,
     IRTextSectionLoader rightDocLoader, ICompilerInfoProvider irInfo, bool quickMode, CancelableTask cancelableTask) {
-    //? TODO: Use a "max threads" setting
     int maxConcurrency = Math.Min(16, Environment.ProcessorCount);
     var tasks = new Task<DocumentDiffResult>[comparedSections.Count];
 
@@ -100,6 +101,7 @@ public class DocumentDiffBuilder {
     IRTextSectionLoader rightDocLoader,
     Task<DocumentDiffResult>[] tasks, ICompilerInfoProvider irInfo, bool quickMode,
     CancelableTask cancelableTask, int maxConcurrency) {
+    //? ConcurrentExclusiveSchedulerPair from DocSectionLoader is not the right solution
     var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, maxConcurrency);
     var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
     int index = 0;

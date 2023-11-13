@@ -363,7 +363,6 @@ public sealed class Lexer {
           return MakeToken(TokenKind.Percent);
         }
         case '#': {
-          //? TODO: Add as custom comment char
           return MakeToken(TokenKind.Hash);
         }
       }

@@ -63,7 +63,7 @@ public class SectionTextSearcher {
     if (string.IsNullOrEmpty(searchedText)) {
       return resultList;
     }
-
+    
     using var concurrencySemaphore = new SemaphoreSlim(options_.MaxThreadCount);
     const int BatchSize = 1024;
     int batches = sections.Count / BatchSize;

@@ -117,15 +117,6 @@ public class Disassembler : IDisposable {
     return DisassembleToText(funcInfo.StartRVA, funcInfo.Size);
   }
 
-  public string DisassembleToText(byte[] data, int size, long startRVA) {
-    //? TODO: Somewhat of a hack, pass list of code sections.
-    Debug.Assert(codeSectionData_ == null);
-    codeSectionData_ = new List<(byte[] Data, long StartRVA)> {(data, startRVA)};
-    string result = DisassembleToText(startRVA, size);
-    codeSectionData_ = null;
-    return result;
-  }
-
   public string DisassembleToText(byte[] data, long startRVA) {
     codeSectionData_ = new List<(byte[] Data, long StartRVA)> {(data, startRVA)};
     string result = DisassembleToText(startRVA, data.Length);

@@ -115,8 +115,6 @@ public sealed class DiffLineHighlighter : IBackgroundRenderer {
     DiffTextSegment prevSegment = null;
     CreatePlaceholderTiledBrush(textView.DefaultLineHeight / 2);
 
-    //? TODO: Can be made more efficient by having one GeometryGBuilder for each type of diff,
-    //? then at the end render each one that was used
     foreach (var segment in segments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
       if (geoBuilder == null) {
         geoBuilder = CreateGeometryBuilder();

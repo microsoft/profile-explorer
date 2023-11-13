@@ -199,8 +199,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   }
 
   private async Task SetupInstanceInfo(ProfileCallTreeNode node) {
-    //? TODO: IF same func, don't recompute
-
     var callTree = Session.ProfileData.CallTree;
     instanceNodes_ = callTree.GetSortedCallTreeNodes(node.Function);
 
