@@ -30,7 +30,7 @@ namespace IRExplorerUI.Compilers {
 
     [ProtoContract(SkipConstructor = true)]
     public class SymbolFileSourceOptions : SettingsBase {
-        private const string DefaultSymbolSourcePath = @"https://msdl.microsoft.com/download/symbols";
+        private const string DefaultSymbolSourcePath = @"https://symweb";
         private const string DefaultSymbolCachePath = @"C:\Symbols";
 
         [ProtoMember(1)]
@@ -62,14 +62,44 @@ namespace IRExplorerUI.Compilers {
         }
 
         public void InsertSymbolPath(string path) {
-            if(string.IsNullOrEmpty(path) || HasSymbolPath(path)) {
+            if (string.IsNullOrEmpty(path)) {
                 return;
             }
 
-            path = Utils.TryGetDirectoryName(path);
+            if (path.Contains(";")) {
+                InsertSymbolPaths(path.Split(";"));
+                return;
+            }
 
-            if (!string.IsNullOrEmpty(path)) {
-                SymbolSearchPaths.Insert(0, path);
+            if (!path.Contains("*")) {
+                if (HasSymbolPath(path)) {
+                    return;
+                }
+
+                path = Utils.TryGetDirectoryName(path);
+
+                if (!string.IsNullOrEmpty(path)) {
+                    SymbolSearchPaths.Insert(0, path);
+                }
+
+                return;
+            }
+
+            string[] tokens = path.Split("*");
+
+            if (tokens[0] == "srv") {
+                string srv = tokens[1];
+
+                if (tokens.Length == 3) {
+                    SymbolCachePath = srv;
+                    srv = tokens[2];
+                }
+
+                SymbolSourcePath = string.IsNullOrEmpty(srv) ? DefaultSymbolSourcePath : srv;
+            }
+            else if (tokens[0] == "cache") {
+                string cache = tokens[1];
+                SymbolCachePath = string.IsNullOrEmpty(cache) ? DefaultSymbolCachePath : cache;
             }
         }
 

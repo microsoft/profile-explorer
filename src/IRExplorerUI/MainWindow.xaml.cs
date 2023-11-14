@@ -400,7 +400,7 @@ namespace IRExplorerUI {
             await EndSession();
         }
 
-        private void MainWindow_ContentRendered(object sender, EventArgs e) {
+        private async void MainWindow_ContentRendered(object sender, EventArgs e) {
             SetupStartPagePanel();
 
             if (sessionState_ == null) {
@@ -416,6 +416,18 @@ namespace IRExplorerUI {
                 }));
             });
 
+            var args = Environment.GetCommandLineArgs();
+
+            if (args.Length > 1 && args[1] == "--open-trace") {
+                var window = new ProfileLoadWindow(this, false, true);
+                window.Owner = this;
+                var result = window.ShowDialog();
+
+                if (result.HasValue && result.Value) {
+                    await SectionPanel.RefreshModuleSummaries();
+                    SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
+                }
+            }
         }
 
         private static void CheckForUpdate() {
@@ -523,7 +535,10 @@ namespace IRExplorerUI {
             //? TODO: This needs a proper arg parsing lib
             var args = Environment.GetCommandLineArgs();
 
-            if (args.Length >= 3) {
+            if (args.Length > 1 && args[1] == "--open-trace") {
+                // Opening IR Explorer with a trace is handled once main window is rendered. maybe move all arg parsing and options to there?
+            }
+            else if (args.Length >= 3) {
                 string baseFilePath = args[1];
                 string diffFilePath = args[2];
                 bool opened = false;
