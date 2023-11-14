@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using IRExplorerCore.Analysis;
+using IRExplorerCore.Collections;
 using IRExplorerCore.IR;
 using IRExplorerCore.Lexer;
 

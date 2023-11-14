@@ -12,7 +12,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace IRExplorerUI.Utilities;
+namespace IRExplorerCore.Collections;
 
 public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T : struct {
   // The GC Large Object Heap is used for allocations > 85 KB,

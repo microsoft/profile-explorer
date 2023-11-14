@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using IRExplorerCore.Collections;
 using IRExplorerCore.IR;
 using IRExplorerCore.Lexer;
 

@@ -1,110 +1,111 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 using IRExplorerCore;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IRExplorerCoreTests {
-    [TestClass]
-    public class SourceFileMapperTests {
-        [TestMethod]
-        public void Map_FirstTime_ReturnsResultFromLookup() {
-            var mapper = new SourceFileMapper();
-            var called = false;
-            const string expectedResult = @"c:\mapped\path\to\file.txt";
-            Assert.AreEqual(expectedResult, mapper.Map(@"c:\path\to\file.txt", () => {
-                called = true;
-                return expectedResult;
-            }));
-            Assert.IsTrue(called);
-        }
+namespace IRExplorerCoreTests;
 
-        [TestMethod]
-        public void Map_SecondTimeForSamePath_DoesNotUseLookup() {
-            var mapper = new SourceFileMapper();
-            const string expectedResult = @"c:\mapped\path\to\file.txt";
-            const string source = @"c:\path\to\file.txt";
+[TestClass]
+public class SourceFileMapperTests {
+  [TestMethod]
+  public void Map_FirstTime_ReturnsResultFromLookup() {
+    var mapper = new SourceFileMapper();
+    bool called = false;
+    const string expectedResult = @"c:\mapped\path\to\file.txt";
+    Assert.AreEqual(expectedResult, mapper.Map(@"c:\path\to\file.txt", () => {
+      called = true;
+      return expectedResult;
+    }));
+    Assert.IsTrue(called);
+  }
 
-            // prime it
-            mapper.Map(source, () => expectedResult);
+  [TestMethod]
+  public void Map_SecondTimeForSamePath_DoesNotUseLookup() {
+    var mapper = new SourceFileMapper();
+    const string expectedResult = @"c:\mapped\path\to\file.txt";
+    const string source = @"c:\path\to\file.txt";
 
-            Assert.AreEqual(expectedResult, mapper.Map(source, () => {
-                Assert.Fail();
-                return "";
-            }));
-        }
+    // prime it
+    mapper.Map(source, () => expectedResult);
 
-        [TestMethod]
-        public void OtherFilesInTheSameDirectoryDontUseLookup() {
-            var mapper = new SourceFileMapper();
-            const string source = @"c:\path\to\file.txt";
-            const string sourceInSameDir = @"c:\path\to\otherFile.txt";
-            // prime it
-            mapper.Map(source, () => @"c:\mapped\path\to\file.txt");
+    Assert.AreEqual(expectedResult, mapper.Map(source, () => {
+      Assert.Fail();
+      return "";
+    }));
+  }
 
-            const string expectedResult = @"c:\mapped\path\to\otherFile.txt";
-            Assert.AreEqual(expectedResult, mapper.Map(sourceInSameDir, () => {
-                Assert.Fail();
-                return "";
-            }));
-        }
+  [TestMethod]
+  public void OtherFilesInTheSameDirectoryDontUseLookup() {
+    var mapper = new SourceFileMapper();
+    const string source = @"c:\path\to\file.txt";
+    const string sourceInSameDir = @"c:\path\to\otherFile.txt";
+    // prime it
+    mapper.Map(source, () => @"c:\mapped\path\to\file.txt");
 
-        [TestMethod]
-        public void OtherFilesWithTheSamePrefixAreMapped() {
-            var file1 = @"c:\path\to\file.txt";
-            var file2 = @"c:\path\for\other\file.txt";
-            var mappedFile1 = @"c:\mapped\to\file.txt";
-            var mappedFile2 = @"c:\mapped\for\other\file.txt";
+    const string expectedResult = @"c:\mapped\path\to\otherFile.txt";
+    Assert.AreEqual(expectedResult, mapper.Map(sourceInSameDir, () => {
+      Assert.Fail();
+      return "";
+    }));
+  }
 
-            var mapper = new SourceFileMapper();
+  [TestMethod]
+  public void OtherFilesWithTheSamePrefixAreMapped() {
+    string file1 = @"c:\path\to\file.txt";
+    string file2 = @"c:\path\for\other\file.txt";
+    string mappedFile1 = @"c:\mapped\to\file.txt";
+    string mappedFile2 = @"c:\mapped\for\other\file.txt";
 
-            // prime it
-            mapper.Map(file1, () => mappedFile1);
+    var mapper = new SourceFileMapper();
 
-            Assert.AreEqual(mappedFile2, mapper.Map(file2, () => {
-                Assert.Fail();
-                return "";
-            }));
-        }
+    // prime it
+    mapper.Map(file1, () => mappedFile1);
 
-        [TestMethod]
-        public void OtherFilesWithDeeperHierarchyAreMatched() {
-            var file1 = @"c:\path\to\file.txt";
-            var file2 = @"c:\path\to\deeper\file.txt";
-            var mappedFile1 = @"c:\mapped\to\file.txt";
-            var mappedFile2 = @"c:\mapped\to\deeper\file.txt";
+    Assert.AreEqual(mappedFile2, mapper.Map(file2, () => {
+      Assert.Fail();
+      return "";
+    }));
+  }
 
-            var mapper = new SourceFileMapper();
+  [TestMethod]
+  public void OtherFilesWithDeeperHierarchyAreMatched() {
+    string file1 = @"c:\path\to\file.txt";
+    string file2 = @"c:\path\to\deeper\file.txt";
+    string mappedFile1 = @"c:\mapped\to\file.txt";
+    string mappedFile2 = @"c:\mapped\to\deeper\file.txt";
 
-            // prime it
-            mapper.Map(file1, () => mappedFile1);
+    var mapper = new SourceFileMapper();
 
-            Assert.AreEqual(mappedFile2, mapper.Map(file2, () => {
-                Assert.Fail();
-                return "";
-            }));
-        }
+    // prime it
+    mapper.Map(file1, () => mappedFile1);
 
-        [TestMethod]
-        public void ResultIsNullWhenLookupIsCanceled()
-        {
-            var mapper = new SourceFileMapper();
-            Assert.IsNull(mapper.Map(@"c:\path\to\file.txt", () => null));
-        }
+    Assert.AreEqual(mappedFile2, mapper.Map(file2, () => {
+      Assert.Fail();
+      return "";
+    }));
+  }
 
-        [TestMethod]
-        public void Map_RetriesNextTimeWhenLookupWasCanceled()
-        {
-            var mapper = new SourceFileMapper();
-            var called = false;
-            const string path = @"c:\path\to\file.txt";
-            const string expectedResult = @"c:\mapped\path\to\file.txt";
+  [TestMethod]
+  public void ResultIsNullWhenLookupIsCanceled() {
+    var mapper = new SourceFileMapper();
+    Assert.IsNull(mapper.Map(@"c:\path\to\file.txt", () => null));
+  }
 
-            // prime with canceled result
-            mapper.Map(path, () => null);
+  [TestMethod]
+  public void Map_RetriesNextTimeWhenLookupWasCanceled() {
+    var mapper = new SourceFileMapper();
+    bool called = false;
+    const string path = @"c:\path\to\file.txt";
+    const string expectedResult = @"c:\mapped\path\to\file.txt";
 
-            Assert.AreEqual(expectedResult, mapper.Map(path, () => {
-                called = true;
-                return expectedResult;
-            }));
-            Assert.IsTrue(called);
-        }
-    }
+    // prime with canceled result
+    mapper.Map(path, () => null);
+
+    Assert.AreEqual(expectedResult, mapper.Map(path, () => {
+      called = true;
+      return expectedResult;
+    }));
+    Assert.IsTrue(called);
+  }
 }

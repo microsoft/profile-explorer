@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace IRExplorerCore;
 
@@ -156,9 +156,7 @@ public class CompressedObject<T> where T : class {
       }
 
       using var stream = new MemoryStream();
-      var serializer = new BinaryFormatter();
-
-      serializer.Serialize(stream, value_);
+      JsonSerializer.Serialize(stream, value_);
       byte[] serializedData = stream.ToArray();
       data_ = CompressionUtils.Compress(serializedData);
       value_ = null;
@@ -174,9 +172,7 @@ public class CompressedObject<T> where T : class {
       // Decompress on-demand.
       byte[] serializedData = CompressionUtils.Decompress(data_);
       using var stream = new MemoryStream(serializedData);
-      var serializer = new BinaryFormatter();
-
-      value_ = (T)serializer.Deserialize(stream);
+      value_ = JsonSerializer.Deserialize<T>(stream);
       data_ = null;
       return value_;
     }
