@@ -807,8 +807,9 @@ public partial class MainWindow : Window, ISession {
 
   private void MenuItem_Click_5(object sender, RoutedEventArgs e) {
     string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-    MessageBox.Show($"IR Explorer\n© 2022 Microsoft Corporation\n\nVersion: {version}", "About",
-                    MessageBoxButton.OK);
+    var window = new AboutWindow();
+    window.Owner = this;
+    window.ShowDialog();
   }
 
   private void SetOptionalStatus(TimeSpan duration, string text, string tooltip = "", Brush textBrush = null) {
