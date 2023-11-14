@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace IRExplorerCore;
+namespace IRExplorerCore.Collections;
 
 // A compact representation of a Trie<T> using only arrays, which makes it
 // more cache friendly and much faster (>10x for large tries) than a simple trie

@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using CSharpTest.Net.Collections;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore;
