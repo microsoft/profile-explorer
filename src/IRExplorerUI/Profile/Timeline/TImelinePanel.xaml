@@ -328,7 +328,7 @@
                 <Grid x:Name="ActivityHost" Margin="0,0,0,20">
                     <Border
                         Width="150"
-                        Height="70"
+                        Height="50"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Top"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -336,25 +336,28 @@
                         <Grid Background="PapayaWhip">
                             <Grid
                                 x:Name="ActivityViewHeader"
-                                Margin="0,0,30,0"
+                                Margin="2,0,30,0"
                                 HorizontalAlignment="Stretch"
                                 MouseDown="ActivityViewHeader_MouseDown">
                                 <StackPanel Margin="2">
-                                    <TextBlock
-                                        Margin="0,1,0,0"
-                                        FontWeight="Medium"
-                                        Text="All Threads" />
+                                    <TextBlock FontWeight="Medium" Text="All Threads" />
 
                                     <TextBlock
-                                        Margin="0,2,0,0"
+                                        Margin="0,0,0,0"
+                                        Foreground="DarkBlue"
                                         Text="Selection"
                                         Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                    <TextBlock Text="{Binding SelectionTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}" Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    <TextBlock
+                                        Margin="0,-2,0,0"
+                                        FontWeight="Medium"
+                                        Foreground="DarkBlue"
+                                        Text="{Binding SelectionTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}"
+                                        Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 </StackPanel>
                             </Grid>
                             <Grid Width="30" HorizontalAlignment="Right">
                                 <TextBlock
-                                    Margin="0,0,4,0"
+                                    Margin="0,0,6,0"
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Top"
                                     Text="{Binding Path=MaxCpuUsage, ElementName=ActivityView}"
@@ -371,7 +374,7 @@
                     <Grid x:Name="TimelineHost" Grid.Column="0">
                         <local:ActivityView
                             x:Name="ActivityView"
-                            Height="70"
+                            Height="50"
                             Margin="150,0,0,0"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Top"
@@ -379,7 +382,7 @@
 
                         <ScrollViewer
                             x:Name="ActivityViewHost"
-                            Margin="0,70,0,0"
+                            Margin="0,50,0,0"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             CanContentScroll="True"

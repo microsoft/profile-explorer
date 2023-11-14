@@ -34,13 +34,13 @@ class ColorUtils {
     "#eed3af"
   };
   private static readonly string[] LightPastelColors = {
+    "#fed7d7",
     "#fee6d6",
     "#f0e4eb",
     "#e1e9f3",
     "#f7dde6",
     "#f7ddee",
     "#fee2d6",
-    "#fed7d7",
     "#f1e4e5",
     "#fee2d6",
     "#fefed6",
