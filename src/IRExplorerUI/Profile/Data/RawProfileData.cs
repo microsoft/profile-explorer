@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using IRExplorerCore.Utilities;
+using IRExplorerCore.Collections;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Utilities;
 using ProtoBuf;
