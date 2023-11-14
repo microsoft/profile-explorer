@@ -358,9 +358,9 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
             // SourceLink HTTP personal authentication token.
             //? TODO: New way for more recent TraceEvent versions:
             //? https://github.com/microsoft/perfview/blob/main/documentation/TraceEvent/SymbolReader/AzureDevOpsPATAuthenticationExample.cs
-            string token = $":{options_.AuthorizationToken}";
-            string tokenB64 = Convert.ToBase64String(Encoding.ASCII.GetBytes(token));
-            pdb.SymbolReader.AuthorizationHeaderForSourceLink = $"Basic {tokenB64}";
+            // string token = $":{options_.AuthorizationToken}";
+            // string tokenB64 = Convert.ToBase64String(Encoding.ASCII.GetBytes(token));
+            // pdb.SymbolReader.AuthorizationHeaderForSourceLink = $"Basic {tokenB64}";
           }
 
           // Download the source file.
