@@ -286,22 +286,27 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       ActivityView.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
       ActivityView.SamplesBackColor = ColorBrushes.GetBrush("#F4A0A0");
 
-      var threadActivityArea = new Rect(0, 0, ActivityViewAreaWidth, 30);
+      var threadActivityArea = new Rect(0, 0, ActivityViewAreaWidth, 25);
 
       foreach (var thread in threads) {
         var threadView = new ActivityTimelineView();
         SetupActivityViewEvents(threadView.ActivityHost);
         threadView.ActivityHost.BackColor = Brushes.WhiteSmoke;
         threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
-        threadView.ActivityHost.SamplesBackColor =
-          ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor((uint)thread.ThreadId));
         threadView.ThreadActivityAction += ThreadView_ThreadActivityAction;
 
         var threadInfo = Session.ProfileData.FindThread(thread.ThreadId);
 
         if (threadInfo != null && threadInfo.HasName) {
-          var backColor = ColorUtils.GenerateLightPastelColor((uint)threadInfo.Name.GetHashCode());
-          threadView.MarginBackColor = ColorBrushes.GetBrush(backColor);
+          uint colorIndex = (uint)threadInfo.Name.GetHashCode();
+          threadView.MarginBackColor =
+            ColorBrushes.GetBrush(ColorUtils.GenerateLightPastelColor(colorIndex));
+          threadView.ActivityHost.SamplesBackColor =
+            ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(colorIndex));
+        }
+        else {
+          threadView.ActivityHost.SamplesBackColor =
+            ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor((uint)thread.ThreadId));
         }
 
         threadActivityViews_.Add(threadView);
@@ -569,7 +574,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
 
-    ThreadFilterText = sb.ToString();
+    ThreadFilterText = sb.ToString().Trim();
     HasThreadFilter = true;
   }
 
