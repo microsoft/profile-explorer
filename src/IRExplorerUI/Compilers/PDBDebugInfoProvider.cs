@@ -239,7 +239,7 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
     var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(rva);
     return FindFunctionSourceFilePathImpl(lineInfo, sourceFile, (uint)rva);
   }
-  
+
   //? TODO: Integrate with SourceFileMapper
   public SourceFileDebugInfo FindFunctionSourceFilePath(string functionName) {
     var funcSymbol = FindFunctionSymbol(functionName);

@@ -269,7 +269,7 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
 
   private async Task AnnotateProfilerData(FunctionProfileData profile, IDebugInfoProvider debugInfo) {
     ResetProfileMarking();
-    
+
     //? Accessing the PDB (DIA) from another thread fails.
     //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
     var result = profile.ProcessSourceLines(debugInfo);

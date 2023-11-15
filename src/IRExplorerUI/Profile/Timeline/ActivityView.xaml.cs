@@ -597,10 +597,11 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                                                                 currentSlice.Weight.Ticks));
         }
 
-        var sliceList = sliceSeriesDict.GetOrAddValue(queryThreadId, () => new SliceList(queryThreadId, (int)Math.Ceiling(slices)) {
-          TimePerSlice = TimeSpan.FromTicks((long)timePerSlice),
-          MaxSlices = (int)slices
-        });
+        var sliceList = sliceSeriesDict.GetOrAddValue(queryThreadId, () =>
+                                                        new SliceList(queryThreadId, (int)Math.Ceiling(slices)) {
+                                                          TimePerSlice = TimeSpan.FromTicks((long)timePerSlice),
+                                                          MaxSlices = (int)slices
+                                                        });
 
         prevSliceIndex = sliceIndex;
         prevSliceList = sliceList;
@@ -802,19 +803,19 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     foreach (var markedSamples in markedSamples_) {
       int index = markedSamples.Samples.BinarySearch(querySample,
-       Comparer<SampleIndex>.Create((a, b) => {
-         var timeDiff = a.Time - startTime_ - b.Time;
+                                                     Comparer<SampleIndex>.Create((a, b) => {
+                                                       var timeDiff = a.Time - startTime_ - b.Time;
 
-         if (timeDiff > closeTimeDiff) {
-           return 1;
-         }
+                                                       if (timeDiff > closeTimeDiff) {
+                                                         return 1;
+                                                       }
 
-         if (timeDiff < -closeTimeDiff) {
-           return -1;
-         }
+                                                       if (timeDiff < -closeTimeDiff) {
+                                                         return -1;
+                                                       }
 
-         return 0;
-       }));
+                                                       return 0;
+                                                     }));
 
       if (index >= 0) {
         return markedSamples;

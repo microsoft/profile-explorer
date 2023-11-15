@@ -5,9 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection.PortableExecutable;
 using System.Text;
-using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using Microsoft.Diagnostics.Tracing;
@@ -211,7 +209,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
     symbolParser.ImageID += data => {
       // The image timestamp often is part of this event when reading an ETL file.
       // A correct timestamp is needed to locate and download the image.
-      
+
       if (lastProfileImage != null &&
           lastProfileImageTime == data.TimeStampQPC) {
         lastProfileImage.OriginalFileName = data.OriginalFileName;

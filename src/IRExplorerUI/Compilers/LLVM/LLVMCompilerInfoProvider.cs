@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.LLVM;
+using IRExplorerUI.Compilers.Default;
 using IRExplorerUI.Diff;
 using IRExplorerUI.Query;
-using IRExplorerUI.Compilers.Default;
 
 namespace IRExplorerUI.Compilers.LLVM;
 

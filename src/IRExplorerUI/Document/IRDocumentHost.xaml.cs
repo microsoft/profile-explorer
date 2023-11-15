@@ -653,7 +653,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     // Filter based on context, accept any context that is a child of the active context.
     if (activeRemarkContext_ != null) {
-        return IsActiveContextTreeRemark(remark);
+      return IsActiveContextTreeRemark(remark);
     }
 
     return true;

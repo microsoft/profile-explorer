@@ -1,5 +1,5 @@
 {
   "configProperties": {
-    "Switch.System.Windows.Media.EnableHardwareAccelerationInRdp": true,
+    "Switch.System.Windows.Media.EnableHardwareAccelerationInRdp": true
   }
 }

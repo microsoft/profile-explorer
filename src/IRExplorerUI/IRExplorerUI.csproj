@@ -32,7 +32,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-		<OutputPath />
+		<OutputPath/>
 		<PlatformTarget>ARM64</PlatformTarget>
 		<DebugType>full</DebugType>
 		<DebugSymbols>true</DebugSymbols>
@@ -47,7 +47,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-		<OutputPath />
+		<OutputPath/>
 		<PlatformTarget>ARM64</PlatformTarget>
 		<DefineConstants>TRACE</DefineConstants>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -65,10 +65,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Remove="Themes\**" />
-		<EmbeddedResource Remove="Themes\**" />
-		<None Remove="Themes\**" />
-		<Page Remove="Themes\**" />
+		<Compile Remove="Themes\**"/>
+		<EmbeddedResource Remove="Themes\**"/>
+		<None Remove="Themes\**"/>
+		<Page Remove="Themes\**"/>
 		<Page Update="Profile\CallTreeNodePanel.xaml">
 			<Generator>MSBuild:Compile</Generator>
 			<XamlRuntime>Wpf</XamlRuntime>
@@ -82,41 +82,41 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Remove="refresh.png" />
+		<None Remove="refresh.png"/>
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Autoupdater.NET.Official" Version="1.8.4" />
-		<PackageReference Include="AvalonEdit" Version="6.3.0.90" />
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.11.0" />
-		<PackageReference Include="ClosedXML" Version="0.102.1" />
-		<PackageReference Include="CS-Script.Core" Version="1.4.0" />
-		<PackageReference Include="DiffPlex" Version="1.7.1" />
-		<PackageReference Include="Dirkster.AvalonDock" Version="4.72.1" />
-		<PackageReference Include="Dirkster.AvalonDock.Themes.Aero" Version="4.72.1" />
-		<PackageReference Include="Dirkster.AvalonDock.Themes.Metro" Version="4.72.1" />
-		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2010" Version="4.72.1" />
-		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
-		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.106" />
-		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94" />
-		<PackageReference Include="Google.Protobuf" Version="3.20.1" />
-		<PackageReference Include="Grpc" Version="2.44.0" />
-		<PackageReference Include="Grpc.Core" Version="2.44.0" />
-		<PackageReference Include="Grpc.Core.Api" Version="2.44.0" />
+		<PackageReference Include="Autoupdater.NET.Official" Version="1.8.4"/>
+		<PackageReference Include="AvalonEdit" Version="6.3.0.90"/>
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.11.0"/>
+		<PackageReference Include="ClosedXML" Version="0.102.1"/>
+		<PackageReference Include="CS-Script.Core" Version="1.4.0"/>
+		<PackageReference Include="DiffPlex" Version="1.7.1"/>
+		<PackageReference Include="Dirkster.AvalonDock" Version="4.72.1"/>
+		<PackageReference Include="Dirkster.AvalonDock.Themes.Aero" Version="4.72.1"/>
+		<PackageReference Include="Dirkster.AvalonDock.Themes.Metro" Version="4.72.1"/>
+		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2010" Version="4.72.1"/>
+		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1"/>
+		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.106"/>
+		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94"/>
+		<PackageReference Include="Google.Protobuf" Version="3.20.1"/>
+		<PackageReference Include="Grpc" Version="2.44.0"/>
+		<PackageReference Include="Grpc.Core" Version="2.44.0"/>
+		<PackageReference Include="Grpc.Core.Api" Version="2.44.0"/>
 		<PackageReference Include="Grpc.Tools" Version="2.44.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.2.0-1.final" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.2.0-1.final" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.2.0-1.final" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.2.0-1.final"/>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.2.0-1.final"/>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.2.0-1.final"/>
 		<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.2">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="2.0.226801" />
-		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.6" />
-		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SupportFiles" Version="1.0.23" />
+		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="2.0.226801"/>
+		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.6"/>
+		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SupportFiles" Version="1.0.23"/>
 		<PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="16.10.10">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -125,19 +125,19 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2194-prerelease" />
-		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
-		<PackageReference Include="OxyPlot.SkiaSharp.Wpf" Version="2.1.2" />
-		<PackageReference Include="OxyPlot.Wpf" Version="2.1.2" />
-		<PackageReference Include="protobuf-net" Version="3.2.26" />
-		<PackageReference Include="System.IO" Version="4.3.0" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.54" />
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2194-prerelease"/>
+		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77"/>
+		<PackageReference Include="OxyPlot.SkiaSharp.Wpf" Version="2.1.2"/>
+		<PackageReference Include="OxyPlot.Wpf" Version="2.1.2"/>
+		<PackageReference Include="protobuf-net" Version="3.2.26"/>
+		<PackageReference Include="System.IO" Version="4.3.0"/>
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.54"/>
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\ClientServer\GrpcLib.csproj" />
-		<ProjectReference Include="..\external\TreeListView\TreeListView.csproj" />
-		<ProjectReference Include="..\IRExplorerCore\IRExplorerCore.csproj" />
+		<ProjectReference Include="..\ClientServer\GrpcLib.csproj"/>
+		<ProjectReference Include="..\external\TreeListView\TreeListView.csproj"/>
+		<ProjectReference Include="..\IRExplorerCore\IRExplorerCore.csproj"/>
 	</ItemGroup>
 
 	<ItemGroup>
