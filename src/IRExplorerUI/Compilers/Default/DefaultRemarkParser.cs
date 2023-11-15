@@ -9,23 +9,11 @@ namespace IRExplorerUI.Compilers.Default;
 
 public class DefaultRemarkParser {
   private IRSectionParser parser_;
-  
+
   public DefaultRemarkParser(ICompilerInfoProvider compilerInfo) {
     parser_ = compilerInfo.IR.CreateSectionParser(null);
   }
 
-  public void Initialize(ReadOnlyMemory<char> line) {
-    
-  }
-  
-  public TupleIR ParseTuple() {
-    return null;
-  }
-
-  public OperandIR ParseOperand() {
-    return null;
-  }
-  
   public static string ExtractValueNumber(IRElement element, string prefix) {
     var tag = element.GetTag<RemarkTag>();
 
@@ -41,6 +29,17 @@ public class DefaultRemarkParser {
       }
     }
 
+    return null;
+  }
+
+  public void Initialize(ReadOnlyMemory<char> line) {
+  }
+
+  public TupleIR ParseTuple() {
+    return null;
+  }
+
+  public OperandIR ParseOperand() {
     return null;
   }
 }

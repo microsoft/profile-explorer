@@ -187,6 +187,11 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
   }
 
   public void Unload() {
+    if (globalSymbol_ != null) {
+      Marshal.ReleaseComObject(globalSymbol_);
+      globalSymbol_ = null;
+    }
+
     if (session_ != null) {
       Marshal.ReleaseComObject(session_);
       session_ = null;

@@ -520,25 +520,29 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     LoadedDocument exeDocument = null;
     otherDocuments = new List<LoadedDocument>();
 
-    foreach (var pair in imageModuleMap_) {
-      if (pair.Value.ModuleDocument == null) {
+    foreach (var module in imageModuleMap_.Values) {
+      if (module.ModuleDocument == null) {
         continue;
       }
 
-      if (Utils.IsExecutableFile(pair.Value.ModuleDocument.BinaryFile?.FilePath)) {
+      if (Utils.IsExecutableFile(module.ModuleDocument.BinaryFile?.FilePath)) {
         if (exeDocument == null) {
-          exeDocument = pair.Value.ModuleDocument;
+          exeDocument = module.ModuleDocument;
         }
-        else if (pair.Value.ModuleDocument.ModuleName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
+        else if (module.ModuleDocument.ModuleName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
           // Pick the better match EXE.
           otherDocuments.Add(exeDocument);
-          exeDocument = pair.Value.ModuleDocument;
+          exeDocument = module.ModuleDocument;
           continue;
         }
       }
 
-      otherDocuments.Add(pair.Value.ModuleDocument);
-      profileData_.RegisterModuleDebugInfo(pair.Value.ModuleDocument.ModuleName, pair.Value.DebugInfo);
+      otherDocuments.Add(module.ModuleDocument);
+
+      if (module.DebugInfo != null) {
+        // Used after profiling completes to unload debug info and free memory.
+        profileData_.RegisterModuleDebugInfo(module.ModuleDocument.ModuleName, module.DebugInfo);
+      }
     }
 
     return exeDocument;

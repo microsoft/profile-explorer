@@ -1640,49 +1640,49 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private void SetupStackFunctionHoverPreview() {
     var preview = new DraggablePopupHoverPreview(
       FunctionList, CallTreeNodePopup.PopupHoverLongDuration,
-    (mousePoint, previewPoint) => {
-      var element =
-        FunctionList.GetObjectAtPoint<ListViewItem>(mousePoint);
+      (mousePoint, previewPoint) => {
+        var element =
+          FunctionList.GetObjectAtPoint<ListViewItem>(mousePoint);
 
-      if (element == null ||
-          element.Content is not IRTextFunctionEx funcEx) {
-        return null;
-      }
+        if (element == null ||
+            element.Content is not IRTextFunctionEx funcEx) {
+          return null;
+        }
 
-      var nodeList =
-        Session.ProfileData.CallTree.GetSortedCallTreeNodes(
-          funcEx.Function);
+        var nodeList =
+          Session.ProfileData.CallTree.GetSortedCallTreeNodes(
+            funcEx.Function);
 
-      if (nodeList is not {Count: > 0}) {
-        return null;
-      }
+        if (nodeList is not {Count: > 0}) {
+          return null;
+        }
 
-      var callNode = nodeList[0];
-      (string text, double textWidth) =
-        CallTreeNodePopup.CreateBacktraceText(callNode, 10,
-          Session.CompilerInfo.NameProvider.FormatFunctionName);
+        var callNode = nodeList[0];
+        (string text, double textWidth) =
+          CallTreeNodePopup.CreateBacktraceText(callNode, 10,
+                                                Session.CompilerInfo.NameProvider.FormatFunctionName);
 
-      if (funcBacktracePreviewPopup_ != null) {
-        funcBacktracePreviewPopup_.UpdatePosition(
-          previewPoint, FunctionList);
-        funcBacktracePreviewPopup_.UpdateNode(callNode);
-      }
-      else {
-        funcBacktracePreviewPopup_ = new CallTreeNodePopup(
-          callNode, null, previewPoint,
-          FunctionList, Session, false);
-      }
+        if (funcBacktracePreviewPopup_ != null) {
+          funcBacktracePreviewPopup_.UpdatePosition(
+            previewPoint, FunctionList);
+          funcBacktracePreviewPopup_.UpdateNode(callNode);
+        }
+        else {
+          funcBacktracePreviewPopup_ = new CallTreeNodePopup(
+            callNode, null, previewPoint,
+            FunctionList, Session, false);
+        }
 
-      funcBacktracePreviewPopup_.ShowBacktraceView = true;
-      funcBacktracePreviewPopup_.BacktraceText = text;
-      funcBacktracePreviewPopup_.Width = textWidth + 50;
-      return funcBacktracePreviewPopup_;
-    },
-    (mousePoint, popup) => true,
-    popup => {
-      Session.RegisterDetachedPanel(popup);
-      funcBacktracePreviewPopup_ = null;
-    });
+        funcBacktracePreviewPopup_.ShowBacktraceView = true;
+        funcBacktracePreviewPopup_.BacktraceText = text;
+        funcBacktracePreviewPopup_.Width = textWidth + 50;
+        return funcBacktracePreviewPopup_;
+      },
+      (mousePoint, popup) => true,
+      popup => {
+        Session.RegisterDetachedPanel(popup);
+        funcBacktracePreviewPopup_ = null;
+      });
   }
 
   private List<IRTextFunctionEx> SetupFunctionExtensions() {

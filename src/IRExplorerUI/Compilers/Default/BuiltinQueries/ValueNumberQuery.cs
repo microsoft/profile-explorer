@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Windows.Media;
 using IRExplorerCore.IR;
 using IRExplorerUI.Query;
-using IRExplorerUI.Compilers.Default;
 
 namespace IRExplorerUI.Compilers.Default;
 

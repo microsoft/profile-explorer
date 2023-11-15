@@ -5,7 +5,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using IRExplorerCore;
-using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.Compilers.Default;
 

@@ -30,10 +30,10 @@ public partial class MainWindow : Window, ISession {
                                           ProfileDataReport report,
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
-    using var profileData = new ETWProfileDataProvider(this);
-    var result = await profileData.LoadTraceAsync(profileFilePath, processIds,
-                                                  options, symbolOptions,
-                                                  report, progressCallback, cancelableTask);
+    using var provider = new ETWProfileDataProvider(this);
+    var result = await provider.LoadTraceAsync(profileFilePath, processIds,
+                                               options, symbolOptions,
+                                               report, progressCallback, cancelableTask);
 
     if (!IsSessionStarted) {
       return false;
@@ -43,6 +43,7 @@ public partial class MainWindow : Window, ISession {
       result.Report = report;
       sessionState_.ProfileData = result;
       UpdateWindowTitle();
+      UnloadProfilingDebugInfo();
     }
 
     return result != null;
@@ -54,10 +55,10 @@ public partial class MainWindow : Window, ISession {
                                           ProfileDataReport report,
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
-    using var profileData = new ETWProfileDataProvider(this);
-    var result = await profileData.LoadTraceAsync(data, processIds,
-                                                  options, symbolOptions,
-                                                  report, progressCallback, cancelableTask);
+    using var provider = new ETWProfileDataProvider(this);
+    var result = await provider.LoadTraceAsync(data, processIds,
+                                               options, symbolOptions,
+                                               report, progressCallback, cancelableTask);
 
     if (!IsSessionStarted) {
       return false;
@@ -67,6 +68,7 @@ public partial class MainWindow : Window, ISession {
       result.Report = report;
       sessionState_.ProfileData = result;
       UpdateWindowTitle();
+      UnloadProfilingDebugInfo();
     }
 
     return result != null;
@@ -322,6 +324,20 @@ public partial class MainWindow : Window, ISession {
     var callerCalleePanel = FindPanel(ToolPanelKind.CallerCallee) as CallTreePanel;
     callerCalleePanel?.Reset();
     return true;
+  }
+
+  private void UnloadProfilingDebugInfo() {
+    if (ProfileData == null) {
+      return;
+    }
+
+    // Free memory used by the debug info by unloading any objects
+    // such as the PDB DIA reader using COM.
+    Task.Run(() => {
+      foreach ((string module, var debugInfo) in ProfileData.ModuleDebugInfo) {
+        debugInfo.Unload();
+      }
+    });
   }
 
   private async void LoadProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
