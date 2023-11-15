@@ -64,7 +64,7 @@ public class DocumentDiffBuilder {
     if (leftText.Equals(rightText, StringComparison.Ordinal)) {
       diffBuilder.BuildDiffModel("", "");
     }
-    
+
     return diffBuilder.BuildDiffModel(leftText, rightText);
   }
 

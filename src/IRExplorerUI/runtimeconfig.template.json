@@ -1,7 +1,5 @@
 {
   "configProperties": {
-    "System.GC.Server": true,
-    "System.GC.HeapCount": 16,
-    "Switch.System.Windows.Media.EnableHardwareAccelerationInRdp":  true
+    "Switch.System.Windows.Media.EnableHardwareAccelerationInRdp": true,
   }
 }

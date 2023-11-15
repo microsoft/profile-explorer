@@ -1241,12 +1241,4 @@ public partial class MainWindow : Window, ISession {
                       MessageBoxButton.OK, MessageBoxImage.Warning);
     }
   }
-
-  private void UnloadAllPDBsClicked(object sender, RoutedEventArgs e) {
-    if (ProfileData != null) {
-      foreach ((string module, var debugInfo) in ProfileData.ModuleDebugInfo) {
-        debugInfo.Unload();
-      }
-    }
-  }
 }

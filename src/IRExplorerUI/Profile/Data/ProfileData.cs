@@ -201,6 +201,7 @@ public class ProfileData {
   }
 
   public void RegisterModuleDebugInfo(string moduleName, IDebugInfoProvider provider) {
+    ModuleDebugInfo[moduleName] = provider;
   }
 
   public void AddModuleSample(int moduleId, TimeSpan weight) {

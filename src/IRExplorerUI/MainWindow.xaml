@@ -398,11 +398,19 @@
           <MenuItem Header="Profiling">
             <MenuItem Command="local:AppCommand.LoadProfile" Header="Load Profile" />
             <MenuItem Command="local:AppCommand.RecordProfile" Header="Record Profile" />
-            <MenuItem Header="Recent Profiles" IsEnabled="False" />
             <Separator />
 
             <MenuItem Command="local:AppCommand.ViewProfileReport" Header="Open profiling report" />
-            <MenuItem Click="UnloadAllPDBsClicked" Header="Unload all PDBs" />
+            <Separator />
+
+            <MenuItem
+              Click="ShowPanelMenuClicked"
+              Header="Timeline Panel"
+              Tag="Timeline" />
+            <MenuItem
+              Click="ShowPanelMenuClicked"
+              Header="Flame Graph Panel"
+              Tag="FlameGraph" />
             <MenuItem
               Click="ShowPanelMenuClicked"
               Header="Call Tree Panel"

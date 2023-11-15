@@ -241,50 +241,50 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
       if (cancelableTask.IsCanceled) {
         return;
       }
-    
+
       int index = 0;
       string line = lines[i];
-    
+
       if (line.StartsWith(MetadataStartString, StringComparison.Ordinal)) {
         if (HandleMetadata(line, i, state)) {
           lineStartOffset += line.Length + newLineLength;
           continue;
         }
       }
-    
+
       while (index < line.Length) {
         // Find next chunk delimited by whitespace.
         if (index > 0) {
           int next = line.IndexOf(' ', index);
-    
+
           if (next != -1) {
             index = next + 1;
           }
         }
-    
+
         // Skip all whitespace.
         while (index < line.Length && char.IsWhiteSpace(line[index])) {
           index++;
         }
-    
+
         if (index == line.Length) {
           break;
         }
-    
+
         lineParser.Initialize(line.AsMemory(index));
         var tuple = lineParser.ParseTuple();
-    
+
         if (tuple is InstructionIR instr) {
           var similarInstr = similarValueFinder.Find(instr);
-    
+
           if (similarInstr != null) {
             var remarkLocation = new TextLocation(lineStartOffset, i, 0);
-    
+
             var location = new TextLocation(
               instr.TextLocation.Offset + index + lineStartOffset, i, 0);
-    
+
             instr.TextLocation = location; // Set actual location in output text.
-    
+
             var remarkKind = FindRemarkKind(line, true);
             var remark = new Remark(remarkKind, section, line.Trim(), line,
                                     remarkLocation, true);
@@ -292,16 +292,16 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
             remark.OutputElements.Add(instr);
             remarks.Add(remark);
             state.AttachToCurrentContext(remark);
-    
+
             index += instr.TextLength;
             continue;
           }
           //? return pool
         }
-    
+
         index++;
       }
-    
+
       // Extract remarks mentioning only operands, not whole instructions.
       //? TODO: If an operand is part of an instruction that was already matched
       //? by a remark, don't include the operand anymore if it's the same remark text
@@ -309,17 +309,17 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
         lineStartOffset += line.Length + newLineLength;
         continue;
       }
-    
+
       parser.Initialize(line.AsMemory());
       var op = parser.ParseOperand();
-      
+
       while (op != null) {
         var value = refFinder.FindEquivalentValue(op, true);
-        
-        if(value != null && op.TextLocation.Line < lines.Count) {
+
+        if (value != null && op.TextLocation.Line < lines.Count) {
           var location = new TextLocation(op.TextLocation.Offset + lineStartOffset, i, 0);
           op.TextLocation = location; // Set actual location in output text.
-  
+
           var remarkLocation = new TextLocation(lineStartOffset, i, 0);
           var remarkKind = FindRemarkKind(line, false);
           var remark = new Remark(remarkKind, section, line.Trim(), line,
@@ -329,10 +329,10 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
           remarks.Add(remark);
           state.AttachToCurrentContext(remark);
         }
-        
+
         op = parser.ParseOperand();
       }
-    
+
       lineStartOffset += line.Length + newLineLength;
     }
   }
