@@ -89,7 +89,7 @@ public class IRTextSection : IEquatable<IRTextSection> {
 
     return Id == other.Id && Number == other.Number &&
            Name.Equals(other.Name, StringComparison.Ordinal) &&
-           ((ParentFunction == null && other.ParentFunction == null) ||
-            (ParentFunction != null && ParentFunction.Equals(other.ParentFunction)));
+           (ParentFunction == null && other.ParentFunction == null ||
+            ParentFunction != null && ParentFunction.Equals(other.ParentFunction));
   }
 }

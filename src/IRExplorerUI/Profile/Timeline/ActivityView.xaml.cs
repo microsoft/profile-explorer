@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -40,7 +39,7 @@ public class MarkedSamples {
 }
 
 public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
-  private const double SliceWidth = 8;
+  private const double DefaultSliceWidth = 8;
   private const double TimeBarHeight = 18;
   private const double MinSampleHeight = 4;
   private const double TopMarginY = 1 + TimeBarHeight;
@@ -321,7 +320,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     font_ = new Typeface(DefaultFont);
     fontSize_ = DefaultTextSize;
     glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual_).PixelsPerDip);
-    return StartComputeSampleSlices(SliceWidth);
+    return StartComputeSampleSlices(DefaultSliceWidth);
   }
 
   public void InitializeDone() {
@@ -668,12 +667,15 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
       double scaledSliceWidth = maxWidth_ / list.MaxSlices;
 
       if (scaledSliceWidth > sliceWidth_ * 1.5) {
-        double newWidth = Math.Min(SliceWidth, Math.Max(0.2, SliceWidth * (SliceWidth / scaledSliceWidth)));
+        double newWidth = Math.Min(DefaultSliceWidth,
+                                   Math.Max(0.2, DefaultSliceWidth * (DefaultSliceWidth / scaledSliceWidth)));
         StartComputeSampleSlices(newWidth);
         return;
       }
-      else if (scaledSliceWidth < sliceWidth_ * 0.75) {
-        double newWidth = Math.Min(SliceWidth, Math.Max(0.2, SliceWidth * (SliceWidth / scaledSliceWidth)));
+
+      if (scaledSliceWidth < sliceWidth_ * 0.75) {
+        double newWidth = Math.Min(DefaultSliceWidth,
+                                   Math.Max(0.2, DefaultSliceWidth * (DefaultSliceWidth / scaledSliceWidth)));
         StartComputeSampleSlices(newWidth);
         return;
       }
@@ -715,7 +717,6 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         graphDC.DrawRectangle(backColor, borderColor, rect);
       }
     }
-
 
     foreach (var samples in markedSamples_) {
       DrawMarkedSamples(samples, graphDC);
