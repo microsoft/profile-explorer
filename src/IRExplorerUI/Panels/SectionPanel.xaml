@@ -329,7 +329,7 @@
           <ListView.View>
             <GridView>
               <GridViewColumn Width="180">
-                <GridViewColumnHeader Content="Module" x:Name="ModuleColumnHeader" />
+                <GridViewColumnHeader Content="Binary" x:Name="ModuleColumnHeader" />
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />

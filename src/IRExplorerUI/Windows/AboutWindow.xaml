@@ -44,7 +44,7 @@
         </Hyperlink>
       </TextBlock>
       <Expander Header="Third party notices" Margin="0,16,0,16">
-        <TextBox Text="{Binding LicenseText, Mode=OneWay}" BorderThickness="0" Margin="0,8,0,0"
+        <TextBox Text="{Binding LicenseText, Mode=OneWay}" Margin="0,8,0,0"
                  MaxLines="20"
                  TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
       </Expander>

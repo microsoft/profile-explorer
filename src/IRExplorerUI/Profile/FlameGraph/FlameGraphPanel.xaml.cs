@@ -384,10 +384,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
     var view = new WebViewPopup(new Point(0, 0),
-                                500, 200, null);
+                                500, 400, GraphHost);
     Session.RegisterDetachedPanel(view);
 
-    view.PanelTitle = "Panel Help";
+    view.PanelTitle = "Flame Graph Panel Help";
     view.IsOpen = true;
   }
 }

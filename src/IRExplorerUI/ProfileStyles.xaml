@@ -351,11 +351,11 @@
           <Style.Triggers>
             <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}"
                          Value="{x:Static profile:ProfileCallTreeNodeKind.NativeKernel}">
-              <Setter Property="Background" Value="MistyRose" />
+              <Setter Property="Background" Value="AliceBlue" />
             </DataTrigger>
             <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}"
                          Value="{x:Static profile:ProfileCallTreeNodeKind.Managed}">
-              <Setter Property="Background" Value="AliceBlue" />
+              <Setter Property="Background" Value="MistyRose" />
             </DataTrigger>
             <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}"
                          Value="{x:Static profile:ProfileCallTreeNodeKind.NativeUser}">
