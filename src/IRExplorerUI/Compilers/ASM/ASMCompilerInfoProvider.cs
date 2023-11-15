@@ -8,10 +8,10 @@ using System.Windows;
 using IRExplorerCore;
 using IRExplorerCore.ASM;
 using IRExplorerCore.IR;
+using IRExplorerUI.Compilers.Default;
 using IRExplorerUI.Diff;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Query;
-using IRExplorerUI.Compilers.Default;
 
 namespace IRExplorerUI.Compilers.ASM;
 
