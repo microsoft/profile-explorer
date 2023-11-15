@@ -1750,7 +1750,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private void CreateFunctionExtensions(IRTextSummary summary, List<IRTextFunctionEx> functionsEx) {
     foreach (var func in summary.Functions) {
       if (IsHiddenFunction(func)) {
-        Trace.WriteLine($"Ignore {func.Name}");
         continue;
       }
 
@@ -1830,7 +1829,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private void SetupSectionExtensions(IRTextSummary summary) {
     foreach (var func in summary.Functions) {
       if (IsHiddenFunction(func)) {
-          Trace.WriteLine($"Ignore section {func.Name}");
         continue;
       }
 
