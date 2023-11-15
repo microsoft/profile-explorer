@@ -138,9 +138,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> OpenProfileSourceFile(IRTextFunction function) {
-    var panel = FindPanel(ToolPanelKind.Source) as SourceFilePanel;
-
-    if (panel != null) {
+    if (FindPanel(ToolPanelKind.Source) is SourceFilePanel panel) {
       await panel.LoadSourceFile(function.Sections[0]);
     }
 
@@ -244,9 +242,7 @@ public partial class MainWindow : Window, ISession {
       return false;
     }
 
-    var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
-
-    if (panel != null) {
+    if (FindPanel(ToolPanelKind.Timeline) is TimelinePanel panel) {
       //? TODO: Select only samples included in this call node,
       //? right now selects any instance of the func
       await SelectFunctionSamples(node, panel);

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -335,6 +336,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
       return;
     }
 
+    prevMaxWidth_ = maxWidth;
     maxWidth_ = maxWidth;
     Redraw();
     InvalidateMeasure();
@@ -660,6 +662,23 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
       return;
     }
 
+    // Recompute the slices if zooming in/out, this will increase/reduces their number.
+    //? TODO: This check is needed only when maxWidth_ changes.
+    foreach (var list in slices_) {
+      double scaledSliceWidth = maxWidth_ / list.MaxSlices;
+
+      if (scaledSliceWidth > sliceWidth_ * 1.5) {
+        double newWidth = Math.Min(SliceWidth, Math.Max(0.2, SliceWidth * (SliceWidth / scaledSliceWidth)));
+        StartComputeSampleSlices(newWidth);
+        return;
+      }
+      else if (scaledSliceWidth < sliceWidth_ * 0.75) {
+        double newWidth = Math.Min(SliceWidth, Math.Max(0.2, SliceWidth * (SliceWidth / scaledSliceWidth)));
+        StartComputeSampleSlices(newWidth);
+        return;
+      }
+    }
+
     if (hasFilter_) {
       DrawTimeRangeFilter(graphDC);
     }
@@ -695,23 +714,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                             scaledSliceWidth, height);
         graphDC.DrawRectangle(backColor, borderColor, rect);
       }
-
-      // Recompute the slices if zooming in/out, this will increase/reduces their number.
-      if (scaledSliceWidth > 2 * SliceWidth) {
-        double newWidth = Math.Max(1, SliceWidth * (SliceWidth / scaledSliceWidth));
-
-        if (newWidth < sliceWidth_) {
-          StartComputeSampleSlices(newWidth);
-        }
-      }
-      else if (scaledSliceWidth < SliceWidth / 2) {
-        double newWidth = Math.Max(1, SliceWidth * (SliceWidth / scaledSliceWidth));
-
-        if (newWidth > sliceWidth_) {
-          StartComputeSampleSlices(newWidth);
-        }
-      }
     }
+
 
     foreach (var samples in markedSamples_) {
       DrawMarkedSamples(samples, graphDC);
@@ -931,12 +935,16 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     sliceTask_.CreateTask();
 
     return Task.Run(() => {
+      sliceTask_.CancelTaskAndWait();
       sliceWidth_ = newWidth;
       slices_ = ComputeSampleSlices(profile_, ThreadId);
       sliceTask_.CompleteTask();
 
       // Update UI.
-      Dispatcher.BeginInvoke(() => OnPropertyChanged(nameof(MaxCpuUsage)));
+      Dispatcher.BeginInvoke(() => {
+        Redraw();
+        OnPropertyChanged(nameof(MaxCpuUsage));
+      });
     });
   }
 

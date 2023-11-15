@@ -178,7 +178,7 @@ public partial class MainWindow : Window, ISession {
 
   public async Task<IRDocumentHost>
     OpenDocumentSectionAsync(OpenSectionEventArgs args) {
-    return await OpenDocumentSectionAsync(args, args.TargetDocument, false);
+    return await OpenDocumentSectionAsync(args, args.TargetDocument);
   }
 
   public ParsedIRTextSection LoadAndParseSection(IRTextSection section) {
