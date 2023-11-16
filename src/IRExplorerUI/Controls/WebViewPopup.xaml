@@ -10,7 +10,6 @@
   xmlns:controls="clr-namespace:IRExplorerUI.Controls"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Border
     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
@@ -62,13 +61,13 @@
           Width="16" />
       </Button>
 
-      <wv2:WebView2
+      <WebBrowser
         DockPanel.Dock="Bottom"
         Grid.ColumnSpan="3"
         Grid.Row="1"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
-        Source="C:\Users\lgrat\WebstormProjects\untitled\main.html"
+        Source="http://www.irexplorer.com"
         x:Name="TextView" />
       <controls:ResizeGrip
         Grid.Column="2"
