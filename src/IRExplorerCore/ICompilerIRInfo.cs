@@ -8,7 +8,7 @@ namespace IRExplorerCore;
 
 public interface ICompilerIRInfo {
   IRMode Mode { get; set; }
-  InstrOffsetData InstructionOffsetData { get; }
+  InstructionOffsetData InstructionOffsetData { get; }
   IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders = true);
   IRSectionReader CreateSectionReader(byte[] textData, bool expectSectionHeaders = true);
   IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler, long functionSize = 0);
@@ -29,28 +29,24 @@ public interface ICompilerIRInfo {
   bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck);
 }
 
-public class InstrOffsetData {
-  public int OffsetAdjustIncrement { get; private set; }
-  public int MaxOffsetAdjust { get; private set; }
+public class InstructionOffsetData {
+  public int OffsetAdjustIncrement { get; set; }
+  public int MaxOffsetAdjust { get; set; }
+  public int InitialMultiplier { get; set; }
 
-  public static InstrOffsetData PointsToNextInstr() {
-    return new InstrOffsetData {
-      OffsetAdjustIncrement = 0,
-      MaxOffsetAdjust = 0
-    };
-  }
-
-  public static InstrOffsetData ConstantSize(int size) {
-    return new InstrOffsetData {
+  public static InstructionOffsetData ConstantSize(int size) {
+    return new InstructionOffsetData {
       OffsetAdjustIncrement = size,
-      MaxOffsetAdjust = size
+      MaxOffsetAdjust = size,
+      InitialMultiplier = 0
     };
   }
 
-  public static InstrOffsetData VariableSize(int minSize, int maxSize) {
-    return new InstrOffsetData {
+  public static InstructionOffsetData VariableSize(int minSize, int maxSize) {
+    return new InstructionOffsetData {
       OffsetAdjustIncrement = minSize,
-      MaxOffsetAdjust = maxSize
+      MaxOffsetAdjust = maxSize,
+      InitialMultiplier = 1
     };
   }
 }

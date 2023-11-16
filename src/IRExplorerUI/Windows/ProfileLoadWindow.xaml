@@ -111,7 +111,7 @@
           <StackPanel Margin="0,0,0,8" Orientation="Vertical">
             <StackPanel x:Name="ProfileCapturePanel"
                         Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
-              <TextBlock Margin="8,6,8,0" Text="Profiling target" />
+              <TextBlock Margin="8,6,8,0" FontWeight="Medium"  Text="Profiling target" />
 
               <RadioButton
                 x:Name="StartAppRadioButton"
@@ -135,7 +135,7 @@
                 Content="System-wide"
                 IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
                 IsEnabled="{Binding InputControlsEnabled}"
-                ToolTip="Profiles every application running on the current machine" />
+                ToolTip="Profiles all applications running on the current machine" />
 
               <Separator Margin="0,8,0,8" />
 
@@ -146,9 +146,11 @@
                   MinHeight="24"
                   Margin="8,4,8,4">
                   <CheckBox
+                    IsEnabled="False"
                     Margin="0,0,60,0"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
+                    ToolTip="Show only managed processes using .NET"
                     Content="Only .NET" />
                   <Button
                     x:Name="RefreshProcessButton"
@@ -334,7 +336,7 @@
               </StackPanel>
 
               <Expander
-                Margin="8,8,8,0"
+                Margin="8,10,8,0"
                 IsEnabled="{Binding InputControlsEnabled}"
                 IsExpanded="True">
                 <Expander.Header>
@@ -349,15 +351,18 @@
                   <CheckBox
                     Margin="20,4,0,0"
                     Content="Record JIT output assembly"
+                    ToolTip="Save the machine code produced by the JIT compiler for each function"
                     IsChecked="{Binding Path=RecordingOptions.RecordDotNetAssembly, Mode=TwoWay}"
                     IsEnabled="{Binding ElementName=SystemWideRadioButton, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
                   <CheckBox
                     Margin="0,8,0,0"
                     Content="Profile child processes"
+                    ToolTip="Include in the trace any process created by the startup process"
                     IsChecked="{Binding Path=RecordingOptions.ProfileChildProcesses, Mode=TwoWay}" />
                   <CheckBox
                     Margin="0,4,0,0"
                     Content="Record CPU performance counter (PMC) events"
+                    ToolTip="Collect the counters enabled in the CPU counters tab"
                     IsChecked="{Binding Path=RecordingOptions.RecordPerformanceCounters, Mode=TwoWay}" />
 
                   <StackPanel
@@ -959,7 +964,7 @@
               IsEnabled="{Binding InputControlsEnabled}"
               IsExpanded="True">
               <Expander.Header>
-                <TextBlock FontWeight="Medium" Text="Processing report" />
+                <TextBlock FontWeight="Medium" Text="Processing options" />
               </Expander.Header>
               <StackPanel>
                 <CheckBox
@@ -979,11 +984,11 @@
             </Expander>
 
             <Expander
-              Margin="8,8,8,0"
+              Margin="8,10,8,0"
               IsEnabled="{Binding InputControlsEnabled}"
               IsExpanded="True">
               <Expander.Header>
-                <TextBlock FontWeight="Medium" Text="Symbol report" />
+                <TextBlock FontWeight="Medium" Text="Symbol options" />
               </Expander.Header>
 
               <StackPanel>
@@ -1039,11 +1044,11 @@
             </Expander>
 
             <Expander
-              Margin="8,8,8,0"
+              Margin="8,10,8,0"
               IsEnabled="{Binding InputControlsEnabled}"
               IsExpanded="True">
               <Expander.Header>
-                <TextBlock FontWeight="Medium" Text="Source file report" />
+                <TextBlock FontWeight="Medium" Text="Source file options" />
               </Expander.Header>
 
               <StackPanel>
@@ -1071,11 +1076,11 @@
               </StackPanel>
             </Expander>
             <Expander
-              Margin="8,8,8,8"
+              Margin="8,10,8,8"
               IsEnabled="{Binding InputControlsEnabled}"
               IsExpanded="True">
               <Expander.Header>
-                <TextBlock FontWeight="Medium" Text="Binary file report" />
+                <TextBlock FontWeight="Medium" Text="Binary file options" />
               </Expander.Header>
 
               <StackPanel>

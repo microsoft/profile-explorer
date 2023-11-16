@@ -36,8 +36,8 @@ public class FunctionProfileData {
 
   public static bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset,
                                              ICompilerIRInfo ir, out IRElement element) {
-    int multiplier = 0;
     var offsetData = ir.InstructionOffsetData;
+    int multiplier = offsetData.InitialMultiplier;
 
     do {
       if (metadataTag.OffsetToElementMap.TryGetValue(offset - multiplier * offsetData.OffsetAdjustIncrement,
