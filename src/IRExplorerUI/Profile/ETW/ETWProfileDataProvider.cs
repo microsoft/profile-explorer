@@ -350,7 +350,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         continue;
       }
 
-      if ((index++ & 1024) == 0) {
+      if ((index++ & 131072) == 0) { // Update progress every 128K samples.
         if (cancelableTask is {IsCanceled: true}) {
           return samples;
         }
@@ -760,9 +760,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     var sw = Stopwatch.StartNew();
 
     foreach (var counter in prof.PerformanceCountersEvents) {
-      index++;
-
-      if (index % 50000 == 0) {
+      if ((index++ & 131072) == 0) { // Update progress every 128K samples.
         if (cancelableTask is {IsCanceled: true}) {
           break;
         }
