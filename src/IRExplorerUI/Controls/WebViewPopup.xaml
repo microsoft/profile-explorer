@@ -10,6 +10,7 @@
   xmlns:controls="clr-namespace:IRExplorerUI.Controls"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Border
     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
@@ -61,7 +62,7 @@
           Width="16" />
       </Button>
 
-      <WebBrowser
+      <wv2:WebView2
         DockPanel.Dock="Bottom"
         Grid.ColumnSpan="3"
         Grid.Row="1"
