@@ -117,19 +117,6 @@ public sealed class ModuleInfo {
     return FunctionDebugInfo.BinarySearch(sortedFuncList_, funcAddress);
   }
 
-  public IRTextFunction FindFunction(long funcAddress) {
-    if (!HasDebugInfo) {
-      return null;
-    }
-
-    // Try to use the precise address -> function mapping.
-    if (addressFuncMap_.TryGetValue(funcAddress, out var textFunction)) {
-      return textFunction;
-    }
-
-    return null;
-  }
-
   public IRTextFunction FindFunction(long funcAddress, out bool isExternal) {
     var textFunc = FindFunction(funcAddress);
 
@@ -173,6 +160,19 @@ public sealed class ModuleInfo {
     }
   }
 
+  private IRTextFunction FindFunction(long funcAddress) {
+    if (!HasDebugInfo) {
+      return null;
+    }
+
+    // Try to use the precise address -> function mapping.
+    if (addressFuncMap_.TryGetValue(funcAddress, out var textFunction)) {
+      return textFunction;
+    }
+
+    return null;
+  }
+
   private void CreateDummyDocument(BinaryFileDescriptor binaryInfo) {
     // Create a dummy document to represent the module,
     // AddPlaceholderFunction will populate it.
@@ -199,6 +199,8 @@ public sealed class ModuleInfo {
 
       if (func != null) {
         addressFuncMap_[funcInfo.RVA] = func;
+        //? TODO: Could cache the func in the FunctionDebugInfo
+        //? to avoid an extra map lookup when resolving stacks
       }
       else {
         externalsFuncMap_[funcInfo.RVA] = ModuleDocument.AddDummyFunction(funcInfo.Name);

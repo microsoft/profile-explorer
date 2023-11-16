@@ -486,8 +486,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         textFunction = module.FindFunction(frameRva, out _);
 
         if (textFunction == null) {
-          string placeholderName = $"{frameIp:X}";
-          textFunction = module.AddPlaceholderFunction(placeholderName, frameIp);
+          string placeholderName = $"{frameRva:X}";
+          textFunction = module.AddPlaceholderFunction(placeholderName, frameRva);
         }
 
         funcDebugInfo = new FunctionDebugInfo(textFunction.Name, frameRva, 0);
