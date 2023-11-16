@@ -50,8 +50,8 @@ public class JsonUtils {
   public static bool SerializeToFile<T>(T data, string path) {
     try {
       var options = GetJsonOptions();
-      string result = JsonSerializer.Serialize(data, options);
-      File.WriteAllText(path, result);
+      using var stream = File.OpenWrite(path);
+      JsonSerializer.Serialize(stream, data,options);
       return true;
     }
     catch (Exception ex) {
@@ -79,8 +79,8 @@ public class JsonUtils {
   public static bool DeserializeFromFile<T>(string path, out T data) where T : class {
     try {
       var options = GetJsonOptions();
-      string text = File.ReadAllText(path);
-      data = JsonSerializer.Deserialize<T>(text, options);
+      using var stream = File.OpenRead(path);
+      data = JsonSerializer.Deserialize<T>(stream, options);
       return true;
     }
     catch (Exception ex) {
