@@ -57,6 +57,12 @@ public struct IRTextFunctionId : IEquatable<IRTextFunctionId> {
   }
 }
 
+// Represents a contiguous range of samples running on the same thread.
+public struct ThreadSampleRange {
+  public int StartIndex;
+  public int EndIndex;
+}
+
 public class ProfileData {
   public ProfileData(TimeSpan profileWeight, TimeSpan totalWeight) : this() {
     ProfileWeight = profileWeight;
@@ -74,6 +80,7 @@ public class ProfileData {
     Samples = new List<(ProfileSample, ResolvedProfileStack)>();
     Events = new List<(PerformanceCounterEvent Sample, ResolvedProfileStack Stack)>();
     ModuleDebugInfo = new Dictionary<string, IDebugInfoProvider>();
+    Filter = new ProfileSampleFilter();
   }
 
   public TimeSpan ProfileWeight { get; set; }
@@ -117,6 +124,8 @@ public class ProfileData {
       return list;
     }
   }
+
+  public ProfileSampleFilter Filter { get; set; }
 
   public static ProfileData MakeDummySamples(int countM, TimeSpan duration) {
     countM *= 1000 * 1000;
@@ -326,21 +335,50 @@ public class ProfileData {
     return null;
   }
 
-  public void FilterFunctionProfile(ProfileSampleFilter filter) {
-    ModuleWeights.Clear();
-    FunctionProfiles.Clear();
-    ProfileWeight = TimeSpan.Zero;
-    TotalWeight = TimeSpan.Zero;
-    CallTree = null; //? TODO: Recycle nodes?
-
+  public ProcessingResult FilterFunctionProfile(ProfileSampleFilter filter) {
     //? TODO: Split ProfileData into a part that has the samples and other info that doesn't change,
     //? while the rest is more like a processing result similar to FuncProfileData
+    var currentProfile = new ProcessingResult {
+      FunctionProfiles = FunctionProfiles,
+      CallTree = CallTree,
+      ModuleWeights = ModuleWeights,
+      ProfileWeight = ProfileWeight,
+      TotalWeight = TotalWeight,
+      Filter = Filter
+    };
+
+    ModuleWeights = new Dictionary<int, TimeSpan>();
+    FunctionProfiles = new ConcurrentDictionary<IRTextFunction, FunctionProfileData>();
+    ProfileWeight = TimeSpan.Zero;
+    TotalWeight = TimeSpan.Zero;
+
     var profile = ComputeFunctionProfile(this, filter);
     ModuleWeights = profile.ModuleWeights;
     ProfileWeight = profile.ProfileWeight;
     TotalWeight = profile.TotalWeight;
     FunctionProfiles = profile.FunctionProfiles;
     CallTree = profile.CallTree;
+    Filter = filter;
+    return currentProfile;
+  }
+
+  public ProcessingResult RestorePreviousProfile(ProcessingResult previousProfile) {
+    var currentProfile = new ProcessingResult {
+      FunctionProfiles = FunctionProfiles,
+      CallTree = CallTree,
+      ModuleWeights = ModuleWeights,
+      ProfileWeight = ProfileWeight,
+      TotalWeight = TotalWeight,
+      Filter = Filter
+    };
+
+    ModuleWeights = previousProfile.ModuleWeights;
+    ProfileWeight = previousProfile.ProfileWeight;
+    TotalWeight = previousProfile.TotalWeight;
+    FunctionProfiles = previousProfile.FunctionProfiles;
+    CallTree = previousProfile.CallTree;
+    Filter = previousProfile.Filter;
+    return currentProfile;
   }
 
   public ProfileData ComputeFunctionProfile(ProfileData baseProfile, ProfileSampleFilter filter,
@@ -368,7 +406,7 @@ public class ProfileData {
       // If a single thread is selected, only process the samples for that thread
       // by going through the thread sample ranges.
       var ranges = baseProfile.ThreadSampleRanges.Ranges[-1];
-      
+
       if (filter.ThreadIds != null && filter.ThreadIds.Count == 1) {
         ranges = baseProfile.ThreadSampleRanges.Ranges[filter.ThreadIds[0]];
         // Trace.WriteLine($"Filter single thread with {ranges.Count} ranges");
@@ -385,12 +423,12 @@ public class ProfileData {
         // Find the ranges of samples that overlap with the filter time range.
         int startRangeIndex = 0;
         int endRangeIndex = ranges.Count - 1;
-        
-        while(startRangeIndex < ranges.Count && ranges[startRangeIndex].EndIndex < start) {
+
+        while (startRangeIndex < ranges.Count && ranges[startRangeIndex].EndIndex < start) {
           startRangeIndex++;
         }
-        
-        while(endRangeIndex > 0 && ranges[endRangeIndex].StartIndex > end) {
+
+        while (endRangeIndex > 0 && ranges[endRangeIndex].StartIndex > end) {
           endRangeIndex--;
         }
 
@@ -474,7 +512,7 @@ public class ProfileData {
     profile.ThreadSampleRanges = baseProfile.ThreadSampleRanges;
     return profile;
   }
-  
+
   public ThreadSampleRanges ComputeThreadSampleRanges() {
     // Compute lists of contiguous range of samples running on the same thread,
     // used later to speed up the timeline slice computation and per-thread filtering.
@@ -510,7 +548,7 @@ public class ProfileData {
     }
 
     // Add an entry representing all threads, covering all samples.    
-    threadSampleRanges[-1] = new List<ThreadSampleRange>() {
+    threadSampleRanges[-1] = new List<ThreadSampleRange> {
       new ThreadSampleRange {
         StartIndex = 0,
         EndIndex = sampleIndex
@@ -519,6 +557,15 @@ public class ProfileData {
 
     ThreadSampleRanges = new ThreadSampleRanges(threadSampleRanges);
     return ThreadSampleRanges;
+  }
+
+  public class ProcessingResult {
+    public ProfileSampleFilter Filter { get; set; }
+    public ConcurrentDictionary<IRTextFunction, FunctionProfileData> FunctionProfiles { get; set; }
+    public ProfileCallTree CallTree { get; set; }
+    public Dictionary<int, TimeSpan> ModuleWeights { get; set; }
+    public TimeSpan ProfileWeight { get; set; }
+    public TimeSpan TotalWeight { get; set; }
   }
 
   [ProtoContract(SkipConstructor = true)]
@@ -578,17 +625,11 @@ public class IRTextFunctionReference {
   }
 }
 
-// Represents a contiguous range of samples running on the same thread.
-public struct ThreadSampleRange {
-  public int StartIndex;
-  public int EndIndex;
-}
-
 // Represents a set of sample ranges for each thread.
 public class ThreadSampleRanges {
-  public Dictionary<int, List<ThreadSampleRange>> Ranges { get; set; }
-
   public ThreadSampleRanges(Dictionary<int, List<ThreadSampleRange>> ranges) {
     Ranges = ranges;
   }
+
+  public Dictionary<int, List<ThreadSampleRange>> Ranges { get; set; }
 }
