@@ -16,6 +16,9 @@ namespace IRExplorerUI;
 
 public partial class MainWindow : Window, ISession {
   private CancelableTaskInstance updateProfileTask_ = new CancelableTaskInstance();
+  private ProfileData.ProcessingResult allThreadsProfile_;
+  private Dictionary<ProfileSampleFilter, ProfileData.ProcessingResult> prevProfiles =
+    new Dictionary<ProfileSampleFilter, ProfileData.ProcessingResult>();
   public ProfileData ProfileData => sessionState_?.ProfileData;
 
   public async Task<bool> OpenProfileFunction(IRTextFunction function, OpenSectionKind openMode) {
@@ -86,7 +89,29 @@ public partial class MainWindow : Window, ISession {
 
     {
       var sw2 = Stopwatch.StartNew();
-      await Task.Run(() => ProfileData.FilterFunctionProfile(filter));
+      ProfileData.ProcessingResult result = null;
+
+      if (filter.IncludesAll && allThreadsProfile_ != null) {
+        Trace.WriteLine("Restore main profile");
+        result = ProfileData.RestorePreviousProfile(allThreadsProfile_);
+      }
+      // else if (prevProfiles.TryGetValue(filter, out result)) {
+      //   Trace.WriteLine($"Restore other profile");
+      //   result = ProfileData.RestorePreviousProfile(allThreadsProfile_);
+      // }
+      else {
+        Trace.WriteLine("Compute new profile");
+
+        result = await Task.Run(() => ProfileData.FilterFunctionProfile(filter));
+      }
+
+      if (result.Filter.IncludesAll) {
+        Trace.WriteLine("Save main profile");
+
+        allThreadsProfile_ = result;
+      }
+
+      //prevProfiles[result.Filter] = result;
       Trace.WriteLine($"1) ComputeFunctionProfile {sw2.ElapsedMilliseconds}");
     }
 
@@ -381,6 +406,8 @@ public partial class MainWindow : Window, ISession {
 
   private Dictionary<int, List<SampleIndex>>
     FindFunctionSamples(ProfileCallTreeNode node, ProfileData profile) {
+    // Compute the list of samples associated with the function,
+    // for each thread it was executed on.
     var sw = Stopwatch.StartNew();
     var allThreadsList = new List<SampleIndex>();
     var threadListMap = new Dictionary<int, List<SampleIndex>>();
@@ -445,6 +472,8 @@ public partial class MainWindow : Window, ISession {
 
   private HashSet<IRTextFunction> FindFunctionsForSamples(int sampleStartIndex, int sampleEndIndex, int threadId,
                                                           ProfileData profile) {
+    // Compute the list of functions covered by the samples
+    // on the specified thread or all threads.
     var funcSet = new HashSet<IRTextFunction>();
 
     //? TODO: If an event fires during the call tree/sample filtering,

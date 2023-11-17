@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -16,12 +15,43 @@ using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI.Profile;
 
-public class ProfileSampleFilter {
+public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
   public SampleTimeRangeInfo TimeRange { get; set; }
   public List<int> ThreadIds { get; set; }
+  public bool IncludesAll => TimeRange == null && (ThreadIds == null || ThreadIds.Count == 0);
+
+  public static bool operator ==(ProfileSampleFilter left, ProfileSampleFilter right) {
+    return Equals(left, right);
+  }
+
+  public static bool operator !=(ProfileSampleFilter left, ProfileSampleFilter right) {
+    return !Equals(left, right);
+  }
+
+  public override bool Equals(object obj) {
+    if (ReferenceEquals(null, obj))
+      return false;
+    if (ReferenceEquals(this, obj))
+      return true;
+    if (obj.GetType() != GetType())
+      return false;
+    return Equals((ProfileSampleFilter)obj);
+  }
+
+  public override int GetHashCode() {
+    return HashCode.Combine(TimeRange, ThreadIds);
+  }
 
   public override string ToString() {
     return $"TimeRange: {TimeRange}, ThreadIds: {ThreadIds}";
+  }
+
+  public bool Equals(ProfileSampleFilter other) {
+    if (ReferenceEquals(null, other))
+      return false;
+    if (ReferenceEquals(this, other))
+      return true;
+    return Equals(TimeRange, other.TimeRange) && Equals(ThreadIds, other.ThreadIds);
   }
 }
 
@@ -276,6 +306,84 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
   protected override int VisualChildrenCount => 1;
   private TimeSpan SelectionTimeDiff => selectionEndTime_ - selectionStartTime_;
+
+  public static List<SliceList> ComputeSampleSlices2(List<ProfileSample> samples, double maxWidth_, double sliceWidth_,
+                                                     int threadId = -1) {
+    if (samples.Count == 0) {
+      return new List<SliceList>();
+    }
+
+    var startTime_ = samples[0].Time;
+    var endTime_ = samples[^1].Time;
+    double slices = maxWidth_ / sliceWidth_;
+
+    var timeDiff = endTime_ - startTime_;
+    double timePerSlice = timeDiff.Ticks / slices;
+    double timePerSliceReciproc = 1.0 / timePerSlice;
+    var sliceSeriesDict = new Dictionary<int, SliceList>();
+
+    int sampleIndex = 0;
+    int prevSliceIndex = -1;
+    SliceList prevSliceList = null;
+    var currentSlice = new Slice(TimeSpan.Zero, -1, 0);
+    var dummySlice = new Slice(TimeSpan.Zero, -1, 0);
+
+    foreach (var sample in samples) {
+      //if (threadId != -1 && stack.Context.ThreadId != threadId) {
+      //  sampleIndex++;
+      //  continue;
+      //}
+
+      int sliceIndex = (int)((sample.Time - startTime_).Ticks * timePerSliceReciproc);
+
+      //int queryThreadId = stack.Context.ThreadId;
+      int queryThreadId = 0;
+
+      if (sliceIndex != prevSliceIndex) {
+        if (currentSlice.FirstSampleIndex != -1 && prevSliceList != null) {
+          prevSliceList.Slices.Add(currentSlice);
+          prevSliceList.TotalWeight += currentSlice.Weight;
+          prevSliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(prevSliceList.MaxWeight.Ticks,
+                                                                currentSlice.Weight.Ticks));
+        }
+
+        var sliceList = sliceSeriesDict.GetOrAddValue(queryThreadId, () =>
+                                                        new SliceList(queryThreadId, (int)Math.Ceiling(slices)) {
+                                                          TimePerSlice = TimeSpan.FromTicks((long)timePerSlice),
+                                                          MaxSlices = (int)slices
+                                                        });
+
+        prevSliceIndex = sliceIndex;
+        prevSliceList = sliceList;
+
+        if (sliceIndex >= sliceList.Slices.Count) {
+          for (int i = sliceList.Slices.Count; i < sliceIndex; i++) {
+            sliceList.Slices.Add(dummySlice);
+          }
+        }
+
+        currentSlice = new Slice(TimeSpan.Zero, sampleIndex, 0);
+      }
+
+      currentSlice.Weight += sample.Weight;
+      currentSlice.SampleCount++;
+      sampleIndex++;
+    }
+
+    if (currentSlice.FirstSampleIndex != -1 && prevSliceList != null) {
+      prevSliceList.Slices.Add(currentSlice);
+      prevSliceList.TotalWeight += currentSlice.Weight;
+      prevSliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(prevSliceList.MaxWeight.Ticks,
+                                                            currentSlice.Weight.Ticks));
+    }
+
+    if (sliceSeriesDict.Count == 0) {
+      // Other code assumes there is at least one slice list, make a dummy one.
+      return new List<SliceList> {new SliceList(threadId)};
+    }
+
+    return sliceSeriesDict.ToValueList();
+  }
 
   public void SelectTimeRange(SampleTimeRangeInfo range) {
     selectionStartTime_ = range.StartTime - startTime_;
@@ -560,16 +668,14 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
   }
 
-   public static List<SliceList> ComputeSampleSlices2(List<ProfileSample> samples, double maxWidth_, double sliceWidth_, 
-                                                       int threadId = -1) {
-    if (samples.Count == 0) {
+  private List<SliceList> ComputeSampleSlices(ProfileData profile, int threadId = -1) {
+    if (profile.Samples.Count == 0) {
       return new List<SliceList>();
     }
 
-    var startTime_ = samples[0].Time;
-    var endTime_ = samples[^1].Time;
-    double slices = maxWidth_ / sliceWidth_;
-
+    startTime_ = profile.Samples[0].Sample.Time;
+    endTime_ = profile.Samples[^1].Sample.Time;
+    double slices = maxWidth_ / sliceWidth_ * (prevMaxWidth_ / maxWidth_);
     var timeDiff = endTime_ - startTime_;
     double timePerSlice = timeDiff.Ticks / slices;
     double timePerSliceReciproc = 1.0 / timePerSlice;
@@ -581,46 +687,52 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     var currentSlice = new Slice(TimeSpan.Zero, -1, 0);
     var dummySlice = new Slice(TimeSpan.Zero, -1, 0);
 
-    foreach (var sample in samples) {
-      //if (threadId != -1 && stack.Context.ThreadId != threadId) {
-      //  sampleIndex++;
-      //  continue;
-      //}
+    var ranges = profile.ThreadSampleRanges.Ranges[threadId];
 
-      int sliceIndex = (int)((sample.Time - startTime_).Ticks * timePerSliceReciproc);
+    foreach (var range in ranges) {
+      sampleIndex = range.StartIndex;
 
-      //int queryThreadId = stack.Context.ThreadId;
-      int queryThreadId = 0;
+      for (int k = range.StartIndex; k < range.EndIndex; k++) {
+        // if (threadId != -1 && stack.Context.ThreadId != threadId) {
+        //   sampleIndex++;
+        //   continue;
+        // }
 
-      if (sliceIndex != prevSliceIndex) {
-        if (currentSlice.FirstSampleIndex != -1 && prevSliceList != null) {
-          prevSliceList.Slices.Add(currentSlice);
-          prevSliceList.TotalWeight += currentSlice.Weight;
-          prevSliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(prevSliceList.MaxWeight.Ticks,
-                                                                currentSlice.Weight.Ticks));
-        }
+        int sliceIndex = (int)((profile.Samples[k].Sample.Time - startTime_).Ticks * timePerSliceReciproc);
 
-        var sliceList = sliceSeriesDict.GetOrAddValue(queryThreadId, () =>
-                                                        new SliceList(queryThreadId, (int)Math.Ceiling(slices)) {
-                                                          TimePerSlice = TimeSpan.FromTicks((long)timePerSlice),
-                                                          MaxSlices = (int)slices
-                                                        });
+        //int queryThreadId = stack.Context.ThreadId;
+        int queryThreadId = 0;
 
-        prevSliceIndex = sliceIndex;
-        prevSliceList = sliceList;
-
-        if (sliceIndex >= sliceList.Slices.Count) {
-          for (int i = sliceList.Slices.Count; i < sliceIndex; i++) {
-            sliceList.Slices.Add(dummySlice);
+        if (sliceIndex != prevSliceIndex) {
+          if (currentSlice.FirstSampleIndex != -1 && prevSliceList != null) {
+            prevSliceList.Slices.Add(currentSlice);
+            prevSliceList.TotalWeight += currentSlice.Weight;
+            prevSliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(prevSliceList.MaxWeight.Ticks,
+                                                                  currentSlice.Weight.Ticks));
           }
+
+          var sliceList = sliceSeriesDict.GetOrAddValue(queryThreadId, () =>
+                                                          new SliceList(queryThreadId, (int)Math.Ceiling(slices)) {
+                                                            TimePerSlice = TimeSpan.FromTicks((long)timePerSlice),
+                                                            MaxSlices = (int)slices
+                                                          });
+
+          prevSliceIndex = sliceIndex;
+          prevSliceList = sliceList;
+
+          if (sliceIndex >= sliceList.Slices.Count) {
+            for (int i = sliceList.Slices.Count; i < sliceIndex; i++) {
+              sliceList.Slices.Add(dummySlice);
+            }
+          }
+
+          currentSlice = new Slice(TimeSpan.Zero, sampleIndex, 0);
         }
 
-        currentSlice = new Slice(TimeSpan.Zero, sampleIndex, 0);
+        currentSlice.Weight += profile.Samples[k].Sample.Weight;
+        currentSlice.SampleCount++;
+        sampleIndex++;
       }
-
-      currentSlice.Weight += sample.Weight;
-      currentSlice.SampleCount++;
-      sampleIndex++;
     }
 
     if (currentSlice.FirstSampleIndex != -1 && prevSliceList != null) {
@@ -638,90 +750,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     return sliceSeriesDict.ToValueList();
   }
 
-   private List<SliceList> ComputeSampleSlices(ProfileData profile, int threadId = -1) {
-     if (profile.Samples.Count == 0) {
-       return new List<SliceList>();
-     }
-
-     startTime_ = profile.Samples[0].Sample.Time;
-     endTime_ = profile.Samples[^1].Sample.Time;
-     double slices = maxWidth_ / sliceWidth_ * (prevMaxWidth_ / maxWidth_);
-     var timeDiff = endTime_ - startTime_;
-     double timePerSlice = timeDiff.Ticks / slices;
-     double timePerSliceReciproc = 1.0 / timePerSlice;
-     var sliceSeriesDict = new Dictionary<int, SliceList>();
-
-     int sampleIndex = 0;
-     int prevSliceIndex = -1;
-     SliceList prevSliceList = null;
-     var currentSlice = new Slice(TimeSpan.Zero, -1, 0);
-     var dummySlice = new Slice(TimeSpan.Zero, -1, 0);
-
-     var ranges = profile.ThreadSampleRanges.Ranges[threadId];
-
-     foreach (var range in ranges) {
-       sampleIndex = range.StartIndex;
-
-       for (var k = range.StartIndex; k < range.EndIndex; k++) {
-         // if (threadId != -1 && stack.Context.ThreadId != threadId) {
-         //   sampleIndex++;
-         //   continue;
-         // }
-
-         int sliceIndex = (int)((profile.Samples[k].Sample.Time - startTime_).Ticks * timePerSliceReciproc);
-
-         //int queryThreadId = stack.Context.ThreadId;
-         int queryThreadId = 0;
-
-         if (sliceIndex != prevSliceIndex) {
-           if (currentSlice.FirstSampleIndex != -1 && prevSliceList != null) {
-             prevSliceList.Slices.Add(currentSlice);
-             prevSliceList.TotalWeight += currentSlice.Weight;
-             prevSliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(prevSliceList.MaxWeight.Ticks,
-                                                                   currentSlice.Weight.Ticks));
-           }
-
-           var sliceList = sliceSeriesDict.GetOrAddValue(queryThreadId, () =>
-                                                           new SliceList(queryThreadId, (int)Math.Ceiling(slices)) {
-                                                             TimePerSlice = TimeSpan.FromTicks((long)timePerSlice),
-                                                             MaxSlices = (int)slices
-                                                           });
-
-           prevSliceIndex = sliceIndex;
-           prevSliceList = sliceList;
-
-           if (sliceIndex >= sliceList.Slices.Count) {
-             for (int i = sliceList.Slices.Count; i < sliceIndex; i++) {
-               sliceList.Slices.Add(dummySlice);
-             }
-           }
-
-           currentSlice = new Slice(TimeSpan.Zero, sampleIndex, 0);
-         }
-
-         currentSlice.Weight += profile.Samples[k].Sample.Weight;
-         currentSlice.SampleCount++;
-         sampleIndex++;
-       }
-     }
-
-
-     if (currentSlice.FirstSampleIndex != -1 && prevSliceList != null) {
-       prevSliceList.Slices.Add(currentSlice);
-       prevSliceList.TotalWeight += currentSlice.Weight;
-       prevSliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(prevSliceList.MaxWeight.Ticks,
-                                                             currentSlice.Weight.Ticks));
-     }
-
-     if (sliceSeriesDict.Count == 0) {
-       // Other code assumes there is at least one slice list, make a dummy one.
-       return new List<SliceList> {new SliceList(threadId)};
-     }
-
-     return sliceSeriesDict.ToValueList();
-   }
-   
-   private void UpdateFilterState() {
+  private void UpdateFilterState() {
     Redraw();
     OnPropertyChanged(nameof(HasFilter));
     OnPropertyChanged(nameof(FilteredTime));
@@ -1025,7 +1054,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
       sliceWidth_ = newWidth;
       slices_ = ComputeSampleSlices(profile_, ThreadId);
       sliceTask_.CompleteTask();
-      
+
       // Update UI.
       Dispatcher.BeginInvoke(() => {
         Redraw();
