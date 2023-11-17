@@ -194,7 +194,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
     double[] perCoreLastTime = new double[MaxCoreCount];
     int[] perCoreLastSample = new int[MaxCoreCount];
     var perCoreLastKernelStack = new (int StackId, long Timestamp)[MaxCoreCount];
-    int oldestCompressedSample = 0;
     var perContextLastSample = new Dictionary<int, int>();
     int lastReportedSample = 0;
 
@@ -636,12 +635,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
           for (int i = 0; i < profile.TraceInfo.CpuCount; i++) {
             int value = perCoreLastSample[i];
             earliestSample = Math.Min(value, earliestSample);
-          }
-
-          //Trace.WriteLine($"Compress {earliestSample}");
-          if (earliestSample > oldestCompressedSample) {
-            profile.Samples.CompressRange(oldestCompressedSample, earliestSample);
-            oldestCompressedSample = earliestSample;
           }
         }
       }

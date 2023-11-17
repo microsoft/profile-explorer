@@ -34,7 +34,7 @@ public enum ProfileSessionKind {
 }
 
 public interface IProfileDataProvider {
-  Task<ProfileData> LoadTraceAsync(RawProfileData profile, List<int> processIds,
+  Task<ProfileData> LoadTraceAsync(RawProfileData rawProfile, List<int> processIds,
                                    ProfileDataProviderOptions options,
                                    SymbolFileSourceOptions symbolOptions,
                                    ProfileDataReport report,
