@@ -16,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using IRExplorerCore.Utilities;
 using IRExplorerUI.Document;
 
 namespace IRExplorerUI.Profile;
@@ -311,7 +312,8 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
         threadActivityViews_.Add(threadView);
         threadActivityViewsMap_[thread.ThreadId] = threadView;
-        initTasks.Add(threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea, thread.ThreadId));
+        initTasks.Add(threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea, 
+                                                               thread.ThreadId));
         SetupActivityHoverPreview(threadView.ActivityHost);
 
         //threadView.TimelineHost.Session = Session;

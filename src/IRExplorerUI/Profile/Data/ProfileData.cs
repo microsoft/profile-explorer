@@ -83,6 +83,7 @@ public class ProfileData {
   public Dictionary<string, PerformanceCounterValueSet> ModuleCounters { get; set; }
   public Dictionary<int, PerformanceCounter> PerformanceCounters { get; set; }
   public ProfileCallTree CallTree { get; set; }
+  public ThreadSampleRanges ThreadSampleRanges { get; set; }
   public ProfileDataReport Report { get; set; }
   public List<(ProfileSample Sample, ResolvedProfileStack Stack)> Samples { get; set; }
   public List<(PerformanceCounterEvent Sample, ResolvedProfileStack Stack)> Events { get; set; }
@@ -364,6 +365,15 @@ public class ProfileData {
       int start = Math.Min(sampleStartIndex + k * chunkSize, sampleEndIndex);
       int end = Math.Min(sampleStartIndex + (k + 1) * chunkSize, sampleEndIndex);
 
+      // If a single thread is selected, only process the samples for that thread
+      // by going through the thread sample ranges.
+      var ranges = baseProfile.ThreadSampleRanges.Ranges[-1];
+      
+      if (filter.ThreadIds != null && filter.ThreadIds.Count == 1) {
+        ranges = baseProfile.ThreadSampleRanges.Ranges[filter.ThreadIds[0]];
+        // Trace.WriteLine($"Filter single thread with {ranges.Count} ranges");
+      }
+
       tasks.Add(taskFactory.StartNew(() => {
         var stackModules = new HashSet<int>();
         var stackFuncts = new HashSet<IRTextFunction>();
@@ -372,61 +382,80 @@ public class ProfileData {
         var totalWeight = TimeSpan.Zero;
         var profileWeight = TimeSpan.Zero;
 
-        for (int i = start; i < end; i++) {
-          var (sample, stack) = baseProfile.Samples[i];
+        // Find the ranges of samples that overlap with the filter time range.
+        int startRangeIndex = 0;
+        int endRangeIndex = ranges.Count - 1;
+        
+        while(startRangeIndex < ranges.Count && ranges[startRangeIndex].EndIndex < start) {
+          startRangeIndex++;
+        }
+        
+        while(endRangeIndex > 0 && ranges[endRangeIndex].StartIndex > end) {
+          endRangeIndex--;
+        }
 
-          if (filter.ThreadIds != null &&
-              !filter.ThreadIds.Contains(stack.Context.ThreadId)) {
-            continue;
-          }
+        // Walk each sample in the range and update the function profile.
+        for (int k = startRangeIndex; k <= endRangeIndex; k++) {
+          var range = ranges[k];
+          int startIndex = Math.Max(start, range.StartIndex);
+          int endIndex = Math.Min(end, range.EndIndex);
 
-          totalWeight += sample.Weight;
-          profileWeight += sample.Weight;
+          for (int i = startIndex; i < endIndex; i++) {
+            var (sample, stack) = baseProfile.Samples[i];
 
-          bool isTopFrame = true;
-          stackModules.Clear();
-          stackFuncts.Clear();
-
-          foreach (var resolvedFrame in stack.StackFrames) {
-            if (resolvedFrame.IsUnknown) {
+            if (filter.ThreadIds != null &&
+                !filter.ThreadIds.Contains(stack.Context.ThreadId)) {
               continue;
             }
 
-            if (isTopFrame && stackModules.Add(resolvedFrame.FrameDetails.Image.Id)) {
-              moduleWeights.AccumulateValue(resolvedFrame.FrameDetails.Image.Id, sample.Weight);
-            }
+            totalWeight += sample.Weight;
+            profileWeight += sample.Weight;
 
-            long funcRva = resolvedFrame.FrameDetails.DebugInfo.RVA;
-            long frameRva = resolvedFrame.FrameRVA;
-            var textFunction = resolvedFrame.FrameDetails.Function;
-            var funcProfile =
-              profile.GetOrCreateFunctionProfile(resolvedFrame.FrameDetails.Function,
-                                                 resolvedFrame.FrameDetails.DebugInfo);
+            bool isTopFrame = true;
+            stackModules.Clear();
+            stackFuncts.Clear();
 
-            //? TODO: Info.Profile ends up being the func profile in the previous run
-            //? resolvedFrame.Info.Profile = funcProfile;
-
-            lock (funcProfile) {
-              long offset = frameRva - funcRva;
-
-              // Don't count the inclusive time for recursive functions multiple times.
-              if (stackFuncts.Add(textFunction)) {
-                funcProfile.AddInstructionSample(offset, sample.Weight);
-                funcProfile.Weight += sample.Weight;
-                funcProfile.SampleStartIndex = Math.Min(funcProfile.SampleStartIndex, i);
-                funcProfile.SampleEndIndex = Math.Max(funcProfile.SampleEndIndex, i);
+            foreach (var resolvedFrame in stack.StackFrames) {
+              if (resolvedFrame.IsUnknown) {
+                continue;
               }
 
-              // Count the exclusive time for the top frame function.
-              if (isTopFrame) {
-                funcProfile.ExclusiveWeight += sample.Weight;
+              if (isTopFrame && stackModules.Add(resolvedFrame.FrameDetails.Image.Id)) {
+                moduleWeights.AccumulateValue(resolvedFrame.FrameDetails.Image.Id, sample.Weight);
               }
+
+              long funcRva = resolvedFrame.FrameDetails.DebugInfo.RVA;
+              long frameRva = resolvedFrame.FrameRVA;
+              var textFunction = resolvedFrame.FrameDetails.Function;
+              var funcProfile =
+                profile.GetOrCreateFunctionProfile(resolvedFrame.FrameDetails.Function,
+                                                   resolvedFrame.FrameDetails.DebugInfo);
+
+              //? TODO: Info.Profile ends up being the func profile in the previous run
+              //? resolvedFrame.Info.Profile = funcProfile;
+
+              lock (funcProfile) {
+                long offset = frameRva - funcRva;
+
+                // Don't count the inclusive time for recursive functions multiple times.
+                if (stackFuncts.Add(textFunction)) {
+                  funcProfile.AddInstructionSample(offset, sample.Weight);
+                  funcProfile.Weight += sample.Weight;
+                  funcProfile.SampleStartIndex = Math.Min(funcProfile.SampleStartIndex, i);
+                  funcProfile.SampleEndIndex = Math.Max(funcProfile.SampleEndIndex, i);
+                }
+
+                // Count the exclusive time for the top frame function.
+                if (isTopFrame) {
+                  funcProfile.ExclusiveWeight += sample.Weight;
+                }
+              }
+
+              isTopFrame = false;
             }
 
-            isTopFrame = false;
+            callTree.UpdateCallTree(sample, stack);
           }
-
-          callTree.UpdateCallTree(sample, stack);
         }
 
         lock (profile) {
@@ -442,7 +471,54 @@ public class ProfileData {
 
     Task.WhenAll(tasks.ToArray()).Wait();
     profile.CallTree = callTree;
+    profile.ThreadSampleRanges = baseProfile.ThreadSampleRanges;
     return profile;
+  }
+  
+  public ThreadSampleRanges ComputeThreadSampleRanges() {
+    // Compute lists of contiguous range of samples running on the same thread,
+    // used later to speed up the timeline slice computation and per-thread filtering.
+    var threadSampleRanges = new Dictionary<int, List<ThreadSampleRange>>();
+
+    int sampleIndex = 0;
+    int prevThreadId = -1;
+    int prevSampleIndex = -1;
+
+    foreach (var (sample, stack) in Samples) {
+      int threadId = stack.Context.ThreadId;
+
+      if (threadId != prevThreadId) {
+        if (prevThreadId != -1) {
+          threadSampleRanges.GetOrAddValue(prevThreadId).Add(new ThreadSampleRange {
+            StartIndex = prevSampleIndex,
+            EndIndex = sampleIndex
+          });
+        }
+
+        prevThreadId = threadId;
+        prevSampleIndex = sampleIndex;
+      }
+
+      sampleIndex++;
+    }
+
+    if (prevThreadId != -1) {
+      threadSampleRanges.GetOrAddValue(prevThreadId).Add(new ThreadSampleRange {
+        StartIndex = prevSampleIndex,
+        EndIndex = sampleIndex
+      });
+    }
+
+    // Add an entry representing all threads, covering all samples.    
+    threadSampleRanges[-1] = new List<ThreadSampleRange>() {
+      new ThreadSampleRange {
+        StartIndex = 0,
+        EndIndex = sampleIndex
+      }
+    };
+
+    ThreadSampleRanges = new ThreadSampleRanges(threadSampleRanges);
+    return ThreadSampleRanges;
   }
 
   [ProtoContract(SkipConstructor = true)]
@@ -499,5 +575,20 @@ public class IRTextFunctionReference {
 
   public static implicit operator IRTextFunction(IRTextFunctionReference funcRef) {
     return funcRef.Value;
+  }
+}
+
+// Represents a contiguous range of samples running on the same thread.
+public struct ThreadSampleRange {
+  public int StartIndex;
+  public int EndIndex;
+}
+
+// Represents a set of sample ranges for each thread.
+public class ThreadSampleRanges {
+  public Dictionary<int, List<ThreadSampleRange>> Ranges { get; set; }
+
+  public ThreadSampleRanges(Dictionary<int, List<ThreadSampleRange>> ranges) {
+    Ranges = ranges;
   }
 }
