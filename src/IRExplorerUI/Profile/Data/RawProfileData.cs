@@ -31,7 +31,7 @@ public class RawProfileData : IDisposable {
   [ThreadStatic]
   private static IpToImageCache globalIpImageCache_;
   [ProtoMember(1)]
-  private CompressedSegmentedList<ProfileSample> samples_;
+  private List<ProfileSample> samples_;
   [ProtoMember(2)]
   private Dictionary<int, ProfileProcess> processes_;
   [ProtoMember(3)]
@@ -71,7 +71,7 @@ public class RawProfileData : IDisposable {
     stacks_ = new List<ProfileStack>();
     stacksMap_ = new Dictionary<int, Dictionary<ProfileStack, int>>();
     stackData_ = new HashSet<long[]>(new StackComparer());
-    samples_ = new CompressedSegmentedList<ProfileSample>();
+    samples_ = new List<ProfileSample>();
     perfCounters_ = new List<PerformanceCounter>();
     perfCountersEvents_ = new CompressedSegmentedList<PerformanceCounterEvent>();
 
@@ -81,7 +81,7 @@ public class RawProfileData : IDisposable {
   }
 
   public ProfileTraceInfo TraceInfo => traceInfo_;
-  public CompressedSegmentedList<ProfileSample> Samples => samples_;
+  public List<ProfileSample> Samples => samples_;
   public List<ProfileProcess> Processes => processes_.ToValueList();
   public List<ProfileThread> Threads => threads_;
   public List<ProfileImage> Images => images_;
@@ -236,7 +236,6 @@ public class RawProfileData : IDisposable {
     lastProcStacks_ = null;
 
     // Wait for any compression tasks.
-    samples_.Wait();
     perfCountersEvents_.Wait();
   }
 
@@ -324,8 +323,7 @@ public class RawProfileData : IDisposable {
   public void SetSampleStack(int sampleId, int stackId, int contextId) {
     // Change the stack ID in-place in the array.
     Debug.Assert(samples_[sampleId - 1].ContextId == contextId);
-    ref var sampleRef = ref samples_.GetValueRef(sampleId - 1);
-    sampleRef.StackId = stackId;
+    CollectionsMarshal.AsSpan(samples_)[sampleId - 1].StackId = stackId;
   }
 
   public int AddPerformanceCounter(PerformanceCounter counter) {
@@ -535,7 +533,6 @@ public class RawProfileData : IDisposable {
   }
 
   public void Dispose() {
-    samples_?.Dispose();
     perfCountersEvents_?.Dispose();
   }
 

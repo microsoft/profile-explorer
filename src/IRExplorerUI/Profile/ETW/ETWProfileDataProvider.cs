@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using IRExplorerCore;
@@ -118,8 +119,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
     UpdateProgress(progressCallback, ProfileLoadStage.TraceLoading, 0, 0);
+    var sw = Stopwatch.StartNew();
 
-    var profile = await Task.Run(() => {
+    var rawProfile = await Task.Run(() => {
       int acceptedProcessId = processIds.Count == 1 ? processIds[0] : 0;
       symbolOptions.InsertSymbolPath(tracePath); // Include the trace path in the symbol search path.
 
@@ -127,38 +129,39 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
     });
 
-    var result = await LoadTraceAsync(profile, processIds, options, symbolOptions,
+    var result = await LoadTraceAsync(rawProfile, processIds, options, symbolOptions,
                                       report, progressCallback, cancelableTask);
-    profile.Dispose();
+    Trace.WriteLine($"LoadTraceAsync done in {sw.Elapsed}");
+    rawProfile.Dispose();
     return result;
   }
 
-  public async Task<ProfileData> LoadTraceAsync(RawProfileData profile, List<int> processIds,
+  public async Task<ProfileData> LoadTraceAsync(RawProfileData rawProfile, List<int> processIds,
                                                 ProfileDataProviderOptions options,
                                                 SymbolFileSourceOptions symbolOptions,
                                                 ProfileDataReport report,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
-    var mainProcess = profile.FindProcess(processIds[0]);
+    var mainProcess = rawProfile.FindProcess(processIds[0]);
     report_ = report;
     report_.Process = mainProcess;
-    report.TraceInfo = profile.TraceInfo;
+    report.TraceInfo = rawProfile.TraceInfo;
     int mainProcessId = mainProcess.ProcessId;
 
     // Save process and thread info.
     profileData_.Process = mainProcess;
 
     foreach (int procId in processIds) {
-      var proc = profile.FindProcess(procId);
+      var proc = rawProfile.FindProcess(procId);
 
       if (proc != null) {
-        profileData_.AddThreads(proc.Threads(profile));
+        profileData_.AddThreads(proc.Threads(rawProfile));
       }
     }
 
     // Save all modules to include the ones loaded in the kernel only,
     // which would show up in stack traces if kernel samples are enabled.
-    profileData_.AddModules(profile.Images);
+    profileData_.AddModules(rawProfile.Images);
 
     try {
       options_ = options;
@@ -185,10 +188,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           return false;
         }
 
-        profile.PrintProcess(mainProcessId);
+        rawProfile.PrintProcess(mainProcessId);
         //profile.PrintSamples(mainProcessId);
 
-        await LoadBinaryAndDebugFiles(profile, mainProcess, imageName,
+        await LoadBinaryAndDebugFiles(rawProfile, mainProcess, imageName,
                                       symbolOptions, progressCallback, cancelableTask);
 
         if (cancelableTask is {IsCanceled: true}) {
@@ -197,7 +200,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         // Start early load of all modules that are used by the binary
         // to reduce the wait time when resolving the stack frame functions.
-        StartEarlyModuleLoad(profile, mainProcess, symbolOptions);
+        StartEarlyModuleLoad(rawProfile, mainProcess, symbolOptions);
 
         var sw = Stopwatch.StartNew();
 
@@ -206,7 +209,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 #if DEBUG
         chunks = 1;
 #endif
-        int chunkSize = profile.ComputeSampleChunkLength(chunks);
+        int chunkSize = rawProfile.ComputeSampleChunkLength(chunks);
 
         Trace.WriteLine($"Using {chunks} threads");
         var tasks = new List<Task<List<(ProfileSample Sample, ResolvedProfileStack Stack)>>>();
@@ -218,15 +221,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         var callTree = new ProfileCallTree();
 
         for (int k = 0; k < chunks; k++) {
-          int start = Math.Min(k * chunkSize, profile.Samples.Count);
-          int end = Math.Min((k + 1) * chunkSize, profile.Samples.Count);
+          int start = Math.Min(k * chunkSize, rawProfile.Samples.Count);
+          int end = Math.Min((k + 1) * chunkSize, rawProfile.Samples.Count);
 
           if (start == end) {
             continue;
           }
 
           tasks.Add(taskFactory.StartNew(() => {
-            var chunkSamples = ProcessSamplesChunk(profile, start, end,
+            var chunkSamples = ProcessSamplesChunk(rawProfile, start, end,
                                                    processIds, options.IncludeKernelEvents, callTree,
                                                    symbolOptions, progressCallback, cancelableTask, chunks);
             return chunkSamples;
@@ -266,12 +269,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         var sw2 = Stopwatch.StartNew();
         profileData_.FilterFunctionProfile(new ProfileSampleFilter());
 
-        Trace.WriteLine($"Done compute profile in {sw2.Elapsed}");
+        Trace.WriteLine($"Done compute func profile/call tree in {sw2.Elapsed}");
         Trace.WriteLine($"Done processing samples in {sw.Elapsed}");
 
-        if (profile.PerformanceCountersEvents.Count > 0) {
+        if (rawProfile.PerformanceCountersEvents.Count > 0) {
           // Process performance counters.
-          ProcessPerformanceCounters(profile, processIds, symbolOptions, progressCallback, cancelableTask);
+          ProcessPerformanceCounters(rawProfile, processIds, symbolOptions, progressCallback, cancelableTask);
         }
 
         Trace.WriteLine($"Done in {totalSw.Elapsed}");
@@ -317,7 +320,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private int currentSampleIndex_;
 
   private List<(ProfileSample Sample, ResolvedProfileStack Stack)>
-    ProcessSamplesChunk(RawProfileData profile, int start, int end, List<int> processIds,
+    ProcessSamplesChunk(RawProfileData rawProfile, int start, int end, List<int> processIds,
                         bool includeKernelEvents, ProfileCallTree callTree,
                         SymbolFileSourceOptions symbolOptions,
                         ProfileLoadProgressHandler progressCallback,
@@ -328,14 +331,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     var totalWeight = TimeSpan.Zero;
     var profileWeight = TimeSpan.Zero;
     var samples = new List<(ProfileSample Sample, ResolvedProfileStack Stack)>(end - start + 1);
+    var sampleRefs = CollectionsMarshal.AsSpan(rawProfile.Samples).Slice(start, end - start);
 
-    foreach (var sample in profile.Samples.Enumerate(start, end, false)) {
+    foreach (var sample in sampleRefs) {
       if (!includeKernelEvents && sample.IsKernelCode) {
         continue;
       }
 
       // Ignore other processes.
-      var context = sample.GetContext(profile);
+      var context = sample.GetContext(rawProfile);
 
       if (!processIds.Contains(context.ProcessId)) {
         continue;
@@ -349,17 +353,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         int position = Interlocked.Add(ref currentSampleIndex_, PROGRESS_UPDATE_INTERVAL);
         UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing,
-                       profile.Samples.Count, position);
+                       rawProfile.Samples.Count, position);
         
         ThreadPool.QueueUserWorkItem(state => {
           progressCallback(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
-            Total = profile.Samples.Count, Current = position});
+            Total = rawProfile.Samples.Count, Current = position});
         });
       }
 
       // Count time for each sample.
       var sampleWeight = sample.Weight;
-      var stack = sample.GetStack(profile);
+      var stack = sample.GetStack(rawProfile);
       ResolvedProfileStack resolvedStack = null;
 
       // Count time in the profile image.
@@ -389,7 +393,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         //ProcessResolvedStack(resolvedStack, sampleWeight, stackModules, stackFuncts);
       }
       else {
-        resolvedStack = ProcessUnresolvedStack(stack, sampleWeight, context, profile,
+        resolvedStack = ProcessUnresolvedStack(stack, sampleWeight, context, rawProfile,
                                                stackModules, stackFuncts, symbolOptions);
         stack.SetOptionalData(resolvedStack); // Cache resolved stack.
       }
@@ -406,7 +410,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   private ResolvedProfileStack ProcessUnresolvedStack(ProfileStack stack, TimeSpan sampleWeight,
-                                                      ProfileContext context, RawProfileData profile,
+                                                      ProfileContext context, RawProfileData rawProfile,
                                                       HashSet<int> stackModules, HashSet<IRTextFunction> stackFuncts,
                                                       SymbolFileSourceOptions symbolOptions) {
     bool isTopFrame = true;
@@ -414,7 +418,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     long[] stackFrames = stack.FramePointers;
     bool isManagedCode = false;
     int frameIndex = 0;
-    int pointerSize = profile.TraceInfo.PointerSize;
+    int pointerSize = rawProfile.TraceInfo.PointerSize;
 
     //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
     //? for ex it never gets to main. Easy example is a quicksort impl
@@ -425,17 +429,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       bool isKernel = false;
 
       if (ETWEventProcessor.IsKernelAddress((ulong)frameIp, pointerSize)) {
-        frameImage = profile.FindImageForIP(frameIp, ETWEventProcessor.KernelProcessId);
+        frameImage = rawProfile.FindImageForIP(frameIp, ETWEventProcessor.KernelProcessId);
         isKernel = true;
       }
       else {
-        frameImage = profile.FindImageForIP(frameIp, context.ProcessId);
+        frameImage = rawProfile.FindImageForIP(frameIp, context.ProcessId);
       }
 
       if (frameImage == null) {
         // Check if it's a .NET method, the JITted code may not mapped to any module.
-        if (profile.HasManagedMethods(context.ProcessId)) {
-          var managedFunc = profile.FindManagedMethodForIP(frameIp, context.ProcessId);
+        if (rawProfile.HasManagedMethods(context.ProcessId)) {
+          var managedFunc = rawProfile.FindManagedMethodForIP(frameIp, context.ProcessId);
 
           if (managedFunc != null) {
             frameImage = managedFunc.Image;
@@ -457,7 +461,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       FunctionDebugInfo funcDebugInfo = null;
       IRTextFunction textFunction = null;
 
-      module = FindModuleInfo(profile, frameImage, context.ProcessId, symbolOptions);
+      module = FindModuleInfo(rawProfile, frameImage, context.ProcessId, symbolOptions);
 
       if (module == null) {
         resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
@@ -557,12 +561,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
   }
 
-  private async Task LoadBinaryAndDebugFiles(RawProfileData prof, ProfileProcess mainProcess, string mainImageName,
+  private async Task LoadBinaryAndDebugFiles(RawProfileData rawProfile, ProfileProcess mainProcess, string mainImageName,
                                              SymbolFileSourceOptions symbolOptions,
                                              ProfileLoadProgressHandler progressCallback,
                                              CancelableTask cancelableTask) {
     
-    var imageList = mainProcess.Images(prof).ToList();
+    var imageList = mainProcess.Images(rawProfile).ToList();
     int imageLimit = imageList.Count;
 
     // Locate the referenced binary files in parallel. This will download them
@@ -655,23 +659,23 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
   }
 
-  private void StartEarlyModuleLoad(RawProfileData prof, ProfileProcess mainProcess,
+  private void StartEarlyModuleLoad(RawProfileData rawProfile, ProfileProcess mainProcess,
                                     SymbolFileSourceOptions symbolOptions) {
-    var imageList = mainProcess.Images(prof).ToList();
+    var imageList = mainProcess.Images(rawProfile).ToList();
 
     foreach (var image in imageList) {
       imageModuleLoadTasks_[image.Id] = Task.Run(() => {
-        var imageModule = LoadModuleInfo(image, prof, mainProcess.ProcessId, symbolOptions);
+        var imageModule = LoadModuleInfo(image, rawProfile, mainProcess.ProcessId, symbolOptions);
         imageModuleMap_.TryAdd(image.Id, imageModule);
         return imageModule;
       });
     }
   }
 
-  private ModuleInfo LoadModuleInfo(ProfileImage image, RawProfileData prof, int processId,
+  private ModuleInfo LoadModuleInfo(ProfileImage image, RawProfileData rawProfile, int processId,
                                     SymbolFileSourceOptions symbolOptions) {
     var imageModule = new ModuleInfo(report_, session_);
-    var imageDebugInfo = prof.GetDebugInfoForImage(image, processId);
+    var imageDebugInfo = rawProfile.GetDebugInfoForImage(image, processId);
 
     if (imageDebugInfo != null) {
       imageDebugInfo.SymbolOptions = symbolOptions;
@@ -703,7 +707,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     return false;
   }
 
-  private ModuleInfo FindModuleInfo(RawProfileData prof, ProfileImage queryImage, int processId,
+  private ModuleInfo FindModuleInfo(RawProfileData rawProfile, ProfileImage queryImage, int processId,
                                     SymbolFileSourceOptions symbolOptions) {
     // prevImage_/prevModule_ are TLS variables since this is called from multiple threads.
     if (queryImage == prevImage_) {
@@ -724,7 +728,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             return imageModule;
           }
 
-          imageModule = LoadModuleInfo(queryImage, prof, processId, symbolOptions);
+          imageModule = LoadModuleInfo(queryImage, rawProfile, processId, symbolOptions);
           imageModuleMap_.TryAdd(queryImage.Id, imageModule);
         }
       }
@@ -735,12 +739,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     return imageModule;
   }
 
-  private void ProcessPerformanceCounters(RawProfileData prof, List<int> processIds,
+  private void ProcessPerformanceCounters(RawProfileData rawProfile, List<int> processIds,
                                           SymbolFileSourceOptions symbolOptions,
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
     // Register the counters found in the trace.
-    foreach (var counter in prof.PerformanceCounters) {
+    foreach (var counter in rawProfile.PerformanceCounters) {
       profileData_.RegisterPerformanceCounter(counter);
     }
 
@@ -759,7 +763,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     Trace.WriteLine($"Start process PMC at {DateTime.Now}");
     var sw = Stopwatch.StartNew();
 
-    foreach (var counter in prof.PerformanceCountersEvents) {
+    foreach (var counter in rawProfile.PerformanceCountersEvents) {
       if ((++index & (PROGRESS_UPDATE_INTERVAL - 1)) == 0) { // Update progress every 128K samples.
         if (cancelableTask is {IsCanceled: true}) {
           break;
@@ -767,21 +771,21 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         
         int position = Interlocked.Add(ref currentSampleIndex_, PROGRESS_UPDATE_INTERVAL);
         UpdateProgress(progressCallback, ProfileLoadStage.PerfCounterProcessing, 
-                       prof.PerformanceCountersEvents.Count, position);
+                       rawProfile.PerformanceCountersEvents.Count, position);
       }
 
-      var context = counter.GetContext(prof);
+      var context = counter.GetContext(rawProfile);
 
       if (!processIds.Contains(context.ProcessId)) {
         continue;
       }
 
       int managedBaseAddress = 0;
-      var frameImage = prof.FindImageForIP(counter.IP, context);
+      var frameImage = rawProfile.FindImageForIP(counter.IP, context);
 
       if (frameImage == null) {
-        if (prof.HasManagedMethods(context.ProcessId)) {
-          var managedFunc = prof.FindManagedMethodForIP(counter.IP, context.ProcessId);
+        if (rawProfile.HasManagedMethods(context.ProcessId)) {
+          var managedFunc = rawProfile.FindManagedMethodForIP(counter.IP, context.ProcessId);
 
           if (managedFunc != null) {
             frameImage = managedFunc.Image;
@@ -795,7 +799,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           profileData_.AddModuleCounter(frameImage.ModuleName, counter.CounterId, 1);
         }
 
-        var module = FindModuleInfo(prof, frameImage, context.ProcessId, symbolOptions);
+        var module = FindModuleInfo(rawProfile, frameImage, context.ProcessId, symbolOptions);
 
         if (module == null) {
           continue;

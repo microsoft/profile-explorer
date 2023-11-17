@@ -1,6 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+
+// Uncomment to disable compression.
+// #define DISABLE_COMPRESSION
 using System;
 using System.Buffers;
 using System.Collections;
@@ -60,6 +63,7 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
   }
 
   public void Wait(bool reset = true) {
+#if !DISABLE_COMPRESSION
     taskQueue_.CompleteAdding();
     Task.WhenAll(taskQueueThreadTasks_);
     Task.WhenAll(taskQueueThreadTasks_).Wait();
@@ -67,6 +71,7 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
     if (reset) {
       SetupCompressionThreads();
     }
+#endif
   }
 
   public void CompressRange(int startIndex, int endIndex) {
@@ -188,6 +193,7 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
   }
 
   public void Dispose() {
+#if !DISABLE_COMPRESSION
     // End compression tasks and free memory.
     Wait(false);
     taskQueue_?.Dispose();
@@ -198,6 +204,7 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
     }
 
     taskQueueThreadTasks_ = null;
+#endif
   }
 
   public IEnumerator<T> GetEnumerator() {
@@ -253,6 +260,7 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
   }
 
   private void SetupCompressionThreads() {
+#if !(DISABLE_COMPRESSION)
     taskQueue_ = new BlockingCollection<Task>();
     taskQueueThreadTasks_ = new List<Task>();
     int threads = 1 + prefetchLimit_; // 1 used for compression.
@@ -273,6 +281,7 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
         }
       }));
     }
+#endif
   }
 
   private int GetActiveSegmentIndex(int index) {
@@ -519,6 +528,7 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
     }
 
     public void CompressValues() {
+#if !DISABLE_COMPRESSION
       lock (this) {
         if (WasCompressed || IsBeingCompressed) {
           values_ = null; // Free array.
@@ -539,6 +549,7 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
           }
         });
       }
+#endif
     }
 
     public override string ToString() {

@@ -97,7 +97,7 @@ public class JsonUtils {
       return true;
     }
     catch (Exception ex) {
-      Trace.TraceError($"Failed to save JSON: {ex.Message}");
+      Trace.TraceError($"Failed to load JSON: {ex.Message}");
       data = default;
       return false;
     }
