@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.PortableExecutable;
+using System.Threading;
 using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
@@ -16,6 +17,8 @@ namespace IRExplorerUI.Profile;
 
 public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private const int IMAGE_LOCK_COUNT = 64;
+  private const int PROGRESS_UPDATE_INTERVAL = 65536; // Progress UI update after pow2 N samples.
+  
   [ThreadStatic]
   private static ProfileImage prevImage_;
   [ThreadStatic]
@@ -114,10 +117,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                 ProfileDataReport report,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
-    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) {
-      Total = 0,
-      Current = 0
-    });
+    UpdateProgress(progressCallback, ProfileLoadStage.TraceLoading, 0, 0);
 
     var profile = await Task.Run(() => {
       int acceptedProcessId = processIds.Count == 1 ? processIds[0] : 0;
@@ -174,25 +174,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         var totalSw = Stopwatch.StartNew();
 
         // Start getting the function address data while the trace is loading.
-        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
-
+        UpdateProgress(progressCallback, ProfileLoadStage.TraceLoading, 0, 0);
         ProfileImage prevImage = null;
         ModuleInfo prevModule = null;
 
         // Start getting the function address data while the trace is loading.
-        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
-
         Trace.WriteLine($"Start load at {DateTime.Now}");
 
         if (cancelableTask is {IsCanceled: true}) {
           return false;
         }
-
-        // Process the samples.
-        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
-          Total = 0,
-          Current = 0
-        });
 
         profile.PrintProcess(mainProcessId);
         //profile.PrintSamples(mainProcessId);
@@ -233,8 +224,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           if (start == end) {
             continue;
           }
-
-          int chunkIndex = k; // Copy needed for lambda.
 
           tasks.Add(taskFactory.StartNew(() => {
             var chunkSamples = ProcessSamplesChunk(profile, start, end,
@@ -325,6 +314,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
   }
 
+  private int currentSampleIndex_;
+
   private List<(ProfileSample Sample, ResolvedProfileStack Stack)>
     ProcessSamplesChunk(RawProfileData profile, int start, int end, List<int> processIds,
                         bool includeKernelEvents, ProfileCallTree callTree,
@@ -349,14 +340,20 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       if (!processIds.Contains(context.ProcessId)) {
         continue;
       }
-
-      if ((index++ & 131072) == 0) { // Update progress every 128K samples.
+      
+      // Update progress every pow2 N samples.
+      if ((++index & (PROGRESS_UPDATE_INTERVAL-1)) == 0) {
         if (cancelableTask is {IsCanceled: true}) {
           return samples;
         }
 
-        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
-          Total = profile.Samples.Count, Current = index * chunks
+        int position = Interlocked.Add(ref currentSampleIndex_, PROGRESS_UPDATE_INTERVAL);
+        UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing,
+                       profile.Samples.Count, position);
+        
+        ThreadPool.QueueUserWorkItem(state => {
+          progressCallback(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
+            Total = profile.Samples.Count, Current = position});
         });
       }
 
@@ -547,16 +544,30 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     return exeDocument;
   }
+  
+  private void UpdateProgress(ProfileLoadProgressHandler callback, ProfileLoadStage stage,
+                              int total, int current, string optional = null) {
+    if (callback != null) {
+      ThreadPool.QueueUserWorkItem(state => {
+        callback(new ProfileLoadProgress(stage) {
+          Total = total, Current = current,
+          Optional = optional
+        });
+      });
+    }
+  }
 
   private async Task LoadBinaryAndDebugFiles(RawProfileData prof, ProfileProcess mainProcess, string mainImageName,
                                              SymbolFileSourceOptions symbolOptions,
                                              ProfileLoadProgressHandler progressCallback,
                                              CancelableTask cancelableTask) {
+    
     var imageList = mainProcess.Images(prof).ToList();
     int imageLimit = imageList.Count;
 
     // Locate the referenced binary files in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.
+    UpdateProgress(progressCallback, ProfileLoadStage.BinaryLoading, imageLimit, 0);
     var binTaskList = new Task<BinaryFileSearchResult>[imageLimit];
     var pdbTaskList = new Task<DebugFileSearchResult>[imageLimit];
 
@@ -568,12 +579,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     // Determine the compiler target for the new session.
     var irMode = IRMode.Default;
-
-    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
-      Total = imageLimit,
-      Current = 0
-    });
-
+    
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
         return;
@@ -602,10 +608,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       }
 
       if (binaryFile.Found) {
-        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
-          Total = imageLimit, Current = i,
-          Optional = Utils.TryGetFileName(binaryFile.BinaryFile.ImageName)
-        });
+        UpdateProgress(progressCallback, ProfileLoadStage.BinaryLoading, imageLimit, i,
+                       Utils.TryGetFileName(binaryFile.BinaryFile.ImageName));
       }
     }
 
@@ -631,11 +635,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       }
     }
 
-    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
-      Total = pdbCount,
-      Current = 0
-    });
-
+    UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
+    
     // Wait for the PDBs to be loaded.
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
@@ -647,10 +648,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         downloadedPdbCount++;
 
         if (pdbPath.Found) {
-          progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
-            Total = pdbCount, Current = downloadedPdbCount,
-            Optional = Utils.TryGetFileName(pdbPath.SymbolFile.FileName)
-          });
+          UpdateProgress(progressCallback, ProfileLoadStage.BinaryLoading, pdbCount, i,
+                         Utils.TryGetFileName(pdbPath.SymbolFile.FileName));
         }
       }
     }
@@ -756,18 +755,19 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
 
     //? TODO: Parallel
+    currentSampleIndex_ = 0;
     Trace.WriteLine($"Start process PMC at {DateTime.Now}");
     var sw = Stopwatch.StartNew();
 
     foreach (var counter in prof.PerformanceCountersEvents) {
-      if ((index++ & 131072) == 0) { // Update progress every 128K samples.
+      if ((++index & (PROGRESS_UPDATE_INTERVAL - 1)) == 0) { // Update progress every 128K samples.
         if (cancelableTask is {IsCanceled: true}) {
           break;
         }
-
-        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.PerfCounterProcessing) {
-          Total = prof.PerformanceCountersEvents.Count, Current = index
-        });
+        
+        int position = Interlocked.Add(ref currentSampleIndex_, PROGRESS_UPDATE_INTERVAL);
+        UpdateProgress(progressCallback, ProfileLoadStage.PerfCounterProcessing, 
+                       prof.PerformanceCountersEvents.Count, position);
       }
 
       var context = counter.GetContext(prof);

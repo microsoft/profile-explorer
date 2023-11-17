@@ -488,7 +488,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void ProfileLoadProgressCallback(ProfileLoadProgress progressInfo) {
-    Dispatcher.BeginInvoke((Action)(() => {
+    Dispatcher.Invoke((Action)(() => {
       if (progressInfo == null) {
         return;
       }
@@ -526,7 +526,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void ProcessListProgressCallback(ProcessListProgress progressInfo) {
-    Dispatcher.BeginInvoke((Action)(() => {
+    Dispatcher.Invoke((Action)(() => {
       if (progressInfo == null) {
         return;
       }
