@@ -2628,7 +2628,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         }
       }
       else if (alternateNameColumnVisible_) {
-        cell.Value = "Unmangled";
+        cell.Value = "Mangled name";
       }
       //else if (columnData != null && (cell.Address.ColumnNumber - 3) < columnData.Columns.Count) {
       //    cell.Value = columnData.Columns[cell.Address.ColumnNumber - 3].Title;

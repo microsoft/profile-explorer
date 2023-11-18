@@ -25,28 +25,28 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private const double ZoomAnimationDuration = TimePerFrame * 10;
   private const double EnlargeAnimationDuration = TimePerFrame * 12;
   private const double ScrollWheelZoomAnimationDuration = TimePerFrame * 8;
-  private FlameGraphSettings settings_;
-  private Stack<FlameGraphState> stateStack_;
+  private ProfileCallTree callTree_;
   private bool dragging_;
   private Point draggingStart_;
   private Point draggingViewStart_;
-  private bool panelVisible_;
-  private ProfileCallTree callTree_;
-  private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
-  private FlameGraphNode enlargedNode_;
-  private FlameGraphNode rootNode_;
-  private DateTime lastWheelZoomTime_;
-  private DraggablePopupHoverPreview stackHoverPreview_;
-  private List<FlameGraphNode> searchResultNodes_;
-  private int searchResultIndex_;
-  private bool ignoreScrollEvent_;
-  private double zoomPointX_;
-  private double initialWidth_;
-  private double initialOffsetX_;
   private double endOffsetX_;
+  private FlameGraphNode enlargedNode_;
+  private bool ignoreScrollEvent_;
+  private double initialOffsetX_;
+  private double initialWidth_;
+  private DateTime lastWheelZoomTime_;
+  private bool panelVisible_;
+  private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
+  private FlameGraphNode rootNode_;
+  private int searchResultIndex_;
+  private List<FlameGraphNode> searchResultNodes_;
+  private readonly FlameGraphSettings settings_;
+  private bool showNodePanel_;
+  private DraggablePopupHoverPreview stackHoverPreview_;
+  private readonly Stack<FlameGraphState> stateStack_;
   private DoubleAnimation widthAnimation_;
   private DoubleAnimation zoomAnimation_;
-  private bool showNodePanel_;
+  private double zoomPointX_;
 
   public FlameGraphHost() {
     InitializeComponent();
@@ -55,20 +55,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     SetupEvents();
     DataContext = this;
     ShowNodePanel = true;
-  }
-
-  public event EventHandler<FlameGraphNode> NodeSelected;
-  public event EventHandler NodesDeselected;
-  public event EventHandler<double> HorizontalOffsetChanged;
-  public event EventHandler<double> MaxWidthChanged;
-  public event EventHandler<FlameGraphNode> RootNodeChanged;
-  public event EventHandler RootNodeCleared;
-  public event PropertyChangedEventHandler PropertyChanged;
-
-  private enum FlameGraphStateKind {
-    Default,
-    EnlargeNode,
-    ChangeRootNode
   }
 
   public new bool IsInitialized => GraphViewer.IsInitialized;
@@ -130,6 +116,41 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private double PanOffset => Utils.IsKeyboardModifierActive() ?
     FastPanOffset : DefaultPanOffset;
 
+  public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
+    return callTree_.GetBacktrace(node);
+  }
+
+  public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
+    return callTree_.GetTopModules(node);
+  }
+
+  public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
+    return callTree_.GetTopFunctions(node);
+  }
+
+  public event PropertyChangedEventHandler PropertyChanged;
+
+  private enum FlameGraphStateKind {
+    Default,
+    EnlargeNode,
+    ChangeRootNode
+  }
+
+  private class FlameGraphState {
+    public FlameGraphStateKind Kind { get; set; }
+    public FlameGraphNode Node { get; set; }
+    public double MaxGraphWidth { get; set; }
+    public double HorizontalOffset { get; set; }
+    public double VerticalOffset { get; set; }
+  }
+
+  public event EventHandler<FlameGraphNode> NodeSelected;
+  public event EventHandler NodesDeselected;
+  public event EventHandler<double> HorizontalOffsetChanged;
+  public event EventHandler<double> MaxWidthChanged;
+  public event EventHandler<FlameGraphNode> RootNodeChanged;
+  public event EventHandler RootNodeCleared;
+
   private static double Lerp(double start, double end, double progress) {
     return start + (end - start) * progress;
   }
@@ -159,7 +180,18 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public void SetupKeyboardEvents(FrameworkElement host) {
-    host.PreviewKeyDown += OnPreviewKeyDown;
+    host.PreviewKeyDown += HostOnPreviewKeyDown;
+    host.PreviewKeyUp += HostOnPreviewKeyUp;
+  }
+
+  private void HostOnPreviewKeyUp(object sender, KeyEventArgs e) {
+    if (Utils.IsControlModifierActive()) {
+      Cursor = Cursors.Arrow;
+    }
+  }
+
+  public void DisableKeyboardEvents(FrameworkElement host) {
+    host.PreviewKeyDown -= HostOnPreviewKeyDown;
   }
 
   public void BringNodeIntoView(FlameGraphNode node, bool fitSize = true) {
@@ -361,18 +393,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     GraphViewer.ResetMarkedNodes(clearFixedNodes);
-  }
-
-  public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
-    return callTree_.GetBacktrace(node);
-  }
-
-  public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
-    return callTree_.GetTopModules(node);
-  }
-
-  public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
-    return callTree_.GetTopFunctions(node);
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
@@ -634,8 +654,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   private async void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
     if (dragging_) {
-      dragging_ = false;
-      ReleaseMouseCapture();
+      EndMouseDragging();
       e.Handled = true;
     }
 
@@ -662,10 +681,18 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       return;
     }
 
-    var point = e.GetPosition(GraphHost);
+    StartMouseDragging(e);
+    e.Handled = true;
+  }
+
+  private void StartMouseDragging(MouseButtonEventArgs e) {
+    //? TODO: Code here is identical to GraphPanel
+    HidePreviewPopup();
     dragging_ = true;
-    draggingStart_ = point;
+    draggingStart_ = e.GetPosition(GraphHost);
     draggingViewStart_ = new Point(GraphHost.HorizontalOffset, GraphHost.VerticalOffset);
+    Cursor = Cursors.SizeAll;
+    CaptureMouse();
   }
 
   private bool IsMouseOutsideViewport(MouseButtonEventArgs e) {
@@ -676,7 +703,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
            point.Y >= GraphHost.ViewportHeight;
   }
 
-  private async void OnPreviewKeyDown(object sender, KeyEventArgs e) {
+  private async void HostOnPreviewKeyDown(object sender, KeyEventArgs e) {
     switch (e.Key) {
       case Key.Return: {
         if (GraphViewer.SelectedNode != null) {
@@ -813,8 +840,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
     // Cancel ongoing dragging operation.
     if (dragging_) {
-      dragging_ = false;
-      ReleaseMouseCapture();
+      EndMouseDragging();
     }
 
     // Disable animation if scrolling without interruption.
@@ -829,6 +855,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
     lastWheelZoomTime_ = time;
     e.Handled = true;
+  }
+
+  private void EndMouseDragging() {
+    dragging_ = false;
+    Cursor = Cursors.Arrow;
+    ReleaseMouseCapture();
   }
 
   private void AdjustZoom(double step, double zoomPointX, bool animate = false, double duration = 0.0) {
@@ -975,14 +1007,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     if (GraphViewer.SelectedNode != null) {
       await EnlargeNode(GraphViewer.SelectedNode);
     }
-  }
-
-  private class FlameGraphState {
-    public FlameGraphStateKind Kind { get; set; }
-    public FlameGraphNode Node { get; set; }
-    public double MaxGraphWidth { get; set; }
-    public double HorizontalOffset { get; set; }
-    public double VerticalOffset { get; set; }
   }
 
     #region Animation support
