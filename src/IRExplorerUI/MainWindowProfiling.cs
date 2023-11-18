@@ -101,7 +101,6 @@ public partial class MainWindow : Window, ISession {
       // }
       else {
         Trace.WriteLine("Compute new profile");
-
         result = await Task.Run(() => ProfileData.FilterFunctionProfile(filter));
       }
 

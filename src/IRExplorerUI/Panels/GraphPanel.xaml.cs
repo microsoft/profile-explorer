@@ -20,11 +20,19 @@ using ProtoBuf;
 
 namespace IRExplorerUI;
 
-// ScrollViewer that ignores click events.
+// ScrollViewer that ignores click events so they get passed
+// to the hosted control, allowing for dragging the graphs for ex.
 public class ScrollViewerClickable : ScrollViewer {
-  protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) { }
+  protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) {
+    Keyboard.Focus(this);
+  }
+
   protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e) { }
-  protected override void OnMouseRightButtonDown(MouseButtonEventArgs e) { }
+
+  protected override void OnMouseRightButtonDown(MouseButtonEventArgs e) {
+    Keyboard.Focus(this);
+  }
+
   protected override void OnMouseRightButtonUp(MouseButtonEventArgs e) { }
 }
 
@@ -47,23 +55,23 @@ public partial class GraphPanel : ToolPanelControl {
   private const double ZoomAdjustment = 0.05;
   private const double HorizontalViewMargin = 50;
   private const double VerticalViewMargin = 100;
+  private readonly object lockObject_;
   private bool delayFitSize_;
   private bool delayRestoreState_;
-  private object lockObject_;
   private bool dragging_;
   private Point draggingStart_;
   private Point draggingViewStart_;
   private Graph graph_;
+  private OptionsPanelHostWindow graphOptionsPanel_;
   private GraphNode hoveredNode_;
   private bool ignoreNextHover_;
   private CancelableTask loadTask_;
-  private IRDocumentPopup previewPopup_;
   private bool optionsPanelVisible_;
+  private IRDocumentPopup previewPopup_;
   private GraphQueryInfo queryInfo_;
   private bool queryPanelVisible_;
-  private bool restoredState_;
-  private OptionsPanelHostWindow graphOptionsPanel_;
   private DelayedAction removeHoveredAction_;
+  private bool restoredState_;
 
   public GraphPanel() {
     InitializeComponent();
@@ -410,25 +418,30 @@ public partial class GraphPanel : ToolPanelControl {
       return;
     }
 
-    //? TODO: DOn't handle if over query panel
+    //? TODO: Also don't handle if over query panel
     var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
     if (pointedNode != null) {
       return;
     }
 
+    StartMouseDragging(e);
+    e.Handled = true;
+  }
+
+  private void StartMouseDragging(MouseButtonEventArgs e) {
+    HidePreviewPopup();
     dragging_ = true;
     draggingStart_ = e.GetPosition(GraphHost);
     draggingViewStart_ = new Point(GraphHost.HorizontalOffset, GraphHost.VerticalOffset);
+    Cursor = Cursors.SizeAll;
     CaptureMouse();
-    HidePreviewPopup();
-    CaptureMouse();
-    e.Handled = true;
   }
 
   private void GraphPanel_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
     if (dragging_) {
       dragging_ = false;
+      Cursor = Cursors.Arrow;
       ReleaseMouseCapture();
       e.Handled = true;
     }

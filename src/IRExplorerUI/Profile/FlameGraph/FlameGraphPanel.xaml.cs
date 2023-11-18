@@ -390,4 +390,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     view.PanelTitle = "Flame Graph Panel Help";
     view.IsOpen = true;
   }
+
+  private void FunctionFilter_OnGotFocus(object sender, RoutedEventArgs e) {
+    GraphHost.DisableKeyboardEvents(this);
+  }
+
+  private void FunctionFilter_OnLostFocus(object sender, RoutedEventArgs e) {
+    GraphHost.SetupKeyboardEvents(this);
+  }
 }
