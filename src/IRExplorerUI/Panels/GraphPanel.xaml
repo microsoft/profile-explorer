@@ -99,13 +99,13 @@
             Command="local:GraphCommand.GraphZoomOut"
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom Out (Ctrol+_">
-            <Image Source="{StaticResource MinusIcon}" />
+            <Image Source="{StaticResource ZoomOutIcon}" Width="16" Height="16" />
           </Button>
           <Button
             Command="local:GraphCommand.GraphZoomIn"
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom In (Ctrl+=)">
-            <Image Source="{StaticResource PlusIcon}" />
+            <Image Source="{StaticResource ZoomInIcon}" Width="16" Height="16" />
           </Button>
           <Separator />
           <Button

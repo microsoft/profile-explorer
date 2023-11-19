@@ -99,11 +99,25 @@
             Click="UndoButton_Click"
             CommandTarget="{Binding ElementName=ActivityView}"
             IsEnabled="False"
-            ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
+            ToolTip="Not yet implemented">
             <StackPanel Orientation="Horizontal">
               <Image Source="{StaticResource DockLeftIcon}" />
               <TextBlock Margin="4,0,0,0" Text="Back" />
             </StackPanel>
+          </Button>
+          
+          <Separator />
+          <Button
+            Command="irExplorerUi:GraphCommand.GraphZoomOut"
+            CommandTarget="{Binding ElementName=ActivityView}"
+            ToolTip="Zoom Out (Ctrl+_">
+            <Image Source="{StaticResource ZoomOutIcon}" Width="16" Height="16" />
+          </Button>
+          <Button
+            Command="irExplorerUi:GraphCommand.GraphZoomIn"
+            CommandTarget="{Binding ElementName=ActivityView}"
+            ToolTip="Zoom In (Ctrl+=)">
+            <Image Source="{StaticResource ZoomInIcon}" Width="16" Height="16" />
           </Button>
           <Button
             Command="irExplorerUi:GraphCommand.GraphResetWidth"
@@ -113,19 +127,6 @@
               <Image Source="{StaticResource ResetWidthIcon}" />
               <TextBlock Margin="4,0,0,0" Text="Reset" />
             </StackPanel>
-          </Button>
-          <Separator />
-          <Button
-            Command="irExplorerUi:GraphCommand.GraphZoomOut"
-            CommandTarget="{Binding ElementName=ActivityView}"
-            ToolTip="Zoom Out (Ctrl+_">
-            <Image Source="{StaticResource MinusIcon}" />
-          </Button>
-          <Button
-            Command="irExplorerUi:GraphCommand.GraphZoomIn"
-            CommandTarget="{Binding ElementName=ActivityView}"
-            ToolTip="Zoom In (Ctrl+=)">
-            <Image Source="{StaticResource PlusIcon}" />
           </Button>
           <Separator />
 
