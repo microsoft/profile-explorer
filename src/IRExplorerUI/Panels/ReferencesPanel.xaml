@@ -135,6 +135,7 @@
         BindMenuOpen="FixedToolbar_BindMenuOpen"
         DuplicateClicked="PanelToolbarTray_DuplicateClicked"
         Grid.Column="1"
+        HasHelpButton="False"
         PinnedChanged="PanelToolbarTray_PinnedChanged"
         SettingsClicked="PanelToolbarTray_SettingsClicked"
         x:Name="FixedToolbar" />

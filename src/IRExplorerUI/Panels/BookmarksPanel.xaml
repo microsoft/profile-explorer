@@ -116,6 +116,7 @@
       </ToolBarTray>
       <local:PanelToolbarTray
         Grid.Column="1"
+        HasHelpButton="False"
         HasDuplicateButton="False"
         HasPinButton="False" />
     </Grid>

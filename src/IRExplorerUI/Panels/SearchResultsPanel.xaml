@@ -119,6 +119,7 @@
       <local:PanelToolbarTray
         Grid.Column="1"
         HasDuplicateButton="False"
+        HasHelpButton="False"
         HasPinButton="False"
         Visibility="{Binding HideToolbarTray, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
     </Grid>
