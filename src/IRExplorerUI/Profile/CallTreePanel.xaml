@@ -116,10 +116,10 @@
             Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
               <Image
-                Width="16"
-                Height="16"
-                Margin="0,1,0,0"
-                Source="{StaticResource MergeIcon}" />
+                Width="15"
+                Height="15"
+                Margin="0,0,2,0"
+                Source="{StaticResource CombineIcon}" />
               <TextBlock Text="Combine" />
             </StackPanel>
           </ToggleButton>
@@ -138,11 +138,11 @@
             ToolTip="Enable/disable function details panel">
             <StackPanel Orientation="Horizontal">
               <Image
+                VerticalAlignment="Center"
                 Width="16"
                 Height="16"
-                Margin="0,1,0,0"
-                Source="{StaticResource ListIcon}" />
-              <TextBlock Text="Details" />
+                Source="{StaticResource DetailsIcon}" />
+              <TextBlock Text="Details" VerticalAlignment="Center"/>
             </StackPanel>
           </ToggleButton>
           <Separator />
@@ -360,11 +360,11 @@
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Open Function"
             InputGestureText="Ctrl+Return"
-            ToolTip="">
+            ToolTip="Open the function assembly view">
             <MenuItem.Icon>
               <Image
                 Height="16"
-                Source="{StaticResource PlusIcon}"
+                Source="{StaticResource LayoutOpenIcon}"
                 Width="16" />
             </MenuItem.Icon>
           </MenuItem>
@@ -374,11 +374,11 @@
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Open Function in New Tab"
             InputGestureText="Ctrl+Shift+Return"
-            ToolTip="">
+            ToolTip="Open the function assembly view in a new tab">
             <MenuItem.Icon>
               <Image
                 Height="16"
-                Source="{StaticResource PlusIcon}"
+                Source="{StaticResource LayoutOpenNewIcon}"
                 Width="16" />
             </MenuItem.Icon>
           </MenuItem>
@@ -393,7 +393,7 @@
             <MenuItem.Icon>
               <Image
                 Height="16"
-                Source="{StaticResource PlusIcon}"
+                Source="{StaticResource ClipboardIcon}"
                 Width="16" />
             </MenuItem.Icon>
           </MenuItem>
@@ -406,7 +406,7 @@
             <MenuItem.Icon>
               <Image
                 Height="16"
-                Source="{StaticResource PlusIcon}"
+                Source="{StaticResource ClipboardIcon}"
                 Width="16" />
             </MenuItem.Icon>
           </MenuItem>
@@ -418,11 +418,11 @@
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Select in Summary"
             InputGestureText="Return"
-            ToolTip="" >
+            ToolTip="Select the function in the Summary panel" >
             <MenuItem.Icon>
               <Image
                 Height="16"
-                Source="{StaticResource PlusIcon}"
+                Source="{StaticResource SummaryIcon}"
                 Width="16" />
             </MenuItem.Icon>
           </MenuItem>
@@ -436,7 +436,7 @@
             <MenuItem.Icon>
               <Image
                 Height="16"
-                Source="{StaticResource PlusIcon}"
+                Source="{StaticResource FlowChartIcon}"
                 Width="16" />
             </MenuItem.Icon>
           </MenuItem>
@@ -450,7 +450,7 @@
             <MenuItem.Icon>
               <Image
                 Height="16"
-                Source="{StaticResource PlusIcon}"
+                Source="{StaticResource FlameGraphIcon}"
                 Width="16" />
             </MenuItem.Icon>
           </MenuItem>
@@ -464,7 +464,7 @@
             <MenuItem.Icon>
               <Image
                 Height="16"
-                Source="{StaticResource PlusIcon}"
+                Source="{StaticResource TimelineIcon}"
                 Width="16" />
             </MenuItem.Icon>
           </MenuItem>

@@ -169,7 +169,7 @@
                                 Width="16"
                                 Height="16"
                                 Margin="0,1,0,0"
-                                Source="{StaticResource ListIcon}" />
+                                Source="{StaticResource DetailsIcon}" />
                             <TextBlock Text="Details" />
                         </StackPanel>
                     </ToggleButton>

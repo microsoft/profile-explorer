@@ -575,8 +575,14 @@
                   CommandTarget="{Binding ElementName=TextView}"
                   Padding="0"
                   ToolTip="Export profiling results as an Excel sheet">
-                  <Image Source="{StaticResource ClipboardIcon}"
-                         Style="{StaticResource DisabledImageStyle}" />
+                  <StackPanel Orientation="Horizontal">
+                    <Image
+                      Width="15"
+                      Height="15"
+                      Margin="0,0,2,0"
+                      Source="{StaticResource ExcelIcon}" />
+                    <TextBlock Text="Export" />
+                  </StackPanel>
                 </Button>
                 <Separator />
 
