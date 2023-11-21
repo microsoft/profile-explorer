@@ -166,7 +166,7 @@ public partial class MainWindow : Window, ISession {
       await panel.LoadSourceFile(function.Sections[0]);
     }
 
-    await OpenProfileFunction(function, OpenSectionKind.ReplaceCurrent);
+    //await OpenProfileFunction(function, OpenSectionKind.ReplaceCurrent);
     return true;
   }
 

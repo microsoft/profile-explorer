@@ -101,9 +101,9 @@
             ToolTip="Display activity from only this thread">
             <MenuItem.Icon>
               <Image
-                Width="16"
                 Height="16"
-                Source="{StaticResource QueryIcon}" />
+                Source="{StaticResource FilterIcon}"
+                Width="16" />
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem

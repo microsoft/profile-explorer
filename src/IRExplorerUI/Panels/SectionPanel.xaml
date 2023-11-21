@@ -993,7 +993,14 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=SectionList}"
                 Header="Open"
-                InputGestureText="Return" />
+                InputGestureText="Return">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource LayoutOpenIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
               <MenuItem
                 Command="local:Command.OpenInNewTab"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -1003,7 +1010,7 @@
                 <MenuItem.Icon>
                   <Image
                     Height="16"
-                    Source="{StaticResource OpenExternalIcon}"
+                    Source="{StaticResource LayoutOpenNewIcon}"
                     Width="16" />
                 </MenuItem.Icon>
               </MenuItem>
@@ -1016,7 +1023,7 @@
                 <MenuItem.Icon>
                   <Image
                     Height="16"
-                    Source="{StaticResource DockLeftIcon}"
+                    Source="{StaticResource LayoutLeftIcon}"
                     Width="16" />
                 </MenuItem.Icon>
               </MenuItem>
@@ -1029,7 +1036,7 @@
                 <MenuItem.Icon>
                   <Image
                     Height="16"
-                    Source="{StaticResource DockRightIcon}"
+                    Source="{StaticResource LayoutRightIcon}"
                     Width="16" />
                 </MenuItem.Icon>
               </MenuItem>
@@ -1043,7 +1050,7 @@
                 <MenuItem.Icon>
                   <Image
                     Height="16"
-                    Source="{StaticResource WordWrapIcon}"
+                    Source="{StaticResource LayoutSplitIcon}"
                     Width="16" />
                 </MenuItem.Icon>
               </MenuItem>

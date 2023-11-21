@@ -13,7 +13,7 @@
   Height="600"
   MinWidth="600"
   MinHeight="500"
-  d:DesignHeight="1000"
+  d:DesignHeight="1200"
   ResizeMode="CanResizeWithGrip"
   ShowInTaskbar="False"
   SizeToContent="Height"
@@ -610,6 +610,7 @@
                   Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibilityConverter}}"
                   Value="40" />
                 <DockPanel
+                  Margin="0,2,0,0"
                   Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibilityConverter}}">
                   <TextBlock
                     x:Name="LoadProgressLabel"

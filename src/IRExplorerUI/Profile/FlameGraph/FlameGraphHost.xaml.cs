@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -155,43 +156,42 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     return start + (end - start) * progress;
   }
 
-  public void InitializeFlameGraph(ProfileCallTree callTree) {
+  public async Task InitializeFlameGraph(ProfileCallTree callTree) {
     if (IsInitialized) {
       Reset();
     }
 
     callTree_ = callTree;
 
-    Dispatcher.BeginInvoke(async () => {
-      if (callTree_ != null) {
-        await GraphViewer.Initialize(callTree, GraphArea, settings_, Session);
-      }
-    }, DispatcherPriority.Background);
-  }
-
-  public void InitializeTimeline(ProfileCallTree callTree, int threadId) {
-    callTree_ = callTree;
-
-    Dispatcher.BeginInvoke(async () => {
-      if (callTree != null && !GraphViewer.IsInitialized) {
-        await GraphViewer.Initialize(callTree, GraphArea, settings_, Session, true, threadId);
-      }
-    }, DispatcherPriority.Background);
-  }
-
-  public void SetupKeyboardEvents(FrameworkElement host) {
-    host.PreviewKeyDown += HostOnPreviewKeyDown;
-    host.PreviewKeyUp += HostOnPreviewKeyUp;
-  }
-
-  private void HostOnPreviewKeyUp(object sender, KeyEventArgs e) {
-    if (Utils.IsControlModifierActive()) {
-      Cursor = Cursors.Arrow;
+    if (callTree_ != null) {
+      await GraphViewer.Initialize(callTree, GraphArea, settings_, Session);
+      DelayedAction.StartNew(TimeSpan.FromMilliseconds(1), () => {
+        Trace.WriteLine("Force update");
+        Dispatcher.Invoke(() => {
+          GraphViewer.InvalidateMeasure();
+          GraphViewer.InvalidateVisual();
+        }, DispatcherPriority.Normal);
+      });
     }
   }
 
-  public void DisableKeyboardEvents(FrameworkElement host) {
-    host.PreviewKeyDown -= HostOnPreviewKeyDown;
+  public async Task InitializeTimeline(ProfileCallTree callTree, int threadId) {
+    //? TODO: Timeline-style view not used yet.
+    if (IsInitialized) {
+      Reset();
+    }
+
+    callTree_ = callTree;
+
+    if (callTree != null && !GraphViewer.IsInitialized) {
+      await GraphViewer.Initialize(callTree, GraphArea, settings_, Session, true, threadId);
+    }
+  }
+
+  private void HostOnKeyUp(object sender, KeyEventArgs e) {
+    if (Utils.IsControlModifierActive()) {
+      Cursor = Cursors.Arrow;
+    }
   }
 
   public void BringNodeIntoView(FlameGraphNode node, bool fitSize = true) {
@@ -428,6 +428,8 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     MouseDoubleClick += OnMouseDoubleClick;
     MouseMove += OnMouseMove;
     MouseDown += OnMouseDown; // Handles back button.
+    KeyDown += HostOnKeyDown;
+    KeyUp += HostOnKeyUp;
 
     stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
                                                         CallTreeNodePopup.PopupHoverDuration,
@@ -703,7 +705,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
            point.Y >= GraphHost.ViewportHeight;
   }
 
-  private async void HostOnPreviewKeyDown(object sender, KeyEventArgs e) {
+  private async void HostOnKeyDown(object sender, KeyEventArgs e) {
     switch (e.Key) {
       case Key.Return: {
         if (GraphViewer.SelectedNode != null) {

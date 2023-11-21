@@ -14,40 +14,60 @@
         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
         Header="Filter to Time Range"
         InputGestureText="Double-click"
-        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
+        ToolTip="Only display activity in the selected time range"
+        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}">
+        <MenuItem.Icon>
+          <Image
+            Height="16"
+            Source="{StaticResource FilterIcon}"
+            Width="16" />
+        </MenuItem.Icon>
+      </MenuItem>
       <MenuItem
         Command="{Binding RemoveTimeRangeFilterCommand}"
         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
         Header="Remove Time Range Filter"
-        Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+        ToolTip="Display activity for the entire application"
+        Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}">
+        <MenuItem.Icon>
+          <Image
+            Height="16"
+            Source="{StaticResource FilterRemoveIcon}"
+            Width="16" />
+        </MenuItem.Icon>
+      </MenuItem>
       <MenuItem
         Command="{Binding FilterTimeRangeCommand}"
         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
         Header="Zoom In to Time Range"
         IsEnabled="False"
-        Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+        ToolTip="Zoom in the activity in the selected time range"
+        Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}">
+        <MenuItem.Icon>
+          <Image
+            Height="16"
+            Source="{StaticResource ZoomInIcon}"
+            Width="16" />
+        </MenuItem.Icon>
+      </MenuItem>
+   
       <MenuItem
         Command="{Binding FilterTimeRangeCommand}"
         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-        Header="Reset Zoom"
+        Header="Zoom In to Time Range"
         IsEnabled="False"
-        Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}">
+        <MenuItem.Icon>
+          <Image
+            Height="16"
+            Source="{StaticResource ZoomInIcon}"
+            Width="16" />
+        </MenuItem.Icon>
+      </MenuItem>
       <MenuItem
         Command="{Binding ClearSelectionCommand}"
         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
         Header="Clear Selection"
-        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
-      <MenuItem
-        Command="{Binding FilterTimeRangeCommand}"
-        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-        Header="Zoom In to Time Range"
-        IsEnabled="False"
-        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
-      <MenuItem
-        Command="{Binding FilterTimeRangeCommand}"
-        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-        Header="Reset Zoom"
-        IsEnabled="False"
         Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}" />
     </ContextMenu>
   </FrameworkElement.ContextMenu>
