@@ -69,7 +69,7 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function"
             InputGestureText="Ctrl+Return"
-            ToolTip="Open the function ASM view">
+            ToolTip="Open the function assembly view">
             <MenuItem.Icon>
               <Image
                 Height="16"
@@ -82,7 +82,7 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function in New Tab"
             InputGestureText="Ctrl+Shift+Return"
-            ToolTip="Open the function ASM view in a new tab">
+            ToolTip="Open the function assembly view in a new tab">
             <MenuItem.Icon>
               <Image
                 Height="16"

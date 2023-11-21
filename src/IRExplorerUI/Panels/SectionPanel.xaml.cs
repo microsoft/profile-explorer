@@ -1959,7 +1959,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return;
     }
 
-    if (e.Parameter is IRTextSectionEx section) {
+    if (GetCommandTargetSection(e) is { } section) {
       OpenSectionImpl(section, OpenSectionKind.ReplaceCurrent);
     }
   }
@@ -1970,23 +1970,31 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return;
     }
 
-    var section = e.Parameter as IRTextSectionEx;
-
-    if (section != null) {
+    if (GetCommandTargetSection(e) is { } section) {
       OpenSectionImpl(section, OpenSectionKind.NewTab);
     }
   }
 
   private void OpenLeftExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (e.Parameter is IRTextSectionEx section) {
+    if (GetCommandTargetSection(e) is { } section) {
       OpenSectionImpl(section, OpenSectionKind.NewTabDockLeft);
     }
   }
 
   private void OpenRightExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (e.Parameter is IRTextSectionEx section) {
+    if (GetCommandTargetSection(e) is { } section) {
       OpenSectionImpl(section, OpenSectionKind.NewTabDockRight);
     }
+  }
+
+  private IRTextSectionEx GetCommandTargetSection(ExecutedRoutedEventArgs e) {
+    var section = e.Parameter as IRTextSectionEx;
+
+    if (e.Parameter is IRTextFunctionEx functionEx) {
+      section = GetSectionExtension(functionEx.Function.Sections[0]);
+    }
+
+    return section;
   }
 
   private void OpenSideBySideExecuted(object sender, ExecutedRoutedEventArgs e) {

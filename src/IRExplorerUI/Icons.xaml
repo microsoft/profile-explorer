@@ -894,13 +894,8 @@
 
   <DrawingImage x:Key="FlameGraphIcon">
     <DrawingImage.Drawing>
-      <DrawingGroup ClipGeometry="M0,0 V16 H16 V0 H0 Z">
-        <DrawingGroup Opacity="1">
-          <DrawingGroup Opacity="1">
-            <GeometryDrawing Brush="#FF000000"
-                             Geometry="F0 M16,16z M0,0z M16,14L16,15 0,15 0,0 1,0 1,14 16,14 16,14z M5,13L3,13 3,8 5,8 5,13 5,13z M9,13L7,13 7,3 9,3 9,13 9,13z M13,13L11,13 11,6 13,6 13,13 13,13z" />
-          </DrawingGroup>
-        </DrawingGroup>
+      <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing Brush="#FF000000" Geometry="F1 M24,24z M0,0z M12,3L12,7 3,7 3,3 12,3z M16,17L16,21 3,21 3,17 16,17z M22,10L22,14 3,14 3,10 22,10z" />
       </DrawingGroup>
     </DrawingImage.Drawing>
   </DrawingImage>
@@ -1247,6 +1242,39 @@
     <DrawingImage.Drawing>
       <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
         <GeometryDrawing Brush="#FF000000" Geometry="F1 M24,24z M0,0z M11,4L21,4 21,6 11,6 11,4z M11,8L17,8 17,10 11,10 11,8z M11,14L21,14 21,16 11,16 11,14z M11,18L17,18 17,20 11,20 11,18z M3,4L9,4 9,10 3,10 3,4z M5,6L5,8 7,8 7,6 5,6z M3,14L9,14 9,20 3,20 3,14z M5,16L5,18 7,18 7,16 5,16z" />
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <DrawingImage x:Key="DetailsIcon">
+    <DrawingImage.Drawing>
+      <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing Brush="#FF000000" Geometry="F1 M24,24z M0,0z M20,22L4,22C3.44772,22,3,21.5523,3,21L3,3C3,2.44772,3.44772,2,4,2L20,2C20.5523,2,21,2.44772,21,3L21,21C21,21.5523,20.5523,22,20,22z M19,20L19,4 5,4 5,20 19,20z M7,6L11,6 11,10 7,10 7,6z M7,12L17,12 17,14 7,14 7,12z M7,16L17,16 17,18 7,18 7,16z M13,7L17,7 17,9 13,9 13,7z" />
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <DrawingImage x:Key="CombineIcon">
+    <DrawingImage.Drawing>
+      <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing Geometry="F1 M24,24z M0,0z M21,9.6L21,20.4C21,20.7314,20.7314,21,20.4,21L9.6,21C9.26863,21,9,20.7314,9,20.4L9,9.6C9,9.26863,9.26863,9,9.6,9L20.4,9C20.7314,9,21,9.26863,21,9.6z">
+          <GeometryDrawing.Pen>
+            <Pen Brush="#FF000000" Thickness="1.6" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
+          </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="F1 M24,24z M0,0z M15,3.6L15,14.4C15,14.7314,14.7314,15,14.4,15L3.6,15C3.26863,15,3,14.7314,3,14.4L3,3.6C3,3.26863,3.26863,3,3.6,3L14.4,3C14.7314,3,15,3.26863,15,3.6z">
+          <GeometryDrawing.Pen>
+            <Pen Brush="#FF000000" Thickness="1.6" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
+          </GeometryDrawing.Pen>
+        </GeometryDrawing>
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <DrawingImage x:Key="ExcelIcon">
+    <DrawingImage.Drawing>
+      <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing Brush="#FF000000" Geometry="F1 M24,24z M0,0z M13.2,12L16,16 13.6,16 12,13.7143 10.4,16 8,16 10.8,12 8,8 10.4,8 12,10.2857 13.6,8 15,8 15,4 5,4 5,20 19,20 19,8 16,8 13.2,12z M3,2.9918C3,2.44405,3.44749,2,3.9985,2L16,2 20.9997,7 21,20.9925C21,21.5489,20.5551,22,20.0066,22L3.9934,22C3.44476,22,3,21.5447,3,21.0082L3,2.9918z" />
       </DrawingGroup>
     </DrawingImage.Drawing>
   </DrawingImage>
