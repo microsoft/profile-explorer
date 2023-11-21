@@ -578,23 +578,98 @@
           <ListView.ContextMenu>
             <ContextMenu>
               <MenuItem
+                Command="local:Command.Open"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding ElementName=FunctionList}"
+                Header="Open"
+                InputGestureText="Return">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource LayoutOpenIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <MenuItem
+                Command="local:Command.OpenInNewTab"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding ElementName=FunctionList}"
+                Header="Open in New Tab"
+                InputGestureText="Shift+Return">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource LayoutOpenNewIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <MenuItem
+                Command="local:Command.OpenLeft"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding ElementName=FunctionList}"
+                Header="Open in Left Tab"
+                InputGestureText="Ctrl+Left">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource LayoutLeftIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <MenuItem
+                Command="local:Command.OpenRight"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding ElementName=FunctionList}"
+                Header="Open in Right Tab"
+                InputGestureText="Ctrl+Right">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource LayoutRightIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <Separator/>
+
+              <MenuItem
                 Command="local:Command.CopyFunctionName"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Copy Function Name"
-                ToolTip="Copy the function name to the clipboard" />
+                ToolTip="Copy the function name to the clipboard">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource ClipboardIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
               <MenuItem
                 Command="local:Command.CopyDemangledFunctionName"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Copy Demangled Function Name"
-                ToolTip="Copy the demangled function name to the clipboard (C/C++)" />
+                ToolTip="Copy the demangled function name to the clipboard (C/C++)">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource ClipboardIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
               <MenuItem
                 Command="local:Command.ExportFunctionList"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Export Function List as Excel File"
-                ToolTip="Save the list of functions and associated column data as an Excel worksheet" />
+                ToolTip="Save the list of functions and associated column data as an Excel worksheet">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource ExcelIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
               <Separator />
 
               <MenuItem
@@ -602,25 +677,41 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Copy Function Text"
-                ToolTip="Copies the text (IR) of all sections for the selected function to the clipboard" />
+                ToolTip="Copies the text (IR) of all sections for the selected function to the clipboard">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource ClipboardIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
               <MenuItem
                 Command="local:Command.SaveFunctionText"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Save Function Text"
-                ToolTip="Save the text (IR) of all sections for the selected function to a file" />
+                ToolTip="Save the text (IR) of all sections for the selected function to a file">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource SaveIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
               <MenuItem
                 Command="local:Command.OpenDocumentInNewInstance"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open File in New IR Explorer Instance"
-                ToolTip="Opens the IR document in a new instance of IR Explorer" />
+                ToolTip="Opens the IR document in a new instance of IR Explorer"
+                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
               <MenuItem
                 Command="local:Command.OpenDocumentInEditor"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open File in External Editor"
-                ToolTip="Opens the IR document in the default external editor" />
+                ToolTip="Opens the IR document in the default external editor"
+                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
               <Separator
                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -630,21 +721,42 @@
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Select in Call Tree"
                 ToolTip="Select the function instance in the Call Tree panel"
-                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource TreeIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
               <MenuItem
                 Command="{Binding SelectFunctionFlameGraphCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Select in Flame Graph"
                 ToolTip="Select the function instance in the Flame Graph panel"
-                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource FlameGraphIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
               <MenuItem
                 Command="{Binding SelectFunctionTimelineCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Select in Timeline"
                 ToolTip="Select the function instance in the Timeline panel"
-                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource TimelineIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
 
               <Separator
                 Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -706,7 +818,7 @@
         <Grid Grid.Row="0" x:Name="SectionToolbarGrid">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="25" />
+            <ColumnDefinition Width="44" />
           </Grid.ColumnDefinitions>
 
           <ToolBarTray
@@ -806,7 +918,7 @@
             Grid.Column="1"
             HasDuplicateButton="False"
             HasPinButton="False"
-            HasHelpButton="False"
+            HasHelpButton="True"
             SettingsClicked="FixedToolbar_SettingsClicked"
             x:Name="FixedToolbar" />
         </Grid>
@@ -993,7 +1105,14 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=SectionList}"
                 Header="Open"
-                InputGestureText="Return" />
+                InputGestureText="Return">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource LayoutOpenIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
               <MenuItem
                 Command="local:Command.OpenInNewTab"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -1003,7 +1122,7 @@
                 <MenuItem.Icon>
                   <Image
                     Height="16"
-                    Source="{StaticResource OpenExternalIcon}"
+                    Source="{StaticResource LayoutOpenNewIcon}"
                     Width="16" />
                 </MenuItem.Icon>
               </MenuItem>
@@ -1016,7 +1135,7 @@
                 <MenuItem.Icon>
                   <Image
                     Height="16"
-                    Source="{StaticResource DockLeftIcon}"
+                    Source="{StaticResource LayoutLeftIcon}"
                     Width="16" />
                 </MenuItem.Icon>
               </MenuItem>
@@ -1029,7 +1148,7 @@
                 <MenuItem.Icon>
                   <Image
                     Height="16"
-                    Source="{StaticResource DockRightIcon}"
+                    Source="{StaticResource LayoutRightIcon}"
                     Width="16" />
                 </MenuItem.Icon>
               </MenuItem>
@@ -1043,7 +1162,7 @@
                 <MenuItem.Icon>
                   <Image
                     Height="16"
-                    Source="{StaticResource WordWrapIcon}"
+                    Source="{StaticResource LayoutSplitIcon}"
                     Width="16" />
                 </MenuItem.Icon>
               </MenuItem>

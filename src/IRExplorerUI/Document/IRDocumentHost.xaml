@@ -122,7 +122,7 @@
         HorizontalAlignment="Stretch">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="25" />
+          <ColumnDefinition Width="50" />
         </Grid.ColumnDefinitions>
         <ToolBarTray
           Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
@@ -470,6 +470,7 @@
         <local:PanelToolbarTray
           Grid.Column="1"
           HasDuplicateButton="False"
+          HasHelpButton="True"
           HasPinButton="False"
           SettingsClicked="PanelToolbarTray_SettingsClicked" />
       </Grid>
@@ -575,8 +576,14 @@
                   CommandTarget="{Binding ElementName=TextView}"
                   Padding="0"
                   ToolTip="Export profiling results as an Excel sheet">
-                  <Image Source="{StaticResource ClipboardIcon}"
-                         Style="{StaticResource DisabledImageStyle}" />
+                  <StackPanel Orientation="Horizontal">
+                    <Image
+                      Width="15"
+                      Height="15"
+                      Margin="0,0,2,0"
+                      Source="{StaticResource ExcelIcon}" />
+                    <TextBlock Text="Export" />
+                  </StackPanel>
                 </Button>
                 <Separator />
 

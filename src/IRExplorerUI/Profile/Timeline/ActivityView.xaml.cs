@@ -762,9 +762,6 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
     UpdateSizes();
-    using var graphDC = visual_.RenderOpen();
-    var area = new Rect(0, 0, visibleArea_.Width, visibleArea_.Height);
-    graphDC.DrawRectangle(backColor_, null, area);
 
     // Wait for sample slices to be computed.
     if (sliceTask_ != null) {
@@ -794,6 +791,11 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         return;
       }
     }
+
+    // Start redrawing the visible part of the activity view.
+    using var graphDC = visual_.RenderOpen();
+    var area = new Rect(0, 0, visibleArea_.Width, visibleArea_.Height);
+    graphDC.DrawRectangle(backColor_, null, area);
 
     if (hasFilter_) {
       DrawTimeRangeFilter(graphDC);
@@ -898,7 +900,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     if (slice.HasValue) {
       double cpuUsage = EstimateCpuUsage(slice.Value, slices_[0].TimePerSlice, samplingInterval_);
-      text += $"{cpuUsage:F2}, {time.AsTimeStringWithMilliseconds(timeDiff)}";
+      text += $"{time.AsTimeStringWithMilliseconds(timeDiff)}, {cpuUsage:F2} cores";
     }
     else {
       text = time.AsTimeStringWithMilliseconds(timeDiff);

@@ -851,22 +851,6 @@ public partial class MainWindow : Window, ISession {
     AlwaysOnTopButton.IsChecked = state;
   }
 
-  private void ScreenshotButton_Click(object sender, RoutedEventArgs e) {
-    double width = ActualWidth;
-    double height = ActualHeight;
-    var bmpCopied =
-      new RenderTargetBitmap((int)Math.Round(width), (int)Math.Round(height), 96, 96, PixelFormats.Default);
-    var dv = new DrawingVisual();
-
-    using (var dc = dv.RenderOpen()) {
-      var vb = new VisualBrush(this);
-      dc.DrawRectangle(vb, null, new Rect(new Point(), new Size(width, height)));
-    }
-
-    bmpCopied.Render(dv);
-    Clipboard.SetImage(bmpCopied);
-  }
-
   private async Task SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
     await EndSession();
     compilerInfo_ = compilerInfo;
@@ -896,9 +880,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async Task SetupCompilerTarget() {
-    if (!string.IsNullOrEmpty(App.Settings.DefaultCompilerIR)) {
-      await SwitchCompilerTarget(App.Settings.DefaultCompilerIR, App.Settings.DefaultIRMode);
-    }
+    await SwitchCompilerTarget(App.Settings.DefaultCompilerIR, App.Settings.DefaultIRMode);
   }
 
   private async Task SwitchCompilerTarget(string name, IRMode irMode = IRMode.Default) {

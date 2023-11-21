@@ -46,7 +46,6 @@ public partial class PanelToolbarTray : ToolBarTray {
 
   public PanelToolbarTray() {
     InitializeComponent();
-    //HasHelpButton = false;
   }
 
   public event EventHandler<PinEventArgs> PinnedChanged;
