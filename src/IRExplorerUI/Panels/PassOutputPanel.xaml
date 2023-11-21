@@ -130,6 +130,7 @@
         DockPanel.Dock="Right"
         DuplicateClicked="PanelToolbarTray_DuplicateClicked"
         HasPinButton="True"
+        HasHelpButton="False"
         SettingsClicked="FixedToolbar_SettingsClicked"
         x:Name="FixedToolbar" />
     </DockPanel>
