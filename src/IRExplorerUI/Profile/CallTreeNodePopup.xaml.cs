@@ -124,9 +124,11 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   private async void ExpandButton_OnClick(object sender, RoutedEventArgs e) {
     DetachPopup();
     await PanelHost.ShowDetailsAsync();
+
     MinWidth = 450;
     Width = 450;
     Height = 400;
     ShowResizeGrip = true;
+    ExpandButton.Visibility = Visibility.Hidden;
   }
 }
