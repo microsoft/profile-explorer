@@ -1499,8 +1499,8 @@ public partial class MainWindow : Window, ISession {
 
   private async Task ReloadDocument(string filePath) {
     if (sessionState_.IsInTwoDocumentsDiffMode) {
-      await CheckedOpenBinaryBaseDiffIRDocuments(sessionState_.MainDocument.FilePath,
-                                                 sessionState_.DiffDocument.FilePath);
+      await CheckedOpenBaseDiffIRDocuments(sessionState_.MainDocument.FilePath,
+                                           sessionState_.DiffDocument.FilePath);
     }
     else {
       await CheckedOpenDocument(filePath);
@@ -1565,18 +1565,7 @@ public partial class MainWindow : Window, ISession {
                       MessageBoxButton.OK, MessageBoxImage.Error);
     }
   }
-
-  private async void OpenExecutableExecuted(object sender, ExecutedRoutedEventArgs e) {
-    var openWindow = new BinaryOpenWindow(this, false);
-    openWindow.Owner = this;
-    bool? result = openWindow.ShowDialog();
-
-    if (result.HasValue && result.Value) {
-      string filePath = openWindow.BinaryFilePath;
-      await CheckedOpenDocument(filePath);
-    }
-  }
-
+  
   private async Task CheckedOpenDocument(string filePath) {
     var loadedDoc = await OpenDocument(filePath);
 
@@ -1586,23 +1575,12 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private async void OpenExecutableBaseDiffExecuted(object sender, ExecutedRoutedEventArgs e) {
-    var openWindow = new BinaryOpenWindow(this, true);
-    openWindow.Owner = this;
-    bool? result = openWindow.ShowDialog();
-
-    if (result.HasValue && result.Value) {
-      await CheckedOpenBinaryBaseDiffIRDocuments(openWindow.BinaryFilePath, openWindow.DiffBinaryFilePath);
-    }
-  }
-
-  private async Task CheckedOpenBinaryBaseDiffIRDocuments(string baseFilePath, string diffFilePath) {
+  private async Task CheckedOpenBaseDiffIRDocuments(string baseFilePath, string diffFilePath) {
     var (baseLoadedDoc, diffLoadedDoc) =
-      await OpenBinaryBaseDiffIRDocuments(baseFilePath,
-                                          diffFilePath);
+      await OpenBaseDiffDocuments(baseFilePath, diffFilePath);
 
     if (baseLoadedDoc == null || diffLoadedDoc == null) {
-      MessageBox.Show($"Filed to open base/diff binary filess {baseFilePath}\nand {diffFilePath}", "IR Explorer",
+      MessageBox.Show($"Filed to open base/diff binary files {baseFilePath}\nand {diffFilePath}", "IR Explorer",
                       MessageBoxButton.OK, MessageBoxImage.Exclamation);
     }
   }
