@@ -165,13 +165,20 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
     if (callTree_ != null) {
       await GraphViewer.Initialize(callTree, GraphArea, settings_, Session);
-      DelayedAction.StartNew(TimeSpan.FromMilliseconds(1), () => {
-        Trace.WriteLine("Force update");
+     
+      // Hack due to possible WPF bug that forces a re-layout of the flame graph
+      // so that the scroll bars are displayed if needed.
+      Dispatcher.Invoke(() => {
+        GraphViewer.InvalidateMeasure();
+        GraphViewer.InvalidateVisual();
+
+        // If there is a vertical scroll bar, resize the flame graph to fit 
+        // the view and not show a horizontal scroll bar initially.
         Dispatcher.Invoke(() => {
-          GraphViewer.InvalidateMeasure();
-          GraphViewer.InvalidateVisual();
-        }, DispatcherPriority.Normal);
-      });
+          ResetWidth(false);
+        }, DispatcherPriority.ContextIdle);
+          
+      }, DispatcherPriority.Normal);
     }
   }
 
@@ -308,13 +315,13 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
   }
 
-  public void ResetWidth() {
+  public void ResetWidth(bool animate = true) {
     //? TODO: Buttons should be disabled
     if (!GraphViewer.IsInitialized) {
       return;
     }
 
-    SetMaxWidth(GraphAreaWidth);
+    SetMaxWidth(GraphAreaWidth, animate);
     ScrollToVerticalOffset(0);
     ResetHighlightedNodes();
   }

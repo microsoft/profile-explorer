@@ -216,6 +216,7 @@
         DockPanel.Dock="Right"
         DuplicateClicked="PanelToolbarTray_DuplicateClicked"
         HasDuplicateButton="False"
+        HasHelpButton="True"
         HasPinButton="False" />
     </DockPanel>
 

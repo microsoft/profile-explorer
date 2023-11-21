@@ -73,7 +73,7 @@
             Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="75" />
+                <ColumnDefinition Width="48" />
             </Grid.ColumnDefinitions>
             <ToolBarTray
                 Grid.Column="0"
@@ -274,7 +274,6 @@
 
             <irExplorerUi:PanelToolbarTray
                 Grid.Column="1"
-                MaxWidth="75"
                 DockPanel.Dock="Right"
                 HasDuplicateButton="False"
                 HasHelpButton="True"

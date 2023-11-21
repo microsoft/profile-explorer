@@ -170,7 +170,7 @@
             <MenuItem.Icon>
               <Image
                 Height="16"
-                Source="{StaticResource FlowChartIcon}"
+                Source="{StaticResource TreeIcon}"
                 Width="16" />
             </MenuItem.Icon>
           </MenuItem>

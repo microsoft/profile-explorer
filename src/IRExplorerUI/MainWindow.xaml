@@ -239,11 +239,14 @@
             <MenuItem
               Command="local:AppCommand.OpenDocument"
               Header="_Open File"
-              InputGestureText="Ctrl+O" />
-            <MenuItem
-              Command="local:AppCommand.OpenExecutable"
-              Header="Open Binary File"
-              InputGestureText="Ctrl+Shift+O" />
+              InputGestureText="Ctrl+O">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource FolderIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <MenuItem x:Name="RecentFilesMenu" Header="_Recent Files">
               <Separator />
               <MenuItem Click="RecentFilesMenu_Click" Header="Clear" />
@@ -253,7 +256,14 @@
             <MenuItem
               Command="local:AppCommand.OpenBaseDiffDocuments"
               Header="_Compare Base/Diff Files"
-              InputGestureText="F12" />
+              InputGestureText="F12">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource BookIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <MenuItem
               Command="local:AppCommand.OpenExecutableDiff"
               Header="Compare Base/Diff Binary Files"
@@ -273,19 +283,40 @@
             <MenuItem
               Command="local:AppCommand.ReloadDocument"
               Header="_Reload File"
-              InputGestureText="F5" />
+              InputGestureText="F5">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource ReloadIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <MenuItem
               Command="local:AppCommand.AutoReloadDocument"
               Header="Auto-Reload File on Change"
               InputGestureText="Ctrl+F5"
               IsCheckable="True"
-              IsChecked="True" />
+              IsChecked="True" >
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource AutoReloadIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <Separator />
 
             <MenuItem
               Command="local:AppCommand.SaveDocument"
               Header="_Save Session"
-              InputGestureText="Ctrl+S" />
+              InputGestureText="Ctrl+S">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource SaveIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <MenuItem
               Command="local:AppCommand.SaveAsDocument"
               Header="Save Session _As..."
@@ -312,7 +343,14 @@
               Header="Always on Top"
               IsCheckable="True"
               IsChecked="False"
-              Tag="Section" />
+              Tag="Section">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource PinIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <Separator />
 
             <MenuItem
@@ -396,39 +434,101 @@
           </MenuItem>
 
           <MenuItem Header="Profiling">
-            <MenuItem Command="local:AppCommand.LoadProfile" Header="Load Profile" />
-            <MenuItem Command="local:AppCommand.RecordProfile" Header="Record Profile" />
+            <MenuItem Command="local:AppCommand.LoadProfile" Header="Load Profile">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource FolderIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Command="local:AppCommand.RecordProfile" Header="Record Profile">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource RecordIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <Separator />
 
-            <MenuItem Command="local:AppCommand.ViewProfileReport" Header="Open profiling report" />
+            <MenuItem Command="local:AppCommand.ViewProfileReport" Header="Open profiling report">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource DetailsIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <Separator />
 
             <MenuItem
               Click="ShowPanelMenuClicked"
               Header="Timeline Panel"
-              Tag="Timeline" />
+              Tag="Timeline" >
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource TimelineIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <MenuItem
               Click="ShowPanelMenuClicked"
               Header="Flame Graph Panel"
-              Tag="FlameGraph" />
+              Tag="FlameGraph">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource FlameGraphIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <MenuItem
               Click="ShowPanelMenuClicked"
               Header="Call Tree Panel"
-              Tag="CallTree" />
+              Tag="CallTree">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource TreeIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <MenuItem
               Click="ShowPanelMenuClicked"
               Header="Caller/Callee Panel"
-              Tag="CallerCallee" />
+              Tag="CallerCallee">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource FlowChartIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
           </MenuItem>
 
           <MenuItem Header="Tools">
             <MenuItem
               Header="Diff Mode"
               IsCheckable="True"
-              IsChecked="{Binding ElementName=DiffModeButton, Path=IsChecked, Mode=TwoWay}" />
+              IsChecked="{Binding ElementName=DiffModeButton, Path=IsChecked, Mode=TwoWay}">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource DiffIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <Separator />
 
             <MenuItem Header="IR Kind">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource ToolIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
               <MenuItem
                 Name="LLVMMenuItem"
                 Click="LLVMMenuItem_Click"
@@ -453,18 +553,39 @@
                 Header=".NET ASM ARM64" />
             </MenuItem>
 
-            <MenuItem Click="MenuItem_OnClick2" Header="Function report" />
+            <MenuItem Click="MenuItem_OnClick2" Header="Function report">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource ReportIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <Separator />
 
             <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio Extension" />
             <MenuItem
               Click="MenuItem_Click_6"
               Header="Settings"
-              IsEnabled="False" />
+              IsEnabled="False">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource SettingsIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
           </MenuItem>
 
           <MenuItem Header="Help">
-            <MenuItem Click="MenuItem_Click_4" Header="Documentation" />
+            <MenuItem Click="MenuItem_Click_4" Header="Documentation">
+              <MenuItem.Icon>
+                <Image
+                  Height="16"
+                  Source="{StaticResource HelpIcon}"
+                  Width="16" />
+              </MenuItem.Icon>
+            </MenuItem>
             <MenuItem Header="Developer">
               <MenuItem
                 x:Name="DevMenuStartupTime"
