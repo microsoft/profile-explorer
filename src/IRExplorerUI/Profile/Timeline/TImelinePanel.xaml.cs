@@ -151,9 +151,12 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       if (threadFilterText_ != value) {
         threadFilterText_ = value;
         OnPropertyChanged();
+        OnPropertyChanged(nameof(HasAnyFilter));
       }
     }
   }
+
+  public bool HasAnyFilter => HasThreadFilter || ActivityView.HasFilter;
 
   public bool ShowNodePanel {
     get => showNodePanel_;
@@ -680,6 +683,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
 
+    OnPropertyChanged(nameof(HasAnyFilter));
     changingThreadFiltering_ = false;
     await ApplyProfileFilter();
   }

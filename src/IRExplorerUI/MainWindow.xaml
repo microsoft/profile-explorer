@@ -465,9 +465,6 @@
 
           <MenuItem Header="Help">
             <MenuItem Click="MenuItem_Click_4" Header="Documentation" />
-            <MenuItem Click="MenuItem_Click_5" Header="About" />
-
-            <Separator />
             <MenuItem Header="Developer">
               <MenuItem
                 x:Name="DevMenuStartupTime"
@@ -477,6 +474,9 @@
               <MenuItem Click="MenuItem_Click_2" Header="Create debug files" />
               <MenuItem Click="MenuItem_Click" Header="Crash application" />
             </MenuItem>
+            <Separator />
+
+            <MenuItem Click="MenuItem_Click_5" Header="About" />
           </MenuItem>
         </Menu>
 
@@ -1150,18 +1150,6 @@
         </StackPanel>
       </ToggleButton>
 
-      <Button
-        x:Name="ScreenshotButton"
-        Width="18"
-        Height="18"
-        VerticalAlignment="Center"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        Click="ScreenshotButton_Click"
-        FontSize="11"
-        ToolTip="Take screenshot of IR Explorer and save it to clipboard">
-        <Image VerticalAlignment="Center" Source="{StaticResource MonitorIcon}" />
-      </Button>
-
       <ToggleButton
         x:Name="AlwaysOnTopButton"
         Width="18"
@@ -1170,7 +1158,7 @@
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
         Click="AlwaysOnTopButton_Click"
         FontSize="11"
-        ToolTip="Toggle always on top">
+        ToolTip="Toggle always on top of the main window">
         <Image VerticalAlignment="Center" Source="{StaticResource PinIcon}" />
       </ToggleButton>
 

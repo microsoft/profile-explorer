@@ -128,20 +128,20 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     set => SetField(ref showNodePanel_, value);
   }
 
-  public override void OnShowPanel() {
+  public override async void OnShowPanel() {
     base.OnShowPanel();
     panelVisible_ = true;
-    InitializePendingCallTree();
+    await InitializePendingCallTree();
   }
 
-  public override void OnSessionStart() {
+  public override async void OnSessionStart() {
     base.OnSessionStart();
-    InitializePendingCallTree();
+    await InitializePendingCallTree();
   }
 
   public async Task DisplayFlameGraph() {
     var callTree = Session.ProfileData.CallTree;
-    SchedulePendingCallTree(callTree);
+    await SchedulePendingCallTree(callTree);
   }
 
   public override void OnSessionEnd() {
@@ -203,24 +203,24 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     return true;
   }
 
-  private void SchedulePendingCallTree(ProfileCallTree callTree) {
+  private async Task SchedulePendingCallTree(ProfileCallTree callTree) {
     // Display flame graph once the panel is visible and visible area is valid.
     if (pendingCallTree_ == null) {
       pendingCallTree_ = callTree;
-      InitializePendingCallTree();
+      await InitializePendingCallTree();
     }
   }
 
-  private void InitializePendingCallTree() {
+  private async Task InitializePendingCallTree() {
     if (pendingCallTree_ != null && panelVisible_) {
-      InitializeCallTree(pendingCallTree_);
+      await InitializeCallTree(pendingCallTree_);
       pendingCallTree_ = null;
     }
   }
 
-  private void InitializeCallTree(ProfileCallTree callTree) {
+  private async Task InitializeCallTree(ProfileCallTree callTree) {
     callTree_ = callTree;
-    GraphHost.InitializeFlameGraph(callTree);
+    await GraphHost.InitializeFlameGraph(callTree);
   }
 
   private void SetupEvents() {
@@ -228,7 +228,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     GraphHost.NodesDeselected += GraphHost_NodesDeselected;
     GraphHost.RootNodeChanged += GraphHostOnRootNodeChanged;
     GraphHost.RootNodeCleared += GraphHostOnRootNodeCleared;
-    GraphHost.SetupKeyboardEvents(this);
 
     // Setup events for the node details view.
     NodeDetailsPanel.NodeInstanceChanged += NodeDetailsPanel_NodeInstanceChanged;
@@ -389,13 +388,5 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     view.PanelTitle = "Flame Graph Panel Help";
     view.IsOpen = true;
-  }
-
-  private void FunctionFilter_OnGotFocus(object sender, RoutedEventArgs e) {
-    GraphHost.DisableKeyboardEvents(this);
-  }
-
-  private void FunctionFilter_OnLostFocus(object sender, RoutedEventArgs e) {
-    GraphHost.SetupKeyboardEvents(this);
   }
 }

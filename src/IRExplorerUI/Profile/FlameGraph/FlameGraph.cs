@@ -195,7 +195,7 @@ public sealed class FlameGraph {
   public void SearchNodesImpl(FlameGraphNode node, string text,
                               List<FlameGraphNode> nodes, bool includeModuleName) {
     if (node.HasFunction) {
-      var result = TextSearcher.FirstIndexOf(node.CallTreeNode.FunctionName, text, 0, TextSearchKind.CaseInsensitive);
+      var result = TextSearcher.FirstIndexOf(node.FunctionName, text, 0, TextSearchKind.CaseInsensitive);
 
       if (result.HasValue) {
         node.SearchResult = result;

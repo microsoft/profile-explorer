@@ -41,13 +41,27 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Focus on Function"
             InputGestureText="Double-click"
-            ToolTip="Enlarge the function in the view" />
+            ToolTip="Enlarge the function in the view">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource FitWidthIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <MenuItem
             Command="local:CallTreeCommand.ChangeRootNode"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Set Function as Root"
             InputGestureText="Alt+Double-click"
-            ToolTip="Restrict the view to the function and its callees" />
+            ToolTip="Restrict the view to the function and its callees">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource RootIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <Separator />
 
           <MenuItem
@@ -55,30 +69,53 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function"
             InputGestureText="Ctrl+Return"
-            ToolTip="Open the function ASM view" />
+            ToolTip="Open the function ASM view">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource LayoutOpenIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <MenuItem
             Command="local:CallTreeCommand.OpenFunctionInNewTab"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function in New Tab"
             InputGestureText="Ctrl+Shift+Return"
-            ToolTip="Open the function ASM view in a new tab" />
-          <MenuItem
-            Command="{Binding SelectFunctionSourceCommand}"
-            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-            Header="Open Source File"
-            ToolTip="Open function in Source File panel" />
+            ToolTip="Open the function ASM view in a new tab">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource LayoutOpenNewIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <Separator />
 
           <MenuItem
             Command="{Binding CopyFunctionNameCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Copy Function Name"
-            ToolTip="Copy the function name to the clipboard" />
+            ToolTip="Copy the function name to the clipboard" >
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource ClipboardIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <MenuItem
             Command="{Binding CopyDemangledFunctionNameCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Copy Demangled Function Name"
-            ToolTip="Copy the demangled function name to the clipboard (C/C++)" />
+            ToolTip="Copy the demangled function name to the clipboard (C/C++)">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource ClipboardIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <Separator />
 
           <MenuItem
@@ -117,17 +154,38 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Summary"
             InputGestureText="Return"
-            ToolTip="Select function in the Summary panel" />
+            ToolTip="Select the function in the Summary panel">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource SummaryIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <MenuItem
             Command="{Binding SelectFunctionCallTreeCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Call Tree"
-            ToolTip="Select the function instance in the Call Tree panel" />
+            ToolTip="Select the function instance in the Call Tree panel">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource FlowChartIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <MenuItem
             Command="{Binding SelectFunctionTimelineCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Timeline"
-            ToolTip="Select the function instance in the Timeline panel" />
+            ToolTip="Select the function instance in the Timeline panel">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource TimelineIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <MenuItem
             Header="Mark in Timeline"
             ToolTip="Mark the function instance in the Timeline panel">
