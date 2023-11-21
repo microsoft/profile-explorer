@@ -55,7 +55,7 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private async Task<Tuple<LoadedDocument, LoadedDocument>>
+  private async Task<(LoadedDocument, LoadedDocument)>
     OpenBaseDiffDocuments(string baseFilePath, string diffFilePath) {
     var (baseDoc, diffDoc) = await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
 
@@ -65,7 +65,7 @@ public partial class MainWindow : Window, ISession {
                       MessageBoxImage.Exclamation);
     }
 
-    return new Tuple<LoadedDocument, LoadedDocument>(baseDoc, diffDoc);
+    return (baseDoc, diffDoc);
   }
 
   private async void ToggleDiffModeExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -89,7 +89,7 @@ public partial class MainWindow : Window, ISession {
     await SwapDiffedDocuments();
   }
 
-  private async Task<Tuple<LoadedDocument, LoadedDocument>>
+  private async Task<(LoadedDocument, LoadedDocument)>
     OpenBaseDiffIRDocumentsImpl(string baseFilePath, string diffFilePath) {
     LoadedDocument baseResult = null;
     LoadedDocument diffResult = null;
@@ -115,10 +115,10 @@ public partial class MainWindow : Window, ISession {
     }
 
     UpdateUIAfterLoadDocument();
-    return new Tuple<LoadedDocument, LoadedDocument>(baseResult, diffResult);
+    return (baseResult, diffResult);
   }
 
-  private async Task<Tuple<LoadedDocument, LoadedDocument>>
+  private async Task<(LoadedDocument, LoadedDocument)>
     LoadBinaryBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath,
                                   string diffModuleName) {
     await SwitchBinaryCompilerTarget(baseFilePath);
@@ -133,16 +133,16 @@ public partial class MainWindow : Window, ISession {
     if (baseResult != null && diffResult != null) {
       await SetupOpenedIRDocument(SessionKind.Default, baseResult);
       await SetupOpenedDiffIRDocument(diffFilePath, diffResult);
-      return new Tuple<LoadedDocument, LoadedDocument>(baseResult, diffResult);
+      return (baseResult, diffResult);
     }
 
     await EndSession();
     Trace.TraceWarning($"Failed to load base/diff documents: base {baseResult != null}, diff {diffResult != null}");
 
-    return new Tuple<LoadedDocument, LoadedDocument>(null, null);
+    return (null, null);
   }
 
-  private async Task<Tuple<LoadedDocument, LoadedDocument>>
+  private async Task<(LoadedDocument, LoadedDocument)>
     LoadBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath, string diffModuleName) {
     var baseTask =
       Task.Run(() => LoadDocument(baseFilePath, baseModuleName, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
@@ -154,16 +154,16 @@ public partial class MainWindow : Window, ISession {
     if (baseResult != null && diffResult != null) {
       await SetupOpenedIRDocument(SessionKind.Default, baseResult);
       await SetupOpenedDiffIRDocument(diffFilePath, diffResult);
-      return new Tuple<LoadedDocument, LoadedDocument>(baseResult, diffResult);
+      return (baseResult, diffResult);
     }
 
     await EndSession();
     Trace.TraceWarning($"Failed to load base/diff documents: base {baseResult != null}, diff {diffResult != null}");
 
-    return new Tuple<LoadedDocument, LoadedDocument>(null, null);
+    return (null, null);
   }
 
-  private async Task<Tuple<LoadedDocument, LoadedDocument>>
+  private async Task<(LoadedDocument, LoadedDocument)>
     OpenBinaryBaseDiffIRDocuments(string baseFilePath, string diffFilePath) {
     //? HACK: Set the module name of both docs to be the same,
     //? otherwise lookup by IRTextFunction in the diff doc will fail the hash checks.
@@ -172,7 +172,7 @@ public partial class MainWindow : Window, ISession {
                                           diffFilePath, baseFilePath);
 
     UpdateWindowTitle();
-    return new Tuple<LoadedDocument, LoadedDocument>(baseLoadedDoc, diffLoadedDoc);
+    return (baseLoadedDoc, diffLoadedDoc);
   }
 
   private async void ToggleButton_Checked(object sender, RoutedEventArgs e) {
@@ -724,7 +724,7 @@ public partial class MainWindow : Window, ISession {
     UpdateDiffStatus(new DiffStatistics());
   }
 
-  private async Task<Tuple<string, IRTextSection>>
+  private async Task<(string, IRTextSection)>
     SwitchOtherDiffedDocumentSide(IRTextSection section, IRTextSection otherSection,
                                   LoadedDocument otherDocument) {
     if (sessionState_.DiffDocument != null) {
@@ -734,16 +734,16 @@ public partial class MainWindow : Window, ISession {
 
       if (diffSection != null) {
         var result = await Task.Run(() => LoadAndParseSection(diffSection));
-        return new Tuple<string, IRTextSection>(result.Text.ToString(), diffSection);
+        return (result.Text.ToString(), diffSection);
       }
 
-      return new Tuple<string, IRTextSection>($"Diff document does not have section {section.Name}", null);
+      return ($"Diff document does not have section {section.Name}", null);
     }
 
     {
       // Load the text of the other section, but don't reload anything else.
       var result = await Task.Run(() => LoadAndParseSection(otherSection));
-      return new Tuple<string, IRTextSection>(result.Text.ToString(), null); //? TODO: Use span
+      return (result.Text.ToString(), null); //? TODO: Use span
     }
   }
 

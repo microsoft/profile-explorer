@@ -90,7 +90,7 @@
 		<PackageReference Include="AvalonEdit" Version="6.3.0.90" />
 		<PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
 		<PackageReference Include="ClosedXML" Version="0.102.1" />
-		<PackageReference Include="CS-Script.Core" Version="1.4.0" />
+		<PackageReference Include="CS-Script.Core" Version="2.0.0" />
 		<PackageReference Include="DiffPlex" Version="1.7.1" />
 		<PackageReference Include="Dirkster.AvalonDock" Version="4.72.1" />
 		<PackageReference Include="Dirkster.AvalonDock.Themes.Aero" Version="4.72.1" />
@@ -99,11 +99,11 @@
 		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
 		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.106" />
 		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94" />
-		<PackageReference Include="Google.Protobuf" Version="3.20.1" />
-		<PackageReference Include="Grpc" Version="2.44.0" />
-		<PackageReference Include="Grpc.Core" Version="2.44.0" />
-		<PackageReference Include="Grpc.Core.Api" Version="2.44.0" />
-		<PackageReference Include="Grpc.Tools" Version="2.44.0">
+		<PackageReference Include="Google.Protobuf" Version="3.25.1" />
+		<PackageReference Include="Grpc" Version="2.46.6" />
+		<PackageReference Include="Grpc.Core" Version="2.46.6" />
+		<PackageReference Include="Grpc.Core.Api" Version="2.59.0" />
+		<PackageReference Include="Grpc.Tools" Version="2.59.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -260,9 +260,6 @@
 			<SubType>Designer</SubType>
 		</Page>
 		<Page Update="Converters.xaml">
-			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-		</Page>
-		<Page Update="Windows\BinaryOpenWindow.xaml">
 			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
 		<Page Update="Windows\ProfileLoadWindow.xaml">

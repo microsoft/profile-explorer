@@ -1,835 +1,813 @@
 ﻿<ResourceDictionary
-  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:local="clr-namespace:IRExplorerUI">
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:IRExplorerUI">
 
-  <DataTemplate x:Key="TimePercentageColumnValueTemplate">
-    <Border
-      Margin="-5,-1,-8,1"
-      HorizontalAlignment="Stretch"
-      VerticalAlignment="Stretch"
-      Background="{Binding BackColor}"
-      BorderBrush="{Binding BorderBrush}"
-      BorderThickness="{Binding BorderThickness}">
-      <StackPanel Orientation="Horizontal">
-        <Image
-          Width="Auto"
-          Height="Auto"
-          Margin="4,0,2,1"
-          VerticalAlignment="Stretch"
-          Source="{Binding Icon}"
-          Stretch="Uniform"
-          ToolTip="{Binding ToolTip}"
-          Visibility="{Binding Path=ShowIcon, Converter={StaticResource BoolToVisibilityConverter}}" />
-
-        <TextBlock
-          MinWidth="{Binding MinTextWidth}"
-          Margin="4,0,2,0"
-          VerticalAlignment="Center"
-          FontFamily="{Binding TextFont}"
-          FontSize="{Binding TextSize}"
-          FontWeight="{Binding TextWeight}"
-          Foreground="{Binding TextColor}"
-          Text="{Binding Text}"
-          ToolTip="{Binding ToolTip}" />
-
-        <Rectangle
-          Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=50.0}"
-          Height="Auto"
-          Margin="4,0,2,0"
-          HorizontalAlignment="Left"
-          VerticalAlignment="Stretch"
-          Fill="{Binding PercentageBarBackColor}"
-          Stroke="{Binding PercentageBarBorderBrush}"
-          StrokeThickness="{Binding PercentageBarBorderThickness}"
-          ToolTip="{Binding ToolTip}"
-          Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibilityConverter}}" />
-      </StackPanel>
-    </Border>
-  </DataTemplate>
-
-  <DataTemplate x:Key="BlockPercentageValueTemplate">
-    <Border
-      Padding="0"
-      HorizontalAlignment="Stretch"
-      VerticalAlignment="Stretch"
-      Background="{Binding BackColor}"
-      BorderBrush="{Binding BorderBrush}"
-      BorderThickness="{Binding BorderThickness}">
-      <StackPanel Orientation="Horizontal">
-        <TextBlock
-          MinWidth="{Binding MinTextWidth}"
-          Margin="0,0,2,0"
-          VerticalAlignment="Center"
-          FontFamily="{Binding TextFont}"
-          FontSize="{Binding TextSize}"
-          FontWeight="Medium"
-          Foreground="{Binding TextColor}"
-          Text="{Binding PrefixText}"
-          ToolTip="{Binding ToolTip}" />
-        <Rectangle
-          Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=50.0}"
-          Height="Auto"
-          Margin="4,0,2,0"
-          HorizontalAlignment="Left"
-          VerticalAlignment="Stretch"
-          Fill="{Binding PercentageBarBackColor}"
-          Stroke="{Binding PercentageBarBorderBrush}"
-          StrokeThickness="{Binding PercentageBarBorderThickness}"
-          ToolTip="{Binding ToolTip}"
-          Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibilityConverter}}" />
-        <TextBlock
-          Margin="4,0,2,0"
-          VerticalAlignment="Center"
-          FontFamily="{Binding TextFont}"
-          FontSize="{Binding TextSize}"
-          FontWeight="Medium"
-          Foreground="{Binding TextColor}"
-          Text="{Binding ValuePercentage, StringFormat=p2}"
-          ToolTip="{Binding ToolTip}" />
-        <TextBlock
-          Margin="6,0,2,0"
-          VerticalAlignment="Center"
-          FontFamily="{Binding TextFont}"
-          FontSize="{Binding TextSize}"
-          FontWeight="{Binding TextWeight}"
-          Foreground="{Binding TextColor}"
-          Text="{Binding Text}"
-          ToolTip="{Binding ToolTip}" />
-      </StackPanel>
-    </Border>
-  </DataTemplate>
-
-  <DataTemplate x:Key="TimeColumnValueTemplate">
-    <Border
-      Margin="-5,0,-8,0"
-      HorizontalAlignment="Stretch"
-      VerticalAlignment="Stretch"
-      Background="{Binding BackColor}"
-      BorderBrush="{Binding BorderBrush}"
-      BorderThickness="{Binding BorderThickness}">
-      <StackPanel Orientation="Horizontal">
-        <Image
-          Width="Auto"
-          Height="Auto"
-          VerticalAlignment="Stretch"
-          Source="{Binding Icon}"
-          Stretch="Uniform"
-          Visibility="{Binding Path=ShowIcon, Converter={StaticResource BoolToVisibilityConverter}}" />
-        <TextBlock
-          VerticalAlignment="Center"
-          FontFamily="Consolas"
-          FontSize="12"
-          FontWeight="{Binding TextWeight}"
-          Foreground="{Binding TextColor}"
-          Text="{Binding Text}"
-          ToolTip="{Binding ToolTip}" />
-      </StackPanel>
-    </Border>
-  </DataTemplate>
-
-  <Style x:Key="DisabledImageStyle" TargetType="Image">
-    <Style.Triggers>
-      <Trigger Property="IsEnabled" Value="False">
-        <Setter Property="Opacity" Value="0.5" />
-      </Trigger>
-    </Style.Triggers>
-  </Style>
-
-  <Style x:Key="TimeColumnHeaderTemplate" TargetType="GridViewColumnHeader">
-    <Setter Property="Template">
-      <Setter.Value>
-        <ControlTemplate TargetType="{x:Type GridViewColumnHeader}">
-          <Border
-            Height="22"
-            Margin="-1,-1,0,0"
+    <DataTemplate x:Key="TimePercentageColumnValueTemplate">
+        <Border
+            Margin="-5,-1,-8,1"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
-            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-            BorderThickness="0,0,1,1">
-            <TextBlock
-              x:Name="ContentHeader"
-              Width="{TemplateBinding Width}"
-              Padding="4,0,4,0"
-              VerticalAlignment="Center"
-              Text="{TemplateBinding Content}"
-              TextAlignment="Left" />
-          </Border>
-        </ControlTemplate>
-      </Setter.Value>
-    </Setter>
-  </Style>
-
-
-  <Style x:Key="ListViewHeaderStyle" TargetType="{x:Type GridViewColumnHeader}">
-    <Setter Property="HorizontalContentAlignment" Value="Left" />
-  </Style>
-
-  <Style x:Key="HoverUnderlineStyle" TargetType="TextBlock">
-    <Style.Triggers>
-      <Trigger Property="IsMouseOver" Value="True">
-        <Setter Property="TextBlock.TextDecorations" Value="Underline" />
-        <Setter Property="TextBlock.Foreground" Value="DarkBlue" />
-      </Trigger>
-    </Style.Triggers>
-  </Style>
-
-  <Style x:Key="IRPreviewTooltip" TargetType="ToolTip">
-    <Setter Property="OverridesDefaultStyle" Value="true" />
-    <Setter Property="Template">
-      <Setter.Value>
-        <ControlTemplate TargetType="ToolTip">
-          <local:IRPreviewToolTip x:Name="IRPreviewer" Background="Silver" />
-        </ControlTemplate>
-      </Setter.Value>
-    </Setter>
-  </Style>
-
-  <Style x:Key="BlockIRPreviewTooltip" TargetType="ToolTip">
-    <Setter Property="OverridesDefaultStyle" Value="true" />
-    <Setter Property="Template">
-      <Setter.Value>
-        <ControlTemplate TargetType="ToolTip">
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*" />
-              <ColumnDefinition Width="120" />
-            </Grid.ColumnDefinitions>
-
-            <local:IRPreviewToolTip
-              x:Name="IRPreviewer"
-              Grid.Column="0"
-              Background="Silver" />
-            <Border
-              Grid.Column="1"
-              Width="120"
-              Background="Gainsboro"
-              BorderBrush="Black"
-              BorderThickness="0,2,2,2">
-              <Grid Margin="4,4,4,4">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="80" />
-                  <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="16" />
-                  <RowDefinition Height="16" />
-                  <RowDefinition Height="16" />
-                  <RowDefinition Height="16" />
-                  <RowDefinition Height="16" />
-                </Grid.RowDefinitions>
+            Background="{Binding BackColor}"
+            BorderBrush="{Binding BorderBrush}"
+            BorderThickness="{Binding BorderThickness}">
+            <StackPanel Orientation="Horizontal">
+                <Image
+                    Width="Auto"
+                    Height="Auto"
+                    Margin="4,0,2,1"
+                    VerticalAlignment="Stretch"
+                    Source="{Binding Icon}"
+                    Stretch="Uniform"
+                    ToolTip="{Binding ToolTip}"
+                    Visibility="{Binding Path=ShowIcon, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <TextBlock
-                  Grid.Row="0"
-                  Grid.Column="0"
-                  Text="Predecessors" />
-                <TextBlock
-                  Grid.Row="1"
-                  Grid.Column="0"
-                  Text="Successors" />
-                <TextBlock
-                  Grid.Row="2"
-                  Grid.Column="0"
-                  Foreground="DarkBlue"
-                  Text="Loop nesting"
-                  Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
-                <TextBlock
-                  Grid.Row="3"
-                  Grid.Column="0"
-                  Foreground="DarkBlue"
-                  Text="Loop blocks"
-                  Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
-                <TextBlock
-                  Grid.Row="4"
-                  Grid.Column="0"
-                  Foreground="DarkBlue"
-                  Text="Loop children"
-                  Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
-
-                <TextBlock
-                  Grid.Row="0"
-                  Grid.Column="1"
-                  FontWeight="Medium"
-                  Text="{Binding PredecessorCount}" />
-                <TextBlock
-                  Grid.Row="1"
-                  Grid.Column="1"
-                  FontWeight="Medium"
-                  Text="{Binding SuccessorCount}" />
-                <TextBlock
-                  Grid.Row="2"
-                  Grid.Column="1"
-                  FontWeight="Medium"
-                  Foreground="DarkBlue"
-                  Text="{Binding LoopNesting}"
-                  Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
-                <TextBlock
-                  Grid.Row="3"
-                  Grid.Column="1"
-                  FontWeight="Medium"
-                  Foreground="DarkBlue"
-                  Text="{Binding LoopBlocks}"
-                  Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
-                <TextBlock
-                  Grid.Row="4"
-                  Grid.Column="1"
-                  FontWeight="Medium"
-                  Foreground="DarkBlue"
-                  Text="{Binding NestedLoops}"
-                  Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
-              </Grid>
-            </Border>
-          </Grid>
-        </ControlTemplate>
-      </Setter.Value>
-    </Setter>
-  </Style>
-
-
-  <Style x:Key="ExpressionIRPreviewTooltip" TargetType="ToolTip">
-    <Setter Property="OverridesDefaultStyle" Value="true" />
-    <Setter Property="Template">
-      <Setter.Value>
-        <ControlTemplate TargetType="ToolTip">
-          <local:IRPreviewToolTip x:Name="IRPreviewer" Background="Silver" />
-        </ControlTemplate>
-      </Setter.Value>
-    </Setter>
-  </Style>
-
-  <SolidColorBrush x:Key="SelectedBackgroundBrush" Color="#FFB1D6F1" />
-  <SolidColorBrush x:Key="DisabledForegroundBrush" Color="#888" />
-
-  <Style x:Key="FlatListViewItem" TargetType="ListViewItem">
-    <Setter Property="OverridesDefaultStyle" Value="true" />
-    <Setter Property="Template">
-      <Setter.Value>
-        <ControlTemplate TargetType="ListBoxItem">
-          <Border
-            Name="Border"
-            Padding="1"
-            Background="{TemplateBinding Background}"
-            BorderBrush="{TemplateBinding BorderBrush}"
-            BorderThickness="{TemplateBinding BorderThickness}"
-            ToolTip="{TemplateBinding ToolTip}">
-            <GridViewRowPresenter
-              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-          </Border>
-          <ControlTemplate.Triggers>
-            <Trigger Property="IsSelected" Value="true">
-              <Setter TargetName="Border" Property="Background"
-                      Value="{StaticResource SelectedBackgroundBrush}" />
-            </Trigger>
-            <Trigger Property="IsEnabled" Value="false">
-              <Setter Property="Foreground" Value="{StaticResource DisabledForegroundBrush}" />
-            </Trigger>
-
-            <MultiTrigger>
-              <MultiTrigger.Conditions>
-                <Condition Property="IsMouseOver" Value="true" />
-                <Condition Property="IsSelected" Value="false" />
-              </MultiTrigger.Conditions>
-              <Setter TargetName="Border" Property="Background" Value="#D0E3F1" />
-            </MultiTrigger>
-          </ControlTemplate.Triggers>
-        </ControlTemplate>
-      </Setter.Value>
-    </Setter>
-  </Style>
-
-  <Style x:Key="SimpleListViewItem" TargetType="ListViewItem">
-    <Setter Property="OverridesDefaultStyle" Value="true" />
-    <Setter Property="Template">
-      <Setter.Value>
-        <ControlTemplate TargetType="ListBoxItem">
-          <Border
-            Name="Border"
-            Padding="0"
-            Background="{TemplateBinding Background}"
-            BorderBrush="{TemplateBinding BorderBrush}"
-            BorderThickness="{TemplateBinding BorderThickness}">
-            <GridViewRowPresenter
-              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-          </Border>
-
-          <ControlTemplate.Triggers>
-            <Trigger Property="IsSelected" Value="true">
-              <Setter TargetName="Border" Property="Background" Value="LightGray" />
-            </Trigger>
-          </ControlTemplate.Triggers>
-        </ControlTemplate>
-      </Setter.Value>
-    </Setter>
-  </Style>
-
-  <ContextMenu x:Key="GraphContextMenu">
-    <MenuItem
-      Focusable="False"
-      Header="Mark Block"
-      IsHitTestVisible="False" />
-    <MenuItem>
-      <MenuItem.Header>
-        <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkBlock" />
-      </MenuItem.Header>
-    </MenuItem>
-    <Separator />
-    <MenuItem Header="Mark Predecessors">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkPredecessors" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
-    <MenuItem Header="Mark Successors">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkSuccessors" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
-    <MenuItem Header="Mark Node Group" ToolTip="Mark block and all its predecessors and succesors">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkGroup" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
-    <Separator />
-
-    <MenuItem Header="Mark Dominators" ToolTip="Mark all the blocks that dominate it">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkDominators" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
-    <MenuItem Header="Mark Post-Dominators" ToolTip="Mark all the blocks that post-dominate it">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkPostDominators" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
-    <MenuItem Header="Mark Dominance Frontier"
-              ToolTip="Mark all the blocks in its dominance frontier">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkDominanceFrontier" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
-    <MenuItem Header="Mark Post-Dominance Frontier"
-              ToolTip="Mark all the blocks in its post-dominance frontier">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkPostDominanceFrontier" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
-    <Separator />
-
-    <MenuItem Header="Mark Loop">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkLoop"
-                               CommandTarget="{Binding ElementName=GraphHost}" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
-
-    <MenuItem Header="Mark Loop Nest">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkLoopNest" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
-    <Separator />
-
-    <MenuItem Header="Query">
-      <MenuItem
-        Command="local:GraphCommand.SelectQueryBlock1"
-        CommandTarget="{Binding ElementName=GraphHost}"
-        Header="Select Block A"
-        InputGestureText="Click + Ctrl/Alt + A/1" />
-
-      <MenuItem
-        Command="local:GraphCommand.SelectQueryBlock2"
-        CommandTarget="{Binding ElementName=GraphHost}"
-        Header="Select Block B"
-        InputGestureText="Click + Ctrl/Alt + B/2" />
-
-    </MenuItem>
-
-    <MenuItem Header="Clear">
-      <MenuItem.Icon>
-        <Image
-          Width="16"
-          Height="16"
-          Source="{StaticResource RemoveIcon}" />
-      </MenuItem.Icon>
-      <MenuItem
-        Command="local:GraphCommand.ClearMarked"
-        CommandTarget="{Binding ElementName=GraphHost}"
-        Header="Selected Marker" />
-      <MenuItem
-        Command="local:GraphCommand.ClearAllMarked"
-        CommandTarget="{Binding ElementName=GraphHost}"
-        Header="All Markers" />
-    </MenuItem>
-  </ContextMenu>
-
-  <Style x:Key="RemarkTreeViewItemStyle" TargetType="{x:Type TreeViewItem}">
-    <Style.Resources>
-      <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#FFB1D6F1" />
-      <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-                       Color="#FFB1D6F1" />
-      <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black" />
-      <SolidColorBrush x:Key="GlyphBrush" Color="#444" />
-
-      <Style x:Key="TreeViewItemFocusVisual">
-        <Setter Property="Control.Template">
-          <Setter.Value>
-            <ControlTemplate>
-              <Rectangle
-                Margin="0,0,0,0"
-                Opacity="0"
-                Stroke="Black"
-                StrokeDashArray="1 2"
-                StrokeThickness="5" />
-            </ControlTemplate>
-          </Setter.Value>
-        </Setter>
-      </Style>
-
-      <Style x:Key="ExpandCollapseToggleStyle" TargetType="ToggleButton">
-        <Setter Property="Template">
-          <Setter.Value>
-            <ControlTemplate TargetType="ToggleButton">
-              <Grid
-                Width="15"
-                Height="13"
-                Background="Transparent">
-                <Path
-                  x:Name="ExpandPath"
-                  Margin="1,1,1,1"
-                  HorizontalAlignment="Left"
-                  VerticalAlignment="Center"
-                  Data="M 4 0 L 8 4 L 4 8 Z"
-                  Fill="{StaticResource GlyphBrush}" />
-              </Grid>
-              <ControlTemplate.Triggers>
-                <Trigger Property="IsChecked" Value="True">
-                  <Setter TargetName="ExpandPath" Property="Data" Value="M 0 4 L 8 4 L 4 8 Z" />
-                </Trigger>
-              </ControlTemplate.Triggers>
-            </ControlTemplate>
-          </Setter.Value>
-        </Setter>
-      </Style>
-    </Style.Resources>
-
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="HorizontalContentAlignment"
-            Value="{Binding Path=HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" />
-    <Setter Property="VerticalContentAlignment"
-            Value="{Binding Path=VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" />
-    <Setter Property="Padding" Value="1,0,0,0" />
-    <Setter Property="Foreground"
-            Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
-    <Setter Property="FocusVisualStyle" Value="{StaticResource TreeViewItemFocusVisual}" />
-
-    <Setter Property="Template">
-      <Setter.Value>
-        <ControlTemplate TargetType="{x:Type TreeViewItem}">
-          <Grid SnapsToDevicePixels="true">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" MinWidth="19" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto" />
-              <RowDefinition />
-            </Grid.RowDefinitions>
-            <Rectangle
-              x:Name="VerLn"
-              Grid.RowSpan="2"
-              Width="1"
-              Margin="0,0,0,0"
-              Stroke="#66888888"
-              StrokeThickness="1" />
-
-            <ToggleButton
-              x:Name="Expander"
-              Margin="5,-5,0,0"
-              Panel.ZIndex="2"
-              ClickMode="Press"
-              IsChecked="{Binding Path=IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
-              Style="{StaticResource ExpandCollapseToggleStyle}" />
-            <Border
-              x:Name="Bd"
-              Grid.Column="1"
-              Grid.ColumnSpan="2"
-              Margin="-10,0,0,0"
-              Padding="{TemplateBinding Padding}"
-              Background="{TemplateBinding Background}"
-              BorderBrush="{TemplateBinding BorderBrush}"
-              BorderThickness="{TemplateBinding BorderThickness}">
-              <Grid>
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="*" />
-                  <RowDefinition Height="4" />
-                </Grid.RowDefinitions>
-                <ContentPresenter
-                  x:Name="PART_Header"
-                  Grid.Row="0"
-                  Margin="8,2,0,0"
-                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                  ContentSource="Header"
-                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                    MinWidth="{Binding MinTextWidth}"
+                    Margin="4,0,2,0"
+                    VerticalAlignment="Center"
+                    FontFamily="{Binding TextFont}"
+                    FontSize="{Binding TextSize}"
+                    FontWeight="{Binding TextWeight}"
+                    Foreground="{Binding TextColor}"
+                    Text="{Binding Text}"
+                    ToolTip="{Binding ToolTip}" />
 
                 <Rectangle
-                  Grid.Row="1"
-                  Height="1"
-                  VerticalAlignment="Bottom"
-                  Stroke="#66888888"
-                  StrokeThickness="1" />
-              </Grid>
+                    Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=50.0}"
+                    Height="Auto"
+                    Margin="4,0,2,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    Fill="{Binding PercentageBarBackColor}"
+                    Stroke="{Binding PercentageBarBorderBrush}"
+                    StrokeThickness="{Binding PercentageBarBorderThickness}"
+                    ToolTip="{Binding ToolTip}"
+                    Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibilityConverter}}" />
+            </StackPanel>
+        </Border>
+    </DataTemplate>
+
+    <DataTemplate x:Key="BlockPercentageValueTemplate">
+        <Border
+            Padding="0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="{Binding BackColor}"
+            BorderBrush="{Binding BorderBrush}"
+            BorderThickness="{Binding BorderThickness}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock
+                    MinWidth="{Binding MinTextWidth}"
+                    Margin="0,0,2,0"
+                    VerticalAlignment="Center"
+                    FontFamily="{Binding TextFont}"
+                    FontSize="{Binding TextSize}"
+                    FontWeight="Medium"
+                    Foreground="{Binding TextColor}"
+                    Text="{Binding PrefixText}"
+                    ToolTip="{Binding ToolTip}" />
+                <Rectangle
+                    Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=50.0}"
+                    Height="Auto"
+                    Margin="4,0,2,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    Fill="{Binding PercentageBarBackColor}"
+                    Stroke="{Binding PercentageBarBorderBrush}"
+                    StrokeThickness="{Binding PercentageBarBorderThickness}"
+                    ToolTip="{Binding ToolTip}"
+                    Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibilityConverter}}" />
+                <TextBlock
+                    Margin="4,0,2,0"
+                    VerticalAlignment="Center"
+                    FontFamily="{Binding TextFont}"
+                    FontSize="{Binding TextSize}"
+                    FontWeight="Medium"
+                    Foreground="{Binding TextColor}"
+                    Text="{Binding ValuePercentage, StringFormat=p2}"
+                    ToolTip="{Binding ToolTip}" />
+                <TextBlock
+                    Margin="6,0,2,0"
+                    VerticalAlignment="Center"
+                    FontFamily="{Binding TextFont}"
+                    FontSize="{Binding TextSize}"
+                    FontWeight="{Binding TextWeight}"
+                    Foreground="{Binding TextColor}"
+                    Text="{Binding Text}"
+                    ToolTip="{Binding ToolTip}" />
+            </StackPanel>
+        </Border>
+    </DataTemplate>
+
+    <DataTemplate x:Key="TimeColumnValueTemplate">
+        <Border
+            Margin="-5,0,-8,0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="{Binding BackColor}"
+            BorderBrush="{Binding BorderBrush}"
+            BorderThickness="{Binding BorderThickness}">
+            <StackPanel Orientation="Horizontal">
+                <Image
+                    Width="Auto"
+                    Height="Auto"
+                    VerticalAlignment="Stretch"
+                    Source="{Binding Icon}"
+                    Stretch="Uniform"
+                    Visibility="{Binding Path=ShowIcon, Converter={StaticResource BoolToVisibilityConverter}}" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontFamily="Consolas"
+                    FontSize="12"
+                    FontWeight="{Binding TextWeight}"
+                    Foreground="{Binding TextColor}"
+                    Text="{Binding Text}"
+                    ToolTip="{Binding ToolTip}" />
+            </StackPanel>
+        </Border>
+    </DataTemplate>
+
+    <Style x:Key="DisabledImageStyle" TargetType="Image">
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.5" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="TimeColumnHeaderTemplate" TargetType="GridViewColumnHeader">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type GridViewColumnHeader}">
+                    <Border
+                        Height="22"
+                        Margin="-1,-1,0,0"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        BorderThickness="0,0,1,1">
+                        <TextBlock
+                            x:Name="ContentHeader"
+                            Width="{TemplateBinding Width}"
+                            Padding="4,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="{TemplateBinding Content}"
+                            TextAlignment="Left" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <Style x:Key="ListViewHeaderStyle" TargetType="{x:Type GridViewColumnHeader}">
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+
+    <Style x:Key="HoverUnderlineStyle" TargetType="TextBlock">
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="TextBlock.TextDecorations" Value="Underline" />
+                <Setter Property="TextBlock.Foreground" Value="DarkBlue" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="IRPreviewTooltip" TargetType="ToolTip">
+        <Setter Property="OverridesDefaultStyle" Value="true" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <local:IRPreviewToolTip x:Name="IRPreviewer" Background="Silver" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="BlockIRPreviewTooltip" TargetType="ToolTip">
+        <Setter Property="OverridesDefaultStyle" Value="true" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="120" />
+                        </Grid.ColumnDefinitions>
+
+                        <local:IRPreviewToolTip
+                            x:Name="IRPreviewer"
+                            Grid.Column="0"
+                            Background="Silver" />
+                        <Border
+                            Grid.Column="1"
+                            Width="120"
+                            Background="Gainsboro"
+                            BorderBrush="Black"
+                            BorderThickness="0,2,2,2">
+                            <Grid Margin="4,4,4,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="16" />
+                                    <RowDefinition Height="16" />
+                                    <RowDefinition Height="16" />
+                                    <RowDefinition Height="16" />
+                                    <RowDefinition Height="16" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Text="Predecessors" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Text="Successors" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    Foreground="DarkBlue"
+                                    Text="Loop nesting"
+                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                <TextBlock
+                                    Grid.Row="3"
+                                    Grid.Column="0"
+                                    Foreground="DarkBlue"
+                                    Text="Loop blocks"
+                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                <TextBlock
+                                    Grid.Row="4"
+                                    Grid.Column="0"
+                                    Foreground="DarkBlue"
+                                    Text="Loop children"
+                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    FontWeight="Medium"
+                                    Text="{Binding PredecessorCount}" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    FontWeight="Medium"
+                                    Text="{Binding SuccessorCount}" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    FontWeight="Medium"
+                                    Foreground="DarkBlue"
+                                    Text="{Binding LoopNesting}"
+                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                <TextBlock
+                                    Grid.Row="3"
+                                    Grid.Column="1"
+                                    FontWeight="Medium"
+                                    Foreground="DarkBlue"
+                                    Text="{Binding LoopBlocks}"
+                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                <TextBlock
+                                    Grid.Row="4"
+                                    Grid.Column="1"
+                                    FontWeight="Medium"
+                                    Foreground="DarkBlue"
+                                    Text="{Binding NestedLoops}"
+                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <Style x:Key="ExpressionIRPreviewTooltip" TargetType="ToolTip">
+        <Setter Property="OverridesDefaultStyle" Value="true" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <local:IRPreviewToolTip x:Name="IRPreviewer" Background="Silver" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <SolidColorBrush x:Key="SelectedBackgroundBrush" Color="#FFB1D6F1" />
+    <SolidColorBrush x:Key="DisabledForegroundBrush" Color="#888" />
+
+    <Style x:Key="FlatListViewItem" TargetType="ListViewItem">
+        <Setter Property="OverridesDefaultStyle" Value="true" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border
+                        Name="Border"
+                        Padding="1"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        ToolTip="{TemplateBinding ToolTip}">
+                        <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="true">
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectedBackgroundBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="false">
+                            <Setter Property="Foreground" Value="{StaticResource DisabledForegroundBrush}" />
+                        </Trigger>
+
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="true" />
+                                <Condition Property="IsSelected" Value="false" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Border" Property="Background" Value="#D0E3F1" />
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SimpleListViewItem" TargetType="ListViewItem">
+        <Setter Property="OverridesDefaultStyle" Value="true" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border
+                        Name="Border"
+                        Padding="0"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                        <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="true">
+                            <Setter TargetName="Border" Property="Background" Value="LightGray" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <ContextMenu x:Key="GraphContextMenu">
+        <MenuItem
+            Focusable="False"
+            Header="Mark Block"
+            IsHitTestVisible="False" />
+        <MenuItem>
+            <MenuItem.Header>
+                <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkBlock" />
+            </MenuItem.Header>
+        </MenuItem>
+        <Separator />
+        <MenuItem Header="Mark Predecessors">
+            <MenuItem>
+                <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkPredecessors" />
+                </MenuItem.Header>
+            </MenuItem>
+        </MenuItem>
+        <MenuItem Header="Mark Successors">
+            <MenuItem>
+                <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkSuccessors" />
+                </MenuItem.Header>
+            </MenuItem>
+        </MenuItem>
+        <MenuItem Header="Mark Node Group" ToolTip="Mark block and all its predecessors and succesors">
+            <MenuItem>
+                <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkGroup" />
+                </MenuItem.Header>
+            </MenuItem>
+        </MenuItem>
+        <Separator />
+
+        <MenuItem Header="Mark Dominators" ToolTip="Mark all the blocks that dominate it">
+            <MenuItem>
+                <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkDominators" />
+                </MenuItem.Header>
+            </MenuItem>
+        </MenuItem>
+        <MenuItem Header="Mark Post-Dominators" ToolTip="Mark all the blocks that post-dominate it">
+            <MenuItem>
+                <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkPostDominators" />
+                </MenuItem.Header>
+            </MenuItem>
+        </MenuItem>
+        <MenuItem Header="Mark Dominance Frontier" ToolTip="Mark all the blocks in its dominance frontier">
+            <MenuItem>
+                <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkDominanceFrontier" />
+                </MenuItem.Header>
+            </MenuItem>
+        </MenuItem>
+        <MenuItem Header="Mark Post-Dominance Frontier" ToolTip="Mark all the blocks in its post-dominance frontier">
+            <MenuItem>
+                <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkPostDominanceFrontier" />
+                </MenuItem.Header>
+            </MenuItem>
+        </MenuItem>
+        <Separator />
+
+        <MenuItem Header="Mark Loop">
+            <MenuItem>
+                <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkLoop" CommandTarget="{Binding ElementName=GraphHost}" />
+                </MenuItem.Header>
+            </MenuItem>
+        </MenuItem>
+
+        <MenuItem Header="Mark Loop Nest">
+            <MenuItem>
+                <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkLoopNest" />
+                </MenuItem.Header>
+            </MenuItem>
+        </MenuItem>
+        <Separator />
+
+        <MenuItem Header="Query">
+            <MenuItem
+                Command="local:GraphCommand.SelectQueryBlock1"
+                CommandTarget="{Binding ElementName=GraphHost}"
+                Header="Select Block A"
+                InputGestureText="Click + Ctrl/Alt + A/1" />
+
+            <MenuItem
+                Command="local:GraphCommand.SelectQueryBlock2"
+                CommandTarget="{Binding ElementName=GraphHost}"
+                Header="Select Block B"
+                InputGestureText="Click + Ctrl/Alt + B/2" />
+
+        </MenuItem>
+
+        <MenuItem Header="Clear">
+            <MenuItem.Icon>
+                <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource RemoveIcon}" />
+            </MenuItem.Icon>
+            <MenuItem
+                Command="local:GraphCommand.ClearMarked"
+                CommandTarget="{Binding ElementName=GraphHost}"
+                Header="Selected Marker" />
+            <MenuItem
+                Command="local:GraphCommand.ClearAllMarked"
+                CommandTarget="{Binding ElementName=GraphHost}"
+                Header="All Markers" />
+        </MenuItem>
+    </ContextMenu>
+
+    <Style x:Key="RemarkTreeViewItemStyle" TargetType="{x:Type TreeViewItem}">
+        <Style.Resources>
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#FFB1D6F1" />
+            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#FFB1D6F1" />
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black" />
+            <SolidColorBrush x:Key="GlyphBrush" Color="#444" />
+
+            <Style x:Key="TreeViewItemFocusVisual">
+                <Setter Property="Control.Template">
+                    <Setter.Value>
+                        <ControlTemplate>
+                            <Rectangle
+                                Margin="0,0,0,0"
+                                Opacity="0"
+                                Stroke="Black"
+                                StrokeDashArray="1 2"
+                                StrokeThickness="5" />
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="ExpandCollapseToggleStyle" TargetType="ToggleButton">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Grid
+                                Width="15"
+                                Height="13"
+                                Background="Transparent">
+                                <Path
+                                    x:Name="ExpandPath"
+                                    Margin="1,1,1,1"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Data="M 4 0 L 8 4 L 4 8 Z"
+                                    Fill="{StaticResource GlyphBrush}" />
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="ExpandPath" Property="Data" Value="M 0 4 L 8 4 L 4 8 Z" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </Style.Resources>
+
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="HorizontalContentAlignment" Value="{Binding Path=HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" />
+        <Setter Property="VerticalContentAlignment" Value="{Binding Path=VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" />
+        <Setter Property="Padding" Value="1,0,0,0" />
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource TreeViewItemFocusVisual}" />
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TreeViewItem}">
+                    <Grid SnapsToDevicePixels="true">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" MinWidth="19" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Rectangle
+                            x:Name="VerLn"
+                            Grid.RowSpan="2"
+                            Width="1"
+                            Margin="0,0,0,0"
+                            Stroke="#66888888"
+                            StrokeThickness="1" />
+
+                        <ToggleButton
+                            x:Name="Expander"
+                            Margin="5,-5,0,0"
+                            Panel.ZIndex="2"
+                            ClickMode="Press"
+                            IsChecked="{Binding Path=IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
+                            Style="{StaticResource ExpandCollapseToggleStyle}" />
+                        <Border
+                            x:Name="Bd"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="2"
+                            Margin="-10,0,0,0"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="4" />
+                                </Grid.RowDefinitions>
+                                <ContentPresenter
+                                    x:Name="PART_Header"
+                                    Grid.Row="0"
+                                    Margin="8,2,0,0"
+                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    ContentSource="Header"
+                                    SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+
+                                <Rectangle
+                                    Grid.Row="1"
+                                    Height="1"
+                                    VerticalAlignment="Bottom"
+                                    Stroke="#66888888"
+                                    StrokeThickness="1" />
+                            </Grid>
+                        </Border>
+                        <ItemsPresenter
+                            x:Name="ItemsHost"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="2" />
+
+
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Converter={StaticResource LineConverter}}" Value="true">
+                            <Setter TargetName="VerLn" Property="VerticalAlignment" Value="Stretch" />
+                        </DataTrigger>
+                        <Trigger Property="IsExpanded" Value="false">
+                            <Setter TargetName="ItemsHost" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="HasItems" Value="false">
+                            <Setter TargetName="Expander" Property="Visibility" Value="Hidden" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="HasHeader" Value="false" />
+                                <Condition Property="Width" Value="Auto" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PART_Header" Property="MinWidth" Value="75" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="HasHeader" Value="false" />
+                                <Condition Property="Height" Value="Auto" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PART_Header" Property="MinHeight" Value="19" />
+                        </MultiTrigger>
+                        <Trigger Property="IsSelected" Value="true">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="true" />
+                                <Condition Property="IsSelectionActive" Value="false" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="false">
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <SolidColorBrush x:Key="ProfilePercentageBackBrush" Color="#55FFFFFF" />
+    <SolidColorBrush x:Key="ProfilePercentageBrush" Color="#66C43939" />
+    <SolidColorBrush x:Key="ProfilePercentageExclusiveBrush" Color="#663891D1" />
+
+    <DataTemplate x:Key="ProfilePercentageTemplate">
+        <Grid HorizontalAlignment="Stretch">
+            <TextBlock
+                Width="45"
+                Margin="1,0,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                FontWeight="Medium"
+                Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <Border
+                x:Name="RectBorder"
+                Height="16"
+                Margin="50,0,0,1"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                Background="{StaticResource ProfilePercentageBackBrush}"
+                BorderBrush="Black"
+                BorderThickness="0.5"
+                CornerRadius="0">
+                <Grid>
+                    <Border
+                        Height="16"
+                        HorizontalAlignment="Left"
+                        Background="{StaticResource ProfilePercentageBrush}"
+                        CornerRadius="0">
+                        <Border.Width>
+                            <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
+                                <Binding Path="Percentage" />
+                                <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                            </MultiBinding>
+                        </Border.Width>
+                    </Border>
+
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        FontWeight="Medium"
+                        Text="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}"
+                        TextTrimming="CharacterEllipsis" />
+                </Grid>
             </Border>
-            <ItemsPresenter
-              x:Name="ItemsHost"
-              Grid.Row="1"
-              Grid.Column="1"
-              Grid.ColumnSpan="2" />
-
-
-          </Grid>
-          <ControlTemplate.Triggers>
-            <DataTrigger
-              Binding="{Binding RelativeSource={RelativeSource Self}, Converter={StaticResource LineConverter}}"
-              Value="true">
-              <Setter TargetName="VerLn" Property="VerticalAlignment" Value="Stretch" />
-            </DataTrigger>
-            <Trigger Property="IsExpanded" Value="false">
-              <Setter TargetName="ItemsHost" Property="Visibility" Value="Collapsed" />
-            </Trigger>
-            <Trigger Property="HasItems" Value="false">
-              <Setter TargetName="Expander" Property="Visibility" Value="Hidden" />
-            </Trigger>
-            <MultiTrigger>
-              <MultiTrigger.Conditions>
-                <Condition Property="HasHeader" Value="false" />
-                <Condition Property="Width" Value="Auto" />
-              </MultiTrigger.Conditions>
-              <Setter TargetName="PART_Header" Property="MinWidth" Value="75" />
-            </MultiTrigger>
-            <MultiTrigger>
-              <MultiTrigger.Conditions>
-                <Condition Property="HasHeader" Value="false" />
-                <Condition Property="Height" Value="Auto" />
-              </MultiTrigger.Conditions>
-              <Setter TargetName="PART_Header" Property="MinHeight" Value="19" />
-            </MultiTrigger>
-            <Trigger Property="IsSelected" Value="true">
-              <Setter TargetName="Bd" Property="Background"
-                      Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
-              <Setter Property="Foreground"
-                      Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
-            </Trigger>
-            <MultiTrigger>
-              <MultiTrigger.Conditions>
-                <Condition Property="IsSelected" Value="true" />
-                <Condition Property="IsSelectionActive" Value="false" />
-              </MultiTrigger.Conditions>
-              <Setter TargetName="Bd" Property="Background"
-                      Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
-              <Setter Property="Foreground"
-                      Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
-            </MultiTrigger>
-            <Trigger Property="IsEnabled" Value="false">
-              <Setter Property="Foreground"
-                      Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
-            </Trigger>
-          </ControlTemplate.Triggers>
-        </ControlTemplate>
-      </Setter.Value>
-    </Setter>
-  </Style>
-
-  <SolidColorBrush x:Key="ProfilePercentageBackBrush" Color="#55FFFFFF" />
-  <SolidColorBrush x:Key="ProfilePercentageBrush" Color="#66C43939" />
-  <SolidColorBrush x:Key="ProfilePercentageExclusiveBrush" Color="#663891D1" />
-
-  <DataTemplate x:Key="ProfilePercentageTemplate">
-    <Grid HorizontalAlignment="Stretch">
-      <TextBlock
-        Width="45"
-        Margin="1,0,0,0"
-        HorizontalAlignment="Left"
-        VerticalAlignment="Center"
-        FontWeight="Medium"
-        Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}">
-        <TextBlock.Style>
-          <Style TargetType="{x:Type TextBlock}">
-            <Style.Triggers>
-              <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                <Setter Property="FontWeight" Value="Bold" />
-              </DataTrigger>
-            </Style.Triggers>
-          </Style>
-        </TextBlock.Style>
-      </TextBlock>
-
-      <Border
-        x:Name="RectBorder"
-        Height="16"
-        Margin="50,0,0,1"
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Center"
-        Background="{StaticResource ProfilePercentageBackBrush}"
-        BorderBrush="Black"
-        BorderThickness="0.5"
-        CornerRadius="0">
-        <Grid>
-          <Border
-            Height="16"
-            HorizontalAlignment="Left"
-            Background="{StaticResource ProfilePercentageBrush}"
-            CornerRadius="0">
-            <Border.Width>
-              <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
-                <Binding Path="Percentage" />
-                <Binding Path="ActualWidth"
-                         RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
-              </MultiBinding>
-            </Border.Width>
-          </Border>
-
-          <TextBlock
-            Margin="4,0,0,0"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Center"
-            FontWeight="Medium"
-            Text="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}"
-            TextTrimming="CharacterEllipsis" />
         </Grid>
-      </Border>
-    </Grid>
-  </DataTemplate>
+    </DataTemplate>
 
-  <DataTemplate x:Key="ProfileExclusivePercentageTemplate">
-    <Grid HorizontalAlignment="Stretch">
-      <TextBlock
-        Width="45"
-        Margin="1,0,0,0"
-        HorizontalAlignment="Left"
-        VerticalAlignment="Center"
-        FontWeight="Medium"
-        Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}">
-        <TextBlock.Style>
-          <Style TargetType="{x:Type TextBlock}">
-            <Style.Triggers>
-              <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                <Setter Property="FontWeight" Value="Bold" />
-              </DataTrigger>
-            </Style.Triggers>
-          </Style>
-        </TextBlock.Style>
-      </TextBlock>
+    <DataTemplate x:Key="ProfileExclusivePercentageTemplate">
+        <Grid HorizontalAlignment="Stretch">
+            <TextBlock
+                Width="45"
+                Margin="1,0,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                FontWeight="Medium"
+                Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
 
-      <Border
-        Height="16"
-        Margin="50,0,0,1"
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Center"
-        Background="{StaticResource ProfilePercentageBackBrush}"
-        BorderBrush="Black"
-        BorderThickness="0.5"
-        CornerRadius="0">
-        <Grid>
-          <Border
-            Height="16"
-            HorizontalAlignment="Left"
-            Background="{StaticResource ProfilePercentageExclusiveBrush}"
-            CornerRadius="0">
-            <Border.Width>
-              <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
-                <Binding Path="ExclusivePercentage" />
-                <Binding Path="ActualWidth"
-                         RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
-              </MultiBinding>
-            </Border.Width>
-          </Border>
+            <Border
+                Height="16"
+                Margin="50,0,0,1"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                Background="{StaticResource ProfilePercentageBackBrush}"
+                BorderBrush="Black"
+                BorderThickness="0.5"
+                CornerRadius="0">
+                <Grid>
+                    <Border
+                        Height="16"
+                        HorizontalAlignment="Left"
+                        Background="{StaticResource ProfilePercentageExclusiveBrush}"
+                        CornerRadius="0">
+                        <Border.Width>
+                            <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
+                                <Binding Path="ExclusivePercentage" />
+                                <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                            </MultiBinding>
+                        </Border.Width>
+                    </Border>
 
-          <TextBlock
-            Margin="4,0,0,0"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Center"
-            FontWeight="Medium"
-            Text="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
-            TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        FontWeight="Medium"
+                        Text="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
+                        TextTrimming="CharacterEllipsis" />
+                </Grid>
+            </Border>
         </Grid>
-      </Border>
-    </Grid>
-  </DataTemplate>
+    </DataTemplate>
 
-  <DataTemplate x:Key="ProfileCombinedPercentageTemplate">
-    <Grid HorizontalAlignment="Stretch">
-      <TextBlock
-        Width="45"
-        Margin="1,0,0,0"
-        HorizontalAlignment="Left"
-        VerticalAlignment="Center"
-        FontWeight="Medium"
-        Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}">
-        <TextBlock.Style>
-          <Style TargetType="{x:Type TextBlock}">
-            <Style.Triggers>
-              <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                <Setter Property="FontWeight" Value="Bold" />
-              </DataTrigger>
-            </Style.Triggers>
-          </Style>
-        </TextBlock.Style>
-      </TextBlock>
+    <DataTemplate x:Key="ProfileCombinedPercentageTemplate">
+        <Grid HorizontalAlignment="Stretch">
+            <TextBlock
+                Width="45"
+                Margin="1,0,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                FontWeight="Medium"
+                Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
 
-      <Border
-        Height="16"
-        Margin="50,0,0,1"
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Center"
-        Background="{StaticResource ProfilePercentageBackBrush}"
-        BorderBrush="Black"
-        BorderThickness="0.5"
-        CornerRadius="0">
-        <Grid>
-          <Border
-            Height="16"
-            HorizontalAlignment="Left"
-            Background="{StaticResource ProfilePercentageExclusiveBrush}"
-            CornerRadius="0">
-            <Border.Width>
-              <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
-                <Binding Path="ExclusivePercentage" />
-                <Binding Path="ActualWidth"
-                         RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
-              </MultiBinding>
-            </Border.Width>
-          </Border>
+            <Border
+                Height="16"
+                Margin="50,0,0,1"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                Background="{StaticResource ProfilePercentageBackBrush}"
+                BorderBrush="Black"
+                BorderThickness="0.5"
+                CornerRadius="0">
+                <Grid>
+                    <Border
+                        Height="16"
+                        HorizontalAlignment="Left"
+                        Background="{StaticResource ProfilePercentageExclusiveBrush}"
+                        CornerRadius="0">
+                        <Border.Width>
+                            <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
+                                <Binding Path="ExclusivePercentage" />
+                                <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                            </MultiBinding>
+                        </Border.Width>
+                    </Border>
 
-          <TextBlock
-            Margin="4,0,0,0"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Center"
-            FontWeight="Medium"
-            Text="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
-            TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        FontWeight="Medium"
+                        Text="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
+                        TextTrimming="CharacterEllipsis" />
+                </Grid>
+            </Border>
         </Grid>
-      </Border>
-    </Grid>
-  </DataTemplate>
+    </DataTemplate>
 </ResourceDictionary>
