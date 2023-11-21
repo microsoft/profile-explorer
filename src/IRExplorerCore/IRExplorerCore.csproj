@@ -32,7 +32,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="CSharpTest.Net.Collections" Version="14.906.1403.1082" />
-		<PackageReference Include="System.Memory" Version="4.5.4" />
+		<PackageReference Include="System.Memory" Version="4.5.5" />
 		<PackageReference Include="System.Runtime" Version="4.3.1" />
 	</ItemGroup>
 

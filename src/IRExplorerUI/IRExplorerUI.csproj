@@ -107,17 +107,17 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.2.0-1.final" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.2.0-1.final" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.2.0-1.final" />
-		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="2.0.226801" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.7.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.7.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.7.0" />
+		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="3.1.456101" />
 		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.6" />
 		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SupportFiles" Version="1.0.23" />
 		<PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="16.10.10">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.1.46">
+		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.8.14">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
