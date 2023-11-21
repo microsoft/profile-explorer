@@ -6,7 +6,7 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   Height="28"
   HorizontalAlignment="Right"
-  VerticalAlignment="Top"
+  VerticalAlignment="Center"
   d:DesignHeight="28"
   d:DesignWidth="200"
   Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
@@ -14,8 +14,9 @@
   mc:Ignorable="d">
   <ToolBar
     MinWidth="24"
+    Height="28"
     HorizontalAlignment="Stretch"
-    VerticalAlignment="Top"
+    VerticalAlignment="Center"
     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
     IsVisibleChanged="ToolBar_OnIsVisibleChanged"
     Loaded="ToolBar_Loaded"
@@ -24,6 +25,8 @@
     <Separator />
 
     <ToggleButton
+      Height="20"
+      Padding="0"
       x:Name="PinButton"
       Checked="PinButton_Checked"
       Focusable="False"
@@ -35,11 +38,12 @@
 
     <Menu
       x:Name="DuplicateButton"
-      Height="22"
+      Height="20"
       VerticalAlignment="Center"
       Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
       Focusable="False"
       ToolBar.OverflowMode="Never"
+      Padding="0"
       ToolTip="Duplicate panel">
       <MenuItem
         Margin="0,0,0,0"
@@ -115,11 +119,18 @@
       Focusable="False"
       PreviewMouseLeftButtonDown="SettingsButton_PreviewMouseLeftButtonDown"
       ToolBar.OverflowMode="Never"
+      Padding="0"
+      Height="20"
       ToolTip="Show panel documentation">
-      <Image Source="{StaticResource QuestionIcon}" />
+        <Image
+          Height="18"
+          Source="{StaticResource HelpIcon}"
+          Width="18" />
     </Button>
 
     <Button
+      Padding="0"
+      Height="20"
       x:Name="SettingsButton"
       Click="SettingsButton_Click"
       Focusable="False"

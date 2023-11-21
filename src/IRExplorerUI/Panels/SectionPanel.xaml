@@ -725,7 +725,7 @@
                 <MenuItem.Icon>
                   <Image
                     Height="16"
-                    Source="{StaticResource FlowChartIcon}"
+                    Source="{StaticResource TreeIcon}"
                     Width="16" />
                 </MenuItem.Icon>
               </MenuItem>
@@ -818,7 +818,7 @@
         <Grid Grid.Row="0" x:Name="SectionToolbarGrid">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="25" />
+            <ColumnDefinition Width="44" />
           </Grid.ColumnDefinitions>
 
           <ToolBarTray
@@ -918,7 +918,7 @@
             Grid.Column="1"
             HasDuplicateButton="False"
             HasPinButton="False"
-            HasHelpButton="False"
+            HasHelpButton="True"
             SettingsClicked="FixedToolbar_SettingsClicked"
             x:Name="FixedToolbar" />
         </Grid>

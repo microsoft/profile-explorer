@@ -880,9 +880,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async Task SetupCompilerTarget() {
-    if (!string.IsNullOrEmpty(App.Settings.DefaultCompilerIR)) {
-      await SwitchCompilerTarget(App.Settings.DefaultCompilerIR, App.Settings.DefaultIRMode);
-    }
+    await SwitchCompilerTarget(App.Settings.DefaultCompilerIR, App.Settings.DefaultIRMode);
   }
 
   private async Task SwitchCompilerTarget(string name, IRMode irMode = IRMode.Default) {

@@ -177,6 +177,7 @@
         Grid.Column="1"
         MinWidth="75"
         MaxWidth="75"
+        HasHelpButton="False"
         BindMenuItemSelected="PanelToolbarTray_BindMenuItemSelected"
         BindMenuOpen="PanelToolbarTray_BindMenuOpen"
         DockPanel.Dock="Right"
