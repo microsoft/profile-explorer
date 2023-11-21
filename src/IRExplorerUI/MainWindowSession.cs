@@ -50,7 +50,11 @@ public partial class MainWindow : Window, ISession {
   public List<IRDocument> OpenDocuments {
     get {
       var list = new List<IRDocument>();
-      sessionState_.DocumentHosts.ForEach(doc => list.Add(doc.DocumentHost.TextView));
+
+      if (IsSessionStarted) {
+        sessionState_.DocumentHosts.ForEach(doc => list.Add(doc.DocumentHost.TextView));
+      }
+
       return list;
     }
   }

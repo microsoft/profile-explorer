@@ -73,7 +73,7 @@
             Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="75" />
+                <ColumnDefinition Width="48" />
             </Grid.ColumnDefinitions>
             <ToolBarTray
                 Grid.Column="0"
@@ -98,30 +98,31 @@
                             <TextBlock Margin="4,0,0,0" Text="Back" />
                         </StackPanel>
                     </Button>
-                    <Button
-                        Command="irExplorerUi:GraphCommand.GraphResetWidth"
-                        CommandTarget="{Binding ElementName=GraphHost}"
-                        ToolTip="Zoom the graph view to 100% (Ctrl+R)">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="{StaticResource ResetWidthIcon}" />
-                            <TextBlock Margin="4,0,0,0" Text="Reset" />
-                        </StackPanel>
-                    </Button>
-                    <Separator />
-                    <Button
+                  <Separator />
+
+                  <Button
+                    Command="irExplorerUi:GraphCommand.GraphResetWidth"
+                    CommandTarget="{Binding ElementName=GraphHost}"
+                    ToolTip="Zoom the graph view to 100% (Ctrl+R)">
+                    <StackPanel Orientation="Horizontal">
+                      <Image Source="{StaticResource ResetWidthIcon}" />
+                      <TextBlock Margin="4,0,0,0" Text="Reset" />
+                    </StackPanel>
+                  </Button>
+          <Button
                         Command="irExplorerUi:GraphCommand.GraphZoomOut"
                         CommandTarget="{Binding ElementName=GraphHost}"
                         ToolTip="Zoom Out (Ctrl+_">
-                        <Image Source="{StaticResource MinusIcon}" />
+                        <Image Source="{StaticResource ZoomOutIcon}"  Width="15" Height="15" />
                     </Button>
                     <Button
                         Command="irExplorerUi:GraphCommand.GraphZoomIn"
                         CommandTarget="{Binding ElementName=GraphHost}"
                         ToolTip="Zoom In (Ctrl+=)">
-                        <Image Source="{StaticResource PlusIcon}" />
+                        <Image Source="{StaticResource ZoomInIcon}" Width="15" Height="15" />
                     </Button>
-
-                    <Separator />
+                 
+          <Separator/>
 
                     <ToggleButton
                         Height="20"
@@ -168,7 +169,7 @@
                                 Width="16"
                                 Height="16"
                                 Margin="0,1,0,0"
-                                Source="{StaticResource ListIcon}" />
+                                Source="{StaticResource DetailsIcon}" />
                             <TextBlock Text="Details" />
                         </StackPanel>
                     </ToggleButton>
@@ -212,9 +213,6 @@
                             VerticalContentAlignment="Center"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                            GotFocus="FunctionFilter_OnGotFocus"
-                            LostFocus="FunctionFilter_OnLostFocus"
-                            LostKeyboardFocus="FunctionFilter_OnLostFocus"
                             TabIndex="4"
                             TextChanged="FunctionFilter_OnTextChanged"
                             ToolTip="Search functions based on a case-insensitive string (Ctrl+F)">
@@ -276,7 +274,6 @@
 
             <irExplorerUi:PanelToolbarTray
                 Grid.Column="1"
-                MaxWidth="75"
                 DockPanel.Dock="Right"
                 HasDuplicateButton="False"
                 HasHelpButton="True"

@@ -66,7 +66,7 @@
       HorizontalAlignment="Stretch">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="55" />
+        <ColumnDefinition Width="48" />
       </Grid.ColumnDefinitions>
       <ToolBarTray
         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
@@ -151,6 +151,7 @@
       </ToolBarTray>
       <local:PanelToolbarTray
         Grid.Column="1"
+        HasHelpButton="True"
         HasDuplicateButton="False"
         HasPinButton="False" />
     </Grid>

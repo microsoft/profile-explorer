@@ -95,17 +95,26 @@
           Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
           Loaded="ToolBar_Loaded">
           <Button
+            Command="local:GraphCommand.GraphResetWidth"
+            CommandTarget="{Binding ElementName=GraphHost}"
+            ToolTip="Zoom the graph view to 100% (Ctrl+R)">
+            <StackPanel Orientation="Horizontal">
+              <Image Source="{StaticResource ResetWidthIcon}" />
+              <TextBlock Margin="4,0,0,0" Text="Reset" />
+            </StackPanel>
+          </Button>
+          <Button
             Margin="4,0,0,0"
             Command="local:GraphCommand.GraphZoomOut"
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom Out (Ctrol+_">
-            <Image Source="{StaticResource MinusIcon}" />
+            <Image Source="{StaticResource ZoomOutIcon}" Width="15" Height="15" />
           </Button>
           <Button
             Command="local:GraphCommand.GraphZoomIn"
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom In (Ctrl+=)">
-            <Image Source="{StaticResource PlusIcon}" />
+            <Image Source="{StaticResource ZoomInIcon}" Width="15" Height="15" />
           </Button>
           <Separator />
           <Button
@@ -127,15 +136,7 @@
               <TextBlock Margin="4,0,0,0" Text="Fit All" />
             </StackPanel>
           </Button>
-          <Button
-            Command="local:GraphCommand.GraphResetWidth"
-            CommandTarget="{Binding ElementName=GraphHost}"
-            ToolTip="Zoom the graph view to 100% (Ctrl+R)">
-            <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource ResetWidthIcon}" />
-              <TextBlock Margin="4,0,0,0" Text="Reset" />
-            </StackPanel>
-          </Button>
+         
           <Separator />
           <Menu VerticalAlignment="Center"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
@@ -176,6 +177,7 @@
         Grid.Column="1"
         MinWidth="75"
         MaxWidth="75"
+        HasHelpButton="False"
         BindMenuItemSelected="PanelToolbarTray_BindMenuItemSelected"
         BindMenuOpen="PanelToolbarTray_BindMenuOpen"
         DockPanel.Dock="Right"

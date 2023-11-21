@@ -80,6 +80,7 @@
 
       <local:PanelToolbarTray
         DockPanel.Dock="Right"
+        HasHelpButton="False"
         DuplicateClicked="PanelToolbarTray_DuplicateClicked"
         HasPinButton="False" />
     </DockPanel>

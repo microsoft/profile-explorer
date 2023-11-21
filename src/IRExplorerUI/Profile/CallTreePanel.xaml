@@ -116,10 +116,10 @@
             Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
               <Image
-                Width="16"
-                Height="16"
-                Margin="0,1,0,0"
-                Source="{StaticResource MergeIcon}" />
+                Width="15"
+                Height="15"
+                Margin="0,0,2,0"
+                Source="{StaticResource CombineIcon}" />
               <TextBlock Text="Combine" />
             </StackPanel>
           </ToggleButton>
@@ -138,11 +138,11 @@
             ToolTip="Enable/disable function details panel">
             <StackPanel Orientation="Horizontal">
               <Image
+                VerticalAlignment="Center"
                 Width="16"
                 Height="16"
-                Margin="0,1,0,0"
-                Source="{StaticResource ListIcon}" />
-              <TextBlock Text="Details" />
+                Source="{StaticResource DetailsIcon}" />
+              <TextBlock Text="Details" VerticalAlignment="Center"/>
             </StackPanel>
           </ToggleButton>
           <Separator />
@@ -216,6 +216,7 @@
         DockPanel.Dock="Right"
         DuplicateClicked="PanelToolbarTray_DuplicateClicked"
         HasDuplicateButton="False"
+        HasHelpButton="True"
         HasPinButton="False" />
     </DockPanel>
 
@@ -330,14 +331,28 @@
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Expand Hottest Call Path"
             InputGestureText="Ctrl+="
-            ToolTip="" />
+            ToolTip="Expand several levels following the hottest path starting with the selected function">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource PlusIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <MenuItem
             Command="local:CallTreeCommand.CollapseCallPath"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Collapse Call Path"
             InputGestureText="Ctrl+-"
-            ToolTip="" />
+            ToolTip="Collapse the expanded node starting under the selected function">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource MinusIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <Separator />
 
           <MenuItem
@@ -346,20 +361,28 @@
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Open Function"
             InputGestureText="Ctrl+Return"
-            ToolTip="" />
+            ToolTip="Open the function assembly view">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource LayoutOpenIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <MenuItem
             Command="local:CallTreeCommand.OpenFunctionInNewTab"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Open Function in New Tab"
             InputGestureText="Ctrl+Shift+Return"
-            ToolTip="" />
-          <MenuItem
-            Command="{Binding SelectFunctionSourceCommand}"
-            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
-            Header="Open Source File"
-            ToolTip="Open function in Source File panel" />
+            ToolTip="Open the function assembly view in a new tab">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource LayoutOpenNewIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <Separator />
 
           <MenuItem
@@ -367,13 +390,27 @@
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Copy Function Name"
-            ToolTip="Copy the function name to the clipboard" />
+            ToolTip="Copy the function name to the clipboard">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource ClipboardIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <MenuItem
             Command="{Binding CopyDemangledFunctionNameCommand}"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Copy Demangled Function Name"
-            ToolTip="Copy the demangled function name to the clipboard (C/C++)" />
+            ToolTip="Copy the demangled function name to the clipboard (C/C++)">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource ClipboardIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <Separator />
 
           <MenuItem
@@ -382,28 +419,56 @@
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Select in Summary"
             InputGestureText="Return"
-            ToolTip="" />
+            ToolTip="Select the function in the Summary panel" >
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource SummaryIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
           <MenuItem
             Command="{Binding SelectFunctionCallTreeCommand}"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Select in Call Tree"
             ToolTip="Select the function instance in the Call Tree panel"
-            Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}" />
+            Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource FlowChartIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
 
           <MenuItem
             Command="{Binding SelectFunctionFlameGraphCommand}"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Select in Flame Graph"
-            ToolTip="Select the function instance in the Flame Graph panel" />
+            ToolTip="Select the function instance in the Flame Graph panel">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource FlameGraphIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
 
           <MenuItem
             Command="{Binding SelectFunctionTimelineCommand}"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Select in Timeline"
-            ToolTip="Select the function instance in the Timeline panel" />
+            ToolTip="Select the function instance in the Timeline panel">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource TimelineIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
         </ContextMenu>
       </ListView.ContextMenu>
     </tree:TreeList>

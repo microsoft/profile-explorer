@@ -9,79 +9,79 @@
   d:DesignHeight="450"
   d:DesignWidth="800"
   mc:Ignorable="d">
-  <irExplorerUi:ToolPanelControl.CommandBindings>
-    <CommandBinding Command="irExplorerUi:GraphCommand.GraphResetWidth"
+    <irExplorerUi:ToolPanelControl.CommandBindings>
+        <CommandBinding Command="irExplorerUi:GraphCommand.GraphResetWidth"
                     Executed="ExecuteGraphResetWidth" />
-    <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomIn" Executed="ExecuteGraphZoomIn" />
-    <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomOut" Executed="ExecuteGraphZoomOut" />
-    <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult"
+        <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomIn" Executed="ExecuteGraphZoomIn" />
+        <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomOut" Executed="ExecuteGraphZoomOut" />
+        <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult"
                     Executed="PreviousSearchResultExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.NextSearchResult"
+        <CommandBinding Command="local:CallTreeCommand.NextSearchResult"
                     Executed="NextSearchResultExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.RemoveFilters" Executed="RemoveFiltersExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.RemoveThreadFilters"
+        <CommandBinding Command="local:CallTreeCommand.RemoveFilters" Executed="RemoveFiltersExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.RemoveThreadFilters"
                     Executed="RemoveThreadFiltersExecuted" />
-  </irExplorerUi:ToolPanelControl.CommandBindings>
+    </irExplorerUi:ToolPanelControl.CommandBindings>
 
-  <irExplorerUi:ToolPanelControl.InputBindings>
-    <KeyBinding
+    <irExplorerUi:ToolPanelControl.InputBindings>
+        <KeyBinding
       Key="R"
       Command="irExplorerUi:GraphCommand.GraphResetWidth"
       CommandTarget="{Binding ElementName=ActivityView}"
       Modifiers="Ctrl" />
-    <KeyBinding
+        <KeyBinding
       Key="F3"
       Command="local:CallTreeCommand.PreviousSearchResult"
       Modifiers="Shift" />
-    <KeyBinding Key="F3" Command="local:CallTreeCommand.NextSearchResult" />
-  </irExplorerUi:ToolPanelControl.InputBindings>
+        <KeyBinding Key="F3" Command="local:CallTreeCommand.NextSearchResult" />
+    </irExplorerUi:ToolPanelControl.InputBindings>
 
-  <irExplorerUi:ToolPanelControl.Resources>
-    <Style x:Key="ColumnsGridSplitterStyle" TargetType="{x:Type ColumnDefinition}">
-      <Style.Setters>
-        <Setter Property="Width" Value="2" />
-      </Style.Setters>
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding ShowNodePanel}" Value="False">
-          <DataTrigger.Setters>
-            <Setter Property="Width" Value="0" />
-            <Setter Property="MaxWidth" Value="0" />
-          </DataTrigger.Setters>
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
+    <irExplorerUi:ToolPanelControl.Resources>
+        <Style x:Key="ColumnsGridSplitterStyle" TargetType="{x:Type ColumnDefinition}">
+            <Style.Setters>
+                <Setter Property="Width" Value="2" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ShowNodePanel}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="0" />
+                        <Setter Property="MaxWidth" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
 
-    <Style x:Key="NodePanelColumnsStyle" TargetType="{x:Type ColumnDefinition}">
-      <Style.Setters>
-        <Setter Property="Width" Value="290" />
-      </Style.Setters>
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding ShowNodePanel}" Value="False">
-          <DataTrigger.Setters>
-            <Setter Property="Width" Value="0" />
-            <Setter Property="MaxWidth" Value="0" />
-          </DataTrigger.Setters>
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-  </irExplorerUi:ToolPanelControl.Resources>
+        <Style x:Key="NodePanelColumnsStyle" TargetType="{x:Type ColumnDefinition}">
+            <Style.Setters>
+                <Setter Property="Width" Value="290" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ShowNodePanel}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="0" />
+                        <Setter Property="MaxWidth" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </irExplorerUi:ToolPanelControl.Resources>
 
-  <Grid>
-    <Grid.RowDefinitions>
-      <RowDefinition Height="28" />
-      <RowDefinition Height="*" />
-    </Grid.RowDefinitions>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="28" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-    <Grid
+        <Grid
       x:Name="ToolbarHost"
       Grid.Row="0"
       HorizontalAlignment="Stretch"
       Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="75" />
-      </Grid.ColumnDefinitions>
-      <ToolBarTray
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="50" />
+            </Grid.ColumnDefinitions>
+            <ToolBarTray
         Grid.Column="0"
         Height="28"
         HorizontalAlignment="Stretch"
@@ -89,82 +89,84 @@
         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
         DockPanel.Dock="Left"
         IsLocked="True">
-        <ToolBar
+                <ToolBar
           HorizontalAlignment="Stretch"
           VerticalAlignment="Top"
           Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
           Loaded="ToolBar_Loaded">
-          <Button
+                    <Button
             Margin="4,0,0,0"
             Click="UndoButton_Click"
             CommandTarget="{Binding ElementName=ActivityView}"
             IsEnabled="False"
-            ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
-            <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource DockLeftIcon}" />
-              <TextBlock Margin="4,0,0,0" Text="Back" />
-            </StackPanel>
-          </Button>
-          <Button
-            Command="irExplorerUi:GraphCommand.GraphResetWidth"
-            CommandTarget="{Binding ElementName=ActivityView}"
-            ToolTip="Zoom the graph view to 100% (Ctrl+R)">
-            <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource ResetWidthIcon}" />
-              <TextBlock Margin="4,0,0,0" Text="Reset" />
-            </StackPanel>
-          </Button>
-          <Separator />
+            ToolTip="Not yet implemented">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{StaticResource DockLeftIcon}" />
+                            <TextBlock Margin="4,0,0,0" Text="Back" />
+                        </StackPanel>
+                    </Button>
+
+                    <Separator />
+                    <Button
+                      Command="irExplorerUi:GraphCommand.GraphResetWidth"
+                      CommandTarget="{Binding ElementName=ActivityView}"
+                      ToolTip="Zoom the graph view to 100% (Ctrl+R)">
+                      <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource ResetWidthIcon}" />
+                        <TextBlock Margin="4,0,0,0" Text="Reset" />
+                      </StackPanel>
+                    </Button>
           <Button
             Command="irExplorerUi:GraphCommand.GraphZoomOut"
             CommandTarget="{Binding ElementName=ActivityView}"
             ToolTip="Zoom Out (Ctrl+_">
-            <Image Source="{StaticResource MinusIcon}" />
-          </Button>
-          <Button
+                        <Image Source="{StaticResource ZoomOutIcon}" Width="15" Height="15" />
+                    </Button>
+                    <Button
             Command="irExplorerUi:GraphCommand.GraphZoomIn"
             CommandTarget="{Binding ElementName=ActivityView}"
             ToolTip="Zoom In (Ctrl+=)">
-            <Image Source="{StaticResource PlusIcon}" />
-          </Button>
-          <Separator />
+                        <Image Source="{StaticResource ZoomInIcon}" Width="15" Height="15" />
+                    </Button>
+                   
+                    <Separator />
 
-          <ToggleButton
+                    <ToggleButton
             Height="20"
             Margin="0,0,0,0"
             Padding="0,0,2,0"
             IsChecked="{Binding Path=SyncSelection, Mode=TwoWay}"
             ToolTip="Sync functions in other panels with selection">
-            <StackPanel Orientation="Horizontal">
-              <Image
+                        <StackPanel Orientation="Horizontal">
+                            <Image
                 Width="16"
                 Height="16"
                 Margin="0,1,0,0"
                 Source="{StaticResource SwitchIcon}" />
-              <TextBlock Text="Sync" />
-            </StackPanel>
-          </ToggleButton>
+                            <TextBlock Text="Sync" />
+                        </StackPanel>
+                    </ToggleButton>
 
-          <ToggleButton
+                    <ToggleButton
             IsEnabled="False"
             Height="20"
             Margin="0,0,0,0"
             Padding="0,0,2,0"
             ToolTip="Group threads by name">
-            <StackPanel Orientation="Horizontal">
-              <Image
+                        <StackPanel Orientation="Horizontal">
+                            <Image
                 Width="16"
                 Height="16"
                 Margin="0,1,0,0"
-                Source="{StaticResource BlockIcon}" />
-              <TextBlock Text="" />
-            </StackPanel>
-          </ToggleButton>
-          <Separator />
+                Source="{StaticResource GroupIcon}" />
+                            <TextBlock Text="" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <Separator />
 
-          <Menu VerticalAlignment="Center"
+                    <Menu VerticalAlignment="Center"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
-            <MenuItem
+                        <MenuItem
               x:Name="MarkersMenuItem"
               Padding="0,0,0,0"
               Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
@@ -172,28 +174,31 @@
               Header="Markers"
               OverridesDefaultStyle="True"
               SubmenuOpened="MarkersMenuItem_SubmenuOpened">
-              <MenuItem.Icon>
-                <Image
+                            <MenuItem.Icon>
+                                <Image
                   Width="16"
                   Height="16"
                   Margin="-2,0,-2,0"
                   HorizontalAlignment="Center"
                   VerticalAlignment="Center"
                   Source="{StaticResource TasklistIcon}" />
-              </MenuItem.Icon>
-              <Separator />
-              <MenuItem Click="ClearMarkers_OnClick" Header="Clear All Markers" />
-            </MenuItem>
-          </Menu>
-          <Separator />
+                            </MenuItem.Icon>
+                            <Separator />
+                            <MenuItem Click="ClearMarkers_OnClick" Header="Clear All Markers" />
+                        </MenuItem>
+                    </Menu>
+                    <Separator />
 
-          <TextBlock
+                    <Image Source="{StaticResource FilterIcon}" Width="16" Height="16" Margin="2,1,4,0"
+                 ToolTip="Active time and thread filters"
+                 Visibility="{Binding HasAnyFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <TextBlock
             VerticalAlignment="Center"
             FontWeight="Medium"
             Foreground="DarkBlue"
             Text="Time:"
             Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
-          <TextBlock
+                    <TextBlock
             Margin="4,0,0,0"
             VerticalAlignment="Center"
             FontWeight="Medium"
@@ -202,28 +207,28 @@
             ToolTip="Time range included in the view"
             Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-          <Button
+                    <Button
             Command="local:CallTreeCommand.RemoveFilters"
             CommandTarget="{Binding ElementName=ActivityView}"
             TabIndex="5"
             ToolTip="Remove time range filter"
             Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}">
-            <Image
+                        <Image
               Width="16"
               Height="16"
               Source="{StaticResource ClearIcon}" />
-          </Button>
-          <Separator
+                    </Button>
+                    <Separator
             Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-          <TextBlock
+                    <TextBlock
             Margin="2,0,0,0"
             VerticalAlignment="Center"
             FontWeight="Medium"
             Foreground="Indigo"
             Text="Threads: "
             Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
-          <TextBlock
+                    <TextBlock
             Margin="4,0,0,0"
             VerticalAlignment="Center"
             FontWeight="Medium"
@@ -232,44 +237,44 @@
             ToolTip="Threads included in the view"
             Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-          <Button
+                    <Button
             Command="local:CallTreeCommand.RemoveThreadFilters"
             CommandTarget="{Binding ElementName=ActivityView}"
             TabIndex="5"
             ToolTip="Remove thread exclusions"
             Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}">
-            <Image
+                        <Image
               Width="16"
               Height="16"
               Source="{StaticResource ClearIcon}" />
-          </Button>
+                    </Button>
 
-          <ToggleButton
+                    <ToggleButton
             Content="m!F"
             IsChecked="{Binding Path=PrependModuleToFunction, Mode=TwoWay}"
             ToolTip="Show the module name in front of the function name"
             Visibility="Collapsed" />
 
-          <ToggleButton
+                    <ToggleButton
             Height="20"
             Margin="0,0,0,0"
             Padding="0,0,2,0"
             IsChecked="{Binding Path=ShowNodePanel, Mode=TwoWay}"
             ToolTip="Enable/disable function details panel"
             Visibility="Collapsed">
-            <StackPanel Orientation="Horizontal">
-              <Image
+                        <StackPanel Orientation="Horizontal">
+                            <Image
                 Width="16"
                 Height="16"
                 Margin="0,1,0,0"
                 Source="{StaticResource ListIcon}" />
-              <TextBlock Text="Details" />
-            </StackPanel>
-          </ToggleButton>
+                            <TextBlock Text="Details" />
+                        </StackPanel>
+                    </ToggleButton>
 
-          <Image Source="{StaticResource SearchIcon}" Visibility="Collapsed" />
-          <Grid Height="24" Visibility="Collapsed">
-            <TextBox
+                    <Image Source="{StaticResource SearchIcon}" Visibility="Collapsed" />
+                    <Grid Height="24" Visibility="Collapsed">
+                        <TextBox
               x:Name="FunctionFilter"
               Width="200"
               Margin="4,0,0,0"
@@ -280,125 +285,141 @@
               TabIndex="4"
               TextChanged="FunctionFilter_OnTextChanged"
               ToolTip="Search functions based on a case-insensitive string (Ctrl+F)">
-              <TextBox.InputBindings>
-                <KeyBinding
+                            <TextBox.InputBindings>
+                                <KeyBinding
                   Key="Escape"
                   Command="local:CallTreeCommand.ClearSearch"
                   CommandParameter="{Binding ElementName=FunctionFilter}" />
-              </TextBox.InputBindings>
-            </TextBox>
-            <TextBlock
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <TextBlock
               Margin="8,4"
               Foreground="DimGray"
               IsHitTestVisible="False"
               Text="Search functions"
               Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-          </Grid>
+                    </Grid>
 
-          <Button
+                    <Button
             Command="local:CallTreeCommand.ClearSearch"
             CommandParameter="{Binding ElementName=FunctionFilter}"
             TabIndex="5"
             ToolTip="Reset searched function"
             Visibility="Collapsed">
-            <Image
+                        <Image
               Width="16"
               Height="16"
               Source="{StaticResource ClearIcon}" />
-          </Button>
+                    </Button>
 
-          <TextBlock
+                    <TextBlock
             Margin="8,0,0,0"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Text="Results:"
             Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-          <TextBlock
+                    <TextBlock
             Margin="4,0,0,0"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Text="{Binding Path=SearchResultText, UpdateSourceTrigger=PropertyChanged}"
             Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
-          <Button Command="local:CallTreeCommand.PreviousSearchResult"
+                    <Button Command="local:CallTreeCommand.PreviousSearchResult"
                   ToolTip="Previous search result">
-            <Image Source="{StaticResource UpArrowIcon}"
+                        <Image Source="{StaticResource UpArrowIcon}"
                    Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
-          </Button>
-          <Button Command="local:CallTreeCommand.NextSearchResult" ToolTip="Next search result">
-            <Image Source="{StaticResource DownArrowIcon}"
+                    </Button>
+                    <Button Command="local:CallTreeCommand.NextSearchResult" ToolTip="Next search result">
+                        <Image Source="{StaticResource DownArrowIcon}"
                    Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
-          </Button>
-        </ToolBar>
-      </ToolBarTray>
+                    </Button>
+                </ToolBar>
+            </ToolBarTray>
 
-      <irExplorerUi:PanelToolbarTray
+            <irExplorerUi:PanelToolbarTray
         Grid.Column="1"
         MaxWidth="75"
         DockPanel.Dock="Right"
         HasDuplicateButton="False"
         HasPinButton="False"
+        HasHelpButton="True"
         SettingsClicked="PanelToolbarTray_SettingsClicked" />
-    </Grid>
+        </Grid>
 
-    <Grid Grid.Row="1">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Style="{StaticResource ColumnsGridSplitterStyle}" />
-        <ColumnDefinition Style="{StaticResource NodePanelColumnsStyle}" />
-      </Grid.ColumnDefinitions>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Style="{StaticResource ColumnsGridSplitterStyle}" />
+                <ColumnDefinition Style="{StaticResource NodePanelColumnsStyle}" />
+            </Grid.ColumnDefinitions>
 
-      <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
               BorderThickness="0,1,0,0">
-        <Grid x:Name="ActivityHost" Margin="0,0,0,20">
-          <Border
+                <Grid x:Name="ActivityHost" Margin="0,0,0,20">
+                    <Border
             Width="150"
             Height="50"
             HorizontalAlignment="Left"
             VerticalAlignment="Top"
             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
             BorderThickness="0,0,1,0">
-            <Grid Background="PapayaWhip">
-              <Grid
+                        <Grid Background="PapayaWhip">
+                            <Grid
                 x:Name="ActivityViewHeader"
                 Margin="2,0,30,0"
                 HorizontalAlignment="Stretch"
                 MouseDown="ActivityViewHeader_MouseDown">
-                <StackPanel Margin="2">
-                  <TextBlock FontWeight="Medium" Text="All Threads" />
+                                <StackPanel Margin="2">
+                                    <TextBlock FontWeight="Medium" Text="All Threads" />
 
-                  <TextBlock
+                                    <TextBlock
                     Margin="0,0,0,0"
                     Foreground="DarkBlue"
                     Text="Selection"
                     Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
-                  <TextBlock
+                                    <TextBlock
                     Margin="0,-2,0,0"
                     FontWeight="Medium"
                     Foreground="DarkBlue"
                     Text="{Binding SelectionTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}"
                     Visibility="{Binding HasSelection, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
-                </StackPanel>
-              </Grid>
-              <Grid Width="30" HorizontalAlignment="Right">
-                <TextBlock
-                  Margin="0,0,6,0"
+                                </StackPanel>
+                            </Grid>
+                            <Grid Width="30" HorizontalAlignment="Right">
+                                <TextBlock
+                  Margin="0,0,18,0"
                   HorizontalAlignment="Right"
                   VerticalAlignment="Top"
                   Text="{Binding Path=MaxCpuUsage, ElementName=ActivityView}"
                   ToolTip="Maximum cores used" />
-                <TextBlock
-                  Margin="0,0,4,0"
+                                <TextBlock
+                  Margin="0,0,18,0"
                   HorizontalAlignment="Right"
                   VerticalAlignment="Bottom"
                   Text="0" />
-              </Grid>
-            </Grid>
-          </Border>
+                                <TextBlock
+                  Margin="0,0,2,2"
+                  HorizontalAlignment="Right"
+                  Text="CPU cores"
+                  FontSize="10"
+                  Foreground="{StaticResource DisabledForegroundBrush}"
 
-          <Grid x:Name="TimelineHost" Grid.Column="0">
-            <local:ActivityView
+                  ToolTip="Maximum cores used" >
+                  <TextBlock.LayoutTransform>
+                                    <TransformGroup>
+                                      <RotateTransform Angle="90" />
+                                      <ScaleTransform ScaleX="-1" ScaleY="-1"/>
+                                    </TransformGroup>
+                                  </TextBlock.LayoutTransform>
+                                </TextBlock>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <Grid x:Name="TimelineHost" Grid.Column="0">
+                        <local:ActivityView
               x:Name="ActivityView"
               Height="50"
               Margin="150,0,0,0"
@@ -406,7 +427,7 @@
               VerticalAlignment="Top"
               BackColor="Linen" />
 
-            <ScrollViewer
+                        <ScrollViewer
               x:Name="ActivityViewHost"
               Margin="0,50,0,0"
               HorizontalAlignment="Stretch"
@@ -417,18 +438,18 @@
               VirtualizingStackPanel.IsVirtualizing="True"
               VirtualizingStackPanel.VirtualizationMode="Recycling">
 
-              <ItemsControl x:Name="ActivityViewList">
-                <ItemsControl.ItemsPanel>
-                  <ItemsPanelTemplate>
-                    <VirtualizingStackPanel Orientation="Vertical" />
-                  </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-              </ItemsControl>
-            </ScrollViewer>
-          </Grid>
-        </Grid>
-      </Border>
-      <irExplorerUi:ScrollViewerClickable
+                            <ItemsControl x:Name="ActivityViewList">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel Orientation="Vertical" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </Border>
+            <irExplorerUi:ScrollViewerClickable
         x:Name="ActivityScrollBar"
         Height="20"
         VerticalAlignment="Bottom"
@@ -436,25 +457,25 @@
         HorizontalScrollBarVisibility="Auto"
         ScrollChanged="ActivityScrollBar_OnScrollChanged"
         VerticalScrollBarVisibility="Disabled">
-        <Grid
+                <Grid
           x:Name="ScrollElement"
           Height="0"
           HorizontalAlignment="Left" />
-      </irExplorerUi:ScrollViewerClickable>
+            </irExplorerUi:ScrollViewerClickable>
 
-      <GridSplitter
+            <GridSplitter
         Grid.Column="1"
         Width="2"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
 
-      <local:CallTreeNodePanel
+            <local:CallTreeNodePanel
         x:Name="NodeDetailsPanel"
         Grid.Column="2"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         ShowDetails="True" />
+        </Grid>
     </Grid>
-  </Grid>
 </irExplorerUi:ToolPanelControl>
