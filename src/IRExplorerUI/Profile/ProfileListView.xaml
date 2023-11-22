@@ -4,6 +4,7 @@
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
+  xmlns:local="clr-namespace:IRExplorerUI.Profile"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   d:DesignHeight="450"
   d:DesignWidth="800"
@@ -174,5 +175,74 @@
         </Style.Triggers>
       </Style>
     </ListView.ItemContainerStyle>
+
+    <ListView.ContextMenu>
+      <ContextMenu>
+        <MenuItem
+          Command="{Binding OpenFunctionCommand}"
+          CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+          Header="Open Function"
+          InputGestureText="Ctrl+Return"
+          ToolTip="Open the function assembly view">
+          <MenuItem.Icon>
+            <Image
+              Height="16"
+              Source="{StaticResource LayoutOpenIcon}"
+              Width="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem
+          Command="{Binding OpenFunctionInNewTabCommand}"
+          CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+          Header="Open Function in New Tab"
+          InputGestureText="Ctrl+Shift+Return"
+          ToolTip="Open the function assembly view in a new tab">
+          <MenuItem.Icon>
+            <Image
+              Height="16"
+              Source="{StaticResource LayoutOpenNewIcon}"
+              Width="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+
+        <MenuItem
+          Command="{Binding SelectFunctionSummaryCommand}"
+          CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+          Header="Select in Summary"
+          ToolTip="Select the function in the Summary panel">
+          <MenuItem.Icon>
+            <Image
+              Height="16"
+              Source="{StaticResource SummaryIcon}"
+              Width="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem
+          Command="{Binding SelectFunctionCallTreeCommand}"
+          CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+          Header="Select in Call Tree"
+          ToolTip="Select the function instance in the Call Tree panel">
+          <MenuItem.Icon>
+            <Image
+              Height="16"
+              Source="{StaticResource TreeIcon}"
+              Width="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem
+          Command="{Binding SelectFunctionTimelineCommand}"
+          CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+          Header="Select in Timeline"
+          ToolTip="Select the function instance in the Timeline panel">
+          <MenuItem.Icon>
+            <Image
+              Height="16"
+              Source="{StaticResource TimelineIcon}"
+              Width="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+      </ContextMenu>
+      </ListView.ContextMenu>
   </ListView>
 </UserControl>

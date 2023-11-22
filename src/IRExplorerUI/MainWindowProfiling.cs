@@ -170,7 +170,7 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
-  public async Task<bool> SelectProfileFunction(ProfileCallTreeNode node, ToolPanelKind panelKind) {
+  public async Task<bool> SelectProfileFunctionInPanel(ProfileCallTreeNode node, ToolPanelKind panelKind) {
     using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
 
     switch (panelKind) {
@@ -193,6 +193,10 @@ public partial class MainWindow : Window, ISession {
         await OpenProfileSourceFile(node);
         break;
       }
+      case ToolPanelKind.Section: {
+        await SwitchActiveProfileFunction(node);
+        break;
+      }
       default: {
         throw new InvalidOperationException();
       }
@@ -201,7 +205,7 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
-  public async Task<bool> SelectProfileFunction(IRTextFunction func, ToolPanelKind panelKind) {
+  public async Task<bool> SelectProfileFunctionInPanel(IRTextFunction func, ToolPanelKind panelKind) {
     using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
 
     switch (panelKind) {
@@ -278,11 +282,12 @@ public partial class MainWindow : Window, ISession {
 
     if (sourcePanelKind != ToolPanelKind.CallTree) {
       var callTreePanel = FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
-      callTreePanel?.SelectFunction(node.Function);
+      callTreePanel?.SelectFunction(node);
     }
 
     if (sourcePanelKind != ToolPanelKind.CallerCallee) {
       if (FindPanel(ToolPanelKind.CallerCallee) is CallTreePanel callerCalleePanel) {
+        //? TODO: Make it path-sensitive (show exact instance, not combined?)
         await callerCalleePanel?.DisplayProfileCallerCalleeTree(node.Function);
       }
     }

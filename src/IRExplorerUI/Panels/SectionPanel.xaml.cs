@@ -1457,7 +1457,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private async Task SelectFunctionInPanel(object target, ToolPanelKind panelKind) {
     if (target is IRTextFunctionEx funcEx) {
-      await Session.SelectProfileFunction(funcEx.Function, panelKind);
+      await Session.SelectProfileFunctionInPanel(funcEx.Function, panelKind);
     }
   }
 

@@ -418,7 +418,6 @@
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Select in Summary"
-            InputGestureText="Return"
             ToolTip="Select the function in the Summary panel" >
             <MenuItem.Icon>
               <Image

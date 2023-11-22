@@ -107,8 +107,8 @@ public interface ISession {
   Task<bool> RemoveProfileSamplesFilter();
   Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode);
   Task<bool> SwitchActiveProfileFunction(ProfileCallTreeNode node);
-  Task<bool> SelectProfileFunction(ProfileCallTreeNode node, ToolPanelKind panelKind);
-  Task<bool> SelectProfileFunction(IRTextFunction node, ToolPanelKind panelKind);
+  Task<bool> SelectProfileFunctionInPanel(ProfileCallTreeNode node, ToolPanelKind panelKind);
+  Task<bool> SelectProfileFunctionInPanel(IRTextFunction node, ToolPanelKind panelKind);
   Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node);
   Task<bool> OpenProfileSourceFile(IRTextFunction function);
   Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range);

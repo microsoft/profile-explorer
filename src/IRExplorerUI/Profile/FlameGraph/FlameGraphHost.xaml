@@ -9,6 +9,7 @@
   d:DesignHeight="450"
   d:DesignWidth="800"
   mc:Ignorable="d">
+  <!-- Replace CommandBindings by RelayCommand everywhere -->
   <UserControl.CommandBindings>
     <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomIn" Executed="ExecuteGraphZoomIn" />
     <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomOut" Executed="ExecuteGraphZoomOut" />
@@ -40,7 +41,7 @@
             Command="local:CallTreeCommand.EnlargeNode"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Focus on Function"
-            InputGestureText="Double-click"
+            InputGestureText="Return, Double-click"
             ToolTip="Enlarge the function in the view">
             <MenuItem.Icon>
               <Image
@@ -153,7 +154,6 @@
             Command="local:CallTreeCommand.SelectFunction"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Summary"
-            InputGestureText="Return"
             ToolTip="Select the function in the Summary panel">
             <MenuItem.Icon>
               <Image
