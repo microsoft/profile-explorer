@@ -15,6 +15,7 @@ using System.Windows.Media;
 using Aga.Controls.Tree;
 using IRExplorerCore;
 using IRExplorerUI.Utilities;
+using Microsoft.Diagnostics.Tracing.Stacks;
 
 namespace IRExplorerUI.Profile;
 
@@ -319,6 +320,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   public void SelectFunction(ProfileCallTreeNode node, bool markPath = true) {
+    if (node is ProfileCallTreeGroupNode nodeGroup) {
+      foreach (var groupNode in nodeGroup.Nodes) {
+        SelectFunction(groupNode, markPath);
+        return; //? TODO: Should it select everything instead?
+      }
+    }
+
     if (!callTreeNodeToNodeExMap_.TryGetValue(node, out var nodeEx)) {
       return;
     }
@@ -353,7 +361,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       var childInfo = node.Tag as ChildFunctionEx;
 
       if (childInfo?.CallTreeNode != null) {
-        await Session.SelectProfileFunction(childInfo.CallTreeNode, panelKind);
+        await Session.SelectProfileFunctionInPanel(childInfo.CallTreeNode, panelKind);
       }
     }
   }

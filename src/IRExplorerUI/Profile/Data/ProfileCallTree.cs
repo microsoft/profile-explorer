@@ -397,9 +397,9 @@ public sealed class ProfileCallTree {
     return list;
   }
 
-  public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
+  public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node, bool combineInstances = true) {
     var funcMap = new Dictionary<IRTextFunction, ProfileCallTreeNode>();
-    CollectFunctions(node, funcMap);
+    CollectFunctions(node, funcMap, combineInstances);
     var funcList = new List<ProfileCallTreeNode>(funcMap.Count);
 
     foreach (var func in funcMap.Values) {
@@ -410,17 +410,22 @@ public sealed class ProfileCallTree {
     return funcList;
   }
 
-  public void CollectFunctions(ProfileCallTreeNode node, Dictionary<IRTextFunction, ProfileCallTreeNode> funcMap) {
-    // Combine all instances of a function under the node.
-    var entry = funcMap.GetOrAddValue(node.Function, () =>
-                                        new ProfileCallTreeGroupNode(node.FunctionDebugInfo, node.Function) {
-                                          Kind = node.Kind
-                                        });
+  public void CollectFunctions(ProfileCallTreeNode node, Dictionary<IRTextFunction, ProfileCallTreeNode> funcMap,
+                               bool combineInstances = true) {
+    ProfileCallTreeNode entry = node;
 
-    var groupEntry = (ProfileCallTreeGroupNode)entry;
-    groupEntry.Nodes.Add(node);
-    groupEntry.Weight += node.Weight;
-    groupEntry.ExclusiveWeight += node.ExclusiveWeight;
+    if (combineInstances) {
+      // Combine all instances of a function under the node.
+      entry = funcMap.GetOrAddValue(node.Function, () =>
+                                      new ProfileCallTreeGroupNode(node.FunctionDebugInfo, node.Function) {
+                                        Kind = node.Kind
+                                      });
+
+      var groupEntry = (ProfileCallTreeGroupNode)entry;
+      groupEntry.Nodes.Add(node);
+      groupEntry.Weight += node.Weight;
+      groupEntry.ExclusiveWeight += node.ExclusiveWeight;
+    }
 
     if (node.HasChildren) {
       foreach (var childNode in node.Children) {

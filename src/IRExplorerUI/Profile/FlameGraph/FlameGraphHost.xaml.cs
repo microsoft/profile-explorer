@@ -165,19 +165,19 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
     if (callTree_ != null) {
       await GraphViewer.Initialize(callTree, GraphArea, settings_, Session);
-     
+
       // Hack due to possible WPF bug that forces a re-layout of the flame graph
       // so that the scroll bars are displayed if needed.
       Dispatcher.Invoke(() => {
         GraphViewer.InvalidateMeasure();
         GraphViewer.InvalidateVisual();
 
-        // If there is a vertical scroll bar, resize the flame graph to fit 
+        // If there is a vertical scroll bar, resize the flame graph to fit
         // the view and not show a horizontal scroll bar initially.
         Dispatcher.Invoke(() => {
           ResetWidth(false);
         }, DispatcherPriority.ContextIdle);
-          
+
       }, DispatcherPriority.Normal);
     }
   }
@@ -415,7 +415,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   private async Task SelectFunctionInPanel(ToolPanelKind panelKind) {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
-      await Session.SelectProfileFunction(GraphViewer.SelectedNode.CallTreeNode, panelKind);
+      await Session.SelectProfileFunctionInPanel(GraphViewer.SelectedNode.CallTreeNode, panelKind);
     }
   }
 
@@ -967,9 +967,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   private async void SelectFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (GraphViewer.SelectedNode != null && GraphViewer.SelectedNode.HasFunction) {
-      await Session.SwitchActiveFunction(GraphViewer.SelectedNode.Function);
-    }
+    await SelectFunctionInPanel(ToolPanelKind.Section);
   }
 
   private async void OpenFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -977,7 +975,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   private async Task OpenFunction(FlameGraphNode node, OpenSectionKind openMode) {
-    if (node != null && node.HasFunction) {
+    if (node is {HasFunction: true}) {
       var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
       await Session.SwitchDocumentSectionAsync(args);
     }

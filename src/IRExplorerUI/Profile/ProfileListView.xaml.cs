@@ -5,9 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using IRExplorerUI.Utilities;
+using Irony.Parsing.Construction;
 
 namespace IRExplorerUI.Profile;
 
@@ -70,6 +73,36 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
   public event PropertyChangedEventHandler PropertyChanged;
   public ISession Session { get; set; }
+
+  public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
+    await OpenFunction(OpenSectionKind.ReplaceCurrent);
+  });
+  public RelayCommand<object> OpenFunctionInNewTabCommand => new RelayCommand<object>(async obj => {
+    await OpenFunction(OpenSectionKind.NewTab);
+  });
+
+  private async Task OpenFunction(OpenSectionKind openMode) {
+    if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
+      var args = new OpenSectionEventArgs(item.CallTreeNode.Function.Sections[0], openMode);
+      await Session.SwitchDocumentSectionAsync(args);
+    }
+  }
+
+  public RelayCommand<object> SelectFunctionSummaryCommand => new RelayCommand<object>(async obj => {
+    await SelectFunctionInPanel(ToolPanelKind.Section);
+  });
+  public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
+    await SelectFunctionInPanel(ToolPanelKind.CallTree);
+  });
+  public RelayCommand<object> SelectFunctionTimelineCommand => new RelayCommand<object>(async obj => {
+    await SelectFunctionInPanel(ToolPanelKind.Timeline);
+  });
+
+  private async Task SelectFunctionInPanel(ToolPanelKind panelKind) {
+    if (ItemList.SelectedItem is ProfileListViewItem item) {
+      await Session.SelectProfileFunctionInPanel(item.CallTreeNode, panelKind);
+    }
+  }
 
   public string NameColumnTitle {
     get => nameColumnTitle_;
