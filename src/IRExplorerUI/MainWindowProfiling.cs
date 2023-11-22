@@ -11,6 +11,7 @@ using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
+using IRExplorerUI.Windows;
 
 namespace IRExplorerUI;
 
@@ -557,5 +558,11 @@ public partial class MainWindow : Window, ISession {
     }
 
     return callNodes.ToList();
+  }
+
+  private void WorkspacesButton_OnClick(object sender, RoutedEventArgs e) {
+    WorkspacesWindow w = new();
+    w.Owner = this;
+    w.ShowDialog();
   }
 }

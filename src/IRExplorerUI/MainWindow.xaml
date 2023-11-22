@@ -1170,11 +1170,7 @@
                 FontWeight="Medium"
                 Text="2 / 3" />
             <Separator />
-
-            <Image
-                Width="14"
-                Height="14"
-                Source="{StaticResource MonitorIcon}" />
+            
             <TextBlock
                 VerticalAlignment="Center"
                 FontSize="11"
@@ -1192,6 +1188,17 @@
                 <ComboBoxItem Content="Default" />
                 <ComboBoxItem Content="Profiling" />
             </ComboBox>
+            <Button
+              x:Name="WorkspacesButton"
+              Width="18"
+              Height="18"
+              VerticalAlignment="Center"
+              BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+              Click="WorkspacesButton_OnClick"
+              FontSize="11"
+              ToolTip="Manage workspaces list">
+              <Image VerticalAlignment="Center" Source="{StaticResource EditIcon}" />
+            </Button>
             <Separator />
 
             <TextBlock
