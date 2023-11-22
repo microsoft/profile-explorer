@@ -14,7 +14,7 @@ using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
-using OxyPlot.SkiaSharp.Wpf;
+using OxyPlot.Wpf;
 using VerticalAlignment = System.Windows.VerticalAlignment;
 
 namespace IRExplorerUI.Profile;
@@ -378,7 +378,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     // Override tooltip.
     plotView.Controller = new PlotController();
     plotView.Controller.UnbindMouseDown(OxyMouseButton.Left);
-    plotView.Controller.BindMouseEnter(PlotCommands.HoverSnapTrack);
+    plotView.Controller.BindMouseEnter(OxyPlot.PlotCommands.HoverSnapTrack);
 
     object tooltipTemplate = Application.Current.FindResource("HistogramTooltipTemplate");
     plotView.DefaultTrackerTemplate = (ControlTemplate)tooltipTemplate;
