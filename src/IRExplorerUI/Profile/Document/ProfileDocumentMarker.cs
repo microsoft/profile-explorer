@@ -289,7 +289,7 @@ public class ProfileDocumentMarker {
      var dummy = new DummyFunctionProfileInfoProvider();
      popup = new CallTreeNodePopup(null, dummy, previewPoint, view,
                  document.Session);
-     popup.TitleText = "Call targets";
+     popup.TitleText = "Call Targets";
    }
    else {
      popup.UpdatePosition(previewPoint, view);

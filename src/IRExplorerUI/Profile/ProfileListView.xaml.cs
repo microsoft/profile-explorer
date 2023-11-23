@@ -22,13 +22,15 @@ public class ProfileListViewItem : SearchableProfileItem {
   }
 
   public ProfileCallTreeNode CallTreeNode { get; set; }
+  protected override string GetFunctionName() {
+    return CallTreeNode?.FunctionName;
+  }
 
   public static ProfileListViewItem From(ProfileCallTreeNode node, ProfileData profileData,
                                          FunctionNameFormatter funcNameFormatter) {
     return new ProfileListViewItem(funcNameFormatter) {
       //prependModule_ = true,
       CallTreeNode = node,
-      FunctionName = node.FunctionName,
       ModuleName = node.ModuleName,
       Weight = node.Weight,
       ExclusiveWeight = node.ExclusiveWeight,
@@ -40,7 +42,7 @@ public class ProfileListViewItem : SearchableProfileItem {
   public static ProfileListViewItem From(ModuleProfileInfo node, ProfileData profileData,
                                          FunctionNameFormatter funcNameFormatter) {
     return new ProfileListViewItem(funcNameFormatter) {
-      FunctionName = node.Name,
+      FunctionName = node.Name, // Override name, disables GetFunctionName.
       Weight = node.Weight,
       Percentage = node.Percentage
     };

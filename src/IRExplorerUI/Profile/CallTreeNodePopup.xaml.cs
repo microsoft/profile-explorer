@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
@@ -91,7 +92,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     set {
       SetField(ref descriptionText_, value);
       OnPropertyChanged(nameof(HasDescriptionText));
-
+    }
   }
 
   public bool HasDescriptionText => !string.IsNullOrEmpty(DescriptionText);
@@ -125,8 +126,11 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   }
 
   private void UpdatePopupWidth(double maxTextWidth) {
+    Trace.WriteLine($"\n-------------\ntry {maxTextWidth + SystemParameters.VerticalScrollBarWidth}");
     Width = Math.Min(maxTextWidth + SystemParameters.VerticalScrollBarWidth, MaxPopupWidth);
+    Trace.WriteLine($"  width {Width}, actual {ActualWidth}");
     StackTraceListView.FunctionColumnWidth = Math.Max(MinPopupWidth, Width - SystemParameters.VerticalScrollBarWidth);
+    Trace.WriteLine($"  column {StackTraceListView.FunctionColumnWidth}");
   }
 
   public void ShowFunctions(List<ProfileCallTreeNode> list,
