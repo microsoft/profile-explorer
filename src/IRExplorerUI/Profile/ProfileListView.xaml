@@ -32,7 +32,7 @@
             ToolTip="Execution context" />
         </GridViewColumn>
 
-        <GridViewColumn Width="250">
+        <GridViewColumn Width="{Binding FunctionColumnWidth{}}">
           <GridViewColumnHeader x:Name="FunctionColumnHeader" Content="{Binding NameColumnTitle}" />
           <GridViewColumn.HeaderContainerStyle>
             <Style TargetType="{x:Type GridViewColumnHeader}">

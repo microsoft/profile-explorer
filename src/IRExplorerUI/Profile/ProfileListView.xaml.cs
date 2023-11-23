@@ -52,6 +52,7 @@ public class ProfileListViewItem : SearchableProfileItem {
 }
 
 public partial class ProfileListView : UserControl, INotifyPropertyChanged {
+  private const double DefaultFunctionColumnWidth = 250;
   private string nameColumnTitle_;
   private string timeColumnTitle_;
   private string exclusiveTimeColumnTitle_;
@@ -63,9 +64,16 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   private bool showTimeNameRow_;
   private bool showModuleColumn_;
   private bool showContextColumn_;
+  private double functionColumnWidth_;
+
+  public double FunctionColumnWidth {
+    get => functionColumnWidth_;
+    set => SetField(ref functionColumnWidth_, value);
+  }
 
   public ProfileListView() {
     InitializeComponent();
+    FunctionColumnWidth = DefaultFunctionColumnWidth;
     DataContext = this;
   }
 
@@ -166,7 +174,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     // ProfileListView columns visibility is not read from the property
     // when in a popup and the popup was first created.
     GridViewColumnVisibility.RemoveAllColumnsExcept("FunctionColumnHeader", ItemList);
-
   }
 
   public void Show(List<ProfileCallTreeNode> nodes, ProfileListViewFilter filter = null) {

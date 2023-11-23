@@ -28,7 +28,7 @@ public interface MarkedDocument {
 
   public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
                                                        double width, double height,
-                                                       string label, string tooltip);
+                                                       string label = null, string tooltip = null);
 }
 
 public class ProfileDocumentMarker {
@@ -200,14 +200,13 @@ public class ProfileDocumentMarker {
       return;
     }
 
-    var icon = IconDrawing.FromIconResource("ExecuteIconColor");
+    var indirectIcon = IconDrawing.FromIconResource("ExecuteIconColor");
+    var directIcon = IconDrawing.FromIconResource("ExecuteIcon");
     var node = callTree.GetCombinedCallTreeNode(textFunction);
 
     if (node == null || !node.HasCallSites) {
       return;
     }
-
-    FunctionNameFormatter nameFormatter = irInfo_.NameProvider.FormatFunctionName;
 
     foreach (var callsite in node.CallSites.Values) {
       if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA - profile_.FunctionDebugInfo.RVA,
@@ -217,32 +216,25 @@ public class ProfileDocumentMarker {
         if (instr == null || !irInfo_.IR.IsCallInstruction(instr))
           continue;
 
-        // Skip over direct calls.
+        // Mark direct, known call targets with a different icon.
         var callTarget = irInfo_.IR.GetCallTarget(instr);
+        bool isDirectCall = false;
 
         if (callTarget != null && callTarget.HasName) {
-          continue;
+          isDirectCall = true;
         }
 
-        var sb = new StringBuilder();
-        int index = 0;
-
+        // Collect call targets and override the weight
+        // to include only the weight at this call site.
         var list = new List<ProfileCallTreeNode>();
 
         foreach (var target in callsite.SortedTargets) {
-          list.Add(target.Node);
-          if (++index > 1) {
-            sb.AppendLine();
-          }
-
-          double weightPercentage = callsite.ScaleWeight(target.Weight);
-          string targetName = nameFormatter(target.Node.FunctionName);
-          sb.Append(
-            $"{weightPercentage.AsPercentageString().PadLeft(6)} | {target.Weight.AsMillisecondsString()} | {targetName}");
+          var callsiteNode = new ProfileCallTreeGroupNode(target.Node, target.Weight);
+          list.Add(callsiteNode);
         }
 
-        string label = "Indirect call targets";
-        var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16, null, null);
+        var icon = isDirectCall ? directIcon : indirectIcon;
+        var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16);
         var color = App.Settings.DocumentSettings.BackgroundColor;
 
         if (instr.ParentBlock != null && !instr.ParentBlock.HasEvenIndexInFunction) {
@@ -263,33 +255,53 @@ public class ProfileDocumentMarker {
                                               App.Settings.DocumentSettings.FontSize).Width - 20;
         overlay.MarginY = 1;
 
-        CallTreeNodePopup popup = null;
-
-        overlay.OnHover += (sender, e) => {
-          Trace.WriteLine("Show popup");
-          var dummy = new DummyFunctionProfileInfoProvider();
-          var referenceElement = document as UIElement;
-
-          // Show popup under the overlay line.
-          var point = e.GetPosition(referenceElement);
-          point.Offset(0, document.DefaultLineHeight);
-
-          var nodeCopy = node;
-          popup = new CallTreeNodePopup(null, dummy, point, referenceElement,
-            document.Session);
-          popup.TitleText = "Indirect call targets";
-          popup.ShowFunctions(list, irInfo_.NameProvider.FormatFunctionName);
-          popup.ShowPopup();
-        };
-
-        overlay.OnHoverEnd += (sender, e) => {
-          if(popup != null) {
-            popup.Close();
-            popup = null;
-          }
-        };
+        // Show a popup on hover with the list of call targets.
+        SetupCallSiteHoverPreview(overlay, list, document);
       }
     }
+  }
+
+  private void SetupCallSiteHoverPreview(IconElementOverlay overlay, List<ProfileCallTreeNode> list, MarkedDocument document) {
+    // The overlay hover preview is somewhat of a hack,
+    // since the hover event is fired over the entire document,
+    // but the popup should be shown only if mouse is over the overlay.
+    //? TODO: Find a way to integrate hover login into overaly.OnHover
+    var view = document as UIElement;
+    CallTreeNodePopup popup = null;
+    IElementOverlay hoveredOveraly = null;
+
+    overlay.OnHover += (sender, e) => {
+      hoveredOveraly = sender as IElementOverlay;
+    };
+
+    overlay.OnHoverEnd += (sender, e) => {
+      hoveredOveraly = null;
+    };
+
+    var preview = new DraggablePopupHoverPreview(
+ view, CallTreeNodePopup.PopupHoverLongDuration,
+ (mousePoint, previewPoint) => {
+   if (hoveredOveraly == null) {
+     return null; // Nothing actually hovered.
+   }
+
+   if (popup == null) {
+     var dummy = new DummyFunctionProfileInfoProvider();
+     popup = new CallTreeNodePopup(null, dummy, previewPoint, view,
+                 document.Session);
+     popup.TitleText = "Call targets";
+   }
+   else {
+     popup.UpdatePosition(previewPoint, view);
+   }
+
+   popup.ShowFunctions(list, irInfo_.NameProvider.FormatFunctionName);
+   return popup;
+ },
+ (mousePoint, popup) => true,
+  popup => {
+    document.Session.RegisterDetachedPanel(popup);
+  });
   }
 
   private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, MarkedDocument document) {

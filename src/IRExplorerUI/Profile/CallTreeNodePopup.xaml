@@ -73,7 +73,8 @@
               Margin="4,0,4,0"
               VerticalAlignment="Center"
               Text="{Binding DescriptionText}"
-              TextTrimming="CharacterEllipsis" />
+              TextTrimming="CharacterEllipsis" 
+              Visibility="{Binding Path=HasDescriptionText, Converter={StaticResource BoolToVisibilityConverter}}"/>
           </StackPanel>
         </Grid>
         <Button
@@ -108,10 +109,10 @@
 
       <Grid DockPanel.Dock="Bottom">
         <Grid
-          Visibility="{Binding Path=ShowBacktraceView, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+          Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
           <profile:CallTreeNodePanel x:Name="PanelHost" />
         </Grid>
-        <Grid Margin="0,-20,0,0" Visibility="{Binding Path=ShowBacktraceView, Converter={StaticResource BoolToVisibilityConverter}}">
+        <Grid Margin="0,-20,0,0" Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource BoolToVisibilityConverter}}">
           <profile:ProfileListView
           x:Name="StackTraceListView"
           Width="{Binding ElementName=ContentHost, Path=ActualWidth}"

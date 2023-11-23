@@ -781,6 +781,12 @@ public sealed class ProfileCallTreeGroupNode : ProfileCallTreeNode {
     callers_ = callers ?? new List<ProfileCallTreeNode>();
   }
 
+  public ProfileCallTreeGroupNode(ProfileCallTreeNode baseNode, TimeSpan weight) :
+    this(baseNode.FunctionDebugInfo, baseNode.Function) { 
+    nodes_.Add(baseNode);
+    Weight = weight;
+  }
+
   public override bool IsGroup => true;
   public List<ProfileCallTreeNode> Nodes => nodes_;
   public override List<ProfileCallTreeNode> Callers => callers_;

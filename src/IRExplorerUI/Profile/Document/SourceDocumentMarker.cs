@@ -11,6 +11,7 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
+using OxyPlot;
 
 namespace IRExplorerUI.Profile;
 
@@ -23,32 +24,34 @@ public class SourceDocumentMarker {
     irInfo_ = ir;
   }
 
-  public async Task Mark(IRDocument document, FunctionIR function) {
+  public async Task Mark(MarkedDocument document, FunctionIR function) {
     var overlays = new List<IconElementOverlay>(function.InstructionCount);
     var inlineeOverlays = new List<IconElementOverlay>(function.InstructionCount);
     var lineLengths = new List<int>(function.InstructionCount);
     int maxLineLength = 0;
 
+
     await Task.Run(() => {
-      foreach (var element in function.AllInstructions) {
-        var tag = element.GetTag<SourceLocationTag>();
+      foreach (var instr in function.AllInstructions) {
+        // Annotate right-hand side with source line and inlinee info.
+        var tag = instr.GetTag<SourceLocationTag>();
 
         if (tag == null) {
           continue;
         }
 
         string funcName = irInfo_.NameProvider.FormatFunctionName(function.Name);
-        
+
         if (tag.Line != 0) {
           string label = $"{tag.Line}";
           string tooltip = $"Line number for {funcName}";
-          var overlay = document.RegisterIconElementOverlay(element, null, 16, 0, label, tooltip);
+          var overlay = document.RegisterIconElementOverlay(instr, null, 16, 0, label, tooltip);
           overlay.IsLabelPinned = true;
           overlay.TextColor = options_.ElementOverlayTextColor;
           overlay.Background = options_.ElementOverlayBackColor;
 
           overlays.Add(overlay);
-          lineLengths.Add(element.TextLength);
+          lineLengths.Add(instr.TextLength);
         }
 
         if (!tag.HasInlinees) {
@@ -75,7 +78,7 @@ public class SourceDocumentMarker {
 
         // AppendInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
         var inlineeOverlay =
-          document.RegisterIconElementOverlay(element, null, 16, 0, sb.ToString(), tooltipSb.ToString());
+          document.RegisterIconElementOverlay(instr, null, 16, 0, sb.ToString(), tooltipSb.ToString());
         inlineeOverlay.TextColor = options_.InlineeOverlayTextColor;
         inlineeOverlay.Background = options_.ElementOverlayBackColor;
         inlineeOverlay.IsLabelPinned = true;
@@ -106,6 +109,24 @@ public class SourceDocumentMarker {
       overlay.VirtualColumn = position + overlayMargin + inlineeOverlayMargin;
     }
   }
+
+  //private void MarkCallInstruction(InstructionIR instr, MarkedDocument document) {
+  //  if (irInfo_.IR.IsCallInstruction(instr) &&
+  //          irInfo_.IR.GetCallTarget(instr) is OperandIR callTargetOp &&
+  //          callTargetOp.HasName) {
+  //    var icon = IconDrawing.FromIconResource("ExecuteIcon");
+  //    var overlay = document.RegisterIconElementOverlay(instr, icon, 16, 16);
+  //    overlay.IsLabelPinned = false;
+  //    overlay.UseLabelBackground = true;
+  //    overlay.AlignmentX = System.Windows.HorizontalAlignment.Left;
+
+  //    // Place before the call opcode.
+  //    int lineOffset = lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
+  //    overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
+  //                                          App.Settings.DocumentSettings.FontSize).Width - 20;
+  //    overlay.MarginY = 1;
+  //  }
+  //}
 
   private void AppendInlineeTooltip(string inlineeName, int inlineeLine, string inlineeFilePath,
                                     int index, StringBuilder tooltipSb) {
