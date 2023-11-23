@@ -30,6 +30,7 @@ public interface MarkedDocument {
 }
 
 public class ProfileDocumentMarker {
+  // Templates for the time columns defining the style.
   private static readonly OptionalColumn TIME_COLUMN =
     OptionalColumn.Template("[TimeHeader]", "TimePercentageColumnValueTemplate",
                             "TimeHeader", "Time (ms)", "Instruction time", null, 50.0, "TimeColumnHeaderTemplate",
@@ -55,6 +56,7 @@ public class ProfileDocumentMarker {
                               BackColorPalette = ColorPalette.Profile,
                               InvertColorPalette = true
                             });
+  //? TODO: Should be customizable (at least JSON if not UI)
   private static readonly (string, string)[] PerfCounterNameReplacements = {
     ("Instruction", "Instr"),
     ("Misprediction", "Mispred")
@@ -119,10 +121,9 @@ public class ProfileDocumentMarker {
     var metadataTag = function.GetTag<AssemblyMetadataTag>();
     bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
-    //? TODO: Make async
     if (hasInstrOffsetMetadata) {
       var result = profile_.Process(function, irInfo_.IR);
-      columnData = MarkProfiledElements(result, function, document);
+      columnData = await MarkProfiledElements(result, function, document);
       MarkProfiledBlocks(result.BlockSampledElements, document);
       MarkCallSites(document, function, textFunction, metadataTag);
     }
@@ -133,7 +134,7 @@ public class ProfileDocumentMarker {
 
   public async Task<IRDocumentColumnData> MarkSourceLines(MarkedDocument document, FunctionIR function,
                                                           FunctionProfileData.ProcessingResult result) {
-    return MarkProfiledElements(result, function, document);
+    return await MarkProfiledElements(result, function, document);
   }
 
   public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
@@ -300,7 +301,7 @@ public class ProfileDocumentMarker {
     }
   }
 
-  private IRDocumentColumnData
+  private async Task<IRDocumentColumnData>
     MarkProfiledElements(FunctionProfileData.ProcessingResult result,
                          FunctionIR function, MarkedDocument document) {
     var elements = result.SampledElements;
@@ -310,20 +311,22 @@ public class ProfileDocumentMarker {
     var percentageColumn = columnData.AddColumn(TIME_PERCENTAGE_COLUMN);
     var timeColumn = columnData.AddColumn(TIME_COLUMN);
 
-    for (int i = 0; i < elements.Count; i++) {
-      var element = elements[i].Item1;
-      var weight = elements[i].Item2;
-      double weightPercentage = profile_.ScaleWeight(weight);
+    await Task.Run(() => {
+      for (int i = 0; i < elements.Count; i++) {
+        var element = elements[i].Item1;
+        var weight = elements[i].Item2;
+        double weightPercentage = profile_.ScaleWeight(weight);
 
-      string label = weight.AsMillisecondsString();
-      string percentageLabel = weightPercentage.AsTrimmedPercentageString();
-      var columnValue = new ElementColumnValue(label, weight.Ticks, weightPercentage, i);
-      var percentageColumnValue = new ElementColumnValue(percentageLabel, weight.Ticks, weightPercentage, i);
+        string label = weight.AsMillisecondsString();
+        string percentageLabel = weightPercentage.AsTrimmedPercentageString();
+        var columnValue = new ElementColumnValue(label, weight.Ticks, weightPercentage, i);
+        var percentageColumnValue = new ElementColumnValue(percentageLabel, weight.Ticks, weightPercentage, i);
 
-      columnData.AddValue(percentageColumnValue, element, percentageColumn);
-      var valueGroup = columnData.AddValue(columnValue, element, timeColumn);
-      //valueGroup.BackColor = Brushes.Bisque;
-    }
+        columnData.AddValue(percentageColumnValue, element, percentageColumn);
+        var valueGroup = columnData.AddValue(columnValue, element, timeColumn);
+        //valueGroup.BackColor = Brushes.Bisque;
+      }
+    });
 
     percentageColumn.IsMainColumn = true;
     ApplyColumnStyle(percentageColumn, columnData, function, document);
@@ -343,108 +346,108 @@ public class ProfileDocumentMarker {
     //? TODO: Way to set a counter as a baseline, another diff to it in %
     //?    misspredictedBranches / totalBranches
     //?    takenBranches / total, etc JSON
-
     var perfCounters = globalProfile_.SortedPerformanceCounters;
-    var colors = new Brush[] {Brushes.DarkSlateBlue, Brushes.DarkOliveGreen, Brushes.DarkSlateGray};
+    var colors = new Brush[] { Brushes.DarkSlateBlue, Brushes.DarkOliveGreen, Brushes.DarkSlateGray };
     var counterIcon = IconDrawing.FromIconResource("QueryIcon");
     var counterColumns = new OptionalColumn[perfCounters.Count];
-
-    // Add a column for each counter.
-    for (int k = 0; k < perfCounters.Count; k++) {
-      var counterInfo = perfCounters[k];
-      counterColumns[k] = OptionalColumn.Template($"[CounterHeader{counterInfo.Id}]",
-                                                  "TimePercentageColumnValueTemplate",
-                                                  $"CounterHeader{counterInfo.Id}",
-                                                  $"{ShortenPerfCounterName(counterInfo.Name)}",
-                                                  /*counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" :*/
-                                                  $"{counterInfo.Name}",
-                                                  null, 50, "TimeColumnHeaderTemplate",
-                                                  new OptionalColumnAppearance {
-                                                    ShowPercentageBar = true,
-                                                    ShowMainColumnPercentageBar = true,
-                                                    UseBackColor = counterInfo.IsMetric,
-                                                    UseMainColumnBackColor = true,
-                                                    PickColorForPercentage = false,
-                                                    ShowIcon = false,
-                                                    ShowMainColumnIcon = true,
-                                                    BackColorPalette = ColorPalette.Profile,
-                                                    InvertColorPalette = true,
-                                                    TextColor = ColorPalette.DarkHue.PickBrush(k),
-                                                    PercentageBarBackColor = ColorPalette.DarkHue.PickBrush(k)
-                                                  });
-
-      counterColumns[k].IsVisible = IsPerfCounterVisible(counterInfo);
-      counterColumns[k].HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
-      columnData.AddColumn(counterColumns[k]);
-    }
-
-    // Build lists, sort lists by value, then go over lists and assign ValueOrder.
     var counterSortMap = new List<List<CounterSortHelper>>();
 
-    for (int k = 0; k < perfCounters.Count; k++) {
-      counterSortMap.Add(new List<CounterSortHelper>(counterElements.Count));
-    }
-
-    for (int i = 0; i < counterElements.Count; i++) {
-      var element = counterElements[i].Item1;
-      var counterSet = counterElements[i].Item2;
-
+    await Task.Run(() => {
+      // Add a column for each counter.
       for (int k = 0; k < perfCounters.Count; k++) {
-        var counter = perfCounters[k];
-        long value = 0;
-        double valuePercentage = 0;
-        string label = "";
-        string tooltip = null;
-        bool isValueBasedMetric = false;
+        var counterInfo = perfCounters[k];
+        counterColumns[k] = OptionalColumn.Template($"[CounterHeader{counterInfo.Id}]",
+                                                    "TimePercentageColumnValueTemplate",
+                                                    $"CounterHeader{counterInfo.Id}",
+                                                    $"{ShortenPerfCounterName(counterInfo.Name)}",
+                                                    /*counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" :*/
+                                                    $"{counterInfo.Name}",
+                                                    null, 50, "TimeColumnHeaderTemplate",
+                                                    new OptionalColumnAppearance {
+                                                      ShowPercentageBar = true,
+                                                      ShowMainColumnPercentageBar = true,
+                                                      UseBackColor = counterInfo.IsMetric,
+                                                      UseMainColumnBackColor = true,
+                                                      PickColorForPercentage = false,
+                                                      ShowIcon = false,
+                                                      ShowMainColumnIcon = true,
+                                                      BackColorPalette = ColorPalette.Profile,
+                                                      InvertColorPalette = true,
+                                                      TextColor = ColorPalette.DarkHue.PickBrush(k),
+                                                      PercentageBarBackColor = ColorPalette.DarkHue.PickBrush(k)
+                                                    });
 
-        if (counter.IsMetric) {
-          var metric = counter as PerformanceMetric;
-          valuePercentage = metric.ComputeMetric(counterSet, out long baseValue, out long relativeValue);
+        counterColumns[k].IsVisible = IsPerfCounterVisible(counterInfo);
+        counterColumns[k].HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
+        columnData.AddColumn(counterColumns[k]);
+      }
 
-          // Don't show metrics for counters with few hits,
-          // they tend to be the ones that are the most inaccurate.
-          double metricBasePercentage = result.ScaleCounterValue(baseValue, metric.BaseCounter);
+      // Build lists, sort lists by value, then go over lists and assign ValueOrder.
+      for (int k = 0; k < perfCounters.Count; k++) {
+        counterSortMap.Add(new List<CounterSortHelper>(counterElements.Count));
+      }
 
-          if (metricBasePercentage > 0.01) {
-            label = FormatPerformanceMetric(valuePercentage, metric);
-            value = (long)(valuePercentage * 10000);
-            isValueBasedMetric = !metric.Config.IsPercentage;
-            tooltip = "Per instruction";
+      for (int i = 0; i < counterElements.Count; i++) {
+        var element = counterElements[i].Item1;
+        var counterSet = counterElements[i].Item2;
+
+        for (int k = 0; k < perfCounters.Count; k++) {
+          var counter = perfCounters[k];
+          long value = 0;
+          double valuePercentage = 0;
+          string label = "";
+          string tooltip = null;
+          bool isValueBasedMetric = false;
+
+          if (counter.IsMetric) {
+            var metric = counter as PerformanceMetric;
+            valuePercentage = metric.ComputeMetric(counterSet, out long baseValue, out long relativeValue);
+
+            // Don't show metrics for counters with few hits,
+            // they tend to be the ones that are the most inaccurate.
+            double metricBasePercentage = result.ScaleCounterValue(baseValue, metric.BaseCounter);
+
+            if (metricBasePercentage > 0.01) {
+              label = FormatPerformanceMetric(valuePercentage, metric);
+              value = (long)(valuePercentage * 10000);
+              isValueBasedMetric = !metric.Config.IsPercentage;
+              tooltip = "Per instruction";
+            }
+            else {
+              valuePercentage = 0;
+            }
           }
           else {
-            valuePercentage = 0;
+            value = counterSet.FindCounterValue(counter);
+
+            if (value == 0) {
+              continue;
+            }
+
+            valuePercentage = result.ScaleCounterValue(value, counter);
+            label = valuePercentage.AsTrimmedPercentageString();
+            tooltip = FormatPerformanceCounter(value, counter);
           }
+
+          //? Could have a config for all/per-counter to pick % or value as label
+          //var label = $"{value * counter.Interval}";
+          var columnValue = new ElementColumnValue(label, value, valuePercentage, i, tooltip);
+
+          var color = colors[counter.Index % colors.Length];
+          //columnValue.TextColor = color;
+          if (counter.IsMetric)
+            columnValue.BackColor = Brushes.Beige;
+          columnValue.ValuePercentage = valuePercentage;
+          //? TODO: Show bar only if any value is much higher? Std dev
+          columnValue.ShowPercentageBar = !isValueBasedMetric && valuePercentage >= 0.03;
+          columnValue.PercentageBarBackColor = color;
+          columnData.AddValue(columnValue, element, counterColumns[k]);
+
+          var counterValueList = counterSortMap[k];
+          counterValueList.Add(new CounterSortHelper(columnValue, value));
         }
-        else {
-          value = counterSet.FindCounterValue(counter);
-
-          if (value == 0) {
-            continue;
-          }
-
-          valuePercentage = result.ScaleCounterValue(value, counter);
-          label = valuePercentage.AsTrimmedPercentageString();
-          tooltip = FormatPerformanceCounter(value, counter);
-        }
-
-        //? Could have a config for all/per-counter to pick % or value as label
-        //var label = $"{value * counter.Interval}";
-        var columnValue = new ElementColumnValue(label, value, valuePercentage, i, tooltip);
-
-        var color = colors[counter.Index % colors.Length];
-        //columnValue.TextColor = color;
-        if (counter.IsMetric)
-          columnValue.BackColor = Brushes.Beige;
-        columnValue.ValuePercentage = valuePercentage;
-        //? TODO: Show bar only if any value is much higher? Std dev
-        columnValue.ShowPercentageBar = !isValueBasedMetric && valuePercentage >= 0.03;
-        columnValue.PercentageBarBackColor = color;
-        columnData.AddValue(columnValue, element, counterColumns[k]);
-
-        var counterValueList = counterSortMap[k];
-        counterValueList.Add(new CounterSortHelper(columnValue, value));
       }
-    }
+    });
 
     // Sort the counters from each column in decreasing order,
     // then assign the ValueOrder for each counter based on the sorting index.

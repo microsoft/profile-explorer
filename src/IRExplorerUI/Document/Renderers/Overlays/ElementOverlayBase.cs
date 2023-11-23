@@ -41,6 +41,8 @@ public abstract class ElementOverlayBase : IElementOverlay {
 
   public event MouseEventHandler OnClick;
   public event KeyEventHandler OnKeyPress;
+  public event EventHandler OnHover;
+
   [ProtoMember(2)]
   public string Label { get; set; }
   [ProtoMember(3)]
@@ -137,6 +139,11 @@ public abstract class ElementOverlayBase : IElementOverlay {
     }
 
     return IsMouseOver;
+  }
+
+  public virtual bool Hovered(EventArgs e) {
+    OnHover?.Invoke(this, e);
+    return true;
   }
 
   public virtual bool MouseClicked(MouseEventArgs e) {
