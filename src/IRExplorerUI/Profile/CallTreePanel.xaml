@@ -326,36 +326,6 @@
       <ListView.ContextMenu>
         <ContextMenu>
           <MenuItem
-            Command="local:CallTreeCommand.ExpandHottestCallPath"
-            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
-            Header="Expand Hottest Call Path"
-            InputGestureText="Ctrl+="
-            ToolTip="Expand several levels following the hottest path starting with the selected function">
-            <MenuItem.Icon>
-              <Image
-                Height="16"
-                Source="{StaticResource PlusIcon}"
-                Width="16" />
-            </MenuItem.Icon>
-          </MenuItem>
-          <MenuItem
-            Command="local:CallTreeCommand.CollapseCallPath"
-            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
-            Header="Collapse Call Path"
-            InputGestureText="Ctrl+-"
-            ToolTip="Collapse the expanded node starting under the selected function">
-            <MenuItem.Icon>
-              <Image
-                Height="16"
-                Source="{StaticResource MinusIcon}"
-                Width="16" />
-            </MenuItem.Icon>
-          </MenuItem>
-          <Separator />
-
-          <MenuItem
             Command="local:CallTreeCommand.OpenFunction"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTree}"
@@ -381,6 +351,36 @@
                 Height="16"
                 Source="{StaticResource LayoutOpenNewIcon}"
                 Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator />
+
+          <MenuItem
+   Command="local:CallTreeCommand.ExpandHottestCallPath"
+   CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+   CommandTarget="{Binding ElementName=CallTree}"
+   Header="Expand Hottest Call Path"
+   InputGestureText="Ctrl+="
+   ToolTip="Expand several levels following the hottest path starting with the selected function">
+            <MenuItem.Icon>
+              <Image
+       Height="16"
+       Source="{StaticResource PlusIcon}"
+       Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
+   Command="local:CallTreeCommand.CollapseCallPath"
+   CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+   CommandTarget="{Binding ElementName=CallTree}"
+   Header="Collapse Call Path"
+   InputGestureText="Ctrl+-"
+   ToolTip="Collapse the expanded node starting under the selected function">
+            <MenuItem.Icon>
+              <Image
+       Height="16"
+       Source="{StaticResource MinusIcon}"
+       Width="16" />
             </MenuItem.Icon>
           </MenuItem>
           <Separator />
