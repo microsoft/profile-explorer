@@ -5,21 +5,21 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:IRExplorerUI.Windows"
         mc:Ignorable="d"
-        ResizeMode="CanResize"
+        ResizeMode="CanResizeWithGrip"
         ShowInTaskbar="False"
         SnapsToDevicePixels="True"
         UseLayoutRounding="True"
         WindowStartupLocation="CenterOwner"
         WindowStyle="ToolWindow"
         Title="Workspaces" Height="250" Width="400">
-  <Grid>
+  <Grid Margin="4">
     <Grid.RowDefinitions>
       <RowDefinition Height="*" />
-      <RowDefinition Height="38" />
+      <RowDefinition Height="30" />
     </Grid.RowDefinitions>
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="*" />
-      <ColumnDefinition Width="100"/>
+      <ColumnDefinition Width="80"/>
     </Grid.ColumnDefinitions>
 
     <ListBox Grid.Row="0" Grid.Column="0" Margin="4,4,4,4"></ListBox>
@@ -39,13 +39,13 @@
       <Button HorizontalContentAlignment="Left" Padding="2" Height="24" Margin="0,2,0,0">
         <StackPanel Orientation="Horizontal">
           <Image Source="{StaticResource UpArrowIcon}" Width="16" Height="16"></Image>
-          <TextBlock Text="Move Up" Margin="4,0,0,0"></TextBlock>
+          <TextBlock Text="Up" Margin="4,0,0,0"></TextBlock>
         </StackPanel>
       </Button>
       <Button HorizontalContentAlignment="Left" Padding="2" Height="24" Margin="0,2,0,0">
         <StackPanel Orientation="Horizontal">
           <Image Source="{StaticResource DownArrowIcon}" Width="16" Height="16"></Image>
-          <TextBlock Text="Move Down" Margin="4,0,0,0"></TextBlock>
+          <TextBlock Text="Down" Margin="4,0,0,0"></TextBlock>
         </StackPanel>
       </Button>
     </StackPanel>

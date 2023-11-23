@@ -561,9 +561,12 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
   public (TimeSpan Weight, TimeSpan ExclusiveWeight) ChildrenWeight {
     get {
-      Debug.Assert(HasChildren);
       var weight = TimeSpan.Zero;
       var exclusiveWeight = TimeSpan.Zero;
+
+      if(!HasChildren) {
+        return (weight, exclusiveWeight);
+      }
 
       foreach (var child in Children) {
         weight += child.Weight;

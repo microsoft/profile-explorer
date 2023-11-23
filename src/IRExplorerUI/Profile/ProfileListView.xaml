@@ -152,7 +152,6 @@
             </DataTemplate>
           </GridViewColumn.CellTemplate>
         </GridViewColumn>
-
       </GridView>
     </ListView.View>
 
@@ -163,16 +162,16 @@
                 Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
 
-        <Style.Triggers>
-          <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-            <Setter Property="Background"
-                    Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-          </Trigger>
-          <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-            <Setter Property="Background"
-                    Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
-          </Trigger>
-        </Style.Triggers>
+        <!-- <Style.Triggers> -->
+        <!--   <Trigger Property="ItemsControl.AlternationIndex" Value="0"> -->
+        <!--     <Setter Property="Background" -->
+        <!--             Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" /> -->
+        <!--   </Trigger> -->
+        <!--   <Trigger Property="ItemsControl.AlternationIndex" Value="1"> -->
+        <!--     <Setter Property="Background" -->
+        <!--             Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" /> -->
+        <!--   </Trigger> -->
+        <!-- </Style.Triggers> -->
       </Style>
     </ListView.ItemContainerStyle>
 

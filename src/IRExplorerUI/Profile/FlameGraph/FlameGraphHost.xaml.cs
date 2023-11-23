@@ -449,12 +449,14 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                                                             if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup
                                                               popup) {
                                                               popup.UpdatePosition(previewPoint, GraphViewer);
-                                                              popup.UpdateNode(callNode);
-                                                              return popup;
+                                                            }
+                                                            else {
+                                                              popup = new CallTreeNodePopup(
+                                                                callNode, this, previewPoint, GraphViewer, Session);
                                                             }
 
-                                                            return new CallTreeNodePopup(
-                                                              callNode, this, previewPoint, GraphViewer, Session);
+                                                            popup.UpdateNode(callNode);
+                                                            return popup;
                                                           }
 
                                                           return null;
@@ -463,7 +465,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                                                           if (popup is CallTreeNodePopup previewPopup) {
                                                             // Hide if not over the same node anymore.
                                                             var pointedNode = GraphViewer.FindPointedNode(mousePoint);
-                                                            return previewPopup.CallTreeNode !=
+                                                            return previewPopup.CallTreeNode.CallTreeNode !=
                                                                    pointedNode?.CallTreeNode;
                                                           }
 

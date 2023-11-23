@@ -1658,24 +1658,20 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         }
 
         var callNode = nodeList[0];
-        (string text, double textWidth) =
-          CallTreeNodePopup.CreateBacktraceText(callNode, 10,
-                                                Session.CompilerInfo.NameProvider.FormatFunctionName);
 
         if (funcBacktracePreviewPopup_ != null) {
           funcBacktracePreviewPopup_.UpdatePosition(
             previewPoint, FunctionList);
-          funcBacktracePreviewPopup_.UpdateNode(callNode);
         }
         else {
           funcBacktracePreviewPopup_ = new CallTreeNodePopup(
             callNode, null, previewPoint,
-            FunctionList, Session, false);
+            FunctionList, Session);
         }
 
-        funcBacktracePreviewPopup_.ShowBacktraceView = true;
-        funcBacktracePreviewPopup_.BacktraceText = text;
-        funcBacktracePreviewPopup_.Width = textWidth + 50;
+        //? TODO: Max backtrace depth 10 should be an option from TimelinePanel
+        funcBacktracePreviewPopup_.ShowBackTrace(callNode, 10,
+                                                 Session.CompilerInfo.NameProvider.FormatFunctionName);
         return funcBacktracePreviewPopup_;
       },
       (mousePoint, popup) => true,
