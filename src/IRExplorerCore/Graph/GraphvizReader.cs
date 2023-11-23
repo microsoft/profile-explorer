@@ -158,7 +158,7 @@ public sealed class GraphvizReader {
       return true;
     }
 
-    value = default;
+    value = default(ReadOnlyMemory<char>);
     return false;
   }
 
@@ -181,7 +181,7 @@ public sealed class GraphvizReader {
       return true;
     }
 
-    value = default;
+    value = default(ReadOnlyMemory<char>);
     return false;
   }
 

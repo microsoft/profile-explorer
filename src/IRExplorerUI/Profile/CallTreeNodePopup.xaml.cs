@@ -45,6 +45,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
 
   public event PropertyChangedEventHandler PropertyChanged;
   public ISession Session { get; set; }
+
   public ProfileCallTreeNodeEx CallTreeNode {
     get => nodeEx_;
     set {
@@ -71,17 +72,18 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   }
 
   private string title_;
+
   public string TitleText {
     get => CallTreeNode != null ? CallTreeNode.FunctionName : title_;
     set => SetField(ref title_, value);
   }
 
   private string titleTooltipText_;
+
   public string TitleTooltipText {
     get => CallTreeNode != null ? CallTreeNode.FullFunctionName : titleTooltipText_;
     set => SetField(ref titleTooltipText_, value);
   }
-
 
   private string descriptionText_;
   private const double MaxPopupWidth = 800;
@@ -113,10 +115,10 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   }
 
   private double MeasureMaxTextWidth(List<ProfileCallTreeNode> list,
-    FunctionNameFormatter nameFormatter) {
+                                     FunctionNameFormatter nameFormatter) {
     double maxTextWidth = 0;
 
-    foreach(var node in list) {
+    foreach (var node in list) {
       string funcName = node.FormatFunctionName(nameFormatter, MaxPreviewNameLength);
       var textSize = Utils.MeasureString(funcName, DefaultTextFont, DefaultTextSize);
       maxTextWidth = Math.Max(maxTextWidth, textSize.Width);

@@ -630,7 +630,7 @@
                     Width="16" />
                 </MenuItem.Icon>
               </MenuItem>
-              <Separator/>
+              <Separator />
 
               <MenuItem
                 Command="local:Command.CopyFunctionName"

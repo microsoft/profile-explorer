@@ -17,7 +17,6 @@ public class TimelineSettings : SettingsBase {
   //? - show backtrace preview on hover
   //?    - max depth
 
-
   public override void Reset() {
   }
 

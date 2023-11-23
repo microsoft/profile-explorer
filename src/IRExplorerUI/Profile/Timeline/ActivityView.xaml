@@ -50,7 +50,7 @@
             Width="16" />
         </MenuItem.Icon>
       </MenuItem>
-   
+
       <MenuItem
         Command="{Binding FilterTimeRangeCommand}"
         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"

@@ -43,7 +43,6 @@ public abstract class ElementOverlayBase : IElementOverlay {
   public event KeyEventHandler OnKeyPress;
   public event MouseEventHandler OnHover;
   public event MouseEventHandler OnHoverEnd;
-
   [ProtoMember(2)]
   public string Label { get; set; }
   [ProtoMember(3)]

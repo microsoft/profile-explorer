@@ -412,7 +412,7 @@ public sealed class ProfileCallTree {
 
   public void CollectFunctions(ProfileCallTreeNode node, Dictionary<IRTextFunction, ProfileCallTreeNode> funcMap,
                                bool combineInstances = true) {
-    ProfileCallTreeNode entry = node;
+    var entry = node;
 
     if (combineInstances) {
       // Combine all instances of a function under the node.
@@ -564,7 +564,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
       var weight = TimeSpan.Zero;
       var exclusiveWeight = TimeSpan.Zero;
 
-      if(!HasChildren) {
+      if (!HasChildren) {
         return (weight, exclusiveWeight);
       }
 
@@ -782,7 +782,7 @@ public sealed class ProfileCallTreeGroupNode : ProfileCallTreeNode {
   }
 
   public ProfileCallTreeGroupNode(ProfileCallTreeNode baseNode, TimeSpan weight) :
-    this(baseNode.FunctionDebugInfo, baseNode.Function) { 
+    this(baseNode.FunctionDebugInfo, baseNode.Function) {
     nodes_.Add(baseNode);
     Weight = weight;
   }

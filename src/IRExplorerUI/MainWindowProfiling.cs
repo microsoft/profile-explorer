@@ -561,7 +561,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void WorkspacesButton_OnClick(object sender, RoutedEventArgs e) {
-    WorkspacesWindow w = new();
+    WorkspacesWindow w = new WorkspacesWindow();
     w.Owner = this;
     w.ShowDialog();
   }

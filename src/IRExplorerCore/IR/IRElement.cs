@@ -12,7 +12,7 @@ public class IRElement : TaggedObject {
 
   public IRElement(IRElementId elementId) {
     Id = elementId;
-    TextLocation = default;
+    TextLocation = default(TextLocation);
     TextLength = 0;
     Tags = null;
   }

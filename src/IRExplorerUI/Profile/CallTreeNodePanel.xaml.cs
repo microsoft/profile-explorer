@@ -388,7 +388,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   }
 
   public static ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node, ISession session) {
-    if(node == null) {
+    if (node == null) {
       return null;
     }
 

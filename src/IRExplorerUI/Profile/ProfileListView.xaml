@@ -4,7 +4,6 @@
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
-  xmlns:local="clr-namespace:IRExplorerUI.Profile"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   d:DesignHeight="450"
   d:DesignWidth="800"
@@ -32,7 +31,7 @@
             ToolTip="Execution context" />
         </GridViewColumn>
 
-        <GridViewColumn Width="{Binding FunctionColumnWidth{}}">
+        <GridViewColumn Width="{Binding FunctionColumnWidth}">
           <GridViewColumnHeader x:Name="FunctionColumnHeader" Content="{Binding NameColumnTitle}" />
           <GridViewColumn.HeaderContainerStyle>
             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -242,6 +241,6 @@
           </MenuItem.Icon>
         </MenuItem>
       </ContextMenu>
-      </ListView.ContextMenu>
+    </ListView.ContextMenu>
   </ListView>
 </UserControl>

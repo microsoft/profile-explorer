@@ -66,7 +66,7 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
 
   public RemarkCategory FindRemarkKind(string text, bool isInstructionElement) {
     if (categories_ == null) {
-      return default; // Error loading settings.
+      return default(RemarkCategory); // Error loading settings.
     }
 
     text = text.Trim();
