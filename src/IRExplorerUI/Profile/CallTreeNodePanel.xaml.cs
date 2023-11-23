@@ -90,16 +90,11 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     }
   }
 
-  public ProfileCallTreeNodeEx Node {
+  public ProfileCallTreeNodeEx CallTreeNode {
     get => nodeEx_;
-    set => SetField(ref nodeEx_, value);
-  }
-
-  public ProfileCallTreeNode CallTreeNode {
-    get => Node?.CallTreeNode;
     set {
-      if (value != Node?.CallTreeNode) {
-        Node = SetupNodeExtension(value);
+      if (value != nodeEx_) {
+        nodeEx_ = value;
         OnPropertyChanged();
       }
     }
@@ -147,28 +142,32 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     get => useSelfTimeHistogram_;
     set {
       if (SetField(ref useSelfTimeHistogram_, value)) {
-        SetupInstancesHistogram(instanceNodes_, CallTreeNode, useSelfTimeHistogram_);
+        SetupInstancesHistogram(instanceNodes_, CallTreeNode.CallTreeNode, useSelfTimeHistogram_);
       }
     }
   }
 
-  public void Show(ProfileCallTreeNode node) {
+  public void Show(ProfileCallTreeNodeEx node) {
     CallTreeNode = node;
   }
 
   public async Task ShowWithDetailsAsync(ProfileCallTreeNode node) {
+    await ShowWithDetailsAsync(new ProfileCallTreeNodeEx(node));
+  }
+
+  public async Task ShowWithDetailsAsync(ProfileCallTreeNodeEx node) {
     CallTreeNode = node;
     await ShowDetailsAsync();
   }
 
   public async Task ShowDetailsAsync() {
-    await SetupInstanceInfo(CallTreeNode);
+    await SetupInstanceInfo(CallTreeNode.CallTreeNode);
     ShowDetails = true;
 
-    BacktraceList.Show(await Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode)));
-    FunctionList.Show(await Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode)),
+    BacktraceList.Show(await Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode.CallTreeNode)));
+    FunctionList.Show(await Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode.CallTreeNode)),
                       App.Settings.ProfileOptions.FunctionListViewFilter);
-    ModuleList.Show(await Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode)));
+    ModuleList.Show(await Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode.CallTreeNode)));
   }
 
   public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {
@@ -207,7 +206,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     }
 
     var combinedNode = await Task.Run(() => callTree.GetCombinedCallTreeNode(node.Function));
-    InstancesNode = SetupNodeExtension(combinedNode);
+    InstancesNode = SetupNodeExtension(combinedNode, Session);
     FunctionInstancesCount = instanceNodes_.Count;
 
     // Show all instances.
@@ -218,7 +217,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     // Show median time.
     var medianNode = instanceNodes_[instanceNodes_.Count / 2];
-    var medianNodeEx = SetupNodeExtension(medianNode);
+    var medianNodeEx = SetupNodeExtension(medianNode, Session);
     medianNodeEx.Percentage = Session.ProfileData.ScaleFunctionWeight(medianNodeEx.Weight);
     medianNodeEx.ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(medianNodeEx.ExclusiveWeight);
     MedianNode = medianNodeEx;
@@ -388,14 +387,15 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     histogramVisible_ = true;
   }
 
-  private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {
+  public static ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node, ISession session) {
+    var nameProvider = session.CompilerInfo.NameProvider;
     var nodeEx = new ProfileCallTreeNodeEx(node) {
-      FullFunctionName = node.FormatFunctionName(Session.CompilerInfo.NameProvider.FormatFunctionName),
+      FullFunctionName = node.FormatFunctionName(nameProvider.FormatFunctionName),
       FunctionName =
-        node.FormatFunctionName(Session.CompilerInfo.NameProvider.FormatFunctionName, MaxFunctionNameLength),
-      ModuleName = node.FormatModuleName(Session.CompilerInfo.NameProvider.FormatFunctionName, MaxModuleNameLength),
-      Percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight),
-      ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight)
+        node.FormatFunctionName(nameProvider.FormatFunctionName, MaxFunctionNameLength),
+      ModuleName = node.FormatModuleName(nameProvider.FormatFunctionName, MaxModuleNameLength),
+      Percentage = session.ProfileData.ScaleFunctionWeight(node.Weight),
+      ExclusivePercentage = session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight)
     };
 
     return nodeEx;
@@ -406,7 +406,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       int index = Utils.IsKeyboardModifierActive() ? 0 : nodeInstanceIndex_ - 1;
       var node = instanceNodes_[index];
       NodeInstanceChanged?.Invoke(this, node);
-      await ShowWithDetailsAsync(node);
+      await ShowWithDetailsAsync(new ProfileCallTreeNodeEx(node));
     }
   }
 
@@ -415,14 +415,14 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       int index = Utils.IsKeyboardModifierActive() ? FunctionInstancesCount - 1 : nodeInstanceIndex_ + 1;
       var node = instanceNodes_[index];
       NodeInstanceChanged?.Invoke(this, node);
-      await ShowWithDetailsAsync(node);
+      await ShowWithDetailsAsync(new ProfileCallTreeNodeEx(node));
     }
   }
 
   private void HistogramHost_Expanded(object sender, RoutedEventArgs e) {
     if (!histogramVisible_ && instanceNodes_ != null) {
       Dispatcher.BeginInvoke(() => {
-        SetupInstancesHistogram(instanceNodes_, CallTreeNode, useSelfTimeHistogram_);
+        SetupInstancesHistogram(instanceNodes_, CallTreeNode.CallTreeNode, useSelfTimeHistogram_);
       }, DispatcherPriority.Background);
     }
   }

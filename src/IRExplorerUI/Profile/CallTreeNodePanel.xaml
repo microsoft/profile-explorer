@@ -34,7 +34,7 @@
             MinWidth="150"
             MaxWidth="200"
             HorizontalAlignment="Stretch"
-            Content="{Binding Node}"
+            Content="{Binding CallTreeNode}"
             ToolTip="Inclusive time for this function instance"
             ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
         </StackPanel>
@@ -44,7 +44,7 @@
             MinWidth="150"
             MaxWidth="200"
             HorizontalAlignment="Stretch"
-            Content="{Binding Node}"
+            Content="{Binding CallTreeNode}"
             ToolTip="Exclusive time for this function instance"
             ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
         </StackPanel>
@@ -241,7 +241,7 @@
                 ScrollViewer.CanContentScroll="True"
                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                Text="{Binding Path=Node.ModuleName}"
+                Text="{Binding Path=CallTreeNode.ModuleName}"
                 TextWrapping="Wrap" />
             </Canvas>
 
@@ -254,7 +254,7 @@
               <ContentPresenter
                 VerticalAlignment="Center"
                 Margin="4,4,6,0"
-                Content="{Binding}"
+                Content="{Binding CallTreeNode}"
                 ContentTemplate="{StaticResource ExecutionContextTemplate}" />
             </StackPanel>
             <Canvas
@@ -274,7 +274,7 @@
                 ScrollViewer.CanContentScroll="True"
                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                Text="{Binding Path=Node.FullFunctionName}"
+                Text="{Binding Path=CallTreeNode.FullFunctionName}"
                 TextWrapping="Wrap" />
             </Canvas>
           </StackPanel>

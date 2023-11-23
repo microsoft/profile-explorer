@@ -21,6 +21,11 @@ public class FlameGraphSettings : SettingsBase {
   public bool SyncSelection { get; set; }
   [ProtoMember(5)]
   public bool UseCompactMode { get; set; } // font size, node height
+  //? TODO: Options for
+  //? - show node preview on hover
+  //? - diff color scheme for kernel/managed
+  //? - custom color scheme for module
+  //? - auto-colors for functs using TextSearcher
 
   public override void Reset() {
     PrependModuleToFunction = true;

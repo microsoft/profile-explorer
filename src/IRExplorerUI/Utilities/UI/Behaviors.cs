@@ -76,6 +76,25 @@ public class GridViewColumnVisibility {
                                         new UIPropertyMetadata(false,
                                                                OnEnabledChanged));
 
+  public static void RemoveAllColumnsExcept(string columnName, ListView lv) {
+    var gridview = lv.View as GridView;
+    if (gridview == null || gridview.Columns == null)
+      return;
+
+    var toRemove = new List<GridViewColumn>();
+
+    foreach (var gc in gridview.Columns) {
+      if (gc.Header is GridViewColumnHeader header &&
+          !string.Equals(header.Name, columnName)) {
+        toRemove.Add(gc);
+      }
+    }
+
+    foreach (var gc in toRemove) {
+      gridview.Columns.Remove(gc);
+    }
+  }
+
   public static void UpdateListView(ListView lv) {
     var gridview = lv.View as GridView;
     if (gridview == null || gridview.Columns == null)
@@ -149,6 +168,9 @@ public class GridViewColumnVisibility {
           UpdateListView((ListView)sender);
         };
         view.DataContextChanged += (sender, e2) => {
+          UpdateListView((ListView)sender);
+        };
+        view.IsVisibleChanged += (sender, e2) => {
           UpdateListView((ListView)sender);
         };
       }

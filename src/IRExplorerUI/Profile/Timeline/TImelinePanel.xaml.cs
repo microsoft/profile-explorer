@@ -315,7 +315,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
         threadActivityViews_.Add(threadView);
         threadActivityViewsMap_[thread.ThreadId] = threadView;
-        initTasks.Add(threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea, 
+        initTasks.Add(threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea,
                                                                thread.ThreadId));
         SetupActivityHoverPreview(threadView.ActivityHost);
 
@@ -447,25 +447,19 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
           return null;
         }
 
-        (string text, double textWidth) =
-          CallTreeNodePopup.CreateBacktraceText(callNode, 10,
-                                                Session.CompilerInfo.NameProvider.FormatFunctionName);
-
         // If popup already opened for this node reuse the instance.
         if (threadHoverPreviewMap_.TryGetValue(
               view.ThreadId, out var hoverPreview) &&
             hoverPreview.PreviewPopup is CallTreeNodePopup popup) {
           popup.UpdatePosition(previewPoint, view);
-          popup.UpdateNode(callNode);
         }
         else {
-          popup = new CallTreeNodePopup(callNode, this, previewPoint, view,
-                                        Session, false);
+          popup = new CallTreeNodePopup(callNode, this, previewPoint, view, Session);
         }
 
-        popup.ShowBacktraceView = true;
-        popup.BacktraceText = text;
-        popup.Width = textWidth + 50;
+        //? TODO: Max backtrace depth 10 should be an option
+        popup.ShowBackTrace(callNode, 10,
+                            Session.CompilerInfo.NameProvider.FormatFunctionName);
         return popup;
       },
       (mousePoint, popup) => true,

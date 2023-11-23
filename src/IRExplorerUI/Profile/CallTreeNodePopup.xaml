@@ -29,7 +29,7 @@
         Color="#FF929292" />
     </Border.Effect>
     <DockPanel x:Name="ContentHost" LastChildFill="True">
-      <Grid DockPanel.Dock="Top">
+      <Grid DockPanel.Dock="Top" Panel.ZIndex="100">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="20" />
@@ -59,11 +59,11 @@
                   IsHitTestVisible="False"
                   IsReadOnly="True"
                   MaxLines="2"
-                  Text="{Binding Node.FunctionName}"
+                  Text="{Binding CallTreeNode.FunctionName}"
                   TextWrapping="Wrap">
                   <TextBox.ToolTip>
                     <ToolTip Visibility="Visible">
-                      <TextBlock Text="{Binding Node.FullFunctionName}" />
+                      <TextBlock Text="{Binding CallTreeNode.FullFunctionName}" />
                     </ToolTip>
                   </TextBox.ToolTip>
                 </TextBox>
@@ -72,7 +72,7 @@
             <TextBlock
               Margin="4,0,4,0"
               VerticalAlignment="Center"
-              Text="{Binding Node.ModuleName}"
+              Text="{Binding CallTreeNode.ModuleName}"
               TextTrimming="CharacterEllipsis" />
           </StackPanel>
         </Grid>
@@ -108,22 +108,22 @@
 
       <Grid DockPanel.Dock="Bottom">
         <Grid
-          Visibility="{Binding Path=CanExpand, Converter={StaticResource BoolToVisibilityConverter}}">
+          Visibility="{Binding Path=ShowBacktraceView, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
           <profile:CallTreeNodePanel x:Name="PanelHost" />
         </Grid>
-        <TextBox
+        <Grid Margin="0,-20,0,0" Visibility="{Binding Path=ShowBacktraceView, Converter={StaticResource BoolToVisibilityConverter}}">
+          <profile:ProfileListView
+          x:Name="StackTraceListView"
           Width="{Binding ElementName=ContentHost, Path=ActualWidth}"
           Background="{x:Null}"
           BorderBrush="{x:Null}"
-          IsHitTestVisible="False"
-          IsReadOnly="True"
-          MaxLines="5"
-          ScrollViewer.CanContentScroll="False"
-          ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-          ScrollViewer.VerticalScrollBarVisibility="Hidden"
-          Text="{Binding Path=BacktraceText}"
-          TextWrapping="Wrap"
-          Visibility="{Binding Path=ShowBacktraceView, Converter={StaticResource BoolToVisibilityConverter}}" />
+          ShowContextColumn="False"
+          ShowModuleColumn="False"
+            ShowCombinedTimeColumn="False"
+            ShowExclusiveTimeColumn="False"
+            ShowTimeColumn="False"
+          ShowCombinedTimeNameRow="True"/>
+        </Grid>
 
         <controls:ResizeGrip
           x:Name="PanelResizeGrip"

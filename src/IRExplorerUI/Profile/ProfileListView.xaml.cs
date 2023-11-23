@@ -159,6 +159,16 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     set => SetField(ref showContextColumn_, value);
   }
 
+  public void ShowSimpleList(List<ProfileCallTreeNode> nodes) {
+    Show(nodes);
+
+    //? TODO: Hack for what looks like a WPF bug where the
+    // ProfileListView columns visibility is not read from the property
+    // when in a popup and the popup was first created.
+    GridViewColumnVisibility.RemoveAllColumnsExcept("FunctionColumnHeader", ItemList);
+
+  }
+
   public void Show(List<ProfileCallTreeNode> nodes, ProfileListViewFilter filter = null) {
     var filteredNodes = new List<ProfileCallTreeNode>();
 
@@ -205,6 +215,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
                                                                     Session.CompilerInfo.NameProvider.
                                                                       FormatFunctionName)));
     ItemList.ItemsSource = new ListCollectionView(list);
+    GridViewColumnVisibility.UpdateListView(ItemList);
   }
 
   public void Show(List<ModuleProfileInfo> nodes) {
