@@ -42,6 +42,7 @@ public abstract class ElementOverlayBase : IElementOverlay {
   public event MouseEventHandler OnClick;
   public event KeyEventHandler OnKeyPress;
   public event MouseEventHandler OnHover;
+  public event MouseEventHandler OnHoverEnd;
 
   [ProtoMember(2)]
   public string Label { get; set; }
@@ -275,5 +276,10 @@ public abstract class ElementOverlayBase : IElementOverlay {
     }
 
     return Utils.SnapToPixels(rect.Top + (rect.Height - ComputeHeight(rect)) / 2);
+  }
+
+  public bool HoveredEnded(MouseEventArgs e) {
+    OnHoverEnd?.Invoke(this, e);
+    return true;
   }
 }

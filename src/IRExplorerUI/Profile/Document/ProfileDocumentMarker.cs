@@ -242,7 +242,7 @@ public class ProfileDocumentMarker {
         }
 
         string label = "Indirect call targets";
-        var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16, label, sb.ToString());
+        var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16, null, null);
         var color = App.Settings.DocumentSettings.BackgroundColor;
 
         if (instr.ParentBlock != null && !instr.ParentBlock.HasEvenIndexInFunction) {
@@ -263,6 +263,8 @@ public class ProfileDocumentMarker {
                                               App.Settings.DocumentSettings.FontSize).Width - 20;
         overlay.MarginY = 1;
 
+        CallTreeNodePopup popup = null;
+
         overlay.OnHover += (sender, e) => {
           Trace.WriteLine("Show popup");
           var dummy = new DummyFunctionProfileInfoProvider();
@@ -273,11 +275,18 @@ public class ProfileDocumentMarker {
           point.Offset(0, document.DefaultLineHeight);
 
           var nodeCopy = node;
-          var popup = new CallTreeNodePopup(null, dummy, point, referenceElement, 
+          popup = new CallTreeNodePopup(null, dummy, point, referenceElement,
             document.Session);
           popup.TitleText = "Indirect call targets";
           popup.ShowFunctions(list, irInfo_.NameProvider.FormatFunctionName);
           popup.ShowPopup();
+        };
+
+        overlay.OnHoverEnd += (sender, e) => {
+          if(popup != null) {
+            popup.Close();
+            popup = null;
+          }
         };
       }
     }

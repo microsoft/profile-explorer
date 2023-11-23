@@ -165,6 +165,27 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   public async Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section) {
     // Since the ASM blocks don't have a number in the text,
     // attach an overlay label next to the first instr. in the block.
+    CreateBlockLabelOverlays(document, function);
+
+    // Check if there is profile info and annotate the instrs. with timing info.
+    var profile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
+
+    if (profile != null) {
+      var profileOptions = ProfileDocumentMarkerOptions.Default;
+      var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, this);
+      document.ColumnData = await profileMarker.Mark(document, function, section.ParentFunction);
+
+      // Redraw the flow graphs, may have loaded before the marker set the node tags.
+      Session.RedrawPanels();
+    }
+
+    // Annotate instrs. with source line numbers if debug info is available.
+    var markerOptions = ProfileDocumentMarkerOptions.Default;
+    var sourceMarker = new SourceDocumentMarker(markerOptions, this);
+    await sourceMarker.Mark(document, function);
+  }
+
+  private static void CreateBlockLabelOverlays(IRDocument document, FunctionIR function) {
     double overlayHeight = document.TextArea.TextView.DefaultLineHeight;
     var options = ProfileDocumentMarkerOptions.Default; //? TODO: Use App.Settings...
     var blockPen = ColorPens.GetPen(options.BlockOverlayBorderColor,
@@ -195,23 +216,6 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
       overlay.ShowBorderOnMouseOverOnly = false;
       overlay.UseLabelBackground = true;
     }
-
-    // Check if there is profile info and annotate the instrs. with timing info.
-    var profile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
-
-    if (profile != null) {
-      var profileOptions = ProfileDocumentMarkerOptions.Default;
-      var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, this);
-      document.ColumnData = await profileMarker.Mark(document, function, section.ParentFunction);
-
-      // Redraw the flow graphs, may have loaded before the marker set the node tags.
-      Session.RedrawPanels();
-    }
-
-    // Annotate instrs. with source line numbers if debug info is available.
-    var markerOptions = ProfileDocumentMarkerOptions.Default;
-    var sourceMarker = new SourceDocumentMarker(markerOptions, this);
-    await sourceMarker.Mark(document, function);
   }
 
   public void ReloadSettings() {

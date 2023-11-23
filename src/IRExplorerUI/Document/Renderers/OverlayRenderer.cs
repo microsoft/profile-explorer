@@ -459,6 +459,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
       if (hoveredOverlay_ != null) {
         // Deselect previous overlay.
         hoveredOverlay_.IsMouseOver = false;
+        hoveredOverlay_.HoveredEnded(e);
         hoveredOverlay_ = null;
       }
 
