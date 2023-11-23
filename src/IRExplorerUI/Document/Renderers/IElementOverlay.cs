@@ -16,6 +16,7 @@ public interface IElementOverlay {
   public event MouseEventHandler OnClick;
   public event KeyEventHandler OnKeyPress;
   public event MouseEventHandler OnHover;
+  public event MouseEventHandler OnHoverEnd;
 
   public IRElement Element { get; set; }
   public HorizontalAlignment AlignmentX { get; }
@@ -37,4 +38,6 @@ public interface IElementOverlay {
   public bool MouseClicked(MouseEventArgs e);
   public bool KeyPressed(KeyEventArgs e);
   public bool Hovered(MouseEventArgs e);
+  public bool HoveredEnded(MouseEventArgs e);
+
 }
