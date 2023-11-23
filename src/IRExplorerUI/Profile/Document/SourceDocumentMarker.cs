@@ -30,7 +30,6 @@ public class SourceDocumentMarker {
     var lineLengths = new List<int>(function.InstructionCount);
     int maxLineLength = 0;
 
-
     await Task.Run(() => {
       foreach (var instr in function.AllInstructions) {
         // Annotate right-hand side with source line and inlinee info.

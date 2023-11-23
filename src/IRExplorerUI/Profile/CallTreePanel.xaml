@@ -142,7 +142,7 @@
                 Width="16"
                 Height="16"
                 Source="{StaticResource DetailsIcon}" />
-              <TextBlock Text="Details" VerticalAlignment="Center"/>
+              <TextBlock Text="Details" VerticalAlignment="Center" />
             </StackPanel>
           </ToggleButton>
           <Separator />
@@ -356,31 +356,31 @@
           <Separator />
 
           <MenuItem
-   Command="local:CallTreeCommand.ExpandHottestCallPath"
-   CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-   CommandTarget="{Binding ElementName=CallTree}"
-   Header="Expand Hottest Call Path"
-   InputGestureText="Ctrl+="
-   ToolTip="Expand several levels following the hottest path starting with the selected function">
+            Command="local:CallTreeCommand.ExpandHottestCallPath"
+            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+            CommandTarget="{Binding ElementName=CallTree}"
+            Header="Expand Hottest Call Path"
+            InputGestureText="Ctrl+="
+            ToolTip="Expand several levels following the hottest path starting with the selected function">
             <MenuItem.Icon>
               <Image
-       Height="16"
-       Source="{StaticResource PlusIcon}"
-       Width="16" />
+                Height="16"
+                Source="{StaticResource PlusIcon}"
+                Width="16" />
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
-   Command="local:CallTreeCommand.CollapseCallPath"
-   CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-   CommandTarget="{Binding ElementName=CallTree}"
-   Header="Collapse Call Path"
-   InputGestureText="Ctrl+-"
-   ToolTip="Collapse the expanded node starting under the selected function">
+            Command="local:CallTreeCommand.CollapseCallPath"
+            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+            CommandTarget="{Binding ElementName=CallTree}"
+            Header="Collapse Call Path"
+            InputGestureText="Ctrl+-"
+            ToolTip="Collapse the expanded node starting under the selected function">
             <MenuItem.Icon>
               <Image
-       Height="16"
-       Source="{StaticResource MinusIcon}"
-       Width="16" />
+                Height="16"
+                Source="{StaticResource MinusIcon}"
+                Width="16" />
             </MenuItem.Icon>
           </MenuItem>
           <Separator />
@@ -418,7 +418,7 @@
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTree}"
             Header="Select in Summary"
-            ToolTip="Select the function in the Summary panel" >
+            ToolTip="Select the function in the Summary panel">
             <MenuItem.Icon>
               <Image
                 Height="16"

@@ -111,7 +111,7 @@
           <StackPanel Margin="0,0,0,8" Orientation="Vertical">
             <StackPanel x:Name="ProfileCapturePanel"
                         Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
-              <TextBlock Margin="8,6,8,0" FontWeight="Medium"  Text="Profiling target" />
+              <TextBlock Margin="8,6,8,0" FontWeight="Medium" Text="Profiling target" />
 
               <RadioButton
                 x:Name="StartAppRadioButton"

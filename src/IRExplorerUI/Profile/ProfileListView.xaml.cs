@@ -22,6 +22,7 @@ public class ProfileListViewItem : SearchableProfileItem {
   }
 
   public ProfileCallTreeNode CallTreeNode { get; set; }
+
   protected override string GetFunctionName() {
     return CallTreeNode?.FunctionName;
   }
@@ -83,7 +84,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
   public event PropertyChangedEventHandler PropertyChanged;
   public ISession Session { get; set; }
-
   public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
     await OpenFunction(OpenSectionKind.ReplaceCurrent);
   });

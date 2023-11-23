@@ -51,7 +51,7 @@ public class JsonUtils {
     try {
       var options = GetJsonOptions();
       using var stream = File.OpenWrite(path);
-      JsonSerializer.Serialize(stream, data,options);
+      JsonSerializer.Serialize(stream, data, options);
       return true;
     }
     catch (Exception ex) {
@@ -85,7 +85,7 @@ public class JsonUtils {
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to load JSON file: {ex.Message}");
-      data = default;
+      data = default(T);
       return false;
     }
   }
@@ -98,7 +98,7 @@ public class JsonUtils {
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to load JSON: {ex.Message}");
-      data = default;
+      data = default(T);
       return false;
     }
   }

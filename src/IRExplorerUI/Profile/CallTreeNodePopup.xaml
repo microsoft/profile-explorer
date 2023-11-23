@@ -73,8 +73,8 @@
               Margin="4,0,4,0"
               VerticalAlignment="Center"
               Text="{Binding DescriptionText}"
-              TextTrimming="CharacterEllipsis" 
-              Visibility="{Binding Path=HasDescriptionText, Converter={StaticResource BoolToVisibilityConverter}}"/>
+              TextTrimming="CharacterEllipsis"
+              Visibility="{Binding Path=HasDescriptionText, Converter={StaticResource BoolToVisibilityConverter}}" />
           </StackPanel>
         </Grid>
         <Button
@@ -112,18 +112,19 @@
           Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
           <profile:CallTreeNodePanel x:Name="PanelHost" />
         </Grid>
-        <Grid Margin="0,-20,0,0" Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource BoolToVisibilityConverter}}">
+        <Grid Margin="0,-20,0,0"
+              Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource BoolToVisibilityConverter}}">
           <profile:ProfileListView
-          x:Name="StackTraceListView"
-          Width="{Binding ElementName=ContentHost, Path=ActualWidth}"
-          Background="{x:Null}"
-          BorderBrush="{x:Null}"
-          ShowContextColumn="False"
-          ShowModuleColumn="False"
+            x:Name="StackTraceListView"
+            Width="{Binding ElementName=ContentHost, Path=ActualWidth}"
+            Background="{x:Null}"
+            BorderBrush="{x:Null}"
+            ShowContextColumn="False"
+            ShowModuleColumn="False"
             ShowCombinedTimeColumn="False"
             ShowExclusiveTimeColumn="False"
             ShowTimeColumn="False"
-          ShowCombinedTimeNameRow="True"/>
+            ShowCombinedTimeNameRow="True" />
         </Grid>
 
         <controls:ResizeGrip

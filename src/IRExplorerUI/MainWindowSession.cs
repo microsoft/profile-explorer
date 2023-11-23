@@ -1565,7 +1565,7 @@ public partial class MainWindow : Window, ISession {
                       MessageBoxButton.OK, MessageBoxImage.Error);
     }
   }
-  
+
   private async Task CheckedOpenDocument(string filePath) {
     var loadedDoc = await OpenDocument(filePath);
 

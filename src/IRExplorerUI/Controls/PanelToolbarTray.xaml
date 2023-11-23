@@ -122,10 +122,10 @@
       Padding="0"
       Height="20"
       ToolTip="Show panel documentation">
-        <Image
-          Height="18"
-          Source="{StaticResource HelpIcon}"
-          Width="18" />
+      <Image
+        Height="18"
+        Source="{StaticResource HelpIcon}"
+        Width="18" />
     </Button>
 
     <Button

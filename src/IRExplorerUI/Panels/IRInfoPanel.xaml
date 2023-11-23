@@ -58,7 +58,7 @@
         </ToolBar>
       </ToolBarTray>
 
-      <local:PanelToolbarTray Grid.Column="1" HasPinButton="False" HasHelpButton="False"/>
+      <local:PanelToolbarTray Grid.Column="1" HasPinButton="False" HasHelpButton="False" />
     </Grid>
 
     <avalonEdit:TextEditor

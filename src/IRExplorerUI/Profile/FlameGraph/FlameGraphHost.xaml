@@ -38,33 +38,33 @@
       <local:FlameGraphViewer.ContextMenu>
         <ContextMenu>
           <MenuItem
-   Command="local:CallTreeCommand.OpenFunction"
-   CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-   Header="Open Function"
-   InputGestureText="Ctrl+Return"
-   ToolTip="Open the function assembly view">
+            Command="local:CallTreeCommand.OpenFunction"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Open Function"
+            InputGestureText="Ctrl+Return"
+            ToolTip="Open the function assembly view">
             <MenuItem.Icon>
               <Image
-       Height="16"
-       Source="{StaticResource LayoutOpenIcon}"
-       Width="16" />
+                Height="16"
+                Source="{StaticResource LayoutOpenIcon}"
+                Width="16" />
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
-   Command="local:CallTreeCommand.OpenFunctionInNewTab"
-   CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-   Header="Open Function in New Tab"
-   InputGestureText="Ctrl+Shift+Return"
-   ToolTip="Open the function assembly view in a new tab">
+            Command="local:CallTreeCommand.OpenFunctionInNewTab"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Open Function in New Tab"
+            InputGestureText="Ctrl+Shift+Return"
+            ToolTip="Open the function assembly view in a new tab">
             <MenuItem.Icon>
               <Image
-       Height="16"
-       Source="{StaticResource LayoutOpenNewIcon}"
-       Width="16" />
+                Height="16"
+                Source="{StaticResource LayoutOpenNewIcon}"
+                Width="16" />
             </MenuItem.Icon>
           </MenuItem>
           <Separator />
-          
+
           <MenuItem
             Command="local:CallTreeCommand.EnlargeNode"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
@@ -97,7 +97,7 @@
             Command="{Binding CopyFunctionNameCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Copy Function Name"
-            ToolTip="Copy the function name to the clipboard" >
+            ToolTip="Copy the function name to the clipboard">
             <MenuItem.Icon>
               <Image
                 Height="16"

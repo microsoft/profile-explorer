@@ -136,7 +136,7 @@
               <TextBlock Margin="4,0,0,0" Text="Fit All" />
             </StackPanel>
           </Button>
-         
+
           <Separator />
           <Menu VerticalAlignment="Center"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">

@@ -180,14 +180,16 @@ public class ProfileDocumentMarker {
 
   private class DummyFunctionProfileInfoProvider : IFunctionProfileInfoProvider {
     public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
-    return new List<ProfileCallTreeNode>();
-  }
+      return new List<ProfileCallTreeNode>();
+    }
+
     public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
-    return new List<ProfileCallTreeNode>();
-  }
+      return new List<ProfileCallTreeNode>();
+    }
+
     public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
-    return new List<ModuleProfileInfo>();
-  }
+      return new List<ModuleProfileInfo>();
+    }
   }
 
   private void MarkCallSites(MarkedDocument document, FunctionIR function, IRTextFunction textFunction,
@@ -261,7 +263,8 @@ public class ProfileDocumentMarker {
     }
   }
 
-  private void SetupCallSiteHoverPreview(IconElementOverlay overlay, List<ProfileCallTreeNode> list, MarkedDocument document) {
+  private void SetupCallSiteHoverPreview(IconElementOverlay overlay, List<ProfileCallTreeNode> list,
+                                         MarkedDocument document) {
     // The overlay hover preview is somewhat of a hack,
     // since the hover event is fired over the entire document,
     // but the popup should be shown only if mouse is over the overlay.
@@ -279,29 +282,29 @@ public class ProfileDocumentMarker {
     };
 
     var preview = new DraggablePopupHoverPreview(
- view, CallTreeNodePopup.PopupHoverLongDuration,
- (mousePoint, previewPoint) => {
-   if (hoveredOveraly == null) {
-     return null; // Nothing actually hovered.
-   }
+      view, CallTreeNodePopup.PopupHoverLongDuration,
+      (mousePoint, previewPoint) => {
+        if (hoveredOveraly == null) {
+          return null; // Nothing actually hovered.
+        }
 
-   if (popup == null) {
-     var dummy = new DummyFunctionProfileInfoProvider();
-     popup = new CallTreeNodePopup(null, dummy, previewPoint, view,
-                 document.Session);
-     popup.TitleText = "Call Targets";
-   }
-   else {
-     popup.UpdatePosition(previewPoint, view);
-   }
+        if (popup == null) {
+          var dummy = new DummyFunctionProfileInfoProvider();
+          popup = new CallTreeNodePopup(null, dummy, previewPoint, view,
+                                        document.Session);
+          popup.TitleText = "Call Targets";
+        }
+        else {
+          popup.UpdatePosition(previewPoint, view);
+        }
 
-   popup.ShowFunctions(list, irInfo_.NameProvider.FormatFunctionName);
-   return popup;
- },
- (mousePoint, popup) => true,
-  popup => {
-    document.Session.RegisterDetachedPanel(popup);
-  });
+        popup.ShowFunctions(list, irInfo_.NameProvider.FormatFunctionName);
+        return popup;
+      },
+      (mousePoint, popup) => true,
+      popup => {
+        document.Session.RegisterDetachedPanel(popup);
+      });
   }
 
   private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, MarkedDocument document) {
@@ -402,7 +405,7 @@ public class ProfileDocumentMarker {
     //?    misspredictedBranches / totalBranches
     //?    takenBranches / total, etc JSON
     var perfCounters = globalProfile_.SortedPerformanceCounters;
-    var colors = new Brush[] { Brushes.DarkSlateBlue, Brushes.DarkOliveGreen, Brushes.DarkSlateGray };
+    var colors = new Brush[] {Brushes.DarkSlateBlue, Brushes.DarkOliveGreen, Brushes.DarkSlateGray};
     var counterIcon = IconDrawing.FromIconResource("QueryIcon");
     var counterColumns = new OptionalColumn[perfCounters.Count];
     var counterSortMap = new List<List<CounterSortHelper>>();
@@ -410,7 +413,7 @@ public class ProfileDocumentMarker {
     await Task.Run(() => {
       // Add a column for each counter.
       for (int k = 0; k < perfCounters.Count; k++) {
-        CreatePerfCounterColumn(function, document, columnData, 
+        CreatePerfCounterColumn(function, document, columnData,
                                 perfCounters, counterColumns, k);
       }
 
@@ -501,8 +504,8 @@ public class ProfileDocumentMarker {
   }
 
   private void CreatePerfCounterColumn(FunctionIR function, MarkedDocument document,
-    IRDocumentColumnData columnData, List<PerformanceCounter> perfCounters,
-    OptionalColumn[] counterColumns, int k) {
+                                       IRDocumentColumnData columnData, List<PerformanceCounter> perfCounters,
+                                       OptionalColumn[] counterColumns, int k) {
     var counterInfo = perfCounters[k];
     counterColumns[k] = OptionalColumn.Template($"[CounterHeader{counterInfo.Id}]",
                                                 "TimePercentageColumnValueTemplate",
