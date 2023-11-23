@@ -59,11 +59,11 @@
                   IsHitTestVisible="False"
                   IsReadOnly="True"
                   MaxLines="2"
-                  Text="{Binding CallTreeNode.FunctionName}"
+                  Text="{Binding TitleText}"
                   TextWrapping="Wrap">
                   <TextBox.ToolTip>
                     <ToolTip Visibility="Visible">
-                      <TextBlock Text="{Binding CallTreeNode.FullFunctionName}" />
+                      <TextBlock Text="{Binding TitleTooltipText}" />
                     </ToolTip>
                   </TextBox.ToolTip>
                 </TextBox>
@@ -72,7 +72,7 @@
             <TextBlock
               Margin="4,0,4,0"
               VerticalAlignment="Center"
-              Text="{Binding CallTreeNode.ModuleName}"
+              Text="{Binding DescriptionText}"
               TextTrimming="CharacterEllipsis" />
           </StackPanel>
         </Grid>

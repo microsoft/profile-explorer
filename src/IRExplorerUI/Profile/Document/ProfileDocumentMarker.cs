@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -17,6 +18,7 @@ namespace IRExplorerUI.Profile;
 
 // Used as the interface for both the full IR document and lightweight version (source file).
 public interface MarkedDocument {
+  ISession Session { get; }
   double DefaultLineHeight { get; }
   public void SuspendUpdate();
   public void ResumeUpdate();
@@ -176,6 +178,18 @@ public class ProfileDocumentMarker {
     }
   }
 
+  private class DummyFunctionProfileInfoProvider : IFunctionProfileInfoProvider {
+    public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
+    return new List<ProfileCallTreeNode>();
+  }
+    public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
+    return new List<ProfileCallTreeNode>();
+  }
+    public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
+    return new List<ModuleProfileInfo>();
+  }
+  }
+
   private void MarkCallSites(MarkedDocument document, FunctionIR function, IRTextFunction textFunction,
                              AssemblyMetadataTag metadataTag) {
     // Mark indirect call sites and list the hottest call targets.
@@ -213,7 +227,10 @@ public class ProfileDocumentMarker {
         var sb = new StringBuilder();
         int index = 0;
 
+        var list = new List<ProfileCallTreeNode>();
+
         foreach (var target in callsite.SortedTargets) {
+          list.Add(target.Node);
           if (++index > 1) {
             sb.AppendLine();
           }
@@ -245,6 +262,23 @@ public class ProfileDocumentMarker {
         overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
                                               App.Settings.DocumentSettings.FontSize).Width - 20;
         overlay.MarginY = 1;
+
+        overlay.OnHover += (sender, e) => {
+          Trace.WriteLine("Show popup");
+          var dummy = new DummyFunctionProfileInfoProvider();
+          var referenceElement = document as UIElement;
+
+          // Show popup under the overlay line.
+          var point = e.GetPosition(referenceElement);
+          point.Offset(0, document.DefaultLineHeight);
+
+          var nodeCopy = node;
+          var popup = new CallTreeNodePopup(null, dummy, point, referenceElement, 
+            document.Session);
+          popup.TitleText = "Indirect call targets";
+          popup.ShowFunctions(list, irInfo_.NameProvider.FormatFunctionName);
+          popup.ShowPopup();
+        };
       }
     }
   }
@@ -264,7 +298,7 @@ public class ProfileDocumentMarker {
       var color = options_.PickBackColorForOrder(i, weightPercentage, true);
 
       if (color == Colors.Transparent) {
-        // 
+        // Match the backround color of the corresponding text line.
         color = block.HasEvenIndexInFunction ?
           App.Settings.DocumentSettings.BackgroundColor :
           App.Settings.DocumentSettings.AlternateBackgroundColor;
@@ -355,31 +389,8 @@ public class ProfileDocumentMarker {
     await Task.Run(() => {
       // Add a column for each counter.
       for (int k = 0; k < perfCounters.Count; k++) {
-        var counterInfo = perfCounters[k];
-        counterColumns[k] = OptionalColumn.Template($"[CounterHeader{counterInfo.Id}]",
-                                                    "TimePercentageColumnValueTemplate",
-                                                    $"CounterHeader{counterInfo.Id}",
-                                                    $"{ShortenPerfCounterName(counterInfo.Name)}",
-                                                    /*counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" :*/
-                                                    $"{counterInfo.Name}",
-                                                    null, 50, "TimeColumnHeaderTemplate",
-                                                    new OptionalColumnAppearance {
-                                                      ShowPercentageBar = true,
-                                                      ShowMainColumnPercentageBar = true,
-                                                      UseBackColor = counterInfo.IsMetric,
-                                                      UseMainColumnBackColor = true,
-                                                      PickColorForPercentage = false,
-                                                      ShowIcon = false,
-                                                      ShowMainColumnIcon = true,
-                                                      BackColorPalette = ColorPalette.Profile,
-                                                      InvertColorPalette = true,
-                                                      TextColor = ColorPalette.DarkHue.PickBrush(k),
-                                                      PercentageBarBackColor = ColorPalette.DarkHue.PickBrush(k)
-                                                    });
-
-        counterColumns[k].IsVisible = IsPerfCounterVisible(counterInfo);
-        counterColumns[k].HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
-        columnData.AddColumn(counterColumns[k]);
+        CreatePerfCounterColumn(function, document, columnData, 
+                                perfCounters, counterColumns, k);
       }
 
       // Build lists, sort lists by value, then go over lists and assign ValueOrder.
@@ -434,7 +445,7 @@ public class ProfileDocumentMarker {
           var columnValue = new ElementColumnValue(label, value, valuePercentage, i, tooltip);
 
           var color = colors[counter.Index % colors.Length];
-          //columnValue.TextColor = color;
+          //? TODO: columnValue.TextColor = color;
           if (counter.IsMetric)
             columnValue.BackColor = Brushes.Beige;
           columnValue.ValuePercentage = valuePercentage;
@@ -466,6 +477,36 @@ public class ProfileDocumentMarker {
     }
 
     return columnData;
+  }
+
+  private void CreatePerfCounterColumn(FunctionIR function, MarkedDocument document,
+    IRDocumentColumnData columnData, List<PerformanceCounter> perfCounters,
+    OptionalColumn[] counterColumns, int k) {
+    var counterInfo = perfCounters[k];
+    counterColumns[k] = OptionalColumn.Template($"[CounterHeader{counterInfo.Id}]",
+                                                "TimePercentageColumnValueTemplate",
+                                                $"CounterHeader{counterInfo.Id}",
+                                                $"{ShortenPerfCounterName(counterInfo.Name)}",
+                                                /*counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" :*/
+                                                $"{counterInfo.Name}",
+                                                null, 50, "TimeColumnHeaderTemplate",
+                                                new OptionalColumnAppearance {
+                                                  ShowPercentageBar = true,
+                                                  ShowMainColumnPercentageBar = true,
+                                                  UseBackColor = counterInfo.IsMetric,
+                                                  UseMainColumnBackColor = true,
+                                                  PickColorForPercentage = false,
+                                                  ShowIcon = false,
+                                                  ShowMainColumnIcon = true,
+                                                  BackColorPalette = ColorPalette.Profile,
+                                                  InvertColorPalette = true,
+                                                  TextColor = ColorPalette.DarkHue.PickBrush(k),
+                                                  PercentageBarBackColor = ColorPalette.DarkHue.PickBrush(k)
+                                                });
+
+    counterColumns[k].IsVisible = IsPerfCounterVisible(counterInfo);
+    counterColumns[k].HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
+    columnData.AddColumn(counterColumns[k]);
   }
 
   private OptionalColumnEventHandler ColumnHeaderClickHandler(MarkedDocument document, FunctionIR function,

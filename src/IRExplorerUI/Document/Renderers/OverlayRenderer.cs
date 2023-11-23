@@ -130,7 +130,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   }
 
   public void MouseMoved(MouseEventArgs e) {
-    HandleMouseMoved(e.GetPosition(this));
+    HandleMouseMoved(e.GetPosition(this), e);
   }
 
   public void KeyPressed(KeyEventArgs e) {
@@ -435,7 +435,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     return new Vector(0, 0);
   }
 
-  private void HandleMouseMoved(Point point) {
+  private void HandleMouseMoved(Point point, MouseEventArgs e) {
     if (overlaySegments_.Count == 0 || TextView == null) {
       return;
     }
@@ -465,7 +465,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
       if (hoverOverlay != null) {
         hoverOverlay.IsMouseOver = true;
         hoveredOverlay_ = hoverOverlay;
-        hoveredOverlay_.Hovered(EventArgs.Empty);
+        hoveredOverlay_.Hovered(e);
       }
 
       HideTooltip();

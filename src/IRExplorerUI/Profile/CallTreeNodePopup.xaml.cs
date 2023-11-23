@@ -45,7 +45,12 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   public ISession Session { get; set; }
   public ProfileCallTreeNodeEx CallTreeNode {
     get => nodeEx_;
-    set => SetField(ref nodeEx_, value);
+    set {
+      SetField(ref nodeEx_, value);
+      OnPropertyChanged(nameof(TitleText));
+      OnPropertyChanged(nameof(TitleTooltipText));
+      OnPropertyChanged(nameof(DescriptionText));
+    }
   }
 
   public bool ShowResizeGrip {
@@ -63,10 +68,26 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     set => SetField(ref showBacktraceView_, value);
   }
 
-  public string BacktraceText {
-    get => backtraceText_;
-    set => SetField(ref backtraceText_, value);
+  private string title_;
+  public string TitleText {
+    get => CallTreeNode != null ? CallTreeNode.FunctionName : title_;
+    set => SetField(ref title_, value);
   }
+
+
+  private string titleTooltipText_;
+  public string TitleTooltipText {
+    get => CallTreeNode != null ? CallTreeNode.FullFunctionName : titleTooltipText_;
+    set => SetField(ref titleTooltipText_, value);
+  }
+
+
+  private string descriptionText_;
+  public string DescriptionText {
+    get => CallTreeNode != null ? CallTreeNode.ModuleName : descriptionText_;
+    set => SetField(ref descriptionText_, value);
+  }
+
 
   public void ShowBackTrace(ProfileCallTreeNode node, int maxLevel,
                             FunctionNameFormatter nameFormatter) {
@@ -83,7 +104,19 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     }
 
     StackTraceListView.ShowSimpleList(list);
+
+    //? TODO: Also adjust name column with in ListView
     Width = maxTextWidth + 20;
+    ShowBacktraceView = true;
+  }
+
+  public void ShowFunctions(List<ProfileCallTreeNode> list,
+                            FunctionNameFormatter nameFormatter) {
+
+    StackTraceListView.ShowSimpleList(list);
+
+    //? TODO: Also adjust name column with in ListView
+    //Width = maxTextWidth + 20;
     ShowBacktraceView = true;
   }
 
