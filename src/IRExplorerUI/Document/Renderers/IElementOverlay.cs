@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -12,9 +13,10 @@ namespace IRExplorerUI.Document;
 [ProtoContract]
 [ProtoInclude(100, typeof(ElementOverlayBase))]
 public interface IElementOverlay {
-  // event EventHandler OnHover;
   public event MouseEventHandler OnClick;
   public event KeyEventHandler OnKeyPress;
+  public event EventHandler OnHover;
+
   public IRElement Element { get; set; }
   public HorizontalAlignment AlignmentX { get; }
   public VerticalAlignment AlignmentY { get; }
@@ -34,4 +36,5 @@ public interface IElementOverlay {
   public bool CheckIsMouseOver(Point point);
   public bool MouseClicked(MouseEventArgs e);
   public bool KeyPressed(KeyEventArgs e);
+  public bool Hovered(EventArgs e);
 }

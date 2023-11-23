@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls.Primitives;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
@@ -14,87 +16,87 @@ namespace IRExplorerUI.Profile;
 
 public class SourceDocumentMarker {
   private ProfileDocumentMarkerOptions options_;
-  private ICompilerIRInfo ir_;
+  private ICompilerInfoProvider irInfo_;
 
-  public SourceDocumentMarker(ProfileDocumentMarkerOptions options, ICompilerIRInfo ir) {
+  public SourceDocumentMarker(ProfileDocumentMarkerOptions options, ICompilerInfoProvider ir) {
     options_ = options;
-    ir_ = ir;
+    irInfo_ = ir;
   }
 
-  public Task Mark(IRDocument document, FunctionIR function) {
+  public async Task Mark(IRDocument document, FunctionIR function) {
     var overlays = new List<IconElementOverlay>(function.InstructionCount);
     var inlineeOverlays = new List<IconElementOverlay>(function.InstructionCount);
     var lineLengths = new List<int>(function.InstructionCount);
     int maxLineLength = 0;
 
-    foreach (var element in function.AllInstructions) {
-      var tag = element.GetTag<SourceLocationTag>();
+    await Task.Run(() => {
+      foreach (var element in function.AllInstructions) {
+        var tag = element.GetTag<SourceLocationTag>();
 
-      if (tag == null) {
-        continue;
-      }
-
-      string funcName =
-        PDBDebugInfoProvider.DemangleFunctionName(function.Name, FunctionNameDemanglingOptions.OnlyName);
-
-      if (tag.Line != 0) {
-        string label = $"{tag.Line}";
-        string tooltip = $"Line number for {funcName}";
-        var overlay = document.RegisterIconElementOverlay(element, null, 16, 0, label, tooltip);
-        overlay.IsLabelPinned = true;
-        overlay.TextColor = options_.ElementOverlayTextColor;
-        overlay.Background = options_.ElementOverlayBackColor;
-
-        overlays.Add(overlay);
-        lineLengths.Add(element.TextLength);
-      }
-
-      if (!tag.HasInlinees) {
-        continue;
-      }
-
-      var sb = new StringBuilder();
-      var tooltipSb = new StringBuilder();
-
-      for (int k = 0; k < tag.Inlinees.Count; k++) {
-        var inlinee = tag.Inlinees[k];
-        string inlineeName =
-          PDBDebugInfoProvider.DemangleFunctionName(inlinee.Function, FunctionNameDemanglingOptions.OnlyName);
-        sb.Append($"{inlineeName}:{tag.Inlinees[k].Line}");
-
-        AppendInlineeTooltip(inlineeName, inlinee.Line, inlinee.FilePath, k, tooltipSb);
-        tooltipSb.AppendLine();
-
-        if (k != tag.Inlinees.Count - 1) {
-          sb.Append("  |  ");
+        if (tag == null) {
+          continue;
         }
+
+        string funcName = irInfo_.NameProvider.FormatFunctionName(function.Name);
+        
+        if (tag.Line != 0) {
+          string label = $"{tag.Line}";
+          string tooltip = $"Line number for {funcName}";
+          var overlay = document.RegisterIconElementOverlay(element, null, 16, 0, label, tooltip);
+          overlay.IsLabelPinned = true;
+          overlay.TextColor = options_.ElementOverlayTextColor;
+          overlay.Background = options_.ElementOverlayBackColor;
+
+          overlays.Add(overlay);
+          lineLengths.Add(element.TextLength);
+        }
+
+        if (!tag.HasInlinees) {
+          continue;
+        }
+
+        var sb = new StringBuilder();
+        var tooltipSb = new StringBuilder();
+        tooltipSb.AppendLine("Inlined functions");
+        tooltipSb.AppendLine("name:line (file) in call tree order:\n");
+
+        for (int k = 0; k < tag.Inlinees.Count; k++) {
+          var inlinee = tag.Inlinees[tag.Inlinees.Count - k - 1]; // Append backwards.
+          string inlineeName = irInfo_.NameProvider.FormatFunctionName(inlinee.Function);
+          sb.Append($"{inlineeName}:{tag.Inlinees[k].Line}");
+
+          AppendInlineeTooltip(inlineeName, inlinee.Line, inlinee.FilePath, k, tooltipSb);
+          tooltipSb.AppendLine();
+
+          if (k != tag.Inlinees.Count - 1) {
+            sb.Append("  |  ");
+          }
+        }
+
+        // AppendInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
+        var inlineeOverlay =
+          document.RegisterIconElementOverlay(element, null, 16, 0, sb.ToString(), tooltipSb.ToString());
+        inlineeOverlay.TextColor = options_.InlineeOverlayTextColor;
+        inlineeOverlay.Background = options_.ElementOverlayBackColor;
+        inlineeOverlay.IsLabelPinned = true;
+        inlineeOverlays.Add(inlineeOverlay);
       }
 
-      AppendInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
-      var inlineeOverlay =
-        document.RegisterIconElementOverlay(element, null, 16, 0, sb.ToString(), tooltipSb.ToString());
-      inlineeOverlay.TextColor = options_.InlineeOverlayTextColor;
-      inlineeOverlay.Background = options_.ElementOverlayBackColor;
-      inlineeOverlay.IsLabelPinned = true;
-      inlineeOverlays.Add(inlineeOverlay);
-    }
+      lineLengths.Sort();
+    });
 
     // Place the line numbers on a column aligned with most instrs.
     var settings = App.Settings.DocumentSettings;
-    const double lengthPercentile = 0.9;
-    const int overlayMargin = 20;
+    const double lengthPercentile = 0.9; // Consider length of most lines.
+    const int overlayMargin = 20; // Distance from instruction end.
     const int inlineeOverlayMargin = 30;
 
-    lineLengths.Sort();
     int percentileLength =
       lineLengths.Count > 0 ? lineLengths[(int)Math.Floor(lineLengths.Count * lengthPercentile)] : 0;
     double columnPosition = Utils.MeasureString(percentileLength, settings.FontName, settings.FontSize).Width;
 
+    // Adjust position of all overlays.
     foreach (var overlay in overlays) {
-      if (overlay.Element.TextLength > percentileLength) {
-        //? adjust
-      }
-
       double position = Math.Max(options_.VirtualColumnPosition, columnPosition);
       overlay.VirtualColumn = position + overlayMargin;
     }
@@ -103,8 +105,6 @@ public class SourceDocumentMarker {
       double position = Math.Max(options_.VirtualColumnPosition, columnPosition);
       overlay.VirtualColumn = position + overlayMargin + inlineeOverlayMargin;
     }
-
-    return Task.CompletedTask;
   }
 
   private void AppendInlineeTooltip(string inlineeName, int inlineeLine, string inlineeFilePath,

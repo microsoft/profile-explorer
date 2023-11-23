@@ -275,6 +275,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     //var dotPen = ColorPens.GetTransparentPen(Colors.DarkRed, 255);
     bool first = true;
 
+    //? TODO: Disabled, used from IRDocument
     // Draw extra annotations for remarks in the same context.
     foreach (var connectedElement in connectedElements_) {
       var prevSegmentRect = GetRemarkSegmentRect(rootConnectedElement_.Element, textView);
@@ -464,6 +465,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
       if (hoverOverlay != null) {
         hoverOverlay.IsMouseOver = true;
         hoveredOverlay_ = hoverOverlay;
+        hoveredOverlay_.Hovered(EventArgs.Empty);
       }
 
       HideTooltip();

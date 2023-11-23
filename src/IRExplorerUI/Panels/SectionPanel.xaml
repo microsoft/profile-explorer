@@ -175,7 +175,7 @@
       <Grid Grid.Row="0">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="25" />
+          <ColumnDefinition Width="44" />
         </Grid.ColumnDefinitions>
         <ToolBarTray
           Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
@@ -300,6 +300,7 @@
           Grid.Column="1"
           HasDuplicateButton="False"
           HasPinButton="False"
+          HasHelpButton="True"
           SettingsClicked="FixedToolbar_SettingsClicked"
           Visibility="{Binding IsSectionListVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
       </Grid>

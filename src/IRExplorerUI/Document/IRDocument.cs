@@ -3316,6 +3316,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return;
     }
 
+    // Compute the weight sum of the selected range of instructions
+    // and display it in the main status bar.
     var funcProfile = Session.ProfileData.GetFunctionProfile(Section.ParentFunction);
     var metadataTag = Function.GetTag<AssemblyMetadataTag>();
     bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;

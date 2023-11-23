@@ -210,7 +210,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
 
     // Annotate instrs. with source line numbers if debug info is available.
     var markerOptions = ProfileDocumentMarkerOptions.Default;
-    var sourceMarker = new SourceDocumentMarker(markerOptions, ir_);
+    var sourceMarker = new SourceDocumentMarker(markerOptions, this);
     await sourceMarker.Mark(document, function);
   }
 
