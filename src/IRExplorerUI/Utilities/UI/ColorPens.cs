@@ -9,7 +9,7 @@ using System.Windows.Media;
 namespace IRExplorerUI;
 
 public static class ColorPens {
-  private static readonly double BoldPenThickness = 1.5;
+  private static readonly double BoldPenThickness = 1.25;
   private static ThreadLocal<Dictionary<Tuple<Color, double>, Pen>> pens_ =
     new ThreadLocal<Dictionary<Tuple<Color, double>, Pen>>(() => {
       return new Dictionary<Tuple<Color, double>, Pen>();

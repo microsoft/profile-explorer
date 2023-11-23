@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using IRExplorerUI.Controls;
@@ -63,7 +64,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     set => SetField(ref canExpand_, value);
   }
 
-  public bool ShowBacktraceView {
+  public bool ShowSimpleView {
     get => showBacktraceView_;
     set => SetField(ref showBacktraceView_, value);
   }
@@ -74,7 +75,6 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     set => SetField(ref title_, value);
   }
 
-
   private string titleTooltipText_;
   public string TitleTooltipText {
     get => CallTreeNode != null ? CallTreeNode.FullFunctionName : titleTooltipText_;
@@ -83,47 +83,63 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
 
 
   private string descriptionText_;
+  private const double MaxPopupWidth = 800;
+  private const double MinPopupWidth = 300;
+
   public string DescriptionText {
     get => CallTreeNode != null ? CallTreeNode.ModuleName : descriptionText_;
-    set => SetField(ref descriptionText_, value);
+    set {
+      SetField(ref descriptionText_, value);
+      OnPropertyChanged(nameof(HasDescriptionText));
+
   }
 
+  public bool HasDescriptionText => !string.IsNullOrEmpty(DescriptionText);
 
   public void ShowBackTrace(ProfileCallTreeNode node, int maxLevel,
                             FunctionNameFormatter nameFormatter) {
     UpdateNode(node); // Set title.
     var list = new List<ProfileCallTreeNode>();
-    double maxTextWidth = 0;
 
     while (node != null && maxLevel-- > 0) {
-      string funcName = node.FormatFunctionName(nameFormatter, MaxPreviewNameLength);
-      var textSize = Utils.MeasureString(funcName, DefaultTextFont, DefaultTextSize);
-      maxTextWidth = Math.Max(maxTextWidth, textSize.Width);
       list.Add(node);
       node = node.Caller;
     }
 
+    ShowSimpleView = true;
+    UpdatePopupWidth(MeasureMaxTextWidth(list, nameFormatter));
     StackTraceListView.ShowSimpleList(list);
+  }
 
-    //? TODO: Also adjust name column with in ListView
-    Width = maxTextWidth + 20;
-    ShowBacktraceView = true;
+  private double MeasureMaxTextWidth(List<ProfileCallTreeNode> list,
+    FunctionNameFormatter nameFormatter) {
+    double maxTextWidth = 0;
+
+    foreach(var node in list) {
+      string funcName = node.FormatFunctionName(nameFormatter, MaxPreviewNameLength);
+      var textSize = Utils.MeasureString(funcName, DefaultTextFont, DefaultTextSize);
+      maxTextWidth = Math.Max(maxTextWidth, textSize.Width);
+    }
+
+    return maxTextWidth;
+  }
+
+  private void UpdatePopupWidth(double maxTextWidth) {
+    Width = Math.Min(maxTextWidth + SystemParameters.VerticalScrollBarWidth, MaxPopupWidth);
+    StackTraceListView.FunctionColumnWidth = Math.Max(MinPopupWidth, Width - SystemParameters.VerticalScrollBarWidth);
   }
 
   public void ShowFunctions(List<ProfileCallTreeNode> list,
                             FunctionNameFormatter nameFormatter) {
-
+    ShowSimpleView = true;
+    UpdatePopupWidth(MeasureMaxTextWidth(list, nameFormatter));
     StackTraceListView.ShowSimpleList(list);
-
-    //? TODO: Also adjust name column with in ListView
-    //Width = maxTextWidth + 20;
-    ShowBacktraceView = true;
   }
 
   public void UpdateNode(ProfileCallTreeNode node) {
     CallTreeNode = CallTreeNodePanel.SetupNodeExtension(node, Session);
 
-    if (!ShowBacktraceView) {
+    if (!ShowSimpleView) {
       PanelHost.Show(CallTreeNode);
     }
   }
@@ -159,7 +175,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   private async void ExpandButton_OnClick(object sender, RoutedEventArgs e) {
     DetachPopup();
 
-    if (!ShowBacktraceView) {
+    if (!ShowSimpleView) {
       await PanelHost.ShowDetailsAsync();
     }
 
