@@ -388,6 +388,10 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   }
 
   public static ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node, ISession session) {
+    if(node == null) {
+      return null;
+    }
+
     var nameProvider = session.CompilerInfo.NameProvider;
     var nodeEx = new ProfileCallTreeNodeEx(node) {
       FullFunctionName = node.FormatFunctionName(nameProvider.FormatFunctionName),

@@ -15,7 +15,7 @@ namespace IRExplorerUI.Document;
 public interface IElementOverlay {
   public event MouseEventHandler OnClick;
   public event KeyEventHandler OnKeyPress;
-  public event EventHandler OnHover;
+  public event MouseEventHandler OnHover;
 
   public IRElement Element { get; set; }
   public HorizontalAlignment AlignmentX { get; }
@@ -36,5 +36,5 @@ public interface IElementOverlay {
   public bool CheckIsMouseOver(Point point);
   public bool MouseClicked(MouseEventArgs e);
   public bool KeyPressed(KeyEventArgs e);
-  public bool Hovered(EventArgs e);
+  public bool Hovered(MouseEventArgs e);
 }
