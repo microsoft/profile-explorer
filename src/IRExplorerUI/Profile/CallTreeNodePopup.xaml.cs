@@ -128,11 +128,9 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   }
 
   private void UpdatePopupWidth(double maxTextWidth) {
-    Trace.WriteLine($"\n-------------\ntry {maxTextWidth + SystemParameters.VerticalScrollBarWidth}");
-    Width = Math.Min(maxTextWidth + SystemParameters.VerticalScrollBarWidth, MaxPopupWidth);
-    Trace.WriteLine($"  width {Width}, actual {ActualWidth}");
-    StackTraceListView.FunctionColumnWidth = Math.Max(MinPopupWidth, Width - SystemParameters.VerticalScrollBarWidth);
-    Trace.WriteLine($"  column {StackTraceListView.FunctionColumnWidth}");
+    double margin = 2 * SystemParameters.VerticalScrollBarWidth;
+    Width = Math.Min(maxTextWidth + margin, MaxPopupWidth);
+    StackTraceListView.FunctionColumnWidth = Math.Max(MinPopupWidth, Width - margin);
   }
 
   public void ShowFunctions(List<ProfileCallTreeNode> list,

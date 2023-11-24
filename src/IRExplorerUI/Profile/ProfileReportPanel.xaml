@@ -9,7 +9,7 @@
   d:DesignHeight="650"
   d:DesignWidth="800"
   mc:Ignorable="d">
-  <TabControl x:Name="TabHost">
+  <TabControl x:Name="TabHost" ToolTip="Trace file and main process details">
     <TabItem Header="Summary">
       <ScrollViewer Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
         <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
@@ -30,7 +30,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Process" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,1"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -41,7 +41,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Image file" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,1"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -87,7 +87,7 @@
 
             <Expander
               Margin="0,10,0,0"
-              Header="Machine"
+              Header="Machine details"
               IsExpanded="True">
               <StackPanel Margin="0,4,0,0">
                 <Grid>
@@ -147,7 +147,7 @@
                     Text="{Binding TraceInfo.MemorySize}" />
                 </Grid>
                 <Grid>
-                  <TextBlock VerticalAlignment="Center" Text="64 bit" />
+                  <TextBlock VerticalAlignment="Center" Text="Is 64 bit" />
                   <TextBox
                     Margin="100,0,0,0"
                     VerticalAlignment="Center"
@@ -276,9 +276,10 @@
         </Grid>
       </ScrollViewer>
     </TabItem>
-    <TabItem Header="Modules">
+    <TabItem Header="Modules" ToolTip="List of modules loaded by the main process">
       <DockPanel LastChildFill="True">
-        <ListView
+        <ListView IsTextSearchEnabled="True"
+                  TextSearch.TextPath="ImageFileInfo.ImageName"
           x:Name="ModuleList"
           Height="250"
           MinHeight="100"
@@ -589,7 +590,7 @@
         </TabControl>
       </DockPanel>
     </TabItem>
-    <TabItem Header="Process list">
+    <TabItem Header="Process list" ToolTip="List of all processes found in the trace">
       <ListView
         x:Name="ProcessList"
         MinHeight="100"
