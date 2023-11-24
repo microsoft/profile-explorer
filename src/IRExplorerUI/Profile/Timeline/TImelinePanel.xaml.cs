@@ -419,7 +419,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private void SetupActivityHoverPreview(ActivityView view) {
     var preview = new DraggablePopupHoverPreview(
-      view, CallTreeNodePopup.PopupHoverLongDuration,
+      view, CallTreeNodePopup.PopupHoverExtraLongDuration,
       (mousePoint, previewPoint) => {
         var timePoint = view.CurrentTimePoint;
         ProfileCallTreeNode callNode = null;

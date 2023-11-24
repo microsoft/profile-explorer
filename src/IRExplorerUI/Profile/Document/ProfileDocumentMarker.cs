@@ -282,7 +282,7 @@ public class ProfileDocumentMarker {
     };
 
     var preview = new DraggablePopupHoverPreview(
-      view, CallTreeNodePopup.PopupHoverLongDuration,
+      view, CallTreeNodePopup.PopupHoverDuration,
       (mousePoint, previewPoint) => {
         if (hoveredOveraly == null) {
           return null; // Nothing actually hovered.

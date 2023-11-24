@@ -405,7 +405,7 @@ static class ExtensionMethods {
     }
 
     if (totalValue.TotalSeconds >= 1) {
-      return $"{value.Seconds}:{value:\\.fff}";
+      return $"{value.Seconds}{value:\\.fff}";
     }
 
     double roundedValue = value.TotalMilliseconds.TruncateToDigits(digits);
