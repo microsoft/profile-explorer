@@ -437,8 +437,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       return false;
     }
 
-    Trace.WriteLine($"Using data {ProfileFilePath}");
-
     var processIds = selectedProcSummary_.ConvertAll(proc => proc.Process.ProcessId);
 
     if (IsRecordMode) {

@@ -177,7 +177,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         Dispatcher.Invoke(() => {
           ResetWidth(false);
         }, DispatcherPriority.ContextIdle);
-
       }, DispatcherPriority.Normal);
     }
   }

@@ -1175,21 +1175,22 @@
       <TextBlock
         VerticalAlignment="Center"
         FontSize="11"
+        ToolTip="A workspace is a snapshot of a panel layout configuration"
         Text="Workspace" />
       <ComboBox
         x:Name="WorkspaceCombobox"
         Width="120"
         Height="18"
         Padding="2,0,5,0"
-        VerticalAlignment="Center"
-        VerticalContentAlignment="Center"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
         FontSize="11"
+        ToolTip="Switch the active workspace"
         SelectionChanged="WorkspaceCombobox_SelectionChanged">
         <ComboBoxItem Content="Default" />
         <ComboBoxItem Content="Profiling" />
       </ComboBox>
       <Button
+        Margin="-4,0,0,0"
         x:Name="WorkspacesButton"
         Width="18"
         Height="18"
@@ -1198,7 +1199,7 @@
         Click="WorkspacesButton_OnClick"
         FontSize="11"
         ToolTip="Manage workspaces list">
-        <Image VerticalAlignment="Center" Source="{StaticResource EditIcon}" />
+        <Image VerticalAlignment="Top" Source="{StaticResource EditIcon}" />
       </Button>
       <Separator />
 
