@@ -39,8 +39,6 @@ public class ProfileCallTreeNodeEx : BindableObject {
   public bool IsMarked { get; set; }
   public TimeSpan Weight => CallTreeNode.Weight;
   public TimeSpan ExclusiveWeight => CallTreeNode.ExclusiveWeight;
-
-  //? dummy merged node fields
 }
 
 public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChanged {
@@ -92,12 +90,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
   public ProfileCallTreeNodeEx CallTreeNode {
     get => nodeEx_;
-    set {
-      if (value != nodeEx_) {
-        nodeEx_ = value;
-        OnPropertyChanged();
-      }
-    }
+    set => SetField(ref nodeEx_, value);
   }
 
   public ProfileCallTreeNodeEx InstancesNode {
@@ -147,12 +140,12 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     }
   }
 
-  public void Show(ProfileCallTreeNodeEx node) {
-    CallTreeNode = node;
+  public void Show(ProfileCallTreeNodeEx nodeEx) {
+    CallTreeNode = nodeEx;
   }
 
   public async Task ShowWithDetailsAsync(ProfileCallTreeNode node) {
-    await ShowWithDetailsAsync(new ProfileCallTreeNodeEx(node));
+    await ShowWithDetailsAsync(SetupNodeExtension(node, Session));
   }
 
   public async Task ShowWithDetailsAsync(ProfileCallTreeNodeEx node) {
@@ -410,7 +403,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       int index = Utils.IsKeyboardModifierActive() ? 0 : nodeInstanceIndex_ - 1;
       var node = instanceNodes_[index];
       NodeInstanceChanged?.Invoke(this, node);
-      await ShowWithDetailsAsync(new ProfileCallTreeNodeEx(node));
+      await ShowWithDetailsAsync(node);
     }
   }
 
@@ -419,7 +412,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       int index = Utils.IsKeyboardModifierActive() ? FunctionInstancesCount - 1 : nodeInstanceIndex_ + 1;
       var node = instanceNodes_[index];
       NodeInstanceChanged?.Invoke(this, node);
-      await ShowWithDetailsAsync(new ProfileCallTreeNodeEx(node));
+      await ShowWithDetailsAsync(node);
     }
   }
 

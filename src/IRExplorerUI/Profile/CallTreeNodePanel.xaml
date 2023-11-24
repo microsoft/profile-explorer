@@ -31,8 +31,8 @@
             Text="Time (total)" />
 
           <ContentControl
-            MinWidth="150"
-            MaxWidth="200"
+            MinWidth="180"
+            MaxWidth="180" Width="180"
             HorizontalAlignment="Stretch"
             Content="{Binding CallTreeNode}"
             ToolTip="Inclusive time for this function instance"
@@ -41,8 +41,8 @@
         <StackPanel Orientation="Horizontal">
           <TextBlock Width="70" Text="Time (self)" />
           <ContentControl
-            MinWidth="150"
-            MaxWidth="200"
+            MinWidth="180"
+            MaxWidth="180" Width="180"
             HorizontalAlignment="Stretch"
             Content="{Binding CallTreeNode}"
             ToolTip="Exclusive time for this function instance"
@@ -54,9 +54,9 @@
         Margin="0,0,4,0"
         Visibility="{Binding ShowInstanceNavigation, Converter={StaticResource BoolToVisibilityConverter}}">
         <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-          <TextBlock Margin="4,0,0,0" Text="{Binding CurrentInstanceIndex}" />
+          <TextBlock Margin="4,0,0,0" Text="{Binding CurrentInstanceIndex}" ToolTip="Currently selected function instance"/>
           <TextBlock Text=" / " />
-          <TextBlock Text="{Binding FunctionInstancesCount}" />
+          <TextBlock Text="{Binding FunctionInstancesCount}" ToolTip="Number  function instances"/>
         </StackPanel>
         <Button
           x:Name="PreviousInstanceButton"

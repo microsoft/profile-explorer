@@ -19,8 +19,9 @@ namespace IRExplorerUI.Profile;
 public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged {
   internal const double DefaultTextSize = 12;
   private const int MaxPreviewNameLength = 80;
-  public static readonly TimeSpan PopupHoverDuration = TimeSpan.FromMilliseconds(50);
+  public static readonly TimeSpan PopupHoverDuration = TimeSpan.FromMilliseconds(100);
   public static readonly TimeSpan PopupHoverLongDuration = TimeSpan.FromMilliseconds(1000);
+  public static readonly TimeSpan PopupHoverExtraLongDuration = TimeSpan.FromMilliseconds(2500);
   private static readonly Typeface DefaultTextFont = new Typeface("Segoe UI");
   private bool showResizeGrip_;
   private bool canExpand_;
@@ -114,25 +115,6 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     StackTraceListView.ShowSimpleList(list);
   }
 
-  private double MeasureMaxTextWidth(List<ProfileCallTreeNode> list,
-                                     FunctionNameFormatter nameFormatter) {
-    double maxTextWidth = 0;
-
-    foreach (var node in list) {
-      string funcName = node.FormatFunctionName(nameFormatter, MaxPreviewNameLength);
-      var textSize = Utils.MeasureString(funcName, DefaultTextFont, DefaultTextSize);
-      maxTextWidth = Math.Max(maxTextWidth, textSize.Width);
-    }
-
-    return maxTextWidth;
-  }
-
-  private void UpdatePopupWidth(double maxTextWidth) {
-    double margin = 2 * SystemParameters.VerticalScrollBarWidth;
-    Width = Math.Min(maxTextWidth + margin, MaxPopupWidth);
-    StackTraceListView.FunctionColumnWidth = Math.Max(MinPopupWidth, Width - margin);
-  }
-
   public void ShowFunctions(List<ProfileCallTreeNode> list,
                             FunctionNameFormatter nameFormatter) {
     ShowSimpleView = true;
@@ -171,6 +153,24 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     return true;
   }
 
+  private double MeasureMaxTextWidth(List<ProfileCallTreeNode> list,
+                                     FunctionNameFormatter nameFormatter) {
+    double maxTextWidth = 0;
+
+    foreach (var node in list) {
+      string funcName = node.FormatFunctionName(nameFormatter, MaxPreviewNameLength);
+      var textSize = Utils.MeasureString(funcName, DefaultTextFont, DefaultTextSize);
+      maxTextWidth = Math.Max(maxTextWidth, textSize.Width);
+    }
+
+    return maxTextWidth;
+  }
+
+  private void UpdatePopupWidth(double maxTextWidth) {
+    double margin = SystemParameters.VerticalScrollBarWidth;
+    Width = Math.Max(MinPopupWidth, Math.Min(maxTextWidth, MaxPopupWidth));
+    StackTraceListView.FunctionColumnWidth = Math.Max(MinPopupWidth, Width - 2 * margin);
+  }
   private void CloseButton_Click(object sender, RoutedEventArgs e) {
     Session.UnregisterDetachedPanel(this);
     ClosePopup();
