@@ -24,6 +24,8 @@
     <DockPanel>
       <Grid Width="250" DockPanel.Dock="Left">
         <ListBox
+          IsTextSearchEnabled="True"
+          TextSearch.TextPath="Title"
           x:Name="SessionList"
           HorizontalAlignment="Stretch"
           VerticalAlignment="Stretch"
