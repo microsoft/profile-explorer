@@ -316,6 +316,8 @@
         </Grid.ColumnDefinitions>
 
         <ListView
+          IsTextSearchEnabled="True"
+          TextSearch.TextPath="Name"
           AlternationCount="2"
           AutomationProperties.AutomationId="AutoFunctionList"
           Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
@@ -405,6 +407,8 @@
           Width="2" />
 
         <ListView
+          IsTextSearchEnabled="True"
+          TextSearch.TextPath="Name"
           AlternationCount="2"
           Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
           BorderBrush="{x:Null}"
@@ -925,6 +929,8 @@
         </Grid>
 
         <ListView
+          IsTextSearchEnabled="True"
+          TextSearch.TextPath="Name"
           AutomationProperties.AutomationId="AutoSectionList"
           Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
           BorderBrush="{x:Null}"

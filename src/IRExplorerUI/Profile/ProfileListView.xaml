@@ -9,6 +9,8 @@
   d:DesignWidth="800"
   mc:Ignorable="d">
   <ListView
+    IsTextSearchEnabled="True"
+    TextSearch.TextPath="Name"
     x:Name="ItemList"
     Panel.ZIndex="1"
     irExplorerUi:GridViewColumnVisibility.Enabled="True"
