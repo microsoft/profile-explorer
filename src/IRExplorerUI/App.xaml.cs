@@ -8,6 +8,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Xml;
+using IRExplorerUI.Settings;
 
 namespace IRExplorerUI;
 
@@ -48,6 +49,9 @@ public partial class App : Application {
   private const string SettingsFile = "IRExplorer.settings";
   private const string LastDockLayoutFile = "LastDockLayout.xml";
   private const string DefaultDockLayoutFile = "DockLayout.xml";
+  private const string WorkspacesDirectory = "workspaces";
+  private const string ScriptsDirectory = "scripts";
+  private const string ThemesDirectory = "themes";
   private const string WorkspaceDockLayoutFile = "WorkspaceDockLayout-{0}.xml";
   private const string TraceFile = "IRExplorer.log";
   private const string BackupTraceFile = "IRExplorerBackup.log";
@@ -91,6 +95,14 @@ public partial class App : Application {
   public static string GetDockLayoutFilePath(string layoutName) {
     string path = GetSettingsDirectoryPath();
     return Path.Combine(path, $"{layoutName}.xml");
+  }
+
+  public static string GetWorkspacesPath() {
+    return GetSettingsFilePath(WorkspacesDirectory);
+  }
+
+  public static string GetInternlWorkspacesPath() {
+    return GetApplicationFilePath(WorkspacesDirectory);
   }
 
   public static string GetCompilerSettingsFilePath(string file, string compilerName, string extension = "") {
@@ -389,10 +401,13 @@ public partial class App : Application {
       string path = GetSettingsDirectoryPath();
       CreateDirectories(path);
 
+      //? TODO: Walk over list of registers compilers
       InitializeSettingsFilesDirectory("llvm");
       InitializeSettingsFilesDirectory("ASM");
-      InitializeSettingsFilesDirectory("scripts");
-      InitializeSettingsFilesDirectory("themes");
+
+      InitializeSettingsFilesDirectory(ScriptsDirectory);
+      InitializeSettingsFilesDirectory(ThemesDirectory);
+      InitializeSettingsFilesDirectory(WorkspacesDirectory);
       return true;
     }
     catch (Exception ex) {
@@ -401,7 +416,7 @@ public partial class App : Application {
     }
   }
 
-  private static bool CreateDirectories(string path) {
+  public static bool CreateDirectories(string path) {
     try {
       if (!Directory.Exists(path)) {
         Directory.CreateDirectory(path);
@@ -560,6 +575,10 @@ public partial class App : Application {
     catch (Exception ex) {
       Debug.WriteLine($"Failed to create trace file: {ex}");
     }
+
+    var ws = new WorkspaceSettings();
+    ws.SaveToArchive(@"C:\work\ws.zip");
+    var newWs = WorkspaceSettings.LoadFromArchive(@"C:\work\ws.zip");
 
     if (!LoadApplicationSettings()) {
       // Failed to load settings, reset them.

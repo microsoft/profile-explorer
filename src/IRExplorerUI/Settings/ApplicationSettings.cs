@@ -7,6 +7,7 @@ using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Query;
+using IRExplorerUI.Settings;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -53,6 +54,8 @@ public class ApplicationSettings {
   public IRMode DefaultIRMode;
   [ProtoMember(16)]
   public ProfileDataProviderOptions ProfileOptions;
+  [ProtoMember(17)]
+  public WorkspaceSettings WorkspaceOptions;
 
   public ApplicationSettings() {
     Reset();
@@ -196,6 +199,7 @@ public class ApplicationSettings {
     SymbolOptions ??= new SymbolFileSourceOptions();
     CallTreeSettings ??= new CallTreeSettings();
     FlameGraphSettings ??= new FlameGraphSettings();
+    WorkspaceOptions ??= new WorkspaceSettings();
   }
 
   private void AddProfilingSession(ProfileDataReport report, List<ProfileDataReport> list) {
