@@ -21,7 +21,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   private const int MaxPreviewNameLength = 80;
   public static readonly TimeSpan PopupHoverDuration = TimeSpan.FromMilliseconds(100);
   public static readonly TimeSpan PopupHoverLongDuration = TimeSpan.FromMilliseconds(1000);
-  public static readonly TimeSpan PopupHoverExtraLongDuration = TimeSpan.FromMilliseconds(2500);
+  public static readonly TimeSpan PopupHoverExtraLongDuration = TimeSpan.FromMilliseconds(2000);
   private static readonly Typeface DefaultTextFont = new Typeface("Segoe UI");
   private bool showResizeGrip_;
   private bool canExpand_;
