@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Controls;
 
@@ -213,7 +214,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private async Task InitializePendingCallTree() {
     if (pendingCallTree_ != null && panelVisible_) {
-      await InitializeCallTree(pendingCallTree_);
+      // Delay the initialization to ensure the panel is actually visible
+      // and the available area is valid.
+      await Dispatcher.BeginInvoke(async () => {
+        await InitializeCallTree(pendingCallTree_);
+      }, DispatcherPriority.Background);
+
       pendingCallTree_ = null;
     }
   }
