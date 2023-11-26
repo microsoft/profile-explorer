@@ -271,20 +271,12 @@ public class ProfileDocumentMarker {
     //? TODO: Find a way to integrate hover login into overaly.OnHover
     var view = document as UIElement;
     CallTreeNodePopup popup = null;
-    IElementOverlay hoveredOveraly = null;
+    IElementOverlay hoveredOverlay = null;
 
-    overlay.OnHover += (sender, e) => {
-      hoveredOveraly = sender as IElementOverlay;
-    };
-
-    overlay.OnHoverEnd += (sender, e) => {
-      hoveredOveraly = null;
-    };
-
-    var preview = new DraggablePopupHoverPreview(
-      view, CallTreeNodePopup.PopupHoverDuration,
+    var preview = new PopupHoverPreview(
+      view, HoverPreview.HoverDuration,
       (mousePoint, previewPoint) => {
-        if (hoveredOveraly == null) {
+        if (hoveredOverlay == null) {
           return null; // Nothing actually hovered.
         }
 
@@ -305,6 +297,15 @@ public class ProfileDocumentMarker {
       popup => {
         document.Session.RegisterDetachedPanel(popup);
       });
+
+    overlay.OnHover += (sender, e) => {
+      hoveredOverlay = sender as IElementOverlay;
+    };
+
+    overlay.OnHoverEnd += (sender, e) => {
+      preview.HideDelayed();
+      hoveredOverlay = null;
+    };
   }
 
   private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, MarkedDocument document) {

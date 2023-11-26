@@ -223,7 +223,7 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     DataContext = this;
     MouseLeave += OnMouseLeave;
 
-    //? TODO: Replace with DraggablePopupHoverPreview
+    //? TODO: Replace with PopupHoverPreview
     var hover = new MouseHoverLogic(this);
     hover.MouseHover += Hover_MouseHover;
     hover.MouseHoverStopped += Hover_MouseHoverStopped;

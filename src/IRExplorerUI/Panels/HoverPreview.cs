@@ -12,6 +12,10 @@ using IRExplorerUI.Utilities.UI;
 namespace IRExplorerUI;
 
 public abstract class HoverPreview {
+  public static readonly TimeSpan HoverDuration = TimeSpan.FromMilliseconds(100);
+  public static readonly TimeSpan LongHoverDuration = TimeSpan.FromMilliseconds(1000);
+  public static readonly TimeSpan ExtraLongHoverDuration = TimeSpan.FromMilliseconds(2000);
+
   protected UIElement control_;
   protected UIElement previewPopup_;
   private DelayedAction removeHoveredAction_;
@@ -28,12 +32,16 @@ public abstract class HoverPreview {
     HidePreviewPopup(true);
   }
 
+  public void HideDelayed() {
+    HidePreviewPopupDelayed(HoverDuration);
+  }
+
   protected abstract void OnHidePopup();
   protected abstract void OnShowPopup(Point mousePoint, Point position);
   protected abstract bool OnHoverStopped(Point mousePosition);
 
   private void OnMouseLeave(object sender, MouseEventArgs e) {
-    HidePreviewPopupDelayed();
+    HidePreviewPopupDelayed(HoverDuration);
   }
 
   private void HidePreviewPopup(bool force = false) {
@@ -62,9 +70,9 @@ public abstract class HoverPreview {
     OnShowPopup(mousePosition, position);
   }
 
-  private void HidePreviewPopupDelayed() {
+  private void HidePreviewPopupDelayed(TimeSpan duration) {
     removeHoveredAction_?.Cancel();
-    removeHoveredAction_ = DelayedAction.StartNew(() => {
+    removeHoveredAction_ = DelayedAction.StartNew(duration, () => {
       if (removeHoveredAction_ != null) {
         removeHoveredAction_ = null;
         HidePreviewPopup();
@@ -74,17 +82,17 @@ public abstract class HoverPreview {
 
   private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {
     if (OnHoverStopped(e.GetPosition(control_))) {
-      HidePreviewPopupDelayed();
+      HidePreviewPopupDelayed(HoverDuration);
     }
   }
 }
 
-public class DraggablePopupHoverPreview : HoverPreview {
+public class PopupHoverPreview : HoverPreview {
   private Func<Point, Point, DraggablePopup> createPopup_;
   private Action<DraggablePopup> detachPopup_;
   private Func<Point, DraggablePopup, bool> hoverStopped_;
 
-  public DraggablePopupHoverPreview(UIElement control, TimeSpan hoverDuration,
+  public PopupHoverPreview(UIElement control, TimeSpan hoverDuration,
                                     Func<Point, Point, DraggablePopup> createPopup,
                                     Func<Point, DraggablePopup, bool> hoverStopped,
                                     Action<DraggablePopup> detachPopup) :
@@ -94,7 +102,7 @@ public class DraggablePopupHoverPreview : HoverPreview {
     detachPopup_ = detachPopup;
   }
 
-  public DraggablePopupHoverPreview(UIElement control,
+  public PopupHoverPreview(UIElement control,
                                     Func<Point, Point, DraggablePopup> createPopup,
                                     Func<Point, DraggablePopup, bool> hoverStopped,
                                     Action<DraggablePopup> detachPopup) :

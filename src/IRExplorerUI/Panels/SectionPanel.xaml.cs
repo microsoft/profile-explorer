@@ -1638,8 +1638,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private void SetupStackFunctionHoverPreview() {
-    var preview = new DraggablePopupHoverPreview(
-      FunctionList, CallTreeNodePopup.PopupHoverExtraLongDuration,
+    var preview = new PopupHoverPreview(
+      FunctionList, HoverPreview.ExtraLongHoverDuration,
       (mousePoint, previewPoint) => {
         var element =
           FunctionList.GetObjectAtPoint<ListViewItem>(mousePoint);
