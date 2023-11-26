@@ -55,18 +55,17 @@ public class ApplicationSettings {
   [ProtoMember(16)]
   public ProfileDataProviderOptions ProfileOptions;
   [ProtoMember(17)]
-  public WorkspaceSettings WorkspaceOptions;
-
-  public ApplicationSettings() {
-    Reset();
-  }
-
-  [ProtoMember(17)]
   public SymbolFileSourceOptions SymbolOptions { get; set; }
   [ProtoMember(18)]
   public CallTreeSettings CallTreeSettings { get; set; }
   [ProtoMember(19)]
   public FlameGraphSettings FlameGraphSettings { get; set; }
+  [ProtoMember(20)]
+  public WorkspaceSettings WorkspaceOptions;
+
+  public ApplicationSettings() {
+    Reset();
+  }
 
   public void Reset() {
     InitializeReferenceMembers();

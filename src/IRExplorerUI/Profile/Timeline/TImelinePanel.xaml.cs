@@ -168,10 +168,10 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     Math.Max(0, ActivityViewHost.ViewportWidth - ActivityViewHeader.ActualWidth - 1);
   private double CenterZoomPointX => ActivityScrollBar.HorizontalOffset + ActivityViewAreaWidth / 2;
 
-  public override void OnShowPanel() {
+  public override async void OnShowPanel() {
     base.OnShowPanel();
     panelVisible_ = true;
-    InitializePendingCallTree();
+    await InitializePendingCallTree();
   }
 
   public void Reset() {
@@ -181,9 +181,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     threadHoverPreviewMap_.Clear();
   }
 
-  public override void OnSessionStart() {
+  public override async void OnSessionStart() {
     base.OnSessionStart();
-    InitializePendingCallTree();
+    await InitializePendingCallTree();
   }
 
   public bool HasExcludedThreads() {
@@ -259,82 +259,85 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     return true;
   }
 
-  private void SchedulePendingCallTree(ProfileCallTree callTree) {
+  private async Task SchedulePendingCallTree(ProfileCallTree callTree) {
     // Display flame graph once the panel is visible and visible area is valid.
     if (pendingCallTree_ == null) {
       pendingCallTree_ = callTree;
-      InitializePendingCallTree();
+      await InitializePendingCallTree();
     }
   }
 
-  private void InitializePendingCallTree() {
+  private async Task InitializePendingCallTree() {
     if (pendingCallTree_ != null && panelVisible_) {
-      InitializeCallTree(pendingCallTree_);
+      // Delay the initialization to ensure the panel is actually visible
+      // and the available area is valid.
+      await Dispatcher.BeginInvoke(async () => {
+        await InitializeCallTree(pendingCallTree_);
+      }, DispatcherPriority.Background);
+
       pendingCallTree_ = null;
     }
   }
 
-  private void InitializeCallTree(ProfileCallTree callTree) {
+  private async Task InitializeCallTree(ProfileCallTree callTree) {
     if (callTree_ != null) {
       return;
     }
 
     callTree_ = callTree;
-    Dispatcher.BeginInvoke(async () => {
-      var activityArea = new Rect(0, 0, ActivityViewAreaWidth, ActivityView.ActualHeight);
-      var threads = Session.ProfileData.SortedThreadWeights;
-      var initTasks = new List<Task>(threads.Count);
+    var activityArea = new Rect(0, 0, ActivityViewAreaWidth, ActivityView.ActualHeight);
+    var threads = Session.ProfileData.SortedThreadWeights;
+    var initTasks = new List<Task>(threads.Count);
 
-      initTasks.Add(ActivityView.Initialize(Session.ProfileData, activityArea));
-      ActivityView.IsTimeBarVisible = true;
-      ActivityView.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
-      ActivityView.SamplesBackColor = ColorBrushes.GetBrush("#F4A0A0");
+    initTasks.Add(ActivityView.Initialize(Session.ProfileData, activityArea));
+    ActivityView.IsTimeBarVisible = true;
+    ActivityView.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
+    ActivityView.SamplesBackColor = ColorBrushes.GetBrush("#F4A0A0");
 
-      var threadActivityArea = new Rect(0, 0, ActivityViewAreaWidth, 25);
+    var threadActivityArea = new Rect(0, 0, ActivityViewAreaWidth, 25);
 
-      foreach (var thread in threads) {
-        var threadView = new ActivityTimelineView();
-        SetupActivityViewEvents(threadView.ActivityHost);
-        threadView.ActivityHost.BackColor = Brushes.WhiteSmoke;
-        threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
-        threadView.ThreadActivityAction += ThreadView_ThreadActivityAction;
+    foreach (var thread in threads) {
+      var threadView = new ActivityTimelineView();
+      SetupActivityViewEvents(threadView.ActivityHost);
+      threadView.ActivityHost.BackColor = Brushes.WhiteSmoke;
+      threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
+      threadView.ThreadActivityAction += ThreadView_ThreadActivityAction;
 
-        var threadInfo = Session.ProfileData.FindThread(thread.ThreadId);
+      var threadInfo = Session.ProfileData.FindThread(thread.ThreadId);
 
-        if (threadInfo != null && threadInfo.HasName) {
-          uint colorIndex = (uint)threadInfo.Name.GetHashCode();
-          threadView.MarginBackColor =
-            ColorBrushes.GetBrush(ColorUtils.GenerateLightPastelColor(colorIndex));
-          threadView.ActivityHost.SamplesBackColor =
-            ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(colorIndex));
-        }
-        else {
-          threadView.ActivityHost.SamplesBackColor =
-            ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor((uint)thread.ThreadId));
-        }
-
-        threadActivityViews_.Add(threadView);
-        threadActivityViewsMap_[thread.ThreadId] = threadView;
-        initTasks.Add(threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea,
-                                                         thread.ThreadId));
-        SetupActivityHoverPreview(threadView.ActivityHost);
-
-        //threadView.TimelineHost.Session = Session;
-        //threadView.TimelineHost.InitializeTimeline(callTree, thread.ThreadId);
-        //SetupTimelineViewEvents(threadView.TimelineHost);
+      if (threadInfo != null && threadInfo.HasName) {
+        uint colorIndex = (uint)threadInfo.Name.GetHashCode();
+        threadView.MarginBackColor =
+          ColorBrushes.GetBrush(ColorUtils.GenerateLightPastelColor(colorIndex));
+        threadView.ActivityHost.SamplesBackColor =
+          ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(colorIndex));
+      }
+      else {
+        threadView.ActivityHost.SamplesBackColor =
+          ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor((uint)thread.ThreadId));
       }
 
-      await Task.WhenAll(initTasks);
+      threadActivityViews_.Add(threadView);
+      threadActivityViewsMap_[thread.ThreadId] = threadView;
+      initTasks.Add(threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea,
+                                                        thread.ThreadId));
+      SetupActivityHoverPreview(threadView.ActivityHost);
 
-      // Redraw everything once all views are initialized.
-      ActivityView.InitializeDone();
+      //threadView.TimelineHost.Session = Session;
+      //threadView.TimelineHost.InitializeTimeline(callTree, thread.ThreadId);
+      //SetupTimelineViewEvents(threadView.TimelineHost);
+    }
 
-      foreach (var thread in threads) {
-        threadActivityViewsMap_[thread.ThreadId].ActivityHost.InitializeDone();
-      }
+    await Task.WhenAll(initTasks);
 
-      ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
-    }, DispatcherPriority.Background);
+    // Redraw everything once all views are initialized.
+    ActivityView.InitializeDone();
+
+    foreach (var thread in threads) {
+      threadActivityViewsMap_[thread.ThreadId].ActivityHost.InitializeDone();
+    }
+
+    ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
   }
 
   private async void ThreadView_ThreadActivityAction(object sender, ThreadActivityAction action) {
