@@ -124,7 +124,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public static readonly DependencyProperty ShowToolbarProperty =
     DependencyProperty.Register("ShowToolbar", typeof(bool), typeof(CallTreePanel));
   private IRTextFunction function_;
-  private DraggablePopupHoverPreview stackHoverPreview_;
+  private PopupHoverPreview stackHoverPreview_;
   private ProfileCallTree callTree_;
   private ChildFunctionEx callTreeEx_;
   private List<ChildFunctionEx> searchResultNodes_;
@@ -369,8 +369,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private void SetupEvents() {
     CallTree.NodeExpanded += CallTreeOnNodeExpanded;
 
-    stackHoverPreview_ = new DraggablePopupHoverPreview(CallTree,
-                                                        CallTreeNodePopup.PopupHoverLongDuration,
+    stackHoverPreview_ = new PopupHoverPreview(CallTree,
+                                               HoverPreview.LongHoverDuration,
                                                         (mousePoint, previewPoint) => {
                                                           var element =
                                                             (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(

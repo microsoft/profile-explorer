@@ -43,7 +43,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private List<FlameGraphNode> searchResultNodes_;
   private readonly FlameGraphSettings settings_;
   private bool showNodePanel_;
-  private DraggablePopupHoverPreview stackHoverPreview_;
+  private PopupHoverPreview stackHoverPreview_;
   private readonly Stack<FlameGraphState> stateStack_;
   private DoubleAnimation widthAnimation_;
   private DoubleAnimation zoomAnimation_;
@@ -437,8 +437,8 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     KeyDown += HostOnKeyDown;
     KeyUp += HostOnKeyUp;
 
-    stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer,
-                                                        CallTreeNodePopup.PopupHoverDuration,
+    stackHoverPreview_ = new PopupHoverPreview(GraphViewer,
+                                               HoverPreview.HoverDuration,
                                                         (mousePoint, previewPoint) => {
                                                           var pointedNode = GraphViewer.FindPointedNode(mousePoint);
                                                           var callNode = pointedNode?.CallTreeNode;

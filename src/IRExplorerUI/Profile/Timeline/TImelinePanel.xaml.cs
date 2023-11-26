@@ -41,7 +41,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private int searchResultIndex_;
   private List<ActivityTimelineView> threadActivityViews_;
   private Dictionary<int, ActivityTimelineView> threadActivityViewsMap_;
-  private Dictionary<int, DraggablePopupHoverPreview> threadHoverPreviewMap_;
+  private Dictionary<int, PopupHoverPreview> threadHoverPreviewMap_;
   private bool changingThreadFiltering_;
   private DoubleAnimation widthAnimation_;
   private DoubleAnimation zoomAnimation_;
@@ -56,7 +56,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     settings_ = App.Settings.FlameGraphSettings;
     threadActivityViews_ = new List<ActivityTimelineView>();
     threadActivityViewsMap_ = new Dictionary<int, ActivityTimelineView>();
-    threadHoverPreviewMap_ = new Dictionary<int, DraggablePopupHoverPreview>();
+    threadHoverPreviewMap_ = new Dictionary<int, PopupHoverPreview>();
 
     SetupEvents();
     DataContext = this;
@@ -421,8 +421,8 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void SetupActivityHoverPreview(ActivityView view) {
-    var preview = new DraggablePopupHoverPreview(
-      view, CallTreeNodePopup.PopupHoverExtraLongDuration,
+    var preview = new PopupHoverPreview(
+      view, HoverPreview.ExtraLongHoverDuration,
       (mousePoint, previewPoint) => {
         var timePoint = view.CurrentTimePoint;
         ProfileCallTreeNode callNode = null;
