@@ -116,6 +116,7 @@
     <Button
       x:Name="HelpButton"
       Click="HelpButton_Click"
+      IsEnabled="False"
       Focusable="False"
       VerticalContentAlignment="Stretch"
       HorizontalAlignment="Stretch"
@@ -125,7 +126,7 @@
       Height="18"
       Width="18"
       ToolTip="Show panel documentation">
-      <TextBlock Text="?" FontWeight="bold" Margin="0,-5,0,0" FontSize="19"></TextBlock>
+      <TextBlock Foreground="DimGray" Text="?" FontWeight="bold" Margin="0,-5,0,0" FontSize="19"></TextBlock>
     </Button>
 
     <Button
