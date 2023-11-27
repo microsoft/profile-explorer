@@ -59,7 +59,7 @@ public class Workspace : IEquatable<Workspace> {
   public Workspace() { }
 
   public override string ToString() {
-    return $"{Name}, order {Order}, file {FilePath}";
+    return Name;
   }
 }
 
@@ -76,7 +76,7 @@ public class WorkspaceSettings {
 
   public WorkspaceSettings() {
     InitializeReferenceMembers();
-    RestoreDefault();
+    RestoreDefaultWorkspaces();
   }
 
   [ProtoAfterDeserialization]
@@ -92,7 +92,7 @@ public class WorkspaceSettings {
     };
   }
 
-  public bool RestoreDefault() {
+  public bool RestoreDefaultWorkspaces() {
     if (!LoadFromDirectory(App.GetInternlWorkspacesPath())) {
       return false;
     }
@@ -102,6 +102,13 @@ public class WorkspaceSettings {
     SortWorkspaces();
     RenumberWorkspaces();
     return true;
+  }
+
+  public void RestoreDefaultActiveWorkspace() {
+    if (ActiveWorkspace == null) {
+      var wsName = GetBuiltinWorkspaceName(App.Settings.DefaultCompilerIR);
+      ActiveWorkspace = Workspaces.FirstOrDefault(w => w.Name == wsName);
+    }
   }
 
   public bool RenumberWorkspaces() {

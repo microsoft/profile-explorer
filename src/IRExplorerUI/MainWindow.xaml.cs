@@ -282,6 +282,8 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void SetupMainWindowCompilerTarget() {
+    App.Settings.WorkspaceOptions.RestoreDefaultActiveWorkspace();
+    RestoreDockLayout();
     IRTypeLabel.Content = compilerInfo_.CompilerDisplayName;
   }
 
@@ -993,8 +995,8 @@ public partial class MainWindow : Window, ISession {
 
     if (selectedWs != null && 
         selectedWs != App.Settings.WorkspaceOptions.ActiveWorkspace) {
-      RestoreDockLayout(selectedWs.FilePath);
       App.Settings.WorkspaceOptions.ActiveWorkspace = selectedWs;
+      RestoreDockLayout(selectedWs.FilePath);
     }
   }
 

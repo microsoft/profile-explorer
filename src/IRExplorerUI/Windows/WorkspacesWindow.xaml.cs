@@ -46,7 +46,7 @@ public partial class WorkspacesWindow : Window {
   }
 
   private void DefaultButton_OnClick(object sender, RoutedEventArgs e) {
-    if (!settings_.RestoreDefault()) {
+    if (!settings_.RestoreDefaultWorkspaces()) {
       MessageBox.Show("Failed to restore default workspaces.");
     }
 
