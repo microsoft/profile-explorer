@@ -1,15 +1,15 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
+// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+namespace IRExplorerUI.OptionsPanels;
 
-namespace IRExplorerUI.OptionsPanels {
-    public partial class FlowGraphOptionsPanel : OptionsPanelBase {
-        public const double DefaultHeight = 500;
-        public const double MinimumHeight = 300;
-        public const double DefaultWidth = 320;
-        public const double MinimumWidth = 320;
+public partial class FlowGraphOptionsPanel : OptionsPanelBase {
+  public const double DefaultHeight = 500;
+  public const double MinimumHeight = 300;
+  public const double DefaultWidth = 320;
+  public const double MinimumWidth = 320;
 
-        public FlowGraphOptionsPanel() {
-            InitializeComponent();
-        }
-    }
+  public FlowGraphOptionsPanel() {
+    InitializeComponent();
+  }
 }

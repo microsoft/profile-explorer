@@ -1,111 +1,108 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using IRExplorerUI.Controls;
 
-namespace IRExplorerUI.OptionsPanels {
-    public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
-        private bool closed_;
-        private IOptionsPanel optionsPanel_;
+namespace IRExplorerUI.OptionsPanels;
 
-        public OptionsPanelHostWindow(UserControl panel, Point position,
-                                      double width, double height,
-                                      UIElement referenceElement,
-                                      bool showResetButton = true) {
-            InitializeComponent();
-            
-            // Offset to account for drop shadow margin.
-            position.Offset(6, 0);
-            Initialize(position, width, height, referenceElement);
+public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
+  private bool closed_;
+  private IOptionsPanel optionsPanel_;
 
-            PanelResizeGrip.ResizedControl = this;
-            ShowResetButton = showResetButton;
-            DataContext = this;
+  public OptionsPanelHostWindow(UserControl panel, Point position,
+                                double width, double height,
+                                UIElement referenceElement,
+                                bool showResetButton = true) {
+    InitializeComponent();
 
-            optionsPanel_ = (IOptionsPanel)panel;
-            optionsPanel_.PanelClosed += SettingsPanel_PanelClosed;
-            optionsPanel_.PanelReset += SettingsPanel_PanelReset;
-            optionsPanel_.SettingsChanged += SettingsPanel_SettingsChanged;
-            optionsPanel_.StayOpenChanged += OptionsPanel_StayOpenChanged;
-            PanelHost.Content = panel;
-        }
+    // Offset to account for drop shadow margin.
+    position.Offset(6, 0);
+    Initialize(position, width, height, referenceElement);
 
-        public bool ShowResetButton { get; set; }
+    PanelResizeGrip.ResizedControl = this;
+    ShowResetButton = showResetButton;
+    DataContext = this;
 
-        protected override void OnOpened(EventArgs e) {
-            base.OnOpened(e);
-            optionsPanel_.Initialize(this);
-        }
+    optionsPanel_ = (IOptionsPanel)panel;
+    optionsPanel_.PanelClosed += SettingsPanel_PanelClosed;
+    optionsPanel_.PanelReset += SettingsPanel_PanelReset;
+    optionsPanel_.SettingsChanged += SettingsPanel_SettingsChanged;
+    optionsPanel_.StayOpenChanged += OptionsPanel_StayOpenChanged;
+    PanelHost.Content = panel;
+  }
 
-        protected override void OnClosed(EventArgs e) {
-            base.OnClosed(e);
+  public event EventHandler PanelClosed;
+  public event EventHandler PanelReset;
+  public event EventHandler SettingsChanged;
+  public event EventHandler<bool> StayOpenChanged;
+  public bool ShowResetButton { get; set; }
 
-            optionsPanel_.PanelClosed -= SettingsPanel_PanelClosed;
-            optionsPanel_.PanelReset -= SettingsPanel_PanelReset;
-            optionsPanel_.SettingsChanged -= SettingsPanel_SettingsChanged;
+  public object Settings {
+    get => optionsPanel_.Settings;
+    set => optionsPanel_.Settings = value;
+  }
 
-            if (!closed_) {
-                closed_ = true;
-                PanelClosed?.Invoke(this, e);
-            }
-        }
+  public void Initialize(FrameworkElement parent) {
+  }
 
-        public void Initialize(FrameworkElement parent) {
+  public void PanelClosing() { }
+  public void PanelResetting() { }
+  public void PanelResetted() { }
 
-        }
+  protected override void OnOpened(EventArgs e) {
+    base.OnOpened(e);
+    optionsPanel_.Initialize(this);
+  }
 
-        private void SettingsPanel_SettingsChanged(object sender, EventArgs e) {
-            SettingsChanged?.Invoke(this, e);
-        }
+  protected override void OnClosed(EventArgs e) {
+    base.OnClosed(e);
 
-        private void SettingsPanel_PanelReset(object sender, EventArgs e) {
-            PanelReset?.Invoke(this, e);
-        }
+    optionsPanel_.PanelClosed -= SettingsPanel_PanelClosed;
+    optionsPanel_.PanelReset -= SettingsPanel_PanelReset;
+    optionsPanel_.SettingsChanged -= SettingsPanel_SettingsChanged;
 
-        private void SettingsPanel_PanelClosed(object sender, EventArgs e) {
-            closed_ = true;
-            PanelClosed?.Invoke(this, e);
-        }
-
-        private void OptionsPanel_StayOpenChanged(object sender, bool staysOpen) {
-            StaysOpen = staysOpen;
-        }
-
-        public object Settings {
-            get => optionsPanel_.Settings;
-            set => optionsPanel_.Settings = value;
-        }
-
-        public event EventHandler PanelClosed;
-        public event EventHandler PanelReset;
-        public event EventHandler SettingsChanged;
-        public event EventHandler<bool> StayOpenChanged;
-
-        public void PanelClosing() { }
-        public void PanelResetting() { }
-        public void PanelResetted() { }
-
-        private void ResetButton_Click(object sender, RoutedEventArgs e) {
-            using var centerForm = new DialogCenteringHelper(this);
-
-            if (MessageBox.Show("Do you want to reset all settings?", "IR Explorer",
-                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) {
-                return;
-            }
-
-            optionsPanel_.PanelResetting();
-            PanelReset?.Invoke(this, e);
-            optionsPanel_.PanelResetted();
-        }
-
-        private void CloseButton_Click(object sender, RoutedEventArgs e) {
-            closed_ = true;
-            optionsPanel_.PanelClosing();
-            PanelClosed?.Invoke(this, e);
-        }
+    if (!closed_) {
+      closed_ = true;
+      PanelClosed?.Invoke(this, e);
     }
+  }
+
+  private void SettingsPanel_SettingsChanged(object sender, EventArgs e) {
+    SettingsChanged?.Invoke(this, e);
+  }
+
+  private void SettingsPanel_PanelReset(object sender, EventArgs e) {
+    PanelReset?.Invoke(this, e);
+  }
+
+  private void SettingsPanel_PanelClosed(object sender, EventArgs e) {
+    closed_ = true;
+    PanelClosed?.Invoke(this, e);
+  }
+
+  private void OptionsPanel_StayOpenChanged(object sender, bool staysOpen) {
+    StaysOpen = staysOpen;
+  }
+
+  private void ResetButton_Click(object sender, RoutedEventArgs e) {
+    using var centerForm = new DialogCenteringHelper(this);
+
+    if (MessageBox.Show("Do you want to reset all settings?", "IR Explorer",
+                        MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) {
+      return;
+    }
+
+    optionsPanel_.PanelResetting();
+    PanelReset?.Invoke(this, e);
+    optionsPanel_.PanelResetted();
+  }
+
+  private void CloseButton_Click(object sender, RoutedEventArgs e) {
+    closed_ = true;
+    optionsPanel_.PanelClosing();
+    PanelClosed?.Invoke(this, e);
+  }
 }

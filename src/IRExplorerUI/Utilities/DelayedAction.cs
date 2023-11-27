@@ -1,36 +1,35 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
+// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 using System;
 using System.Threading.Tasks;
 
-namespace IRExplorerUI {
-    public class DelayedAction {
-        private bool canceled_;
+namespace IRExplorerUI;
 
-        public static TimeSpan DefaultDelay = TimeSpan.FromMilliseconds(500);
-        
-        public async Task Start(TimeSpan delay, Action action) {
-            canceled_ = false;
-            await Task.Delay(delay);
+public class DelayedAction {
+  public static TimeSpan DefaultDelay = TimeSpan.FromMilliseconds(500);
+  private bool canceled_;
 
-            if (!canceled_) {
-                action();
-            }
-        }
+  public static DelayedAction StartNew(Action action) {
+    return StartNew(DefaultDelay, action);
+  }
 
-        public void Cancel() {
-            canceled_ = true;
-        }
+  public static DelayedAction StartNew(TimeSpan delay, Action action) {
+    var instance = new DelayedAction();
+    instance.Start(delay, action);
+    return instance;
+  }
 
-        public static DelayedAction StartNew(Action action) {
-            return StartNew(DefaultDelay, action);
-        }
+  public async Task Start(TimeSpan delay, Action action) {
+    canceled_ = false;
+    await Task.Delay(delay);
 
-        public static DelayedAction StartNew(TimeSpan delay, Action action) {
-            var instance = new DelayedAction();
-            instance.Start(delay, action);
-            return instance;
-        }
+    if (!canceled_) {
+      action();
     }
+  }
+
+  public void Cancel() {
+    canceled_ = true;
+  }
 }

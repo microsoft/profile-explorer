@@ -161,7 +161,7 @@
 
         <Strings>
           <ButtonText>Attach</ButtonText>
-          <ToolTipText>Attach debugger to UTC instance and start IR Explorer</ToolTipText>
+          <ToolTipText>Attach debugger to compiler instance and start IR Explorer</ToolTipText>
         </Strings>
       </Button>
 

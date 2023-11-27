@@ -14,12 +14,13 @@
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<AssemblyName>irexplorer</AssemblyName>
 		<Platforms>AnyCPU;ARM64</Platforms>
+		<LangVersion>default</LangVersion>
 	</PropertyGroup>
 
 	<PropertyGroup>
 		<ServerGarbageCollection>true</ServerGarbageCollection>
 		<ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
-    <GCHeapCount>16</GCHeapCount>
+		<GCHeapCount>16</GCHeapCount>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -31,11 +32,11 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-	  <OutputPath />
-	  <PlatformTarget>ARM64</PlatformTarget>
-	  <DebugType>full</DebugType>
-	  <DebugSymbols>true</DebugSymbols>
-	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<OutputPath/>
+		<PlatformTarget>ARM64</PlatformTarget>
+		<DebugType>full</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -46,10 +47,10 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-	  <OutputPath />
-	  <PlatformTarget>ARM64</PlatformTarget>
-	  <DefineConstants>TRACE</DefineConstants>
-	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<OutputPath/>
+		<PlatformTarget>ARM64</PlatformTarget>
+		<DefineConstants>TRACE</DefineConstants>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -64,85 +65,81 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Remove="Themes\**" />
-		<EmbeddedResource Remove="Themes\**" />
-		<None Remove="Themes\**" />
-		<Page Remove="Themes\**" />
+		<Compile Remove="Themes\**"/>
+		<EmbeddedResource Remove="Themes\**"/>
+		<None Remove="Themes\**"/>
+		<Page Remove="Themes\**"/>
 		<Page Update="Profile\CallTreeNodePanel.xaml">
-		  <Generator>MSBuild:Compile</Generator>
-		  <XamlRuntime>Wpf</XamlRuntime>
-		  <SubType>Designer</SubType>
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Controls\WebViewPopup.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
 		</Page>
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Remove="refresh.png" />
+		<None Remove="refresh.png"/>
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Autoupdater.NET.Official" Version="1.6.4" />
-		<PackageReference Include="AvalonEdit" Version="6.1.3.50" />
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.11.0" />
-		<PackageReference Include="ClosedXML" Version="0.96.0" />
-		<PackageReference Include="CS-Script.Core" Version="1.4.0" />
-		<PackageReference Include="DiffPlex" Version="1.7.1" />
-		<PackageReference Include="Dirkster.AvalonDock" Version="4.70.1" />
-		<PackageReference Include="Dirkster.AvalonDock.Themes.Aero" Version="4.70.1" />
-		<PackageReference Include="Dirkster.AvalonDock.Themes.Metro" Version="4.70.1" />
-		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2010" Version="4.70.1" />
-		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.70.1" />
-		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.100" />
-		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94" />
-		<PackageReference Include="Google.Protobuf" Version="3.20.1" />
-		<PackageReference Include="Grpc" Version="2.44.0" />
-		<PackageReference Include="Grpc.Core" Version="2.44.0" />
-		<PackageReference Include="Grpc.Core.Api" Version="2.44.0" />
-		<PackageReference Include="Grpc.Tools" Version="2.44.0">
+		<PackageReference Include="Autoupdater.NET.Official" Version="1.8.4"/>
+		<PackageReference Include="AvalonEdit" Version="6.3.0.90"/>
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.19.1"/>
+		<PackageReference Include="ClosedXML" Version="0.102.1"/>
+		<PackageReference Include="CS-Script.Core" Version="2.0.0"/>
+		<PackageReference Include="DiffPlex" Version="1.7.1"/>
+		<PackageReference Include="Dirkster.AvalonDock" Version="4.72.1"/>
+		<PackageReference Include="Dirkster.AvalonDock.Themes.Aero" Version="4.72.1"/>
+		<PackageReference Include="Dirkster.AvalonDock.Themes.Metro" Version="4.72.1"/>
+		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2010" Version="4.72.1"/>
+		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1"/>
+		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.106"/>
+		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94"/>
+		<PackageReference Include="Google.Protobuf" Version="3.25.1"/>
+		<PackageReference Include="Grpc" Version="2.46.6"/>
+		<PackageReference Include="Grpc.Core" Version="2.46.6"/>
+		<PackageReference Include="Grpc.Core.Api" Version="2.59.0"/>
+		<PackageReference Include="Grpc.Tools" Version="2.59.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.2.0-1.final" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.2.0-1.final" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.2.0-1.final" />
-		<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.2">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="2.0.226801" />
-		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.0.2" />
-		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SupportFiles" Version="1.0.23" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.7.0"/>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.7.0"/>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.7.0"/>
+		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="3.1.456101"/>
+		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.6"/>
+		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SupportFiles" Version="1.0.23"/>
 		<PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="16.10.10">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.1.46">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.8.14">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
-		<PackageReference Include="OxyPlot.SkiaSharp.Wpf" Version="2.1.0" />
-		<PackageReference Include="OxyPlot.Wpf" Version="2.1.0" />
-		<PackageReference Include="protobuf-net" Version="3.0.101" />
-		<PackageReference Include="RangeTree" Version="3.0.1" />
-		<PackageReference Include="System.IO" Version="4.3.0" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.42" />
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2194-prerelease"/>
+		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77"/>
+		<PackageReference Include="OxyPlot.SkiaSharp.Wpf" Version="2.1.2"/>
+		<PackageReference Include="OxyPlot.Wpf" Version="2.1.2"/>
+		<PackageReference Include="protobuf-net" Version="3.2.26"/>
+		<PackageReference Include="System.IO" Version="4.3.0"/>
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.54"/>
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\ClientServer\GrpcLib.csproj" />
-		<ProjectReference Include="..\external\TreeListView\TreeListView.csproj" />
-		<ProjectReference Include="..\IRExplorerCore\IRExplorerCore.csproj" />
-		<ProjectReference Include="..\IRExplorerLib\IRExplorerLib.csproj" />
+		<ProjectReference Include="..\ClientServer\GrpcLib.csproj"/>
+		<ProjectReference Include="..\external\TreeListView\TreeListView.csproj"/>
+		<ProjectReference Include="..\IRExplorerCore\IRExplorerCore.csproj"/>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Reference Include="Dia2Lib">
-	    <HintPath>..\external\Dia2Lib.dll</HintPath>
-	  </Reference>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Resource Include="refresh.png" />
+		<Reference Include="Dia2Lib">
+			<HintPath>..\external\Dia2Lib.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -153,10 +150,10 @@
 			<SubType>Code</SubType>
 		</Compile>
 		<Compile Update="Panels\ModuleReportPanel.xaml.cs">
-		  <SubType>Code</SubType>
+			<SubType>Code</SubType>
 		</Compile>
 		<Compile Update="Profile\CallTreePanel.xaml.cs">
-		  <SubType>Code</SubType>
+			<SubType>Code</SubType>
 		</Compile>
 		<Compile Update="Panels\ScriptingPanel.xaml.cs">
 			<SubType>Code</SubType>
@@ -213,13 +210,13 @@
 
 	<ItemGroup>
 		<Page Update="Controls\IconSelector.xaml">
-		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
 		<Page Update="Controls\IRDocumentPopup.xaml">
-		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
 		<Page Update="OptionsPanels\LightDocumentOptionsPanel.xaml">
-		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
 		<Page Update="OptionsPanels\ExpressionGraphOptionsPanel.xaml">
 			<SubType>Designer</SubType>
@@ -228,12 +225,12 @@
 			<SubType>Designer</SubType>
 		</Page>
 		<Page Update="Panels\ModuleReportPanel.xaml">
-		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-		  <SubType>Designer</SubType>
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+			<SubType>Designer</SubType>
 		</Page>
 		<Page Update="Profile\CallTreePanel.xaml">
-		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-		  <SubType>Designer</SubType>
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+			<SubType>Designer</SubType>
 		</Page>
 		<Page Update="Panels\ScriptingPanel.xaml">
 			<SubType>Designer</SubType>
@@ -265,11 +262,8 @@
 		<Page Update="Converters.xaml">
 			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
-		<Page Update="Windows\BinaryOpenWindow.xaml">
-		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-		</Page>
 		<Page Update="Windows\ProfileLoadWindow.xaml">
-		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
 	</ItemGroup>
 

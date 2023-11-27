@@ -1,0 +1,69 @@
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System.Collections.Generic;
+using System.Windows.Media;
+using IRExplorerCore.IR;
+using IRExplorerUI.Query;
+
+namespace IRExplorerUI.Compilers.Default;
+
+public class ValueNumberQuery : IElementQuery {
+  private static readonly string ValueNumberPrefix = "vn ";
+  public ISession Session { get; private set; }
+
+  public static QueryDefinition GetDefinition() {
+    var query = new QueryDefinition(typeof(ValueNumberQuery), "Value Numbers",
+                                    "Details about values with SSA info");
+    query.Data.AddInput("Operand", QueryValueKind.Element);
+    query.Data.AddInput("Consider only dominated values", QueryValueKind.Bool);
+    query.Data.AddInput("Marking color", QueryValueKind.Color);
+    query.Data.AddOutput("Value number", QueryValueKind.String);
+    return query;
+  }
+
+  public bool Initialize(ISession session) {
+    Session = session;
+    return true;
+  }
+
+  public bool Execute(QueryData data) {
+    data.ResetResults();
+    var element = data.GetInput<IRElement>("Operand");
+    string vn = DefaultRemarkParser.ExtractValueNumber(element, ValueNumberPrefix);
+
+    if (vn == null) {
+      return true;
+    }
+
+    var func = element.ParentFunction;
+    var sameVNInstrs = new HashSet<InstructionIR>();
+
+    func.ForEachInstruction(instr => {
+      string instrVN = DefaultRemarkParser.ExtractValueNumber(instr, ValueNumberPrefix);
+
+      if (instrVN == vn) {
+        sameVNInstrs.Add(instr);
+      }
+
+      return true;
+    });
+
+    data.SetOutput("Value number", vn);
+    data.SetOutput("Instrs. with same value number", sameVNInstrs.Count);
+    data.ClearButtons();
+
+    if (sameVNInstrs.Count > 0) {
+      data.AddButton("Mark same value number instrs.", (sender, data) => {
+        //? TODO: Check for document/function still being the same
+        var document = Session.CurrentDocument;
+
+        foreach (var instr in sameVNInstrs) {
+          document.MarkElement(instr, Colors.YellowGreen);
+        }
+      });
+    }
+
+    return true;
+  }
+}

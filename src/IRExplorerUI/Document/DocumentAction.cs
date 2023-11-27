@@ -1,71 +1,71 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 using System;
 using IRExplorerCore.IR;
 
-namespace IRExplorerUI {
-    public enum DocumentActionKind {
-        SelectElement,
-        MarkElement,
-        MarkBlock,
-        GoToDefinition,
-        ShowReferences,
-        MarkReferences,
-        ShowUses,
-        MarkUses,
-        MarkExpression,
-        ClearMarker,
-        ClearAllMarkers,
-        ClearBlockMarkers,
-        ClearInstructionMarkers,
-        ClearTemporaryMarkers,
-        UndoAction,
-        VerticalScroll,
-        ShowExpressionGraph
-    }
+namespace IRExplorerUI;
 
-    public class DocumentAction {
-        public DocumentAction(DocumentActionKind actionKind, IRElement element = null,
-                              object optionalData = null) {
-            ActionKind = actionKind;
-            Element = element;
-            OptionalData = optionalData;
-        }
+public enum DocumentActionKind {
+  SelectElement,
+  MarkElement,
+  MarkBlock,
+  GoToDefinition,
+  ShowReferences,
+  MarkReferences,
+  ShowUses,
+  MarkUses,
+  MarkExpression,
+  ClearMarker,
+  ClearAllMarkers,
+  ClearBlockMarkers,
+  ClearInstructionMarkers,
+  ClearTemporaryMarkers,
+  UndoAction,
+  VerticalScroll,
+  ShowExpressionGraph
+}
 
-        public DocumentActionKind ActionKind { get; set; }
-        public IRElement Element { get; set; }
-        public object OptionalData { get; set; }
+public class DocumentAction {
+  public DocumentAction(DocumentActionKind actionKind, IRElement element = null,
+                        object optionalData = null) {
+    ActionKind = actionKind;
+    Element = element;
+    OptionalData = optionalData;
+  }
 
-        public DocumentAction WithNewElement(IRElement newElement) {
-            return new DocumentAction(ActionKind, newElement, OptionalData);
-        }
+  public DocumentActionKind ActionKind { get; set; }
+  public IRElement Element { get; set; }
+  public object OptionalData { get; set; }
 
-        public override string ToString() {
-            return $"action: {ActionKind}, element: {Element}";
-        }
-    }
+  public DocumentAction WithNewElement(IRElement newElement) {
+    return new DocumentAction(ActionKind, newElement, OptionalData);
+  }
 
-    public class MarkActionData {
-        public bool IsTemporary { get; set; }
-        public PairHighlightingStyle Style { get; set; }
-    }
+  public override string ToString() {
+    return $"action: {ActionKind}, element: {Element}";
+  }
+}
 
-    public class ReversibleDocumentAction {
-        public ReversibleDocumentAction(DocumentAction action, Action<DocumentAction> undoAction) {
-            Action = action;
-            UndoAction = undoAction;
-        }
+public class MarkActionData {
+  public bool IsTemporary { get; set; }
+  public PairHighlightingStyle Style { get; set; }
+}
 
-        private DocumentAction Action { get; set; }
-        public Action<DocumentAction> UndoAction { get; set; }
+public class ReversibleDocumentAction {
+  public ReversibleDocumentAction(DocumentAction action, Action<DocumentAction> undoAction) {
+    Action = action;
+    UndoAction = undoAction;
+  }
 
-        public void Undo() {
-            UndoAction?.Invoke(Action);
-        }
+  public Action<DocumentAction> UndoAction { get; set; }
+  private DocumentAction Action { get; set; }
 
-        public override string ToString() {
-            return Action.ToString();
-        }
-    }
+  public void Undo() {
+    UndoAction?.Invoke(Action);
+  }
+
+  public override string ToString() {
+    return Action.ToString();
+  }
 }

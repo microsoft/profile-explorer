@@ -1,138 +1,136 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
-using DocumentFormat.OpenXml.Drawing.Charts;
-using DocumentFormat.OpenXml.EMMA;
-using HarfBuzzSharp;
 
 namespace IRExplorerUI.Profile;
 
 public class GlyphRunCache {
-    public struct GlyphInfo {
-        public GlyphRun Glyphs;
-        public double TextWidth;
-        public double TextHeight;
-        public bool IsCached;
+  private static readonly Point ZeroPoint = new Point(0, 0);
+  private readonly GlyphTypeface glyphTypeface_;
+  private readonly Dictionary<string, Dictionary<double, GlyphInfo>> textGlyphsCache_;
+  private readonly Typeface typeFace_;
+  private readonly double textSize_;
+  private readonly float pixelsPerDip_;
+  private readonly bool useGlyphIndexFastPath_;
+  private readonly double[] advanceGlyphWidths_;
 
-        public GlyphInfo(GlyphRun glyphs, double textWidth, double textHeight) {
-            Glyphs = glyphs;
-            TextWidth = textWidth;
-            TextHeight = textHeight;
-            IsCached = false;
-        }
+  public GlyphRunCache(Typeface typeFace, double textSize, double pixelsPerDip) {
+    typeFace_ = typeFace;
+    textSize_ = textSize;
+    pixelsPerDip_ = (float)pixelsPerDip;
+    textGlyphsCache_ = new Dictionary<string, Dictionary<double, GlyphInfo>>();
+
+    if (!typeFace.TryGetGlyphTypeface(out glyphTypeface_)) {
+      throw new InvalidOperationException("Failed to get GlyphTypeface");
     }
 
+    // Check if a direct mapping from ASCII code to glyph index is possible.
+    char testLetter = 'a';
+    ushort glyphIndex = glyphTypeface_.CharacterToGlyphMap[testLetter];
+    useGlyphIndexFastPath_ = glyphIndex == testLetter - 29;
 
-    private class MaxWidthComparer : IEqualityComparer<double> {
-        public bool Equals(double x, double y) {
-            return Math.Abs(x - y) < double.Epsilon;
-        }
+    if (useGlyphIndexFastPath_) {
+      advanceGlyphWidths_ = new double[glyphTypeface_.GlyphCount];
 
-        public int GetHashCode(double value) {
-            return (int)value;
-        }
+      for (int i = 0; i < glyphTypeface_.GlyphCount; i++) {
+        advanceGlyphWidths_[i] = glyphTypeface_.AdvanceWidths[(ushort)i] * textSize_;
+      }
+    }
+  }
+
+  public GlyphInfo GetGlyphs(string text) {
+    return GetGlyphs(text, double.MaxValue);
+  }
+
+  public GlyphInfo GetGlyphs(string text, double maxWidth) {
+    if (textGlyphsCache_.TryGetValue(text, out var glyphsList)) {
+      if (glyphsList.TryGetValue(maxWidth, out var info)) {
+        return info;
+      }
     }
 
+    return MakeGlyphRun(text);
+  }
 
-    private static readonly Point ZeroPoint = new Point(0, 0);
-    private readonly GlyphTypeface glyphTypeface_;
-    private readonly Dictionary<string, Dictionary<double, GlyphInfo>> textGlyphsCache_;
-    private readonly Typeface typeFace_;
-    private readonly double textSize_;
-    private readonly float pixelsPerDip_;
-    private readonly bool useGlyphIndexFastPath_;
-    private readonly double[] advanceGlyphWidths_;
-
-    public GlyphRunCache(Typeface typeFace, double textSize, double pixelsPerDip) {
-        typeFace_ = typeFace;
-        textSize_ = textSize;
-        pixelsPerDip_ = (float)pixelsPerDip;
-        textGlyphsCache_ = new Dictionary<string, Dictionary<double, GlyphInfo>>();
-
-        if (!typeFace.TryGetGlyphTypeface(out glyphTypeface_)) {
-            throw new InvalidOperationException("Failed to get GlyphTypeface");
-        }
-
-        // Check if a direct mapping from ASCII code to glyph index is possible.
-        char testLetter = 'a';
-        ushort glyphIndex = glyphTypeface_.CharacterToGlyphMap[testLetter];
-        useGlyphIndexFastPath_ = glyphIndex == (testLetter - 29);
-
-        if (useGlyphIndexFastPath_) {
-            advanceGlyphWidths_ = new double[glyphTypeface_.GlyphCount];
-
-            for (int i = 0; i < glyphTypeface_.GlyphCount; i++) {
-                advanceGlyphWidths_[i] = glyphTypeface_.AdvanceWidths[(ushort)i] * textSize_;
-            }
-        }
+  public void CacheGlyphs(GlyphInfo info, string text, double maxWidth) {
+    if (info.IsCached) {
+      return;
     }
 
-    public GlyphInfo GetGlyphs(string text) {
-        return GetGlyphs(text, double.MaxValue);
+    if (!textGlyphsCache_.TryGetValue(text, out var glyphsList)) {
+      glyphsList = new Dictionary<double, GlyphInfo>(new MaxWidthComparer());
+      textGlyphsCache_[text] = glyphsList;
     }
 
-    public GlyphInfo GetGlyphs(string text, double maxWidth) {
-        if (textGlyphsCache_.TryGetValue(text, out var glyphsList)) {
-            if (glyphsList.TryGetValue(maxWidth, out var info)) {
-                return info;
-            }
-        }
+    glyphsList[maxWidth] = info;
+  }
 
-        return MakeGlyphRun(text);
+  private GlyphInfo MakeGlyphRun(string text) {
+    if (string.IsNullOrEmpty(text)) {
+      text = " "; // GlyphRun constructor doesn't like 0-length arrays.
     }
 
-    public void CacheGlyphs(GlyphInfo info, string text, double maxWidth) {
-        if (info.IsCached) {
-            return;
-        }
+    double size = textSize_;
+    double totalWidth = 0;
+    ushort[] glyphIndexes = new ushort[text.Length];
+    double[] advanceWidths = new double[text.Length];
 
-        if (!textGlyphsCache_.TryGetValue(text, out var glyphsList)) {
-            glyphsList = new Dictionary<double, GlyphInfo>(new MaxWidthComparer());
-            textGlyphsCache_[text] = glyphsList;
-        }
+    for (int i = 0; i < text.Length; i++) {
+      ushort glyphIndex;
 
-        glyphsList[maxWidth] = info;
+      if (useGlyphIndexFastPath_) {
+        glyphIndex = (ushort)(text[i] - 29);
+      }
+      else {
+        glyphIndex = glyphTypeface_.CharacterToGlyphMap[text[i]];
+      }
+
+      glyphIndexes[i] = glyphIndex;
+      double glyphWidth = 0;
+
+      if (useGlyphIndexFastPath_) {
+        glyphWidth = advanceGlyphWidths_[glyphIndex];
+      }
+      else {
+        glyphWidth = glyphTypeface_.AdvanceWidths[glyphIndex] * size;
+      }
+
+      advanceWidths[i] = glyphWidth;
+      totalWidth += glyphWidth;
     }
 
-    private GlyphInfo MakeGlyphRun(string text) {
-        if (string.IsNullOrEmpty(text)) {
-            text = " "; // GlyphRun constructor doesn't like 0-length arrays.
-        }
+    var glyphRun = new GlyphRun(glyphTypeface_, 0, false, size, pixelsPerDip_,
+                                glyphIndexes, ZeroPoint, advanceWidths,
+                                null, null, null, null, null, null);
+    double height = glyphTypeface_.Height * size;
+    return new GlyphInfo(glyphRun, totalWidth, height);
+  }
 
-        double size = textSize_;
-        double totalWidth = 0;
-        ushort[] glyphIndexes = new ushort[text.Length];
-        double[] advanceWidths = new double[text.Length];
+  public struct GlyphInfo {
+    public GlyphRun Glyphs;
+    public double TextWidth;
+    public double TextHeight;
+    public bool IsCached;
 
-        for (int i = 0; i < text.Length; i++) {
-            ushort glyphIndex;
-            if (useGlyphIndexFastPath_) {
-                glyphIndex = (ushort)(text[i] - 29);
-            }
-            else {
-                glyphIndex = glyphTypeface_.CharacterToGlyphMap[text[i]];
-            }
-
-            glyphIndexes[i] = glyphIndex;
-            double glyphWidth = 0;
-
-            if (useGlyphIndexFastPath_) {
-                glyphWidth = advanceGlyphWidths_[glyphIndex];
-            }
-            else {
-                glyphWidth = glyphTypeface_.AdvanceWidths[glyphIndex] * size;
-            }
-
-            advanceWidths[i] = glyphWidth;
-            totalWidth += glyphWidth;
-        }
-
-        GlyphRun glyphRun = new GlyphRun(glyphTypeface_, 0, false, size, pixelsPerDip_,
-            glyphIndexes, ZeroPoint, advanceWidths,
-            null, null, null, null, null, null);
-        double height = glyphTypeface_.Height * size;
-        return new GlyphInfo(glyphRun, totalWidth, height);
+    public GlyphInfo(GlyphRun glyphs, double textWidth, double textHeight) {
+      Glyphs = glyphs;
+      TextWidth = textWidth;
+      TextHeight = textHeight;
+      IsCached = false;
     }
+  }
+
+  private class MaxWidthComparer : IEqualityComparer<double> {
+    public bool Equals(double x, double y) {
+      return Math.Abs(x - y) < double.Epsilon;
+    }
+
+    public int GetHashCode(double value) {
+      return (int)value;
+    }
+  }
 }

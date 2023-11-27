@@ -1,279 +1,286 @@
 ﻿<local:ToolPanelControl
-    d:DesignHeight="450"
-    d:DesignWidth="800"
-    mc:Ignorable="d"
-    x:Class="IRExplorerUI.SearchResultsPanel"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:IRExplorerUI"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <local:ToolPanelControl.CommandBindings>
-        <CommandBinding Command="local:SearchResultsCommand.JumpToSelected" Executed="JumpToSelectedExecuted" />
-        <CommandBinding Command="local:SearchResultsCommand.JumpToNext" Executed="JumpToNextExecuted" />
-        <CommandBinding Command="local:SearchResultsCommand.JumpToPrevious" Executed="JumpToPreviousExecuted" />
-        <CommandBinding Command="local:SearchResultsCommand.JumpToNextSection" Executed="JumpToNextSectionExecuted" />
-        <CommandBinding Command="local:SearchResultsCommand.JumpToPreviousSection" Executed="JumpToPreviousSectionExecuted" />
-        <CommandBinding Command="local:SearchResultsCommand.OpenInNewTab" Executed="OpenInNewTabExecuted" />
-        <CommandBinding Command="local:SearchResultsCommand.OpenLeft" Executed="OpenLeftExecuted" />
-        <CommandBinding Command="local:SearchResultsCommand.OpenRight" Executed="OpenRightExecuted" />
-    </local:ToolPanelControl.CommandBindings>
+  d:DesignHeight="450"
+  d:DesignWidth="800"
+  mc:Ignorable="d"
+  x:Class="IRExplorerUI.SearchResultsPanel"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="clr-namespace:IRExplorerUI"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <local:ToolPanelControl.CommandBindings>
+    <CommandBinding Command="local:SearchResultsCommand.JumpToSelected"
+                    Executed="JumpToSelectedExecuted" />
+    <CommandBinding Command="local:SearchResultsCommand.JumpToNext" Executed="JumpToNextExecuted" />
+    <CommandBinding Command="local:SearchResultsCommand.JumpToPrevious"
+                    Executed="JumpToPreviousExecuted" />
+    <CommandBinding Command="local:SearchResultsCommand.JumpToNextSection"
+                    Executed="JumpToNextSectionExecuted" />
+    <CommandBinding Command="local:SearchResultsCommand.JumpToPreviousSection"
+                    Executed="JumpToPreviousSectionExecuted" />
+    <CommandBinding Command="local:SearchResultsCommand.OpenInNewTab"
+                    Executed="OpenInNewTabExecuted" />
+    <CommandBinding Command="local:SearchResultsCommand.OpenLeft" Executed="OpenLeftExecuted" />
+    <CommandBinding Command="local:SearchResultsCommand.OpenRight" Executed="OpenRightExecuted" />
+  </local:ToolPanelControl.CommandBindings>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="28" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="28" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
 
-        <Grid
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-            Grid.Row="0"
-            HorizontalAlignment="Stretch">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="75" />
-            </Grid.ColumnDefinitions>
-            <ToolBarTray
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                Grid.Column="0"
-                Height="28"
-                HorizontalAlignment="Stretch"
-                IsLocked="True"
-                VerticalAlignment="Top">
-                <ToolBar
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                    HorizontalAlignment="Stretch"
-                    Loaded="ToolBar_Loaded"
-                    VerticalAlignment="Top">
+    <Grid
+      Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+      Grid.Row="0"
+      HorizontalAlignment="Stretch">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="75" />
+      </Grid.ColumnDefinitions>
+      <ToolBarTray
+        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        Grid.Column="0"
+        Height="28"
+        HorizontalAlignment="Stretch"
+        IsLocked="True"
+        VerticalAlignment="Top">
+        <ToolBar
+          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+          HorizontalAlignment="Stretch"
+          Loaded="ToolBar_Loaded"
+          VerticalAlignment="Top">
 
-                    <TextBlock
-                        Margin="5,0,0,0"
-                        Text="Section"
-                        VerticalAlignment="Center" />
-                    <Button
-                        Command="local:SearchResultsCommand.JumpToPreviousSection"
-                        CommandTarget="{Binding ElementName=ResultList}"
-                        Margin="4,0,0,0"
-                        ToolTip="Jump to previous section results (Ctrl+Shift+F3)">
-                        <Image Source="{StaticResource BoldUpArrowIcon}" />
-                    </Button>
-
-                    <Button
-                        Command="local:SearchResultsCommand.JumpToNextSection"
-                        CommandTarget="{Binding ElementName=ResultList}"
-                        ToolTip="Jump to next section results (Ctrl+F3)">
-                        <Image Source="{StaticResource BoldDownArrowIcon}" />
-                    </Button>
-                    <Separator />
-
-                    <Button
-                        Command="local:SearchResultsCommand.JumpToPrevious"
-                        CommandTarget="{Binding ElementName=ResultList}"
-                        Margin="4,0,0,0"
-                        ToolTip="Jump to previous result (Shift+F3)">
-                        <Image Source="{StaticResource UpArrowIcon}" />
-                    </Button>
-
-                    <Button
-                        Command="local:SearchResultsCommand.JumpToNext"
-                        CommandTarget="{Binding ElementName=ResultList}"
-                        ToolTip="Jump to next result (F3)">
-                        <Image Source="{StaticResource DownArrowIcon}" />
-                    </Button>
-
-                    <TextBlock
-                        Margin="4,0,0,0"
-                        Text="Results:"
-                        VerticalAlignment="Center" />
-
-                    <TextBlock
-                        FontWeight="Medium"
-                        Margin="8,0,0,0"
-                        Text=""
-                        VerticalAlignment="Center"
-                        x:Name="ResultNumberText" />
-
-                    <TextBlock
-                        Margin="32,0,0,0"
-                        Text="Searched text:"
-                        VerticalAlignment="Center"
-                        Visibility="{Binding HideSearchedText, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
-                    <TextBlock
-                        FontWeight="Medium"
-                        Margin="4,0,0,0"
-                        Text=""
-                        VerticalAlignment="Center"
-                        Visibility="{Binding HideSearchedText, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
-                        x:Name="SearchedText" />
-                    <TextBlock
-                        Margin="32,0,0,0"
-                        Text="{Binding OptionalText}"
-                        VerticalAlignment="Center" />
-                </ToolBar>
-            </ToolBarTray>
-            <local:PanelToolbarTray
-                Grid.Column="1"
-                HasDuplicateButton="False"
-                HasPinButton="False"
-                Visibility="{Binding HideToolbarTray, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
-        </Grid>
-
-        <ListView
-            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-            BorderBrush="{x:Null}"
-            BorderThickness="0,0,0,0"
-            Grid.Row="1"
-            Margin="0,-1,0,0"
-            VirtualizingPanel.CacheLengthUnit="Item"
-            VirtualizingPanel.IsVirtualizing="True"
-            VirtualizingStackPanel.CacheLength="2,3"
-            VirtualizingStackPanel.ScrollUnit="Item"
-            VirtualizingStackPanel.VirtualizationMode="Recycling"
-            x:Name="ResultList">
-            <ListView.View>
-                <GridView>
-
-                    <GridViewColumn
-                        DisplayMemberBinding="{Binding SectionName}"
-                        Header="Section"
-                        Width="300">
-                        <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
-                                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                            </Style>
-                        </GridViewColumn.HeaderContainerStyle>
-                    </GridViewColumn>
-
-                    <GridViewColumn
-                        DisplayMemberBinding="{Binding Index}"
-                        Header="#"
-                        Width="40">
-                        <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
-                                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                            </Style>
-                        </GridViewColumn.HeaderContainerStyle>
-                    </GridViewColumn>
-
-                    <GridViewColumn Header="Search result" Width="380">
-                        <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
-                                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                            </Style>
-                        </GridViewColumn.HeaderContainerStyle>
-
-                        <GridViewColumn.CellTemplate>
-                            <DataTemplate>
-                                <ContentPresenter Content="{Binding Preview}" />
-                            </DataTemplate>
-                        </GridViewColumn.CellTemplate>
-                    </GridViewColumn>
-                </GridView>
-            </ListView.View>
-            <ListView.ItemContainerStyle>
-                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                    <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
-
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                            <Setter Property="Foreground" Value="{Binding Path=TextColor}" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ListView.ItemContainerStyle>
-
-            <ListView.ContextMenu>
-                <ContextMenu>
-                    <MenuItem
-                        Command="local:SearchResultsCommand.OpenInNewTab"
-                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                        CommandTarget="{Binding ElementName=ResultList}"
-                        Header="Open Section in New Tab"
-                        InputGestureText="Shift+Return">
-                        <MenuItem.Icon>
-                            <Image
-                                Height="16"
-                                Source="{StaticResource OpenExternalIcon}"
-                                Width="16" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-
-                    <MenuItem
-                        Command="local:SearchResultsCommand.OpenLeft"
-                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                        CommandTarget="{Binding ElementName=ResultList}"
-                        Header="Open Section in Left Tab"
-                        InputGestureText="Ctrl+Left">
-                        <MenuItem.Icon>
-                            <Image
-                                Height="16"
-                                Source="{StaticResource DockLeftIcon}"
-                                Width="16" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem
-                        Command="local:SearchResultsCommand.OpenRight"
-                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                        CommandTarget="{Binding ElementName=ResultList}"
-                        Header="Open Section in Right Tab"
-                        InputGestureText="Ctrl+Right">
-                        <MenuItem.Icon>
-                            <Image
-                                Height="16"
-                                Source="{StaticResource DockRightIcon}"
-                                Width="16" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                </ContextMenu>
-            </ListView.ContextMenu>
-
-            <ListView.InputBindings>
-                <KeyBinding
-                    Command="local:SearchResultsCommand.JumpToSelected"
-                    CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
-                    CommandTarget="{Binding ElementName=ResultList}"
-                    Key="Return" />
-                <KeyBinding
-                    Command="local:SearchResultsCommand.OpenInNewTab"
-                    CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
-                    CommandTarget="{Binding ElementName=ResultList}"
-                    Key="Return"
-                    Modifiers="Shift" />
-            </ListView.InputBindings>
-        </ListView>
-    </Grid>
-
-    <local:ToolPanelControl.InputBindings>
-        <KeyBinding
-            Command="local:SearchResultsCommand.JumpToNext"
-            CommandTarget="{Binding ElementName=ResultList}"
-            Key="F3" />
-        <KeyBinding
-            Command="local:SearchResultsCommand.JumpToPrevious"
-            CommandTarget="{Binding ElementName=ResultList}"
-            Key="F3"
-            Modifiers="Shift" />
-        <KeyBinding
-            Command="local:SearchResultsCommand.JumpToNextSection"
-            CommandTarget="{Binding ElementName=ResultList}"
-            Key="F3"
-            Modifiers="Ctrl" />
-        <KeyBinding
+          <TextBlock
+            Margin="5,0,0,0"
+            Text="Section"
+            VerticalAlignment="Center" />
+          <Button
             Command="local:SearchResultsCommand.JumpToPreviousSection"
             CommandTarget="{Binding ElementName=ResultList}"
-            Key="F3"
-            Modifiers="Ctrl+Shift" />
+            Margin="4,0,0,0"
+            ToolTip="Jump to previous section results (Ctrl+Shift+F3)">
+            <Image Source="{StaticResource BoldUpArrowIcon}" />
+          </Button>
 
-        <KeyBinding
+          <Button
+            Command="local:SearchResultsCommand.JumpToNextSection"
+            CommandTarget="{Binding ElementName=ResultList}"
+            ToolTip="Jump to next section results (Ctrl+F3)">
+            <Image Source="{StaticResource BoldDownArrowIcon}" />
+          </Button>
+          <Separator />
+
+          <Button
+            Command="local:SearchResultsCommand.JumpToPrevious"
+            CommandTarget="{Binding ElementName=ResultList}"
+            Margin="4,0,0,0"
+            ToolTip="Jump to previous result (Shift+F3)">
+            <Image Source="{StaticResource UpArrowIcon}" />
+          </Button>
+
+          <Button
+            Command="local:SearchResultsCommand.JumpToNext"
+            CommandTarget="{Binding ElementName=ResultList}"
+            ToolTip="Jump to next result (F3)">
+            <Image Source="{StaticResource DownArrowIcon}" />
+          </Button>
+
+          <TextBlock
+            Margin="4,0,0,0"
+            Text="Results:"
+            VerticalAlignment="Center" />
+
+          <TextBlock
+            FontWeight="Medium"
+            Margin="8,0,0,0"
+            Text=""
+            VerticalAlignment="Center"
+            x:Name="ResultNumberText" />
+
+          <TextBlock
+            Margin="32,0,0,0"
+            Text="Searched text:"
+            VerticalAlignment="Center"
+            Visibility="{Binding HideSearchedText, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+          <TextBlock
+            FontWeight="Medium"
+            Margin="4,0,0,0"
+            Text=""
+            VerticalAlignment="Center"
+            Visibility="{Binding HideSearchedText, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
+            x:Name="SearchedText" />
+          <TextBlock
+            Margin="32,0,0,0"
+            Text="{Binding OptionalText}"
+            VerticalAlignment="Center" />
+        </ToolBar>
+      </ToolBarTray>
+      <local:PanelToolbarTray
+        Grid.Column="1"
+        HasDuplicateButton="False"
+        HasHelpButton="False"
+        HasPinButton="False"
+        Visibility="{Binding HideToolbarTray, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+    </Grid>
+
+    <ListView
+      Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+      BorderBrush="{x:Null}"
+      BorderThickness="0,0,0,0"
+      Grid.Row="1"
+      Margin="0,-1,0,0"
+      VirtualizingPanel.CacheLengthUnit="Item"
+      VirtualizingPanel.IsVirtualizing="True"
+      VirtualizingStackPanel.CacheLength="2,3"
+      VirtualizingStackPanel.ScrollUnit="Item"
+      VirtualizingStackPanel.VirtualizationMode="Recycling"
+      x:Name="ResultList">
+      <ListView.View>
+        <GridView>
+
+          <GridViewColumn
+            DisplayMemberBinding="{Binding SectionName}"
+            Header="Section"
+            Width="300">
+            <GridViewColumn.HeaderContainerStyle>
+              <Style TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+              </Style>
+            </GridViewColumn.HeaderContainerStyle>
+          </GridViewColumn>
+
+          <GridViewColumn
+            DisplayMemberBinding="{Binding Index}"
+            Header="#"
+            Width="40">
+            <GridViewColumn.HeaderContainerStyle>
+              <Style TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+              </Style>
+            </GridViewColumn.HeaderContainerStyle>
+          </GridViewColumn>
+
+          <GridViewColumn Header="Search result" Width="380">
+            <GridViewColumn.HeaderContainerStyle>
+              <Style TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+              </Style>
+            </GridViewColumn.HeaderContainerStyle>
+
+            <GridViewColumn.CellTemplate>
+              <DataTemplate>
+                <ContentPresenter Content="{Binding Preview}" />
+              </DataTemplate>
+            </GridViewColumn.CellTemplate>
+          </GridViewColumn>
+        </GridView>
+      </ListView.View>
+      <ListView.ItemContainerStyle>
+        <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+          <Setter Property="Background"
+                  Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+          <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
+
+          <Style.Triggers>
+            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+              <Setter Property="Foreground" Value="{Binding Path=TextColor}" />
+            </DataTrigger>
+          </Style.Triggers>
+        </Style>
+      </ListView.ItemContainerStyle>
+
+      <ListView.ContextMenu>
+        <ContextMenu>
+          <MenuItem
+            Command="local:SearchResultsCommand.OpenInNewTab"
+            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+            CommandTarget="{Binding ElementName=ResultList}"
+            Header="Open Section in New Tab"
+            InputGestureText="Shift+Return">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource OpenExternalIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
+
+          <MenuItem
             Command="local:SearchResultsCommand.OpenLeft"
-            CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
-            Key="Left"
-            Modifiers="Ctrl" />
-        <KeyBinding
+            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+            CommandTarget="{Binding ElementName=ResultList}"
+            Header="Open Section in Left Tab"
+            InputGestureText="Ctrl+Left">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource DockLeftIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
             Command="local:SearchResultsCommand.OpenRight"
-            CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
-            Key="Right"
-            Modifiers="Ctrl" />
-    </local:ToolPanelControl.InputBindings>
+            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+            CommandTarget="{Binding ElementName=ResultList}"
+            Header="Open Section in Right Tab"
+            InputGestureText="Ctrl+Right">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource DockRightIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
+        </ContextMenu>
+      </ListView.ContextMenu>
+
+      <ListView.InputBindings>
+        <KeyBinding
+          Command="local:SearchResultsCommand.JumpToSelected"
+          CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
+          CommandTarget="{Binding ElementName=ResultList}"
+          Key="Return" />
+        <KeyBinding
+          Command="local:SearchResultsCommand.OpenInNewTab"
+          CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
+          CommandTarget="{Binding ElementName=ResultList}"
+          Key="Return"
+          Modifiers="Shift" />
+      </ListView.InputBindings>
+    </ListView>
+  </Grid>
+
+  <local:ToolPanelControl.InputBindings>
+    <KeyBinding
+      Command="local:SearchResultsCommand.JumpToNext"
+      CommandTarget="{Binding ElementName=ResultList}"
+      Key="F3" />
+    <KeyBinding
+      Command="local:SearchResultsCommand.JumpToPrevious"
+      CommandTarget="{Binding ElementName=ResultList}"
+      Key="F3"
+      Modifiers="Shift" />
+    <KeyBinding
+      Command="local:SearchResultsCommand.JumpToNextSection"
+      CommandTarget="{Binding ElementName=ResultList}"
+      Key="F3"
+      Modifiers="Ctrl" />
+    <KeyBinding
+      Command="local:SearchResultsCommand.JumpToPreviousSection"
+      CommandTarget="{Binding ElementName=ResultList}"
+      Key="F3"
+      Modifiers="Ctrl+Shift" />
+
+    <KeyBinding
+      Command="local:SearchResultsCommand.OpenLeft"
+      CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
+      Key="Left"
+      Modifiers="Ctrl" />
+    <KeyBinding
+      Command="local:SearchResultsCommand.OpenRight"
+      CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
+      Key="Right"
+      Modifiers="Ctrl" />
+  </local:ToolPanelControl.InputBindings>
 </local:ToolPanelControl>
