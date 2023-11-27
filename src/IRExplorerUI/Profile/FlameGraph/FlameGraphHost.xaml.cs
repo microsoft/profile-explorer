@@ -200,7 +200,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
   }
 
-  public void BringNodeIntoView(FlameGraphNode node, bool fitSize = true) {
+  public void BringNodeIntoView(FlameGraphNode node, bool fitSize = false) {
     var bounds = GraphViewer.ComputeNodeBounds(node);
     var graphArea = GraphVisibleArea;
     DoubleAnimation animation1 = null;
