@@ -968,6 +968,11 @@ public partial class MainWindow : Window, ISession {
   }
 
   private bool SaveDockLayout() {
+    if (App.Settings.WorkspaceOptions.ActiveWorkspace == null) {
+      App.Settings.WorkspaceOptions.ActiveWorkspace =
+        App.Settings.WorkspaceOptions.CreateWorkspace("Default");
+    }
+
     return SaveDockLayout(App.Settings.WorkspaceOptions.ActiveWorkspace.FilePath);
   }
 
@@ -996,7 +1001,10 @@ public partial class MainWindow : Window, ISession {
   private void PopulateWorkspacesCombobox() {
     var list = App.Settings.WorkspaceOptions.Workspaces;
     WorkspaceCombobox.ItemsSource = new ObservableCollectionRefresh<Workspace>(list);
-    WorkspaceCombobox.SelectedIndex = App.Settings.WorkspaceOptions.ActiveWorkspace.Order;
+
+    if (App.Settings.WorkspaceOptions.ActiveWorkspace != null) {
+      WorkspaceCombobox.SelectedIndex = App.Settings.WorkspaceOptions.ActiveWorkspace.Order;
+    }
   }
 
   private void WorkspacesButton_OnClick(object sender, RoutedEventArgs e) {
