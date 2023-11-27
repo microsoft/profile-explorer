@@ -95,10 +95,10 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
     if (options.HasSymbolSourcePath) {
       defaultSearchPath = $"SRV*{options.SymbolSourcePath}";
 
-                if (options.HasSymbolCachePath) {
-                    defaultSearchPath = $"SRV*{options.SymbolCachePath}*{options.SymbolSourcePath}";
-                }
-            }
+      if (options.HasSymbolCachePath) {
+        defaultSearchPath = $"SRV*{options.SymbolCachePath}*{options.SymbolSourcePath}";
+      }
+    }
 
     string userSearchPath = "";
 

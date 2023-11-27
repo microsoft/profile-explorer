@@ -320,12 +320,11 @@ public class RawProfileData : IDisposable {
     return false;
   }
 
-    public void SetSampleStack(int sampleId, int stackId, int contextId) {
-        // Change the stack ID in-place in the array.
-        Debug.Assert(samples_[sampleId - 1].ContextId == contextId);
-        ref var sampleRef = ref samples_.GetValueRef(sampleId - 1);
-        sampleRef.StackId = stackId;
-    }
+  public void SetSampleStack(int sampleId, int stackId, int contextId) {
+    // Change the stack ID in-place in the array.
+    Debug.Assert(samples_[sampleId - 1].ContextId == contextId);
+    CollectionsMarshal.AsSpan(samples_)[sampleId - 1].StackId = stackId;
+  }
 
   public int AddPerformanceCounter(PerformanceCounter counter) {
     perfCounters_.Add(counter);
