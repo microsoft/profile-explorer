@@ -1,722 +1,565 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
-using IRExplorerUI.Diff;
-using IRExplorerUI.UTC;
-using IRExplorerUI.Query;
+using System.Diagnostics;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.IR;
-using IRExplorerCore.ASM;
-using System;
-using System.Diagnostics;
-using System.Windows;
-using System.Windows.Media;
-using IRExplorerUI.Profile;
 using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Document;
-using System.Windows.Documents;
-using System.IO;
-using System.Threading.Tasks;
-using Google.Protobuf.WellKnownTypes;
-using System.Text;
 
-namespace IRExplorerUI.Profile {
-    // Used as the interface for both the full IR document and lightweight version (source file).
-    public interface MarkedDocument {
-        double DefaultLineHeight { get; }
-        public void SuspendUpdate();
-        public void ResumeUpdate();
-        public void ClearInstructionMarkers();
-        public void MarkElements(ICollection<ValueTuple<IRElement, Color>> elementColorPairs);
-        public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true);
-        public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
-            double width, double height,
-            string label, string tooltip);
+namespace IRExplorerUI.Profile;
+
+// Used as the interface for both the full IR document and lightweight version (source file).
+public interface MarkedDocument {
+  ISession Session { get; }
+  double DefaultLineHeight { get; }
+  public void SuspendUpdate();
+  public void ResumeUpdate();
+  public void ClearInstructionMarkers();
+  public void MarkElements(ICollection<ValueTuple<IRElement, Color>> elementColorPairs);
+  public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true);
+
+  public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
+                                                       double width, double height,
+                                                       string label = null, string tooltip = null);
+}
+
+public class ProfileDocumentMarker {
+  // Templates for the time columns defining the style.
+  private static readonly OptionalColumn TIME_COLUMN =
+    OptionalColumn.Template("[TimeHeader]", "TimePercentageColumnValueTemplate",
+                            "TimeHeader", "Time (ms)", "Instruction time", null, 50.0, "TimeColumnHeaderTemplate",
+                            new OptionalColumnAppearance {
+                              ShowPercentageBar = false,
+                              ShowMainColumnPercentageBar = false,
+                              UseBackColor = true,
+                              UseMainColumnBackColor = true,
+                              ShowMainColumnIcon = true,
+                              BackColorPalette = ColorPalette.Profile,
+                              InvertColorPalette = true
+                            });
+  private static readonly OptionalColumn TIME_PERCENTAGE_COLUMN =
+    OptionalColumn.Template("[TimePercentageHeader]", "TimePercentageColumnValueTemplate",
+                            "TimePercentageHeader", "Time (%)", "Instruction time percentage relative to function time",
+                            null, 50.0, "TimeColumnHeaderTemplate",
+                            new OptionalColumnAppearance {
+                              ShowPercentageBar = true,
+                              ShowMainColumnPercentageBar = true,
+                              UseBackColor = true,
+                              UseMainColumnBackColor = true,
+                              ShowIcon = true,
+                              BackColorPalette = ColorPalette.Profile,
+                              InvertColorPalette = true
+                            });
+  //? TODO: Should be customizable (at least JSON if not UI)
+  private static readonly (string, string)[] PerfCounterNameReplacements = {
+    ("Instruction", "Instr"),
+    ("Misprediction", "Mispred")
+  };
+  private FunctionProfileData profile_;
+  private ProfileData globalProfile_;
+  private ProfileDocumentMarkerOptions options_;
+  private ICompilerInfoProvider irInfo_;
+
+  public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile,
+                               ProfileDocumentMarkerOptions options, ICompilerInfoProvider ir) {
+    profile_ = profile;
+    globalProfile_ = globalProfile;
+    options_ = options;
+    irInfo_ = ir;
+  }
+
+  public static bool IsPerfCounterVisible(PerformanceCounter counter) {
+    //? TODO: Use a filter list from options
+    return counter.Name != "Timer";
+  }
+
+  public static string FormatPerformanceMetric(double value, PerformanceMetric metric) {
+    if (value == 0) {
+      return "";
     }
 
-    //? TODO: Move to application settings
-    public class ProfileDocumentMarkerOptions {
-        public enum ValueUnitKind {
-            Nanosecond,
-            Millisecond,
-            Second,
-            Percent,
-            Value
-        }
+    return metric.Config.IsPercentage ? value.AsPercentageString() : $"{value:F2}";
+  }
 
-        public double VirtualColumnPosition { get; set; }
-        public double ElementWeightCutoff { get; set; }
-        public double LineWeightCutoff { get; set; }
-        public int TopOrderCutoff { get; set; }
-        public double IconBarWeightCutoff { get; set; }
-
-        public Brush ColumnTextColor { get; set; }
-        public Brush ElementOverlayTextColor { get; set; }
-        public Brush HotElementOverlayTextColor { get; set; }
-        public Brush InlineeOverlayTextColor { get; set; }
-        public Brush BlockOverlayTextColor { get; set; }
-        public Brush HotBlockOverlayTextColor { get; set; }
-        public Brush InlineeOverlayBackColor { get; set; }
-        public Brush ElementOverlayBackColor { get; set; }
-        public Brush HotElementOverlayBackColor { get; set; }
-        public Brush BlockOverlayBackColor { get; set; }
-        public Brush HotBlockOverlayBackColor { get; set; }
-        public Brush BlockOverlayBorderColor { get; set; }
-        public double BlockOverlayBorderThickness { get; set; }
-        public Brush PercentageBarBackColor { get; set; }
-        public int MaxPercentageBarWidth { get; set; }
-        public bool DisplayPercentageBar { get; set; }
-        public bool DisplayIcons { get; set; }
-        public bool RemoveEmptyColumns { get; set; }
-        public ValueUnitKind ValueUnit { get; set; }
-
-        private static ProfileDocumentMarkerOptions defaultInstance_;
-        private static ColorPalette defaultBackColorPalette_ = ColorPalette.Profile;
-
-        static ProfileDocumentMarkerOptions() {
-            defaultInstance_ = new ProfileDocumentMarkerOptions() {
-                VirtualColumnPosition = 350,
-                ElementWeightCutoff = 0.003, // 0.3%
-                LineWeightCutoff = 0.005, // 0.5%,
-                TopOrderCutoff = 10,
-                IconBarWeightCutoff = 0.03,
-                MaxPercentageBarWidth = 50,
-                DisplayIcons = true,
-                RemoveEmptyColumns = true,
-                DisplayPercentageBar = true,
-                ColumnTextColor = Brushes.Black,
-                ElementOverlayTextColor = Brushes.DimGray,
-                HotElementOverlayTextColor = Brushes.DarkRed,
-                ElementOverlayBackColor = Brushes.Transparent,
-                HotElementOverlayBackColor = Brushes.AntiqueWhite,
-                BlockOverlayTextColor = Brushes.DarkBlue,
-                HotBlockOverlayTextColor = Brushes.DarkRed,
-                BlockOverlayBackColor = Brushes.AliceBlue,
-                BlockOverlayBorderColor = Brushes.DimGray,
-                BlockOverlayBorderThickness = 1,
-                HotBlockOverlayBackColor = Brushes.AntiqueWhite,
-                InlineeOverlayTextColor = Brushes.Green,
-                InlineeOverlayBackColor = Brushes.Transparent,
-                PercentageBarBackColor = Utils.ColorFromString("#Aa4343").AsBrush()
-            };
-        }
-
-        public static ProfileDocumentMarkerOptions Default => defaultInstance_;
-
-        public Color PickBackColor(OptionalColumn column, int colorIndex, double percentage) {
-            if (!ShouldUseBackColor(column)) {
-                return Colors.Transparent;
-            }
-
-            //? TODO: ShouldUsePalette, ColorPalette in Appearance
-            return column.Appearance.PickColorForPercentage
-                ? PickBackColorForPercentage(column, percentage)
-                : PickBackColorForOrder(column, colorIndex, percentage, InvertColorPalette(column));
-        }
-
-        private ColorPalette PickColorPalette(OptionalColumn column) {
-            return column?.Appearance?.BackColorPalette ?? defaultBackColorPalette_;
-        }
-
-        private bool InvertColorPalette(OptionalColumn column) {
-            return column != null && column.Appearance.InvertColorPalette;
-        }
-
-        public Color PickBackColorForPercentage(OptionalColumn column, double percentage) {
-            if (percentage < ElementWeightCutoff) {
-                return Colors.Transparent;
-            }
-
-            var palette = PickColorPalette(column);
-            return palette.PickColorForPercentage(percentage, InvertColorPalette(column));
-        }
-
-        public Color PickBackColorForOrder(OptionalColumn column, int order, double percentage, bool inverted) {
-            if (!IsSignificantValue(order, percentage)) {
-                return Colors.Transparent;
-            }
-
-            var palette = PickColorPalette(column);
-            return palette.PickColor(order, inverted);
-        }
-
-        public bool IsSignificantValue(int order, double percentage) {
-            return order < TopOrderCutoff && percentage >= IconBarWeightCutoff;
-        }
-
-        public Color PickBackColorForOrder(int order, double percentage, bool inverted) {
-            return PickBackColorForOrder(null, order, percentage, inverted);
-        }
-
-        public Brush PickTextColor(OptionalColumn column, int order, double percentage) {
-            return column.Appearance.TextColor ?? ColumnTextColor;
-        }
-
-        public FontWeight PickTextWeight(OptionalColumn column, int order, double percentage) {
-            if (column.Appearance.PickColorForPercentage) {
-                return percentage switch {
-                    >= 0.9 => FontWeights.Bold,
-                    >= 0.75 => FontWeights.Medium,
-                    _ => FontWeights.Normal
-                };
-            }
-
-            return order switch {
-                0 => FontWeights.ExtraBold,
-                1 => FontWeights.Bold,
-                _ => IsSignificantValue(order, percentage)
-                    ? FontWeights.Medium
-                    : FontWeights.Normal
-            };
-        }
-
-        public FontWeight PickTextWeight(double percentage) {
-            return percentage switch {
-                >= 0.9 => FontWeights.Bold,
-                >= 0.75 => FontWeights.Medium,
-                _ => FontWeights.Normal
-            };
-        }
-
-        public Brush PickBrushForPercentage(double weightPercentage) {
-            return PickBackColorForPercentage(null, weightPercentage).AsBrush();
-        }
-
-        //? TODO: Cache IconDrawing between calls
-        public IconDrawing PickIcon(OptionalColumn column, int order, double percentage) {
-            if (!ShouldShowIcon(column)) {
-                return IconDrawing.Empty;
-            }
-            else if (column.Appearance.PickColorForPercentage) {
-                return PickIconForPercentage(percentage);
-            }
-
-            return PickIconForOrder(order, percentage);
-        }
-
-        public IconDrawing PickIconForOrder(int order, double percentage) {
-            return order switch {
-                0 => IconDrawing.FromIconResource("HotFlameIcon1"),
-                1 => IconDrawing.FromIconResource("HotFlameIcon2"),
-                // Even if instr is the n-th hottest one, don't use an icon
-                // if the percentage is small.
-                _ => IsSignificantValue(order, percentage) ?
-                    IconDrawing.FromIconResource("HotFlameIcon3") :
-                    IconDrawing.FromIconResource("HotFlameIconTransparent")
-            };
-        }
-
-        public IconDrawing PickIconForPercentage(double percentage) {
-            return percentage switch {
-                >= 0.9 => IconDrawing.FromIconResource("HotFlameIcon1"),
-                >= 0.75 => IconDrawing.FromIconResource("HotFlameIcon2"),
-                >= 0.5 => IconDrawing.FromIconResource("HotFlameIcon3"),
-                _ => IconDrawing.FromIconResource("HotFlameIconTransparent")
-            };
-        }
-
-        public bool ShowPercentageBar(OptionalColumn column, int order, double percentage) {
-            if (!ShouldShowPercentageBar(column)) {
-                return false;
-            }
-
-            // Don't use a bar if it ends up only a few pixels.
-            return percentage >= IconBarWeightCutoff;
-        }
-
-        public bool ShowPercentageBar(double percentage) {
-            if (!DisplayPercentageBar) {
-                return false;
-            }
-
-            // Don't use a bar if it ends up only a few pixels.
-            return percentage >= IconBarWeightCutoff;
-        }
-
-        public Brush PickPercentageBarColor(OptionalColumn column) {
-            return column.Appearance.PercentageBarBackColor ?? PercentageBarBackColor;
-        }
-
-        public bool ShouldShowPercentageBar(OptionalColumn column) =>
-            DisplayPercentageBar &&
-            (column.Appearance.ShowPercentageBar ||
-            column.IsMainColumn && column.Appearance.ShowMainColumnPercentageBar);
-        public bool ShouldShowIcon(OptionalColumn column) =>
-            DisplayIcons && (column.Appearance.ShowIcon ||
-            column.IsMainColumn && column.Appearance.ShowMainColumnIcon);
-        public bool ShouldUseBackColor(OptionalColumn column) =>
-            column.Appearance.UseBackColor ||
-            column.IsMainColumn && column.Appearance.UseMainColumnBackColor;
-
-        public Color PickColorForPercentage(double percentage) {
-            return PickBackColorForPercentage(null, percentage);
-        }
+  public static string FormatPerformanceCounter(long value, PerformanceCounter counter) {
+    if (counter.Frequency > 1000) {
+      double valueK = (double)(value * counter.Frequency) / 1000;
+      return $"{valueK:##}K";
     }
 
-    public class ProfileDocumentMarker {
-        private FunctionProfileData profile_;
-        private ProfileData globalProfile_;
-        private ProfileDocumentMarkerOptions options_;
-        private ICompilerInfoProvider irInfo_;
+    return $"{value * counter.Frequency}";
+  }
 
-        public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile,
-                                     ProfileDocumentMarkerOptions options, ICompilerInfoProvider ir) {
-            profile_ = profile;
-            globalProfile_ = globalProfile;
-            options_ = options;
-            irInfo_ = ir;
+  public static string ShortenPerfCounterName(string name) {
+    foreach (var replacement in PerfCounterNameReplacements) {
+      int index = name.LastIndexOf(replacement.Item1);
+
+      if (index != -1) {
+        string suffix = "";
+
+        if (index + replacement.Item1.Length < name.Length) {
+          suffix = name.Substring(index + replacement.Item1.Length);
         }
 
-        public async Task<IRDocumentColumnData> Mark(MarkedDocument document, FunctionIR function, IRTextFunction textFunction) {
-            document.SuspendUpdate();
-            IRDocumentColumnData columnData = null;
-            var metadataTag = function.GetTag<AssemblyMetadataTag>();
-            bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+        return name.Substring(0, index) + replacement.Item2 + suffix;
+      }
+    }
 
-            //? TODO: Make async
-            if (hasInstrOffsetMetadata) {
-                var result = profile_.Process(function, irInfo_.IR);
-                columnData = MarkProfiledElements(result, function, document);
-                MarkProfiledBlocks(result.BlockSampledElements, document);
-                MarkCallSites(document, function, textFunction, metadataTag);
-            }
+    return name;
+  }
 
-            document.ResumeUpdate();
-            return columnData;
-        }
-        
-        private void MarkCallSites(MarkedDocument document, FunctionIR function, IRTextFunction textFunction, AssemblyMetadataTag metadataTag) {
-            // Mark indirect call sites and list the hottest call targets.
-            // Useful especially for virtual function calls.
-            var callTree = globalProfile_.CallTree;
+  public async Task<IRDocumentColumnData> Mark(MarkedDocument document, FunctionIR function,
+                                               IRTextFunction textFunction) {
+    document.SuspendUpdate();
+    IRDocumentColumnData columnData = null;
+    var metadataTag = function.GetTag<AssemblyMetadataTag>();
+    bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
-            if (callTree == null) {
-                return;
-            }
+    if (hasInstrOffsetMetadata) {
+      var result = profile_.Process(function, irInfo_.IR);
+      columnData = await MarkProfiledElements(result, function, document);
+      MarkProfiledBlocks(result.BlockSampledElements, document);
+      MarkCallSites(document, function, textFunction, metadataTag);
+    }
 
-            var icon = IconDrawing.FromIconResource("ExecuteIconColor");
-            var node = callTree.GetCombinedCallTreeNode(textFunction);
+    document.ResumeUpdate();
+    return columnData;
+  }
 
-            if (node == null || !node.HasCallSites) {
-                return;
-            }
+  public async Task<IRDocumentColumnData> MarkSourceLines(MarkedDocument document, FunctionIR function,
+                                                          FunctionProfileData.ProcessingResult result) {
+    return await MarkProfiledElements(result, function, document);
+  }
 
-            FunctionNameFormatter nameFormatter =  irInfo_.NameProvider.FormatFunctionName;
+  public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
+                               FunctionIR function, MarkedDocument document) {
+    Trace.WriteLine($"Apply {column.ColumnName}, main {column.IsMainColumn}");
 
-            foreach (var callsite in node.CallSites.Values) {
-                if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA - profile_.FunctionDebugInfo.RVA,
-                                                                irInfo_.IR, out var element)) {
-                    //Trace.WriteLine($"Found CS for elem at RVA {callsite.RVA}, weight {callsite.Weight}: {element}");
-                    var instr = element as InstructionIR;
-                    if (instr == null || !irInfo_.IR.IsCallInstruction(instr))
-                        continue;
+    var style = column.Appearance;
+    var elementColorPairs = new List<ValueTuple<IRElement, Color>>(function.TupleCount);
 
-                    // Skip over direct calls.
-                    var callTarget = irInfo_.IR.GetCallTarget(instr);
+    foreach (var tuple in function.AllTuples) {
+      var value = columnData.GetColumnValue(tuple, column);
+      if (value == null)
+        continue;
 
-                    //? TODO: Could add an icon for all calls and clicking it selects the func
-                    if (callTarget != null && callTarget.HasName) {
-                        continue;
-                    }
+      int order = value.ValueOrder;
+      double percentage = value.ValuePercentage;
+      var color = options_.PickBackColor(column, order, percentage);
 
-                    var sb = new StringBuilder();
-                    int index = 0;
+      if (column.IsMainColumn) {
+        elementColorPairs.Add(new ValueTuple<IRElement, Color>(tuple, color));
+      }
 
-                    foreach (var target in callsite.SortedTargets) {
-                        if (++index > 1) {
-                            sb.AppendLine();
-                        }
+      value.BackColor = color.AsBrush();
+      value.TextColor = options_.PickTextColor(column, order, percentage);
+      value.TextWeight = options_.PickTextWeight(column, order, percentage);
 
-                        double weightPercentage = callsite.ScaleWeight(target.Weight);
-                        var targetName = nameFormatter(target.Node.FunctionName);
-                        sb.Append($"{weightPercentage.AsPercentageString().PadLeft(6)} | {target.Weight.AsMillisecondsString()} | {targetName}");
-                    }
+      value.Icon = options_.PickIcon(column, value.ValueOrder, value.ValuePercentage).Icon;
+      value.ShowPercentageBar = value.ShowPercentageBar && // Disabled per value
+                                options_.ShowPercentageBar(column, value.ValueOrder, value.ValuePercentage);
+      value.PercentageBarBackColor = options_.PickPercentageBarColor(column);
+    }
 
-                    var label = $"Indirect call targets";
-                    var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16, label, sb.ToString());
-                    var color = App.Settings.DocumentSettings.BackgroundColor;
+    // Mark the elements themselves with a color.
+    //? TODO: Check settings from UI
+    //? Needs a tag so later a RemoveMarkedElements(tag) can be done
+    if (column.IsMainColumn && document != null) {
+      document.ClearInstructionMarkers();
+      document.MarkElements(elementColorPairs);
+    }
+  }
 
-                    if (instr.ParentBlock != null && !instr.ParentBlock.HasEvenIndexInFunction) {
-                        color = App.Settings.DocumentSettings.AlternateBackgroundColor;
-                    }
+  private class DummyFunctionProfileInfoProvider : IFunctionProfileInfoProvider {
+    public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
+      return new List<ProfileCallTreeNode>();
+    }
 
-                    overlay.Background = color.AsBrush();
-                    //overlay.Border = blockPen;
-                    overlay.IsLabelPinned = false;
-                    overlay.UseLabelBackground = true;
-                    overlay.ShowBackgroundOnMouseOverOnly = true;
-                    overlay.ShowBorderOnMouseOverOnly = true;
-                    overlay.AlignmentX = HorizontalAlignment.Left;
-                    
-                    // Place before the call opcode.
-                    int lineOffset = lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
-                    overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
-                                                          App.Settings.DocumentSettings.FontSize).Width - 20;
-                    overlay.MarginY = 1;
-                }
-            }
-        }
+    public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
+      return new List<ProfileCallTreeNode>();
+    }
 
-        public async Task<IRDocumentColumnData> MarkSourceLines(MarkedDocument document, FunctionIR function,
-                                                                FunctionProfileData.ProcessingResult result) {
-            return MarkProfiledElements(result, function, document);
-        }
+    public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
+      return new List<ModuleProfileInfo>();
+    }
+  }
 
-        private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, MarkedDocument document) {
-            document.SuspendUpdate();
-            var overlayHeight = document.DefaultLineHeight;
-            var blockPen = ColorPens.GetPen(options_.BlockOverlayBorderColor,
-                                            options_.BlockOverlayBorderThickness);
+  private void MarkCallSites(MarkedDocument document, FunctionIR function, IRTextFunction textFunction,
+                             AssemblyMetadataTag metadataTag) {
+    // Mark indirect call sites and list the hottest call targets.
+    // Useful especially for virtual function calls.
+    var callTree = globalProfile_.CallTree;
 
-            for (int i = 0; i < blockWeights.Count; i++) {
-                var block = blockWeights[i].Item1;
-                var weight = blockWeights[i].Item2;
-                double weightPercentage = profile_.ScaleWeight(weight);
+    if (callTree == null) {
+      return;
+    }
 
-                var icon = options_.PickIconForOrder(i, weightPercentage);
-                var color = options_.PickBackColorForOrder(i, weightPercentage, true);
+    var indirectIcon = IconDrawing.FromIconResource("ExecuteIconColor");
+    var directIcon = IconDrawing.FromIconResource("ExecuteIcon");
+    var node = callTree.GetCombinedCallTreeNode(textFunction);
 
-                if (color == Colors.Transparent) {
-                    // 
-                    color = block.HasEvenIndexInFunction ?
-                        App.Settings.DocumentSettings.BackgroundColor :
-                        App.Settings.DocumentSettings.AlternateBackgroundColor;
-                }
+    if (node == null || !node.HasCallSites) {
+      return;
+    }
 
-                bool markOnFlowGraph = options_.IsSignificantValue(i, weightPercentage);
-                var label = $"{weightPercentage.AsTrimmedPercentageString()}";
-                var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label, "");
-                overlay.Background = color.AsBrush();
-                overlay.Border = blockPen;
+    foreach (var callsite in node.CallSites.Values) {
+      if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA - profile_.FunctionDebugInfo.RVA,
+                                                      irInfo_.IR, out var element)) {
+        //Trace.WriteLine($"Found CS for elem at RVA {callsite.RVA}, weight {callsite.Weight}: {element}");
+        var instr = element as InstructionIR;
+        if (instr == null || !irInfo_.IR.IsCallInstruction(instr))
+          continue;
 
-                overlay.IsLabelPinned = true;
-                overlay.UseLabelBackground = true;
-                overlay.ShowBackgroundOnMouseOverOnly = false;
-                overlay.ShowBorderOnMouseOverOnly = false;
-                overlay.AlignmentX = HorizontalAlignment.Left;
-                overlay.MarginX = -1;
-                overlay.Padding = 2;
+        // Mark direct, known call targets with a different icon.
+        var callTarget = irInfo_.IR.GetCallTarget(instr);
+        bool isDirectCall = false;
 
-                if (markOnFlowGraph) {
-                    overlay.TextColor = options_.HotBlockOverlayTextColor;
-                    overlay.TextWeight = FontWeights.Bold;
-                }
-                else {
-                    overlay.TextColor = options_.BlockOverlayTextColor;
-                }
-
-                // Mark the block itself with a color.
-                document.MarkBlock(block, color, markOnFlowGraph);
-
-                if (weightPercentage > options_.ElementWeightCutoff) {
-                    block.AddTag(GraphNodeTag.MakeColor(weightPercentage.AsTrimmedPercentageString(), color));
-                }
-            }
+        if (callTarget != null && callTarget.HasName) {
+          isDirectCall = true;
         }
 
-        private static readonly OptionalColumn TIME_COLUMN =
-            OptionalColumn.Template("[TimeHeader]", "TimePercentageColumnValueTemplate",
-                                    "TimeHeader", "Time (ms)", "Instruction time", null, 50.0, "TimeColumnHeaderTemplate",
-            new OptionalColumnAppearance() {
-                ShowPercentageBar = false,
-                ShowMainColumnPercentageBar = false,
-                UseBackColor = true,
-                UseMainColumnBackColor = true,
-                ShowMainColumnIcon = true,
-                BackColorPalette = ColorPalette.Profile,
-                InvertColorPalette = true
-            });
+        // Collect call targets and override the weight
+        // to include only the weight at this call site.
+        var list = new List<ProfileCallTreeNode>();
 
-        private static readonly OptionalColumn TIME_PERCENTAGE_COLUMN =
-            OptionalColumn.Template("[TimePercentageHeader]", "TimePercentageColumnValueTemplate",
-            "TimePercentageHeader", "Time (%)", "Instruction time percentage relative to function time", null, 50.0, "TimeColumnHeaderTemplate",
-            new OptionalColumnAppearance() {
-                ShowPercentageBar = true,
-                ShowMainColumnPercentageBar = true,
-                UseBackColor = true,
-                UseMainColumnBackColor = true,
-                ShowIcon = true,
-                BackColorPalette = ColorPalette.Profile,
-                InvertColorPalette = true
-            });
-
-        public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
-                                     FunctionIR function, MarkedDocument document) {
-            Trace.WriteLine($"Apply {column.ColumnName}, main {column.IsMainColumn}");
-
-            var style = column.Appearance;
-            var elementColorPairs = new List<ValueTuple<IRElement, Color>>(function.TupleCount);
-
-            foreach (var tuple in function.AllTuples) {
-                var value = columnData.GetColumnValue(tuple, column);
-                if (value == null)
-                    continue;
-
-                int order = value.ValueOrder;
-                double percentage = value.ValuePercentage;
-                var color = options_.PickBackColor(column, order, percentage);
-
-                if (column.IsMainColumn) {
-                    elementColorPairs.Add(new ValueTuple<IRElement, Color>(tuple, color));
-                }
-
-                value.BackColor = color.AsBrush();
-                value.TextColor = options_.PickTextColor(column, order, percentage);
-                value.TextWeight = options_.PickTextWeight(column, order, percentage);
-
-                value.Icon = options_.PickIcon(column, value.ValueOrder, value.ValuePercentage).Icon;
-                value.ShowPercentageBar = value.ShowPercentageBar && // Disabled per value
-                                          options_.ShowPercentageBar(column, value.ValueOrder, value.ValuePercentage);
-                value.PercentageBarBackColor = options_.PickPercentageBarColor(column);
-            }
-
-            // Mark the elements themselves with a color.
-            //? option in appearance
-            //? Needs a tag so later a RemoveMarkedElements(tag) can be done
-            if (column.IsMainColumn && document != null) {
-                document.ClearInstructionMarkers();
-                document.MarkElements(elementColorPairs);
-            }
+        foreach (var target in callsite.SortedTargets) {
+          var callsiteNode = new ProfileCallTreeGroupNode(target.Node, target.Weight);
+          list.Add(callsiteNode);
         }
 
-        struct CounterSortHelper {
-            public ElementColumnValue ColumnValue;
-            public long Value;
+        var icon = isDirectCall ? directIcon : indirectIcon;
+        var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16);
+        var color = App.Settings.DocumentSettings.BackgroundColor;
 
-            public CounterSortHelper(ElementColumnValue columnValue, long value) {
-                ColumnValue = columnValue;
-                Value = value;
-            }
+        if (instr.ParentBlock != null && !instr.ParentBlock.HasEvenIndexInFunction) {
+          color = App.Settings.DocumentSettings.AlternateBackgroundColor;
         }
 
-        private IRDocumentColumnData
-            MarkProfiledElements(FunctionProfileData.ProcessingResult result,
-                                 FunctionIR function, MarkedDocument document) {
-            var elements = result.SampledElements;
+        overlay.Background = color.AsBrush();
+        //overlay.Border = blockPen;
+        overlay.IsLabelPinned = false;
+        overlay.UseLabelBackground = true;
+        overlay.ShowBackgroundOnMouseOverOnly = true;
+        overlay.ShowBorderOnMouseOverOnly = true;
+        overlay.AlignmentX = HorizontalAlignment.Left;
 
-            // Add a time column.
-            var columnData = new IRDocumentColumnData(function.InstructionCount);
-            var percentageColumn = columnData.AddColumn(TIME_PERCENTAGE_COLUMN);
-            var timeColumn = columnData.AddColumn(TIME_COLUMN);
+        // Place before the call opcode.
+        int lineOffset = lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
+        overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
+                                              App.Settings.DocumentSettings.FontSize).Width - 20;
+        overlay.MarginY = 1;
 
-            for (int i = 0; i < elements.Count; i++) {
-                var element = elements[i].Item1;
-                var weight = elements[i].Item2;
-                double weightPercentage = profile_.ScaleWeight(weight);
+        // Show a popup on hover with the list of call targets.
+        SetupCallSiteHoverPreview(overlay, list, document);
+      }
+    }
+  }
 
-                var label = weight.AsMillisecondsString();
-                var percentageLabel = weightPercentage.AsTrimmedPercentageString();
-                var columnValue = new ElementColumnValue(label, weight.Ticks, weightPercentage, i);
-                var percentageColumnValue = new ElementColumnValue(percentageLabel, weight.Ticks, weightPercentage, i);
+  private void SetupCallSiteHoverPreview(IconElementOverlay overlay, List<ProfileCallTreeNode> list,
+                                         MarkedDocument document) {
+    // The overlay hover preview is somewhat of a hack,
+    // since the hover event is fired over the entire document,
+    // but the popup should be shown only if mouse is over the overlay.
+    //? TODO: Find a way to integrate hover login into overaly.OnHover
+    var view = document as UIElement;
+    CallTreeNodePopup popup = null;
+    IElementOverlay hoveredOverlay = null;
 
-                columnData.AddValue(percentageColumnValue, element, percentageColumn);
-                var valueGroup = columnData.AddValue(columnValue, element, timeColumn);
-                //valueGroup.BackColor = Brushes.Bisque;
-            }
-
-            percentageColumn.IsMainColumn = true;
-            ApplyColumnStyle(percentageColumn, columnData, function, document);
-            ApplyColumnStyle(timeColumn, columnData, function, document);
-
-            percentageColumn.HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
-            timeColumn.HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
-
-            var counterElements = result.CounterElements;
-
-            if (counterElements.Count == 0) {
-                return columnData;
-            }
-
-            //? TODO: Filter to hide counters
-            //? TODO: Order of counters (custom sorting or fixed)
-
-            //? Way to set a counter as a baseline, another diff to it in %
-            //?    misspredictedBranches / totalBranches
-            //?    takenBranches / total, etc JSON
-
-            var perfCounters = globalProfile_.SortedPerformanceCounters;
-            var colors = new Brush[] { Brushes.DarkSlateBlue, Brushes.DarkOliveGreen, Brushes.DarkSlateGray };
-            var counterIcon = IconDrawing.FromIconResource("QueryIcon");
-            var counterColumns = new OptionalColumn[perfCounters.Count];
-
-            // Add a column for each counter.
-            for (int k = 0; k < perfCounters.Count; k++) {
-                var counterInfo = perfCounters[k];
-                counterColumns[k] = OptionalColumn.Template($"[CounterHeader{counterInfo.Id}]", "TimePercentageColumnValueTemplate",
-                    $"CounterHeader{counterInfo.Id}", $"{ShortenPerfCounterName(counterInfo.Name)}",
-                    /*counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" :*/ $"{counterInfo.Name}",
-                    null, 50, "TimeColumnHeaderTemplate",
-                    new OptionalColumnAppearance() {
-                        ShowPercentageBar = true,
-                        ShowMainColumnPercentageBar = true,
-                        UseBackColor = counterInfo.IsMetric,
-                        UseMainColumnBackColor = true,
-                        PickColorForPercentage = false,
-                        ShowIcon = false,
-                        ShowMainColumnIcon = true,
-                        BackColorPalette = ColorPalette.Profile,
-                        InvertColorPalette = true,
-                        TextColor = ColorPalette.DarkHue.PickBrush(k),
-                        PercentageBarBackColor = ColorPalette.DarkHue.PickBrush(k)
-                    });
-
-                counterColumns[k].IsVisible = IsPerfCounterVisible(counterInfo);
-                counterColumns[k].HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
-                columnData.AddColumn(counterColumns[k]);
-            }
-
-            // build lists
-            // sort lists by value (parallel)
-            // go over lists and assign ValueOrder
-
-            var counterSortMap = new List<List<CounterSortHelper>>();
-
-            for (int k = 0; k < perfCounters.Count; k++) {
-                counterSortMap.Add(new List<CounterSortHelper>(counterElements.Count));
-            }
-
-            for (int i = 0; i < counterElements.Count; i++) {
-                var element = counterElements[i].Item1;
-                var counterSet = counterElements[i].Item2;
-
-                for (int k = 0; k < perfCounters.Count; k++) {
-                    var counter = perfCounters[k];
-                    long value = 0;
-                    double valuePercentage = 0;
-                    string label = "";
-                    string tooltip = null;
-                    bool isValueBasedMetric = false;
-
-                    if (counter.IsMetric) {
-                        var metric = counter as PerformanceMetric;
-                        valuePercentage = metric.ComputeMetric(counterSet, out var baseValue, out var relativeValue);
-
-                        // Don't show metrics for counters with few hits,
-                        // they tend to be the ones the most inaccurate.
-                        double metricBasePercentage = result.ScaleCounterValue(baseValue, metric.BaseCounter);
-
-                        if (metricBasePercentage > 0.01) {
-                            label = FormatPerformanceMetric(valuePercentage, metric);
-                            value = (long)(valuePercentage * 10000);
-                            isValueBasedMetric = !metric.Config.IsPercentage;
-                            tooltip = "Per instruction";
-                        }
-                        else {
-                            valuePercentage = 0;
-                        }
-                    }
-                    else {
-                        value = counterSet.FindCounterValue(counter);
-
-                        if (value == 0) {
-                            continue;
-                        }
-
-                        valuePercentage = result.ScaleCounterValue(value, counter);
-                        label = valuePercentage.AsTrimmedPercentageString();
-                        tooltip = FormatPerformanceCounter(value, counter);
-                    }
-
-                    //? Could have a config for all/per-counter to pick % or value as label
-                    //var label = $"{value * counter.Interval}";
-                    var columnValue = new ElementColumnValue(label, value, valuePercentage, i, tooltip);
-
-                    var color = colors[counter.Index % colors.Length];
-                    //columnValue.TextColor = color;
-                    if (counter.IsMetric)
-                        columnValue.BackColor = Brushes.Beige;
-                    columnValue.ValuePercentage = valuePercentage;
-                    //? TODO: SHow bar only if any value is much higher? Std dev
-                    columnValue.ShowPercentageBar = !isValueBasedMetric && valuePercentage >= 0.03;
-                    columnValue.PercentageBarBackColor = color;
-                    columnData.AddValue(columnValue, element, counterColumns[k]);
-
-                    var counterValueList = counterSortMap[k];
-                    counterValueList.Add(new CounterSortHelper(columnValue, value));
-                }
-            }
-
-            // Sort the counters from each column in decreasing order,
-            // then assign the ValueOrder for each counter based on the sorting index.
-            for (int k = 0; k < perfCounters.Count; k++) {
-                var counterValueList = counterSortMap[k];
-                counterValueList.Sort((a, b) => -a.Value.CompareTo(b.Value));
-
-                for (int i = 0; i < counterValueList.Count; i++) {
-                    counterValueList[i].ColumnValue.ValueOrder = i;
-                }
-            }
-
-            foreach (var column in counterColumns) {
-                ApplyColumnStyle(column, columnData, function, document);
-            }
-
-            return columnData;
+    var preview = new PopupHoverPreview(
+      view, HoverPreview.HoverDuration,
+      (mousePoint, previewPoint) => {
+        if (hoveredOverlay == null) {
+          return null; // Nothing actually hovered.
         }
 
-        public static bool IsPerfCounterVisible(PerformanceCounter counter) {
-            //? TODO: Use a filter list from options
-            return counter.Name != "Timer";
+        if (popup == null) {
+          var dummy = new DummyFunctionProfileInfoProvider();
+          popup = new CallTreeNodePopup(null, dummy, previewPoint, view,
+                                        document.Session);
+          popup.TitleText = "Call Targets";
+        }
+        else {
+          popup.UpdatePosition(previewPoint, view);
         }
 
-        public static string FormatPerformanceMetric(double value, PerformanceMetric metric) {
-            if (value == 0) {
-                return "";
-            }
+        popup.ShowFunctions(list, irInfo_.NameProvider.FormatFunctionName);
+        return popup;
+      },
+      (mousePoint, popup) => true,
+      popup => {
+        document.Session.RegisterDetachedPanel(popup);
+      });
 
-            return metric.Config.IsPercentage ? value.AsPercentageString() : $"{value:F2}";
-        }
+    overlay.OnHover += (sender, e) => {
+      hoveredOverlay = sender as IElementOverlay;
+    };
 
-        public static string FormatPerformanceCounter(long value, PerformanceCounter counter) {
-            if (counter.Frequency > 1000) {
-                double valueK = (double)(value * counter.Frequency) / 1000;
-                return $"{valueK:##}K";
+    overlay.OnHoverEnd += (sender, e) => {
+      preview.HideDelayed();
+      hoveredOverlay = null;
+    };
+  }
+
+  private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, MarkedDocument document) {
+    document.SuspendUpdate();
+    double overlayHeight = document.DefaultLineHeight;
+    var blockPen = ColorPens.GetPen(options_.BlockOverlayBorderColor,
+                                    options_.BlockOverlayBorderThickness);
+
+    for (int i = 0; i < blockWeights.Count; i++) {
+      var block = blockWeights[i].Item1;
+      var weight = blockWeights[i].Item2;
+      double weightPercentage = profile_.ScaleWeight(weight);
+
+      var icon = options_.PickIconForOrder(i, weightPercentage);
+      var color = options_.PickBackColorForOrder(i, weightPercentage, true);
+
+      if (color == Colors.Transparent) {
+        // Match the backround color of the corresponding text line.
+        color = block.HasEvenIndexInFunction ?
+          App.Settings.DocumentSettings.BackgroundColor :
+          App.Settings.DocumentSettings.AlternateBackgroundColor;
+      }
+
+      bool markOnFlowGraph = options_.IsSignificantValue(i, weightPercentage);
+      string label = $"{weightPercentage.AsTrimmedPercentageString()}";
+      var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label, "");
+      overlay.Background = color.AsBrush();
+      overlay.Border = blockPen;
+
+      overlay.IsLabelPinned = true;
+      overlay.UseLabelBackground = true;
+      overlay.ShowBackgroundOnMouseOverOnly = false;
+      overlay.ShowBorderOnMouseOverOnly = false;
+      overlay.AlignmentX = HorizontalAlignment.Left;
+      overlay.MarginX = -1;
+      overlay.Padding = 2;
+
+      if (markOnFlowGraph) {
+        overlay.TextColor = options_.HotBlockOverlayTextColor;
+        overlay.TextWeight = FontWeights.Bold;
+      }
+      else {
+        overlay.TextColor = options_.BlockOverlayTextColor;
+      }
+
+      // Mark the block itself with a color.
+      document.MarkBlock(block, color, markOnFlowGraph);
+
+      if (weightPercentage > options_.ElementWeightCutoff) {
+        block.AddTag(GraphNodeTag.MakeColor(weightPercentage.AsTrimmedPercentageString(), color));
+      }
+    }
+  }
+
+  private async Task<IRDocumentColumnData>
+    MarkProfiledElements(FunctionProfileData.ProcessingResult result,
+                         FunctionIR function, MarkedDocument document) {
+    var elements = result.SampledElements;
+
+    // Add a time column.
+    var columnData = new IRDocumentColumnData(function.InstructionCount);
+    var percentageColumn = columnData.AddColumn(TIME_PERCENTAGE_COLUMN);
+    var timeColumn = columnData.AddColumn(TIME_COLUMN);
+
+    await Task.Run(() => {
+      for (int i = 0; i < elements.Count; i++) {
+        var element = elements[i].Item1;
+        var weight = elements[i].Item2;
+        double weightPercentage = profile_.ScaleWeight(weight);
+
+        string label = weight.AsMillisecondsString();
+        string percentageLabel = weightPercentage.AsTrimmedPercentageString();
+        var columnValue = new ElementColumnValue(label, weight.Ticks, weightPercentage, i);
+        var percentageColumnValue = new ElementColumnValue(percentageLabel, weight.Ticks, weightPercentage, i);
+
+        columnData.AddValue(percentageColumnValue, element, percentageColumn);
+        var valueGroup = columnData.AddValue(columnValue, element, timeColumn);
+        //valueGroup.BackColor = Brushes.Bisque;
+      }
+    });
+
+    percentageColumn.IsMainColumn = true;
+    ApplyColumnStyle(percentageColumn, columnData, function, document);
+    ApplyColumnStyle(timeColumn, columnData, function, document);
+
+    percentageColumn.HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
+    timeColumn.HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
+
+    var counterElements = result.CounterElements;
+
+    if (counterElements.Count == 0) {
+      return columnData;
+    }
+
+    //? TODO: Filter to hide counters
+    //? TODO: Order of counters (custom sorting or fixed)
+    //? TODO: Way to set a counter as a baseline, another diff to it in %
+    //?    misspredictedBranches / totalBranches
+    //?    takenBranches / total, etc JSON
+    var perfCounters = globalProfile_.SortedPerformanceCounters;
+    var colors = new Brush[] {Brushes.DarkSlateBlue, Brushes.DarkOliveGreen, Brushes.DarkSlateGray};
+    var counterIcon = IconDrawing.FromIconResource("QueryIcon");
+    var counterColumns = new OptionalColumn[perfCounters.Count];
+    var counterSortMap = new List<List<CounterSortHelper>>();
+
+    await Task.Run(() => {
+      // Add a column for each counter.
+      for (int k = 0; k < perfCounters.Count; k++) {
+        CreatePerfCounterColumn(function, document, columnData,
+                                perfCounters, counterColumns, k);
+      }
+
+      // Build lists, sort lists by value, then go over lists and assign ValueOrder.
+      for (int k = 0; k < perfCounters.Count; k++) {
+        counterSortMap.Add(new List<CounterSortHelper>(counterElements.Count));
+      }
+
+      for (int i = 0; i < counterElements.Count; i++) {
+        var element = counterElements[i].Item1;
+        var counterSet = counterElements[i].Item2;
+
+        for (int k = 0; k < perfCounters.Count; k++) {
+          var counter = perfCounters[k];
+          long value = 0;
+          double valuePercentage = 0;
+          string label = "";
+          string tooltip = null;
+          bool isValueBasedMetric = false;
+
+          if (counter.IsMetric) {
+            var metric = counter as PerformanceMetric;
+            valuePercentage = metric.ComputeMetric(counterSet, out long baseValue, out long relativeValue);
+
+            // Don't show metrics for counters with few hits,
+            // they tend to be the ones that are the most inaccurate.
+            double metricBasePercentage = result.ScaleCounterValue(baseValue, metric.BaseCounter);
+
+            if (metricBasePercentage > 0.01) {
+              label = FormatPerformanceMetric(valuePercentage, metric);
+              value = (long)(valuePercentage * 10000);
+              isValueBasedMetric = !metric.Config.IsPercentage;
+              tooltip = "Per instruction";
             }
             else {
-                return $"{value * counter.Frequency}";
+              valuePercentage = 0;
             }
-        }
+          }
+          else {
+            value = counterSet.FindCounterValue(counter);
 
-        static readonly (string, string)[] PerfCounterNameReplacements = new (string, string)[] {
-            ("Instruction", "Instr"),
-            ("Misprediction", "Mispred"),
-        };
-
-        public static string ShortenPerfCounterName(string name) {
-            foreach (var replacement in PerfCounterNameReplacements) {
-                int index = name.LastIndexOf(replacement.Item1);
-
-                if (index != -1) {
-                    string suffix = "";
-
-                    if (index + replacement.Item1.Length < name.Length) {
-                        suffix = name.Substring(index + replacement.Item1.Length);
-                    }
-
-                    return name.Substring(0, index) + replacement.Item2 + suffix;
-                }
+            if (value == 0) {
+              continue;
             }
 
-            return name;
+            valuePercentage = result.ScaleCounterValue(value, counter);
+            label = valuePercentage.AsTrimmedPercentageString();
+            tooltip = FormatPerformanceCounter(value, counter);
+          }
+
+          //? Could have a config for all/per-counter to pick % or value as label
+          //var label = $"{value * counter.Interval}";
+          var columnValue = new ElementColumnValue(label, value, valuePercentage, i, tooltip);
+
+          var color = colors[counter.Index % colors.Length];
+          //? TODO: columnValue.TextColor = color;
+          if (counter.IsMetric)
+            columnValue.BackColor = Brushes.Beige;
+          columnValue.ValuePercentage = valuePercentage;
+          //? TODO: Show bar only if any value is much higher? Std dev
+          columnValue.ShowPercentageBar = !isValueBasedMetric && valuePercentage >= 0.03;
+          columnValue.PercentageBarBackColor = color;
+          columnData.AddValue(columnValue, element, counterColumns[k]);
+
+          var counterValueList = counterSortMap[k];
+          counterValueList.Add(new CounterSortHelper(columnValue, value));
         }
+      }
+    });
 
-        private OptionalColumnEventHandler ColumnHeaderClickHandler(MarkedDocument document, FunctionIR function,
-                                                                    IRDocumentColumnData columnData) {
-            return column => {
-                var currentMainColumn = columnData.MainColumn;
+    // Sort the counters from each column in decreasing order,
+    // then assign the ValueOrder for each counter based on the sorting index.
+    //? TODO: Sort lists in parallel
+    for (int k = 0; k < perfCounters.Count; k++) {
+      var counterValueList = counterSortMap[k];
+      counterValueList.Sort((a, b) => -a.Value.CompareTo(b.Value));
 
-                if (column == currentMainColumn) {
-                    return;
-                }
-
-                if (currentMainColumn != null) {
-                    currentMainColumn.IsMainColumn = false;
-                    ApplyColumnStyle(currentMainColumn, columnData, function, document);
-                }
-
-                column.IsMainColumn = true;
-                ApplyColumnStyle(column, columnData, function, document);
-            };
-        }
+      for (int i = 0; i < counterValueList.Count; i++) {
+        counterValueList[i].ColumnValue.ValueOrder = i;
+      }
     }
+
+    foreach (var column in counterColumns) {
+      ApplyColumnStyle(column, columnData, function, document);
+    }
+
+    return columnData;
+  }
+
+  private void CreatePerfCounterColumn(FunctionIR function, MarkedDocument document,
+                                       IRDocumentColumnData columnData, List<PerformanceCounter> perfCounters,
+                                       OptionalColumn[] counterColumns, int k) {
+    var counterInfo = perfCounters[k];
+    counterColumns[k] = OptionalColumn.Template($"[CounterHeader{counterInfo.Id}]",
+                                                "TimePercentageColumnValueTemplate",
+                                                $"CounterHeader{counterInfo.Id}",
+                                                $"{ShortenPerfCounterName(counterInfo.Name)}",
+                                                /*counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" :*/
+                                                $"{counterInfo.Name}",
+                                                null, 50, "TimeColumnHeaderTemplate",
+                                                new OptionalColumnAppearance {
+                                                  ShowPercentageBar = true,
+                                                  ShowMainColumnPercentageBar = true,
+                                                  UseBackColor = counterInfo.IsMetric,
+                                                  UseMainColumnBackColor = true,
+                                                  PickColorForPercentage = false,
+                                                  ShowIcon = false,
+                                                  ShowMainColumnIcon = true,
+                                                  BackColorPalette = ColorPalette.Profile,
+                                                  InvertColorPalette = true,
+                                                  TextColor = ColorPalette.DarkHue.PickBrush(k),
+                                                  PercentageBarBackColor = ColorPalette.DarkHue.PickBrush(k)
+                                                });
+
+    counterColumns[k].IsVisible = IsPerfCounterVisible(counterInfo);
+    counterColumns[k].HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
+    columnData.AddColumn(counterColumns[k]);
+  }
+
+  private OptionalColumnEventHandler ColumnHeaderClickHandler(MarkedDocument document, FunctionIR function,
+                                                              IRDocumentColumnData columnData) {
+    return column => {
+      var currentMainColumn = columnData.MainColumn;
+
+      if (column == currentMainColumn) {
+        return;
+      }
+
+      if (currentMainColumn != null) {
+        currentMainColumn.IsMainColumn = false;
+        ApplyColumnStyle(currentMainColumn, columnData, function, document);
+      }
+
+      column.IsMainColumn = true;
+      ApplyColumnStyle(column, columnData, function, document);
+    };
+  }
+
+  private struct CounterSortHelper {
+    public ElementColumnValue ColumnValue;
+    public long Value;
+
+    public CounterSortHelper(ElementColumnValue columnValue, long value) {
+      ColumnValue = columnValue;
+      Value = value;
+    }
+  }
 }

@@ -1,37 +1,37 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
 
-namespace IRExplorerCore.IR.Tags {
-    public class NotesTag : ITag {
-        public NotesTag() {
-            Title = "";
-            Notes = new List<string>();
-        }
+namespace IRExplorerCore.IR.Tags;
 
-        public NotesTag(string title) : this() {
-            Title = title;
-        }
+public class NotesTag : ITag {
+  public NotesTag() {
+    Title = "";
+    Notes = new List<string>();
+  }
 
-        public string Title { get; set; }
-        public List<string> Notes { get; set; }
-        public string Name => "Notes";
-        public TaggedObject Owner { get; set; }
+  public NotesTag(string title) : this() {
+    Title = title;
+  }
 
-        public override bool Equals(object obj) {
-            return obj is NotesTag tag &&
-                   Title == tag.Title &&
-                   EqualityComparer<List<string>>.Default.Equals(Notes, tag.Notes);
-        }
+  public string Title { get; set; }
+  public List<string> Notes { get; set; }
+  public string Name => "Notes";
+  public TaggedObject Owner { get; set; }
 
-        public override int GetHashCode() {
-            return HashCode.Combine(Title, Notes);
-        }
+  public override bool Equals(object obj) {
+    return obj is NotesTag tag &&
+           Title == tag.Title &&
+           EqualityComparer<List<string>>.Default.Equals(Notes, tag.Notes);
+  }
 
-        public override string ToString() {
-            return $"Notes title: {Title}";
-        }
-    }
+  public override int GetHashCode() {
+    return HashCode.Combine(Title, Notes);
+  }
+
+  public override string ToString() {
+    return $"Notes title: {Title}";
+  }
 }

@@ -1,7 +1,6 @@
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.Analysis;
-using IRExplorerCore.UTC;
 using IRExplorerUI.Query;
 using IRExplorerUI;
 using IRExplorerUI.Scripting;

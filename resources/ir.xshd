@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?> 
 
-<!-- Syntax definition for Compiler Studio internal IR -->
-<SyntaxDefinition name="UTC" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+<!-- Syntax definition for IR Explorer internal IR -->
+<SyntaxDefinition name="IRX" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
 	<Color name="Digits" foreground="Blue" />
 	<Color name="Comment" foreground="Silver" />
 	<Color name="Keywords" foreground="MediumBlue" fontWeight="bold"/>

@@ -1,60 +1,60 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+namespace IRExplorerCore.IR;
 
-namespace IRExplorerCore.IR {
-    public class IRElementId {
-        public ushort BlockId;
-        public ushort OperandId;
-        public uint TupleId;
+public class IRElementId {
+  public ushort BlockId;
+  public ushort OperandId;
+  public uint TupleId;
 
-        public static IRElementId NewFunctionId() {
-            return new IRElementId {
-                BlockId = 0xFFFF,
-                TupleId = 0xFFFFFFFF,
-                OperandId = 0xFFFF
-            };
-        }
+  public static implicit operator ulong(IRElementId elementId) {
+    return elementId.ToLong();
+  }
 
-        private IRElementId NewBlock(ushort blockId) {
-            BlockId = blockId;
-            TupleId = 0;
-            OperandId = 0;
-            return this;
-        }
+  public static IRElementId NewFunctionId() {
+    return new IRElementId {
+      BlockId = 0xFFFF,
+      TupleId = 0xFFFFFFFF,
+      OperandId = 0xFFFF
+    };
+  }
 
-        public IRElementId NewBlock(int blockId) {
-            return NewBlock((ushort)blockId);
-        }
+  public static IRElementId FromLong(ulong value) {
+    return new IRElementId {
+      OperandId = (ushort)((value & 0xFFFF) >> 0),
+      TupleId = (uint)((value & 0xFFFFFFFF0000) >> 32),
+      BlockId = (ushort)((value & 0xFFFF000000000000) >> 48)
+    };
+  }
 
-        public IRElementId NextTuple() {
-            TupleId++;
-            OperandId = 0;
-            return this;
-        }
+  public static ulong ToLong(ushort blockId, uint tupleId = 0, ushort operandId = 0) {
+    return (ulong)blockId << 48 | (ulong)tupleId << 32 | operandId;
+  }
 
-        public IRElementId NextOperand() {
-            OperandId++;
-            return this;
-        }
+  public IRElementId NewBlock(int blockId) {
+    return NewBlock((ushort)blockId);
+  }
 
-        public static implicit operator ulong(IRElementId elementId) {
-            return elementId.ToLong();
-        }
+  public IRElementId NextTuple() {
+    TupleId++;
+    OperandId = 0;
+    return this;
+  }
 
-        public static IRElementId FromLong(ulong value) {
-            return new IRElementId {
-                OperandId = (ushort)((value & 0xFFFF) >> 0),
-                TupleId = (uint)((value & 0xFFFFFFFF0000) >> 32),
-                BlockId = (ushort)((value & 0xFFFF000000000000) >> 48)
-            };
-        }
+  public IRElementId NextOperand() {
+    OperandId++;
+    return this;
+  }
 
-        public ulong ToLong() {
-            return ToLong(blockId: BlockId, tupleId: TupleId, operandId: OperandId);
-        }
+  public ulong ToLong() {
+    return ToLong(BlockId, TupleId, OperandId);
+  }
 
-        public static ulong ToLong(ushort blockId, uint tupleId = 0, ushort operandId = 0) {
-            return ((ulong)blockId << 48) | ((ulong)tupleId << 32) | operandId;
-        }
-    }
+  private IRElementId NewBlock(ushort blockId) {
+    BlockId = blockId;
+    TupleId = 0;
+    OperandId = 0;
+    return this;
+  }
 }

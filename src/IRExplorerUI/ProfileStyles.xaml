@@ -1,11 +1,9 @@
 ﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:oxy="http://oxyplot.org/wpf"
     xmlns:profile="clr-namespace:IRExplorerUI.Profile"
-    xmlns:system="clr-namespace:System;assembly=System.Runtime"
-    xmlns:utils="clr-namespace:IRExplorerUI.Utilities">
+    xmlns:system="clr-namespace:System;assembly=System.Runtime">
 
     <system:Boolean x:Key="TrueBool">True</system:Boolean>
     <SolidColorBrush x:Key="ProfilePercentageBackBrush" Color="#66FFFFFF" />
@@ -348,10 +346,10 @@
                 <Style TargetType="{x:Type Border}">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}" Value="{x:Static profile:ProfileCallTreeNodeKind.NativeKernel}">
-                            <Setter Property="Background" Value="MistyRose" />
+                            <Setter Property="Background" Value="AliceBlue" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}" Value="{x:Static profile:ProfileCallTreeNodeKind.Managed}">
-                            <Setter Property="Background" Value="AliceBlue" />
+                            <Setter Property="Background" Value="MistyRose" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}" Value="{x:Static profile:ProfileCallTreeNodeKind.NativeUser}">
                             <Setter Property="Opacity" Value="0.5" />

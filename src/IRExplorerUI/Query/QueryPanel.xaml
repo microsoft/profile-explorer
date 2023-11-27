@@ -1,71 +1,72 @@
 ﻿<controls:DraggablePopup
-    AllowsTransparency="True"
-    SnapsToDevicePixels="True"
-    UseLayoutRounding="True"
-    d:DesignHeight="200"
-    d:DesignWidth="300"
-    mc:Ignorable="d"
-    x:Class="IRExplorerUI.Query.QueryPanel"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:client="clr-namespace:IRExplorerUI"
-    xmlns:controls="clr-namespace:IRExplorerUI.Controls"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:IRExplorerUI.Query"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  AllowsTransparency="True"
+  SnapsToDevicePixels="True"
+  UseLayoutRounding="True"
+  d:DesignHeight="200"
+  d:DesignWidth="300"
+  mc:Ignorable="d"
+  x:Class="IRExplorerUI.Query.QueryPanel"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:controls="clr-namespace:IRExplorerUI.Controls"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="clr-namespace:IRExplorerUI.Query"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <controls:DraggablePopup.Resources>
-        <DataTemplate x:Key="ListElementTemplate">
-            <local:QueryView />
-        </DataTemplate>
-    </controls:DraggablePopup.Resources>
+  <controls:DraggablePopup.Resources>
+    <DataTemplate x:Key="ListElementTemplate">
+      <local:QueryView />
+    </DataTemplate>
+  </controls:DraggablePopup.Resources>
 
-    <Border
-        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        BorderThickness="1,1,1,1"
-        Margin="0,0,6,6">
-        <Border.Effect>
-            <DropShadowEffect
-                BlurRadius="5"
-                Color="#FF929292"
-                Direction="315"
-                RenderingBias="Performance"
-                ShadowDepth="2" />
-        </Border.Effect>
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="20" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="20" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+  <Border
+    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+    BorderThickness="1,1,1,1"
+    Margin="0,0,6,6">
+    <Border.Effect>
+      <DropShadowEffect
+        BlurRadius="5"
+        Color="#FF929292"
+        Direction="315"
+        RenderingBias="Performance"
+        ShadowDepth="2" />
+    </Border.Effect>
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="20" />
+        <ColumnDefinition Width="20" />
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="20" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
 
-            <Grid
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
-                Grid.Row="0">
-                <Grid.Style>
-                    <Style TargetType="Grid">
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ActiveCaptionBrushKey}}" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsActivePanel}" Value="False">
-                                <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.InactiveCaptionBrushKey}}" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Grid.Style>
+      <Grid
+        Grid.Column="0"
+        Grid.ColumnSpan="3"
+        Grid.Row="0">
+        <Grid.Style>
+          <Style TargetType="Grid">
+            <Setter Property="Background"
+                    Value="{DynamicResource {x:Static SystemColors.ActiveCaptionBrushKey}}" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsActivePanel}" Value="False">
+                <Setter Property="Background"
+                        Value="{DynamicResource {x:Static SystemColors.InactiveCaptionBrushKey}}" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Grid.Style>
 
-                <TextBlock
-                    FontWeight="Medium"
-                    Margin="4,0,0,0"
-                    Text="{Binding PanelTitle}"
-                    VerticalAlignment="Center" />
-            </Grid>
-            <!--<Button
+        <TextBlock
+          FontWeight="Medium"
+          Margin="4,0,0,0"
+          Text="{Binding PanelTitle}"
+          VerticalAlignment="Center" />
+      </Grid>
+      <!--<Button
                 Grid.Row="0"
                 Grid.Column="1"
                 client:ContextMenuLeftClickBehavior.IsLeftClickEnabled="True"
@@ -81,49 +82,49 @@
                     <ContextMenu x:Name="QueryContextMenu" />
                 </Button.ContextMenu>
             </Button>-->
-            <Button
-                Background="{x:Null}"
-                BorderBrush="{x:Null}"
-                Click="CloseButton_Click"
-                Grid.Column="2"
-                Grid.Row="0"
-                ToolTip="Close query panel"
-                x:Name="CloseButton">
-                <Image
-                    Height="16"
-                    Source="{StaticResource CloseIcon}"
-                    Width="16" />
-            </Button>
+      <Button
+        Background="{x:Null}"
+        BorderBrush="{x:Null}"
+        Click="CloseButton_Click"
+        Grid.Column="2"
+        Grid.Row="0"
+        ToolTip="Close query panel"
+        x:Name="CloseButton">
+        <Image
+          Height="16"
+          Source="{StaticResource CloseIcon}"
+          Width="16" />
+      </Button>
 
-            <ScrollViewer
-                CanContentScroll="True"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
-                Grid.Row="1"
-                HorizontalAlignment="Stretch"
-                HorizontalScrollBarVisibility="Disabled"
-                VerticalScrollBarVisibility="Auto"
-                VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling">
+      <ScrollViewer
+        CanContentScroll="True"
+        Grid.Column="0"
+        Grid.ColumnSpan="3"
+        Grid.Row="1"
+        HorizontalAlignment="Stretch"
+        HorizontalScrollBarVisibility="Disabled"
+        VerticalScrollBarVisibility="Auto"
+        VirtualizingStackPanel.IsVirtualizing="True"
+        VirtualizingStackPanel.VirtualizationMode="Recycling">
 
-                <ItemsControl ItemTemplate="{StaticResource ListElementTemplate}" x:Name="QueryViewList">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <VirtualizingStackPanel Orientation="Vertical" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                </ItemsControl>
-            </ScrollViewer>
+        <ItemsControl ItemTemplate="{StaticResource ListElementTemplate}" x:Name="QueryViewList">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <VirtualizingStackPanel Orientation="Vertical" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+        </ItemsControl>
+      </ScrollViewer>
 
-            <controls:ResizeGrip
-                Grid.Column="2"
-                Grid.Row="1"
-                Height="16"
-                HorizontalAlignment="Right"
-                Panel.ZIndex="100"
-                VerticalAlignment="Bottom"
-                Width="16"
-                x:Name="PanelResizeGrip" />
-        </Grid>
-    </Border>
+      <controls:ResizeGrip
+        Grid.Column="2"
+        Grid.Row="1"
+        Height="16"
+        HorizontalAlignment="Right"
+        Panel.ZIndex="100"
+        VerticalAlignment="Bottom"
+        Width="16"
+        x:Name="PanelResizeGrip" />
+    </Grid>
+  </Border>
 </controls:DraggablePopup>

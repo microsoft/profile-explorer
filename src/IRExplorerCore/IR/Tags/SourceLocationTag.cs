@@ -1,59 +1,58 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
+// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace IRExplorerCore.IR {
-    public sealed class SourceLocationTag : ITag {
-        public SourceLocationTag() { }
-        
-        public SourceLocationTag(int line, int column) {
-            Line = line;
-            Column = column;
-        }
-        
-        public List<StackFrame> Inlinees { get; set; }
-        public int Line { get; set; }
-        public int Column { get; set; }
-        public bool HasInlinees => Inlinees != null && Inlinees.Count > 0;
+namespace IRExplorerCore.IR;
 
-        public void AddInlinee(string function, string filePath, int line, int column) {
-            Inlinees ??= new List<StackFrame>();
-            Inlinees.Add(new StackFrame(function, filePath, line, column));
-        }
+public sealed class SourceLocationTag : ITag {
+  public SourceLocationTag() { }
 
-        public void Reset() {
-            Inlinees = null;
-            Line = 0;
-            Column = 0;
-        }
+  public SourceLocationTag(int line, int column) {
+    Line = line;
+    Column = column;
+  }
 
-        public string Name => "Source location";
-        public TaggedObject Owner { get; set; }
+  public List<StackFrame> Inlinees { get; set; }
+  public int Line { get; set; }
+  public int Column { get; set; }
+  public bool HasInlinees => Inlinees != null && Inlinees.Count > 0;
+  public string Name => "Source location";
+  public TaggedObject Owner { get; set; }
 
-        public override bool Equals(object obj) {
-            return obj is SourceLocationTag tag && Line == tag.Line && Column == tag.Column;
-        }
+  public void AddInlinee(string function, string filePath, int line, int column) {
+    Inlinees ??= new List<StackFrame>();
+    Inlinees.Add(new StackFrame(function, filePath, line, column));
+  }
 
-        public override int GetHashCode() {
-            return HashCode.Combine(Line, Column);
-        }
+  public void Reset() {
+    Inlinees = null;
+    Line = 0;
+    Column = 0;
+  }
 
-        public override string ToString() {
-            var builder = new StringBuilder();
-            builder.Append($"source location: {Line};{Column}");
+  public override bool Equals(object obj) {
+    return obj is SourceLocationTag tag && Line == tag.Line && Column == tag.Column;
+  }
 
-            if (Inlinees != null) {
-                builder.AppendLine($"\n  inlinees: {Inlinees.Count}");
+  public override int GetHashCode() {
+    return HashCode.Combine(Line, Column);
+  }
 
-                foreach (var item in Inlinees) {
-                    builder.AppendLine($"    {item.Line};{item.Column}: {item.Function}");
-                }
-            }
+  public override string ToString() {
+    var builder = new StringBuilder();
+    builder.Append($"source location: {Line};{Column}");
 
-            return builder.ToString();
-        }
+    if (Inlinees != null) {
+      builder.AppendLine($"\n  inlinees: {Inlinees.Count}");
+
+      foreach (var item in Inlinees) {
+        builder.AppendLine($"    {item.Line};{item.Column}: {item.Function}");
+      }
     }
+
+    return builder.ToString();
+  }
 }

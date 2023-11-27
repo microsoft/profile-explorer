@@ -1,654 +1,666 @@
 ﻿<local:ToolPanelControl
-    x:Class="IRExplorerUI.Profile.ProfileReportPanel"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:IRExplorerUI"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:profile="clr-namespace:IRExplorerUI.Profile"
-    d:DesignHeight="650"
-    d:DesignWidth="800"
-    mc:Ignorable="d">
-    <TabControl x:Name="TabHost">
-        <TabItem Header="Summary">
-            <ScrollViewer Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-                <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-                    <StackPanel Margin="8">
-                        <Expander Header="Trace" IsExpanded="True">
-                            <StackPanel Margin="0,4,0,0">
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Trace source" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding TraceInfo.TraceFilePath}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Process" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding Process.Name}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Image file" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding Process.ImageFileName}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Command line" />
-                                    <TextBox
-                                        Margin="100,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding Process.CommandLine}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Start time" />
-                                    <TextBox
-                                        Margin="100,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding TraceInfo.ProfileStartTime}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Duration" />
-                                    <TextBox
-                                        Margin="100,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding TraceInfo.ProfileDuration, Mode=OneTime}" />
-                                </Grid>
-                            </StackPanel>
-                        </Expander>
-
-                        <Expander
-                            Margin="0,10,0,0"
-                            Header="Machine"
-                            IsExpanded="True">
-                            <StackPanel Margin="0,4,0,0">
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Computer name" />
-                                    <TextBox
-                                        Margin="100,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding TraceInfo.ComputerName}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Domain name" />
-                                    <TextBox
-                                        Margin="100,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding TraceInfo.DomainName}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="CPU core count" />
-                                    <TextBox
-                                        Margin="100,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding TraceInfo.CpuCount}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="CPU speed (Mhz)" />
-                                    <TextBox
-                                        Margin="100,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding TraceInfo.CpuSpeed}" />
-                                </Grid>
-
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Memory size (MB)" />
-                                    <TextBox
-                                        Margin="100,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding TraceInfo.MemorySize}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="64 bit" />
-                                    <TextBox
-                                        Margin="100,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding TraceInfo.Is64Bit, Mode=OneTime}" />
-                                </Grid>
-                            </StackPanel>
-                        </Expander>
-
-                        <Expander
-                            Margin="0,10,0,0"
-                            Header="Recording session"
-                            IsExpanded="True"
-                            Visibility="{Binding IsRecordingSession, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <StackPanel Margin="0,4,0,0">
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Application path" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SessionOptions.ApplicationPath}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Arguments" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SessionOptions.ApplicationArguments}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Working directory" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SessionOptions.WorkingDirectory}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Top" Text="Environment vars." />
-                                    <CheckBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Top"
-                                        Background="Transparent"
-                                        BorderBrush="DarkBlue"
-                                        IsChecked="{Binding SessionOptions.EnableEnvironmentVars}"
-                                        IsHitTestVisible="False" />
-                                    <TextBox
-                                        Margin="120,1,0,1"
-                                        VerticalAlignment="Top"
-                                        Background="Transparent"
-                                        BorderBrush="LightGray"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding Path=SessionOptions.EnvironmentVariables, Converter={StaticResource StringListPairConverter}}"
-                                        Visibility="{Binding SessionOptions.EnableEnvironmentVars, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                </Grid>
-                                <Separator Margin="0,4,0,4" />
-
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Sampling freq." />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SessionOptions.SamplingFrequency}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Profile children" />
-                                    <CheckBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="DarkBlue"
-                                        IsChecked="{Binding SessionOptions.ProfileChildProcesses}"
-                                        IsHitTestVisible="False" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Profile .NET" />
-                                    <CheckBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="DarkBlue"
-                                        IsChecked="{Binding SessionOptions.ProfileDotNet}"
-                                        IsHitTestVisible="False" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Top" Text="Perf. counters" />
-                                    <CheckBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Top"
-                                        Background="Transparent"
-                                        BorderBrush="DarkBlue"
-                                        IsChecked="{Binding SessionOptions.RecordPerformanceCounters}"
-                                        IsHitTestVisible="False" />
-                                    <TextBox
-                                        Margin="120,1,0,1"
-                                        VerticalAlignment="Top"
-                                        Background="Transparent"
-                                        BorderBrush="LightGray"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding Path=SessionOptions.EnabledPerformanceCounters, Mode=OneWay, Converter={StaticResource PerformanceCounterConverter}}"
-                                        Visibility="{Binding SessionOptions.RecordPerformanceCounters, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                </Grid>
-                            </StackPanel>
-                        </Expander>
-                    </StackPanel>
+  x:Class="IRExplorerUI.Profile.ProfileReportPanel"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="clr-namespace:IRExplorerUI"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:profile="clr-namespace:IRExplorerUI.Profile"
+  d:DesignHeight="650"
+  d:DesignWidth="800"
+  mc:Ignorable="d">
+  <TabControl x:Name="TabHost" ToolTip="Trace file and main process details">
+    <TabItem Header="Summary">
+      <ScrollViewer Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+        <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+          <StackPanel Margin="8">
+            <Expander Header="Trace" IsExpanded="True">
+              <StackPanel Margin="0,4,0,0">
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Trace source" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding TraceInfo.TraceFilePath}" />
                 </Grid>
-            </ScrollViewer>
-        </TabItem>
-        <TabItem Header="Modules">
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Process" />
+                  <TextBox
+                    Margin="100,0,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding Process.Name}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Image file" />
+                  <TextBox
+                    Margin="100,0,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding Process.ImageFileName}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Command line" />
+                  <TextBox
+                    Margin="100,0,0,0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding Process.CommandLine}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Start time" />
+                  <TextBox
+                    Margin="100,0,0,0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding TraceInfo.ProfileStartTime}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Duration" />
+                  <TextBox
+                    Margin="100,0,0,0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding TraceInfo.ProfileDuration, Mode=OneTime}" />
+                </Grid>
+              </StackPanel>
+            </Expander>
+
+            <Expander
+              Margin="0,10,0,0"
+              Header="Machine details"
+              IsExpanded="True">
+              <StackPanel Margin="0,4,0,0">
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Computer name" />
+                  <TextBox
+                    Margin="100,0,0,0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding TraceInfo.ComputerName}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Domain name" />
+                  <TextBox
+                    Margin="100,0,0,0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding TraceInfo.DomainName}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="CPU core count" />
+                  <TextBox
+                    Margin="100,0,0,0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding TraceInfo.CpuCount}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="CPU speed (Mhz)" />
+                  <TextBox
+                    Margin="100,0,0,0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding TraceInfo.CpuSpeed}" />
+                </Grid>
+
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Memory size (MB)" />
+                  <TextBox
+                    Margin="100,0,0,0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding TraceInfo.MemorySize}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Is 64 bit" />
+                  <TextBox
+                    Margin="100,0,0,0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding TraceInfo.Is64Bit, Mode=OneTime}" />
+                </Grid>
+              </StackPanel>
+            </Expander>
+
+            <Expander
+              Margin="0,10,0,0"
+              Header="Recording session"
+              IsExpanded="True"
+              Visibility="{Binding IsRecordingSession, Converter={StaticResource BoolToVisibilityConverter}}">
+              <StackPanel Margin="0,4,0,0">
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Application path" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SessionOptions.ApplicationPath}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Arguments" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SessionOptions.ApplicationArguments}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Working directory" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SessionOptions.WorkingDirectory}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Top" Text="Environment vars." />
+                  <CheckBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Top"
+                    Background="Transparent"
+                    BorderBrush="DarkBlue"
+                    IsChecked="{Binding SessionOptions.EnableEnvironmentVars}"
+                    IsHitTestVisible="False" />
+                  <TextBox
+                    Margin="120,1,0,1"
+                    VerticalAlignment="Top"
+                    Background="Transparent"
+                    BorderBrush="LightGray"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding Path=SessionOptions.EnvironmentVariables, Converter={StaticResource StringListPairConverter}}"
+                    Visibility="{Binding SessionOptions.EnableEnvironmentVars, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </Grid>
+                <Separator Margin="0,4,0,4" />
+
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Sampling freq." />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SessionOptions.SamplingFrequency}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Profile children" />
+                  <CheckBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="DarkBlue"
+                    IsChecked="{Binding SessionOptions.ProfileChildProcesses}"
+                    IsHitTestVisible="False" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Profile .NET" />
+                  <CheckBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="DarkBlue"
+                    IsChecked="{Binding SessionOptions.ProfileDotNet}"
+                    IsHitTestVisible="False" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Top" Text="Perf. counters" />
+                  <CheckBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Top"
+                    Background="Transparent"
+                    BorderBrush="DarkBlue"
+                    IsChecked="{Binding SessionOptions.RecordPerformanceCounters}"
+                    IsHitTestVisible="False" />
+                  <TextBox
+                    Margin="120,1,0,1"
+                    VerticalAlignment="Top"
+                    Background="Transparent"
+                    BorderBrush="LightGray"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding Path=SessionOptions.EnabledPerformanceCounters, Mode=OneWay, Converter={StaticResource PerformanceCounterConverter}}"
+                    Visibility="{Binding SessionOptions.RecordPerformanceCounters, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </Grid>
+              </StackPanel>
+            </Expander>
+          </StackPanel>
+        </Grid>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem Header="Modules" ToolTip="List of modules loaded by the main process">
+      <DockPanel LastChildFill="True">
+        <ListView IsTextSearchEnabled="True"
+                  TextSearch.TextPath="ImageFileInfo.ImageName"
+          x:Name="ModuleList"
+          Height="250"
+          MinHeight="100"
+          MaxHeight="500"
+          Margin="0,4,0,0"
+          Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+          DockPanel.Dock="Top"
+          IsEnabled="{Binding InputControlsEnabled}"
+          ScrollViewer.VerticalScrollBarVisibility="Auto"
+          SelectionMode="Single"
+          VirtualizingStackPanel.IsVirtualizing="True"
+          VirtualizingStackPanel.VirtualizationMode="Recycling">
+          <ListView.View>
+            <GridView>
+              <GridViewColumn Width="150" DisplayMemberBinding="{Binding ImageFileInfo.ImageName}">
+                <GridViewColumnHeader Content="Module" />
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+              </GridViewColumn>
+
+              <GridViewColumn Width="85">
+                <GridViewColumnHeader Content="Loaded" />
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+                <GridViewColumn.CellTemplate>
+                  <DataTemplate>
+                    <Border Margin="-6,-2,-6,-2">
+                      <StackPanel Margin="6,2,6,2" Orientation="Horizontal">
+                        <Image Width="16" Height="16">
+                          <Image.Style>
+                            <Style TargetType="{x:Type Image}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding State}"
+                                             Value="{x:Static profile:ModuleLoadState.Loaded}">
+                                  <Setter Property="Source" Value="{StaticResource CheckIcon}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding State}"
+                                             Value="{x:Static profile:ModuleLoadState.NotFound}">
+                                  <Setter Property="Source" Value="{StaticResource VoidIcon}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding State}"
+                                             Value="{x:Static profile:ModuleLoadState.Failed}">
+                                  <Setter Property="Source" Value="{StaticResource WarningYellow}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Image.Style>
+                        </Image>
+
+                        <TextBlock>
+                          <TextBlock.Style>
+                            <Style TargetType="{x:Type TextBlock}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding State}"
+                                             Value="{x:Static profile:ModuleLoadState.Loaded}">
+                                  <Setter Property="Text" Value="Yes" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding State}"
+                                             Value="{x:Static profile:ModuleLoadState.NotFound}">
+                                  <Setter Property="Text" Value="Not Found" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding State}"
+                                             Value="{x:Static profile:ModuleLoadState.Failed}">
+                                  <Setter Property="Text" Value="Failed" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </TextBlock.Style>
+                        </TextBlock>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </GridViewColumn.CellTemplate>
+              </GridViewColumn>
+
+              <GridViewColumn Width="120"
+                              DisplayMemberBinding="{Binding DebugInfoFile.SymbolFile.FileName, StringFormat={}{0:mm\\:ss\\.ff}}">
+                <GridViewColumnHeader Content="Debug file" />
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+              </GridViewColumn>
+
+              <GridViewColumn Width="85">
+                <GridViewColumnHeader Content="Debug loaded" />
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+                <GridViewColumn.CellTemplate>
+                  <DataTemplate>
+                    <Border Margin="-6,-2,-6,-2">
+                      <StackPanel Margin="6,2,6,2" Orientation="Horizontal">
+                        <Image Width="16" Height="16">
+                          <Image.Style>
+                            <Style TargetType="{x:Type Image}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="True">
+                                  <Setter Property="Source" Value="{StaticResource CheckIcon}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="False">
+                                  <Setter Property="Source" Value="{StaticResource VoidIcon}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Image.Style>
+                        </Image>
+
+                        <TextBlock>
+                          <TextBlock.Style>
+                            <Style TargetType="{x:Type TextBlock}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="True">
+                                  <Setter Property="Text" Value="Yes" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="False">
+                                  <Setter Property="Text" Value="Not Found" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </TextBlock.Style>
+                        </TextBlock>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </GridViewColumn.CellTemplate>
+              </GridViewColumn>
+
+              <GridViewColumn Width="250" DisplayMemberBinding="{Binding DebugInfoFile.FilePath}">
+                <GridViewColumnHeader Content="Debug file local path" />
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                    <Setter Property="ToolTip" Value="{Binding DebugInfoFile.FilePath}" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+              </GridViewColumn>
+            </GridView>
+          </ListView.View>
+
+          <ListView.ItemContainerStyle>
+            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+              <Setter Property="Background"
+                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+            </Style>
+          </ListView.ItemContainerStyle>
+        </ListView>
+        <TabControl
+          Margin="0,4,0,0"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+          DockPanel.Dock="Bottom"
+          TabStripPlacement="Top">
+          <TabItem Header="Image file">
             <DockPanel LastChildFill="True">
-                <ListView
-                    x:Name="ModuleList"
-                    Height="250"
-                    MinHeight="100"
-                    MaxHeight="500"
-                    Margin="0,4,0,0"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                    DockPanel.Dock="Top"
-                    IsEnabled="{Binding InputControlsEnabled}"
-                    ScrollViewer.VerticalScrollBarVisibility="Auto"
-                    SelectionMode="Single"
-                    VirtualizingStackPanel.IsVirtualizing="True"
-                    VirtualizingStackPanel.VirtualizationMode="Recycling">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Width="150" DisplayMemberBinding="{Binding ImageFileInfo.ImageName}">
-                                <GridViewColumnHeader Content="Module" />
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="{x:Type GridViewColumnHeader}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-                            </GridViewColumn>
-
-                            <GridViewColumn Width="85">
-                                <GridViewColumnHeader Content="Loaded" />
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="{x:Type GridViewColumnHeader}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border Margin="-6,-2,-6,-2">
-                                            <StackPanel Margin="6,2,6,2" Orientation="Horizontal">
-                                                <Image Width="16" Height="16">
-                                                    <Image.Style>
-                                                        <Style TargetType="{x:Type Image}">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Loaded}">
-                                                                    <Setter Property="Source" Value="{StaticResource CheckIcon}" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.NotFound}">
-                                                                    <Setter Property="Source" Value="{StaticResource VoidIcon}" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Failed}">
-                                                                    <Setter Property="Source" Value="{StaticResource WarningYellow}" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Image.Style>
-                                                </Image>
-
-                                                <TextBlock>
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="{x:Type TextBlock}">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Loaded}">
-                                                                    <Setter Property="Text" Value="Yes" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.NotFound}">
-                                                                    <Setter Property="Text" Value="Not Found" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Failed}">
-                                                                    <Setter Property="Text" Value="Failed" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-
-                            <GridViewColumn Width="120" DisplayMemberBinding="{Binding DebugInfoFile.SymbolFile.FileName, StringFormat={}{0:mm\\:ss\\.ff}}">
-                                <GridViewColumnHeader Content="Debug file" />
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="{x:Type GridViewColumnHeader}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-                            </GridViewColumn>
-
-                            <GridViewColumn Width="85">
-                                <GridViewColumnHeader Content="Debug loaded" />
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="{x:Type GridViewColumnHeader}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border Margin="-6,-2,-6,-2">
-                                            <StackPanel Margin="6,2,6,2" Orientation="Horizontal">
-                                                <Image Width="16" Height="16">
-                                                    <Image.Style>
-                                                        <Style TargetType="{x:Type Image}">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="True">
-                                                                    <Setter Property="Source" Value="{StaticResource CheckIcon}" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="False">
-                                                                    <Setter Property="Source" Value="{StaticResource VoidIcon}" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Image.Style>
-                                                </Image>
-
-                                                <TextBlock>
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="{x:Type TextBlock}">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="True">
-                                                                    <Setter Property="Text" Value="Yes" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="False">
-                                                                    <Setter Property="Text" Value="Not Found" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-
-                            <GridViewColumn Width="250" DisplayMemberBinding="{Binding DebugInfoFile.FilePath}">
-                                <GridViewColumnHeader Content="Debug file local path" />
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="{x:Type GridViewColumnHeader}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                        <Setter Property="ToolTip" Value="{Binding DebugInfoFile.FilePath}" />
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-                            </GridViewColumn>
-                        </GridView>
-                    </ListView.View>
-
-                    <ListView.ItemContainerStyle>
-                        <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                        </Style>
-                    </ListView.ItemContainerStyle>
-                </ListView>
-                <TabControl
-                    Margin="0,4,0,0"
-                    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                    DockPanel.Dock="Bottom"
-                    TabStripPlacement="Top">
-                    <TabItem Header="Image file">
-                        <DockPanel LastChildFill="True">
-                            <StackPanel Margin="4,2,4,0" DockPanel.Dock="Top">
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Name" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.ImageFileInfo.ImageName, ElementName=ModuleList}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Local path" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.BinaryFileInfo.FilePath, ElementName=ModuleList}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Architecture" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.Architecture, ElementName=ModuleList}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Image size" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.ImageSize, ElementName=ModuleList}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Code size" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.CodeSize, ElementName=ModuleList}" />
-                                </Grid>
+              <StackPanel Margin="4,2,4,0" DockPanel.Dock="Top">
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Name" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SelectedItem.ImageFileInfo.ImageName, ElementName=ModuleList}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Local path" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SelectedItem.BinaryFileInfo.FilePath, ElementName=ModuleList}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Architecture" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.Architecture, ElementName=ModuleList}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Image size" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.ImageSize, ElementName=ModuleList}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Code size" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.CodeSize, ElementName=ModuleList}" />
+                </Grid>
 
 
-                            </StackPanel>
-                            <Expander
-                                Margin="0,8,0,0"
-                                Header="Logs"
-                                IsExpanded="True">
-                                <Grid>
-                                    <TextBox
-                                        Margin="0,2,0,0"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        FontFamily="Consolas"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.BinaryFileInfo.Details, ElementName=ModuleList}"
-                                        VerticalScrollBarVisibility="Auto" />
-                                </Grid>
-                            </Expander>
-                        </DockPanel>
-                    </TabItem>
-                    <TabItem Header="Debug file">
-                        <DockPanel LastChildFill="True">
-                            <StackPanel Margin="4,2,4,0" DockPanel.Dock="Top">
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Name" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.FileName, ElementName=ModuleList}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Local path" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.DebugInfoFile.FilePath, ElementName=ModuleList}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Guid" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.Id, ElementName=ModuleList}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Age" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.Age, ElementName=ModuleList}" />
-                                </Grid>
-
-                            </StackPanel>
-                            <Expander
-                                Margin="0,8,0,0"
-                                Header="Logs"
-                                IsExpanded="True">
-                                <Grid>
-                                    <TextBox
-                                        Margin="0,2,0,0"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        FontFamily="Consolas"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.DebugInfoFile.Details, ElementName=ModuleList}"
-                                        VerticalScrollBarVisibility="Auto" />
-                                </Grid>
-                            </Expander>
-                        </DockPanel>
-                    </TabItem>
-                </TabControl>
+              </StackPanel>
+              <Expander
+                Margin="0,8,0,0"
+                Header="Logs"
+                IsExpanded="True">
+                <Grid>
+                  <TextBox
+                    Margin="0,2,0,0"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    FontFamily="Consolas"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SelectedItem.BinaryFileInfo.Details, ElementName=ModuleList}"
+                    VerticalScrollBarVisibility="Auto" />
+                </Grid>
+              </Expander>
             </DockPanel>
-        </TabItem>
-        <TabItem Header="Process list">
-            <ListView
-                x:Name="ProcessList"
-                MinHeight="100"
-                Margin="0,4,0,0"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                IsEnabled="{Binding InputControlsEnabled}"
-                ScrollViewer.VerticalScrollBarVisibility="Auto"
-                SelectionMode="Single"
-                VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling"
-                Visibility="{Binding ShowProcessList, Converter={StaticResource BoolToVisibilityConverter}}">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Width="150" DisplayMemberBinding="{Binding Process.Name}">
-                            <GridViewColumnHeader Content="Process" />
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>
+          </TabItem>
+          <TabItem Header="Debug file">
+            <DockPanel LastChildFill="True">
+              <StackPanel Margin="4,2,4,0" DockPanel.Dock="Top">
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Name" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.FileName, ElementName=ModuleList}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Local path" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SelectedItem.DebugInfoFile.FilePath, ElementName=ModuleList}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Guid" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.Id, ElementName=ModuleList}" />
+                </Grid>
+                <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Age" />
+                  <TextBox
+                    Margin="100,1,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.Age, ElementName=ModuleList}" />
+                </Grid>
 
-                        <GridViewColumn Width="80" DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}">
-                            <GridViewColumnHeader Content="Weight" />
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>
+              </StackPanel>
+              <Expander
+                Margin="0,8,0,0"
+                Header="Logs"
+                IsExpanded="True">
+                <Grid>
+                  <TextBox
+                    Margin="0,2,0,0"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    FontFamily="Consolas"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding SelectedItem.DebugInfoFile.Details, ElementName=ModuleList}"
+                    VerticalScrollBarVisibility="Auto" />
+                </Grid>
+              </Expander>
+            </DockPanel>
+          </TabItem>
+        </TabControl>
+      </DockPanel>
+    </TabItem>
+    <TabItem Header="Process list" ToolTip="List of all processes found in the trace">
+      <ListView
+        x:Name="ProcessList"
+        MinHeight="100"
+        Margin="0,4,0,0"
+        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+        IsEnabled="{Binding InputControlsEnabled}"
+        ScrollViewer.VerticalScrollBarVisibility="Auto"
+        SelectionMode="Single"
+        VirtualizingStackPanel.IsVirtualizing="True"
+        VirtualizingStackPanel.VirtualizationMode="Recycling"
+        Visibility="{Binding ShowProcessList, Converter={StaticResource BoolToVisibilityConverter}}">
+        <ListView.View>
+          <GridView>
+            <GridViewColumn Width="150" DisplayMemberBinding="{Binding Process.Name}">
+              <GridViewColumnHeader Content="Process" />
+              <GridViewColumn.HeaderContainerStyle>
+                <Style TargetType="{x:Type GridViewColumnHeader}">
+                  <Setter Property="HorizontalContentAlignment" Value="Left" />
+                </Style>
+              </GridViewColumn.HeaderContainerStyle>
+            </GridViewColumn>
 
-                        <GridViewColumn Width="80" DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}">
-                            <GridViewColumnHeader Content="Duration" />
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>
+            <GridViewColumn Width="80"
+                            DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}">
+              <GridViewColumnHeader Content="Weight" />
+              <GridViewColumn.HeaderContainerStyle>
+                <Style TargetType="{x:Type GridViewColumnHeader}">
+                  <Setter Property="HorizontalContentAlignment" Value="Left" />
+                </Style>
+              </GridViewColumn.HeaderContainerStyle>
+            </GridViewColumn>
 
-                        <GridViewColumn Width="70" DisplayMemberBinding="{Binding Process.ProcessId}">
-                            <GridViewColumnHeader Content="Process ID" />
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>
+            <GridViewColumn Width="80"
+                            DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}">
+              <GridViewColumnHeader Content="Duration" />
+              <GridViewColumn.HeaderContainerStyle>
+                <Style TargetType="{x:Type GridViewColumnHeader}">
+                  <Setter Property="HorizontalContentAlignment" Value="Left" />
+                </Style>
+              </GridViewColumn.HeaderContainerStyle>
+            </GridViewColumn>
 
-                        <GridViewColumn Width="100" DisplayMemberBinding="{Binding Process.CommandLine}">
-                            <GridViewColumnHeader Content="Command line" />
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>
-                    </GridView>
-                </ListView.View>
+            <GridViewColumn Width="70" DisplayMemberBinding="{Binding Process.ProcessId}">
+              <GridViewColumnHeader Content="Process ID" />
+              <GridViewColumn.HeaderContainerStyle>
+                <Style TargetType="{x:Type GridViewColumnHeader}">
+                  <Setter Property="HorizontalContentAlignment" Value="Left" />
+                </Style>
+              </GridViewColumn.HeaderContainerStyle>
+            </GridViewColumn>
 
-                <ListView.ItemContainerStyle>
-                    <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                    </Style>
-                </ListView.ItemContainerStyle>
-            </ListView>
-        </TabItem>
-    </TabControl>
+            <GridViewColumn Width="100" DisplayMemberBinding="{Binding Process.CommandLine}">
+              <GridViewColumnHeader Content="Command line" />
+              <GridViewColumn.HeaderContainerStyle>
+                <Style TargetType="{x:Type GridViewColumnHeader}">
+                  <Setter Property="HorizontalContentAlignment" Value="Left" />
+                </Style>
+              </GridViewColumn.HeaderContainerStyle>
+            </GridViewColumn>
+          </GridView>
+        </ListView.View>
+
+        <ListView.ItemContainerStyle>
+          <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+            <Setter Property="Background"
+                    Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+          </Style>
+        </ListView.ItemContainerStyle>
+      </ListView>
+    </TabItem>
+  </TabControl>
 
 </local:ToolPanelControl>
