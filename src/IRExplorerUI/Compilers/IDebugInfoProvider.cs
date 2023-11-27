@@ -28,10 +28,10 @@ public interface IDebugInfoProvider : IDisposable {
   SourceLineDebugInfo FindSourceLineByRVA(long rva);
 }
 
-    [ProtoContract(SkipConstructor = true)]
-    public class SymbolFileSourceOptions : SettingsBase {
-        private const string DefaultSymbolSourcePath = @"https://symweb";
-        private const string DefaultSymbolCachePath = @"C:\Symbols";
+[ProtoContract(SkipConstructor = true)]
+public class SymbolFileSourceOptions : SettingsBase {
+  private const string DefaultSymbolSourcePath = @"https://symweb";
+  private const string DefaultSymbolCachePath = @"C:\Symbols";
 
   public SymbolFileSourceOptions() {
     Reset();
@@ -64,47 +64,47 @@ public interface IDebugInfoProvider : IDisposable {
     return SymbolSearchPaths.Find(item => item.ToLowerInvariant() == path) != null;
   }
 
-        public void InsertSymbolPath(string path) {
-            if (string.IsNullOrEmpty(path)) {
-                return;
-            }
+  public void InsertSymbolPath(string path) {
+    if (string.IsNullOrEmpty(path)) {
+      return;
+    }
 
-            if (path.Contains(";")) {
-                InsertSymbolPaths(path.Split(";"));
-                return;
-            }
+    if (path.Contains(";")) {
+      InsertSymbolPaths(path.Split(";"));
+      return;
+    }
 
-            if (!path.Contains("*")) {
-                if (HasSymbolPath(path)) {
-                    return;
-                }
+    if (!path.Contains("*")) {
+      if (HasSymbolPath(path)) {
+        return;
+      }
 
-                path = Utils.TryGetDirectoryName(path);
+      path = Utils.TryGetDirectoryName(path);
 
-                if (!string.IsNullOrEmpty(path)) {
-                    SymbolSearchPaths.Insert(0, path);
-                }
+      if (!string.IsNullOrEmpty(path)) {
+        SymbolSearchPaths.Insert(0, path);
+      }
 
-                return;
-            }
+      return;
+    }
 
-            string[] tokens = path.Split("*");
+    string[] tokens = path.Split("*");
 
-            if (tokens[0] == "srv") {
-                string srv = tokens[1];
+    if (tokens[0] == "srv") {
+      string srv = tokens[1];
 
-                if (tokens.Length == 3) {
-                    SymbolCachePath = srv;
-                    srv = tokens[2];
-                }
+      if (tokens.Length == 3) {
+        SymbolCachePath = srv;
+        srv = tokens[2];
+      }
 
-                SymbolSourcePath = string.IsNullOrEmpty(srv) ? DefaultSymbolSourcePath : srv;
-            }
-            else if (tokens[0] == "cache") {
-                string cache = tokens[1];
-                SymbolCachePath = string.IsNullOrEmpty(cache) ? DefaultSymbolCachePath : cache;
-            }
-        }
+      SymbolSourcePath = string.IsNullOrEmpty(srv) ? DefaultSymbolSourcePath : srv;
+    }
+    else if (tokens[0] == "cache") {
+      string cache = tokens[1];
+      SymbolCachePath = string.IsNullOrEmpty(cache) ? DefaultSymbolCachePath : cache;
+    }
+  }
 
   public void InsertSymbolPaths(IEnumerable<string> paths) {
     foreach (string path in paths) {

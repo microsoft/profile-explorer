@@ -175,13 +175,13 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private string profileFilePath_;
   private string binaryFilePath_;
 
-        public ProfileLoadWindow(ISession session, bool recordMode, bool isOnLaunch = false) {
-            InitializeComponent();
-            DataContext = this;
-            Session = session;
-            loadTask_ = new CancelableTaskInstance(false);
-            IsRecordMode = recordMode;
-            IsOnLaunch = isOnLaunch;
+  public ProfileLoadWindow(ISession session, bool recordMode, bool isOnLaunch = false) {
+    InitializeComponent();
+    DataContext = this;
+    Session = session;
+    loadTask_ = new CancelableTaskInstance(false);
+    IsRecordMode = recordMode;
+    IsOnLaunch = isOnLaunch;
 
     if (IsRecordMode) {
       Title = "Record profile trace";
@@ -281,18 +281,18 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   public bool RecordingStopControlsEnabled => !IsLoadingProfile && IsRecordingProfile;
   public bool IsRecordMode { get; }
 
-        public bool IsOnLaunch { get; }
+  public bool IsOnLaunch { get; }
 
-        public ProfileRecordingSessionOptions RecordingOptions {
-            get {
-                return recordingOptions_;
-            }
-            set {
-                recordingOptions_ = value;
-                OnPropertyChange(nameof(RecordingOptions));
-                OnPropertyChange(nameof(Options));
-            }
-        }
+  public ProfileRecordingSessionOptions RecordingOptions {
+    get {
+      return recordingOptions_;
+    }
+    set {
+      recordingOptions_ = value;
+      OnPropertyChange(nameof(RecordingOptions));
+      OnPropertyChange(nameof(Options));
+    }
+  }
 
   public ProfileDataProviderOptions Options {
     get => options_;
@@ -822,24 +822,24 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
   }
 
-        private async void LoadProfileFromArgs(string traceFilePath, string symbolPath, int processId, string imageFileName) {
-            ProfileFilePath = traceFilePath;
-            BinaryFilePath = imageFileName;
-            symbolOptions_.InsertSymbolPath(symbolPath);
+  private async void LoadProfileFromArgs(string traceFilePath, string symbolPath, int processId, string imageFileName) {
+    ProfileFilePath = traceFilePath;
+    BinaryFilePath = imageFileName;
+    symbolOptions_.InsertSymbolPath(symbolPath);
 
-            ProfileProcess process = new ProfileProcess(processId, imageFileName);
-            selectedProcSummary_ = new List<ProcessSummary>() {
+    ProfileProcess process = new ProfileProcess(processId, imageFileName);
+    selectedProcSummary_ = new List<ProcessSummary>() {
                 new ProcessSummary(process, TimeSpan.Zero)
             };
 
-            await OpenFilesAndComplete();
-        }
+    await OpenFilesAndComplete();
+  }
 
-        private async void SessionList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
-            var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
-            if (sessionEx?.Report == null) {
-                return;
-            }
+  private async void SessionList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
+    var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
+    if (sessionEx?.Report == null) {
+      return;
+    }
 
     LoadPreviousSession(sessionEx.Report);
 

@@ -377,8 +377,8 @@ public partial class MainWindow : Window, ISession {
     await EndSession();
   }
 
-        private async void MainWindow_ContentRendered(object sender, EventArgs e) {
-            SetupStartPagePanel();
+  private async void MainWindow_ContentRendered(object sender, EventArgs e) {
+    SetupStartPagePanel();
 
     if (sessionState_ == null) {
       ShowStartPage();
@@ -387,25 +387,25 @@ public partial class MainWindow : Window, ISession {
     var time = DateTime.UtcNow - App.AppStartTime;
     DevMenuStartupTime.Header = $"Startup time: {time.TotalMilliseconds} ms";
 
-            DelayedAction.StartNew(TimeSpan.FromSeconds(10), () => {
-                Dispatcher.BeginInvoke(new Action(() => {
-                    CheckForUpdate();
-                }));
-            });
+    DelayedAction.StartNew(TimeSpan.FromSeconds(10), () => {
+      Dispatcher.BeginInvoke(new Action(() => {
+        CheckForUpdate();
+      }));
+    });
 
-            var args = Environment.GetCommandLineArgs();
+    var args = Environment.GetCommandLineArgs();
 
-            if (args.Length > 1 && args[1] == "--open-trace") {
-                var window = new ProfileLoadWindow(this, false, true);
-                window.Owner = this;
-                var result = window.ShowDialog();
+    if (args.Length > 1 && args[1] == "--open-trace") {
+      var window = new ProfileLoadWindow(this, false, true);
+      window.Owner = this;
+      var result = window.ShowDialog();
 
-                if (result.HasValue && result.Value) {
-                    await SectionPanel.RefreshModuleSummaries();
-                    SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
-                }
-            }
-        }
+      if (result.HasValue && result.Value) {
+        await SectionPanel.RefreshModuleSummaries();
+        SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
+      }
+    }
+  }
 
   private void StartApplicationUpdateTimer() {
     AutoUpdater.RunUpdateAsAdmin = true;
@@ -504,13 +504,13 @@ public partial class MainWindow : Window, ISession {
     //? TODO: This needs a proper arg parsing lib
     string[] args = Environment.GetCommandLineArgs();
 
-            if (args.Length > 1 && args[1] == "--open-trace") {
-                // Opening IR Explorer with a trace is handled once main window is rendered. maybe move all arg parsing and options to there?
-            }
-            else if (args.Length >= 3) {
-                string baseFilePath = args[1];
-                string diffFilePath = args[2];
-                bool opened = false;
+    if (args.Length > 1 && args[1] == "--open-trace") {
+      // Opening IR Explorer with a trace is handled once main window is rendered. maybe move all arg parsing and options to there?
+    }
+    else if (args.Length >= 3) {
+      string baseFilePath = args[1];
+      string diffFilePath = args[2];
+      bool opened = false;
 
       if (File.Exists(baseFilePath) && File.Exists(diffFilePath)) {
         baseFilePath = Path.GetFullPath(baseFilePath);

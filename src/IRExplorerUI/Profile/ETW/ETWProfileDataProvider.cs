@@ -136,10 +136,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     var result = await LoadTraceAsync(rawProfile, processIds, options, symbolOptions,
                                       report, progressCallback, cancelableTask);
-
     rawProfile.Dispose();
-        return result;
-    }
+    return result;
+  }
 
   public async Task<ProfileData> LoadTraceAsync(RawProfileData rawProfile, List<int> processIds,
                                                 ProfileDataProviderOptions options,
@@ -295,18 +294,18 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       if (result) {
         var exeDocument = FindSessionDocuments(imageName, out var otherDocuments);
 
-                if (exeDocument == null) {
-                    Trace.WriteLine($"Failed to find main EXE document");
-                    exeDocument = new LoadedDocument(string.Empty, string.Empty, Guid.Empty);
-                    exeDocument.Summary = new IRTextSummary(string.Empty);
-                }
-                else {
-                    Trace.WriteLine($"Using exe document {exeDocument.ModuleName}");
-                }
+        if (exeDocument == null) {
+          Trace.WriteLine($"Failed to find main EXE document");
+          exeDocument = new LoadedDocument(string.Empty, string.Empty, Guid.Empty);
+          exeDocument.Summary = new IRTextSummary(string.Empty);
+        }
+        else {
+          Trace.WriteLine($"Using exe document {exeDocument.ModuleName}");
+        }
 
-                session_.SessionState.MainDocument = exeDocument;
-                await session_.SetupNewSession(exeDocument, otherDocuments);
-            }
+        session_.SessionState.MainDocument = exeDocument;
+        await session_.SetupNewSession(exeDocument, otherDocuments);
+      }
 
       if (cancelableTask is {IsCanceled: true}) {
         return null;
