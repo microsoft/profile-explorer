@@ -284,9 +284,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   public bool IsOnLaunch { get; }
 
   public ProfileRecordingSessionOptions RecordingOptions {
-    get {
-      return recordingOptions_;
-    }
+    get => recordingOptions_;
     set {
       recordingOptions_ = value;
       OnPropertyChange(nameof(RecordingOptions));
@@ -837,6 +835,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
   private async void SessionList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
     var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
+
     if (sessionEx?.Report == null) {
       return;
     }
