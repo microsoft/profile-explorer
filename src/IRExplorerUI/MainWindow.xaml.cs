@@ -28,7 +28,9 @@ using IRExplorerUI.Compilers.LLVM;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Scripting;
+using IRExplorerUI.Settings;
 using IRExplorerUI.Utilities;
+using IRExplorerUI.Windows;
 
 namespace IRExplorerUI;
 
@@ -274,6 +276,7 @@ public partial class MainWindow : Window, ISession {
 
   private void SetupMainWindow() {
     PopulateRecentFilesMenu();
+    PopulateWorkspacesCombobox();
     ThemeCombobox.SelectedIndex = App.Settings.ThemeIndex;
     DiffModeButton.IsEnabled = false;
   }
@@ -965,10 +968,10 @@ public partial class MainWindow : Window, ISession {
   }
 
   private bool SaveDockLayout() {
-    return SaveDockLayout(App.GetDefaultDockLayoutFilePath());
+    return SaveDockLayout(App.Settings.WorkspaceOptions.ActiveWorkspace.FilePath);
   }
 
-  private bool SaveDockLayout(string dockLayoutFile) {
+  public bool SaveDockLayout(string dockLayoutFile) {
     try {
       var serializer = new XmlLayoutSerializer(DockManager);
       serializer.Serialize(dockLayoutFile);
@@ -981,19 +984,26 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void WorkspaceCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-    if (WorkspaceCombobox.SelectedIndex == 0) {
-      RestoreDockLayout();
-    }
-    else {
-      string prof = App.GetDockLayoutFilePath("profiling");
+    var selectedWs = WorkspaceCombobox.SelectedItem as Workspace;
 
-      if (File.Exists(prof)) {
-        RestoreDockLayout(prof);
-      }
-      //else {
-      //    SaveDockLayout(prof);
-      //}
+    if (selectedWs != null && 
+        selectedWs != App.Settings.WorkspaceOptions.ActiveWorkspace) {
+      RestoreDockLayout(selectedWs.FilePath);
+      App.Settings.WorkspaceOptions.ActiveWorkspace = selectedWs;
     }
+  }
+
+  private void PopulateWorkspacesCombobox() {
+    var list = App.Settings.WorkspaceOptions.Workspaces;
+    WorkspaceCombobox.ItemsSource = new ObservableCollectionRefresh<Workspace>(list);
+    WorkspaceCombobox.SelectedIndex = App.Settings.WorkspaceOptions.ActiveWorkspace.Order;
+  }
+
+  private void WorkspacesButton_OnClick(object sender, RoutedEventArgs e) {
+    WorkspacesWindow wsWindow = new WorkspacesWindow();
+    wsWindow.Owner = this;
+    wsWindow.ShowDialog();
+    PopulateWorkspacesCombobox();
   }
 
   private void MenuItem_OnClick2(object sender, RoutedEventArgs e) {

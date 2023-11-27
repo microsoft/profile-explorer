@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -62,14 +65,14 @@ public class Workspace : IEquatable<Workspace> {
 
 [ProtoContract(SkipConstructor = true)]
 public class WorkspaceSettings {
+  private static readonly string SettingsFileName = "settings.proto";
+
   [ProtoMember(1)]
   public List<Workspace> Workspaces { get; set; }
   [ProtoMember(2)]
-  public Workspace DefaultWorkspace { get; set; }
+  public Workspace ActiveWorkspace { get; set; }
   [ProtoMember(3)]
   public Dictionary<string, Workspace> CompilerDefaultWorkspace { get; set; }
-
-  public List<Workspace> SordedWorkspaces => Workspaces.OrderBy(w => w.Order).ToList();
 
   public WorkspaceSettings() {
     InitializeReferenceMembers();
@@ -94,9 +97,60 @@ public class WorkspaceSettings {
       return false;
     }
 
-    var wsName = GetBuiltinWorkspaceName(App.Settings.DefaultCompilerIR);
-    DefaultWorkspace = Workspaces.FirstOrDefault(w => w.Name == wsName);
+    var wsName = GetBuiltinWorkspaceName("");
+    ActiveWorkspace = Workspaces.FirstOrDefault(w => w.Name == wsName);
+    SortWorkspaces();
+    RenumberWorkspaces();
     return true;
+  }
+
+  public bool RenumberWorkspaces() {
+    int order = 0;
+
+    foreach (var ws in Workspaces) {
+      ws.Order = order++;
+    }
+
+    return true;
+  }
+
+  public Workspace CreateWorkspace(string name) {
+    var fileName = $"{Guid.NewGuid()}.xml";
+    var ws = new Workspace {
+      Name = name,
+      FilePath = Path.Combine(App.GetWorkspacesPath(), fileName),
+      Order = Workspaces.Count
+    };
+
+    Workspaces.Add(ws);
+    return ws;
+  }
+
+  public void RemoveWorkspace(Workspace ws) {
+    if(Workspaces.Remove(ws)) {
+      if(ws == ActiveWorkspace) {
+        ActiveWorkspace = null;
+        if(Workspaces.Count > 0) {
+            ActiveWorkspace = Workspaces[0];
+        }
+      }
+
+      try {
+        File.Delete(ws.FilePath);
+      }
+      catch(Exception ex) { 
+        Trace.WriteLine($"Failed to remove workspace file {ws.FilePath}", ex.Message);
+      }
+      RenumberWorkspaces();
+    }
+  }
+
+  public bool HasWorkspace(string name) {
+    return Workspaces.Any(w => w.Name == name);
+  }
+
+  private void SortWorkspaces() {
+    Workspaces = Workspaces.OrderBy(w => w.Order).ToList();
   }
 
   private bool LoadFromDirectory(string path) {
@@ -115,7 +169,9 @@ public class WorkspaceSettings {
         if (!Workspaces.Contains(ws)) {
           ws.Order = order++; 
           Workspaces.Add(ws);
-          File.Copy(file, Path.Combine(workspacesPath, Path.GetFileName(file)));
+
+          var destFile = Path.Combine(workspacesPath, Path.GetFileName(file));
+          File.Copy(file, destFile, true);
         }
       }
 
@@ -169,7 +225,7 @@ public class WorkspaceSettings {
     try {
       var tempPath = Directory.CreateTempSubdirectory("irx");
       ZipFile.ExtractToDirectory(filePath, tempPath.FullName, true);
-      var settings = DeserializeWorkspaceSettings(Path.Combine(tempPath.FullName, "settings.proto"));
+      var settings = DeserializeWorkspaceSettings(Path.Combine(tempPath.FullName, SettingsFileName));
       settings.LoadFromDirectory(tempPath.FullName);
 
       //? Open settings file and clone it
@@ -186,8 +242,13 @@ public class WorkspaceSettings {
     try {
       var tempPath = Directory.CreateTempSubdirectory("irx");
       CopyToDirectory(tempPath.FullName);
-      SerializeWorkspaceSettings(Path.Combine(tempPath.FullName, "settings.proto"));
-      ZipFile.CreateFromDirectory(tempPath.FullName, filePath, CompressionLevel.Optimal, true);
+      SerializeWorkspaceSettings(Path.Combine(tempPath.FullName, SettingsFileName));
+
+      if (File.Exists(filePath)) {
+        File.Delete(filePath);
+      }
+
+      ZipFile.CreateFromDirectory(tempPath.FullName, filePath, CompressionLevel.Optimal, false);
       return true;
     }
     catch (Exception ex) {

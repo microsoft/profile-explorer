@@ -576,10 +576,6 @@ public partial class App : Application {
       Debug.WriteLine($"Failed to create trace file: {ex}");
     }
 
-    var ws = new WorkspaceSettings();
-    ws.SaveToArchive(@"C:\work\ws.zip");
-    var newWs = WorkspaceSettings.LoadFromArchive(@"C:\work\ws.zip");
-
     if (!LoadApplicationSettings()) {
       // Failed to load settings, reset them.
       Utils.TryDeleteFile(GetSettingsFilePath());

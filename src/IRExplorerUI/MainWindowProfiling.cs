@@ -560,9 +560,4 @@ public partial class MainWindow : Window, ISession {
     return callNodes.ToList();
   }
 
-  private void WorkspacesButton_OnClick(object sender, RoutedEventArgs e) {
-    WorkspacesWindow w = new WorkspacesWindow();
-    w.Owner = this;
-    w.ShowDialog();
-  }
 }
