@@ -199,16 +199,12 @@ public class ProfileDataProviderOptions : SettingsBase {
   public bool HasBinaryNameWhitelist => BinaryNameWhitelistEnabled && BinaryNameWhitelist.Count > 0;
   public bool HasBinarySearchPaths => BinarySearchPathsEnabled && BinarySearchPaths.Count > 0;
 
-    public ProfileDataProviderOptions() {
-        Reset();
-    }
-
-    public override void Reset() {
-        ResetAndInitializeReferenceMembers();
-        DownloadBinaryFiles = true;
-        IncludeKernelEvents = true;
-        IncludePerformanceCounters = true;
-    }
+  public override void Reset() {
+    ResetAndInitializeReferenceMembers();
+    DownloadBinaryFiles = true;
+    IncludeKernelEvents = true;
+    IncludePerformanceCounters = true;
+  }
 
   public bool AddPerformanceMetric(PerformanceMetricConfig config) {
     if (!PerformanceMetrics.Contains(config)) {

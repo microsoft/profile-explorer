@@ -473,6 +473,10 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
     ImageFileName = imageFileName;
     CommandLine = commandLine;
   }
+  public ProfileProcess(int processId, string imageFileName) : this() {
+    ProcessId = processId;
+    ImageFileName = imageFileName;
+  }
 
   [ProtoMember(1)]
   public int ProcessId { get; set; }
@@ -521,25 +525,11 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
     return null;
   }
 
-    public ProfileProcess(int processId, int parentId, string name,
-        string imageFileName, string commandLine) : this() {
-        ProcessId = processId;
-        ParentId = parentId;
-        Name = name;
-        ImageFileName = imageFileName;
-        CommandLine = commandLine;
+  public void AddImage(int imageId) {
+    if (!ImageIds.Contains(imageId)) {
+      ImageIds.Add(imageId);
     }
-
-    public ProfileProcess(int processId, string imageFileName) : this() {
-        ProcessId = processId;
-        ImageFileName = imageFileName;
-    }
-
-    public void AddImage(int imageId) {
-        if (!ImageIds.Contains(imageId)) {
-            ImageIds.Add(imageId);
-        }
-    }
+  }
 
   public void AddThread(int threadId) {
     if (!ThreadIds.Contains(threadId)) {
