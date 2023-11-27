@@ -970,6 +970,11 @@ public partial class MainWindow : Window, ISession {
   private bool RestoreDockLayout() {
     string dockLayoutFile = App.GetDefaultDockLayoutFilePath();
 
+    if (App.Settings.WorkspaceOptions.ActiveWorkspace != null) {
+      // Override with active workspace.
+      dockLayoutFile = App.Settings.WorkspaceOptions.ActiveWorkspace.FilePath;
+    }
+
     if (!File.Exists(dockLayoutFile)) {
       return false;
     }

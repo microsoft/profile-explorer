@@ -93,11 +93,6 @@ public partial class App : Application {
     return Path.Combine(path, DefaultDockLayoutFile);
   }
 
-  public static string GetDockLayoutFilePath(string layoutName) {
-    string path = GetSettingsDirectoryPath();
-    return Path.Combine(path, $"{layoutName}.xml");
-  }
-
   public static string GetWorkspacesPath() {
     return GetSettingsFilePath(WorkspacesDirectory);
   }
