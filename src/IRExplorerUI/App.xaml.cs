@@ -49,6 +49,7 @@ public partial class App : Application {
   private const string SettingsFile = "IRExplorer.settings";
   private const string LastDockLayoutFile = "LastDockLayout.xml";
   private const string DefaultDockLayoutFile = "DockLayout.xml";
+  private const string LicenseFile = "license.txt";
   private const string WorkspacesDirectory = "workspaces";
   private const string ScriptsDirectory = "scripts";
   private const string ThemesDirectory = "themes";
@@ -103,6 +104,16 @@ public partial class App : Application {
 
   public static string GetInternlWorkspacesPath() {
     return GetApplicationFilePath(WorkspacesDirectory);
+  }
+
+  public static string GetLicenseText() {
+    try {
+      return File.ReadAllText(GetApplicationFilePath(LicenseFile));
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to get license text: {ex}");
+      return "";
+    }
   }
 
   public static string GetCompilerSettingsFilePath(string file, string compilerName, string extension = "") {
