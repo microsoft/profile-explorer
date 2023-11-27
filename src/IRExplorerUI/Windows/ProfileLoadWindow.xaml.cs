@@ -193,6 +193,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     UpdatePerfCounterList();
     SetupSessionList();
+    ContentRendered += ProfileLoadWindow_ContentRendered;
     Closing += ProfileLoadWindow_Closing;
   }
 
@@ -362,6 +363,32 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     currentSession_ = sessionList[0];
     SessionList.ItemsSource = null; // Force update.
     SessionList.ItemsSource = new ListCollectionView(sessionList);
+  }
+
+  private void ProfileLoadWindow_ContentRendered(object sender, EventArgs e) {
+    if (IsOnLaunch) {
+      var args = Environment.GetCommandLineArgs();
+
+      if (args.Length >= 6 && args[1] == "--open-trace") {
+        string traceFilePath = args[2];
+
+        if (!File.Exists(traceFilePath) || Path.GetExtension(traceFilePath) != ".etl") {
+          MessageBox.Show("Trace file does not exist.");
+          return;
+        }
+
+        string symbolPath = args[3];
+
+        if (!int.TryParse(args[4], out int processId)) {
+          MessageBox.Show("Process ID is not an integer.");
+          return;
+        }
+
+        string imageFileName = args[5];
+
+        LoadProfileFromArgs(traceFilePath, symbolPath, processId, imageFileName);
+      }
+    }
   }
 
   private void ProfileLoadWindow_Closing(object sender, CancelEventArgs e) {
