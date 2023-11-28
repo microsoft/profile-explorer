@@ -89,4 +89,31 @@ public partial class WorkspacesWindow : Window {
       ReloadWorkspacesList();
     }
   }
+
+  private void ExportButton_Click(object sender, RoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("ZIP archive|*.zip", "*.zip", "Export workspaces");
+ 
+    if (!string.IsNullOrEmpty(path)) {
+      if(!settings_.SaveToArchive(path)) {
+        MessageBox.Show("Failed to export workspaces.");
+      }
+    }
+  }
+
+  private void ImportButton_Click(object sender, RoutedEventArgs e) {
+    string path = Utils.ShowOpenFileDialog("ZIP archive|*.zip", "*.zip", "Export workspaces");
+
+    if (!string.IsNullOrEmpty(path)) {
+      var newSettings = WorkspaceSettings.LoadFromArchive(path);
+
+      if(newSettings == null) {
+        MessageBox.Show("Failed to import workspaces.");
+        return;
+      }
+
+      settings_ =   newSettings;
+      App.Settings.WorkspaceOptions = newSettings;
+      ReloadWorkspacesList();
+    }
+  }
 }
