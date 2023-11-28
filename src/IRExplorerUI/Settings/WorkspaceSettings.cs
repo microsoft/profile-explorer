@@ -30,7 +30,7 @@ public class Workspace : IEquatable<Workspace> {
       return false;
     if (ReferenceEquals(this, obj))
       return true;
-    if (obj.GetType() != this.GetType())
+    if (obj.GetType() != GetType())
       return false;
     return Equals((Workspace)obj);
   }
@@ -55,18 +55,16 @@ public class Workspace : IEquatable<Workspace> {
   public string FilePath { get; set; }
   [ProtoMember(4)]
   public int Order { get; set; }
-
   public Workspace() { }
 
   public override string ToString() {
-    return $"{Name}, order {Order}, file {FilePath}";
+    return Name;
   }
 }
 
 [ProtoContract(SkipConstructor = true)]
 public class WorkspaceSettings {
   private static readonly string SettingsFileName = "settings.proto";
-
   [ProtoMember(1)]
   public List<Workspace> Workspaces { get; set; }
   [ProtoMember(2)]
@@ -76,7 +74,7 @@ public class WorkspaceSettings {
 
   public WorkspaceSettings() {
     InitializeReferenceMembers();
-    RestoreDefault();
+    RestoreDefaultWorkspaces();
   }
 
   [ProtoAfterDeserialization]
@@ -90,22 +88,34 @@ public class WorkspaceSettings {
   }
 
   public string GetBuiltinWorkspaceName(string compiler) {
-    return compiler switch { 
+    return compiler switch {
       "ASM" => "Profiling",
       _ => "Profiling"
     };
   }
 
-  public bool RestoreDefault() {
+  public bool RestoreDefaultWorkspaces() {
     if (!LoadFromDirectory(App.GetInternlWorkspacesPath())) {
       return false;
     }
 
-    var wsName = GetBuiltinWorkspaceName("");
+    string wsName = GetBuiltinWorkspaceName("");
     ActiveWorkspace = Workspaces.FirstOrDefault(w => w.Name == wsName);
     SortWorkspaces();
     RenumberWorkspaces();
     return true;
+  }
+
+  public bool RestoreDefaultActiveWorkspace() {
+    string wsName = GetBuiltinWorkspaceName(App.Settings.DefaultCompilerIR);
+    var defaultWs = Workspaces.FirstOrDefault(w => w.Name == wsName);
+
+    if (ActiveWorkspace == null || ActiveWorkspace != defaultWs) {
+      ActiveWorkspace = defaultWs;
+      return true;
+    }
+
+    return false;
   }
 
   public bool RenumberWorkspaces() {
@@ -119,7 +129,7 @@ public class WorkspaceSettings {
   }
 
   public Workspace CreateWorkspace(string name) {
-    var fileName = $"{Guid.NewGuid()}.xml";
+    string fileName = $"{Guid.NewGuid()}.xml";
     var ws = new Workspace {
       Name = name,
       FilePath = Path.Combine(App.GetWorkspacesPath(), fileName),
@@ -131,20 +141,22 @@ public class WorkspaceSettings {
   }
 
   public void RemoveWorkspace(Workspace ws) {
-    if(Workspaces.Remove(ws)) {
-      if(ws == ActiveWorkspace) {
+    if (Workspaces.Remove(ws)) {
+      if (ws == ActiveWorkspace) {
         ActiveWorkspace = null;
-        if(Workspaces.Count > 0) {
-            ActiveWorkspace = Workspaces[0];
+
+        if (Workspaces.Count > 0) {
+          ActiveWorkspace = Workspaces[0];
         }
       }
 
       try {
         File.Delete(ws.FilePath);
       }
-      catch(Exception ex) { 
+      catch (Exception ex) {
         Trace.WriteLine($"Failed to remove workspace file {ws.FilePath}", ex.Message);
       }
+
       RenumberWorkspaces();
     }
   }
@@ -171,22 +183,22 @@ public class WorkspaceSettings {
 
   private bool LoadFromDirectory(string path) {
     try {
-      var workspacesPath = App.GetWorkspacesPath();
+      string workspacesPath = App.GetWorkspacesPath();
       App.CreateDirectories(workspacesPath);
-      var files = Directory.GetFiles(path, "*.xml");
+      string[] files = Directory.GetFiles(path, "*.xml");
       int order = Workspaces.Count;
 
-      foreach (var file in files) {
+      foreach (string file in files) {
         var ws = new Workspace {
           FilePath = file,
           Name = Path.GetFileNameWithoutExtension(file)
         };
 
         if (!Workspaces.Contains(ws)) {
-          ws.Order = order++; 
+          ws.Order = order++;
           Workspaces.Add(ws);
 
-          var destFile = Path.Combine(workspacesPath, Path.GetFileName(file));
+          string destFile = Path.Combine(workspacesPath, Path.GetFileName(file));
           File.Copy(file, destFile, true);
         }
       }
@@ -202,7 +214,7 @@ public class WorkspaceSettings {
   private bool CopyToDirectory(string path) {
     try {
       foreach (var ws in Workspaces) {
-        var filePath = Path.Combine(path, Path.GetFileName(ws.FilePath));
+        string filePath = Path.Combine(path, Path.GetFileName(ws.FilePath));
         File.Copy(ws.FilePath, filePath, true);
       }
 

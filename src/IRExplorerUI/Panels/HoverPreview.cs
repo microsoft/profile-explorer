@@ -15,7 +15,6 @@ public abstract class HoverPreview {
   public static readonly TimeSpan HoverDuration = TimeSpan.FromMilliseconds(100);
   public static readonly TimeSpan LongHoverDuration = TimeSpan.FromMilliseconds(1000);
   public static readonly TimeSpan ExtraLongHoverDuration = TimeSpan.FromMilliseconds(2000);
-
   protected UIElement control_;
   protected UIElement previewPopup_;
   private DelayedAction removeHoveredAction_;
@@ -93,9 +92,9 @@ public class PopupHoverPreview : HoverPreview {
   private Func<Point, DraggablePopup, bool> hoverStopped_;
 
   public PopupHoverPreview(UIElement control, TimeSpan hoverDuration,
-                                    Func<Point, Point, DraggablePopup> createPopup,
-                                    Func<Point, DraggablePopup, bool> hoverStopped,
-                                    Action<DraggablePopup> detachPopup) :
+                           Func<Point, Point, DraggablePopup> createPopup,
+                           Func<Point, DraggablePopup, bool> hoverStopped,
+                           Action<DraggablePopup> detachPopup) :
     base(control, hoverDuration) {
     createPopup_ = createPopup;
     hoverStopped_ = hoverStopped;
@@ -103,9 +102,9 @@ public class PopupHoverPreview : HoverPreview {
   }
 
   public PopupHoverPreview(UIElement control,
-                                    Func<Point, Point, DraggablePopup> createPopup,
-                                    Func<Point, DraggablePopup, bool> hoverStopped,
-                                    Action<DraggablePopup> detachPopup) :
+                           Func<Point, Point, DraggablePopup> createPopup,
+                           Func<Point, DraggablePopup, bool> hoverStopped,
+                           Action<DraggablePopup> detachPopup) :
     this(control, TimeSpan.MaxValue, createPopup, hoverStopped, detachPopup) {
   }
 

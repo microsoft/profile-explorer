@@ -46,7 +46,7 @@ public partial class WorkspacesWindow : Window {
   }
 
   private void DefaultButton_OnClick(object sender, RoutedEventArgs e) {
-    if (!settings_.RestoreDefault()) {
+    if (!settings_.RestoreDefaultWorkspaces()) {
       MessageBox.Show("Failed to restore default workspaces.");
     }
 
@@ -55,9 +55,9 @@ public partial class WorkspacesWindow : Window {
 
   private void SaveButton_OnClick(object sender, RoutedEventArgs e) {
     var ws = settings_.CreateWorkspace("Untitled");
-    var mainWindow = App.Current.MainWindow as MainWindow;
-    
-    if(!mainWindow.SaveDockLayout(ws.FilePath)) {
+    var mainWindow = Application.Current.MainWindow as MainWindow;
+
+    if (!mainWindow.SaveDockLayout(ws.FilePath)) {
       MessageBox.Show("Failed to create workspace.");
       settings_.RemoveWorkspace(ws);
       return;
@@ -67,8 +67,7 @@ public partial class WorkspacesWindow : Window {
     Utils.SelectEditableListViewItem(WorkspacesList, ws.Order);
   }
 
-
-  private void TextBox_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e) {
+  private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
     if (sender is TextBox textBox && !textBox.IsKeyboardFocusWithin) {
       if (e.OriginalSource.GetType().Name == "TextBoxView") {
         e.Handled = true;
@@ -79,7 +78,8 @@ public partial class WorkspacesWindow : Window {
   }
 
   private void RemoveButton_Click(object sender, RoutedEventArgs e) {
-    var selectedWs = WorkspacesList.SelectedItem as Workspace; ;
+    var selectedWs = WorkspacesList.SelectedItem as Workspace;
+    ;
 
     if (selectedWs != null &&
         MessageBox.Show("Do you want to remove the selected workspace?", "IR Explorer",

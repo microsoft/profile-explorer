@@ -559,5 +559,4 @@ public partial class MainWindow : Window, ISession {
 
     return callNodes.ToList();
   }
-
 }

@@ -90,6 +90,8 @@ public class IRDocumentColumnData {
   }
 }
 
+// Represents a value in the row associated with an element.
+// Can be viewed as a cell in a spreadsheet.
 public sealed class ElementColumnValue : BindableObject {
   public static readonly ElementColumnValue Empty = new ElementColumnValue(string.Empty);
   private Thickness borderThickness_;
@@ -206,6 +208,8 @@ public sealed class ElementColumnValue : BindableObject {
   }
 }
 
+// Represents a set of values (by column) associated with an element.
+// Can be view as a row with cells in a spreadsheet.
 public sealed class ElementRowValue : BindableObject {
   private Brush backColor_;
   private Thickness borderThickness_;
