@@ -1005,14 +1005,28 @@
                   Content="Use Symbol Server (e.g., https://msdl.microsoft.com/download/symbols, http://symweb)"
                   ToolTip="Provide a Symbol Server to load symbols."
                   IsChecked="{Binding Path=SymbolOptions.SymbolSourcePathEnabled, Mode=TwoWay}" />
+                <Grid>
                 <TextBox
-                  Margin="20,4,55,0"
+                  Margin="20,4,48,0"
+                  Height="22"
                   HorizontalAlignment="Stretch"
                   Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                   BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                   IsEnabled="{Binding ElementName=SymbolServerCheckbox, Path=IsChecked}"
                   Text="{Binding Path=SymbolOptions.SymbolSourcePath, Mode=TwoWay}"
                   TextWrapping="Wrap" />
+                
+                <Button
+                  x:Name="DefaultSymbolsButton"
+                  Height="22"
+                  Margin="0,2,0,0"
+                  Padding="4,2,4,2"
+                  HorizontalAlignment="Right"
+                  ToolTip="Restore the default symbol server path"
+                  Click="DefaultSymbolsButton_OnClick"
+                  Content="Default"
+                  IsEnabled="{Binding InputControlsEnabled}" />
+                </Grid>
 
                 <CheckBox
                   x:Name="SymbolCacheCheckbox"
@@ -1022,6 +1036,7 @@
                   IsChecked="{Binding Path=SymbolOptions.SymbolCachePathEnabled, Mode=TwoWay}" />
                 <TextBox
                   Margin="20,4,55,0"
+                  Height="22"
                   HorizontalAlignment="Stretch"
                   Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                   BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -1074,6 +1089,7 @@
 
                 <TextBox
                   Margin="20,4,55,0"
+                  Height="22"
                   HorizontalAlignment="Stretch"
                   Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                   BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
