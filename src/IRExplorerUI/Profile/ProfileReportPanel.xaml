@@ -280,18 +280,18 @@
       <DockPanel LastChildFill="True">
         <ListView IsTextSearchEnabled="True"
                   TextSearch.TextPath="ImageFileInfo.ImageName"
-          x:Name="ModuleList"
-          Height="250"
-          MinHeight="100"
-          MaxHeight="500"
-          Margin="0,4,0,0"
-          Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-          DockPanel.Dock="Top"
-          IsEnabled="{Binding InputControlsEnabled}"
-          ScrollViewer.VerticalScrollBarVisibility="Auto"
-          SelectionMode="Single"
-          VirtualizingStackPanel.IsVirtualizing="True"
-          VirtualizingStackPanel.VirtualizationMode="Recycling">
+                  x:Name="ModuleList"
+                  Height="250"
+                  MinHeight="100"
+                  MaxHeight="500"
+                  Margin="0,4,0,0"
+                  Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                  DockPanel.Dock="Top"
+                  IsEnabled="{Binding InputControlsEnabled}"
+                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                  SelectionMode="Single"
+                  VirtualizingStackPanel.IsVirtualizing="True"
+                  VirtualizingStackPanel.VirtualizationMode="Recycling">
           <ListView.View>
             <GridView>
               <GridViewColumn Width="150" DisplayMemberBinding="{Binding ImageFileInfo.ImageName}">

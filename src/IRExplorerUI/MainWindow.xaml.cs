@@ -1009,7 +1009,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void WorkspacesButton_OnClick(object sender, RoutedEventArgs e) {
-    WorkspacesWindow wsWindow = new WorkspacesWindow();
+    var wsWindow = new WorkspacesWindow();
     wsWindow.Owner = this;
     wsWindow.ShowDialog();
     PopulateWorkspacesCombobox();
