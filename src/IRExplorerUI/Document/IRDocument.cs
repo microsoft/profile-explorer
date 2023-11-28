@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -900,14 +901,14 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
   }
 
-  public void UninstallBlockFolding() {
+  private void UninstallBlockFolding() {
     if (folding_ != null) {
       FoldingManager.Uninstall(folding_);
       folding_ = null;
     }
   }
 
-  public void SetupBlockFolding() {
+  private void SetupBlockFolding() {
     if (!settings_.ShowBlockFolding) {
       UninstallBlockFolding();
       return;
@@ -921,9 +922,41 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     folding_ = FoldingManager.Install(TextArea);
     var foldingStrategy = Session.CompilerInfo.CreateFoldingStrategy(Function);
     foldingStrategy.UpdateFoldings(folding_, Document);
+
+    SetupBlockFoldingEvents();
   }
 
-  public void AddDiffTextSegments(List<DiffTextSegment> segments) {
+  private void SetupBlockFoldingEvents() {
+    var foldingMargin = TextArea.LeftMargins.OfType<FoldingMargin>().FirstOrDefault();
+
+    if (foldingMargin == null) {
+      return;
+    }
+
+    var foldedBlocks = new HashSet<FoldingSection>();
+
+    foldingMargin.PreviewMouseLeftButtonUp += (sender, args) => {
+      // Check each folding if there is a change, since there is
+      // no event for a single folding being changed.
+      foreach (var folding in folding_.AllFoldings) {
+        if (folding.IsFolded) {
+          if (foldedBlocks.Add(folding)) {
+            TextRegionFolded?.Invoke(this, folding);
+          }
+        }
+        else {
+          if (foldedBlocks.Remove(folding)) {
+            TextRegionUnfolded?.Invoke(this, folding);
+          }
+        }
+      }
+    };
+  }
+
+  public event EventHandler<FoldingSection> TextRegionFolded;
+  public event EventHandler<FoldingSection> TextRegionUnfolded;
+
+  private void AddDiffTextSegments(List<DiffTextSegment> segments) {
     diffSegments_ = segments;
     diffHighlighter_.Add(segments);
   }
@@ -933,7 +966,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     UpdateHighlighting();
   }
 
-  public void StartDiffSegmentAdding() {
+  private void StartDiffSegmentAdding() {
     diffHighlighter_.Clear();
     ClearAllMarkers();
     TextArea.IsEnabled = false;
@@ -945,7 +978,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     duringDiffModeSetup_ = true;
   }
 
-  public void AllDiffSegmentsAdded() {
+  private void AllDiffSegmentsAdded() {
     disableCaretEvent_ = false;
     duringDiffModeSetup_ = false;
     TextArea.IsEnabled = true;

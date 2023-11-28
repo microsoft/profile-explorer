@@ -284,7 +284,7 @@ public partial class SectionPanelPair : ToolPanelControl {
 
   private void MainPanel_SectionListScrollChanged(object sender, double offset) {
     // When using the grid splitter to resize the left/right panels,
-    // the event gets called for some reason with a 0 offset and 
+    // the event gets called for some reason with a 0 offset and
     // the current vertical offset gets reset.
 
     //? TODO: Ignoring 0 offset causes other scroll issues, likely fix is to ignore
@@ -386,7 +386,7 @@ public partial class SectionPanelPair : ToolPanelControl {
     // Scroll to the first diff section.
     if (firstDiffResult != null) {
       // Force scrolling to happen after other layout updates,
-      // otherwise the section lists scroll back to offset 0 
+      // otherwise the section lists scroll back to offset 0
       // on the next layout update, looks like a WPF bug...
       Dispatcher.Invoke(() => {
         MainPanel.SelectSection(firstDiffResult.LeftSection, false);

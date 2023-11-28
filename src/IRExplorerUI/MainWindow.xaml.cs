@@ -282,9 +282,8 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void SetupMainWindowCompilerTarget() {
-    App.Settings.WorkspaceOptions.RestoreDefaultActiveWorkspace();
-    RestoreDockLayout();
     IRTypeLabel.Content = compilerInfo_.CompilerDisplayName;
+    RestoreDockLayout();
   }
 
   private void AddRecentFile(string path) {
@@ -993,7 +992,7 @@ public partial class MainWindow : Window, ISession {
   private void WorkspaceCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
     var selectedWs = WorkspaceCombobox.SelectedItem as Workspace;
 
-    if (selectedWs != null && 
+    if (selectedWs != null &&
         selectedWs != App.Settings.WorkspaceOptions.ActiveWorkspace) {
       App.Settings.WorkspaceOptions.ActiveWorkspace = selectedWs;
       RestoreDockLayout(selectedWs.FilePath);

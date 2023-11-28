@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,6 +14,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using ClosedXML.Excel;
+using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -245,6 +247,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private List<(IRElement, TimeSpan)> profileElements_;
   private List<(BlockIR, TimeSpan)> profileBlocks_;
   private List<ElementRowValue> profileDataRows_;
+  private ListCollectionView profileRowCollection_;
   private List<(GridViewColumnHeader Header, GridViewColumn Column)> profileColumnHeaders_;
   private int profileElementIndex_;
   private int profileBlockIndex_;
@@ -286,6 +289,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.GotKeyboardFocus += TextView_GotKeyboardFocus;
     TextView.CaretChanged += TextViewOnCaretChanged;
     TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
+    TextView.TextRegionFolded += TextViewOnTextRegionFolded;
+    TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
 
     SectionPanel.OpenSection += SectionPanel_OpenSection;
     SearchPanel.SearchChanged += SearchPanel_SearchChanged;
@@ -299,6 +304,42 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     loadTask_ = new CancelableTaskInstance(true, Session.SessionState.RegisterCancelableTask,
                                            Session.SessionState.UnregisterCancelableTask);
     activeQueryPanels_ = new List<QueryPanel>();
+    folded_ = new List<FoldingSection>();
+  }
+
+  private List<FoldingSection> folded_;
+
+  private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
+    folded_.Remove(e);
+    profileRowCollection_.Refresh();
+  }
+
+  private void TextViewOnTextRegionFolded(object sender, FoldingSection e) {
+    folded_.Add(e);
+    folded_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
+    profileRowCollection_.Refresh();
+  }
+
+
+  private bool ProfileListRowFilter(object item) {
+    var rowValue = (ElementRowValue)item;
+
+    foreach(var range in folded_) {
+      var startLine = TextView.Document.GetLineByOffset(range.StartOffset);
+      var endLine = TextView.Document.GetLineByOffset(range.EndOffset + 1);
+
+      if (startLine.LineNumber - 1 > rowValue.Index) {
+        break; // Early stop in sorted range list.
+      }
+
+      if (rowValue.Index >= startLine.LineNumber - 1 &&
+          rowValue.Index < endLine.LineNumber) {
+        return false;
+      }
+
+    }
+
+    return true;
   }
 
   public event EventHandler<(double offset, double offsetChangeAmount)> VerticalScrollChanged;
@@ -451,6 +492,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       remarkElement_ = null;
       selectedBlock_ = null;
       profileDataRows_ = null;
+      profileRowCollection_ = null;
       profileColumnHeaders_ = null;
       PassOutputVisible = false;
       BlockSelector.SelectedItem = null;
@@ -532,6 +574,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     duringSectionSwitching_ = false;
   }
 
+  //? TODO: Replace with code from DocumentColumns
   public void UpdateProfileDataColumnWidths() {
     if (profileDataRows_ == null ||
         profileColumnHeaders_ == null) {
@@ -722,8 +765,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     if (columnsVisible_) {
       var line = TextView.Document.GetLineByOffset(offset);
 
-      if (ColumnsList.Items.Count >= line.LineNumber) {
-        ColumnsList.SelectedIndex = line.LineNumber - 1;
+      if (ProfileList.Items.Count >= line.LineNumber) {
+        ProfileList.SelectedIndex = line.LineNumber - 1;
       }
     }
   }
@@ -744,7 +787,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private void SyncColumnsVerticalScrollOffset(double offset) {
     // Sync scrolling with the optional columns.
     if (columnsVisible_) {
-      var columnScrollViewer = Utils.FindChild<ScrollViewer>(ColumnsList);
+      var columnScrollViewer = Utils.FindChild<ScrollViewer>(ProfileList);
 
       if (columnScrollViewer != null) {
         columnScrollViewer.ScrollToVerticalOffset(offset);
@@ -1085,13 +1128,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void UpdateColumnsList() {
-    ColumnsList.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
+    ProfileList.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
     double h = Utils.MeasureString("0123456789ABCFEFGH", settings_.FontName, settings_.FontSize).Height;
-
     ColumnsListItemHeight = h;
-
-    //ColumnsList.InvalidateVisual();
-    //ColumnsList.UpdateLayout();
   }
 
   private void TextView_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) {
@@ -1177,10 +1216,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     profileElements_ = result.SampledElements;
     ProfileVisible = true;
 
+    //? TODO: Replace with code from DocumentColumns
     // Show optional columns with timing, counters, etc.
     // First remove any previous columns.
-    OptionalColumn.RemoveListViewColumns(ColumnsList);
-    ColumnsList.ItemsSource = null;
+    OptionalColumn.RemoveListViewColumns(ProfileList);
+    ProfileList.ItemsSource = null;
 
     var columnData = TextView.ColumnData;
     ColumnsVisible = columnData.HasData;
@@ -1210,7 +1250,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       }
 
       ElementRowValue MakeDummyRow(Brush backColor = null) {
-        var row = new ElementRowValue(null) {BackColor = backColor, BorderBrush = blockSeparatorColor};
+        var row = new ElementRowValue(null) {
+          BackColor = backColor, BorderBrush = blockSeparatorColor
+        };
 
         foreach (var column in columnData.Columns) {
           row.ColumnValues[column] = MakeDummyCell();
@@ -1318,16 +1360,25 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       return elementValueList;
     });
 
-    profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
+    profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ProfileList, columnData.Columns);
 
     foreach (var columnHeader in profileColumnHeaders_) {
       columnHeader.Header.Click += ColumnHeaderOnClick;
       columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
     }
 
+    // Number the rows, used when filtering due to blocks
+    // being folded in the document.
+    for (int i = 0; i < elementValueList.Count; i++) {
+      elementValueList[i].Index = i;
+    }
+
+    profileRowCollection_ = new ListCollectionView(elementValueList);
+    profileRowCollection_.Filter += ProfileListRowFilter;
+
     UpdateProfileDataColumnWidths();
-    ColumnsList.ItemsSource = new ListCollectionView(elementValueList);
-    ColumnsList.Background = settings_.BackgroundColor.AsBrush();
+    ProfileList.ItemsSource = profileRowCollection_;
+    ProfileList.Background = settings_.BackgroundColor.AsBrush();
     return true;
   }
 
@@ -1679,8 +1730,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private void JumpToProfiledElement(IRElement element) {
     TextView.SetCaretAtElement(element);
     TextView.BringElementIntoView(element);
-    ColumnsList.InvalidateVisual();
-    ColumnsList.UpdateLayout();
+    ProfileList.InvalidateVisual();
+    ProfileList.UpdateLayout();
 
     double offset = TextView.TextArea.TextView.VerticalOffset;
     SyncColumnsVerticalScrollOffset(offset);
@@ -1755,7 +1806,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     double height = Math.Max(DocumentOptionsPanel.MinimumHeight,
                              Math.Min(TextView.ActualHeight, DocumentOptionsPanel.DefaultHeight));
 
-    FrameworkElement relativeElement = ProfileVisible ? ColumnsList : TextView;
+    FrameworkElement relativeElement = ProfileVisible ? ProfileList : TextView;
     var position = new Point(relativeElement.ActualWidth - width, 0);
 
     optionsPanel_ = new DocumentOptionsPanel();

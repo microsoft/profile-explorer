@@ -943,6 +943,7 @@ public partial class MainWindow : Window, ISession {
   private async Task SetupSectionPanel() {
     if (SectionPanel.MainSummary == null) {
       SectionPanel.CompilerInfo = compilerInfo_;
+      SectionPanel.Session = this;
 
       foreach (var doc in sessionState_.Documents) {
         if (doc != sessionState_.MainDocument &&
@@ -967,19 +968,26 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
+  private bool initialDockLayoutRestored_;
+
   private bool RestoreDockLayout() {
-    string dockLayoutFile = App.GetDefaultDockLayoutFilePath();
+    if (!initialDockLayoutRestored_ || // Initial load and registration of active panel config.
+        App.Settings.WorkspaceOptions.RestoreDefaultActiveWorkspace()) {
+      string dockLayoutFile = null;
+      var activeWs = App.Settings.WorkspaceOptions.ActiveWorkspace;
 
-    if (App.Settings.WorkspaceOptions.ActiveWorkspace != null) {
-      // Override with active workspace.
-      dockLayoutFile = App.Settings.WorkspaceOptions.ActiveWorkspace.FilePath;
+      if (activeWs != null) {
+        dockLayoutFile = activeWs.FilePath;
+      }
+      else {
+        dockLayoutFile = App.GetDefaultDockLayoutFilePath();
+      }
+
+      initialDockLayoutRestored_ = true;
+      return RestoreDockLayout(dockLayoutFile);
     }
 
-    if (!File.Exists(dockLayoutFile)) {
-      return false;
-    }
-
-    return RestoreDockLayout(dockLayoutFile);
+    return true; // No change needed.
   }
 
   private bool RestoreDockLayout(string dockLayoutFile) {
@@ -1130,6 +1138,16 @@ public partial class MainWindow : Window, ISession {
         }
       };
 
+      // Unregister existing panels.
+      foreach (var panelSet in panelHostSet_) {
+        foreach (var panel in panelSet.Value) {
+          UnregisterPanel(panel);
+        }
+      }
+
+      panelHostSet_.Clear();
+
+      // Load panels from layout file.
       serializer.Deserialize(dockLayoutFile);
       return true;
     }
