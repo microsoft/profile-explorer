@@ -222,7 +222,6 @@ public sealed class ElementRowValue : BindableObject {
 
   public IRElement Element { get; set; }
   public Dictionary<OptionalColumn, ElementColumnValue> ColumnValues { get; set; }
-  public int Index { get; set; }
   public ICollection<ElementColumnValue> Values => ColumnValues.Values;
   public ICollection<OptionalColumn> Columns => ColumnValues.Keys;
   public int Count => ColumnValues.Count;

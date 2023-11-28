@@ -257,6 +257,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private DelayedAction delayedHideActionPanel_;
   private bool profileVisible_;
   private double columnsListItemHeight_;
+  private List<FoldingSection> foldedTextRegions_;
+  private int rowFilterIndex_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -304,41 +306,42 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     loadTask_ = new CancelableTaskInstance(true, Session.SessionState.RegisterCancelableTask,
                                            Session.SessionState.UnregisterCancelableTask);
     activeQueryPanels_ = new List<QueryPanel>();
-    folded_ = new List<FoldingSection>();
+    foldedTextRegions_ = new List<FoldingSection>();
   }
 
-  private List<FoldingSection> folded_;
-
   private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
-    folded_.Remove(e);
+    foldedTextRegions_.Remove(e);
+    rowFilterIndex_ = 0;
     profileRowCollection_.Refresh();
   }
 
   private void TextViewOnTextRegionFolded(object sender, FoldingSection e) {
-    folded_.Add(e);
-    folded_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
+    foldedTextRegions_.Add(e);
+    foldedTextRegions_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
+    rowFilterIndex_ = 0;
     profileRowCollection_.Refresh();
   }
-
 
   private bool ProfileListRowFilter(object item) {
     var rowValue = (ElementRowValue)item;
 
-    foreach(var range in folded_) {
+    foreach(var range in foldedTextRegions_) {
       var startLine = TextView.Document.GetLineByOffset(range.StartOffset);
-      var endLine = TextView.Document.GetLineByOffset(range.EndOffset + 1);
+      var endLine = TextView.Document.GetLineByOffset(range.EndOffset);
 
-      if (startLine.LineNumber - 1 > rowValue.Index) {
+      if (startLine.LineNumber - 1 > rowFilterIndex_) {
+        rowFilterIndex_++;
         break; // Early stop in sorted range list.
       }
 
-      if (rowValue.Index >= startLine.LineNumber - 1 &&
-          rowValue.Index < endLine.LineNumber) {
+      if (rowFilterIndex_ >= startLine.LineNumber &&
+          rowFilterIndex_ < endLine.LineNumber) {
+        rowFilterIndex_++;
         return false;
       }
-
     }
 
+    rowFilterIndex_++;
     return true;
   }
 
@@ -1365,12 +1368,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     foreach (var columnHeader in profileColumnHeaders_) {
       columnHeader.Header.Click += ColumnHeaderOnClick;
       columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
-    }
-
-    // Number the rows, used when filtering due to blocks
-    // being folded in the document.
-    for (int i = 0; i < elementValueList.Count; i++) {
-      elementValueList[i].Index = i;
     }
 
     profileRowCollection_ = new ListCollectionView(elementValueList);
