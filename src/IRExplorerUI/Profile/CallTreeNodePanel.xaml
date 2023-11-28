@@ -54,9 +54,10 @@
         Margin="0,0,4,0"
         Visibility="{Binding ShowInstanceNavigation, Converter={StaticResource BoolToVisibilityConverter}}">
         <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-          <TextBlock Margin="4,0,0,0" Text="{Binding CurrentInstanceIndex}" ToolTip="Currently selected function instance"/>
+          <TextBlock Margin="4,0,0,0" Text="{Binding CurrentInstanceIndex}"
+                     ToolTip="Currently selected function instance" />
           <TextBlock Text=" / " />
-          <TextBlock Text="{Binding FunctionInstancesCount}" ToolTip="Number  function instances"/>
+          <TextBlock Text="{Binding FunctionInstancesCount}" ToolTip="Number  function instances" />
         </StackPanel>
         <Button
           x:Name="PreviousInstanceButton"

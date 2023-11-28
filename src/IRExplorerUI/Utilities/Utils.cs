@@ -735,7 +735,7 @@ static class Utils {
   }
 
   public static bool IsKeyboardModifierActive() {
-    return IsControlModifierActive() || IsAltModifierActive() || Utils.IsShiftModifierActive();
+    return IsControlModifierActive() || IsAltModifierActive() || IsShiftModifierActive();
   }
 
   public static bool IsControlModifierActive() {
@@ -784,8 +784,8 @@ static class Utils {
     return $"#{color.R:x2}{color.G:x2}{color.B:x2}";
   }
 
-  public static Utils.KeyCharInfo KeyToChar(Key key) {
-    var info = new Utils.KeyCharInfo();
+  public static KeyCharInfo KeyToChar(Key key) {
+    var info = new KeyCharInfo();
     info.IsAlt = Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt);
     info.IsControl = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
     info.IsShift = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
@@ -1079,7 +1079,7 @@ static class Utils {
     listView.SelectedItem = null;
     listView.SelectedIndex = index;
     listView.UpdateLayout(); // Force the ListView to generate the containers.
-    ListViewItem item =
+    var item =
       listView.ItemContainerGenerator.ContainerFromIndex(index) as ListViewItem;
 
     if (item != null) {

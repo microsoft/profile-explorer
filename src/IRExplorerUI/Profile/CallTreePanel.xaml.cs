@@ -371,39 +371,39 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     stackHoverPreview_ = new PopupHoverPreview(CallTree,
                                                HoverPreview.LongHoverDuration,
-                                                        (mousePoint, previewPoint) => {
-                                                          var element =
-                                                            (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(
-                                                              mousePoint);
+                                               (mousePoint, previewPoint) => {
+                                                 var element =
+                                                   (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(
+                                                     mousePoint);
 
-                                                          if (element is not TreeListItem treeItem) {
-                                                            return null;
-                                                          }
+                                                 if (element is not TreeListItem treeItem) {
+                                                   return null;
+                                                 }
 
-                                                          var funcNode = treeItem.Node?.Tag as ChildFunctionEx;
-                                                          var callNode = funcNode?.CallTreeNode;
+                                                 var funcNode = treeItem.Node?.Tag as ChildFunctionEx;
+                                                 var callNode = funcNode?.CallTreeNode;
 
-                                                          if (callNode != null && callNode.Function != null) {
-                                                            // If popup already opened for this node reuse the instance.
-                                                            if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup
-                                                              popup) {
-                                                              popup.UpdatePosition(previewPoint, CallTree);
-                                                              popup.UpdateNode(callNode);
-                                                              return popup;
-                                                            }
+                                                 if (callNode != null && callNode.Function != null) {
+                                                   // If popup already opened for this node reuse the instance.
+                                                   if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup
+                                                     popup) {
+                                                     popup.UpdatePosition(previewPoint, CallTree);
+                                                     popup.UpdateNode(callNode);
+                                                     return popup;
+                                                   }
 
-                                                            return new CallTreeNodePopup(
-                                                              callNode, this, previewPoint, CallTree, Session);
-                                                          }
+                                                   return new CallTreeNodePopup(
+                                                     callNode, this, previewPoint, CallTree, Session);
+                                                 }
 
-                                                          return null;
-                                                        },
-                                                        (mousePoint, popup) => true,
-                                                        popup => {
-                                                          if (popup.IsDetached) {
-                                                            Session.RegisterDetachedPanel(popup);
-                                                          }
-                                                        });
+                                                 return null;
+                                               },
+                                               (mousePoint, popup) => true,
+                                               popup => {
+                                                 if (popup.IsDetached) {
+                                                   Session.RegisterDetachedPanel(popup);
+                                                 }
+                                               });
   }
 
   private void CallTreeOnNodeExpanded(object sender, TreeNode node) {
