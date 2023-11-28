@@ -86,7 +86,7 @@ public class WorkspaceSettings {
   }
 
   public string GetBuiltinWorkspaceName(string compiler) {
-    return compiler switch { 
+    return compiler switch {
       "ASM" => "Profiling",
       _ => "Profiling"
     };
@@ -104,11 +104,16 @@ public class WorkspaceSettings {
     return true;
   }
 
-  public void RestoreDefaultActiveWorkspace() {
-    if (ActiveWorkspace == null) {
-      var wsName = GetBuiltinWorkspaceName(App.Settings.DefaultCompilerIR);
-      ActiveWorkspace = Workspaces.FirstOrDefault(w => w.Name == wsName);
+  public bool RestoreDefaultActiveWorkspace() {
+    var wsName = GetBuiltinWorkspaceName(App.Settings.DefaultCompilerIR);
+    var defaultWs = Workspaces.FirstOrDefault(w => w.Name == wsName);
+
+    if (ActiveWorkspace == null || ActiveWorkspace != defaultWs) {
+      ActiveWorkspace = defaultWs;
+      return true;
     }
+
+    return false;
   }
 
   public bool RenumberWorkspaces() {
@@ -145,7 +150,7 @@ public class WorkspaceSettings {
       try {
         File.Delete(ws.FilePath);
       }
-      catch(Exception ex) { 
+      catch(Exception ex) {
         Trace.WriteLine($"Failed to remove workspace file {ws.FilePath}", ex.Message);
       }
       RenumberWorkspaces();
@@ -174,7 +179,7 @@ public class WorkspaceSettings {
         };
 
         if (!Workspaces.Contains(ws)) {
-          ws.Order = order++; 
+          ws.Order = order++;
           Workspaces.Add(ws);
 
           var destFile = Path.Combine(workspacesPath, Path.GetFileName(file));

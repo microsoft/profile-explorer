@@ -918,7 +918,7 @@
           VirtualizingStackPanel.CacheLength="0,0"
           VirtualizingStackPanel.IsVirtualizing="True"
           VirtualizingStackPanel.VirtualizationMode="Recycling"
-          x:Name="ColumnsList">
+          x:Name="ProfileList">
           <ListView.View>
             <GridView>
               <GridView.ColumnHeaderContainerStyle>
