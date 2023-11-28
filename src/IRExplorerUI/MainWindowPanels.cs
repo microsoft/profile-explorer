@@ -14,7 +14,10 @@ using AvalonDock.Layout;
 using AvalonDock.Layout.Serialization;
 using IRExplorerCore;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Panels;
 using IRExplorerUI.Profile;
+using IRExplorerUI.Settings;
+using IRExplorerUI.Windows;
 
 namespace IRExplorerUI;
 
@@ -967,9 +970,7 @@ public partial class MainWindow : Window, ISession {
       await ShowSectionPanelDiffs(sessionState_.DiffDocument);
     }
   }
-
-  private bool initialDockLayoutRestored_;
-
+  
   private bool RestoreDockLayout() {
     if (!initialDockLayoutRestored_ || // Initial load and registration of active panel config.
         App.Settings.WorkspaceOptions.RestoreDefaultActiveWorkspace()) {
@@ -1156,6 +1157,95 @@ public partial class MainWindow : Window, ISession {
       return false;
     }
   }
+  
+  private void ShowDocumentSearchPanel() {
+    if (documentSearchVisible_) {
+      return;
+    }
+
+    if (sessionState_ == null || sessionState_.Documents.Count == 0) {
+      // No proper session started yet.
+      return;
+    }
+
+    var position = new Point(236, MainMenu.ActualHeight + 1);
+    documentSearchPanel_ = new DocumentSearchPanel(position, 800, 500, this, this, sessionState_.Documents[0]);
+    documentSearchPanel_.PopupClosed += DocumentSearchPanel__PopupClosed;
+    documentSearchPanel_.PopupDetached += DocumentSearchPanel__PopupDetached;
+    documentSearchPanel_.IsOpen = true;
+    documentSearchVisible_ = true;
+  }
+
+  private void DocumentSearchPanel__PopupDetached(object sender, EventArgs e) {
+    RegisterDetachedPanel(documentSearchPanel_);
+  }
+
+  private void DocumentSearchPanel__PopupClosed(object sender, EventArgs e) {
+    CloseDocumentSearchPanel();
+  }
+
+  private void CloseDocumentSearchPanel() {
+    if (!documentSearchVisible_) {
+      return;
+    }
+
+    if (documentSearchPanel_.IsDetached) {
+      UnregisterDetachedPanel(documentSearchPanel_);
+    }
+
+    documentSearchPanel_.IsOpen = false;
+    documentSearchPanel_.PopupClosed -= DocumentSearchPanel__PopupClosed;
+    documentSearchPanel_.PopupDetached -= DocumentSearchPanel__PopupDetached;
+    documentSearchPanel_ = null;
+    documentSearchVisible_ = false;
+  }
+
+  private bool SaveDockLayout() {
+    if (App.Settings.WorkspaceOptions.ActiveWorkspace == null) {
+      App.Settings.WorkspaceOptions.RestoreDefaultActiveWorkspace();
+    }
+
+    return SaveDockLayout(App.Settings.WorkspaceOptions.ActiveWorkspace.FilePath);
+  }
+
+  public bool SaveDockLayout(string dockLayoutFile) {
+    try {
+      var serializer = new XmlLayoutSerializer(DockManager);
+      serializer.Serialize(dockLayoutFile);
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to save dock layout: {ex}");
+      return false;
+    }
+  }
+
+  private void WorkspaceCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+    var selectedWs = WorkspaceCombobox.SelectedItem as Workspace;
+
+    if (selectedWs != null &&
+        selectedWs != App.Settings.WorkspaceOptions.ActiveWorkspace) {
+      App.Settings.WorkspaceOptions.ActiveWorkspace = selectedWs;
+      RestoreDockLayout(selectedWs.FilePath);
+    }
+  }
+
+  private void PopulateWorkspacesCombobox() {
+    var list = App.Settings.WorkspaceOptions.Workspaces;
+    WorkspaceCombobox.ItemsSource = new ObservableCollectionRefresh<Workspace>(list);
+
+    if (App.Settings.WorkspaceOptions.ActiveWorkspace != null) {
+      WorkspaceCombobox.SelectedIndex = App.Settings.WorkspaceOptions.ActiveWorkspace.Order;
+    }
+  }
+
+  private void WorkspacesButton_OnClick(object sender, RoutedEventArgs e) {
+    var wsWindow = new WorkspacesWindow();
+    wsWindow.Owner = this;
+    wsWindow.ShowDialog();
+    PopulateWorkspacesCombobox();
+  }
+
 
   private void ShowPanelMenuClicked(object sender, RoutedEventArgs e) {
     // Panel hosts must be found at runtime because of deserialization.

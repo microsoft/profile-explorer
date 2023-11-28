@@ -22,7 +22,8 @@ public class Workspace : IEquatable<Workspace> {
       return false;
     if (ReferenceEquals(this, other))
       return true;
-    return Name == other.Name && FilePath == other.FilePath;
+    return Name == other.Name ||
+           Utils.TryGetFileName(FilePath) == Utils.TryGetFileName(other.FilePath);
   }
 
   public override bool Equals(object obj) {
@@ -111,6 +112,10 @@ public class WorkspaceSettings {
     var defaultWs = Workspaces.FirstOrDefault(w => w.Name == wsName);
 
     if (ActiveWorkspace == null || ActiveWorkspace != defaultWs) {
+      if (defaultWs == null) {
+        defaultWs = CreateWorkspace("Default");
+      }
+      
       ActiveWorkspace = defaultWs;
       return true;
     }
@@ -129,6 +134,12 @@ public class WorkspaceSettings {
   }
 
   public Workspace CreateWorkspace(string name) {
+    var existing = Workspaces.FirstOrDefault(w => w.Name == name);
+    
+    if (existing != null) {
+      return existing;
+    }
+    
     string fileName = $"{Guid.NewGuid()}.xml";
     var ws = new Workspace {
       Name = name,
