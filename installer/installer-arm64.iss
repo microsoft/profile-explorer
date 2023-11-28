@@ -21,7 +21,7 @@ SolidCompression=yes
 OutputDir=userdocs:IRExplorer
 ChangesAssociations = yes
 ChangesEnvironment = yes
-OutputBaseFilename=irexplorer_installer_arm64
+OutputBaseFilename=irexplorer_installer_{#APP_VERSION}
 
 [Registry]
 Root: HKCR; Subkey: ".irx";                             ValueData: "{#MyAppName}";          Flags: uninsdeletevalue; ValueType: string;  ValueName: ""
