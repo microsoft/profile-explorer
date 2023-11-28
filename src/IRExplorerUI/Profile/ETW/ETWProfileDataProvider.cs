@@ -129,9 +129,13 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
     });
 
+    if (rawProfile.FindProcess(processIds[0]) == null) {
+      Trace.WriteLine($"Failed to find main process id {processIds[0]} in trace.");
+      return null;
+    }
+
     var result = await LoadTraceAsync(rawProfile, processIds, options, symbolOptions,
                                       report, progressCallback, cancelableTask);
-    Trace.WriteLine($"LoadTraceAsync done in {sw.Elapsed}");
     rawProfile.Dispose();
     return result;
   }
@@ -291,11 +295,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         var exeDocument = FindSessionDocuments(imageName, out var otherDocuments);
 
         if (exeDocument == null) {
-          Trace.WriteLine("Failed to find main EXE document");
-          return null;
+          Trace.WriteLine($"Failed to find main EXE document");
+          exeDocument = new LoadedDocument(string.Empty, string.Empty, Guid.Empty);
+          exeDocument.Summary = new IRTextSummary(string.Empty);
+        }
+        else {
+          Trace.WriteLine($"Using exe document {exeDocument.ModuleName}");
         }
 
-        Trace.WriteLine($"Using exe document {exeDocument.ModuleName}");
         session_.SessionState.MainDocument = exeDocument;
         await session_.SetupNewSession(exeDocument, otherDocuments);
       }

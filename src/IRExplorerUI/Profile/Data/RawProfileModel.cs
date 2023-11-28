@@ -473,6 +473,10 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
     ImageFileName = imageFileName;
     CommandLine = commandLine;
   }
+  public ProfileProcess(int processId, string imageFileName) : this() {
+    ProcessId = processId;
+    ImageFileName = imageFileName;
+  }
 
   [ProtoMember(1)]
   public int ProcessId { get; set; }
