@@ -59,6 +59,10 @@ public class SymbolFileSourceOptions : SettingsBase {
   public bool HasSymbolCachePath => !string.IsNullOrEmpty(SymbolCachePath);
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
 
+  public void ResetDefaultSymbolPath() {
+    SymbolSourcePath = DefaultSymbolSourcePath;
+  }
+  
   public bool HasSymbolPath(string path) {
     path = Utils.TryGetDirectoryName(path).ToLowerInvariant();
     return SymbolSearchPaths.Find(item => item.ToLowerInvariant() == path) != null;

@@ -1031,4 +1031,9 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     RecordingOptions.ProfileDotNet = false;
     OnPropertyChange(nameof(RecordingOptions));
   }
+
+  private void DefaultSymbolsButton_OnClick(object sender, RoutedEventArgs e) {
+    SymbolOptions.ResetDefaultSymbolPath();
+    OnPropertyChange(nameof(SymbolOptions));
+  }
 }
