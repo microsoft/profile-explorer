@@ -83,6 +83,10 @@ public class WorkspaceSettings {
   private void InitializeReferenceMembers() {
     Workspaces ??= new List<Workspace>();
     CompilerDefaultWorkspace ??= new Dictionary<string, Workspace>();
+
+    // Sync settings with files on disk.
+    CleanupWorkspaces();
+    LoadFromDirectory(App.GetWorkspacesPath());
   }
 
   public string GetBuiltinWorkspaceName(string compiler) {
@@ -142,6 +146,18 @@ public class WorkspaceSettings {
         Trace.WriteLine($"Failed to remove workspace file {ws.FilePath}", ex.Message);
       }
       RenumberWorkspaces();
+    }
+  }
+
+  private void CleanupWorkspaces() {
+    // Remove any workspaces that don't have a file.
+    try {
+      if (Workspaces.RemoveAll(w => !File.Exists(w.FilePath)) > 0) {
+        RenumberWorkspaces();
+      }
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to cleanup workspaces: {ex.Message}");
     }
   }
 
@@ -227,9 +243,6 @@ public class WorkspaceSettings {
       ZipFile.ExtractToDirectory(filePath, tempPath.FullName, true);
       var settings = DeserializeWorkspaceSettings(Path.Combine(tempPath.FullName, SettingsFileName));
       settings.LoadFromDirectory(tempPath.FullName);
-
-      //? Open settings file and clone it
-
       return settings;
     }
     catch (Exception ex) {
