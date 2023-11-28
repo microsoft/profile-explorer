@@ -41,7 +41,7 @@
                 <StackPanel DockPanel.Dock="Left" MaxWidth="190">
                   <TextBlock FontWeight="Medium" Text="{Binding Title}"
                              HorizontalAlignment="Stretch"
-                             TextTrimming="CharacterEllipsis"/>
+                             TextTrimming="CharacterEllipsis" />
                   <TextBlock Text="{Binding Description}"
                              HorizontalAlignment="Stretch"
                              TextTrimming="CharacterEllipsis"

@@ -320,7 +320,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       threadActivityViews_.Add(threadView);
       threadActivityViewsMap_[thread.ThreadId] = threadView;
       initTasks.Add(threadView.ActivityHost.Initialize(Session.ProfileData, threadActivityArea,
-                                                        thread.ThreadId));
+                                                       thread.ThreadId));
       SetupActivityHoverPreview(threadView.ActivityHost);
 
       //threadView.TimelineHost.Session = Session;

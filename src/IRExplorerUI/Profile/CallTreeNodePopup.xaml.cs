@@ -169,8 +169,9 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
 
     // Leave some space for the vertical scroll bar
     // to avoid having a horizontal one by default.
-    StackTraceListView.FunctionColumnWidth = Math.Max(MinPopupWidth -  2 * margin, Width - 2 * margin);
+    StackTraceListView.FunctionColumnWidth = Math.Max(MinPopupWidth - 2 * margin, Width - 2 * margin);
   }
+
   private void CloseButton_Click(object sender, RoutedEventArgs e) {
     Session.UnregisterDetachedPanel(this);
     ClosePopup();
