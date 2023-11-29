@@ -1254,12 +1254,15 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void WorkspacesButton_OnClick(object sender, RoutedEventArgs e) {
+    ShowWorkspacesWindow();
+  }
+
+  private void ShowWorkspacesWindow() {
     var wsWindow = new WorkspacesWindow();
     wsWindow.Owner = this;
     wsWindow.ShowDialog();
     PopulateWorkspacesCombobox();
   }
-
 
   private void ShowPanelMenuClicked(object sender, RoutedEventArgs e) {
     // Panel hosts must be found at runtime because of deserialization.
@@ -1367,5 +1370,10 @@ public partial class MainWindow : Window, ISession {
       MessageBox.Show($"No log file found: {file}", "IR Explorer",
                       MessageBoxButton.OK, MessageBoxImage.Warning);
     }
+  }
+
+  private void ResetWorkspaceMenuClicked(object sender, RoutedEventArgs e) {
+    App.Settings.WorkspaceOptions.RestoreDefaultActiveWorkspace();
+    RestoreDockLayout();
   }
 }

@@ -4,8 +4,9 @@
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
   Title="IR Explorer Update"
-  Width="600"
+  Width="700"
   Height="500"
   Loaded="Window_Loaded"
   ResizeMode="CanResizeWithGrip"
@@ -56,10 +57,10 @@
       </StackPanel>
 
     </DockPanel>
-    <WebBrowser
+    <wv2:WebView2
       x:Name="Browser"
       Grid.Row="1"
-      Margin="0,8,0,4" />
+      Margin="0,6,0,4" />
     <StackPanel
       Grid.Row="2"
       Margin="0,4,8,4"

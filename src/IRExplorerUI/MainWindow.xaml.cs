@@ -106,10 +106,7 @@ public partial class MainWindow : Window, ISession {
   private bool initialDockLayoutRestored_;
 
   public MainWindow() {
-    App.WindowShowTime = DateTime.UtcNow;
     InitializeComponent();
-
-    App.Session = this;
     panelHostSet_ = new Dictionary<ToolPanelKind, List<PanelHostInfo>>();
     changedDocuments_ = new Dictionary<string, DateTime>();
     detachedPanels_ = new List<DraggablePopup>();
@@ -276,6 +273,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void SetupMainWindow() {
+    App.Session = this;
     PopulateRecentFilesMenu();
     PopulateWorkspacesCombobox();
     ThemeCombobox.SelectedIndex = App.Settings.ThemeIndex;
@@ -388,7 +386,7 @@ public partial class MainWindow : Window, ISession {
     var time = DateTime.UtcNow - App.AppStartTime;
     DevMenuStartupTime.Header = $"Startup time: {time.TotalMilliseconds} ms";
 
-    DelayedAction.StartNew(TimeSpan.FromSeconds(10), () => {
+    DelayedAction.StartNew(TimeSpan.FromSeconds(3), () => {
       Dispatcher.BeginInvoke(new Action(() => {
         CheckForUpdate();
       }));
@@ -793,9 +791,6 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private void MenuItem_Click_3(object sender, RoutedEventArgs e) {
-  }
-
   private void UpdateButton_Click(object sender, RoutedEventArgs e) {
     var updateWindow = new UpdateWindow(UpdateButton.Tag as UpdateInfoEventArgs);
     updateWindow.Owner = this;
@@ -804,6 +799,8 @@ public partial class MainWindow : Window, ISession {
     if (installUpdate.HasValue && installUpdate.Value) {
       Close();
     }
+    
+    UpdateButton.Visibility = Visibility.Collapsed;
   }
 
   private void MenuItem_Exit(object sender, RoutedEventArgs e) {
@@ -826,7 +823,6 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void MenuItem_Click_5(object sender, RoutedEventArgs e) {
-    string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
     var window = new AboutWindow();
     window.Owner = this;
     window.ShowDialog();
@@ -973,5 +969,9 @@ public partial class MainWindow : Window, ISession {
       window.MainMenu.Visibility = CurrentMenuVisibility;
       window.MainGrid.RowDefinitions[0].Height = CurrentMenuHeight;
     }
+  }
+
+  private void ShowWorkspacesMenuClicked(object sender, RoutedEventArgs e) {
+    ShowWorkspacesWindow();
   }
 }

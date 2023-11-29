@@ -310,11 +310,10 @@
 
           <MenuItem Header="View">
             <MenuItem
-              Click="MenuItem_Click_3"
+              Click="ResetWorkspaceMenuClicked"
               Header="Reset Workspace"
               ToolTip="Restore default layout of workplace" />
-
-            <MenuItem Click="MenuItem_Click_3" Header="Manage Workspaces" />
+            <MenuItem Click="ShowWorkspacesMenuClicked" Header="Manage Workspaces" />
             <MenuItem
               x:Name="AlwaysOnTopCheckbox"
               Click="AlwaysOnTopMenuClicked"

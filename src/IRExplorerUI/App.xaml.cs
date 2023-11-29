@@ -44,16 +44,15 @@ public class SyntaxFileInfo {
 }
 
 public partial class App : Application {
-  public const string AutoUpdateInfo = @"https://irexplorer.blob.core.windows.net/app/update.xml";
+  //public const string AutoUpdateInfo = @"https://irexplorer.blob.core.windows.net/app/update.xml";
+  public const string AutoUpdateInfo = @"C:\work\update.xml";
   private const string SettingsPath = @"Microsoft\IRExplorer";
   private const string SettingsFile = "IRExplorer.settings";
-  private const string LastDockLayoutFile = "LastDockLayout.xml";
   private const string DefaultDockLayoutFile = "DockLayout.xml";
   private const string LicenseFile = "license.txt";
   private const string WorkspacesDirectory = "workspaces";
   private const string ScriptsDirectory = "scripts";
   private const string ThemesDirectory = "themes";
-  private const string WorkspaceDockLayoutFile = "WorkspaceDockLayout-{0}.xml";
   private const string TraceFile = "IRExplorer.log";
   private const string BackupTraceFile = "IRExplorerBackup.log";
   private const string RemarkDefinitionFile = @"remark-settings.json";
@@ -66,7 +65,6 @@ public partial class App : Application {
   private const string FunctionTaskScriptSearchPattern = @"*.cs";
   private const string DocumentationLocation = @"https://irexplorer.z5.web.core.windows.net/";
   public static DateTime AppStartTime;
-  public static DateTime WindowShowTime;
   public static ApplicationSettings Settings;
   public static ISession Session;
   private static List<SyntaxFileInfo> cachedSyntaxHighlightinFiles_;
