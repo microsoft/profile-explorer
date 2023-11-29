@@ -2,8 +2,10 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Diagnostics;
 using System.Windows;
 using AutoUpdaterDotNET;
+using Microsoft.Web.WebView2.Core;
 
 namespace IRExplorerUI;
 
@@ -40,15 +42,21 @@ public partial class UpdateWindow : Window {
     }
   }
 
-  private void Window_Loaded(object sender, RoutedEventArgs e) {
+  private async void Window_Loaded(object sender, RoutedEventArgs e) {
     try {
+      // Force light mode for the WebView2 control for now.
+      await Browser.EnsureCoreWebView2Async();
+      Browser.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
+      
       if (updateInfo_ != null) {
         NewVersionLabel.Text = updateInfo_.CurrentVersion;
         CurrentVersionLabel.Text = updateInfo_.InstalledVersion.ToString();
-        Browser.Navigate(updateInfo_.ChangelogURL);
+        Browser.Source = new Uri(updateInfo_.ChangelogURL);
       }
     }
-    catch (Exception) { }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to release notes: {ex}");
+    }
   }
 
   private void CancelButton_Click(object sender, RoutedEventArgs e) {
