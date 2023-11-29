@@ -15,6 +15,7 @@
     <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomOut" Executed="ExecuteGraphZoomOut" />
     <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult" Executed="PreviousSearchResultExecuted" />
     <CommandBinding Command="local:CallTreeCommand.NextSearchResult" Executed="NextSearchResultExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.ClearSearch" Executed="ClearSearchExecuted" />
   </irExplorerUi:ToolPanelControl.CommandBindings>
 
   <irExplorerUi:ToolPanelControl.InputBindings>
@@ -184,14 +185,18 @@
             ToolTip="Root function of the flame graph"
             Visibility="{Binding HasRootNode, Converter={StaticResource BoolToVisibilityConverter}}" />
           <TextBlock
-            Margin="4,0,0,0"
+            Margin="2,0,0,0"
             VerticalAlignment="Center"
             FontWeight="Medium"
+            MaxWidth="200"
+            TextTrimming="CharacterEllipsis"
             Foreground="Indigo"
-            Text="{Binding ThreadFilterText, Converter={StaticResource MillisecondTimeConverter}}"
+            Text="{Binding RootNode.FunctionName, Converter={StaticResource MillisecondTimeConverter}}"
+            ToolTip="{Binding RootNode.FunctionName, Converter={StaticResource MillisecondTimeConverter}}"
             Visibility="{Binding HasRootNode, Converter={StaticResource BoolToVisibilityConverter}}" />
           <Button
-            Command="local:CallTreeCommand.RemoveThreadFilters"
+            x:Name="RootNodeResetButton"
+            Click="RootNodeResetButton_OnClick"
             CommandTarget="{Binding ElementName=ActivityView}"
             TabIndex="5"
             ToolTip="Reset root function and display whole flame graph"
@@ -288,7 +293,7 @@
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Style="{StaticResource ColumnsGridSplitterStyle}" />
-        <ColumnDefinition Style="{StaticResource NodePanelColumnsStyle}" />
+        <ColumnDefinition Style="{StaticResource NodePanelColumnsStyle}" MinWidth="200"/>
       </Grid.ColumnDefinitions>
 
       <local:FlameGraphHost x:Name="GraphHost" />

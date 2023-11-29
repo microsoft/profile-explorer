@@ -104,6 +104,7 @@
           <Menu Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                 VerticalAlignment="Center">
             <MenuItem
+              ToolTip="Source file operations"
               Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
               OverridesDefaultStyle="True"
@@ -126,6 +127,7 @@
             Text="Inlinees"
             VerticalAlignment="Center" />
           <ComboBox
+            IsEnabled="False"
             Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
             DisplayMemberPath="Function"
@@ -136,7 +138,7 @@
             SelectedValue="Function"
             SelectionChanged="InlineeCombobox_SelectionChanged"
             ToolTip="Inlined functions call stack"
-            Width="200" />
+            Width="150" />
           <Button Click="Button_Click_1" ToolTip="Switch to callee">
             <Image Source="{StaticResource LeftArrowIcon}" />
           </Button>

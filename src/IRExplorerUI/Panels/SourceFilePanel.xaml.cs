@@ -162,9 +162,9 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
   private void UpdateDocumentStyle() {
     var settings = App.Settings.DocumentSettings;
     TextView.Background = ColorBrushes.GetBrush(settings.BackgroundColor);
-    Foreground = ColorBrushes.GetBrush(settings.TextColor);
-    FontFamily = new FontFamily(settings.FontName);
-    FontSize = settings.FontSize;
+    TextView.Foreground = ColorBrushes.GetBrush(settings.TextColor);
+    TextView.FontFamily = new FontFamily(settings.FontName);
+    TextView.FontSize = settings.FontSize;
   }
 
   private void Caret_PositionChanged(object sender, EventArgs e) {
