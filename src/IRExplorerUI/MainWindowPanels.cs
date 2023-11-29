@@ -978,6 +978,7 @@ public partial class MainWindow : Window, ISession {
       var activeWs = App.Settings.WorkspaceOptions.ActiveWorkspace;
 
       if (activeWs != null) {
+        Trace.WriteLine($"=> SWITCH WS {activeWs.Name}");
         dockLayoutFile = activeWs.FilePath;
       }
       else {
@@ -988,11 +989,13 @@ public partial class MainWindow : Window, ISession {
       return RestoreDockLayout(dockLayoutFile);
     }
 
+    Trace.WriteLine($"=> NO SWITCH");
     return true; // No change needed.
   }
 
   private bool RestoreDockLayout(string dockLayoutFile) {
     try {
+      Trace.WriteLine($"Restore dock layout from {dockLayoutFile}");
       var serializer = new XmlLayoutSerializer(DockManager);
       var visiblePanels = new List<IToolPanel>();
 
@@ -1140,16 +1143,11 @@ public partial class MainWindow : Window, ISession {
       };
 
       // Unregister existing panels.
-      foreach (var panelSet in panelHostSet_) {
-        foreach (var panel in panelSet.Value) {
-          UnregisterPanel(panel);
-        }
-      }
-
-      panelHostSet_.Clear();
+      UnregisterAllPanels();
 
       // Load panels from layout file.
       serializer.Deserialize(dockLayoutFile);
+      RenameAllPanels();
       return true;
     }
     catch (Exception ex) {
@@ -1157,7 +1155,23 @@ public partial class MainWindow : Window, ISession {
       return false;
     }
   }
-  
+
+  private void UnregisterAllPanels() {
+    var panelList = new List<PanelHostInfo>();
+
+    foreach (var panelSet in panelHostSet_) {
+      foreach (var panel in panelSet.Value) {
+        panelList.Add(panel);
+      }
+    }
+
+    foreach (var panel in panelList) {
+      UnregisterPanel(panel);
+    }
+
+    panelHostSet_.Clear();
+  }
+
   private void ShowDocumentSearchPanel() {
     if (documentSearchVisible_) {
       return;
