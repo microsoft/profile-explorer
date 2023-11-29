@@ -28,6 +28,7 @@ public enum ChildFunctionExKind {
   Header
 }
 
+//? TODO: Replace all with RelayCommand pattern.
 public static class CallTreeCommand {
   public static readonly RoutedCommand ExpandHottestCallPath =
     new RoutedCommand("ExpandHottestCallPath", typeof(FrameworkElement));

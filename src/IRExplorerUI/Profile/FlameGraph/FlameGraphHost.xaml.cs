@@ -356,15 +356,15 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     GraphViewer.Reset();
   }
 
-  public void SelectNode(FlameGraphNode node, bool fitSize = true, bool bringIntoView = true) {
+  public void SelectNode(FlameGraphNode node, bool fitSize = false, bool bringIntoView = true) {
     GraphViewer.SelectNode(node);
 
-    if (fitSize) {
+    if (bringIntoView) {
       BringNodeIntoView(node, fitSize);
     }
   }
 
-  public void SelectNode(ProfileCallTreeNode node, bool fitSize = true, bool bringIntoView = true) {
+  public void SelectNode(ProfileCallTreeNode node, bool fitSize = false, bool bringIntoView = true) {
     if (!IsInitialized) {
       return;
     }
@@ -1088,4 +1088,16 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
     #endregion
+
+  public async Task ClearRootNode() {
+    // Undo all states until a root node change is found.
+    while (stateStack_.TryPop(out var state)) {
+      if (state.Kind == FlameGraphStateKind.ChangeRootNode) {
+        RootNodeCleared?.Invoke(this, EventArgs.Empty);
+        GraphViewer.RestoreFixedMarkedNodes();
+        await ChangeRootNode(state.Node, false); // May enable a previous root node.
+        break;
+      }
+    }
+  }
 }

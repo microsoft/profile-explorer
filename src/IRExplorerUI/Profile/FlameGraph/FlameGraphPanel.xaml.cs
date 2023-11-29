@@ -31,6 +31,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   private string searchResultText_;
   private bool hasRootNode;
   private bool showNodePanel_;
+  private FlameGraphNode rootNode_;
 
   public FlameGraphPanel() {
     InitializeComponent();
@@ -252,6 +253,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private void GraphHostOnRootNodeChanged(object sender, FlameGraphNode e) {
     HasRootNode = true;
+    RootNode = e;
+  }
+
+  public FlameGraphNode RootNode {
+    get => rootNode_;
+    set => SetField(ref rootNode_, value);
   }
 
   private async void GraphHost_NodesDeselected(object sender, EventArgs e) {
@@ -350,7 +357,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       GraphHost.GraphViewer.MarkSearchResultNodes(searchResultNodes_);
 
       searchResultIndex_ = -1;
-      SelectNextSearchResult(false);
+      SelectNextSearchResult();
       ShowSearchSection = true;
     }
     else {
@@ -371,11 +378,11 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
   }
 
-  private void SelectNextSearchResult(bool fitSize = true) {
+  private void SelectNextSearchResult() {
     if (searchResultNodes_ != null && searchResultIndex_ < searchResultNodes_.Count - 1) {
       searchResultIndex_++;
       UpdateSearchResultText();
-      GraphHost.SelectNode(searchResultNodes_[searchResultIndex_], fitSize);
+      GraphHost.SelectNode(searchResultNodes_[searchResultIndex_]);
     }
   }
 
@@ -386,7 +393,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   private void NextSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
     SelectNextSearchResult();
   }
-
+  private void ClearSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
+    ((TextBox)e.Parameter).Text = string.Empty;
+  }
+  
   private void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
     var view = new WebViewPopup(new Point(0, 0),
                                 500, 400, GraphHost);
@@ -394,5 +404,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     view.PanelTitle = "Flame Graph Panel Help";
     view.IsOpen = true;
+  }
+
+  private async void RootNodeResetButton_OnClick(object sender, RoutedEventArgs e) {
+    await GraphHost.ClearRootNode();
   }
 }
