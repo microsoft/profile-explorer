@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -1101,6 +1102,22 @@ static class Utils {
     if (toolbar.Template.FindName("OverflowGrid", toolbar) is FrameworkElement overflowGrid) {
       overflowGrid.Visibility =
         toolbar.HasOverflowItems ? Visibility.Visible : Visibility.Collapsed;
+    }
+  }
+  
+  public static void ScrollToFirstListViewItem(ListView listView, int itemIndex = 0) {
+    // Based on https://stackoverflow.com/a/211984.
+    // This is a hack to scroll to an item in a ListView.
+    if (listView.Items.Count > 0) {
+      VirtualizingStackPanel vsp =  
+        (VirtualizingStackPanel)typeof(ItemsControl).InvokeMember("_itemsHost",
+                                                                  BindingFlags.Instance | BindingFlags.GetField | BindingFlags.NonPublic, null, 
+                                                                  listView, null);
+      if (vsp != null) {
+        double scrollHeight = vsp.ScrollOwner.ScrollableHeight;
+        double offset = scrollHeight * itemIndex / listView.Items.Count;
+        vsp.SetVerticalOffset(offset);
+      }
     }
   }
 }

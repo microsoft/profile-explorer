@@ -111,7 +111,7 @@ public class WorkspaceSettings {
     string wsName = GetBuiltinWorkspaceName(App.Settings.DefaultCompilerIR);
     var defaultWs = Workspaces.FirstOrDefault(w => w.Name == wsName);
 
-    if (ActiveWorkspace == null || ActiveWorkspace != defaultWs) {
+    if (ActiveWorkspace == null) {
       if (defaultWs == null) {
         defaultWs = CreateWorkspace("Default");
       }

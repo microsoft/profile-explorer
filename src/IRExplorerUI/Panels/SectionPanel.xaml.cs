@@ -1615,6 +1615,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
     UseProfileCallTree = true;
     GridViewColumnVisibility.UpdateListView(FunctionList);
+    Utils.ScrollToFirstListViewItem(FunctionList);
     SetupStackFunctionHoverPreview();
 
     // Create the call tree.
