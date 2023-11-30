@@ -36,6 +36,7 @@ public partial class WorkspacesWindow : Window {
     ReloadWorkspacesList();
 
     Closing += (sender, args) => {
+      settings_.RenameWorkspaces();
       App.SaveApplicationSettings();
     };
   }
@@ -47,6 +48,7 @@ public partial class WorkspacesWindow : Window {
 
   private void DefaultButton_OnClick(object sender, RoutedEventArgs e) {
     if (!settings_.RestoreDefaultWorkspaces()) {
+      using var centerForm = new DialogCenteringHelper(this);
       MessageBox.Show("Failed to restore default workspaces.");
     }
 
@@ -58,6 +60,7 @@ public partial class WorkspacesWindow : Window {
     var mainWindow = Application.Current.MainWindow as MainWindow;
 
     if (!mainWindow.SaveDockLayout(ws.FilePath)) {
+      using var centerForm = new DialogCenteringHelper(this);
       MessageBox.Show("Failed to create workspace.");
       settings_.RemoveWorkspace(ws);
       return;
@@ -79,7 +82,7 @@ public partial class WorkspacesWindow : Window {
 
   private void RemoveButton_Click(object sender, RoutedEventArgs e) {
     var selectedWs = WorkspacesList.SelectedItem as Workspace;
-    ;
+    using var centerForm = new DialogCenteringHelper(this);
 
     if (selectedWs != null &&
         MessageBox.Show("Do you want to remove the selected workspace?", "IR Explorer",
@@ -92,9 +95,10 @@ public partial class WorkspacesWindow : Window {
 
   private void ExportButton_Click(object sender, RoutedEventArgs e) {
     string path = Utils.ShowSaveFileDialog("ZIP archive|*.zip", "*.zip", "Export workspaces");
- 
+
     if (!string.IsNullOrEmpty(path)) {
       if(!settings_.SaveToArchive(path)) {
+        using var centerForm = new DialogCenteringHelper(this);
         MessageBox.Show("Failed to export workspaces.");
       }
     }
@@ -107,6 +111,7 @@ public partial class WorkspacesWindow : Window {
       var newSettings = WorkspaceSettings.LoadFromArchive(path);
 
       if(newSettings == null) {
+        using var centerForm = new DialogCenteringHelper(this);
         MessageBox.Show("Failed to import workspaces.");
         return;
       }
