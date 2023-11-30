@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LayoutRoot>
+  <RootPanel Orientation="Vertical">
+    <LayoutPanel Orientation="Horizontal">
+      <LayoutDocumentPaneGroup Orientation="Horizontal" DockWidth="1.0139724849527085*" IsMaximized="True">
+        <LayoutDocumentPane>
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Flame Graph" IsSelected="True" IsLastFocusedDocument="True" ContentId="FlameGraph" FloatingLeft="2320" FloatingTop="548" FloatingWidth="2561" FloatingHeight="290" LastActivationTimeStamp="11/30/2023 12:27:23" PreviousContainerId="40ed3bab-577b-421f-94a2-ea0190bf0ad4" PreviousContainerIndex="6" />
+        </LayoutDocumentPane>
+      </LayoutDocumentPaneGroup>
+      <LayoutAnchorablePaneGroup Orientation="Horizontal" DockWidth="385" DockMinWidth="50" FloatingWidth="400">
+        <LayoutAnchorablePane Id="730a38a0-d8e3-44f5-b64d-7bd6c6549462" />
+      </LayoutAnchorablePaneGroup>
+    </LayoutPanel>
+    <LayoutPanel Orientation="Horizontal" DockHeight="280" DockMinHeight="50" FloatingHeight="280">
+      <LayoutAnchorablePaneGroup Orientation="Horizontal" DockWidth="0.6454491374182034*">
+        <LayoutAnchorablePane>
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Summary" IsSelected="True" ContentId="Sections" FloatingWidth="400" LastActivationTimeStamp="11/30/2023 12:26:08" />
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Pass Output" ContentId="PassOutput" />
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Definition" ContentId="Definition" />
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Scripting" ContentId="Scripting" />
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Developer" ContentId="Developer" />
+        </LayoutAnchorablePane>
+      </LayoutAnchorablePaneGroup>
+      <LayoutAnchorablePaneGroup Orientation="Horizontal" DockWidth="1.3545508625817966*" DockMinHeight="200">
+        <LayoutAnchorablePane Id="40ed3bab-577b-421f-94a2-ea0190bf0ad4" DockWidth="0.9103641456582633*">
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Timeline" IsSelected="True" ContentId="Timeline" LastActivationTimeStamp="11/30/2023 12:26:01" />
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="References" ContentId="ReferencesPanelHost" LastActivationTimeStamp="11/28/2023 09:12:55" />
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Notes" ContentId="Notes" />
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Bookmarks" ContentId="Bookmarks" />
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Search Results" ContentId="SearchResults" />
+        </LayoutAnchorablePane>
+        <LayoutAnchorablePane DockWidth="1.0896358543417366*" FloatingWidth="848" FloatingHeight="290" FloatingLeft="2489" FloatingTop="1063">
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Source File" IsSelected="True" ContentId="SourceFile" FloatingLeft="2912" FloatingTop="988" FloatingWidth="1691" FloatingHeight="290" LastActivationTimeStamp="11/30/2023 12:27:18" />
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Caller/Callee" ContentId="CallerCallee" FloatingLeft="2489" FloatingTop="1063" FloatingWidth="848" FloatingHeight="290" LastActivationTimeStamp="11/30/2023 12:26:06" PreviousContainerId="40ed3bab-577b-421f-94a2-ea0190bf0ad4" PreviousContainerIndex="1" />
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Call Tree" ContentId="CallTree" FloatingLeft="2896" FloatingTop="1102" FloatingWidth="567" FloatingHeight="290" LastActivationTimeStamp="11/30/2023 12:26:04" PreviousContainerId="40ed3bab-577b-421f-94a2-ea0190bf0ad4" PreviousContainerIndex="2" />
+        </LayoutAnchorablePane>
+      </LayoutAnchorablePaneGroup>
+    </LayoutPanel>
+  </RootPanel>
+  <TopSide />
+  <RightSide>
+    <LayoutAnchorGroup PreviousContainerId="730a38a0-d8e3-44f5-b64d-7bd6c6549462">
+      <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Flow Graph" ContentId="FlowGraph" LastActivationTimeStamp="11/28/2023 09:13:01" />
+      <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Dominator Tree" ContentId="DominatorTree" />
+      <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Post-Dominator Tree" ContentId="PostDominatorTree" />
+      <LayoutAnchorable CanHide="False" CanAutoHide="False" AutoHideMinWidth="100" AutoHideMinHeight="100" CanDockAsTabbedDocument="False" Title="Expression Graph" ContentId="ExpressionGraph" />
+    </LayoutAnchorGroup>
+  </RightSide>
+  <LeftSide />
+  <BottomSide />
+  <FloatingWindows />
+  <Hidden />
+</LayoutRoot>

@@ -970,7 +970,7 @@ public partial class MainWindow : Window, ISession {
       await ShowSectionPanelDiffs(sessionState_.DiffDocument);
     }
   }
-  
+
   private bool RestoreDockLayout() {
     if (!initialDockLayoutRestored_ || // Initial load and registration of active panel config.
         App.Settings.WorkspaceOptions.RestoreDefaultActiveWorkspace()) {
@@ -1239,6 +1239,7 @@ public partial class MainWindow : Window, ISession {
 
     if (selectedWs != null &&
         selectedWs != App.Settings.WorkspaceOptions.ActiveWorkspace) {
+      SaveDockLayout(); // Save current layout before switching.
       App.Settings.WorkspaceOptions.ActiveWorkspace = selectedWs;
       RestoreDockLayout(selectedWs.FilePath);
     }

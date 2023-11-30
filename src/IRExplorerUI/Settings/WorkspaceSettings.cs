@@ -115,7 +115,7 @@ public class WorkspaceSettings {
       if (defaultWs == null) {
         defaultWs = CreateWorkspace("Default");
       }
-      
+
       ActiveWorkspace = defaultWs;
       return true;
     }
@@ -133,13 +133,32 @@ public class WorkspaceSettings {
     return true;
   }
 
+  public void RenameWorkspaces() {
+    // Try to rename the on-disk file to match the workspace name.
+    foreach (var ws in Workspaces) {
+      string fileName = Utils.TryGetFileNameWithoutExtension(ws.FilePath);
+
+      if (fileName != ws.Name) {
+        string newFilePath = Path.Combine(App.GetWorkspacesPath(), $"{ws.Name}.xml");
+
+        try {
+          File.Move(ws.FilePath, newFilePath);
+          ws.FilePath = newFilePath;
+        }
+        catch (Exception ex) {
+          Trace.WriteLine($"Failed to rename workspace file {ws.FilePath} to {newFilePath}: {ex.Message}");
+        }
+      }
+    }
+  }
+
   public Workspace CreateWorkspace(string name) {
     var existing = Workspaces.FirstOrDefault(w => w.Name == name);
-    
+
     if (existing != null) {
       return existing;
     }
-    
+
     string fileName = $"{Guid.NewGuid()}.xml";
     var ws = new Workspace {
       Name = name,
