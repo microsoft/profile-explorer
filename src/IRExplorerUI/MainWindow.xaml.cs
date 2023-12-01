@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -127,8 +128,22 @@ public partial class MainWindow : Window, ISession {
   public SessionStateManager SessionState => sessionState_;
 
   private static void CheckForUpdate() {
+    string autoUpdateInfo;
+
+    switch (RuntimeInformation.OSArchitecture) {
+      case Architecture.Arm64:
+        autoUpdateInfo = App.AutoUpdateInfoArm64;
+        break;
+      case Architecture.X64:
+        autoUpdateInfo = App.AutoUpdateInfox64;
+        break;
+      default:
+        autoUpdateInfo = App.AutoUpdateInfox64;
+        break;
+    }
+
     try {
-      AutoUpdater.Start(App.AutoUpdateInfo);
+      AutoUpdater.Start(autoUpdateInfo);
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed update check: {ex}");

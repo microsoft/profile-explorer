@@ -45,7 +45,8 @@ public class SyntaxFileInfo {
 
 public partial class App : Application {
   //public const string AutoUpdateInfo = @"https://irexplorer.blob.core.windows.net/app/update.xml";
-  public const string AutoUpdateInfo = @"C:\work\update.xml";
+  public const string AutoUpdateInfox64 = @"\\ntperformance\Public\benjaming\IRExplorer\x64\autoupdater.xml";
+  public const string AutoUpdateInfoArm64 = @"\\ntperformance\Public\benjaming\IRExplorer\arm64\autoupdater.xml";
   private const string SettingsPath = @"Microsoft\IRExplorer";
   private const string SettingsFile = "IRExplorer.settings";
   private const string DefaultDockLayoutFile = "DockLayout.xml";
