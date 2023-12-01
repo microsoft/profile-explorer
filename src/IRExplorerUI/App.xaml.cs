@@ -50,6 +50,7 @@ public partial class App : Application {
   private const string SettingsPath = @"Microsoft\IRExplorer";
   private const string SettingsFile = "IRExplorer.settings";
   private const string DefaultDockLayoutFile = "DockLayout.xml";
+  private const string HelpIndexFile = @"help\index.json";
   private const string LicenseFile = "license.txt";
   private const string WorkspacesDirectory = "workspaces";
   private const string ScriptsDirectory = "scripts";
@@ -137,6 +138,16 @@ public partial class App : Application {
   public static string GetInternalIRSyntaxHighlightingFilePath() {
     string appDir = ApplicationDirectory;
     return Path.Combine(appDir, InternalIRSyntaxHighlightingFile);
+  }
+
+  public static string GetHelpIndexFilePath() {
+    string appDir = ApplicationDirectory;
+    return Path.Combine(appDir, HelpIndexFile);
+  }
+
+  public static string GetHelpFilePath(string relativeURL) {
+    string appDir = ApplicationDirectory;
+    return Path.Combine(appDir, relativeURL);
   }
 
   public static string GetRemarksDefinitionFilePath(string compilerIRName) {
