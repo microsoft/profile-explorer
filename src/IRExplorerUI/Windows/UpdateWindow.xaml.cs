@@ -44,14 +44,16 @@ public partial class UpdateWindow : Window {
 
   private async void Window_Loaded(object sender, RoutedEventArgs e) {
     try {
-      // Force light mode for the WebView2 control for now.
-      await Browser.EnsureCoreWebView2Async();
-      Browser.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
-      
       if (updateInfo_ != null) {
         NewVersionLabel.Text = updateInfo_.CurrentVersion;
         CurrentVersionLabel.Text = updateInfo_.InstalledVersion.ToString();
-        Browser.Source = new Uri(updateInfo_.ChangelogURL);
+        
+        if (!string.IsNullOrEmpty(updateInfo_.ChangelogURL)) {
+          // Force light mode for the WebView2 control for now.
+          await Browser.EnsureCoreWebView2Async();
+          Browser.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
+          Browser.Source = new Uri(updateInfo_.ChangelogURL);
+        }
       }
     }
     catch (Exception ex) {
