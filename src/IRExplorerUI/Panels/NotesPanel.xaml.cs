@@ -38,8 +38,6 @@ public partial class NotesPanel : ToolPanelControl {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
 
-  private void TextSearch_TextChanged(object sender, TextChangedEventArgs e) { }
-
   private void ExecuteClearTextSearch(object sender, ExecutedRoutedEventArgs e) {
     ((TextBox)e.Parameter).Text = string.Empty;
   }

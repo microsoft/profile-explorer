@@ -27,6 +27,7 @@ public enum ToolPanelKind {
   Remarks,
   Scripting,
   Developer,
+  Help,
   Other
 }
 
