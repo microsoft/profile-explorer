@@ -616,6 +616,7 @@ public partial class MainWindow : Window, ISession {
       ToolPanelKind.PassOutput => "Pass Output",
       ToolPanelKind.SearchResults => "Search Results",
       ToolPanelKind.Scripting => "Scripting",
+      ToolPanelKind.Help => "Help",
       _ => ""
     };
   }
