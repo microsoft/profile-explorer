@@ -210,6 +210,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="220" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="50" />
                 </Grid.ColumnDefinitions>
 
                 <Menu
@@ -344,7 +345,7 @@
                             Tag="Definition" />
                         <MenuItem
                             Click="ShowPanelMenuClicked"
-                            Header="Refrences Panel"
+                            Header="References Panel"
                             Tag="References" />
                         <MenuItem
                             Click="ShowPanelMenuClicked"
@@ -353,7 +354,7 @@
                         <MenuItem
                             Click="ShowPanelMenuClicked"
                             Header="Source File Panel"
-                            Tag="SourceFile" />
+                            Tag="Source" />
                         <MenuItem
                             Click="ShowPanelMenuClicked"
                             Header="Search Results Panel"
@@ -619,7 +620,7 @@
                                         Source="{StaticResource BookIcon}"
                                         UseLayoutRounding="True" />
                                     <TextBlock
-                                        Margin="2,-1,0,0"
+                                        Margin="2,0,0,0"
                                         HorizontalAlignment="Left"
                                         VerticalAlignment="Top"
                                         FontSize="11"
@@ -781,6 +782,7 @@
                             x:Name="ShareButton"
                             Padding="2,1,2,1"
                             VerticalAlignment="Center"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                             BorderBrush="{x:Null}"
                             Click="ShareButton_Click"
                             FontSize="11"
@@ -796,7 +798,7 @@
                                     Source="{StaticResource UploadIcon}"
                                     UseLayoutRounding="True" />
                                 <TextBlock
-                                    Margin="2,-1,0,0"
+                                    Margin="2,0,0,0"
                                     HorizontalAlignment="Left"
                                     VerticalAlignment="Top"
                                     FontSize="11"
@@ -813,6 +815,7 @@
                             x:Name="FindButton"
                             Padding="2,1,2,1"
                             VerticalAlignment="Center"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                             BorderBrush="{x:Null}"
                             Click="FindButton_Click"
                             FontSize="11"
@@ -829,6 +832,34 @@
                         </Button>
                     </Border>
                 </StackPanel>
+                <Button
+                    x:Name="HelpButton"
+                    Grid.Column="2"
+                    Padding="2,1,2,1"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    BorderBrush="{x:Null}"
+                    Click="HelpButton_Click"
+                    FontSize="11"
+                    FontWeight="Medium"
+                    ToolTip="Open Help Panel">
+                    <StackPanel Orientation="Horizontal">
+                        <Image
+                            Width="16"
+                            Height="16"
+                            Margin="0,0,0,0"
+                            VerticalAlignment="Center"
+                            SnapsToDevicePixels="True"
+                            Source="{StaticResource HelpIcon}"
+                            UseLayoutRounding="True" />
+                        <TextBlock
+                            Margin="2,0,0,0"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            FontSize="11"
+                            Text="Help" />
+                    </StackPanel>
+                </Button>
             </Grid>
         </Border>
 

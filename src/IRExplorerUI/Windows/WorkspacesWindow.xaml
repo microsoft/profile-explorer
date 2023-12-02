@@ -156,7 +156,7 @@
             ToolTip="Restore the predefined workspaces">
             <Button
                 Height="24"
-                Padding="2"
+                Padding="4,2,4,2"
                 HorizontalContentAlignment="Left"
                 Click="DefaultButton_OnClick">
                 <StackPanel Orientation="Horizontal">
@@ -170,7 +170,7 @@
             <Button
                 Height="24"
                 Margin="2,0,0,0"
-                Padding="2"
+                Padding="4,2,4,2"
                 HorizontalContentAlignment="Left"
                 Click="ImportButton_Click"
                 ToolTip="Import all workspaces from an exported ZIP file">
@@ -185,7 +185,7 @@
             <Button
                 Height="24"
                 Margin="2,0,0,0"
-                Padding="2"
+                Padding="4,2,4,2"
                 HorizontalContentAlignment="Left"
                 Click="ExportButton_Click"
                 ToolTip="Export all workspaces to a ZIP file">

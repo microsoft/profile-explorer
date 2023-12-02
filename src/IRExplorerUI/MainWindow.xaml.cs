@@ -989,4 +989,8 @@ public partial class MainWindow : Window, ISession {
   private void ShowWorkspacesMenuClicked(object sender, RoutedEventArgs e) {
     ShowWorkspacesWindow();
   }
+
+  private async void HelpButton_Click(object sender, RoutedEventArgs e) {
+    await ShowPanel(ToolPanelKind.Help);
+  }
 }

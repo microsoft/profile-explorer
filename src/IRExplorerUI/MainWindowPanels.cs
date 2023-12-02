@@ -1268,90 +1268,99 @@ public partial class MainWindow : Window, ISession {
     PopulateWorkspacesCombobox();
   }
 
-  private void ShowPanelMenuClicked(object sender, RoutedEventArgs e) {
+  private async void ShowPanelMenuClicked(object sender, RoutedEventArgs e) {
+    var panelName = ((MenuItem)sender).Tag as string;
+    var panelKind = Enum.Parse<ToolPanelKind>(panelName);
+    await ShowPanel(panelKind);
+  }
+
+  private async Task ShowPanel(ToolPanelKind panelKind) {
     // Panel hosts must be found at runtime because of deserialization.
     LayoutAnchorable panelHost = null;
 
-    switch (((MenuItem)sender).Tag) {
-      case "Section": {
+    switch (panelKind) {
+      case ToolPanelKind.Section: {
         panelHost = SectionPanelHost;
         break;
       }
-      case "Definition": {
+      case ToolPanelKind.Definition: {
         panelHost = DefinitionPanelHost;
         break;
       }
-      case "References": {
+      case ToolPanelKind.References: {
         panelHost = ReferencesPanelHost;
         break;
       }
-      case "Bookmarks": {
+      case ToolPanelKind.Bookmarks: {
         panelHost = SectionPanelHost;
         break;
       }
-      case "SourceFile": {
+      case ToolPanelKind.Source: {
         panelHost = SourceFilePanelHost;
         break;
       }
-      case "PassOutput": {
+      case ToolPanelKind.PassOutput: {
         panelHost = PassOutputHost;
         break;
       }
-      case "SearchResults": {
+      case ToolPanelKind.SearchResults: {
         panelHost = SearchResultsPanelHost;
         break;
       }
-      case "Notes": {
+      case ToolPanelKind.Notes: {
         panelHost = NotesPanelHost;
         break;
       }
-      case "Scripting": {
+      case ToolPanelKind.Scripting: {
         panelHost = ScriptingPanelHost;
         break;
       }
-      case "Developer": {
+      case ToolPanelKind.Developer: {
         panelHost = IRInfoPanelHost;
         break;
       }
-      case "FlowGraph": {
+      case ToolPanelKind.FlowGraph: {
         panelHost = FlowGraphPanelHost;
         break;
       }
-      case "DominatorTree": {
+      case ToolPanelKind.DominatorTree: {
         panelHost = DominatorTreePanelHost;
         break;
       }
-      case "PostDominatorTree": {
+      case ToolPanelKind.PostDominatorTree: {
         panelHost = PostDominatorTreePanelHost;
         break;
       }
-      case "ExpressionGraph": {
+      case ToolPanelKind.ExpressionGraph: {
         panelHost = ExpressionGraphPanelHost;
         break;
       }
-      case "CallTree": {
+      case ToolPanelKind.CallTree: {
         panelHost = CallTreePanelHost;
         break;
       }
-      case "CallerCallee": {
+      case ToolPanelKind.CallerCallee: {
         panelHost = CallerCalleePanelHost;
         break;
       }
-      case "FlameGraph": {
+      case ToolPanelKind.FlameGraph: {
         panelHost = FlameGraphPanelHost;
         break;
       }
-      case "Timeline": {
+      case ToolPanelKind.Timeline: {
         panelHost = TimelinePanelHost;
         break;
       }
-      case "Help": {
+      case ToolPanelKind.Help: {
         panelHost = FindActivePanel(ToolPanelKind.Help)?.Host;
 
         if (panelHost == null) {
-          panelHost = DisplayNewPanel(new HelpPanel(), null, DuplicatePanelKind.NewSetDockedRight).Host;
+          var helpPanel = new HelpPanel();
+          panelHost = DisplayNewPanel(helpPanel, null, DuplicatePanelKind.NewSetDockedRight).Host;
           RenameAllPanels();
+          await helpPanel.LoadHomeTopic();
         }
+
         break;
       }
     }
