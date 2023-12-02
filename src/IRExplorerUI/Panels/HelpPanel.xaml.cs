@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.using System;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -35,9 +36,10 @@ public class HelpIndex {
   }
 
   public static HelpIndex Deserialize(string filePath) {
-    if(JsonUtils.Deserialize(filePath, out HelpIndex index)) {
+    if (JsonUtils.DeserializeFromFile(filePath, out HelpIndex index)) {
       return index;
     }
+
     return new HelpIndex();
   }
 }
@@ -46,27 +48,33 @@ public partial class HelpPanel : ToolPanelControl {
   private HelpIndex helpIndex_;
 
   public HelpPanel() {
-    var h = new  HelpIndex();
-    h.Topics.Add(new HelpTopic() { Title = "Test", URL = "https://www.google.com" });
-    h.PanelTopics.Add(ToolPanelKind.FlameGraph, new HelpTopic() { Title="Flame Graph", URL = @"help\flameGraph.html"});
-    var j = JsonUtils.Serialize(h);
-
     InitializeComponent();
     helpIndex_ = HelpIndex.Deserialize(App.GetHelpIndexFilePath());
-
-    //? TODO: Handle link click to open in external browser.
+    TopicsTree.ItemsSource = helpIndex_.Topics;
   }
 
   public async Task LoadPanelHelp(ToolPanelKind kind) {
-    if(helpIndex_.PanelTopics.TryGetValue(kind, out var topic)) {
-      await NavigateToURL(App.GetHelpFilePath(topic.URL));
+    if (helpIndex_.PanelTopics.TryGetValue(kind, out var topic)) {
+      await NavigateToTopic(topic);
     }
   }
 
-  public static void DisplayPanelHelp(ToolPanelKind kind, ISession session) {
-    var panel = new HelpPanel();
-    session.DisplayFloatingPanel(panel);
-    panel.LoadPanelHelp(kind);
+  public static async Task DisplayPanelHelp(ToolPanelKind kind, ISession session) {
+    var panel = session.FindPanel(ToolPanelKind.Help) as HelpPanel;
+
+    if (panel == null) {
+      panel = new HelpPanel();
+      session.DisplayFloatingPanel(panel);
+    }
+
+    await panel.LoadPanelHelp(kind);
+  }
+
+  private async Task NavigateToTopic(HelpTopic topic) {
+    if (!string.IsNullOrEmpty(topic.URL)) {
+      TopicTextBox.Text = topic.Title;
+      await NavigateToURL(App.GetHelpFilePath(topic.URL));
+    }
   }
 
   private async Task NavigateToURL(string url) {
@@ -80,5 +88,61 @@ public partial class HelpPanel : ToolPanelControl {
 
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
     Utils.PatchToolbarStyle(sender as ToolBar);
+  }
+
+  private async void TopicsTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
+    var treeView = sender as TreeView;
+    var selectedTopic = treeView.SelectedItem as HelpTopic;
+
+    if (selectedTopic != null) {
+      await NavigateToTopic(selectedTopic);
+    }
+
+    TopicsTreePopup.IsOpen = false;
+  }
+
+  private void TopicsTextbox_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
+    if (TopicsTreePopup.IsOpen) {
+      TopicsTreePopup.IsOpen = false;
+      return;
+    }
+
+    TopicsTreePopup.Placement = System.Windows.Controls.Primitives.PlacementMode.Relative;
+    TopicsTreePopup.PlacementTarget = TopicTextBox;
+    TopicsTreePopup.VerticalOffset = TopicTextBox.ActualHeight;
+    TopicsTreePopup.Height = TopicsTree.Height;
+    TopicsTreePopup.Width = TopicTextBox.Width;
+    TopicsTreePopup.IsOpen = true;
+  }
+
+  private void TopicsTextbox_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
+    TopicsTreePopup.IsOpen = false;
+  }
+
+  private void Browser_CoreWebView2InitializationCompleted(object sender,
+                                                           CoreWebView2InitializationCompletedEventArgs e) {
+    Browser.CoreWebView2.NewWindowRequested += Browser_NewWindowRequested;
+  }
+
+  private void Browser_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e) {
+    try {
+      e.Handled = true;
+      var psi = new ProcessStartInfo() {
+        FileName = e.Uri,
+        UseShellExecute = true
+      };
+      Process.Start(psi);
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to start external browser: {ex.Message}");
+    }
+  }
+
+  private void ZoomInButton_Click(object sender, RoutedEventArgs e) {
+    Browser.ZoomFactor = Math.Min(4, Browser.ZoomFactor + 0.1);
+  }
+
+  private void ZoomOutButton_Click(object sender, RoutedEventArgs e) {
+    Browser.ZoomFactor = Math.Max(0.5, Browser.ZoomFactor - 0.1);
   }
 }
