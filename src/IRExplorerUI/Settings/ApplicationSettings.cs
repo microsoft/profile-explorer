@@ -59,8 +59,11 @@ public class ApplicationSettings {
   [ProtoMember(18)]
   public CallTreeSettings CallTreeSettings { get; set; }
   [ProtoMember(19)]
-  public FlameGraphSettings FlameGraphSettings { get; set; }
+  public CallTreeSettings CallerCalleeSettings { get; set; }
+  //? CallerCalleeSettings
   [ProtoMember(20)]
+  public FlameGraphSettings FlameGraphSettings { get; set; }
+  [ProtoMember(21)]
   public WorkspaceSettings WorkspaceOptions;
 
   public ApplicationSettings() {
@@ -77,6 +80,7 @@ public class ApplicationSettings {
     DiffSettings.Reset();
     SectionSettings.Reset();
     CallTreeSettings.Reset();
+    CallerCalleeSettings.Reset();
     FlameGraphSettings.Reset();
     AutoReloadDocument = true;
     ThemeIndex = 2; // Blue theme.
@@ -197,6 +201,7 @@ public class ApplicationSettings {
     ProfileOptions ??= new ProfileDataProviderOptions();
     SymbolOptions ??= new SymbolFileSourceOptions();
     CallTreeSettings ??= new CallTreeSettings();
+    CallerCalleeSettings ??= new CallTreeSettings();
     FlameGraphSettings ??= new FlameGraphSettings();
     WorkspaceOptions ??= new WorkspaceSettings();
   }
