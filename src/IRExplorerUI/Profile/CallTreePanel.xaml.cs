@@ -73,12 +73,13 @@ public static class CallTreeCommand {
 }
 
 public class ChildFunctionEx : SearchableProfileItem, ITreeModel {
-  public ChildFunctionEx(ChildFunctionExKind kind, FunctionNameFormatter funcNameFormatter = null) :
+  public ChildFunctionEx(ChildFunctionExKind kind, CallTreePanel owner, FunctionNameFormatter funcNameFormatter = null) :
     base(funcNameFormatter) {
     Children = new List<ChildFunctionEx>();
     Kind = kind;
   }
 
+  public CallTreePanel Owner { get; set; }
   public IRTextFunction Function { get; set; }
   public ProfileCallTreeNode CallTreeNode { get; set; }
   public Brush TextColor { get; set; }
@@ -117,7 +118,7 @@ public class ChildFunctionEx : SearchableProfileItem, ITreeModel {
 
   protected override bool ShouldPrependModule() {
     return Kind != ChildFunctionExKind.Header &&
-           App.Settings.CallTreeSettings.PrependModuleToFunction;
+           Owner.Settings.PrependModuleToFunction;
   }
 }
 
@@ -140,7 +141,9 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   public CallTreePanel() {
     InitializeComponent();
-    settings_ = App.Settings.CallTreeSettings;
+    settings_ = PanelKind == ToolPanelKind.CallTree ?
+                App.Settings.CallTreeSettings :
+                App.Settings.CallerCalleeSettings;
     searchTask_ = new CancelableTaskInstance(false);
     callTreeNodeToNodeExMap_ = new Dictionary<ProfileCallTreeNode, ChildFunctionEx>();
     stateStack_ = new Stack<IRTextFunction>();
@@ -151,6 +154,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public CallTreePanel(ISession session) : this() {
     Session = session;
   }
+
+  public CallTreeSettings Settings => settings_;
 
   public event PropertyChangedEventHandler PropertyChanged;
 
@@ -484,7 +489,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private ChildFunctionEx CreateProfileCallerCalleeTree(IRTextFunction function) {
     var visitedNodes = new HashSet<ProfileCallTreeNode>();
-    var rootNode = new ChildFunctionEx(ChildFunctionExKind.Root);
+    var rootNode = new ChildFunctionEx(ChildFunctionExKind.Root, this);
     rootNode.Children = new List<ChildFunctionEx>();
     var nodeList = GetCallTreeNodes(function, callTree_);
 
@@ -566,7 +571,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     var visitedNodes = new HashSet<ProfileCallTreeNode>();
     var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
 
-    var rootNode = new ChildFunctionEx(ChildFunctionExKind.Root);
+    var rootNode = new ChildFunctionEx(ChildFunctionExKind.Root, this);
     rootNode.Children = new List<ChildFunctionEx>();
 
     foreach (var node in callTree_.RootNodes) {
@@ -654,7 +659,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     double weightPercentage = percentageFunc(node.Weight);
     double exclusiveWeightPercentage = percentageFunc(node.ExclusiveWeight);
 
-    var result = new ChildFunctionEx(kind, Session.CompilerInfo.NameProvider.FormatFunctionName) {
+    var result = new ChildFunctionEx(kind, this, Session.CompilerInfo.NameProvider.FormatFunctionName) {
       Function = node.Function,
       ModuleName = node.ModuleName,
       Time = node.Weight.Ticks,
@@ -675,7 +680,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                                                       Func<TimeSpan, double> percentageFunc, int priority) {
     double weightPercentage = percentageFunc(weight);
     double exclusiveWeightPercentage = percentageFunc(exclusiveWeight);
-    return new ChildFunctionEx(ChildFunctionExKind.Header) {
+    return new ChildFunctionEx(ChildFunctionExKind.Header, this) {
       CallTreeNode = new ProfileCallTreeNode(null, null) {Weight = weight, ExclusiveWeight = exclusiveWeight},
       Time = TimeSpan.MaxValue.Ticks - priority,
       FunctionName = name,
@@ -689,7 +694,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private ChildFunctionEx CreateProfileCallTreeHeader(ChildFunctionExKind kind, string name, int priority) {
-    return new ChildFunctionEx(kind)
+    return new ChildFunctionEx(kind, this)
       {Time = TimeSpan.MaxValue.Ticks - priority, FunctionName = name, TextColor = Brushes.Black, IsMarked = true};
   }
 
