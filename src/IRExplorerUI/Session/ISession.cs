@@ -57,6 +57,7 @@ public interface ISession {
 
   void RedrawPanels(params ToolPanelKind[] kinds);
   IToolPanel FindPanel(ToolPanelKind kind);
+  void ActivatePanel(IToolPanel panel);
   Task<IRDocumentHost> SwitchDocumentSectionAsync(OpenSectionEventArgs args);
   Task<IRDocumentHost> OpenDocumentSectionAsync(OpenSectionEventArgs args);
   bool SwitchToPreviousSection(IRTextSection section, IRDocument document);

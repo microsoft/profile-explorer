@@ -454,9 +454,10 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
 
-    var report = new ProfileDataReport();
-    report.RunningProcesses = processList_;
-    report.SymbolOptions = symbolOptions_.Clone();
+    var report = new ProfileDataReport {
+      RunningProcesses = processList_,
+      SymbolOptions = symbolOptions_.Clone()
+    };
 
     bool success = false;
     IsLoadingProfile = true;
@@ -773,6 +774,10 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private async void ProfileAutocompleteBox_TextChanged(object sender, RoutedEventArgs e) {
+    if(IsLoadingProfile) {
+      return; // Ignore during load of previous session.
+    }
+
     ShowProcessList = false;
 
     if (!string.IsNullOrEmpty(ProfileFilePath)) {
@@ -867,6 +872,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       return;
     }
 
+    IsLoadingProfile = true; // Prevent process list to be loaded.
     LoadPreviousSession(sessionEx.Report);
 
     if (IsRecordMode) {
@@ -921,7 +927,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
     else {
       ProfileFilePath = report.TraceInfo.TraceFilePath;
-      BinaryFilePath = report.Process.ImageFileName;
+      BinaryFilePath = report.Process?.ImageFileName;
     }
   }
 

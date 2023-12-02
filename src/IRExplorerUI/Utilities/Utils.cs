@@ -178,6 +178,38 @@ static class Utils {
 #endif
   }
 
+  //? TODO: Replace MessageBox.Show all over the app
+  public static MessageBoxResult ShowMessageBox(string text, FrameworkElement owner) {
+    return ShowMessageBox(text, owner, MessageBoxButton.OK, MessageBoxImage.Information);
+  }
+
+  public static MessageBoxResult ShowWarningMessageBox(string text, FrameworkElement owner) {
+    return ShowMessageBox(text, owner, MessageBoxButton.OK, MessageBoxImage.Warning);
+  }
+
+  public static MessageBoxResult ShowErrorMessageBox(string text, FrameworkElement owner) {
+    return ShowMessageBox(text, owner, MessageBoxButton.OK, MessageBoxImage.Error);
+  }
+
+
+  public static MessageBoxResult ShowYesNoMessageBox(string text, FrameworkElement owner) {
+    return ShowMessageBox(text, owner, MessageBoxButton.YesNo, MessageBoxImage.Question);
+  }
+
+  public static MessageBoxResult ShowYesNoCancelMessageBox(string text, FrameworkElement owner) {
+    return ShowMessageBox(text, owner, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+  }
+
+  private static MessageBoxResult ShowMessageBox(string text, FrameworkElement owner, MessageBoxButton buttons, MessageBoxImage image) {
+    if (owner != null) {
+      using var centerForm = new DialogCenteringHelper(owner);
+      return MessageBox.Show(text, "IR Explorer", buttons, image);
+    }
+    else {
+      return MessageBox.Show(text, "IR Explorer", buttons, image);
+    }
+  }
+
   public static string TrimToLength(string text, int maxLength) {
     if (text.Length <= maxLength) {
       return text;
