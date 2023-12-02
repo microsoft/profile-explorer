@@ -29,6 +29,7 @@ public class HelpTopic {
 public class HelpIndex {
   public List<HelpTopic> Topics { get; set; }
   public Dictionary<ToolPanelKind, HelpTopic> PanelTopics { get; set; }
+  public HelpTopic HomeTopic { get; set; }
 
   public HelpIndex() {
     Topics = new List<HelpTopic>();
@@ -53,6 +54,10 @@ public partial class HelpPanel : ToolPanelControl {
     TopicsTree.ItemsSource = helpIndex_.Topics;
   }
 
+  public async Task LoadHomeTopic() {
+    await NavigateToTopic(helpIndex_.HomeTopic);
+  }
+
   public async Task LoadPanelHelp(ToolPanelKind kind) {
     if (helpIndex_.PanelTopics.TryGetValue(kind, out var topic)) {
       await NavigateToTopic(topic);
@@ -72,7 +77,7 @@ public partial class HelpPanel : ToolPanelControl {
   }
 
   private async Task NavigateToTopic(HelpTopic topic) {
-    if (!string.IsNullOrEmpty(topic.URL)) {
+    if (topic != null && !string.IsNullOrEmpty(topic.URL)) {
       TopicTextBox.Text = topic.Title;
       await NavigateToURL(App.GetHelpFilePath(topic.URL));
     }
@@ -145,5 +150,9 @@ public partial class HelpPanel : ToolPanelControl {
 
   private void ZoomOutButton_Click(object sender, RoutedEventArgs e) {
     Browser.ZoomFactor = Math.Max(0.5, Browser.ZoomFactor - 0.1);
+  }
+
+  private async void HomeButton_Click(object sender, RoutedEventArgs e) {
+    await NavigateToTopic(helpIndex_.HomeTopic);
   }
 }

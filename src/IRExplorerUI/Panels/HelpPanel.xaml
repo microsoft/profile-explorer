@@ -51,6 +51,16 @@
                         PreviewMouseDown="TopicsTextbox_PreviewMouseDown" />
                     <Button
                         Margin="2,0,0,0"
+                        Click="HomeButton_Click"
+                        ToolTip="Home">
+                        <Image
+                            Width="15"
+                            Height="15"
+                            Source="{StaticResource DetailsIcon}" />
+                    </Button>
+                    <Separator />
+                    <Button
+                        Margin="2,0,0,0"
                         Click="ZoomOutButton_Click"
                         ToolTip="Zoom Out (Ctrl+_">
                         <Image
