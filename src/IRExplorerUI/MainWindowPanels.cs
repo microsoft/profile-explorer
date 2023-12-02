@@ -699,29 +699,33 @@ public partial class MainWindow : Window, ISession {
       case DuplicatePanelKind.NewSetDockedLeft: {
         panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Right);
 
-        var baseHost = FindPanelHost(relativePanel).Host;
-        var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
+        if (relativePanel != null) {
+          var baseHost = FindPanelHost(relativePanel).Host;
+          var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
 
-        if (baseGroup == null) {
-          break;
+          if (baseGroup == null) {
+            break;
+          }
+
+          baseGroup.Children.Insert(0, new LayoutAnchorablePane(panelHost.Host));
+          attached = true;
         }
-
-        baseGroup.Children.Insert(0, new LayoutAnchorablePane(panelHost.Host));
-        attached = true;
         break;
       }
       case DuplicatePanelKind.NewSetDockedRight: {
         panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Right);
 
-        var baseHost = FindPanelHost(relativePanel).Host;
-        var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
+        if (relativePanel != null) {
+          var baseHost = FindPanelHost(relativePanel).Host;
+          var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
 
-        if (baseGroup == null) {
-          break;
+          if (baseGroup == null) {
+            break;
+          }
+
+          baseGroup.Children.Add(new LayoutAnchorablePane(panelHost.Host));
+          attached = true;
         }
-
-        baseGroup.Children.Add(new LayoutAnchorablePane(panelHost.Host));
-        attached = true;
         break;
       }
       case DuplicatePanelKind.SameSet: {
@@ -979,7 +983,6 @@ public partial class MainWindow : Window, ISession {
       var activeWs = App.Settings.WorkspaceOptions.ActiveWorkspace;
 
       if (activeWs != null) {
-        Trace.WriteLine($"=> SWITCH WS {activeWs.Name}");
         dockLayoutFile = activeWs.FilePath;
       }
       else {
@@ -990,7 +993,6 @@ public partial class MainWindow : Window, ISession {
       return RestoreDockLayout(dockLayoutFile);
     }
 
-    Trace.WriteLine($"=> NO SWITCH");
     return true; // No change needed.
   }
 
@@ -1341,6 +1343,15 @@ public partial class MainWindow : Window, ISession {
       }
       case "Timeline": {
         panelHost = TimelinePanelHost;
+        break;
+      }
+      case "Help": {
+        panelHost = FindActivePanel(ToolPanelKind.Help)?.Host;
+
+        if (panelHost == null) {
+          panelHost = DisplayNewPanel(new HelpPanel(), null, DuplicatePanelKind.NewSetDockedRight).Host;
+          RenameAllPanels();
+        }
         break;
       }
     }

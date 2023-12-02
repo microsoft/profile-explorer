@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -36,7 +37,7 @@ public partial class WorkspacesWindow : Window {
     ReloadWorkspacesList();
 
     Closing += (sender, args) => {
-      settings_.RenameWorkspaces();
+      settings_.SaveWorkspaces();
       App.SaveApplicationSettings();
     };
   }
@@ -47,9 +48,12 @@ public partial class WorkspacesWindow : Window {
   }
 
   private void DefaultButton_OnClick(object sender, RoutedEventArgs e) {
+    if(Utils.ShowYesNoMessageBox("Restore builtin, default workspaces?", this) == MessageBoxResult.No) {
+      return;
+    }
+
     if (!settings_.RestoreDefaultWorkspaces()) {
-      using var centerForm = new DialogCenteringHelper(this);
-      MessageBox.Show("Failed to restore default workspaces.");
+      Utils.ShowErrorMessageBox("Failed to restore default workspaces.", this);
     }
 
     ReloadWorkspacesList();
@@ -60,8 +64,7 @@ public partial class WorkspacesWindow : Window {
     var mainWindow = Application.Current.MainWindow as MainWindow;
 
     if (!mainWindow.SaveDockLayout(ws.FilePath)) {
-      using var centerForm = new DialogCenteringHelper(this);
-      MessageBox.Show("Failed to create workspace.");
+      Utils.ShowErrorMessageBox("Failed to create workspace.", this);
       settings_.RemoveWorkspace(ws);
       return;
     }
@@ -82,11 +85,9 @@ public partial class WorkspacesWindow : Window {
 
   private void RemoveButton_Click(object sender, RoutedEventArgs e) {
     var selectedWs = WorkspacesList.SelectedItem as Workspace;
-    using var centerForm = new DialogCenteringHelper(this);
 
     if (selectedWs != null &&
-        MessageBox.Show("Do you want to remove the selected workspace?", "IR Explorer",
-                        MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) ==
+        Utils.ShowYesNoMessageBox("Do you want to remove the selected workspace?", this) ==
         MessageBoxResult.Yes) {
       settings_.RemoveWorkspace(selectedWs);
       ReloadWorkspacesList();
@@ -98,8 +99,7 @@ public partial class WorkspacesWindow : Window {
 
     if (!string.IsNullOrEmpty(path)) {
       if(!settings_.SaveToArchive(path)) {
-        using var centerForm = new DialogCenteringHelper(this);
-        MessageBox.Show("Failed to export workspaces.");
+        Utils.ShowErrorMessageBox("Failed to export workspaces.", this);
       }
     }
   }
@@ -108,17 +108,18 @@ public partial class WorkspacesWindow : Window {
     string path = Utils.ShowOpenFileDialog("ZIP archive|*.zip", "*.zip", "Export workspaces");
 
     if (!string.IsNullOrEmpty(path)) {
-      var newSettings = WorkspaceSettings.LoadFromArchive(path);
+      int loadedCount = 0;
+      var newSettings = WorkspaceSettings.LoadFromArchive(path, out loadedCount);
 
-      if(newSettings == null) {
-        using var centerForm = new DialogCenteringHelper(this);
-        MessageBox.Show("Failed to import workspaces.");
+      if (newSettings == null) {
+        Utils.ShowErrorMessageBox("Failed to import workspaces.", this);
         return;
       }
 
       settings_ =   newSettings;
       App.Settings.WorkspaceOptions = newSettings;
       ReloadWorkspacesList();
+      Utils.ShowMessageBox($"Successfully imported {loadedCount} workspaces.", this);
     }
   }
 }

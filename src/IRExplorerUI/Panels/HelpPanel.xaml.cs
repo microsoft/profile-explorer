@@ -61,12 +61,13 @@ public partial class HelpPanel : ToolPanelControl {
 
   public static async Task DisplayPanelHelp(ToolPanelKind kind, ISession session) {
     var panel = session.FindPanel(ToolPanelKind.Help) as HelpPanel;
-
+    
     if (panel == null) {
       panel = new HelpPanel();
       session.DisplayFloatingPanel(panel);
     }
 
+    session.ActivatePanel(panel);
     await panel.LoadPanelHelp(kind);
   }
 

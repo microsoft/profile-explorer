@@ -273,6 +273,15 @@ public partial class MainWindow : Window, ISession {
     return null;
   }
 
+  public void ActivatePanel(IToolPanel panel) {
+    var panelHost = FindPanelHost(panel);
+
+    if(panelHost != null) {
+      panelHost.Host.Show();
+      panelHost.Host.IsActive = true;
+    }
+  }
+
   public async Task<SectionSearchResult> SearchSectionAsync(
     SearchInfo searchInfo, IRTextSection section, IRDocument document) {
     var docInfo = sessionState_.FindLoadedDocument(section);

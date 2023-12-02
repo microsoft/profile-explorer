@@ -56,6 +56,8 @@ public class Workspace : IEquatable<Workspace> {
   public string FilePath { get; set; }
   [ProtoMember(4)]
   public int Order { get; set; }
+  public bool IsNew { get; set; }
+
   public Workspace() { }
 
   public override string ToString() {
@@ -85,7 +87,7 @@ public class WorkspaceSettings {
 
     // Sync settings with files on disk.
     CleanupWorkspaces();
-    LoadFromDirectory(App.GetWorkspacesPath());
+    LoadFromDirectory(App.GetWorkspacesPath(), out _);
   }
 
   public string GetBuiltinWorkspaceName(string compiler) {
@@ -96,7 +98,7 @@ public class WorkspaceSettings {
   }
 
   public bool RestoreDefaultWorkspaces() {
-    if (!LoadFromDirectory(App.GetInternlWorkspacesPath())) {
+    if (!LoadFromDirectory(App.GetInternlWorkspacesPath(), out _)) {
       return false;
     }
 
@@ -133,9 +135,10 @@ public class WorkspaceSettings {
     return true;
   }
 
-  public void RenameWorkspaces() {
+  public void SaveWorkspaces() {
     // Try to rename the on-disk file to match the workspace name.
     foreach (var ws in Workspaces) {
+      ws.IsNew = false;
       string fileName = Utils.TryGetFileNameWithoutExtension(ws.FilePath);
 
       if (fileName != ws.Name) {
@@ -163,7 +166,8 @@ public class WorkspaceSettings {
     var ws = new Workspace {
       Name = name,
       FilePath = Path.Combine(App.GetWorkspacesPath(), fileName),
-      Order = Workspaces.Count
+      Order = Workspaces.Count,
+      IsNew = true
     };
 
     Workspaces.Add(ws);
@@ -211,12 +215,13 @@ public class WorkspaceSettings {
     Workspaces = Workspaces.OrderBy(w => w.Order).ToList();
   }
 
-  private bool LoadFromDirectory(string path) {
+  private bool LoadFromDirectory(string path, out int loadedCount) {
     try {
       string workspacesPath = App.GetWorkspacesPath();
       App.CreateDirectories(workspacesPath);
       string[] files = Directory.GetFiles(path, "*.xml");
       int order = Workspaces.Count;
+      loadedCount = 0;
 
       foreach (string file in files) {
         var ws = new Workspace {
@@ -230,6 +235,7 @@ public class WorkspaceSettings {
 
           string destFile = Path.Combine(workspacesPath, Path.GetFileName(file));
           File.Copy(file, destFile, true);
+          loadedCount++;
         }
       }
 
@@ -237,6 +243,7 @@ public class WorkspaceSettings {
     }
     catch (Exception ex) {
       Trace.WriteLine($"Failed to load workspaces from directory {ex.Message}");
+      loadedCount = 0;
       return false;
     }
   }
@@ -279,16 +286,17 @@ public class WorkspaceSettings {
     }
   }
 
-  public static WorkspaceSettings LoadFromArchive(string filePath) {
+  public static WorkspaceSettings LoadFromArchive(string filePath, out int loadedCount) {
     try {
       var tempPath = Directory.CreateTempSubdirectory("irx");
       ZipFile.ExtractToDirectory(filePath, tempPath.FullName, true);
       var settings = DeserializeWorkspaceSettings(Path.Combine(tempPath.FullName, SettingsFileName));
-      settings.LoadFromDirectory(tempPath.FullName);
+      settings.LoadFromDirectory(tempPath.FullName, out loadedCount);
       return settings;
     }
     catch (Exception ex) {
       Trace.WriteLine($"Failed to load workspaces from Zip {ex.Message}");
+      loadedCount = 0;
       return null;
     }
   }
