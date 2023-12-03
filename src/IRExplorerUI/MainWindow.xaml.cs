@@ -347,7 +347,7 @@ public partial class MainWindow : Window, ISession {
     // Save settings, including the window state.
     App.Settings.MainWindowPlacement = WindowPlacement.GetPlacement(this);
     App.Settings.ThemeIndex = ThemeCombobox.SelectedIndex;
-    
+
     SaveDockLayout();
     App.SaveApplicationSettings();
     Trace.Flush();
@@ -514,6 +514,11 @@ public partial class MainWindow : Window, ISession {
     }
 
     ResetStatusBar();
+
+    // Make help panel active on the first run.
+    if(App.IsFirstRun) {
+      await ShowPanel(ToolPanelKind.Help);
+    }
 
     //? TODO: This needs a proper arg parsing lib
     string[] args = Environment.GetCommandLineArgs();
@@ -814,7 +819,7 @@ public partial class MainWindow : Window, ISession {
     if (installUpdate.HasValue && installUpdate.Value) {
       Close();
     }
-    
+
     UpdateButton.Visibility = Visibility.Collapsed;
   }
 

@@ -66,7 +66,7 @@ public partial class HelpPanel : ToolPanelControl {
 
   public static async Task DisplayPanelHelp(ToolPanelKind kind, ISession session) {
     var panel = session.FindPanel(ToolPanelKind.Help) as HelpPanel;
-    
+
     if (panel == null) {
       panel = new HelpPanel();
       session.DisplayFloatingPanel(panel);
@@ -153,6 +153,15 @@ public partial class HelpPanel : ToolPanelControl {
   }
 
   private async void HomeButton_Click(object sender, RoutedEventArgs e) {
-    await NavigateToTopic(helpIndex_.HomeTopic);
+    await LoadHomeTopic();
+  }
+
+  private async void BackButton_Click(object sender, RoutedEventArgs e) {
+    Browser.GoBack();
+  }
+
+  public override void OnSessionStart() {
+    base.OnSessionStart();
+    LoadHomeTopic();
   }
 }

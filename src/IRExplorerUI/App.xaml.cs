@@ -67,12 +67,14 @@ public partial class App : Application {
   private const string FunctionTaskScriptsDirectory = "scripts";
   private const string FunctionTaskScriptSearchPattern = @"*.cs";
   private const string DocumentationLocation = @"https://irexplorer.z5.web.core.windows.net/";
+  public static bool IsFirstRun;
   public static DateTime AppStartTime;
   public static ApplicationSettings Settings;
   public static ISession Session;
   private static List<SyntaxFileInfo> cachedSyntaxHighlightinFiles_;
   public static string ApplicationPath => Process.GetCurrentProcess().MainModule.FileName;
   public static string ApplicationDirectory => Path.GetDirectoryName(ApplicationPath);
+
 
   public static string[] GetFunctionTaskScripts() {
     try {
@@ -598,6 +600,7 @@ public partial class App : Application {
       Utils.TryDeleteFile(GetSettingsFilePath());
       Utils.TryDeleteFile(GetDefaultDockLayoutFilePath());
       Settings = new ApplicationSettings();
+      IsFirstRun = true;
     }
   }
 }

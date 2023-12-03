@@ -396,7 +396,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   private void ClearSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
     ((TextBox)e.Parameter).Text = string.Empty;
   }
-  
+
   private void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
     var view = new WebViewPopup(new Point(0, 0),
                                 500, 400, GraphHost);
