@@ -158,6 +158,7 @@ public partial class MainWindow : Window, ISession {
     RegisterPanel(CallTreePanel, CallTreePanelHost);
     RegisterPanel(CallerCalleePanel, CallerCalleePanelHost);
     RegisterPanel(FlameGraphPanel, FlameGraphPanelHost);
+    RegisterPanel(HelpPanel, HelpPanelHost);
     RenameAllPanels();
   }
 
@@ -1135,6 +1136,12 @@ public partial class MainWindow : Window, ISession {
               RegisterPanel(ScriptingPanel, ScriptingPanelHost);
               break;
             }
+            case ToolPanelKind.Help: {
+              HelpPanel = (HelpPanel)panel;
+              HelpPanelHost = (LayoutAnchorable)args.Model;
+              RegisterPanel(HelpPanel, HelpPanelHost);
+              break;
+            }
           }
 
           // Manually invoke the events, they are not triggered automatically.
@@ -1352,15 +1359,7 @@ public partial class MainWindow : Window, ISession {
         break;
       }
       case ToolPanelKind.Help: {
-        panelHost = FindActivePanel(ToolPanelKind.Help)?.Host;
-
-        if (panelHost == null) {
-          var helpPanel = new HelpPanel();
-          panelHost = DisplayNewPanel(helpPanel, null, DuplicatePanelKind.NewSetDockedRight).Host;
-          RenameAllPanels();
-          await helpPanel.LoadHomeTopic();
-        }
-
+        panelHost = HelpPanelHost;
         break;
       }
     }
