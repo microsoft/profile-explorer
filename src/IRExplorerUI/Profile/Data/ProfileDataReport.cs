@@ -27,10 +27,10 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
   [ProtoMember(5)]
   public SymbolFileSourceOptions SymbolOptions { get; set; }
   [ProtoMember(6)]
-  public ProfileRecordingSessionOptions SessionOptions { get; set; } // For recording mode
-  public bool IsRecordingSession => SessionOptions != null;
-  public bool IsStartProcessSession => SessionOptions is {SessionKind: ProfileSessionKind.StartProcess};
-  public bool IsAttachToProcessSession => SessionOptions is {SessionKind: ProfileSessionKind.AttachToProcess};
+  public ProfileRecordingSessionOptions RecordingSessionOptions { get; set; } // For recording mode
+  public bool IsRecordingSession => RecordingSessionOptions != null;
+  public bool IsStartProcessSession => RecordingSessionOptions is {SessionKind: ProfileSessionKind.StartProcess};
+  public bool IsAttachToProcessSession => RecordingSessionOptions is {SessionKind: ProfileSessionKind.AttachToProcess};
   public List<ModuleStatus> Modules => moduleStatusMap_.ToValueList();
 
   public TimeSpan SamplingInterval {
@@ -39,8 +39,8 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
         return TraceInfo.SamplingInterval;
       }
 
-      if (SessionOptions != null) {
-        return TimeSpan.FromMilliseconds(1.0 / SessionOptions.SamplingFrequency);
+      if (RecordingSessionOptions != null) {
+        return TimeSpan.FromMilliseconds(1.0 / RecordingSessionOptions.SamplingFrequency);
       }
 
       return TimeSpan.Zero;
@@ -94,7 +94,7 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
   }
 
   public override int GetHashCode() {
-    return HashCode.Combine(SessionOptions);
+    return HashCode.Combine(RecordingSessionOptions);
   }
 
   public void Dump() {
@@ -125,7 +125,7 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
       return true;
     }
 
-    return Equals(SessionOptions, other.SessionOptions) &&
+    return Equals(RecordingSessionOptions, other.RecordingSessionOptions) &&
            TraceInfo.HasSameTraceFilePath(other.TraceInfo);
   }
 
