@@ -29,7 +29,7 @@
             Text="IR Explorer" />
 
         </StackPanel>
-        <StackPanel>
+        <StackPanel Visibility="Hidden">
           <TextBlock
             HorizontalAlignment="Right"
             VerticalAlignment="Center"

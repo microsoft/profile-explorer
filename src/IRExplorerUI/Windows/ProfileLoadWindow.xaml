@@ -1007,7 +1007,7 @@
                   IsChecked="{Binding Path=SymbolOptions.SymbolSourcePathEnabled, Mode=TwoWay}" />
                 <Grid>
                 <TextBox
-                  Margin="20,4,48,0"
+                  Margin="20,4,92,0"
                   Height="22"
                   HorizontalAlignment="Stretch"
                   Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
@@ -1015,16 +1015,26 @@
                   IsEnabled="{Binding ElementName=SymbolServerCheckbox, Path=IsChecked}"
                   Text="{Binding Path=SymbolOptions.SymbolSourcePath, Mode=TwoWay}"
                   TextWrapping="Wrap" />
-                
+
                 <Button
                   x:Name="DefaultSymbolsButton"
                   Height="22"
-                  Margin="0,2,0,0"
+                  Margin="0,4,44,0"
                   Padding="4,2,4,2"
                   HorizontalAlignment="Right"
-                  ToolTip="Restore the default symbol server path"
+                  ToolTip="Restore the default private symbol server path"
                   Click="DefaultSymbolsButton_OnClick"
-                  Content="Default"
+                  Content="Private"
+                  IsEnabled="{Binding InputControlsEnabled}" />
+                <Button
+                  x:Name="PublicDefaultSymbolsButton"
+                  Height="22"
+                  Margin="0,4,0,0"
+                  Padding="4,2,4,2"
+                  HorizontalAlignment="Right"
+                  ToolTip="Restore the default public symbol server path"
+                  Click="DefaultPublicSymbolsButton_OnClick"
+                  Content="Public"
                   IsEnabled="{Binding InputControlsEnabled}" />
                 </Grid>
 

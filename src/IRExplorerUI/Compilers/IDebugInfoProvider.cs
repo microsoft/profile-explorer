@@ -3,7 +3,9 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using ProtoBuf;
@@ -31,6 +33,7 @@ public interface IDebugInfoProvider : IDisposable {
 [ProtoContract(SkipConstructor = true)]
 public class SymbolFileSourceOptions : SettingsBase {
   private const string DefaultSymbolSourcePath = @"https://symweb";
+  private const string DefaultPublicSymbolSourcePath = @"https://msdl.microsoft.com/download/symbols";
   private const string DefaultSymbolCachePath = @"C:\Symbols";
 
   public SymbolFileSourceOptions() {
@@ -59,10 +62,10 @@ public class SymbolFileSourceOptions : SettingsBase {
   public bool HasSymbolCachePath => !string.IsNullOrEmpty(SymbolCachePath);
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
 
-  public void ResetDefaultSymbolPath() {
-    SymbolSourcePath = DefaultSymbolSourcePath;
+  public void ResetDefaultSymbolPath(bool publicSymServer) {
+    SymbolSourcePath = publicSymServer ? DefaultPublicSymbolSourcePath : DefaultSymbolSourcePath;
   }
-  
+
   public bool HasSymbolPath(string path) {
     path = Utils.TryGetDirectoryName(path).ToLowerInvariant();
     return SymbolSearchPaths.Find(item => item.ToLowerInvariant() == path) != null;
@@ -126,10 +129,57 @@ public class SymbolFileSourceOptions : SettingsBase {
     return options;
   }
 
+  public static bool ShouldUsePrivateSymbolPath() {
+    // Try to detect running as a domain-joined or AAD-joined account,
+    // which should have access to a private, internal symbol server.
+    // Based on https://stackoverflow.com/questions/926227/how-to-detect-if-machine-is-joined-to-domain
+    //? TODO: This should not be hardcoded
+
+    try {
+      var domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
+
+      if (domain != null &&
+          domain.Contains("redmond", StringComparison.OrdinalIgnoreCase) ||
+          domain.Contains("ntdev", StringComparison.OrdinalIgnoreCase)) {
+        Trace.WriteLine("Set symbol path for domain-joined machine");
+        return true;
+      }
+    }
+    catch (Exception ex) {
+    }
+
+    try {
+      string pcszTenantId = null;
+      var ptrJoinInfo = IntPtr.Zero;
+      var ptrUserInfo = IntPtr.Zero;
+      var ptrJoinCertificate = IntPtr.Zero;
+      NetAPI32.DSREG_JOIN_INFO joinInfo = new NetAPI32.DSREG_JOIN_INFO();
+
+      NetAPI32.NetFreeAadJoinInformation(IntPtr.Zero);
+      var retValue = NetAPI32.NetGetAadJoinInformation(pcszTenantId, out ptrJoinInfo);
+
+      if (retValue == 0) {
+        NetAPI32.DSREG_JOIN_INFO ptrJoinInfoObject = new NetAPI32.DSREG_JOIN_INFO();
+        joinInfo = (NetAPI32.DSREG_JOIN_INFO)System.Runtime.InteropServices.Marshal.PtrToStructure(ptrJoinInfo, (System.Type)ptrJoinInfoObject.GetType());
+
+        if (joinInfo.JoinUserEmail.Contains("@microsoft.com", StringComparison.OrdinalIgnoreCase) ||
+            joinInfo.TenantDisplayName.Contains("microsoft", StringComparison.OrdinalIgnoreCase)) {
+          Trace.WriteLine("Set symbol path for AAD-joined machine");
+          return true;
+        }
+      }
+    }
+    catch (Exception ex) {
+    }
+
+    Trace.WriteLine("Set symbol path for non-domain-joined machine");
+    return false;
+  }
+
   public override void Reset() {
     InitializeReferenceMembers();
 
-    SymbolSourcePath = DefaultSymbolSourcePath;
+    ResetDefaultSymbolPath(ShouldUsePrivateSymbolPath());
     SymbolSourcePathEnabled = true;
     SymbolCachePath = DefaultSymbolCachePath;
     SymbolCachePathEnabled = true;
@@ -202,4 +252,31 @@ public class SymbolFileDescriptor : IEquatable<SymbolFileDescriptor> {
            Id == other.Id &&
            Age == other.Age;
   }
+}
+
+class NetAPI32 {
+  [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+  public struct DSREG_JOIN_INFO {
+    public int joinType;
+    public IntPtr pJoinCertificate;
+    [MarshalAs(UnmanagedType.LPWStr)] public string DeviceId;
+    [MarshalAs(UnmanagedType.LPWStr)] public string IdpDomain;
+    [MarshalAs(UnmanagedType.LPWStr)] public string TenantId;
+    [MarshalAs(UnmanagedType.LPWStr)] public string JoinUserEmail;
+    [MarshalAs(UnmanagedType.LPWStr)] public string TenantDisplayName;
+    [MarshalAs(UnmanagedType.LPWStr)] public string MdmEnrollmentUrl;
+    [MarshalAs(UnmanagedType.LPWStr)] public string MdmTermsOfUseUrl;
+    [MarshalAs(UnmanagedType.LPWStr)] public string MdmComplianceUrl;
+    [MarshalAs(UnmanagedType.LPWStr)] public string UserSettingSyncUrl;
+    public IntPtr pUserInfo;
+  }
+
+  [DllImport("netapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+  public static extern void NetFreeAadJoinInformation(
+    IntPtr pJoinInfo);
+
+  [DllImport("netapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+  public static extern int NetGetAadJoinInformation(
+    string pcszTenantId,
+    out IntPtr ppJoinInfo);
 }
