@@ -31,6 +31,7 @@ public interface IDebugInfoProvider : IDisposable {
 [ProtoContract(SkipConstructor = true)]
 public class SymbolFileSourceOptions : SettingsBase {
   private const string DefaultSymbolSourcePath = @"https://symweb";
+  private const string DefaultPublicSymbolSourcePath = @"https://msdl.microsoft.com/download/symbols";
   private const string DefaultSymbolCachePath = @"C:\Symbols";
 
   public SymbolFileSourceOptions() {
@@ -59,10 +60,10 @@ public class SymbolFileSourceOptions : SettingsBase {
   public bool HasSymbolCachePath => !string.IsNullOrEmpty(SymbolCachePath);
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
 
-  public void ResetDefaultSymbolPath() {
-    SymbolSourcePath = DefaultSymbolSourcePath;
+  public void ResetDefaultSymbolPath(bool publicSymServer) {
+    SymbolSourcePath =  publicSymServer ? DefaultPublicSymbolSourcePath : DefaultSymbolSourcePath;
   }
-  
+
   public bool HasSymbolPath(string path) {
     path = Utils.TryGetDirectoryName(path).ToLowerInvariant();
     return SymbolSearchPaths.Find(item => item.ToLowerInvariant() == path) != null;
