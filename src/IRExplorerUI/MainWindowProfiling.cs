@@ -372,9 +372,13 @@ public partial class MainWindow : Window, ISession {
     bool? result = window.ShowDialog();
 
     if (result.HasValue && result.Value) {
-      await SectionPanel.RefreshModuleSummaries();
-      SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
+      await SetupLoadedProfile();
     }
+  }
+
+  private async Task SetupLoadedProfile() {
+    await SectionPanel.RefreshModuleSummaries();
+    SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
   }
 
   private async void RecordProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -383,8 +387,7 @@ public partial class MainWindow : Window, ISession {
     bool? result = window.ShowDialog();
 
     if (result.HasValue && result.Value) {
-      await SectionPanel.RefreshModuleSummaries();
-      SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
+      await SetupLoadedProfile();
     }
   }
 
