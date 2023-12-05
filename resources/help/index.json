@@ -22,6 +22,16 @@
       "Title": "Flame Graph",
       "URL": "flameGraph\\flameGraphHelp.html",
       "SubTopics": null
+    },
+    "timeline": {
+      "Title": "Timeline",
+      "URL": "timeline\\timelineHelp.html",
+      "SubTopics": null
     }
+  },
+  "HomeTopic": {
+    "Title": "Home",
+    "URL": "index.html",
+    "SubTopics": null
   }
 }

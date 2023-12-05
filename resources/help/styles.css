@@ -1,0 +1,56 @@
+img {
+    zoom: 50%;
+}
+
+body {
+    font-family: Verdana;
+    font-size: small;
+}
+
+.accordion {
+    margin-bottom: 5px;
+}
+
+.header {
+    background-color: #D7E4F2;
+    border-width: medium;
+    border-color: black;
+    padding: 4px 4px;
+    color: black;
+    cursor: pointer;
+    font-size: small;
+}
+
+.body {
+    padding: 2px;
+}
+
+table.shortcutTable {
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
+}
+
+table.shortcutTable td, table.shortcutTable th {
+    padding: 3px 2px;
+}
+
+table.shortcutTable tr:nth-child(even) {
+    background: #F5F5F5;
+}
+
+table.shortcutTable tfoot td {
+    font-size: 14px;
+}
+
+table.shortcutTable tfoot .links {
+    text-align: right;
+}
+
+table.shortcutTable tfoot .links a {
+    display: inline-block;
+    background: #1C6EA4;
+    color: #FFFFFF;
+    padding: 2px 8px;
+    border-radius: 5px;
+}
