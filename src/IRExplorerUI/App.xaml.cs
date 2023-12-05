@@ -100,7 +100,7 @@ public partial class App : Application {
     return GetSettingsFilePath(WorkspacesDirectory);
   }
 
-  public static string GetInternlWorkspacesPath() {
+  public static string GetInternalWorkspacesPath() {
     return GetApplicationFilePath(WorkspacesDirectory);
   }
 
