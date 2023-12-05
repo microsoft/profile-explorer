@@ -815,6 +815,12 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
+  private void ForEachPanelHost(Action<PanelHostInfo> action) {
+    foreach (var (kind, list) in panelHostSet_) {
+      list.ForEach(item => action(item));
+    }
+  }
+
   private void SwitchCommandFocusToPanel(PanelHostInfo panelHost) {
     var activePanel = FindActivePanel(panelHost.PanelKind);
 
@@ -1002,6 +1008,7 @@ public partial class MainWindow : Window, ISession {
       Trace.WriteLine($"Restore dock layout from {dockLayoutFile}");
       var serializer = new XmlLayoutSerializer(DockManager);
       var visiblePanels = new List<IToolPanel>();
+      var registeredPanelKinds = new HashSet<ToolPanelKind>();
 
       serializer.LayoutSerializationCallback += (s, args) => {
         if (args.Model is LayoutDocument) {
@@ -1023,6 +1030,7 @@ public partial class MainWindow : Window, ISession {
           var panelHost = (LayoutAnchorable)args.Model;
           panelHost.IsActiveChanged += LayoutAnchorable_IsActiveChanged;
           panelHost.IsSelectedChanged += LayoutAnchorable_IsSelectedChanged;
+          registeredPanelKinds.Add(panel.PanelKind);
 
           if (panelHost.IsVisible && panelHost.IsSelected) {
             visiblePanels.Add(panel);
@@ -1157,12 +1165,32 @@ public partial class MainWindow : Window, ISession {
 
       // Load panels from layout file.
       serializer.Deserialize(dockLayoutFile);
+      RegisterNewVersionPanels(registeredPanelKinds);
       RenameAllPanels();
       return true;
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to load dock layout: {ex}");
       return false;
+    }
+  }
+
+  private void RegisterNewVersionPanels(HashSet<ToolPanelKind> registeredPanelKinds) {
+    // When a new panel kind is added in a new version of the app,
+    // the previous dock layout files don't reference it and when restoring
+    // the new panel is not registered properly in the UI. Code below fixes this
+    // by re-adding the panel to the loaded dock layout.
+    var panelKinds = Enum.GetValues<ToolPanelKind>();
+
+    foreach (var kind in panelKinds) {
+      if (!registeredPanelKinds.Contains(kind)) {
+        var newPanelHost = FindPanelHostForKind(kind);
+
+        if (newPanelHost != null) {
+          newPanelHost.Parent.RemoveChild(newPanelHost);
+          newPanelHost.AddToLayout(DockManager, AnchorableShowStrategy.Right);
+        }
+      }
     }
   }
 
@@ -1283,90 +1311,75 @@ public partial class MainWindow : Window, ISession {
 
   private async Task ShowPanel(ToolPanelKind panelKind) {
     // Panel hosts must be found at runtime because of deserialization.
-    LayoutAnchorable panelHost = null;
-
-    switch (panelKind) {
-      case ToolPanelKind.Section: {
-        panelHost = SectionPanelHost;
-        break;
-      }
-      case ToolPanelKind.Definition: {
-        panelHost = DefinitionPanelHost;
-        break;
-      }
-      case ToolPanelKind.References: {
-        panelHost = ReferencesPanelHost;
-        break;
-      }
-      case ToolPanelKind.Bookmarks: {
-        panelHost = SectionPanelHost;
-        break;
-      }
-      case ToolPanelKind.Source: {
-        panelHost = SourceFilePanelHost;
-        break;
-      }
-      case ToolPanelKind.PassOutput: {
-        panelHost = PassOutputHost;
-        break;
-      }
-      case ToolPanelKind.SearchResults: {
-        panelHost = SearchResultsPanelHost;
-        break;
-      }
-      case ToolPanelKind.Notes: {
-        panelHost = NotesPanelHost;
-        break;
-      }
-      case ToolPanelKind.Scripting: {
-        panelHost = ScriptingPanelHost;
-        break;
-      }
-      case ToolPanelKind.Developer: {
-        panelHost = IRInfoPanelHost;
-        break;
-      }
-      case ToolPanelKind.FlowGraph: {
-        panelHost = FlowGraphPanelHost;
-        break;
-      }
-      case ToolPanelKind.DominatorTree: {
-        panelHost = DominatorTreePanelHost;
-        break;
-      }
-      case ToolPanelKind.PostDominatorTree: {
-        panelHost = PostDominatorTreePanelHost;
-        break;
-      }
-      case ToolPanelKind.ExpressionGraph: {
-        panelHost = ExpressionGraphPanelHost;
-        break;
-      }
-      case ToolPanelKind.CallTree: {
-        panelHost = CallTreePanelHost;
-        break;
-      }
-      case ToolPanelKind.CallerCallee: {
-        panelHost = CallerCalleePanelHost;
-        break;
-      }
-      case ToolPanelKind.FlameGraph: {
-        panelHost = FlameGraphPanelHost;
-        break;
-      }
-      case ToolPanelKind.Timeline: {
-        panelHost = TimelinePanelHost;
-        break;
-      }
-      case ToolPanelKind.Help: {
-        panelHost = HelpPanelHost;
-        break;
-      }
-    }
+    var panelHost = FindPanelHostForKind(panelKind);
 
     if (panelHost != null) {
       panelHost.Show();
       panelHost.IsActive = true;
+    }
+  }
+
+  private LayoutAnchorable FindPanelHostForKind(ToolPanelKind panelKind) {
+    switch (panelKind) {
+      case ToolPanelKind.Section: {
+        return SectionPanelHost;
+      }
+      case ToolPanelKind.Definition: {
+        return DefinitionPanelHost;
+      }
+      case ToolPanelKind.References: {
+        return ReferencesPanelHost;
+      }
+      case ToolPanelKind.Bookmarks: {
+        return SectionPanelHost;
+      }
+      case ToolPanelKind.Source: {
+        return SourceFilePanelHost;
+      }
+      case ToolPanelKind.PassOutput: {
+        return PassOutputHost;
+      }
+      case ToolPanelKind.SearchResults: {
+        return SearchResultsPanelHost;
+      }
+      case ToolPanelKind.Notes: {
+        return NotesPanelHost;
+      }
+      case ToolPanelKind.Scripting: {
+        return ScriptingPanelHost;
+      }
+      case ToolPanelKind.Developer: {
+        return IRInfoPanelHost;
+      }
+      case ToolPanelKind.FlowGraph: {
+        return FlowGraphPanelHost;
+      }
+      case ToolPanelKind.DominatorTree: {
+        return DominatorTreePanelHost;
+      }
+      case ToolPanelKind.PostDominatorTree: {
+        return PostDominatorTreePanelHost;
+      }
+      case ToolPanelKind.ExpressionGraph: {
+        return ExpressionGraphPanelHost;
+      }
+      case ToolPanelKind.CallTree: {
+        return CallTreePanelHost;
+      }
+      case ToolPanelKind.CallerCallee: {
+        return CallerCalleePanelHost;
+      }
+      case ToolPanelKind.FlameGraph: {
+        return FlameGraphPanelHost;
+      }
+      case ToolPanelKind.Timeline: {
+        return TimelinePanelHost;
+      }
+      case ToolPanelKind.Help: {
+        return HelpPanelHost;
+      }
+      default:
+        return null;
     }
   }
 

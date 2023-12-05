@@ -33,10 +33,21 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded">
                     <TextBlock
-                        Margin="5,0,0,0"
+                        Margin="5,0,4,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Text="Topic" />
+
+                    <TextBox
+                        x:Name="TopicTextBox"
+                        Width="200"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        Cursor="Arrow"
+                        Focusable="False"
+                        IsReadOnly="True"
+                        PreviewMouseDown="TopicsTextbox_PreviewMouseDown" />
                     <Button
                       Margin="2,0,0,0"
                       Click="BackButton_Click"
@@ -49,17 +60,6 @@
                         Height="16"
                         Source="{StaticResource LeftArrowIcon}" />
                     </Button>
-                    <TextBox
-                        x:Name="TopicTextBox"
-                        Width="200"
-
-                        VerticalAlignment="Center"
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                        Cursor="Arrow"
-                        Focusable="False"
-                        IsReadOnly="True"
-                        PreviewMouseDown="TopicsTextbox_PreviewMouseDown" />
                     <Button
                         Margin="2,0,0,0"
                         Click="HomeButton_Click"

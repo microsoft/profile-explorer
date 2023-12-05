@@ -98,7 +98,7 @@ public class WorkspaceSettings {
   }
 
   public bool RestoreDefaultWorkspaces() {
-    if (!LoadFromDirectory(App.GetInternlWorkspacesPath(), out _)) {
+    if (!LoadFromDirectory(App.GetInternalWorkspacesPath(), out _)) {
       return false;
     }
 
@@ -232,10 +232,13 @@ public class WorkspaceSettings {
         if (!Workspaces.Contains(ws)) {
           ws.Order = order++;
           Workspaces.Add(ws);
+          loadedCount++;
 
           string destFile = Path.Combine(workspacesPath, Path.GetFileName(file));
-          File.Copy(file, destFile, true);
-          loadedCount++;
+
+          if (destFile != file) {
+            File.Copy(file, destFile, true);
+          }
         }
       }
 
