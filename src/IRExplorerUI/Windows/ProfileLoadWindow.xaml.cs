@@ -918,7 +918,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void DefaultSymbolsButton_OnClick(object sender, RoutedEventArgs e) {
-    SymbolOptions.ResetDefaultSymbolPath();
+    SymbolOptions.ResetDefaultSymbolPath(false);
+    OnPropertyChange(nameof(SymbolOptions));
+  }
+
+  private void DefaultPublicSymbolsButton_OnClick(object sender, RoutedEventArgs e) {
+    SymbolOptions.ResetDefaultSymbolPath(true);
     OnPropertyChange(nameof(SymbolOptions));
   }
 }
