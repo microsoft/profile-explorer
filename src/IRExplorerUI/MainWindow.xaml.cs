@@ -892,7 +892,7 @@ public partial class MainWindow : Window, ISession {
   private async Task SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
     await EndSession();
     compilerInfo_ = compilerInfo;
-    compilerInfo_.ReloadSettings();
+    await compilerInfo_.ReloadSettings();
     App.Settings.CompilerIRSwitched(compilerInfo_.CompilerIRName, compilerInfo.IR.Mode);
     SetupMainWindowCompilerTarget();
   }
