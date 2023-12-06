@@ -543,8 +543,7 @@
                         </MenuItem>
                         <MenuItem
                             Click="MenuItem_Click_6"
-                            Header="Settings"
-                            IsEnabled="False">
+                            Header="Settings">
                             <MenuItem.Icon>
                                 <Image
                                     Width="16"

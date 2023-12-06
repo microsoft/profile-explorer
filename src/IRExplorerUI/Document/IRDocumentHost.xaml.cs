@@ -1807,12 +1807,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     var position = new Point(relativeElement.ActualWidth - width, 0);
 
     optionsPanel_ = new DocumentOptionsPanel();
-    optionsPanelWindow_ = new OptionsPanelHostWindow(optionsPanel_, position, width, height, relativeElement);
+    optionsPanelWindow_ = new OptionsPanelHostWindow(optionsPanel_, position, width, height, relativeElement,
+                                                     settings_.Clone(), Session);
 
     optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
     optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
     optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;
-    optionsPanelWindow_.Settings = settings_.Clone();
     optionsPanelWindow_.IsOpen = true;
     optionsPanelVisible_ = true;
   }
@@ -1847,11 +1847,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     var position = new Point(RemarkOptionsPanel.LeftMargin, 0);
 
     remarkOptionsPanelWindow_ = new OptionsPanelHostWindow(new RemarkOptionsPanel(),
-                                                           position, width, height, TextView);
+                                                           position, width, height, TextView,
+                                                           remarkSettings_.Clone(), Session);
     remarkOptionsPanelWindow_.PanelClosed += RemarkOptionsPanel_PanelClosed;
     remarkOptionsPanelWindow_.PanelReset += RemarkOptionsPanel_PanelReset;
     remarkOptionsPanelWindow_.SettingsChanged += RemarkOptionsPanel_SettingsChanged;
-    remarkOptionsPanelWindow_.Settings = remarkSettings_.Clone();
     remarkOptionsPanelWindow_.IsOpen = true;
     remarkOptionsPanelVisible_ = true;
   }
