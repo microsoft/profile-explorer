@@ -833,7 +833,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void MenuItem_Click_6(object sender, RoutedEventArgs e) {
-    var optionsWindow = new OptionsWindow();
+    var optionsWindow = new OptionsWindow(this);
     optionsWindow.Owner = this;
     optionsWindow.ShowDialog();
   }

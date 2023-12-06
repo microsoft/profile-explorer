@@ -50,8 +50,8 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
 
   public bool SyntaxFileChanged { get; set; }
 
-  public override void Initialize(FrameworkElement parent) {
-    base.Initialize(parent);
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+    base.Initialize(parent, settings, session);
     settings_ = (DocumentSettings)Settings;
     ReloadSyntaxHighlightingList();
   }
@@ -70,7 +70,7 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
     syntaxHighlightingColors_ = null;
   }
 
-  public override void PanelResetted() {
+  public override void PanelAfterReset() {
     if (syntaxEditPanelVisible_) {
       ShowSyntaxEditPanel(null);
     }

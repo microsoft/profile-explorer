@@ -12,11 +12,9 @@ public partial class SectionOptionsPanel : OptionsPanelBase {
   public const double MinimumHeight = 200;
   public const double DefaultWidth = 350;
   public const double MinimumWidth = 350;
-  private ICompilerInfoProvider compilerInfo_;
 
-  public SectionOptionsPanel(ICompilerInfoProvider compilerInfo) {
+  public SectionOptionsPanel() {
     InitializeComponent();
-    compilerInfo_ = compilerInfo;
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
     PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
   }
@@ -36,11 +34,11 @@ public partial class SectionOptionsPanel : OptionsPanelBase {
   }
 
   private void EditButton_Click(object sender, RoutedEventArgs e) {
-    string settingsPath = App.GetSectionsDefinitionFilePath(compilerInfo_.CompilerIRName);
+    string settingsPath = App.GetSectionsDefinitionFilePath(Session.CompilerInfo.CompilerIRName);
     App.LaunchSettingsFileEditor(settingsPath);
   }
 
   private void ReloadButton_Click(object sender, RoutedEventArgs e) {
-    compilerInfo_.SectionStyleProvider.LoadSettings();
+    Session.CompilerInfo.SectionStyleProvider.LoadSettings();
   }
 }

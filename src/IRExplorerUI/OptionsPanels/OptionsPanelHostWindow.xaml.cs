@@ -15,6 +15,7 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
   public OptionsPanelHostWindow(UserControl panel, Point position,
                                 double width, double height,
                                 UIElement referenceElement,
+                                SettingsBase settings, ISession session,
                                 bool showResetButton = true) {
     InitializeComponent();
 
@@ -27,6 +28,7 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
     DataContext = this;
 
     optionsPanel_ = (IOptionsPanel)panel;
+    optionsPanel_.Initialize(this, settings, session);
     optionsPanel_.PanelClosed += SettingsPanel_PanelClosed;
     optionsPanel_.PanelReset += SettingsPanel_PanelReset;
     optionsPanel_.SettingsChanged += SettingsPanel_SettingsChanged;
@@ -40,22 +42,24 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
   public event EventHandler<bool> StayOpenChanged;
   public bool ShowResetButton { get; set; }
 
-  public object Settings {
+  public SettingsBase Settings {
     get => optionsPanel_.Settings;
     set => optionsPanel_.Settings = value;
   }
 
-  public void Initialize(FrameworkElement parent) {
+  public ISession Session {
+    get => optionsPanel_.Session;
+    set => optionsPanel_.Session = value;
+  }
+
+  public void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+    Settings = settings;
+    Session = session;
   }
 
   public void PanelClosing() { }
   public void PanelResetting() { }
-  public void PanelResetted() { }
-
-  protected override void OnOpened(EventArgs e) {
-    base.OnOpened(e);
-    optionsPanel_.Initialize(this);
-  }
+  public void PanelAfterReset() { }
 
   protected override void OnClosed(EventArgs e) {
     base.OnClosed(e);
@@ -97,7 +101,7 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
 
     optionsPanel_.PanelResetting();
     PanelReset?.Invoke(this, e);
-    optionsPanel_.PanelResetted();
+    optionsPanel_.PanelAfterReset();
   }
 
   private void CloseButton_Click(object sender, RoutedEventArgs e) {

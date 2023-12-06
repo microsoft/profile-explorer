@@ -520,7 +520,7 @@ public partial class MainWindow : Window, ISession {
       var diff = await ComputeSectionDiffs(leftDiffText, rightDiffText, newLeftSection, newRightSection);
 
       // Apply the diff results on the left and right documents in parallel.
-      // This will produce two AvalonEdit documents that will be installed 
+      // This will produce two AvalonEdit documents that will be installed
       // in the doc. hosts once back on the UI thread.
       var leftMarkTask = MarkSectionDiffs(newLeftSection, leftText, rightText,
                                           diff.OldText, diff.NewText,
@@ -595,7 +595,7 @@ public partial class MainWindow : Window, ISession {
     var diff = await Task.Run(() => diffBuilder.ComputeDiffs(leftText, rightText));
 
     // Apply the diff results on the left and right documents in parallel.
-    // This will produce two AvalonEdit documents that will be installed 
+    // This will produce two AvalonEdit documents that will be installed
     // in the doc. hosts once back on the UI thread.
     var leftDiffStats = new DiffStatistics();
     var rightDiffStats = new DiffStatistics();
@@ -620,7 +620,7 @@ public partial class MainWindow : Window, ISession {
 
   private void ScrollToFirstDiff(IRDocument leftDocument, IRDocument rightDocument,
                                  DiffMarkingResult leftDiffResult, DiffMarkingResult rightDiffResult) {
-    // Scroll to the first diff. If minor diffs are enabled, scroll to the first 
+    // Scroll to the first diff. If minor diffs are enabled, scroll to the first
     // major diff in either the left or right document.
     var firstLeftDiff = SelectFirstDiff(leftDiffResult);
     var firstRightDiff = SelectFirstDiff(rightDiffResult);
@@ -728,7 +728,7 @@ public partial class MainWindow : Window, ISession {
     SwitchOtherDiffedDocumentSide(IRTextSection section, IRTextSection otherSection,
                                   LoadedDocument otherDocument) {
     if (sessionState_.DiffDocument != null) {
-      // When two documents are compared, try to pick 
+      // When two documents are compared, try to pick
       // the other section from that other document.
       var diffSection = FindDiffDocumentSection(section, otherDocument);
 
@@ -810,11 +810,11 @@ public partial class MainWindow : Window, ISession {
     double height = Math.Max(DiffOptionsPanel.MinimumHeight,
                              Math.Min(MainGrid.ActualHeight, DiffOptionsPanel.DefaultHeight));
     var position = new Point(230, MainMenu.ActualHeight + 1);
-    diffOptionsPanelHost_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, width, height, MainGrid);
+    diffOptionsPanelHost_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, width, height, MainGrid,
+                                                       App.Settings.DiffSettings.Clone(), this);
     diffOptionsPanelHost_.PanelClosed += DiffOptionsPanel_PanelClosed;
     diffOptionsPanelHost_.PanelReset += DiffOptionsPanel_PanelReset;
     diffOptionsPanelHost_.SettingsChanged += DiffOptionsPanel_SettingsChanged;
-    diffOptionsPanelHost_.Settings = App.Settings.DiffSettings.Clone();
     diffOptionsPanelHost_.IsOpen = true;
     diffOptionsVisible_ = true;
   }

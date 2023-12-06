@@ -2203,13 +2203,12 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     double height = Math.Max(SectionOptionsPanel.MinimumHeight,
                              Math.Min(SectionList.ActualHeight, SectionOptionsPanel.DefaultHeight));
     var position = new Point(SectionList.ActualWidth - width, 0);
-
-    optionsPanelWindow_ = new OptionsPanelHostWindow(new SectionOptionsPanel(CompilerInfo),
-                                                     position, width, height, SectionList);
+    optionsPanelWindow_ = new OptionsPanelHostWindow(new SectionOptionsPanel(),
+                                                     position, width, height, SectionList,
+                                                     settings_.Clone(), Session);
     optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
     optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
     optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;
-    optionsPanelWindow_.Settings = settings_.Clone();
     optionsPanelWindow_.IsOpen = true;
     optionsPanelVisible_ = true;
   }

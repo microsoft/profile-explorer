@@ -12,11 +12,12 @@ public interface IOptionsPanel {
   event EventHandler PanelReset;
   event EventHandler SettingsChanged;
   event EventHandler<bool> StayOpenChanged;
-  object Settings { get; set; }
-  void Initialize(FrameworkElement parent);
+  SettingsBase Settings { get; set; }
+  ISession Session { get; set; }
+  void Initialize(FrameworkElement parent, SettingsBase settings, ISession session);
   void PanelClosing();
   void PanelResetting();
-  void PanelResetted();
+  void PanelAfterReset();
 }
 
 public class OptionsPanelBase : UserControl, IOptionsPanel {
@@ -25,10 +26,11 @@ public class OptionsPanelBase : UserControl, IOptionsPanel {
   public event EventHandler PanelReset;
   public event EventHandler SettingsChanged;
   public event EventHandler<bool> StayOpenChanged;
+  public ISession Session { get; set; }
   public FrameworkElement Parent { get; set; }
 
-  public object Settings {
-    get => DataContext;
+  public SettingsBase Settings {
+    get => (SettingsBase)DataContext;
     set {
       if (DataContext != value) {
         DataContext = null;
@@ -60,12 +62,14 @@ public class OptionsPanelBase : UserControl, IOptionsPanel {
     StayOpenChanged?.Invoke(this, staysOpen);
   }
 
-  public virtual void Initialize(FrameworkElement parent) {
+  public virtual void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     Parent = parent;
+    Settings = settings;
+    Session = session;
     initialized_ = true;
   }
 
   public virtual void PanelClosing() { }
   public virtual void PanelResetting() { }
-  public virtual void PanelResetted() { }
+  public virtual void PanelAfterReset() { }
 }
