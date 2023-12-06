@@ -44,13 +44,13 @@ public class SyntaxFileInfo {
 }
 
 public partial class App : Application {
-  //public const string AutoUpdateInfo = @"https://irexplorer.blob.core.windows.net/app/update.xml";
   public const string AutoUpdateInfox64 = @"\\ntperformance\Public\benjaming\IRExplorer\x64\autoupdater.xml";
   public const string AutoUpdateInfoArm64 = @"\\ntperformance\Public\benjaming\IRExplorer\arm64\autoupdater.xml";
   private const string SettingsPath = @"Microsoft\IRExplorer";
   private const string SettingsFile = "IRExplorer.settings";
   private const string DefaultDockLayoutFile = "DockLayout.xml";
-  private const string HelpDirectory = @"help";
+  //private const string HelpLocation = @"help"; // Local directory.
+  private const string HelpLocation = @"https://irx.z5.web.core.windows.net/";
   private const string HelpIndexFile = @"index.json";
   private const string LicenseFile = "license.txt";
   private const string WorkspacesDirectory = "workspaces";
@@ -144,13 +144,21 @@ public partial class App : Application {
   }
 
   public static string GetHelpIndexFilePath() {
+    if (HelpLocation.StartsWith("https://")) {
+      return $"{HelpLocation}/{HelpIndexFile}";
+    }
+
     string appDir = ApplicationDirectory;
-    return Path.Combine(appDir, HelpDirectory, HelpIndexFile);
+    return Path.Combine(appDir, HelpLocation, HelpIndexFile);
   }
 
   public static string GetHelpFilePath(string relativeURL) {
+    if (HelpLocation.StartsWith("https://")) {
+      return $"{HelpLocation}/{relativeURL}";
+    }
+
     string appDir = ApplicationDirectory;
-    return Path.Combine(appDir, HelpDirectory, relativeURL);
+    return Path.Combine(appDir, HelpLocation, relativeURL);
   }
 
   public static string GetRemarksDefinitionFilePath(string compilerIRName) {
