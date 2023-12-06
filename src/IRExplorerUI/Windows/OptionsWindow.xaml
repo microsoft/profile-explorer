@@ -28,12 +28,12 @@
       Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
       IsSynchronizedWithCurrentItem="True"
       SelectedIndex="0"
-      TabStripPlacement="Top">
+      TabStripPlacement="Left">
       <TabItem Header="General">
         <Grid>
           <TextBlock
-            FontSize="14"
-            Text="Work in progress. Use the wrench icon on the upper-right of each panel to get its settings."
+            Margin="4"
+            Text="Work in progress, not all panels have a settings UI.&amp;#x0a;Tip: use the wrench icon on the upper-right of each panel to quickly show its settings."
             TextWrapping="Wrap" />
         </Grid>
       </TabItem>
@@ -139,15 +139,55 @@
         <ColumnDefinition Width="50" />
         <ColumnDefinition Width="50" />
       </Grid.ColumnDefinitions>
+      
+      <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2">
       <Button
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         x:Name="ResetButton"
         Click="ResetButton_OnClick"
-        Grid.Column="0"
         Height="24"
-        VerticalAlignment="Top"
+        Padding="4,2,4,2"
+        ToolTip="Reset all settings to their default values"
+        HorizontalContentAlignment="Left">
+        <StackPanel Orientation="Horizontal">
+          <Image
+            Width="16"
+            Height="16"
+            Source="{StaticResource UndoIcon}" />
+          <TextBlock Margin="4,0,0,0" Text="Default" />
+        </StackPanel>
+      </Button>
+      <Button
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-        BorderThickness="1,1,1,1"
-        Content="Reset All" />
+        Height="24"
+        Margin="2,0,0,0"
+        Padding="4,2,4,2"
+        HorizontalContentAlignment="Left"
+        ToolTip="Import all workspaces from an exported ZIP file">
+        <StackPanel Orientation="Horizontal">
+          <Image
+            Width="16"
+            Height="16"
+            Source="{StaticResource FolderIcon}" />
+          <TextBlock Margin="4,0,0,0" Text="Import" />
+        </StackPanel>
+      </Button>
+      <Button
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+        Height="24"
+        Margin="2,0,0,0"
+        Padding="4,2,4,2"
+        HorizontalContentAlignment="Left"
+        ToolTip="Export all workspaces to a ZIP file">
+        <StackPanel Orientation="Horizontal">
+          <Image
+            Width="16"
+            Height="16"
+            Source="{StaticResource SaveIcon}" />
+          <TextBlock Margin="4,0,0,0" Text="Export" />
+        </StackPanel>
+      </Button>
+        </StackPanel>
       <Button
         x:Name="ApplyButton"
         Click="ApplyButton_OnClick"
