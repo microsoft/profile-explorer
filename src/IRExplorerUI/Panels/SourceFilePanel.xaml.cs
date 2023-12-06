@@ -21,6 +21,7 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
+using IRExplorerUI.Panels;
 using IRExplorerUI.Profile;
 using Microsoft.Win32;
 using TextLocation = IRExplorerCore.TextLocation;
@@ -828,5 +829,8 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
     TextView.Text = "";
   }
 
+  private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
+    await HelpPanel.DisplayPanelHelp(PanelKind, Session);
+  }
         #endregion
 }

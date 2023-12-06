@@ -18,6 +18,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Document;
+using IRExplorerUI.Panels;
 
 namespace IRExplorerUI.Profile;
 
@@ -1023,5 +1024,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     var targetBitmap = new RenderTargetBitmap(16, 16, 96, 96, PixelFormats.Default);
     targetBitmap.Render(visual);
     return new Image {Source = targetBitmap};
+  }
+  
+  private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
+    await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
 }

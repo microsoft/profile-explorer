@@ -309,6 +309,7 @@
                     HasDuplicateButton="False"
                     HasHelpButton="True"
                     HasPinButton="False"
+                    HelpClicked="PanelToolbarTray_OnHelpClicked"
                     SettingsClicked="FixedToolbar_SettingsClicked"
                     Visibility="{Binding IsSectionListVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
             </Grid>
@@ -916,6 +917,7 @@
                         HasDuplicateButton="False"
                         HasHelpButton="True"
                         HasPinButton="False"
+                        HelpClicked="PanelToolbarTray_OnHelpClicked"
                         SettingsClicked="FixedToolbar_SettingsClicked" />
                 </Grid>
 

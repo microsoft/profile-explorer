@@ -214,6 +214,7 @@
 
       <irExplorerUi:PanelToolbarTray
         DockPanel.Dock="Right"
+        HelpClicked="PanelToolbarTray_OnHelpClicked"
         DuplicateClicked="PanelToolbarTray_DuplicateClicked"
         HasDuplicateButton="False"
         HasHelpButton="True"
