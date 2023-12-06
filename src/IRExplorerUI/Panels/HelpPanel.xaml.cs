@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -36,8 +38,16 @@ public class HelpIndex {
     PanelTopics = new Dictionary<ToolPanelKind, HelpTopic>();
   }
 
-  public static HelpIndex Deserialize(string filePath) {
+  public static HelpIndex DeserializeFromFile(string filePath) {
     if (JsonUtils.DeserializeFromFile(filePath, out HelpIndex index)) {
+      return index;
+    }
+
+    return new HelpIndex();
+  }
+
+  public static HelpIndex Deserialize(string text) {
+    if (JsonUtils.Deserialize(text, out HelpIndex index)) {
       return index;
     }
 
@@ -47,20 +57,59 @@ public class HelpIndex {
 
 public partial class HelpPanel : ToolPanelControl {
   private HelpIndex helpIndex_;
+  private HelpTopic currentTopic_;
 
   public HelpPanel() {
     InitializeComponent();
-    helpIndex_ = HelpIndex.Deserialize(App.GetHelpIndexFilePath());
-    TopicsTree.ItemsSource = helpIndex_.Topics;
+  }
+
+  public override async void OnActivatePanel() {
+    base.OnActivatePanel();
+
+    if (currentTopic_ == null) {
+      await LoadHomeTopic();
+    }
+  }
+
+  private async Task<bool> DownloadHelpIndex() {
+    if (helpIndex_ != null) {
+      return true;
+    }
+
+    try {
+      using var client = new HttpClient();
+      using var response = await client.GetAsync(App.GetHelpIndexFilePath());
+
+      if (response.IsSuccessStatusCode) {
+        var contents = await response.Content.ReadAsStringAsync();
+        helpIndex_ = HelpIndex.Deserialize(contents);
+
+        if (helpIndex_ != null) {
+          TopicsTree.ItemsSource = helpIndex_.Topics;
+        }
+      }
+      else {
+        Trace.WriteLine($"Failed to download file: {response.ReasonPhrase}");
+      }
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to download file: {ex.Message}");
+    }
+
+    return helpIndex_ != null;
   }
 
   public async Task LoadHomeTopic() {
-    await NavigateToTopic(helpIndex_.HomeTopic);
+    if (await DownloadHelpIndex()) {
+      await NavigateToTopic(helpIndex_.HomeTopic);
+    }
   }
 
   public async Task LoadPanelHelp(ToolPanelKind kind) {
-    if (helpIndex_.PanelTopics.TryGetValue(kind, out var topic)) {
-      await NavigateToTopic(topic);
+    if (await DownloadHelpIndex()) {
+      if (helpIndex_.PanelTopics.TryGetValue(kind, out var topic)) {
+        await NavigateToTopic(topic);
+      }
     }
   }
 
@@ -79,6 +128,7 @@ public partial class HelpPanel : ToolPanelControl {
   private async Task NavigateToTopic(HelpTopic topic) {
     if (topic != null && !string.IsNullOrEmpty(topic.URL)) {
       TopicTextBox.Text = topic.Title;
+      currentTopic_ = topic;
       await NavigateToURL(App.GetHelpFilePath(topic.URL));
     }
   }
@@ -158,10 +208,5 @@ public partial class HelpPanel : ToolPanelControl {
 
   private async void BackButton_Click(object sender, RoutedEventArgs e) {
     Browser.GoBack();
-  }
-
-  public override void OnSessionStart() {
-    base.OnSessionStart();
-    LoadHomeTopic();
   }
 }
