@@ -139,7 +139,7 @@
         <ColumnDefinition Width="50" />
         <ColumnDefinition Width="50" />
       </Grid.ColumnDefinitions>
-      
+
       <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2">
       <Button
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
@@ -162,8 +162,9 @@
         Height="24"
         Margin="2,0,0,0"
         Padding="4,2,4,2"
+        IsEnabled="False"
         HorizontalContentAlignment="Left"
-        ToolTip="Import all workspaces from an exported ZIP file">
+        ToolTip="Import all settings from an exported ZIP file">
         <StackPanel Orientation="Horizontal">
           <Image
             Width="16"
@@ -177,8 +178,9 @@
         Height="24"
         Margin="2,0,0,0"
         Padding="4,2,4,2"
+        IsEnabled="False"
         HorizontalContentAlignment="Left"
-        ToolTip="Export all workspaces to a ZIP file">
+        ToolTip="Export all settings to a ZIP file">
         <StackPanel Orientation="Horizontal">
           <Image
             Width="16"
