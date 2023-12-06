@@ -6,7 +6,7 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:options="clr-namespace:IRExplorerUI.OptionsPanels"
   Title="Settings"
-  Width="500"
+  Width="600"
   Height="500"
   MinWidth="400"
   MinHeight="300"
@@ -33,7 +33,7 @@
         <Grid>
           <TextBlock
             FontSize="14"
-            Text="This settings window is not working yet, use the wrench icon on the upper-right of each panel to get its settings instead"
+            Text="Work in progress. Use the wrench icon on the upper-right of each panel to get its settings."
             TextWrapping="Wrap" />
         </Grid>
       </TabItem>
@@ -102,6 +102,34 @@
             Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
+      <TabItem Header="Timeline" IsEnabled="False">
+        <ScrollViewer
+          HorizontalScrollBarVisibility="Disabled"
+          VerticalScrollBarVisibility="Auto">
+          <TextBlock Text="TODO"></TextBlock>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="Flame Graph" IsEnabled="False">
+        <ScrollViewer
+          HorizontalScrollBarVisibility="Disabled"
+          VerticalScrollBarVisibility="Auto">
+          <TextBlock Text="TODO"></TextBlock>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="Call Tree" IsEnabled="False">
+        <ScrollViewer
+          HorizontalScrollBarVisibility="Disabled"
+          VerticalScrollBarVisibility="Auto">
+          <TextBlock Text="TODO"></TextBlock>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="Caller/Callee" IsEnabled="False">
+        <ScrollViewer
+          HorizontalScrollBarVisibility="Disabled"
+          VerticalScrollBarVisibility="Auto">
+          <TextBlock Text="TODO"></TextBlock>
+        </ScrollViewer>
+      </TabItem>
     </TabControl>
 
     <Grid Grid.Row="1" Margin="8,4,8,4">
@@ -109,9 +137,11 @@
         <ColumnDefinition Width="70" />
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="50" />
+        <ColumnDefinition Width="50" />
       </Grid.ColumnDefinitions>
       <Button
         x:Name="ResetButton"
+        Click="ResetButton_OnClick"
         Grid.Column="0"
         Height="24"
         VerticalAlignment="Top"
@@ -119,8 +149,19 @@
         BorderThickness="1,1,1,1"
         Content="Reset All" />
       <Button
-        x:Name="CloseButton"
+        x:Name="ApplyButton"
+        Click="ApplyButton_OnClick"
         Grid.Column="2"
+        Height="24"
+        VerticalAlignment="Top"
+        Margin="0,0,4,0"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+        BorderThickness="1,1,1,1"
+        Content="Apply" />
+      <Button
+        x:Name="CloseButton"
+        Click="CloseButton_OnClick"
+        Grid.Column="3"
         Height="24"
         VerticalAlignment="Top"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"

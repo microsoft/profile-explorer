@@ -836,8 +836,8 @@ public partial class MainWindow : Window, ISession {
     diffOptionsVisible_ = false;
   }
 
-  private async Task HandleNewDiffSettings(DiffSettings newSettings, bool commit) {
-    if (newSettings.HasChanges(App.Settings.DiffSettings)) {
+  private async Task HandleNewDiffSettings(DiffSettings newSettings, bool commit, bool force = false) {
+    if (force || newSettings.HasChanges(App.Settings.DiffSettings)) {
       bool hasHandlingChanges = App.Settings.DiffSettings.HasDiffHandlingChanges(newSettings);
       App.Settings.DiffSettings = newSettings;
       await ReloadDiffSettings(newSettings, hasHandlingChanges);

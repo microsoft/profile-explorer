@@ -2245,27 +2245,29 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     optionsPanelVisible_ = false;
   }
 
-  private async Task HandleNewSettings(SectionSettings newSettings, bool commit) {
+  public override Task OnReloadSettings() {
+    return HandleNewSettings(App.Settings.SectionSettings, false, true);
+  }
+
+  private async Task HandleNewSettings(SectionSettings newSettings, bool commit, bool force = false) {
     if (commit) {
       App.Settings.SectionSettings = newSettings;
       App.SaveApplicationSettings();
     }
 
-    if (newSettings.Equals(settings_)) {
-      return;
+    if (force || !newSettings.Equals(settings_)) {
+      bool updateFunctionList = newSettings.HasFunctionListChanges(settings_);
+      App.Settings.SectionSettings = newSettings;
+      settings_ = newSettings;
+
+      if (updateFunctionList) {
+        await SetupFunctionList();
+      }
+
+      SetupSectionList(currentFunction_, true);
+      RefreshSectionList();
+      await ComputeConsecutiveSectionDiffs();
     }
-
-    bool updateFunctionList = newSettings.HasFunctionListChanges(settings_);
-    App.Settings.SectionSettings = newSettings;
-    settings_ = newSettings;
-
-    if (updateFunctionList) {
-      await SetupFunctionList();
-    }
-
-    SetupSectionList(currentFunction_, true);
-    RefreshSectionList();
-    await ComputeConsecutiveSectionDiffs();
   }
 
   private async void CopySectionTextExecuted(object sender, ExecutedRoutedEventArgs e) {

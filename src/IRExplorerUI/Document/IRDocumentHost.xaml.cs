@@ -264,11 +264,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     InitializeComponent();
     DataContext = this;
     PassOutput.DataContext = this;
+    ActionPanel.Visibility = Visibility.Collapsed;
 
     Session = session;
     remarkSettings_ = App.Settings.RemarkSettings;
     Settings = App.Settings.DocumentSettings;
-    ActionPanel.Visibility = Visibility.Collapsed;
+    TextView.Initalize(Settings, Session);
 
     // Initialize pass output panel.
     PassOutput.Session = session;
@@ -378,7 +379,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     get => settings_;
     set {
       settings_ = value;
-      ReloadSettings();
     }
   }
 
@@ -463,10 +463,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     await HandleNewRemarkSettings(newSettings, false);
   }
 
-  public void ReloadSettings() {
-    TextView.Initalize(settings_, session_);
-    SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
-    UpdateColumnsList();
+  public async Task ReloadSettings(bool force = false) {
+    await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, force);
+
+    if (force) {
+      TextView.Initalize(settings_, session_);
+      SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
+      UpdateColumnsList();
+    }
   }
 
   public async void UnloadSection(IRTextSection section, bool switchingActiveDocument) {
@@ -475,7 +479,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     // Cancel any running tasks and hide panels.
-    loadTask_.CancelTaskAndWait();
+    await loadTask_.CancelTaskAndWaitAsync();
 
     //? TODO: use await loadTask_.CancelTaskAndWaitAsync(); once UnloadSection returns Task
     await HideRemarkPanel();
@@ -549,6 +553,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   public async Task LoadSection(ParsedIRTextSection parsedSection) {
     duringSectionSwitching_ = true;
+    await ReloadSettings();
+    
     object data = Session.LoadDocumentState(parsedSection.Section);
     double horizontalOffset = 0;
     double verticalOffset = 0;
@@ -1097,32 +1103,33 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
+  private async void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
     if (optionsPanelVisible_) {
       var newSettings = (DocumentSettings)optionsPanelWindow_.Settings;
 
       if (newSettings != null) {
-        LoadNewSettings(newSettings, optionsPanel_.SyntaxFileChanged, false);
+        await LoadNewSettings(newSettings, optionsPanel_.SyntaxFileChanged, false);
         optionsPanelWindow_.Settings = newSettings.Clone();
       }
     }
   }
 
-  private void LoadNewSettings(DocumentSettings newSettings, bool force, bool commit) {
+  private async Task LoadNewSettings(DocumentSettings newSettings, bool force, bool commit) {
     if (force || newSettings.HasChanges(Settings)) {
       App.Settings.DocumentSettings = newSettings;
       Settings = newSettings;
+      await ReloadSettings(force);
     }
 
     if (commit) {
-      Session.ReloadDocumentSettings(newSettings, TextView);
+      await Session.ReloadDocumentSettings(newSettings, TextView);
       App.SaveApplicationSettings();
     }
   }
 
-  private void OptionsPanel_PanelReset(object sender, EventArgs e) {
+  private async void OptionsPanel_PanelReset(object sender, EventArgs e) {
     var newOptions = new DocumentSettings();
-    LoadNewSettings(newOptions, true, false);
+    await LoadNewSettings(newOptions, true, false);
     optionsPanelWindow_.Settings = newOptions;
   }
 
@@ -1882,11 +1889,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     // Toolbar remark buttons change remarkSettings_ directly,
     // force an update in this case since newSettings is remarkSettings_.
-    if (!force && newSettings.Equals(remarkSettings_)) {
-      return;
+    if (force || !newSettings.Equals(remarkSettings_)) {
+      await ApplyRemarkSettings(newSettings);
     }
-
-    await ApplyRemarkSettings(newSettings);
   }
 
   private async Task ApplyRemarkSettings(RemarkSettings newSettings) {

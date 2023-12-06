@@ -815,6 +815,14 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
+  private async Task ForEachPanelAsync(Func<IToolPanel, Task> action) {
+    foreach (var (kind, list) in panelHostSet_) {
+      foreach (var item in list) {
+        await action(item.Panel);
+      }
+    }
+  }
+
   private void ForEachPanelHost(Action<PanelHostInfo> action) {
     foreach (var (kind, list) in panelHostSet_) {
       list.ForEach(item => action(item));

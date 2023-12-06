@@ -927,6 +927,10 @@ public partial class GraphPanel : ToolPanelControl {
     GraphViewer.ReloadCurrentGraph();
   }
 
+  public override async Task OnReloadSettings() {
+    ReloadSettings();
+  }
+
   private void ReloadSettings() {
     GraphViewer.Settings = Settings;
     GraphHost.Background = ColorBrushes.GetBrush(Settings.BackgroundColor);

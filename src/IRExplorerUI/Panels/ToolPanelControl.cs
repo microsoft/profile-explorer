@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System.Threading.Tasks;
 using System.Windows.Controls;
 using IRExplorerCore;
 
@@ -31,6 +32,10 @@ public class ToolPanelControl : UserControl, IToolPanel {
   public virtual void OnUnregisterPanel() { }
   public virtual void OnElementSelected(IRElementEventArgs e) { }
   public virtual void OnElementHighlighted(IRHighlightingEventArgs e) { }
+ 
+  public virtual Task OnReloadSettings() {
+    return Task.CompletedTask;
+  }
 
   public virtual void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     Document = document;
