@@ -1,21 +1,15 @@
 {
   "Topics": [
     {
-      "Title": "Flame Graph",
-      "URL": "flameGraph\\flameGraphHelp.html",
+      "Title": "Home",
+      "URL": "index.html",
       "SubTopics": null
     },
     {
-        "Title": "Call Tree",
-        "URL": "bing.com",
-        "SubTopics": [
-            {
-                "Title": "Other",
-                "URL": "google.com",
-                "SubTopics": null
-              }
-        ]
-        }
+      "Title": "Flame Graph",
+      "URL": "flameGraph\\flameGraphHelp.html",
+      "SubTopics": null
+    }
   ],
   "PanelTopics": {
     "flameGraph": {
