@@ -14,6 +14,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Aga.Controls.Tree;
 using IRExplorerCore;
+using IRExplorerUI.Panels;
 using IRExplorerUI.Utilities;
 using Microsoft.Diagnostics.Tracing.Stacks;
 
@@ -939,6 +940,10 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private void CollapseNodesExecuted(object sender, ExecutedRoutedEventArgs e) {
     CollapseAllFunctionPaths();
     ExpandHottestFunctionPath();
+  }
+  
+  private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
+    await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
 
     #region IToolPanel

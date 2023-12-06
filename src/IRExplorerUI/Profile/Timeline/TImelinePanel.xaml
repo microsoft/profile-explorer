@@ -345,6 +345,7 @@
         HasDuplicateButton="False"
         HasPinButton="False"
         HasHelpButton="True"
+        HelpClicked="PanelToolbarTray_OnHelpClicked"
         SettingsClicked="PanelToolbarTray_SettingsClicked" />
     </Grid>
 

@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Panels;
 
 namespace IRExplorerUI.Profile;
 
@@ -397,13 +398,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     ((TextBox)e.Parameter).Text = string.Empty;
   }
 
-  private void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
-    var view = new WebViewPopup(new Point(0, 0),
-                                500, 400, GraphHost);
-    Session.RegisterDetachedPanel(view);
-
-    view.PanelTitle = "Flame Graph Panel Help";
-    view.IsOpen = true;
+  private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
+    await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
 
   private async void RootNodeResetButton_OnClick(object sender, RoutedEventArgs e) {

@@ -21,6 +21,7 @@ using ClosedXML.Excel;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerUI.OptionsPanels;
+using IRExplorerUI.Panels;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Utilities;
 using ProtoBuf;
@@ -3009,5 +3010,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     ResetUI(); //? TODO: Await, make OnSessionEnd async
   }
 
+  private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
+    await HelpPanel.DisplayPanelHelp(PanelKind, Session);
+  }
         #endregion
 }
