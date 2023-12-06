@@ -565,8 +565,15 @@
                         <MenuItem
                             Click="ShowPanelMenuClicked"
                             Header="Help Panel"
-                            Tag="Help" />
-                        <MenuItem Header="Developer">
+                            Tag="Help">
+                          <MenuItem.Icon>
+                            <Image
+                              Width="16"
+                              Height="16"
+                              Source="{StaticResource HelpIcon}" />
+                          </MenuItem.Icon>
+                        </MenuItem>
+                          <MenuItem Header="Developer">
                             <MenuItem
                                 x:Name="DevMenuStartupTime"
                                 Header="Diff time: 0"

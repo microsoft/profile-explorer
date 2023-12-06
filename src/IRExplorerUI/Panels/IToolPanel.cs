@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Threading.Tasks;
 using IRExplorerCore;
 
 namespace IRExplorerUI;
@@ -64,6 +65,7 @@ public interface IToolPanel {
   void OnSessionStart();
   void OnSessionEnd();
   void OnSessionSave();
+  Task OnReloadSettings();
   void OnDocumentSectionLoaded(IRTextSection section, IRDocument document);
   void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document);
   void OnElementSelected(IRElementEventArgs e);

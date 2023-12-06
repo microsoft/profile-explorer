@@ -247,7 +247,6 @@ public sealed class ASMParser : ParserBase {
             // Move the tuples to the new block.
             int splitIndex = 0;
             int copiedTuples = 0;
-            bool isNopBlock = true;
 
             for (; splitIndex < otherBlock.Tuples.Count; splitIndex++) {
               var tuple = otherBlock.Tuples[splitIndex];
@@ -258,16 +257,11 @@ public sealed class ASMParser : ParserBase {
                 tuple.IndexInBlock = copiedTuples;
                 copiedTuples++;
               }
-              else if (tuple is InstructionIR instr && !irInfo_.IsNOP(instr)) {
-                isNopBlock = false;
-              }
             }
 
             // If the block has only NOP, don't connect it, it leaves
             // the NOP block without any predecessor.
-            if (!isNopBlock) {
-              ConnectBlocks(otherBlock, refBlock);
-            }
+            ConnectBlocks(otherBlock, refBlock);
 
             if (copiedTuples > 0) {
               otherBlock.Tuples.RemoveRange(otherBlock.Tuples.Count - copiedTuples, copiedTuples);

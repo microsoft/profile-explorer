@@ -218,6 +218,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     }
   }
 
-  public void ReloadSettings() {
+  public Task ReloadSettings() {
+    return Task.CompletedTask;
   }
 }

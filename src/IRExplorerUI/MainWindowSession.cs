@@ -209,15 +209,15 @@ public partial class MainWindow : Window, ISession {
                                                           loadTask, options));
   }
 
-  public Task ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document) {
+  public async Task ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document) {
+    await CompilerInfo.ReloadSettings();
+
     foreach (var docHostInfo in sessionState_.DocumentHosts) {
       if (docHostInfo.DocumentHost.TextView != document) {
         docHostInfo.DocumentHost.Settings = newSettings;
+        await docHostInfo.DocumentHost.ReloadSettings();
       }
     }
-
-    CompilerInfo.ReloadSettings();
-    return Task.CompletedTask;
   }
 
   public async Task ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document) {
@@ -228,6 +228,21 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
+  public async Task ReloadSettings() {
+    await CompilerInfo.ReloadSettings();
+
+    if (!IsSessionStarted) {
+      return;
+    }
+
+    foreach (var docHostInfo in sessionState_.DocumentHosts) {
+      await docHostInfo.DocumentHost.ReloadSettings(true);
+    }
+
+    await ForEachPanelAsync(async (panel) => await panel.OnReloadSettings());
+    await HandleNewDiffSettings(App.Settings.DiffSettings, false, true);
+  }
+  
   public Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null) {
     if (IsInDiffMode && targetDiffDocument != null) {
       IRDocument diffDocument = null;

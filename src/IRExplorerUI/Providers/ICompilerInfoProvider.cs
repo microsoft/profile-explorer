@@ -27,7 +27,7 @@ public interface ICompilerInfoProvider {
   List<FunctionTaskDefinition> ScriptFunctionTasks { get; }
   string OpenFileFilter { get; }
   string OpenDebugFileFilter { get; }
-  void ReloadSettings();
+  Task ReloadSettings();
   bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section);
   Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section);
   Task HandleLoadedDocument(LoadedDocument document, string modulePath);

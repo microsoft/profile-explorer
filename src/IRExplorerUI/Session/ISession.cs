@@ -82,6 +82,7 @@ public interface ISession {
   Task SwitchActiveFunction(IRTextFunction function, bool handleProfiling = true);
   Task ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document);
   Task ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document);
+  Task ReloadSettings();
   void RegisterDetachedPanel(DraggablePopup panel);
   void UnregisterDetachedPanel(DraggablePopup panel);
   Task<bool> SaveSessionDocument(string filePath);
