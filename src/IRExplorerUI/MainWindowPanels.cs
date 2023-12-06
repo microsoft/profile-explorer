@@ -992,13 +992,14 @@ public partial class MainWindow : Window, ISession {
   }
 
   private bool RestoreDockLayout() {
-    if (!initialDockLayoutRestored_ || // Initial load and registration of active panel config.
-        App.Settings.WorkspaceOptions.RestoreDefaultActiveWorkspace()) {
+    if (App.Settings.WorkspaceOptions.RestoreDefaultActiveWorkspace() ||
+        !initialDockLayoutRestored_) { // Initial load and registration of active panel config.
       string dockLayoutFile = null;
       var activeWs = App.Settings.WorkspaceOptions.ActiveWorkspace;
 
       if (activeWs != null) {
         dockLayoutFile = activeWs.FilePath;
+        WorkspaceCombobox.SelectedIndex = activeWs.Order;
       }
       else {
         dockLayoutFile = App.GetDefaultDockLayoutFilePath();
