@@ -23,8 +23,8 @@ public partial class LightDocumentOptionsPanel : OptionsPanelBase {
 
   public bool SyntaxFileChanged { get; set; }
 
-  public override void Initialize(FrameworkElement parent) {
-    base.Initialize(parent);
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+    base.Initialize(parent, settings, session);
     settings_ = (DocumentSettings)Settings;
   }
 

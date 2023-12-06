@@ -437,6 +437,18 @@ public partial class MainWindow : Window, ISession {
         loadedDoc = await OpenBinaryDocument(filePath);
         failed = loadedDoc == null;
       }
+      else if (Utils.FileHasExtension(filePath, ".etl")) {
+        var profileSession = RecordingSession.FromFile(filePath);
+        var window = new ProfileLoadWindow(this, false, false, profileSession);
+        window.Owner = this;
+        var result = window.ShowDialog();
+        failed = !result.HasValue || !result.Value;
+
+        if(!failed) {
+          await SetupLoadedProfile();
+          return sessionState_.MainDocument;
+        }
+      }
     }
 
     if (loadedDoc == null && !failed) {

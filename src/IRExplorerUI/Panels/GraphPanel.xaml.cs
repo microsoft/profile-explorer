@@ -739,7 +739,8 @@ public partial class GraphPanel : ToolPanelControl {
                                Math.Min(GraphHost.ActualHeight, ExpressionGraphOptionsPanel.DefaultHeight));
       var position = new Point(GraphHost.ActualWidth - width, 0);
       graphOptionsPanel_ = new OptionsPanelHostWindow(new ExpressionGraphOptionsPanel(),
-                                                      position, width, height, GraphHost);
+                                                      position, width, height, GraphHost,
+                                                      Settings.Clone(), Session);
     }
     else {
       double width = Math.Max(FlowGraphOptionsPanel.MinimumWidth,
@@ -748,12 +749,12 @@ public partial class GraphPanel : ToolPanelControl {
                                Math.Min(GraphHost.ActualHeight, FlowGraphOptionsPanel.DefaultHeight));
       var position = new Point(GraphHost.ActualWidth - width, 0);
       graphOptionsPanel_ = new OptionsPanelHostWindow(new FlowGraphOptionsPanel(),
-                                                      position, width, height, GraphHost);
+                                                      position, width, height, GraphHost,
+                                                      Settings.Clone(), Session);
     }
 
     graphOptionsPanel_.PanelClosed += OptionsPanel_PanelClosed;
     graphOptionsPanel_.PanelReset += OptionsPanel_PanelReset;
-    graphOptionsPanel_.Settings = Settings.Clone();
     graphOptionsPanel_.IsOpen = true;
     optionsPanelVisible_ = true;
   }

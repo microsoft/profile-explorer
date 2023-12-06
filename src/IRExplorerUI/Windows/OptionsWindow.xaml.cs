@@ -6,11 +6,16 @@ using System.Windows;
 namespace IRExplorerUI;
 
 public partial class OptionsWindow : Window {
-  public OptionsWindow() {
+  public OptionsWindow(ISession session) {
     InitializeComponent();
-    DocumentOptionsPanel.Settings = App.Settings.DocumentSettings;
-    GraphOptionsPanel.Settings = App.Settings.FlowGraphSettings;
-    ExpressionGraphOptionsPanel.Settings = App.Settings.ExpressionGraphSettings;
-    DiffOptionsPanel.Settings = App.Settings.DiffSettings;
+    SummaryOptionsPanel.Initialize(this, App.Settings.SectionSettings, session);
+    DocumentOptionsPanel.Initialize(this, App.Settings.DocumentSettings, session);
+    GraphOptionsPanel.Initialize(this, App.Settings.FlowGraphSettings, session);
+    ExpressionGraphOptionsPanel.Initialize(this, App.Settings.ExpressionGraphSettings, session);
+    DiffOptionsPanel.Initialize(this, App.Settings.DiffSettings, session);
+
+    this.Closing += (sender, args) => {
+      App.SaveApplicationSettings();
+    };
   }
 }

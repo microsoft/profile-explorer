@@ -37,6 +37,19 @@
             TextWrapping="Wrap" />
         </Grid>
       </TabItem>
+      <TabItem Header="Summary">
+        <ScrollViewer
+          HorizontalScrollBarVisibility="Disabled"
+          VerticalScrollBarVisibility="Auto">
+          <options:SectionOptionsPanel
+            x:Name="SummaryOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="Visible" />
+        </ScrollViewer>
+      </TabItem>
       <TabItem Header="Document">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
