@@ -122,4 +122,8 @@ public partial class WorkspacesWindow : Window {
       Utils.ShowMessageBox($"Successfully imported {loadedCount} workspaces.", this);
     }
   }
+
+  private void CloseButton_Click(object sender, RoutedEventArgs e) {
+    Close();
+  }
 }

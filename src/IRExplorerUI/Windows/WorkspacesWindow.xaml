@@ -8,7 +8,7 @@
     Title="Manage Workspaces"
     Width="450"
     Height="250"
-    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
     ResizeMode="CanResizeWithGrip"
     ShowInTaskbar="False"
     SnapsToDevicePixels="True"
@@ -88,6 +88,7 @@
             Grid.Column="1"
             Margin="2,4,4,4">
             <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Height="24"
                 Padding="2"
                 HorizontalContentAlignment="Left"
@@ -98,10 +99,11 @@
                         Width="16"
                         Height="16"
                         Source="{StaticResource PlusIcon}" />
-                    <TextBlock Margin="4,0,0,0" Text="Save" />
+                    <TextBlock Margin="4,0,0,0" Text="New" />
                 </StackPanel>
             </Button>
             <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Height="24"
                 Margin="0,2,0,0"
                 Padding="2"
@@ -117,6 +119,7 @@
                 </StackPanel>
             </Button>
             <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Height="24"
                 Margin="0,2,0,0"
                 Padding="2"
@@ -131,6 +134,7 @@
                 </StackPanel>
             </Button>
             <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Height="24"
                 Margin="0,2,0,0"
                 Padding="2"
@@ -155,6 +159,7 @@
             Orientation="Horizontal"
             ToolTip="Restore the predefined workspaces">
             <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Height="24"
                 Padding="4,2,4,2"
                 HorizontalContentAlignment="Left"
@@ -163,11 +168,12 @@
                     <Image
                         Width="16"
                         Height="16"
-                        Source="{StaticResource ResetWidthIcon}" />
+                        Source="{StaticResource UndoIcon}" />
                     <TextBlock Margin="4,0,0,0" Text="Default" />
                 </StackPanel>
             </Button>
             <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Height="24"
                 Margin="2,0,0,0"
                 Padding="4,2,4,2"
@@ -183,6 +189,7 @@
                 </StackPanel>
             </Button>
             <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Height="24"
                 Margin="2,0,0,0"
                 Padding="4,2,4,2"
@@ -199,5 +206,17 @@
             </Button>
 
         </StackPanel>
+      
+      <Button
+        Grid.Row="1"
+        Grid.Column="1"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+        Height="24"
+        Margin="0,0,4,4"
+        Padding="4,2,4,2"
+        HorizontalContentAlignment="Center"
+        Content="Close"
+        Click="CloseButton_Click">
+      </Button>
     </Grid>
 </Window>
