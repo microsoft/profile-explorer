@@ -20,139 +20,6 @@ using IRExplorerUI.Profile;
 
 namespace IRExplorerUI;
 
-public class RecordingSessionEx : BindableObject {
-  private static readonly SortedList<double, Func<TimeSpan, string>> offsets =
-    new SortedList<double, Func<TimeSpan, string>> {
-      {0.75, x => $"{x.TotalSeconds:F0} seconds"},
-      {1.5, x => "a minute"},
-      {45, x => $"{x.TotalMinutes:F0} minutes"},
-      {90, x => "an hour"},
-      {1440, x => $"{x.TotalHours:F0} hours"},
-      {2880, x => "a day"},
-      {43200, x => $"{x.TotalDays:F0} days"},
-      {86400, x => "a month"},
-      {525600, x => $"{x.TotalDays / 30:F0} months"},
-      {1051200, x => "a year"},
-      {double.MaxValue, x => $"{x.TotalDays / 365:F0} years"}
-    };
-  private ProfileDataReport report_;
-  private bool isLoadedFile_;
-  private bool isNewSession_;
-  private string title_;
-  private string description_;
-
-  public RecordingSessionEx(ProfileDataReport report, bool isLoadedFile,
-                            bool isNewSession = false,
-                            string title = null, string description = null) {
-    report_ = report;
-    isLoadedFile_ = isLoadedFile;
-    isNewSession_ = isNewSession;
-    title_ = title;
-    description_ = description;
-  }
-
-  public ProfileDataReport Report => report_;
-
-  public bool IsNewSession {
-    get => isNewSession_;
-    set => SetAndNotify(ref isNewSession_, value);
-  }
-
-  public string Title {
-    get {
-      if (!string.IsNullOrEmpty(title_)) {
-        return title_;
-      }
-
-      if (isLoadedFile_) {
-        return report_.TraceInfo.TraceFilePath;
-      }
-
-      if (report_.SessionOptions.HasTitle) {
-        return report_.SessionOptions.Title;
-      }
-
-      if (report_.IsAttachToProcessSession) {
-        return $"Attached to {report_.Process.Name}";
-      }
-
-      if (Report.IsStartProcessSession) {
-        return Utils.TryGetFileName(report_.SessionOptions.ApplicationPath);
-      }
-
-      return null;
-    }
-    set => SetAndNotify(ref title_, value);
-  }
-
-  public string ToolTip {
-    get {
-      if (report_ == null) {
-        return null;
-      }
-
-      if (isLoadedFile_) {
-        return report_?.TraceInfo.TraceFilePath;
-      }
-
-      if (report_.IsStartProcessSession) {
-        return $"{report_?.SessionOptions.ApplicationPath} {report_?.SessionOptions.ApplicationArguments}";
-      }
-
-      return null;
-    }
-  }
-
-  public string Description {
-    get {
-      if (!string.IsNullOrEmpty(description_)) {
-        return description_;
-      }
-
-      if (!IsNewSession) {
-        if (isLoadedFile_) {
-          return $"Process: {report_?.Process.ImageFileName}";
-        }
-
-        if (report_.IsAttachToProcessSession) {
-          return $"Id: {report_.Process.ProcessId}";
-        }
-
-        if (report_.IsStartProcessSession) {
-          return $"Args: {report_.SessionOptions.ApplicationArguments}";
-        }
-      }
-
-      return null;
-    }
-    set => SetAndNotify(ref description_, value);
-  }
-
-  public bool ShowDescription {
-    get {
-      if (!string.IsNullOrEmpty(description_)) {
-        return true;
-      }
-
-      if (!IsNewSession) {
-        return !string.IsNullOrEmpty(isLoadedFile_ ? report_?.Process.ImageFileName
-                                       : report_.SessionOptions.ApplicationArguments);
-      }
-
-      return false;
-    }
-  }
-
-  public string Time => IsNewSession ? ""
-    : $"{report_.TraceInfo.ProfileStartTime.ToShortDateString()}, {ToRelativeDate(report_.TraceInfo.ProfileStartTime)}";
-
-  public static string ToRelativeDate(DateTime input) {
-    var x = DateTime.Now - input;
-    x = new TimeSpan(Math.Abs(x.Ticks));
-    return offsets.First(n => x.TotalMinutes < n.Key).Value(x) + " ago";
-  }
-}
-
 public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private CancelableTaskInstance loadTask_;
   private bool isLoadingProfile_;
@@ -167,7 +34,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private List<ProcessSummary> selectedProcSummary_;
   private List<ProcessSummary> recoredProcSummaries_;
   private bool windowClosed_;
-  private RecordingSessionEx currentSession_;
+  private RecordingSession currentSession_;
+  private RecordingSession loadedSession_;
   private int enabledPerfCounters_;
   private ICollectionView perfCountersFilter_;
   private ICollectionView metricsFilter_;
@@ -175,13 +43,15 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private string profileFilePath_;
   private string binaryFilePath_;
 
-  public ProfileLoadWindow(ISession session, bool recordMode, bool isOnLaunch = false) {
+  public ProfileLoadWindow(ISession session, bool recordMode, bool isOnLaunch = false,
+                           RecordingSession loadedSession = null) {
     InitializeComponent();
     DataContext = this;
     Session = session;
     loadTask_ = new CancelableTaskInstance(false);
     IsRecordMode = recordMode;
     IsOnLaunch = isOnLaunch;
+    loadedSession_ = loadedSession;
 
     if (IsRecordMode) {
       Title = "Record profile trace";
@@ -341,22 +211,22 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void SetupSessionList() {
-    var sessionList = new List<RecordingSessionEx>();
+    var sessionList = new List<RecordingSession>();
 
     if (IsRecordMode) {
-      sessionList.Add(new RecordingSessionEx(null, false, true,
+      sessionList.Add(new RecordingSession(null, false, true,
                                              "Record", "Start a new session"));
 
       foreach (var prevSession in Options.PreviousRecordingSessions) {
-        sessionList.Add(new RecordingSessionEx(prevSession, false));
+        sessionList.Add(new RecordingSession(prevSession, false));
       }
     }
     else {
-      sessionList.Add(new RecordingSessionEx(null, false, true,
+      sessionList.Add(new RecordingSession(null, false, true,
                                              "Open", "Load a trace"));
 
       foreach (var prevSession in Options.PreviousLoadedSessions) {
-        sessionList.Add(new RecordingSessionEx(prevSession, true));
+        sessionList.Add(new RecordingSession(prevSession, true));
       }
     }
 
@@ -366,6 +236,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void ProfileLoadWindow_ContentRendered(object sender, EventArgs e) {
+    //? TODO: Use CreateSessionFromCommandLineArgs
     if (IsOnLaunch) {
       var args = Environment.GetCommandLineArgs();
 
@@ -388,6 +259,9 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
         LoadProfileFromArgs(traceFilePath, symbolPath, processId, imageFileName);
       }
+    }
+    else if (loadedSession_ != null) {
+      SwitchCurrentSession(loadedSession_);
     }
   }
 
@@ -433,17 +307,17 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private async void LoadButton_Click(object sender, RoutedEventArgs e) {
-    await OpenFilesAndComplete();
+    await OpenFilesAndComplete(symbolOptions_);
   }
 
-  private async Task OpenFilesAndComplete() {
-    if (await OpenFiles() && !windowClosed_) {
+  private async Task OpenFilesAndComplete(SymbolFileSourceOptions symbolOptions) {
+    if (await OpenFiles(symbolOptions) && !windowClosed_) {
       DialogResult = true;
       Close();
     }
   }
 
-  private async Task<bool> OpenFiles() {
+  private async Task<bool> OpenFiles(SymbolFileSourceOptions symbolOptions) {
     ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
     BinaryFilePath = Utils.CleanupPath(BinaryFilePath);
 
@@ -471,20 +345,21 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     var processIds = selectedProcSummary_.ConvertAll(proc => proc.Process.ProcessId);
 
     if (IsRecordMode) {
-      report.SessionOptions = recordingOptions_.Clone();
-      var binSearchOptions = symbolOptions_.WithSymbolPaths(recordingOptions_.ApplicationPath);
+      report.RecordingSessionOptions = recordingOptions_.Clone();
+      symbolOptions = symbolOptions_.WithSymbolPaths(recordingOptions_.ApplicationPath);
 
       if (recordingOptions_.HasWorkingDirectory) {
-        binSearchOptions = binSearchOptions.WithSymbolPaths(recordingOptions_.WorkingDirectory);
+        symbolOptions = symbolOptions.WithSymbolPaths(recordingOptions_.WorkingDirectory);
       }
 
       success = await Session.LoadProfileData(recordedProfile_, processIds,
-                                              options_, binSearchOptions, report,
+                                              options_, symbolOptions, report,
                                               ProfileLoadProgressCallback, task);
     }
     else {
+      symbolOptions = symbolOptions_.Clone();
       success = await Session.LoadProfileData(ProfileFilePath, processIds,
-                                              options_, symbolOptions_, report,
+                                              options_, symbolOptions, report,
                                               ProfileLoadProgressCallback, task);
     }
 
@@ -820,7 +695,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void SessionReportButton_Click(object sender, RoutedEventArgs e) {
-    var sessionEx = ((Button)sender).DataContext as RecordingSessionEx;
+    var sessionEx = ((Button)sender).DataContext as RecordingSession;
     var report = sessionEx?.Report;
 
     if (report != null) {
@@ -829,7 +704,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void SessionRemoveButton_Click(object sender, RoutedEventArgs e) {
-    var sessionEx = ((Button)sender).DataContext as RecordingSessionEx;
+    var sessionEx = ((Button)sender).DataContext as RecordingSession;
     var report = sessionEx?.Report;
 
     if (report != null) {
@@ -855,18 +730,18 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private async void LoadProfileFromArgs(string traceFilePath, string symbolPath, int processId, string imageFileName) {
     ProfileFilePath = traceFilePath;
     BinaryFilePath = imageFileName;
-    symbolOptions_.InsertSymbolPath(symbolPath);
+    var symbolOptions = symbolOptions_.WithSymbolPaths(symbolPath);
 
     ProfileProcess process = new ProfileProcess(processId, imageFileName);
     selectedProcSummary_ = new List<ProcessSummary>() {
                 new ProcessSummary(process, TimeSpan.Zero)
             };
 
-    await OpenFilesAndComplete();
+    await OpenFilesAndComplete(symbolOptions);
   }
 
   private async void SessionList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
-    var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
+    var sessionEx = SessionList.SelectedItem as RecordingSession;
 
     if (sessionEx?.Report == null) {
       return;
@@ -879,18 +754,22 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       await StartRecordingSession();
     }
     else {
-      await OpenFilesAndComplete();
+      await OpenFilesAndComplete(symbolOptions_);
     }
   }
 
   private void SessionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-    var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
+    var sessionEx = SessionList.SelectedItem as RecordingSession;
 
     if (sessionEx == null) {
       return;
     }
 
-    var report = sessionEx.Report;
+    SwitchCurrentSession(sessionEx);
+  }
+
+  private void SwitchCurrentSession(RecordingSession session) {
+    var report = session.Report;
 
     if (IsRecordMode && currentSession_.IsNewSession) {
       SaveCurrentOptions();
@@ -911,7 +790,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     UpdatePerfCounterList();
-    currentSession_ = sessionEx;
+    currentSession_ = session;
   }
 
   private void LoadPreviousSession(ProfileDataReport report) {
@@ -923,7 +802,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     if (IsRecordMode) {
-      RecordingOptions = report.SessionOptions.Clone();
+      RecordingOptions = report.RecordingSessionOptions.Clone();
     }
     else {
       ProfileFilePath = report.TraceInfo.TraceFilePath;
@@ -1039,7 +918,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void DefaultSymbolsButton_OnClick(object sender, RoutedEventArgs e) {
-    SymbolOptions.ResetDefaultSymbolPath();
+    SymbolOptions.ResetDefaultSymbolPath(false);
+    OnPropertyChange(nameof(SymbolOptions));
+  }
+
+  private void DefaultPublicSymbolsButton_OnClick(object sender, RoutedEventArgs e) {
+    SymbolOptions.ResetDefaultSymbolPath(true);
     OnPropertyChange(nameof(SymbolOptions));
   }
 }

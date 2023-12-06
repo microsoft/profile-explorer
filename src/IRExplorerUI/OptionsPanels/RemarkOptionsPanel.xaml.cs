@@ -31,8 +31,8 @@ public partial class RemarkOptionsPanel : OptionsPanelBase {
     kindCheckboxes_.Add(TraceCheckbox);
   }
 
-  public override void Initialize(FrameworkElement parent) {
-    base.Initialize(parent);
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+    base.Initialize(parent, settings, session);
     PopulateCategoryList();
   }
 

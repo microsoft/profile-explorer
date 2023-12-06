@@ -543,8 +543,7 @@
                         </MenuItem>
                         <MenuItem
                             Click="MenuItem_Click_6"
-                            Header="Settings"
-                            IsEnabled="False">
+                            Header="Settings">
                             <MenuItem.Icon>
                                 <Image
                                     Width="16"
@@ -979,24 +978,33 @@
                                 </avalonDock:LayoutAnchorable>
 
                                 <avalonDock:LayoutAnchorable
-                                    Title="Loop Graph"
-                                    ContentId="LoopGraph"
-                                    IsActiveChanged="LayoutAnchorable_IsActiveChanged"
-                                    IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                                    <Grid>
-                                        <Button Content="Placeholder" />
-                                    </Grid>
+                                  x:Name="HelpPanelHost"
+                                  Title="Help"
+                                  ContentId="Help"
+                                  IsActiveChanged="LayoutAnchorable_IsActiveChanged"
+                                  IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
+                                  <panels:HelpPanel x:Name="HelpPanel" />
                                 </avalonDock:LayoutAnchorable>
 
-                                <avalonDock:LayoutAnchorable
-                                    Title="Control Dependence Graph"
-                                    ContentId="ControlDependenceGraph"
-                                    IsActiveChanged="LayoutAnchorable_IsActiveChanged"
-                                    IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                                    <Grid>
-                                        <Button Content="Placeholder" />
-                                    </Grid>
-                                </avalonDock:LayoutAnchorable>
+                                <!-- <avalonDock:LayoutAnchorable -->
+                                <!--     Title="Loop Graph" -->
+                                <!--     ContentId="LoopGraph" -->
+                                <!--     IsActiveChanged="LayoutAnchorable_IsActiveChanged" -->
+                                <!--     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged"> -->
+                                <!--     <Grid> -->
+                                <!--         <Button Content="Placeholder" /> -->
+                                <!--     </Grid> -->
+                                <!-- </avalonDock:LayoutAnchorable> -->
+                                <!-- -->
+                                <!-- <avalonDock:LayoutAnchorable -->
+                                <!--     Title="Control Dependence Graph" -->
+                                <!--     ContentId="ControlDependenceGraph" -->
+                                <!--     IsActiveChanged="LayoutAnchorable_IsActiveChanged" -->
+                                <!--     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged"> -->
+                                <!--     <Grid> -->
+                                <!--         <Button Content="Placeholder" /> -->
+                                <!--     </Grid> -->
+                                <!-- </avalonDock:LayoutAnchorable> -->
 
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>
