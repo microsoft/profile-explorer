@@ -465,7 +465,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   public async Task ReloadSettings(bool force = false) {
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, force);
-
+    UpdateColumnsList();
+    
     if (force) {
       TextView.Initalize(settings_, session_);
       SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
