@@ -62,8 +62,8 @@ public class SymbolFileSourceOptions : SettingsBase {
   public bool HasSymbolCachePath => !string.IsNullOrEmpty(SymbolCachePath);
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
 
-  public void ResetDefaultSymbolPath(bool publicSymServer) {
-    SymbolSourcePath = publicSymServer ? DefaultPublicSymbolSourcePath : DefaultSymbolSourcePath;
+  public void ResetDefaultSymbolPath(bool privateSymServer) {
+    SymbolSourcePath = privateSymServer ? DefaultSymbolSourcePath : DefaultPublicSymbolSourcePath;
   }
 
   public bool HasSymbolPath(string path) {

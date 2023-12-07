@@ -78,6 +78,7 @@ public class ChildFunctionEx : SearchableProfileItem, ITreeModel {
     base(funcNameFormatter) {
     Children = new List<ChildFunctionEx>();
     Kind = kind;
+    Owner = owner;
   }
 
   public CallTreePanel Owner { get; set; }

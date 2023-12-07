@@ -114,15 +114,12 @@ public partial class HelpPanel : ToolPanelControl {
   }
 
   public static async Task DisplayPanelHelp(ToolPanelKind kind, ISession session) {
+    await session.ShowPanel(ToolPanelKind.Help);
     var panel = session.FindPanel(ToolPanelKind.Help) as HelpPanel;
 
-    if (panel == null) {
-      panel = new HelpPanel();
-      session.DisplayFloatingPanel(panel);
+    if (panel != null) {
+      await panel.LoadPanelHelp(kind);
     }
-
-    session.ActivatePanel(panel);
-    await panel.LoadPanelHelp(kind);
   }
 
   private async Task NavigateToTopic(HelpTopic topic) {

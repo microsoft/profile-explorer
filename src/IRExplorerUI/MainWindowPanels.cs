@@ -565,7 +565,9 @@ public partial class MainWindow : Window, ISession {
         return commandFocusPanelInfo;
       }
 
-      return list[^1];
+      if (list.Count > 0) {
+        return list[^1];
+      }
     }
 
     return null;
@@ -777,6 +779,12 @@ public partial class MainWindow : Window, ISession {
   }
 
   private PanelHostInfo RegisterPanel(IToolPanel panel, LayoutAnchorable host) {
+    var existingHost = FindPanelHost(panel);
+    
+    if(existingHost != null) {
+      return existingHost;
+    }
+    
     if (!panelHostSet_.TryGetValue(panel.PanelKind, out var list)) {
       list = new List<PanelHostInfo>();
     }
@@ -1318,11 +1326,16 @@ public partial class MainWindow : Window, ISession {
     await ShowPanel(panelKind);
   }
 
-  private async Task ShowPanel(ToolPanelKind panelKind) {
+  public async Task ShowPanel(ToolPanelKind panelKind) {
     // Panel hosts must be found at runtime because of deserialization.
+    RegisterDefaultToolPanels();
     var panelHost = FindPanelHostForKind(panelKind);
 
     if (panelHost != null) {
+      if (panelHost.IsAutoHidden) {
+        panelHost.ToggleAutoHide();
+      }
+      
       panelHost.Show();
       panelHost.IsActive = true;
     }
