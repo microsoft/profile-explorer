@@ -18,6 +18,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using IRExplorerUI.Controls;
 using Microsoft.Web.WebView2.Core;
 
 namespace IRExplorerUI.Panels;
@@ -72,6 +73,15 @@ public partial class HelpPanel : ToolPanelControl {
   }
 
   private async Task<bool> DownloadHelpIndex() {
+#if DEBUG
+    // Open local index file in debug builds.
+    helpIndex_ = HelpIndex.DeserializeFromFile(App.GetHelpIndexFilePath());
+
+    if (helpIndex_ != null) {
+      TopicsTree.ItemsSource = helpIndex_.Topics;
+    }
+#else
+    // Download index file from web location.
     if (helpIndex_ != null) {
       return true;
     }
@@ -95,6 +105,7 @@ public partial class HelpPanel : ToolPanelControl {
     catch (Exception ex) {
       Trace.WriteLine($"Failed to download file: {ex.Message}");
     }
+#endif
 
     return helpIndex_ != null;
   }
@@ -180,18 +191,68 @@ public partial class HelpPanel : ToolPanelControl {
     Browser.CoreWebView2.NewWindowRequested += Browser_NewWindowRequested;
   }
 
-  private void Browser_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e) {
+  private async void Browser_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e) {
     try {
+      if (e.Uri.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+          e.Uri.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)) {
+        // Try to parse out an initial popup size from the image name.
+        if (!TryExtractImageSize(e.Uri, out int width, out int height)) {
+          width = 800;
+          height = 600;
+        }
+
+        width = (int)Math.Min(width, System.Windows.SystemParameters.PrimaryScreenWidth - 50);
+        height = (int)Math.Min(height, System.Windows.SystemParameters.PrimaryScreenHeight - 50);
+        ShowImagePreview(e.Uri, width, height);
+      }
+      else {
+        // Open in new external browser window.
+        var psi = new ProcessStartInfo() {
+          FileName = e.Uri,
+          UseShellExecute = true
+        };
+        Process.Start(psi);
+      }
       e.Handled = true;
-      var psi = new ProcessStartInfo() {
-        FileName = e.Uri,
-        UseShellExecute = true
-      };
-      Process.Start(psi);
     }
     catch (Exception ex) {
       Trace.WriteLine($"Failed to start external browser: {ex.Message}");
     }
+  }
+
+  private static void ShowImagePreview(string url, int width, int height) {
+    var window = new Window();
+    window.WindowStyle = WindowStyle.SingleBorderWindow;
+    window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+    window.ResizeMode = ResizeMode.CanResizeWithGrip;
+    var browser = new Microsoft.Web.WebView2.Wpf.WebView2();
+    window.Content = browser;
+    window.Width = width;
+    window.Height = height;
+    window.Owner = App.Current.MainWindow;
+    window.Title = "Image Preview";
+    browser.Source = new Uri(url);
+    window.Show();
+  }
+
+  private bool TryExtractImageSize(string url, out int width, out int height) {
+    // Try parse file_widthxheight.extension, like file_800x600.gif.
+    width = height = 0;
+    int start = url.LastIndexOf('_');
+    int end = url.LastIndexOf('.');
+
+    if (start == -1 || end <= start) {
+      return false;
+    }
+
+    int middle = url.IndexOf('x', start);
+
+    if (middle == -1) {
+      return false;
+    }
+
+    return int.TryParse(url.Substring(start + 1, middle - start - 1), out width) &&
+           int.TryParse(url.Substring(middle + 1, end - middle - 1), out height);
   }
 
   private void ZoomInButton_Click(object sender, RoutedEventArgs e) {

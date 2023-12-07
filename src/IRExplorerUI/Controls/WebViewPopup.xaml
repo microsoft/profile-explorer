@@ -68,8 +68,7 @@
         Grid.Row="1"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
-        Source="http://www.irexplorer.com"
-        x:Name="TextView" />
+        x:Name="Browser" />
       <controls:ResizeGrip
         Grid.Column="2"
         Grid.Row="1"
