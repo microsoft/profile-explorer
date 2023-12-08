@@ -274,9 +274,9 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         break;
       }
       case FlameGraphStateKind.ChangeRootNode: {
+        RootNodeCleared?.Invoke(this, EventArgs.Empty);
         await ChangeRootNode(state.Node);
         GraphViewer.RestoreFixedMarkedNodes();
-        RootNodeCleared?.Invoke(this, EventArgs.Empty);
         break;
       }
       default: {

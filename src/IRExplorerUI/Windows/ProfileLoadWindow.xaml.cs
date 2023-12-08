@@ -383,6 +383,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       }
       else {
         App.Settings.AddLoadedProfileSession(report);
+        App.Settings.AddRecentFile(report.TraceInfo.TraceFilePath);
       }
 
       App.SaveApplicationSettings();

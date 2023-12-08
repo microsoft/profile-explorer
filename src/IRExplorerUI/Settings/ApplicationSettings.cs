@@ -102,6 +102,10 @@ public class ApplicationSettings {
     RecentFiles.Insert(0, path);
   }
 
+  public void RemoveRecentFile(string path) {
+    RecentFiles.Remove(path);
+  }
+
   public void ClearRecentFiles() {
     RecentFiles.Clear();
   }
@@ -140,6 +144,10 @@ public class ApplicationSettings {
     // Also add both files to the recent file list.
     AddRecentFile(basePath);
     AddRecentFile(diffPath);
+  }
+
+  public void RemoveRecentComparedFiles(Tuple<string, string> pair) {
+    RecentComparedFiles.Remove(pair);
   }
 
   public void ClearRecentComparedFiles() {
@@ -181,7 +189,7 @@ public class ApplicationSettings {
 
   public void CompilerIRSwitched(string irName, IRMode irMode) {
     //? TODO: Hack to get the default IR style picked when the IR changes
-    //? Should remember a last {ir -> ir style name} and restore based on that 
+    //? Should remember a last {ir -> ir style name} and restore based on that
     DocumentSettings.SyntaxHighlightingName = null;
     App.ReloadSyntaxHighlightingFiles(irName);
   }
