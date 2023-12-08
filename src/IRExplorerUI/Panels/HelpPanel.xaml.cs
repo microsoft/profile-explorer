@@ -59,6 +59,8 @@ public class HelpIndex {
 public partial class HelpPanel : ToolPanelControl {
   private HelpIndex helpIndex_;
   private HelpTopic currentTopic_;
+  private bool browserInitialized_;
+  private Window videoWindow_;
 
   public HelpPanel() {
     InitializeComponent();
@@ -141,10 +143,44 @@ public partial class HelpPanel : ToolPanelControl {
     }
   }
 
-  private async Task NavigateToURL(string url) {
+  private async Task InitializeBrowser() {
+    if(browserInitialized_) {
+      return;
+    }
+
     // Force light mode for the WebView2 control for now.
     await Browser.EnsureCoreWebView2Async();
+
+    // Handle a video/image entering full-screen mode
+    // by making a new maximized window to which the browser control
+    // is moved. When exiting full-screen mode, the browser is moved
+    // back to the panel and the window is closed.
+    Browser.CoreWebView2.ContainsFullScreenElementChanged += (sender, args) => {
+      if (Browser.CoreWebView2.ContainsFullScreenElement) {
+        videoWindow_ = new Window();
+        videoWindow_.WindowState = WindowState.Maximized;
+        videoWindow_.WindowStyle = WindowStyle.None;
+        videoWindow_.ResizeMode = ResizeMode.NoResize;
+        videoWindow_.ShowInTaskbar = false;
+        BrowserHost.Children.Remove(Browser);
+        videoWindow_.Content = Browser;
+        videoWindow_.Show();
+      }
+      else {
+        if (videoWindow_ != null) {
+          videoWindow_.Content = null;
+          videoWindow_.Close();
+          BrowserHost.Children.Add(Browser);
+        }
+      }
+    };
+
     Browser.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
+    browserInitialized_ = true;
+  }
+
+  private async Task NavigateToURL(string url) {
+    await InitializeBrowser();
     Browser.Source = new Uri(url);
   }
 
@@ -190,66 +226,17 @@ public partial class HelpPanel : ToolPanelControl {
 
   private async void Browser_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e) {
     try {
-      if (e.Uri.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-          e.Uri.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)) {
-        // Try to parse out an initial popup size from the image name.
-        if (!TryExtractImageSize(e.Uri, out int width, out int height)) {
-          width = 800;
-          height = 600;
-        }
-
-        width = (int)Math.Min(width, System.Windows.SystemParameters.PrimaryScreenWidth - 50);
-        height = (int)Math.Min(height, System.Windows.SystemParameters.PrimaryScreenHeight - 50);
-        ShowImagePreview(e.Uri, width, height);
-      }
-      else {
-        // Open in new external browser window.
-        var psi = new ProcessStartInfo() {
-          FileName = e.Uri,
-          UseShellExecute = true
-        };
-        Process.Start(psi);
-      }
+      // Open in new external browser window.
+      var psi = new ProcessStartInfo() {
+        FileName = e.Uri,
+        UseShellExecute = true
+      };
+      Process.Start(psi);
       e.Handled = true;
     }
     catch (Exception ex) {
       Trace.WriteLine($"Failed to start external browser: {ex.Message}");
     }
-  }
-
-  private static void ShowImagePreview(string url, int width, int height) {
-    var window = new Window();
-    window.WindowStyle = WindowStyle.SingleBorderWindow;
-    window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-    window.ResizeMode = ResizeMode.CanResizeWithGrip;
-    var browser = new Microsoft.Web.WebView2.Wpf.WebView2();
-    window.Content = browser;
-    window.Width = width;
-    window.Height = height;
-    window.Owner = App.Current.MainWindow;
-    window.Title = "Image Preview";
-    browser.Source = new Uri(url);
-    window.Show();
-  }
-
-  private bool TryExtractImageSize(string url, out int width, out int height) {
-    // Try parse file_widthxheight.extension, like file_800x600.gif.
-    width = height = 0;
-    int start = url.LastIndexOf('_');
-    int end = url.LastIndexOf('.');
-
-    if (start == -1 || end <= start) {
-      return false;
-    }
-
-    int middle = url.IndexOf('x', start);
-
-    if (middle == -1) {
-      return false;
-    }
-
-    return int.TryParse(url.Substring(start + 1, middle - start - 1), out width) &&
-           int.TryParse(url.Substring(middle + 1, end - middle - 1), out height);
   }
 
   private void ZoomInButton_Click(object sender, RoutedEventArgs e) {
