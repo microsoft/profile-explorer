@@ -130,6 +130,20 @@
           <TextBlock Text="TODO"></TextBlock>
         </ScrollViewer>
       </TabItem>
+      <TabItem Header="Source File" IsEnabled="False">
+        <ScrollViewer
+          HorizontalScrollBarVisibility="Disabled"
+          VerticalScrollBarVisibility="Auto">
+          <TextBlock Text="TODO"></TextBlock>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="Advanced" IsEnabled="False">
+        <ScrollViewer
+          HorizontalScrollBarVisibility="Disabled"
+          VerticalScrollBarVisibility="Auto">
+          <TextBlock Text="TODO"></TextBlock>
+        </ScrollViewer>
+      </TabItem>
     </TabControl>
 
     <Grid Grid.Row="1" Margin="8,4,8,4">
@@ -142,7 +156,7 @@
 
       <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2">
       <Button
-        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+
         x:Name="ResetButton"
         Click="ResetButton_OnClick"
         Height="24"
@@ -158,11 +172,12 @@
         </StackPanel>
       </Button>
       <Button
-        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+
         Height="24"
         Margin="2,0,0,0"
         Padding="4,2,4,2"
-        IsEnabled="False"
+        x:Name="ImportButton"
+        Click="ImportButton_OnClick"
         HorizontalContentAlignment="Left"
         ToolTip="Import all settings from an exported ZIP file">
         <StackPanel Orientation="Horizontal">
@@ -174,11 +189,12 @@
         </StackPanel>
       </Button>
       <Button
-        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+
         Height="24"
         Margin="2,0,0,0"
         Padding="4,2,4,2"
-        IsEnabled="False"
+        x:Name="ExportButton"
+        Click="ExportButton_OnClick"
         HorizontalContentAlignment="Left"
         ToolTip="Export all settings to a ZIP file">
         <StackPanel Orientation="Horizontal">
@@ -197,7 +213,7 @@
         Height="24"
         VerticalAlignment="Top"
         Margin="0,0,4,0"
-        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+
         BorderThickness="1,1,1,1"
         Content="Apply" />
       <Button
@@ -206,7 +222,7 @@
         Grid.Column="3"
         Height="24"
         VerticalAlignment="Top"
-        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+
         BorderThickness="1,1,1,1"
         Content="Close" />
     </Grid>

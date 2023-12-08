@@ -105,7 +105,7 @@ public partial class WorkspacesWindow : Window {
   }
 
   private void ImportButton_Click(object sender, RoutedEventArgs e) {
-    string path = Utils.ShowOpenFileDialog("ZIP archive|*.zip", "*.zip", "Export workspaces");
+    string path = Utils.ShowOpenFileDialog("ZIP archive|*.zip", "*.zip", "Import workspaces");
 
     if (!string.IsNullOrEmpty(path)) {
       int loadedCount = 0;

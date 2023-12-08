@@ -291,6 +291,10 @@ public class WorkspaceSettings {
 
   public static WorkspaceSettings LoadFromArchive(string filePath, out int loadedCount) {
     try {
+      if (File.Exists(filePath)) {
+        File.Delete(filePath);
+      }
+
       var tempPath = Directory.CreateTempSubdirectory("irx");
       ZipFile.ExtractToDirectory(filePath, tempPath.FullName, true);
       var settings = DeserializeWorkspaceSettings(Path.Combine(tempPath.FullName, SettingsFileName));
