@@ -226,7 +226,7 @@
             VerticalAlignment="Center"
             FontWeight="Medium"
             Foreground="Indigo"
-            Text="Threads: "
+            Text="Threads:"
             Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
           <TextBlock
             Margin="4,0,0,0"
@@ -241,7 +241,7 @@
             Command="local:CallTreeCommand.RemoveThreadFilters"
             CommandTarget="{Binding ElementName=ActivityView}"
             TabIndex="5"
-            ToolTip="Remove thread exclusions"
+            ToolTip="Remove thread filters"
             Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}">
             <Image
               Width="16"

@@ -11,7 +11,7 @@
   UseLayoutRounding="True"
   mc:Ignorable="d">
   <Border
-    Background="#BFD9EFFF"
+    Background="#FFD9EFFF"
     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
     BorderThickness="2,2,2,2">
     <DockPanel LastChildFill="True">
@@ -143,7 +143,7 @@
                       Padding="1"
                       Background="Transparent"
                       BorderThickness="0"
-                      ToolTip="Remove session from history">
+                      ToolTip="Remove entry from history">
                       <Image Height="14" Width="14" Source="{StaticResource ClearIcon}" />
                     </Button>
                     <StackPanel.Style>
@@ -161,6 +161,11 @@
                 </DockPanel>
               </DataTemplate>
             </ListBox.ItemTemplate>
+            <ListBox.ItemContainerStyle>
+              <Style TargetType="ListBoxItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+              </Style>
+            </ListBox.ItemContainerStyle>
           </ListBox>
 
           <DockPanel Margin="0,16,0,0" LastChildFill="False">
@@ -223,7 +228,7 @@
                       Padding="1"
                       Background="Transparent"
                       BorderThickness="0"
-                      ToolTip="Remove session from history">
+                      ToolTip="Remove entry from history">
                       <Image Height="14" Width="14" Source="{StaticResource ClearIcon}" />
                     </Button>
                     <StackPanel.Style>
