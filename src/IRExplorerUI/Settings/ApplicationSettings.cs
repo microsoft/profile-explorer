@@ -3,6 +3,9 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
@@ -223,5 +226,44 @@ public class ApplicationSettings {
     }
 
     list.Insert(0, report);
+  }
+
+  public bool SaveToArchive(string filePath) {
+    try {
+      if (File.Exists(filePath)) {
+        File.Delete(filePath);
+      }
+
+      var appDir = App.GetSettingsDirectoryPath();
+      ZipFile.CreateFromDirectory(appDir, filePath, CompressionLevel.Optimal, false);
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to save settings to {filePath}: {ex.Message}");
+      return false;
+    }
+  }
+
+  public bool LoadFromArchive(string filePath) {
+    try {
+      // Extract first to a temp dir.
+      var tempPath = Directory.CreateTempSubdirectory("irx");
+      ZipFile.ExtractToDirectory(filePath, tempPath.FullName, true);
+
+      if (!App.ContainsSettingsFile(tempPath.FullName)) {
+        Trace.TraceError($"Invalid settings archive: {filePath}");
+        return false;
+      }
+
+      // Remove current settings and move the new ones in place.
+      var appDir = App.GetSettingsDirectoryPath();
+      Directory.Delete(appDir, true);
+      Directory.Move(tempPath.FullName, appDir);
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to load settings from {filePath}: {ex.Message}");
+      return false;
+    }
   }
 }

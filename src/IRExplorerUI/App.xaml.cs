@@ -461,7 +461,7 @@ public partial class App : Application {
     }
   }
 
-  private static string GetSettingsDirectoryPath() {
+  public static string GetSettingsDirectoryPath() {
     string path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     return Path.Combine(path, SettingsPath);
   }
@@ -513,6 +513,10 @@ public partial class App : Application {
 
   private static string GetSettingsFilePath() {
     return GetSettingsFilePath(SettingsFile);
+  }
+
+  public static bool ContainsSettingsFile(string dirPath) {
+    return File.Exists(Path.Combine(dirPath, SettingsFile));
   }
 
   private static string GetSyntaxFileName(string filePath) {
@@ -590,6 +594,18 @@ public partial class App : Application {
     }
 
     // Enable file output for tracing.
+    OpenLogFile();
+
+    if (!LoadApplicationSettings()) {
+      // Failed to load settings, reset them.
+      Utils.TryDeleteFile(GetSettingsFilePath());
+      Utils.TryDeleteFile(GetDefaultDockLayoutFilePath());
+      Settings = new ApplicationSettings();
+      IsFirstRun = true;
+    }
+  }
+
+  public static void OpenLogFile() {
     try {
       string traceFilePath = GetTraceFilePath();
 
@@ -606,13 +622,25 @@ public partial class App : Application {
     catch (Exception ex) {
       Debug.WriteLine($"Failed to create trace file: {ex}");
     }
+  }
 
-    if (!LoadApplicationSettings()) {
-      // Failed to load settings, reset them.
-      Utils.TryDeleteFile(GetSettingsFilePath());
-      Utils.TryDeleteFile(GetDefaultDockLayoutFilePath());
-      Settings = new ApplicationSettings();
-      IsFirstRun = true;
+  public static void CloseLogFile() {
+    try {
+      Trace.Flush();
+
+      foreach (TraceListener listener in Trace.Listeners) {
+        listener.Close();
+      }
+
+      Trace.Close();
     }
+    catch (Exception ex) {
+      Debug.WriteLine($"Failed to close trace file: {ex}");
+    }
+  }
+
+  public static void Restart() {
+    Process.Start(Process.GetCurrentProcess().MainModule.FileName);
+    Application.Current.Shutdown();
   }
 }
