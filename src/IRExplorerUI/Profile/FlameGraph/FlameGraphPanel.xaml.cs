@@ -250,11 +250,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private void GraphHostOnRootNodeCleared(object sender, EventArgs e) {
     HasRootNode = false;
+    RootNode = null;
   }
 
-  private void GraphHostOnRootNodeChanged(object sender, FlameGraphNode e) {
+  private void GraphHostOnRootNodeChanged(object sender, FlameGraphNode node) {
     HasRootNode = true;
-    RootNode = e;
+    RootNode = node;
   }
 
   public FlameGraphNode RootNode {

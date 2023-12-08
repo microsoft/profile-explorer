@@ -105,4 +105,18 @@ public partial class StartPagePanel : UserControl {
       InvokeOpenRecentDocument();
     }
   }
+
+  private void RemoveButton_OnClick(object sender, RoutedEventArgs e) {
+    if (((Button)sender).DataContext is string item) {
+      App.Settings.RemoveRecentFile(item);
+      ReloadFileList();
+    }
+  }
+
+  private void DiffRemoveButton_OnClick(object sender, RoutedEventArgs e) {
+    if (((Button)sender).DataContext is Tuple<string, string> item) {
+      App.Settings.RemoveRecentComparedFiles(item);
+      ReloadFileList();
+    }
+  }
 }

@@ -242,7 +242,7 @@ public partial class MainWindow : Window, ISession {
     await ForEachPanelAsync(async (panel) => await panel.OnReloadSettings());
     await HandleNewDiffSettings(App.Settings.DiffSettings, false, true);
   }
-  
+
   public Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null) {
     if (IsInDiffMode && targetDiffDocument != null) {
       IRDocument diffDocument = null;
@@ -442,6 +442,7 @@ public partial class MainWindow : Window, ISession {
   private async Task<LoadedDocument> OpenDocument(string filePath) {
     LoadedDocument loadedDoc = null;
     bool failed = false;
+    bool isProfilingFile = false;
 
     if (Path.HasExtension(filePath)) {
       if (Utils.FileHasExtension(filePath, ".irx")) {
@@ -456,7 +457,9 @@ public partial class MainWindow : Window, ISession {
         var profileSession = RecordingSession.FromFile(filePath);
         var window = new ProfileLoadWindow(this, false, false, profileSession);
         window.Owner = this;
-        var result = window.ShowDialog();
+        isProfilingFile = true;
+
+        bool? result = window.ShowDialog();
         failed = !result.HasValue || !result.Value;
 
         if(!failed) {
@@ -470,7 +473,7 @@ public partial class MainWindow : Window, ISession {
       loadedDoc = await OpenIRDocument(filePath, filePath, LoadDocument);
     }
 
-    if (loadedDoc == null) {
+    if (loadedDoc == null && !isProfilingFile) {
       using var centerForm = new DialogCenteringHelper(this);
       MessageBox.Show($"Failed to load file {filePath}", "IR Explorer", MessageBoxButton.OK,
                       MessageBoxImage.Exclamation);

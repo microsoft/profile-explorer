@@ -121,8 +121,47 @@
             Margin="0,8,0,0"
             Background="#D8F0F0F0"
             FontSize="12"
+            SelectionMode="Single"
             KeyDown="RecentFilesListBox_KeyDown"
-            MouseDoubleClick="RecentFilesListBox_MouseDoubleClick" />
+            MouseDoubleClick="RecentFilesListBox_MouseDoubleClick">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <DockPanel HorizontalAlignment="Stretch">
+                  <TextBlock Text="{Binding .}"
+                             DockPanel.Dock="Left"
+                             HorizontalAlignment="Stretch"
+                             TextTrimming="CharacterEllipsis" />
+                  <StackPanel
+                    Margin="4,0,0,0"
+                    HorizontalAlignment="Right"
+                    DockPanel.Dock="Right">
+                    <Button
+                      Name="RemoveButton"
+                      Click="RemoveButton_OnClick"
+                      Width="16"
+                      Height="16"
+                      Padding="1"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      ToolTip="Remove session from history">
+                      <Image Height="14" Width="14" Source="{StaticResource ClearIcon}" />
+                    </Button>
+                    <StackPanel.Style>
+                      <Style TargetType="{x:Type StackPanel}">
+                        <Style.Triggers>
+                          <DataTrigger
+                            Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}"
+                            Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </StackPanel.Style>
+                  </StackPanel>
+                </DockPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
 
           <DockPanel Margin="0,16,0,0" LastChildFill="False">
             <TextBlock
@@ -164,11 +203,42 @@
             MouseDoubleClick="RecentDiffFilesListBox_MouseDoubleClick">
             <ListBox.ItemTemplate>
               <DataTemplate>
-                <StackPanel Orientation="Vertical">
-                  <TextBlock FontSize="12" Text="{Binding Item1}" />
-                  <Separator />
-                  <TextBlock FontSize="12" Text="{Binding Item2}" />
-                </StackPanel>
+                <DockPanel HorizontalAlignment="Stretch">
+                  <StackPanel Orientation="Vertical" DockPanel.Dock="Left" HorizontalAlignment="Stretch">
+                    <TextBlock FontSize="12" Text="{Binding Item1}" />
+                    <Separator />
+                    <TextBlock FontSize="12" Text="{Binding Item2}" />
+                  </StackPanel>
+
+                  <StackPanel
+                    Margin="4,0,0,0"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Right"
+                    DockPanel.Dock="Right">
+                    <Button
+                      Name="DiffRemoveButton"
+                      Click="DiffRemoveButton_OnClick"
+                      Width="16"
+                      Height="16"
+                      Padding="1"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      ToolTip="Remove session from history">
+                      <Image Height="14" Width="14" Source="{StaticResource ClearIcon}" />
+                    </Button>
+                    <StackPanel.Style>
+                      <Style TargetType="{x:Type StackPanel}">
+                        <Style.Triggers>
+                          <DataTrigger
+                            Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}"
+                            Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </StackPanel.Style>
+                  </StackPanel>
+                </DockPanel>
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
