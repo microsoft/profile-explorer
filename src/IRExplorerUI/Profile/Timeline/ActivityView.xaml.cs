@@ -900,7 +900,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     if (slice.HasValue) {
       double cpuUsage = EstimateCpuUsage(slice.Value, slices_[0].TimePerSlice, samplingInterval_);
-      text += $"{time.AsTimeStringWithMilliseconds(timeDiff)}, {cpuUsage:F2} cores";
+      text += $"{time.AsTimeStringWithMilliseconds(timeDiff)} ({cpuUsage:F2} cores)";
     }
     else {
       text = time.AsTimeStringWithMilliseconds(timeDiff);

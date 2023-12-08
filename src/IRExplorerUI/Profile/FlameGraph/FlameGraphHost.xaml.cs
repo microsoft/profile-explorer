@@ -258,7 +258,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     await GraphViewer.Initialize(GraphViewer.FlameGraph.CallTree, node.CallTreeNode,
                                  GraphHostBounds, settings_, Session);
     GraphViewer.RestoreFixedMarkedNodes();
-    RootNodeChanged?.Invoke(this, node);
+
+    if (node.HasFunction) {
+      RootNodeChanged?.Invoke(this, node);
+    }
   }
 
   public async Task RestorePreviousState() {
@@ -275,7 +278,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       }
       case FlameGraphStateKind.ChangeRootNode: {
         RootNodeCleared?.Invoke(this, EventArgs.Empty);
-        await ChangeRootNode(state.Node);
+        await ChangeRootNode(state.Node, false);
         GraphViewer.RestoreFixedMarkedNodes();
         break;
       }

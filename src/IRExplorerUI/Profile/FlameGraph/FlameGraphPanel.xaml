@@ -48,7 +48,8 @@
 
     <Style x:Key="NodePanelColumnsStyle" TargetType="{x:Type ColumnDefinition}">
       <Style.Setters>
-        <Setter Property="Width" Value="290" />
+        <Setter Property="Width" Value="300" />
+        <Setter Property="MinWidth" Value="300" />
       </Style.Setters>
       <Style.Triggers>
         <DataTrigger Binding="{Binding ShowNodePanel}" Value="False">
