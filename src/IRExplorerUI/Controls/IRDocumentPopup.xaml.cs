@@ -26,9 +26,15 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     Initialize(position, width, height, owner);
     TextView.PreviewMouseWheel += TextView_OnMouseWheel;
     PanelResizeGrip.ResizedControl = this;
+    RegisterColorButton(ColorButton, ToolbarPanel.Background);
     DataContext = this;
     Session = session;
     owner_ = owner;
+  }
+
+  protected override void SetPanelAccentColor(Color color) {
+    ToolbarPanel.Background = ColorBrushes.GetBrush(color);
+    PanelBorder.BorderBrush = ColorBrushes.GetBrush(color);
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
@@ -141,7 +147,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       if (!IsDetached) {
         DetachPopup();
         EnableVerticalScrollbar();
-        SetPanelAccentColor(ColorUtils.GenerateRandomPastelColor());
+        ColorButton.Visibility = Visibility.Visible;
         Session.RegisterDetachedPanel(this);
       }
 
@@ -185,10 +191,6 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     ScrollViewer.SetVerticalScrollBarVisibility(TextView, ScrollBarVisibility.Auto);
   }
 
-  private void SetPanelAccentColor(Color color) {
-    ToolbarPanel.Background = ColorBrushes.GetBrush(color);
-  }
-
   private async void OpenButton_Click(object sender, RoutedEventArgs e) {
     var args = new OpenSectionEventArgs(TextView.Section, OpenSectionKind.NewTabDockRight);
 
@@ -208,7 +210,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
 public class IRDocumentPopupInstance {
   public const double DefaultWidth = 600;
-  public const double DefaultHeigth = 200;
+  public const double DefaultHeight = 200;
   private IRDocumentPopup previewPopup_;
   private DelayedAction removeHoveredAction_;
   private Func<PreviewPopupArgs> previewedElementFinder_;

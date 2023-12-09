@@ -16,6 +16,7 @@
   UseLayoutRounding="True"
   mc:Ignorable="d">
   <Border
+    x:Name="PanelBorder"
     Margin="0,0,6,6"
     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -29,7 +30,7 @@
         Color="#FF929292" />
     </Border.Effect>
     <DockPanel x:Name="ContentHost" LastChildFill="True">
-      <Grid DockPanel.Dock="Top" Panel.ZIndex="100">
+      <Grid Panel.ZIndex="100" DockPanel.Dock="Top">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="20" />
@@ -46,12 +47,12 @@
             <Grid HorizontalAlignment="Stretch">
               <Canvas
                 x:Name="Canvas"
-                Height="{Binding ElementName=TextBlock, Path=ActualHeight}"
+                Height="{Binding ElementName=TitleTextBlock, Path=ActualHeight}"
                 Margin="0,0,42,0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch">
                 <TextBox
-                  x:Name="TextBlock"
+                  x:Name="TitleTextBlock"
                   Width="{Binding ElementName=Canvas, Path=ActualWidth}"
                   Background="{x:Null}"
                   BorderBrush="{x:Null}"
@@ -92,6 +93,22 @@
             Source="{StaticResource OpenExternalIcon}" />
         </Button>
         <Button
+          x:Name="ColorButton"
+          Grid.Row="0"
+          Grid.Column="1"
+          Width="20"
+          Height="20"
+          VerticalAlignment="Top"
+          Background="#01FFFFFF"
+          BorderBrush="{x:Null}"
+          ToolTip="Change popup color"
+          Visibility="Collapsed">
+          <Image
+            Width="16"
+            Height="16"
+            Source="{StaticResource ThemeIcon}" />
+        </Button>
+        <Button
           x:Name="CloseButton"
           Grid.Row="0"
           Grid.Column="2"
@@ -108,23 +125,21 @@
       </Grid>
 
       <Grid DockPanel.Dock="Bottom">
-        <Grid
-          Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+        <Grid Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
           <profile:CallTreeNodePanel x:Name="PanelHost" />
         </Grid>
-        <Grid Margin="0,-20,0,0"
-              Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource BoolToVisibilityConverter}}">
+        <Grid Margin="0,-20,0,0" Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource BoolToVisibilityConverter}}">
           <profile:ProfileListView
             x:Name="StackTraceListView"
             Width="{Binding ElementName=ContentHost, Path=ActualWidth}"
             Background="{x:Null}"
             BorderBrush="{x:Null}"
-            ShowContextColumn="False"
-            ShowModuleColumn="False"
             ShowCombinedTimeColumn="False"
+            ShowCombinedTimeNameRow="True"
+            ShowContextColumn="False"
             ShowExclusiveTimeColumn="False"
-            ShowTimeColumn="False"
-            ShowCombinedTimeNameRow="True" />
+            ShowModuleColumn="False"
+            ShowTimeColumn="False" />
         </Grid>
 
         <controls:ResizeGrip

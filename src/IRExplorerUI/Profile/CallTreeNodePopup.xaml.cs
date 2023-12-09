@@ -19,7 +19,10 @@ namespace IRExplorerUI.Profile;
 public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged {
   internal const double DefaultTextSize = 12;
   private const int MaxPreviewNameLength = 80;
-  private static readonly Typeface DefaultTextFont = new Typeface("Segoe UI");
+  private const double InitialWidth = 450;
+  private const double InitialHeight = 400;
+
+  private Typeface defaultTextFont_;
   private bool showResizeGrip_;
   private bool canExpand_;
   private bool showBacktraceView_;
@@ -31,6 +34,10 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     InitializeComponent();
     Initialize(position, referenceElement);
     PanelResizeGrip.ResizedControl = this;
+    RegisterColorButton(ColorButton, ToolbarPanel.Background);
+
+    //? TODO: Use GetTextTypeface everywhere instead of hardcoding fonts
+    defaultTextFont_ = Utils.GetTextTypeface(TitleTextBlock);
 
     Session = session;
     CanExpand = canExpand;
@@ -39,6 +46,11 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     StackTraceListView.Session = Session;
     UpdateNode(node);
     DataContext = this;
+  }
+
+  protected override void SetPanelAccentColor(Color color) {
+    ToolbarPanel.Background = ColorBrushes.GetBrush(color);
+    PanelBorder.BorderBrush = ColorBrushes.GetBrush(color);
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
@@ -156,7 +168,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
 
     foreach (var node in list) {
       string funcName = node.FormatFunctionName(nameFormatter, MaxPreviewNameLength);
-      var textSize = Utils.MeasureString(funcName, DefaultTextFont, DefaultTextSize);
+      var textSize = Utils.MeasureString(funcName, defaultTextFont_, DefaultTextSize);
       maxTextWidth = Math.Max(maxTextWidth, textSize.Width);
     }
 
@@ -184,10 +196,11 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
       await PanelHost.ShowDetailsAsync();
     }
 
-    MinWidth = 450;
-    Width = Math.Max(Width, 450);
-    Height = Math.Max(Height, 400);
+    MinWidth = InitialWidth;
+    Width = Math.Max(Width, InitialWidth);
+    Height = Math.Max(Height, InitialHeight);
     ShowResizeGrip = true;
     ExpandButton.Visibility = Visibility.Hidden;
+    ColorButton.Visibility = Visibility.Visible;
   }
 }

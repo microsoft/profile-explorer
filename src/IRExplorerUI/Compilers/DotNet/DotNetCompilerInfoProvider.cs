@@ -13,7 +13,7 @@ public class DotNetCompilerInfoProvider : ASMCompilerInfoProvider {
   public override string CompilerIRName => "DotNet";
   public override string CompilerDisplayName => ".NET " + IR.Mode;
   public override string OpenFileFilter =>
-    ".NET ASM and Binary Files|*.asm;*.txt;*.log;*.exe;*.dll;*.sys|All Files|*.*";
+    "ASM, Binary, Trace Files|*.asm;*.txt;*.log;*.exe;*.dll;*.sys;*.etl|All Files|*.*";
   public override string OpenDebugFileFilter => "Debug Files|*.json|All Files|*.*";
 
   public override async Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
