@@ -63,11 +63,12 @@ public class ApplicationSettings {
   public CallTreeSettings CallTreeSettings { get; set; }
   [ProtoMember(19)]
   public CallTreeSettings CallerCalleeSettings { get; set; }
-  //? CallerCalleeSettings
   [ProtoMember(20)]
   public FlameGraphSettings FlameGraphSettings { get; set; }
   [ProtoMember(21)]
   public WorkspaceSettings WorkspaceOptions;
+  [ProtoMember(22)]
+  public SourceFileSettings SourceFileSettings;
 
   public ApplicationSettings() {
     Reset();
@@ -85,6 +86,7 @@ public class ApplicationSettings {
     CallTreeSettings.Reset();
     CallerCalleeSettings.Reset();
     FlameGraphSettings.Reset();
+    SourceFileSettings.Reset();
     AutoReloadDocument = true;
     ThemeIndex = 2; // Blue theme.
   }
@@ -215,6 +217,7 @@ public class ApplicationSettings {
     CallerCalleeSettings ??= new CallTreeSettings();
     FlameGraphSettings ??= new FlameGraphSettings();
     WorkspaceOptions ??= new WorkspaceSettings();
+    SourceFileSettings ??= new SourceFileSettings();
   }
 
   private void AddProfilingSession(ProfileDataReport report, List<ProfileDataReport> list) {
