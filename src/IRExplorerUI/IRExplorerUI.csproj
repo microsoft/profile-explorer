@@ -79,6 +79,36 @@
 			<XamlRuntime>Wpf</XamlRuntime>
 			<SubType>Designer</SubType>
 		</Page>
+		<Page Update="OptionsPanels\FlameGraphOptionsPanel.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		  <XamlRuntime>Wpf</XamlRuntime>
+		  <SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\TimelineOptionsPanel.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		  <XamlRuntime>Wpf</XamlRuntime>
+		  <SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\CallTreeOptionsPanel.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		  <XamlRuntime>Wpf</XamlRuntime>
+		  <SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\SourceFileOptionsPanel.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		  <XamlRuntime>Wpf</XamlRuntime>
+		  <SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\AdvancedOptionsPanel.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		  <XamlRuntime>Wpf</XamlRuntime>
+		  <SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\GeneralOptionsPanel.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		  <XamlRuntime>Wpf</XamlRuntime>
+		  <SubType>Designer</SubType>
+		</Page>
 	</ItemGroup>
 
 	<ItemGroup>
