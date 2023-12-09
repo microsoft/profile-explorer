@@ -7,12 +7,16 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 
 namespace IRExplorerUI.Controls;
 
 public class DraggablePopup : Popup {
   private bool duringMinimize_;
   private bool isDetached_;
+  private Popup colorPopup_;
+  private Button colorButton_;
+  private Brush colorPopupBackground_;
 
   public DraggablePopup() {
     MouseDown += (sender, e) => {
@@ -25,6 +29,43 @@ public class DraggablePopup : Popup {
       HorizontalOffset += e.HorizontalChange;
       VerticalOffset += e.VerticalChange;
     };
+  }
+
+  private void HideColorSelector() {
+    if (colorPopup_ != null) {
+      colorPopup_.IsOpen = false;
+      colorPopup_ = null;
+    }
+  }
+
+  protected void RegisterColorButton(Button button, Brush colorPopupBackground) {
+    colorButton_ = button;
+    colorPopupBackground_ = colorPopupBackground;
+    colorButton_.Click += ColorButton_Click;
+  }
+
+  private void ColorButton_Click(object sender, RoutedEventArgs e) {
+    var colorSelector = new ColorSelector();
+    colorSelector.BorderBrush = SystemColors.ActiveBorderBrush;
+    colorSelector.BorderThickness = new Thickness(1);
+    colorSelector.Background = colorPopupBackground_;
+    colorSelector.ColorSelected += ColorSelector_ColorSelected;
+
+    colorPopup_ = new Popup();
+    colorPopup_.Placement = PlacementMode.Bottom;
+    colorPopup_.PlacementTarget = colorButton_;
+    colorPopup_.StaysOpen = true;
+    colorPopup_.Child = colorSelector;
+    colorPopup_.IsOpen = true;
+  }
+
+  private void ColorSelector_ColorSelected(object sender, SelectedColorEventArgs e) {
+    SetPanelAccentColor(e.SelectedColor);
+    HideColorSelector();
+  }
+
+  protected virtual void SetPanelAccentColor(Color color) {
+
   }
 
   public event EventHandler PopupClosed;
@@ -41,6 +82,7 @@ public class DraggablePopup : Popup {
   public bool IsDetached => isDetached_;
 
   public virtual bool ShouldStartDragging(MouseButtonEventArgs e) {
+    HideColorSelector();
     return e.LeftButton == MouseButtonState.Pressed;
   }
 

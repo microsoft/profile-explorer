@@ -213,7 +213,6 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
   private RemarkSettingsEx remarkFilter_;
   private bool showPreview_;
   private bool filterActiveContextRemarks_;
-  private Popup colorPopup_;
   private Remark selectedRemark_;
   private bool contextSearchPanelVisible_;
   private SearchInfo contextSearchInfo_;
@@ -222,6 +221,7 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
   public RemarkPreviewPanel() {
     InitializeComponent();
     PanelResizeGrip.ResizedControl = this;
+    RegisterColorButton(ColorButton, ToolbarPanel.Background);
     DataContext = this; // Used for auto-resizing with ShowPreview.
 
     //? TODO: Add options
@@ -344,11 +344,15 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
     DetachPopup();
     PopupPanelButton.Visibility = Visibility.Collapsed;
     ColorButton.Visibility = Visibility.Visible;
-    SetPanelAccentColor(ColorUtils.GenerateRandomPastelColor());
+  }
+  protected override void SetPanelAccentColor(Color color) {
+    ToolbarPanel.Background = ColorBrushes.GetBrush(color);
+    ContextToolbarPanel.Background = ColorBrushes.GetBrush(color);
+    PanelBorder.BorderBrush = ColorBrushes.GetBrush(color);
   }
 
   public override bool ShouldStartDragging(MouseButtonEventArgs e) {
-    HideColorSelector();
+    base.ShouldStartDragging(e);
 
     if (e.LeftButton == MouseButtonState.Pressed && ToolbarPanel.IsMouseOver) {
       DetachPanel();
@@ -900,40 +904,6 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
 
   private void TextBox_TextChanged(object sender, TextChangedEventArgs e) {
     UpdateRemarkList();
-  }
-
-  private void ColorSelector_ColorSelected(object sender, SelectedColorEventArgs e) {
-    SetPanelAccentColor(e.SelectedColor);
-    HideColorSelector();
-  }
-
-  private void HideColorSelector() {
-    if (colorPopup_ != null) {
-      colorPopup_.IsOpen = false;
-      colorPopup_ = null;
-    }
-  }
-
-  private void SetPanelAccentColor(Color color) {
-    ToolbarPanel.Background = ColorBrushes.GetBrush(color);
-    ContextToolbarPanel.Background = ColorBrushes.GetBrush(color);
-    PanelBorder.BorderBrush = ColorBrushes.GetBrush(color);
-  }
-
-  private void ColorButton_Click(object sender, RoutedEventArgs e) {
-    var colorSelector = new ColorSelector();
-    colorSelector.BorderBrush = SystemColors.ActiveBorderBrush;
-    colorSelector.BorderThickness = new Thickness(1);
-    colorSelector.Background = ToolbarPanel.Background;
-    colorSelector.ColorSelected += ColorSelector_ColorSelected;
-
-    var location = ToolbarPanel.PointToScreen(new Point(ColorButtonLeft, ToolbarPanel.ActualHeight));
-    colorPopup_ = new Popup();
-    colorPopup_.HorizontalOffset = location.X;
-    colorPopup_.VerticalOffset = location.Y;
-    colorPopup_.StaysOpen = true;
-    colorPopup_.Child = colorSelector;
-    colorPopup_.IsOpen = true;
   }
 
   private void PopupPanelButton_Click(object sender, RoutedEventArgs e) {

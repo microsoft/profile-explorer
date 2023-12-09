@@ -347,7 +347,7 @@
           <Style.Triggers>
             <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}"
                          Value="{x:Static profile:ProfileCallTreeNodeKind.NativeKernel}">
-              <Setter Property="Background" Value="AliceBlue" />
+              <Setter Property="Background" Value="#D7ECFF" />
             </DataTrigger>
             <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}"
                          Value="{x:Static profile:ProfileCallTreeNodeKind.Managed}">
@@ -378,18 +378,18 @@
               Text="{Binding Item.Count}" />
           </DockPanel>
           <DockPanel Background="WhiteSmoke">
-            <TextBlock Width="80" Text="Average Time: " />
-            <TextBlock
-              DockPanel.Dock="Right"
-              FontWeight="Medium"
-              Text="{Binding Item.AverageWeight, Converter={StaticResource MillisecondTimeConverter}}" />
-          </DockPanel>
-          <DockPanel Background="WhiteSmoke">
             <TextBlock Width="80" Text="Group Time: " />
             <TextBlock
               DockPanel.Dock="Right"
               FontWeight="Medium"
               Text="{Binding Item.TotalWeight, Converter={StaticResource MillisecondTimeConverter}}" />
+          </DockPanel>
+          <DockPanel Background="WhiteSmoke">
+            <TextBlock Width="80" Text="Average Time: " />
+            <TextBlock
+              DockPanel.Dock="Right"
+              FontWeight="Medium"
+              Text="{Binding Item.AverageWeight, Converter={StaticResource MillisecondTimeConverter}}" />
           </DockPanel>
         </StackPanel>
       </oxy:TrackerControl.Content>

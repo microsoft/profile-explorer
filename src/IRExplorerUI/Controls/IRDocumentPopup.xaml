@@ -13,6 +13,7 @@
   UseLayoutRounding="True"
   mc:Ignorable="d">
   <Border
+    x:Name="PanelBorder"
     Margin="0,0,6,6"
     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -30,6 +31,7 @@
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="20" />
         <ColumnDefinition Width="20" />
+        <ColumnDefinition Width="20" />
       </Grid.ColumnDefinitions>
       <Grid.RowDefinitions>
         <RowDefinition Height="20" />
@@ -40,7 +42,7 @@
         x:Name="ToolbarPanel"
         Grid.Row="0"
         Grid.Column="0"
-        Grid.ColumnSpan="3"
+        Grid.ColumnSpan="4"
         Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}">
         <TextBlock
           Margin="4,0,40,0"
@@ -51,9 +53,25 @@
           ToolTip="{Binding PanelToolTip}" />
       </Grid>
       <Button
-        x:Name="OpenButton"
+        x:Name="ColorButton"
         Grid.Row="0"
         Grid.Column="1"
+        Width="20"
+        Height="20"
+        VerticalAlignment="Top"
+        Background="#01FFFFFF"
+        BorderBrush="{x:Null}"
+        ToolTip="Change popup color"
+        Visibility="Collapsed">
+        <Image
+          Width="16"
+          Height="16"
+          Source="{StaticResource ThemeIcon}" />
+      </Button>
+      <Button
+        x:Name="OpenButton"
+        Grid.Row="0"
+        Grid.Column="2"
         Width="20"
         Height="20"
         Background="{x:Null}"
@@ -63,12 +81,12 @@
         <Image
           Width="16"
           Height="16"
-          Source="{StaticResource OpenExternalIcon}" />
+          Source="{StaticResource LayoutOpenNewIcon}" />
       </Button>
       <Button
         x:Name="CloseButton"
         Grid.Row="0"
-        Grid.Column="2"
+        Grid.Column="3"
         Background="{x:Null}"
         BorderBrush="{x:Null}"
         Click="CloseButton_Click"
@@ -82,7 +100,7 @@
       <client:IRDocument
         x:Name="TextView"
         Grid.Row="1"
-        Grid.ColumnSpan="3"
+        Grid.ColumnSpan="4"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"

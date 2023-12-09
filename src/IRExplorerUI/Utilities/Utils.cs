@@ -1152,4 +1152,14 @@ static class Utils {
       }
     }
   }
+
+  public static Typeface GetTextTypeface(TextBlock element) {
+    return new Typeface(element.FontFamily, element.FontStyle,
+                        element.FontWeight, element.FontStretch);
+  }
+
+  public static Typeface GetTextTypeface(TextBox element) {
+    return new Typeface(element.FontFamily, element.FontStyle,
+                        element.FontWeight, element.FontStretch);
+  }
 }
