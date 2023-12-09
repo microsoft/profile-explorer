@@ -6,6 +6,11 @@ using ProtoBuf;
 namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
+//? TODO: options ofr
+//? - show node preview on hover
+//?      - hover time
+//? - color list item based on module name
+
 public class CallTreeSettings : SettingsBase {
   public CallTreeSettings() {
     Reset();
