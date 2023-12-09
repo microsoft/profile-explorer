@@ -13,7 +13,6 @@ public partial class LightDocumentOptionsPanel : OptionsPanelBase {
   public const double MinimumHeight = 300;
   public const double DefaultWidth = 360;
   public const double MinimumWidth = 360;
-  private DocumentSettings settings_;
 
   public LightDocumentOptionsPanel() {
     InitializeComponent();
@@ -25,11 +24,9 @@ public partial class LightDocumentOptionsPanel : OptionsPanelBase {
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);
-    settings_ = (DocumentSettings)Settings;
   }
 
   public override void OnSettingsChanged(object newSettings) {
-    settings_ = (DocumentSettings)newSettings;
   }
 
   public override void PanelClosing() {
@@ -50,15 +47,5 @@ public partial class LightDocumentOptionsPanel : OptionsPanelBase {
     DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
       RaiseSettingsChanged(null);
     });
-  }
-
-  private class ColorPickerInfo {
-    public ColorPickerInfo(string name, Color value) {
-      Name = name;
-      Value = value;
-    }
-
-    public string Name { get; set; }
-    public Color Value { get; set; }
   }
 }
