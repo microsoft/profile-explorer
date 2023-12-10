@@ -659,7 +659,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         downloadedPdbCount++;
 
         if (pdbPath.Found) {
-          UpdateProgress(progressCallback, ProfileLoadStage.BinaryLoading, pdbCount, i,
+          UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, i,
                          Utils.TryGetFileName(pdbPath.SymbolFile.FileName));
         }
       }
