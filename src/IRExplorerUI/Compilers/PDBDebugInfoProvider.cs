@@ -56,31 +56,40 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
       string result = null;
       using var logWriter = new StringWriter();
 
-      string symbolSearchPath = ConstructSymbolSearchPath(options);
-      using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
-      symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
+      // In case there is a timeout downloading the symbols, try once more.
+      for (int attempt = 0; attempt < 2; attempt++) {
+        string symbolSearchPath = ConstructSymbolSearchPath(options);
+        using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
+        symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
-      try {
-        result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
-      }
-      catch (Exception ex) {
-        Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");
-      }
+        try {
+          result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
+        }
+        catch (Exception ex) {
+          Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");
+          break;
+        }
 
 #if DEBUG
-      Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
-      Trace.IndentLevel = 1;
-      Trace.WriteLine(logWriter.ToString());
-      Trace.IndentLevel = 0;
-      Trace.WriteLine("<< TraceEvent");
+        Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
+        Trace.IndentLevel = 1;
+        Trace.WriteLine(logWriter.ToString());
+        Trace.IndentLevel = 0;
+        Trace.WriteLine("<< TraceEvent");
 #endif
-      DebugFileSearchResult searchResult;
+        DebugFileSearchResult searchResult;
 
-      if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
-        searchResult = DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
-      }
-      else {
-        searchResult = DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
+        if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
+          searchResult = DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
+          break;
+        }
+        else {
+          // If there was a timeout, try once more.
+          if (!logWriter.ToString().Contains("timeout", StringComparison.OrdinalIgnoreCase)) {
+            searchResult = DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
+            break;
+          }
+        }
       }
 
       resolvedSymbolsCache_.TryAdd(symbolFile, searchResult);
