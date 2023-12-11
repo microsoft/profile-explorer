@@ -55,6 +55,7 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
     return await Task.Run(() => {
       string result = null;
       using var logWriter = new StringWriter();
+      DebugFileSearchResult searchResult = null;
 
       // In case there is a timeout downloading the symbols, try once more.
       for (int attempt = 0; attempt < 2; attempt++) {
@@ -77,7 +78,6 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
         Trace.IndentLevel = 0;
         Trace.WriteLine("<< TraceEvent");
 #endif
-        DebugFileSearchResult searchResult;
 
         if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
           searchResult = DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
@@ -86,10 +86,13 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
         else {
           // If there was a timeout, try once more.
           if (!logWriter.ToString().Contains("timeout", StringComparison.OrdinalIgnoreCase)) {
-            searchResult = DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
             break;
           }
         }
+      }
+
+      if (searchResult == null) {
+        searchResult = DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
       }
 
       resolvedSymbolsCache_.TryAdd(symbolFile, searchResult);
