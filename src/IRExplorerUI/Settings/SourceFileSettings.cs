@@ -6,26 +6,29 @@ using ProtoBuf;
 namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
-public class TimelineSettings : SettingsBase {
-  public TimelineSettings() {
+public class SourceFileSettings : SettingsBase {
+  public SourceFileSettings() {
     Reset();
   }
 
+  [ProtoMember(1)]
+  public bool Foo { get; set; }
   //? TODO: Options for
-  //? - grouping
-  //? - custom colors for thread names
-  //? - show backtrace preview on hover
-  //?    - max depth
+  //? - font, font size
+  //? - syntax highlighting
+  //? - other options from DocumentSettings
 
   public override void Reset() {
+    Foo = true;
   }
 
-  public TimelineSettings Clone() {
+  public SourceFileSettings Clone() {
     byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<TimelineSettings>(serialized);
+    return StateSerializer.Deserialize<SourceFileSettings>(serialized);
   }
 
   public override bool Equals(object obj) {
-    return obj is TimelineSettings settings;
+    return obj is SourceFileSettings settings &&
+           Foo == settings.Foo;
   }
 }
