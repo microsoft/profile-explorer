@@ -12,7 +12,7 @@
   Width="900"
   Height="600"
   MinWidth="600"
-  MinHeight="500"
+  MinHeight="400"
   d:DesignHeight="1200"
   ResizeMode="CanResizeWithGrip"
   ShowInTaskbar="False"
@@ -109,6 +109,7 @@
           </ListBox.ItemContainerStyle>
         </ListBox>
       </Grid>
+      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <TabControl
         VerticalAlignment="Stretch"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
@@ -1157,6 +1158,7 @@
           </StackPanel>
         </TabItem>
       </TabControl>
+      </ScrollViewer>
     </DockPanel>
   </Grid>
 </Window>
