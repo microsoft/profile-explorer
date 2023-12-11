@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Shell;
 using System.Xml;
 using IRExplorerUI.Settings;
 
@@ -595,6 +596,7 @@ public partial class App : Application {
 
     // Enable file output for tracing.
     OpenLogFile();
+    SetupJumplist();
 
     if (!LoadApplicationSettings()) {
       // Failed to load settings, reset them.
@@ -602,6 +604,54 @@ public partial class App : Application {
       Utils.TryDeleteFile(GetDefaultDockLayoutFilePath());
       Settings = new ApplicationSettings();
       IsFirstRun = true;
+    }
+  }
+
+  private void SetupJumplist() {
+    var instanceTask = new JumpTask {
+      ApplicationPath = ApplicationPath,
+      Arguments = "",
+      Title = "New instance",
+      Description = "Start a new IR Explorer instance",
+      CustomCategory = "Tasks"
+    };
+
+    // var recordTask = new JumpTask {
+    //   ApplicationPath = ApplicationPath,
+    //   IconResourcePath = ApplicationPath,
+    //   IconResourceIndex = 2,
+    //   Arguments = "",
+    //   Title = "Record profile",
+    //   Description = "Start a new IR Explorer instance",
+    //   CustomCategory = "Tasks"
+    // };
+    //
+    //
+    // var recordSystemTask = new JumpTask {
+    //   ApplicationPath = ApplicationPath,
+    //   IconResourcePath = ApplicationPath,
+    //   IconResourceIndex = 2,
+    //   Arguments = "",
+    //   Title = "Record system-wide profile",
+    //   Description = "Start a new IR Explorer instance",
+    //   CustomCategory = "Tasks"
+    // };
+
+    var currentJumplist = JumpList.GetJumpList(App.Current);
+
+    if (currentJumplist != null) {
+      currentJumplist.JumpItems.Clear();
+      currentJumplist.JumpItems.Add(instanceTask);
+      //currentJumplist.JumpItems.Add(recordTask);
+      //currentJumplist.JumpItems.Add(recordSystemTask);
+      currentJumplist.Apply();
+    }
+    else {
+      var jumpList = new JumpList();
+      jumpList.JumpItems.Add(instanceTask);
+      //jumpList.JumpItems.Add(recordTask);
+      //jumpList.JumpItems.Add(recordSystemTask);
+      JumpList.SetJumpList(App.Current, jumpList);
     }
   }
 
