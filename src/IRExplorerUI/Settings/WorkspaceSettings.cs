@@ -68,6 +68,8 @@ public class Workspace : IEquatable<Workspace> {
 [ProtoContract(SkipConstructor = true)]
 public class WorkspaceSettings {
   private static readonly string SettingsFileName = "settings.proto";
+  private static readonly string DefaultWorkspaceName = "Default";
+
   [ProtoMember(1)]
   public List<Workspace> Workspaces { get; set; }
   [ProtoMember(2)]
@@ -110,12 +112,12 @@ public class WorkspaceSettings {
   }
 
   public bool RestoreDefaultActiveWorkspace() {
-    string wsName = GetBuiltinWorkspaceName(App.Settings.DefaultCompilerIR);
-    var defaultWs = Workspaces.FirstOrDefault(w => w.Name == wsName);
-
     if (ActiveWorkspace == null) {
+      string wsName = GetBuiltinWorkspaceName(App.Settings.DefaultCompilerIR);
+      var defaultWs = Workspaces.FirstOrDefault(w => w.Name == wsName);
+
       if (defaultWs == null) {
-        defaultWs = CreateWorkspace("Default");
+        defaultWs = CreateWorkspace(DefaultWorkspaceName);
       }
 
       ActiveWorkspace = defaultWs;
@@ -172,6 +174,10 @@ public class WorkspaceSettings {
 
     Workspaces.Add(ws);
     return ws;
+  }
+
+  public Workspace GetDefaultWorkspace() {
+    return CreateWorkspace(DefaultWorkspaceName);
   }
 
   public void RemoveWorkspace(Workspace ws) {

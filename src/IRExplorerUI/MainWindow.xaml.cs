@@ -297,7 +297,6 @@ public partial class MainWindow : Window, ISession {
 
   private void SetupMainWindowCompilerTarget() {
     IRTypeLabel.Content = compilerInfo_.CompilerDisplayName;
-    RestoreDockLayout();
   }
 
   private void AddRecentFile(string path) {

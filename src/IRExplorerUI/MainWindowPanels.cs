@@ -141,6 +141,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void RegisterDefaultToolPanels() {
+    Trace.WriteLine($"Register default tool panels");
     RegisterPanel(SectionPanel, SectionPanelHost);
     RegisterPanel(FlowGraphPanel, FlowGraphPanelHost);
     RegisterPanel(DominatorTreePanel, DominatorTreePanelHost);
@@ -160,6 +161,11 @@ public partial class MainWindow : Window, ISession {
     RegisterPanel(FlameGraphPanel, FlameGraphPanelHost);
     RegisterPanel(HelpPanel, HelpPanelHost);
     RenameAllPanels();
+
+    var defaultWs = App.Settings.WorkspaceOptions.GetDefaultWorkspace();
+    SaveDockLayout(defaultWs.FilePath);
+    PopulateWorkspacesCombobox();
+    RestoreDockLayout(defaultWs.FilePath);
   }
 
   private void NotifyPanelsOfElementEvent(HandledEventKind eventKind, IRDocument document,
@@ -780,11 +786,11 @@ public partial class MainWindow : Window, ISession {
 
   private PanelHostInfo RegisterPanel(IToolPanel panel, LayoutAnchorable host) {
     var existingHost = FindPanelHost(panel);
-    
+
     if(existingHost != null) {
       return existingHost;
     }
-    
+
     if (!panelHostSet_.TryGetValue(panel.PanelKind, out var list)) {
       list = new List<PanelHostInfo>();
     }
@@ -1335,7 +1341,7 @@ public partial class MainWindow : Window, ISession {
       if (panelHost.IsAutoHidden) {
         panelHost.ToggleAutoHide();
       }
-      
+
       panelHost.Show();
       panelHost.IsActive = true;
     }

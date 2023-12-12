@@ -377,7 +377,8 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async Task SetupLoadedProfile() {
-    await SectionPanel.RefreshModuleSummaries();
+    await SetupPanels();
+    UpdateWindowTitle();
     SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
   }
 

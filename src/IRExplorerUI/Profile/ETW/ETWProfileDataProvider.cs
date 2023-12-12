@@ -304,7 +304,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
         session_.SessionState.MainDocument = exeDocument;
-        await session_.SetupNewSession(exeDocument, otherDocuments);
+        await session_.SetupNewSession(exeDocument, otherDocuments, profileData_).ConfigureAwait(false);
       }
 
       if (cancelableTask is {IsCanceled: true}) {
