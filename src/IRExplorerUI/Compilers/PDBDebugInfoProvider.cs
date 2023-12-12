@@ -24,7 +24,10 @@ namespace IRExplorerUI.Compilers;
 //? TODO: Use for-each iterators everywhere
 public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private const int MaxDemangledFunctionNameLength = 8192;
-  // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path
+
+  //? TODO: Save cache between sessions, including the unavailable PDBs.
+  //? Invalidate unavailable ones if SymbolOption paths change so they get a chance
+  //? to be searched for in new locations.
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ =
     new ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult>();
   private SymbolFileSourceOptions options_;
