@@ -316,7 +316,10 @@ public sealed class LightIRDocument : TextEditor {
     initialTextChanged_ = false;
     EnableIRSyntaxHighlighting();
     EnsureInitialTextLines();
-    await UpdateElementHighlighting();
+
+    if (function_ != null) {
+      await UpdateElementHighlighting();
+    }
   }
 
   private async Task UpdateElementHighlighting() {

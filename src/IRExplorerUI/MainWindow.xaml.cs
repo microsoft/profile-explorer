@@ -781,10 +781,6 @@ public partial class MainWindow : Window, ISession {
     ErrorReporting.SaveOpenSections();
   }
 
-  private void MenuItem_Click(object sender, RoutedEventArgs e) {
-    throw new InvalidOperationException("Crash Handler test assert");
-  }
-
   private async Task DisplayCallGraph(IRTextSummary summary, IRTextSection section,
                                       bool buildPartialGraph) {
     var loadedDoc = sessionState_.FindLoadedDocument(summary);
