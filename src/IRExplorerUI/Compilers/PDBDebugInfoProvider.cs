@@ -22,7 +22,7 @@ using Microsoft.Diagnostics.Symbols;
 namespace IRExplorerUI.Compilers;
 
 //? TODO: Use for-each iterators everywhere
-public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
+public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private const int MaxDemangledFunctionNameLength = 8192;
   // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ =
@@ -34,9 +34,14 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
   private IDiaSymbol globalSymbol_;
   private List<FunctionDebugInfo> sortedFunctionList_;
   private bool loadFailed_;
+  private bool disposed_;
 
   public PDBDebugInfoProvider(SymbolFileSourceOptions options) {
     options_ = options;
+  }
+
+  ~PDBDebugInfoProvider() {
+    Dispose(false);
   }
 
   public SymbolFileSourceOptions SymbolOptions { get; set; }
@@ -198,6 +203,7 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to locate global sym for file {debugFilePath}: {ex.Message}");
+      loadFailed_ = true;
       return false;
     }
 
@@ -338,7 +344,21 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
   }
 
   public void Dispose() {
+    Dispose(true);
+    GC.SuppressFinalize(this);
+  }
+
+  private void Dispose(bool disposing) {
+    if (disposed_) {
+      return;
+    }
+
+    if (disposing) {
+      sortedFunctionList_ = null;
+    }
+
     Unload();
+    disposed_ = true;
   }
 
   private bool EnsureLoaded() {
