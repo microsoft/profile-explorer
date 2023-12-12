@@ -236,17 +236,110 @@ public partial class HelpPanel : ToolPanelControl {
 
   private async void Browser_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e) {
     try {
-      // Open in new external browser window.
-      var psi = new ProcessStartInfo() {
-        FileName = e.Uri,
-        UseShellExecute = true
-      };
-      Process.Start(psi);
+      if (e.Uri.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+          e.Uri.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)) {
+
+        if (previewWindow_ != null) {
+          // Second click on same image closes current preview.
+          bool showPreview = previewUrl_ != e.Uri;
+          CloseImagePreview();
+
+          if (!showPreview) {
+            e.Handled = true;
+            return;
+          }
+        }
+
+        // Try to parse out an initial popup size from the image name.
+        if (!TryExtractImageSize(e.Uri, out int width, out int height)) {
+          width = 800;
+          height = 600;
+        }
+
+        width = (int)Math.Min(width, System.Windows.SystemParameters.PrimaryScreenWidth - 50);
+        height = (int)Math.Min(height, System.Windows.SystemParameters.PrimaryScreenHeight - 50);
+        ShowImagePreview(e.Uri, width, height);
+      }
+      else {
+        // Open in new external browser window.
+        var psi = new ProcessStartInfo() {
+          FileName = e.Uri,
+          UseShellExecute = true
+        };
+        Process.Start(psi);
+      }
+
       e.Handled = true;
     }
     catch (Exception ex) {
       Trace.WriteLine($"Failed to start external browser: {ex.Message}");
     }
+  }
+
+  private Window previewWindow_;
+  private string previewUrl_;
+
+  private void ShowImagePreview(string url, int width, int height) {
+    var window = new Window();
+    window.WindowStyle = WindowStyle.None;
+    window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+    window.ResizeMode = ResizeMode.CanResizeWithGrip;
+    var browser = new Image();
+    browser.Source = new BitmapImage(new Uri(url));
+    browser.HorizontalAlignment = HorizontalAlignment.Stretch;
+    browser.VerticalAlignment = VerticalAlignment.Stretch;
+    browser.Stretch = Stretch.Uniform;
+    window.Content = browser;
+    window.Width = width;
+    window.Height = height;
+    window.Owner = App.Current.MainWindow;
+
+    window.PreviewMouseDown += (sender, args) => {
+      CloseImagePreview();
+    };
+
+    window.PreviewKeyDown += (sender, args) => {
+      switch (args.Key) {
+        case Key.Escape:
+        case Key.Space:
+        case Key.Back: {
+          CloseImagePreview();
+          break;
+        }
+      }
+    };
+
+    previewWindow_ = window;
+    previewUrl_ = url;
+    window.Show();
+  }
+
+  private void CloseImagePreview() {
+    if (previewWindow_ != null) {
+      previewWindow_.Close();
+      previewWindow_ = null;
+      previewUrl_ = null;
+    }
+  }
+
+  private bool TryExtractImageSize(string url, out int width, out int height) {
+    // Try parse file_widthxheight.extension, like file_800x600.gif.
+    width = height = 0;
+    int start = url.LastIndexOf('_');
+    int end = url.LastIndexOf('.');
+
+    if (start == -1 || end <= start) {
+      return false;
+    }
+
+    int middle = url.IndexOf('x', start);
+
+    if (middle == -1) {
+      return false;
+    }
+
+    return int.TryParse(url.Substring(start + 1, middle - start - 1), out width) &&
+           int.TryParse(url.Substring(middle + 1, end - middle - 1), out height);
   }
 
   private void ZoomInButton_Click(object sender, RoutedEventArgs e) {
