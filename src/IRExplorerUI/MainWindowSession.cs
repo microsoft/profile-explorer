@@ -169,7 +169,6 @@ public partial class MainWindow : Window, ISession {
         sessionState_.RegisterLoadedDocument(loadedDoc);
       }
 
-
       // For profiling sessions, setup the UI is done
       // after the profiling window closes.
       if (profileData == null) {
