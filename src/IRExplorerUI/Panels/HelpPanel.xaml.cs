@@ -148,8 +148,15 @@ public partial class HelpPanel : ToolPanelControl {
       return;
     }
 
+    browserInitialized_ = true;
+
     // Force light mode for the WebView2 control for now.
-    await Browser.EnsureCoreWebView2Async();
+    var webView2Environment = await CoreWebView2Environment.CreateAsync(null, App.GetSettingsDirectoryPath());
+    await Browser.EnsureCoreWebView2Async(webView2Environment);
+
+    if (Browser.CoreWebView2 == null) {
+      return;
+    }
 
     // Handle a video/image entering full-screen mode
     // by making a new maximized window to which the browser control
@@ -176,7 +183,6 @@ public partial class HelpPanel : ToolPanelControl {
     };
 
     Browser.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
-    browserInitialized_ = true;
   }
 
   private async Task NavigateToURL(string url) {
@@ -221,6 +227,10 @@ public partial class HelpPanel : ToolPanelControl {
 
   private void Browser_CoreWebView2InitializationCompleted(object sender,
                                                            CoreWebView2InitializationCompletedEventArgs e) {
+    if (Browser.CoreWebView2 == null) {
+      return;
+    }
+
     Browser.CoreWebView2.NewWindowRequested += Browser_NewWindowRequested;
   }
 
