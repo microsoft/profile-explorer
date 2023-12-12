@@ -204,6 +204,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         // Start early load of all modules that are used by the binary
         // to reduce the wait time when resolving the stack frame functions.
+        UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing, 0, 0);
         StartEarlyModuleLoad(rawProfile, mainProcess, symbolOptions);
 
         var sw = Stopwatch.StartNew();
@@ -360,12 +361,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         int position = Interlocked.Add(ref currentSampleIndex_, PROGRESS_UPDATE_INTERVAL);
         UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing,
                        rawProfile.Samples.Count, position);
-
-        ThreadPool.QueueUserWorkItem(state => {
-          progressCallback(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
-            Total = rawProfile.Samples.Count, Current = position
-          });
-        });
       }
 
       // Count time for each sample.
@@ -632,6 +627,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     // from the symbol server if not yet on local machine and enabled.
     int pdbCount = 0;
     int downloadedPdbCount = 0;
+    var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 32);
+    var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
 
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
@@ -641,12 +638,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       var binaryFile = await binTaskList[i].ConfigureAwait(false);
 
       if (binaryFile is {Found: true}) {
-        pdbTaskList[i] = session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath);
         pdbCount++;
+
+        pdbTaskList[i] = taskFactory.StartNew(() => {
+          var result = session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath).Result;
+          return result;
+        });
       }
     }
 
     UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
+    var sw = Stopwatch.StartNew();
 
     // Wait for the PDBs to be loaded.
     for (int i = 0; i < imageLimit; i++) {
@@ -664,6 +666,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
       }
     }
+
+    UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
+    Trace.WriteLine($"PDB download time: {sw.Elapsed}");
   }
 
   private void StartEarlyModuleLoad(RawProfileData rawProfile, ProfileProcess mainProcess,
