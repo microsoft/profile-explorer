@@ -159,7 +159,9 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
-  public async Task<bool> SetupNewSession(LoadedDocument mainDocument, List<LoadedDocument> otherDocuments) {
+  public async Task<bool> SetupNewSession(LoadedDocument mainDocument,
+                                          List<LoadedDocument> otherDocuments,
+                                          ProfileData profileData) {
     await Dispatcher.InvokeAsync(async () => {
       sessionState_.RegisterLoadedDocument(mainDocument);
 
@@ -167,8 +169,13 @@ public partial class MainWindow : Window, ISession {
         sessionState_.RegisterLoadedDocument(loadedDoc);
       }
 
-      UpdateWindowTitle();
-      await SetupPanels();
+
+      // For profiling sessions, setup the UI is done
+      // after the profiling window closes.
+      if (profileData == null) {
+        UpdateWindowTitle();
+        await SetupPanels();
+      }
     });
 
     return true;

@@ -37,7 +37,7 @@ public interface ISession {
   IRTextSummary DiffDocumentSummary { get; }
   ProfileData ProfileData { get; }
   Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo);
-  Task<bool> SetupNewSession(LoadedDocument mainDocument, List<LoadedDocument> otherDocuments);
+  Task<bool> SetupNewSession(LoadedDocument mainDocument, List<LoadedDocument> otherDocuments, ProfileData profileData);
   IRTextSummary GetDocumentSummary(IRTextSection section);
   IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId);
   IRDocument FindAssociatedDocument(IToolPanel panel);
