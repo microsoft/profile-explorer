@@ -6,14 +6,32 @@
     <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
-    <p>To load a profiling trace file (ETL file produced by tools like xperf and WPR), there are two main ways:</p>
+    <p>The <span class="ui">Profiling window</span> is the main way for loading and recording profiling traces.
+        To load a profiling trace file (ETL file produced by tools like xperf and WPR), there are several ways:</p>
     <ul>
-        <li><p>Through the Profiling window, displayed selecting Profiling menu -> Load Profile</p></li>    
-        <li><p>As a regular file opened using File menu -> Open File (Ctrl + O). After selecting a file, this will show the Profiling window mentioned above with the trace file path filled in.</p</li>
+        <li><p>Select <span class="ui">Profling menu -> Load Profile</span> and specify a file in the <span class="ui">Profile data file</span> field.</p></li>    
+        <li><p>Select <span class="ui">File menu -> Open File (Ctrl+O)</span>. After picking a file, this will show the Profiling window with the trace file path filled in.</p</li>
     </ul>
 
-    <p>In the <Pre></Pre></p>
-    
+    <p>In the Profiling window, once a trace file is selected in the Profile data file field, a summary of all processes found in the trace is displayed, with the list sorted by weight (number of samples per app).</p>
+    <p>Select the process to load from the list and click the Load Profile button (or simply double-click).
+   
+    <details class="accordion" open="">
+        <summary class="header" style="background-color: lightblue;">Profiling window overview
+        </summary>
+        <div class="body">
+           List of prev sessions in Profiling window, recent document list
+        </div>
+    </details>
+
+    <details class="accordion" open="">
+        <summary class="header" style="background-color: lightblue;">Symbol and binary path options
+        </summary>
+        <div class="body">
+            List of prev sessions in Profiling window, recent document list
+        </div>
+    </details>
+
 <details class="accordion" open="">
     <summary class="header" style="background-color: lightblue;">Tips
     </summary>

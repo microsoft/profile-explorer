@@ -79,8 +79,8 @@
         Click="OpenButton_Click"
         ToolTip="Open previewed document in a new tab">
         <Image
-          Width="16"
-          Height="16"
+          Width="15"
+          Height="15"
           Source="{StaticResource LayoutOpenNewIcon}" />
       </Button>
       <Button

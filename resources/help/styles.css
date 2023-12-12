@@ -1,9 +1,14 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans&display=swap');
+
 img {
     zoom: 50%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain
 }
 
 body {
-    font-family: Verdana;
+    font-family: 'Open Sans', sans-serif;
     font-size: small;
 }
 
@@ -53,4 +58,10 @@ table.shortcutTable tfoot .links a {
     color: #FFFFFF;
     padding: 2px 8px;
     border-radius: 5px;
+}
+
+.ui {
+    color:darkslategray;
+    font-size:small;
+    font-weight:600;
 }
