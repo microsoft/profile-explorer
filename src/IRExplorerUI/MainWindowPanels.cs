@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -1428,5 +1429,13 @@ public partial class MainWindow : Window, ISession {
   private void ResetWorkspaceMenuClicked(object sender, RoutedEventArgs e) {
     App.Settings.WorkspaceOptions.RestoreDefaultActiveWorkspace();
     RestoreDockLayout();
+  }
+
+  private void MenuItem_OnClick3(object sender, RoutedEventArgs e) {
+    Trace.WriteLine("Force GC start");
+    GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true, true);
+    GC.WaitForPendingFinalizers();
+    Trace.WriteLine("Force GC end");
+    Trace.Flush();
   }
 }

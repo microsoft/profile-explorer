@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using DocumentFormat.OpenXml.Math;
+using ICSharpCode.AvalonEdit.Highlighting;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 
@@ -76,8 +78,9 @@ public partial class SearcheableIRDocument : UserControl, INotifyPropertyChanged
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
   }
 
-  public void SetText(string text) {
-    TextView.Text = text;
+  public async Task SetText(string text, IHighlightingDefinition syntaxHighlighting = null) {
+    await TextView.SwitchText(text);
+    TextView.SyntaxHighlighting = syntaxHighlighting;
   }
 
   public async Task SetText(string text, FunctionIR function, IRTextSection section,
@@ -89,6 +92,10 @@ public partial class SearcheableIRDocument : UserControl, INotifyPropertyChanged
   public void SelectText(int offset, int length, int line) {
     TextView.Select(offset, length);
     TextView.ScrollToLine(line);
+  }
+
+  public void ScrollToEnd() {
+    TextView.ScrollToEnd();
   }
 
   private async Task SearchText(SearchInfo info = null) {

@@ -580,7 +580,7 @@
                                 IsEnabled="False" />
                             <MenuItem Click="MenuItem_OnClick" Header="Open log file" />
                             <MenuItem Click="MenuItem_Click_2" Header="Create debug files" />
-                            <MenuItem Click="MenuItem_Click" Header="Crash application" />
+                            <MenuItem Click="MenuItem_OnClick3" Header="Force GC" />
                             <MenuItem.Icon>
                                 <Image
                                     Width="16"

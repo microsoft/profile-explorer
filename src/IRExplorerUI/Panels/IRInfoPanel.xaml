@@ -5,6 +5,7 @@
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:local="clr-namespace:IRExplorerUI"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:document="clr-namespace:IRExplorerUI.Document"
   d:DesignHeight="450"
   d:DesignWidth="800"
   mc:Ignorable="d">
@@ -41,34 +42,58 @@
             Click="Button_Click"
             TabIndex="5"
             ToolTip="Show internal function IR">
-            <Image
-              Width="16"
-              Height="16"
-              Source="{StaticResource SourceIcon}" />
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Margin="0,1,0,0"
+                Source="{StaticResource DocumentIcon}" />
+              <TextBlock Text="Internal IR" />
+            </StackPanel>
           </Button>
           <Button
             Click="Button_Click_1"
             TabIndex="5"
             ToolTip="Show IR parsing error list">
-            <Image
-              Width="16"
-              Height="16"
-              Source="{StaticResource WarningIcon}" />
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Margin="0,1,0,0"
+                Source="{StaticResource WarningIcon}" />
+              <TextBlock Text="Parsing Errors" />
+            </StackPanel>
           </Button>
+          <Separator></Separator>
+
+          <Button
+            Click="ButtonBase_OnClick"
+            TabIndex="5"
+            ToolTip="Show log file">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Margin="0,1,0,0"
+                Source="{StaticResource ListIcon}" />
+              <TextBlock Text="Log" />
+            </StackPanel>
+          </Button>
+          <ToggleButton Content="Refresh" IsChecked="False"
+                        ToolTip="Continuously reload the log file"
+                        Style="{x:Null}" Checked="ToggleButton_OnChecked" Unchecked="ToggleButton_OnUnchecked"></ToggleButton>
         </ToolBar>
       </ToolBarTray>
 
       <local:PanelToolbarTray Grid.Column="1" HasPinButton="False" HasHelpButton="False" />
     </Grid>
 
-    <avalonEdit:TextEditor
-      xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
+    <document:SearcheableIRDocument
       x:Name="TextView"
       Grid.Row="1"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       FontFamily="Consolas"
-      FontSize="12"
-      ShowLineNumbers="True" />
+      FontSize="12"/>
 
     <ListBox
       x:Name="ErrorList"
