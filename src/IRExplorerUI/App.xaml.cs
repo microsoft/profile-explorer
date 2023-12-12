@@ -49,7 +49,6 @@ public partial class App : Application {
   public const string AutoUpdateInfoArm64 = @"\\ntperformance\Public\benjaming\IRExplorer\arm64\autoupdater.xml";
   private const string SettingsPath = @"Microsoft\IRExplorer";
   private const string SettingsFile = "IRExplorer.settings";
-  private const string DefaultDockLayoutFile = "DockLayout.xml";
 #if DEBUG
   //private const string HelpLocation = @"help"; // Local directory.
   private const string HelpLocation = @"D:\github\irx\resources\help";
@@ -94,11 +93,6 @@ public partial class App : Application {
 
   public static string GetCompilerSettingsDirectoryPath(string compilerName) {
     return GetSettingsFilePath(compilerName);
-  }
-
-  public static string GetDefaultDockLayoutFilePath() {
-    string path = GetSettingsDirectoryPath();
-    return Path.Combine(path, DefaultDockLayoutFile);
   }
 
   public static string GetWorkspacesPath() {
@@ -601,7 +595,6 @@ public partial class App : Application {
     if (!LoadApplicationSettings()) {
       // Failed to load settings, reset them.
       Utils.TryDeleteFile(GetSettingsFilePath());
-      Utils.TryDeleteFile(GetDefaultDockLayoutFilePath());
       Settings = new ApplicationSettings();
       IsFirstRun = true;
     }
