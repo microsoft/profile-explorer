@@ -33,6 +33,7 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
   private IDiaSession session_;
   private IDiaSymbol globalSymbol_;
   private List<FunctionDebugInfo> sortedFunctionList_;
+  private bool loadFailed_;
 
   public PDBDebugInfoProvider(SymbolFileSourceOptions options) {
     options_ = options;
@@ -175,6 +176,10 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
   }
 
   public bool LoadDebugInfo(string debugFilePath) {
+    if (loadFailed_) {
+      return false; // Failed before, don't try again.
+    }
+
     try {
       debugFilePath_ = debugFilePath;
       diaSource_ = new DiaSourceClass();
@@ -183,6 +188,7 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to load debug file {debugFilePath}: {ex.Message}");
+      loadFailed_ = true;
       return false;
     }
 
@@ -527,6 +533,10 @@ public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
   }
 
   private IEnumerable<FunctionDebugInfo> EnumerateFunctionsImpl() {
+    if (!EnsureLoaded()) {
+      yield break;
+    }
+
     IDiaEnumSymbols symbolEnum;
 
     try {
