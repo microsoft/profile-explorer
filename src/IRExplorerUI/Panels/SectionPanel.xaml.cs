@@ -1198,7 +1198,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  public async Task Update(bool force = false) {
+  public async Task Update(bool force = false, bool analyzeFunctions = true) {
     if (summary_ != null) {
       await SetupFunctionList(force);
     }
