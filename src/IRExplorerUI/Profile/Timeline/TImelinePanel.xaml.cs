@@ -304,19 +304,23 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
       threadView.ThreadActivityAction += ThreadView_ThreadActivityAction;
 
+      // Set thread color based on name, if available,
+      // otherwise on the thread ID. The picked color is stable
+      // between different sessions loading the same trace.
       var threadInfo = Session.ProfileData.FindThread(thread.ThreadId);
+      uint colorIndex = 0;
 
       if (threadInfo != null && threadInfo.HasName) {
-        uint colorIndex = (uint)threadInfo.Name.GetHashCode();
-        threadView.MarginBackColor =
-          ColorBrushes.GetBrush(ColorUtils.GenerateLightPastelColor(colorIndex));
-        threadView.ActivityHost.SamplesBackColor =
-          ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(colorIndex));
+        colorIndex = (uint)threadInfo.Name.GetStableHashCode();
       }
       else {
-        threadView.ActivityHost.SamplesBackColor =
-          ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor((uint)thread.ThreadId));
+        colorIndex = (uint)thread.ThreadId;
       }
+
+      threadView.MarginBackColor =
+        ColorBrushes.GetBrush(ColorUtils.GenerateLightPastelColor(colorIndex));
+      threadView.ActivityHost.SamplesBackColor =
+        ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(colorIndex));
 
       threadActivityViews_.Add(threadView);
       threadActivityViewsMap_[thread.ThreadId] = threadView;
@@ -1025,7 +1029,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     targetBitmap.Render(visual);
     return new Image {Source = targetBitmap};
   }
-  
+
   private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
     await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
