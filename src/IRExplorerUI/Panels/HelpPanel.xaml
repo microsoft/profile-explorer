@@ -38,9 +38,11 @@
                         VerticalAlignment="Center"
                         Text="Topic" />
 
+                    <Grid>
                     <TextBox
                         x:Name="TopicTextBox"
                         Width="200"
+                        Margin="2,0,0,0"
                         VerticalAlignment="Center"
                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -48,6 +50,10 @@
                         Focusable="False"
                         IsReadOnly="True"
                         PreviewMouseDown="TopicsTextbox_PreviewMouseDown" />
+                    <Image Source="{StaticResource DownArrowIcon}"
+                           Width="16" Height="16" HorizontalAlignment="Right"
+                           IsHitTestVisible="False" Margin="0,1,5,0"></Image>
+                    </Grid>
                     <Button
                       Margin="2,0,0,0"
                       Click="BackButton_Click"
@@ -84,6 +90,13 @@
                             Width="15"
                             Height="15"
                             Source="{StaticResource ZoomInIcon}" />
+                    </Button>
+                    <Separator></Separator>
+                    <Button Click="ExternaButton_Click" ToolTip="Open help in external browser">
+                      <Image
+                        Width="15"
+                        Height="15"
+                        Source="{StaticResource OpenExternalIcon}" />
                     </Button>
                 </ToolBar>
             </ToolBarTray>
