@@ -150,11 +150,12 @@ public partial class HelpPanel : ToolPanelControl {
 
     browserInitialized_ = true;
 
-    // Force light mode for the WebView2 control for now.
+    // Place cache files in the settings directory.
     var webView2Environment = await CoreWebView2Environment.CreateAsync(null, App.GetSettingsDirectoryPath());
     await Browser.EnsureCoreWebView2Async(webView2Environment);
 
     if (Browser.CoreWebView2 == null) {
+      Trace.WriteLine("Failed to initialize WebView2 control in HelpPanel.");
       return;
     }
 
@@ -182,6 +183,19 @@ public partial class HelpPanel : ToolPanelControl {
       }
     };
 
+    Browser.NavigationStarting += (sender, args) => {
+      // Update current topic when navigating to a new page.
+      foreach (var topic in helpIndex_.Topics) {
+        if (args.Uri.Contains(topic.URL.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase)) {
+          TopicTextBox.Text = topic.Title;
+          currentTopic_ = topic;
+          break;
+        }
+      }
+    };
+    
+    // Force light mode for the WebView2 control for now
+    // screenshots don't look good in dark mode.
     Browser.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
   }
 
@@ -356,5 +370,20 @@ public partial class HelpPanel : ToolPanelControl {
 
   private async void BackButton_Click(object sender, RoutedEventArgs e) {
     Browser.GoBack();
+  }
+
+  private async void ExternaButton_Click(object sender, RoutedEventArgs e) {
+    try {
+      if (await DownloadHelpIndex()) {
+        var psi = new ProcessStartInfo() {
+          FileName = App.GetHelpFilePath(helpIndex_.HomeTopic.URL),
+          UseShellExecute = true
+        };
+        Process.Start(psi);
+      }
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to start external browser: {ex.Message}");
+    }
   }
 }
