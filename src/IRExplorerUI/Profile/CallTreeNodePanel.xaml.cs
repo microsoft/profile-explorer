@@ -50,6 +50,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   private IFunctionProfileInfoProvider funcInfoProvider_;
   private bool histogramVisible_;
   private ProfileCallTreeNodeEx instancesNode_;
+  private ProfileCallTreeNodeEx averageNode_;
   private ProfileCallTreeNodeEx mediansNode_;
   private int funcInstancesCount_;
   private int currentInstanceIndex_;
@@ -63,6 +64,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     SetupEvents();
     ShowInstanceNavigation = true;
     DataContext = this;
+    CallTreeNode = null;
   }
 
   public event EventHandler<ProfileCallTreeNode> NodeInstanceChanged;
@@ -90,12 +92,26 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
   public ProfileCallTreeNodeEx CallTreeNode {
     get => nodeEx_;
-    set => SetField(ref nodeEx_, value);
+    set {
+      SetField(ref nodeEx_, value);
+
+      if (value != null) {
+        Utils.EnableControl(this);
+      }
+      else {
+        Utils.DisableControl(this);
+      }
+    }
   }
 
   public ProfileCallTreeNodeEx InstancesNode {
     get => instancesNode_;
     set => SetField(ref instancesNode_, value);
+  }
+
+  public ProfileCallTreeNodeEx AverageNode {
+    get => averageNode_;
+    set => SetField(ref averageNode_, value);
   }
 
   public ProfileCallTreeNodeEx MedianNode {
@@ -194,7 +210,8 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     var callTree = Session.ProfileData.CallTree;
     instanceNodes_ = callTree.GetSortedCallTreeNodes(node.Function);
 
-    if (instanceNodes_ == null) {
+    //? TODO: Should rather be an assert.
+    if (instanceNodes_ == null || instanceNodes_.Count == 0) {
       return;
     }
 
@@ -207,6 +224,15 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     nodeInstanceIndex_ = instanceNodes_.FindIndex(instanceNode => instanceNode == node);
     CurrentInstanceIndex = nodeInstanceIndex_ + 1;
+
+    // Show average node.
+    var averageNode = instanceNodes_[0].Clone();
+    averageNode.Weight = combinedNode.Weight / instanceNodes_.Count;
+    averageNode.ExclusiveWeight = combinedNode.ExclusiveWeight / instanceNodes_.Count;
+    var averageNodeEx = SetupNodeExtension(averageNode, Session);
+    averageNodeEx.Percentage = Session.ProfileData.ScaleFunctionWeight(averageNodeEx.Weight);
+    averageNodeEx.ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(averageNodeEx.ExclusiveWeight);
+    AverageNode = averageNodeEx;
 
     // Show median time.
     var medianNode = instanceNodes_[instanceNodes_.Count / 2];
@@ -437,5 +463,9 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     public TimeSpan AverageWeight { get; set; }
     public TimeSpan TotalWeight { get; set; }
     public List<ProfileCallTreeNode> Nodes { get; set; }
+  }
+
+  public void Reset() {
+    Utils.DisableControl(this);
   }
 }
