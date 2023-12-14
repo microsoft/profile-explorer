@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -140,6 +141,8 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   }
 
   public override bool ShouldStartDragging(MouseButtonEventArgs e) {
+    base.ShouldStartDragging(e);
+
     if (e.LeftButton == MouseButtonState.Pressed && ToolbarPanel.IsMouseOver) {
       if (!IsDetached) {
         DetachPopup();
@@ -149,6 +152,11 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     }
 
     return false;
+  }
+
+  public override async void DetachPopup() {
+    base.DetachPopup();
+    await ExpandDetailsPanel();
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
@@ -189,9 +197,11 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     ClosePopup();
   }
 
-  private async void ExpandButton_OnClick(object sender, RoutedEventArgs e) {
+  private void ExpandButton_OnClick(object sender, RoutedEventArgs e) {
     DetachPopup();
+  }
 
+  private async Task ExpandDetailsPanel() {
     if (!ShowSimpleView) {
       await PanelHost.ShowDetailsAsync();
     }
