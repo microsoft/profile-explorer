@@ -445,6 +445,10 @@ public partial class MainWindow : Window, ISession {
     }, DispatcherPriority.Render);
   }
 
+  public void ResetApplicationProgress() {
+    SetApplicationProgress(false, double.NaN);
+  }
+
   private async Task<LoadedDocument> OpenDocument(string filePath) {
     LoadedDocument loadedDoc = null;
     bool failed = false;

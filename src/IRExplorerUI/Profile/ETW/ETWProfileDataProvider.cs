@@ -18,7 +18,7 @@ namespace IRExplorerUI.Profile;
 
 public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private const int IMAGE_LOCK_COUNT = 64;
-  private const int PROGRESS_UPDATE_INTERVAL = 131072; // Progress UI update after pow2 N samples.
+  private const int PROGRESS_UPDATE_INTERVAL = 32768; // Progress UI update after pow2 N samples.
   [ThreadStatic]
   private static ProfileImage prevImage_;
   [ThreadStatic]
@@ -341,6 +341,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     var sampleRefs = CollectionsMarshal.AsSpan(rawProfile.Samples).Slice(start, end - start);
 
     foreach (var sample in sampleRefs) {
+      // Update progress every pow2 N samples.
+      if ((++index & PROGRESS_UPDATE_INTERVAL - 1) == 0) {
+        if (cancelableTask is { IsCanceled: true }) {
+          return samples;
+        }
+
+        int position = Interlocked.Add(ref currentSampleIndex_, PROGRESS_UPDATE_INTERVAL);
+        UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing,
+                       rawProfile.Samples.Count, position);
+      }
+
       if (!includeKernelEvents && sample.IsKernelCode) {
         continue;
       }
@@ -350,17 +361,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       if (!processIds.Contains(context.ProcessId)) {
         continue;
-      }
-
-      // Update progress every pow2 N samples.
-      if ((++index & PROGRESS_UPDATE_INTERVAL - 1) == 0) {
-        if (cancelableTask is {IsCanceled: true}) {
-          return samples;
-        }
-
-        int position = Interlocked.Add(ref currentSampleIndex_, PROGRESS_UPDATE_INTERVAL);
-        UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing,
-                       rawProfile.Samples.Count, position);
       }
 
       // Count time for each sample.

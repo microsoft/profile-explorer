@@ -24,6 +24,7 @@ namespace IRExplorerUI.Compilers;
 //? TODO: Use for-each iterators everywhere
 public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private const int MaxDemangledFunctionNameLength = 8192;
+  private const int MaxDownloadAttempts = 3;
 
   //? TODO: Save cache between sessions, including the unavailable PDBs.
   //? Invalidate unavailable ones if SymbolOption paths change so they get a chance
@@ -66,8 +67,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       using var logWriter = new StringWriter();
       DebugFileSearchResult searchResult = null;
 
-      // In case there is a timeout downloading the symbols, try once more.
-      for (int attempt = 0; attempt < 2; attempt++) {
+      // In case there is a timeout downloading the symbols, try again.
+      for (int attempt = 0; attempt < MaxDownloadAttempts; attempt++) {
         string symbolSearchPath = ConstructSymbolSearchPath(options);
         using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
         symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
@@ -93,7 +94,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
           break;
         }
         else {
-          // If there was a timeout, try once more.
+          // If there was a timeout, try again.
           if (!logWriter.ToString().Contains("timeout", StringComparison.OrdinalIgnoreCase)) {
             break;
           }
