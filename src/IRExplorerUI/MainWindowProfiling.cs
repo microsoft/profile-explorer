@@ -81,52 +81,48 @@ public partial class MainWindow : Window, ISession {
   public async Task<bool> FilterProfileSamples(ProfileSampleFilter filter) {
     using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
 
-    SetApplicationProgress(true, double.NaN, "Filtering");
+    SetApplicationProgress(true, double.NaN, "Filtering profiling data");
     StartUIUpdate();
 
-    var sw = Stopwatch.StartNew();
+    var totalSw = Stopwatch.StartNew();
     Trace.WriteLine("--------------------------------------------------------\n");
     Trace.WriteLine($"Filter {filter}, samples {ProfileData.Samples.Count}");
 
-    {
-      var sw2 = Stopwatch.StartNew();
-      ProfileData.ProcessingResult result = null;
+    var filterSw = Stopwatch.StartNew();
+    ProfileData.ProcessingResult result = null;
 
-      if (filter.IncludesAll && allThreadsProfile_ != null) {
-        Trace.WriteLine("Restore main profile");
-        result = ProfileData.RestorePreviousProfile(allThreadsProfile_);
-      }
-      // else if (prevProfiles.TryGetValue(filter, out result)) {
-      //   Trace.WriteLine($"Restore other profile");
-      //   result = ProfileData.RestorePreviousProfile(allThreadsProfile_);
-      // }
-      else {
-        Trace.WriteLine("Compute new profile");
-        result = await Task.Run(() => ProfileData.FilterFunctionProfile(filter));
-      }
-
-      if (result.Filter.IncludesAll) {
-        Trace.WriteLine("Save main profile");
-
-        allThreadsProfile_ = result;
-      }
-
-      //prevProfiles[result.Filter] = result;
-      Trace.WriteLine($"1) ComputeFunctionProfile {sw2.ElapsedMilliseconds}");
+    if (filter.IncludesAll && allThreadsProfile_ != null) {
+      Trace.WriteLine("Restore main profile");
+      result = ProfileData.RestorePreviousProfile(allThreadsProfile_);
+    }
+    // else if (prevProfiles.TryGetValue(filter, out result)) {
+    //   Trace.WriteLine($"Restore other profile");
+    //   result = ProfileData.RestorePreviousProfile(allThreadsProfile_);
+    // }
+    else {
+      Trace.WriteLine("Compute new profile");
+      result = await Task.Run(() => ProfileData.FilterFunctionProfile(filter));
     }
 
-    {
-      var sw2 = Stopwatch.StartNew();
-      await SectionPanel.RefreshProfile();
-      Trace.WriteLine($"2) RefreshProfile {sw2.ElapsedMilliseconds}");
+    if (result.Filter.IncludesAll) {
+      Trace.WriteLine("Save main profile");
+      allThreadsProfile_ = result;
     }
 
-    sw.Stop();
-    Trace.WriteLine($"Total: {sw.ElapsedMilliseconds}");
+    //prevProfiles[result.Filter] = result;
+    Trace.WriteLine($"ComputeFunctionProfile time: {filterSw.ElapsedMilliseconds} ms");
 
+    // Update all profiling panels.
+    var updateSw = Stopwatch.StartNew();
+    await SectionPanel.RefreshProfile();
+    await RefreshProfilingPanels();
     await ProfileSampleRangeDeselected();
 
-    SetApplicationProgress(false, double.NaN);
+    Trace.WriteLine($"RefreshProfile time: {updateSw.ElapsedMilliseconds} ms");
+    Trace.WriteLine($"FilterProfileSamples time: {totalSw.ElapsedMilliseconds} ms");
+    Trace.WriteLine("--------------------------------------------------------\n");
+
+    ResetApplicationProgress();
     StopUIUpdate();
     return true;
   }
@@ -377,9 +373,34 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async Task SetupLoadedProfile() {
-    await SetupPanels();
     UpdateWindowTitle();
+    SetApplicationProgress(true, double.NaN, "Loading profiling data");
+    StartUIUpdate();
+
+    await SetupPanels();
+    await RefreshProfilingPanels();
+
+    StopUIUpdate();
+    ResetApplicationProgress();
     SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
+  }
+
+  private async Task RefreshProfilingPanels() {
+    List<Task> panelTasks = new();
+
+    if (FindPanel(ToolPanelKind.CallTree) is CallTreePanel panel) {
+      panelTasks.Add(panel.DisplayProfileCallTree());
+    }
+
+    if (FindPanel(ToolPanelKind.FlameGraph) is FlameGraphPanel fgPanel) {
+      panelTasks.Add(fgPanel.DisplayFlameGraph());
+    }
+
+    if (FindPanel(ToolPanelKind.Timeline) is TimelinePanel timelinePanel) {
+      panelTasks.Add(timelinePanel.DisplayFlameGraph());
+    }
+
+    await Task.WhenAll(panelTasks.ToArray());
   }
 
   private async void RecordProfileExecuted(object sender, ExecutedRoutedEventArgs e) {

@@ -1618,25 +1618,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     GridViewColumnVisibility.UpdateListView(FunctionList);
     Utils.ScrollToFirstListViewItem(FunctionList);
     SetupStackFunctionHoverPreview();
-
-    // Create the call tree.
-    var panel = Session.FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
-
-    if (panel != null) {
-      await panel.DisplayProfileCallTree();
-    }
-
-    var fgPanel = Session.FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
-
-    if (fgPanel != null) {
-      await fgPanel.DisplayFlameGraph();
-    }
-
-    var timelinePanel = Session.FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
-
-    if (timelinePanel != null) {
-      await timelinePanel.DisplayFlameGraph();
-    }
   }
 
   private void SetupStackFunctionHoverPreview() {
