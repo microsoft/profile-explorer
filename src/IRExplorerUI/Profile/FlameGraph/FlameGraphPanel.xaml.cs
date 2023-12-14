@@ -276,6 +276,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private async void GraphHost_NodesDeselected(object sender, EventArgs e) {
+    NodeDetailsPanel.Reset();
+
     if (SyncSelection) {
       await Session.ProfileFunctionDeselected();
     }

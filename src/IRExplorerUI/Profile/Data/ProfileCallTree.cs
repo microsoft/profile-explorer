@@ -765,6 +765,20 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     return
       $"{FunctionName}, weight: {Weight}, exc weight {ExclusiveWeight}, children: {(HasCallers ? Children.Count : 0)}";
   }
+
+  public ProfileCallTreeNode Clone() {
+    return new() {
+      Id = Id,
+      FunctionDebugInfo = FunctionDebugInfo,
+      weight_ = weight_,
+      exclusiveWeight_ = exclusiveWeight_,
+      Kind = Kind,
+      functionRef_ = functionRef_,
+      children_ = children_,
+      caller_ = caller_,
+      callSites_ = callSites_
+    };
+  }
 }
 
 public sealed class ProfileCallTreeGroupNode : ProfileCallTreeNode {
