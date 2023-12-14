@@ -85,12 +85,12 @@ public partial class DefinitionPanel : ToolPanelControl {
     definedOperand_ = op;
   }
 
-  public override void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+  public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     if (TextView.Section == section) {
       return;
     }
 
-    TextView.InitializeFromDocument(document, false);
+    await TextView.InitializeFromDocument(document, false);
     Document = document;
 
     if (Session.LoadPanelState(this, section, document) is DefinitionPanelState savedState) {
@@ -159,9 +159,9 @@ public partial class DefinitionPanel : ToolPanelControl {
     TextView.UnloadDocument();
   }
 
-  public override void ClonePanel(IToolPanel sourcePanel) {
+  public override async void ClonePanel(IToolPanel sourcePanel) {
     var defPanel = sourcePanel as DefinitionPanel;
-    TextView.InitializeFromDocument(defPanel.TextView);
+    await TextView.InitializeFromDocument(defPanel.TextView);
   }
 
         #endregion
