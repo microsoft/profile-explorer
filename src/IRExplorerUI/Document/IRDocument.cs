@@ -457,10 +457,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     HighlightSingleElement(element, markedHighlighter_);
   }
 
-  public void InitializeBasedOnDocument(string text, IRDocument doc) {
-    InitializeFromDocument(doc, true, text);
-  }
-
   public void UnloadDocument() {
     Section = null;
     Function = null;
@@ -474,7 +470,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     ColumnData = null;
   }
 
-  public bool InitializeFromDocument(IRDocument doc, bool copyTemporaryHighlighting = true, string text = null) {
+  public async Task<bool> InitializeFromDocument(IRDocument doc, bool copyTemporaryHighlighting = true, string text = null) {
     if (Section == doc.Section) {
       return false;
     }
@@ -508,7 +504,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
 
     SetupBlockFolding();
-    //await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
+    await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
     return true;
   }
 
@@ -3703,21 +3699,26 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
       if (result != null) {
         string title = $"Function: {element.Name}";
-        previewPopup_ = await IRDocumentPopup.CreateNew(result, position, 600, 400,
+        previewPopup_ = await IRDocumentPopup.CreateNew(result, position, IRDocumentPopup.DefaultWidth,
+                                                        IRDocumentPopup.DefaultHeight * 2,
                                                         this, Session, title);
       }
     }
     else {
-      previewPopup_ = IRDocumentPopup.CreateNew(this, element, position, 600, 200,
+      previewPopup_ = await IRDocumentPopup.CreateNew(this, element, position,
+                                                IRDocumentPopup.DefaultWidth,
+                                                IRDocumentPopup.DefaultHeight,
                                                 this, "Definition of ");
     }
 
-    previewPopup_.PopupDetached += Popup_PopupDetached;
-    previewPopup_.ShowPopup();
+    if (previewPopup_ != null) {
+      previewPopup_.PopupDetached += Popup_PopupDetached;
+      previewPopup_.ShowPopup();
 
-    if (alwaysShow) {
-      // Keep open when triggered manually from UI or shortcut.
-      previewPopup_.DetachPopup();
+      if (alwaysShow) {
+        // Keep open when triggered manually from UI or shortcut.
+        previewPopup_.DetachPopup();
+      }
     }
   }
 

@@ -528,7 +528,7 @@ public partial class GraphPanel : ToolPanelControl {
     }
   }
 
-  private void Hover_MouseHover(object sender, MouseEventArgs e) {
+  private async void Hover_MouseHover(object sender, MouseEventArgs e) {
     if (!Settings.ShowPreviewPopup ||
         Settings.ShowPreviewPopupWithModifier && !Utils.IsShiftModifierActive()) {
       return;
@@ -543,7 +543,7 @@ public partial class GraphPanel : ToolPanelControl {
     var node = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
     if (node?.NodeInfo.ElementData != null) {
-      ShowPreviewPopup(node);
+      await ShowPreviewPopup(node);
       hoveredNode_ = node;
     }
   }
@@ -825,7 +825,7 @@ public partial class GraphPanel : ToolPanelControl {
     GraphHost.ScrollToVerticalOffset(offsetY * zoom - centerY);
   }
 
-  private void ShowPreviewPopup(GraphNode node) {
+  private async Task ShowPreviewPopup(GraphNode node) {
     if (previewPopup_ != null) {
       if (hoveredNode_ == node) {
         return;
@@ -844,8 +844,10 @@ public partial class GraphPanel : ToolPanelControl {
     }
 
     var position = Mouse.GetPosition(GraphHost).AdjustForMouseCursor();
-    previewPopup_ = IRDocumentPopup.CreateNew(Document, node.NodeInfo.ElementData,
-                                              position, 500, 150, GraphHost, "Block ");
+    previewPopup_ = await IRDocumentPopup.CreateNew(Document, node.NodeInfo.ElementData, position,
+                                              IRDocumentPopup.DefaultWidth,
+                                              IRDocumentPopup.DefaultHeight,
+                                              GraphHost, "Block ");
     previewPopup_.PopupDetached += Popup_PopupDetached;
     previewPopup_.ShowPopup();
   }

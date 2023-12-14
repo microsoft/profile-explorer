@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using IRExplorerCore.IR;
@@ -41,12 +42,8 @@ public partial class IRPreviewToolTip : UserControl {
     }
   }
 
-  public void InitializeFromDocument(IRDocument document, string text = null) {
-    TextView.InitializeFromDocument(document, false, text);
-  }
-
-  public void InitializeBasedOnDocument(string text, IRDocument document) {
-    TextView.InitializeBasedOnDocument(text, document);
+  public async Task InitializeFromDocument(IRDocument document, string text = null) {
+    await TextView.InitializeFromDocument(document, false, text);
   }
 
   public void UpdateView(bool highlight = true) {

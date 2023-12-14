@@ -16,6 +16,9 @@ using IRExplorerUI.Utilities.UI;
 namespace IRExplorerUI.Controls;
 
 public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
+  public static double DefaultWidth = 500;
+  public static double DefaultHeight = 200;
+
   private string panelTitle_;
   private string panelToolTip_;
   private UIElement owner_;
@@ -61,12 +64,12 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     }
   }
 
-  public static IRDocumentPopup CreateNew(IRDocument document, IRElement previewedElement,
+  public static async Task<IRDocumentPopup> CreateNew(IRDocument document, IRElement previewedElement,
                                           Point position, double width, double height, UIElement owner,
                                           string titlePrefix = "") {
     var popup = CreatePopup(document.Section, previewedElement, position, width, height,
                             owner ?? document.TextArea.TextView, document.Session, titlePrefix);
-    popup.InitializeFromDocument(document);
+    await popup.InitializeFromDocument(document);
     popup.CaptureMouseWheel();
     return popup;
   }
@@ -86,7 +89,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private static IRDocumentPopup CreatePopup(IRTextSection section, IRElement previewedElement,
                                              Point position, double width, double height,
                                              UIElement owner, ISession session, string titlePrefix) {
-    var popup = new IRDocumentPopup(position, 500, 150, owner, session);
+    var popup = new IRDocumentPopup(position, width, height, owner, session);
 
     if (previewedElement != null) {
       string elementText = Utils.MakeElementDescription(previewedElement);
@@ -101,12 +104,8 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     return popup;
   }
 
-  public void InitializeFromDocument(IRDocument document, string text = null) {
-    TextView.InitializeFromDocument(document, false, text);
-  }
-
-  public void InitializeBasedOnDocument(string text, IRDocument document) {
-    TextView.InitializeBasedOnDocument(text, document);
+  private async Task InitializeFromDocument(IRDocument document, string text = null) {
+    await TextView.InitializeFromDocument(document, false, text);
   }
 
   public override void ShowPopup() {
@@ -233,18 +232,18 @@ public class IRDocumentPopupInstance {
     hover.MouseHoverStopped += Hover_MouseHoverStopped;
   }
 
-  public void ShowPreviewPopupForDocument(IRDocument document, IRElement element, UIElement relativeElement) {
-    ShowPreviewPopupForDocument(document, element, relativeElement, width_, height_, title_);
+  private async Task ShowPreviewPopupForDocument(IRDocument document, IRElement element, UIElement relativeElement) {
+    await ShowPreviewPopupForDocument(document, element, relativeElement, width_, height_, title_);
   }
 
-  public void ShowPreviewPopupForDocument(IRDocument document, IRElement element, UIElement relativeElement,
+  private async Task ShowPreviewPopupForDocument(IRDocument document, IRElement element, UIElement relativeElement,
                                           double width, double height, string titlePrefix) {
     if (!Prepare(element)) {
       return;
     }
 
     var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
-    previewPopup_ = IRDocumentPopup.CreateNew(document, element, position, width, height,
+    previewPopup_ = await IRDocumentPopup.CreateNew(document, element, position, width, height,
                                               relativeElement, titlePrefix);
     Complete();
   }
@@ -316,7 +315,7 @@ public class IRDocumentPopupInstance {
 
     if (result.Element != null) {
       if (result.AssociatedDocument != null) {
-        ShowPreviewPopupForDocument(result.AssociatedDocument, result.Element, result.RelativeElement);
+        await ShowPreviewPopupForDocument(result.AssociatedDocument, result.Element, result.RelativeElement);
       }
       else if (result.AssociatedSection != null) {
         await ShowPreviewPopupForSection(result.AssociatedSection, result.RelativeElement);

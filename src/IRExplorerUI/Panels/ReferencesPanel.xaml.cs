@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -470,7 +471,7 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     Document.BringElementIntoView(refInfo.Info.Element);
   }
 
-  private void ShowPreviewPopup(IRElement element, UIElement relativeElement) {
+  private async Task ShowPreviewPopup(IRElement element, UIElement relativeElement) {
     if (previewPopup_ != null) {
       if (previewPopup_.PreviewedElement == element) {
         return;
@@ -485,7 +486,10 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     }
 
     var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
-    previewPopup_ = IRDocumentPopup.CreateNew(Document, element, position, 500, 150, relativeElement, "Use of ");
+    previewPopup_ = await IRDocumentPopup.CreateNew(Document, element, position,
+                                              IRDocumentPopup.DefaultWidth,
+                                              IRDocumentPopup.DefaultHeight,
+                                              relativeElement, "Use of ");
     previewPopup_.PopupDetached += Popup_PopupDetached;
     previewPopup_.ShowPopup();
   }
@@ -547,12 +551,12 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     return false;
   }
 
-  private void Hover_MouseHover(object sender, MouseEventArgs e) {
+  private async void Hover_MouseHover(object sender, MouseEventArgs e) {
     var hoveredItem = FindPointedListItem(ReferenceList);
 
     if (hoveredItem != null) {
       var refInfo = (ReferenceInfo)hoveredItem.DataContext;
-      ShowPreviewPopup(refInfo.Info.Element, hoveredItem);
+      await ShowPreviewPopup(refInfo.Info.Element, hoveredItem);
     }
   }
 
