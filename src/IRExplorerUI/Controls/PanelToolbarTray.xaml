@@ -33,7 +33,8 @@
             ToolBar.OverflowMode="Never"
             ToolTip="Pin panel content (don't sync with document)"
             Unchecked="PinButton_Unchecked">
-            <Image Source="{StaticResource PinIcon}" />
+            <Image Source="{StaticResource PinIcon}"
+                   Style="{StaticResource DisabledImageStyle}"/>
         </ToggleButton>
 
         <Menu
@@ -57,7 +58,8 @@
                     <Image
                         Width="16"
                         Height="20"
-                        Source="{StaticResource VersionsIcon}" />
+                        Source="{StaticResource VersionsIcon}"
+                        Style="{StaticResource DisabledImageStyle}"/>
                 </MenuItem.Icon>
                 <MenuItem
                     x:Name="DuplicateMenu"
@@ -131,6 +133,7 @@
                 VerticalAlignment="Center"
                 SnapsToDevicePixels="True"
                 Source="{StaticResource HelpIcon}"
+                Style="{StaticResource DisabledImageStyle}"
                 UseLayoutRounding="True" />
         </Button>
 
@@ -143,7 +146,8 @@
             PreviewMouseLeftButtonDown="SettingsButton_PreviewMouseLeftButtonDown"
             ToolBar.OverflowMode="Never"
             ToolTip="Show panel settings">
-            <Image Source="{StaticResource SettingsIcon}" />
+            <Image Source="{StaticResource SettingsIcon}"
+                   Style="{StaticResource DisabledImageStyle}"/>
         </Button>
     </ToolBar>
 </ToolBarTray>
