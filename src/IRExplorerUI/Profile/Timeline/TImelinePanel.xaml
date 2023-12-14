@@ -66,7 +66,7 @@
     </Style>
   </irExplorerUi:ToolPanelControl.Resources>
 
-  <Grid>
+  <Grid IsEnabled="{Binding HasCallTree}">
     <Grid.RowDefinitions>
       <RowDefinition Height="28" />
       <RowDefinition Height="*" />
@@ -101,7 +101,8 @@
             IsEnabled="False"
             ToolTip="Not yet implemented">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource DockLeftIcon}" />
+              <Image Source="{StaticResource DockLeftIcon}"
+                     Style="{StaticResource DisabledImageStyle}"/>
               <TextBlock Margin="4,0,0,0" Text="Back" />
             </StackPanel>
           </Button>
@@ -112,7 +113,8 @@
             CommandTarget="{Binding ElementName=ActivityView}"
             ToolTip="Zoom the graph view to 100% (Ctrl+R)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource ResetWidthIcon}" />
+              <Image Source="{StaticResource ResetWidthIcon}"
+                     Style="{StaticResource DisabledImageStyle}"/>
               <TextBlock Margin="4,0,0,0" Text="Reset" />
             </StackPanel>
           </Button>
@@ -120,13 +122,17 @@
             Command="irExplorerUi:GraphCommand.GraphZoomOut"
             CommandTarget="{Binding ElementName=ActivityView}"
             ToolTip="Zoom Out (Ctrl+_">
-            <Image Source="{StaticResource ZoomOutIcon}" Width="15" Height="15" />
+            <Image Source="{StaticResource ZoomOutIcon}"
+                   Style="{StaticResource DisabledImageStyle}"
+                   Width="15" Height="15" />
           </Button>
           <Button
             Command="irExplorerUi:GraphCommand.GraphZoomIn"
             CommandTarget="{Binding ElementName=ActivityView}"
             ToolTip="Zoom In (Ctrl+=)">
-            <Image Source="{StaticResource ZoomInIcon}" Width="15" Height="15" />
+            <Image Source="{StaticResource ZoomInIcon}"
+                   Style="{StaticResource DisabledImageStyle}"
+                   Width="15" Height="15" />
           </Button>
 
           <Separator />
@@ -142,7 +148,8 @@
                 Width="16"
                 Height="16"
                 Margin="0,1,0,0"
-                Source="{StaticResource SwitchIcon}" />
+                Source="{StaticResource SwitchIcon}"
+                Style="{StaticResource DisabledImageStyle}"/>
               <TextBlock Text="Sync" />
             </StackPanel>
           </ToggleButton>
@@ -158,7 +165,8 @@
                 Width="16"
                 Height="16"
                 Margin="0,1,0,0"
-                Source="{StaticResource GroupIcon}" />
+                Source="{StaticResource GroupIcon}"
+                Style="{StaticResource DisabledImageStyle}"/>
               <TextBlock Text="" />
             </StackPanel>
           </ToggleButton>
@@ -181,7 +189,8 @@
                   Margin="-2,0,-2,0"
                   HorizontalAlignment="Center"
                   VerticalAlignment="Center"
-                  Source="{StaticResource TasklistIcon}" />
+                  Source="{StaticResource TasklistIcon}"
+                  Style="{StaticResource DisabledImageStyle}"/>
               </MenuItem.Icon>
               <Separator />
               <MenuItem Click="ClearMarkers_OnClick" Header="Clear All Markers" />
@@ -191,6 +200,7 @@
 
           <Image Source="{StaticResource FilterIcon}" Width="16" Height="16" Margin="2,1,4,0"
                  ToolTip="Active time and thread filters"
+                 Style="{StaticResource DisabledImageStyle}"
                  Visibility="{Binding HasAnyFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
           <TextBlock
             VerticalAlignment="Center"
@@ -246,7 +256,8 @@
             <Image
               Width="16"
               Height="16"
-              Source="{StaticResource ClearIcon}" />
+              Source="{StaticResource ClearIcon}"
+              Style="{StaticResource DisabledImageStyle}"/>
           </Button>
 
           <ToggleButton

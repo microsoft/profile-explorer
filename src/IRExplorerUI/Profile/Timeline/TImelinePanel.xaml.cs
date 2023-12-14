@@ -74,6 +74,16 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
+  public ProfileCallTree CallTree {
+    get => callTree_;
+    set {
+      SetField(ref callTree_, value);
+      OnPropertyChanged(nameof(HasCallTree));
+    }
+  }
+
+  public bool HasCallTree => callTree_ != null;
+
   public bool PrependModuleToFunction {
     get => settings_.PrependModuleToFunction;
     set {
@@ -88,6 +98,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public bool SyncSelection {
     get => settings_.SyncSelection;
     set {
+      //? TODO: Use SetField everywhere
       if (value != settings_.SyncSelection) {
         settings_.SyncSelection = value;
         OnPropertyChanged();
@@ -176,7 +187,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   public void Reset() {
-    callTree_ = null;
+    CallTree = null;
     threadActivityViews_.Clear();
     threadActivityViewsMap_.Clear();
     threadHoverPreviewMap_.Clear();
@@ -198,7 +209,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   public override void OnSessionEnd() {
     base.OnSessionEnd();
-    callTree_ = null;
+    CallTree = null;
     pendingCallTree_ = null;
   }
 
@@ -281,11 +292,11 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private async Task InitializeCallTree(ProfileCallTree callTree) {
-    if (callTree_ != null) {
+    if (HasCallTree) {
       return;
     }
 
-    callTree_ = callTree;
+    CallTree = callTree;
     var activityArea = new Rect(0, 0, ActivityViewAreaWidth, ActivityView.ActualHeight);
     var threads = Session.ProfileData.SortedThreadWeights;
     var initTasks = new List<Task>(threads.Count);

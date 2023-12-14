@@ -30,7 +30,7 @@
     <CommandBinding Command="local:CallTreeCommand.CollapseNodes" Executed="CollapseNodesExecuted" />
   </irExplorerUi:ToolPanelControl.CommandBindings>
 
-  <Grid>
+  <Grid IsEnabled="{Binding HasCallTree}">
     <Grid.RowDefinitions>
       <RowDefinition Height="28" />
       <RowDefinition Height="*" />
@@ -58,7 +58,8 @@
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource DockLeftIcon}" />
+              <Image Source="{StaticResource DockLeftIcon}"
+                     Style="{StaticResource DisabledImageStyle}"/>
               <TextBlock Margin="4,0,0,0" Text="Back" />
             </StackPanel>
           </Button>
@@ -68,7 +69,8 @@
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Reset call tree to initial state (Ctrl+R)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource ResetWidthIcon}" />
+              <Image Source="{StaticResource ResetWidthIcon}"
+                     Style="{StaticResource DisabledImageStyle}"/>
               <TextBlock Margin="4,0,0,0" Text="Reset" />
             </StackPanel>
           </Button>
@@ -91,7 +93,8 @@
                 Width="16"
                 Height="16"
                 Margin="0,1,0,0"
-                Source="{StaticResource SwitchIcon}" />
+                Source="{StaticResource SwitchIcon}"
+                Style="{StaticResource DisabledImageStyle}"/>
               <TextBlock Text="Sync" />
             </StackPanel>
           </ToggleButton>
@@ -106,7 +109,8 @@
               Width="16"
               Height="16"
               Margin="0,1,0,0"
-              Source="{StaticResource SourceIcon}" />
+              Source="{StaticResource SourceIcon}"
+              Style="{StaticResource DisabledImageStyle}"/>
           </ToggleButton>
           <Separator />
 
@@ -119,7 +123,8 @@
                 Width="15"
                 Height="15"
                 Margin="0,0,2,0"
-                Source="{StaticResource CombineIcon}" />
+                Source="{StaticResource CombineIcon}"
+                Style="{StaticResource DisabledImageStyle}"/>
               <TextBlock Text="Combine" />
             </StackPanel>
           </ToggleButton>
@@ -141,13 +146,15 @@
                 VerticalAlignment="Center"
                 Width="16"
                 Height="16"
-                Source="{StaticResource DetailsIcon}" />
+                Source="{StaticResource DetailsIcon}"
+                Style="{StaticResource DisabledImageStyle}"/>
               <TextBlock Text="Details" VerticalAlignment="Center" />
             </StackPanel>
           </ToggleButton>
           <Separator />
 
-          <Image Source="{StaticResource SearchIcon}" />
+          <Image Source="{StaticResource SearchIcon}"
+                 Style="{StaticResource DisabledImageStyle}"/>
           <Grid Height="24">
             <TextBox
               x:Name="FunctionFilter"
@@ -179,25 +186,26 @@
           <Button
             Command="local:CallTreeCommand.ClearSearch"
             CommandParameter="{Binding ElementName=FunctionFilter}"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             TabIndex="5"
             ToolTip="Reset searched function">
             <Image
               Width="16"
               Height="16"
-              Source="{StaticResource ClearIcon}" />
+              Source="{StaticResource ClearIcon}"
+              Style="{StaticResource DisabledImageStyle}"/>
           </Button>
 
           <Button
             Command="local:CallTreeCommand.PreviousSearchResult"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             ToolTip="Previous search result">
             <Image Source="{StaticResource UpArrowIcon}"
                    Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
           </Button>
           <Button
             Command="local:CallTreeCommand.NextSearchResult"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             ToolTip="Next search result">
             <Image Source="{StaticResource DownArrowIcon}"
                    Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -222,7 +230,7 @@
     </DockPanel>
 
     <tree:TreeList
-      x:Name="CallTree"
+      x:Name="CallTreeList"
       Grid.Row="1"
       Panel.ZIndex="2"
       Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
@@ -329,7 +337,7 @@
           <MenuItem
             Command="local:CallTreeCommand.OpenFunction"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Open Function"
             InputGestureText="Ctrl+Return"
             ToolTip="Open the function assembly view">
@@ -343,7 +351,7 @@
           <MenuItem
             Command="local:CallTreeCommand.OpenFunctionInNewTab"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Open Function in New Tab"
             InputGestureText="Ctrl+Shift+Return"
             ToolTip="Open the function assembly view in a new tab">
@@ -359,7 +367,7 @@
           <MenuItem
             Command="local:CallTreeCommand.ExpandHottestCallPath"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Expand Hottest Call Path"
             InputGestureText="Ctrl+="
             ToolTip="Expand several levels following the hottest path starting with the selected function">
@@ -373,7 +381,7 @@
           <MenuItem
             Command="local:CallTreeCommand.CollapseCallPath"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Collapse Call Path"
             InputGestureText="Ctrl+-"
             ToolTip="Collapse the expanded node starting under the selected function">
@@ -389,7 +397,7 @@
           <MenuItem
             Command="{Binding CopyFunctionNameCommand}"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Copy Function Name"
             ToolTip="Copy the function name to the clipboard">
             <MenuItem.Icon>
@@ -402,7 +410,7 @@
           <MenuItem
             Command="{Binding CopyDemangledFunctionNameCommand}"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Copy Demangled Function Name"
             ToolTip="Copy the demangled function name to the clipboard (C/C++)">
             <MenuItem.Icon>
@@ -417,7 +425,7 @@
           <MenuItem
             Command="local:CallTreeCommand.SelectFunction"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Select in Summary"
             ToolTip="Select the function in the Summary panel">
             <MenuItem.Icon>
@@ -430,7 +438,7 @@
           <MenuItem
             Command="{Binding SelectFunctionCallTreeCommand}"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Select in Call Tree"
             ToolTip="Select the function instance in the Call Tree panel"
             Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -445,7 +453,7 @@
           <MenuItem
             Command="{Binding SelectFunctionFlameGraphCommand}"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Select in Flame Graph"
             ToolTip="Select the function instance in the Flame Graph panel">
             <MenuItem.Icon>
@@ -459,7 +467,7 @@
           <MenuItem
             Command="{Binding SelectFunctionTimelineCommand}"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTree}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Select in Timeline"
             ToolTip="Select the function instance in the Timeline panel">
             <MenuItem.Icon>

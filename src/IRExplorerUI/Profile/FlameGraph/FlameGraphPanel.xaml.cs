@@ -39,6 +39,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     settings_ = App.Settings.FlameGraphSettings;
     SetupEvents();
     DataContext = this;
+    CallTree = null;
     ShowNodePanel = true;
   }
 
@@ -54,6 +55,16 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
   }
 
+  public ProfileCallTree CallTree {
+    get => callTree_;
+    set {
+      SetField(ref callTree_, value);
+      OnPropertyChanged(nameof(HasCallTree));
+    }
+  }
+
+  public bool HasCallTree => callTree_ != null;
+
   public bool PrependModuleToFunction {
     get => settings_.PrependModuleToFunction;
     set {
@@ -68,6 +79,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   public bool SyncSourceFile {
     get => settings_.SyncSourceFile;
     set {
+      //? TODO: Use SetField everywhere
       if (value != settings_.SyncSourceFile) {
         settings_.SyncSourceFile = value;
         OnPropertyChanged();
@@ -150,7 +162,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   public override void OnSessionEnd() {
     base.OnSessionEnd();
     GraphHost.Reset();
-    callTree_ = null;
+    CallTree = null;
     pendingCallTree_ = null;
   }
 
@@ -163,7 +175,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   public async Task SelectFunction(IRTextFunction function, bool bringIntoView = true) {
-    if (callTree_ == null) {
+    if (!HasCallTree) {
       return; //? TODO: Maybe do the init now?
     }
 
@@ -175,7 +187,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   public async Task SelectFunction(ProfileCallTreeNode node, bool bringIntoView = true) {
-    if (callTree_ == null) {
+    if (!HasCallTree) {
       return; //? TODO: Maybe do the init now?
     }
 
@@ -227,7 +239,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private async Task InitializeCallTree(ProfileCallTree callTree) {
-    callTree_ = callTree;
+    CallTree = callTree;
     await GraphHost.InitializeFlameGraph(callTree);
   }
 

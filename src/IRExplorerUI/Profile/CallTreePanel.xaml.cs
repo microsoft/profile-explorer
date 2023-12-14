@@ -188,6 +188,16 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   });
 
+  public ProfileCallTree CallTree {
+    get => callTree_;
+    set {
+      SetField(ref callTree_, value);
+      OnPropertyChanged(nameof(HasCallTree));
+    }
+  }
+
+  public bool HasCallTree => callTree_ != null;
+
   public bool PrependModuleToFunction {
     get => settings_.PrependModuleToFunction;
     set {
@@ -209,6 +219,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public bool SyncSelection {
     get => settings_.SyncSelection;
     set {
+      //? TODO: Use SetField everywhere
       if (value != settings_.SyncSelection) {
         settings_.SyncSelection = value;
         OnPropertyChanged();
@@ -290,9 +301,9 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       Reset();
     }
 
-    callTree_ = Session.ProfileData.CallTree;
+    CallTree = Session.ProfileData.CallTree;
     callTreeEx_ = await Task.Run(() => CreateProfileCallTree());
-    CallTree.Model = callTreeEx_;
+    CallTreeList.Model = callTreeEx_;
 
     if (true) { //? TODO: Use option from UI settings
       ExpandHottestFunctionPath();
@@ -301,19 +312,19 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   public async Task DisplayProfileCallerCalleeTree(IRTextFunction function) {
     function_ = function;
-    callTree_ = Session.ProfileData.CallTree;
+    CallTree = Session.ProfileData.CallTree;
     ignoreNextSelectionEvent_ = true; // Prevent deselection even to be triggered.
 
     callTreeEx_ = await Task.Run(() => CreateProfileCallerCalleeTree(function));
-    CallTree.Model = callTreeEx_;
+    CallTreeList.Model = callTreeEx_;
     ExpandCallTreeTop();
     ignoreNextSelectionEvent_ = false;
   }
 
   public void Reset() {
-    CallTree.Model = null;
+    CallTreeList.Model = null;
     function_ = null;
-    callTree_ = null;
+    CallTree = null;
     callTreeEx_ = null;
     callTreeNodeToNodeExMap_.Clear();
     stateStack_.Clear();
@@ -342,9 +353,9 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     ExpandPathToNode(nodeEx, markPath);
     BringIntoView(nodeEx);
 
-    if (CallTree.SelectedItem != nodeEx.TreeNode) {
+    if (CallTreeList.SelectedItem != nodeEx.TreeNode) {
       ignoreNextSelectionEvent_ = true;
-      CallTree.SelectedItem = nodeEx.TreeNode;
+      CallTreeList.SelectedItem = nodeEx.TreeNode;
     }
   }
 
@@ -358,6 +369,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
     return callTree_.GetTopModules(node);
+  }
+
+  protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
+    if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+    field = value;
+    OnPropertyChanged(propertyName);
+    return true;
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
@@ -375,13 +393,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void SetupEvents() {
-    CallTree.NodeExpanded += CallTreeOnNodeExpanded;
+    CallTreeList.NodeExpanded += CallTreeOnNodeExpanded;
 
-    stackHoverPreview_ = new PopupHoverPreview(CallTree,
+    stackHoverPreview_ = new PopupHoverPreview(CallTreeList,
                                                HoverPreview.LongHoverDuration,
                                                (mousePoint, previewPoint) => {
                                                  var element =
-                                                   (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(
+                                                   (UIElement)CallTreeList.GetObjectAtPoint<ListViewItem>(
                                                      mousePoint);
 
                                                  if (element is not TreeListItem treeItem) {
@@ -395,13 +413,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                                                    // If popup already opened for this node reuse the instance.
                                                    if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup
                                                      popup) {
-                                                     popup.UpdatePosition(previewPoint, CallTree);
+                                                     popup.UpdatePosition(previewPoint, CallTreeList);
                                                      popup.UpdateNode(callNode);
                                                      return popup;
                                                    }
 
                                                    return new CallTreeNodePopup(
-                                                     callNode, this, previewPoint, CallTree, Session);
+                                                     callNode, this, previewPoint, CallTreeList, Session);
                                                  }
 
                                                  return null;
@@ -467,7 +485,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private void BringIntoView(ChildFunctionEx nodeEx) {
     if (nodeEx.TreeNode != null) {
-      CallTree.ScrollIntoView(nodeEx.TreeNode);
+      CallTreeList.ScrollIntoView(nodeEx.TreeNode);
     }
   }
 
@@ -648,8 +666,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void ExpandCallTreeTop() {
-    if (CallTree.Nodes.Count > 0) {
-      foreach (var childNode in CallTree.Nodes) {
+    if (CallTreeList.Nodes.Count > 0) {
+      foreach (var childNode in CallTreeList.Nodes) {
         childNode.IsExpanded = true;
       }
     }
@@ -723,8 +741,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void ExpandHottestFunctionPath() {
-    if (CallTree.Nodes.Count > 0) {
-      ExpandHottestFunctionPath(CallTree.Nodes[0]);
+    if (CallTreeList.Nodes.Count > 0) {
+      ExpandHottestFunctionPath(CallTreeList.Nodes[0]);
     }
   }
 
@@ -754,7 +772,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void CollapseAllFunctionPaths() {
-    foreach (var node in CallTree.Nodes) {
+    foreach (var node in CallTreeList.Nodes) {
       CollapseFunctionPath(node);
     }
   }
@@ -891,7 +909,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       return;
     }
 
-    if (CallTree.SelectedItem is TreeNode node &&
+    if (CallTreeList.SelectedItem is TreeNode node &&
         node.Tag is ChildFunctionEx funcEx &&
         funcEx.HasCallTreeNode) {
       if (settings_.SyncSourceFile) {
@@ -942,7 +960,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     CollapseAllFunctionPaths();
     ExpandHottestFunctionPath();
   }
-  
+
   private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
     await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
