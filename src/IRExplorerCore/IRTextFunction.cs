@@ -66,7 +66,8 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
     // but from diff documents, should be considered the same, each
     // IRTextFunction is unique and if reference check fails, thee is no equality.
     if (considerUnique) {
-      Debug.Assert(!Name.Equals(other.Name, StringComparison.Ordinal));
+      Debug.Assert(!Name.Equals(other.Name, StringComparison.Ordinal) ||
+                   !ParentSummary.Equals(other.ParentSummary));
       return false;
     }
 

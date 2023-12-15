@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers.ASM;
@@ -41,7 +42,8 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
 
     if (!isManagedImage_) {
       // This preloads all code sections in the binary.
-      disassembler_ = Disassembler.CreateForBinary(binaryFilePath_, debugInfo_);
+      disassembler_ = Disassembler.CreateForBinary(binaryFilePath_, debugInfo_,
+                                                   compilerInfo_.NameProvider.FormatFunctionName);
     }
 
     var functs = debugInfo_.GetSortedFunctions();
@@ -51,12 +53,17 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
         continue; // Some entries don't represent real functions.
       }
 
-      var func = new IRTextFunction(funcInfo.Name);
-      var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
-      func.AddSection(section);
-      summary_.AddFunction(func);
-      summary_.AddSection(section);
-      funcToDebugInfoMap_[func] = funcInfo;
+      // The debug info function list can have duplicates, ignore them.
+      var func = summary_.FindFunction(funcInfo.Name);
+
+      if (func == null) {
+        func = new IRTextFunction(funcInfo.Name);
+        var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
+        func.AddSection(section);
+        summary_.AddFunction(func);
+        summary_.AddSection(section);
+        funcToDebugInfoMap_[func] = funcInfo;
+      }
     }
 
     //progressHandler?.Invoke(null, new SectionReaderProgressInfo(false));
@@ -163,7 +170,7 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     if (debugInfo_ != null) {
       if (debugInfo_.LoadDebugInfo("")) {
         // For managed code, the code data is found on each function.
-        disassembler_ = Disassembler.CreateForMachine(debugInfo_);
+        disassembler_ = Disassembler.CreateForMachine(debugInfo_, compilerInfo_.NameProvider.FormatFunctionName);
       }
 
       return true;

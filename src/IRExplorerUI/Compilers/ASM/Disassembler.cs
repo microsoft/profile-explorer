@@ -67,25 +67,27 @@ public class Disassembler : IDisposable {
   private List<FunctionDebugInfo> sortedFuncList_;
   private bool checkValidCallAddress_;
   private SymbolNameResolverDelegate symbolNameResolver_;
+  private FunctionNameFormatter funcNameFormatter_;
 
-  public Disassembler(Machine architecture, SymbolNameResolverDelegate symbolNameResolver) {
-    architecture_ = architecture;
-    symbolNameResolver_ = symbolNameResolver;
-    Initialize(false);
-  }
-
-  private Disassembler(Machine architecture, List<(byte[] Data, long StartRVA)> codeSectionData, long baseAddress = 0,
-                       IDebugInfoProvider debugInfo = null) {
+  private Disassembler(Machine architecture,
+                       List<(byte[] Data, long StartRVA)> codeSectionData,
+                       long baseAddress = 0,
+                       IDebugInfoProvider debugInfo = null,
+                       FunctionNameFormatter funcNameFormatter = null,
+                       SymbolNameResolverDelegate symbolNameResolver = null) {
     codeSectionData_ = codeSectionData;
     architecture_ = architecture;
     baseAddress_ = baseAddress;
     debugInfo_ = debugInfo;
+    funcNameFormatter_ = funcNameFormatter;
+    symbolNameResolver_ = symbolNameResolver;
     Initialize(true);
   }
 
   public delegate string SymbolNameResolverDelegate(long address);
 
-  public static Disassembler CreateForBinary(string binaryFilePath, IDebugInfoProvider debugInfo) {
+  public static Disassembler CreateForBinary(string binaryFilePath, IDebugInfoProvider debugInfo,
+                                             FunctionNameFormatter funcNameFormatter) {
     using var peInfo = new PEBinaryInfoProvider(binaryFilePath);
 
     if (!peInfo.Initialize()) {
@@ -101,11 +103,12 @@ public class Disassembler : IDisposable {
 
     var binaryInfo = peInfo.BinaryFileInfo;
     return new Disassembler(binaryInfo.Architecture, codeSectionData,
-                            binaryInfo.ImageBase, debugInfo);
+                            binaryInfo.ImageBase, debugInfo, funcNameFormatter);
   }
 
-  public static Disassembler CreateForMachine(IDebugInfoProvider debugInfo) {
-    return new Disassembler(debugInfo.Architecture.Value, null, 0, debugInfo);
+  public static Disassembler CreateForMachine(IDebugInfoProvider debugInfo,
+                                              FunctionNameFormatter funcNameFormatter) {
+    return new Disassembler(debugInfo.Architecture.Value, null, 0, debugInfo, funcNameFormatter);
   }
 
   public void UseSymbolNameResolver(SymbolNameResolverDelegate symbolNameResolver) {
@@ -150,6 +153,7 @@ public class Disassembler : IDisposable {
         AppendOperands(instr, startRVA, size, builder);
         builder.AppendLine();
 
+        //? TODO: UI option
         if (appendBytes) {
           // For longer instructions, append up to 6 bytes per line.
           while (startIndex < instr.Size) {
@@ -270,9 +274,15 @@ public class Disassembler : IDisposable {
     if (debugInfo_ != null) {
       var func = FindFunctionByRva(rva);
 
-      //? TODO: Option to demangle
+      //? TODO: UI option to demangle
       if (func != null) {
-        builder.Append(func.Name);
+        if (funcNameFormatter_ != null) {
+          builder.Append(funcNameFormatter_(func.Name));
+        }
+        else {
+          builder.Append(func.Name);
+        }
+
         return true;
       }
     }

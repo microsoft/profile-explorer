@@ -95,6 +95,8 @@ public partial class IRInfoPanel : ToolPanelControl {
         #endregion
 
   private async void ButtonBase_OnClick(object sender, RoutedEventArgs e) {
+    ErrorList.Visibility = Visibility.Collapsed;
+    TextView.Visibility = Visibility.Visible;
     await ReloadLogFile();
   }
 
@@ -111,7 +113,7 @@ public partial class IRInfoPanel : ToolPanelControl {
         TextView.ScrollToEnd();
       }
       catch (Exception ex) {
-        TextView.SetText($"Failed to load log file: {ex.Message}");
+        await TextView.SetText($"Failed to load log file: {ex.Message}");
       }
     }
   }
