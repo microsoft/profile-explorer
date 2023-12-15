@@ -87,6 +87,7 @@ public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
 [ProtoContract(SkipConstructor = true)]
 public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<FunctionDebugInfo>, IComparable<long> {
   public static readonly FunctionDebugInfo Unknown = new FunctionDebugInfo(null, 0, 0);
+  private int cachedHashCode_;
 
   public FunctionDebugInfo(string name, long rva, long size, short optLevel = 0, int id = -1, short auxId = -1) {
     Name = name != null ? string.Intern(name) : null;
@@ -197,7 +198,11 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   }
 
   public override int GetHashCode() {
-    return HashCode.Combine(Name, RVA, Id, AuxiliaryId);
+    if (cachedHashCode_ == 0) {
+      cachedHashCode_ = HashCode.Combine(Name, RVA, Id, AuxiliaryId);
+    }
+
+    return cachedHashCode_;
   }
 
   public override string ToString() {

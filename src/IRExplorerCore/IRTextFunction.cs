@@ -3,11 +3,12 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace IRExplorerCore;
 
 public class IRTextFunction : IEquatable<IRTextFunction> {
-  private int hashCode_;
+  private int cachedHashCode_;
 
   public IRTextFunction(string name) {
     Name = string.Intern(name);
@@ -52,7 +53,7 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
     return Sections.FindAll(section => section.Name.Contains(nameSubstring));
   }
 
-  public bool Equals(IRTextFunction other, bool checkParent) {
+  public bool Equals(IRTextFunction other, bool considerUnique) {
     if (ReferenceEquals(null, other)) {
       return false;
     }
@@ -61,8 +62,15 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
       return true;
     }
 
-    return Name.Equals(other.Name, StringComparison.Ordinal) &&
-           (!checkParent || HasSameModule(other));
+    // Except for the case where in diff mode functions with the same name,
+    // but from diff documents, should be considered the same, each
+    // IRTextFunction is unique and if reference check fails, thee is no equality.
+    if (considerUnique) {
+      Debug.Assert(!Name.Equals(other.Name, StringComparison.Ordinal));
+      return false;
+    }
+
+    return Name.Equals(other.Name, StringComparison.Ordinal);
   }
 
   public bool Equals(object obj) {
@@ -84,11 +92,11 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
   public override int GetHashCode() {
     // Compute the hash so that functs. with same name in diff. modules
     // don't get the same hash code.
-    if (hashCode_ == 0) {
-      hashCode_ = ParentSummary != null ? HashCode.Combine(Name, ParentSummary) : HashCode.Combine(Name);
+    if (cachedHashCode_ == 0) {
+      cachedHashCode_ = ParentSummary != null ? HashCode.Combine(Name, ParentSummary) : HashCode.Combine(Name);
     }
 
-    return hashCode_;
+    return cachedHashCode_;
   }
 
   public override string ToString() {

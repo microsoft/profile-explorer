@@ -42,6 +42,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private ICollectionView processFilter_;
   private string profileFilePath_;
   private string binaryFilePath_;
+  private bool showOnlyManagedProcesses_;
 
   public ProfileLoadWindow(ISession session, bool recordMode, bool isOnLaunch = false,
                            RecordingSession loadedSession = null) {
@@ -177,6 +178,16 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     set {
       symbolOptions_ = value;
       OnPropertyChange(nameof(SymbolOptions));
+    }
+  }
+
+  public bool ShowOnlyManagedProcesses {
+    get => showOnlyManagedProcesses_;
+    set {
+      if (showOnlyManagedProcesses_ != value) {
+        showOnlyManagedProcesses_ = value;
+        UpdateRunningProcessList();
+      }
     }
   }
 
@@ -407,7 +418,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       LoadProgressBar.Value = progressInfo.Current;
 
       LoadProgressLabel.Text = progressInfo.Stage switch {
-        ProfileLoadStage.TraceLoading => "Loading trace",
+        ProfileLoadStage.TraceLoading => "Reading trace",
         ProfileLoadStage.TraceProcessing => "Processing trace",
         ProfileLoadStage.BinaryLoading => "Loading binaries" +
                                           (!string.IsNullOrEmpty(progressInfo.Optional) ?
@@ -844,21 +855,19 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         continue; // Ignore self.
       }
 
-      var procProfile = new ProfileProcess(proc.Id, -1, proc.ProcessName, proc.ProcessName, "");
-      list.Add(new ProcessSummary(procProfile, TimeSpan.Zero));
-
       try {
-        procProfile.ImageFileName = proc.MainWindowTitle;
+        // Filter list down to .NET processes if requested.
+        if (ShowOnlyManagedProcesses &&
+            !IsManagedProcess(proc)) { 
+          continue;
+        }
 
-        //? TODO: Detecting .NET procs is extremely slow done like below
-        // bool isnet = false;
-        //foreach (var mod in proc.Modules) {
-        //    if (mod is ProcessModule module &&
-        //        module.ModuleName.Contains("mscor", StringComparison.OrdinalIgnoreCase)) {
-        //        isnet = true;
-        //        break;
-        //    }
-        //}
+        var procProfile = new ProfileProcess(proc.Id, -1, proc.ProcessName, proc.ProcessName, "");
+        list.Add(new ProcessSummary(procProfile, TimeSpan.Zero));
+
+        // Retrieving values below may fail.
+        procProfile.ImageFileName = proc.MainWindowTitle;
+        procProfile.StartTime = proc.StartTime;
       }
       catch (Exception ex) {
         Trace.WriteLine($"Failed to get proc title {proc.ProcessName}: {ex.Message}");
@@ -871,6 +880,18 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     processFilter_.Filter = FilterRunningProcessList;
     RunningProcessList.ItemsSource = null;
     RunningProcessList.ItemsSource = processFilter_;
+  }
+
+  private bool IsManagedProcess(Process proc) {
+    //? TODO: Detecting .NET procs is extremely slow done like below
+    foreach (var mod in proc.Modules) {
+      if (mod is ProcessModule module &&
+          module.ModuleName.Contains("mscor", StringComparison.OrdinalIgnoreCase)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private bool FilterRunningProcessList(object value) {
