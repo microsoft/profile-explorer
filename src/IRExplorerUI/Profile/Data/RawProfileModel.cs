@@ -492,6 +492,8 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
   public List<int> ImageIds { get; set; }
   [ProtoMember(7)]
   public List<int> ThreadIds { get; set; }
+  [ProtoMember(8)]
+  public DateTime StartTime { get; set; }
 
   public static bool operator ==(ProfileProcess left, ProfileProcess right) {
     return Equals(left, right);

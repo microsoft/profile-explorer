@@ -222,18 +222,20 @@ public sealed class ProfileCallTree {
         try {
           nodeList = new List<ProfileCallTreeNode>();
           funcToNodesMap_[node.Function] = nodeList;
+          nodeList.Add(node);
         }
         finally {
           funcLock_.ExitWriteLock();
         }
       }
+      else {
+        lock (nodeList) {
+          nodeList.Add(node);
+        }
+      }
     }
     finally {
       funcLock_.ExitUpgradeableReadLock();
-    }
-
-    lock (nodeList) {
-      nodeList.Add(node);
     }
   }
 
