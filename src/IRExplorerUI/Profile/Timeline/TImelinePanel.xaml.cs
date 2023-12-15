@@ -441,7 +441,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       view, HoverPreview.ExtraLongHoverDuration,
       (mousePoint, previewPoint) => {
         var timePoint = view.CurrentTimePoint;
-        ProfileCallTreeNode callNode = null;
 
         // Find the call node at the current time point.
         // Pick the hottest function in a small range of samples around the time point.
@@ -454,6 +453,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             ? new List<int> {timePoint.ThreadId} : null
         };
 
+        ProfileCallTreeNode callNode = null;
         var rangeProfile = Session.ProfileData.ComputeFunctionProfile(Session.ProfileData, filter, 1);
         var funcs = rangeProfile.GetSortedFunctions();
 
