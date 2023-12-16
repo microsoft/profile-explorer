@@ -453,8 +453,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
             ? new List<int> {timePoint.ThreadId} : null
         };
 
+        //? TODO: if selection, use range covered by it
         ProfileCallTreeNode callNode = null;
-        var rangeProfile = Session.ProfileData.ComputeFunctionProfile(Session.ProfileData, filter, 1);
+        var rangeProfile = Session.ProfileData.ComputeProfile(Session.ProfileData, filter, 1);
         var funcs = rangeProfile.GetSortedFunctions();
 
         if (funcs.Count > 0) {

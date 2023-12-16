@@ -614,7 +614,7 @@
                 </ListView.ContextMenu>
               </ListView>
 
-              <Grid Margin="8,8,8,0">
+              <Grid Margin="8,8,8,4">
                 <StackPanel Width="250" HorizontalAlignment="Left">
                   <ProgressBar
                     x:Name="LoadProgressBar"

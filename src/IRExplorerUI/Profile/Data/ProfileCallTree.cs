@@ -28,8 +28,8 @@ public sealed class ProfileCallTree {
   private Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcToNodesMap_;
   private Dictionary<long, ProfileCallTreeNode> nodeIdMap_;
   private long nextNodeId_;
-  private ReaderWriterLockSlim lock_;
-  private ReaderWriterLockSlim funcLock_;
+  //private ReaderWriterLockSlim lock_;
+  //private ReaderWriterLockSlim funcLock_;
 
   public ProfileCallTree() {
     InitializeReferenceMembers();
@@ -214,10 +214,10 @@ public sealed class ProfileCallTree {
     List<ProfileCallTreeNode> nodeList = null;
 
     try {
-      funcLock_.EnterUpgradeableReadLock();
+      //funcLock_.EnterUpgradeableReadLock();
 
       if (!funcToNodesMap_.TryGetValue(node.Function, out nodeList)) {
-        funcLock_.EnterWriteLock();
+        //funcLock_.EnterWriteLock();
 
         try {
           nodeList = new List<ProfileCallTreeNode>();
@@ -225,7 +225,7 @@ public sealed class ProfileCallTree {
           nodeList.Add(node);
         }
         finally {
-          funcLock_.ExitWriteLock();
+          //funcLock_.ExitWriteLock();
         }
       }
       else {
@@ -235,7 +235,7 @@ public sealed class ProfileCallTree {
       }
     }
     finally {
-      funcLock_.ExitUpgradeableReadLock();
+      //funcLock_.ExitUpgradeableReadLock();
     }
   }
 
@@ -243,7 +243,7 @@ public sealed class ProfileCallTree {
     // Build mapping on-demand.
     if (nodeIdMap_ == null) {
       try {
-        funcLock_.EnterWriteLock();
+        //funcLock_.EnterWriteLock();
 
         if (nodeIdMap_ == null) {
           nodeIdMap_ = new Dictionary<long, ProfileCallTreeNode>(funcToNodesMap_.Count);
@@ -256,7 +256,7 @@ public sealed class ProfileCallTree {
         }
       }
       finally {
-        funcLock_.ExitWriteLock();
+        //funcLock_.ExitWriteLock();
       }
     }
 
@@ -265,14 +265,14 @@ public sealed class ProfileCallTree {
 
   public List<ProfileCallTreeNode> GetCallTreeNodes(IRTextFunction function) {
     try {
-      funcLock_.EnterReadLock();
+      //funcLock_.EnterReadLock();
 
       if (funcToNodesMap_.TryGetValue(function, out var nodeList)) {
         return nodeList;
       }
     }
     finally {
-      funcLock_.ExitReadLock();
+      //funcLock_.ExitReadLock();
     }
 
     return null;
@@ -478,8 +478,8 @@ public sealed class ProfileCallTree {
   private void InitializeReferenceMembers() {
     rootNodes_ ??= new ConcurrentDictionary<IRTextFunction, ProfileCallTreeNode>();
     funcToNodesMap_ ??= new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();
-    lock_ ??= new ReaderWriterLockSlim();
-    funcLock_ ??= new ReaderWriterLockSlim();
+    //lock_ ??= new ReaderWriterLockSlim();
+    //funcLock_ ??= new ReaderWriterLockSlim();
   }
 
   [ProtoContract(SkipConstructor = true)]
