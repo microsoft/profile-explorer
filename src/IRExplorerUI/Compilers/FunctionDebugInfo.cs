@@ -90,7 +90,10 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   private int cachedHashCode_;
 
   public FunctionDebugInfo(string name, long rva, long size, short optLevel = 0, int id = -1, short auxId = -1) {
-    Name = name != null ? string.Intern(name) : null;
+    // Note that string interning is not done here on purpose because
+    // it is often the slowest part in processing a trace, while the memory
+    // saving are quite small (under 15%, a few dozen MBs even for big traces).
+    Name = name;
     RVA = rva;
     Size = size;
     OptimizationLevel = optLevel;

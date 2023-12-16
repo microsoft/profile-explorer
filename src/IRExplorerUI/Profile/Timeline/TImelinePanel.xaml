@@ -243,6 +243,8 @@
             VerticalAlignment="Center"
             FontWeight="Medium"
             Foreground="Indigo"
+            MaxWidth="200"
+            TextTrimming="CharacterEllipsis"
             Text="{Binding ThreadFilterText, Converter={StaticResource MillisecondTimeConverter}}"
             ToolTip="Threads included in the view"
             Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
