@@ -92,6 +92,14 @@ public sealed class Lexer {
     ArrayPool<Token>.Shared.Return(tempArray);
   }
 
+  public ReadOnlyMemory<char> GetTokenText(Token token) {
+    return source_.TextSpan.Slice(token.Location.Offset, token.Length);
+  }
+
+  public ReadOnlyMemory<char> GetText(int offset, int length) {
+    return source_.TextSpan.Slice(offset, length);
+  }
+
   private void NextChar() {
     current_ = source_.NextChar();
   }
