@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Collections;
 using IRExplorerCore.IR;
@@ -435,6 +436,35 @@ public sealed class ASMParser : ParserBase {
         SkipToken(); // More operands after ,
       }
       else {
+        if (instr.Kind == InstructionKind.Call &&
+            operand.IsVariable && operand.HasName) {
+          // With demangled names, there can be multiple tokens
+          // that form the complete function name, append them together.
+          var sb = new StringBuilder();
+          sb.Append(operand.Name);
+
+          int funcNameLength = operand.TextLength;
+          int prevTokenEnd = operand.TextLocation.Offset + operand.TextLength;
+
+          while (!IsLineEnd()) {
+            // Append whitespace if there is some between tokens.
+            int spaceCount = current_.Location.Offset - prevTokenEnd;
+
+            if (spaceCount > 0) {
+              sb.Append(lexer_.GetText(prevTokenEnd, spaceCount));
+              funcNameLength += spaceCount;
+            }
+
+            sb.Append(lexer_.GetTokenText(current_));
+            funcNameLength += current_.Length;
+            prevTokenEnd = current_.Location.Offset + current_.Length;
+            SkipToken();
+          }
+
+          operand.Value = sb.ToString().AsMemory();
+          operand.TextLength = funcNameLength;
+        }
+
         break;
       }
     }
