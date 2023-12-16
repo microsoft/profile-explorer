@@ -361,7 +361,7 @@
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
 
-              <GridViewColumn Width="120"
+              <GridViewColumn Width="150"
                               DisplayMemberBinding="{Binding DebugInfoFile.SymbolFile.FileName, StringFormat={}{0:mm\\:ss\\.ff}}">
                 <GridViewColumnHeader Content="Debug file" />
                 <GridViewColumn.HeaderContainerStyle>

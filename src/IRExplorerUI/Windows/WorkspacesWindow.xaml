@@ -30,7 +30,7 @@
             x:Name="WorkspacesList"
             Grid.Row="0"
             Grid.Column="0"
-            Margin="4,4,4,4"
+            Margin="4,4,4,8"
             IsTextSearchEnabled="True"
             SelectionMode="Single"
             TextSearch.TextPath="Name">

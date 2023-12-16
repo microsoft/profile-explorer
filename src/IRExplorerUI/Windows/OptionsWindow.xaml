@@ -25,6 +25,7 @@
 
     <TabControl
       Grid.Row="0"
+      Margin="0,0,0,4"
       Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
       IsSynchronizedWithCurrentItem="True"
       SelectedIndex="0"
@@ -131,6 +132,13 @@
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Source File" IsEnabled="False">
+        <ScrollViewer
+          HorizontalScrollBarVisibility="Disabled"
+          VerticalScrollBarVisibility="Auto">
+          <TextBlock Text="TODO"></TextBlock>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="Profiling" IsEnabled="False">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
