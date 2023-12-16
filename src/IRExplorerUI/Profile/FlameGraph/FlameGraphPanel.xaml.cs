@@ -281,6 +281,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     if (SyncSelection) {
       await Session.ProfileFunctionDeselected();
     }
+
+    if (GraphHost.SelectedNodes.Count == 0) {
+      Session.SetApplicationStatus("");
+    }
   }
 
   private async void GraphHost_NodeSelected(object sender, FlameGraphNode node) {
@@ -295,7 +299,62 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       if (SyncSelection) {
         await Session.ProfileFunctionSelected(node.CallTreeNode, PanelKind);
       }
+
+      // When selecting multiple nodes, display the weight sum in the status bar.
+      var selectedNodes = GraphHost.SelectedNodes;
+
+      if (selectedNodes.Count > 1) {
+        var selectionWeight = ComputeSelectedNodeWeight(selectedNodes);
+        double weightPercentage = 0;
+
+        if (rootNode_ != null) {
+          // Scale based on the current root node, which may be overriden.
+          weightPercentage = selectionWeight.Ticks / (double)rootNode_.Weight.Ticks;
+        }
+        else {
+          weightPercentage = Session.ProfileData.ScaleFunctionWeight(selectionWeight);
+        }
+
+        string text = $"{weightPercentage.AsPercentageString()} ({selectionWeight.AsMillisecondsString()})";
+        Session.SetApplicationStatus(text, "Sum of selected flame graph nodes");
+      }
+      else {
+        Session.SetApplicationStatus("");
+      }
     }
+  }
+
+  private TimeSpan ComputeSelectedNodeWeight(List<FlameGraphNode> selectedNodes) {
+    // Sum up the total weight of all selected nodes,
+    // but ignore nodes whose time is covered by a parent node
+    // in case it is also selected. Sort by weight so that parent
+    // (more inclusive time) get processed first.
+    var nodes = new List<FlameGraphNode>(selectedNodes);
+    nodes.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+
+    var handledNodes = new HashSet<FlameGraphNode>();
+    var sum = TimeSpan.Zero;
+
+    foreach (var node in nodes) {
+      var parentNode = node.Parent;
+      bool reject = false;
+
+      while (parentNode != null) {
+        if (handledNodes.Contains(parentNode)) {
+          reject = true;
+          break;
+        }
+
+        parentNode = parentNode.Parent;
+      }
+
+      if (!reject) {
+        sum += node.Weight;
+        handledNodes.Add(node);
+      }
+    }
+
+    return sum;
   }
 
   private void NodeDetailsPanel_NodesSelected(object sender, List<ProfileCallTreeNode> e) {

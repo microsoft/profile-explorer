@@ -55,6 +55,7 @@ public partial class FlameGraphViewer : FrameworkElement {
   public ISession Session { get; set; }
   public HighlightingStyle SelectedNodeStyle { get; private set; }
   public HighlightingStyle MarkedNodeStyle { get; private set; }
+  public List<FlameGraphNode> SelectedNodes => selectedNodes_.ToKeyList();
   protected override int VisualChildrenCount => 1;
 
   public HighlightingStyle MarkedColoredNodeStyle(Color color) {
@@ -102,16 +103,6 @@ public partial class FlameGraphViewer : FrameworkElement {
     else if (append && selectedNodes_.ContainsKey(graphNode)) {
       selectedNodes_.Remove(graphNode);
       selectedNode_ = null;
-    }
-
-    if (selectedNodes_.Count > 1) {
-      var selectionWeight = ComputeSelectedNodeWeight();
-      double weightPercentage = Session.ProfileData.ScaleFunctionWeight(selectionWeight);
-      string text = $"{weightPercentage.AsPercentageString()} ({selectionWeight.AsMillisecondsString()})";
-      Session.SetApplicationStatus(text, "Sum of selected flame graph nodes");
-    }
-    else {
-      Session.SetApplicationStatus("");
     }
   }
 
@@ -476,39 +467,6 @@ public partial class FlameGraphViewer : FrameworkElement {
     else {
       ClearSelection();
     }
-  }
-
-  private TimeSpan ComputeSelectedNodeWeight() {
-    // Sum up the total weight of all selected nodes,
-    // but ignore nodes whose time is covered by a parent node
-    // in case it is also selected. Sort by weight so that parent
-    // (more inclusive time) get processed first.
-    var nodes = new List<FlameGraphNode>(selectedNodes_.Keys);
-    nodes.Sort((a, b) => b.Weight.CompareTo(a.Weight));
-
-    var handledNodes = new HashSet<FlameGraphNode>();
-    var sum = TimeSpan.Zero;
-
-    foreach (var node in nodes) {
-      var parentNode = node.Parent;
-      bool reject = false;
-
-      while (parentNode != null) {
-        if (handledNodes.Contains(parentNode)) {
-          reject = true;
-          break;
-        }
-
-        parentNode = parentNode.Parent;
-      }
-
-      if (!reject) {
-        sum += node.Weight;
-        handledNodes.Add(node);
-      }
-    }
-
-    return sum;
   }
 
   private void MarkNodeNoRedraw(ProfileCallTreeNode node, HighlightingStyle style, bool overwriteStyle) {

@@ -60,6 +60,8 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   public new bool IsInitialized => GraphViewer.IsInitialized;
   public ISession Session { get; set; }
+  public List<FlameGraphNode> SelectedNodes => GraphViewer.SelectedNodes;
+
   public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.CallTree);
   });
