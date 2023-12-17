@@ -418,7 +418,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       LoadProgressBar.Value = progressInfo.Current;
 
       LoadProgressLabel.Text = progressInfo.Stage switch {
-        ProfileLoadStage.TraceLoading => "Reading trace",
+        ProfileLoadStage.TraceReading => "Reading trace",
         ProfileLoadStage.TraceProcessing => "Processing trace",
         ProfileLoadStage.BinaryLoading => "Loading binaries" +
                                           (!string.IsNullOrEmpty(progressInfo.Optional) ?
@@ -622,7 +622,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     if (progressInfo != null) {
       status += progressInfo.Stage switch {
-        ProfileLoadStage.TraceLoading => $", {progressInfo.Total / 1000}K samples",
+        ProfileLoadStage.TraceReading => $", {progressInfo.Total / 1000}K samples",
         _ => ""
       };
     }

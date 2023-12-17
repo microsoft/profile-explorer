@@ -118,7 +118,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                 ProfileDataReport report,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
-    UpdateProgress(progressCallback, ProfileLoadStage.TraceLoading, 0, 0);
+    UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
     var sw = Stopwatch.StartNew();
 
     var rawProfile = await Task.Run(() => {
@@ -181,7 +181,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         var totalSw = Stopwatch.StartNew();
 
         // Start getting the function address data while the trace is loading.
-        UpdateProgress(progressCallback, ProfileLoadStage.TraceLoading, 0, 0);
+        UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
         ProfileImage prevImage = null;
         ModuleInfo prevModule = null;
 

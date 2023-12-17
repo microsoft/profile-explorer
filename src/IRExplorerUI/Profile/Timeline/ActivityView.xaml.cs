@@ -577,7 +577,9 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     if (hasSelection_) {
       if (time >= selectionStartTime_ && time <= selectionEndTime_) {
-        ApplyTimeRangeFilter();
+        if (e.ClickCount > 1) { // Check for double-click.
+          ApplyTimeRangeFilter();
+        }
         return;
       }
 
