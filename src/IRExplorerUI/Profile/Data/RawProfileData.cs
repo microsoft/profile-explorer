@@ -344,16 +344,6 @@ public class RawProfileData : IDisposable {
 
   public int AddStack(ProfileStack stack, ProfileContext context) {
     Debug.Assert(stack.ContextId != 0);
-
-    // De-duplicate the stack frame pointer array,
-    // since lots of samples have identical stacks.
-    if (!stackData_.TryGetValue(stack.FramePointers, out long[] framePtrData)) {
-      // Make a clone since the temporary stack uses a static array.
-      framePtrData = stack.CloneFramePointers();
-      stackData_.Add(framePtrData);
-    }
-
-    stack.SubstituteFramePointers(framePtrData);
     Dictionary<ProfileStack, int> procStacks = null;
 
     if (lastProcId_ == context.ProcessId && lastProcStacks_ != null) {
@@ -370,6 +360,15 @@ public class RawProfileData : IDisposable {
     }
 
     if (!procStacks.TryGetValue(stack, out int existingStack)) {
+      // De-duplicate the stack frame pointer array,
+      // since lots of samples have identical stacks.
+      if (!stackData_.TryGetValue(stack.FramePointers, out long[] framePtrData)) {
+        // Make a clone since the temporary stack uses a static array.
+        framePtrData = stack.CloneFramePointers();
+        stackData_.Add(framePtrData);
+      }
+
+      stack.SubstituteFramePointers(framePtrData);
       stacks_.Add(stack);
       procStacks[stack] = stacks_.Count;
       existingStack = stacks_.Count;

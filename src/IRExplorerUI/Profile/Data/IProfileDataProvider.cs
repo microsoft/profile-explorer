@@ -20,7 +20,7 @@ public enum ModuleLoadState {
 }
 
 public enum ProfileLoadStage {
-  TraceLoading,
+  TraceReading,
   BinaryLoading,
   SymbolLoading,
   TraceProcessing,

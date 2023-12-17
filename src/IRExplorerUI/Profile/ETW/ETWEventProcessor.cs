@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using Microsoft.Diagnostics.Tracing;
@@ -19,7 +20,7 @@ namespace IRExplorerUI.Profile;
 public sealed partial class ETWEventProcessor : IDisposable {
   public const int KernelProcessId = 0;
   private const double SamplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
-  private const int SampleReportingInterval = 10000;
+  private const int SampleReportingInterval = 20000;
   private const int MaxCoreCount = 4096;
   private ETWTraceEventSource source_;
   private string tracePath_;
@@ -153,20 +154,24 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
         if (sampleId - lastProcessListSample >= nextProcessListSample &&
             (currentTime - lastProcessListReport).TotalMilliseconds > 1000) {
-          {
-            var sw = Stopwatch.StartNew();
-
-            processList = summaryBuilder.MakeSummaries();
-            lastProcessListSample = sampleId;
-            lastProcessListReport = currentTime;
-          }
+          // Rebuild the process list every few seconds.
+          processList = summaryBuilder.MakeSummaries();
+          lastProcessListSample = sampleId;
+          lastProcessListReport = currentTime;
         }
 
-        progressCallback?.Invoke(new ProcessListProgress {
-          Total = (int)source_.SessionDuration.TotalMilliseconds,
-          Current = (int)data.TimeStampRelativeMSec,
-          Processes = processList
-        });
+        if (progressCallback != null) {
+          int current = (int)data.TimeStampRelativeMSec; // Copy since data gets reused.
+          int total = (int)source_.SessionDuration.TotalMilliseconds;
+
+          ThreadPool.QueueUserWorkItem(state => {
+            progressCallback(new ProcessListProgress {
+              Total = total,
+              Current = current,
+              Processes = processList
+            });
+          });
+        }
 
         lastReportedSample = sampleId;
       }
@@ -318,17 +323,8 @@ public sealed partial class ETWEventProcessor : IDisposable {
         return; // Ignore events from other processes.
       }
 
-      bool isKernelStack = false;
-
-      if (data.FrameCount > 0 &&
-          IsKernelAddress(data.InstructionPointer(0), data.PointerSize)) {
-        isKernelStack = true;
-
-        //Trace.WriteLine($"Kernel stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
-        //if (data.FrameCount > 1 && !IsKernelAddress(data.InstructionPointer(data.FrameCount - 1), 8)) {
-        //  //  Trace.WriteLine("     ends in user");
-        //}
-      }
+      bool isKernelStack = data.FrameCount > 0 &&
+                           IsKernelAddress(data.InstructionPointer(0), data.PointerSize);
 
       //Trace.WriteLine($"User stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
       var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
@@ -620,23 +616,18 @@ public sealed partial class ETWEventProcessor : IDisposable {
       perContextLastSample[contextId] = sampleId;
 
       // Report progress.
-      if (sampleId - lastReportedSample >= SampleReportingInterval) {
-        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading)
-                                   {Total = sampleId, Current = sampleId});
+      if (progressCallback != null && sampleId - lastReportedSample >= SampleReportingInterval) {
+        int current = (int)data.TimeStampRelativeMSec; // Copy since data gets reused.
+        int total = (int)source_.SessionDuration.TotalMilliseconds;
+ 
+        ThreadPool.QueueUserWorkItem(state => {
+          progressCallback(new ProfileLoadProgress(ProfileLoadStage.TraceReading) {
+            Total = total,
+            Current = current
+          });
+        });
+
         lastReportedSample = sampleId;
-
-        // Updating the stack associated with a sample often ends up
-        // decompressing a segment and it remains in that state until the end, wasting memory.
-        // Since sample IDs are increasing, compress all segments that may have been
-        // accessed since the last time and cannot be anymore.
-        if (profile.TraceInfo.CpuCount > 0) {
-          int earliestSample = int.MaxValue;
-
-          for (int i = 0; i < profile.TraceInfo.CpuCount; i++) {
-            int value = perCoreLastSample[i];
-            earliestSample = Math.Min(value, earliestSample);
-          }
-        }
       }
     };
 
@@ -751,6 +742,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
         profile.TraceInfo.ProfileStartTime = DateTime.Now;
       }
 
+      UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0,0);
       source_.Process();
 
       if (isRealTime_) {
@@ -798,6 +790,18 @@ public sealed partial class ETWEventProcessor : IDisposable {
     samplingInterval100NS_ = value;
     samplingIntervalMS_ = (double)samplingInterval100NS_ / 10000;
     samplingIntervalLimitMS_ = samplingIntervalMS_ * SamplingErrorMargin;
+  }
+  
+  private void UpdateProgress(ProfileLoadProgressHandler callback, ProfileLoadStage stage,
+                              int total, int current, string optional = null) {
+    if (callback != null) {
+      ThreadPool.QueueUserWorkItem(state => {
+        callback(new ProfileLoadProgress(stage) {
+          Total = total, Current = current,
+          Optional = optional
+        });
+      });
+    }
   }
 
   private string ToOptimizationLevel(OptimizationTier tier) {

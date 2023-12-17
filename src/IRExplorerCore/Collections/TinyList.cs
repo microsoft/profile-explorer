@@ -6,9 +6,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace IRExplorerUI.Profile;
+namespace IRExplorerCore.Collections;
 
-struct TinyList<T> : IList<T> {
+public struct TinyList<T> : IList<T> {
   private object value_; // Either T or array of T.
   private int count_;
 
