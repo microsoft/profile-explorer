@@ -117,7 +117,6 @@ public sealed class FlameGraphGroupNode : FlameGraphNode {
 }
 
 public sealed class FlameGraph {
-  private Dictionary<ProfileCallTreeNode, FlameGraphNode> treeNodeToFgNodeMap_;
   private FlameGraphNode rootNode_;
   private TimeSpan rootWeight_;
   private TimeSpan profileStartTime_;
@@ -129,7 +128,6 @@ public sealed class FlameGraph {
 
   public FlameGraph(ProfileCallTree callTree, FunctionNameFormatter nameFormatter) {
     CallTree = callTree;
-    treeNodeToFgNodeMap_ = new Dictionary<ProfileCallTreeNode, FlameGraphNode>();
     nameFormatter_ = nameFormatter;
   }
 
@@ -166,7 +164,7 @@ public sealed class FlameGraph {
 
   public void AppendNodes(ProfileCallTreeNode node, List<FlameGraphNode> resultList) {
     if (!node.IsGroup) {
-      if (treeNodeToFgNodeMap_.TryGetValue(node, out var fgNode)) {
+      if (node.Tag is FlameGraphNode fgNode) {
         resultList.Add(fgNode);
       }
 
@@ -176,14 +174,14 @@ public sealed class FlameGraph {
     var groupNode = node as ProfileCallTreeGroupNode;
 
     foreach (var childNode in groupNode.Nodes) {
-      if (treeNodeToFgNodeMap_.TryGetValue(childNode, out var fgNode)) {
+      if(childNode.Tag is FlameGraphNode fgNode) {
         resultList.Add(fgNode);
       }
     }
   }
 
   public FlameGraphNode GetFlameGraphNode(ProfileCallTreeNode callNode) {
-    return treeNodeToFgNodeMap_.GetValueOrNull(callNode);
+    return callNode.Tag as FlameGraphNode;
   }
 
   public List<FlameGraphNode> SearchNodes(string text, bool includeModuleName = true) {
@@ -434,7 +432,7 @@ public sealed class FlameGraph {
       var childNode = Build(childFlameNode, child.Children, depth + 1);
       childNode.Parent = flameNode;
       flameNode.Children.Add(childNode);
-      treeNodeToFgNodeMap_[child] = childFlameNode;
+      child.Tag = childFlameNode;
     }
 
     return flameNode;

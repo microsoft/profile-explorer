@@ -20,7 +20,7 @@ namespace IRExplorerUI.Profile;
 public sealed partial class ETWEventProcessor : IDisposable {
   public const int KernelProcessId = 0;
   private const double SamplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
-  private const int SampleReportingInterval = 20000;
+  private const int SampleReportingInterval = 10000;
   private const int MaxCoreCount = 4096;
   private ETWTraceEventSource source_;
   private string tracePath_;
@@ -619,15 +619,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       if (progressCallback != null && sampleId - lastReportedSample >= SampleReportingInterval) {
         int current = (int)data.TimeStampRelativeMSec; // Copy since data gets reused.
         int total = (int)source_.SessionDuration.TotalMilliseconds;
- 
-        ThreadPool.QueueUserWorkItem(state => {
-          progressCallback(new ProfileLoadProgress(ProfileLoadStage.TraceReading) {
-            Total = total,
-            Current = current
-          });
-        });
-
-        lastReportedSample = sampleId;
+        UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, total, current);
       }
     };
 
