@@ -7,8 +7,7 @@ namespace IRExplorerUI.Profile;
 
 public partial class ProfileData {
   private sealed class CallTreeProcessor : ProfileSampleProcessor {
-    public ProfileCallTree callTree_ = new ProfileCallTree();
-    public ProfileCallTree CallTree => callTree_;
+    public ProfileCallTree CallTree { get; } = new();
 
     //? TODO: Multi-threading disabled until merging of trees is impl.
     protected override int DefaultThreadCount => 1;
@@ -22,21 +21,20 @@ public partial class ProfileData {
 
     protected override void ProcessSample(ProfileSample sample, ResolvedProfileStack stack,
                                           int sampleIndex, object chunkData) {
-      callTree_.UpdateCallTree(sample, stack);
+      CallTree.UpdateCallTree(sample, stack);
     }
   }
 
   private sealed class FunctionProfileProcessor : ProfileSampleProcessor {
     private class ChunkData {
-      public HashSet<int> stackModules = new ();
-      public HashSet<IRTextFunction> stackFuncts = new();
-      public Dictionary<int, TimeSpan> moduleWeights = new();
-      public TimeSpan totalWeight = TimeSpan.Zero;
-      public TimeSpan profileWeight = TimeSpan.Zero;
+      public HashSet<int> StackModules = new ();
+      public HashSet<IRTextFunction> StackFunctions = new();
+      public Dictionary<int, TimeSpan> ModuleWeights = new();
+      public TimeSpan TotalWeight = TimeSpan.Zero;
+      public TimeSpan ProfileWeight = TimeSpan.Zero;
     }
 
-    private ProfileData profile = new();
-    public ProfileData Profile => profile;
+    public ProfileData Profile { get; } = new();
 
     public static ProfileData Compute(ProfileData profile, ProfileSampleFilter filter,
                                       int maxChunks = int.MaxValue) {
@@ -52,34 +50,34 @@ public partial class ProfileData {
     protected override void ProcessSample(ProfileSample sample, ResolvedProfileStack stack,
                                           int sampleIndex, object chunkData) {
       var data = (ChunkData)chunkData;
-      data.totalWeight += sample.Weight;
-      data.profileWeight += sample.Weight;
+      data.TotalWeight += sample.Weight;
+      data.ProfileWeight += sample.Weight;
 
       bool isTopFrame = true;
-      data.stackModules.Clear();
-      data.stackFuncts.Clear();
+      data.StackModules.Clear();
+      data.StackFunctions.Clear();
 
       foreach (var resolvedFrame in stack.StackFrames) {
         if (resolvedFrame.IsUnknown) {
           continue;
         }
 
-        if (isTopFrame && data.stackModules.Add(resolvedFrame.FrameDetails.Image.Id)) {
-          data.moduleWeights.AccumulateValue(resolvedFrame.FrameDetails.Image.Id, sample.Weight);
+        if (isTopFrame && data.StackModules.Add(resolvedFrame.FrameDetails.Image.Id)) {
+          data.ModuleWeights.AccumulateValue(resolvedFrame.FrameDetails.Image.Id, sample.Weight);
         }
 
         long funcRva = resolvedFrame.FrameDetails.DebugInfo.RVA;
         long frameRva = resolvedFrame.FrameRVA;
         var textFunction = resolvedFrame.FrameDetails.Function;
         var funcProfile =
-          profile.GetOrCreateFunctionProfile(resolvedFrame.FrameDetails.Function,
+          Profile.GetOrCreateFunctionProfile(resolvedFrame.FrameDetails.Function,
                                              resolvedFrame.FrameDetails.DebugInfo);
 
         lock (funcProfile) {
           long offset = frameRva - funcRva;
 
           // Don't count the inclusive time for recursive functions multiple times.
-          if (data.stackFuncts.Add(textFunction)) {
+          if (data.StackFunctions.Add(textFunction)) {
             funcProfile.AddInstructionSample(offset, sample.Weight);
             funcProfile.Weight += sample.Weight;
 
@@ -101,12 +99,12 @@ public partial class ProfileData {
     protected override void CompleteChunk(int k, object chunkData) {
       var data = (ChunkData)chunkData;
 
-      lock (profile) {
-        profile.TotalWeight += data.totalWeight;
-        profile.ProfileWeight += data.profileWeight;
+      lock (Profile) {
+        Profile.TotalWeight += data.TotalWeight;
+        Profile.ProfileWeight += data.ProfileWeight;
 
-        foreach ((int moduleId, var weight) in data.moduleWeights) {
-          profile.AddModuleSample(moduleId, weight);
+        foreach ((int moduleId, var weight) in data.ModuleWeights) {
+          Profile.AddModuleSample(moduleId, weight);
         }
       }
     }

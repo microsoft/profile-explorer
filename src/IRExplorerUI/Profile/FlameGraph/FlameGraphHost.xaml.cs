@@ -167,19 +167,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
     if (callTree_ != null) {
       await GraphViewer.Initialize(callTree, GraphArea, settings_, Session);
-
-      // Hack due to possible WPF bug that forces a re-layout of the flame graph
-      // so that the scroll bars are displayed if needed.
-      Dispatcher.Invoke(() => {
-        GraphViewer.InvalidateMeasure();
-        GraphViewer.InvalidateVisual();
-
-        // If there is a vertical scroll bar, resize the flame graph to fit
-        // the view and not show a horizontal scroll bar initially.
-        Dispatcher.Invoke(() => {
-          ResetWidth(false);
-        }, DispatcherPriority.ContextIdle);
-      }, DispatcherPriority.Normal);
+      ResetWidth(false);
     }
   }
 
@@ -320,13 +308,29 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public void ResetWidth(bool animate = true) {
+    // Hack due to possible WPF bug that forces a re-layout of the flame graph
+    // so that the scroll bars are displayed if needed.
+    Dispatcher.Invoke(() => {
+      GraphViewer.InvalidateMeasure();
+      GraphViewer.InvalidateVisual();
+
+      // If there is a vertical scroll bar, resize the flame graph to fit
+      // the view and not show a horizontal scroll bar initially.
+      Dispatcher.Invoke(() => {
+        ResetWidthImpl(false);
+      }, DispatcherPriority.ContextIdle);
+    }, DispatcherPriority.Normal);
+  }
+
+  private void ResetWidthImpl(bool animate = true) {
     //? TODO: Buttons should be disabled
     if (!GraphViewer.IsInitialized) {
       return;
     }
 
     SetMaxWidth(GraphAreaWidth, animate);
-    ScrollToVerticalOffset(0);
+    ScrollToVerticalOffset(0, animate);
+    ScrollToHorizontalOffset(0, animate);
     ResetHighlightedNodes();
   }
 
@@ -551,25 +555,23 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       BeginAnimation(FlameGraphHorizontalOffsetProperty, animation, HandoffBehavior.SnapshotAndReplace);
       return animation;
     }
-
-    GraphHost.ScrollToHorizontalOffset(offset);
-    return null;
+    else {
+      GraphHost.ScrollToHorizontalOffset(offset);
+      return null;
+    }
   }
 
-  private DoubleAnimation ScrollToVerticalOffset(double offset, bool triggerAnimation = true,
-                                                 bool animate = true, double duration = ZoomAnimationDuration) {
+  private DoubleAnimation ScrollToVerticalOffset(double offset, bool animate = true, 
+                                                 double duration = ZoomAnimationDuration) {
     if (animate) {
       var animation1 = new DoubleAnimation(GraphHost.VerticalOffset, offset, TimeSpan.FromMilliseconds(duration));
-
-      if (triggerAnimation) {
-        BeginAnimation(FlameGraphVerticalOffsetProperty, animation1, HandoffBehavior.SnapshotAndReplace);
-      }
-
+      BeginAnimation(FlameGraphVerticalOffsetProperty, animation1, HandoffBehavior.SnapshotAndReplace);
       return animation1;
     }
-
-    GraphHost.ScrollToVerticalOffset(offset);
-    return null;
+    else {
+      GraphHost.ScrollToVerticalOffset(offset);
+      return null;
+    }
   }
 
   private void BringNodeIntoViewZoom(FlameGraphNode node) {

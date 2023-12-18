@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using IRExplorerCore;
+using IRExplorerCore.Collections;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 using ProtoBuf;
@@ -331,8 +332,8 @@ public sealed class ProfileCallTree {
             childrenSet.Add(existingNode);
           }
 
-          existingNode.Weight += childNode.Weight;
-          existingNode.ExclusiveWeight += childNode.ExclusiveWeight;
+          existingNode.AccumulateWeight(childNode.Weight);
+          existingNode.AccumulateExclusiveWeight(childNode.ExclusiveWeight);
         }
       }
 
@@ -343,8 +344,8 @@ public sealed class ProfileCallTree {
           callersSet.Add(existingNode);
         }
 
-        existingNode.Weight += node.Caller.Weight;
-        existingNode.ExclusiveWeight += node.Caller.ExclusiveWeight;
+        existingNode.AccumulateWeight(node.Caller.Weight);
+        existingNode.AccumulateExclusiveWeight(node.Caller.ExclusiveWeight);
       }
 
       if (node.HasCallSites) {
@@ -425,8 +426,8 @@ public sealed class ProfileCallTree {
 
       var groupEntry = (ProfileCallTreeGroupNode)entry;
       groupEntry.Nodes.Add(node);
-      groupEntry.Weight += node.Weight;
-      groupEntry.ExclusiveWeight += node.ExclusiveWeight;
+      groupEntry.AccumulateWeight(node.Weight);
+      groupEntry.AccumulateExclusiveWeight(node.ExclusiveWeight);
     }
 
     if (node.HasChildren) {
@@ -511,29 +512,30 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   //? Remove reference once no longer serialized
   private IRTextFunctionReference functionRef_ { get; set; }
   private TinyList<ProfileCallTreeNode> children_;
+  //private SparseBitvector samplesIndices_;
 
   //? TODO: ProfileCallSite not serialized properly, references CallTreeNode and should use Id instead
   //[ProtoMember(3)]
   private Dictionary<long, ProfileCallSite> callSites_; //? Use Hybrid array/dict to save space
   private ProfileCallTreeNode caller_; // Can't be serialized, reconstructed.
-  private ReaderWriterLockSlim lock_; // Lock for updating children, callers, call sites.
   [ProtoMember(4)]
   public long Id { get; set; }
   [ProtoMember(5)]
   public FunctionDebugInfo FunctionDebugInfo { get; set; }
-  [ProtoMember(6)] private long weight_; // Weight saved as ticks to use Interlocked.Add
-  [ProtoMember(7)] private long exclusiveWeight_;
+  [ProtoMember(6)] private TimeSpan weight_; // Weight saved as ticks to use Interlocked.Add
+  [ProtoMember(7)] private TimeSpan exclusiveWeight_;
   [ProtoMember(8)]
   public ProfileCallTreeNodeKind Kind { get; set; }
+  public object Tag { get; set; }
 
   public TimeSpan Weight {
-    get => TimeSpan.FromTicks(weight_);
-    set => weight_ = value.Ticks;
+    get => weight_;
+    set => weight_ = value;
   }
 
   public TimeSpan ExclusiveWeight {
-    get => TimeSpan.FromTicks(exclusiveWeight_);
-    set => exclusiveWeight_ = value.Ticks;
+    get => exclusiveWeight_;
+    set => exclusiveWeight_ = value;
   }
 
   public IRTextFunction Function {
@@ -600,7 +602,6 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   [ProtoAfterDeserialization]
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void InitializeReferenceMembers() {
-    lock_ ??= new ReaderWriterLockSlim();
     functionRef_ ??= new IRTextFunctionReference();
   }
 
@@ -617,13 +618,11 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   }
 
   public void AccumulateWeight(TimeSpan weight) {
-    // Avoid lock incrementing the weight ticks.
-    Interlocked.Add(ref weight_, weight.Ticks);
+    weight_ += weight;
   }
 
   public void AccumulateExclusiveWeight(TimeSpan weight) {
-    // Avoid lock incrementing the weight ticks.
-    Interlocked.Add(ref exclusiveWeight_, weight.Ticks);
+    exclusiveWeight_ += weight;
   }
 
   public (ProfileCallTreeNode, bool) AddChild(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
@@ -646,52 +645,32 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
   private (ProfileCallTreeNode, bool)
     GetOrCreateChildNode(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
-    try {
-      lock_.EnterUpgradeableReadLock();
+    var childNode = FindExistingNode(functionDebugInfo, function);
 
-      var childNode = FindExistingNode(functionDebugInfo, function);
-
-      if (childNode != null) {
-        return (childNode, false);
-      }
-
-      try {
-        // Check again if another thread added the child in the meantime.
-        lock_.EnterWriteLock();
-        childNode = FindExistingNode(functionDebugInfo, function);
-
-        if (childNode != null) {
-          return (childNode, false);
-        }
-
-        childNode = new ProfileCallTreeNode(functionDebugInfo, function, null, this);
-        children_.Add(childNode);
-        return (childNode, true);
-      }
-      finally {
-        lock_.ExitWriteLock();
-      }
+    if (childNode != null) {
+      return (childNode, false);
     }
-    finally {
-      lock_.ExitUpgradeableReadLock();
+
+    // Check again if another thread added the child in the meantime.
+    childNode = FindExistingNode(functionDebugInfo, function);
+
+    if (childNode != null) {
+      return (childNode, false);
     }
+
+    childNode = new ProfileCallTreeNode(functionDebugInfo, function, null, this);
+    children_.Add(childNode);
+    return (childNode, true);
   }
 
   public void AddCallSite(ProfileCallTreeNode childNode, long rva, TimeSpan weight) {
-    try {
-      lock_.EnterWriteLock();
-
-      if (callSites_ == null || !callSites_.TryGetValue(rva, out var callsite)) {
-        callSites_ ??= new Dictionary<long, ProfileCallSite>();
-        callsite = new ProfileCallSite(rva);
-        callSites_[rva] = callsite;
-      }
-
-      callsite.AddTarget(childNode, weight);
+    if (callSites_ == null || !callSites_.TryGetValue(rva, out var callsite)) {
+      callSites_ ??= new Dictionary<long, ProfileCallSite>();
+      callsite = new ProfileCallSite(rva);
+      callSites_[rva] = callsite;
     }
-    finally {
-      lock_.ExitWriteLock();
-    }
+
+    callsite.AddTarget(childNode, weight);
   }
 
   private ProfileCallTreeNode FindExistingNode(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
