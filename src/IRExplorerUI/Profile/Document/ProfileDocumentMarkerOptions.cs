@@ -83,6 +83,10 @@ public class ProfileDocumentMarkerOptions {
       : PickBackColorForOrder(column, colorIndex, percentage, InvertColorPalette(column));
   }
 
+  public Color PickBackColorForPercentage(double percentage) {
+    return PickBackColorForPercentage(null, percentage);
+  }
+
   public Color PickBackColorForPercentage(OptionalColumn column, double percentage) {
     if (percentage < ElementWeightCutoff) {
       return Colors.Transparent;

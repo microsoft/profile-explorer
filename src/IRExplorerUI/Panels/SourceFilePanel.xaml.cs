@@ -15,7 +15,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ClosedXML.Excel;
+using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -45,7 +47,6 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
   private int firstSourceLineIndex_;
   private int lastSourceLineIndex_;
   private IRExplorerCore.IR.StackFrame currentInlinee_;
-  private bool sourceMapperDisabled_;
   private bool columnsVisible_;
   private double previousVerticalOffset_;
   private List<(IRElement, TimeSpan)> profileElements_;
@@ -55,11 +56,15 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
   private double columnsListItemHeight_;
   private Brush selectedLineBrush_;
 
+  //? TODO: Remember exclusions between sessions
+  private HashSet<string> disabledSourceMappings_;
+
   public SourceFilePanel() {
     InitializeComponent();
     DataContext = this;
     UpdateDocumentStyle();
 
+    disabledSourceMappings_ = new HashSet<string>();
     profileMarker_ = new ElementHighlighter(HighlighingType.Marked);
     TextView.TextArea.TextView.BackgroundRenderers.Add(profileMarker_);
     TextView.TextArea.TextView.BackgroundRenderers.Add(
@@ -226,22 +231,45 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
     return null;
   }
 
-  private async Task<bool> LoadSourceFileImpl(string path, string originalPath, int sourceStartLine) {
+  private async Task<bool> LoadSourceFileImpl(string filePath, string originalFilePath, int sourceStartLine) {
     try {
-      string text = await File.ReadAllTextAsync(path);
-      SetSourceText(text);
-      SetPanelName(originalPath);
+      string text = await File.ReadAllTextAsync(filePath);
+      await SetSourceText(text, filePath);
+      SetPanelName(originalFilePath);
+
+      //? TODO: Is panel is not visible, scroll doesn't do anything,
+      //? should be executed again when panel is activated
       ScrollToLine(sourceStartLine);
       return true;
     }
     catch (Exception ex) {
-      Trace.TraceError($"Failed to load source file {path}: {ex.Message}");
+      Trace.TraceError($"Failed to load source file {filePath}: {ex.Message}");
       return false;
     }
   }
 
-  private void SetSourceText(string text) {
+  private async Task SetSourceText(string text, string filePath) {
     disableCaretEvent_ = true; // Changing the text triggers the caret event twice.
+    IHighlightingDefinition highlightingDef = null;
+
+    switch (Utils.GetFileExtension(filePath)) {
+      case ".c":
+      case ".cpp":
+      case ".cxx":
+      case ".cc":
+      case ".h":
+      case ".hpp":
+      case ".hxx": {
+        highlightingDef = HighlightingManager.Instance.GetDefinition("C++");
+        break;
+      }
+      case ".cs": {
+        highlightingDef = HighlightingManager.Instance.GetDefinition("C#");
+        break;
+      }
+    }
+
+    TextView.SyntaxHighlighting = highlightingDef;
     TextView.Text = text;
     disableCaretEvent_ = false;
   }
@@ -396,7 +424,8 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
     }
 
     // Re-enable source mapper if it was disabled before.
-    sourceMapperDisabled_ = false;
+    //? TODO: Should clear only the current file
+    disabledSourceMappings_.Clear();
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
       ScrollToLine(hottestSourceLine_);
@@ -477,9 +506,7 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
         ExportFunctionAsExcelFile(path);
       }
       catch (Exception ex) {
-        using var centerForm = new DialogCenteringHelper(this);
-        MessageBox.Show($"Failed to save source profiling results to {path}: {ex.Message}", "IR Explorer",
-                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+        Utils.ShowErrorMessageBox($"Failed to save source profiling results to {path}: {ex.Message}", this);
       }
     }
   }
@@ -673,19 +700,16 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
     if (File.Exists(sourceInfo.FilePath)) {
       mappedSourceFilePath = sourceInfo.FilePath;
     }
-    else if (!sourceMapperDisabled_) {
+    else if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
       mappedSourceFilePath = sourceFileMapper_.Map(sourceInfo.FilePath, () =>
                                                      BrowseSourceFile(
                                                        $"Source File|{Path.GetFileName(sourceInfo.OriginalFilePath)}",
                                                        $"Open {sourceInfo.OriginalFilePath}"));
 
       if (string.IsNullOrEmpty(mappedSourceFilePath)) {
-        using var centerForm = new DialogCenteringHelper(this);
-
-        if (MessageBox.Show("Continue asking for source file location during this session?", "IR Explorer",
-                            MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) ==
+        if(Utils.ShowYesNoMessageBox("Continue asking for the location of this source file?", this) ==
             MessageBoxResult.No) {
-          sourceMapperDisabled_ = true;
+          disabledSourceMappings_.Add(sourceInfo.FilePath);
         }
       }
     }
