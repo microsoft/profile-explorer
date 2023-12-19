@@ -44,9 +44,20 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     CanExpand = canExpand;
     PanelHost.ShowInstanceNavigation = false;
     PanelHost.Initialize(session, funcInfoProvider);
-    StackTraceListView.Session = Session;
+    FunctionListView.Session = Session;
     UpdateNode(node);
+    SetupEvents();
     DataContext = this;
+  }
+
+  private void SetupEvents() {
+    FunctionListView.NodeClick += async (sender, treeNode) => {
+      await Session.ProfileFunctionSelected(treeNode, ToolPanelKind.Other);
+    };
+
+    FunctionListView.NodeDoubleClick += async (sender, treeNode) => {
+      await Session.OpenProfileFunction(treeNode, OpenSectionKind.NewTab);
+    };
   }
 
   protected override void SetPanelAccentColor(Color color) {
@@ -122,14 +133,14 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
 
     ShowSimpleView = true;
     UpdatePopupWidth(MeasureMaxTextWidth(list, nameFormatter));
-    StackTraceListView.ShowSimpleList(list);
+    FunctionListView.ShowSimpleList(list);
   }
 
   public void ShowFunctions(List<ProfileCallTreeNode> list,
                             FunctionNameFormatter nameFormatter) {
     ShowSimpleView = true;
     UpdatePopupWidth(MeasureMaxTextWidth(list, nameFormatter));
-    StackTraceListView.ShowSimpleList(list);
+    FunctionListView.ShowSimpleList(list);
   }
 
   public void UpdateNode(ProfileCallTreeNode node) {
@@ -189,7 +200,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
 
     // Leave some space for the vertical scroll bar
     // to avoid having a horizontal one by default.
-    StackTraceListView.FunctionColumnWidth = Math.Max(MinPopupWidth - 2 * margin, Width - 2 * margin);
+    FunctionListView.FunctionColumnWidth = Math.Max(MinPopupWidth - 2 * margin, Width - 2 * margin);
   }
 
   private void CloseButton_Click(object sender, RoutedEventArgs e) {
