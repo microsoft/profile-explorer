@@ -125,6 +125,7 @@
           <TextBlock
             Margin="0,0,4,0"
             Text="Inlinees"
+            IsEnabled="False"
             VerticalAlignment="Center" />
           <ComboBox
             IsEnabled="False"
@@ -139,13 +140,14 @@
             SelectionChanged="InlineeCombobox_SelectionChanged"
             ToolTip="Inlined functions call stack"
             Width="150" />
-          <Button Click="Button_Click_1" ToolTip="Switch to callee">
-            <Image Source="{StaticResource LeftArrowIcon}" />
+          <Button Click="Button_Click_1" ToolTip="Switch to callee" IsEnabled="False">
+            <Image Source="{StaticResource UpArrowIcon}" />
           </Button>
-          <Button Click="Button_Click_2" ToolTip="Switch to caller">
-            <Image Source="{StaticResource RightArrowIcon}" />
+          <Button Click="Button_Click_2" ToolTip="Switch to caller" IsEnabled="False">
+            <Image Source="{StaticResource DownArrowIcon}" />
           </Button>
           <TextBlock
+            IsEnabled="False"
             Margin="4,0,0,0"
             Text="0/0"
             VerticalAlignment="Center" />

@@ -153,6 +153,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       if (hasThreadFilter_ != value) {
         hasThreadFilter_ = value;
         OnPropertyChanged();
+        OnPropertyChanged(nameof(HasAnyFilter));
       }
     }
   }
@@ -163,7 +164,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       if (threadFilterText_ != value) {
         threadFilterText_ = value;
         OnPropertyChanged();
-        OnPropertyChanged(nameof(HasAnyFilter));
       }
     }
   }
@@ -598,7 +598,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private async Task ApplyProfileFilter() {
+    OnPropertyChanged(nameof(HasAnyFilter));
     UpdateFilteredThreads();
+
     var timeRange = ActivityView.HasFilter ? ActivityView.FilteredRange : null;
     var filter = ConstructProfileSampleFilter(timeRange);
     await Session.FilterProfileSamples(filter);
@@ -697,7 +699,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
 
-    OnPropertyChanged(nameof(HasAnyFilter));
     changingThreadFiltering_ = false;
     await ApplyProfileFilter();
   }

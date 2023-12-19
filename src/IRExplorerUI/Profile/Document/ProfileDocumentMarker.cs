@@ -43,7 +43,8 @@ public class ProfileDocumentMarker {
                               UseMainColumnBackColor = true,
                               ShowMainColumnIcon = true,
                               BackColorPalette = ColorPalette.Profile,
-                              InvertColorPalette = true
+                              InvertColorPalette = false,
+                              PickColorForPercentage = true
                             });
   private static readonly OptionalColumn TIME_PERCENTAGE_COLUMN =
     OptionalColumn.Template("[TimePercentageHeader]", "TimePercentageColumnValueTemplate",
@@ -56,7 +57,8 @@ public class ProfileDocumentMarker {
                               UseMainColumnBackColor = true,
                               ShowIcon = true,
                               BackColorPalette = ColorPalette.Profile,
-                              InvertColorPalette = true
+                              InvertColorPalette = false,
+                              PickColorForPercentage = true
                             });
   //? TODO: Should be customizable (at least JSON if not UI)
   private static readonly (string, string)[] PerfCounterNameReplacements = {
@@ -124,8 +126,10 @@ public class ProfileDocumentMarker {
     bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
     if (hasInstrOffsetMetadata) {
-      var result = profile_.Process(function, irInfo_.IR);
+      var result = await Task.Run(() => profile_.Process(function, irInfo_.IR));
       columnData = await MarkProfiledElements(result, function, document);
+
+      //? TODO: UI option to display these
       MarkProfiledBlocks(result.BlockSampledElements, document);
       MarkCallSites(document, function, textFunction, metadataTag);
     }
@@ -141,7 +145,7 @@ public class ProfileDocumentMarker {
 
   public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
                                FunctionIR function, MarkedDocument document) {
-    Trace.WriteLine($"Apply {column.ColumnName}, main {column.IsMainColumn}");
+    Trace.WriteLine($"Apply {column.ColumnName}, is main column: {column.IsMainColumn}");
 
     var style = column.Appearance;
     var elementColorPairs = new List<ValueTuple<IRElement, Color>>(function.TupleCount);
@@ -155,7 +159,7 @@ public class ProfileDocumentMarker {
       double percentage = value.ValuePercentage;
       var color = options_.PickBackColor(column, order, percentage);
 
-      if (column.IsMainColumn) {
+      if (column.IsMainColumn && percentage >= options_.ElementWeightCutoff) {
         elementColorPairs.Add(new ValueTuple<IRElement, Color>(tuple, color));
       }
 
@@ -320,10 +324,10 @@ public class ProfileDocumentMarker {
       double weightPercentage = profile_.ScaleWeight(weight);
 
       var icon = options_.PickIconForOrder(i, weightPercentage);
-      var color = options_.PickBackColorForOrder(i, weightPercentage, true);
+      var color = options_.PickBackColorForPercentage(weightPercentage);
 
       if (color == Colors.Transparent) {
-        // Match the backround color of the corresponding text line.
+        // Match the background color of the corresponding text line.
         color = block.HasEvenIndexInFunction ?
           App.Settings.DocumentSettings.BackgroundColor :
           App.Settings.DocumentSettings.AlternateBackgroundColor;
