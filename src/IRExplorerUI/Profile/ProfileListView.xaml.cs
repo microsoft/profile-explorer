@@ -69,6 +69,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   private bool showModuleColumn_;
   private bool showContextColumn_;
   private double functionColumnWidth_;
+  private ISession session_;
 
   public double FunctionColumnWidth {
     get => functionColumnWidth_;
@@ -78,7 +79,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public ProfileListView() {
     InitializeComponent();
     FunctionColumnWidth = DefaultFunctionColumnWidth;
-    SetupPreviewPopup();
     DataContext = this;
   }
 
@@ -104,7 +104,19 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public event EventHandler<ProfileCallTreeNode> NodeClick;
   public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
   public event PropertyChangedEventHandler PropertyChanged;
-  public ISession Session { get; set; }
+
+  public ISession Session {
+    get => session_;
+    set {
+      session_ = value;
+
+      //? TODO: UI option
+      if (session_ != null) {
+        SetupPreviewPopup();
+      }
+    }
+  }
+
   public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
     await OpenFunction(OpenSectionKind.ReplaceCurrent);
   });
