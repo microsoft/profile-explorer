@@ -16,8 +16,8 @@ using IRExplorerUI.Utilities.UI;
 namespace IRExplorerUI.Controls;
 
 public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
-  public static double DefaultWidth = 500;
-  public static double DefaultHeight = 200;
+  public static readonly double DefaultWidth = 500;
+  public static readonly double DefaultHeight = 200;
 
   private string panelTitle_;
   private string panelToolTip_;
@@ -207,6 +207,8 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 }
 
+//? TODO: Replace all places using IRDocumentPopup with this,
+//? removes lots of duplicate code this way
 public class IRDocumentPopupInstance {
   public const double DefaultWidth = 600;
   public const double DefaultHeight = 200;
@@ -216,44 +218,44 @@ public class IRDocumentPopupInstance {
   private double width_;
   private double height_;
   private ISession session_;
-  private string title_;
 
-  public IRDocumentPopupInstance(double width, double height, string title, ISession session) {
+  public IRDocumentPopupInstance(double width, double height, ISession session) {
     width_ = width;
     height_ = height;
     session_ = session;
-    title_ = title;
   }
 
-  public void SetupHoverEvents(UIElement target, Func<PreviewPopupArgs> previewedElementFinder) {
+  public void SetupHoverEvents(UIElement target, TimeSpan hoverDuration, Func<PreviewPopupArgs> previewedElementFinder) {
     previewedElementFinder_ = previewedElementFinder;
-    var hover = new MouseHoverLogic(target);
+    var hover = new MouseHoverLogic(target, hoverDuration);
     hover.MouseHover += Hover_MouseHover;
     hover.MouseHoverStopped += Hover_MouseHoverStopped;
   }
 
-  private async Task ShowPreviewPopupForDocument(IRDocument document, IRElement element, UIElement relativeElement) {
-    await ShowPreviewPopupForDocument(document, element, relativeElement, width_, height_, title_);
+  private async Task ShowPreviewPopupForDocument(IRDocument document, IRElement element,
+                                                 UIElement relativeElement, string title) {
+    await ShowPreviewPopupForDocument(document, element, relativeElement, width_, height_, title);
   }
 
   private async Task ShowPreviewPopupForDocument(IRDocument document, IRElement element, UIElement relativeElement,
-                                          double width, double height, string titlePrefix) {
+                                                 double width, double height, string titlePrefix) {
     if (!Prepare(element)) {
       return;
     }
 
     var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
     previewPopup_ = await IRDocumentPopup.CreateNew(document, element, position, width, height,
-                                              relativeElement, titlePrefix);
+                                                    relativeElement, titlePrefix);
     Complete();
   }
 
-  public async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection, UIElement relativeElement) {
-    await ShowPreviewPopupForSection(parsedSection, relativeElement, width_, height_, title_);
+  public async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection,
+                                               UIElement relativeElement, string title) {
+    await ShowPreviewPopupForSection(parsedSection, relativeElement, width_, height_, title);
   }
 
   public async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection, UIElement relativeElement,
-                                               double width, double height, string title = "") {
+                                               double width, double height, string title) {
     if (!Prepare()) {
       return;
     }
@@ -262,6 +264,27 @@ public class IRDocumentPopupInstance {
     previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position, width, height,
                                                     relativeElement, session_, title);
     Complete();
+  }
+
+  public async Task ShowPreviewPopupForSection(IRTextSection section,
+                                               UIElement relativeElement, string title) {
+    await ShowPreviewPopupForSection(section, relativeElement, width_, height_, title);
+  }
+
+  public async Task ShowPreviewPopupForSection(IRTextSection section, UIElement relativeElement,
+                                               double width, double height, string title = "") {
+    if (!Prepare()) {
+      return;
+    }
+
+    var parsedSection = await Task.Run(() => session_.LoadAndParseSection(section));
+
+    if (parsedSection != null) {
+      var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
+      previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position, width, height,
+                                                      relativeElement, session_, title);
+      Complete();
+    }
   }
 
   public void HidePreviewPopup(bool force = false) {
@@ -313,36 +336,71 @@ public class IRDocumentPopupInstance {
   private async void Hover_MouseHover(object sender, MouseEventArgs e) {
     var result = previewedElementFinder_();
 
-    if (result.Element != null) {
-      if (result.AssociatedDocument != null) {
-        await ShowPreviewPopupForDocument(result.AssociatedDocument, result.Element, result.RelativeElement);
-      }
-      else if (result.AssociatedSection != null) {
-        await ShowPreviewPopupForSection(result.AssociatedSection, result.RelativeElement);
-      }
-      else {
-        throw new InvalidOperationException();
-      }
+    if (result.Document != null) {
+      await ShowPreviewPopupForDocument(result.Document, result.Element, result.RelativeElement, result.Title);
+    }
+    else if (result.Section != null) {
+      await ShowPreviewPopupForSection(result.Section, result.RelativeElement, result.Title);
+    }
+    else if (result.LoadedSection != null) {
+      await ShowPreviewPopupForSection(result.LoadedSection, result.RelativeElement, result.Title);
+    }
+    else {
+      throw new InvalidOperationException();
     }
   }
 
   private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {
     HidePreviewPopupDelayed();
   }
+}
 
-  public class PreviewPopupArgs {
-    public PreviewPopupArgs(IRElement element, UIElement relativeElement,
-                            IRDocument associatedDocument = null,
-                            ParsedIRTextSection associatedSection = null) {
-      Element = element;
-      RelativeElement = relativeElement;
-      AssociatedDocument = associatedDocument;
-      AssociatedSection = associatedSection;
+public class PreviewPopupArgs {
+  public static PreviewPopupArgs ForDocument(IRDocument document, IRElement element,
+                                             UIElement relativeElement, string title = "") {
+    return new() {
+      Element = element,
+      Document = document,
+      RelativeElement = relativeElement,
+      Title = title
+    };
+  }
+
+  public static PreviewPopupArgs ForSection(IRTextSection section,
+                                            UIElement relativeElement, string title = "") {
+    return new() {
+      Section = section,
+      RelativeElement = relativeElement,
+      Title = title
+    };
+  }
+
+  public static PreviewPopupArgs ForFunction(IRTextFunction function,
+                                            UIElement relativeElement, string title = "") {
+    if (function == null || function.Sections.Count == 0) {
+      return null;
     }
 
-    public IRElement Element { get; set; }
-    public UIElement RelativeElement { get; set; }
-    public IRDocument AssociatedDocument { get; set; }
-    public ParsedIRTextSection AssociatedSection { get; set; }
+    return new() {
+      Section = function.Sections[0],
+      RelativeElement = relativeElement,
+      Title = title
+    };
   }
+
+  public static PreviewPopupArgs ForSLoadedSection(ParsedIRTextSection section,
+                                                   UIElement relativeElement, string title = "") {
+    return new() {
+      LoadedSection = section,
+      RelativeElement = relativeElement,
+      Title = title
+    };
+  }
+
+  public string Title { get; set; }
+  public IRElement Element { get; set; }
+  public UIElement RelativeElement { get; set; }
+  public IRDocument Document { get; set; }
+  public ParsedIRTextSection LoadedSection { get; set; }
+  public IRTextSection Section { get; set; }
 }

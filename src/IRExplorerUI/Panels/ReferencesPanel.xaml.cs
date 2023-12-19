@@ -552,7 +552,7 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private async void Hover_MouseHover(object sender, MouseEventArgs e) {
-    var hoveredItem = FindPointedListItem(ReferenceList);
+    var hoveredItem = Utils.FindPointedListViewItem(ReferenceList);
 
     if (hoveredItem != null) {
       var refInfo = (ReferenceInfo)hoveredItem.DataContext;
@@ -571,12 +571,6 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
         HidePreviewPopup();
       }
     });
-  }
-
-  private ListViewItem FindPointedListItem(UIElement source) {
-    var mousePosition = Mouse.GetPosition(source);
-    var result = ReferenceList.GetObjectAtPoint<ListViewItem>(mousePosition);
-    return result;
   }
 
         #region IToolPanel

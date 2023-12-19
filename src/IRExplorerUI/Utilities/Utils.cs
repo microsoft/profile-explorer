@@ -1126,6 +1126,12 @@ static class Utils {
     }
   }
 
+  public static ListViewItem FindPointedListViewItem(ListView listView) {
+    var mousePosition = Mouse.GetPosition(listView);
+    var result = listView.GetObjectAtPoint<ListViewItem>(mousePosition);
+    return result;
+  }
+
   private static void Control_SizeChanged(object sender, SizeChangedEventArgs e) {
     if (!(sender is ToolBar toolbar)) {
       return;
@@ -1136,14 +1142,14 @@ static class Utils {
         toolbar.HasOverflowItems ? Visibility.Visible : Visibility.Collapsed;
     }
   }
-  
+
   public static void ScrollToFirstListViewItem(ListView listView, int itemIndex = 0) {
     // Based on https://stackoverflow.com/a/211984.
     // This is a hack to scroll to an item in a ListView.
     if (listView.Items.Count > 0) {
-      VirtualizingStackPanel vsp =  
+      VirtualizingStackPanel vsp =
         (VirtualizingStackPanel)typeof(ItemsControl).InvokeMember("_itemsHost",
-                                                                  BindingFlags.Instance | BindingFlags.GetField | BindingFlags.NonPublic, null, 
+                                                                  BindingFlags.Instance | BindingFlags.GetField | BindingFlags.NonPublic, null,
                                                                   listView, null);
       if (vsp != null) {
         double scrollHeight = vsp.ScrollOwner.ScrollableHeight;

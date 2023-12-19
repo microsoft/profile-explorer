@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using IRExplorerUI.Controls;
 using IRExplorerUI.Utilities;
 using Irony.Parsing.Construction;
 
@@ -77,7 +78,27 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public ProfileListView() {
     InitializeComponent();
     FunctionColumnWidth = DefaultFunctionColumnWidth;
+    SetupPreviewPopup();
     DataContext = this;
+  }
+
+  private void SetupPreviewPopup() {
+    var preview = new IRDocumentPopupInstance(IRDocumentPopup.DefaultWidth,
+                                              IRDocumentPopup.DefaultHeight * 2, Session);
+    preview.SetupHoverEvents(ItemList, HoverPreview.LongHoverDuration, () => {
+      var hoveredItem = Utils.FindPointedListViewItem(ItemList);
+
+      if (hoveredItem != null) {
+        var item = (ProfileListViewItem)hoveredItem.DataContext;
+
+        if (item.CallTreeNode != null) {
+          return PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList,
+                                              $"Function {item.CallTreeNode.FunctionName}");
+        }
+      }
+
+      return null;
+    });
   }
 
   public event EventHandler<ProfileCallTreeNode> NodeClick;
@@ -93,8 +114,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
   private async Task OpenFunction(OpenSectionKind openMode) {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
-      var args = new OpenSectionEventArgs(item.CallTreeNode.Function.Sections[0], openMode);
-      await Session.SwitchDocumentSectionAsync(args);
+      await Session.OpenProfileFunction(item.CallTreeNode, openMode);
     }
   }
 

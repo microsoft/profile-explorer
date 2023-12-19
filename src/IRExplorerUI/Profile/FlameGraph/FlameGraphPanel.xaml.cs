@@ -372,12 +372,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     GraphHost.BringNodeIntoView(node);
   }
 
-  private void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
-    var nodes = GraphHost.GraphViewer.SelectNodes(e);
-
-    if (nodes.Count > 0) {
-      GraphHost.BringNodeIntoView(nodes[0], false);
-    }
+  private async void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
+    await Session.ProfileFunctionSelected(e, ToolPanelKind.Other);
   }
 
   private async void NodeDetailsPanel_NodeDoubleClick(object sender, ProfileCallTreeNode e) {
