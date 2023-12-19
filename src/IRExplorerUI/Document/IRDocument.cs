@@ -113,6 +113,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private List<MarkerBarElement> markerMargingElements_;
   private HighlightingStyleCyclingCollection markerParentStyle_;
   private IRDocumentPopup previewPopup_;
+  private bool preparingPreviewPopup_;
   private List<IRElement> operandElements_;
   private RemarkHighlighter remarkHighlighter_;
   private DelayedAction removeHoveredAction_;
@@ -2246,7 +2247,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private void HidePreviewPopup(bool force = false) {
     ignoreNextPreviewElement_ = null;
 
-    if (previewPopup_ != null && (force || !previewPopup_.IsMouseOver)) {
+    if (previewPopup_ != null) {
       previewPopup_.ClosePopup();
       previewPopup_ = null;
     }
@@ -3664,10 +3665,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private async Task ShowPreviewPopup(IRElement element, bool isCallTarget = false, bool alwaysShow = false) {
-    if (element == null) {
+    if (element == null || preparingPreviewPopup_) {
       return; // Valid case for search results.
     }
 
+    // Close current popup.
     if (previewPopup_ != null) {
       if (previewPopup_.PreviewedElement == element) {
         return; // Already showing preview for this element.
@@ -3680,36 +3682,18 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return;
     }
 
+    // Try to create a popup for the element.
     var position = Mouse.GetPosition(TextArea.TextView).AdjustForMouseCursor();
+    preparingPreviewPopup_ = true; // Prevent another popup to be created due to await.
 
     if (isCallTarget) {
-      // Try to find a function definition for the call.
-      var targetSection = FindCallTargetSection(element);
-
-      if (targetSection == null) {
-        if (alwaysShow) {
-          MessageBox.Show($"Couldn't find call target in opened document:\n{element.Name}", "IR Explorer",
-                          MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
-
-        return;
-      }
-
-      var result = await Task.Run(() => Session.LoadAndParseSection(targetSection));
-
-      if (result != null) {
-        string title = $"Function: {element.Name}";
-        previewPopup_ = await IRDocumentPopup.CreateNew(result, position, IRDocumentPopup.DefaultWidth,
-                                                        IRDocumentPopup.DefaultHeight * 2,
-                                                        this, Session, title);
-      }
+      previewPopup_ = await CreateCallTargetPreviewPopup(element, alwaysShow, position);
     }
     else {
-      previewPopup_ = await IRDocumentPopup.CreateNew(this, element, position,
-                                                IRDocumentPopup.DefaultWidth,
-                                                IRDocumentPopup.DefaultHeight,
-                                                this, "Definition of ");
+      previewPopup_ = await CreateElementPreviewPopup(element, position);
     }
+
+    preparingPreviewPopup_ = false;
 
     if (previewPopup_ != null) {
       previewPopup_.PopupDetached += Popup_PopupDetached;
@@ -3720,6 +3704,33 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
         previewPopup_.DetachPopup();
       }
     }
+  }
+
+  private async Task<IRDocumentPopup> CreateElementPreviewPopup(IRElement element, Point position) {
+    return await IRDocumentPopup.CreateNew(this, element, position,
+                                                       IRDocumentPopup.DefaultWidth,
+                                                       IRDocumentPopup.DefaultHeight, this);
+  }
+
+  private async Task<IRDocumentPopup> CreateCallTargetPreviewPopup(IRElement element, bool alwaysShow, Point position) {
+    // Try to find a function definition for the call.
+    var targetSection = FindCallTargetSection(element);
+
+    if (targetSection == null) {
+      if (alwaysShow) {
+        Utils.ShowWarningMessageBox($"Couldn't find call target in opened document:\n{element.Name}", this);
+      }
+      return null;
+    }
+
+    var result = await Task.Run(() => Session.LoadAndParseSection(targetSection));
+
+    if (result == null)
+      return null;
+
+    return await IRDocumentPopup.CreateNew(result, position, IRDocumentPopup.DefaultWidth,
+                                           IRDocumentPopup.DefaultHeight * 2,
+                                           this, Session,  $"Function: {element.Name}");
   }
 
   private IRTextSection FindCallTargetSection(IRElement element) {
