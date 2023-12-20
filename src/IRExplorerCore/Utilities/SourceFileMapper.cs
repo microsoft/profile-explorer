@@ -7,6 +7,10 @@ using System.IO;
 
 namespace IRExplorerCore;
 
+//? TODO: Exclusion based on module name
+//? Exclusion based on path regex (use TextSearcher)
+//? UI to edit
+
 public class SourceFileMapper {
   private readonly Dictionary<string, DirectoryInfo> map_ = new Dictionary<string, DirectoryInfo>();
   private readonly HashSet<string> missingFilesSet_ = new HashSet<string>();
@@ -32,6 +36,10 @@ public class SourceFileMapper {
     }
 
     return result;
+  }
+
+  public void Reset() {
+    missingFilesSet_.Clear();
   }
 
   private bool TryLookupInMap(string sourceFile, out string result) {

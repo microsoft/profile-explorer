@@ -30,31 +30,14 @@ using TextLocation = IRExplorerCore.TextLocation;
 
 namespace IRExplorerUI;
 
-public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotifyPropertyChanged {
+public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged {
   private SourceFileMapper sourceFileMapper_ = new SourceFileMapper();
   private IRTextSection section_;
   private IRElement element_;
-  private bool ignoreNextCaretEvent_;
-  private bool disableCaretEvent_;
-  private int selectedLine_;
-  private ElementHighlighter profileMarker_;
-  private OverlayRenderer overlayRenderer_;
-  private bool hasProfileInfo_;
   private bool sourceFileLoaded_;
   private IRTextFunction sourceFileFunc_;
   private string sourceFilePath_;
-  private int hottestSourceLine_;
-  private int firstSourceLineIndex_;
-  private int lastSourceLineIndex_;
   private IRExplorerCore.IR.StackFrame currentInlinee_;
-  private bool columnsVisible_;
-  private double previousVerticalOffset_;
-  private List<(IRElement, TimeSpan)> profileElements_;
-  private int profileElementIndex_;
-  private FunctionProfileData.ProcessingResult sourceProfileResult_;
-  private IRDocumentColumnData sourceColumnData_;
-  private double columnsListItemHeight_;
-  private Brush selectedLineBrush_;
 
   //? TODO: Remember exclusions between sessions
   private HashSet<string> disabledSourceMappings_;
@@ -62,142 +45,15 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
   public SourceFilePanel() {
     InitializeComponent();
     DataContext = this;
-    UpdateDocumentStyle();
-
     disabledSourceMappings_ = new HashSet<string>();
-    profileMarker_ = new ElementHighlighter(HighlighingType.Marked);
-    TextView.TextArea.TextView.BackgroundRenderers.Add(profileMarker_);
-    TextView.TextArea.TextView.BackgroundRenderers.Add(
-      new CurrentLineHighlighter(TextView, App.Settings.DocumentSettings.SelectedValueColor));
-
-    // Create the overlay and place it on top of the text.
-    overlayRenderer_ = new OverlayRenderer(profileMarker_);
-    TextView.TextArea.Caret.PositionChanged += Caret_PositionChanged;
-    TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
-    ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
-
-    TextView.TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
-    TextView.TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
 
-  public bool ColumnsVisible {
-    get => columnsVisible_;
-    set {
-      if (columnsVisible_ != value) {
-        columnsVisible_ = value;
-        OnPropertyChanged();
-      }
-    }
-  }
 
-  public double ColumnsListItemHeight {
-    get => columnsListItemHeight_;
-    set {
-      if (columnsListItemHeight_ != value) {
-        columnsListItemHeight_ = value;
-        OnPropertyChanged();
-      }
-    }
-  }
-
-  public Brush SelectedLineBrush {
-    get => selectedLineBrush_;
-    set {
-      selectedLineBrush_ = value;
-      OnPropertyChanged();
-    }
-  }
-
-  public bool HasProfileInfo {
-    get => hasProfileInfo_;
-    set {
-      if (hasProfileInfo_ != value) {
-        hasProfileInfo_ = value;
-        OnPropertyChanged();
-      }
-    }
-  }
-
-  public double DefaultLineHeight => TextView.TextArea.TextView.DefaultLineHeight;
-
-  public void SuspendUpdate() {
-  }
-
-  public void ResumeUpdate() {
-  }
-
-  public void ClearInstructionMarkers() {
-    ResetProfileMarking();
-  }
-
-  public void MarkElements(ICollection<(IRElement, Color)> elementColorPairs) {
-    foreach (var pair in elementColorPairs) {
-      var style = new HighlightingStyle(pair.Item2);
-      var group = new HighlightedGroup(style);
-      group.Add(pair.Item1);
-      profileMarker_.Add(group);
-    }
-
-    UpdateHighlighting();
-  }
-
-  public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true) {
-    throw new NotImplementedException();
-  }
-
-  public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
-                                                       double width, double height,
-                                                       string label, string tooltip) {
-    throw new NotImplementedException();
-  }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-  }
-
-  private void ProfileColumns_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-    if (Math.Abs(e.VerticalChange) < double.Epsilon) {
-      return;
-    }
-
-    TextView.ScrollToVerticalOffset(e.VerticalOffset);
-  }
-
-  private void UpdateDocumentStyle() {
-    var settings = App.Settings.DocumentSettings;
-    TextView.Background = ColorBrushes.GetBrush(settings.BackgroundColor);
-    TextView.Foreground = ColorBrushes.GetBrush(settings.TextColor);
-    TextView.FontFamily = new FontFamily(settings.FontName);
-    TextView.FontSize = settings.FontSize;
-  }
-
-  private void Caret_PositionChanged(object sender, EventArgs e) {
-    if (columnsVisible_) {
-      var line = TextView.Document.GetLineByOffset(TextView.TextArea.Caret.Offset);
-      ProfileColumns.SelectRow(line.LineNumber - 1);
-    }
-
-    if (ignoreNextCaretEvent_) {
-      ignoreNextCaretEvent_ = false;
-      return;
-    }
-
-    if (disableCaretEvent_) {
-      return;
-    }
-
-    HighlightElementsOnSelectedLine();
-  }
-
-  private void HighlightElementsOnSelectedLine() {
-    var line = TextView.Document.GetLineByOffset(TextView.CaretOffset);
-
-    if (line != null && Document != null) {
-      selectedLine_ = line.LineNumber;
-      Document.SelectElementsOnSourceLine(line.LineNumber, currentInlinee_);
-    }
   }
 
   private void ComboBox_Loaded(object sender, RoutedEventArgs e) {
@@ -234,12 +90,12 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
   private async Task<bool> LoadSourceFileImpl(string filePath, string originalFilePath, int sourceStartLine) {
     try {
       string text = await File.ReadAllTextAsync(filePath);
-      await SetSourceText(text, filePath);
+      await TextView.SetSourceText(text, filePath);
       SetPanelName(originalFilePath);
 
       //? TODO: Is panel is not visible, scroll doesn't do anything,
       //? should be executed again when panel is activated
-      ScrollToLine(sourceStartLine);
+      TextView.ScrollToLine(sourceStartLine);
       return true;
     }
     catch (Exception ex) {
@@ -248,31 +104,6 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
     }
   }
 
-  private async Task SetSourceText(string text, string filePath) {
-    disableCaretEvent_ = true; // Changing the text triggers the caret event twice.
-    IHighlightingDefinition highlightingDef = null;
-
-    switch (Utils.GetFileExtension(filePath)) {
-      case ".c":
-      case ".cpp":
-      case ".cxx":
-      case ".cc":
-      case ".h":
-      case ".hpp":
-      case ".hxx": {
-        highlightingDef = HighlightingManager.Instance.GetDefinition("C++");
-        break;
-      }
-      case ".cs": {
-        highlightingDef = HighlightingManager.Instance.GetDefinition("C#");
-        break;
-      }
-    }
-
-    TextView.SyntaxHighlighting = highlightingDef;
-    TextView.Text = text;
-    disableCaretEvent_ = false;
-  }
 
   private void SetPanelName(string path) {
     if (!string.IsNullOrEmpty(path)) {
@@ -293,107 +124,6 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
     if (path != null) {
       var sourceInfo = new SourceFileDebugInfo(path, path);
       await LoadSourceFile(sourceInfo, section_.ParentFunction);
-    }
-  }
-
-  private async Task AnnotateProfilerData(FunctionProfileData profile, IDebugInfoProvider debugInfo) {
-    ResetProfileMarking();
-
-    //? Accessing the PDB (DIA) from another thread fails.
-    //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
-    var result = profile.ProcessSourceLines(debugInfo);
-    var sourceLineWeights = result.SourceLineWeightList;
-
-    if (sourceLineWeights.Count == 0) {
-      return;
-    }
-
-    //? TODO: Pretty hacky approach that makes a fake function
-    //? with IR elements to represent each source line.
-    firstSourceLineIndex_ = result.FirstLineIndex;
-    lastSourceLineIndex_ = result.LastLineIndex;
-    int totalLines = TextView.Document.LineCount;
-    var ids = IRElementId.NewFunctionId();
-    var dummyFunc = new FunctionIR();
-    var dummyBlock = new BlockIR(ids.NewBlock(0), 0, dummyFunc);
-    dummyFunc.Blocks.Add(dummyBlock);
-    dummyFunc.AssignBlockIndices();
-
-    var processingResult = new FunctionProfileData.ProcessingResult();
-
-    TupleIR MakeDummyTuple(TextLocation textLocation, DocumentLine documentLine1) {
-      var tupleIr = new TupleIR(ids.NextTuple(), TupleKind.Other, dummyBlock);
-      tupleIr.TextLocation = textLocation;
-      tupleIr.TextLength = documentLine1.Length;
-      dummyBlock.Tuples.Add(tupleIr);
-      return tupleIr;
-    }
-
-    //? TODO: Should be enough to iter over result.First/LastLineIndex
-    for (int lineNumber = 1; lineNumber <= totalLines; lineNumber++) {
-      TupleIR dummyTuple = null;
-
-      if (result.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
-        var documentLine = TextView.Document.GetLineByNumber(lineNumber);
-        var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
-        dummyTuple = MakeDummyTuple(location, documentLine);
-        processingResult.SampledElements.Add((dummyTuple, lineWeight));
-      }
-
-      if (result.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
-        var documentLine = TextView.Document.GetLineByNumber(lineNumber);
-        var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
-        dummyTuple ??= MakeDummyTuple(location, documentLine);
-        processingResult.CounterElements.Add((dummyTuple, counters));
-      }
-    }
-
-    processingResult.SortSampledElements(); // Used for ordering.
-    processingResult.FunctionCountersValue = result.FunctionCountersValue;
-    sourceProfileResult_ = processingResult;
-
-    var profileOptions = ProfileDocumentMarkerOptions.Default;
-    var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, Session.CompilerInfo);
-    var columnData = await profileMarker.MarkSourceLines(this, dummyFunc, processingResult);
-
-    sourceColumnData_ = columnData;
-    ColumnsVisible = columnData.HasData;
-
-    if (ColumnsVisible) {
-      ProfileColumns.Display(columnData, TextView.LineCount, dummyFunc);
-      profileElements_ = processingResult.SampledElements;
-      UpdateHighlighting();
-    }
-    else {
-      ProfileColumns.Reset();
-    }
-
-    HasProfileInfo = true;
-  }
-
-  private void TextViewOnScrollOffsetChanged(object? sender, EventArgs e) {
-    double offset = TextView.TextArea.TextView.VerticalOffset;
-    double changeAmount = offset - previousVerticalOffset_;
-    previousVerticalOffset_ = offset;
-
-    // Sync scrolling with the optional columns.
-    SyncColumnsVerticalScrollOffset(offset);
-  }
-
-  private void SyncColumnsVerticalScrollOffset(double offset) {
-    // Sync scrolling with the optional columns.
-    if (columnsVisible_) {
-      ProfileColumns.ScrollToVerticalOffset(offset);
-    }
-  }
-
-  private void UpdateHighlighting() {
-    TextView.TextArea.TextView.Redraw();
-  }
-
-  private void ButtonBase_OnClick(object sender, RoutedEventArgs e) {
-    if (hasProfileInfo_) {
-      ScrollToLine(hottestSourceLine_);
     }
   }
 
@@ -426,65 +156,13 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
     // Re-enable source mapper if it was disabled before.
     //? TODO: Should clear only the current file
     disabledSourceMappings_.Clear();
+    sourceFileMapper_.Reset();
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
-      ScrollToLine(hottestSourceLine_);
+      TextView.JumpToHottestProfiledElement();
     }
   }
 
-  private void JumpToProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (!HasProfileElements()) {
-      return;
-    }
-
-    profileElementIndex_ = 0;
-    JumpToProfiledElement(profileElements_[profileElementIndex_].Item1);
-  }
-
-  private bool HasProfileElements() {
-    return ColumnsVisible && profileElements_ != null && profileElements_.Count > 0;
-  }
-
-  private bool HasProfileElement(int offset) {
-    return ColumnsVisible && profileElements_ != null &&
-           profileElementIndex_ + offset >= 0 &&
-           profileElementIndex_ + offset < profileElements_.Count;
-  }
-
-  private void JumpToNextProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
-    JumpToProfiledElement(-1);
-  }
-
-  private void JumpToPreviousProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
-    JumpToProfiledElement(1);
-  }
-
-  private void JumpToHottestProfiledElement() {
-    Dispatcher.BeginInvoke(() => JumpToProfiledElement(0), DispatcherPriority.Background);
-  }
-
-  private void JumpToProfiledElement(int offset) {
-    if (!HasProfileElement(offset)) {
-      return;
-    }
-
-    profileElementIndex_ += offset;
-    JumpToProfiledElement(profileElements_[profileElementIndex_].Item1);
-  }
-
-  private void JumpToProfiledElement(IRElement element) {
-    TextView.ScrollToLine(element.TextLocation.Line);
-    double offset = TextView.TextArea.TextView.VerticalOffset;
-    SyncColumnsVerticalScrollOffset(offset);
-  }
-
-  private void JumpToNextProfiledElementCanExecute(object sender, CanExecuteRoutedEventArgs e) {
-    e.CanExecute = HasProfileElement(-1);
-  }
-
-  private void JumpToPreviousProfiledElementCanExecute(object sender, CanExecuteRoutedEventArgs e) {
-    e.CanExecute = HasProfileElement(1);
-  }
 
   private void SourceFile_CopyPath(object sender, RoutedEventArgs e) {
     if (!string.IsNullOrEmpty(sourceFilePath_)) {
@@ -497,90 +175,6 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
       Utils.OpenExternalFile(sourceFilePath_);
     }
   }
-
-  private void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
-    string path = Utils.ShowSaveFileDialog("Excel Worksheets|*.xlsx", "*.xlsx|All Files|*.*");
-
-    if (!string.IsNullOrEmpty(path)) {
-      try {
-        ExportFunctionAsExcelFile(path);
-      }
-      catch (Exception ex) {
-        Utils.ShowErrorMessageBox($"Failed to save source profiling results to {path}: {ex.Message}", this);
-      }
-    }
-  }
-
-  private void ExportFunctionAsExcelFile(string filePath) {
-    var wb = new XLWorkbook();
-    var ws = wb.Worksheets.Add("Source");
-    var columnData = sourceColumnData_;
-    int rowId = 2; // First row is for the table column names.
-    int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
-    int maxLineLength = 0;
-
-    for (int i = firstSourceLineIndex_; i <= lastSourceLineIndex_; i++) {
-      var line = TextView.Document.GetLineByNumber(i);
-      string text = TextView.Document.GetText(line.Offset, line.Length);
-      ws.Cell(rowId, 1).Value = text;
-      ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-      maxLineLength = Math.Max(text.Length, maxLineLength);
-
-      ws.Cell(rowId, 2).Value = i;
-      ws.Cell(rowId, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-      ws.Cell(rowId, 2).Style.Font.FontColor = XLColor.DarkGreen;
-
-      if (columnData != null) {
-        IRElement tuple = null;
-        tuple = FindTupleOnSourceLine(i);
-
-        if (tuple != null) {
-          IRDocumentColumnData.ExportColumnsToExcel(columnData, tuple, ws, rowId, 3);
-        }
-      }
-
-      rowId++;
-    }
-
-    var firstCell = ws.Cell(1, 1);
-    var lastCell = ws.LastCellUsed();
-    var range = ws.Range(firstCell.Address, lastCell.Address);
-    var table = range.CreateTable();
-    table.Theme = XLTableTheme.None;
-
-    foreach (var cell in table.HeadersRow().Cells()) {
-      if (cell.Address.ColumnNumber == 1) {
-        cell.Value = "Source";
-      }
-      else if (cell.Address.ColumnNumber == 2) {
-        cell.Value = "Line";
-      }
-      else if (columnData != null && cell.Address.ColumnNumber - 3 < columnData.Columns.Count) {
-        cell.Value = columnData.Columns[cell.Address.ColumnNumber - 3].Title;
-      }
-
-      cell.Style.Font.Bold = true;
-      cell.Style.Fill.BackgroundColor = XLColor.LightGray;
-    }
-
-    for (int i = 1; i <= 1; i++) {
-      ws.Column(i).AdjustToContents((double)1, maxLineLength);
-    }
-
-    wb.SaveAs(filePath);
-  }
-
-  private IRElement FindTupleOnSourceLine(int line) {
-    var pair1 = sourceProfileResult_.SampledElements.Find(e => e.Item1.TextLocation.Line == line - 1);
-
-    if (pair1.Item1 != null) {
-      return pair1.Item1;
-    }
-
-    var pair2 = sourceProfileResult_.CounterElements.Find(e => e.Item1.TextLocation.Line == line - 1);
-    return pair2.Item1;
-  }
-
         #region IToolPanel
 
   public override ToolPanelKind PanelKind => ToolPanelKind.Source;
@@ -588,18 +182,21 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
 
   public async Task LoadSourceFile(IRTextSection section) {
     section_ = section;
+    TextView.Session = Session;
+    TextView.TextView.Initalize(App.Settings.DocumentSettings, Session);
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
-      JumpToHottestProfiledElement();
+      TextView.JumpToHottestProfiledElement();
     }
   }
 
   public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     base.OnDocumentSectionLoaded(section, document);
     section_ = section;
+    TextView.Document = document;
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
-      JumpToHottestProfiledElement();
+      TextView.JumpToHottestProfiledElement();
     }
   }
 
@@ -669,12 +266,11 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
       funcProfile = Session.ProfileData?.GetFunctionProfile(function);
     }
 
-    if (funcProfile != null && debugInfo != null) {
-      await AnnotateProfilerData(funcProfile, debugInfo);
-    }
-
     if (!funcLoaded) {
       HandleMissingSourceFile(failureText);
+    }
+    else if (funcProfile != null) {
+      await TextView.AnnotateProfilerData(funcProfile, section_, debugInfo);
     }
 
     return funcLoaded;
@@ -733,7 +329,7 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
       text += $"\n{failureText}";
     }
 
-    TextView.Text = text;
+    TextView.TextView.Text = text;
     SetPanelName("");
     sourceFileLoaded_ = false;
     sourceFileFunc_ = null;
@@ -745,7 +341,7 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
   }
 
   private void ResetState() {
-    ResetSelectedLine();
+    //? ResetSelectedLine();
     ResetProfileMarking();
     section_ = null;
     sourceFileLoaded_ = false;
@@ -754,13 +350,6 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
   }
 
   private void ResetProfileMarking() {
-    overlayRenderer_.Clear();
-    profileMarker_.Clear();
-  }
-
-  private void ResetSelectedLine() {
-    selectedLine_ = -1;
-    element_ = null;
   }
 
   public override async void OnElementSelected(IRElementEventArgs e) {
@@ -783,7 +372,7 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
       }
 
       if (await LoadSourceFileForFunction(section_.ParentFunction)) {
-        ScrollToLine(tag.Line);
+        TextView.ScrollToLine(tag.Line);
       }
     }
   }
@@ -825,32 +414,18 @@ public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotify
     //? TODO: The func ASM is not needed, profile is created by mapping ASM lines in main func
     //? to corresponding lines in the selected inlinee
     if (fileLoaded) {
-      ScrollToLine(inlinee.Line);
+      TextView.ScrollToLine(inlinee.Line);
     }
 
     currentInlinee_ = inlinee;
     return fileLoaded;
   }
 
-  private void ScrollToLine(int line) {
-    if (line <= 0 || line > TextView.Document.LineCount) {
-      return;
-    }
-
-    var documentLine = TextView.Document.GetLineByNumber(line);
-
-    if (documentLine.LineNumber != selectedLine_) {
-      selectedLine_ = documentLine.LineNumber;
-      ignoreNextCaretEvent_ = true;
-      TextView.CaretOffset = documentLine.Offset;
-      TextView.ScrollToLine(line);
-    }
-  }
 
   public override void OnSessionEnd() {
     base.OnSessionEnd();
     ResetState();
-    TextView.Text = "";
+    TextView.SetSourceText("", "");
   }
 
   private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {

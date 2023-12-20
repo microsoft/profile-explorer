@@ -335,6 +335,18 @@
       <ListView.ContextMenu>
         <ContextMenu>
           <MenuItem
+            Command="{Binding OpenFunctionCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Preview Function"
+            ToolTip="Show a preview popup of the function ASM or source code">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource PeekDefinitionIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
             Command="local:CallTreeCommand.OpenFunction"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTreeList}"

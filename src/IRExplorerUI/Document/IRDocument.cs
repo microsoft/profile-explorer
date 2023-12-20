@@ -17,6 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using ICSharpCode.AvalonEdit;
+using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
@@ -28,6 +29,7 @@ using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Query;
+using TextLocation = IRExplorerCore.TextLocation;
 
 namespace IRExplorerUI;
 
@@ -190,6 +192,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public IRDocumentColumnData ColumnData { get; set; }
   public double DefaultLineHeight => TextArea.TextView.DefaultLineHeight;
+  public int LineCount => Document.LineCount;
 
   private static int AdjustVisibleLine(int line) {
     // Leave a few lines be visible above.
@@ -1106,6 +1109,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   //        margin_.AddBlock(group);
   //    }
   //}
+
+  public DocumentLine GetDocumentLine(int lineNumber) {
+    return Document.GetLineByNumber(lineNumber);
+  }
 
   public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true) {
     var style = new HighlightingStyle(selectedColor, null);
@@ -2247,7 +2254,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private void HidePreviewPopup(bool force = false) {
     ignoreNextPreviewElement_ = null;
 
-    if (previewPopup_ != null) {
+    if (previewPopup_ != null && (force || !previewPopup_.IsMouseOver)) {
       previewPopup_.ClosePopup();
       previewPopup_ = null;
     }
@@ -2958,7 +2965,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     PopulateMarkerBarForHighlighter(selectedHighlighter_, startY, width, availableHeight, dotSize);
     PopulateMarkerBarForHighlighter(hoverHighlighter_, startY, width, availableHeight, dotSize);
     PopulateMarkerBarForElementOverlays(startY, width, availableHeight, dotSize);
-    PopulateMarkerBarForDiffs(diffHighlighter_, startY, width, availableHeight);
+    PopulateMarkerBarForDiffs(startY, width, availableHeight);
     PopulateMarkerBarForBlocks(startY, width, availableHeight);
 
     margin_.ForEachBookmark(bookmark => {
@@ -3045,8 +3052,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
   }
 
-  private void PopulateMarkerBarForDiffs(DiffLineHighlighter highlighter, int startY, double width,
-                                         double height) {
+  private void PopulateMarkerBarForDiffs(int startY, double width, double height) {
     if (duringDiffModeSetup_) {
       return;
     }
@@ -3055,7 +3061,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     int lineSpan = 1;
     var lastColor = Colors.Transparent;
 
-    highlighter.ForEachDiffSegment((segment, color) => {
+    diffHighlighter_.ForEachDiffSegment((segment, color) => {
       // Combine the marking of multiple diffs of the same type
       // to speed up rendering.
       int line = Document.GetLineByOffset(segment.StartOffset).LineNumber;

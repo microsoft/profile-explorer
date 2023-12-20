@@ -38,6 +38,19 @@
       <local:FlameGraphViewer.ContextMenu>
         <ContextMenu>
           <MenuItem
+            Command="{Binding OpenFunctionCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Preview Function"
+            InputGestureText="Alt+Return"
+            ToolTip="Show a preview popup of the function ASM or source code">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource PeekDefinitionIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
             Command="local:CallTreeCommand.OpenFunction"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function"

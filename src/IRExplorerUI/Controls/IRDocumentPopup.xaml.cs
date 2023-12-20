@@ -335,15 +335,22 @@ public class IRDocumentPopupInstance {
 
   private async void Hover_MouseHover(object sender, MouseEventArgs e) {
     var result = previewedElementFinder_();
+    await ShowPreviewPopup(result);
+  }
 
-    if (result.Document != null) {
-      await ShowPreviewPopupForDocument(result.Document, result.Element, result.RelativeElement, result.Title);
+  public async Task ShowPreviewPopup(PreviewPopupArgs args) {
+    if (args == null) {
+      return;
     }
-    else if (result.Section != null) {
-      await ShowPreviewPopupForSection(result.Section, result.RelativeElement, result.Title);
+
+    if (args.Document != null) {
+      await ShowPreviewPopupForDocument(args.Document, args.Element, args.RelativeElement, args.Title);
     }
-    else if (result.LoadedSection != null) {
-      await ShowPreviewPopupForSection(result.LoadedSection, result.RelativeElement, result.Title);
+    else if (args.Section != null) {
+      await ShowPreviewPopupForSection(args.Section, args.RelativeElement, args.Title);
+    }
+    else if (args.LoadedSection != null) {
+      await ShowPreviewPopupForSection(args.LoadedSection, args.RelativeElement, args.Title);
     }
     else {
       throw new InvalidOperationException();
