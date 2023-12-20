@@ -25,6 +25,8 @@ public interface MarkedDocument {
   ISession Session { get; }
   double DefaultLineHeight { get; }
   int LineCount { get; }
+  IRDocumentColumnData ProfileColumnData { get; set; }
+  FunctionProcessingResult ProfileProcessingResult { get; set; }
   public void SuspendUpdate();
   public void ResumeUpdate();
   public void ClearInstructionMarkers();
@@ -134,6 +136,8 @@ public class ProfileDocumentMarker {
     if (hasInstrOffsetMetadata) {
       var result = await Task.Run(() => profile_.Process(function, irInfo_.IR));
       columnData = await MarkProfiledElements(result, function, document);
+      document.ProfileProcessingResult = result;
+      document.ProfileColumnData = columnData;
 
       //? TODO: UI option to display these
       MarkProfiledBlocks(result.BlockSampledElements, document);
@@ -145,12 +149,12 @@ public class ProfileDocumentMarker {
   }
 
   public async Task<IRDocumentColumnData> MarkSourceLines(MarkedDocument document, FunctionIR function,
-                                                          FunctionProfileData.ProcessingResult result) {
-    return await MarkProfiledElements(result, function, document);
+                                                          FunctionProcessingResult result) {
+    document.ProfileColumnData = await MarkProfiledElements(result, function, document);
+    return document.ProfileColumnData;
   }
 
-
-  public (FunctionProfileData.ProcessingResult ProcessingResult, FunctionIR DummyFunc)
+  public (FunctionProcessingResult ProcessingResult, FunctionIR DummyFunc)
     PrepareSourceLineProfile(FunctionProfileData profile, MarkedDocument document, IDebugInfoProvider debugInfo) {
     var result = profile.ProcessSourceLines(debugInfo);
     var sourceLineWeights = result.SourceLineWeightList;
@@ -168,7 +172,7 @@ public class ProfileDocumentMarker {
     dummyFunc.Blocks.Add(dummyBlock);
     dummyFunc.AssignBlockIndices();
 
-    var processingResult = new FunctionProfileData.ProcessingResult();
+    var processingResult = new FunctionProcessingResult();
 
     TupleIR MakeDummyTuple(TextLocation textLocation, DocumentLine documentLine1) {
       var tupleIr = new TupleIR(ids.NextTuple(), TupleKind.Other, dummyBlock);
@@ -198,6 +202,7 @@ public class ProfileDocumentMarker {
 
     processingResult.SortSampledElements(); // Used for ordering.
     processingResult.FunctionCountersValue = result.FunctionCountersValue;
+    document.ProfileProcessingResult = processingResult;
     return (processingResult, dummyFunc);
   }
 
@@ -423,7 +428,7 @@ public class ProfileDocumentMarker {
   }
 
   private async Task<IRDocumentColumnData>
-    MarkProfiledElements(FunctionProfileData.ProcessingResult result,
+    MarkProfiledElements(FunctionProcessingResult result,
                          FunctionIR function, MarkedDocument document) {
     var elements = result.SampledElements;
 

@@ -158,6 +158,10 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
   public void Dispose() {
   }
 
+  public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
+    return true;
+  }
+
   private bool EnsureHasSourceLines(FunctionDebugInfo functionDebugInfo) {
     if (functionDebugInfo == null || functionDebugInfo.IsUnknown) {
       return false;

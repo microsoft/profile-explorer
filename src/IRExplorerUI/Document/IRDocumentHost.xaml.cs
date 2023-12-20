@@ -466,7 +466,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   public async Task ReloadSettings(bool force = false) {
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, force);
     UpdateColumnsList();
-    
+
     if (force) {
       TextView.Initalize(settings_, session_);
       SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
@@ -555,7 +555,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   public async Task LoadSection(ParsedIRTextSection parsedSection) {
     duringSectionSwitching_ = true;
     await ReloadSettings();
-    
+
     object data = Session.LoadDocumentState(parsedSection.Section);
     double horizontalOffset = 0;
     double verticalOffset = 0;
@@ -1233,7 +1233,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     OptionalColumn.RemoveListViewColumns(ProfileList);
     ProfileList.ItemsSource = null;
 
-    var columnData = TextView.ColumnData;
+    var columnData = TextView.ProfileColumnData;
     ColumnsVisible = columnData.HasData;
 
     if (!columnData.HasData) {
@@ -1388,7 +1388,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void BuildProfileBlocksList(FunctionProfileData funcProfile,
-                                      FunctionProfileData.ProcessingResult result) {
+                                      FunctionProcessingResult result) {
     profileBlocks_ = result.BlockSampledElements;
     var list = new List<ProfiledBlockEx>(result.BlockSampledElements.Count);
     double maxWidth = 0;
@@ -2385,7 +2385,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private void ExportFunctionAsExcelFile(string filePath) {
     var wb = new XLWorkbook();
     var ws = wb.Worksheets.Add("Function");
-    var columnData = TextView.ColumnData;
+    var columnData = TextView.ProfileColumnData;
     int rowId = 1; // First row is for the table column names.
     int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
     int maxLineLength = 0;

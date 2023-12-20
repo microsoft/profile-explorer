@@ -556,6 +556,10 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return true;
   }
 
+  public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
+    return true;
+  }
+
   private IEnumerable<FunctionDebugInfo> EnumerateFunctionsImpl() {
     if (!EnsureLoaded()) {
       yield break;

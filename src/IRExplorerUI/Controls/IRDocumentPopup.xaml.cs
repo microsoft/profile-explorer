@@ -79,9 +79,15 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
                                                       UIElement owner, ISession session, string titlePrefix = "") {
     var popup = CreatePopup(parsedSection.Section, null, position, width, height,
                             owner, session, titlePrefix);
-    popup.TextView.Initalize(App.Settings.DocumentSettings, session);
-    popup.TextView.EarlyLoadSectionSetup(parsedSection);
-    await popup.TextView.LoadSection(parsedSection);
+    popup.TextView.TextView.Initalize(App.Settings.DocumentSettings, session);
+    popup.TextView.TextView.EarlyLoadSectionSetup(parsedSection);
+    await popup.TextView.TextView.LoadSection(parsedSection);
+
+    //? TODO: UI option
+    if (true) {
+      popup.TextView.ShowProfilingColumns();
+    }
+
     popup.CaptureMouseWheel();
     return popup;
   }
@@ -105,14 +111,14 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private async Task InitializeFromDocument(IRDocument document, string text = null) {
-    await TextView.InitializeFromDocument(document, false, text);
+    await TextView.TextView.InitializeFromDocument(document, false, text);
   }
 
   public override void ShowPopup() {
     base.ShowPopup();
 
     if (PreviewedElement != null) {
-      MarkPreviewedElement(PreviewedElement, TextView);
+      MarkPreviewedElement(PreviewedElement, TextView.TextView);
     }
   }
 
@@ -160,9 +166,9 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     // Make scroll bar visible, it's not by default.
     EnableVerticalScrollbar();
 
-    amount *= TextView.TextArea.TextView.DefaultLineHeight;
-    double newOffset = TextView.VerticalOffset + amount;
-    TextView.ScrollToVerticalOffset(newOffset);
+    amount *= TextView.TextView.DefaultLineHeight;
+    double newOffset = TextView.TextView.VerticalOffset + amount;
+    TextView.TextView.ScrollToVerticalOffset(newOffset);
   }
 
   private void Owner_OnPreviewMouseWheel(object sender, MouseWheelEventArgs e) {
@@ -186,12 +192,12 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private void EnableVerticalScrollbar() {
-    TextView.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+    TextView.TextView.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
     ScrollViewer.SetVerticalScrollBarVisibility(TextView, ScrollBarVisibility.Auto);
   }
 
   private async void OpenButton_Click(object sender, RoutedEventArgs e) {
-    var args = new OpenSectionEventArgs(TextView.Section, OpenSectionKind.NewTabDockRight);
+    var args = new OpenSectionEventArgs(TextView.TextView.Section, OpenSectionKind.NewTabDockRight);
 
     //? TODO: BeginInvoke prevents the "Dispatcher suspended" assert that happens
     // with profiling, when Source panel shows the open dialog.
@@ -202,7 +208,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       //? TODO: Mark the previewed elem in the new doc
       // var similarValueFinder = new SimilarValueFinder(function_);
       // refElement = similarValueFinder.Find(instr);
-      result.TextView.ScrollToVerticalOffset(TextView.VerticalOffset);
+      result.TextView.ScrollToVerticalOffset(TextView.TextView.VerticalOffset);
     }, DispatcherPriority.Background);
   }
 }
