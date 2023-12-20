@@ -8,22 +8,8 @@
   xmlns:document="clr-namespace:IRExplorerUI.Document"
   xmlns:local="clr-namespace:IRExplorerUI"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <local:ToolPanelControl.CommandBindings>
-    <CommandBinding Command="local:DocumentHostCommand.JumpToProfiledElement"
-                    Executed="JumpToProfiledElementExecuted" />
-    <CommandBinding
-      CanExecute="JumpToNextProfiledElementCanExecute"
-      Command="local:DocumentHostCommand.JumpToNextProfiledElement"
-      Executed="JumpToNextProfiledElementExecuted" />
-    <CommandBinding
-      CanExecute="JumpToPreviousProfiledElementCanExecute"
-      Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
-      Executed="JumpToPreviousProfiledElementExecuted" />
-    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfile"
-                    Executed="ExportFunctionProfileExecuted" />
-  </local:ToolPanelControl.CommandBindings>
-
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:document1="clr-namespace:IRExplorerUI.Profile.Document">
   <local:ToolPanelControl.Resources>
     <Style TargetType="{x:Type ColumnDefinition}" x:Key="ColumnsGridSplitterStyle">
       <Style.Setters>
@@ -160,120 +146,6 @@
         HasPinButton="False" />
     </Grid>
 
-    <Grid Row="1">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="2*" />
-        <ColumnDefinition Style="{StaticResource ColumnsGridSplitterStyle}" />
-        <ColumnDefinition Style="{StaticResource ColumnsStyle}" />
-      </Grid.ColumnDefinitions>
-
-      <DockPanel Grid.Column="0" LastChildFill="True">
-        <Border
-          BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-          BorderThickness="0,1,0,1"
-          DockPanel.Dock="Top"
-          Height="23"
-          HorizontalAlignment="Stretch"
-          VerticalAlignment="Top"
-          Visibility="{Binding ColumnsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-          <ToolBarTray
-            Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
-            HorizontalAlignment="Stretch"
-            IsLocked="True"
-            VerticalAlignment="Stretch"
-            x:Name="ProfileToolbar">
-            <ToolBar
-              Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
-              Height="22"
-              HorizontalAlignment="Stretch"
-              Loaded="ToolBar_Loaded"
-              VerticalAlignment="Center">
-              <TextBlock Text="Profile" VerticalAlignment="Center" />
-              <Button
-                Command="local:DocumentHostCommand.JumpToProfiledElement"
-                CommandTarget="{Binding ElementName=TextView}"
-                Margin="4,0,0,0"
-                Padding="0"
-                ToolTip="Jump to hottest profiled line"
-                VerticalAlignment="Center"
-                Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                <Image Source="{StaticResource HotFlameIcon}" />
-              </Button>
-              <Button
-                Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
-                CommandTarget="{Binding ElementName=TextView}"
-                Margin="2,0,0,0"
-                Padding="0"
-                ToolTip="Jump to previous less hot line (Shift+F2)">
-                <Image Source="{StaticResource MinusIcon}"
-                       Style="{StaticResource DisabledImageStyle}" />
-              </Button>
-              <Button
-                Command="local:DocumentHostCommand.JumpToNextProfiledElement"
-                CommandTarget="{Binding ElementName=TextView}"
-                Padding="0"
-                ToolTip="Jump to next hotter line (Shift+F2)">
-                <Image Source="{StaticResource PlusIcon}"
-                       Style="{StaticResource DisabledImageStyle}" />
-              </Button>
-              <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
-
-              <Button
-                Command="local:DocumentHostCommand.ExportFunctionProfile"
-                CommandTarget="{Binding ElementName=TextView}"
-                Padding="0"
-                ToolTip="Export profiling results as an Excel sheet">
-                <Image Source="{StaticResource ClipboardIcon}"
-                       Style="{StaticResource DisabledImageStyle}" />
-              </Button>
-              <Separator />
-
-              <TextBlock
-                Margin="2,0,0,0"
-                Text="Columns"
-                VerticalAlignment="Center" />
-              <Button
-                Command="local:DocumentHostCommand.JumpToNextProfiledBlock"
-                CommandTarget="{Binding ElementName=TextView}"
-                IsEnabled="False"
-                Margin="4,0,0,0"
-                Padding="0"
-                ToolTip="Jump to hottest profiled instruction"
-                VerticalAlignment="Center"
-                Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                <Image Source="{StaticResource EyeIcon}"
-                       Style="{StaticResource DisabledImageStyle}" />
-              </Button>
-            </ToolBar>
-          </ToolBarTray>
-        </Border>
-
-        <avalonEdit:TextEditor
-          Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-          DockPanel.Dock="Bottom"
-          FontFamily="Consolas"
-          FontSize="12"
-          HorizontalScrollBarVisibility="Auto"
-          ShowLineNumbers="True"
-          SyntaxHighlighting="C++"
-          VerticalScrollBarVisibility="Auto"
-          x:Name="TextView"
-          xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit" />
-      </DockPanel>
-
-      <GridSplitter
-        Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        Grid.Column="1"
-        HorizontalAlignment="Stretch"
-        ResizeBehavior="PreviousAndNext"
-        VerticalAlignment="Stretch" />
-
-      <document:DocumentColumns
-        Grid.Column="2"
-        HorizontalAlignment="Stretch"
-        Padding="-1,0,0,0"
-        VerticalAlignment="Stretch"
-        x:Name="ProfileColumns" />
-    </Grid>
+    <document1:ProfileIRDocument x:Name="TextView" Grid.Row="1"/>
   </Grid>
 </local:ToolPanelControl>

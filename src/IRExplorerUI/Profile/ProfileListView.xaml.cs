@@ -70,6 +70,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   private bool showContextColumn_;
   private double functionColumnWidth_;
   private ISession session_;
+  private IRDocumentPopupInstance previewPopup_;
 
   public double FunctionColumnWidth {
     get => functionColumnWidth_;
@@ -83,9 +84,9 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   }
 
   private void SetupPreviewPopup() {
-    var preview = new IRDocumentPopupInstance(IRDocumentPopup.DefaultWidth,
-                                              IRDocumentPopup.DefaultHeight * 2, Session);
-    preview.SetupHoverEvents(ItemList, HoverPreview.LongHoverDuration, () => {
+    previewPopup_ = new IRDocumentPopupInstance(IRDocumentPopup.DefaultWidth,
+                                                IRDocumentPopup.DefaultHeight * 2, Session);
+    previewPopup_.SetupHoverEvents(ItemList, HoverPreview.LongHoverDuration, () => {
       var hoveredItem = Utils.FindPointedListViewItem(ItemList);
 
       if (hoveredItem != null) {
@@ -116,6 +117,13 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       }
     }
   }
+
+  public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
+    if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
+      previewPopup_.ShowPreviewPopup(PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList,
+                                                                  $"Function {item.CallTreeNode.FunctionName}"));
+    }
+  });
 
   public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
     await OpenFunction(OpenSectionKind.ReplaceCurrent);

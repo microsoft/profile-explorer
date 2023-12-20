@@ -9,10 +9,14 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
+using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
+using TextLocation = IRExplorerCore.TextLocation;
 
 namespace IRExplorerUI.Profile;
 
@@ -20,11 +24,13 @@ namespace IRExplorerUI.Profile;
 public interface MarkedDocument {
   ISession Session { get; }
   double DefaultLineHeight { get; }
+  int LineCount { get; }
   public void SuspendUpdate();
   public void ResumeUpdate();
   public void ClearInstructionMarkers();
   public void MarkElements(ICollection<ValueTuple<IRElement, Color>> elementColorPairs);
   public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true);
+  public DocumentLine GetDocumentLine(int lineNumber);
 
   public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
                                                        double width, double height,
@@ -141,6 +147,58 @@ public class ProfileDocumentMarker {
   public async Task<IRDocumentColumnData> MarkSourceLines(MarkedDocument document, FunctionIR function,
                                                           FunctionProfileData.ProcessingResult result) {
     return await MarkProfiledElements(result, function, document);
+  }
+
+
+  public (FunctionProfileData.ProcessingResult ProcessingResult, FunctionIR DummyFunc)
+    PrepareSourceLineProfile(FunctionProfileData profile, MarkedDocument document, IDebugInfoProvider debugInfo) {
+    var result = profile.ProcessSourceLines(debugInfo);
+    var sourceLineWeights = result.SourceLineWeightList;
+
+    if (sourceLineWeights.Count == 0) {
+      return (null,null);
+    }
+
+    //? TODO: Pretty hacky approach that makes a fake function
+    //? with IR elements to represent each source line.
+    int totalLines = document.LineCount;
+    var ids = IRElementId.NewFunctionId();
+    var dummyFunc = new FunctionIR();
+    var dummyBlock = new BlockIR(ids.NewBlock(0), 0, dummyFunc);
+    dummyFunc.Blocks.Add(dummyBlock);
+    dummyFunc.AssignBlockIndices();
+
+    var processingResult = new FunctionProfileData.ProcessingResult();
+
+    TupleIR MakeDummyTuple(TextLocation textLocation, DocumentLine documentLine1) {
+      var tupleIr = new TupleIR(ids.NextTuple(), TupleKind.Other, dummyBlock);
+      tupleIr.TextLocation = textLocation;
+      tupleIr.TextLength = documentLine1.Length;
+      dummyBlock.Tuples.Add(tupleIr);
+      return tupleIr;
+    }
+
+    for (int lineNumber = result.FirstLineIndex; lineNumber <= result.LastLineIndex; lineNumber++) {
+      TupleIR dummyTuple = null;
+
+      if (result.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
+        var documentLine = document.GetDocumentLine(lineNumber);
+        var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
+        dummyTuple = MakeDummyTuple(location, documentLine);
+        processingResult.SampledElements.Add((dummyTuple, lineWeight));
+      }
+
+      if (result.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
+        var documentLine = document.GetDocumentLine(lineNumber);
+        var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
+        dummyTuple ??= MakeDummyTuple(location, documentLine);
+        processingResult.CounterElements.Add((dummyTuple, counters));
+      }
+    }
+
+    processingResult.SortSampledElements(); // Used for ordering.
+    processingResult.FunctionCountersValue = result.FunctionCountersValue;
+    return (processingResult, dummyFunc);
   }
 
   public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,

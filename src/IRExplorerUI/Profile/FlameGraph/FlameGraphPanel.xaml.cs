@@ -373,7 +373,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private async void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
-    await Session.ProfileFunctionSelected(e, ToolPanelKind.Other);
+    await Session.ProfileFunctionSelected(e, ToolPanelKind.FlameGraph);
   }
 
   private async void NodeDetailsPanel_NodeDoubleClick(object sender, ProfileCallTreeNode e) {

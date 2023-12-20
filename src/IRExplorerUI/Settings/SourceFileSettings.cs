@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System.Collections.Generic;
+using System.IO;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -31,4 +33,10 @@ public class SourceFileSettings : SettingsBase {
     return obj is SourceFileSettings settings &&
            Foo == settings.Foo;
   }
+}
+
+[ProtoContract(SkipConstructor = true)]
+public class SourceFileMapperSettings {
+  private readonly Dictionary<string, DirectoryInfo> map_ = new Dictionary<string, DirectoryInfo>();
+  private readonly HashSet<string> missingFilesSet_ = new HashSet<string>();
 }
