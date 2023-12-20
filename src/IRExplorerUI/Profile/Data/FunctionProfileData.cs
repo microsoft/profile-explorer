@@ -69,7 +69,7 @@ public class FunctionProfileData {
     return weight.Ticks / (double)Weight.Ticks;
   }
 
-  public ProcessingResult Process(FunctionIR function, ICompilerIRInfo ir) {
+  public FunctionProcessingResult Process(FunctionIR function, ICompilerIRInfo ir) {
     var metadataTag = function.GetTag<AssemblyMetadataTag>();
     bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
@@ -77,7 +77,7 @@ public class FunctionProfileData {
       return null;
     }
 
-    var result = new ProcessingResult(metadataTag.OffsetToElementMap.Count);
+    var result = new FunctionProcessingResult(metadataTag.OffsetToElementMap.Count);
 
     foreach (var pair in InstructionWeight) {
       if (TryFindElementForOffset(metadataTag, pair.Key, ir, out var element)) {
@@ -158,46 +158,46 @@ public class FunctionProfileData {
     SampleStartIndex = int.MaxValue;
     SampleEndIndex = int.MinValue;
   }
+}
 
-  public class ProcessingResult {
-    public ProcessingResult(int capacity = 0) {
-      SampledElements = new List<(IRElement, TimeSpan)>(capacity);
-      BlockSampledElementsMap = new Dictionary<BlockIR, TimeSpan>(capacity);
-      BlockSampledElements = new List<(BlockIR, TimeSpan)>();
-      CounterElements = new List<(IRElement, PerformanceCounterValueSet)>(capacity);
-      FunctionCountersValue = new PerformanceCounterValueSet();
-    }
-
-    public List<(IRElement, TimeSpan)> SampledElements { get; set; }
-    public Dictionary<BlockIR, TimeSpan> BlockSampledElementsMap { get; set; }
-    public List<(BlockIR, TimeSpan)> BlockSampledElements { get; set; }
-    public List<(IRElement, PerformanceCounterValueSet)> CounterElements { get; set; }
-    public List<(BlockIR, PerformanceCounterValueSet)> BlockCounterElements { get; set; }
-    public PerformanceCounterValueSet FunctionCountersValue { get; set; }
-
-    public double ScaleCounterValue(long value, PerformanceCounter counter) {
-      long total = FunctionCountersValue.FindCounterValue(counter);
-      return total > 0 ? value / (double)total : 0;
-    }
-
-    public void SortSampledElements() {
-      BlockSampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
-      SampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
-    }
+public class FunctionProcessingResult {
+  public FunctionProcessingResult(int capacity = 0) {
+    SampledElements = new List<(IRElement, TimeSpan)>(capacity);
+    BlockSampledElementsMap = new Dictionary<BlockIR, TimeSpan>(capacity);
+    BlockSampledElements = new List<(BlockIR, TimeSpan)>();
+    CounterElements = new List<(IRElement, PerformanceCounterValueSet)>(capacity);
+    FunctionCountersValue = new PerformanceCounterValueSet();
   }
 
-  public class SourceLineProcessingResult {
-    public SourceLineProcessingResult() {
-      SourceLineWeight = new Dictionary<int, TimeSpan>();
-      SourceLineCounters = new Dictionary<int, PerformanceCounterValueSet>();
-      FunctionCountersValue = new PerformanceCounterValueSet();
-    }
+  public List<(IRElement, TimeSpan)> SampledElements { get; set; }
+  public Dictionary<BlockIR, TimeSpan> BlockSampledElementsMap { get; set; }
+  public List<(BlockIR, TimeSpan)> BlockSampledElements { get; set; }
+  public List<(IRElement, PerformanceCounterValueSet)> CounterElements { get; set; }
+  public List<(BlockIR, PerformanceCounterValueSet)> BlockCounterElements { get; set; }
+  public PerformanceCounterValueSet FunctionCountersValue { get; set; }
 
-    public Dictionary<int, TimeSpan> SourceLineWeight { get; set; } // Line number mapping
-    public Dictionary<int, PerformanceCounterValueSet> SourceLineCounters { get; set; } // Line number mapping
-    public PerformanceCounterValueSet FunctionCountersValue { get; set; }
-    public List<(int LineNumber, TimeSpan Weight)> SourceLineWeightList => SourceLineWeight.ToList();
-    public int FirstLineIndex { get; set; }
-    public int LastLineIndex { get; set; }
+  public double ScaleCounterValue(long value, PerformanceCounter counter) {
+    long total = FunctionCountersValue.FindCounterValue(counter);
+    return total > 0 ? value / (double)total : 0;
   }
+
+  public void SortSampledElements() {
+    BlockSampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+    SampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+  }
+}
+
+public class SourceLineProcessingResult {
+  public SourceLineProcessingResult() {
+    SourceLineWeight = new Dictionary<int, TimeSpan>();
+    SourceLineCounters = new Dictionary<int, PerformanceCounterValueSet>();
+    FunctionCountersValue = new PerformanceCounterValueSet();
+  }
+
+  public Dictionary<int, TimeSpan> SourceLineWeight { get; set; } // Line number mapping
+  public Dictionary<int, PerformanceCounterValueSet> SourceLineCounters { get; set; } // Line number mapping
+  public PerformanceCounterValueSet FunctionCountersValue { get; set; }
+  public List<(int LineNumber, TimeSpan Weight)> SourceLineWeightList => SourceLineWeight.ToList();
+  public int FirstLineIndex { get; set; }
+  public int LastLineIndex { get; set; }
 }

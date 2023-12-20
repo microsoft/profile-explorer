@@ -24,6 +24,7 @@ public interface IDebugInfoProvider : IDisposable {
   List<FunctionDebugInfo> GetSortedFunctions();
   FunctionDebugInfo FindFunction(string functionName);
   FunctionDebugInfo FindFunctionByRVA(long rva);
+  bool PopulateSourceLines(FunctionDebugInfo funcInfo);
   SourceFileDebugInfo FindFunctionSourceFilePath(IRTextFunction textFunc);
   SourceFileDebugInfo FindFunctionSourceFilePath(string functionName);
   SourceFileDebugInfo FindSourceFilePathByRVA(long rva);

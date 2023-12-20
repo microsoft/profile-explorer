@@ -6,6 +6,7 @@
   xmlns:controls="clr-namespace:IRExplorerUI.Controls"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:document="clr-namespace:IRExplorerUI.Profile.Document"
   d:DesignHeight="450"
   d:DesignWidth="800"
   AllowsTransparency="True"
@@ -97,7 +98,7 @@
           Source="{StaticResource CloseIcon}" />
       </Button>
 
-      <client:IRDocument
+      <document:ProfileIRDocument
         x:Name="TextView"
         Grid.Row="1"
         Grid.ColumnSpan="4"
@@ -105,13 +106,8 @@
         VerticalAlignment="Stretch"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         DockPanel.Dock="Bottom"
-        FontFamily="Consolas"
-        FontSize="13"
-        HorizontalScrollBarVisibility="Hidden"
         ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-        ScrollViewer.VerticalScrollBarVisibility="Hidden"
-        ShowLineNumbers="True"
-        VerticalScrollBarVisibility="Hidden" />
+        ScrollViewer.VerticalScrollBarVisibility="Hidden" />
 
       <controls:ResizeGrip
         x:Name="PanelResizeGrip"

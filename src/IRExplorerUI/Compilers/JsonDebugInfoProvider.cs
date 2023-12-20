@@ -125,6 +125,10 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
     return LoadDebugInfo(debugFile.FilePath);
   }
 
+  public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
+    return true;
+  }
+
   public void Unload() {
   }
 

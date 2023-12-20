@@ -173,7 +173,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     if (profile != null) {
       var profileOptions = ProfileDocumentMarkerOptions.Default;
       var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, this);
-      document.ColumnData = await profileMarker.Mark(document, function, section.ParentFunction);
+      await profileMarker.Mark(document, function, section.ParentFunction);
 
       // Redraw the flow graphs, may have loaded before the marker set the node tags.
       Session.RedrawPanels();

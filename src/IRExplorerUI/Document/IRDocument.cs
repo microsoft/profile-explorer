@@ -190,9 +190,9 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
   }
 
-  public IRDocumentColumnData ColumnData { get; set; }
+  public IRDocumentColumnData ProfileColumnData { get; set; }
+  public FunctionProcessingResult ProfileProcessingResult { get; set; }
   public double DefaultLineHeight => TextArea.TextView.DefaultLineHeight;
-  public int LineCount => Document.LineCount;
 
   private static int AdjustVisibleLine(int line) {
     // Leave a few lines be visible above.
@@ -471,7 +471,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     ResetRenderers();
     Text = "";
     SectionText = ReadOnlyMemory<char>.Empty;
-    ColumnData = null;
+    ProfileColumnData = null;
   }
 
   public async Task<bool> InitializeFromDocument(IRDocument doc, bool copyTemporaryHighlighting = true, string text = null) {
@@ -3347,6 +3347,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     HideTemporaryUI();
   }
 
+  //? TODO: Profile hanling should be moved out of IRDocument,
+  //? handled up when a TextSelection event is fired.
   private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
     if (Session.ProfileData == null) {
       return;

@@ -19,7 +19,7 @@ namespace IRExplorerUI.Profile.Document;
 public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private List<(IRElement, TimeSpan)> profileElements_;
   private int profileElementIndex_;
-  private FunctionProfileData.ProcessingResult sourceProfileResult_;
+  private FunctionProcessingResult sourceProfileResult_;
   private IRDocumentColumnData sourceColumnData_;
   private double columnsListItemHeight_;
   private bool columnsVisible_;
@@ -113,18 +113,34 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, dummyFunc);
     TextView.EarlyLoadSectionSetup(dummyParsedSection);
     await TextView.LoadSection(dummyParsedSection);
+    await profileMarker.MarkSourceLines(TextView, dummyFunc, processingResult);
 
-    firstSourceLineIndex_ = profile.FunctionDebugInfo.StartSourceLine.Line;
-    lastSourceLineIndex_ = firstSourceLineIndex_;
+    //? TODO: Fix end
+    if (debugInfo.PopulateSourceLines(profile.FunctionDebugInfo)) {
+      firstSourceLineIndex_ = profile.FunctionDebugInfo.StartSourceLine.Line;
+      lastSourceLineIndex_ = firstSourceLineIndex_;
+    }
+
     sourceProfileResult_ = processingResult;
-    var columnData = await profileMarker.MarkSourceLines(TextView, dummyFunc, processingResult);
 
-    sourceColumnData_ = columnData;
-    ColumnsVisible = columnData.HasData;
+    //? TODO: UI Option
+    if (true) {
+      ShowProfilingColumns();
+    }
+  }
+
+  public void ShowProfilingColumns() {
+    sourceColumnData_ = TextView.ProfileColumnData;
+
+    if (sourceColumnData_ == null) {
+      return;
+    }
+
+    ColumnsVisible = sourceColumnData_.HasData;
 
     if (ColumnsVisible) {
-      ProfileColumns.Display(columnData, TextView.LineCount, dummyFunc);
-      profileElements_ = processingResult.SampledElements;
+      ProfileColumns.Display(sourceColumnData_, TextView.LineCount, TextView.Function);
+      profileElements_ = TextView.ProfileProcessingResult.SampledElements;
       UpdateHighlighting();
     }
     else {
