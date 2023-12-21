@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Controls;
@@ -50,7 +51,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public ISession Session { get; set; }
   public int SelectedLine { get; set; }
-  public IRDocument Document { get; set; }
+  public IRDocument AssociatedDocument { get; set; }
 
   public bool HasProfileInfo {
     get => hasProfileInfo_;
@@ -268,9 +269,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private void HighlightElementsOnSelectedLine() {
     var line = TextView.Document.GetLineByOffset(TextView.CaretOffset);
 
-    if (line != null && Document != null) {
+    if (line != null && AssociatedDocument != null) {
       selectedLine_ = line.LineNumber;
-      Document.SelectElementsOnSourceLine(line.LineNumber, null);
+      AssociatedDocument.SelectElementsOnSourceLine(line.LineNumber, null);
     }
   }
 

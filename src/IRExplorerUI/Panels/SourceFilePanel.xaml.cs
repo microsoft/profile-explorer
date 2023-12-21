@@ -48,9 +48,15 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     disabledSourceMappings_ = new HashSet<string>();
   }
 
+  public override ISession Session {
+    get => base.Session;
+    set {
+      base.Session = value;
+      TextView.Session = value;
+    }
+  }
+
   public event PropertyChangedEventHandler PropertyChanged;
-
-
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -103,7 +109,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       return false;
     }
   }
-
 
   private void SetPanelName(string path) {
     if (!string.IsNullOrEmpty(path)) {
@@ -182,7 +187,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public async Task LoadSourceFile(IRTextSection section) {
     section_ = section;
-    TextView.Session = Session;
     TextView.TextView.Initalize(App.Settings.DocumentSettings, Session);
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
@@ -193,11 +197,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     base.OnDocumentSectionLoaded(section, document);
     section_ = section;
-    TextView.Document = document;
-
-    if (await LoadSourceFileForFunction(section_.ParentFunction)) {
-      TextView.JumpToHottestProfiledElement();
-    }
+    TextView.AssociatedDocument = document;
+    await LoadSourceFile(section_);
   }
 
   private IDebugInfoProvider GetDebugInfo(LoadedDocument loadedDoc) {
@@ -353,19 +354,20 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       return;
     }
 
+    //Trace.WriteLine($"Selected element: {element_}");
     element_ = e.Element;
     var instr = element_.ParentInstruction;
     var tag = instr?.GetTag<SourceLocationTag>();
 
     if (tag != null) {
-      if (tag.HasInlinees) {
-        if (await LoadInlineeSourceFile(tag)) {
-          return;
-        }
-      }
-      else {
-        ResetInlinee();
-      }
+      //if (tag.HasInlinees) {
+      //  if (await LoadInlineeSourceFile(tag)) {
+      //    return;
+      //  }
+      //}
+      //else {
+      //  ResetInlinee();
+      //}
 
       if (await LoadSourceFileForFunction(section_.ParentFunction)) {
         TextView.ScrollToLine(tag.Line);
