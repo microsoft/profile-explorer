@@ -85,7 +85,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
     //? TODO: UI option
     if (true) {
-      popup.TextView.ShowProfilingColumns();
+      await popup.TextView.ShowProfilingColumns();
     }
 
     popup.CaptureMouseWheel();

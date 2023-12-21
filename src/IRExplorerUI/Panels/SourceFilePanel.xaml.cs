@@ -90,7 +90,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private async Task<bool> LoadSourceFileImpl(string filePath, string originalFilePath, int sourceStartLine) {
     try {
       string text = await File.ReadAllTextAsync(filePath);
-      await TextView.SetSourceText(text, filePath);
+      TextView.SetSourceText(text, filePath);
       SetPanelName(originalFilePath);
 
       //? TODO: Is panel is not visible, scroll doesn't do anything,
@@ -329,7 +329,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       text += $"\n{failureText}";
     }
 
-    TextView.TextView.Text = text;
+    TextView.SetSourceText(text, "");
     SetPanelName("");
     sourceFileLoaded_ = false;
     sourceFileFunc_ = null;
@@ -341,15 +341,11 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private void ResetState() {
-    //? ResetSelectedLine();
-    ResetProfileMarking();
+    TextView.SelectedLine = -1;
     section_ = null;
     sourceFileLoaded_ = false;
     sourceFileFunc_ = null;
     currentInlinee_ = null;
-  }
-
-  private void ResetProfileMarking() {
   }
 
   public override async void OnElementSelected(IRElementEventArgs e) {
