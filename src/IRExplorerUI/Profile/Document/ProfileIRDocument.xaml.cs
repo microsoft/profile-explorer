@@ -46,7 +46,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   }
 
-
   public event PropertyChangedEventHandler PropertyChanged;
 
   public ISession Session { get; set; }
@@ -73,17 +72,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
   }
 
-  public double ColumnsListItemHeight {
-    get => columnsListItemHeight_;
-    set {
-      if (columnsListItemHeight_ != value) {
-        columnsListItemHeight_ = value;
-        OnPropertyChanged();
-      }
-    }
-  }
-
-
   public Brush SelectedLineBrush {
     get => selectedLineBrush_;
     set {
@@ -97,9 +85,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public async Task AnnotateProfilerData(FunctionProfileData profile, IRTextSection section, IDebugInfoProvider debugInfo) {
-    TextView.ClearInstructionMarkers();
+    if (TextView.IsLoaded) {
+      TextView.ClearInstructionMarkers();
+    }
 
-
+    //? TODO: Check if it's still the case
     //? Accessing the PDB (DIA) from another thread fails.
     //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
     var profileOptions = ProfileDocumentMarkerOptions.Default;
@@ -125,21 +115,16 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     //? TODO: UI Option
     if (true) {
-      ShowProfilingColumns();
+      await ShowProfilingColumns();
     }
   }
 
-  public void ShowProfilingColumns() {
+  public async Task ShowProfilingColumns() {
     sourceColumnData_ = TextView.ProfileColumnData;
-
-    if (sourceColumnData_ == null) {
-      return;
-    }
-
-    ColumnsVisible = sourceColumnData_.HasData;
+    ColumnsVisible = sourceColumnData_ != null && sourceColumnData_.HasData;
 
     if (ColumnsVisible) {
-      ProfileColumns.Display(sourceColumnData_, TextView.LineCount, TextView.Function);
+      await ProfileColumns.Display(sourceColumnData_, TextView);
       profileElements_ = TextView.ProfileProcessingResult.SampledElements;
       UpdateHighlighting();
     }
@@ -163,7 +148,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
   }
 
-  public async Task SetSourceText(string text, string filePath) {
+  public void SetSourceText(string text, string filePath) {
     disableCaretEvent_ = true; // Changing the text triggers the caret event twice.
     IHighlightingDefinition highlightingDef = null;
 
@@ -394,10 +379,4 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var pair2 = sourceProfileResult_.CounterElements.Find(e => e.Item1.TextLocation.Line == line - 1);
     return pair2.Item1;
   }
-
-  private void ResetSelectedLine() {
-    //selectedLine_ = -1;
-    //element_ = null;
-  }
-
 }

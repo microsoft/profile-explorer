@@ -5,11 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using ICSharpCode.AvalonEdit.Folding;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore.IR;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Document;
 
@@ -20,12 +24,17 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private List<(GridViewColumnHeader Header, GridViewColumn Column)> profileColumnHeaders_;
   private double columnsListItemHeight_;
   private Brush selectedLineBrush_;
+  private ListCollectionView profileRowCollection_;
+  private List<FoldingSection> foldedTextRegions_;
+  private int rowFilterIndex_;
+  private MarkedDocument associatedDocument_;
 
   public DocumentColumns() {
     InitializeComponent();
     settings_ = App.Settings.DocumentSettings;
     profileColumnHeaders_ = new List<(GridViewColumnHeader Header, GridViewColumn Column)>();
     profileDataRows_ = new List<ElementRowValue>();
+    foldedTextRegions_ = new List<FoldingSection>();
   }
 
   public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
@@ -49,6 +58,11 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     }
   }
 
+  public DocumentSettings Settings {
+    get => settings_; 
+    set => settings_ = value; 
+  }
+
   public void SelectRow(int index) {
     if (index >= 0 && ColumnsList.Items.Count > index) {
       ColumnsList.SelectedIndex = index;
@@ -57,14 +71,23 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
   public void Reset() {
     OptionalColumn.RemoveListViewColumns(ColumnsList);
+    ColumnsList.ItemsSource = null;
+    UpdateColumnsList();
   }
 
-  public void Display(IRDocumentColumnData columnData, int rowCount,
-                      FunctionIR function) {
+  public async Task Display(IRDocumentColumnData columnData, MarkedDocument associatedDocument) {
     Reset();
     ColumnsList.ItemsSource = null;
+    associatedDocument_ = associatedDocument;
+    var function = associatedDocument.Function;
+    var rowCount = associatedDocument.LineCount;
 
-    if (columnData.HasData) {
+    if (!columnData.HasData) {
+      return;
+    }
+
+    var elementValueList = await Task.Run(() => {
+      var elementValueList = new List<ElementRowValue>(function.TupleCount);
       var oddBackColor = settings_.AlternateBackgroundColor.AsBrush();
       var blockSeparatorColor = settings_.ShowBlockSeparatorLine ? settings_.BlockSeparatorColor.AsBrush() : null;
       var font = new FontFamily(settings_.FontName);
@@ -94,10 +117,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         return row;
       }
 
-      var elementValueList = new List<ElementRowValue>(function.TupleCount);
       var dummyValues = MakeDummyRow();
       var oddDummyValues = MakeDummyRow(oddBackColor);
-
       int prevLine = -1;
       bool prevIsOddBlock = false;
 
@@ -116,7 +137,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
           var tuple = block.Tuples[i];
           int currentLine = tuple.TextLocation.Line;
           bool isSeparatorLine = settings_.ShowBlockSeparatorLine &&
-                                 i == block.Tuples.Count - 1;
+                                  i == block.Tuples.Count - 1;
 
           // Add dummy empty list view lines to match document text.
           if (currentLine > prevLine + 1) {
@@ -166,7 +187,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
             rowValues.BorderBrush = blockSeparatorColor;
           }
 
-          //? if (showColumnSeparators) {
+          //? TODO: UI option if (showColumnSeparators) {
           foreach (var value in rowValues.Values) {
             value.BorderBrush = blockSeparatorColor;
             value.BorderThickness = new Thickness(0, 0, 1, 0);
@@ -184,24 +205,61 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
       if (rowCount != prevLine + 1) {
         AddDummyRows(rowCount - prevLine, prevIsOddBlock);
       }
+      return elementValueList;
+    });
 
-      profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
+    profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
 
-      foreach (var columnHeader in profileColumnHeaders_) {
-        columnHeader.Header.Click += ColumnHeaderOnClick;
-        columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
-        columnHeader.Header.ContextMenu = new ContextMenu();
+    foreach (var columnHeader in profileColumnHeaders_) {
+      columnHeader.Header.Click += ColumnHeaderOnClick;
+      columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
+      columnHeader.Header.ContextMenu = new ContextMenu();
 
-        //? TODO: Add context menu
-        //? columnHeader.Header.ContextMenu.Items.Add(new MenuItem() { Header = "hey" });
-      }
-
-      UpdateColumnWidths();
-      ColumnsList.ItemsSource = new ListCollectionView(elementValueList);
-      ColumnsList.Background = settings_.BackgroundColor.AsBrush();
+      //? TODO: Add context menu
+      //? columnHeader.Header.ContextMenu.Items.Add(new MenuItem() { Header = "hey" });
     }
 
-    UpdateColumnsList(settings_);
+    profileRowCollection_ = new ListCollectionView(elementValueList);
+    profileRowCollection_.Filter += ProfileListRowFilter;
+    UpdateColumnWidths();
+    ColumnsList.ItemsSource = profileRowCollection_;
+    UpdateColumnsList();
+  }
+
+  public void HandleTextRegionFolded(FoldingSection section) {
+    foldedTextRegions_.Add(section);
+    foldedTextRegions_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
+    rowFilterIndex_ = 0;
+    profileRowCollection_.Refresh();
+  }
+
+  public void HandleTextRegionUnfolded(FoldingSection section) {
+    foldedTextRegions_.Remove(section);
+    rowFilterIndex_ = 0;
+    profileRowCollection_.Refresh();
+  }
+
+  private bool ProfileListRowFilter(object item) {
+    var rowValue = (ElementRowValue)item;
+
+    foreach (var range in foldedTextRegions_) {
+      var startLine = associatedDocument_.GetLineByOffset(range.StartOffset);
+      var endLine = associatedDocument_.GetLineByOffset(range.EndOffset);
+
+      if (startLine.LineNumber - 1 > rowFilterIndex_) {
+        rowFilterIndex_++;
+        break; // Early stop in sorted range list.
+      }
+
+      if (rowFilterIndex_ >= startLine.LineNumber &&
+          rowFilterIndex_ < endLine.LineNumber) {
+        rowFilterIndex_++;
+        return false;
+      }
+    }
+
+    rowFilterIndex_++;
+    return true;
   }
 
   public void UpdateColumnWidths() {
@@ -296,10 +354,11 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
   }
 
-  private void UpdateColumnsList(DocumentSettings settings) {
-    SelectedLineBrush = settings.SelectedValueColor.AsBrush();
-    ColumnsList.Background = ColorBrushes.GetBrush(settings.BackgroundColor);
-    ColumnsListItemHeight = Utils.MeasureString("0123456789ABCFEFGH", settings.FontName, settings.FontSize).Height;
+  public void UpdateColumnsList() {
+    ColumnsList.Background = settings_.BackgroundColor.AsBrush();
+    SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
+    ColumnsList.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
+    ColumnsListItemHeight = Utils.MeasureString("0123456789ABCFEFGH", settings_.FontName, settings_.FontSize).Height;
   }
 
   private void ColumnHeaderOnClick(object sender, RoutedEventArgs e) {

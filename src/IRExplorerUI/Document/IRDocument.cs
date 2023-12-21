@@ -181,6 +181,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public ReadOnlyMemory<char> SectionText { get; set; }
   public bool DiffModeEnabled { get; set; }
   public bool DuringSectionLoading => duringSectionLoading_;
+  public bool IsLoaded => Function != null;
 
   public DocumentSettings Settings {
     get => settings_;
@@ -1110,9 +1111,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   //    }
   //}
 
-  public DocumentLine GetDocumentLine(int lineNumber) {
-    return Document.GetLineByNumber(lineNumber);
-  }
+  public DocumentLine GetLineByNumber(int lineNumber) => Document.GetLineByNumber(lineNumber);
+  public DocumentLine GetLineByOffset(int offset) => Document.GetLineByOffset(offset);
 
   public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true) {
     var style = new HighlightingStyle(selectedColor, null);

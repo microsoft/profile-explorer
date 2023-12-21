@@ -257,8 +257,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private DelayedAction delayedHideActionPanel_;
   private bool profileVisible_;
   private double columnsListItemHeight_;
-  private List<FoldingSection> foldedTextRegions_;
-  private int rowFilterIndex_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -307,43 +305,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     loadTask_ = new CancelableTaskInstance(true, Session.SessionState.RegisterCancelableTask,
                                            Session.SessionState.UnregisterCancelableTask);
     activeQueryPanels_ = new List<QueryPanel>();
-    foldedTextRegions_ = new List<FoldingSection>();
   }
 
   private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
-    foldedTextRegions_.Remove(e);
-    rowFilterIndex_ = 0;
-    profileRowCollection_.Refresh();
+    ProfileColumns.HandleTextRegionUnfolded(e);
   }
 
   private void TextViewOnTextRegionFolded(object sender, FoldingSection e) {
-    foldedTextRegions_.Add(e);
-    foldedTextRegions_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
-    rowFilterIndex_ = 0;
-    profileRowCollection_.Refresh();
-  }
-
-  private bool ProfileListRowFilter(object item) {
-    var rowValue = (ElementRowValue)item;
-
-    foreach(var range in foldedTextRegions_) {
-      var startLine = TextView.Document.GetLineByOffset(range.StartOffset);
-      var endLine = TextView.Document.GetLineByOffset(range.EndOffset);
-
-      if (startLine.LineNumber - 1 > rowFilterIndex_) {
-        rowFilterIndex_++;
-        break; // Early stop in sorted range list.
-      }
-
-      if (rowFilterIndex_ >= startLine.LineNumber &&
-          rowFilterIndex_ < endLine.LineNumber) {
-        rowFilterIndex_++;
-        return false;
-      }
-    }
-
-    rowFilterIndex_++;
-    return true;
+    ProfileColumns.HandleTextRegionFolded(e);
   }
 
   public event EventHandler<(double offset, double offsetChangeAmount)> VerticalScrollChanged;
@@ -379,6 +348,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     get => settings_;
     set {
       settings_ = value;
+      ProfileColumns.Settings = value;
     }
   }
 
@@ -465,12 +435,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   public async Task ReloadSettings(bool force = false) {
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, force);
-    UpdateColumnsList();
+    ProfileColumns.UpdateColumnsList();
 
     if (force) {
       TextView.Initalize(settings_, session_);
       SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
-      UpdateColumnsList();
+      ProfileColumns.UpdateColumnsList();
     }
   }
 
@@ -584,86 +554,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     duringSectionSwitching_ = false;
   }
 
-  //? TODO: Replace with code from DocumentColumns
-  public void UpdateProfileDataColumnWidths() {
-    if (profileDataRows_ == null ||
-        profileColumnHeaders_ == null) {
-      return;
-    }
-
-    var maxColumnTextSize = new Dictionary<OptionalColumn, double>();
-    var maxColumnExtraSize = new Dictionary<OptionalColumn, double>();
-    var font = new FontFamily(settings_.FontName);
-    double fontSize = settings_.FontSize;
-    const double maxBarWidth = 50;
-    const double columnMargin = 4;
-
-    foreach (var rowValues in profileDataRows_) {
-      foreach (var columnValue in rowValues.ColumnValues) {
-        columnValue.Value.TextFont = font;
-        columnValue.Value.TextSize = fontSize;
-
-        // Remember the max text length for each column
-        // to later set the MinWidth for alignment.
-        maxColumnTextSize.CollectMaxValue(columnValue.Key, columnValue.Value.Text.Length);
-
-        if (columnValue.Value.ShowPercentageBar ||
-            columnValue.Value.ShowIcon) {
-          double extraColumnWidth = columnMargin;
-
-          if (columnValue.Value.ShowPercentageBar) {
-            extraColumnWidth += columnValue.Value.ValuePercentage * maxBarWidth;
-          }
-
-          if (columnValue.Value.ShowIcon) {
-            // Width of the icon is at most the height of the row.
-            extraColumnWidth += ColumnsListItemHeight + columnMargin;
-          }
-
-          maxColumnExtraSize.CollectMaxValue(columnValue.Key, extraColumnWidth);
-        }
-      }
-    }
-
-    // Set the MinWidth of the text for each cell.
-    foreach (var pair in maxColumnTextSize) {
-      var columnContentSize = Utils.MeasureString((int)pair.Value, settings_.FontName, settings_.FontSize);
-      double columnWidth = columnContentSize.Width + columnMargin;
-      maxColumnTextSize[pair.Key] = Math.Ceiling(columnWidth);
-
-      // Also set the initial width of each column header.
-      // For the header, consider image and percentage bar too.
-      if (maxColumnExtraSize.TryGetValue(pair.Key, out double extraSize)) {
-        columnWidth += extraSize;
-      }
-
-      //? TODO: Pass options and check RemoveEmptyColumns
-      if (columnWidth == 0) {
-        pair.Key.IsVisible = false;
-      }
-      else {
-        var columnTitleSize = Utils.MeasureString(pair.Key.Title, settings_.FontName, settings_.FontSize);
-        var gridColumn = profileColumnHeaders_.Find(item => item.Header.Tag.Equals(pair.Key));
-
-        if (gridColumn.Column == null || gridColumn.Header == null) {
-          continue;
-        }
-
-        columnWidth = Math.Max(columnWidth, columnTitleSize.Width + columnMargin);
-        gridColumn.Header.Width = columnWidth;
-        gridColumn.Column.Width = columnWidth;
-      }
-
-      //Trace.WriteLine($"Column width {columnWidth} for {pair.Key.ColumnName}");
-    }
-
-    foreach (var row in profileDataRows_) {
-      foreach (var columnValue in row.ColumnValues) {
-        columnValue.Value.MinTextWidth = maxColumnTextSize[columnValue.Key];
-      }
-    }
-  }
-
   //? TODO: Create a new class to do the remark finding/filtering work
   public bool IsAcceptedRemark(Remark remark, IRTextSection section, RemarkSettings remarkSettings) {
     if (!remarkSettings.ShowPreviousSections && remark.Section != section) {
@@ -774,10 +664,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private void TextViewOnCaretChanged(object? sender, int offset) {
     if (columnsVisible_) {
       var line = TextView.Document.GetLineByOffset(offset);
-
-      if (ProfileList.Items.Count >= line.LineNumber) {
-        ProfileList.SelectedIndex = line.LineNumber - 1;
-      }
+      ProfileColumns.SelectRow(line.LineNumber - 1);
     }
   }
 
@@ -797,11 +684,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private void SyncColumnsVerticalScrollOffset(double offset) {
     // Sync scrolling with the optional columns.
     if (columnsVisible_) {
-      var columnScrollViewer = Utils.FindChild<ScrollViewer>(ProfileList);
-
-      if (columnScrollViewer != null) {
-        columnScrollViewer.ScrollToVerticalOffset(offset);
-      }
+      ProfileColumns.ScrollToVerticalOffset(offset);
     }
   }
 
@@ -1138,12 +1021,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     CloseOptionsPanel(optionsPanel_.SyntaxFileChanged);
   }
 
-  private void UpdateColumnsList() {
-    ProfileList.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
-    double h = Utils.MeasureString("0123456789ABCFEFGH", settings_.FontName, settings_.FontSize).Height;
-    ColumnsListItemHeight = h;
-  }
-
   private void TextView_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) {
     //CloseSectionPanel();
   }
@@ -1230,160 +1107,15 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     //? TODO: Replace with code from DocumentColumns
     // Show optional columns with timing, counters, etc.
     // First remove any previous columns.
-    OptionalColumn.RemoveListViewColumns(ProfileList);
-    ProfileList.ItemsSource = null;
-
     var columnData = TextView.ProfileColumnData;
     ColumnsVisible = columnData.HasData;
 
     if (!columnData.HasData) {
+      ProfileColumns.Reset();
       return false;
     }
 
-    int docLineCount = TextView.LineCount;
-
-    var elementValueList = await Task.Run(() => {
-      var elementValueList = new List<ElementRowValue>(Function.TupleCount);
-      var oddBackColor = settings_.AlternateBackgroundColor.AsBrush();
-      var blockSeparatorColor = settings_.ShowBlockSeparatorLine ? settings_.BlockSeparatorColor.AsBrush() : null;
-      var font = new FontFamily(settings_.FontName);
-      double fontSize = settings_.FontSize;
-
-      ElementColumnValue MakeDummyCell() {
-        var columnValue = ElementColumnValue.Empty;
-
-        //? if (showColumnSeparators) {
-        columnValue.BorderBrush = blockSeparatorColor;
-        columnValue.BorderThickness = new Thickness(0, 0, 1, 0);
-        columnValue.TextFont = font;
-        columnValue.TextSize = fontSize;
-        return columnValue;
-      }
-
-      ElementRowValue MakeDummyRow(Brush backColor = null) {
-        var row = new ElementRowValue(null) {
-          BackColor = backColor, BorderBrush = blockSeparatorColor
-        };
-
-        foreach (var column in columnData.Columns) {
-          row.ColumnValues[column] = MakeDummyCell();
-        }
-
-        return row;
-      }
-
-      var dummyValues = MakeDummyRow();
-      var oddDummyValues = MakeDummyRow(oddBackColor);
-
-      int prevLine = -1;
-      bool prevIsOddBlock = false;
-
-      void AddDummyRows(int count, bool isOddBlock) {
-        for (int i = 0; i < count; i++) {
-          elementValueList.Add(isOddBlock ? oddDummyValues : dummyValues);
-        }
-      }
-
-      const double maxBarWidth = 50;
-      const double columnMargin = 4;
-      profileDataRows_ = new List<ElementRowValue>();
-
-      foreach (var block in Function.SortedBlocks) {
-        if (task.IsCanceled) {
-          break;
-        }
-
-        bool isOddBlock = block.HasOddIndexInFunction;
-
-        for (int i = 0; i < block.Tuples.Count; i++) {
-          var tuple = block.Tuples[i];
-          int currentLine = tuple.TextLocation.Line;
-          bool isSeparatorLine = settings_.ShowBlockSeparatorLine &&
-                                 i == block.Tuples.Count - 1;
-
-          // Add dummy empty list view lines to match document text.
-          if (currentLine > prevLine + 1) {
-            AddDummyRows(currentLine - prevLine - 1, isOddBlock);
-          }
-
-          // Check if there is any data associated with the element.
-          // Have the row match the background color used in the doc.
-          var rowValues = columnData.GetValues(tuple);
-
-          if (rowValues != null) {
-            rowValues.BorderBrush = blockSeparatorColor;
-
-            if (rowValues.BackColor == null && isOddBlock) {
-              rowValues.BackColor = oddBackColor;
-            }
-
-            foreach (var columnValue in rowValues.ColumnValues) {
-              columnValue.Value.TextFont = font;
-              columnValue.Value.TextSize = fontSize;
-            }
-
-            // Add dummy cells for the missing ones, needed for column separators.
-            if (rowValues.ColumnValues.Count != columnData.Columns.Count) {
-              foreach (var column in columnData.Columns) {
-                if (!rowValues.Columns.Contains(column)) {
-                  rowValues.ColumnValues[column] = MakeDummyCell();
-                }
-              }
-            }
-
-            profileDataRows_.Add(rowValues);
-          }
-          else {
-            if (isSeparatorLine) {
-              rowValues = isOddBlock ? MakeDummyRow(oddBackColor) : MakeDummyRow();
-            }
-            else {
-              rowValues = isOddBlock ? oddDummyValues : dummyValues;
-            }
-          }
-
-          // Add a separator line at the bottom of the current row
-          // if the next instr. is found in another block.
-          if (isSeparatorLine) {
-            rowValues.BorderThickness = new Thickness(0, 0, 0, 1);
-            rowValues.BorderBrush = blockSeparatorColor;
-          }
-
-          //? if (showColumnSeparators) {
-          foreach (var value in rowValues.Values) {
-            value.BorderBrush = blockSeparatorColor;
-            value.BorderThickness = new Thickness(0, 0, 1, 0);
-          }
-
-          elementValueList.Add(rowValues);
-          prevLine = currentLine;
-        }
-
-        prevIsOddBlock = isOddBlock;
-      }
-
-      // Add empty lines at the end to match document,
-      // otherwise scrolling can get out of sync.
-      if (docLineCount != prevLine + 1) {
-        AddDummyRows(docLineCount - prevLine, prevIsOddBlock);
-      }
-
-      return elementValueList;
-    });
-
-    profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ProfileList, columnData.Columns);
-
-    foreach (var columnHeader in profileColumnHeaders_) {
-      columnHeader.Header.Click += ColumnHeaderOnClick;
-      columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
-    }
-
-    profileRowCollection_ = new ListCollectionView(elementValueList);
-    profileRowCollection_.Filter += ProfileListRowFilter;
-
-    UpdateProfileDataColumnWidths();
-    ProfileList.ItemsSource = profileRowCollection_;
-    ProfileList.Background = settings_.BackgroundColor.AsBrush();
+    await ProfileColumns.Display(columnData, TextView);
     return true;
   }
 
@@ -1441,7 +1173,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     if (((GridViewColumnHeader)sender).Tag is OptionalColumn column &&
         column.HeaderClickHandler != null) {
       column.HeaderClickHandler(column);
-      UpdateProfileDataColumnWidths();
+      ProfileColumns.UpdateColumnWidths();
     }
   }
 
@@ -1449,7 +1181,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     if (((GridViewColumnHeader)sender).Tag is OptionalColumn column &&
         column.HeaderDoubleClickHandler != null) {
       column.HeaderDoubleClickHandler(column);
-      UpdateProfileDataColumnWidths();
+      ProfileColumns.UpdateColumnWidths();
     }
   }
 
@@ -1735,8 +1467,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private void JumpToProfiledElement(IRElement element) {
     TextView.SetCaretAtElement(element);
     TextView.BringElementIntoView(element);
-    ProfileList.InvalidateVisual();
-    ProfileList.UpdateLayout();
+
+    //? TODO: Still needed?
+    ProfileColumns.InvalidateVisual();
+    ProfileColumns.UpdateLayout();
 
     double offset = TextView.TextArea.TextView.VerticalOffset;
     SyncColumnsVerticalScrollOffset(offset);
@@ -1811,7 +1545,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     double height = Math.Max(DocumentOptionsPanel.MinimumHeight,
                              Math.Min(TextView.ActualHeight, DocumentOptionsPanel.DefaultHeight));
 
-    FrameworkElement relativeElement = ProfileVisible ? ProfileList : TextView;
+    FrameworkElement relativeElement = ProfileVisible ? ProfileColumns : TextView;
     var position = new Point(relativeElement.ActualWidth - width, 0);
 
     optionsPanel_ = new DocumentOptionsPanel();

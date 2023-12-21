@@ -23,6 +23,7 @@ namespace IRExplorerUI.Profile;
 // Used as the interface for both the full IR document and lightweight version (source file).
 public interface MarkedDocument {
   ISession Session { get; }
+  FunctionIR Function { get; }
   double DefaultLineHeight { get; }
   int LineCount { get; }
   IRDocumentColumnData ProfileColumnData { get; set; }
@@ -32,7 +33,8 @@ public interface MarkedDocument {
   public void ClearInstructionMarkers();
   public void MarkElements(ICollection<ValueTuple<IRElement, Color>> elementColorPairs);
   public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true);
-  public DocumentLine GetDocumentLine(int lineNumber);
+  public DocumentLine GetLineByNumber(int lineNumber);
+  public DocumentLine GetLineByOffset(int offset);
 
   public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
                                                        double width, double height,
@@ -186,14 +188,14 @@ public class ProfileDocumentMarker {
       TupleIR dummyTuple = null;
 
       if (result.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
-        var documentLine = document.GetDocumentLine(lineNumber);
+        var documentLine = document.GetLineByNumber(lineNumber);
         var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
         dummyTuple = MakeDummyTuple(location, documentLine);
         processingResult.SampledElements.Add((dummyTuple, lineWeight));
       }
 
       if (result.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
-        var documentLine = document.GetDocumentLine(lineNumber);
+        var documentLine = document.GetLineByNumber(lineNumber);
         var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
         dummyTuple ??= MakeDummyTuple(location, documentLine);
         processingResult.CounterElements.Add((dummyTuple, counters));
