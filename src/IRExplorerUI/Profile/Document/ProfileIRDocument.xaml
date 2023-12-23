@@ -25,7 +25,7 @@
 
     <Style TargetType="{x:Type ColumnDefinition}" x:Key="ColumnsStyle">
       <Style.Setters>
-        <Setter Property="Width" Value="*" />
+        <Setter Property="Width" Value="100" />
       </Style.Setters>
       <Style.Triggers>
         <DataTrigger Binding="{Binding ColumnsVisible}" Value="False">
@@ -76,6 +76,7 @@
             <ToolBar
               Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
               Height="22"
+              Loaded="ToolBar_Loaded"
               HorizontalAlignment="Stretch"
               VerticalAlignment="Center">
               <TextBlock Text="Profile" VerticalAlignment="Center" />

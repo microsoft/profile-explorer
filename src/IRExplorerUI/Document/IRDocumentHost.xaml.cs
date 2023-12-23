@@ -797,7 +797,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     return null;
   }
-
   private async Task ShowActionPanel(IRElement element, bool fromClickEvent = false) {
     remarkElement_ = GetRemarkElement(element);
     var visualElement = remarkElement_;
@@ -1166,22 +1165,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     foreach (var value in list) {
       value.MinTextWidth = maxWidth;
-    }
-  }
-
-  private void ColumnHeaderOnClick(object sender, RoutedEventArgs e) {
-    if (((GridViewColumnHeader)sender).Tag is OptionalColumn column &&
-        column.HeaderClickHandler != null) {
-      column.HeaderClickHandler(column);
-      ProfileColumns.UpdateColumnWidths();
-    }
-  }
-
-  private void ColumnHeaderOnDoubleClick(object sender, RoutedEventArgs e) {
-    if (((GridViewColumnHeader)sender).Tag is OptionalColumn column &&
-        column.HeaderDoubleClickHandler != null) {
-      column.HeaderDoubleClickHandler(column);
-      ProfileColumns.UpdateColumnWidths();
     }
   }
 

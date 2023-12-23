@@ -4,11 +4,13 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ClosedXML.Excel;
+using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -45,6 +47,16 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
 
+    TextView.TextRegionFolded += TextViewOnTextRegionFolded;
+    TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
+  }
+
+  private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
+    ProfileColumns.HandleTextRegionUnfolded(e);
+  }
+
+  private void TextViewOnTextRegionFolded(object sender, FoldingSection e) {
+    ProfileColumns.HandleTextRegionFolded(e);
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
@@ -125,6 +137,14 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ColumnsVisible = sourceColumnData_ != null && sourceColumnData_.HasData;
 
     if (ColumnsVisible) {
+      // Use compact mode that shows only the time column.
+      if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TIME_COLUMN) is var timeColumn) {
+        timeColumn.Appearance.ShowMainColumnIcon = false;
+      }
+      if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TIME_PERCENTAGE_COLUMN) is var timePercColumn) {
+        timePercColumn.IsVisible = false;
+      }
+
       await ProfileColumns.Display(sourceColumnData_, TextView);
       profileElements_ = TextView.ProfileProcessingResult.SampledElements;
       UpdateHighlighting();
@@ -379,5 +399,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     var pair2 = sourceProfileResult_.CounterElements.Find(e => e.Item1.TextLocation.Line == line - 1);
     return pair2.Item1;
+  }
+  private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
+    Utils.PatchToolbarStyle(sender as ToolBar);
   }
 }
