@@ -43,7 +43,7 @@ public interface MarkedDocument {
 
 public class ProfileDocumentMarker {
   // Templates for the time columns defining the style.
-  private static readonly OptionalColumn TIME_COLUMN =
+  public static readonly OptionalColumn TIME_COLUMN =
     OptionalColumn.Template("[TimeHeader]", "TimePercentageColumnValueTemplate",
                             "TimeHeader", "Time (ms)", "Instruction time", null, 50.0, "TimeColumnHeaderTemplate",
                             new OptionalColumnAppearance {
@@ -56,7 +56,7 @@ public class ProfileDocumentMarker {
                               InvertColorPalette = false,
                               PickColorForPercentage = true
                             });
-  private static readonly OptionalColumn TIME_PERCENTAGE_COLUMN =
+  public static readonly OptionalColumn TIME_PERCENTAGE_COLUMN =
     OptionalColumn.Template("[TimePercentageHeader]", "TimePercentageColumnValueTemplate",
                             "TimePercentageHeader", "Time (%)", "Instruction time percentage relative to function time",
                             null, 50.0, "TimeColumnHeaderTemplate",
@@ -449,6 +449,8 @@ public class ProfileDocumentMarker {
         string percentageLabel = weightPercentage.AsTrimmedPercentageString();
         var columnValue = new ElementColumnValue(label, weight.Ticks, weightPercentage, i);
         var percentageColumnValue = new ElementColumnValue(percentageLabel, weight.Ticks, weightPercentage, i);
+        columnValue.ToolTip = percentageLabel;
+        percentageColumnValue.ToolTip = label;
 
         columnData.AddValue(percentageColumnValue, element, percentageColumn);
         var valueGroup = columnData.AddValue(columnValue, element, timeColumn);

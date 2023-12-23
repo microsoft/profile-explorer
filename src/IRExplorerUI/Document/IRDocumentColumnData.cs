@@ -62,6 +62,10 @@ public class IRDocumentColumnData {
     return column;
   }
 
+  public OptionalColumn GetColumn(OptionalColumn templateColumn) {
+    return Columns.Find(column => column.ColumnName == templateColumn.ColumnName);
+  }
+
   public ElementRowValue AddValue(ElementColumnValue value, IRElement element, OptionalColumn column) {
     if (!Values.TryGetValue(element, out var valueGroup)) {
       valueGroup = new ElementRowValue(element);

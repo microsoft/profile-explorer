@@ -27,11 +27,10 @@
         ShadowDepth="2"
         Color="#FF929292" />
     </Border.Effect>
-    <Grid>
+    <Grid x:Name="ToolbarPanel">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="20" />
-        <ColumnDefinition Width="20" />
+        <ColumnDefinition Width="130" />
         <ColumnDefinition Width="20" />
       </Grid.ColumnDefinitions>
       <Grid.RowDefinitions>
@@ -39,54 +38,80 @@
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-      <Grid
-        x:Name="ToolbarPanel"
-        Grid.Row="0"
+      <Grid.ContextMenu>
+        <ContextMenu>
+          <MenuItem
+            IsCheckable="True"
+  Header="Always on Top">
+            <MenuItem.Icon>
+              <Image
+      Height="16"
+      Source="{StaticResource PinIcon}"
+      Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator />
+
+          <MenuItem>
+            <MenuItem.Header>
+              <client:ColorSelector/>
+            </MenuItem.Header>
+          </MenuItem>
+          <Separator/>
+        </ContextMenu>
+      </Grid.ContextMenu>
+      
+      <TextBlock
         Grid.Column="0"
-        Grid.ColumnSpan="4"
-        Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}">
-        <TextBlock
-          Margin="4,0,40,0"
-          VerticalAlignment="Center"
-          FontWeight="Medium"
-          Text="{Binding PanelTitle}"
-          TextTrimming="CharacterEllipsis"
-          ToolTip="{Binding PanelToolTip}" />
-      </Grid>
-      <Button
-        x:Name="ColorButton"
-        Grid.Row="0"
-        Grid.Column="1"
-        Width="20"
-        Height="20"
-        VerticalAlignment="Top"
-        Background="#01FFFFFF"
-        BorderBrush="{x:Null}"
-        ToolTip="Change popup color"
-        Visibility="Collapsed">
-        <Image
-          Width="16"
-          Height="16"
-          Source="{StaticResource ThemeIcon}" />
-      </Button>
-      <Button
-        x:Name="OpenButton"
-        Grid.Row="0"
-        Grid.Column="2"
-        Width="20"
-        Height="20"
-        Background="{x:Null}"
-        BorderBrush="{x:Null}"
-        Click="OpenButton_Click"
-        ToolTip="Open previewed document in a new tab">
-        <Image
-          Width="15"
-          Height="15"
-          Source="{StaticResource LayoutOpenNewIcon}" />
-      </Button>
+  Margin="4,0,8,0"
+  VerticalAlignment="Stretch"
+  FontWeight="Medium"
+  Text="{Binding PanelTitle}"
+  TextTrimming="CharacterEllipsis"
+  ToolTip="{Binding PanelToolTip}" />
+      
+      <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+       
+        <Button
+   x:Name="ColorButton"
+   Grid.Row="0"
+   Width="20"
+   Height="20"
+   VerticalAlignment="Top"
+   Background="#01FFFFFF"
+   BorderBrush="{x:Null}"
+   ToolTip="Change popup color"
+   Visibility="Collapsed">
+          <Image
+     Width="16"
+     Height="16"
+     Source="{StaticResource ThemeIcon}" />
+        </Button>
+        <TextBlock Text="Show" VerticalAlignment="Center" Margin="0,0,4,0"/>
+        <ToggleButton Content="ASM" Height="18" VerticalAlignment="Center"
+              Background="{x:Null}" Padding="2,0,2,0"/>
+        <ToggleButton Content="Source" Height="18" VerticalAlignment="Center"
+              Background="{x:Null}" Margin="-1,0,0,0"  Padding="2,0,2,0" />
+        <Button
+   x:Name="OpenButton"
+          Margin="2,0,0,0"
+   Grid.Row="0"
+   Width="18"
+   Height="20"
+   Background="{x:Null}"
+   BorderBrush="{x:Null}"
+   Click="OpenButton_Click"
+   ToolTip="Open previewed document in a new tab">
+          <Image
+     Width="14"
+     Height="14"
+     Source="{StaticResource LayoutOpenNewIcon}" />
+        </Button>
+        
+      </StackPanel>
+     
       <Button
         x:Name="CloseButton"
-        Grid.Row="0"
         Grid.Column="3"
         Background="{x:Null}"
         BorderBrush="{x:Null}"
