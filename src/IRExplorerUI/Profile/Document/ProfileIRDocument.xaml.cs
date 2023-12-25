@@ -105,7 +105,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     //? TODO: Check if it's still the case
     //? Accessing the PDB (DIA) from another thread fails.
     //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
-    var profileOptions = ProfileDocumentMarkerOptions.Default;
+    var profileOptions = ProfileDocumentMarkerSettings.Default;
     var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, Session.CompilerInfo);
 
     var (processingResult, dummyFunc) = profileMarker.PrepareSourceLineProfile(profile, TextView, debugInfo);

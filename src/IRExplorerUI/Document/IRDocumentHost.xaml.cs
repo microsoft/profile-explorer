@@ -1125,7 +1125,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     double maxWidth = 0;
 
     var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
-    var valueStyle = ProfileDocumentMarkerOptions.Default; //? TODO: Use options from UI
+    var valueStyle = ProfileDocumentMarkerSettings.Default; //? TODO: Use options from UI
     int index = 0;
 
     foreach (var pair in result.BlockSampledElements) {
