@@ -12,20 +12,6 @@ namespace IRExplorerUI;
 
 public delegate void OptionalColumnEventHandler(OptionalColumn column);
 
-public class OptionalColumnAppearance {
-  public bool ShowPercentageBar { get; set; }
-  public bool ShowMainColumnPercentageBar { get; set; }
-  public Brush PercentageBarBackColor { get; set; }
-  public Brush TextColor { get; set; }
-  public bool ShowIcon { get; set; }
-  public bool ShowMainColumnIcon { get; set; }
-  public bool PickColorForPercentage { get; set; }
-  public bool UseBackColor { get; set; }
-  public bool UseMainColumnBackColor { get; set; }
-  public ColorPalette BackColorPalette { get; set; }
-  public bool InvertColorPalette { get; set; }
-}
-
 public class OptionalColumn : ICloneable {
   public OptionalColumnEventHandler HeaderClickHandler;
   public OptionalColumnEventHandler HeaderDoubleClickHandler;
@@ -36,7 +22,7 @@ public class OptionalColumn : ICloneable {
                          IValueConverter converter = null,
                          double width = double.NaN,
                          string columnStyle = null,
-                         OptionalColumnAppearance appearance = null,
+                         OptionalColumnStyle style = null,
                          bool isVisible = true) {
     BindingName = bindingName;
     CellTemplateName = cellTemplateName;
@@ -46,7 +32,7 @@ public class OptionalColumn : ICloneable {
     Width = width;
     Converter = converter;
     ColumnStyle = columnStyle;
-    Appearance = appearance ?? new OptionalColumnAppearance();
+    Style = style ?? new OptionalColumnStyle();
     IsVisible = isVisible;
     IsTemplateBinding = cellTemplateName != null;
   }
@@ -59,7 +45,7 @@ public class OptionalColumn : ICloneable {
   public string Tooltip { get; set; }
   public double Width { get; set; }
   public IValueConverter Converter { get; set; }
-  public OptionalColumnAppearance Appearance { get; set; }
+  public OptionalColumnStyle Style { get; set; }
   public bool IsVisible { get; set; }
   public bool IsMainColumn { get; set; }
   public bool IsTemplateBinding { get; set; }
@@ -70,18 +56,18 @@ public class OptionalColumn : ICloneable {
   public static OptionalColumn Binding(string binding, string columnName, string title, string tooltip = null,
                                        IValueConverter converter = null, double width = double.NaN,
                                        string columnStyle = null,
-                                       OptionalColumnAppearance appearance = null, bool isVisible = true) {
+                                       OptionalColumnStyle style = null, bool isVisible = true) {
     return new OptionalColumn(binding, null, columnName, title, tooltip,
-                              converter, width, columnStyle, appearance, isVisible);
+                              converter, width, columnStyle, style, isVisible);
   }
 
   public static OptionalColumn Template(string binding, string templateName, string columnName, string title,
                                         string tooltip = null,
                                         IValueConverter converter = null, double width = double.NaN,
                                         string columnStyle = null,
-                                        OptionalColumnAppearance appearance = null, bool isVisible = true) {
+                                        OptionalColumnStyle style = null, bool isVisible = true) {
     return new OptionalColumn(binding, templateName, columnName, title, tooltip,
-                              converter, width, columnStyle, appearance, isVisible);
+                              converter, width, columnStyle, style, isVisible);
   }
 
   public static void RemoveListViewColumns(ListView listView, OptionalColumn[] columns,
@@ -241,7 +227,7 @@ public class OptionalColumn : ICloneable {
 
   public object Clone() {
     var clone = new OptionalColumn(BindingName, CellTemplateName, ColumnName, Title, Tooltip,
-                                   Converter, Width, ColumnStyle, Appearance, IsVisible) {
+                                   Converter, Width, ColumnStyle, Style, IsVisible) {
       HeaderClickHandler = HeaderClickHandler,
       HeaderDoubleClickHandler = HeaderDoubleClickHandler
     };

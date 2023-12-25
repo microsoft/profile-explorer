@@ -88,7 +88,8 @@
                 ToolTip="Jump to hottest profiled line"
                 VerticalAlignment="Center"
                 Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                <Image Source="{StaticResource HotFlameIcon}" />
+                <Image Source="{StaticResource HotFlameIcon}"
+                       Style="{StaticResource DisabledImageStyle}"/>
               </Button>
               <Button
                 Command="irExplorerUi:DocumentHostCommand.JumpToPreviousProfiledElement"
@@ -114,8 +115,15 @@
                 CommandTarget="{Binding ElementName=TextView}"
                 Padding="0"
                 ToolTip="Export profiling results as an Excel sheet">
-                <Image Source="{StaticResource ClipboardIcon}"
-                       Style="{StaticResource DisabledImageStyle}" />
+                <StackPanel Orientation="Horizontal">
+                  <Image
+                    Width="15"
+                    Height="15"
+                    Margin="0,0,2,0"
+                    Source="{StaticResource ExcelIcon}"
+                    Style="{StaticResource DisabledImageStyle}"/>
+                  <TextBlock Text="Export" />
+                </StackPanel>
               </Button>
               <Separator />
 

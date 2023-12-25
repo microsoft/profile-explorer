@@ -139,7 +139,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (ColumnsVisible) {
       // Use compact mode that shows only the time column.
       if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TIME_COLUMN) is var timeColumn) {
-        timeColumn.Appearance.ShowMainColumnIcon = false;
+        timeColumn.Style.ShowMainColumnIcon = false;
       }
       if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TIME_PERCENTAGE_COLUMN) is var timePercColumn) {
         timePercColumn.IsVisible = false;

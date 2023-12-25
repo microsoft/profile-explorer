@@ -46,7 +46,7 @@ public class ProfileDocumentMarker {
   public static readonly OptionalColumn TIME_COLUMN =
     OptionalColumn.Template("[TimeHeader]", "TimePercentageColumnValueTemplate",
                             "TimeHeader", "Time (ms)", "Instruction time", null, 50.0, "TimeColumnHeaderTemplate",
-                            new OptionalColumnAppearance {
+                            new OptionalColumnStyle {
                               ShowPercentageBar = false,
                               ShowMainColumnPercentageBar = false,
                               UseBackColor = true,
@@ -60,7 +60,7 @@ public class ProfileDocumentMarker {
     OptionalColumn.Template("[TimePercentageHeader]", "TimePercentageColumnValueTemplate",
                             "TimePercentageHeader", "Time (%)", "Instruction time percentage relative to function time",
                             null, 50.0, "TimeColumnHeaderTemplate",
-                            new OptionalColumnAppearance {
+                            new OptionalColumnStyle {
                               ShowPercentageBar = true,
                               ShowMainColumnPercentageBar = true,
                               UseBackColor = true,
@@ -212,7 +212,7 @@ public class ProfileDocumentMarker {
                                FunctionIR function, MarkedDocument document) {
     Trace.WriteLine($"Apply {column.ColumnName}, is main column: {column.IsMainColumn}");
 
-    var style = column.Appearance;
+    var style = column.Style;
     var elementColorPairs = new List<ValueTuple<IRElement, Color>>(function.TupleCount);
 
     foreach (var tuple in function.AllTuples) {
@@ -586,7 +586,7 @@ public class ProfileDocumentMarker {
                                                 /*counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" :*/
                                                 $"{counterInfo.Name}",
                                                 null, 50, "TimeColumnHeaderTemplate",
-                                                new OptionalColumnAppearance {
+                                                new OptionalColumnStyle {
                                                   ShowPercentageBar = true,
                                                   ShowMainColumnPercentageBar = true,
                                                   UseBackColor = counterInfo.IsMetric,
@@ -596,8 +596,8 @@ public class ProfileDocumentMarker {
                                                   ShowMainColumnIcon = true,
                                                   BackColorPalette = ColorPalette.Profile,
                                                   InvertColorPalette = true,
-                                                  TextColor = ColorPalette.DarkHue.PickBrush(k),
-                                                  PercentageBarBackColor = ColorPalette.DarkHue.PickBrush(k)
+                                                  TextColor = ColorPalette.DarkHue.PickColor(k),
+                                                  PercentageBarBackColor = ColorPalette.DarkHue.PickColor(k)
                                                 });
 
     counterColumns[k].IsVisible = IsPerfCounterVisible(counterInfo);

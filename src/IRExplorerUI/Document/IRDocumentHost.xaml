@@ -512,7 +512,8 @@
                   ToolTip="Jump to hottest profiled instruction"
                   VerticalAlignment="Center"
                   Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                  <Image Source="{StaticResource HotFlameIcon}" />
+                  <Image Source="{StaticResource HotFlameIcon}"
+                         Style="{StaticResource DisabledImageStyle}"/>
                 </Button>
                 <Button
                   Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
@@ -581,7 +582,8 @@
                       Width="15"
                       Height="15"
                       Margin="0,0,2,0"
-                      Source="{StaticResource ExcelIcon}" />
+                      Source="{StaticResource ExcelIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                     <TextBlock Text="Export" />
                   </StackPanel>
                 </Button>
@@ -900,8 +902,8 @@
           ResizeBehavior="PreviousAndNext"
           VerticalAlignment="Stretch" />
 
-        <doc:DocumentColumns 
-          Grid.Column="2" 
+        <doc:DocumentColumns
+          Grid.Column="2"
           x:Name="ProfileColumns"
           HorizontalAlignment="Stretch"
           Padding="-1,0,0,0"

@@ -78,7 +78,7 @@ public class ProfileDocumentMarkerOptions {
     }
 
     //? TODO: ShouldUsePalette, ColorPalette in Appearance
-    return column.Appearance.PickColorForPercentage
+    return column.Style.PickColorForPercentage
       ? PickBackColorForPercentage(column, percentage)
       : PickBackColorForOrder(column, colorIndex, percentage, InvertColorPalette(column));
   }
@@ -114,11 +114,12 @@ public class ProfileDocumentMarkerOptions {
   }
 
   public Brush PickTextColor(OptionalColumn column, int order, double percentage) {
-    return column.Appearance.TextColor ?? ColumnTextColor;
+    return !column.Style.TextColor.IsTransparent() ?
+            ColorBrushes.GetBrush(column.Style.TextColor) : ColumnTextColor;
   }
 
   public FontWeight PickTextWeight(OptionalColumn column, int order, double percentage) {
-    if (column.Appearance.PickColorForPercentage) {
+    if (column.Style.PickColorForPercentage) {
       return percentage switch {
         >= 0.9 => FontWeights.Bold,
         >= 0.75 => FontWeights.Medium,
@@ -153,7 +154,7 @@ public class ProfileDocumentMarkerOptions {
       return IconDrawing.Empty;
     }
 
-    if (column.Appearance.PickColorForPercentage) {
+    if (column.Style.PickColorForPercentage) {
       return PickIconForPercentage(percentage);
     }
 
@@ -200,23 +201,25 @@ public class ProfileDocumentMarkerOptions {
   }
 
   public Brush PickPercentageBarColor(OptionalColumn column) {
-    return column.Appearance.PercentageBarBackColor ?? PercentageBarBackColor;
+    return !column.Style.PercentageBarBackColor.IsTransparent() ?
+          ColorBrushes.GetBrush(column.Style.PercentageBarBackColor) :
+          PercentageBarBackColor;
   }
 
   public bool ShouldShowPercentageBar(OptionalColumn column) {
     return DisplayPercentageBar &&
-           (column.Appearance.ShowPercentageBar ||
-            column.IsMainColumn && column.Appearance.ShowMainColumnPercentageBar);
+           (column.Style.ShowPercentageBar ||
+            column.IsMainColumn && column.Style.ShowMainColumnPercentageBar);
   }
 
   public bool ShouldShowIcon(OptionalColumn column) {
-    return DisplayIcons && (column.Appearance.ShowIcon ||
-                            column.IsMainColumn && column.Appearance.ShowMainColumnIcon);
+    return DisplayIcons && (column.Style.ShowIcon ||
+                            column.IsMainColumn && column.Style.ShowMainColumnIcon);
   }
 
   public bool ShouldUseBackColor(OptionalColumn column) {
-    return column.Appearance.UseBackColor ||
-           column.IsMainColumn && column.Appearance.UseMainColumnBackColor;
+    return column.Style.UseBackColor ||
+           column.IsMainColumn && column.Style.UseMainColumnBackColor;
   }
 
   public Color PickColorForPercentage(double percentage) {
@@ -224,10 +227,10 @@ public class ProfileDocumentMarkerOptions {
   }
 
   private ColorPalette PickColorPalette(OptionalColumn column) {
-    return column?.Appearance?.BackColorPalette ?? defaultBackColorPalette_;
+    return column?.Style?.BackColorPalette ?? defaultBackColorPalette_;
   }
 
   private bool InvertColorPalette(OptionalColumn column) {
-    return column != null && column.Appearance.InvertColorPalette;
+    return column != null && column.Style.InvertColorPalette;
   }
 }

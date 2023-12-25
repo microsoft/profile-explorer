@@ -4,9 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Media;
+using ProtoBuf;
 
 namespace IRExplorerUI;
 
+[ProtoContract(SkipConstructor = true)]
 public class ColorPalette {
   public ColorPalette(string name = "", string description = "") {
     Name = name;
@@ -79,9 +81,14 @@ public class ColorPalette {
     });
   public static ColorPalette DarkHue => MakeHue(0.9f, 0.2f, 10);
   public static ColorPalette LightHue => MakeHue(0.9f, 0.5f, 10);
+
+  [ProtoMember(1)]
   public string Name { get; set; }
+  [ProtoMember(2)]
   public string Description { get; set; }
+  [ProtoMember(3)]
   public List<Color> Colors { get; set; }
+
   public int Count => Colors.Count;
   public Color this[int index] => Colors[index];
 

@@ -61,7 +61,9 @@ static class ExtensionMethods {
     return Color.FromRgb((byte)color.R, (byte)color.G, (byte)color.B);
   }
 
-
+  public static bool IsTransparent(this Color color) {
+    return color.A == 0;
+  }
 
   public static SolidColorBrush AsBrush(this Color color) {
     return ColorBrushes.GetBrush(color);
