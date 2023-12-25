@@ -171,7 +171,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     var profile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
 
     if (profile != null) {
-      var profileOptions = ProfileDocumentMarkerOptions.Default;
+      var profileOptions = ProfileDocumentMarkerSettings.Default;
       var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, this);
       await profileMarker.Mark(document, function, section.ParentFunction);
 
@@ -180,14 +180,14 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     }
 
     // Annotate instrs. with source line numbers if debug info is available.
-    var markerOptions = ProfileDocumentMarkerOptions.Default;
+    var markerOptions = ProfileDocumentMarkerSettings.Default;
     var sourceMarker = new SourceDocumentMarker(markerOptions, this);
     await sourceMarker.Mark(document, function);
   }
 
   private static void CreateBlockLabelOverlays(IRDocument document, FunctionIR function) {
     double overlayHeight = document.TextArea.TextView.DefaultLineHeight;
-    var options = ProfileDocumentMarkerOptions.Default; //? TODO: Use App.Settings...
+    var options = ProfileDocumentMarkerSettings.Default; //? TODO: Use App.Settings...
     var blockPen = ColorPens.GetPen(options.BlockOverlayBorderColor,
                                     options.BlockOverlayBorderThickness);
 

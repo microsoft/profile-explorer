@@ -16,11 +16,11 @@ using OxyPlot;
 namespace IRExplorerUI.Profile;
 
 public class SourceDocumentMarker {
-  private ProfileDocumentMarkerOptions options_;
+  private ProfileDocumentMarkerSettings settings_;
   private ICompilerInfoProvider irInfo_;
 
-  public SourceDocumentMarker(ProfileDocumentMarkerOptions options, ICompilerInfoProvider ir) {
-    options_ = options;
+  public SourceDocumentMarker(ProfileDocumentMarkerSettings settings, ICompilerInfoProvider ir) {
+    settings_ = settings;
     irInfo_ = ir;
   }
 
@@ -46,8 +46,8 @@ public class SourceDocumentMarker {
           string tooltip = $"Line number for {funcName}";
           var overlay = document.RegisterIconElementOverlay(instr, null, 16, 0, label, tooltip);
           overlay.IsLabelPinned = true;
-          overlay.TextColor = options_.ElementOverlayTextColor;
-          overlay.Background = options_.ElementOverlayBackColor;
+          overlay.TextColor = settings_.ElementOverlayTextColor;
+          overlay.Background = settings_.ElementOverlayBackColor;
 
           overlays.Add(overlay);
           lineLengths.Add(instr.TextLength);
@@ -78,8 +78,8 @@ public class SourceDocumentMarker {
         // AppendInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
         var inlineeOverlay =
           document.RegisterIconElementOverlay(instr, null, 16, 0, sb.ToString(), tooltipSb.ToString());
-        inlineeOverlay.TextColor = options_.InlineeOverlayTextColor;
-        inlineeOverlay.Background = options_.ElementOverlayBackColor;
+        inlineeOverlay.TextColor = settings_.InlineeOverlayTextColor;
+        inlineeOverlay.Background = settings_.ElementOverlayBackColor;
         inlineeOverlay.IsLabelPinned = true;
         inlineeOverlays.Add(inlineeOverlay);
       }
@@ -99,12 +99,12 @@ public class SourceDocumentMarker {
 
     // Adjust position of all overlays.
     foreach (var overlay in overlays) {
-      double position = Math.Max(options_.VirtualColumnPosition, columnPosition);
+      double position = Math.Max(settings_.VirtualColumnPosition, columnPosition);
       overlay.VirtualColumn = position + overlayMargin;
     }
 
     foreach (var overlay in inlineeOverlays) {
-      double position = Math.Max(options_.VirtualColumnPosition, columnPosition);
+      double position = Math.Max(settings_.VirtualColumnPosition, columnPosition);
       overlay.VirtualColumn = position + overlayMargin + inlineeOverlayMargin;
     }
   }

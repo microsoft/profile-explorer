@@ -15,15 +15,71 @@ public class OptionalColumnSettings : SettingsBase {
   [ProtoMember(2)]
   private HashSet<string> hiddenColumns_;
 
+  //? TODO: Column order, width
+  
   public OptionalColumnSettings() {
     Reset();
   }
 
-  //? TODO: Move definition of time/perc columns here
-  //? same for perf counters, metrics
+  [ProtoAfterDeserialization]
+  private void InitializeReferenceMembers() {
+    columnStyles_ ??= new Dictionary<string, OptionalColumnStyle>();
+    hiddenColumns_ ??= new HashSet<string>();
+  }
 
-  public OptionalColumnStyle DefaultMetricsColumnStyle => null;
-  public OptionalColumnStyle DefaultCounterColumnStyle => null;
+  public static OptionalColumnStyle DefaultTimeColumnStyle =>
+    new OptionalColumnStyle(0) {
+      ShowPercentageBar = false,
+      ShowMainColumnPercentageBar = false,
+      UseBackColor = true,
+      UseMainColumnBackColor = true,
+      ShowMainColumnIcon = true,
+      BackColorPalette = ColorPalette.Profile,
+      InvertColorPalette = false,
+      PickColorForPercentage = true
+    };
+  
+  public static OptionalColumnStyle DefaultTimePercentageColumnStyle =>
+    new OptionalColumnStyle(1) {
+      ShowPercentageBar = true,
+      ShowMainColumnPercentageBar = true,
+      UseBackColor = true,
+      UseMainColumnBackColor = true,
+      ShowIcon = true,
+      BackColorPalette = ColorPalette.Profile,
+      InvertColorPalette = false,
+      PickColorForPercentage = true
+    };
+  
+  public static OptionalColumnStyle DefaultMetricsColumnStyle(int k) =>
+    new OptionalColumnStyle(k + 2) {
+      ShowPercentageBar = true,
+      ShowMainColumnPercentageBar = true,
+      UseBackColor = true,
+      UseMainColumnBackColor = true,
+      PickColorForPercentage = false,
+      ShowIcon = false,
+      ShowMainColumnIcon = true,
+      BackColorPalette = ColorPalette.Profile,
+      InvertColorPalette = true,
+      TextColor = ColorPalette.DarkHue.PickColor(k),
+      PercentageBarBackColor = ColorPalette.DarkHue.PickColor(k)
+    };
+  
+  public static OptionalColumnStyle DefaultCounterColumnStyle(int k) =>
+    new OptionalColumnStyle(k + 2) {
+      ShowPercentageBar = true,
+      ShowMainColumnPercentageBar = true,
+      UseBackColor = false,
+      UseMainColumnBackColor = true,
+      PickColorForPercentage = false,
+      ShowIcon = false,
+      ShowMainColumnIcon = true,
+      BackColorPalette = ColorPalette.Profile,
+      InvertColorPalette = true,
+      TextColor = ColorPalette.DarkHue.PickColor(k),
+      PercentageBarBackColor = ColorPalette.DarkHue.PickColor(k)
+    };
 
   public OptionalColumnStyle GetColumnStyle(OptionalColumn column) {
     return columnStyles_.GetValueOrNull(column.ColumnName);
@@ -43,8 +99,7 @@ public class OptionalColumnSettings : SettingsBase {
   }
 
   public override void Reset() {
-    columnStyles_ = new Dictionary<string, OptionalColumnStyle>();
-    hiddenColumns_ = new HashSet<string>();
+    InitializeReferenceMembers();
   }
 
   public OptionalColumnSettings Clone() {
@@ -57,16 +112,46 @@ public class OptionalColumnSettings : SettingsBase {
   }
 }
 
+[ProtoContract(SkipConstructor = true)]
 public class OptionalColumnStyle {
+  public OptionalColumnStyle() : this(int.MaxValue) {
+    
+  }
+  
+  public OptionalColumnStyle(int order) {
+    Order = order;
+    IsVisible = true;
+    Width = 50;
+  }
+  
+  [ProtoMember(1)]
+  public bool IsVisible { get; set; }
+  [ProtoMember(2)]
+  public int Order { get; set; }
+  [ProtoMember(3)]
+  public double Width { get; set; }
+  [ProtoMember(4)]
+  public string Abbreviation { get; set; }
+  [ProtoMember(5)]
   public bool ShowPercentageBar { get; set; }
+  [ProtoMember(6)]
   public bool ShowMainColumnPercentageBar { get; set; }
+  [ProtoMember(7)]
   public Color PercentageBarBackColor { get; set; }
+  [ProtoMember(8)]
   public Color TextColor { get; set; }
+  [ProtoMember(9)]
   public bool ShowIcon { get; set; }
+  [ProtoMember(10)]
   public bool ShowMainColumnIcon { get; set; }
+  [ProtoMember(11)]
   public bool PickColorForPercentage { get; set; }
+  [ProtoMember(12)]
   public bool UseBackColor { get; set; }
+  [ProtoMember(13)]
   public bool UseMainColumnBackColor { get; set; }
+  [ProtoMember(14)]
   public ColorPalette BackColorPalette { get; set; }
+  [ProtoMember(15)]
   public bool InvertColorPalette { get; set; }
 }

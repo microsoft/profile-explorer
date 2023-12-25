@@ -1546,7 +1546,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     OptionalDataColumnName = "Time (self)";
     OptionalDataColumnVisible2 = true;
     OptionalDataColumnName2 = "Time (total)";
-    var markerOptions = ProfileDocumentMarkerOptions.Default;
+    var markerOptions = ProfileDocumentMarkerSettings.Default;
     bool counterColumnsAdded = false;
 
     //? TODO: Can be expensive, multithread and async

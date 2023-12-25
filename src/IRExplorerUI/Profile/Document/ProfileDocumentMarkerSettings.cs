@@ -6,12 +6,13 @@ using System.Windows.Media;
 
 namespace IRExplorerUI.Profile;
 
-public class ProfileDocumentMarkerOptions {
-  private static ProfileDocumentMarkerOptions defaultInstance_;
+public class ProfileDocumentMarkerSettings {
+  private static ProfileDocumentMarkerSettings defaultInstance_;
   private static ColorPalette defaultBackColorPalette_ = ColorPalette.Profile;
 
-  static ProfileDocumentMarkerOptions() {
-    defaultInstance_ = new ProfileDocumentMarkerOptions {
+  static ProfileDocumentMarkerSettings() {
+    defaultInstance_ = new ProfileDocumentMarkerSettings {
+      ColumnSettings = App.Settings.ColumnSettings,
       VirtualColumnPosition = 350,
       ElementWeightCutoff = 0.003, // 0.3%
       LineWeightCutoff = 0.005, // 0.5%,
@@ -46,7 +47,8 @@ public class ProfileDocumentMarkerOptions {
     Value
   }
 
-  public static ProfileDocumentMarkerOptions Default => defaultInstance_;
+  public static ProfileDocumentMarkerSettings Default => defaultInstance_;
+  public OptionalColumnSettings ColumnSettings { get; set; }
   public double VirtualColumnPosition { get; set; }
   public double ElementWeightCutoff { get; set; }
   public double LineWeightCutoff { get; set; }

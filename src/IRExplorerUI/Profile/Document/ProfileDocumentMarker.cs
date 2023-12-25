@@ -45,46 +45,65 @@ public class ProfileDocumentMarker {
   // Templates for the time columns defining the style.
   public static readonly OptionalColumn TIME_COLUMN =
     OptionalColumn.Template("[TimeHeader]", "TimePercentageColumnValueTemplate",
-                            "TimeHeader", "Time (ms)", "Instruction time", null, 50.0, "TimeColumnHeaderTemplate",
-                            new OptionalColumnStyle {
-                              ShowPercentageBar = false,
-                              ShowMainColumnPercentageBar = false,
-                              UseBackColor = true,
-                              UseMainColumnBackColor = true,
-                              ShowMainColumnIcon = true,
-                              BackColorPalette = ColorPalette.Profile,
-                              InvertColorPalette = false,
-                              PickColorForPercentage = true
-                            });
+                            "TimeHeader", "Time (ms)", "Instruction time", 
+                            null, 50.0, "TimeColumnHeaderTemplate");
   public static readonly OptionalColumn TIME_PERCENTAGE_COLUMN =
     OptionalColumn.Template("[TimePercentageHeader]", "TimePercentageColumnValueTemplate",
                             "TimePercentageHeader", "Time (%)", "Instruction time percentage relative to function time",
-                            null, 50.0, "TimeColumnHeaderTemplate",
-                            new OptionalColumnStyle {
-                              ShowPercentageBar = true,
-                              ShowMainColumnPercentageBar = true,
-                              UseBackColor = true,
-                              UseMainColumnBackColor = true,
-                              ShowIcon = true,
-                              BackColorPalette = ColorPalette.Profile,
-                              InvertColorPalette = false,
-                              PickColorForPercentage = true
-                            });
+                            null, 50.0, "TimeColumnHeaderTemplate");
+
+  public OptionalColumn TimeColumnTemplate() {
+    TIME_COLUMN.Style = settings_.ColumnSettings.GetColumnStyle(TIME_COLUMN) ?? 
+                        OptionalColumnSettings.DefaultTimeColumnStyle;
+
+    return TIME_COLUMN;
+  }
+  
+  public OptionalColumn TimePerrcentageColumnTemplate() {
+    TIME_PERCENTAGE_COLUMN.Style = settings_.ColumnSettings.GetColumnStyle(TIME_PERCENTAGE_COLUMN) ??
+                                   OptionalColumnSettings.DefaultTimePercentageColumnStyle;
+    return TIME_PERCENTAGE_COLUMN;
+  }
+  
+  public OptionalColumn CounterColumnTemplate(PerformanceCounter counter, int index) {
+    var column = OptionalColumn.Template($"[CounterHeader{counter.Id}]",
+                                         "TimePercentageColumnValueTemplate",
+                                         $"CounterHeader{counter.Name}",
+                                         $"{ShortenPerfCounterName(counter.Name)}",
+                                         /*counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" :*/
+                                         $"{counter.Name}",
+                                         null, 50, "TimeColumnHeaderTemplate");
+    column.Style = settings_.ColumnSettings.GetColumnStyle(column);
+
+    if (column.Style == null) {
+      column.Style = counter.IsMetric ? 
+        OptionalColumnSettings.DefaultMetricsColumnStyle(index) : 
+        OptionalColumnSettings.DefaultCounterColumnStyle(index);
+    }
+
+    //? TODO: UI part
+    if (!string.IsNullOrEmpty(column.Style.Abbreviation)) {
+      column.Title = column.Style.Abbreviation;
+    }
+    return column;
+  }
+  
   //? TODO: Should be customizable (at least JSON if not UI)
+  //? TODO: Each column setting should have the abbreviation
   private static readonly (string, string)[] PerfCounterNameReplacements = {
     ("Instruction", "Instr"),
     ("Misprediction", "Mispred")
   };
   private FunctionProfileData profile_;
   private ProfileData globalProfile_;
-  private ProfileDocumentMarkerOptions options_;
+  private ProfileDocumentMarkerSettings settings_;
   private ICompilerInfoProvider irInfo_;
 
   public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile,
-                               ProfileDocumentMarkerOptions options, ICompilerInfoProvider ir) {
+                               ProfileDocumentMarkerSettings settings, ICompilerInfoProvider ir) {
     profile_ = profile;
     globalProfile_ = globalProfile;
-    options_ = options;
+    settings_ = settings;
     irInfo_ = ir;
   }
 
@@ -167,7 +186,6 @@ public class ProfileDocumentMarker {
 
     //? TODO: Pretty hacky approach that makes a fake function
     //? with IR elements to represent each source line.
-    int totalLines = document.LineCount;
     var ids = IRElementId.NewFunctionId();
     var dummyFunc = new FunctionIR();
     var dummyBlock = new BlockIR(ids.NewBlock(0), 0, dummyFunc);
@@ -211,8 +229,6 @@ public class ProfileDocumentMarker {
   public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
                                FunctionIR function, MarkedDocument document) {
     Trace.WriteLine($"Apply {column.ColumnName}, is main column: {column.IsMainColumn}");
-
-    var style = column.Style;
     var elementColorPairs = new List<ValueTuple<IRElement, Color>>(function.TupleCount);
 
     foreach (var tuple in function.AllTuples) {
@@ -222,20 +238,20 @@ public class ProfileDocumentMarker {
 
       int order = value.ValueOrder;
       double percentage = value.ValuePercentage;
-      var color = options_.PickBackColor(column, order, percentage);
+      var color = settings_.PickBackColor(column, order, percentage);
 
-      if (column.IsMainColumn && percentage >= options_.ElementWeightCutoff) {
+      if (column.IsMainColumn && percentage >= settings_.ElementWeightCutoff) {
         elementColorPairs.Add(new ValueTuple<IRElement, Color>(tuple, color));
       }
 
       value.BackColor = color.AsBrush();
-      value.TextColor = options_.PickTextColor(column, order, percentage);
-      value.TextWeight = options_.PickTextWeight(column, order, percentage);
+      value.TextColor = settings_.PickTextColor(column, order, percentage);
+      value.TextWeight = settings_.PickTextWeight(column, order, percentage);
 
-      value.Icon = options_.PickIcon(column, value.ValueOrder, value.ValuePercentage).Icon;
+      value.Icon = settings_.PickIcon(column, value.ValueOrder, value.ValuePercentage).Icon;
       value.ShowPercentageBar = value.ShowPercentageBar && // Disabled per value
-                                options_.ShowPercentageBar(column, value.ValueOrder, value.ValuePercentage);
-      value.PercentageBarBackColor = options_.PickPercentageBarColor(column);
+                                settings_.ShowPercentageBar(column, value.ValueOrder, value.ValuePercentage);
+      value.PercentageBarBackColor = settings_.PickPercentageBarColor(column);
     }
 
     // Mark the elements themselves with a color.
@@ -289,11 +305,7 @@ public class ProfileDocumentMarker {
 
         // Mark direct, known call targets with a different icon.
         var callTarget = irInfo_.IR.GetCallTarget(instr);
-        bool isDirectCall = false;
-
-        if (callTarget != null && callTarget.HasName) {
-          isDirectCall = true;
-        }
+        bool isDirectCall = callTarget != null && callTarget.HasName;
 
         // Collect call targets and override the weight
         // to include only the weight at this call site.
@@ -380,16 +392,16 @@ public class ProfileDocumentMarker {
   private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, MarkedDocument document) {
     document.SuspendUpdate();
     double overlayHeight = document.DefaultLineHeight;
-    var blockPen = ColorPens.GetPen(options_.BlockOverlayBorderColor,
-                                    options_.BlockOverlayBorderThickness);
+    var blockPen = ColorPens.GetPen(settings_.BlockOverlayBorderColor,
+                                    settings_.BlockOverlayBorderThickness);
 
     for (int i = 0; i < blockWeights.Count; i++) {
       var block = blockWeights[i].Item1;
       var weight = blockWeights[i].Item2;
       double weightPercentage = profile_.ScaleWeight(weight);
 
-      var icon = options_.PickIconForOrder(i, weightPercentage);
-      var color = options_.PickBackColorForPercentage(weightPercentage);
+      var icon = settings_.PickIconForOrder(i, weightPercentage);
+      var color = settings_.PickBackColorForPercentage(weightPercentage);
 
       if (color == Colors.Transparent) {
         // Match the background color of the corresponding text line.
@@ -398,7 +410,7 @@ public class ProfileDocumentMarker {
           App.Settings.DocumentSettings.AlternateBackgroundColor;
       }
 
-      bool markOnFlowGraph = options_.IsSignificantValue(i, weightPercentage);
+      bool markOnFlowGraph = settings_.IsSignificantValue(i, weightPercentage);
       string label = $"{weightPercentage.AsTrimmedPercentageString()}";
       var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label, "");
       overlay.Background = color.AsBrush();
@@ -413,17 +425,17 @@ public class ProfileDocumentMarker {
       overlay.Padding = 2;
 
       if (markOnFlowGraph) {
-        overlay.TextColor = options_.HotBlockOverlayTextColor;
+        overlay.TextColor = settings_.HotBlockOverlayTextColor;
         overlay.TextWeight = FontWeights.Bold;
       }
       else {
-        overlay.TextColor = options_.BlockOverlayTextColor;
+        overlay.TextColor = settings_.BlockOverlayTextColor;
       }
 
       // Mark the block itself with a color.
       document.MarkBlock(block, color, markOnFlowGraph);
 
-      if (weightPercentage > options_.ElementWeightCutoff) {
+      if (weightPercentage > settings_.ElementWeightCutoff) {
         block.AddTag(GraphNodeTag.MakeColor(weightPercentage.AsTrimmedPercentageString(), color));
       }
     }
@@ -436,8 +448,8 @@ public class ProfileDocumentMarker {
 
     // Add a time column.
     var columnData = new IRDocumentColumnData(function.InstructionCount);
-    var percentageColumn = columnData.AddColumn(TIME_PERCENTAGE_COLUMN);
-    var timeColumn = columnData.AddColumn(TIME_COLUMN);
+    var percentageColumn = columnData.AddColumn(TimePerrcentageColumnTemplate());
+    var timeColumn = columnData.AddColumn(TimeColumnTemplate());
 
     await Task.Run(() => {
       for (int i = 0; i < elements.Count; i++) {
@@ -579,27 +591,7 @@ public class ProfileDocumentMarker {
                                        IRDocumentColumnData columnData, List<PerformanceCounter> perfCounters,
                                        OptionalColumn[] counterColumns, int k) {
     var counterInfo = perfCounters[k];
-    counterColumns[k] = OptionalColumn.Template($"[CounterHeader{counterInfo.Id}]",
-                                                "TimePercentageColumnValueTemplate",
-                                                $"CounterHeader{counterInfo.Id}",
-                                                $"{ShortenPerfCounterName(counterInfo.Name)}",
-                                                /*counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" :*/
-                                                $"{counterInfo.Name}",
-                                                null, 50, "TimeColumnHeaderTemplate",
-                                                new OptionalColumnStyle {
-                                                  ShowPercentageBar = true,
-                                                  ShowMainColumnPercentageBar = true,
-                                                  UseBackColor = counterInfo.IsMetric,
-                                                  UseMainColumnBackColor = true,
-                                                  PickColorForPercentage = false,
-                                                  ShowIcon = false,
-                                                  ShowMainColumnIcon = true,
-                                                  BackColorPalette = ColorPalette.Profile,
-                                                  InvertColorPalette = true,
-                                                  TextColor = ColorPalette.DarkHue.PickColor(k),
-                                                  PercentageBarBackColor = ColorPalette.DarkHue.PickColor(k)
-                                                });
-
+    counterColumns[k] = CounterColumnTemplate(counterInfo, k);
     counterColumns[k].IsVisible = IsPerfCounterVisible(counterInfo);
     counterColumns[k].HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
     columnData.AddColumn(counterColumns[k]);
