@@ -69,6 +69,8 @@ public class ApplicationSettings {
   public WorkspaceSettings WorkspaceOptions;
   [ProtoMember(22)]
   public SourceFileSettings SourceFileSettings;
+  [ProtoMember(23)]
+  public OptionalColumnSettings ColumnSettings;
 
   public ApplicationSettings() {
     Reset();
@@ -87,6 +89,7 @@ public class ApplicationSettings {
     CallerCalleeSettings.Reset();
     FlameGraphSettings.Reset();
     SourceFileSettings.Reset();
+    ColumnSettings.Reset();
     AutoReloadDocument = true;
     ThemeIndex = 2; // Blue theme.
   }
@@ -218,6 +221,7 @@ public class ApplicationSettings {
     FlameGraphSettings ??= new FlameGraphSettings();
     WorkspaceOptions ??= new WorkspaceSettings();
     SourceFileSettings ??= new SourceFileSettings();
+    ColumnSettings ??= new OptionalColumnSettings();
   }
 
   private void AddProfilingSession(ProfileDataReport report, List<ProfileDataReport> list) {
