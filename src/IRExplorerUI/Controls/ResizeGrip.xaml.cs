@@ -19,6 +19,9 @@ public partial class ResizeGrip : UserControl {
   public FrameworkElement ResizedControl { get => control_; set => control_ = value; }
 
   private void OnResizeThumbDragStarted(object sender, DragStartedEventArgs e) {
+    // Disable min size constraints when manually resizing.
+    control_.MaxHeight = double.PositiveInfinity;
+    control_.MaxWidth = double.PositiveInfinity;
     cursor_ = control_.Cursor;
     Cursor = Cursors.SizeNWSE;
   }
