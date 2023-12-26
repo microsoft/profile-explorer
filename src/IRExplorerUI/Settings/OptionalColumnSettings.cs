@@ -27,18 +27,6 @@ public class OptionalColumnSettings : SettingsBase {
     hiddenColumns_ ??= new HashSet<string>();
   }
 
-  public static OptionalColumnStyle DefaultTimeColumnStyle =>
-    new OptionalColumnStyle(0) {
-      ShowPercentageBar = false,
-      ShowMainColumnPercentageBar = false,
-      UseBackColor = true,
-      UseMainColumnBackColor = true,
-      ShowMainColumnIcon = true,
-      BackColorPalette = ColorPalette.Profile,
-      InvertColorPalette = false,
-      PickColorForPercentage = true
-    };
-  
   public static OptionalColumnStyle DefaultTimePercentageColumnStyle =>
     new OptionalColumnStyle(1) {
       ShowPercentageBar = true,
@@ -46,6 +34,18 @@ public class OptionalColumnSettings : SettingsBase {
       UseBackColor = true,
       UseMainColumnBackColor = true,
       ShowIcon = true,
+      BackColorPalette = ColorPalette.Profile,
+      InvertColorPalette = false,
+      PickColorForPercentage = true
+    };
+
+  public static OptionalColumnStyle DefaultTimeColumnStyle =>
+    new OptionalColumnStyle(0) {
+      ShowPercentageBar = false,
+      ShowMainColumnPercentageBar = false,
+      UseBackColor = true,
+      UseMainColumnBackColor = true,
+      ShowMainColumnIcon = true,
       BackColorPalette = ColorPalette.Profile,
       InvertColorPalette = false,
       PickColorForPercentage = true

@@ -156,9 +156,10 @@ public class ProfileDocumentMarkerSettings {
       return IconDrawing.Empty;
     }
 
-    if (column.Style.PickColorForPercentage) {
-      return PickIconForPercentage(percentage);
-    }
+    //? TODO: Option
+    // if (column.Style.PickColorForPercentage) {
+    //   return PickIconForPercentage(percentage);
+    // }
 
     return PickIconForOrder(order, percentage);
   }

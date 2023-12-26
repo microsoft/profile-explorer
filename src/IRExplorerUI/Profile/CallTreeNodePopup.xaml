@@ -42,6 +42,7 @@
           Grid.Row="0"
           Grid.Column="0"
           Grid.ColumnSpan="3"
+          ContextMenu="{StaticResource PopupContextMenu}"
           Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}">
           <StackPanel Margin="0,0,0,1">
             <Grid HorizontalAlignment="Stretch">
@@ -91,22 +92,6 @@
             Width="16"
             Height="16"
             Source="{StaticResource OpenExternalIcon}" />
-        </Button>
-        <Button
-          x:Name="ColorButton"
-          Grid.Row="0"
-          Grid.Column="1"
-          Width="20"
-          Height="20"
-          VerticalAlignment="Top"
-          Background="#01FFFFFF"
-          BorderBrush="{x:Null}"
-          ToolTip="Change popup color"
-          Visibility="Collapsed">
-          <Image
-            Width="16"
-            Height="16"
-            Source="{StaticResource ThemeIcon}" />
         </Button>
         <Button
           x:Name="CloseButton"

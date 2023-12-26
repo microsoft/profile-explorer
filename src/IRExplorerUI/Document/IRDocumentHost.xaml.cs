@@ -69,27 +69,6 @@ public class IRDocumentHostState {
   public bool HasAnnotations => DocumentState.HasAnnotations;
 }
 
-public class DummyVirtualizingStackPanel : VirtualizingStackPanel {
-  protected override Size MeasureOverride(Size constraint) {
-    //Trace.WriteLine($"Measure {constraint}");
-    //var sw = Stopwatch.StartNew();
-
-    var result = base.MeasureOverride(constraint);
-
-    //sw.Stop();
-    //Trace.WriteLine($"Measured  {x} in {sw.ElapsedMilliseconds}");
-    //Trace.Flush(;
-
-    return result;
-  }
-
-  protected override void OnChildDesiredSizeChanged(UIElement el) {
-    //? Workaround for WPF measuring bug, see link
-    //? https://stackoverflow.com/questions/11696008/performance-issue-with-measure
-    /* base.OnChildDesiredSizeChanged(el); */ // avoid rampant remeasuring
-  }
-}
-
 public class ProfiledBlockEx : BindableObject {
   public static readonly ElementColumnValue Empty = new ElementColumnValue(string.Empty);
   private Thickness borderThickness_;
@@ -212,9 +191,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private const int ActionPanelHeight = 20;
   private const double AnimationDuration = 0.1;
   private const int ActionPanelOffset = 15;
-  private static readonly OptionalColumn TIME_COLUMN = OptionalColumn.Template(
-    "[TimeHeader]", "TimeColumnValueTemplate",
-    "TimeHeader", "Time (ms)", "Instruction time");
   private bool actionPanelHovered_;
   private bool actionPanelFromClick_;
   private bool actionPanelVisible_;
@@ -246,9 +222,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private Brush selectedLineBrush_;
   private List<(IRElement, TimeSpan)> profileElements_;
   private List<(BlockIR, TimeSpan)> profileBlocks_;
-  private List<ElementRowValue> profileDataRows_;
-  private ListCollectionView profileRowCollection_;
-  private List<(GridViewColumnHeader Header, GridViewColumn Column)> profileColumnHeaders_;
   private int profileElementIndex_;
   private int profileBlockIndex_;
   private OptionsPanelHostWindow remarkOptionsPanelWindow_;
@@ -275,6 +248,16 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     PassOutput.HasDuplicateButton = false;
     PassOutput.DiffModeButtonVisible = false;
     PassOutput.SectionNameVisible = false;
+    
+    SetupEvents();
+    var hover = new MouseHoverLogic(this);
+    hover.MouseHover += Hover_MouseHover;
+    loadTask_ = new CancelableTaskInstance(true, Session.SessionState.RegisterCancelableTask,
+                                           Session.SessionState.UnregisterCancelableTask);
+    activeQueryPanels_ = new List<QueryPanel>();
+  }
+
+  private void SetupEvents() {
     PassOutput.ScrollChanged += PassOutput_ScrollChanged;
     PassOutput.ShowBeforeOutputChanged += PassOutput_ShowBeforeOutputChanged;
 
@@ -298,13 +281,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     SearchPanel.NavigateToPreviousResult += SearchPanel_NaviateToPreviousResult;
     SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
     SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
+    ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
     Unloaded += IRDocumentHost_Unloaded;
-
-    var hover = new MouseHoverLogic(this);
-    hover.MouseHover += Hover_MouseHover;
-    loadTask_ = new CancelableTaskInstance(true, Session.SessionState.RegisterCancelableTask,
-                                           Session.SessionState.UnregisterCancelableTask);
-    activeQueryPanels_ = new List<QueryPanel>();
   }
 
   private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
@@ -315,6 +293,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileColumns.HandleTextRegionFolded(e);
   }
 
+  private void ProfileColumns_ScrollChanged(object sender, ScrollChangedEventArgs e) {
+    if (Math.Abs(e.VerticalChange) < double.Epsilon) {
+      return;
+    }
+
+    TextView.ScrollToVerticalOffset(e.VerticalOffset);
+  }
+  
   public event EventHandler<(double offset, double offsetChangeAmount)> VerticalScrollChanged;
   public event EventHandler<(double offset, double offsetChangeAmount)> PassOutputVerticalScrollChanged;
   public event EventHandler<bool> PassOutputShowBeforeChanged;
@@ -469,9 +455,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       selectedElement_ = null;
       remarkElement_ = null;
       selectedBlock_ = null;
-      profileDataRows_ = null;
-      profileRowCollection_ = null;
-      profileColumnHeaders_ = null;
       PassOutputVisible = false;
       BlockSelector.SelectedItem = null;
       BlockSelector.ItemsSource = null;

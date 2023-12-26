@@ -89,6 +89,7 @@
         BorderThickness="0,0,0,1">
         <DockPanel
           x:Name="ToolbarPanel"
+          ContextMenu="{StaticResource PopupContextMenu}"
           Background="#FFFFFBCF"
           LastChildFill="False">
 

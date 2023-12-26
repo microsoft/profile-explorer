@@ -35,7 +35,6 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     InitializeComponent();
     Initialize(position, referenceElement);
     PanelResizeGrip.ResizedControl = this;
-    RegisterColorButton(ColorButton, ToolbarPanel.Background);
 
     //? TODO: Use GetTextTypeface everywhere instead of hardcoding fonts
     defaultTextFont_ = Utils.GetTextTypeface(TitleTextBlock);
@@ -221,7 +220,6 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     Width = Math.Max(Width, InitialWidth);
     Height = Math.Max(Height, InitialHeight);
     ShowResizeGrip = true;
-    ExpandButton.Visibility = Visibility.Hidden;
-    ColorButton.Visibility = Visibility.Visible;
+    CanExpand = false;
   }
 }
