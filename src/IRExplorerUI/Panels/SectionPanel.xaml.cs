@@ -2994,5 +2994,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
     await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
+
         #endregion
 }

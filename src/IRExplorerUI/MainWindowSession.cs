@@ -297,7 +297,7 @@ public partial class MainWindow : Window, ISession {
   public void ActivatePanel(IToolPanel panel) {
     var panelHost = FindPanelHost(panel);
 
-    if(panelHost != null) {
+    if (panelHost != null) {
       panelHost.Host.Show();
       panelHost.Host.IsActive = true;
     }
@@ -472,7 +472,7 @@ public partial class MainWindow : Window, ISession {
         bool? result = window.ShowDialog();
         failed = !result.HasValue || !result.Value;
 
-        if(!failed) {
+        if (!failed) {
           await SetupLoadedProfile();
           return sessionState_.MainDocument;
         }

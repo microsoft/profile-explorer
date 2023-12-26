@@ -7,7 +7,7 @@ namespace IRExplorerUI.Profile;
 
 public partial class ProfileData {
   private sealed class CallTreeProcessor : ProfileSampleProcessor {
-    public ProfileCallTree CallTree { get; } = new();
+    public ProfileCallTree CallTree { get; } = new ProfileCallTree();
 
     //? TODO: Multi-threading disabled until merging of trees is impl.
     protected override int DefaultThreadCount => 1;
@@ -27,14 +27,14 @@ public partial class ProfileData {
 
   private sealed class FunctionProfileProcessor : ProfileSampleProcessor {
     private class ChunkData {
-      public HashSet<int> StackModules = new ();
-      public HashSet<IRTextFunction> StackFunctions = new();
-      public Dictionary<int, TimeSpan> ModuleWeights = new();
+      public HashSet<int> StackModules = new HashSet<int>();
+      public HashSet<IRTextFunction> StackFunctions = new HashSet<IRTextFunction>();
+      public Dictionary<int, TimeSpan> ModuleWeights = new Dictionary<int, TimeSpan>();
       public TimeSpan TotalWeight = TimeSpan.Zero;
       public TimeSpan ProfileWeight = TimeSpan.Zero;
     }
 
-    public ProfileData Profile { get; } = new();
+    public ProfileData Profile { get; } = new ProfileData();
 
     public static ProfileData Compute(ProfileData profile, ProfileSampleFilter filter,
                                       int maxChunks = int.MaxValue) {
@@ -122,11 +122,9 @@ public partial class ProfileData {
                                           int sampleIndex, object chunkData);
 
     protected virtual void CompleteChunk(int k, object chunkData) {
-
     }
 
     protected virtual void Complete() {
-
     }
 
     protected virtual int DefaultThreadCount => Environment.ProcessorCount * 3 / 4;
@@ -160,7 +158,7 @@ public partial class ProfileData {
         }
 
         tasks.Add(taskFactory.StartNew(() => {
-          var chunkData = InitializeChunk(k);
+          object chunkData = InitializeChunk(k);
 
           // Find the ranges of samples that overlap with the filter time range.
           int startRangeIndex = 0;

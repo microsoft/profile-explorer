@@ -152,7 +152,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   public bool RecordingControlsEnabled => !IsLoadingProfile && !IsRecordingProfile;
   public bool RecordingStopControlsEnabled => !IsLoadingProfile && IsRecordingProfile;
   public bool IsRecordMode { get; }
-
   public bool IsOnLaunch { get; }
 
   public ProfileRecordingSessionOptions RecordingOptions {
@@ -226,7 +225,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     if (IsRecordMode) {
       sessionList.Add(new RecordingSession(null, false, true,
-                                             "Record", "Start a new session"));
+                                           "Record", "Start a new session"));
 
       foreach (var prevSession in Options.PreviousRecordingSessions) {
         sessionList.Add(new RecordingSession(prevSession, false));
@@ -234,7 +233,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
     else {
       sessionList.Add(new RecordingSession(null, false, true,
-                                             "Open", "Load a trace"));
+                                           "Open", "Load a trace"));
 
       foreach (var prevSession in Options.PreviousLoadedSessions) {
         sessionList.Add(new RecordingSession(prevSession, true));
@@ -249,7 +248,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private void ProfileLoadWindow_ContentRendered(object sender, EventArgs e) {
     //? TODO: Use CreateSessionFromCommandLineArgs
     if (IsOnLaunch) {
-      var args = Environment.GetCommandLineArgs();
+      string[] args = Environment.GetCommandLineArgs();
 
       if (args.Length >= 6 && args[1] == "--open-trace") {
         string traceFilePath = args[2];
@@ -661,7 +660,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private async void ProfileAutocompleteBox_TextChanged(object sender, RoutedEventArgs e) {
-    if(IsLoadingProfile) {
+    if (IsLoadingProfile) {
       return; // Ignore during load of previous session.
     }
 
@@ -744,10 +743,10 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     BinaryFilePath = imageFileName;
     var symbolOptions = symbolOptions_.WithSymbolPaths(symbolPath);
 
-    ProfileProcess process = new ProfileProcess(processId, imageFileName);
+    var process = new ProfileProcess(processId, imageFileName);
     selectedProcSummary_ = new List<ProcessSummary>() {
-                new ProcessSummary(process, TimeSpan.Zero)
-            };
+      new ProcessSummary(process, TimeSpan.Zero)
+    };
 
     await OpenFilesAndComplete(symbolOptions);
   }
@@ -858,7 +857,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       try {
         // Filter list down to .NET processes if requested.
         if (ShowOnlyManagedProcesses &&
-            !IsManagedProcess(proc)) { 
+            !IsManagedProcess(proc)) {
           continue;
         }
 
@@ -884,7 +883,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
   private bool IsManagedProcess(Process proc) {
     //? TODO: Detecting .NET procs is extremely slow done like below
-    foreach (var mod in proc.Modules) {
+    foreach (object mod in proc.Modules) {
       if (mod is ProcessModule module &&
           module.ModuleName.Contains("mscor", StringComparison.OrdinalIgnoreCase)) {
         return true;

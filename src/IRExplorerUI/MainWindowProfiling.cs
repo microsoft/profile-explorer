@@ -386,7 +386,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async Task RefreshProfilingPanels() {
-    List<Task> panelTasks = new();
+    List<Task> panelTasks = new List<Task>();
 
     if (FindPanel(ToolPanelKind.CallTree) is CallTreePanel panel) {
       panelTasks.Add(panel.DisplayProfileCallTree());

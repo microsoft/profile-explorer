@@ -48,7 +48,7 @@ public partial class WorkspacesWindow : Window {
   }
 
   private void DefaultButton_OnClick(object sender, RoutedEventArgs e) {
-    if(Utils.ShowYesNoMessageBox("Restore builtin, default workspaces?", this) == MessageBoxResult.No) {
+    if (Utils.ShowYesNoMessageBox("Restore builtin, default workspaces?", this) == MessageBoxResult.No) {
       return;
     }
 
@@ -98,7 +98,7 @@ public partial class WorkspacesWindow : Window {
     string path = Utils.ShowSaveFileDialog("ZIP archive|*.zip", "*.zip", "Export workspaces");
 
     if (!string.IsNullOrEmpty(path)) {
-      if(!settings_.SaveToArchive(path)) {
+      if (!settings_.SaveToArchive(path)) {
         Utils.ShowErrorMessageBox("Failed to export workspaces.", this);
       }
     }
@@ -116,7 +116,7 @@ public partial class WorkspacesWindow : Window {
         return;
       }
 
-      settings_ =   newSettings;
+      settings_ = newSettings;
       App.Settings.WorkspaceOptions = newSettings;
       ReloadWorkspacesList();
       Utils.ShowMessageBox($"Successfully imported {loadedCount} workspaces.", this);

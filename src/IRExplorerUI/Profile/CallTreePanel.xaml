@@ -59,7 +59,7 @@
             ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
             <StackPanel Orientation="Horizontal">
               <Image Source="{StaticResource DockLeftIcon}"
-                     Style="{StaticResource DisabledImageStyle}"/>
+                     Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Back" />
             </StackPanel>
           </Button>
@@ -70,7 +70,7 @@
             ToolTip="Reset call tree to initial state (Ctrl+R)">
             <StackPanel Orientation="Horizontal">
               <Image Source="{StaticResource ResetWidthIcon}"
-                     Style="{StaticResource DisabledImageStyle}"/>
+                     Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Reset" />
             </StackPanel>
           </Button>
@@ -94,7 +94,7 @@
                 Height="16"
                 Margin="0,1,0,0"
                 Source="{StaticResource SwitchIcon}"
-                Style="{StaticResource DisabledImageStyle}"/>
+                Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Text="Sync" />
             </StackPanel>
           </ToggleButton>
@@ -110,7 +110,7 @@
               Height="16"
               Margin="0,1,0,0"
               Source="{StaticResource SourceIcon}"
-              Style="{StaticResource DisabledImageStyle}"/>
+              Style="{StaticResource DisabledImageStyle}" />
           </ToggleButton>
           <Separator />
 
@@ -124,7 +124,7 @@
                 Height="15"
                 Margin="0,0,2,0"
                 Source="{StaticResource CombineIcon}"
-                Style="{StaticResource DisabledImageStyle}"/>
+                Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Text="Combine" />
             </StackPanel>
           </ToggleButton>
@@ -147,14 +147,14 @@
                 Width="16"
                 Height="16"
                 Source="{StaticResource DetailsIcon}"
-                Style="{StaticResource DisabledImageStyle}"/>
+                Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Text="Details" VerticalAlignment="Center" />
             </StackPanel>
           </ToggleButton>
           <Separator />
 
           <Image Source="{StaticResource SearchIcon}"
-                 Style="{StaticResource DisabledImageStyle}"/>
+                 Style="{StaticResource DisabledImageStyle}" />
           <Grid Height="24">
             <TextBox
               x:Name="FunctionFilter"
@@ -193,7 +193,7 @@
               Width="16"
               Height="16"
               Source="{StaticResource ClearIcon}"
-              Style="{StaticResource DisabledImageStyle}"/>
+              Style="{StaticResource DisabledImageStyle}" />
           </Button>
 
           <Button

@@ -32,7 +32,8 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
 
   public virtual string CompilerIRName => "ASM";
   public virtual string CompilerDisplayName => "ASM " + ir_.Mode;
-  public virtual string OpenFileFilter => "ASM, Binary, Trace Files|*.asm;*.txt;*.log;*.exe;*.dll;*.sys;*.etl|All Files|*.*";
+  public virtual string OpenFileFilter =>
+    "ASM, Binary, Trace Files|*.asm;*.txt;*.log;*.exe;*.dll;*.sys;*.etl|All Files|*.*";
   public virtual string OpenDebugFileFilter => "Debug Files|*.pdb|All Files|*.*";
   public virtual string DefaultSyntaxHighlightingFile => (ir_.Mode == IRMode.ARM64 ? "ARM64" : "x86") + " ASM IR";
   public ISession Session => session_;

@@ -720,6 +720,7 @@ public partial class MainWindow : Window, ISession {
           baseGroup.Children.Insert(0, new LayoutAnchorablePane(panelHost.Host));
           attached = true;
         }
+
         break;
       }
       case DuplicatePanelKind.NewSetDockedRight: {
@@ -736,6 +737,7 @@ public partial class MainWindow : Window, ISession {
           baseGroup.Children.Add(new LayoutAnchorablePane(panelHost.Host));
           attached = true;
         }
+
         break;
       }
       case DuplicatePanelKind.SameSet: {
@@ -788,7 +790,7 @@ public partial class MainWindow : Window, ISession {
   private PanelHostInfo RegisterPanel(IToolPanel panel, LayoutAnchorable host) {
     var existingHost = FindPanelHost(panel);
 
-    if(existingHost != null) {
+    if (existingHost != null) {
       return existingHost;
     }
 
@@ -1319,7 +1321,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async void ShowPanelMenuClicked(object sender, RoutedEventArgs e) {
-    var panelName = ((MenuItem)sender).Tag as string;
+    string panelName = ((MenuItem)sender).Tag as string;
     var panelKind = Enum.Parse<ToolPanelKind>(panelName);
     await ShowPanel(panelKind);
   }

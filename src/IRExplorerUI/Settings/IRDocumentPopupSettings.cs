@@ -15,7 +15,7 @@ public class IRDocumentPopupSettings : SettingsBase {
   public double Height { get; set; }
   public bool ShowSourceFile { get; set; }
   // Font, font size, doc style
-  
+
   public override void Reset() {
   }
 

@@ -101,7 +101,7 @@ public partial class IRInfoPanel : ToolPanelControl {
   }
 
   private async Task ReloadLogFile() {
-    var traceFile = App.GetTraceFilePath();
+    string traceFile = App.GetTraceFilePath();
 
     if (File.Exists(traceFile)) {
       try {

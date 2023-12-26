@@ -406,12 +406,12 @@ public partial class MainWindow : Window, ISession {
       }));
     });
 
-    var args = Environment.GetCommandLineArgs();
+    string[] args = Environment.GetCommandLineArgs();
 
     if (args.Length > 1 && args[1] == "--open-trace") {
       var window = new ProfileLoadWindow(this, false, true);
       window.Owner = this;
-      var result = window.ShowDialog();
+      bool? result = window.ShowDialog();
 
       if (result.HasValue && result.Value) {
         await SectionPanel.RefreshModuleSummaries();
@@ -515,7 +515,7 @@ public partial class MainWindow : Window, ISession {
     ResetStatusBar();
 
     // Make help panel active on the first run.
-    if(App.IsFirstRun) {
+    if (App.IsFirstRun) {
       await ShowPanel(ToolPanelKind.Help);
     }
 

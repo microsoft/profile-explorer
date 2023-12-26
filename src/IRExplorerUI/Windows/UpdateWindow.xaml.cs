@@ -47,7 +47,7 @@ public partial class UpdateWindow : Window {
       if (updateInfo_ != null) {
         NewVersionLabel.Text = updateInfo_.CurrentVersion;
         CurrentVersionLabel.Text = updateInfo_.InstalledVersion.ToString();
-        
+
         if (!string.IsNullOrEmpty(updateInfo_.ChangelogURL)) {
           // Force light mode for the WebView2 control for now.
           await Browser.EnsureCoreWebView2Async();

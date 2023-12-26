@@ -173,7 +173,8 @@
             <Border.Width>
               <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
                 <Binding Path="Percentage" />
-                <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                <Binding Path="ActualWidth"
+                         RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
               </MultiBinding>
             </Border.Width>
           </Border>
@@ -226,7 +227,8 @@
             <Border.Width>
               <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
                 <Binding Path="ExclusivePercentage" />
-                <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                <Binding Path="ActualWidth"
+                         RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
               </MultiBinding>
             </Border.Width>
           </Border>
@@ -280,7 +282,8 @@
               <Border.Width>
                 <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
                   <Binding Path="ExclusivePercentage" />
-                  <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                  <Binding Path="ActualWidth"
+                           RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
                 </MultiBinding>
               </Border.Width>
             </Border>
@@ -294,7 +297,8 @@
                 <MultiBinding Converter="{StaticResource DoubleDiffScalingBoundConverter}">
                   <Binding Path="ExclusivePercentage" />
                   <Binding Path="Percentage" />
-                  <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                  <Binding Path="ActualWidth"
+                           RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
                 </MultiBinding>
               </Border.Width>
             </Border>

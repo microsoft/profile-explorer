@@ -234,7 +234,7 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
     ContextSearchPanel.NavigateToNextResult += ContextSearchPanel_NavigateToResult;
     ContextSearchPanel.NavigateToPreviousResult += ContextSearchPanel_NavigateToResult;
   }
-  
+
   public event EventHandler<RemarkContextChangedEventArgs> RemarkContextChanged;
   public event EventHandler<Remark> RemarkChanged;
   public event PropertyChangedEventHandler PropertyChanged;
@@ -344,6 +344,7 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
     PopupPanelButton.Visibility = Visibility.Collapsed;
     ColorButton.Visibility = Visibility.Visible;
   }
+
   protected override void SetPanelAccentColor(Color color) {
     ToolbarPanel.Background = ColorBrushes.GetBrush(color);
     ContextToolbarPanel.Background = ColorBrushes.GetBrush(color);

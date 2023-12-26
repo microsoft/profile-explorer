@@ -29,14 +29,13 @@ public class DraggablePopup : Popup {
       VerticalOffset += e.VerticalChange;
     };
   }
-  
-  public RelayCommand<SelectedColorEventArgs> PopupColorSelectedCommand => 
+
+  public RelayCommand<SelectedColorEventArgs> PopupColorSelectedCommand =>
     new RelayCommand<SelectedColorEventArgs>(async e => {
       SetPanelAccentColor(e.SelectedColor);
-  });
+    });
 
   protected virtual void SetPanelAccentColor(Color color) {
-
   }
 
   public event EventHandler PopupClosed;
@@ -110,7 +109,7 @@ public class DraggablePopup : Popup {
 
   public void BringToFront() {
     if (NativeMethods.GetWindowRect(PopupHandle, out var rect)) {
-      NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_TOP, 
+      NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_TOP,
                                  rect.Left, rect.Top, (int)Width, (int)Height,
                                  NativeMethods.TOPMOST_FLAGS);
     }
@@ -124,14 +123,14 @@ public class DraggablePopup : Popup {
                                  NativeMethods.TOPMOST_FLAGS);
     }
   }
-  
+
   public void SendToBack() {
-    if(IsAlwaysOnTop) {
+    if (IsAlwaysOnTop) {
       return;
     }
 
     if (NativeMethods.GetWindowRect(PopupHandle, out var rect)) {
-      NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_NOTOPMOST, 
+      NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_NOTOPMOST,
                                  rect.Left, rect.Top, (int)Width, (int)Height,
                                  NativeMethods.TOPMOST_FLAGS);
     }

@@ -78,7 +78,7 @@ public partial class SectionPanelPair : ToolPanelControl {
   }
 
   public async Task RefreshProfile() {
-    await MainPanel.Update(force: true, analyzeFunctions: false);
+    await MainPanel.Update(true, false);
   }
 
   public async Task SetMainSummary(IRTextSummary summary, bool updateFunctionList = false) {

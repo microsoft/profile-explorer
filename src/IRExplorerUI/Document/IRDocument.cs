@@ -475,7 +475,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     ProfileColumnData = null;
   }
 
-  public async Task<bool> InitializeFromDocument(IRDocument doc, bool copyTemporaryHighlighting = true, string text = null) {
+  public async Task<bool> InitializeFromDocument(IRDocument doc, bool copyTemporaryHighlighting = true,
+                                                 string text = null) {
     if (Section == doc.Section) {
       return false;
     }
@@ -1111,8 +1112,13 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   //    }
   //}
 
-  public DocumentLine GetLineByNumber(int lineNumber) => Document.GetLineByNumber(lineNumber);
-  public DocumentLine GetLineByOffset(int offset) => Document.GetLineByOffset(offset);
+  public DocumentLine GetLineByNumber(int lineNumber) {
+    return Document.GetLineByNumber(lineNumber);
+  }
+
+  public DocumentLine GetLineByOffset(int offset) {
+    return Document.GetLineByOffset(offset);
+  }
 
   public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true) {
     var style = new HighlightingStyle(selectedColor, null);
@@ -3716,8 +3722,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private async Task<IRDocumentPopup> CreateElementPreviewPopup(IRElement element, Point position) {
     return await IRDocumentPopup.CreateNew(this, element, position,
-                                                       IRDocumentPopup.DefaultWidth,
-                                                       IRDocumentPopup.DefaultHeight, this);
+                                           IRDocumentPopup.DefaultWidth,
+                                           IRDocumentPopup.DefaultHeight, this);
   }
 
   private async Task<IRDocumentPopup> CreateCallTargetPreviewPopup(IRElement element, bool alwaysShow, Point position) {
@@ -3728,6 +3734,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       if (alwaysShow) {
         Utils.ShowWarningMessageBox($"Couldn't find call target in opened document:\n{element.Name}", this);
       }
+
       return null;
     }
 
@@ -3738,7 +3745,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     return await IRDocumentPopup.CreateNew(result, position, IRDocumentPopup.DefaultWidth,
                                            IRDocumentPopup.DefaultHeight * 2,
-                                           this, Session,  $"Function: {element.Name}");
+                                           this, Session, $"Function: {element.Name}");
   }
 
   private IRTextSection FindCallTargetSection(IRElement element) {

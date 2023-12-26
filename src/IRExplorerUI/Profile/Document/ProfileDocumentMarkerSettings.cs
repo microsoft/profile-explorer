@@ -117,7 +117,7 @@ public class ProfileDocumentMarkerSettings {
 
   public Brush PickTextColor(OptionalColumn column, int order, double percentage) {
     return !column.Style.TextColor.IsTransparent() ?
-            ColorBrushes.GetBrush(column.Style.TextColor) : ColumnTextColor;
+      ColorBrushes.GetBrush(column.Style.TextColor) : ColumnTextColor;
   }
 
   public FontWeight PickTextWeight(OptionalColumn column, int order, double percentage) {
@@ -205,8 +205,8 @@ public class ProfileDocumentMarkerSettings {
 
   public Brush PickPercentageBarColor(OptionalColumn column) {
     return !column.Style.PercentageBarBackColor.IsTransparent() ?
-          ColorBrushes.GetBrush(column.Style.PercentageBarBackColor) :
-          PercentageBarBackColor;
+      ColorBrushes.GetBrush(column.Style.PercentageBarBackColor) :
+      PercentageBarBackColor;
   }
 
   public bool ShouldShowPercentageBar(OptionalColumn column) {

@@ -39,7 +39,7 @@ public class RecordingSession : BindableObject {
   }
 
   public static RecordingSession FromCommandLineArgs() {
-    var args = Environment.GetCommandLineArgs();
+    string[] args = Environment.GetCommandLineArgs();
 
     if (args.Length >= 6 && args[1] == "--open-trace") {
       var report = new ProfileDataReport();
@@ -116,7 +116,8 @@ public class RecordingSession : BindableObject {
       }
 
       if (report_.IsStartProcessSession) {
-        return $"{report_?.RecordingSessionOptions.ApplicationPath} {report_?.RecordingSessionOptions.ApplicationArguments}";
+        return
+          $"{report_?.RecordingSessionOptions.ApplicationPath} {report_?.RecordingSessionOptions.ApplicationArguments}";
       }
 
       return null;

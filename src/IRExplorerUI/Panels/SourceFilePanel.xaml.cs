@@ -168,7 +168,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
   }
 
-
   private void SourceFile_CopyPath(object sender, RoutedEventArgs e) {
     if (!string.IsNullOrEmpty(sourceFilePath_)) {
       Clipboard.SetText(sourceFilePath_);
@@ -180,6 +179,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       Utils.OpenExternalFile(sourceFilePath_);
     }
   }
+
         #region IToolPanel
 
   public override ToolPanelKind PanelKind => ToolPanelKind.Source;
@@ -304,7 +304,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
                                                        $"Open {sourceInfo.OriginalFilePath}"));
 
       if (string.IsNullOrEmpty(mappedSourceFilePath)) {
-        if(Utils.ShowYesNoMessageBox("Continue asking for the location of this source file?", this) ==
+        if (Utils.ShowYesNoMessageBox("Continue asking for the location of this source file?", this) ==
             MessageBoxResult.No) {
           disabledSourceMappings_.Add(sourceInfo.FilePath);
         }
@@ -419,7 +419,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     return fileLoaded;
   }
 
-
   public override void OnSessionEnd() {
     base.OnSessionEnd();
     ResetState();
@@ -429,5 +428,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
     await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
+
         #endregion
 }

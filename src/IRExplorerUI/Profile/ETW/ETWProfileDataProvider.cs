@@ -343,7 +343,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     foreach (var sample in sampleRefs) {
       // Update progress every pow2 N samples.
       if ((++index & PROGRESS_UPDATE_INTERVAL - 1) == 0) {
-        if (cancelableTask is { IsCanceled: true }) {
+        if (cancelableTask is {IsCanceled: true}) {
           return samples;
         }
 

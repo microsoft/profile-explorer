@@ -72,7 +72,7 @@
             Width="14"
             Height="14"
             Source="{StaticResource DockLeftIcon}"
-            Style="{StaticResource DisabledImageStyle}"/>
+            Style="{StaticResource DisabledImageStyle}" />
         </Button>
         <Button
           x:Name="NextInstanceButton"
@@ -87,7 +87,7 @@
             Width="14"
             Height="14"
             Source="{StaticResource DockRightIcon}"
-            Style="{StaticResource DisabledImageStyle}"/>
+            Style="{StaticResource DisabledImageStyle}" />
         </Button>
       </Grid>
     </Grid>
@@ -114,49 +114,50 @@
               HorizontalAlignment="Stretch"
               Header="Instances"
               IsExpanded="True">
-            <StackPanel Orientation="Vertical">
-            <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-              <TextBlock Width="70" Text="Number" ToolTip="Number of unique instances of the selected function" />
-              <TextBlock
-                Margin="4,0,0,0"
-                FontWeight="Medium"
-                Text="{Binding FunctionInstancesCount}" />
-            </StackPanel>
+              <StackPanel Orientation="Vertical">
+                <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
+                  <TextBlock Width="70" Text="Number"
+                             ToolTip="Number of unique instances of the selected function" />
+                  <TextBlock
+                    Margin="4,0,0,0"
+                    FontWeight="Medium"
+                    Text="{Binding FunctionInstancesCount}" />
+                </StackPanel>
 
-            <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-              <TextBlock Width="70" Text="Total time" />
-              <ContentControl
-                Width="200"
-                Margin="4,0,0,0"
-                HorizontalAlignment="Left"
-                Content="{Binding InstancesNode}"
-                ToolTip="Total time across all function instances"
-                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
-            </StackPanel>
+                <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
+                  <TextBlock Width="70" Text="Total time" />
+                  <ContentControl
+                    Width="200"
+                    Margin="4,0,0,0"
+                    HorizontalAlignment="Left"
+                    Content="{Binding InstancesNode}"
+                    ToolTip="Total time across all function instances"
+                    ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
+                </StackPanel>
 
-            <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-              <TextBlock Width="70" Text="Average time" />
-              <ContentControl
-                Width="200"
-                Margin="4,0,0,0"
-                HorizontalAlignment="Left"
-                Content="{Binding AverageNode}"
-                ToolTip="Average time across all function instances"
-                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
-            </StackPanel>
+                <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
+                  <TextBlock Width="70" Text="Average time" />
+                  <ContentControl
+                    Width="200"
+                    Margin="4,0,0,0"
+                    HorizontalAlignment="Left"
+                    Content="{Binding AverageNode}"
+                    ToolTip="Average time across all function instances"
+                    ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
+                </StackPanel>
 
-            <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-              <TextBlock Width="70" Text="Median time" />
-              <ContentControl
-                Width="200"
-                Margin="4,0,0,0"
-                HorizontalAlignment="Left"
-                Content="{Binding MedianNode}"
-                ToolTip="Median time across all function instances"
-                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
-            </StackPanel>
+                <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
+                  <TextBlock Width="70" Text="Median time" />
+                  <ContentControl
+                    Width="200"
+                    Margin="4,0,0,0"
+                    HorizontalAlignment="Left"
+                    Content="{Binding MedianNode}"
+                    ToolTip="Median time across all function instances"
+                    ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
+                </StackPanel>
               </StackPanel>
-              </Expander>
+            </Expander>
 
             <Expander
               x:Name="HistogramHost"

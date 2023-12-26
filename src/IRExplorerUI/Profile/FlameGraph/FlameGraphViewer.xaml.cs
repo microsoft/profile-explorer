@@ -156,6 +156,7 @@ public partial class FlameGraphViewer : FrameworkElement {
 
   public FlameGraphNode SelectNode(ProfileCallTreeNode graphNode) {
     var nodes = flameGraph_.GetNodes(graphNode);
+
     // Because the flame graph can be rooted at a different node then
     // the call tree, parts of the call tree may not have a flame graph node.
     if (nodes is {Count: > 0}) {

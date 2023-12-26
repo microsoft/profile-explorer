@@ -79,7 +79,6 @@ public partial class App : Application {
   public static string ApplicationPath => Process.GetCurrentProcess().MainModule.FileName;
   public static string ApplicationDirectory => Path.GetDirectoryName(ApplicationPath);
 
-
   public static string[] GetFunctionTaskScripts() {
     try {
       string path = GetSettingsFilePath(FunctionTaskScriptsDirectory);
@@ -630,7 +629,7 @@ public partial class App : Application {
     //   CustomCategory = "Tasks"
     // };
 
-    var currentJumplist = JumpList.GetJumpList(App.Current);
+    var currentJumplist = JumpList.GetJumpList(Current);
 
     if (currentJumplist != null) {
       currentJumplist.JumpItems.Clear();
@@ -644,7 +643,7 @@ public partial class App : Application {
       jumpList.JumpItems.Add(instanceTask);
       //jumpList.JumpItems.Add(recordTask);
       //jumpList.JumpItems.Add(recordSystemTask);
-      JumpList.SetJumpList(App.Current, jumpList);
+      JumpList.SetJumpList(Current, jumpList);
     }
   }
 
@@ -684,6 +683,6 @@ public partial class App : Application {
 
   public static void Restart() {
     Process.Start(Process.GetCurrentProcess().MainModule.FileName);
-    Application.Current.Shutdown();
+    Current.Shutdown();
   }
 }

@@ -21,7 +21,8 @@
   <DrawingImage x:Key="LeftArrowIcon">
     <DrawingImage.Drawing>
       <DrawingGroup ClipGeometry="M0,0 V16 H10 V0 H0 Z">
-        <GeometryDrawing Brush="#FF000000" Geometry="F0 M10,16z M0,0z M6,3L0,8 6,13 6,10 10,10 10,6 6,6 6,3z" />
+        <GeometryDrawing Brush="#FF000000"
+                         Geometry="F0 M10,16z M0,0z M6,3L0,8 6,13 6,10 10,10 10,6 6,6 6,3z" />
       </DrawingGroup>
     </DrawingImage.Drawing>
   </DrawingImage>
@@ -29,7 +30,8 @@
   <DrawingImage x:Key="RightArrowIcon">
     <DrawingImage.Drawing>
       <DrawingGroup ClipGeometry="M0,0 V16 H10 V0 H0 Z">
-        <GeometryDrawing Brush="#FF000000" Geometry="F0 M10,16z M0,0z M10,8L4,3 4,6 0,6 0,10 4,10 4,13 10,8z" />
+        <GeometryDrawing Brush="#FF000000"
+                         Geometry="F0 M10,16z M0,0z M10,8L4,3 4,6 0,6 0,10 4,10 4,13 10,8z" />
       </DrawingGroup>
     </DrawingImage.Drawing>
   </DrawingImage>
@@ -190,7 +192,8 @@
   <DrawingImage x:Key="DownArrowIcon">
     <DrawingImage.Drawing>
       <DrawingGroup ClipGeometry="M0,0 V16 H10 V0 H0 Z">
-        <GeometryDrawing Brush="#FF000000" Geometry="F0 M10,16z M0,0z M5,11L0,6 1.5,4.5 5,8.25 8.5,4.5 10,6 5,11z" />
+        <GeometryDrawing Brush="#FF000000"
+                         Geometry="F0 M10,16z M0,0z M5,11L0,6 1.5,4.5 5,8.25 8.5,4.5 10,6 5,11z" />
       </DrawingGroup>
     </DrawingImage.Drawing>
   </DrawingImage>
@@ -198,7 +201,8 @@
   <DrawingImage x:Key="UpArrowIcon">
     <DrawingImage.Drawing>
       <DrawingGroup ClipGeometry="M0,0 V16 H10 V0 H0 Z">
-        <GeometryDrawing Brush="#FF000000" Geometry="F0 M10,16z M0,0z M10,10L8.5,11.5 5,7.75 1.5,11.5 0,10 5,5 10,10z" />
+        <GeometryDrawing Brush="#FF000000"
+                         Geometry="F0 M10,16z M0,0z M10,10L8.5,11.5 5,7.75 1.5,11.5 0,10 5,5 10,10z" />
       </DrawingGroup>
     </DrawingImage.Drawing>
   </DrawingImage>
@@ -422,7 +426,8 @@
   <DrawingImage x:Key="DockLeftIcon">
     <DrawingImage.Drawing>
       <DrawingGroup ClipGeometry="M0,0 V16 H8 V0 H0 Z">
-        <GeometryDrawing Brush="#FF000000" Geometry="F0 M8,16z M0,0z M5.5,3L7,4.5 3.25,8 7,11.5 5.5,13 0.5,8 5.5,3z" />
+        <GeometryDrawing Brush="#FF000000"
+                         Geometry="F0 M8,16z M0,0z M5.5,3L7,4.5 3.25,8 7,11.5 5.5,13 0.5,8 5.5,3z" />
       </DrawingGroup>
     </DrawingImage.Drawing>
   </DrawingImage>
@@ -430,7 +435,8 @@
   <DrawingImage x:Key="DockRightIcon">
     <DrawingImage.Drawing>
       <DrawingGroup ClipGeometry="M0,0 V16 H8 V0 H0 Z">
-        <GeometryDrawing Brush="#FF000000" Geometry="F0 M8,16z M0,0z M7.5,8L2.5,13 1,11.5 4.75,8 1,4.5 2.5,3 7.5,8z" />
+        <GeometryDrawing Brush="#FF000000"
+                         Geometry="F0 M8,16z M0,0z M7.5,8L2.5,13 1,11.5 4.75,8 1,4.5 2.5,3 7.5,8z" />
       </DrawingGroup>
     </DrawingImage.Drawing>
   </DrawingImage>
@@ -582,7 +588,8 @@
   <DrawingImage x:Key="ZapIcon">
     <DrawingImage.Drawing>
       <DrawingGroup ClipGeometry="M0,0 V16 H10 V0 H0 Z">
-        <GeometryDrawing Brush="#FF000000" Geometry="F0 M10,16z M0,0z M10,7L6,7 9,0 0,9 4,9 1,16 10,7z" />
+        <GeometryDrawing Brush="#FF000000"
+                         Geometry="F0 M10,16z M0,0z M10,7L6,7 9,0 0,9 4,9 1,16 10,7z" />
       </DrawingGroup>
     </DrawingImage.Drawing>
   </DrawingImage>
@@ -933,7 +940,8 @@
       <DrawingGroup ClipGeometry="M0,0 V16 H12 V0 H0 Z">
         <DrawingGroup Opacity="1">
           <DrawingGroup Opacity="1">
-            <GeometryDrawing Brush="#FF006E00" Geometry="F0 M12,16z M0,0z M12,5L12,5 4,13 0,9 1.5,7.5 4,10 10.5,3.5z" />
+            <GeometryDrawing Brush="#FF006E00"
+                             Geometry="F0 M12,16z M0,0z M12,5L12,5 4,13 0,9 1.5,7.5 4,10 10.5,3.5z" />
           </DrawingGroup>
         </DrawingGroup>
       </DrawingGroup>
@@ -956,7 +964,8 @@
   <DrawingImage x:Key="ZoomInIcon">
     <DrawingImage.Drawing>
       <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
-        <GeometryDrawing Geometry="F1 M24,24z M0,0z M8,11L11,11 M14,11L11,11 M11,11L11,8 M11,11L11,14">
+        <GeometryDrawing
+          Geometry="F1 M24,24z M0,0z M8,11L11,11 M14,11L11,11 M11,11L11,8 M11,11L11,14">
           <GeometryDrawing.Pen>
             <Pen
               Brush="#FF000000"
@@ -1234,7 +1243,8 @@
               Thickness="1.6" />
           </GeometryDrawing.Pen>
         </GeometryDrawing>
-        <GeometryDrawing Geometry="F1 M24,24z M0,0z M9,14L12,14 M15,14L12,14 M12,14L12,11 M12,14L12,17">
+        <GeometryDrawing
+          Geometry="F1 M24,24z M0,0z M9,14L12,14 M15,14L12,14 M12,14L12,11 M12,14L12,17">
           <GeometryDrawing.Pen>
             <Pen
               Brush="#FF000000"

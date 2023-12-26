@@ -107,49 +107,49 @@
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO"></TextBlock>
+          <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Flame Graph" IsEnabled="False">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO"></TextBlock>
+          <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Call Tree" IsEnabled="False">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO"></TextBlock>
+          <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Caller/Callee" IsEnabled="False">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO"></TextBlock>
+          <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Source File" IsEnabled="False">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO"></TextBlock>
+          <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Profiling" IsEnabled="False">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO"></TextBlock>
+          <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Advanced" IsEnabled="False">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO"></TextBlock>
+          <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
     </TabControl>
@@ -163,57 +163,57 @@
       </Grid.ColumnDefinitions>
 
       <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2">
-      <Button
+        <Button
 
-        x:Name="ResetButton"
-        Click="ResetButton_OnClick"
-        Height="24"
-        Padding="4,2,4,2"
-        ToolTip="Reset all settings to their default values"
-        HorizontalContentAlignment="Left">
-        <StackPanel Orientation="Horizontal">
-          <Image
-            Width="16"
-            Height="16"
-            Source="{StaticResource UndoIcon}" />
-          <TextBlock Margin="4,0,0,0" Text="Default" />
-        </StackPanel>
-      </Button>
-      <Button
+          x:Name="ResetButton"
+          Click="ResetButton_OnClick"
+          Height="24"
+          Padding="4,2,4,2"
+          ToolTip="Reset all settings to their default values"
+          HorizontalContentAlignment="Left">
+          <StackPanel Orientation="Horizontal">
+            <Image
+              Width="16"
+              Height="16"
+              Source="{StaticResource UndoIcon}" />
+            <TextBlock Margin="4,0,0,0" Text="Default" />
+          </StackPanel>
+        </Button>
+        <Button
 
-        Height="24"
-        Margin="2,0,0,0"
-        Padding="4,2,4,2"
-        x:Name="ImportButton"
-        Click="ImportButton_OnClick"
-        HorizontalContentAlignment="Left"
-        ToolTip="Import all settings from an exported ZIP file">
-        <StackPanel Orientation="Horizontal">
-          <Image
-            Width="16"
-            Height="16"
-            Source="{StaticResource FolderIcon}" />
-          <TextBlock Margin="4,0,0,0" Text="Import" />
-        </StackPanel>
-      </Button>
-      <Button
+          Height="24"
+          Margin="2,0,0,0"
+          Padding="4,2,4,2"
+          x:Name="ImportButton"
+          Click="ImportButton_OnClick"
+          HorizontalContentAlignment="Left"
+          ToolTip="Import all settings from an exported ZIP file">
+          <StackPanel Orientation="Horizontal">
+            <Image
+              Width="16"
+              Height="16"
+              Source="{StaticResource FolderIcon}" />
+            <TextBlock Margin="4,0,0,0" Text="Import" />
+          </StackPanel>
+        </Button>
+        <Button
 
-        Height="24"
-        Margin="2,0,0,0"
-        Padding="4,2,4,2"
-        x:Name="ExportButton"
-        Click="ExportButton_OnClick"
-        HorizontalContentAlignment="Left"
-        ToolTip="Export all settings to a ZIP file">
-        <StackPanel Orientation="Horizontal">
-          <Image
-            Width="16"
-            Height="16"
-            Source="{StaticResource SaveIcon}" />
-          <TextBlock Margin="4,0,0,0" Text="Export" />
-        </StackPanel>
-      </Button>
-        </StackPanel>
+          Height="24"
+          Margin="2,0,0,0"
+          Padding="4,2,4,2"
+          x:Name="ExportButton"
+          Click="ExportButton_OnClick"
+          HorizontalContentAlignment="Left"
+          ToolTip="Export all settings to a ZIP file">
+          <StackPanel Orientation="Horizontal">
+            <Image
+              Width="16"
+              Height="16"
+              Source="{StaticResource SaveIcon}" />
+            <TextBlock Margin="4,0,0,0" Text="Export" />
+          </StackPanel>
+        </Button>
+      </StackPanel>
       <Button
         x:Name="ApplyButton"
         Click="ApplyButton_OnClick"

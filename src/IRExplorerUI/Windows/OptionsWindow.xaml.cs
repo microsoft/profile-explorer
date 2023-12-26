@@ -15,7 +15,7 @@ public partial class OptionsWindow : Window {
     Session = session;
     LoadSettings();
 
-    this.Closing += async (sender, args) => {
+    Closing += async (sender, args) => {
       await SaveAndReloadSettings();
     };
   }
@@ -57,7 +57,7 @@ public partial class OptionsWindow : Window {
     if (!string.IsNullOrEmpty(path)) {
       App.CloseLogFile();
 
-      if(!App.Settings.SaveToArchive(path)) {
+      if (!App.Settings.SaveToArchive(path)) {
         Utils.ShowErrorMessageBox("Failed to export settings.", this);
       }
 
@@ -69,7 +69,9 @@ public partial class OptionsWindow : Window {
     string path = Utils.ShowOpenFileDialog("ZIP archive|*.zip", "*.zip", "Import settings");
 
     if (!string.IsNullOrEmpty(path)) {
-      if (Utils.ShowYesNoMessageBox("Do you want to import new settings?\nAll existing settings will be lost and application will restart.", this) ==
+      if (Utils.ShowYesNoMessageBox(
+            "Do you want to import new settings?\nAll existing settings will be lost and application will restart.",
+            this) ==
           MessageBoxResult.No) {
         return;
       }

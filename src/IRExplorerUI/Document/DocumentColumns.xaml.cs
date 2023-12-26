@@ -59,8 +59,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   public DocumentSettings Settings {
-    get => settings_; 
-    set => settings_ = value; 
+    get => settings_;
+    set => settings_ = value;
   }
 
   public void SelectRow(int index) {
@@ -80,7 +80,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     ColumnsList.ItemsSource = null;
     associatedDocument_ = associatedDocument;
     var function = associatedDocument.Function;
-    var rowCount = associatedDocument.LineCount;
+    int rowCount = associatedDocument.LineCount;
 
     if (!columnData.HasData) {
       return;
@@ -137,7 +137,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
           var tuple = block.Tuples[i];
           int currentLine = tuple.TextLocation.Line;
           bool isSeparatorLine = settings_.ShowBlockSeparatorLine &&
-                                  i == block.Tuples.Count - 1;
+                                 i == block.Tuples.Count - 1;
 
           // Add dummy empty list view lines to match document text.
           if (currentLine > prevLine + 1) {
@@ -205,6 +205,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
       if (rowCount != prevLine + 1) {
         AddDummyRows(rowCount - prevLine, prevIsOddBlock);
       }
+
       return elementValueList;
     });
 

@@ -144,7 +144,7 @@ public partial class HelpPanel : ToolPanelControl {
   }
 
   private async Task InitializeBrowser() {
-    if(browserInitialized_) {
+    if (browserInitialized_) {
       return;
     }
 
@@ -193,7 +193,7 @@ public partial class HelpPanel : ToolPanelControl {
         }
       }
     };
-    
+
     // Force light mode for the WebView2 control for now
     // screenshots don't look good in dark mode.
     Browser.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
@@ -252,7 +252,6 @@ public partial class HelpPanel : ToolPanelControl {
     try {
       if (e.Uri.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
           e.Uri.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)) {
-
         if (previewWindow_ != null) {
           // Second click on same image closes current preview.
           bool showPreview = previewUrl_ != e.Uri;
@@ -270,8 +269,8 @@ public partial class HelpPanel : ToolPanelControl {
           height = 600;
         }
 
-        width = (int)Math.Min(width, System.Windows.SystemParameters.PrimaryScreenWidth - 50);
-        height = (int)Math.Min(height, System.Windows.SystemParameters.PrimaryScreenHeight - 50);
+        width = (int)Math.Min(width, SystemParameters.PrimaryScreenWidth - 50);
+        height = (int)Math.Min(height, SystemParameters.PrimaryScreenHeight - 50);
         ShowImagePreview(e.Uri, width, height);
       }
       else {
@@ -306,7 +305,7 @@ public partial class HelpPanel : ToolPanelControl {
     window.Content = browser;
     window.Width = width;
     window.Height = height;
-    window.Owner = App.Current.MainWindow;
+    window.Owner = Application.Current.MainWindow;
 
     window.PreviewMouseDown += (sender, args) => {
       CloseImagePreview();
