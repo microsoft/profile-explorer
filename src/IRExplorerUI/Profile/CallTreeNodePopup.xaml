@@ -9,6 +9,7 @@
   MinWidth="300"
   MinHeight="75"
   MaxWidth="800"
+  MaxHeight="500"
   d:DesignHeight="450"
   d:DesignWidth="800"
   AllowsTransparency="True"

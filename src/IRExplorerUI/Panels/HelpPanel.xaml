@@ -33,7 +33,7 @@
           Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
           Loaded="ToolBar_Loaded">
           <TextBlock
-            Margin="5,0,4,0"
+            Margin="2,0,4,0"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Text="Topic" />
