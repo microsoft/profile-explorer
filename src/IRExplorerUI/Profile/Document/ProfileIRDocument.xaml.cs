@@ -34,6 +34,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private int lastSourceLineIndex_;
   private ReadOnlyMemory<char> sourceText_;
   private bool hasProfileInfo_;
+  private bool useCompactMode_;
   private Brush selectedLineBrush_;
   private int selectedLine_;
 
@@ -70,6 +71,16 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     set {
       if (hasProfileInfo_ != value) {
         hasProfileInfo_ = value;
+        OnPropertyChanged();
+      }
+    }
+  }
+
+  public bool UseCompactMode {
+    get => useCompactMode_;
+    set {
+      if (useCompactMode_ != value) {
+        useCompactMode_ = value;
         OnPropertyChanged();
       }
     }
@@ -137,12 +148,15 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ColumnsVisible = sourceColumnData_ != null && sourceColumnData_.HasData;
 
     if (ColumnsVisible) {
-      // Use compact mode that shows only the time column.
-      if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TIME_COLUMN) is var timeColumn) {
-        timeColumn.Style.ShowMainColumnIcon = false;
-      }
-      if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TIME_PERCENTAGE_COLUMN) is var timePercColumn) {
-        timePercColumn.IsVisible = false;
+      if (UseCompactMode) {
+        // Use compact mode that shows only the time column.
+        if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TIME_COLUMN) is var timeColumn) {
+          timeColumn.Style.ShowMainColumnIcon = false;
+        }
+
+        if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TIME_PERCENTAGE_COLUMN) is var timePercColumn) {
+          timePercColumn.IsVisible = false;
+        }
       }
 
       await ProfileColumns.Display(sourceColumnData_, TextView);

@@ -221,7 +221,6 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
   public RemarkPreviewPanel() {
     InitializeComponent();
     PanelResizeGrip.ResizedControl = this;
-    RegisterColorButton(ColorButton, ToolbarPanel.Background);
     DataContext = this; // Used for auto-resizing with ShowPreview.
 
     //? TODO: Add options
@@ -235,7 +234,7 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
     ContextSearchPanel.NavigateToNextResult += ContextSearchPanel_NavigateToResult;
     ContextSearchPanel.NavigateToPreviousResult += ContextSearchPanel_NavigateToResult;
   }
-
+  
   public event EventHandler<RemarkContextChangedEventArgs> RemarkContextChanged;
   public event EventHandler<Remark> RemarkChanged;
   public event PropertyChangedEventHandler PropertyChanged;

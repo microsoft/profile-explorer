@@ -29,7 +29,6 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     Initialize(position, width, height, owner);
     TextView.PreviewMouseWheel += TextView_OnMouseWheel;
     PanelResizeGrip.ResizedControl = this;
-    RegisterColorButton(ColorButton, ToolbarPanel.Background);
     DataContext = this;
     Session = session;
     owner_ = owner;
@@ -152,7 +151,6 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       if (!IsDetached) {
         DetachPopup();
         EnableVerticalScrollbar();
-        ColorButton.Visibility = Visibility.Visible;
         Session.RegisterDetachedPanel(this);
       }
 

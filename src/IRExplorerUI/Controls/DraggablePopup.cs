@@ -8,15 +8,14 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI.Controls;
 
 public class DraggablePopup : Popup {
   private bool duringMinimize_;
   private bool isDetached_;
-  private Popup colorPopup_;
-  private Button colorButton_;
-  private Brush colorPopupBackground_;
+  private bool isAlwaysOnTop_;
 
   public DraggablePopup() {
     MouseDown += (sender, e) => {
@@ -30,39 +29,11 @@ public class DraggablePopup : Popup {
       VerticalOffset += e.VerticalChange;
     };
   }
-
-  private void HideColorSelector() {
-    if (colorPopup_ != null) {
-      colorPopup_.IsOpen = false;
-      colorPopup_ = null;
-    }
-  }
-
-  protected void RegisterColorButton(Button button, Brush colorPopupBackground) {
-    colorButton_ = button;
-    colorPopupBackground_ = colorPopupBackground;
-    colorButton_.Click += ColorButton_Click;
-  }
-
-  private void ColorButton_Click(object sender, RoutedEventArgs e) {
-    var colorSelector = new ColorSelector();
-    colorSelector.BorderBrush = SystemColors.ActiveBorderBrush;
-    colorSelector.BorderThickness = new Thickness(1);
-    colorSelector.Background = colorPopupBackground_;
-    colorSelector.ColorSelected += ColorSelector_ColorSelected;
-
-    colorPopup_ = new Popup();
-    colorPopup_.Placement = PlacementMode.Bottom;
-    colorPopup_.PlacementTarget = colorButton_;
-    colorPopup_.StaysOpen = true;
-    colorPopup_.Child = colorSelector;
-    colorPopup_.IsOpen = true;
-  }
-
-  private void ColorSelector_ColorSelected(object sender, SelectedColorEventArgs e) {
-    SetPanelAccentColor(e.SelectedColor);
-    HideColorSelector();
-  }
+  
+  public RelayCommand<SelectedColorEventArgs> PopupColorSelectedCommand => 
+    new RelayCommand<SelectedColorEventArgs>(async e => {
+      SetPanelAccentColor(e.SelectedColor);
+  });
 
   protected virtual void SetPanelAccentColor(Color color) {
 
@@ -71,6 +42,14 @@ public class DraggablePopup : Popup {
   public event EventHandler PopupClosed;
   public event EventHandler PopupDetached;
   public Thumb Thumb { get; private set; } = new Thumb {Width = 0, Height = 0};
+
+  public bool IsAlwaysOnTop {
+    get => isAlwaysOnTop_;
+    set {
+      isAlwaysOnTop_ = value;
+      UpdateAlwaysOnTop(value);
+    }
+  }
 
   public IntPtr PopupHandle {
     get {
@@ -82,7 +61,6 @@ public class DraggablePopup : Popup {
   public bool IsDetached => isDetached_;
 
   public virtual bool ShouldStartDragging(MouseButtonEventArgs e) {
-    HideColorSelector();
     return e.LeftButton == MouseButtonState.Pressed;
   }
 
@@ -131,25 +109,32 @@ public class DraggablePopup : Popup {
   }
 
   public void BringToFront() {
-    NativeMethods.RECT rect;
-
-    if (!NativeMethods.GetWindowRect(PopupHandle, out rect)) {
-      return;
+    if (NativeMethods.GetWindowRect(PopupHandle, out var rect)) {
+      NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_TOP, 
+                                 rect.Left, rect.Top, (int)Width, (int)Height,
+                                 NativeMethods.TOPMOST_FLAGS);
     }
-
-    NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_TOPMOST, rect.Left, rect.Top, (int)Width, (int)Height,
-                               NativeMethods.TOPMOST_FLAGS);
   }
 
+  public void UpdateAlwaysOnTop(bool value) {
+    if (NativeMethods.GetWindowRect(PopupHandle, out var rect)) {
+      NativeMethods.SetWindowPos(PopupHandle,
+                                 value ? NativeMethods.HWND_TOPMOST : NativeMethods.HWND_NOTOPMOST,
+                                 rect.Left, rect.Top, (int)Width, (int)Height,
+                                 NativeMethods.TOPMOST_FLAGS);
+    }
+  }
+  
   public void SendToBack() {
-    NativeMethods.RECT rect;
-
-    if (!NativeMethods.GetWindowRect(PopupHandle, out rect)) {
+    if(IsAlwaysOnTop) {
       return;
     }
 
-    NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_NOTOPMOST, rect.Left, rect.Top, (int)Width, (int)Height,
-                               NativeMethods.TOPMOST_FLAGS);
+    if (NativeMethods.GetWindowRect(PopupHandle, out var rect)) {
+      NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_NOTOPMOST, 
+                                 rect.Left, rect.Top, (int)Width, (int)Height,
+                                 NativeMethods.TOPMOST_FLAGS);
+    }
   }
 
   public void Minimize() {

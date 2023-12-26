@@ -362,6 +362,27 @@
     </Setter>
   </Style>
 
+  <ContextMenu x:Key="PopupContextMenu">
+    <MenuItem
+      IsCheckable="True"
+      IsChecked="{Binding Path=IsAlwaysOnTop}"
+      Header="Always on Top">
+      <MenuItem.Icon>
+        <Image
+          Height="16"
+          Source="{StaticResource PinIcon}"
+          Width="16" />
+      </MenuItem.Icon>
+    </MenuItem>
+    <Separator />
+
+    <MenuItem>
+      <MenuItem.Header>
+        <local:ColorSelector ColorSelectedCommand="{Binding PopupColorSelectedCommand}"/>
+      </MenuItem.Header>
+    </MenuItem>
+  </ContextMenu>
+  
   <ContextMenu x:Key="GraphContextMenu">
     <MenuItem
       Focusable="False"
