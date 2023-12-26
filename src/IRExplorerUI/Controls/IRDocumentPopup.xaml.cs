@@ -18,7 +18,6 @@ namespace IRExplorerUI.Controls;
 public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   public static readonly double DefaultWidth = 500;
   public static readonly double DefaultHeight = 200;
-
   private string panelTitle_;
   private string panelToolTip_;
   private UIElement owner_;
@@ -64,8 +63,8 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   public static async Task<IRDocumentPopup> CreateNew(IRDocument document, IRElement previewedElement,
-                                          Point position, double width, double height, UIElement owner,
-                                          string titlePrefix = "") {
+                                                      Point position, double width, double height, UIElement owner,
+                                                      string titlePrefix = "") {
     var popup = CreatePopup(document.Section, previewedElement, position, width, height,
                             owner ?? document.TextArea.TextView, document.Session, titlePrefix);
     await popup.InitializeFromDocument(document);
@@ -229,7 +228,8 @@ public class IRDocumentPopupInstance {
     session_ = session;
   }
 
-  public void SetupHoverEvents(UIElement target, TimeSpan hoverDuration, Func<PreviewPopupArgs> previewedElementFinder) {
+  public void SetupHoverEvents(UIElement target, TimeSpan hoverDuration,
+                               Func<PreviewPopupArgs> previewedElementFinder) {
     previewedElementFinder_ = previewedElementFinder;
     var hover = new MouseHoverLogic(target, hoverDuration);
     hover.MouseHover += Hover_MouseHover;
@@ -369,7 +369,7 @@ public class IRDocumentPopupInstance {
 public class PreviewPopupArgs {
   public static PreviewPopupArgs ForDocument(IRDocument document, IRElement element,
                                              UIElement relativeElement, string title = "") {
-    return new() {
+    return new PreviewPopupArgs {
       Element = element,
       Document = document,
       RelativeElement = relativeElement,
@@ -379,7 +379,7 @@ public class PreviewPopupArgs {
 
   public static PreviewPopupArgs ForSection(IRTextSection section,
                                             UIElement relativeElement, string title = "") {
-    return new() {
+    return new PreviewPopupArgs {
       Section = section,
       RelativeElement = relativeElement,
       Title = title
@@ -387,12 +387,12 @@ public class PreviewPopupArgs {
   }
 
   public static PreviewPopupArgs ForFunction(IRTextFunction function,
-                                            UIElement relativeElement, string title = "") {
+                                             UIElement relativeElement, string title = "") {
     if (function == null || function.Sections.Count == 0) {
       return null;
     }
 
-    return new() {
+    return new PreviewPopupArgs {
       Section = function.Sections[0],
       RelativeElement = relativeElement,
       Title = title
@@ -401,7 +401,7 @@ public class PreviewPopupArgs {
 
   public static PreviewPopupArgs ForSLoadedSection(ParsedIRTextSection section,
                                                    UIElement relativeElement, string title = "") {
-    return new() {
+    return new PreviewPopupArgs {
       LoadedSection = section,
       RelativeElement = relativeElement,
       Title = title

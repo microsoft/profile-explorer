@@ -163,7 +163,7 @@
             </ListBox.ItemTemplate>
             <ListBox.ItemContainerStyle>
               <Style TargetType="ListBoxItem">
-                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               </Style>
             </ListBox.ItemContainerStyle>
           </ListBox>
@@ -209,7 +209,8 @@
             <ListBox.ItemTemplate>
               <DataTemplate>
                 <DockPanel HorizontalAlignment="Stretch">
-                  <StackPanel Orientation="Vertical" DockPanel.Dock="Left" HorizontalAlignment="Stretch">
+                  <StackPanel Orientation="Vertical" DockPanel.Dock="Left"
+                              HorizontalAlignment="Stretch">
                     <TextBlock FontSize="12" Text="{Binding Item1}" />
                     <Separator />
                     <TextBlock FontSize="12" Text="{Binding Item2}" />

@@ -64,7 +64,7 @@
               <TextBlock Text="Parsing Errors" />
             </StackPanel>
           </Button>
-          <Separator></Separator>
+          <Separator />
 
           <Button
             Click="ButtonBase_OnClick"
@@ -81,7 +81,8 @@
           </Button>
           <ToggleButton Content="Refresh" IsChecked="False"
                         ToolTip="Continuously reload the log file"
-                        Style="{x:Null}" Checked="ToggleButton_OnChecked" Unchecked="ToggleButton_OnUnchecked"></ToggleButton>
+                        Style="{x:Null}" Checked="ToggleButton_OnChecked"
+                        Unchecked="ToggleButton_OnUnchecked" />
         </ToolBar>
       </ToolBarTray>
 
@@ -93,7 +94,7 @@
       Grid.Row="1"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       FontFamily="Consolas"
-      FontSize="12"/>
+      FontSize="12" />
 
     <ListBox
       x:Name="ErrorList"

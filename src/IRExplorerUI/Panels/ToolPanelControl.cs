@@ -32,7 +32,7 @@ public class ToolPanelControl : UserControl, IToolPanel {
   public virtual void OnUnregisterPanel() { }
   public virtual void OnElementSelected(IRElementEventArgs e) { }
   public virtual void OnElementHighlighted(IRHighlightingEventArgs e) { }
- 
+
   public virtual Task OnReloadSettings() {
     return Task.CompletedTask;
   }

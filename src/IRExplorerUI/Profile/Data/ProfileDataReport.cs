@@ -12,7 +12,8 @@ namespace IRExplorerUI.Profile;
 [ProtoContract(SkipConstructor = true)]
 public class ProfileDataReport : IEquatable<ProfileDataReport> {
   [ProtoMember(1)]
-  private Dictionary<BinaryFileDescriptor, ModuleStatus> moduleStatusMap_ = new Dictionary<BinaryFileDescriptor, ModuleStatus>();
+  private Dictionary<BinaryFileDescriptor, ModuleStatus> moduleStatusMap_ =
+    new Dictionary<BinaryFileDescriptor, ModuleStatus>();
   [ProtoMember(2)]
   public ProfileTraceInfo TraceInfo { get; set; }
   [ProtoMember(3)]

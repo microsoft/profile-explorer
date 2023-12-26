@@ -1,96 +1,96 @@
 ﻿<local:ToolPanelControl
-    x:Class="IRExplorerUI.NotesPanel"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:IRExplorerUI"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
-    mc:Ignorable="d">
-    <local:ToolPanelControl.CommandBindings>
-        <CommandBinding Command="local:Command.ClearTextbox" Executed="ExecuteClearTextSearch" />
-    </local:ToolPanelControl.CommandBindings>
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="28" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+  x:Class="IRExplorerUI.NotesPanel"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="clr-namespace:IRExplorerUI"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  d:DesignHeight="450"
+  d:DesignWidth="800"
+  mc:Ignorable="d">
+  <local:ToolPanelControl.CommandBindings>
+    <CommandBinding Command="local:Command.ClearTextbox" Executed="ExecuteClearTextSearch" />
+  </local:ToolPanelControl.CommandBindings>
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="28" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
 
-        <DockPanel
-            Grid.Row="0"
-            HorizontalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
-            <ToolBarTray
-                Height="28"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Top"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                IsLocked="True">
-                <ToolBar
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Top"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                    Loaded="ToolBar_Loaded">
-                    <TextBlock
-                        Margin="5,0,0,0"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Text="Notes Scope" />
+    <DockPanel
+      Grid.Row="0"
+      HorizontalAlignment="Stretch"
+      Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+      <ToolBarTray
+        Height="28"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Top"
+        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        IsLocked="True">
+        <ToolBar
+          HorizontalAlignment="Stretch"
+          VerticalAlignment="Top"
+          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+          Loaded="ToolBar_Loaded">
+          <TextBlock
+            Margin="5,0,0,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Text="Notes Scope" />
 
-                    <ComboBox
-                        x:Name="FilterComboBox"
-                        Width="120"
-                        Margin="8,0,0,0"
-                        VerticalAlignment="Center"
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                        Loaded="ComboBox_Loaded"
-                        SelectedIndex="0"
-                        SelectionChanged="FilterComboBox_SelectionChanged">
-                        <ComboBoxItem Content="Document Notes" Tag="Document" />
-                        <ComboBoxItem Content="Section Notes" Tag="Section" />
-                    </ComboBox>
-
-                    <ToggleButton
-                        IsChecked="{Binding WordWrap, Mode=TwoWay}"
-                        TabIndex="5"
-                        ToolTip="Word wrap output text">
-                        <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource WordWrapIcon}" />
-                    </ToggleButton>
-                    <Separator />
-
-                    <ToggleButton
-                        IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}"
-                        TabIndex="5"
-                        ToolTip="Search output text (Ctrl+F)">
-                        <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource SearchIcon}" />
-                    </ToggleButton>
-
-                </ToolBar>
-            </ToolBarTray>
-
-            <local:PanelToolbarTray
-                DockPanel.Dock="Right"
-                DuplicateClicked="PanelToolbarTray_DuplicateClicked"
-                HasHelpButton="False"
-                HasPinButton="False" />
-        </DockPanel>
-
-        <local:LightIRDocument
-            x:Name="TextView"
-            Grid.Row="1"
+          <ComboBox
+            x:Name="FilterComboBox"
+            Width="120"
+            Margin="8,0,0,0"
+            VerticalAlignment="Center"
             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-            FontFamily="Consolas"
-            FontSize="12"
-            HorizontalScrollBarVisibility="Auto"
-            ShowLineNumbers="True"
-            VerticalScrollBarVisibility="Auto" />
-    </Grid>
+            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            Loaded="ComboBox_Loaded"
+            SelectedIndex="0"
+            SelectionChanged="FilterComboBox_SelectionChanged">
+            <ComboBoxItem Content="Document Notes" Tag="Document" />
+            <ComboBoxItem Content="Section Notes" Tag="Section" />
+          </ComboBox>
+
+          <ToggleButton
+            IsChecked="{Binding WordWrap, Mode=TwoWay}"
+            TabIndex="5"
+            ToolTip="Word wrap output text">
+            <Image
+              Width="16"
+              Height="16"
+              Source="{StaticResource WordWrapIcon}" />
+          </ToggleButton>
+          <Separator />
+
+          <ToggleButton
+            IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}"
+            TabIndex="5"
+            ToolTip="Search output text (Ctrl+F)">
+            <Image
+              Width="16"
+              Height="16"
+              Source="{StaticResource SearchIcon}" />
+          </ToggleButton>
+
+        </ToolBar>
+      </ToolBarTray>
+
+      <local:PanelToolbarTray
+        DockPanel.Dock="Right"
+        DuplicateClicked="PanelToolbarTray_DuplicateClicked"
+        HasHelpButton="False"
+        HasPinButton="False" />
+    </DockPanel>
+
+    <local:LightIRDocument
+      x:Name="TextView"
+      Grid.Row="1"
+      Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+      FontFamily="Consolas"
+      FontSize="12"
+      HorizontalScrollBarVisibility="Auto"
+      ShowLineNumbers="True"
+      VerticalScrollBarVisibility="Auto" />
+  </Grid>
 </local:ToolPanelControl>

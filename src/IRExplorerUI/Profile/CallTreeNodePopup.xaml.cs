@@ -22,7 +22,6 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   private const int MaxPreviewNameLength = 80;
   private const double InitialWidth = 450;
   private const double InitialHeight = 400;
-
   private Typeface defaultTextFont_;
   private bool showResizeGrip_;
   private bool canExpand_;

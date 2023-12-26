@@ -74,7 +74,8 @@ public static class CallTreeCommand {
 }
 
 public class ChildFunctionEx : SearchableProfileItem, ITreeModel {
-  public ChildFunctionEx(ChildFunctionExKind kind, CallTreePanel owner, FunctionNameFormatter funcNameFormatter = null) :
+  public ChildFunctionEx(ChildFunctionExKind kind, CallTreePanel owner,
+                         FunctionNameFormatter funcNameFormatter = null) :
     base(funcNameFormatter) {
     Children = new List<ChildFunctionEx>();
     Kind = kind;
@@ -144,8 +145,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public CallTreePanel() {
     InitializeComponent();
     settings_ = PanelKind == ToolPanelKind.CallTree ?
-                App.Settings.CallTreeSettings :
-                App.Settings.CallerCalleeSettings;
+      App.Settings.CallTreeSettings :
+      App.Settings.CallerCalleeSettings;
     searchTask_ = new CancelableTaskInstance(false);
     callTreeNodeToNodeExMap_ = new Dictionary<ProfileCallTreeNode, ChildFunctionEx>();
     stateStack_ = new Stack<IRTextFunction>();
@@ -158,7 +159,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   public CallTreeSettings Settings => settings_;
-
   public event PropertyChangedEventHandler PropertyChanged;
 
   //? TODO: Replace all other commands with RelayCommand.

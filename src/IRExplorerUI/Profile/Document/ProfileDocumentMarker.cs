@@ -45,7 +45,7 @@ public class ProfileDocumentMarker {
   // Templates for the time columns defining the style.
   public static readonly OptionalColumn TIME_COLUMN =
     OptionalColumn.Template("[TimeHeader]", "TimePercentageColumnValueTemplate",
-                            "TimeHeader", "Time (ms)", "Instruction time", 
+                            "TimeHeader", "Time (ms)", "Instruction time",
                             null, 50.0, "TimeColumnHeaderTemplate");
   public static readonly OptionalColumn TIME_PERCENTAGE_COLUMN =
     OptionalColumn.Template("[TimePercentageHeader]", "TimePercentageColumnValueTemplate",
@@ -53,18 +53,18 @@ public class ProfileDocumentMarker {
                             null, 50.0, "TimeColumnHeaderTemplate");
 
   public OptionalColumn TimeColumnTemplate() {
-    TIME_COLUMN.Style = settings_.ColumnSettings.GetColumnStyle(TIME_COLUMN) ?? 
+    TIME_COLUMN.Style = settings_.ColumnSettings.GetColumnStyle(TIME_COLUMN) ??
                         OptionalColumnSettings.DefaultTimeColumnStyle;
 
     return TIME_COLUMN;
   }
-  
+
   public OptionalColumn TimePerrcentageColumnTemplate() {
     TIME_PERCENTAGE_COLUMN.Style = settings_.ColumnSettings.GetColumnStyle(TIME_PERCENTAGE_COLUMN) ??
                                    OptionalColumnSettings.DefaultTimePercentageColumnStyle;
     return TIME_PERCENTAGE_COLUMN;
   }
-  
+
   public OptionalColumn CounterColumnTemplate(PerformanceCounter counter, int index) {
     var column = OptionalColumn.Template($"[CounterHeader{counter.Id}]",
                                          "TimePercentageColumnValueTemplate",
@@ -76,8 +76,8 @@ public class ProfileDocumentMarker {
     column.Style = settings_.ColumnSettings.GetColumnStyle(column);
 
     if (column.Style == null) {
-      column.Style = counter.IsMetric ? 
-        OptionalColumnSettings.DefaultMetricsColumnStyle(index) : 
+      column.Style = counter.IsMetric ?
+        OptionalColumnSettings.DefaultMetricsColumnStyle(index) :
         OptionalColumnSettings.DefaultCounterColumnStyle(index);
     }
 
@@ -85,9 +85,10 @@ public class ProfileDocumentMarker {
     if (!string.IsNullOrEmpty(column.Style.Abbreviation)) {
       column.Title = column.Style.Abbreviation;
     }
+
     return column;
   }
-  
+
   //? TODO: Should be customizable (at least JSON if not UI)
   //? TODO: Each column setting should have the abbreviation
   private static readonly (string, string)[] PerfCounterNameReplacements = {
@@ -181,7 +182,7 @@ public class ProfileDocumentMarker {
     var sourceLineWeights = result.SourceLineWeightList;
 
     if (sourceLineWeights.Count == 0) {
-      return (null,null);
+      return (null, null);
     }
 
     //? TODO: Pretty hacky approach that makes a fake function

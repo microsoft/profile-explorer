@@ -580,6 +580,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
         if (e.ClickCount > 1) { // Check for double-click.
           ApplyTimeRangeFilter();
         }
+
         return;
       }
 
@@ -1300,9 +1301,12 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
   }
 }
 
-public record SampleTimeRangeInfo(TimeSpan StartTime, TimeSpan EndTime,
-                                  int StartSampleIndex, int EndSampleIndex,
-                                  int ThreadId);
+public record SampleTimeRangeInfo(
+  TimeSpan StartTime,
+  TimeSpan EndTime,
+  int StartSampleIndex,
+  int EndSampleIndex,
+  int ThreadId);
 
 public record SampleTimePointInfo(TimeSpan Time, int SampleIndex, int ThreadId);
 

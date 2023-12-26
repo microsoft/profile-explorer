@@ -513,7 +513,7 @@
                   VerticalAlignment="Center"
                   Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                   <Image Source="{StaticResource HotFlameIcon}"
-                         Style="{StaticResource DisabledImageStyle}"/>
+                         Style="{StaticResource DisabledImageStyle}" />
                 </Button>
                 <Button
                   Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
@@ -583,7 +583,7 @@
                       Height="15"
                       Margin="0,0,2,0"
                       Source="{StaticResource ExcelIcon}"
-                      Style="{StaticResource DisabledImageStyle}"/>
+                      Style="{StaticResource DisabledImageStyle}" />
                     <TextBlock Text="Export" />
                   </StackPanel>
                 </Button>
@@ -907,7 +907,7 @@
           x:Name="ProfileColumns"
           HorizontalAlignment="Stretch"
           Padding="-1,0,0,0"
-          VerticalAlignment="Stretch"/>
+          VerticalAlignment="Stretch" />
       </Grid>
       <GridSplitter
         Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"

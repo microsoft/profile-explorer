@@ -16,7 +16,7 @@ public class OptionalColumnSettings : SettingsBase {
   private HashSet<string> hiddenColumns_;
 
   //? TODO: Column order, width
-  
+
   public OptionalColumnSettings() {
     Reset();
   }
@@ -38,7 +38,6 @@ public class OptionalColumnSettings : SettingsBase {
       InvertColorPalette = false,
       PickColorForPercentage = true
     };
-
   public static OptionalColumnStyle DefaultTimeColumnStyle =>
     new OptionalColumnStyle(0) {
       ShowPercentageBar = false,
@@ -50,9 +49,9 @@ public class OptionalColumnSettings : SettingsBase {
       InvertColorPalette = false,
       PickColorForPercentage = true
     };
-  
-  public static OptionalColumnStyle DefaultMetricsColumnStyle(int k) =>
-    new OptionalColumnStyle(k + 2) {
+
+  public static OptionalColumnStyle DefaultMetricsColumnStyle(int k) {
+    return new OptionalColumnStyle(k + 2) {
       ShowPercentageBar = true,
       ShowMainColumnPercentageBar = true,
       UseBackColor = true,
@@ -65,9 +64,10 @@ public class OptionalColumnSettings : SettingsBase {
       TextColor = ColorPalette.DarkHue.PickColor(k),
       PercentageBarBackColor = ColorPalette.DarkHue.PickColor(k)
     };
-  
-  public static OptionalColumnStyle DefaultCounterColumnStyle(int k) =>
-    new OptionalColumnStyle(k + 2) {
+  }
+
+  public static OptionalColumnStyle DefaultCounterColumnStyle(int k) {
+    return new OptionalColumnStyle(k + 2) {
       ShowPercentageBar = true,
       ShowMainColumnPercentageBar = true,
       UseBackColor = false,
@@ -80,6 +80,7 @@ public class OptionalColumnSettings : SettingsBase {
       TextColor = ColorPalette.DarkHue.PickColor(k),
       PercentageBarBackColor = ColorPalette.DarkHue.PickColor(k)
     };
+  }
 
   public OptionalColumnStyle GetColumnStyle(OptionalColumn column) {
     return columnStyles_.GetValueOrNull(column.ColumnName);
@@ -115,15 +116,14 @@ public class OptionalColumnSettings : SettingsBase {
 [ProtoContract(SkipConstructor = true)]
 public class OptionalColumnStyle {
   public OptionalColumnStyle() : this(int.MaxValue) {
-    
   }
-  
+
   public OptionalColumnStyle(int order) {
     Order = order;
     IsVisible = true;
     Width = 50;
   }
-  
+
   [ProtoMember(1)]
   public bool IsVisible { get; set; }
   [ProtoMember(2)]

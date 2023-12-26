@@ -174,7 +174,7 @@ public sealed class FlameGraph {
     var groupNode = node as ProfileCallTreeGroupNode;
 
     foreach (var childNode in groupNode.Nodes) {
-      if(childNode.Tag is FlameGraphNode fgNode) {
+      if (childNode.Tag is FlameGraphNode fgNode) {
         resultList.Add(fgNode);
       }
     }

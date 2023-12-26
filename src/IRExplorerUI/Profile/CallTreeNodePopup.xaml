@@ -110,10 +110,12 @@
       </Grid>
 
       <Grid DockPanel.Dock="Bottom">
-        <Grid Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+        <Grid
+          Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
           <profile:CallTreeNodePanel x:Name="PanelHost" />
         </Grid>
-        <Grid Margin="0,-20,0,0" Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource BoolToVisibilityConverter}}">
+        <Grid Margin="0,-20,0,0"
+              Visibility="{Binding Path=ShowSimpleView, Converter={StaticResource BoolToVisibilityConverter}}">
           <profile:ProfileListView
             x:Name="FunctionListView"
             Width="{Binding ElementName=ContentHost, Path=ActualWidth}"

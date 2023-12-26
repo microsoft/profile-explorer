@@ -49,7 +49,8 @@
                     Text="{Binding Description}"
                     TextTrimming="CharacterEllipsis"
                     Visibility="{Binding ShowDescription, Converter={StaticResource BoolToVisibilityConverter}}" />
-                  <TextBlock Text="{Binding Time}" Visibility="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+                  <TextBlock Text="{Binding Time}"
+                             Visibility="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
                 </StackPanel>
                 <StackPanel
@@ -59,9 +60,12 @@
                   Orientation="Horizontal">
                   <StackPanel.Style>
                     <Style TargetType="{x:Type StackPanel}">
-                      <Setter Property="Visibility" Value="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+                      <Setter Property="Visibility"
+                              Value="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
                       <Style.Triggers>
-                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}" Value="False">
+                        <DataTrigger
+                          Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}"
+                          Value="False">
                           <Setter Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
                       </Style.Triggers>
@@ -115,7 +119,8 @@
           DockPanel.Dock="Right">
           <TabItem Header="Session">
             <StackPanel Orientation="Vertical">
-              <StackPanel x:Name="ProfileCapturePanel" Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
+              <StackPanel x:Name="ProfileCapturePanel"
+                          Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
                 <TextBlock
                   Margin="8,6,8,0"
                   FontWeight="Medium"
@@ -147,7 +152,8 @@
 
                 <Separator Margin="0,8,0,8" />
 
-                <StackPanel x:Name="AttachToProcessPanel" Visibility="{Binding ElementName=AttachRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel x:Name="AttachToProcessPanel"
+                            Visibility="{Binding ElementName=AttachRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
                   <Grid
                     Height="24"
                     MinHeight="24"
@@ -227,7 +233,8 @@
                           </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="70" DisplayMemberBinding="{Binding Process.ProcessId}">
+                        <GridViewColumn Width="70"
+                                        DisplayMemberBinding="{Binding Process.ProcessId}">
                           <GridViewColumnHeader Content="Process ID" />
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -236,7 +243,8 @@
                           </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="100" DisplayMemberBinding="{Binding Process.StartTime, StringFormat=hh:mm:ss tt}">
+                        <GridViewColumn Width="100"
+                                        DisplayMemberBinding="{Binding Process.StartTime, StringFormat=hh:mm:ss tt}">
                           <GridViewColumnHeader Content="Start Time" />
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -245,7 +253,8 @@
                           </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="250" DisplayMemberBinding="{Binding Process.ImageFileName}">
+                        <GridViewColumn Width="250"
+                                        DisplayMemberBinding="{Binding Process.ImageFileName}">
                           <GridViewColumnHeader Content="Title" />
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -257,10 +266,13 @@
                     </ListView.View>
 
                     <ListView.ItemContainerStyle>
-                      <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                      <Style BasedOn="{StaticResource FlatListViewItem}"
+                             TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background"
+                                Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                         <Setter Property="ToolTip" Value="{Binding Process.CommandLine}" />
-                        <EventSetter Event="MouseDoubleClick" Handler="RunningProcessList_DoubleClick" />
+                        <EventSetter Event="MouseDoubleClick"
+                                     Handler="RunningProcessList_DoubleClick" />
                       </Style>
                     </ListView.ItemContainerStyle>
 
@@ -277,7 +289,8 @@
 
                 </StackPanel>
 
-                <StackPanel x:Name="StartProcessPanel" Visibility="{Binding ElementName=StartAppRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel x:Name="StartProcessPanel"
+                            Visibility="{Binding ElementName=StartAppRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
                   <TextBlock Margin="8,0,8,0" Text="Application path" />
                   <Grid Margin="8,4,8,0">
                     <controls:FileSystemTextBox
@@ -380,7 +393,7 @@
                       Margin="0,4,0,0"
                       Orientation="Horizontal">
                       <TextBlock Text="Sampling frequency"
-                                 VerticalAlignment="Center"/>
+                                 VerticalAlignment="Center" />
                       <Slider
                         x:Name="SamplingFrequencySlider"
                         Width="120"
@@ -441,10 +454,11 @@
                     Text="IR Explorer must run with Administrator permissions" />
                 </StackPanel>
 
-                <Grid Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+                <Grid
+                  Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                   <TextBlock Margin="8,0,4,0" Text="Session name"
                              HorizontalAlignment="Left"
-                             VerticalAlignment="Center"/>
+                             VerticalAlignment="Center" />
                   <TextBox
                     Height="22"
                     Margin="88,0,0,0"
@@ -488,10 +502,11 @@
                       IsEnabled="{Binding RecordingControlsEnabled}" />
                   </StackPanel>
                 </Grid>
-                </StackPanel>
+              </StackPanel>
 
 
-              <StackPanel x:Name="ProfileLoadPanel" Visibility="{Binding IsRecordMode, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+              <StackPanel x:Name="ProfileLoadPanel"
+                          Visibility="{Binding IsRecordMode, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                 <TextBlock Margin="8,8,8,0" Text="Profile data file" />
                 <Grid Margin="8,4,8,0">
                   <controls:FileSystemTextBox
@@ -557,7 +572,8 @@
                       </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
 
-                    <GridViewColumn Width="80" DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}">
+                    <GridViewColumn Width="80"
+                                    DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}">
                       <GridViewColumnHeader Content="Weight" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -566,7 +582,8 @@
                       </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
 
-                    <GridViewColumn Width="80" DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}">
+                    <GridViewColumn Width="80"
+                                    DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}">
                       <GridViewColumnHeader Content="Duration" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -584,7 +601,8 @@
                       </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
 
-                    <GridViewColumn Width="100" DisplayMemberBinding="{Binding Process.CommandLine}">
+                    <GridViewColumn Width="100"
+                                    DisplayMemberBinding="{Binding Process.CommandLine}">
                       <GridViewColumnHeader Content="Command line" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -596,8 +614,10 @@
                 </ListView.View>
 
                 <ListView.ItemContainerStyle>
-                  <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                  <Style BasedOn="{StaticResource FlatListViewItem}"
+                         TargetType="{x:Type ListViewItem}">
+                    <Setter Property="Background"
+                            Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     <Setter Property="ToolTip" Value="{Binding Process.CommandLine}" />
                     <EventSetter Event="MouseDoubleClick" Handler="LoadButton_Click" />
                   </Style>
@@ -623,7 +643,8 @@
                     Maximum="100"
                     Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibilityConverter}}"
                     Value="40" />
-                  <DockPanel Margin="0,2,0,0" Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibilityConverter}}">
+                  <DockPanel Margin="0,2,0,0"
+                             Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock
                       x:Name="LoadProgressLabel"
                       DockPanel.Dock="Left"
@@ -660,7 +681,7 @@
               </Grid>
             </StackPanel>
           </TabItem>
-<TabItem Header="Options">
+          <TabItem Header="Options">
             <StackPanel Margin="0,4,0,8" Orientation="Vertical">
               <Expander
                 Margin="8,0,8,0"
@@ -852,7 +873,8 @@
               </Expander>
             </StackPanel>
           </TabItem>
-          <TabItem Header="CPU counters" Visibility="{Binding Path=IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
+          <TabItem Header="CPU counters"
+                   Visibility="{Binding Path=IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
             <Grid Margin="0,4,0,8">
               <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
@@ -978,8 +1000,10 @@
                     </ListView.View>
 
                     <ListView.ItemContainerStyle>
-                      <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                      <Style BasedOn="{StaticResource FlatListViewItem}"
+                             TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background"
+                                Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                         <Setter Property="ToolTip" Value="{Binding Description}" />
 
                         <Style.Triggers>
@@ -1073,7 +1097,8 @@
                           <GridViewColumnHeader Content="Name" />
                         </GridViewColumn>
 
-                        <GridViewColumn Width="100" DisplayMemberBinding="{Binding RelativeCounterName}">
+                        <GridViewColumn Width="100"
+                                        DisplayMemberBinding="{Binding RelativeCounterName}">
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                               <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -1082,7 +1107,8 @@
                           <GridViewColumnHeader Content="Relative counter" />
                         </GridViewColumn>
 
-                        <GridViewColumn Width="100" DisplayMemberBinding="{Binding BaseCounterName}">
+                        <GridViewColumn Width="100"
+                                        DisplayMemberBinding="{Binding BaseCounterName}">
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                               <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -1103,8 +1129,10 @@
                     </ListView.View>
 
                     <ListView.ItemContainerStyle>
-                      <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                      <Style BasedOn="{StaticResource FlatListViewItem}"
+                             TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background"
+                                Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                         <Setter Property="ToolTip" Value="{Binding Description}" />
                       </Style>
                     </ListView.ItemContainerStyle>

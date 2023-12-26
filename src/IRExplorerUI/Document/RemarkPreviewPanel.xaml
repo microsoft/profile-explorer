@@ -136,7 +136,8 @@
               VerticalAlignment="Top"
               Text="|">
               <TextBlock.Foreground>
-                <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveBorderColorKey}}" />
+                <SolidColorBrush
+                  Color="{DynamicResource {x:Static SystemColors.ActiveBorderColorKey}}" />
               </TextBlock.Foreground>
             </TextBlock>
 
@@ -196,7 +197,8 @@
               VerticalAlignment="Top"
               Text="|">
               <TextBlock.Foreground>
-                <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveBorderColorKey}}" />
+                <SolidColorBrush
+                  Color="{DynamicResource {x:Static SystemColors.ActiveBorderColorKey}}" />
               </TextBlock.Foreground>
             </TextBlock>
 
@@ -222,7 +224,8 @@
               VerticalAlignment="Top"
               Text="|">
               <TextBlock.Foreground>
-                <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveBorderColorKey}}" />
+                <SolidColorBrush
+                  Color="{DynamicResource {x:Static SystemColors.ActiveBorderColorKey}}" />
               </TextBlock.Foreground>
             </TextBlock>
 

@@ -9,9 +9,10 @@
   d:DesignWidth="800"
   mc:Ignorable="d">
   <UserControl.InputBindings>
-    <KeyBinding Command="{Binding OpenFunctionCommand}" Key="Return" Modifiers="Control"/>
-    <KeyBinding Command="{Binding OpenFunctionInNewTabCommand}" Key="Return" Modifiers="Control+Shift"/>
-    <KeyBinding Command="{Binding PreviewFunctionCommand}" Key="Return" Modifiers="Alt"/>
+    <KeyBinding Command="{Binding OpenFunctionCommand}" Key="Return" Modifiers="Control" />
+    <KeyBinding Command="{Binding OpenFunctionInNewTabCommand}" Key="Return"
+                Modifiers="Control+Shift" />
+    <KeyBinding Command="{Binding PreviewFunctionCommand}" Key="Return" Modifiers="Alt" />
   </UserControl.InputBindings>
   <ListView
     IsTextSearchEnabled="True"

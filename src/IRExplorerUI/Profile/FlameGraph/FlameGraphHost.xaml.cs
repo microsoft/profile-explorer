@@ -61,7 +61,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   public new bool IsInitialized => GraphViewer.IsInitialized;
   public ISession Session { get; set; }
   public List<FlameGraphNode> SelectedNodes => GraphViewer.SelectedNodes;
-
   public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.CallTree);
   });
@@ -561,7 +560,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
   }
 
-  private DoubleAnimation ScrollToVerticalOffset(double offset, bool animate = true, 
+  private DoubleAnimation ScrollToVerticalOffset(double offset, bool animate = true,
                                                  double duration = ZoomAnimationDuration) {
     if (animate) {
       var animation1 = new DoubleAnimation(GraphHost.VerticalOffset, offset, TimeSpan.FromMilliseconds(duration));

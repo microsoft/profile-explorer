@@ -124,7 +124,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
                                                                   $"Function {item.CallTreeNode.FunctionName}"));
     }
   });
-
   public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
     await OpenFunction(OpenSectionKind.ReplaceCurrent);
   });

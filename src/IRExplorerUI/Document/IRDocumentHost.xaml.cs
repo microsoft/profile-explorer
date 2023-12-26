@@ -248,7 +248,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     PassOutput.HasDuplicateButton = false;
     PassOutput.DiffModeButtonVisible = false;
     PassOutput.SectionNameVisible = false;
-    
+
     SetupEvents();
     var hover = new MouseHoverLogic(this);
     hover.MouseHover += Hover_MouseHover;
@@ -300,7 +300,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     TextView.ScrollToVerticalOffset(e.VerticalOffset);
   }
-  
+
   public event EventHandler<(double offset, double offsetChangeAmount)> VerticalScrollChanged;
   public event EventHandler<(double offset, double offsetChangeAmount)> PassOutputVerticalScrollChanged;
   public event EventHandler<bool> PassOutputShowBeforeChanged;
@@ -780,6 +780,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     return null;
   }
+
   private async Task ShowActionPanel(IRElement element, bool fromClickEvent = false) {
     remarkElement_ = GetRemarkElement(element);
     var visualElement = remarkElement_;

@@ -57,7 +57,6 @@ public class Workspace : IEquatable<Workspace> {
   [ProtoMember(4)]
   public int Order { get; set; }
   public bool IsNew { get; set; }
-
   public Workspace() { }
 
   public override string ToString() {
@@ -69,7 +68,6 @@ public class Workspace : IEquatable<Workspace> {
 public class WorkspaceSettings {
   private static readonly string SettingsFileName = "settings.proto";
   private static readonly string DefaultWorkspaceName = "Default";
-
   [ProtoMember(1)]
   public List<Workspace> Workspaces { get; set; }
   [ProtoMember(2)]

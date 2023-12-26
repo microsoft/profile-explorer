@@ -466,6 +466,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   private void NextSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
     SelectNextSearchResult();
   }
+
   private void ClearSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
     ((TextBox)e.Parameter).Text = string.Empty;
   }

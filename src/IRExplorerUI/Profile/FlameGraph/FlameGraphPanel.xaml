@@ -10,11 +10,14 @@
   d:DesignWidth="800"
   mc:Ignorable="d">
   <irExplorerUi:ToolPanelControl.CommandBindings>
-    <CommandBinding Command="irExplorerUi:GraphCommand.GraphResetWidth" Executed="ExecuteGraphResetWidth" />
+    <CommandBinding Command="irExplorerUi:GraphCommand.GraphResetWidth"
+                    Executed="ExecuteGraphResetWidth" />
     <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomIn" Executed="ExecuteGraphZoomIn" />
     <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomOut" Executed="ExecuteGraphZoomOut" />
-    <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult" Executed="PreviousSearchResultExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.NextSearchResult" Executed="NextSearchResultExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult"
+                    Executed="PreviousSearchResultExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.NextSearchResult"
+                    Executed="NextSearchResultExecuted" />
     <CommandBinding Command="local:CallTreeCommand.ClearSearch" Executed="ClearSearchExecuted" />
   </irExplorerUi:ToolPanelControl.CommandBindings>
 
@@ -98,7 +101,7 @@
             ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
             <StackPanel Orientation="Horizontal">
               <Image Source="{StaticResource DockLeftIcon}"
-                     Style="{StaticResource DisabledImageStyle}"/>
+                     Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Back" />
             </StackPanel>
           </Button>
@@ -110,7 +113,7 @@
             ToolTip="Zoom the graph view to 100% (Ctrl+R)">
             <StackPanel Orientation="Horizontal">
               <Image Source="{StaticResource ResetWidthIcon}"
-                     Style="{StaticResource DisabledImageStyle}"/>
+                     Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Reset" />
             </StackPanel>
           </Button>
@@ -145,7 +148,7 @@
                 Height="16"
                 Margin="0,1,0,0"
                 Source="{StaticResource SwitchIcon}"
-                Style="{StaticResource DisabledImageStyle}"/>
+                Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Text="Sync" />
             </StackPanel>
           </ToggleButton>
@@ -161,7 +164,7 @@
               Height="16"
               Margin="0,1,0,0"
               Source="{StaticResource SourceIcon}"
-              Style="{StaticResource DisabledImageStyle}"/>
+              Style="{StaticResource DisabledImageStyle}" />
           </ToggleButton>
           <Separator />
 
@@ -181,7 +184,7 @@
                 Height="16"
                 Margin="0,1,0,0"
                 Source="{StaticResource DetailsIcon}"
-                Style="{StaticResource DisabledImageStyle}"/>
+                Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Text="Details" />
             </StackPanel>
           </ToggleButton>
@@ -216,9 +219,10 @@
               Width="16"
               Height="16"
               Source="{StaticResource ClearIcon}"
-              Style="{StaticResource DisabledImageStyle}"/>
+              Style="{StaticResource DisabledImageStyle}" />
           </Button>
-          <Separator Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+          <Separator
+            Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
 
           <Image Source="{StaticResource SearchIcon}" />
           <Grid Height="24">
@@ -259,7 +263,7 @@
               Width="16"
               Height="16"
               Source="{StaticResource ClearIcon}"
-              Style="{StaticResource DisabledImageStyle}"/>
+              Style="{StaticResource DisabledImageStyle}" />
           </Button>
 
           <TextBlock
@@ -306,7 +310,7 @@
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Style="{StaticResource ColumnsGridSplitterStyle}" />
-        <ColumnDefinition Style="{StaticResource NodePanelColumnsStyle}"/>
+        <ColumnDefinition Style="{StaticResource NodePanelColumnsStyle}" />
       </Grid.ColumnDefinitions>
 
       <local:FlameGraphHost x:Name="GraphHost" />

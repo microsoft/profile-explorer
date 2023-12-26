@@ -191,7 +191,6 @@ static class Utils {
     return ShowMessageBox(text, owner, MessageBoxButton.OK, MessageBoxImage.Error);
   }
 
-
   public static MessageBoxResult ShowYesNoMessageBox(string text, FrameworkElement owner) {
     return ShowMessageBox(text, owner, MessageBoxButton.YesNo, MessageBoxImage.Question);
   }
@@ -200,7 +199,8 @@ static class Utils {
     return ShowMessageBox(text, owner, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
   }
 
-  private static MessageBoxResult ShowMessageBox(string text, FrameworkElement owner, MessageBoxButton buttons, MessageBoxImage image) {
+  private static MessageBoxResult ShowMessageBox(string text, FrameworkElement owner, MessageBoxButton buttons,
+                                                 MessageBoxImage image) {
     if (owner != null) {
       using var centerForm = new DialogCenteringHelper(owner);
       return MessageBox.Show(text, "IR Explorer", buttons, image);
@@ -1147,10 +1147,12 @@ static class Utils {
     // Based on https://stackoverflow.com/a/211984.
     // This is a hack to scroll to an item in a ListView.
     if (listView.Items.Count > 0) {
-      VirtualizingStackPanel vsp =
+      var vsp =
         (VirtualizingStackPanel)typeof(ItemsControl).InvokeMember("_itemsHost",
-                                                                  BindingFlags.Instance | BindingFlags.GetField | BindingFlags.NonPublic, null,
+                                                                  BindingFlags.Instance | BindingFlags.GetField |
+                                                                  BindingFlags.NonPublic, null,
                                                                   listView, null);
+
       if (vsp != null) {
         double scrollHeight = vsp.ScrollOwner.ScrollableHeight;
         double offset = scrollHeight * itemIndex / listView.Items.Count;

@@ -734,7 +734,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
         profile.TraceInfo.ProfileStartTime = DateTime.Now;
       }
 
-      UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0,0);
+      UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
       source_.Process();
 
       if (isRealTime_) {
@@ -783,7 +783,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
     samplingIntervalMS_ = (double)samplingInterval100NS_ / 10000;
     samplingIntervalLimitMS_ = samplingIntervalMS_ * SamplingErrorMargin;
   }
-  
+
   private void UpdateProgress(ProfileLoadProgressHandler callback, ProfileLoadStage stage,
                               int total, int current, string optional = null) {
     if (callback != null) {

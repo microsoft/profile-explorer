@@ -245,7 +245,7 @@ public class ApplicationSettings {
         File.Delete(filePath);
       }
 
-      var appDir = App.GetSettingsDirectoryPath();
+      string appDir = App.GetSettingsDirectoryPath();
       ZipFile.CreateFromDirectory(appDir, filePath, CompressionLevel.Optimal, false);
       return true;
     }
@@ -267,7 +267,7 @@ public class ApplicationSettings {
       }
 
       // Remove current settings and move the new ones in place.
-      var appDir = App.GetSettingsDirectoryPath();
+      string appDir = App.GetSettingsDirectoryPath();
       Directory.Delete(appDir, true);
       Directory.Move(tempPath.FullName, appDir);
       return true;

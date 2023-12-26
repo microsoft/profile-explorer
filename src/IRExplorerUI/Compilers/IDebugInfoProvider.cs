@@ -137,7 +137,7 @@ public class SymbolFileSourceOptions : SettingsBase {
     //? TODO: This should not be hardcoded
 
     try {
-      var domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
+      string domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
 
       if (domain != null &&
           domain.Contains("redmond", StringComparison.OrdinalIgnoreCase) ||
@@ -151,17 +151,17 @@ public class SymbolFileSourceOptions : SettingsBase {
 
     try {
       string pcszTenantId = null;
-      var ptrJoinInfo = IntPtr.Zero;
-      var ptrUserInfo = IntPtr.Zero;
-      var ptrJoinCertificate = IntPtr.Zero;
-      NetAPI32.DSREG_JOIN_INFO joinInfo = new NetAPI32.DSREG_JOIN_INFO();
+      IntPtr ptrJoinInfo = IntPtr.Zero;
+      IntPtr ptrUserInfo = IntPtr.Zero;
+      IntPtr ptrJoinCertificate = IntPtr.Zero;
+      var joinInfo = new NetAPI32.DSREG_JOIN_INFO();
 
       NetAPI32.NetFreeAadJoinInformation(IntPtr.Zero);
-      var retValue = NetAPI32.NetGetAadJoinInformation(pcszTenantId, out ptrJoinInfo);
+      int retValue = NetAPI32.NetGetAadJoinInformation(pcszTenantId, out ptrJoinInfo);
 
       if (retValue == 0) {
-        NetAPI32.DSREG_JOIN_INFO ptrJoinInfoObject = new NetAPI32.DSREG_JOIN_INFO();
-        joinInfo = (NetAPI32.DSREG_JOIN_INFO)System.Runtime.InteropServices.Marshal.PtrToStructure(ptrJoinInfo, (System.Type)ptrJoinInfoObject.GetType());
+        var ptrJoinInfoObject = new NetAPI32.DSREG_JOIN_INFO();
+        joinInfo = (NetAPI32.DSREG_JOIN_INFO)Marshal.PtrToStructure(ptrJoinInfo, (Type)ptrJoinInfoObject.GetType());
 
         if (joinInfo.JoinUserEmail.Contains("@microsoft.com", StringComparison.OrdinalIgnoreCase) ||
             joinInfo.TenantDisplayName.Contains("microsoft", StringComparison.OrdinalIgnoreCase)) {

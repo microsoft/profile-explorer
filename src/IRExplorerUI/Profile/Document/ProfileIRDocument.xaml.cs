@@ -61,7 +61,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
-
   public ISession Session { get; set; }
   public int SelectedLine { get; set; }
   public IRDocument AssociatedDocument { get; set; }
@@ -108,7 +107,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
   }
 
-  public async Task AnnotateProfilerData(FunctionProfileData profile, IRTextSection section, IDebugInfoProvider debugInfo) {
+  public async Task AnnotateProfilerData(FunctionProfileData profile, IRTextSection section,
+                                         IDebugInfoProvider debugInfo) {
     if (TextView.IsLoaded) {
       TextView.ClearInstructionMarkers();
     }
@@ -121,7 +121,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     var (processingResult, dummyFunc) = profileMarker.PrepareSourceLineProfile(profile, TextView, debugInfo);
 
-    if(processingResult == null)
+    if (processingResult == null)
       return;
 
     var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, dummyFunc);
@@ -280,7 +280,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     e.CanExecute = HasProfileElement(1);
   }
 
-
   private void Caret_PositionChanged(object sender, EventArgs e) {
     if (columnsVisible_) {
       var line = TextView.Document.GetLineByOffset(TextView.TextArea.Caret.Offset);
@@ -298,7 +297,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     HighlightElementsOnSelectedLine();
   }
-
 
   private void HighlightElementsOnSelectedLine() {
     var line = TextView.Document.GetLineByOffset(TextView.CaretOffset);
@@ -403,7 +401,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     wb.SaveAs(filePath);
   }
 
-
   private IRElement FindTupleOnSourceLine(int line) {
     var pair1 = sourceProfileResult_.SampledElements.Find(e => e.Item1.TextLocation.Line == line - 1);
 
@@ -414,6 +411,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var pair2 = sourceProfileResult_.CounterElements.Find(e => e.Item1.TextLocation.Line == line - 1);
     return pair2.Item1;
   }
+
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }

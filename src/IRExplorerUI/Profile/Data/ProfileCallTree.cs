@@ -748,7 +748,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   }
 
   public ProfileCallTreeNode Clone() {
-    return new() {
+    return new ProfileCallTreeNode {
       Id = Id,
       FunctionDebugInfo = FunctionDebugInfo,
       weight_ = weight_,
