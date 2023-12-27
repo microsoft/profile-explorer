@@ -170,19 +170,25 @@ public class ProfileDocumentMarker {
     return columnData;
   }
 
-  public async Task<IRDocumentColumnData> MarkSourceLines(MarkedDocument document, FunctionIR function,
-                                                          FunctionProcessingResult result) {
-    document.ProfileColumnData = await MarkProfiledElements(result, function, document);
+  public async Task<IRDocumentColumnData> MarkSourceLines(MarkedDocument document,
+                                                          SourceLineProfileResult processingResult) {
+    document.ProfileColumnData =
+      await MarkProfiledElements(processingResult.Result, processingResult.Function, document);
     return document.ProfileColumnData;
   }
 
-  public (FunctionProcessingResult ProcessingResult, FunctionIR DummyFunc)
+  public record SourceLineProfileResult(
+    FunctionProcessingResult Result,
+    FunctionIR Function,
+    Dictionary<int, IRElement> LineToElementMap);
+
+  public SourceLineProfileResult
     PrepareSourceLineProfile(FunctionProfileData profile, MarkedDocument document, IDebugInfoProvider debugInfo) {
     var result = profile.ProcessSourceLines(debugInfo);
     var sourceLineWeights = result.SourceLineWeightList;
 
     if (sourceLineWeights.Count == 0) {
-      return (null, null);
+      return null;
     }
 
     //? TODO: Pretty hacky approach that makes a fake function
@@ -194,15 +200,18 @@ public class ProfileDocumentMarker {
     dummyFunc.AssignBlockIndices();
 
     var processingResult = new FunctionProcessingResult();
+    var lineToElementMap = new Dictionary<int, IRElement>();
 
-    TupleIR MakeDummyTuple(TextLocation textLocation, DocumentLine documentLine1) {
+    TupleIR MakeDummyTuple(TextLocation textLocation, DocumentLine documentLine) {
       var tupleIr = new TupleIR(ids.NextTuple(), TupleKind.Other, dummyBlock);
       tupleIr.TextLocation = textLocation;
-      tupleIr.TextLength = documentLine1.Length;
+      tupleIr.TextLength = documentLine.Length;
       dummyBlock.Tuples.Add(tupleIr);
       return tupleIr;
     }
 
+    // For each source line, accumulate the weight of all instructions
+    // mapped to that line, for both samples and performance counters.
     for (int lineNumber = result.FirstLineIndex; lineNumber <= result.LastLineIndex; lineNumber++) {
       TupleIR dummyTuple = null;
 
@@ -211,12 +220,14 @@ public class ProfileDocumentMarker {
         var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
         dummyTuple = MakeDummyTuple(location, documentLine);
         processingResult.SampledElements.Add((dummyTuple, lineWeight));
+        lineToElementMap[lineNumber] = dummyTuple;
       }
 
       if (result.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
         var documentLine = document.GetLineByNumber(lineNumber);
         var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
         dummyTuple ??= MakeDummyTuple(location, documentLine);
+        lineToElementMap[lineNumber] = dummyTuple;
         processingResult.CounterElements.Add((dummyTuple, counters));
       }
     }
@@ -224,7 +235,7 @@ public class ProfileDocumentMarker {
     processingResult.SortSampledElements(); // Used for ordering.
     processingResult.FunctionCountersValue = result.FunctionCountersValue;
     document.ProfileProcessingResult = processingResult;
-    return (processingResult, dummyFunc);
+    return new SourceLineProfileResult(processingResult, dummyFunc, lineToElementMap);
   }
 
   public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
@@ -278,8 +289,18 @@ public class ProfileDocumentMarker {
     }
   }
 
+  public void MarkCallSites(MarkedDocument document, FunctionIR function, IRTextFunction textFunction,
+                            SourceLineProfileResult processingResult) {
+    var metadataTag = function.GetTag<AssemblyMetadataTag>();
+    bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+
+    if (hasInstrOffsetMetadata) {
+      MarkCallSites(document, function, textFunction, metadataTag, processingResult);
+    }
+  }
+
   private void MarkCallSites(MarkedDocument document, FunctionIR function, IRTextFunction textFunction,
-                             AssemblyMetadataTag metadataTag) {
+                             AssemblyMetadataTag metadataTag, SourceLineProfileResult processingResult = null) {
     // Mark indirect call sites and list the hottest call targets.
     // Useful especially for virtual function calls.
     var callTree = globalProfile_.CallTree;
@@ -288,6 +309,7 @@ public class ProfileDocumentMarker {
       return;
     }
 
+    var overlayMap = new Dictionary<IRElement, (List<ProfileCallTreeNode> List, IconElementOverlay Overlay)>();
     var indirectIcon = IconDrawing.FromIconResource("ExecuteIconColor");
     var directIcon = IconDrawing.FromIconResource("ExecuteIcon");
     var node = callTree.GetCombinedCallTreeNode(textFunction);
@@ -308,40 +330,57 @@ public class ProfileDocumentMarker {
         var callTarget = irInfo_.IR.GetCallTarget(instr);
         bool isDirectCall = callTarget != null && callTarget.HasName;
 
+        // When annotating a source file, map the instruction to the
+        // fake tuple used the represent the source line.
+        if (processingResult != null) {
+          if (!instr.TryGetTag(out SourceLocationTag sourceTag) ||
+              !processingResult.LineToElementMap.TryGetValue(sourceTag.Line, out element)) {
+            continue; // Couldn't map for some reason, ignore.
+          }
+        }
+
         // Collect call targets and override the weight
         // to include only the weight at this call site.
-        var list = new List<ProfileCallTreeNode>();
+        if (!overlayMap.TryGetValue(element, out var pair)) {
+          pair = new ValueTuple<List<ProfileCallTreeNode>, IconElementOverlay>();
+          pair.List = new List<ProfileCallTreeNode>();
+          var icon = isDirectCall ? directIcon : indirectIcon;
+          pair.Overlay = document.RegisterIconElementOverlay(element, icon, 16, 16);
+          overlayMap[element] = pair;
+        }
 
         foreach (var target in callsite.SortedTargets) {
           var callsiteNode = new ProfileCallTreeGroupNode(target.Node, target.Weight);
-          list.Add(callsiteNode);
+          pair.List.Add(callsiteNode);
         }
-
-        var icon = isDirectCall ? directIcon : indirectIcon;
-        var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16);
-        var color = App.Settings.DocumentSettings.BackgroundColor;
-
-        if (instr.ParentBlock != null && !instr.ParentBlock.HasEvenIndexInFunction) {
-          color = App.Settings.DocumentSettings.AlternateBackgroundColor;
-        }
-
-        overlay.Background = color.AsBrush();
-        //overlay.Border = blockPen;
-        overlay.IsLabelPinned = false;
-        overlay.UseLabelBackground = true;
-        overlay.ShowBackgroundOnMouseOverOnly = true;
-        overlay.ShowBorderOnMouseOverOnly = true;
-        overlay.AlignmentX = HorizontalAlignment.Left;
-
-        // Place before the call opcode.
-        int lineOffset = lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
-        overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
-                                              App.Settings.DocumentSettings.FontSize).Width - 20;
-        overlay.MarginY = 1;
-
-        // Show a popup on hover with the list of call targets.
-        SetupCallSiteHoverPreview(overlay, list, document);
       }
+    }
+
+    // Add the overlays to the document. 
+    foreach (var (element, pair) in overlayMap) {
+      var color = App.Settings.DocumentSettings.BackgroundColor;
+
+      if (element.ParentBlock != null && !element.ParentBlock.HasEvenIndexInFunction) {
+        color = App.Settings.DocumentSettings.AlternateBackgroundColor;
+      }
+
+      pair.Overlay.Background = color.AsBrush();
+      pair.Overlay.IsLabelPinned = false;
+      pair.Overlay.UseLabelBackground = true;
+      pair.Overlay.ShowBackgroundOnMouseOverOnly = true;
+      pair.Overlay.ShowBorderOnMouseOverOnly = true;
+      pair.Overlay.AlignmentX = HorizontalAlignment.Left;
+      pair.Overlay.MarginY = 1;
+
+      if (element is InstructionIR instr) {
+        // Place before the call opcode.
+        int lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
+        pair.Overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
+                                                   App.Settings.DocumentSettings.FontSize).Width - 20;
+      }
+
+      // Show a popup on hover with the list of call targets.
+      SetupCallSiteHoverPreview(pair.Overlay, pair.List, document);
     }
   }
 

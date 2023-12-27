@@ -271,7 +271,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       HandleMissingSourceFile(failureText);
     }
     else if (funcProfile != null) {
-      await TextView.AnnotateProfilerData(funcProfile, section_, debugInfo);
+      await TextView.AnnotateSourceFileProfilerData(funcProfile, section_, debugInfo);
     }
 
     return funcLoaded;
