@@ -36,7 +36,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private bool hasProfileInfo_;
   private bool useCompactMode_;
   private Brush selectedLineBrush_;
-  private int selectedLine_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -107,8 +106,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
   }
 
-  public async Task AnnotateProfilerData(FunctionProfileData profile, IRTextSection section,
-                                         IDebugInfoProvider debugInfo) {
+  public async Task AnnotateSourceFileProfilerData(FunctionProfileData profile, IRTextSection section,
+                                                   IDebugInfoProvider debugInfo) {
     if (TextView.IsLoaded) {
       TextView.ClearInstructionMarkers();
     }
@@ -119,23 +118,38 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var profileOptions = ProfileDocumentMarkerSettings.Default;
     var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, Session.CompilerInfo);
 
-    var (processingResult, dummyFunc) = profileMarker.PrepareSourceLineProfile(profile, TextView, debugInfo);
+    var processingResult = profileMarker.PrepareSourceLineProfile(profile, TextView, debugInfo);
 
     if (processingResult == null)
       return;
 
-    var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, dummyFunc);
+    var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, processingResult.Function);
     TextView.EarlyLoadSectionSetup(dummyParsedSection);
     await TextView.LoadSection(dummyParsedSection);
-    await profileMarker.MarkSourceLines(TextView, dummyFunc, processingResult);
+    
+    TextView.SuspendUpdate();
+    await profileMarker.MarkSourceLines(TextView, processingResult);
 
+    //? TODO: UI option
+    if (true) {
+      // Annotate call sites next to source lines.
+      var parsedSection = await Task.Run(() => Session.LoadAndParseSection(section));
+
+      if (parsedSection != null) {
+        profileMarker.MarkCallSites(TextView, parsedSection.Function, 
+                                    section.ParentFunction, processingResult);
+      }
+    }
+    
     //? TODO: Fix end
+    //? TODO: Used only for Excel exporting, do it only then
     if (debugInfo.PopulateSourceLines(profile.FunctionDebugInfo)) {
       firstSourceLineIndex_ = profile.FunctionDebugInfo.StartSourceLine.Line;
       lastSourceLineIndex_ = firstSourceLineIndex_;
     }
 
-    sourceProfileResult_ = processingResult;
+    TextView.ResumeUpdate();
+    sourceProfileResult_ = processingResult.Result;
 
     //? TODO: UI Option
     if (true) {
@@ -302,7 +316,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var line = TextView.Document.GetLineByOffset(TextView.CaretOffset);
 
     if (line != null && AssociatedDocument != null) {
-      selectedLine_ = line.LineNumber;
       AssociatedDocument.SelectElementsOnSourceLine(line.LineNumber, null);
     }
   }

@@ -32,6 +32,11 @@ public class TaggedObject {
     return GetTag<T>() != null;
   }
 
+  public bool TryGetTag<T>(out T result) where T : class {
+    result = GetTag<T>();
+    return result != null;
+  }
+
   public T GetOrAddTag<T>() where T : class, new() {
     var result = GetTag<T>();
 

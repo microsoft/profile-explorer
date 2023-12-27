@@ -68,5 +68,8 @@ public sealed class IconElementOverlay : ElementOverlayBase {
       DrawBackground(Bounds, opacity, drawingContext);
       Icon.Draw(x + 1, y - 1, Width, Width, iconHeight, opacity, drawingContext);
     }
+    
+    // For debugging, border around whole element.
+    // drawingContext.DrawRectangle(Brushes.Transparent, ColorPens.GetPen(Colors.Red), elementRect);
   }
 }
