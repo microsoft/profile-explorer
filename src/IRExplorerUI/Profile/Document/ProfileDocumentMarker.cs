@@ -309,9 +309,7 @@ public class ProfileDocumentMarker {
       return;
     }
 
-    var overlayMap = new Dictionary<IRElement, (List<ProfileCallTreeNode> List, IconElementOverlay Overlay)>();
-    var indirectIcon = IconDrawing.FromIconResource("ExecuteIconColor");
-    var directIcon = IconDrawing.FromIconResource("ExecuteIcon");
+    var overlayMap = new Dictionary<IRElement, (List<ProfileCallTreeNode> List, bool HasIndirectCalls)>();
     var node = callTree.GetCombinedCallTreeNode(textFunction);
 
     if (node == null || !node.HasCallSites) {
@@ -319,44 +317,53 @@ public class ProfileDocumentMarker {
     }
 
     foreach (var callsite in node.CallSites.Values) {
-      if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA - profile_.FunctionDebugInfo.RVA,
-                                                      irInfo_.IR, out var element)) {
-        //Trace.WriteLine($"Found CS for elem at RVA {callsite.RVA}, weight {callsite.Weight}: {element}");
-        var instr = element as InstructionIR;
-        if (instr == null || !irInfo_.IR.IsCallInstruction(instr))
-          continue;
+      if (!FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA - profile_.FunctionDebugInfo.RVA,
+                                                       irInfo_.IR, out var element)) {
 
-        // Mark direct, known call targets with a different icon.
-        var callTarget = irInfo_.IR.GetCallTarget(instr);
-        bool isDirectCall = callTarget != null && callTarget.HasName;
+        continue;
+      }
 
-        // When annotating a source file, map the instruction to the
-        // fake tuple used the represent the source line.
-        if (processingResult != null) {
-          if (!instr.TryGetTag(out SourceLocationTag sourceTag) ||
-              !processingResult.LineToElementMap.TryGetValue(sourceTag.Line, out element)) {
-            continue; // Couldn't map for some reason, ignore.
-          }
+      //Trace.WriteLine($"Found CS for elem at RVA {callsite.RVA}, weight {callsite.Weight}: {element}");
+      var instr = element as InstructionIR;
+      if (instr == null || !irInfo_.IR.IsCallInstruction(instr))
+        continue;
+
+      // Mark direct, known call targets with a different icon.
+      var callTarget = irInfo_.IR.GetCallTarget(instr);
+      bool isDirectCall = callTarget is {HasName: true};
+
+      // When annotating a source file, map the instruction to the
+      // fake tuple used the represent the source line.
+      if (processingResult != null) {
+        if (!instr.TryGetTag(out SourceLocationTag sourceTag) ||
+            !processingResult.LineToElementMap.TryGetValue(sourceTag.Line, out element)) {
+          continue; // Couldn't map for some reason, ignore.
         }
+      }
 
-        // Collect call targets and override the weight
-        // to include only the weight at this call site.
-        if (!overlayMap.TryGetValue(element, out var pair)) {
-          pair = new ValueTuple<List<ProfileCallTreeNode>, IconElementOverlay>();
-          pair.List = new List<ProfileCallTreeNode>();
-          var icon = isDirectCall ? directIcon : indirectIcon;
-          pair.Overlay = document.RegisterIconElementOverlay(element, icon, 16, 16);
-          overlayMap[element] = pair;
-        }
+      // Collect call targets and override the weight
+      // to include only the weight at this call site.
+      if (!overlayMap.TryGetValue(element, out var pair)) {
+        pair = new ValueTuple<List<ProfileCallTreeNode>, bool>();
+        pair.List = new List<ProfileCallTreeNode>();
+        overlayMap[element] = pair;
+      }
+      
+      // Mark if any of the calls are indirect.
+      if (!isDirectCall) {
+        pair.HasIndirectCalls = true;
+      }
 
-        foreach (var target in callsite.SortedTargets) {
-          var callsiteNode = new ProfileCallTreeGroupNode(target.Node, target.Weight);
-          pair.List.Add(callsiteNode);
-        }
+      foreach (var target in callsite.SortedTargets) {
+        var callsiteNode = new ProfileCallTreeGroupNode(target.Node, target.Weight);
+        pair.List.Add(callsiteNode);
       }
     }
 
     // Add the overlays to the document. 
+    var indirectIcon = IconDrawing.FromIconResource("ExecuteIconColor");
+    var directIcon = IconDrawing.FromIconResource("ExecuteIcon");
+    
     foreach (var (element, pair) in overlayMap) {
       var color = App.Settings.DocumentSettings.BackgroundColor;
 
@@ -364,23 +371,25 @@ public class ProfileDocumentMarker {
         color = App.Settings.DocumentSettings.AlternateBackgroundColor;
       }
 
-      pair.Overlay.Background = color.AsBrush();
-      pair.Overlay.IsLabelPinned = false;
-      pair.Overlay.UseLabelBackground = true;
-      pair.Overlay.ShowBackgroundOnMouseOverOnly = true;
-      pair.Overlay.ShowBorderOnMouseOverOnly = true;
-      pair.Overlay.AlignmentX = HorizontalAlignment.Left;
-      pair.Overlay.MarginY = 1;
+      var icon = pair.HasIndirectCalls ? indirectIcon : directIcon;
+      var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16);
+      overlay.Background = color.AsBrush();
+      overlay.IsLabelPinned = false;
+      overlay.UseLabelBackground = true;
+      overlay.ShowBackgroundOnMouseOverOnly = true;
+      overlay.ShowBorderOnMouseOverOnly = true;
+      overlay.AlignmentX = HorizontalAlignment.Left;
+      overlay.MarginY = 1;
 
       if (element is InstructionIR instr) {
         // Place before the call opcode.
         int lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
-        pair.Overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
-                                                   App.Settings.DocumentSettings.FontSize).Width - 20;
+        overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
+                                              App.Settings.DocumentSettings.FontSize).Width - 20;
       }
 
       // Show a popup on hover with the list of call targets.
-      SetupCallSiteHoverPreview(pair.Overlay, pair.List, document);
+      SetupCallSiteHoverPreview(overlay, pair.List, document);
     }
   }
 

@@ -36,7 +36,7 @@ public class SourceFileSettings : SettingsBase {
 }
 
 [ProtoContract(SkipConstructor = true)]
-public class SourceFileMapperSettings {
+public class SourceFileFinderSettings {
   private readonly Dictionary<string, DirectoryInfo> map_ = new Dictionary<string, DirectoryInfo>();
   private readonly HashSet<string> missingFilesSet_ = new HashSet<string>();
 }

@@ -31,7 +31,7 @@ using TextLocation = IRExplorerCore.TextLocation;
 namespace IRExplorerUI;
 
 public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged {
-  private SourceFileMapper sourceFileMapper_ = new SourceFileMapper();
+  private SourceFileFinder sourceFileFinder_;
   private IRTextSection section_;
   private IRElement element_;
   private bool sourceFileLoaded_;
@@ -53,6 +53,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     set {
       base.Session = value;
       TextView.Session = value;
+      sourceFileFinder_ = new SourceFileFinder(value);
     }
   }
 
@@ -73,24 +74,9 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private string BrowseSourceFile() {
-    return BrowseSourceFile(
+    return Utils.ShowOpenFileDialog(
       "C/C++ source files|*.c;*.cpp;*.cc;*.cxx;*.h;*.hpp;*.hxx;*.hh|.NET source files|*.cs;*.vb|All Files|*.*",
       string.Empty);
-  }
-
-  private string BrowseSourceFile(string filter, string title) {
-    var fileDialog = new OpenFileDialog {
-      Filter = filter,
-      Title = title
-    };
-
-    bool? result = fileDialog.ShowDialog();
-
-    if (result.HasValue && result.Value) {
-      return fileDialog.FileName;
-    }
-
-    return null;
   }
 
   private async Task<bool> LoadSourceFileImpl(string filePath, string originalFilePath, int sourceStartLine) {
@@ -160,8 +146,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
     // Re-enable source mapper if it was disabled before.
     //? TODO: Should clear only the current file
-    disabledSourceMappings_.Clear();
-    sourceFileMapper_.Reset();
+    sourceFileFinder_.Reset();
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
       TextView.JumpToHottestProfiledElement();
@@ -200,25 +185,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     TextView.AssociatedDocument = document;
     await LoadSourceFile(section_);
   }
-
-  private IDebugInfoProvider GetDebugInfo(LoadedDocument loadedDoc) {
-    //? Provider ASM should return instance instead of JSONDebug
-    if (loadedDoc.DebugInfo != null) {
-      // Used for managed binaries, where the debug info is constructed during profiling.
-      return loadedDoc.DebugInfo;
-    }
-
-    if (loadedDoc.DebugInfoFileExists) {
-      var debugInfo = Session.CompilerInfo.CreateDebugInfoProvider(loadedDoc.BinaryFile.FilePath);
-
-      if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFile)) {
-        return debugInfo;
-      }
-    }
-
-    return null;
-  }
-
+  
   private async Task<bool> LoadSourceFileForFunction(IRTextFunction function) {
     if (sourceFileLoaded_ && sourceFileFunc_ == function) {
       return true; // Right file already loaded.
@@ -226,96 +193,41 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
     // Get the associated source file from the debug info if available,
     // since it also includes the start line number.
-    var loadedDoc = Session.SessionState.FindLoadedDocument(function);
     FunctionProfileData funcProfile = null;
-    string failureText = "";
     bool funcLoaded = false;
 
     //? TODO: Make async too
-    var debugInfo = GetDebugInfo(loadedDoc);
+    var (sourceInfo, debugInfo) = sourceFileFinder_.FindLocalSourceFile(function);
 
-    if (debugInfo != null) {
-      var sourceInfo = SourceFileDebugInfo.Unknown;
-      funcProfile = Session.ProfileData?.GetFunctionProfile(function);
-
-      if (funcProfile != null) {
-        sourceInfo = LocateSourceFile(funcProfile, debugInfo);
-      }
-
-      if (sourceInfo.IsUnknown) {
-        // Try again using the function name.
-        sourceInfo = debugInfo.FindFunctionSourceFilePath(function);
-      }
-      else {
-        failureText = $"Could not find debug info for function:\n{function.Name}";
-      }
-
-      if (sourceInfo.HasFilePath) {
-        funcLoaded = await LoadSourceFile(sourceInfo, function);
-      }
-      else {
-        failureText = $"Missing file path in debug info for function:\n{function.Name}";
-      }
-    }
-    else {
-      failureText = $"Could not find debug info for module:\n{loadedDoc.ModuleName}";
+    if (!sourceInfo.IsUnknown) {
+      funcLoaded = await LoadSourceFile(sourceInfo, function);
     }
 
     if (funcProfile == null) {
       // Check if there is profile info.
       // This path is taken only if there is no debug info.
-      funcProfile = Session.ProfileData?.GetFunctionProfile(function);
     }
 
-    if (!funcLoaded) {
-      HandleMissingSourceFile(failureText);
+    if (funcLoaded) {
+      funcProfile = Session.ProfileData?.GetFunctionProfile(function);
+
+      if (funcProfile != null) {
+        await TextView.AnnotateSourceFileProfilerData(funcProfile, section_, debugInfo);
+      }
     }
-    else if (funcProfile != null) {
-      await TextView.AnnotateSourceFileProfilerData(funcProfile, section_, debugInfo);
+    else {
+      var failureText = $"Could not find debug info for function:\n{function.Name}";
+      HandleMissingSourceFile(failureText);
     }
 
     return funcLoaded;
   }
 
-  private SourceFileDebugInfo LocateSourceFile(FunctionProfileData funcProfile,
-                                               IDebugInfoProvider debugInfo) {
-    var sourceInfo = SourceFileDebugInfo.Unknown;
-
-    // Lookup function by RVA, more precise.
-    if (funcProfile.FunctionDebugInfo != null) {
-      sourceInfo = debugInfo.FindSourceFilePathByRVA(funcProfile.FunctionDebugInfo.RVA);
-    }
-
-    return sourceInfo;
-  }
-
   private async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo, IRTextFunction function) {
-    // Check if the file can be found. If it's from another machine,
-    // a mapping is done after the user is asked to pick the new location of the file.
-    string mappedSourceFilePath = null;
-
-    if (File.Exists(sourceInfo.FilePath)) {
-      mappedSourceFilePath = sourceInfo.FilePath;
-    }
-    else if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
-      mappedSourceFilePath = sourceFileMapper_.Map(sourceInfo.FilePath, () =>
-                                                     BrowseSourceFile(
-                                                       $"Source File|{Path.GetFileName(sourceInfo.OriginalFilePath)}",
-                                                       $"Open {sourceInfo.OriginalFilePath}"));
-
-      if (string.IsNullOrEmpty(mappedSourceFilePath)) {
-        if (Utils.ShowYesNoMessageBox("Continue asking for the location of this source file?", this) ==
-            MessageBoxResult.No) {
-          disabledSourceMappings_.Add(sourceInfo.FilePath);
-        }
-      }
-    }
-
-    if (mappedSourceFilePath != null &&
-        await LoadSourceFileImpl(mappedSourceFilePath, sourceInfo.OriginalFilePath, sourceInfo.StartLine)) {
+    if (await LoadSourceFileImpl(sourceInfo.FilePath, sourceInfo.OriginalFilePath, sourceInfo.StartLine)) {
       sourceFileLoaded_ = true;
       sourceFileFunc_ = function;
-      sourceFilePath_ = mappedSourceFilePath;
+      sourceFilePath_ = sourceInfo.FilePath;
       return true;
     }
 
