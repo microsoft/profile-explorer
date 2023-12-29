@@ -15,9 +15,9 @@ public class ProfileDocumentMarkerSettings {
       ColumnSettings = App.Settings.ColumnSettings,
       VirtualColumnPosition = 350,
       ElementWeightCutoff = 0.003, // 0.3%
-      LineWeightCutoff = 0.005, // 0.5%,
+      LineWeightCutoff = 0.005,    // 0.5%,
       TopOrderCutoff = 10,
-      IconBarWeightCutoff = 0.03,
+      IconBarWeightCutoff = 0.03,  // 3%
       MaxPercentageBarWidth = 50,
       DisplayIcons = true,
       RemoveEmptyColumns = true,
@@ -74,22 +74,23 @@ public class ProfileDocumentMarkerSettings {
   public bool RemoveEmptyColumns { get; set; }
   public ValueUnitKind ValueUnit { get; set; }
 
-  public Color PickBackColor(OptionalColumn column, int colorIndex, double percentage) {
+  public Color PickBackColor(OptionalColumn column, int order, double percentage) {
     if (!ShouldUseBackColor(column)) {
       return Colors.Transparent;
     }
 
     //? TODO: ShouldUsePalette, ColorPalette in Appearance
-    return column.Style.PickColorForPercentage
+    return column.Style.PickColorForPercentage &&
+           !ShouldOverridePercentage(order, percentage)
       ? PickBackColorForPercentage(column, percentage)
-      : PickBackColorForOrder(column, colorIndex, percentage, InvertColorPalette(column));
+      : PickBackColorForOrder(column, order, percentage, !InvertColorPalette(column));
   }
 
   public Color PickBackColorForPercentage(double percentage) {
     return PickBackColorForPercentage(null, percentage);
   }
 
-  public Color PickBackColorForPercentage(OptionalColumn column, double percentage) {
+  private Color PickBackColorForPercentage(OptionalColumn column, double percentage) {
     if (percentage < ElementWeightCutoff) {
       return Colors.Transparent;
     }
@@ -98,7 +99,7 @@ public class ProfileDocumentMarkerSettings {
     return palette.PickColorForPercentage(percentage, InvertColorPalette(column));
   }
 
-  public Color PickBackColorForOrder(OptionalColumn column, int order, double percentage, bool inverted) {
+  private Color PickBackColorForOrder(OptionalColumn column, int order, double percentage, bool inverted) {
     if (!IsSignificantValue(order, percentage)) {
       return Colors.Transparent;
     }
@@ -119,21 +120,23 @@ public class ProfileDocumentMarkerSettings {
     return !column.Style.TextColor.IsTransparent() ?
       ColorBrushes.GetBrush(column.Style.TextColor) : ColumnTextColor;
   }
-
+  
   public FontWeight PickTextWeight(OptionalColumn column, int order, double percentage) {
-    if (column.Style.PickColorForPercentage) {
+    if (column.Style.PickColorForPercentage &&
+        !ShouldOverridePercentage(order, percentage)) { 
       return percentage switch {
         >= 0.9 => FontWeights.Bold,
-        >= 0.75 => FontWeights.Medium,
+        >= 0.7 => FontWeights.Medium,
+        >= 0.5 => FontWeights.SemiBold,
         _ => FontWeights.Normal
       };
-    }
+    } 
 
     return order switch {
-      0 => FontWeights.ExtraBold,
-      1 => FontWeights.Bold,
+      0 => FontWeights.Bold,
+      1 => FontWeights.Medium,
       _ => IsSignificantValue(order, percentage)
-        ? FontWeights.Medium
+        ? FontWeights.SemiBold
         : FontWeights.Normal
     };
   }
@@ -156,12 +159,10 @@ public class ProfileDocumentMarkerSettings {
       return IconDrawing.Empty;
     }
 
-    //? TODO: Option
-    // if (column.Style.PickColorForPercentage) {
-    //   return PickIconForPercentage(percentage);
-    // }
-
-    return PickIconForOrder(order, percentage);
+    return column.Style.PickColorForPercentage &&
+           !ShouldOverrideIconPercentage(order, percentage)
+      ? PickIconForPercentage(percentage)
+      : PickIconForOrder(order, percentage);
   }
 
   public IconDrawing PickIconForOrder(int order, double percentage) {
@@ -176,10 +177,10 @@ public class ProfileDocumentMarkerSettings {
     };
   }
 
-  public IconDrawing PickIconForPercentage(double percentage) {
+  private IconDrawing PickIconForPercentage(double percentage) {
     return percentage switch {
       >= 0.9 => IconDrawing.FromIconResource("HotFlameIcon1"),
-      >= 0.75 => IconDrawing.FromIconResource("HotFlameIcon2"),
+      >= 0.7 => IconDrawing.FromIconResource("HotFlameIcon2"),
       >= 0.5 => IconDrawing.FromIconResource("HotFlameIcon3"),
       _ => IconDrawing.FromIconResource("HotFlameIconTransparent")
     };
@@ -209,18 +210,18 @@ public class ProfileDocumentMarkerSettings {
       PercentageBarBackColor;
   }
 
-  public bool ShouldShowPercentageBar(OptionalColumn column) {
+  private bool ShouldShowPercentageBar(OptionalColumn column) {
     return DisplayPercentageBar &&
            (column.Style.ShowPercentageBar ||
             column.IsMainColumn && column.Style.ShowMainColumnPercentageBar);
   }
 
-  public bool ShouldShowIcon(OptionalColumn column) {
+  private bool ShouldShowIcon(OptionalColumn column) {
     return DisplayIcons && (column.Style.ShowIcon ||
                             column.IsMainColumn && column.Style.ShowMainColumnIcon);
   }
 
-  public bool ShouldUseBackColor(OptionalColumn column) {
+  private bool ShouldUseBackColor(OptionalColumn column) {
     return column.Style.UseBackColor ||
            column.IsMainColumn && column.Style.UseMainColumnBackColor;
   }
@@ -235,5 +236,17 @@ public class ProfileDocumentMarkerSettings {
 
   private bool InvertColorPalette(OptionalColumn column) {
     return column != null && column.Style.InvertColorPalette;
+  }
+  
+  private bool ShouldOverridePercentage(int order, double percentage) {
+    // Hottest elements still handled by order.
+    return order == 0 ||
+           (order < 3 && percentage > 0.2); // 20%
+  }
+  
+  private bool ShouldOverrideIconPercentage(int order, double percentage) {
+    // Hottest elements still handled by order.
+    return order == 0 ||
+           (order < 3 && percentage > 0.05); // 5%
   }
 }

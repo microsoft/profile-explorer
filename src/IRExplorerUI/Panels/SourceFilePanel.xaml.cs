@@ -79,23 +79,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       string.Empty);
   }
 
-  private async Task<bool> LoadSourceFileImpl(string filePath, string originalFilePath, int sourceStartLine) {
-    try {
-      string text = await File.ReadAllTextAsync(filePath);
-      TextView.SetSourceText(text, filePath);
-      SetPanelName(originalFilePath);
-
-      //? TODO: Is panel is not visible, scroll doesn't do anything,
-      //? should be executed again when panel is activated
-      TextView.ScrollToLine(sourceStartLine);
-      return true;
-    }
-    catch (Exception ex) {
-      Trace.TraceError($"Failed to load source file {filePath}: {ex.Message}");
-      return false;
-    }
-  }
-
   private void SetPanelName(string path) {
     if (!string.IsNullOrEmpty(path)) {
       TitleSuffix = $" - {Utils.TryGetFileName(path)}";
@@ -114,7 +97,11 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
     if (path != null) {
       var sourceInfo = new SourceFileDebugInfo(path, path);
-      await LoadSourceFile(sourceInfo, section_.ParentFunction);
+      var debugInfo = await Session.GetDebugInfoProvider(section_.ParentFunction);
+
+      if (await TextView.LoadSourceFile(sourceInfo, section_, debugInfo)) {
+        HandleLoadedSourceFile(sourceInfo, section_.ParentFunction);
+      }
     }
   }
 
@@ -193,56 +180,34 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
     // Get the associated source file from the debug info if available,
     // since it also includes the start line number.
-    FunctionProfileData funcProfile = null;
-    bool funcLoaded = false;
-
-    //? TODO: Make async too
-    var (sourceInfo, debugInfo) = sourceFileFinder_.FindLocalSourceFile(function);
+    string failureText = null;
+    var (sourceInfo, debugInfo) = await sourceFileFinder_.FindLocalSourceFile(function);
 
     if (!sourceInfo.IsUnknown) {
-      funcLoaded = await LoadSourceFile(sourceInfo, function);
-    }
-
-    if (funcProfile == null) {
-      // Check if there is profile info.
-      // This path is taken only if there is no debug info.
-    }
-
-    if (funcLoaded) {
-      funcProfile = Session.ProfileData?.GetFunctionProfile(function);
-
-      if (funcProfile != null) {
-        await TextView.AnnotateSourceFileProfilerData(funcProfile, section_, debugInfo);
+      if (await TextView.LoadSourceFile(sourceInfo, section_, debugInfo)) {
+        HandleLoadedSourceFile(sourceInfo, function);
+        return true;
       }
+
+      failureText = $"Could not find local copy of source file:\n{sourceInfo.FilePath}";
     }
     else {
-      var failureText = $"Could not find debug info for function:\n{function.Name}";
-      HandleMissingSourceFile(failureText);
+      failureText = $"Could not find debug info for function:\n{function.Name}";
     }
 
-    return funcLoaded;
-  }
-
-  private async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo, IRTextFunction function) {
-    if (await LoadSourceFileImpl(sourceInfo.FilePath, sourceInfo.OriginalFilePath, sourceInfo.StartLine)) {
-      sourceFileLoaded_ = true;
-      sourceFileFunc_ = function;
-      sourceFilePath_ = sourceInfo.FilePath;
-      return true;
-    }
-
-    HandleMissingSourceFile($"Could not find local copy of source file:\n{sourceInfo.FilePath}");
+    HandleMissingSourceFile(failureText);
     return false;
   }
 
+  private void HandleLoadedSourceFile(SourceFileDebugInfo sourceInfo, IRTextFunction function) {
+    SetPanelName(sourceInfo.OriginalFilePath);
+    sourceFileLoaded_ = true;
+    sourceFileFunc_ = function;
+    sourceFilePath_ = sourceInfo.FilePath;
+  }
+
   private void HandleMissingSourceFile(string failureText) {
-    string text = "Failed to load profile source file.";
-
-    if (!string.IsNullOrEmpty(failureText)) {
-      text += $"\n{failureText}";
-    }
-
-    TextView.SetSourceText(text, "");
+    TextView.HandleMissingSourceFile(failureText);
     SetPanelName("");
     sourceFileLoaded_ = false;
     sourceFileFunc_ = null;
@@ -254,7 +219,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private void ResetState() {
-    TextView.SelectedLine = -1;
+    TextView.Reset();
     section_ = null;
     sourceFileLoaded_ = false;
     sourceFileFunc_ = null;
@@ -262,7 +227,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   public override async void OnElementSelected(IRElementEventArgs e) {
-    if (!sourceFileLoaded_ || e.Element == element_) {
+    if (!sourceFileLoaded_) {
       return;
     }
 
@@ -282,7 +247,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       //}
 
       if (await LoadSourceFileForFunction(section_.ParentFunction)) {
-        TextView.ScrollToLine(tag.Line);
+        TextView.SelectLine(tag.Line);
       }
     }
   }
@@ -324,7 +289,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     //? TODO: The func ASM is not needed, profile is created by mapping ASM lines in main func
     //? to corresponding lines in the selected inlinee
     if (fileLoaded) {
-      TextView.ScrollToLine(inlinee.Line);
+      TextView.SelectLine(inlinee.Line);
     }
 
     currentInlinee_ = inlinee;

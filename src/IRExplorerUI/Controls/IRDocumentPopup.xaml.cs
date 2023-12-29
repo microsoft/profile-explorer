@@ -2,16 +2,20 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
-using IRExplorerUI.Utilities.UI;
+using IRExplorerUI.Document;
+using MouseHoverLogic = IRExplorerUI.Utilities.UI.MouseHoverLogic;
 
 namespace IRExplorerUI.Controls;
 
@@ -21,12 +25,16 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private string panelTitle_;
   private string panelToolTip_;
   private UIElement owner_;
-
+  private bool showSourceFile_;
+  private bool showModeButtons_;
+  private ISession session;
+  private ParsedIRTextSection parsedSection_;
+  
   public IRDocumentPopup(Point position, double width, double height,
                          UIElement owner, ISession session) {
     InitializeComponent();
     Initialize(position, width, height, owner);
-    TextView.PreviewMouseWheel += TextView_OnMouseWheel;
+    ProfileTextView.PreviewMouseWheel += ProfileTextViewOnMouseWheel;
     PanelResizeGrip.ResizedControl = this;
     DataContext = this;
     Session = session;
@@ -40,26 +48,50 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
   public event PropertyChangedEventHandler PropertyChanged;
   public IRElement PreviewedElement { get; set; }
-  public ISession Session { get; set; }
+
+  public ISession Session {
+    get => session;
+    set {
+      session = value;
+      ProfileTextView.Session = value;
+    }
+  }
 
   public string PanelTitle {
     get => panelTitle_;
-    set {
-      if (panelTitle_ != value) {
-        panelTitle_ = value;
-        OnPropertyChange(nameof(PanelTitle));
-      }
-    }
+    set => SetField(ref panelTitle_, value);
   }
 
   public string PanelToolTip {
     get => panelToolTip_;
+    set => SetField(ref panelToolTip_, value);
+  }
+
+  public bool ShowAssembly {
+    get => !showSourceFile_;
     set {
-      if (panelToolTip_ != value) {
-        panelToolTip_ = value;
-        OnPropertyChange(nameof(PanelToolTip));
-      }
+      SetField(ref showSourceFile_, !value);
+      OnPropertyChanged(nameof(ShowSourceFile));
     }
+  }
+
+  public bool ShowSourceFile {
+    get => showSourceFile_;
+    set {
+      SetField(ref showSourceFile_, value);
+      OnPropertyChanged(nameof(ShowAssembly));
+    }
+  }
+  
+  public bool ShowModeButtons {
+    get => showModeButtons_;
+    set => SetField(ref showModeButtons_, value);
+  }
+
+  private void SetupInitialMode(ParsedIRTextSection parsedSection) {
+    parsedSection_ = parsedSection;
+    ShowModeButtons = true;
+    ShowAssembly = true; //? TODO: Remember setting
   }
 
   public static async Task<IRDocumentPopup> CreateNew(IRDocument document, IRElement previewedElement,
@@ -77,15 +109,8 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
                                                       UIElement owner, ISession session, string titlePrefix = "") {
     var popup = CreatePopup(parsedSection.Section, null, position, width, height,
                             owner, session, titlePrefix);
-    popup.TextView.TextView.Initalize(App.Settings.DocumentSettings, session);
-    popup.TextView.TextView.EarlyLoadSectionSetup(parsedSection);
-    await popup.TextView.TextView.LoadSection(parsedSection);
-
-    //? TODO: UI option
-    if (true) {
-      await popup.TextView.ShowProfilingColumns();
-    }
-
+    await popup.ProfileTextView.LoadSection(parsedSection);
+    popup.SetupInitialMode(parsedSection);
     popup.CaptureMouseWheel();
     return popup;
   }
@@ -109,14 +134,14 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private async Task InitializeFromDocument(IRDocument document, string text = null) {
-    await TextView.TextView.InitializeFromDocument(document, false, text);
+    await ProfileTextView.TextView.InitializeFromDocument(document, false, text);
   }
 
   public override void ShowPopup() {
     base.ShowPopup();
 
     if (PreviewedElement != null) {
-      MarkPreviewedElement(PreviewedElement, TextView.TextView);
+      MarkPreviewedElement(PreviewedElement, ProfileTextView.TextView);
     }
   }
 
@@ -163,9 +188,9 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     // Make scroll bar visible, it's not by default.
     EnableVerticalScrollbar();
 
-    amount *= TextView.TextView.DefaultLineHeight;
-    double newOffset = TextView.TextView.VerticalOffset + amount;
-    TextView.TextView.ScrollToVerticalOffset(newOffset);
+    amount *= ProfileTextView.TextView.DefaultLineHeight;
+    double newOffset = ProfileTextView.TextView.VerticalOffset + amount;
+    ProfileTextView.TextView.ScrollToVerticalOffset(newOffset);
   }
 
   private void Owner_OnPreviewMouseWheel(object sender, MouseWheelEventArgs e) {
@@ -176,25 +201,32 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     }
   }
 
-  private void OnPropertyChange(string propertyname) {
-    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
+  protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
+    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+  }
+
+  protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
+    if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+    field = value;
+    OnPropertyChanged(propertyName);
+    return true;
   }
 
   private void CloseButton_Click(object sender, RoutedEventArgs e) {
     ClosePopup();
   }
 
-  private void TextView_OnMouseWheel(object sender, MouseWheelEventArgs e) {
+  private void ProfileTextViewOnMouseWheel(object sender, MouseWheelEventArgs e) {
     EnableVerticalScrollbar();
   }
 
   private void EnableVerticalScrollbar() {
-    TextView.TextView.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
-    ScrollViewer.SetVerticalScrollBarVisibility(TextView, ScrollBarVisibility.Auto);
+    ProfileTextView.TextView.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+    ScrollViewer.SetVerticalScrollBarVisibility(ProfileTextView, ScrollBarVisibility.Auto);
   }
 
   private async void OpenButton_Click(object sender, RoutedEventArgs e) {
-    var args = new OpenSectionEventArgs(TextView.TextView.Section, OpenSectionKind.NewTabDockRight);
+    var args = new OpenSectionEventArgs(ProfileTextView.TextView.Section, OpenSectionKind.NewTabDockRight);
 
     //? TODO: BeginInvoke prevents the "Dispatcher suspended" assert that happens
     // with profiling, when Source panel shows the open dialog.
@@ -205,8 +237,30 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       //? TODO: Mark the previewed elem in the new doc
       // var similarValueFinder = new SimilarValueFinder(function_);
       // refElement = similarValueFinder.Find(instr);
-      result.TextView.ScrollToVerticalOffset(TextView.TextView.VerticalOffset);
+      result.TextView.ScrollToVerticalOffset(ProfileTextView.TextView.VerticalOffset);
     }, DispatcherPriority.Background);
+  }
+
+  private async void ModeToggleButton_Click(object sender, RoutedEventArgs e) {
+    ProfileTextView.Reset();
+    
+    if (showSourceFile_) {
+      var sourceFileFinder = new SourceFileFinder(Session);
+      var function = parsedSection_.Section.ParentFunction;
+      var (sourceInfo, debugInfo) = await sourceFileFinder.FindLocalSourceFile(function);
+
+      if (!sourceInfo.IsUnknown) {
+        await ProfileTextView.LoadSourceFile(sourceInfo, parsedSection_.Section, debugInfo);
+      }
+      else {
+        var failureText = $"Could not find debug info for function:\n{function.Name}";
+        ProfileTextView.HandleMissingSourceFile(failureText);
+      }
+    }
+    else {
+      // Show assembly.
+      await ProfileTextView.LoadSection(parsedSection_);
+    }
   }
 }
 
@@ -253,13 +307,13 @@ public class IRDocumentPopupInstance {
     Complete();
   }
 
-  public async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection,
-                                               UIElement relativeElement, string title) {
+  private async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection,
+                                                UIElement relativeElement, string title) {
     await ShowPreviewPopupForSection(parsedSection, relativeElement, width_, height_, title);
   }
 
-  public async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection, UIElement relativeElement,
-                                               double width, double height, string title) {
+  private async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection, UIElement relativeElement,
+                                                double width, double height, string title) {
     if (!Prepare()) {
       return;
     }
@@ -270,13 +324,13 @@ public class IRDocumentPopupInstance {
     Complete();
   }
 
-  public async Task ShowPreviewPopupForSection(IRTextSection section,
-                                               UIElement relativeElement, string title) {
+  private async Task ShowPreviewPopupForSection(IRTextSection section,
+                                                UIElement relativeElement, string title) {
     await ShowPreviewPopupForSection(section, relativeElement, width_, height_, title);
   }
 
-  public async Task ShowPreviewPopupForSection(IRTextSection section, UIElement relativeElement,
-                                               double width, double height, string title = "") {
+  private async Task ShowPreviewPopupForSection(IRTextSection section, UIElement relativeElement,
+                                                double width, double height, string title = "") {
     if (!Prepare()) {
       return;
     }
