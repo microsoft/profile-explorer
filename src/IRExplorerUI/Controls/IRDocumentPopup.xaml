@@ -47,12 +47,18 @@
         ToolTip="{Binding PanelToolTip}" />
 
       <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-
+        <StackPanel Grid.Column="1" Orientation="Horizontal" 
+                    Visibility="{Binding ShowModeButtons, Converter={StaticResource BoolToVisibilityConverter}}" >
         <TextBlock Text="Show" VerticalAlignment="Center" Margin="0,0,4,0" />
         <ToggleButton Content="ASM" Height="18" VerticalAlignment="Center"
+                      IsChecked="{Binding ShowAssembly}"
+                      Click="ModeToggleButton_Click"
                       Background="{x:Null}" Padding="2,0,2,0" />
         <ToggleButton Content="Source" Height="18" VerticalAlignment="Center"
+                      IsChecked="{Binding ShowSourceFile}"
+                      Click="ModeToggleButton_Click"
                       Background="{x:Null}" Margin="-1,0,0,0" Padding="2,0,2,0" />
+        </StackPanel>
         <Button
           x:Name="OpenButton"
           Margin="2,0,0,0"
@@ -84,7 +90,7 @@
       </Button>
 
       <document:ProfileIRDocument
-        x:Name="TextView"
+        x:Name="ProfileTextView"
         Grid.Row="1"
         Grid.ColumnSpan="4"
         HorizontalAlignment="Stretch"

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -15,7 +16,6 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
-using Xceed.Wpf.Toolkit.Core;
 
 namespace IRExplorerUI.Profile.Document;
 
@@ -24,12 +24,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private int profileElementIndex_;
   private FunctionProcessingResult sourceProfileResult_;
   private IRDocumentColumnData sourceColumnData_;
-  private double columnsListItemHeight_;
   private bool columnsVisible_;
-  private int hottestSourceLine_;
   private bool ignoreNextCaretEvent_;
   private bool disableCaretEvent_;
-  private double previousVerticalOffset_;
   private int firstSourceLineIndex_;
   private int lastSourceLineIndex_;
   private ReadOnlyMemory<char> sourceText_;
@@ -39,14 +36,16 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public ProfileIRDocument() {
     InitializeComponent();
-    DataContext = this;
     UpdateDocumentStyle();
+    DataContext = this;
 
-    // Create the overlay and place it on top of the text.
+    SetupEvents();
+  }
+
+  private void SetupEvents() {
     TextView.TextArea.Caret.PositionChanged += Caret_PositionChanged;
     TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
-
     TextView.TextRegionFolded += TextViewOnTextRegionFolded;
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
   }
@@ -61,100 +60,130 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public event PropertyChangedEventHandler PropertyChanged;
   public ISession Session { get; set; }
-  public int SelectedLine { get; set; }
   public IRDocument AssociatedDocument { get; set; }
 
   public bool HasProfileInfo {
     get => hasProfileInfo_;
-    set {
-      if (hasProfileInfo_ != value) {
-        hasProfileInfo_ = value;
-        OnPropertyChanged();
-      }
-    }
+    set => SetField(ref hasProfileInfo_, value);
   }
 
   public bool UseCompactMode {
     get => useCompactMode_;
-    set {
-      if (useCompactMode_ != value) {
-        useCompactMode_ = value;
-        OnPropertyChanged();
-      }
-    }
+    set => SetField(ref useCompactMode_, value);
   }
 
   public bool ColumnsVisible {
     get => columnsVisible_;
-    set {
-      if (columnsVisible_ != value) {
-        columnsVisible_ = value;
-        OnPropertyChanged();
-      }
-    }
+    set => SetField(ref columnsVisible_, value);
   }
 
   public Brush SelectedLineBrush {
     get => selectedLineBrush_;
-    set {
-      selectedLineBrush_ = value;
-      OnPropertyChanged();
-    }
+    set => SetField(ref selectedLineBrush_, value);
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
   }
 
-  public async Task AnnotateSourceFileProfilerData(FunctionProfileData profile, IRTextSection section,
-                                                   IDebugInfoProvider debugInfo) {
-    if (TextView.IsLoaded) {
-      TextView.ClearInstructionMarkers();
+  protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
+    if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+    field = value;
+    OnPropertyChanged(propertyName);
+    return true;
+  }
+
+  public async Task<bool> LoadSection(ParsedIRTextSection parsedSection) {
+    TextView.Initalize(App.Settings.DocumentSettings, Session);
+    TextView.EarlyLoadSectionSetup(parsedSection);
+    await TextView.LoadSection(parsedSection);
+
+    //? TODO: UI option?
+    if (true) {
+      await ShowProfilingColumns();
+    }
+
+    return true;
+  }
+
+  public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
+                                         IRTextSection section,
+                                         IDebugInfoProvider debugInfo) {
+    try {
+      string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
+      SetSourceText(text, sourceInfo.FilePath);
+      await AnnotateSourceFileProfilerData(section, debugInfo);
+      
+      //? TODO: Is panel is not visible, scroll doesn't do anything,
+      //? should be executed again when panel is activated
+      TextView.ScrollToLine(sourceInfo.StartLine);
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to load source file {sourceInfo.FilePath}: {ex.Message}");
+      return false;
+    }
+  }
+
+  public void HandleMissingSourceFile(string failureText) {
+    string text = "Failed to load source file.";
+
+    if (!string.IsNullOrEmpty(failureText)) {
+      text += $"\n{failureText}";
+    }
+
+    SetSourceText(text, "");
+  }
+  
+  private async Task AnnotateSourceFileProfilerData(IRTextSection section,
+                                                    IDebugInfoProvider debugInfo) {
+    var funcProfile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
+
+    if (funcProfile == null) {
+      return;
     }
 
     //? TODO: Check if it's still the case
     //? Accessing the PDB (DIA) from another thread fails.
     //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
     var profileOptions = ProfileDocumentMarkerSettings.Default;
-    var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, Session.CompilerInfo);
+    var profileMarker =
+      new ProfileDocumentMarker(funcProfile, Session.ProfileData, profileOptions, Session.CompilerInfo);
+    var processingResult = profileMarker.PrepareSourceLineProfile(funcProfile, TextView, debugInfo);
 
-    var processingResult = profileMarker.PrepareSourceLineProfile(profile, TextView, debugInfo);
-
-    if (processingResult == null)
+    if (processingResult == null) {
       return;
+    }
+
+    // 
+    if (TextView.IsLoaded) {
+      TextView.ClearInstructionMarkers();
+    }
 
     var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, processingResult.Function);
     TextView.EarlyLoadSectionSetup(dummyParsedSection);
     await TextView.LoadSection(dummyParsedSection);
-    
+
     TextView.SuspendUpdate();
     await profileMarker.MarkSourceLines(TextView, processingResult);
 
-    //? TODO: UI option
+    //? TODO: UI option?
     if (true) {
-      // Annotate call sites next to source lines.
+      // Annotate call sites next to source lines by parsing the actual section
+      // and mapping back the call sites to the dummy elements representing the source lines.
       var parsedSection = await Task.Run(() => Session.LoadAndParseSection(section));
 
       if (parsedSection != null) {
-        profileMarker.MarkCallSites(TextView, parsedSection.Function, 
+        profileMarker.MarkCallSites(TextView, parsedSection.Function,
                                     section.ParentFunction, processingResult);
       }
-    }
-    
-    //? TODO: Fix end
-    //? TODO: Used only for Excel exporting, do it only then
-    if (debugInfo.PopulateSourceLines(profile.FunctionDebugInfo)) {
-      firstSourceLineIndex_ = profile.FunctionDebugInfo.StartSourceLine.Line;
-      lastSourceLineIndex_ = firstSourceLineIndex_;
     }
 
     TextView.ResumeUpdate();
     sourceProfileResult_ = processingResult.Result;
 
-    //? TODO: UI Option
-    if (true) {
-      await ShowProfilingColumns();
-    }
+    //? TODO: UI Option?
+    await ShowProfilingColumns();
   }
 
   public async Task ShowProfilingColumns() {
@@ -184,12 +213,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     HasProfileInfo = true;
   }
 
-  private void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+  private async void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
     string path = Utils.ShowSaveFileDialog("Excel Worksheets|*.xlsx", "*.xlsx|All Files|*.*");
 
     if (!string.IsNullOrEmpty(path)) {
       try {
-        ExportFunctionAsExcelFile(path);
+        await ExportFunctionAsExcelFile(path);
       }
       catch (Exception ex) {
         Utils.ShowErrorMessageBox($"Failed to save source profiling results to {path}: {ex.Message}", this);
@@ -320,27 +349,29 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
   }
 
-  public void ScrollToLine(int line) {
+  public void SelectLine(int line) {
     if (line <= 0 || line > TextView.Document.LineCount) {
       return;
     }
 
     var documentLine = TextView.Document.GetLineByNumber(line);
-
-    if (documentLine.LineNumber != SelectedLine) {
-      SelectedLine = documentLine.LineNumber;
-      ignoreNextCaretEvent_ = true;
-      TextView.CaretOffset = documentLine.Offset;
-      TextView.ScrollToLine(line);
-    }
+    ignoreNextCaretEvent_ = true;
+    TextView.CaretOffset = documentLine.Offset;
+    TextView.ScrollToLine(line);
   }
 
+  public void Reset() {
+    TextView.UnloadDocument();
+    ProfileColumns.Reset();
+    sourceText_ = null;
+    profileElements_ = null;
+    sourceProfileResult_ = null;
+    sourceColumnData_ = null;
+  }
+  
   private void TextViewOnScrollOffsetChanged(object? sender, EventArgs e) {
-    double offset = TextView.TextArea.TextView.VerticalOffset;
-    double changeAmount = offset - previousVerticalOffset_;
-    previousVerticalOffset_ = offset;
-
     // Sync scrolling with the optional columns.
+    double offset = TextView.TextArea.TextView.VerticalOffset;
     SyncColumnsVerticalScrollOffset(offset);
   }
 
@@ -355,7 +386,22 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.TextArea.TextView.Redraw();
   }
 
-  private void ExportFunctionAsExcelFile(string filePath) {
+  private async Task ExportFunctionAsExcelFile(string filePath) {
+    var function = TextView.Section.ParentFunction;
+    var debugInfo = await Session.GetDebugInfoProvider(function);
+    var funcProfile = Session.ProfileData?.GetFunctionProfile(function);
+
+    if (debugInfo == null || funcProfile == null) {
+      return;
+    }
+
+    //? TODO: Fix end
+    //? TODO: Used only for Excel exporting, do it only then
+    if (debugInfo.PopulateSourceLines(funcProfile.FunctionDebugInfo)) {
+      firstSourceLineIndex_ = funcProfile.FunctionDebugInfo.StartSourceLine.Line;
+      lastSourceLineIndex_ = firstSourceLineIndex_;
+    }
+
     var wb = new XLWorkbook();
     var ws = wb.Worksheets.Add("Source");
     var columnData = sourceColumnData_;

@@ -80,15 +80,14 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     return new BasicDiffOutputFilter();
   }
 
-  //? TODO: Debug/Binary related functs should not be part of CompilerInfoProvider
+  //? TODO: Debug/Binary related functs should not be part of CompilerInfoProvider,
+  //? probably inside SessionState 
   public IDebugInfoProvider CreateDebugInfoProvider(string imagePath) {
     using var info = new PEBinaryInfoProvider(imagePath);
 
     if (!info.Initialize()) {
       return new JsonDebugInfoProvider();
     }
-
-    //? Cache
 
     switch (info.BinaryFileInfo.FileKind) {
       case BinaryFileKind.Native: {

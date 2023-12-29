@@ -89,7 +89,8 @@ public interface ISession {
   Task<bool> SaveSessionDocument(string filePath);
   Task<LoadedDocument> OpenSessionDocument(string filePath);
   Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null);
-
+  Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function);
+  
   //? TODO: Extract into an IProfilingSession, connecting all profile panels
   //? and sending the activity/timeline events to all of them.
   Task<bool> LoadProfileData(string profileFilePath, List<int> processIds,
