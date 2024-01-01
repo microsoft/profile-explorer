@@ -94,7 +94,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public async Task<bool> LoadSection(ParsedIRTextSection parsedSection) {
-    TextView.Initalize(App.Settings.DocumentSettings, Session);
+    TextView.Initialize(App.Settings.DocumentSettings, Session);
     TextView.EarlyLoadSectionSetup(parsedSection);
     await TextView.LoadSection(parsedSection);
 

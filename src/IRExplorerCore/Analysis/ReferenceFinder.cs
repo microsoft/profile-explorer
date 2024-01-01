@@ -179,7 +179,7 @@ public sealed class ReferenceFinder {
       }
     }
 
-    // For non-SSA values, search the entire function 
+    // For non-SSA values, search the entire function
     // for a symbol with the same name and type.
     //? TODO: inefficient, use a symbol table indexed by name (PrecomputeAllReferences)
     return onlySSA ? null : FindBestMatchingOperand(EnumerateAllOperands(), op);

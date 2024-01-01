@@ -8,6 +8,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.LLVM;
 using IRExplorerUI.Compilers.Default;
 using IRExplorerUI.Diff;
+using IRExplorerUI.Document;
 using IRExplorerUI.Query;
 
 namespace IRExplorerUI.Compilers.LLVM;
@@ -18,12 +19,15 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
   private DefaultNameProvider names_;
   private DefaultRemarkProvider remarks_;
   private DefaultSectionStyleProvider styles_;
+  private readonly SourceFileFinder sourceFileFinder_;
 
-  public LLVMCompilerInfoProvider() {
+  public LLVMCompilerInfoProvider(ISession session) {
+    session_ = session;
     ir_ = new LLVMCompilerIRInfo();
     styles_ = new DefaultSectionStyleProvider(this);
     names_ = new DefaultNameProvider();
     remarks_ = new DefaultRemarkProvider(this);
+    sourceFileFinder_ = new SourceFileFinder(session);
   }
 
   public string CompilerIRName => "LLVM";
@@ -37,6 +41,7 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
   public INameProvider NameProvider => names_;
   public ISectionStyleProvider SectionStyleProvider => styles_;
   public IRRemarkProvider RemarkProvider => remarks_;
+  public SourceFileFinder SourceFileFinder => sourceFileFinder_;
   public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>();
   public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>();
   public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>();

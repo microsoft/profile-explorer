@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using IRExplorerCore;
+using IRExplorerUI.Controls;
 using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI.Profile;
@@ -98,6 +99,13 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
       await Session.MarkProfileFunction(GraphViewer.SelectedNode.CallTreeNode, ToolPanelKind.Timeline,
                                         GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
+    }
+  });
+  public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
+    if (GraphViewer.SelectedNode is {HasFunction: true}) {
+      await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function,
+                                                     $"Function {GraphViewer.SelectedNode.FunctionName}",
+                                                     GraphViewer, Session);
     }
   });
 

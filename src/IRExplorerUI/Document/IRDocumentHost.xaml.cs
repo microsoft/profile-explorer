@@ -240,7 +240,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     Session = session;
     remarkSettings_ = App.Settings.RemarkSettings;
     Settings = App.Settings.DocumentSettings;
-    TextView.Initalize(Settings, Session);
+    TextView.Initialize(Settings, Session);
 
     // Initialize pass output panel.
     PassOutput.Session = session;
@@ -424,7 +424,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileColumns.UpdateColumnsList();
 
     if (force) {
-      TextView.Initalize(settings_, session_);
+      TextView.Initialize(settings_, session_);
       SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
       ProfileColumns.UpdateColumnsList();
     }

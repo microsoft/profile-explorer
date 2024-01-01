@@ -124,6 +124,12 @@
         IsEnabled="{Binding ElementName=DemanglingCheckbox, Path=IsChecked}"
         Margin="20,2,0,2"
         ToolTip="Demangle only the scope and function name, without parameters" />
+      <TextBlock FontWeight="Medium" Text="Profiling" Margin="0,4,0,0" />
+      <CheckBox
+        Content="Show hottest call stack popup"
+        IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
+        ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
+        Margin="0,4,0,2" />
       <Separator Margin="0,4,0,4" />
 
       <TextBlock FontWeight="Medium" Text="List Filtering" />

@@ -335,7 +335,7 @@
       <ListView.ContextMenu>
         <ContextMenu>
           <MenuItem
-            Command="{Binding OpenFunctionCommand}"
+            Command="{Binding PreviewFunctionCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Preview Function"
             ToolTip="Show a preview popup of the function ASM or source code">

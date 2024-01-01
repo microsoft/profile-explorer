@@ -1624,27 +1624,28 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     var preview = new PopupHoverPreview(
       FunctionList, HoverPreview.ExtraLongHoverDuration,
       (mousePoint, previewPoint) => {
-        var element =
-          FunctionList.GetObjectAtPoint<ListViewItem>(mousePoint);
+        if (!settings_.ShowCallStackPopup) {
+          return null;
+        }
+
+        var element = FunctionList.GetObjectAtPoint<ListViewItem>(mousePoint);
 
         if (element == null ||
             element.Content is not IRTextFunctionEx funcEx) {
           return null;
         }
 
-        var nodeList =
-          Session.ProfileData.CallTree.GetSortedCallTreeNodes(
-            funcEx.Function);
+        var nodeList = Session.ProfileData.CallTree.GetSortedCallTreeNodes(funcEx.Function);
 
         if (nodeList is not {Count: > 0}) {
           return null;
         }
 
+        // Show popup for hottest call stack.
         var callNode = nodeList[0];
 
         if (funcBacktracePreviewPopup_ != null) {
-          funcBacktracePreviewPopup_.UpdatePosition(
-            previewPoint, FunctionList);
+          funcBacktracePreviewPopup_.UpdatePosition(previewPoint, FunctionList);
         }
         else {
           funcBacktracePreviewPopup_ = new CallTreeNodePopup(
@@ -1652,7 +1653,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
             FunctionList, Session);
         }
 
-        //? TODO: Max backtrace depth 10 should be an option from TimelinePanel
+        //? TODO: Max backtrace depth 10 should be a a global profiling option
         funcBacktracePreviewPopup_.ShowBackTrace(callNode, 10,
                                                  Session.CompilerInfo.NameProvider.FormatFunctionName);
         return funcBacktracePreviewPopup_;

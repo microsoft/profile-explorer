@@ -14,6 +14,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Aga.Controls.Tree;
 using IRExplorerCore;
+using IRExplorerUI.Controls;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Utilities;
 using Microsoft.Diagnostics.Tracing.Stacks;
@@ -185,6 +186,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       var options = FunctionNameDemanglingOptions.Default;
       string text = Session.CompilerInfo.NameProvider.DemangleFunctionName(childInfo.Function, options);
       Clipboard.SetText(text);
+    }
+  });
+  public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
+    if (obj is TreeNode node && node.Tag is ChildFunctionEx childInfo) {
+      await IRDocumentPopupInstance.ShowPreviewPopup(childInfo.Function,
+                                                     $"Function {childInfo.FunctionName}",
+                                                     CallTreeList, Session);
     }
   });
 
