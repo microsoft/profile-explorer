@@ -204,7 +204,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     return line;
   }
 
-  public void Initalize(DocumentSettings settings, ISession session) {
+  public void Initialize(DocumentSettings settings, ISession session) {
     Session = session;
     Settings = settings;
   }
@@ -760,6 +760,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public void SelectElement(IRElement element, bool raiseEvent = true, bool fromUICommand = false,
                             int textOffset = -1) {
+    if (Function == null) { // For source code documents.
+      return;
+    }
+
     ClearTemporaryHighlighting();
     ResetExpressionLevel(element);
 
@@ -1574,7 +1578,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private void B_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
     HideTemporaryUI();
     var position = e.GetPosition(markerMargin_);
-    var barElement = FindMarkerBarlElement(position);
+    var barElement = FindMarkerBarElement(position);
 
     if (barElement != null && barElement.HandlesInput) {
       ignoreNextPreviewElement_ = barElement.Element;
@@ -1600,7 +1604,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
 
     var position = e.GetPosition(markerMargin_);
-    var barElement = FindMarkerBarlElement(position);
+    var barElement = FindMarkerBarElement(position);
 
     if (barElement != null && barElement.HandlesInput) {
       barElement.Style.Border = ColorPens.GetBoldPen(Colors.Black);
@@ -1802,8 +1806,9 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private IRElement FindElementAtOffset(int offset) {
-    // Exit if the element lists are still being computed.
-    if (duringSectionLoading_) {
+    // Exit if the element lists are still being computed or
+    // for source code documents.
+    if (duringSectionLoading_ || Function == null) {
       return null;
     }
 
@@ -1818,7 +1823,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     return null;
   }
 
-  private MarkerBarElement FindMarkerBarlElement(Point position) {
+  private MarkerBarElement FindMarkerBarElement(Point position) {
     if (markerMargingElements_ != null) {
       //? TODO: This is inefficient, at least sort by Y and do binary search
       foreach (var barElement in markerMargingElements_) {
@@ -1840,6 +1845,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private IRElement FindPointedElement(Point position, out int textOffset) {
+    if (Function == null) { // For source code documents.
+      textOffset = 0;
+      return null;
+    }
+
     int offset = DocumentUtils.GetOffsetFromMousePosition(position, this, out _);
 
     if (offset != -1) {
@@ -2693,7 +2703,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     operandElements_ = new List<IRElement>(blocks * 12);
     selectedElements_ = new HashSet<IRElement>();
 
-    if (Function == null) {
+    if (Function == null) { // For source code documents.
       return;
     }
 
@@ -3723,7 +3733,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private async Task<IRDocumentPopup> CreateElementPreviewPopup(IRElement element, Point position) {
     return await IRDocumentPopup.CreateNew(this, element, position,
                                            IRDocumentPopup.DefaultWidth,
-                                           IRDocumentPopup.DefaultHeight, this);
+                                           IRDocumentPopup.DefaultElementHeight, this);
   }
 
   private async Task<IRDocumentPopup> CreateCallTargetPreviewPopup(IRElement element, bool alwaysShow, Point position) {
@@ -3744,7 +3754,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return null;
 
     return await IRDocumentPopup.CreateNew(result, position, IRDocumentPopup.DefaultWidth,
-                                           IRDocumentPopup.DefaultHeight * 2,
+                                           IRDocumentPopup.DefaultHeight,
                                            this, Session, $"Function: {element.Name}");
   }
 

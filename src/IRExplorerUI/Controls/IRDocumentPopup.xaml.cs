@@ -21,7 +21,8 @@ namespace IRExplorerUI.Controls;
 
 public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   public static readonly double DefaultWidth = 500;
-  public static readonly double DefaultHeight = 200;
+  public static readonly double DefaultHeight = 400; // For ASM/source preview.
+  public static readonly double DefaultElementHeight = 200; // For single element preview.
   private string panelTitle_;
   private string panelToolTip_;
   private UIElement owner_;
@@ -29,7 +30,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private bool showModeButtons_;
   private ISession session;
   private ParsedIRTextSection parsedSection_;
-  
+
   public IRDocumentPopup(Point position, double width, double height,
                          UIElement owner, ISession session) {
     InitializeComponent();
@@ -82,7 +83,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       OnPropertyChanged(nameof(ShowAssembly));
     }
   }
-  
+
   public bool ShowModeButtons {
     get => showModeButtons_;
     set => SetField(ref showModeButtons_, value);
@@ -243,11 +244,10 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
   private async void ModeToggleButton_Click(object sender, RoutedEventArgs e) {
     ProfileTextView.Reset();
-    
+
     if (showSourceFile_) {
-      var sourceFileFinder = new SourceFileFinder(Session);
       var function = parsedSection_.Section.ParentFunction;
-      var (sourceInfo, debugInfo) = await sourceFileFinder.FindLocalSourceFile(function);
+      var (sourceInfo, debugInfo) = await Session.CompilerInfo.SourceFileFinder.FindLocalSourceFile(function);
 
       if (!sourceInfo.IsUnknown) {
         await ProfileTextView.LoadSourceFile(sourceInfo, parsedSection_.Section, debugInfo);
@@ -396,7 +396,7 @@ public class IRDocumentPopupInstance {
     await ShowPreviewPopup(result);
   }
 
-  public async Task ShowPreviewPopup(PreviewPopupArgs args) {
+  private async Task ShowPreviewPopup(PreviewPopupArgs args) {
     if (args == null) {
       return;
     }
@@ -413,6 +413,14 @@ public class IRDocumentPopupInstance {
     else {
       throw new InvalidOperationException();
     }
+  }
+
+  public static async Task ShowPreviewPopup(IRTextFunction function, string title,
+                                            UIElement relativeElement, ISession session) {
+    var instance = new IRDocumentPopupInstance(IRDocumentPopup.DefaultWidth,
+                                               IRDocumentPopup.DefaultHeight, session);
+    var args = PreviewPopupArgs.ForFunction(function, relativeElement, title);
+    await instance.ShowPreviewPopup(args);
   }
 
   private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {

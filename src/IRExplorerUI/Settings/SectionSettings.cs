@@ -33,6 +33,7 @@ public class SectionSettings : SettingsBase {
   [ProtoMember(22)] public bool IncludeCallGraphStatistics { get; set; }
   [ProtoMember(23)] public bool SyncSourceFile { get; set; }
   [ProtoMember(24)] public bool SyncSelection { get; set; }
+  [ProtoMember(25)] public bool ShowCallStackPopup { get; set; }
 
   public FunctionNameDemanglingOptions DemanglingOptions {
     get {
@@ -76,6 +77,7 @@ public class SectionSettings : SettingsBase {
     DemangleNoSpecialKeywords = true;
     DemangleNoReturnType = true;
     SyncSelection = true;
+    ShowCallStackPopup = true;
     NewSectionColor = Utils.ColorFromString("#007200");
     MissingSectionColor = Utils.ColorFromString("#BB0025");
     ChangedSectionColor = Utils.ColorFromString("#DE8000");
@@ -105,6 +107,7 @@ public class SectionSettings : SettingsBase {
            DemangleOnlyNames == settings.DemangleOnlyNames &&
            DemangleNoReturnType == settings.DemangleNoReturnType &&
            DemangleNoSpecialKeywords == settings.DemangleNoSpecialKeywords &&
-           ComputeStatistics == settings.ComputeStatistics;
+           ComputeStatistics == settings.ComputeStatistics &&
+           ShowCallStackPopup == settings.ShowCallStackPopup;
   }
 }

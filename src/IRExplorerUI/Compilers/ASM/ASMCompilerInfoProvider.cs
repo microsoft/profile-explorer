@@ -10,6 +10,7 @@ using IRExplorerCore.ASM;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers.Default;
 using IRExplorerUI.Diff;
+using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Query;
 
@@ -23,11 +24,13 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   private readonly DummySectionStyleProvider styles_ = new DummySectionStyleProvider();
   private readonly DefaultRemarkProvider remarks_;
   private readonly ASMCompilerIRInfo ir_;
+  private readonly SourceFileFinder sourceFileFinder_;
 
   public ASMCompilerInfoProvider(IRMode mode, ISession session) {
     session_ = session;
     remarks_ = new DefaultRemarkProvider(this);
     ir_ = new ASMCompilerIRInfo(mode);
+    sourceFileFinder_ = new SourceFileFinder(session);
   }
 
   public virtual string CompilerIRName => "ASM";
@@ -41,6 +44,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   public INameProvider NameProvider => names_;
   public ISectionStyleProvider SectionStyleProvider => styles_;
   public IRRemarkProvider RemarkProvider => remarks_;
+  public SourceFileFinder SourceFileFinder => sourceFileFinder_;
   public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>();
   public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>();
   public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>();
@@ -81,7 +85,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   }
 
   //? TODO: Debug/Binary related functs should not be part of CompilerInfoProvider,
-  //? probably inside SessionState 
+  //? probably inside SessionState
   public IDebugInfoProvider CreateDebugInfoProvider(string imagePath) {
     using var info = new PEBinaryInfoProvider(imagePath);
 

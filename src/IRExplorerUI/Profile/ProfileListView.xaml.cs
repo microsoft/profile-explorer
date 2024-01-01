@@ -85,7 +85,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
   private void SetupPreviewPopup() {
     previewPopup_ = new IRDocumentPopupInstance(IRDocumentPopup.DefaultWidth,
-                                                IRDocumentPopup.DefaultHeight * 2, Session);
+                                                IRDocumentPopup.DefaultHeight, Session);
     previewPopup_.SetupHoverEvents(ItemList, HoverPreview.LongHoverDuration, () => {
       var hoveredItem = Utils.FindPointedListViewItem(ItemList);
 
@@ -120,8 +120,9 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
-      previewPopup_.ShowPreviewPopup(PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList,
-                                                                  $"Function {item.CallTreeNode.FunctionName}"));
+      await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function,
+                                                     $"Function {item.FunctionName}",
+                                                     ItemList, session_);
     }
   });
   public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {

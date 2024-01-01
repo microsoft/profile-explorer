@@ -53,7 +53,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     set {
       base.Session = value;
       TextView.Session = value;
-      sourceFileFinder_ = new SourceFileFinder(value);
+      sourceFileFinder_ = value.CompilerInfo.SourceFileFinder;
     }
   }
 
@@ -159,7 +159,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public async Task LoadSourceFile(IRTextSection section) {
     section_ = section;
-    TextView.TextView.Initalize(App.Settings.DocumentSettings, Session);
+    TextView.TextView.Initialize(App.Settings.DocumentSettings, Session);
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
       TextView.JumpToHottestProfiledElement();
@@ -172,7 +172,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     TextView.AssociatedDocument = document;
     await LoadSourceFile(section_);
   }
-  
+
   private async Task<bool> LoadSourceFileForFunction(IRTextFunction function) {
     if (sourceFileLoaded_ && sourceFileFunc_ == function) {
       return true; // Right file already loaded.

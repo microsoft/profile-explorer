@@ -920,7 +920,7 @@ public partial class MainWindow : Window, ISession {
     //? TODO: Use a list of registered IRs
     switch (name) {
       case "LLVM": {
-        await SwitchCompilerTarget(new LLVMCompilerInfoProvider());
+        await SwitchCompilerTarget(new LLVMCompilerInfoProvider(this));
         break;
       }
       case "ASM": {

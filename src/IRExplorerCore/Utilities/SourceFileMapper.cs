@@ -10,32 +10,37 @@ namespace IRExplorerCore;
 public class SourceFileMapper {
   private readonly Dictionary<string, DirectoryInfo> map_ = new Dictionary<string, DirectoryInfo>();
   private readonly HashSet<string> missingFilesSet_ = new HashSet<string>();
+  private readonly object lockObject_ = new object();
 
   public string Map(string sourceFile, Func<string> lookup) {
-    if (TryLookupInMap(sourceFile, out string result)) {
+    lock (lockObject_) {
+      if (TryLookupInMap(sourceFile, out string result)) {
+        return result;
+      }
+
+      if (missingFilesSet_.Contains(sourceFile)) {
+        return null;
+      }
+
+      result = lookup();
+
+      if (result != null) {
+        UpdateMap(sourceFile, result);
+      }
+      else {
+        // Remember that the file couldn't be found so next time
+        // it won't ask again for the same one.
+        missingFilesSet_.Add(sourceFile);
+      }
+
       return result;
     }
-
-    if (missingFilesSet_.Contains(sourceFile)) {
-      return null;
-    }
-
-    result = lookup();
-
-    if (result != null) {
-      UpdateMap(sourceFile, result);
-    }
-    else {
-      // Remember that the file couldn't be found so next time
-      // it won't ask again for the same one.
-      missingFilesSet_.Add(sourceFile);
-    }
-
-    return result;
   }
 
   public void Reset() {
-    missingFilesSet_.Clear();
+    lock (lockObject_) {
+      missingFilesSet_.Clear();
+    }
   }
 
   private bool TryLookupInMap(string sourceFile, out string result) {

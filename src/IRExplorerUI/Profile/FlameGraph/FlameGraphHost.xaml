@@ -38,7 +38,7 @@
       <local:FlameGraphViewer.ContextMenu>
         <ContextMenu>
           <MenuItem
-            Command="{Binding OpenFunctionCommand}"
+            Command="{Binding PreviewFunctionCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Preview Function"
             InputGestureText="Alt+Return"
