@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
@@ -35,7 +36,8 @@ public class FunctionProfileData {
   public bool HasPerformanceCounters => InstructionCounters.Count > 0;
 
   public static bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset,
-                                             ICompilerIRInfo ir, out IRElement element) {
+                                             ICompilerIRInfo ir,
+                                             out IRElement element) {
     var offsetData = ir.InstructionOffsetData;
     int multiplier = offsetData.InitialMultiplier;
 
@@ -99,13 +101,15 @@ public class FunctionProfileData {
     return result;
   }
 
-  public SourceLineProcessingResult ProcessSourceLines(IDebugInfoProvider debugInfo) {
+  public SourceLineProcessingResult ProcessSourceLines(IDebugInfoProvider debugInfo,
+                                                       ICompilerIRInfo ir) {
     var result = new SourceLineProcessingResult();
     int firstLine = int.MaxValue;
     int lastLine = int.MinValue;
+    var offsetData = ir.InstructionOffsetData;
 
     foreach (var pair in InstructionWeight) {
-      long rva = pair.Key + FunctionDebugInfo.RVA;
+      long rva = pair.Key + FunctionDebugInfo.RVA - offsetData.InitialMultiplier;
       var lineInfo = debugInfo.FindSourceLineByRVA(rva);
 
       if (!lineInfo.IsUnknown) {

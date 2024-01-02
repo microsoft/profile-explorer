@@ -184,7 +184,7 @@ public class ProfileDocumentMarker {
 
   public SourceLineProfileResult
     PrepareSourceLineProfile(FunctionProfileData profile, MarkedDocument document, IDebugInfoProvider debugInfo) {
-    var result = profile.ProcessSourceLines(debugInfo);
+    var result = profile.ProcessSourceLines(debugInfo, irInfo_.IR);
     var sourceLineWeights = result.SourceLineWeightList;
 
     if (sourceLineWeights.Count == 0) {
@@ -348,7 +348,7 @@ public class ProfileDocumentMarker {
         pair.List = new List<ProfileCallTreeNode>();
         overlayMap[element] = pair;
       }
-      
+
       // Mark if any of the calls are indirect.
       if (!isDirectCall) {
         pair.HasIndirectCalls = true;
@@ -360,10 +360,10 @@ public class ProfileDocumentMarker {
       }
     }
 
-    // Add the overlays to the document. 
+    // Add the overlays to the document.
     var indirectIcon = IconDrawing.FromIconResource("ExecuteIconColor");
     var directIcon = IconDrawing.FromIconResource("ExecuteIcon");
-    
+
     foreach (var (element, pair) in overlayMap) {
       var color = App.Settings.DocumentSettings.BackgroundColor;
 
