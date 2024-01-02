@@ -25,7 +25,7 @@ public static class CollectionExtensionMethods {
     var newHashSet = new HashSet<T>(hashSet.Count);
 
     foreach (var item in hashSet) {
-      hashSet.Add(item);
+      newHashSet.Add(item);
     }
 
     return newHashSet;
