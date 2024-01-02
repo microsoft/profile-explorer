@@ -244,7 +244,7 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
   private SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info) {
     return new SourceFileDebugInfo(info.SourceFileName,
                                    info.OriginalSourceFileName,
-                                   info.StartSourceLine.Line);
+                                   info.FirstSourceLine.Line);
   }
 
   public struct AddressNamePair {

@@ -268,7 +268,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return FindFunctionSourceFilePathImpl(lineInfo, sourceFile, (uint)rva);
   }
 
-  //? TODO: Integrate with SourceFileMapper
   public SourceFileDebugInfo FindFunctionSourceFilePath(string functionName) {
     var funcSymbol = FindFunctionSymbol(functionName);
 
@@ -520,6 +519,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         locationTag.Line = (int)lineNumber.lineNumber;
         locationTag.Column = (int)lineNumber.columnNumber;
 
+        // Enumerate the functions that got inlined at this call site.
         funcSymbol.findInlineFramesByRVA(instrRVA, out var inlineeFrameEnum);
 
         foreach (IDiaSymbol inlineFrame in inlineeFrameEnum) {
@@ -538,7 +538,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
             try {
               inlineeFileName = inlineeLineNumber.sourceFile.fileName;
             }
-            catch (Exception _) {
+            catch {
             }
 
             locationTag.AddInlinee(inlineFrame.name, inlineeFileName,
@@ -557,7 +557,34 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   }
 
   public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
-    return true;
+    if (funcInfo.HasSourceLines) {
+      return true; // Already populated.
+    }
+
+    lock (funcInfo) {
+      try {
+        session_.findLinesByRVA((uint)funcInfo.StartRVA, (uint)funcInfo.Size, out var lineEnum);
+
+        while (true) {
+          lineEnum.Next(1, out var lineNumber, out uint retrieved);
+
+          if (retrieved == 0) {
+            break;
+          }
+
+          funcInfo.AddSourceLine(new SourceLineDebugInfo(
+                                   (int)lineNumber.addressOffset,
+                                   (int)lineNumber.lineNumber,
+                                   (int)lineNumber.columnNumber));
+        }
+
+        return true;
+      }
+      catch (Exception ex) {
+        Trace.TraceError($"Failed to populate source lines for {funcInfo.Name}: {ex.Message}");
+        return false;
+      }
+    }
   }
 
   private IEnumerable<FunctionDebugInfo> EnumerateFunctionsImpl() {
