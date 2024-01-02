@@ -49,20 +49,11 @@
               <TextBlock Text="Open" />
             </StackPanel>
           </Button>
-          <Button Click="DefaultButton_Click" ToolTip="Find and open source file using debug info">
-            <StackPanel Orientation="Horizontal">
-              <Image
-                Height="16"
-                Margin="0,1,0,0"
-                Source="{StaticResource ReloadIcon}"
-                Width="16" />
-              <TextBlock Text="Default" />
-            </StackPanel>
-          </Button>
 
           <Menu Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                 VerticalAlignment="Center">
             <MenuItem
+              Header="Path"
               ToolTip="Source file operations"
               Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
@@ -79,6 +70,16 @@
               <MenuItem Click="SourceFile_Open" Header="Open source file" />
             </MenuItem>
           </Menu>
+          <Button Click="ResetButton_Click" ToolTip="Reset source file mappings and exclusions">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Height="16"
+                Margin="0,1,0,0"
+                Source="{StaticResource ReloadIcon}"
+                Width="16" />
+              <TextBlock Text="Reset" />
+            </StackPanel>
+          </Button>
           <Separator />
 
           <TextBlock

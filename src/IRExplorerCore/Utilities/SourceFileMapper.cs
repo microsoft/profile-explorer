@@ -8,9 +8,17 @@ using System.IO;
 namespace IRExplorerCore;
 
 public class SourceFileMapper {
-  private readonly Dictionary<string, DirectoryInfo> map_ = new Dictionary<string, DirectoryInfo>();
-  private readonly HashSet<string> missingFilesSet_ = new HashSet<string>();
-  private readonly object lockObject_ = new object();
+  private readonly Dictionary<string, string> map_;
+  private readonly HashSet<string> missingFilesSet_;
+  private readonly object lockObject_ = new();
+
+  public SourceFileMapper(Dictionary<string, string> map = null) {
+    map_ = map;
+    map_ ??= new();
+    missingFilesSet_ = new();
+  }
+
+  public Dictionary<string, string> SourceMap => map_;
 
   public string Map(string sourceFile, Func<string> lookup) {
     lock (lockObject_) {
@@ -39,6 +47,7 @@ public class SourceFileMapper {
 
   public void Reset() {
     lock (lockObject_) {
+      map_.Clear();
       missingFilesSet_.Clear();
     }
   }
@@ -48,7 +57,7 @@ public class SourceFileMapper {
 
     while (index != -1) {
       if (map_.TryGetValue(sourceFile.Substring(0, index), out var mappedDirectory)) {
-        result = Path.Combine(mappedDirectory.FullName, sourceFile.Substring(index + 1));
+        result = Path.Combine(mappedDirectory, sourceFile.Substring(index + 1));
         return true;
       }
 
@@ -71,7 +80,7 @@ public class SourceFileMapper {
         return;
       }
 
-      map_[originalPath.Substring(0, originalPathIndex)] = new DirectoryInfo(mappedPath.Substring(0, mappedPathIndex));
+      map_[originalPath.Substring(0, originalPathIndex)] = mappedPath.Substring(0, mappedPathIndex);
       prevOriginalPath = originalPathIndex;
       prevMappedPath = mappedPathIndex;
 

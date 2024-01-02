@@ -126,14 +126,20 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
   }
 
-  private async void DefaultButton_Click(object sender, RoutedEventArgs e) {
+  private async void ResetButton_Click(object sender, RoutedEventArgs e) {
+    // Re-enable source mapper if it was disabled before.
+    //? TODO: Should clear only the current file?
+    if (Utils.ShowYesNoMessageBox("Do you want to reset all file mappings and exclusions?", this) ==
+        MessageBoxResult.No) {
+      return;
+    }
+
+    sourceFileFinder_.Reset();
+
+    // Try to reload source file.
     if (section_ == null) {
       return; //? TODO: Button should be disabled, needs commands
     }
-
-    // Re-enable source mapper if it was disabled before.
-    //? TODO: Should clear only the current file
-    sourceFileFinder_.Reset();
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
       TextView.JumpToHottestProfiledElement();

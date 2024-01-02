@@ -15,9 +15,19 @@ public class SourceFileFinder {
 
   public SourceFileFinder(ISession session) {
     session_ = session;
-    sourceFileMapper_ = new SourceFileMapper();
-    disabledSourceMappings_ = new HashSet<string>();
-    //? TODO: Load sessings
+    LoadSettings();
+  }
+
+  private void LoadSettings() {
+    var settings = App.Settings.SourceFileSettings.FinderSettings;
+    disabledSourceMappings_ = settings.DisabledSourceMappings.CloneHashSet();
+    sourceFileMapper_ = new SourceFileMapper(settings.SourceMappings.CloneDictionary());
+  }
+
+  public void SaveSettings() {
+    var settings = App.Settings.SourceFileSettings.FinderSettings;
+    settings.SourceMappings = sourceFileMapper_.SourceMap.CloneDictionary();
+    settings.DisabledSourceMappings = disabledSourceMappings_.CloneHashSet();
   }
 
   public async Task<(SourceFileDebugInfo, IDebugInfoProvider)>
@@ -40,7 +50,7 @@ public class SourceFileFinder {
       // Try again using the function name.
       sourceInfo = debugInfo.FindFunctionSourceFilePath(function);
     }
-      
+
     if (sourceInfo.HasFilePath) {
       // Check if the file can be found. If it's from another machine,
       // a mapping is done after the user is asked to pick the new location of the file.
@@ -50,7 +60,7 @@ public class SourceFileFinder {
       else if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
         var filePath = sourceFileMapper_.Map(sourceInfo.FilePath, () =>
                                                Utils.ShowOpenFileDialog(
-                                                 $"Source File|{Utils.TryGetFileName(sourceInfo.OriginalFilePath)}", 
+                                                 $"Source File|{Utils.TryGetFileName(sourceInfo.OriginalFilePath)}",
                                                  null, $"Open {sourceInfo.OriginalFilePath}"));
         if (!string.IsNullOrEmpty(filePath)) {
           sourceInfo.FilePath = filePath;
@@ -60,6 +70,7 @@ public class SourceFileFinder {
           disabledSourceMappings_.Add(sourceInfo.FilePath);
         }
 
+        SaveSettings();
         return (sourceInfo, debugInfo);
       }
     }
@@ -71,20 +82,16 @@ public class SourceFileFinder {
     //? TODO: Should clear only the current file
     disabledSourceMappings_.Clear();
     sourceFileMapper_.Reset();
+    SaveSettings();
   }
-  
+
   private SourceFileDebugInfo LocateSourceFile(FunctionProfileData funcProfile,
                                                IDebugInfoProvider debugInfo) {
     // Lookup function by RVA, more precise.
     if (funcProfile.FunctionDebugInfo != null) {
       return debugInfo.FindSourceFilePathByRVA(funcProfile.FunctionDebugInfo.RVA);
     }
-    
-    return SourceFileDebugInfo.Unknown;
-  }
 
-  private string BrowseSourceFile() {
-    return Utils.ShowOpenFileDialog(
-      "C/C++ source files|*.c;*.cpp;*.cc;*.cxx;*.h;*.hpp;*.hxx;*.hh|.NET source files|*.cs;*.vb|All Files|*.*");
+    return SourceFileDebugInfo.Unknown;
   }
 }
