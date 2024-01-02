@@ -97,7 +97,6 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     RVA = rva;
     Size = size;
     OptimizationLevel = optLevel;
-    StartSourceLine = SourceLineDebugInfo.Unknown;
     SourceLines = null;
     Id = id;
     AuxiliaryId = auxId;
@@ -112,20 +111,24 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   [ProtoMember(4)]
   public long Size { get; set; }
   [ProtoMember(5)]
-  public SourceLineDebugInfo StartSourceLine { get; set; }
-  [ProtoMember(6)]
   public List<SourceLineDebugInfo> SourceLines { get; set; }
-  [ProtoMember(7)]
+  [ProtoMember(5)]
   public long AuxiliaryId { get; set; } // Used for RejitID in managed code.
-  [ProtoMember(8)]
+  [ProtoMember(6)]
   public short OptimizationLevel { get; set; } // Used for OptimizationTier in managed code.
+
+  public bool HasSourceLines => SourceLines is {Count: > 0};
+  public SourceLineDebugInfo FirstSourceLine => HasSourceLines ?
+    SourceLines[0] : SourceLineDebugInfo.Unknown;
+
+  public SourceLineDebugInfo LastSourceLine => HasSourceLines ?
+    SourceLines[^1] : SourceLineDebugInfo.Unknown;
 
   //? TODO: Remove SourceFileName from SourceLineDebugInfo
   public string SourceFileName { get; set; }
   public string OriginalSourceFileName { get; set; }
   public long StartRVA => RVA;
   public long EndRVA => RVA + Size - 1;
-  public bool HasSourceLines => SourceLines != null && SourceLines.Count > 0;
   public bool IsUnknown => RVA == 0 && Size == 0;
 
   public static T BinarySearch<T>(List<T> ranges, long value) where T : IComparable<long> {
@@ -159,10 +162,6 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   public void AddSourceLine(SourceLineDebugInfo sourceLine) {
     SourceLines ??= new List<SourceLineDebugInfo>(1);
     SourceLines.Add(sourceLine);
-
-    if (StartSourceLine.IsUnknown) {
-      StartSourceLine = sourceLine;
-    }
   }
 
   public SourceLineDebugInfo FindNearestLine(long offset) {

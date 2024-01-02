@@ -8,7 +8,7 @@
   Title="Manage Workspaces"
   Width="450"
   Height="250"
-  Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
   ResizeMode="CanResizeWithGrip"
   ShowInTaskbar="False"
   SnapsToDevicePixels="True"

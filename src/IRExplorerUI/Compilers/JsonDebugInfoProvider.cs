@@ -17,9 +17,9 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
   public SymbolFileSourceOptions SymbolOptions { get; set; }
 
   private static SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info) {
-    return new SourceFileDebugInfo(info.StartSourceLine.FilePath,
-                                   info.StartSourceLine.FilePath,
-                                   info.StartSourceLine.Line);
+    return new SourceFileDebugInfo(info.FirstSourceLine.FilePath,
+                                   info.FirstSourceLine.FilePath,
+                                   info.FirstSourceLine.Line);
   }
 
   public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {

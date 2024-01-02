@@ -17,7 +17,7 @@
   WindowStartupLocation="CenterOwner"
   WindowStyle="ToolWindow"
   mc:Ignorable="d">
-  <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <Grid.RowDefinitions>
       <RowDefinition Height="*" />
       <RowDefinition Height="32" />

@@ -27,8 +27,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private bool columnsVisible_;
   private bool ignoreNextCaretEvent_;
   private bool disableCaretEvent_;
-  private int firstSourceLineIndex_;
-  private int lastSourceLineIndex_;
   private ReadOnlyMemory<char> sourceText_;
   private bool hasProfileInfo_;
   private bool useCompactMode_;
@@ -113,7 +111,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
       SetSourceText(text, sourceInfo.FilePath);
       await AnnotateSourceFileProfilerData(section, debugInfo);
-      
+
       //? TODO: Is panel is not visible, scroll doesn't do anything,
       //? should be executed again when panel is activated
       TextView.ScrollToLine(sourceInfo.StartLine);
@@ -134,7 +132,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     SetSourceText(text, "");
   }
-  
+
   private async Task AnnotateSourceFileProfilerData(IRTextSection section,
                                                     IDebugInfoProvider debugInfo) {
     var funcProfile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
@@ -155,7 +153,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       return;
     }
 
-    // 
+    //
     if (TextView.IsLoaded) {
       TextView.ClearInstructionMarkers();
     }
@@ -230,14 +228,19 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     disableCaretEvent_ = true; // Changing the text triggers the caret event twice.
     IHighlightingDefinition highlightingDef = null;
 
-    switch (Utils.GetFileExtension(filePath)) {
+    switch (Utils.GetFileExtension(filePath).ToLowerInvariant()) {
       case ".c":
       case ".cpp":
       case ".cxx":
+      case ".c++":
       case ".cc":
+      case ".cp":
       case ".h":
+      case ".hh":
       case ".hpp":
-      case ".hxx": {
+      case ".hxx":
+      case ".inl":
+      case ".ixx": {
         highlightingDef = HighlightingManager.Instance.GetDefinition("C++");
         break;
       }
@@ -368,7 +371,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     sourceProfileResult_ = null;
     sourceColumnData_ = null;
   }
-  
+
   private void TextViewOnScrollOffsetChanged(object? sender, EventArgs e) {
     // Sync scrolling with the optional columns.
     double offset = TextView.TextArea.TextView.VerticalOffset;
@@ -395,11 +398,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       return;
     }
 
-    //? TODO: Fix end
-    //? TODO: Used only for Excel exporting, do it only then
+    int firstSourceLineIndex = 0;
+    int lastSourceLineIndex = 0;
+
     if (debugInfo.PopulateSourceLines(funcProfile.FunctionDebugInfo)) {
-      firstSourceLineIndex_ = funcProfile.FunctionDebugInfo.StartSourceLine.Line;
-      lastSourceLineIndex_ = firstSourceLineIndex_;
+      firstSourceLineIndex = funcProfile.FunctionDebugInfo.FirstSourceLine.Line;
+      lastSourceLineIndex = funcProfile.FunctionDebugInfo.LastSourceLine.Line;
     }
 
     var wb = new XLWorkbook();
@@ -409,7 +413,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
     int maxLineLength = 0;
 
-    for (int i = firstSourceLineIndex_; i <= lastSourceLineIndex_; i++) {
+    for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
       var line = TextView.Document.GetLineByNumber(i);
       string text = TextView.Document.GetText(line.Offset, line.Length);
       ws.Cell(rowId, 1).Value = text;
