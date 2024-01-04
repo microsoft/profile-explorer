@@ -11,7 +11,7 @@
   xmlns:settings="clr-namespace:IRExplorerUI"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
-  <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <StackPanel Margin="4,4,4,4">
       <TextBlock FontWeight="Medium" Text="Displayed changes" />
       <StackPanel Margin="0,4,0,2" Orientation="Horizontal">
@@ -65,7 +65,7 @@
         Margin="0,2,0,2"
         Name="WholeNameCheckbox"
         ToolTip="Combine many small changes in a line into one line change" />
-      <TextBlock Margin="20,6,0,2" Text="Mark as modified line change percentage" />
+      <TextBlock Margin="20,4,0,2" Text="Mark as modified line change percentage" />
       <StackPanel
         HorizontalAlignment="Stretch"
         Margin="20,0,0,4"

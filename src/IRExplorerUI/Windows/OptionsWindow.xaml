@@ -26,11 +26,12 @@
     <TabControl
       Grid.Row="0"
       Margin="0,0,0,4"
-      Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+      BorderThickness="0"
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       IsSynchronizedWithCurrentItem="True"
       SelectedIndex="0"
       TabStripPlacement="Left">
-      <TabItem Header="General">
+      <TabItem Header="General" Style="{StaticResource TabControlStyle}">
         <Grid>
           <TextBlock
             Margin="4"
@@ -38,7 +39,7 @@
             TextWrapping="Wrap" />
         </Grid>
       </TabItem>
-      <TabItem Header="Summary">
+      <TabItem Header="Summary" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
@@ -51,7 +52,7 @@
             Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Document">
+      <TabItem Header="Document" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
@@ -64,7 +65,7 @@
             Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Flow Graph">
+      <TabItem Header="Flow Graph" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
@@ -77,7 +78,7 @@
             Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Expression Graph">
+      <TabItem Header="Expression Graph" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
@@ -90,7 +91,7 @@
             Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Diffing">
+      <TabItem Header="Diffing" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
@@ -103,49 +104,49 @@
             Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Timeline" IsEnabled="False">
+      <TabItem Header="Timeline" IsEnabled="False" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
           <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Flame Graph" IsEnabled="False">
+      <TabItem Header="Flame Graph" IsEnabled="False" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
           <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Call Tree" IsEnabled="False">
+      <TabItem Header="Call Tree" IsEnabled="False" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
           <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Caller/Callee" IsEnabled="False">
+      <TabItem Header="Caller/Callee" IsEnabled="False" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
           <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Source File" IsEnabled="False">
+      <TabItem Header="Source File" IsEnabled="False" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
           <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Profiling" IsEnabled="False">
+      <TabItem Header="Profiling" IsEnabled="False" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
           <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Advanced" IsEnabled="False">
+      <TabItem Header="Advanced" IsEnabled="False" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">

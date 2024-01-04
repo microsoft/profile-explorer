@@ -9,7 +9,7 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:toolkit="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <StackPanel Margin="4,4,4,4">
       <TextBlock FontWeight="Medium" Text="Graph" />
       <StackPanel Margin="0,0,0,2" Orientation="Horizontal" />

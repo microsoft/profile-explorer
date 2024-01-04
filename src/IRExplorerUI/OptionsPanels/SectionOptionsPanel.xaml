@@ -9,205 +9,242 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
-  <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
-    <StackPanel Margin="4,4,4,4">
-      <TextBlock FontWeight="Medium" Text="Section List" />
-      <StackPanel Orientation="Horizontal">
-        <CheckBox
-          Content="Use semantic colorization of section names"
-          IsChecked="{Binding ColorizeSectionNames, Mode=TwoWay}"
-          Margin="0,4,20,2" />
-        <Button
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-          BorderBrush="{x:Null}"
-          Click="EditButton_Click"
-          Height="20"
-          Name="EditButton"
-          ToolTip="Edit section style definition file (JSON format)"
-          VerticalAlignment="Top"
-          Width="20">
-          <Image Source="{StaticResource EditIcon}" />
-        </Button>
+  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <TabControl BorderThickness="0"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+      <TabItem Header="General" Style="{StaticResource TabControlStyle}">
+        <StackPanel Margin="4,4,4,4">
+          <TextBlock FontWeight="Medium" Text="Section List" />
+          <StackPanel Orientation="Horizontal">
+            <CheckBox
+              Content="Use semantic colorization of section names"
+              IsChecked="{Binding ColorizeSectionNames, Mode=TwoWay}"
+              Margin="0,4,20,2" />
+            <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              BorderBrush="{x:Null}"
+              Click="EditButton_Click"
+              Height="20"
+              Name="EditButton"
+              ToolTip="Edit section style definition file (JSON format)"
+              VerticalAlignment="Top"
+              Width="20">
+              <Image Source="{StaticResource EditIcon}" />
+            </Button>
 
-        <Button
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-          BorderBrush="{x:Null}"
-          Click="ReloadButton_Click"
-          Height="20"
-          Name="ReloadButton"
-          ToolTip="Reload the session style definitions"
-          VerticalAlignment="Top"
-          Width="20">
-          <Image Source="{StaticResource ReloadIcon}" />
-        </Button>
-      </StackPanel>
+            <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              BorderBrush="{x:Null}"
+              Click="ReloadButton_Click"
+              Height="20"
+              Name="ReloadButton"
+              ToolTip="Reload the session style definitions"
+              VerticalAlignment="Top"
+              Width="20">
+              <Image Source="{StaticResource ReloadIcon}" />
+            </Button>
+          </StackPanel>
 
-      <CheckBox
-        Content="Use indentation for nested section names"
-        IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        Name="IndentationCheckbox"
-        ToolTip="Show section names indentend based on the parent/child relationship" />
-      <StackPanel Margin="20,2,0,2" Orientation="Horizontal">
-        <TextBlock Text="Indentation amount" VerticalAlignment="Center" />
-        <xctk:IntegerUpDown
-          IsEnabled="{Binding ElementName=IndentationCheckbox, Path=IsChecked}"
-          Margin="4,0,0,0"
-          Maximum="16"
-          Minimum="1"
-          ParsingNumberStyle="Number"
-          ShowButtonSpinner="True"
-          ToolTip="Number of whitespace letters to use for each level of indentation"
-          Value="{Binding Path=IndentationAmount, Mode=TwoWay}" />
-      </StackPanel>
-      <CheckBox
-        Content="Show section group separators"
-        IsChecked="{Binding ShowSectionSeparators, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Show before/after section separator lines for groups of sections" />
+          <CheckBox
+            Content="Use indentation for nested section names"
+            IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            Name="IndentationCheckbox"
+            ToolTip="Show section names indentend based on the parent/child relationship" />
+          <StackPanel Margin="20,2,0,2" Orientation="Horizontal">
+            <TextBlock Text="Indentation amount" VerticalAlignment="Center" />
+            <xctk:IntegerUpDown
+              IsEnabled="{Binding ElementName=IndentationCheckbox, Path=IsChecked}"
+              Margin="4,0,0,0"
+              Maximum="16"
+              Minimum="1"
+              ParsingNumberStyle="Number"
+              ShowButtonSpinner="True"
+              ToolTip="Number of whitespace letters to use for each level of indentation"
+              Value="{Binding Path=IndentationAmount, Mode=TwoWay}" />
+          </StackPanel>
+          <CheckBox
+            Content="Show section group separators"
+            IsChecked="{Binding ShowSectionSeparators, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Show before/after section separator lines for groups of sections" />
 
 
-      <CheckBox
-        Content="Mark sections identical to previous"
-        IsChecked="{Binding MarkSectionsIdenticalToPrevious, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Identify sequences of sections with no changes in the IR compared to previous one"
-        x:Name="IdenticalToPreviousCheckbox" />
-      <CheckBox
-        Content="Lower text opacity for identical sections"
-        IsChecked="{Binding LowerIdenticalToPreviousOpacity, Mode=TwoWay}"
-        IsEnabled="{Binding ElementName=IdenticalToPreviousCheckbox, Path=IsChecked}"
-        Margin="20,2,0,2"
-        ToolTip="Make the section name semi-transparent if it's identical to the previous one" />
-      <CheckBox
-        Content="Mark sections with annotations"
-        IsChecked="{Binding MarkAnnotatedSections, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Tag sections that have highlighted IR, bookmarks and other annotations" />
-      <Separator Margin="0,4,0,4" />
+          <CheckBox
+            Content="Mark sections identical to previous"
+            IsChecked="{Binding MarkSectionsIdenticalToPrevious, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Identify sequences of sections with no changes in the IR compared to previous one"
+            x:Name="IdenticalToPreviousCheckbox" />
+          <CheckBox
+            Content="Lower text opacity for identical sections"
+            IsChecked="{Binding LowerIdenticalToPreviousOpacity, Mode=TwoWay}"
+            IsEnabled="{Binding ElementName=IdenticalToPreviousCheckbox, Path=IsChecked}"
+            Margin="20,2,0,2"
+            ToolTip="Make the section name semi-transparent if it's identical to the previous one" />
+          <CheckBox
+            Content="Mark sections with annotations"
+            IsChecked="{Binding MarkAnnotatedSections, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Tag sections that have highlighted IR, bookmarks and other annotations" />
+          <Separator Margin="0,4,0,4" />
 
-      <TextBlock FontWeight="Medium" Text="Function List" />
-      <CheckBox
-        Content="Compute instruction statistics"
-        IsChecked="{Binding ComputeStatistics, Mode=TwoWay}"
-        Margin="0,4,0,2"
-        ToolTip="Compute function IR statistics on document load and show extra columns"
-        x:Name="StatisticsCheckbox" />
-      <CheckBox
-        Content="Include call statistics"
-        IsChecked="{Binding IncludeCallGraphStatistics, Mode=TwoWay}"
-        IsEnabled="{Binding ElementName=StatisticsCheckbox, Path=IsChecked}"
-        Margin="20,2,0,2"
-        ToolTip="Include caller/callee count function statistics"
-        x:Name="CallGraphStatisticsCheckbox" />
-      <CheckBox
-        Content="Show demangled function names"
-        IsChecked="{Binding ShowDemangledNames, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Show an extra column with the C/C++ demangled (undecorated) function names"
-        x:Name="DemanglingCheckbox" />
-      <CheckBox
-        Content="Exclude return types"
-        IsChecked="{Binding DemangleNoReturnType, Mode=TwoWay}"
-        IsEnabled="{Binding ElementName=DemanglingCheckbox, Path=IsChecked}"
-        Margin="20,2,0,2"
-        ToolTip="Exclude the function return type from the demangled name" />
-      <CheckBox
-        Content="Exclude special keywords"
-        IsChecked="{Binding DemangleNoSpecialKeywords, Mode=TwoWay}"
-        IsEnabled="{Binding ElementName=DemanglingCheckbox, Path=IsChecked}"
-        Margin="20,2,0,2"
-        ToolTip="Exclude any vendor-specific keywords from the demangled name" />
-      <CheckBox
-        Content="Use simplified demangled form"
-        IsChecked="{Binding DemangleOnlyNames, Mode=TwoWay}"
-        IsEnabled="{Binding ElementName=DemanglingCheckbox, Path=IsChecked}"
-        Margin="20,2,0,2"
-        ToolTip="Demangle only the scope and function name, without parameters" />
-      <TextBlock FontWeight="Medium" Text="Profiling" Margin="0,4,0,0" />
-      <CheckBox
-        Content="Show hottest call stack popup"
-        IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
-        ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
-        Margin="0,4,0,2" />
-      <Separator Margin="0,4,0,4" />
+          <TextBlock FontWeight="Medium" Text="Function List" />
+          <CheckBox
+            Content="Compute instruction statistics"
+            IsChecked="{Binding ComputeStatistics, Mode=TwoWay}"
+            Margin="0,4,0,2"
+            ToolTip="Compute function IR statistics on document load and show extra columns"
+            x:Name="StatisticsCheckbox" />
+          <CheckBox
+            Content="Include call statistics"
+            IsChecked="{Binding IncludeCallGraphStatistics, Mode=TwoWay}"
+            IsEnabled="{Binding ElementName=StatisticsCheckbox, Path=IsChecked}"
+            Margin="20,2,0,2"
+            ToolTip="Include caller/callee count function statistics"
+            x:Name="CallGraphStatisticsCheckbox" />
+          <CheckBox
+            Content="Show demangled function names"
+            IsChecked="{Binding ShowDemangledNames, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Show an extra column with the C/C++ demangled (undecorated) function names"
+            x:Name="DemanglingCheckbox" />
+          <CheckBox
+            Content="Exclude return types"
+            IsChecked="{Binding DemangleNoReturnType, Mode=TwoWay}"
+            IsEnabled="{Binding ElementName=DemanglingCheckbox, Path=IsChecked}"
+            Margin="20,2,0,2"
+            ToolTip="Exclude the function return type from the demangled name" />
+          <CheckBox
+            Content="Exclude special keywords"
+            IsChecked="{Binding DemangleNoSpecialKeywords, Mode=TwoWay}"
+            IsEnabled="{Binding ElementName=DemanglingCheckbox, Path=IsChecked}"
+            Margin="20,2,0,2"
+            ToolTip="Exclude any vendor-specific keywords from the demangled name" />
+          <CheckBox
+            Content="Use simplified demangled form"
+            IsChecked="{Binding DemangleOnlyNames, Mode=TwoWay}"
+            IsEnabled="{Binding ElementName=DemanglingCheckbox, Path=IsChecked}"
+            Margin="20,2,0,2"
+            ToolTip="Demangle only the scope and function name, without parameters" />
+          <Separator Margin="0,4,0,4" />
 
-      <TextBlock FontWeight="Medium" Text="List Filtering" />
-      <CheckBox
-        Content="Use case-sensitive function name search"
-        IsChecked="{Binding FunctionSearchCaseSensitive, Mode=TwoWay}"
-        Margin="0,4,0,2" />
-      <CheckBox
-        Content="Use case-sensitive section name search"
-        IsChecked="{Binding SectionSearchCaseSensitive, Mode=TwoWay}"
-        Margin="0,2,0,2" />
+          <TextBlock FontWeight="Medium" Text="List Filtering" />
+          <CheckBox
+            Content="Use case-sensitive function name search"
+            IsChecked="{Binding FunctionSearchCaseSensitive, Mode=TwoWay}"
+            Margin="0,4,0,2" />
+          <CheckBox
+            Content="Use case-sensitive section name search"
+            IsChecked="{Binding SectionSearchCaseSensitive, Mode=TwoWay}"
+            Margin="0,2,0,2" />
 
-      <Separator Margin="0,4,0,4" />
-      <TextBlock FontWeight="Medium" Text="Document Diffs" />
+          <Separator Margin="0,4,0,4" />
+          <TextBlock FontWeight="Medium" Text="Document Diffs" />
 
-      <Grid Margin="0,4,0,0">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="70" />
-          <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-        <xctk:ColorPicker
-          AvailableColorsSortingMode="HueSaturationBrightness"
-          BorderBrush="Gray"
-          Grid.Column="0"
-          HorizontalAlignment="Left"
-          SelectedColor="{Binding NewSectionColor, Mode=TwoWay}"
-          ShowDropDownButton="True"
-          UsingAlphaChannel="False"
-          VerticalAlignment="Center"
-          Width="64" />
-        <TextBlock
-          Grid.Column="1"
-          HorizontalAlignment="Left"
-          Text="New section border color"
-          VerticalAlignment="Center" />
-      </Grid>
-      <Grid Margin="0,2,0,0">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="70" />
-          <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-        <xctk:ColorPicker
-          AvailableColorsSortingMode="HueSaturationBrightness"
-          BorderBrush="Gray"
-          Grid.Column="0"
-          HorizontalAlignment="Left"
-          SelectedColor="{Binding MissingSectionColor, Mode=TwoWay}"
-          ShowDropDownButton="True"
-          UsingAlphaChannel="False"
-          VerticalAlignment="Center"
-          Width="64" />
-        <TextBlock
-          Grid.Column="1"
-          HorizontalAlignment="Left"
-          Text="Missing section border color"
-          VerticalAlignment="Center" />
-      </Grid>
-      <Grid Margin="0,2,0,0">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="70" />
-          <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-        <xctk:ColorPicker
-          AvailableColorsSortingMode="HueSaturationBrightness"
-          BorderBrush="Gray"
-          Grid.Column="0"
-          HorizontalAlignment="Left"
-          SelectedColor="{Binding ChangedSectionColor, Mode=TwoWay}"
-          ShowDropDownButton="True"
-          UsingAlphaChannel="False"
-          VerticalAlignment="Center"
-          Width="64" />
-        <TextBlock
-          Grid.Column="1"
-          HorizontalAlignment="Left"
-          Text="Changed section border color"
-          VerticalAlignment="Center" />
-      </Grid>
-    </StackPanel>
+          <Grid Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="Gray"
+              Grid.Column="0"
+              HorizontalAlignment="Left"
+              SelectedColor="{Binding NewSectionColor, Mode=TwoWay}"
+              ShowDropDownButton="True"
+              UsingAlphaChannel="False"
+              VerticalAlignment="Center"
+              Width="64" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              Text="New section border color"
+              VerticalAlignment="Center" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="Gray"
+              Grid.Column="0"
+              HorizontalAlignment="Left"
+              SelectedColor="{Binding MissingSectionColor, Mode=TwoWay}"
+              ShowDropDownButton="True"
+              UsingAlphaChannel="False"
+              VerticalAlignment="Center"
+              Width="64" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              Text="Missing section border color"
+              VerticalAlignment="Center" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="Gray"
+              Grid.Column="0"
+              HorizontalAlignment="Left"
+              SelectedColor="{Binding ChangedSectionColor, Mode=TwoWay}"
+              ShowDropDownButton="True"
+              UsingAlphaChannel="False"
+              VerticalAlignment="Center"
+              Width="64" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              Text="Changed section border color"
+              VerticalAlignment="Center" />
+          </Grid>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Profiling" Style="{StaticResource TabControlStyle}">
+        <StackPanel>
+          <CheckBox
+            x:Name="ShowCallStackPopupCheckbox"
+            Content="Show hottest call stack popup"
+            IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
+            ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
+            Margin="0,4,0,2" />
+          <TextBlock Margin="20,0,0,2" Text="Mouse hover duration"
+                     IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}" />
+          <StackPanel
+            HorizontalAlignment="Stretch"
+            Margin="20,0,0,4"
+            IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}"
+            Orientation="Horizontal">
+            <Slider
+              Foreground="{DynamicResource DisabledForegroundBrush}"
+              Maximum="3000"
+              Minimum="50"
+              TickFrequency="200"
+              TickPlacement="BottomRight"
+              ToolTip="Percentage of changed letters in the line for it to be marked entirely"
+              Value="{Binding ManyDiffsModificationPercentage, Mode=TwoWay}"
+              Width="150" />
+            <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding ManyDiffsModificationPercentage}" />
+            <TextBlock Margin="4,0,4,0" VerticalAlignment="Center" Text="ms" />
+            <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              BorderBrush="{x:Null}"
+              VerticalAlignment="Center"
+              Padding="2,0,2,0"
+              Content="Default"
+              Click="EditButton_Click"
+              Height="20"
+              ToolTip="Reset value to default duration" />
+          </StackPanel>
+        </StackPanel>
+      </TabItem>
+    </TabControl>
   </Grid>
 </local:OptionsPanelBase>

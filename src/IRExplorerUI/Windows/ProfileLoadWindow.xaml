@@ -115,9 +115,10 @@
       <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
         <TabControl
           VerticalAlignment="Stretch"
+          BorderThickness="0"
           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           DockPanel.Dock="Right">
-          <TabItem Header="Session">
+          <TabItem Header="Session" Style="{StaticResource TabControlStyle}">
             <StackPanel Orientation="Vertical">
               <StackPanel x:Name="ProfileCapturePanel"
                           Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -681,7 +682,7 @@
               </Grid>
             </StackPanel>
           </TabItem>
-          <TabItem Header="Options">
+          <TabItem Header="Options" Style="{StaticResource TabControlStyle}">
             <StackPanel Margin="0,4,0,8" Orientation="Vertical">
               <Expander
                 Margin="8,0,8,0"
@@ -874,6 +875,7 @@
             </StackPanel>
           </TabItem>
           <TabItem Header="CPU counters"
+                   Style="{StaticResource TabControlStyle}"
                    Visibility="{Binding Path=IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
             <Grid Margin="0,4,0,8">
               <Grid.RowDefinitions>

@@ -94,12 +94,14 @@
 
     <TabControl
       Padding="2"
+      BorderThickness="0"
       HorizontalAlignment="Stretch"
       VerticalAlignment="Stretch"
       Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
       DockPanel.Dock="Bottom"
       Visibility="{Binding ShowDetails, Converter={StaticResource BoolToVisibilityConverter}}">
       <TabItem
+        Style="{StaticResource TabControlStyle}"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         HorizontalContentAlignment="Stretch"
@@ -306,6 +308,7 @@
         </ScrollViewer>
       </TabItem>
       <TabItem
+        Style="{StaticResource TabControlStyle}"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         Header="Backtrace"
@@ -319,6 +322,7 @@
       </TabItem>
 
       <TabItem
+        Style="{StaticResource TabControlStyle}"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         Header="Functions"
@@ -331,6 +335,7 @@
           ShowModuleColumn="True" />
       </TabItem>
       <TabItem
+        Style="{StaticResource TabControlStyle}"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         Header="Modules"
@@ -343,6 +348,7 @@
       </TabItem>
 
       <TabItem
+        Style="{StaticResource TabControlStyle}"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         Header="Instances"

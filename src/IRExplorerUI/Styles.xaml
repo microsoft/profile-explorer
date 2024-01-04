@@ -853,4 +853,35 @@
       </Border>
     </Grid>
   </DataTemplate>
+
+  <Style x:Key="TabControlStyle" TargetType="TabItem">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="TabItem">
+          <StackPanel Name="Panel">
+            <ContentPresenter x:Name="ContentSite"
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Center"
+                              ContentSource="Header"
+                              TextBlock.FontWeight="SemiBold"
+                              Margin="4,2"/>
+            <Rectangle Name="SelectedLine" Height="2"
+                       Margin="2,0,2,0"
+                       HorizontalAlignment="Stretch" 
+                       Fill="DimGray"
+                       Stroke="DimGray">
+            </Rectangle>
+          </StackPanel>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter TargetName="SelectedLine" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="False">
+              <Setter TargetName="SelectedLine" Property="Visibility" Value="Hidden" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
 </ResourceDictionary>

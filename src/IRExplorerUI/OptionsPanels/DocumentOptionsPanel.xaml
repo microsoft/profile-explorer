@@ -13,7 +13,6 @@
   <local:OptionsPanelBase.Resources>
     <CollectionViewSource Source="{Binding Source={x:Static Fonts.SystemFontFamilies}}"
                           x:Key="FontCollection" />
-
     <local:FontFamilyConverter x:Key="FontFamilyConverter" />
 
     <DataTemplate x:Key="ColorPickerItemList">
@@ -41,7 +40,7 @@
     </DataTemplate>
   </local:OptionsPanelBase.Resources>
 
-  <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <StackPanel Grid.Row="0" Margin="4,4,4,4">
       <TextBlock FontWeight="Medium" Text="Document Style" />
       <StackPanel Margin="0,4,0,2" Orientation="Horizontal">
