@@ -8,11 +8,14 @@
   xmlns:profile="clr-namespace:IRExplorerUI.Profile"
   d:DesignHeight="650"
   d:DesignWidth="800"
-  mc:Ignorable="d">
-  <TabControl x:Name="TabHost" ToolTip="Trace file and main process details">
-    <TabItem Header="Summary">
-      <ScrollViewer Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-        <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+  mc:Ignorable="d"
+  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+  <TabControl x:Name="TabHost" ToolTip="Trace file and main process details"
+              BorderThickness="0"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <TabItem Header="Summary" Style="{StaticResource TabControlStyle}">
+      <ScrollViewer>
+        <Grid>
           <StackPanel Margin="8">
             <Expander Header="Trace" IsExpanded="True">
               <StackPanel Margin="0,4,0,0">
@@ -276,7 +279,8 @@
         </Grid>
       </ScrollViewer>
     </TabItem>
-    <TabItem Header="Modules" ToolTip="List of modules loaded by the main process">
+    <TabItem Header="Modules" ToolTip="List of modules loaded by the main process"
+             Style="{StaticResource TabControlStyle}">
       <DockPanel LastChildFill="True">
         <ListView IsTextSearchEnabled="True"
                   TextSearch.TextPath="ImageFileInfo.ImageName"
@@ -438,10 +442,11 @@
         </ListView>
         <TabControl
           Margin="0,4,0,0"
+          BorderThickness="0"
           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           DockPanel.Dock="Bottom"
           TabStripPlacement="Top">
-          <TabItem Header="Image file">
+          <TabItem Header="Image file" Style="{StaticResource TabControlStyle}">
             <DockPanel LastChildFill="True">
               <StackPanel Margin="4,2,4,0" DockPanel.Dock="Top">
                 <Grid>
@@ -520,7 +525,7 @@
               </Expander>
             </DockPanel>
           </TabItem>
-          <TabItem Header="Debug file">
+          <TabItem Header="Debug file" Style="{StaticResource TabControlStyle}">
             <DockPanel LastChildFill="True">
               <StackPanel Margin="4,2,4,0" DockPanel.Dock="Top">
                 <Grid>
@@ -590,7 +595,8 @@
         </TabControl>
       </DockPanel>
     </TabItem>
-    <TabItem Header="Process list" ToolTip="List of all processes found in the trace">
+    <TabItem Header="Process list" ToolTip="List of all processes found in the trace"
+             Style="{StaticResource TabControlStyle}">
       <ListView
         x:Name="ProcessList"
         MinHeight="100"
