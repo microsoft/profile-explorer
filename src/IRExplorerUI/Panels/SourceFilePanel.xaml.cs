@@ -53,7 +53,10 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     set {
       base.Session = value;
       TextView.Session = value;
-      sourceFileFinder_ = value.CompilerInfo.SourceFileFinder;
+
+      if (value != null) {
+        sourceFileFinder_ = value.CompilerInfo.SourceFileFinder;
+      }
     }
   }
 

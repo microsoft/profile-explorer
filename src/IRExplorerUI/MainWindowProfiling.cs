@@ -160,10 +160,11 @@ public partial class MainWindow : Window, ISession {
 
   public async Task<bool> OpenProfileSourceFile(IRTextFunction function) {
     if (FindPanel(ToolPanelKind.Source) is SourceFilePanel panel) {
-      await panel.LoadSourceFile(function.Sections[0]);
+      if (function.HasSections) {
+        await panel.LoadSourceFile(function.Sections[0]);
+      }
     }
 
-    //await OpenProfileFunction(function, OpenSectionKind.ReplaceCurrent);
     return true;
   }
 
@@ -173,12 +174,12 @@ public partial class MainWindow : Window, ISession {
     switch (panelKind) {
       case ToolPanelKind.CallTree: {
         var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
-        panel.SelectFunction(node);
+        panel?.SelectFunction(node);
         break;
       }
       case ToolPanelKind.FlameGraph: {
         var panel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
-        panel.SelectFunction(node);
+        panel?.SelectFunction(node);
         break;
       }
       case ToolPanelKind.Timeline: {
@@ -207,23 +208,26 @@ public partial class MainWindow : Window, ISession {
 
     switch (panelKind) {
       case ToolPanelKind.CallTree: {
-        var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
-        panel.SelectFunction(func);
+        if (FindAndActivatePanel(ToolPanelKind.CallTree) is CallTreePanel panel) {
+          panel.SelectFunction(func);
+        }
+
         break;
       }
       case ToolPanelKind.FlameGraph: {
-        var panel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
-        await panel.SelectFunction(func);
+        if (FindAndActivatePanel(ToolPanelKind.FlameGraph) is FlameGraphPanel panel) {
+          await panel.SelectFunction(func);
+        }
+
         break;
       }
       case ToolPanelKind.Timeline: {
-        var panel = FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
+        if (FindAndActivatePanel(ToolPanelKind.Timeline) is TimelinePanel panel) {
+          var nodeList = ProfileData.CallTree.GetSortedCallTreeNodes(func);
 
-        //? TODO: Should include samples from all func instances
-        var nodeList = ProfileData.CallTree.GetSortedCallTreeNodes(func);
-
-        if (nodeList != null && nodeList.Count > 0) {
-          await SelectFunctionSamples(nodeList[0], panel);
+          if (nodeList is {Count: > 0}) {
+            await SelectFunctionSamples(nodeList[0], panel);
+          }
         }
 
         break;
@@ -248,8 +252,8 @@ public partial class MainWindow : Window, ISession {
     var funcs = await Task.Run(() =>
                                  FindFunctionsForSamples(range.StartSampleIndex, range.EndSampleIndex,
                                                          range.ThreadId, ProfileData));
-    var sectinPanel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
-    sectinPanel?.MarkFunctions(funcs.ToList());
+    var sectionPanel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
+    sectionPanel?.MarkFunctions(funcs.ToList());
 
     var nodes = await Task.Run(() =>
                                  FindCallTreeNodesForSamples(funcs, ProfileData));
@@ -301,9 +305,7 @@ public partial class MainWindow : Window, ISession {
   public async Task<bool> MarkProfileFunction(ProfileCallTreeNode node, ToolPanelKind sourcePanelKind,
                                               HighlightingStyle style) {
     if (sourcePanelKind == ToolPanelKind.Timeline) {
-      var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
-
-      if (panel != null) {
+      if (FindPanel(ToolPanelKind.Timeline) is TimelinePanel panel) {
         var threadSamples = await Task.Run(() => FindFunctionSamples(node, ProfileData));
         panel.MarkFunctionSamples(node, threadSamples, style);
       }
@@ -332,8 +334,8 @@ public partial class MainWindow : Window, ISession {
     var panel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
     panel?.ClearMarkedFunctions();
 
-    var sectinPanel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
-    sectinPanel?.ClearMarkedFunctions();
+    var sectionPanel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
+    sectionPanel?.ClearMarkedFunctions();
     return true;
   }
 
@@ -386,7 +388,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async Task RefreshProfilingPanels() {
-    List<Task> panelTasks = new List<Task>();
+    var panelTasks = new List<Task>();
 
     if (FindPanel(ToolPanelKind.CallTree) is CallTreePanel panel) {
       panelTasks.Add(panel.DisplayProfileCallTree());
@@ -524,16 +526,9 @@ public partial class MainWindow : Window, ISession {
       }
 
       foreach (var stackFrame in stack.StackFrames) {
-        if (stackFrame.IsUnknown)
-          continue;
-
-        if (stackFrame.FrameDetails.Function == null) {
-          Trace.TraceError($"Function is null for {stackFrame.FrameDetails}");
-          Utils.WaitForDebugger();
-          continue;
+        if (!stackFrame.IsUnknown) {
+          funcSet.Add(stackFrame.FrameDetails.Function);
         }
-
-        funcSet.Add(stackFrame.FrameDetails.Function);
       }
     }
 
@@ -550,41 +545,36 @@ public partial class MainWindow : Window, ISession {
     var callNodes = new HashSet<ProfileCallTreeNode>(funcs.Count);
 
     foreach (var func in funcs) {
-      if (func == null) {
-        Trace.TraceError("Function is null in list");
-        Utils.WaitForDebugger();
-        continue;
-      }
-
       var nodes = profile.CallTree.GetCallTreeNodes(func);
 
-      if (nodes != null) {
-        // Filter out nodes that are not in the call path leading to the function,
-        // meaning that all parents of the node instance must be in the initial set
-        // of functions covered by the samples.
-        foreach (var node in nodes) {
-          var parentNode = node.Caller;
-          bool addNode = true;
+      if (nodes == null)
+        continue;
 
-          while (parentNode != null) {
-            if (!funcs.Contains(parentNode.Function)) {
-              addNode = false;
-              break;
-            }
+      // Filter out nodes that are not in the call path leading to the function,
+      // meaning that all parents of the node instance must be in the initial set
+      // of functions covered by the samples.
+      foreach (var node in nodes) {
+        var parentNode = node.Caller;
+        bool addNode = true;
 
-            parentNode = parentNode.Caller;
+        while (parentNode != null) {
+          if (!funcs.Contains(parentNode.Function)) {
+            addNode = false;
+            break;
           }
 
-          if (addNode) {
-            callNodes.Add(node);
-          }
+          parentNode = parentNode.Caller;
+        }
+
+        if (addNode) {
+          callNodes.Add(node);
         }
       }
     }
 
     return callNodes.ToList();
   }
-  
+
   public async Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function) {
     var loadedDoc = SessionState.FindLoadedDocument(function);
 
