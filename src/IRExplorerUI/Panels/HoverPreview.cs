@@ -16,15 +16,16 @@ public abstract class HoverPreview {
   public static readonly TimeSpan LongHoverDuration = TimeSpan.FromMilliseconds(800);
   public static readonly TimeSpan ExtraLongHoverDuration = TimeSpan.FromMilliseconds(1500);
   protected UIElement control_;
+  private MouseHoverLogic hover_;
   protected UIElement previewPopup_;
   private DelayedAction removeHoveredAction_;
 
   public HoverPreview(UIElement control, TimeSpan hoverDuration) {
     control_ = control;
-    var hover = new MouseHoverLogic(control, hoverDuration);
-    hover.MouseHover += Hover_MouseHover;
-    hover.MouseHoverStopped += Hover_MouseHoverStopped;
-    control.MouseLeave += OnMouseLeave;
+    hover_ = new MouseHoverLogic(control, hoverDuration);
+    hover_.MouseHover += Hover_MouseHover;
+    hover_.MouseHoverStopped += Hover_MouseHoverStopped;
+    control_.MouseLeave += OnMouseLeave;
   }
 
   public void Hide() {
@@ -35,7 +36,13 @@ public abstract class HoverPreview {
     HidePreviewPopupDelayed(HoverDuration);
   }
 
-  protected abstract void OnHidePopup();
+  protected virtual void OnHidePopup() {
+    control_.MouseLeave -= OnMouseLeave;
+    hover_.MouseHover -= Hover_MouseHover;
+    hover_.MouseHoverStopped -= Hover_MouseHoverStopped;
+    hover_.Dispose();
+    hover_ = null;
+  }
   protected abstract void OnShowPopup(Point mousePoint, Point position);
   protected abstract bool OnHoverStopped(Point mousePosition);
 
