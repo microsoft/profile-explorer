@@ -272,6 +272,7 @@ public class IRDocumentPopupInstance {
   private IRDocumentPopup previewPopup_;
   private DelayedAction removeHoveredAction_;
   private Func<PreviewPopupArgs> previewedElementFinder_;
+  private MouseHoverLogic hover_;
   private double width_;
   private double height_;
   private ISession session_;
@@ -285,9 +286,16 @@ public class IRDocumentPopupInstance {
   public void SetupHoverEvents(UIElement target, TimeSpan hoverDuration,
                                Func<PreviewPopupArgs> previewedElementFinder) {
     previewedElementFinder_ = previewedElementFinder;
-    var hover = new MouseHoverLogic(target, hoverDuration);
-    hover.MouseHover += Hover_MouseHover;
-    hover.MouseHoverStopped += Hover_MouseHoverStopped;
+    hover_ = new MouseHoverLogic(target, hoverDuration);
+    hover_.MouseHover += Hover_MouseHover;
+    hover_.MouseHoverStopped += Hover_MouseHoverStopped;
+  }
+
+  public void UnregisterHoverEvents() {
+    hover_.MouseHover -= Hover_MouseHover;
+    hover_.MouseHoverStopped -= Hover_MouseHoverStopped;
+    hover_.Dispose();
+    hover_ = null;
   }
 
   private async Task ShowPreviewPopupForDocument(IRDocument document, IRElement element,

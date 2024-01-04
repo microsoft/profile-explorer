@@ -83,6 +83,12 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     DataContext = this;
   }
 
+  ~ProfileListView() {
+    if(previewPopup_ != null) {
+      previewPopup_.UnregisterHoverEvents();
+    }
+  }
+
   private void SetupPreviewPopup() {
     previewPopup_ = new IRDocumentPopupInstance(IRDocumentPopup.DefaultWidth,
                                                 IRDocumentPopup.DefaultHeight, Session);
