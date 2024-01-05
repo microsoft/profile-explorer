@@ -499,6 +499,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private bool sectionCountColumnVisible_;
   private bool moduleControlsVisible_;
   private CallTreeNodePopup funcBacktracePreviewPopup_;
+  private PopupHoverPreview preview_;
 
   public SectionPanel() {
     InitializeComponent();
@@ -1621,8 +1622,13 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private void SetupStackFunctionHoverPreview() {
-    var preview = new PopupHoverPreview(
-      FunctionList, HoverPreview.ExtraLongHoverDuration,
+    if (preview_ != null) {
+      preview_.Unregister();
+      preview_ = null;
+    }
+    
+    preview_ = new PopupHoverPreview(
+      FunctionList, TimeSpan.FromMilliseconds(settings_.CallStackPopupDuration),
       (mousePoint, previewPoint) => {
         if (!settings_.ShowCallStackPopup) {
           return null;
@@ -2250,6 +2256,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       SetupSectionList(currentFunction_, true);
       RefreshSectionList();
       await ComputeConsecutiveSectionDiffs();
+      
+      if(ProfileControlsVisible) {
+        SetupStackFunctionHoverPreview();
+      }
     }
   }
 

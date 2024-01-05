@@ -46,6 +46,12 @@ public class OptionsPanelBase : UserControl, IOptionsPanel {
   public virtual void OnSettingsChanged(object newSettings) {
   }
 
+  protected void ReloadSettings() {
+    var temp = Settings;
+    Settings = null;
+    Settings = temp;
+  }
+  
   public void RaisePanelClosed(EventArgs e) {
     PanelClosed?.Invoke(this, e);
   }

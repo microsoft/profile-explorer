@@ -12,6 +12,10 @@ public class SectionSettings : SettingsBase {
     Reset();
   }
 
+  public static readonly int DefaultCallStackPopupDuration = HoverPreview.ExtraLongHoverDuration.Milliseconds;
+  public static readonly int ShortCallStackPopupDuration = HoverPreview.HoverDuration.Milliseconds;
+  public static readonly int LongCallStackPopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
+  
   [ProtoMember(1)] public bool ColorizeSectionNames { get; set; }
   [ProtoMember(2)] public bool MarkAnnotatedSections { get; set; }
   [ProtoMember(3)] public bool MarkNoDiffSectionGroups { get; set; }
@@ -34,6 +38,8 @@ public class SectionSettings : SettingsBase {
   [ProtoMember(23)] public bool SyncSourceFile { get; set; }
   [ProtoMember(24)] public bool SyncSelection { get; set; }
   [ProtoMember(25)] public bool ShowCallStackPopup { get; set; }
+  [ProtoMember(26)] public int CallStackPopupDuration { get; set; }
+  
 
   public FunctionNameDemanglingOptions DemanglingOptions {
     get {
@@ -78,6 +84,7 @@ public class SectionSettings : SettingsBase {
     DemangleNoReturnType = true;
     SyncSelection = true;
     ShowCallStackPopup = true;
+    CallStackPopupDuration = DefaultCallStackPopupDuration;
     NewSectionColor = Utils.ColorFromString("#007200");
     MissingSectionColor = Utils.ColorFromString("#BB0025");
     ChangedSectionColor = Utils.ColorFromString("#DE8000");
@@ -108,6 +115,9 @@ public class SectionSettings : SettingsBase {
            DemangleNoReturnType == settings.DemangleNoReturnType &&
            DemangleNoSpecialKeywords == settings.DemangleNoSpecialKeywords &&
            ComputeStatistics == settings.ComputeStatistics &&
-           ShowCallStackPopup == settings.ShowCallStackPopup;
+           ShowCallStackPopup == settings.ShowCallStackPopup &&
+           CallStackPopupDuration == settings.CallStackPopupDuration &&
+           SyncSourceFile == settings.SyncSourceFile &&
+           SyncSelection == settings.SyncSelection;
   }
 }

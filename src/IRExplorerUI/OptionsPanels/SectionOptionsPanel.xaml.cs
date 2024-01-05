@@ -41,4 +41,19 @@ public partial class SectionOptionsPanel : OptionsPanelBase {
   private void ReloadButton_Click(object sender, RoutedEventArgs e) {
     Session.CompilerInfo.SectionStyleProvider.LoadSettings();
   }
+
+  private void ResetCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    ((SectionSettings)Settings).CallStackPopupDuration = SectionSettings.DefaultCallStackPopupDuration;
+    ReloadSettings();
+  }
+  
+  private void ShortCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    ((SectionSettings)Settings).CallStackPopupDuration = SectionSettings.ShortCallStackPopupDuration;
+    ReloadSettings();
+  }
+  
+  private void LongCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    ((SectionSettings)Settings).CallStackPopupDuration = SectionSettings.LongCallStackPopupDuration;
+    ReloadSettings();
+  }
 }

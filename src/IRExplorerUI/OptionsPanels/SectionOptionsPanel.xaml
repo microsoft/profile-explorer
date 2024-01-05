@@ -22,7 +22,7 @@
               Margin="0,4,20,2" />
             <Button
               Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-              BorderBrush="{x:Null}"
+              
               Click="EditButton_Click"
               Height="20"
               Name="EditButton"
@@ -34,7 +34,7 @@
 
             <Button
               Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-              BorderBrush="{x:Null}"
+              
               Click="ReloadButton_Click"
               Height="20"
               Name="ReloadButton"
@@ -210,11 +210,21 @@
       <TabItem Header="Profiling" Style="{StaticResource TabControlStyle}">
         <StackPanel>
           <CheckBox
+            Content="Sync function in other panels"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Sync function displayed in other profiling panels with selection" />
+          <CheckBox
+            Content="Sync Source File panel with selection"
+            IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Sync file displayed in the Source File panel with selection" />
+          <CheckBox
             x:Name="ShowCallStackPopupCheckbox"
             Content="Show hottest call stack popup"
             IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
-            Margin="0,4,0,2" />
+            Margin="0,2,0,2" />
           <TextBlock Margin="20,0,0,2" Text="Mouse hover duration"
                      IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}" />
           <StackPanel
@@ -222,24 +232,40 @@
             Margin="20,0,0,4"
             IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}"
             Orientation="Horizontal">
-            <Slider
-              Foreground="{DynamicResource DisabledForegroundBrush}"
-              Maximum="3000"
+            <xctk:IntegerUpDown
+              Maximum="5000"
               Minimum="50"
-              TickFrequency="200"
-              TickPlacement="BottomRight"
-              ToolTip="Percentage of changed letters in the line for it to be marked entirely"
-              Value="{Binding ManyDiffsModificationPercentage, Mode=TwoWay}"
-              Width="150" />
-            <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding ManyDiffsModificationPercentage}" />
-            <TextBlock Margin="4,0,4,0" VerticalAlignment="Center" Text="ms" />
+              Width="80"
+              ParsingNumberStyle="Number"
+              ShowButtonSpinner="True"
+              Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
+            <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" 
+                       Text="ms" />
             <Button
               Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-              BorderBrush="{x:Null}"
               VerticalAlignment="Center"
+              Margin="20,0,0,0"
               Padding="2,0,2,0"
               Content="Default"
-              Click="EditButton_Click"
+              Click="ResetCallStackPopupDurationButton_Click"
+              Height="20"
+              ToolTip="Reset value to default duration" />
+            <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              VerticalAlignment="Center"
+              Margin="2,0,0,0"
+              Padding="2,0,2,0"
+              Content="Short"
+              Click="ShortCallStackPopupDurationButton_Click"
+              Height="20"
+              ToolTip="Reset value to default duration" />
+            <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              VerticalAlignment="Center"
+              Margin="2,0,0,0"
+              Padding="2,0,2,0"
+              Content="Long"
+              Click="LongCallStackPopupDurationButton_Click"
               Height="20"
               ToolTip="Reset value to default duration" />
           </StackPanel>

@@ -36,13 +36,15 @@ public abstract class HoverPreview {
     HidePreviewPopupDelayed(HoverDuration);
   }
 
-  protected virtual void OnHidePopup() {
+  public void Unregister() {
     control_.MouseLeave -= OnMouseLeave;
     hover_.MouseHover -= Hover_MouseHover;
     hover_.MouseHoverStopped -= Hover_MouseHoverStopped;
     hover_.Dispose();
     hover_ = null;
   }
+
+  protected abstract void OnHidePopup();
   protected abstract void OnShowPopup(Point mousePoint, Point position);
   protected abstract bool OnHoverStopped(Point mousePosition);
 
