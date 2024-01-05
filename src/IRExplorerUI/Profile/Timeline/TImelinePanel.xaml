@@ -142,7 +142,7 @@
             Margin="0,0,0,0"
             Padding="0,0,2,0"
             IsChecked="{Binding Path=SyncSelection, Mode=TwoWay}"
-            ToolTip="Sync functions in other panels with selection">
+            ToolTip="Sync function displayed in other profiling panels with selectionSync function displayed in other profiling panels with selection">
             <StackPanel Orientation="Horizontal">
               <Image
                 Width="16"

@@ -58,7 +58,7 @@
 
         <ToggleButton
           Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-          BorderBrush="{x:Null}"
+          
           Click="SyntaxEditButton_Click"
           DockPanel.Dock="Right"
           Height="20"
@@ -74,7 +74,7 @@
 
         <Button
           Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-          BorderBrush="{x:Null}"
+          
           Click="OpenSyntaxStyleButton_Click"
           DockPanel.Dock="Right"
           Height="20"
@@ -88,7 +88,7 @@
 
         <Button
           Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-          BorderBrush="{x:Null}"
+          
           Click="ReloadSyntaxStyleButton_Click"
           DockPanel.Dock="Right"
           Height="20"
@@ -118,7 +118,7 @@
               Text="Syntax Highlighting Colors" />
             <Button
               Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-              BorderBrush="{x:Null}"
+              
               Click="ResetSyntaxStyleButton_Click"
               DockPanel.Dock="Right"
               Height="20"
@@ -133,7 +133,7 @@
 
             <Button
               Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-              BorderBrush="{x:Null}"
+              
               Click="EditSyntaxFileButton_Click"
               DockPanel.Dock="Right"
               Height="20"
@@ -250,7 +250,7 @@
         <TextBlock FontWeight="Medium" Text="Document Colors" />
         <Button
           Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-          BorderBrush="{x:Null}"
+          
           Click="StyleButton_Click"
           DockPanel.Dock="Right"
           Height="20"
