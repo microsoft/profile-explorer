@@ -3377,7 +3377,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
     if (funcProfile == null || !hasInstrOffsetMetadata) {
-      Session.SetApplicationStatus("");
       return;
     }
 
@@ -3396,9 +3395,14 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       }
     }
 
+    if(weightSum == TimeSpan.Zero) {
+      Session.SetApplicationStatus("");
+      return;
+    }
+    
     double weightPercentage = funcProfile.ScaleWeight(weightSum);
     string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
-    Session.SetApplicationStatus(text, "Sum of selected instructions time");
+    Session.SetApplicationStatus(text, "Sum of time for the selected instructions");
   }
 
   private void IRDocument_GiveFeedback(object sender, GiveFeedbackEventArgs e) {

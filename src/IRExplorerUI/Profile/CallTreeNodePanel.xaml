@@ -51,8 +51,7 @@
       </StackPanel>
       <Grid
         Grid.Column="1"
-        Margin="0,0,4,0"
-        Visibility="{Binding ShowInstanceNavigation, Converter={StaticResource BoolToVisibilityConverter}}">
+        Margin="0,0,4,0">
         <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
           <TextBlock Margin="4,0,0,0" Text="{Binding CurrentInstanceIndex}"
                      ToolTip="Currently selected function instance" />
@@ -61,6 +60,7 @@
         </StackPanel>
         <Button
           x:Name="PreviousInstanceButton"
+          IsEnabled="{Binding ShowInstanceNavigation}"
           Margin="0,18,14,0"
           HorizontalAlignment="Right"
           VerticalAlignment="Top"
@@ -76,6 +76,7 @@
         </Button>
         <Button
           x:Name="NextInstanceButton"
+          IsEnabled="{Binding ShowInstanceNavigation}"
           Margin="0,18,-2,0"
           HorizontalAlignment="Right"
           VerticalAlignment="Top"
@@ -93,6 +94,7 @@
     </Grid>
 
     <TabControl
+      Margin="0,2,0,0"
       Padding="2"
       BorderThickness="0"
       HorizontalAlignment="Stretch"
@@ -137,7 +139,8 @@
                     ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
                 </StackPanel>
 
-                <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
+                <StackPanel Margin="4,2,0,0" Orientation="Horizontal"
+                            Visibility="{Binding ShowInstanceNavigation, Converter={StaticResource BoolToVisibilityConverter}}">
                   <TextBlock Width="70" Text="Average time" />
                   <ContentControl
                     Width="200"
@@ -148,7 +151,8 @@
                     ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
                 </StackPanel>
 
-                <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
+                <StackPanel Margin="4,2,0,0" Orientation="Horizontal"
+                            Visibility="{Binding ShowInstanceNavigation, Converter={StaticResource BoolToVisibilityConverter}}">
                   <TextBlock Width="70" Text="Median time" />
                   <ContentControl
                     Width="200"

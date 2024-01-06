@@ -23,6 +23,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private List<(IRElement, TimeSpan)> profileElements_;
   private int profileElementIndex_;
   private FunctionProcessingResult sourceProfileResult_;
+  private SourceLineProcessingResult sourceLineProfileResult_;
   private IRDocumentColumnData sourceColumnData_;
   private bool columnsVisible_;
   private bool ignoreNextCaretEvent_;
@@ -43,9 +44,37 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private void SetupEvents() {
     TextView.TextArea.Caret.PositionChanged += Caret_PositionChanged;
     TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
+    TextView.TextArea.SelectionChanged += TextAreaOnSelectionChanged;
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
     TextView.TextRegionFolded += TextViewOnTextRegionFolded;
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
+  }
+
+  private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
+    // For source files, compute the sum of the selected lines time.
+    if(sourceLineProfileResult_ == null) {
+      return;
+    }
+    
+    int startLine = TextView.TextArea.Selection.StartPosition.Line;
+    int endLine = TextView.TextArea.Selection.EndPosition.Line;
+    var weightSum = TimeSpan.Zero;
+    
+    for(int i = startLine; i<= endLine; i++) {
+      if(sourceLineProfileResult_.SourceLineWeight.TryGetValue(i, out var weight)) {
+        weightSum += weight;
+      }
+    }
+    
+    if(weightSum == TimeSpan.Zero) {
+      Session.SetApplicationStatus("");
+      return;
+    }
+    
+    var funcProfile = Session.ProfileData.GetFunctionProfile(TextView.Section.ParentFunction);
+    double weightPercentage = funcProfile.ScaleWeight(weightSum);
+    string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+    Session.SetApplicationStatus(text, "Sum of time for the selected lines");
   }
 
   private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
@@ -179,6 +208,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     TextView.ResumeUpdate();
     sourceProfileResult_ = processingResult.Result;
+    sourceLineProfileResult_ = processingResult.SourceLineResult;
 
     //? TODO: UI Option?
     await ShowProfilingColumns();
@@ -369,6 +399,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     sourceText_ = null;
     profileElements_ = null;
     sourceProfileResult_ = null;
+    sourceLineProfileResult_ = null;
     sourceColumnData_ = null;
   }
 

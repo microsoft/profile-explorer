@@ -179,6 +179,7 @@ public class ProfileDocumentMarker {
 
   public record SourceLineProfileResult(
     FunctionProcessingResult Result,
+    SourceLineProcessingResult SourceLineResult,
     FunctionIR Function,
     Dictionary<int, IRElement> LineToElementMap);
 
@@ -235,7 +236,7 @@ public class ProfileDocumentMarker {
     processingResult.SortSampledElements(); // Used for ordering.
     processingResult.FunctionCountersValue = result.FunctionCountersValue;
     document.ProfileProcessingResult = processingResult;
-    return new SourceLineProfileResult(processingResult, dummyFunc, lineToElementMap);
+    return new SourceLineProfileResult(processingResult, result, dummyFunc, lineToElementMap);
   }
 
   public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,

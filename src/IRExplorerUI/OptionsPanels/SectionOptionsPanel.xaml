@@ -208,9 +208,9 @@
         </StackPanel>
       </TabItem>
       <TabItem Header="Profiling" Style="{StaticResource TabControlStyle}">
-        <StackPanel>
+        <StackPanel Margin="4,4,4,4">
           <CheckBox
-            Content="Sync function in other panels"
+            Content="Sync function in other profiling panels"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Sync function displayed in other profiling panels with selection" />
@@ -225,26 +225,21 @@
             IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
             Margin="0,2,0,2" />
-          <TextBlock Margin="20,0,0,2" Text="Mouse hover duration"
-                     IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}" />
-          <StackPanel
-            HorizontalAlignment="Stretch"
-            Margin="20,0,0,4"
-            IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}"
-            Orientation="Horizontal">
+          <StackPanel Margin="20,0,0,2" Orientation="Horizontal"
+                      IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}" >
+          <TextBlock Text="Hover duration (ms)" VerticalAlignment="Center"/>
             <xctk:IntegerUpDown
+              Margin="8,0,0,0"
               Maximum="5000"
               Minimum="50"
-              Width="80"
+              Width="70"
               ParsingNumberStyle="Number"
               ShowButtonSpinner="True"
               Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
-            <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" 
-                       Text="ms" />
             <Button
               Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
               VerticalAlignment="Center"
-              Margin="20,0,0,0"
+              Margin="4,0,0,0"
               Padding="2,0,2,0"
               Content="Default"
               Click="ResetCallStackPopupDurationButton_Click"
@@ -269,6 +264,33 @@
               Height="20"
               ToolTip="Reset value to default duration" />
           </StackPanel>
+          
+          <Separator Margin="0,4,0,4" />
+          <TextBlock FontWeight="Medium" Text="Function List Columns" />
+          <CheckBox
+            Content="Show module column"
+            IsEnabled="False"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,4,0,2"
+            ToolTip="Sync function displayed in other profiling panels with selection" />
+          <CheckBox
+            Content="Show performance counter columns"
+            IsEnabled="False"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Sync function displayed in other profiling panels with selection" />
+          <CheckBox
+            Content="Include duration in total time column"
+            IsEnabled="False"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Sync function displayed in other profiling panels with selection" />
+          <CheckBox
+            Content="Include duration in self time column"
+            IsEnabled="False"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Sync function displayed in other profiling panels with selection" />
         </StackPanel>
       </TabItem>
     </TabControl>

@@ -62,7 +62,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   public CallTreeNodePanel() {
     InitializeComponent();
     SetupEvents();
-    ShowInstanceNavigation = true;
     DataContext = this;
     CallTreeNode = null;
   }
@@ -212,6 +211,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     //? TODO: Should rather be an assert.
     if (instanceNodes_ == null || instanceNodes_.Count == 0) {
+      ShowInstanceNavigation = false;
       return;
     }
 
@@ -221,6 +221,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     // Show all instances.
     InstancesList.Show(instanceNodes_);
+    ShowInstanceNavigation = instanceNodes_.Count > 1;
 
     nodeInstanceIndex_ = instanceNodes_.FindIndex(instanceNode => instanceNode == node);
     CurrentInstanceIndex = nodeInstanceIndex_ + 1;
