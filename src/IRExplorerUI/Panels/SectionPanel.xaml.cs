@@ -2259,6 +2259,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       
       if(ProfileControlsVisible) {
         SetupStackFunctionHoverPreview();
+        OnPropertyChanged(nameof(SyncSelection));
+        OnPropertyChanged(nameof(SyncSourceFile));
       }
     }
   }
