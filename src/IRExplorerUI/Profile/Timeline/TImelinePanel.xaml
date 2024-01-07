@@ -76,7 +76,7 @@
       x:Name="ToolbarHost"
       Grid.Row="0"
       HorizontalAlignment="Stretch"
-      Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="50" />
@@ -86,13 +86,13 @@
         Height="28"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Top"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         DockPanel.Dock="Left"
         IsLocked="True">
         <ToolBar
           HorizontalAlignment="Stretch"
           VerticalAlignment="Top"
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           Loaded="ToolBar_Loaded">
           <Button
             Margin="4,0,0,0"
@@ -173,12 +173,12 @@
           <Separator />
 
           <Menu VerticalAlignment="Center"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
             <MenuItem
               x:Name="MarkersMenuItem"
               Padding="0,0,0,0"
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-              BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Header="Markers"
               OverridesDefaultStyle="True"
               SubmenuOpened="MarkersMenuItem_SubmenuOpened">

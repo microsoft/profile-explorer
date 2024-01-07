@@ -23,18 +23,18 @@
     </Grid.RowDefinitions>
 
     <DockPanel
-      Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Grid.Row="0"
       HorizontalAlignment="Stretch">
       <ToolBarTray
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         Height="28"
         HorizontalAlignment="Stretch"
         IsLocked="True"
         VerticalAlignment="Top"
         x:Name="Toolbar">
         <ToolBar
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           HorizontalAlignment="Stretch"
           Loaded="ToolBar_Loaded"
           VerticalAlignment="Top">

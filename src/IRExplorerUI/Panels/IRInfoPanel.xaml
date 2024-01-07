@@ -19,7 +19,7 @@
     <Grid
       Grid.Row="0"
       HorizontalAlignment="Stretch"
-      Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="75" />
@@ -30,12 +30,12 @@
         Height="28"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Top"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         IsLocked="True">
         <ToolBar
           HorizontalAlignment="Stretch"
           VerticalAlignment="Top"
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           Loaded="ToolBar_Loaded">
 
           <Button

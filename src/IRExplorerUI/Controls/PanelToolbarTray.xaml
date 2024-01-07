@@ -9,7 +9,7 @@
   VerticalAlignment="Center"
   d:DesignHeight="28"
   d:DesignWidth="200"
-  Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
   IsLocked="True"
   mc:Ignorable="d">
   <ToolBar
@@ -17,7 +17,7 @@
     MinWidth="24"
     HorizontalAlignment="Stretch"
     VerticalAlignment="Center"
-    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
     IsVisibleChanged="ToolBar_OnIsVisibleChanged"
     Loaded="ToolBar_Loaded"
     SizeChanged="ToolBar_OnSizeChanged">
@@ -42,15 +42,15 @@
       Height="20"
       Padding="0"
       VerticalAlignment="Center"
-      Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Focusable="False"
       ToolBar.OverflowMode="Never"
       ToolTip="Duplicate panel">
       <MenuItem
         Margin="0,0,0,0"
         Padding="0,0,0,0"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+        BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         Focusable="False"
         OverridesDefaultStyle="True"
         SubmenuOpened="MenuItem_SubmenuOpened">

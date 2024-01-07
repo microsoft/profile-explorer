@@ -15,7 +15,7 @@
   <Border
     x:Name="PanelBorder"
     Margin="0,0,6,6"
-    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
     BorderThickness="1,1,1,1">
     <Border.Effect>
@@ -47,7 +47,7 @@
         ToolTip="{Binding PanelToolTip}" />
 
       <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-        <StackPanel Grid.Column="1" Orientation="Horizontal" 
+        <StackPanel Grid.Column="1" Orientation="Horizontal"
                     Visibility="{Binding ShowModeButtons, Converter={StaticResource BoolToVisibilityConverter}}" >
         <TextBlock Text="Show" VerticalAlignment="Center" Margin="0,0,4,0" />
         <ToggleButton Content="ASM" Height="18" VerticalAlignment="Center"

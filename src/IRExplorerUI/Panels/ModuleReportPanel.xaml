@@ -27,17 +27,17 @@
         <DockPanel
           Grid.Row="0"
           HorizontalAlignment="Stretch"
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
           <ToolBarTray
             Height="28"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Top"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             IsLocked="True">
             <ToolBar
               HorizontalAlignment="Stretch"
               VerticalAlignment="Top"
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Loaded="ToolBar_Loaded">
 
               <ToggleButton
@@ -74,7 +74,7 @@
           Grid.Column="0"
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+          <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
             <StackPanel>
               <Expander IsExpanded="True">
                 <Expander.Header>
@@ -326,19 +326,19 @@
         <DockPanel
           Grid.Row="0"
           HorizontalAlignment="Stretch"
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
           <ToolBarTray
             Height="28"
             Margin="0,0,24,0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Top"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             IsLocked="True">
             <ToolBar
               Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToolBarTray}}, Path=ActualWidth}"
               HorizontalAlignment="Stretch"
               VerticalAlignment="Top"
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
               <Image Source="{StaticResource SearchIcon}" ToolBar.OverflowMode="Never" />
               <Grid
                 x:Name="FunctionFilterGrid"

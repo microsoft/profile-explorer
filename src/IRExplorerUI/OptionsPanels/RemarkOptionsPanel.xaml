@@ -78,7 +78,7 @@
             Margin="0,2,0,4"
             Text="Filter by Kind" />
           <Button
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             BorderBrush="{x:Null}"
             Click="SetAllKindCheckboxesButton_Click"
             Height="20"
@@ -90,7 +90,7 @@
             <Image Source="{StaticResource TasklistIcon}" />
           </Button>
           <Button
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             BorderBrush="{x:Null}"
             Click="ResetAllKindCheckboxesButton_Click"
             Height="20"
@@ -141,7 +141,7 @@
             Text="Filter by Category" />
 
           <Button
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             BorderBrush="{x:Null}"
             Click="SetAllCategoryCheckboxesButton_Click"
             Height="20"
@@ -154,7 +154,7 @@
           </Button>
 
           <Button
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             BorderBrush="{x:Null}"
             Click="ResetAllCategoryCheckboxesButton_Click"
             Height="20"
@@ -166,7 +166,7 @@
           </Button>
 
           <Button
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             BorderBrush="{x:Null}"
             Click="EditButton_Click"
             Height="20"
@@ -177,7 +177,7 @@
             <Image Source="{StaticResource EditIcon}" />
           </Button>
           <Button
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             BorderBrush="{x:Null}"
             Click="ReloadButton_Click"
             Height="20"

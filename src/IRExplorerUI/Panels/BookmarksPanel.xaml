@@ -27,7 +27,7 @@
     </Grid.RowDefinitions>
 
     <Grid
-      Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Grid.Row="0"
       HorizontalAlignment="Stretch">
       <Grid.ColumnDefinitions>
@@ -35,14 +35,14 @@
         <ColumnDefinition Width="25" />
       </Grid.ColumnDefinitions>
       <ToolBarTray
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         Grid.Column="0"
         Height="28"
         HorizontalAlignment="Stretch"
         IsLocked="True"
         VerticalAlignment="Top">
         <ToolBar
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           HorizontalAlignment="Stretch"
           Loaded="ToolBar_Loaded"
           VerticalAlignment="Top">
@@ -85,11 +85,11 @@
           </Button>
           <Separator />
 
-          <Menu Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+          <Menu Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 VerticalAlignment="Center">
             <MenuItem
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-              BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Header="Remove"
               Margin="0,0,0,0"
               OverridesDefaultStyle="True"

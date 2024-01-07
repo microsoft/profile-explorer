@@ -31,7 +31,7 @@
     </Grid.RowDefinitions>
 
     <Grid
-      Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Grid.Row="0"
       HorizontalAlignment="Stretch">
       <Grid.ColumnDefinitions>
@@ -39,14 +39,14 @@
         <ColumnDefinition Width="75" />
       </Grid.ColumnDefinitions>
       <ToolBarTray
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         Grid.Column="0"
         Height="28"
         HorizontalAlignment="Stretch"
         IsLocked="True"
         VerticalAlignment="Top">
         <ToolBar
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           HorizontalAlignment="Stretch"
           Loaded="ToolBar_Loaded"
           VerticalAlignment="Top">

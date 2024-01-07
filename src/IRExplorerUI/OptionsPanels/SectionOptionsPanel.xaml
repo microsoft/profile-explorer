@@ -21,7 +21,7 @@
               IsChecked="{Binding ColorizeSectionNames, Mode=TwoWay}"
               Margin="0,4,20,2" />
             <Button
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
 
               Click="EditButton_Click"
               Height="20"
@@ -33,7 +33,7 @@
             </Button>
 
             <Button
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
 
               Click="ReloadButton_Click"
               Height="20"
@@ -237,7 +237,7 @@
               ShowButtonSpinner="True"
               Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
             <Button
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               VerticalAlignment="Center"
               Margin="4,0,0,0"
               Padding="2,0,2,0"
@@ -246,7 +246,7 @@
               Height="20"
               ToolTip="Reset value to default duration" />
             <Button
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               VerticalAlignment="Center"
               Margin="2,0,0,0"
               Padding="2,0,2,0"
@@ -255,7 +255,7 @@
               Height="20"
               ToolTip="Reset value to default duration" />
             <Button
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               VerticalAlignment="Center"
               Margin="2,0,0,0"
               Padding="2,0,2,0"

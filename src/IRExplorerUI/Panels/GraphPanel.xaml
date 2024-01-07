@@ -76,7 +76,7 @@
       x:Name="ToolbarHost"
       Grid.Row="0"
       HorizontalAlignment="Stretch"
-      Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="75" />
@@ -86,13 +86,13 @@
         Height="28"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Top"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         DockPanel.Dock="Left"
         IsLocked="True">
         <ToolBar
           HorizontalAlignment="Stretch"
           VerticalAlignment="Top"
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           Loaded="ToolBar_Loaded">
           <Button
             Command="local:GraphCommand.GraphResetWidth"
@@ -139,11 +139,11 @@
 
           <Separator />
           <Menu VerticalAlignment="Center"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
             <MenuItem
               Padding="0,2,2,2"
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-              BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Header="Clear"
               OverridesDefaultStyle="True">
               <MenuItem.Icon>
@@ -323,14 +323,14 @@
             <Separator />
             <CheckBox
               Margin="4,0,0,0"
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Content="A dominates B"
               IsChecked="{Binding Dominates}"
               IsHitTestVisible="False" />
             <Separator />
             <CheckBox
               Margin="4,0,0,0"
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Content="A post-dominates B"
               IsChecked="{Binding PostDominates}"
               IsHitTestVisible="False" />
@@ -340,7 +340,7 @@
             <StackPanel Orientation="Horizontal">
               <CheckBox
                 Margin="4,0,0,0"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Content="A reaches B"
                 IsChecked="{Binding Reaches}"
                 IsHitTestVisible="False" />
