@@ -166,7 +166,7 @@
     <Grid
       x:Name="FunctionPart"
       Grid.Column="0"
-      Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
       <Grid.RowDefinitions>
         <RowDefinition Height="28" />
         <RowDefinition Height="*" />
@@ -184,7 +184,7 @@
           Margin="0,0,24,0"
           HorizontalAlignment="Stretch"
           VerticalAlignment="Top"
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           IsLocked="True"
           Visibility="{Binding IsFunctionListVisible, Converter={StaticResource BoolToVisibilityConverter}}">
           <ToolBar
@@ -192,7 +192,7 @@
             Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToolBarTray}}, Path=ActualWidth}"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Top"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             Loaded="ToolBar_Loaded"
             SizeChanged="ToolBar_SizeChanged">
             <ToggleButton
@@ -845,12 +845,12 @@
             x:Name="SectionToolbar"
             Grid.Column="0"
             Height="28"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             IsLocked="True">
             <ToolBar
               HorizontalAlignment="Stretch"
               VerticalAlignment="Top"
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Loaded="ToolBar_Loaded">
 
               <Image Source="{StaticResource SearchIcon}" />

@@ -80,7 +80,7 @@
                 Width="150"
                 Margin="4,0,2,0"
                 HorizontalAlignment="Center"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
                 FilterMode="ContainsOrdinal"
                 IsDropDownOpen="True"

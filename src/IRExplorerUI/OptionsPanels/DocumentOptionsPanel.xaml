@@ -57,8 +57,8 @@
           Width="180" />
 
         <ToggleButton
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-          
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+
           Click="SyntaxEditButton_Click"
           DockPanel.Dock="Right"
           Height="20"
@@ -73,8 +73,8 @@
 
 
         <Button
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-          
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+
           Click="OpenSyntaxStyleButton_Click"
           DockPanel.Dock="Right"
           Height="20"
@@ -87,8 +87,8 @@
         </Button>
 
         <Button
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-          
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+
           Click="ReloadSyntaxStyleButton_Click"
           DockPanel.Dock="Right"
           Height="20"
@@ -117,8 +117,8 @@
               Margin="0,0,0,4"
               Text="Syntax Highlighting Colors" />
             <Button
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-              
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+
               Click="ResetSyntaxStyleButton_Click"
               DockPanel.Dock="Right"
               Height="20"
@@ -132,8 +132,8 @@
             </Button>
 
             <Button
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-              
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+
               Click="EditSyntaxFileButton_Click"
               DockPanel.Dock="Right"
               Height="20"
@@ -249,8 +249,8 @@
       <DockPanel>
         <TextBlock FontWeight="Medium" Text="Document Colors" />
         <Button
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-          
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+
           Click="StyleButton_Click"
           DockPanel.Dock="Right"
           Height="20"

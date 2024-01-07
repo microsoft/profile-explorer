@@ -117,7 +117,7 @@
       </Grid.RowDefinitions>
 
       <Grid
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         Grid.Row="0"
         HorizontalAlignment="Stretch">
         <Grid.ColumnDefinitions>
@@ -125,7 +125,7 @@
           <ColumnDefinition Width="50" />
         </Grid.ColumnDefinitions>
         <ToolBarTray
-          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           Grid.Column="0"
           Height="28"
           HorizontalAlignment="Stretch"
@@ -133,7 +133,7 @@
           VerticalAlignment="Top"
           x:Name="DocumentToolbar">
           <ToolBar
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             HorizontalAlignment="Stretch"
             Loaded="ToolBar_Loaded"
             VerticalAlignment="Top">
@@ -235,11 +235,11 @@
             </Button>
             <Separator />
 
-            <Menu Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            <Menu Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                   VerticalAlignment="Center">
               <MenuItem
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Height="20"
                 Margin="0,0,-1,0"
                 OverridesDefaultStyle="True"
@@ -361,11 +361,11 @@
             </Button>
 
             <Separator />
-            <Menu Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            <Menu Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                   VerticalAlignment="Center">
               <MenuItem
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Header="Clear"
                 OverridesDefaultStyle="True"
                 Padding="0,2,2,2">
@@ -398,11 +398,11 @@
             </Menu>
             <Separator />
 
-            <Menu Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            <Menu Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                   VerticalAlignment="Center">
               <MenuItem
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Header="Tasks"
                 OverridesDefaultStyle="True"
                 Padding="0,0,0,0"
@@ -421,8 +421,8 @@
                 <MenuItem Header="Edit Task Definitions" />
               </MenuItem>
               <MenuItem
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Header="Queries"
                 OverridesDefaultStyle="True"
                 Padding="0,0,0,0"
