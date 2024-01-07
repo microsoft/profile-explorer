@@ -22,6 +22,12 @@ public interface IOptionsPanel {
 
 public class OptionsPanelBase : UserControl, IOptionsPanel {
   private bool initialized_;
+
+  public virtual double DefaultHeight => 320;
+  public virtual double MinimumHeight => 200;
+  public virtual double DefaultWidth => 350;
+  public virtual double MinimumWidth => 350;
+
   public event EventHandler PanelClosed;
   public event EventHandler PanelReset;
   public event EventHandler SettingsChanged;
@@ -51,7 +57,7 @@ public class OptionsPanelBase : UserControl, IOptionsPanel {
     Settings = null;
     Settings = temp;
   }
-  
+
   public void RaisePanelClosed(EventArgs e) {
     PanelClosed?.Invoke(this, e);
   }

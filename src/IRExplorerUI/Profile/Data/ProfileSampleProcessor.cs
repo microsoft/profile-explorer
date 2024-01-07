@@ -186,7 +186,7 @@ public partial class ProfileData {
                 continue;
               }
 
-              ProcessSample(sample, stack, k, chunkData);
+              ProcessSample(sample, stack, i, chunkData);
             }
           }
 

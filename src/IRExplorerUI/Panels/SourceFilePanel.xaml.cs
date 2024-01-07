@@ -23,6 +23,7 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
+using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Profile;
 using Microsoft.Win32;
@@ -41,6 +42,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   //? TODO: Remember exclusions between sessions
   private HashSet<string> disabledSourceMappings_;
+  private OptionsPanelHostWindow optionsPanelWindow_;
+  private SourceFileSettings settings_;
 
   public SourceFilePanel() {
     InitializeComponent();
@@ -161,6 +164,28 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
   }
 
+  private void ShowOptionsPanel() {
+    if (optionsPanelWindow_ != null) {
+      optionsPanelWindow_.Close();
+      optionsPanelWindow_ = null;
+      return;
+    }
+
+    FrameworkElement relativeControl = TextView;
+    optionsPanelWindow_ = OptionsPanelHostWindow.Create<SourceFileOptionsPanel, SourceFileSettings>(
+      settings_, relativeControl, Session,
+      (newSettings, commit) => {
+        if (!newSettings.Equals(settings_)) {
+          settings_ = newSettings;
+          App.Settings.SourceFileSettings = newSettings;
+
+          if (commit) {
+            App.SaveApplicationSettings();
+          }
+        }
+      },
+      () => optionsPanelWindow_ = null);
+  }
         #region IToolPanel
 
   public override ToolPanelKind PanelKind => ToolPanelKind.Source;
@@ -316,4 +341,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
         #endregion
+
+  private void PanelToolbarTray_OnSettingsClicked(object sender, EventArgs e) {
+    ShowOptionsPanel();
+  }
 }

@@ -15,6 +15,7 @@ using System.Windows.Media;
 using Aga.Controls.Tree;
 using IRExplorerCore;
 using IRExplorerUI.Controls;
+using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Utilities;
 using Microsoft.Diagnostics.Tracing.Stacks;
@@ -142,6 +143,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private bool ignoreNextSelectionEvent_;
   private bool showSearchSection_;
   private string searchResultText_;
+  private OptionsPanelHostWindow optionsPanelWindow_;
 
   public CallTreePanel() {
     InitializeComponent();
@@ -477,10 +479,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         BringIntoView(firstNodeEx);
       }
     }
-  }
-
-  private void PanelToolbarTray_DuplicateClicked(object sender, DuplicateEventArgs e) {
-    Session.DuplicatePanel(this, e.Kind);
   }
 
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
@@ -973,6 +971,35 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
 
+  private void ShowOptionsPanel() {
+    if (optionsPanelWindow_ != null) {
+      optionsPanelWindow_.Close();
+      optionsPanelWindow_ = null;
+      return;
+    }
+
+    FrameworkElement relativeControl = CallTreeList;
+    optionsPanelWindow_ = OptionsPanelHostWindow.Create<CallTreeOptionsPanel, CallTreeSettings>(
+      settings_, relativeControl, Session,
+      (newSettings, commit) => {
+        if (!newSettings.Equals(settings_)) {
+          settings_ = newSettings;
+
+          if (IsCallerCalleePanel) {
+            App.Settings.CallerCalleeSettings = newSettings;
+          }
+          else {
+            App.Settings.CallTreeSettings = newSettings;
+          }
+
+          if (commit) {
+            App.SaveApplicationSettings();
+          }
+        }
+      },
+      () => optionsPanelWindow_ = null);
+  }
+
     #region IToolPanel
 
   public override ToolPanelKind PanelKind => ToolPanelKind.CallTree;
@@ -984,4 +1011,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
     #endregion
+
+  private void PanelToolbarTray_OnSettingsClicked(object sender, EventArgs e) {
+    ShowOptionsPanel();
+  }
 }
