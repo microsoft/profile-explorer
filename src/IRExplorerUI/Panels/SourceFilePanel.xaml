@@ -117,7 +117,8 @@
         Grid.Column="1"
         HasHelpButton="True"
         HasDuplicateButton="False"
-        HasPinButton="False" />
+        HasPinButton="False"
+        SettingsClicked="PanelToolbarTray_OnSettingsClicked"/>
     </Grid>
 
     <document1:ProfileIRDocument x:Name="TextView" Grid.Row="1" />

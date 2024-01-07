@@ -18,6 +18,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Document;
+using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 
 namespace IRExplorerUI.Profile;
@@ -51,6 +52,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private bool hasThreadFilter_;
   private string threadFilterText_;
   private bool showNodePanel_;
+  private OptionsPanelHostWindow optionsPanelWindow_;
 
   public TimelinePanel() {
     InitializeComponent();
@@ -905,6 +907,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void PanelToolbarTray_SettingsClicked(object sender, EventArgs e) {
+    ShowOptionsPanel();
   }
 
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
@@ -1045,5 +1048,28 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
     await HelpPanel.DisplayPanelHelp(PanelKind, Session);
+  }
+
+  private void ShowOptionsPanel() {
+    if (optionsPanelWindow_ != null) {
+      optionsPanelWindow_.Close();
+      optionsPanelWindow_ = null;
+      return;
+    }
+
+    FrameworkElement relativeControl = ShowNodePanel ? NodeDetailsPanel : TimelineHost;
+    optionsPanelWindow_ = OptionsPanelHostWindow.Create<TimelineOptionsPanel, TimelineSettings>(
+      settings_, relativeControl, Session,
+      (newSettings, commit) => {
+        if (!newSettings.Equals(settings_)) {
+         // settings_ = newSettings;
+          //App.Settings.TimelineSettings = newSettings;
+
+          if (commit) {
+            App.SaveApplicationSettings();
+          }
+        }
+      },
+      () => optionsPanelWindow_ = null);
   }
 }

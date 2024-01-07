@@ -10,8 +10,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using DocumentFormat.OpenXml.Office2010.PowerPoint;
 using IRExplorerCore;
 using IRExplorerUI.Controls;
+using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 
 namespace IRExplorerUI.Profile;
@@ -33,6 +35,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   private bool hasRootNode;
   private bool showNodePanel_;
   private FlameGraphNode rootNode_;
+  private OptionsPanelHostWindow optionsPanelWindow_;
 
   public FlameGraphPanel() {
     InitializeComponent();
@@ -401,6 +404,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void PanelToolbarTray_SettingsClicked(object sender, EventArgs e) {
+    ShowOptionsPanel();
   }
 
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
@@ -477,5 +481,28 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private async void RootNodeResetButton_OnClick(object sender, RoutedEventArgs e) {
     await GraphHost.ClearRootNode();
+  }
+
+  private void ShowOptionsPanel() {
+    if (optionsPanelWindow_ != null) {
+      optionsPanelWindow_.Close();
+      optionsPanelWindow_ = null;
+      return;
+    }
+
+    FrameworkElement relativeControl = ShowNodePanel ? NodeDetailsPanel : GraphHost;
+    optionsPanelWindow_ = OptionsPanelHostWindow.Create<FlameGraphOptionsPanel, FlameGraphSettings>(
+      settings_, relativeControl, Session,
+      (newSettings, commit) => {
+        if (!newSettings.Equals(settings_)) {
+          settings_ = newSettings;
+          App.Settings.FlameGraphSettings = newSettings;
+
+          if (commit) {
+            App.SaveApplicationSettings();
+          }
+        }
+      },
+      () => optionsPanelWindow_ = null);
   }
 }

@@ -36,6 +36,40 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
     PanelHost.Content = panel;
   }
 
+  public static OptionsPanelHostWindow Create<T, S>(SettingsBase settings, FrameworkElement relativeControl, ISession session,
+                                                    Action<S, bool> newSettingsHandler,
+                                                    Action panelClosedHandler)
+    where T : OptionsPanelBase, new()
+    where S: SettingsBase, new() {
+    var panel = new T();
+    double width = Math.Max(panel.MinimumWidth,
+                            Math.Min(relativeControl.ActualWidth, panel.DefaultWidth));
+    double height = Math.Max(panel.MinimumHeight,
+                             Math.Min(relativeControl.ActualHeight, panel.DefaultHeight));
+    var position = new Point(relativeControl.ActualWidth - width, 0);
+    var panelHost = new OptionsPanelHostWindow(panel, position, width, height, relativeControl,
+                                               settings, session);
+    panelHost.SettingsChanged += (sender, args) => {
+      newSettingsHandler((S)panelHost.Settings, false);
+    };
+    panelHost.PanelReset += (sender, args) => {
+      var newSettings =  new S();
+      panelHost.Settings = newSettings;
+      newSettingsHandler(newSettings, true);
+    };
+    panelHost.PanelClosed += (sender, args) => {
+      panelHost.IsOpen = false;
+      panelHost.PanelClosed = null;
+      panelHost.PanelReset = null;
+      panelHost.SettingsChanged = null;
+      newSettingsHandler((S)panelHost.Settings, true);
+      panelClosedHandler();
+    };
+
+    panelHost.IsOpen = true;
+    return panelHost;
+  }
+
   public event EventHandler PanelClosed;
   public event EventHandler PanelReset;
   public event EventHandler SettingsChanged;

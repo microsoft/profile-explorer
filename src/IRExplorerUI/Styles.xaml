@@ -864,11 +864,11 @@
                               HorizontalAlignment="Center"
                               ContentSource="Header"
                               TextBlock.FontWeight="SemiBold"
-                              TextBlock.FontSize="13"
+                              TextBlock.FontSize="12"
                               Margin="4,2"/>
             <Rectangle Name="SelectedLine" Height="2"
                        Margin="4,0,4,0"
-                       HorizontalAlignment="Stretch" 
+                       HorizontalAlignment="Stretch"
                        Fill="DimGray"
                        Stroke="DimGray">
             </Rectangle>
