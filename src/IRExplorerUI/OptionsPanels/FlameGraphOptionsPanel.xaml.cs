@@ -32,4 +32,16 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
       RaiseSettingsChanged(null);
     });
   }
+
+  private void ResetCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    throw new NotImplementedException();
+  }
+
+  private void ShortCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    throw new NotImplementedException();
+  }
+
+  private void LongCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    throw new NotImplementedException();
+  }
 }

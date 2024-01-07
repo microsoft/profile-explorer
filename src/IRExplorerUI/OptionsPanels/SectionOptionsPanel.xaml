@@ -22,7 +22,7 @@
               Margin="0,4,20,2" />
             <Button
               Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-              
+
               Click="EditButton_Click"
               Height="20"
               Name="EditButton"
@@ -34,7 +34,7 @@
 
             <Button
               Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-              
+
               Click="ReloadButton_Click"
               Height="20"
               Name="ReloadButton"
@@ -221,7 +221,7 @@
             ToolTip="Sync file displayed in the Source File panel with selection" />
           <CheckBox
             x:Name="ShowCallStackPopupCheckbox"
-            Content="Show hottest call stack popup"
+            Content="Show hottest call stack popup on hover"
             IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
             Margin="0,2,0,2" />
@@ -264,7 +264,7 @@
               Height="20"
               ToolTip="Reset value to default duration" />
           </StackPanel>
-          
+
           <Separator Margin="0,4,0,4" />
           <TextBlock FontWeight="Medium" Text="Function List Columns" />
           <CheckBox
