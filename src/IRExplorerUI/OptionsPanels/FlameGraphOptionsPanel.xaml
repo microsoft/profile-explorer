@@ -10,45 +10,155 @@
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
   <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-    <StackPanel Margin="4,4,4,4">
-      <TextBlock FontWeight="Medium" Text="Section List" />
-      <CheckBox
-        Content="Use indentation for nested section names"
-        IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        Name="IndentationCheckbox"
-        ToolTip="Show section names indentend based on the parent/child relationship" />
-      <Separator Margin="0,4,0,4" />
+   <TabControl BorderThickness="0"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+      <TabItem Header="General" Style="{StaticResource TabControlStyle}">
+        <StackPanel Margin="4,4,4,4">
+          <CheckBox
+            Content="Show node details panel"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Sync function displayed in other profiling panels with selection" />
+          <CheckBox
+            Content="Sync function in other profiling panels"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Sync function displayed in other profiling panels with selection" />
+          <CheckBox
+            Content="Sync Source File panel with selection"
+            IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Sync file displayed in the Source File panel with selection" />
+          <CheckBox
+            x:Name="ShowCallStackPopupCheckbox"
+            Content="Show node details on hover"
+            IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
+            ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
+            Margin="0,2,0,2" />
+          <StackPanel Margin="20,0,0,2" Orientation="Horizontal"
+                      IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}" >
+          <TextBlock Text="Hover duration (ms)" VerticalAlignment="Center"/>
+            <xctk:IntegerUpDown
+              Margin="8,0,0,0"
+              Maximum="5000"
+              Minimum="50"
+              Width="70"
+              ParsingNumberStyle="Number"
+              ShowButtonSpinner="True"
+              Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
+            <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              VerticalAlignment="Center"
+              Margin="4,0,0,0"
+              Padding="2,0,2,0"
+              Content="Default"
+              Click="ResetCallStackPopupDurationButton_Click"
+              Height="20"
+              ToolTip="Reset value to default duration" />
+            <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              VerticalAlignment="Center"
+              Margin="2,0,0,0"
+              Padding="2,0,2,0"
+              Content="Short"
+              Click="ShortCallStackPopupDurationButton_Click"
+              Height="20"
+              ToolTip="Reset value to default duration" />
+            <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              VerticalAlignment="Center"
+              Margin="2,0,0,0"
+              Padding="2,0,2,0"
+              Content="Long"
+              Click="LongCallStackPopupDurationButton_Click"
+              Height="20"
+              ToolTip="Reset value to default duration" />
+          </StackPanel>
 
-      <TextBlock FontWeight="Medium" Text="Function List" />
-      <CheckBox
-        Content="Compute instruction statistics"
-        IsChecked="{Binding ComputeStatistics, Mode=TwoWay}"
-        Margin="0,4,0,2"
-        ToolTip="Compute function IR statistics on document load and show extra columns"
-        x:Name="StatisticsCheckbox" />
+          <CheckBox
+            Content="Append module name before function"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Show the module name in front of the function name" />
 
-      <Grid Margin="0,4,0,0">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="70" />
-          <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-        <xctk:ColorPicker
-          AvailableColorsSortingMode="HueSaturationBrightness"
-          BorderBrush="Gray"
-          Grid.Column="0"
-          HorizontalAlignment="Left"
-          SelectedColor="{Binding NewSectionColor, Mode=TwoWay}"
-          ShowDropDownButton="True"
-          UsingAlphaChannel="False"
-          VerticalAlignment="Center"
-          Width="64" />
-        <TextBlock
-          Grid.Column="1"
-          HorizontalAlignment="Left"
-          Text="New section border color"
-          VerticalAlignment="Center" />
-      </Grid>
-    </StackPanel>
+
+          <Separator Margin="0,4,0,4" />
+          <TextBlock FontWeight="Medium" Text="Style" />
+          <CheckBox
+            Content="Use different color palette for kernel code"
+            IsEnabled="False"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,4,0,2"
+            ToolTip="Sync function displayed in other profiling panels with selection" />
+          <CheckBox
+            Content="Use different color palette for managed (.NET) code"
+            IsEnabled="False"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Sync function displayed in other profiling panels with selection" />
+<TextBlock Text="TODO: Select color pallettes"></TextBlock>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Details Panel" Style="{StaticResource TabControlStyle}">
+        <StackPanel Margin="4,4,4,4">
+          <CheckBox
+            Content="Expand Instances section"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Instances section expanded by default" />
+          <CheckBox
+            Content="Expand Histogram section"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Histogram section expanded by default" />
+
+          <CheckBox
+            x:Name="ShowDetailsPopupCheckbox"
+            Content="Show function preview on hover"
+            IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
+            ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
+            Margin="0,2,0,2" />
+          <StackPanel Margin="20,0,0,2" Orientation="Horizontal"
+                      IsEnabled="{Binding ElementName=ShowDetailsPopupCheckbox, Path=IsChecked}" >
+          <TextBlock Text="Hover duration (ms)" VerticalAlignment="Center"/>
+            <xctk:IntegerUpDown
+              Margin="8,0,0,0"
+              Maximum="5000"
+              Minimum="50"
+              Width="70"
+              ParsingNumberStyle="Number"
+              ShowButtonSpinner="True"
+              Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
+            <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              VerticalAlignment="Center"
+              Margin="4,0,0,0"
+              Padding="2,0,2,0"
+              Content="Default"
+              Click="ResetCallStackPopupDurationButton_Click"
+              Height="20"
+              ToolTip="Reset value to default duration" />
+            <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              VerticalAlignment="Center"
+              Margin="2,0,0,0"
+              Padding="2,0,2,0"
+              Content="Short"
+              Click="ShortCallStackPopupDurationButton_Click"
+              Height="20"
+              ToolTip="Reset value to default duration" />
+            <Button
+              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+              VerticalAlignment="Center"
+              Margin="2,0,0,0"
+              Padding="2,0,2,0"
+              Content="Long"
+              Click="LongCallStackPopupDurationButton_Click"
+              Height="20"
+              ToolTip="Reset value to default duration" />
+          </StackPanel>
+        </StackPanel>
+      </TabItem>
+    </TabControl>
   </Grid>
 </local:OptionsPanelBase>

@@ -35,7 +35,7 @@
             MaxWidth="180" Width="180"
             HorizontalAlignment="Stretch"
             Content="{Binding CallTreeNode}"
-            ToolTip="Inclusive time for this function instance"
+            ToolTip="Inclusive (total) time for this function instance"
             ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
         </StackPanel>
         <StackPanel Orientation="Horizontal">
@@ -45,7 +45,7 @@
             MaxWidth="180" Width="180"
             HorizontalAlignment="Stretch"
             Content="{Binding CallTreeNode}"
-            ToolTip="Exclusive time for this function instance"
+            ToolTip="Exclusive (self) time for this function instance"
             ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
         </StackPanel>
       </StackPanel>
@@ -114,7 +114,7 @@
           VerticalScrollBarVisibility="Auto">
           <StackPanel MaxWidth="{Binding ActualWidth, ElementName=ContentHost}" Margin="0,4,0,0">
             <Expander
-              Margin="0,4,0,8"
+              Margin="0,4,0,4"
               HorizontalAlignment="Stretch"
               Header="Instances"
               IsExpanded="True">
@@ -167,7 +167,7 @@
 
             <Expander
               x:Name="HistogramHost"
-              Margin="0,4,0,8"
+              Margin="0,0,0,8"
               HorizontalAlignment="Stretch"
               Expanded="HistogramHost_Expanded"
               Header="Histogram"
@@ -240,7 +240,7 @@
                           Margin="16,0,0,0"
                           VerticalAlignment="Center"
                           FontSize="11"
-                          Text="Avg" />
+                          Text="Average" />
                       </Grid>
 
                     </StackPanel>
@@ -275,7 +275,7 @@
                 TextWrapping="Wrap" />
             </Canvas>
 
-            
+
             <StackPanel Orientation="Horizontal">
               <TextBlock
                 Margin="4,4,6,0"
@@ -284,7 +284,7 @@
                 Text="Function name" />
               <ContentPresenter
                 VerticalAlignment="Center"
-                Margin="4,2,6,0"
+                Margin="4,4,6,0"
                 Content="{Binding CallTreeNode}"
                 ContentTemplate="{StaticResource ExecutionContextTemplate}" />
             </StackPanel>
