@@ -15,7 +15,7 @@
       <TabItem Header="General" Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
-            Content="Show node details panel"
+            Content="Show function details panel"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Sync function displayed in other profiling panels with selection" />
@@ -31,7 +31,7 @@
             ToolTip="Sync file displayed in the Source File panel with selection" />
           <CheckBox
             x:Name="ShowCallStackPopupCheckbox"
-            Content="Show node details on hover"
+            Content="Show function details on hover"
             IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
             Margin="0,2,0,2" />

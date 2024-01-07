@@ -32,4 +32,20 @@ public partial class CallTreeOptionsPanel : OptionsPanelBase {
       RaiseSettingsChanged(null);
     });
   }
+
+
+  private void ResetCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    ((SectionSettings)Settings).CallStackPopupDuration = SectionSettings.DefaultCallStackPopupDuration;
+    ReloadSettings();
+  }
+
+  private void ShortCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    ((SectionSettings)Settings).CallStackPopupDuration = SectionSettings.ShortCallStackPopupDuration;
+    ReloadSettings();
+  }
+
+  private void LongCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    ((SectionSettings)Settings).CallStackPopupDuration = SectionSettings.LongCallStackPopupDuration;
+    ReloadSettings();
+  }
 }
