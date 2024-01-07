@@ -210,6 +210,13 @@
       <TabItem Header="Profiling" Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
+            IsEnabled="False"
+            Content="Show Modules list panel"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Show the list of modules (binaries) on the left-hand side" />
+
+          <CheckBox
             Content="Sync function in other profiling panels"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
             Margin="0,2,0,2"
@@ -225,6 +232,7 @@
             IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
             Margin="0,2,0,2" />
+
           <StackPanel Margin="20,0,0,2" Orientation="Horizontal"
                       IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}" >
           <TextBlock Text="Hover duration (ms)" VerticalAlignment="Center"/>
@@ -264,6 +272,13 @@
               Height="20"
               ToolTip="Reset value to default duration" />
           </StackPanel>
+          <CheckBox
+            IsEnabled="False"
+            Content="Append module name before function"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Show the module name in front of the function name" />
+
 
           <Separator Margin="0,4,0,4" />
           <TextBlock FontWeight="Medium" Text="Function List Columns" />
