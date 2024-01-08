@@ -161,7 +161,7 @@ public class FlameGraphRenderer {
     return new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top, node.Bounds.Width * maxWidth_, node.Bounds.Height);
   }
 
-  public void DrawNode(FlameGraphNode node, DrawingContext dc) {
+  public void DrawNode(FlameGraphNode node, DrawingContext dc, FlameGraphSettings settings) {
     if (node.IsDummyNode) {
       return;
     }
@@ -230,7 +230,7 @@ public class FlameGraphRenderer {
           break;
         }
         case 1: {
-          if (node.ShowWeightPercentage) {
+          if (settings_.AppendPercentageToFunction) {
             label = flameGraph_.ScaleWeight(node).AsPercentageString();
             margin = FlameGraphNode.ExtraValueMargin;
             textColor = node.WeightTextColor;
@@ -240,8 +240,10 @@ public class FlameGraphRenderer {
           break;
         }
         case 2: {
-          if (node.ShowWeight) {
-            label = $"({node.Weight.AsMillisecondsString()})";
+          if (settings_.AppendDurationToFunction) {
+            label = settings_.AppendPercentageToFunction ? 
+              $"({node.Weight.AsMillisecondsString()})" : 
+              $"{node.Weight.AsMillisecondsString()}";
             margin = FlameGraphNode.DefaultMargin;
             textColor = node.WeightTextColor;
           }
@@ -330,7 +332,7 @@ public class FlameGraphRenderer {
     int shrinkingNodes = 0;
 
     foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
-      node.Owner.DrawNode(node, graphDC);
+      node.Owner.DrawNode(node, graphDC, settings_);
 
       if (layoutChanged && ScaleNode(node) < minVisibleRectWidth_) {
         shrinkingNodes++;
@@ -585,7 +587,6 @@ public class FlameGraphRenderer {
   }
 
   private Brush CreatePlaceholderTiledBrush(double tileSize) {
-    //? TODO: Rendering perf is poor, much better with ImageBrush but it looks bad.
     // Create the brush once, freeze and reuse it everywhere.
     if (placeholderTileBrush_ != null) {
       return placeholderTileBrush_;
@@ -674,7 +675,7 @@ public class FlameGraphRenderer {
     var glyphsCache = useNameFont ? NameGlyphsCache : GlyphsCache;
 
     if (maxWidth <= 0 || string.IsNullOrEmpty(text)) {
-      return ("", glyphsCache.GetGlyphs("").Glyphs, true, Size.Empty);
+      return ("", glyphsCache.GetGlyphs("").Glyphs, false, new Size(0, 0));
     }
 
     //? TODO: cache measurement and reuse if

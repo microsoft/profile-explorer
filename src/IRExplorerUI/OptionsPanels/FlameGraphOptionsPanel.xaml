@@ -16,9 +16,9 @@
         <StackPanel Margin="4,4,4,4">
           <CheckBox
             Content="Show function details panel"
-            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            IsChecked="{Binding ShowDetailsPanel, Mode=TwoWay}"
             Margin="0,2,0,2"
-            ToolTip="Sync function displayed in other profiling panels with selection" />
+            ToolTip="Show the function details panel on the right-hand side" />
           <CheckBox
             Content="Sync function in other profiling panels"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
@@ -45,7 +45,7 @@
               Width="70"
               ParsingNumberStyle="Number"
               ShowButtonSpinner="True"
-              Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
+              Value="{Binding Path=NodePopupDuration, Mode=TwoWay}" />
             <Button
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               VerticalAlignment="Center"
@@ -75,15 +75,33 @@
               ToolTip="Reset value to default duration" />
           </StackPanel>
 
+          <Separator Margin="0,4,0,4" />
+          <TextBlock FontWeight="Medium" Text="Function node" />
           <CheckBox
-            Content="Append module name before function"
-            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Content="Include module name"
+            IsChecked="{Binding PrependModuleToFunction, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Show the module name in front of the function name" />
+          <CheckBox
+            Content="Include function percentage"
+            IsChecked="{Binding AppendPercentageToFunction, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Show the function instance time percentage after the name" />
+          <CheckBox
+            Content="Include function time"
+            IsChecked="{Binding AppendDurationToFunction, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Show the function instance duration after the name" />
 
 
           <Separator Margin="0,4,0,4" />
           <TextBlock FontWeight="Medium" Text="Style" />
+          <CheckBox
+            Content="Use compact mode"
+            IsEnabled="False"
+            IsChecked="{Binding UseCompactMode, Mode=TwoWay}"
+            Margin="0,4,0,2"
+            ToolTip="Make flame graph view more dense by using a smaller font size" />
           <CheckBox
             Content="Use different color palette for kernel code"
             IsEnabled="False"
@@ -102,17 +120,22 @@
       <TabItem Header="Details Panel" Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
+            IsEnabled="False"
             Content="Expand Instances section"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Instances section expanded by default" />
           <CheckBox
+            IsEnabled="False"
+
             Content="Expand Histogram section"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Histogram section expanded by default" />
 
           <CheckBox
+            IsEnabled="False"
+
             x:Name="ShowDetailsPopupCheckbox"
             Content="Show function preview on hover"
             IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"

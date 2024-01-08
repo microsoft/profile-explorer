@@ -33,7 +33,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   private bool showSearchSection_;
   private string searchResultText_;
   private bool hasRootNode;
-  private bool showNodePanel_;
   private FlameGraphNode rootNode_;
   private OptionsPanelHostWindow optionsPanelWindow_;
 
@@ -43,7 +42,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     SetupEvents();
     DataContext = this;
     CallTree = null;
-    ShowNodePanel = true;
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
@@ -58,6 +56,17 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
   }
 
+  public FlameGraphSettings Settings {
+    get => settings_;
+    set {
+      if (value != settings_) {
+        settings_ = value;
+        GraphHost.GraphViewer.SettingsUpdated(value);
+        OnPropertyChanged();
+      }
+    }
+  }
+
   public ProfileCallTree CallTree {
     get => callTree_;
     set {
@@ -67,49 +76,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   public bool HasCallTree => callTree_ != null;
-
-  public bool PrependModuleToFunction {
-    get => settings_.PrependModuleToFunction;
-    set {
-      if (value != settings_.PrependModuleToFunction) {
-        settings_.PrependModuleToFunction = value;
-        GraphHost.GraphViewer.SettingsUpdated(settings_);
-        OnPropertyChanged();
-      }
-    }
-  }
-
-  public bool SyncSourceFile {
-    get => settings_.SyncSourceFile;
-    set {
-      //? TODO: Use SetField everywhere
-      if (value != settings_.SyncSourceFile) {
-        settings_.SyncSourceFile = value;
-        OnPropertyChanged();
-      }
-    }
-  }
-
-  public bool SyncSelection {
-    get => settings_.SyncSelection;
-    set {
-      if (value != settings_.SyncSelection) {
-        settings_.SyncSelection = value;
-        OnPropertyChanged();
-      }
-    }
-  }
-
-  public bool UseCompactMode {
-    get => settings_.UseCompactMode;
-    set {
-      if (value != settings_.UseCompactMode) {
-        settings_.UseCompactMode = value;
-        GraphHost.GraphViewer.SettingsUpdated(settings_);
-        OnPropertyChanged();
-      }
-    }
-  }
 
   public bool ShowSearchSection {
     get => showSearchSection_;
@@ -139,11 +105,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         OnPropertyChanged();
       }
     }
-  }
-
-  public bool ShowNodePanel {
-    get => showNodePanel_;
-    set => SetField(ref showNodePanel_, value);
   }
 
   public override async void OnShowPanel() {
@@ -283,7 +244,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   private async void GraphHost_NodesDeselected(object sender, EventArgs e) {
     NodeDetailsPanel.Reset();
 
-    if (SyncSelection) {
+    if (settings_.SyncSelection) {
       await Session.ProfileFunctionDeselected();
     }
 
@@ -296,12 +257,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     if (node.HasFunction) {
       await NodeDetailsPanel.ShowWithDetailsAsync(node.CallTreeNode);
 
-      if (SyncSourceFile) {
+      if (settings_.SyncSourceFile) {
         // Load the source file and scroll to the hottest line.
         await Session.OpenProfileSourceFile(node.CallTreeNode);
       }
 
-      if (SyncSelection) {
+      if (settings_.SyncSelection) {
         await Session.ProfileFunctionSelected(node.CallTreeNode, PanelKind);
       }
 
@@ -490,12 +451,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       return;
     }
 
-    FrameworkElement relativeControl = ShowNodePanel ? NodeDetailsPanel : GraphHost;
+    FrameworkElement relativeControl = settings_.ShowDetailsPanel ? NodeDetailsPanel : GraphHost;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<FlameGraphOptionsPanel, FlameGraphSettings>(
       settings_, relativeControl, Session,
       (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
-          settings_ = newSettings;
+          Settings = newSettings;
           App.Settings.FlameGraphSettings = newSettings;
 
           if (commit) {

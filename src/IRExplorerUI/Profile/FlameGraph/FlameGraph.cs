@@ -26,8 +26,6 @@ public class FlameGraphNode : SearchableProfileItem, IEquatable<FlameGraphNode> 
     CallTreeNode = callTreeNode;
     Weight = weight;
     Depth = depth;
-    ShowWeight = true;
-    ShowWeightPercentage = true;
   }
 
   public virtual bool IsGroup => false;
@@ -42,9 +40,6 @@ public class FlameGraphNode : SearchableProfileItem, IEquatable<FlameGraphNode> 
   public Brush ModuleTextColor { get; set; }
   public Brush WeightTextColor { get; set; }
   public Rect Bounds { get; set; }
-  public bool ShowWeight { get; set; }
-  public bool ShowWeightPercentage { get; set; }
-  public bool ShowInclusiveWeight { get; set; }
   public bool IsDummyNode { get; set; }
   public bool HasFunction => CallTreeNode != null;
   public bool HasChildren => Children is {Count: > 0};

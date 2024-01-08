@@ -50,6 +50,7 @@
         </StackPanel>
       </StackPanel>
       <Grid
+        Visibility="{Binding ShowInstanceNavigation, Converter={StaticResource BoolToVisibilityConverter}}"
         Grid.Column="1"
         Margin="0,0,4,0">
         <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
