@@ -150,6 +150,9 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.CallTree);
   });
+  public RelayCommand<object> SelectFunctionFlameGraphCommand => new RelayCommand<object>(async obj => {
+    await SelectFunctionInPanel(ToolPanelKind.FlameGraph);
+  });
   public RelayCommand<object> SelectFunctionTimelineCommand => new RelayCommand<object>(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.Timeline);
   });
@@ -315,12 +318,12 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
           weightSum += profileItem.CallTreeNode.Weight;
         }
       }
-      
+
       if(weightSum == TimeSpan.Zero) {
         Session.SetApplicationStatus("");
         return;
       }
-      
+
       double weightPercentage = Session.ProfileData.ScaleFunctionWeight(weightSum);
       string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
       Session.SetApplicationStatus(text, "Sum of time for the selected functions");
