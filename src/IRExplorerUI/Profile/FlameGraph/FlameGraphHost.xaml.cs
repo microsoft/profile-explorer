@@ -37,11 +37,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private double initialOffsetX_;
   private double initialWidth_;
   private DateTime lastWheelZoomTime_;
-  private bool panelVisible_;
-  private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
   private FlameGraphNode rootNode_;
-  private int searchResultIndex_;
-  private List<FlameGraphNode> searchResultNodes_;
   private readonly FlameGraphSettings settings_;
   private bool showNodePanel_;
   private PopupHoverPreview stackHoverPreview_;
@@ -361,7 +357,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   public void Reset() {
     callTree_ = null;
-    pendingCallTree_ = null;
     ScrollToOffsets(0, 0);
 
     if (!GraphViewer.IsInitialized) {
@@ -454,7 +449,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     KeyUp += HostOnKeyUp;
 
     stackHoverPreview_ = new PopupHoverPreview(GraphViewer,
-                                               HoverPreview.HoverDuration,
+                                               TimeSpan.FromMilliseconds(settings_.NodePopupDuration),
                                                (mousePoint, previewPoint) => {
                                                  var pointedNode = GraphViewer.FindPointedNode(mousePoint);
                                                  var callNode = pointedNode?.CallTreeNode;

@@ -224,6 +224,8 @@ public partial class FlameGraphViewer : FrameworkElement {
 
   public void SettingsUpdated(FlameGraphSettings settings) {
     renderer_.SettingsUpdated(settings);
+    InvalidateMeasure();
+    InvalidateVisual();
   }
 
   public async Task Initialize(ProfileCallTree callTree, Rect visibleArea, FlameGraphSettings settings,

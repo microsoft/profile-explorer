@@ -7,6 +7,8 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class FlameGraphSettings : SettingsBase {
+  public static readonly int DefaultNodePopupDuration = HoverPreview.HoverDuration.Milliseconds;
+
   public FlameGraphSettings() {
     Reset();
   }
@@ -21,6 +23,15 @@ public class FlameGraphSettings : SettingsBase {
   public bool SyncSelection { get; set; }
   [ProtoMember(5)]
   public bool UseCompactMode { get; set; } // font size, node height
+  [ProtoMember(6)]
+  public bool ShowNodePopup { get; set; }
+  [ProtoMember(7)]
+  public bool AppendPercentageToFunction { get; set; }
+  [ProtoMember(8)]
+  public bool AppendDurationToFunction { get; set; }
+  [ProtoMember(9)]
+  public int NodePopupDuration { get; set; }
+  
   //? TODO: Options for
   //? - show node preview on hover
   //?      - hover time
@@ -37,6 +48,10 @@ public class FlameGraphSettings : SettingsBase {
     SyncSelection = true;
     SyncSourceFile = false;
     ShowDetailsPanel = true;
+    ShowNodePopup = true;
+    AppendPercentageToFunction = true;
+    AppendDurationToFunction = true;
+    NodePopupDuration = DefaultNodePopupDuration;
   }
 
   public FlameGraphSettings Clone() {
@@ -50,6 +65,10 @@ public class FlameGraphSettings : SettingsBase {
            ShowDetailsPanel == settings.ShowDetailsPanel &&
            SyncSelection == settings.SyncSelection &&
            SyncSourceFile == settings.SyncSourceFile &&
-           UseCompactMode == settings.UseCompactMode;
+           UseCompactMode == settings.UseCompactMode &&
+           ShowNodePopup == settings.ShowNodePopup &&
+           AppendPercentageToFunction == settings.AppendPercentageToFunction &&
+           AppendDurationToFunction == settings.AppendDurationToFunction &&
+           NodePopupDuration == settings.NodePopupDuration;
   }
 }
