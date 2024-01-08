@@ -250,6 +250,18 @@
           </MenuItem.Icon>
         </MenuItem>
         <MenuItem
+          Command="{Binding SelectFunctionFlameGraphCommand}"
+          CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+          Header="Select in Flame Graph"
+          ToolTip="Select the function instance in the Flame Graph panel">
+          <MenuItem.Icon>
+            <Image
+              Height="16"
+              Source="{StaticResource FlameGraphIcon}"
+              Width="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem
           Command="{Binding SelectFunctionTimelineCommand}"
           CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
           Header="Select in Timeline"

@@ -864,7 +864,7 @@
                               HorizontalAlignment="Center"
                               ContentSource="Header"
                               TextBlock.FontWeight="SemiBold"
-                              TextBlock.FontSize="12"
+                              TextBlock.FontSize="12.5"
                               Margin="4,2"/>
             <Rectangle Name="SelectedLine" Height="2"
                        Margin="4,0,4,0"

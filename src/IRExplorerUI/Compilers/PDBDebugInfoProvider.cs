@@ -24,7 +24,6 @@ namespace IRExplorerUI.Compilers;
 //? TODO: Use for-each iterators everywhere
 public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private const int MaxDemangledFunctionNameLength = 8192;
-  private const int MaxDownloadAttempts = 3;
 
   //? TODO: Save cache between sessions, including the unavailable PDBs.
   //? Invalidate unavailable ones if SymbolOption paths change so they get a chance
@@ -68,40 +67,29 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       DebugFileSearchResult searchResult = null;
 
       // In case there is a timeout downloading the symbols, try again.
-      for (int attempt = 0; attempt < MaxDownloadAttempts; attempt++) {
-        string symbolSearchPath = ConstructSymbolSearchPath(options);
-        using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
-        symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
+      string symbolSearchPath = ConstructSymbolSearchPath(options);
+      using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
+      symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
-        try {
-          result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
-        }
-        catch (Exception ex) {
-          Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");
-          break;
-        }
-
-#if DEBUG
-        Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
-        Trace.IndentLevel = 1;
-        Trace.WriteLine(logWriter.ToString());
-        Trace.IndentLevel = 0;
-        Trace.WriteLine("<< TraceEvent");
-#endif
-
-        if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
-          searchResult = DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
-          break;
-        }
-        else {
-          // If there was a timeout, try again.
-          if (!logWriter.ToString().Contains("timeout", StringComparison.OrdinalIgnoreCase)) {
-            break;
-          }
-        }
+      try {
+        result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
+      }
+      catch (Exception ex) {
+        Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");
       }
 
-      if (searchResult == null) {
+#if DEBUG
+      Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
+      Trace.IndentLevel = 1;
+      Trace.WriteLine(logWriter.ToString());
+      Trace.IndentLevel = 0;
+      Trace.WriteLine("<< TraceEvent");
+#endif
+
+      if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
+        searchResult = DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
+      }
+      else {
         searchResult = DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
       }
 
