@@ -101,14 +101,14 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   }
 
   public bool IsInstancesExpanded {
-    get => settings_.ExpandInstances;
+    get => settings_ is {ExpandInstances: true};
     set {
       settings_.ExpandInstances = value;
       OnPropertyChanged();
     }
   }
   public bool IsHistogramExpanded {
-    get => settings_.ExpandHistogram;
+    get => settings_ is {ExpandHistogram: true};
     set {
       settings_.ExpandHistogram = value;
       OnPropertyChanged();

@@ -89,10 +89,14 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     set => SetField(ref showModeButtons_, value);
   }
 
-  private void SetupInitialMode(ParsedIRTextSection parsedSection) {
+  private async Task SetupInitialMode(ParsedIRTextSection parsedSection, bool showAssembly) {
     parsedSection_ = parsedSection;
     ShowModeButtons = true;
-    ShowAssembly = true; //? TODO: Remember setting
+    ShowAssembly = showAssembly;
+    
+    if(!showAssembly) {
+      await SwitchAssemblySourceMode();
+    }
   }
 
   public static async Task<IRDocumentPopup> CreateNew(IRDocument document, IRElement previewedElement,
@@ -107,11 +111,12 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
   public static async Task<IRDocumentPopup> CreateNew(ParsedIRTextSection parsedSection,
                                                       Point position, double width, double height,
-                                                      UIElement owner, ISession session, string titlePrefix = "") {
+                                                      UIElement owner, ISession session, 
+                                                      string titlePrefix = "", bool showAssembly = false) {
     var popup = CreatePopup(parsedSection.Section, null, position, width, height,
                             owner, session, titlePrefix);
     await popup.ProfileTextView.LoadSection(parsedSection);
-    popup.SetupInitialMode(parsedSection);
+    await popup.SetupInitialMode(parsedSection, showAssembly);
     popup.CaptureMouseWheel();
     return popup;
   }
@@ -243,6 +248,10 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private async void ModeToggleButton_Click(object sender, RoutedEventArgs e) {
+    await SwitchAssemblySourceMode();
+  }
+
+  private async Task SwitchAssemblySourceMode() {
     ProfileTextView.Reset();
 
     if (showSourceFile_) {
@@ -298,9 +307,9 @@ public class IRDocumentPopupInstance {
     hover_ = null;
   }
 
-  private async Task ShowPreviewPopupForDocument(IRDocument document, IRElement element,
-                                                 UIElement relativeElement, string title) {
-    await ShowPreviewPopupForDocument(document, element, relativeElement, width_, height_, title);
+  private async Task ShowPreviewPopupForDocument(PreviewPopupArgs args) {
+    await ShowPreviewPopupForDocument(args.Document, args.Element, args.RelativeElement, 
+                                      width_, height_, args.Title);
   }
 
   private async Task ShowPreviewPopupForDocument(IRDocument document, IRElement element, UIElement relativeElement,
@@ -315,30 +324,29 @@ public class IRDocumentPopupInstance {
     Complete();
   }
 
-  private async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection,
-                                                UIElement relativeElement, string title) {
-    await ShowPreviewPopupForSection(parsedSection, relativeElement, width_, height_, title);
+  private async Task ShowPreviewPopupForLoadedSection(PreviewPopupArgs args) {
+    await ShowPreviewPopupForSection(args.LoadedSection, args.RelativeElement,
+                                     width_, height_, args.Title, args.ShowAssembly);
   }
 
   private async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection, UIElement relativeElement,
-                                                double width, double height, string title) {
+                                                double width, double height, string title, bool showAssembly) {
     if (!Prepare()) {
       return;
     }
 
     var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
     previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position, width, height,
-                                                    relativeElement, session_, title);
+                                                    relativeElement, session_, title, showAssembly);
     Complete();
   }
 
-  private async Task ShowPreviewPopupForSection(IRTextSection section,
-                                                UIElement relativeElement, string title) {
-    await ShowPreviewPopupForSection(section, relativeElement, width_, height_, title);
+  private async Task ShowPreviewPopupForSection(PreviewPopupArgs args) {
+    await ShowPreviewPopupForSection(args.Section, args.RelativeElement, width_, height_, args.Title, args.ShowAssembly);
   }
 
   private async Task ShowPreviewPopupForSection(IRTextSection section, UIElement relativeElement,
-                                                double width, double height, string title = "") {
+                                                double width, double height, string title, bool showAssembly) {
     if (!Prepare()) {
       return;
     }
@@ -348,7 +356,7 @@ public class IRDocumentPopupInstance {
     if (parsedSection != null) {
       var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
       previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position, width, height,
-                                                      relativeElement, session_, title);
+                                                      relativeElement, session_, title, showAssembly);
       Complete();
     }
   }
@@ -410,13 +418,13 @@ public class IRDocumentPopupInstance {
     }
 
     if (args.Document != null) {
-      await ShowPreviewPopupForDocument(args.Document, args.Element, args.RelativeElement, args.Title);
+      await ShowPreviewPopupForDocument(args);
     }
     else if (args.Section != null) {
-      await ShowPreviewPopupForSection(args.Section, args.RelativeElement, args.Title);
+      await ShowPreviewPopupForSection(args);
     }
     else if (args.LoadedSection != null) {
-      await ShowPreviewPopupForSection(args.LoadedSection, args.RelativeElement, args.Title);
+      await ShowPreviewPopupForLoadedSection(args);
     }
     else {
       throw new InvalidOperationException();
@@ -448,16 +456,19 @@ public class PreviewPopupArgs {
   }
 
   public static PreviewPopupArgs ForSection(IRTextSection section,
-                                            UIElement relativeElement, string title = "") {
+                                            UIElement relativeElement, string title = "",
+                                            bool showAssembly = true) {
     return new PreviewPopupArgs {
       Section = section,
       RelativeElement = relativeElement,
-      Title = title
+      Title = title,
+      ShowAssembly = showAssembly
     };
   }
 
   public static PreviewPopupArgs ForFunction(IRTextFunction function,
-                                             UIElement relativeElement, string title = "") {
+                                             UIElement relativeElement, string title = "",
+                                             bool showAssembly = true) {
     if (function == null || function.Sections.Count == 0) {
       return null;
     }
@@ -465,16 +476,19 @@ public class PreviewPopupArgs {
     return new PreviewPopupArgs {
       Section = function.Sections[0],
       RelativeElement = relativeElement,
-      Title = title
+      Title = title,
+      ShowAssembly = showAssembly
     };
   }
 
-  public static PreviewPopupArgs ForSLoadedSection(ParsedIRTextSection section,
-                                                   UIElement relativeElement, string title = "") {
+  public static PreviewPopupArgs ForLoadedSection(ParsedIRTextSection section,
+                                                   UIElement relativeElement, string title = "",
+                                                   bool showAssembly = true) {
     return new PreviewPopupArgs {
       LoadedSection = section,
       RelativeElement = relativeElement,
-      Title = title
+      Title = title,
+      ShowAssembly = showAssembly
     };
   }
 
@@ -484,4 +498,5 @@ public class PreviewPopupArgs {
   public IRDocument Document { get; set; }
   public ParsedIRTextSection LoadedSection { get; set; }
   public IRTextSection Section { get; set; }
+  public bool ShowAssembly { get; set; }
 }
