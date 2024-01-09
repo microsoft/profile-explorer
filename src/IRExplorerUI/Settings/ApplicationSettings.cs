@@ -75,6 +75,8 @@ public class ApplicationSettings {
   public IRDocumentPopupSettings DocumentPopupSettings;
   [ProtoMember(25)]
   public TimelineSettings TimelineSettings;
+  [ProtoMember(26)]
+  public CallTreeNodeSettings CallTreeNodeSettings;
 
   public ApplicationSettings() {
     Reset();
@@ -96,6 +98,7 @@ public class ApplicationSettings {
     ColumnSettings.Reset();
     DocumentPopupSettings.Reset();
     TimelineSettings.Reset();
+    CallTreeNodeSettings.Reset();
     AutoReloadDocument = true;
     ThemeIndex = 2; // Blue theme.
   }
@@ -230,6 +233,7 @@ public class ApplicationSettings {
     ColumnSettings ??= new OptionalColumnSettings();
     DocumentPopupSettings ??= new IRDocumentPopupSettings();
     TimelineSettings ??= new TimelineSettings();
+    CallTreeNodeSettings ??= new CallTreeNodeSettings();
   }
 
   private void AddProfilingSession(ProfileDataReport report, List<ProfileDataReport> list) {

@@ -459,6 +459,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
           Settings = newSettings;
+          NodeDetailsPanel.Settings = App.Settings.CallTreeNodeSettings;
           App.Settings.FlameGraphSettings = newSettings;
 
           if (commit) {

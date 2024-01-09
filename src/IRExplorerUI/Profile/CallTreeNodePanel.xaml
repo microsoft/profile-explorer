@@ -115,10 +115,11 @@
           VerticalScrollBarVisibility="Auto">
           <StackPanel MaxWidth="{Binding ActualWidth, ElementName=ContentHost}" Margin="0,4,0,0">
             <Expander
+              x:Name="InstancesExpander"
               Margin="0,4,0,4"
               HorizontalAlignment="Stretch"
               Header="Instances"
-              IsExpanded="True">
+              IsExpanded="{Binding IsInstancesExpanded}">
               <StackPanel Orientation="Vertical">
                 <StackPanel Margin="4,4,0,0" Orientation="Horizontal">
                   <TextBlock Width="70" Text="Number"
@@ -167,12 +168,12 @@
             </Expander>
 
             <Expander
-              x:Name="HistogramHost"
+              x:Name="HistogramExpander"
               Margin="0,0,0,8"
               HorizontalAlignment="Stretch"
               Expanded="HistogramHost_Expanded"
               Header="Histogram"
-              IsExpanded="{Binding IsHistogramExpanded, Mode=TwoWay}">
+              IsExpanded="{Binding IsHistogramExpanded}">
               <Border
                 Height="150"
                 Margin="0,4,0,0"

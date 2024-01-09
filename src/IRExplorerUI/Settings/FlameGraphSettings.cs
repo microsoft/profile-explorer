@@ -33,8 +33,6 @@ public class FlameGraphSettings : SettingsBase {
   public int NodePopupDuration { get; set; }
   
   //? TODO: Options for
-  //? - show node preview on hover
-  //?      - hover time
   //? - diff color scheme for kernel/managed
   //?      - enabled or not
   //?      - pick builtin color scheme

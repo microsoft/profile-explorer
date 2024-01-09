@@ -56,8 +56,8 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   private int currentInstanceIndex_;
   private bool showDetails_;
   private bool showInstanceNavigation_;
-  private bool isHistogramExpanded_;
   private bool useSelfTimeHistogram_;
+  private CallTreeNodeSettings settings_;
 
   public CallTreeNodePanel() {
     InitializeComponent();
@@ -86,6 +86,32 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       FunctionList.Session = value;
       ModuleList.Session = value;
       InstancesList.Session = value;
+    }
+  }
+
+  public CallTreeNodeSettings Settings {
+    get => settings_;
+    set {
+      settings_ = value;
+      BacktraceList.Settings = value;
+      FunctionList.Settings = value;
+      ModuleList.Settings = value;
+      InstancesList.Settings = value;
+    }
+  }
+
+  public bool IsInstancesExpanded {
+    get => settings_.ExpandInstances;
+    set {
+      settings_.ExpandInstances = value;
+      OnPropertyChanged();
+    }
+  }
+  public bool IsHistogramExpanded {
+    get => settings_.ExpandHistogram;
+    set {
+      settings_.ExpandHistogram = value;
+      OnPropertyChanged();
     }
   }
 
@@ -140,12 +166,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     get => showInstanceNavigation_ && showDetails_;
     set => SetField(ref showInstanceNavigation_, value);
   }
-
-  public bool IsHistogramExpanded {
-    get => isHistogramExpanded_;
-    set => SetField(ref isHistogramExpanded_, value);
-  }
-
+  
   public bool UseSelfTimeHistogram {
     get => useSelfTimeHistogram_;
     set {
@@ -180,6 +201,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
   public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {
     Session = session;
+    Settings = App.Settings.CallTreeNodeSettings;
     funcInfoProvider_ = funcInfoProvider;
   }
 
@@ -242,8 +264,11 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     medianNodeEx.ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(medianNodeEx.ExclusiveWeight);
     MedianNode = medianNodeEx;
 
-    if (IsHistogramExpanded) {
-      SetupInstancesHistogram(instanceNodes_, node, useSelfTimeHistogram_);
+    InstancesExpander.IsExpanded = settings_.ExpandInstances;
+    HistogramExpander.IsExpanded = settings_.ExpandHistogram;
+    
+    if (settings_.ExpandHistogram) {
+      InvokeSetupInstancesHistogram();
     }
   }
 
@@ -445,10 +470,16 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
   private void HistogramHost_Expanded(object sender, RoutedEventArgs e) {
     if (!histogramVisible_ && instanceNodes_ != null) {
-      Dispatcher.BeginInvoke(() => {
-        SetupInstancesHistogram(instanceNodes_, CallTreeNode.CallTreeNode, useSelfTimeHistogram_);
-      }, DispatcherPriority.Background);
+      InvokeSetupInstancesHistogram();
     }
+  }
+  
+  private void InvokeSetupInstancesHistogram() {
+    // Create the histogram on the next render pass,
+    // after the host has been expanded, otherwise some computations assert.
+    Dispatcher.BeginInvoke(() => {
+      SetupInstancesHistogram(instanceNodes_, CallTreeNode.CallTreeNode, useSelfTimeHistogram_);
+    }, DispatcherPriority.Background);
   }
 
   public class BinHistogramItem : HistogramItem {

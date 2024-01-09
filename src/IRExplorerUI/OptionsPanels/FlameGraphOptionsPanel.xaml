@@ -52,7 +52,7 @@
               Margin="4,0,0,0"
               Padding="2,0,2,0"
               Content="Default"
-              Click="ResetCallStackPopupDurationButton_Click"
+              Click="ResetNodePopupDurationButton_Click"
               Height="20"
               ToolTip="Reset value to default duration" />
             <Button
@@ -61,7 +61,7 @@
               Margin="2,0,0,0"
               Padding="2,0,2,0"
               Content="Short"
-              Click="ShortCallStackPopupDurationButton_Click"
+              Click="ShortNodePopupDurationButton_Click"
               Height="20"
               ToolTip="Reset value to default duration" />
             <Button
@@ -70,7 +70,7 @@
               Margin="2,0,0,0"
               Padding="2,0,2,0"
               Content="Long"
-              Click="LongCallStackPopupDurationButton_Click"
+              Click="LongNodePopupDurationButton_Click"
               Height="20"
               ToolTip="Reset value to default duration" />
           </StackPanel>
@@ -117,33 +117,28 @@
 <TextBlock Text="TODO: Select color pallettes"></TextBlock>
         </StackPanel>
       </TabItem>
-      <TabItem Header="Details Panel" Style="{StaticResource TabControlStyle}">
+      <TabItem x:Name="DetailsPanel" Header="Details Panel" Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
-            IsEnabled="False"
             Content="Expand Instances section"
-            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            IsChecked="{Binding ExpandInstances, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Instances section expanded by default" />
           <CheckBox
-            IsEnabled="False"
-
             Content="Expand Histogram section"
-            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            IsChecked="{Binding ExpandHistogram, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Histogram section expanded by default" />
 
           <CheckBox
-            IsEnabled="False"
-
             x:Name="ShowDetailsPopupCheckbox"
             Content="Show function preview on hover"
-            IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
+            IsChecked="{Binding ShowPreviewPopup, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
             Margin="0,2,0,2" />
-          <StackPanel Margin="20,0,0,2" Orientation="Horizontal"
+          <StackPanel Margin="20,4,0,0" Orientation="Horizontal"
                       IsEnabled="{Binding ElementName=ShowDetailsPopupCheckbox, Path=IsChecked}" >
-          <TextBlock Text="Hover duration (ms)" VerticalAlignment="Center"/>
+          <TextBlock Text="Hover duration (ms):" VerticalAlignment="Center"/>
             <xctk:IntegerUpDown
               Margin="8,0,0,0"
               Maximum="5000"
@@ -151,14 +146,14 @@
               Width="70"
               ParsingNumberStyle="Number"
               ShowButtonSpinner="True"
-              Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
+              Value="{Binding Path=PreviewPopupDuration, Mode=TwoWay}" />
             <Button
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               VerticalAlignment="Center"
               Margin="4,0,0,0"
               Padding="2,0,2,0"
               Content="Default"
-              Click="ResetCallStackPopupDurationButton_Click"
+              Click="ResetDetailsPopupDurationButton_Click"
               Height="20"
               ToolTip="Reset value to default duration" />
             <Button
@@ -167,7 +162,7 @@
               Margin="2,0,0,0"
               Padding="2,0,2,0"
               Content="Short"
-              Click="ShortCallStackPopupDurationButton_Click"
+              Click="ShortDetailsPopupDurationButton_Click"
               Height="20"
               ToolTip="Reset value to default duration" />
             <Button
@@ -176,10 +171,16 @@
               Margin="2,0,0,0"
               Padding="2,0,2,0"
               Content="Long"
-              Click="LongCallStackPopupDurationButton_Click"
+              Click="LongDetailsPopupDurationButton_Click"
               Height="20"
               ToolTip="Reset value to default duration" />
           </StackPanel>
+          <StackPanel Margin="20,4,0,2" Orientation="Horizontal"
+                      IsEnabled="{Binding ElementName=ShowDetailsPopupCheckbox, Path=IsChecked}" >
+            <TextBlock Text="Default view:" VerticalAlignment="Center"/>
+            <RadioButton Content="Assembly" Margin="8,0,0,0" VerticalAlignment="Center"></RadioButton>
+            <RadioButton Content="Source code" Margin="8,0,0,0" VerticalAlignment="Center"></RadioButton>
+            </StackPanel>
         </StackPanel>
       </TabItem>
     </TabControl>

@@ -16,10 +16,12 @@ using Irony.Parsing.Construction;
 namespace IRExplorerUI.Profile;
 
 public class ProfileListViewItem : SearchableProfileItem {
-  private bool prependModule_;
-
-  public ProfileListViewItem(FunctionNameFormatter funcNameFormatter) :
+  CallTreeNodeSettings settings_;
+  
+  private ProfileListViewItem(FunctionNameFormatter funcNameFormatter,
+                              CallTreeNodeSettings settings) :
     base(funcNameFormatter) {
+    settings_ = settings;
   }
 
   public ProfileCallTreeNode CallTreeNode { get; set; }
@@ -29,9 +31,9 @@ public class ProfileListViewItem : SearchableProfileItem {
   }
 
   public static ProfileListViewItem From(ProfileCallTreeNode node, ProfileData profileData,
-                                         FunctionNameFormatter funcNameFormatter) {
-    return new ProfileListViewItem(funcNameFormatter) {
-      //prependModule_ = true,
+                                         FunctionNameFormatter funcNameFormatter,
+                                         CallTreeNodeSettings settings) {
+    return new ProfileListViewItem(funcNameFormatter, settings) {
       CallTreeNode = node,
       ModuleName = node.ModuleName,
       Weight = node.Weight,
@@ -42,8 +44,9 @@ public class ProfileListViewItem : SearchableProfileItem {
   }
 
   public static ProfileListViewItem From(ModuleProfileInfo node, ProfileData profileData,
-                                         FunctionNameFormatter funcNameFormatter) {
-    return new ProfileListViewItem(funcNameFormatter) {
+                                         FunctionNameFormatter funcNameFormatter,
+                                         CallTreeNodeSettings settings) {
+    return new ProfileListViewItem(funcNameFormatter, settings) {
       FunctionName = node.Name, // Override name, disables GetFunctionName.
       Weight = node.Weight,
       Percentage = node.Percentage
@@ -51,7 +54,7 @@ public class ProfileListViewItem : SearchableProfileItem {
   }
 
   protected override bool ShouldPrependModule() {
-    return prependModule_ && App.Settings.CallTreeSettings.PrependModuleToFunction;
+    return settings_.PrependModuleToFunction;
   }
 }
 
@@ -71,6 +74,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   private double functionColumnWidth_;
   private ISession session_;
   private IRDocumentPopupInstance previewPopup_;
+  private CallTreeNodeSettings settings_;
 
   public double FunctionColumnWidth {
     get => functionColumnWidth_;
@@ -89,19 +93,39 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
   }
 
+  public CallTreeNodeSettings Settings {
+    get => settings_;
+    set {
+      settings_ = value;
+      
+      if (settings_ != null && session_ != null) {
+        SetupPreviewPopup();
+      }
+    }
+  }
+
   private void SetupPreviewPopup() {
+    if (previewPopup_ != null) {
+      previewPopup_.UnregisterHoverEvents();
+      previewPopup_ = null;
+    }
+    
+    if(!Settings.ShowPreviewPopup) {
+      return;
+    }
+    
     previewPopup_ = new IRDocumentPopupInstance(IRDocumentPopup.DefaultWidth,
                                                 IRDocumentPopup.DefaultHeight, Session);
-    previewPopup_.SetupHoverEvents(ItemList, HoverPreview.LongHoverDuration, () => {
+    previewPopup_.SetupHoverEvents(ItemList, TimeSpan.FromMilliseconds(Settings.PreviewPopupDuration), () => {
       var hoveredItem = Utils.FindPointedListViewItem(ItemList);
+      if (hoveredItem == null)
+        return null;
+      
+      var item = (ProfileListViewItem)hoveredItem.DataContext;
 
-      if (hoveredItem != null) {
-        var item = (ProfileListViewItem)hoveredItem.DataContext;
-
-        if (item.CallTreeNode != null) {
-          return PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList,
-                                              $"Function {item.CallTreeNode.FunctionName}");
-        }
+      if (item.CallTreeNode != null) {
+        return PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList,
+                                            $"Function {item.CallTreeNode.FunctionName}");
       }
 
       return null;
@@ -114,14 +138,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
   public ISession Session {
     get => session_;
-    set {
-      session_ = value;
-
-      //? TODO: UI option
-      if (session_ != null) {
-        SetupPreviewPopup();
-      }
-    }
+    set => session_ = value;
   }
 
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
@@ -270,8 +287,8 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
     var list = new List<ProfileListViewItem>(nodes.Count);
     filteredNodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData,
-                                                                    Session.CompilerInfo.NameProvider.
-                                                                      FormatFunctionName)));
+                                                                    Session.CompilerInfo.NameProvider.FormatFunctionName,
+                                                                    Settings)));
     ItemList.ItemsSource = new ListCollectionView(list);
     GridViewColumnVisibility.UpdateListView(ItemList);
   }
@@ -279,7 +296,8 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public void Show(List<ModuleProfileInfo> nodes) {
     var list = new List<ProfileListViewItem>(nodes.Count);
     nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData,
-                                                            Session.CompilerInfo.NameProvider.FormatFunctionName)));
+                                                            Session.CompilerInfo.NameProvider.FormatFunctionName,
+                                                            Settings)));
     ItemList.ItemsSource = new ListCollectionView(list);
   }
 
