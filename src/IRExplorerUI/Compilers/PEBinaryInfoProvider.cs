@@ -172,7 +172,7 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
             return !rel.StartsWith('.') && !Path.IsPathRooted(rel);
           }
 
-          foreach (string path in options.SymbolSearchPaths) {
+          foreach (string path in options.SymbolPaths) {
             if (PathIsSubPath(path, winPath) ||
                 PathIsSubPath(path, sysPath) ||
                 PathIsSubPath(path, sysx86Path)) {
