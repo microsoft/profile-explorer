@@ -30,7 +30,8 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   private ProfileCallTreeNodeEx nodeEx_;
 
   public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,
-                           Point position, UIElement referenceElement, ISession session, bool canExpand = true) {
+                           Point position, UIElement referenceElement, 
+                           ISession session, bool canExpand = true) {
     InitializeComponent();
     Initialize(position, referenceElement);
     PanelResizeGrip.ResizedControl = this;
@@ -43,6 +44,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     PanelHost.ShowInstanceNavigation = false;
     PanelHost.Initialize(session, funcInfoProvider);
     FunctionListView.Session = Session;
+    FunctionListView.Settings = App.Settings.CallTreeNodeSettings;
     UpdateNode(node);
     SetupEvents();
     DataContext = this;

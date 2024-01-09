@@ -52,7 +52,7 @@ public class OptionsPanelBase : UserControl, IOptionsPanel {
   public virtual void OnSettingsChanged(object newSettings) {
   }
 
-  protected void ReloadSettings() {
+  protected virtual void ReloadSettings() {
     var temp = Settings;
     Settings = null;
     Settings = temp;

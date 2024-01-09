@@ -15,10 +15,17 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
 
   public FlameGraphOptionsPanel() {
     InitializeComponent();
+    DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
     PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
   }
 
+  protected override void ReloadSettings() {
+    base.ReloadSettings();
+    DetailsPanel.DataContext = null;
+    DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
+  }
+  
   private void SectionOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
     NotifySettingsChanged();
   }
@@ -33,18 +40,33 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     });
   }
 
-  private void ResetCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((SectionSettings)Settings).CallStackPopupDuration = FlameGraphSettings.DefaultNodePopupDuration;
+  private void ResetNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    ((FlameGraphSettings)Settings).NodePopupDuration = FlameGraphSettings.DefaultNodePopupDuration;
     ReloadSettings();
   }
   
-  private void ShortCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((SectionSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDuration.Milliseconds;
+  private void ShortNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    ((FlameGraphSettings)Settings).NodePopupDuration = HoverPreview.HoverDuration.Milliseconds;
     ReloadSettings();
   }
 
-  private void LongCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((SectionSettings)Settings).CallStackPopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
+  private void LongNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    ((FlameGraphSettings)Settings).NodePopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
+    ReloadSettings();
+  }
+  
+  private void ResetDetailsPopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    ((CallTreeNodeSettings)DetailsPanel.DataContext).PreviewPopupDuration = CallTreeNodeSettings.DefaultPreviewPopupDuration;
+    ReloadSettings();
+  }
+  
+  private void ShortDetailsPopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    ((CallTreeNodeSettings)DetailsPanel.DataContext).PreviewPopupDuration = HoverPreview.HoverDuration.Milliseconds;
+    ReloadSettings();
+  }
+
+  private void LongDetailsPopupDurationButton_Click(object sender, RoutedEventArgs e) {
+    ((CallTreeNodeSettings)DetailsPanel.DataContext).PreviewPopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
     ReloadSettings();
   }
 }
