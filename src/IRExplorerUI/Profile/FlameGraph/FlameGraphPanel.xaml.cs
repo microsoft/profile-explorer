@@ -61,7 +61,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     set {
       if (value != settings_) {
         settings_ = value;
-        GraphHost.GraphViewer.SettingsUpdated(value);
+        GraphHost.SettingsUpdated(value);
         OnPropertyChanged();
       }
     }
@@ -459,6 +459,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
           Settings = newSettings;
+          //? TODO: Pick one of SettingsUpdated and assigning Settings
+          GraphHost.SettingsUpdated(newSettings);
           NodeDetailsPanel.Settings = App.Settings.CallTreeNodeSettings;
           App.Settings.FlameGraphSettings = newSettings;
 

@@ -7,13 +7,13 @@ using System.Windows.Input;
 
 namespace IRExplorerUI.OptionsPanels;
 
-public partial class CallTreeOptionsPanel : OptionsPanelBase {
+public partial class ProfilingOptionsPanel : OptionsPanelBase {
   public const double DefaultHeight = 320;
   public const double MinimumHeight = 200;
   public const double DefaultWidth = 350;
   public const double MinimumWidth = 350;
 
-  public CallTreeOptionsPanel() {
+  public ProfilingOptionsPanel() {
     InitializeComponent();
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
     PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
@@ -31,21 +31,5 @@ public partial class CallTreeOptionsPanel : OptionsPanelBase {
     DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
       RaiseSettingsChanged(null);
     });
-  }
-
-
-  private void ResetCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((CallTreeSettings)Settings).NodePopupDuration = CallTreeSettings.DefaultNodePopupDuration;
-    ReloadSettings();
-  }
-
-  private void ShortCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((CallTreeSettings)Settings).NodePopupDuration = HoverPreview.HoverDuration.Milliseconds;
-    ReloadSettings();
-  }
-
-  private void LongCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((CallTreeSettings)Settings).NodePopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
-    ReloadSettings();
   }
 }
