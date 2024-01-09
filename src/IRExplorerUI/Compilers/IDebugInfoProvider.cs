@@ -87,57 +87,11 @@ public class SymbolFileSourceOptions : SettingsBase {
     return options;
   }
 
-  public static bool ShouldUsePrivateSymbolPath() {
-    // Try to detect running as a domain-joined or AAD-joined account,
-    // which should have access to a private, internal symbol server.
-    // Based on https://stackoverflow.com/questions/926227/how-to-detect-if-machine-is-joined-to-domain
-    //? TODO: This should not be hardcoded
-
-    try {
-      string domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
-
-      if (domain != null &&
-          domain.Contains("redmond", StringComparison.OrdinalIgnoreCase) ||
-          domain.Contains("ntdev", StringComparison.OrdinalIgnoreCase)) {
-        Trace.WriteLine("Set symbol path for domain-joined machine");
-        return true;
-      }
-    }
-    catch (Exception ex) {
-    }
-
-    try {
-      string pcszTenantId = null;
-      IntPtr ptrJoinInfo = IntPtr.Zero;
-      IntPtr ptrUserInfo = IntPtr.Zero;
-      IntPtr ptrJoinCertificate = IntPtr.Zero;
-      var joinInfo = new NetAPI32.DSREG_JOIN_INFO();
-
-      NetAPI32.NetFreeAadJoinInformation(IntPtr.Zero);
-      int retValue = NetAPI32.NetGetAadJoinInformation(pcszTenantId, out ptrJoinInfo);
-
-      if (retValue == 0) {
-        var ptrJoinInfoObject = new NetAPI32.DSREG_JOIN_INFO();
-        joinInfo = (NetAPI32.DSREG_JOIN_INFO)Marshal.PtrToStructure(ptrJoinInfo, (Type)ptrJoinInfoObject.GetType());
-
-        if (joinInfo.JoinUserEmail.Contains("@microsoft.com", StringComparison.OrdinalIgnoreCase) ||
-            joinInfo.TenantDisplayName.Contains("microsoft", StringComparison.OrdinalIgnoreCase)) {
-          Trace.WriteLine("Set symbol path for AAD-joined machine");
-          return true;
-        }
-      }
-    }
-    catch (Exception ex) {
-    }
-
-    Trace.WriteLine("Set symbol path for non-domain-joined machine");
-    return false;
-  }
-
   public override void Reset() {
     InitializeReferenceMembers();
 
-    AddSymbolServer(usePrivateServer : ShouldUsePrivateSymbolPath());
+    AddSymbolServer(usePrivateServer : true);
+    AddSymbolServer(usePrivateServer: false);
   }
 
   public SymbolFileSourceOptions Clone() {
