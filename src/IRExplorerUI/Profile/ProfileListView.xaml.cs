@@ -125,7 +125,8 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
       if (item.CallTreeNode != null) {
         return PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList,
-                                            $"Function {item.CallTreeNode.FunctionName}");
+                                            $"Function {item.CallTreeNode.FunctionName}",
+                                            !settings_.ShowSourcePreviewPopup);
       }
 
       return null;

@@ -178,8 +178,10 @@
           <StackPanel Margin="20,4,0,2" Orientation="Horizontal"
                       IsEnabled="{Binding ElementName=ShowDetailsPopupCheckbox, Path=IsChecked}" >
             <TextBlock Text="Default view:" VerticalAlignment="Center"/>
-            <RadioButton Content="Assembly" Margin="8,0,0,0" VerticalAlignment="Center"></RadioButton>
-            <RadioButton Content="Source code" Margin="8,0,0,0" VerticalAlignment="Center"></RadioButton>
+            <RadioButton Content="Assembly" IsChecked="{Binding ShowSourcePreviewPopup, Converter={StaticResource InvertedBoolConverter}}"
+                         Margin="8,0,0,0" VerticalAlignment="Center"></RadioButton>
+            <RadioButton Content="Source code" IsChecked="{Binding ShowSourcePreviewPopup}"
+                         Margin="8,0,0,0" VerticalAlignment="Center"></RadioButton>
             </StackPanel>
         </StackPanel>
       </TabItem>
