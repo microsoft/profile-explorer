@@ -131,7 +131,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public static readonly DependencyProperty ShowToolbarProperty =
     DependencyProperty.Register("ShowToolbar", typeof(bool), typeof(CallTreePanel));
   private IRTextFunction function_;
-  private PopupHoverPreview stackHoverPreview_;
+  private PopupHoverPreview nodeHoverPreview_;
   private ProfileCallTree callTree_;
   private ChildFunctionEx callTreeEx_;
   private List<ChildFunctionEx> searchResultNodes_;
@@ -161,7 +161,11 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     Session = session;
   }
 
-  public CallTreeSettings Settings => settings_;
+  public CallTreeSettings Settings {
+    get => settings_;
+    set => SetField(ref settings_, value);
+  }
+  
   public event PropertyChangedEventHandler PropertyChanged;
 
   //? TODO: Replace all other commands with RelayCommand.
@@ -206,60 +210,17 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
+  public bool IsCallerCalleePanel => PanelKind == ToolPanelKind.CallerCallee;
   public bool HasCallTree => callTree_ != null;
 
-  public bool PrependModuleToFunction {
-    get => settings_.PrependModuleToFunction;
-    set {
-      if (value != settings_.PrependModuleToFunction) {
-        settings_.PrependModuleToFunction = value;
-        OnPropertyChanged();
-        callTreeEx_ = null;
+  private async Task UpdateCallTree() {
+    callTreeEx_ = null;
 
-        if (IsCallerCalleePanel) {
-          DisplayProfileCallerCalleeTree(function_);
-        }
-        else {
-          DisplayProfileCallTree();
-        }
-      }
+    if (IsCallerCalleePanel) {
+      await DisplayProfileCallerCalleeTree(function_);
     }
-  }
-
-  public bool SyncSelection {
-    get => settings_.SyncSelection;
-    set {
-      //? TODO: Use SetField everywhere
-      if (value != settings_.SyncSelection) {
-        settings_.SyncSelection = value;
-        OnPropertyChanged();
-      }
-    }
-  }
-
-  public bool SyncSourceFile {
-    get => settings_.SyncSourceFile;
-    set {
-      if (value != settings_.SyncSourceFile) {
-        settings_.SyncSourceFile = value;
-        OnPropertyChanged();
-      }
-    }
-  }
-
-  public bool IsCallerCalleePanel => PanelKind == ToolPanelKind.CallerCallee;
-
-  public bool CombineNodes {
-    get => settings_.CombineInstances;
-    set {
-      if (settings_.CombineInstances != value) {
-        settings_.CombineInstances = value;
-        OnPropertyChanged();
-
-        if (function_ != null) {
-          DisplayProfileCallerCalleeTree(function_);
-        }
-      }
+    else {
+      await DisplayProfileCallTree();
     }
   }
 
@@ -404,9 +365,21 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private void SetupEvents() {
     CallTreeList.NodeExpanded += CallTreeOnNodeExpanded;
+    SetupPreviewPopup();
+  }
+  
+  private void SetupPreviewPopup() {
+    if (nodeHoverPreview_ != null) {
+      nodeHoverPreview_.Unregister();
+      nodeHoverPreview_ = null;
+    }
+    
+    if(!settings_.ShowNodePopup) {
+      return;
+    }
 
-    stackHoverPreview_ = new PopupHoverPreview(CallTreeList,
-                                               HoverPreview.LongHoverDuration,
+    nodeHoverPreview_ = new PopupHoverPreview(CallTreeList,
+                                            TimeSpan.FromMilliseconds(settings_.NodePopupDuration),
                                                (mousePoint, previewPoint) => {
                                                  var element =
                                                    (UIElement)CallTreeList.GetObjectAtPoint<ListViewItem>(
@@ -421,7 +394,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
                                                  if (callNode != null && callNode.Function != null) {
                                                    // If popup already opened for this node reuse the instance.
-                                                   if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup
+                                                   if (nodeHoverPreview_.PreviewPopup is CallTreeNodePopup
                                                      popup) {
                                                      popup.UpdatePosition(previewPoint, CallTreeList);
                                                      popup.UpdateNode(callNode);
@@ -496,7 +469,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private List<ProfileCallTreeNode> GetCallTreeNodes(IRTextFunction function, ProfileCallTree callTree) {
-    if (CombineNodes) {
+    if (settings_.CombineInstances) {
       var combinedNode = callTree.GetCombinedCallTreeNode(function);
       return combinedNode == null ? null : new List<ProfileCallTreeNode> {combinedNode};
     }
@@ -506,7 +479,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private ProfileCallTreeNode GetChildCallTreeNode(ProfileCallTreeNode childNode, ProfileCallTreeNode parentNode,
                                                    ProfileCallTree callTree) {
-    if (CombineNodes) {
+    if (settings_.CombineInstances) {
       return callTree.GetCombinedCallTreeNode(childNode.Function, parentNode);
     }
 
@@ -923,11 +896,11 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         await Session.OpenProfileSourceFile(funcEx.CallTreeNode);
       }
 
-      if (SyncSelection) {
+      if (settings_.SyncSelection) {
         await Session.ProfileFunctionSelected(funcEx.CallTreeNode, PanelKind);
       }
     }
-    else if (SyncSelection) {
+    else if (settings_.SyncSelection) {
       await Session.ProfileFunctionDeselected();
     }
   }
@@ -984,6 +957,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
           settings_ = newSettings;
+          SetupPreviewPopup();
 
           if (IsCallerCalleePanel) {
             App.Settings.CallerCalleeSettings = newSettings;
@@ -1014,5 +988,9 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private void PanelToolbarTray_OnSettingsClicked(object sender, EventArgs e) {
     ShowOptionsPanel();
+  }
+
+  private async void ToggleButton_Click(object sender, RoutedEventArgs e) {
+    await UpdateCallTree();
   }
 }

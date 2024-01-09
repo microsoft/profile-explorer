@@ -29,10 +29,28 @@
             IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Sync file displayed in the Source File panel with selection" />
+          
+          <Separator Margin="0,4,0,4" />
+          <TextBlock FontWeight="Medium" Text="Function node" />
+          <CheckBox
+            Content="Include module name"
+            IsChecked="{Binding PrependModuleToFunction, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Show the module name in front of the function name" />
+          <CheckBox
+            Content="Include function percentage"
+            IsChecked="{Binding AppendPercentageToFunction, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Show the function instance time percentage after the name" />
+          <CheckBox
+            Content="Include function time"
+            IsChecked="{Binding AppendDurationToFunction, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Show the function instance duration after the name" />
           <CheckBox
             x:Name="ShowCallStackPopupCheckbox"
             Content="Show function details on hover"
-            IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
+            IsChecked="{Binding ShowNodePopup, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
             Margin="0,2,0,2" />
           <StackPanel Margin="20,0,0,2" Orientation="Horizontal"
@@ -75,24 +93,6 @@
               ToolTip="Reset value to default duration" />
           </StackPanel>
 
-          <Separator Margin="0,4,0,4" />
-          <TextBlock FontWeight="Medium" Text="Function node" />
-          <CheckBox
-            Content="Include module name"
-            IsChecked="{Binding PrependModuleToFunction, Mode=TwoWay}"
-            Margin="0,2,0,2"
-            ToolTip="Show the module name in front of the function name" />
-          <CheckBox
-            Content="Include function percentage"
-            IsChecked="{Binding AppendPercentageToFunction, Mode=TwoWay}"
-            Margin="0,2,0,2"
-            ToolTip="Show the function instance time percentage after the name" />
-          <CheckBox
-            Content="Include function time"
-            IsChecked="{Binding AppendDurationToFunction, Mode=TwoWay}"
-            Margin="0,2,0,2"
-            ToolTip="Show the function instance duration after the name" />
-
 
           <Separator Margin="0,4,0,4" />
           <TextBlock FontWeight="Medium" Text="Style" />
@@ -130,12 +130,14 @@
             Margin="0,2,0,2"
             ToolTip="Histogram section expanded by default" />
 
+          <Separator Margin="0,4,0,4" />
+          <TextBlock FontWeight="Medium" Text="Preview popup" />
           <CheckBox
             x:Name="ShowDetailsPopupCheckbox"
             Content="Show function preview on hover"
             IsChecked="{Binding ShowPreviewPopup, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
-            Margin="0,2,0,2" />
+            Margin="0,4,0,2" />
           <StackPanel Margin="20,4,0,0" Orientation="Horizontal"
                       IsEnabled="{Binding ElementName=ShowDetailsPopupCheckbox, Path=IsChecked}" >
           <TextBlock Text="Hover duration (ms):" VerticalAlignment="Center"/>

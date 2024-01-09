@@ -86,7 +86,7 @@
             Height="20"
             Margin="0,0,0,0"
             Padding="0,0,2,0"
-            IsChecked="{Binding Path=SyncSelection, Mode=TwoWay}"
+            IsChecked="{Binding Path=Settings.SyncSelection, Mode=TwoWay}"
             ToolTip="Sync function displayed in other profiling panels with selectionSync function displayed in other profiling panels with selection">
             <StackPanel Orientation="Horizontal">
               <Image
@@ -103,7 +103,7 @@
             Height="20"
             Margin="0,0,0,0"
             Padding="0,0,2,0"
-            IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
+            IsChecked="{Binding Path=Settings.SyncSourceFile, Mode=TwoWay}"
             ToolTip="Sync Source File panel with selection">
             <Image
               Width="16"
@@ -115,7 +115,8 @@
           <Separator />
 
           <ToggleButton
-            IsChecked="{Binding CombineNodes, Mode=TwoWay}"
+            IsChecked="{Binding Settings.CombineNodes, Mode=TwoWay}"
+            Click="ToggleButton_Click"
             ToolTip="Combine all function instances into one"
             Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
@@ -131,14 +132,15 @@
 
           <ToggleButton
             Content="m!F"
-            IsChecked="{Binding Path=PrependModuleToFunction, Mode=TwoWay}"
+            Click="ToggleButton_Click"
+            IsChecked="{Binding Path=Settings.PrependModuleToFunction, Mode=TwoWay}"
             ToolTip="Show the module name in front of the function name" />
 
           <ToggleButton
             Height="20"
             Margin="0,0,0,0"
             Padding="0,0,2,0"
-            IsChecked="{Binding Path=ShowNodePanel, Mode=TwoWay}"
+            IsChecked="{Binding Path=Settings.ShowNodePanel, Mode=TwoWay}"
             IsEnabled="False"
             ToolTip="Enable/disable function details panel">
             <StackPanel Orientation="Horizontal">

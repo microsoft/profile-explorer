@@ -38,9 +38,9 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private double initialWidth_;
   private DateTime lastWheelZoomTime_;
   private FlameGraphNode rootNode_;
-  private readonly FlameGraphSettings settings_;
+  private FlameGraphSettings settings_;
   private bool showNodePanel_;
-  private PopupHoverPreview stackHoverPreview_;
+  private PopupHoverPreview nodeHoverPreview_;
   private readonly Stack<FlameGraphState> stateStack_;
   private DoubleAnimation widthAnimation_;
   private DoubleAnimation zoomAnimation_;
@@ -448,42 +448,55 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     KeyDown += HostOnKeyDown;
     KeyUp += HostOnKeyUp;
 
-    stackHoverPreview_ = new PopupHoverPreview(GraphViewer,
-                                               TimeSpan.FromMilliseconds(settings_.NodePopupDuration),
-                                               (mousePoint, previewPoint) => {
-                                                 var pointedNode = GraphViewer.FindPointedNode(mousePoint);
-                                                 var callNode = pointedNode?.CallTreeNode;
+    SetupPreviewPopup();
+  }
 
-                                                 if (callNode != null) {
-                                                   // If popup already opened for this node reuse the instance.
-                                                   if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup
-                                                     popup) {
-                                                     popup.UpdatePosition(previewPoint, GraphViewer);
-                                                   }
-                                                   else {
-                                                     popup = new CallTreeNodePopup(
-                                                       callNode, this, previewPoint, GraphViewer, Session);
-                                                   }
+  private void SetupPreviewPopup() {
+    if (nodeHoverPreview_ != null) {
+      nodeHoverPreview_.Unregister();
+      nodeHoverPreview_ = null;
+    }
+    
+    if(!settings_.ShowNodePopup) {
+      return;
+    }
+    
+    nodeHoverPreview_ = new PopupHoverPreview(GraphViewer,
+                                              TimeSpan.FromMilliseconds(settings_.NodePopupDuration),
+                                              (mousePoint, previewPoint) => {
+                                                var pointedNode = GraphViewer.FindPointedNode(mousePoint);
+                                                var callNode = pointedNode?.CallTreeNode;
 
-                                                   popup.UpdateNode(callNode);
-                                                   return popup;
-                                                 }
+                                                if (callNode != null) {
+                                                  // If popup already opened for this node reuse the instance.
+                                                  if (nodeHoverPreview_.PreviewPopup is CallTreeNodePopup
+                                                    popup) {
+                                                    popup.UpdatePosition(previewPoint, GraphViewer);
+                                                  }
+                                                  else {
+                                                    popup = new CallTreeNodePopup(
+                                                      callNode, this, previewPoint, GraphViewer, Session);
+                                                  }
 
-                                                 return null;
-                                               },
-                                               (mousePoint, popup) => {
-                                                 if (popup is CallTreeNodePopup previewPopup) {
-                                                   // Hide if not over the same node anymore.
-                                                   var pointedNode = GraphViewer.FindPointedNode(mousePoint);
-                                                   return previewPopup.CallTreeNode.CallTreeNode !=
-                                                          pointedNode?.CallTreeNode;
-                                                 }
+                                                  popup.UpdateNode(callNode);
+                                                  return popup;
+                                                }
 
-                                                 return true;
-                                               },
-                                               popup => {
-                                                 Session.RegisterDetachedPanel(popup);
-                                               });
+                                                return null;
+                                              },
+                                              (mousePoint, popup) => {
+                                                if (popup is CallTreeNodePopup previewPopup) {
+                                                  // Hide if not over the same node anymore.
+                                                  var pointedNode = GraphViewer.FindPointedNode(mousePoint);
+                                                  return previewPopup.CallTreeNode.CallTreeNode !=
+                                                         pointedNode?.CallTreeNode;
+                                                }
+
+                                                return true;
+                                              },
+                                              popup => {
+                                                Session.RegisterDetachedPanel(popup);
+                                              });
   }
 
   private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) {
@@ -501,7 +514,9 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   private void HidePreviewPopup() {
-    stackHoverPreview_.Hide();
+    if (nodeHoverPreview_ != null) {
+      nodeHoverPreview_.Hide();
+    }
   }
 
   private async void OnMouseDown(object sender, MouseButtonEventArgs e) {
@@ -1108,5 +1123,11 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         break;
       }
     }
+  }
+
+  public void SettingsUpdated(FlameGraphSettings value) {
+    settings_ = value;
+    GraphViewer.SettingsUpdated(value);
+    SetupPreviewPopup();
   }
 }

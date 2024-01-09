@@ -11,6 +11,8 @@ namespace IRExplorerUI;
 //?      - hover time
 //? - color list item based on module name
 public class CallTreeSettings : SettingsBase {
+  public static readonly int DefaultNodePopupDuration = HoverPreview.HoverDuration.Milliseconds;
+
   public CallTreeSettings() {
     Reset();
   }
@@ -27,13 +29,18 @@ public class CallTreeSettings : SettingsBase {
   public bool SyncSourceFile { get; set; }
   [ProtoMember(6)]
   public bool SyncSelection { get; set; }
-
+  [ProtoMember(7)]
+  public bool ShowNodePopup { get; set; }
+  [ProtoMember(8)]
+  public int NodePopupDuration { get; set; }
+  
   public override void Reset() {
     CombineInstances = true;
     PrependModuleToFunction = true;
     ShowTimeAfterPercentage = true;
-    SyncSourceFile = true;
     SyncSelection = true;
+    ShowNodePopup = true;
+    NodePopupDuration = DefaultNodePopupDuration;
   }
 
   public CallTreeSettings Clone() {
@@ -48,6 +55,8 @@ public class CallTreeSettings : SettingsBase {
            ShowTimeAfterPercentage == settings.ShowTimeAfterPercentage &&
            ShowDetailsPanel == settings.ShowDetailsPanel &&
            SyncSourceFile == settings.SyncSourceFile &&
-           SyncSelection == settings.SyncSelection;
+           SyncSelection == settings.SyncSelection &&
+           ShowNodePopup == settings.ShowNodePopup &&
+           NodePopupDuration == settings.NodePopupDuration;
   }
 }
