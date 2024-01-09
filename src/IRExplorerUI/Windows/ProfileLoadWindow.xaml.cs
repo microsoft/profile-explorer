@@ -13,6 +13,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
@@ -63,6 +64,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     RecordingOptions = new ProfileRecordingSessionOptions();
 
     UpdatePerfCounterList();
+    ReloadSymbolPathsList();
     SetupSessionList();
     ContentRendered += ProfileLoadWindow_ContentRendered;
     Closing += ProfileLoadWindow_Closing;
@@ -938,13 +940,132 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     OnPropertyChange(nameof(RecordingOptions));
   }
 
-  private void DefaultSymbolsButton_OnClick(object sender, RoutedEventArgs e) {
-    SymbolOptions.ResetDefaultSymbolPath(true);
-    OnPropertyChange(nameof(SymbolOptions));
+  private void AddPrivateSymbolServer_OnClick(object sender, RoutedEventArgs e) {
+    SymbolOptions.AddSymbolServer(usePrivateServer: true);
+    ReloadSymbolPathsList();
   }
 
-  private void DefaultPublicSymbolsButton_OnClick(object sender, RoutedEventArgs e) {
-    SymbolOptions.ResetDefaultSymbolPath(false);
-    OnPropertyChange(nameof(SymbolOptions));
+  private void AddPublicSymbolServer_OnClick(object sender, RoutedEventArgs e) {
+    SymbolOptions.AddSymbolServer(usePrivateServer: false);
+    ReloadSymbolPathsList();
+  }
+
+  private void AddSymbolPathButton_Click(object sender, RoutedEventArgs e) {
+    symbolOptions_.SymbolPaths.Add("");
+
+    ReloadSymbolPathsList();
+
+    // Wait for the UI to update
+    Dispatcher.BeginInvoke((Action)(() => {
+      // Get the ListViewItem for the new item
+      var newItem = symbolOptions_.SymbolPaths.Last();
+      var listViewItem = (ListViewItem)SymbolPathsList.ItemContainerGenerator.ContainerFromItem(newItem);
+
+      // Find the TextBox within the ListViewItem
+      var textBox = FindVisualChild<TextBox>(listViewItem);
+      if (textBox != null) {
+        // Set keyboard focus to the TextBox
+        textBox.Focus();
+      }
+    }), DispatcherPriority.ContextIdle);
+  }
+
+  private void RemoveSymbolPathButton_Click(object sender, RoutedEventArgs e) {
+    foreach (var item in SymbolPathsList.SelectedItems) {
+      string symbolPath = item as string;
+      symbolOptions_.SymbolPaths.Remove(symbolPath);
+
+    }
+
+    ReloadSymbolPathsList();
+  }
+
+  private void MoveSymbolPathUpButton_Click(object sender, RoutedEventArgs e) {
+    if (SymbolPathsList.SelectedItems.Count != 1) {
+      return; // Only remove if there is exactly one item selected
+    }
+
+    if (SymbolPathsList.SelectedIndex == 0) {
+      return; // Cannot move an item up if it is already at the top of the list
+    }
+
+    var selectedIndex = SymbolPathsList.SelectedIndex;
+    var selectedItem = SymbolPathsList.SelectedItem as string;
+    symbolOptions_.SymbolPaths.RemoveAt(selectedIndex);
+    symbolOptions_.SymbolPaths.Insert(selectedIndex - 1, selectedItem);
+
+    ReloadSymbolPathsList();
+  }
+
+  private void MoveSymbolPathDownButton_Click(object sender, RoutedEventArgs e) {
+    if (SymbolPathsList.SelectedItems.Count != 1) {
+      return; // Only remove if there is exactly one item selected
+    }
+
+    if (SymbolPathsList.SelectedIndex == SymbolPathsList.Items.Count - 1) {
+      return; // Cannot move an item down if it is already at the bottom of the list
+    }
+
+    var selectedIndex = SymbolPathsList.SelectedIndex;
+    var selectedItem = SymbolPathsList.SelectedItem as string;
+    symbolOptions_.SymbolPaths.RemoveAt(selectedIndex);
+    symbolOptions_.SymbolPaths.Insert(selectedIndex + 1, selectedItem);
+
+    ReloadSymbolPathsList();
+  }
+  private void ReloadSymbolPathsList() {
+    var list = new ObservableCollectionRefresh<string>(symbolOptions_.SymbolPaths);
+    SymbolPathsList.ItemsSource = list;
+  }
+
+  private void SymbolPath_LostFocus(object sender, RoutedEventArgs e) {
+    var textBox = sender as TextBox;
+    UpdateSymbolPath(textBox);
+  }
+
+  private void SymbolPath_KeyDown(object sender, KeyEventArgs e) {
+    if (e.Key == Key.Enter) {
+      var textBox = sender as TextBox;
+      UpdateSymbolPath(textBox);
+    }
+  }
+
+  private void UpdateSymbolPath(TextBox textBox) {
+    if (textBox == null) {
+      return;
+    }
+
+    var item = textBox.DataContext;
+    var index = symbolOptions_.SymbolPaths.IndexOf(item as string);
+
+    if (index == -1) {
+      return;
+    }
+
+    if (string.IsNullOrEmpty(textBox.Text)) {
+      // Remove entry if there is no text in it
+      symbolOptions_.SymbolPaths.RemoveAt(index);
+      ReloadSymbolPathsList();
+
+      return; 
+    }
+
+    // Update list with the new text
+    symbolOptions_.SymbolPaths[index] = textBox.Text;
+    ReloadSymbolPathsList();
+  }
+
+  private static T FindVisualChild<T>(DependencyObject obj) where T : DependencyObject {
+    for (var i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++) {
+      var child = VisualTreeHelper.GetChild(obj, i);
+      if (child is T typedChild)
+        return typedChild;
+
+      var childOfChild = FindVisualChild<T>(child);
+      if (childOfChild != null)
+        return childOfChild;
+    }
+
+    return null;
   }
 }

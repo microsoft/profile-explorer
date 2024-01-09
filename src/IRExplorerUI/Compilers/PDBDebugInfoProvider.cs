@@ -100,27 +100,16 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
   public static string ConstructSymbolSearchPath(SymbolFileSourceOptions options) {
     //? TODO: Also consider Environment.GetEnvironmentVariable("_NT_SYMBOL_PATH")?
-    string defaultSearchPath = "";
 
-    if (options.HasSymbolSourcePath) {
-      defaultSearchPath = $"SRV*{options.SymbolSourcePath}";
+    string symbolPath = "";
 
-      if (options.HasSymbolCachePath) {
-        defaultSearchPath = $"SRV*{options.SymbolCachePath}*{options.SymbolSourcePath}";
-      }
-    }
-
-    string userSearchPath = "";
-
-    foreach (string path in options.SymbolSearchPaths) {
+    foreach (string path in options.SymbolPaths) {
       if (!string.IsNullOrEmpty(path)) {
-        userSearchPath += $"{path};";
+        symbolPath += $"{path};";
       }
     }
 
-    // Give priority to the user locations.
-    string symbolSearchPath = $"{userSearchPath}{defaultSearchPath}";
-    return symbolSearchPath;
+    return symbolPath;
   }
 
   public static async Task<DebugFileSearchResult>

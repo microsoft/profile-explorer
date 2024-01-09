@@ -33,8 +33,8 @@ public interface IDebugInfoProvider : IDisposable {
 
 [ProtoContract(SkipConstructor = true)]
 public class SymbolFileSourceOptions : SettingsBase {
-  private const string DefaultSymbolSourcePath = @"https://symweb";
-  private const string DefaultPublicSymbolSourcePath = @"https://msdl.microsoft.com/download/symbols";
+  private const string DefaultPrivateSymbolServer = @"https://symweb";
+  private const string DefaultPublicSymbolServer = @"https://msdl.microsoft.com/download/symbols";
   private const string DefaultSymbolCachePath = @"C:\Symbols";
 
   public SymbolFileSourceOptions() {
@@ -42,34 +42,23 @@ public class SymbolFileSourceOptions : SettingsBase {
   }
 
   [ProtoMember(1)]
-  public bool SymbolSourcePathEnabled { get; set; }
+  public List<string> SymbolPaths { get; set; }
   [ProtoMember(2)]
-  public string SymbolSourcePath { get; set; }
-  [ProtoMember(3)]
-  public bool SymbolCachePathEnabled { get; set; }
-  [ProtoMember(4)]
-  public string SymbolCachePath { get; set; }
-  [ProtoMember(5)]
-  public bool SymbolSearchPathsEnabled { get; set; }
-  [ProtoMember(6)]
-  public List<string> SymbolSearchPaths { get; set; }
-  [ProtoMember(7)]
   public bool SourceServerEnabled { get; set; }
-  [ProtoMember(8)]
+  [ProtoMember(3)]
   public bool AuthorizationTokenEnabled { get; set; }
-  [ProtoMember(9)]
+  [ProtoMember(4)]
   public string AuthorizationToken { get; set; }
-  public bool HasSymbolSourcePath => !string.IsNullOrEmpty(SymbolSourcePath);
-  public bool HasSymbolCachePath => !string.IsNullOrEmpty(SymbolCachePath);
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
 
-  public void ResetDefaultSymbolPath(bool privateSymServer) {
-    SymbolSourcePath = privateSymServer ? DefaultSymbolSourcePath : DefaultPublicSymbolSourcePath;
+  public void AddSymbolServer(bool usePrivateServer) {
+    string symbolServer = usePrivateServer ? DefaultPrivateSymbolServer : DefaultPublicSymbolServer;
+    SymbolPaths.Add($"srv*{DefaultSymbolCachePath}*{symbolServer}");
   }
 
   public bool HasSymbolPath(string path) {
     path = Utils.TryGetDirectoryName(path).ToLowerInvariant();
-    return SymbolSearchPaths.Find(item => item.ToLowerInvariant() == path) != null;
+    return SymbolPaths.Find(item => item.ToLowerInvariant() == path) != null;
   }
 
   public void InsertSymbolPath(string path) {
@@ -77,40 +66,8 @@ public class SymbolFileSourceOptions : SettingsBase {
       return;
     }
 
-    if (path.Contains(";")) {
-      InsertSymbolPaths(path.Split(";"));
-      return;
-    }
-
-    if (!path.Contains("*")) {
-      if (HasSymbolPath(path)) {
-        return;
-      }
-
-      path = Utils.TryGetDirectoryName(path);
-
-      if (!string.IsNullOrEmpty(path)) {
-        SymbolSearchPaths.Insert(0, path);
-      }
-
-      return;
-    }
-
-    string[] tokens = path.Split("*");
-
-    if (tokens[0] == "srv") {
-      string srv = tokens[1];
-
-      if (tokens.Length == 3) {
-        SymbolCachePath = srv;
-        srv = tokens[2];
-      }
-
-      SymbolSourcePath = string.IsNullOrEmpty(srv) ? DefaultSymbolSourcePath : srv;
-    }
-    else if (tokens[0] == "cache") {
-      string cache = tokens[1];
-      SymbolCachePath = string.IsNullOrEmpty(cache) ? DefaultSymbolCachePath : cache;
+    foreach (string p in path.Split(";")) {
+      SymbolPaths.Add(p);
     }
   }
 
@@ -180,10 +137,7 @@ public class SymbolFileSourceOptions : SettingsBase {
   public override void Reset() {
     InitializeReferenceMembers();
 
-    ResetDefaultSymbolPath(ShouldUsePrivateSymbolPath());
-    SymbolSourcePathEnabled = true;
-    SymbolCachePath = DefaultSymbolCachePath;
-    SymbolCachePathEnabled = true;
+    AddSymbolServer(usePrivateServer : ShouldUsePrivateSymbolPath());
   }
 
   public SymbolFileSourceOptions Clone() {
@@ -193,7 +147,7 @@ public class SymbolFileSourceOptions : SettingsBase {
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
-    SymbolSearchPaths ??= new List<string>();
+    SymbolPaths ??= new List<string>();
   }
 }
 
