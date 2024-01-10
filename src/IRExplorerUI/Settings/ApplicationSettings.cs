@@ -58,13 +58,13 @@ public class ApplicationSettings {
   [ProtoMember(16)]
   public ProfileDataProviderOptions ProfileOptions;
   [ProtoMember(17)]
-  public SymbolFileSourceOptions SymbolOptions { get; set; }
+  public SymbolFileSourceOptions SymbolOptions;
   [ProtoMember(18)]
-  public CallTreeSettings CallTreeSettings { get; set; }
+  public CallTreeSettings CallTreeSettings;
   [ProtoMember(19)]
-  public CallTreeSettings CallerCalleeSettings { get; set; }
+  public CallTreeSettings CallerCalleeSettings;
   [ProtoMember(20)]
-  public FlameGraphSettings FlameGraphSettings { get; set; }
+  public FlameGraphSettings FlameGraphSettings;
   [ProtoMember(21)]
   public WorkspaceSettings WorkspaceOptions;
   [ProtoMember(22)]
@@ -77,6 +77,8 @@ public class ApplicationSettings {
   public TimelineSettings TimelineSettings;
   [ProtoMember(26)]
   public CallTreeNodeSettings CallTreeNodeSettings;
+  [ProtoMember(27)]
+  public PreviewPopupSettings PreviewPopupSettings;
 
   public ApplicationSettings() {
     Reset();
@@ -99,6 +101,7 @@ public class ApplicationSettings {
     DocumentPopupSettings.Reset();
     TimelineSettings.Reset();
     CallTreeNodeSettings.Reset();
+    PreviewPopupSettings.Reset();
     AutoReloadDocument = true;
     ThemeIndex = 2; // Blue theme.
   }
@@ -234,6 +237,7 @@ public class ApplicationSettings {
     DocumentPopupSettings ??= new IRDocumentPopupSettings();
     TimelineSettings ??= new TimelineSettings();
     CallTreeNodeSettings ??= new CallTreeNodeSettings();
+    PreviewPopupSettings ??= new PreviewPopupSettings();
   }
 
   private void AddProfilingSession(ProfileDataReport report, List<ProfileDataReport> list) {

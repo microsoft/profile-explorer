@@ -17,7 +17,7 @@ namespace IRExplorerUI.Profile;
 
 public class ProfileListViewItem : SearchableProfileItem {
   CallTreeNodeSettings settings_;
-  
+
   private ProfileListViewItem(FunctionNameFormatter funcNameFormatter,
                               CallTreeNodeSettings settings) :
     base(funcNameFormatter) {
@@ -97,7 +97,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     get => settings_;
     set {
       settings_ = value;
-      
+
       if (settings_ != null && session_ != null) {
         SetupPreviewPopup();
       }
@@ -109,24 +109,23 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       previewPopup_.UnregisterHoverEvents();
       previewPopup_ = null;
     }
-    
+
     if(!Settings.ShowPreviewPopup) {
       return;
     }
-    
+
     previewPopup_ = new IRDocumentPopupInstance(IRDocumentPopup.DefaultWidth,
                                                 IRDocumentPopup.DefaultHeight, Session);
     previewPopup_.SetupHoverEvents(ItemList, TimeSpan.FromMilliseconds(Settings.PreviewPopupDuration), () => {
       var hoveredItem = Utils.FindPointedListViewItem(ItemList);
       if (hoveredItem == null)
         return null;
-      
+
       var item = (ProfileListViewItem)hoveredItem.DataContext;
 
       if (item.CallTreeNode != null) {
         return PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList,
-                                            $"Function {item.CallTreeNode.FunctionName}",
-                                            !settings_.ShowSourcePreviewPopup);
+                                            $"Function {item.CallTreeNode.FunctionName}");
       }
 
       return null;

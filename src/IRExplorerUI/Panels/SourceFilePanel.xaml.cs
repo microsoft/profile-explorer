@@ -173,7 +173,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
     FrameworkElement relativeControl = TextView;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<SourceFileOptionsPanel, SourceFileSettings>(
-      settings_, relativeControl, Session,
+      settings_.Clone(), relativeControl, Session,
       (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
           settings_ = newSettings;
@@ -182,7 +182,10 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
           if (commit) {
             App.SaveApplicationSettings();
           }
+          return settings_.Clone();
         }
+
+        return null;
       },
       () => optionsPanelWindow_ = null);
   }

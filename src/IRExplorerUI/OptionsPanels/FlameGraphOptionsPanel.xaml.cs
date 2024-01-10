@@ -16,6 +16,7 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   public FlameGraphOptionsPanel() {
     InitializeComponent();
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
+    PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
     PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
   }
@@ -24,8 +25,16 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     base.ReloadSettings();
     DetailsPanel.DataContext = null;
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
+    PreviewPopupOptionsPanel.DataContext = null;
+    PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
   }
-  
+
+  public override void PanelResetting() {
+    base.PanelResetting();
+    App.Settings.CallTreeNodeSettings.Reset();
+    App.Settings.PreviewPopupSettings.Reset();
+  }
+
   private void SectionOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
     NotifySettingsChanged();
   }
@@ -44,7 +53,7 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     ((FlameGraphSettings)Settings).NodePopupDuration = FlameGraphSettings.DefaultNodePopupDuration;
     ReloadSettings();
   }
-  
+
   private void ShortNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
     ((FlameGraphSettings)Settings).NodePopupDuration = HoverPreview.HoverDuration.Milliseconds;
     ReloadSettings();
@@ -54,12 +63,12 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     ((FlameGraphSettings)Settings).NodePopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
     ReloadSettings();
   }
-  
+
   private void ResetDetailsPopupDurationButton_Click(object sender, RoutedEventArgs e) {
     ((CallTreeNodeSettings)DetailsPanel.DataContext).PreviewPopupDuration = CallTreeNodeSettings.DefaultPreviewPopupDuration;
     ReloadSettings();
   }
-  
+
   private void ShortDetailsPopupDurationButton_Click(object sender, RoutedEventArgs e) {
     ((CallTreeNodeSettings)DetailsPanel.DataContext).PreviewPopupDuration = HoverPreview.HoverDuration.Milliseconds;
     ReloadSettings();

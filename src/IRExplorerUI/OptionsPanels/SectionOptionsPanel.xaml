@@ -215,7 +215,6 @@
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Show the list of modules (binaries) on the left-hand side" />
-
           <CheckBox
             Content="Sync function in other profiling panels"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
@@ -226,6 +225,12 @@
             IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Sync file displayed in the Source File panel with selection" />
+          <CheckBox
+            IsEnabled="False"
+            Content="Append module name before function"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            Margin="0,2,0,2"
+            ToolTip="Show the module name in front of the function name" />
           <CheckBox
             x:Name="ShowCallStackPopupCheckbox"
             Content="Show hottest call stack popup on hover"
@@ -272,13 +277,6 @@
               Height="20"
               ToolTip="Reset value to default duration" />
           </StackPanel>
-          <CheckBox
-            IsEnabled="False"
-            Content="Append module name before function"
-            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
-            Margin="0,2,0,2"
-            ToolTip="Show the module name in front of the function name" />
-
 
           <Separator Margin="0,4,0,4" />
           <TextBlock FontWeight="Medium" Text="Function List Columns" />
@@ -287,25 +285,25 @@
             IsEnabled="False"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
             Margin="0,4,0,2"
-            ToolTip="Sync function displayed in other profiling panels with selection" />
+            ToolTip="TODO" />
           <CheckBox
             Content="Show performance counter columns"
             IsEnabled="False"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
             Margin="0,2,0,2"
-            ToolTip="Sync function displayed in other profiling panels with selection" />
+            ToolTip="TODO" />
           <CheckBox
             Content="Include duration in total time column"
             IsEnabled="False"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
             Margin="0,2,0,2"
-            ToolTip="Sync function displayed in other profiling panels with selection" />
+            ToolTip="TODO" />
           <CheckBox
             Content="Include duration in self time column"
             IsEnabled="False"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
             Margin="0,2,0,2"
-            ToolTip="Sync function displayed in other profiling panels with selection" />
+            ToolTip="TODO" />
         </StackPanel>
       </TabItem>
     </TabControl>

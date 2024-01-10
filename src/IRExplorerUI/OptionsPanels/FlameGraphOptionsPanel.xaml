@@ -29,7 +29,7 @@
             IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Sync file displayed in the Source File panel with selection" />
-          
+
           <Separator Margin="0,4,0,4" />
           <TextBlock FontWeight="Medium" Text="Function node" />
           <CheckBox
@@ -93,7 +93,6 @@
               ToolTip="Reset value to default duration" />
           </StackPanel>
 
-
           <Separator Margin="0,4,0,4" />
           <TextBlock FontWeight="Medium" Text="Style" />
           <CheckBox
@@ -106,7 +105,7 @@
             Content="Use different color palette for kernel code"
             IsEnabled="False"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
-            Margin="0,4,0,2"
+            Margin="0,2,0,2"
             ToolTip="Sync function displayed in other profiling panels with selection" />
           <CheckBox
             Content="Use different color palette for managed (.NET) code"
@@ -120,12 +119,12 @@
       <TabItem x:Name="DetailsPanel" Header="Details Panel" Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
-            Content="Expand Instances section"
+            Content="Auto-expand Instances section"
             IsChecked="{Binding ExpandInstances, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Instances section expanded by default" />
           <CheckBox
-            Content="Expand Histogram section"
+            Content="Auto-expand Histogram section"
             IsChecked="{Binding ExpandHistogram, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Histogram section expanded by default" />
@@ -138,9 +137,13 @@
             IsChecked="{Binding ShowPreviewPopup, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
             Margin="0,4,0,2" />
-          <StackPanel Margin="20,4,0,0" Orientation="Horizontal"
+          <Border BorderThickness="0"
+                  Margin="20,0,0,0"
+                  Padding="4">
+            <StackPanel>
+          <StackPanel Orientation="Horizontal"
                       IsEnabled="{Binding ElementName=ShowDetailsPopupCheckbox, Path=IsChecked}" >
-          <TextBlock Text="Hover duration (ms):" VerticalAlignment="Center"/>
+            <TextBlock Text="Hover duration (ms):" VerticalAlignment="Center"/>
             <xctk:IntegerUpDown
               Margin="8,0,0,0"
               Maximum="5000"
@@ -177,14 +180,9 @@
               Height="20"
               ToolTip="Reset value to default duration" />
           </StackPanel>
-          <StackPanel Margin="20,4,0,2" Orientation="Horizontal"
-                      IsEnabled="{Binding ElementName=ShowDetailsPopupCheckbox, Path=IsChecked}" >
-            <TextBlock Text="Default view:" VerticalAlignment="Center"/>
-            <RadioButton Content="Assembly" IsChecked="{Binding ShowSourcePreviewPopup, Converter={StaticResource InvertedBoolConverter}}"
-                         Margin="8,0,0,0" VerticalAlignment="Center"></RadioButton>
-            <RadioButton Content="Source code" IsChecked="{Binding ShowSourcePreviewPopup}"
-                         Margin="8,0,0,0" VerticalAlignment="Center"></RadioButton>
-            </StackPanel>
+          <local:PreviewPopupOptionsPanel x:Name="PreviewPopupOptionsPanel"></local:PreviewPopupOptionsPanel>
+          </StackPanel>
+          </Border>
         </StackPanel>
       </TabItem>
     </TabControl>

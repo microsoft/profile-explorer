@@ -455,7 +455,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     FrameworkElement relativeControl = settings_.ShowDetailsPanel ? NodeDetailsPanel : GraphHost;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<FlameGraphOptionsPanel, FlameGraphSettings>(
-      settings_, relativeControl, Session,
+      settings_.Clone(), relativeControl, Session,
       (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
           Settings = newSettings;
@@ -467,7 +467,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
           if (commit) {
             App.SaveApplicationSettings();
           }
+          return settings_.Clone();
         }
+
+        return null;
       },
       () => optionsPanelWindow_ = null);
   }

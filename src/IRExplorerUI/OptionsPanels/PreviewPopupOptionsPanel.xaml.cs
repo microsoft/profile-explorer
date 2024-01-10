@@ -7,13 +7,13 @@ using System.Windows.Input;
 
 namespace IRExplorerUI.OptionsPanels;
 
-public partial class TimelineOptionsPanel : OptionsPanelBase {
+public partial class PreviewPopupOptionsPanel : OptionsPanelBase {
   public const double DefaultHeight = 320;
   public const double MinimumHeight = 200;
   public const double DefaultWidth = 350;
   public const double MinimumWidth = 350;
 
-  public TimelineOptionsPanel() {
+  public PreviewPopupOptionsPanel() {
     InitializeComponent();
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
     PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
@@ -31,20 +31,5 @@ public partial class TimelineOptionsPanel : OptionsPanelBase {
     DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
       RaiseSettingsChanged(null);
     });
-  }
-
-  private void ResetNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((TimelineSettings)Settings).CallStackPopupDuration = TimelineSettings.DefaultCallStackPopupDuration;
-    ReloadSettings();
-  }
-
-  private void ShortNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((TimelineSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDuration.Milliseconds;
-    ReloadSettings();
-  }
-
-  private void LongNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((TimelineSettings)Settings).CallStackPopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
-    ReloadSettings();
   }
 }

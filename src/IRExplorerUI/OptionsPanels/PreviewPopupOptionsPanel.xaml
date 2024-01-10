@@ -1,0 +1,48 @@
+﻿<local:OptionsPanelBase
+  d:DesignHeight="450"
+  d:DesignWidth="350"
+  mc:Ignorable="d"
+  x:Class="IRExplorerUI.OptionsPanels.PreviewPopupOptionsPanel"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="clr-namespace:IRExplorerUI.OptionsPanels"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
+  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <StackPanel Margin="4,4,4,4">
+      <StackPanel Margin="0,4,0,2" Orientation="Horizontal"
+                  IsEnabled="{Binding ElementName=ShowDetailsPopupCheckbox, Path=IsChecked}" >
+        <TextBlock Text="Default view:" VerticalAlignment="Center"/>
+        <RadioButton Content="Assembly" IsChecked="{Binding ShowSourcePreviewPopup, Converter={StaticResource InvertedBoolConverter}}"
+                     Margin="8,0,0,0" VerticalAlignment="Center"></RadioButton>
+        <RadioButton Content="Source code" IsChecked="{Binding ShowSourcePreviewPopup}"
+                     Margin="8,0,0,0" VerticalAlignment="Center"></RadioButton>
+      </StackPanel>
+      <CheckBox
+        IsEnabled="False"
+        Content="Jump to hottest profiled part"
+        IsChecked="{Binding JumpToHottestElement, Mode=TwoWay}"
+        Margin="0,4,0,2"
+        ToolTip="Jump to the hottest profiled instruction/source line on load" />
+      <CheckBox
+        IsEnabled="False"
+        Content="Use compact profiling time columns"
+        IsChecked="{Binding UseCompactProfilingColumns, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="TODO" />
+      <CheckBox
+        IsEnabled="False"
+        Content="Show performance counter columns"
+        IsChecked="{Binding ShowPerformanceCounterColumns, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="TODO" />
+      <CheckBox
+        IsEnabled="False"
+        Content="Use smaller font size"
+        IsChecked="{Binding UseSmallerFontSize, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="TODO" />
+    </StackPanel>
+  </Grid>
+</local:OptionsPanelBase>

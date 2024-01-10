@@ -18,7 +18,17 @@ public class TimelineSettings : SettingsBase {
   //?    - max depth
   //?    - hover time
   //?    - same settings in SectionPanel
+  public static readonly int DefaultCallStackPopupDuration = HoverPreview.ExtraLongHoverDuration.Milliseconds;
+
+  [ProtoMember(1)] public bool SyncSelection { get; set; }
+  [ProtoMember(2)] public bool ShowCallStackPopup { get; set; }
+  [ProtoMember(3)] public int CallStackPopupDuration { get; set; }
+  [ProtoMember(4)] public bool GroupThreads { get; set; }
+
   public override void Reset() {
+    SyncSelection = true;
+    ShowCallStackPopup = true;
+    CallStackPopupDuration = DefaultCallStackPopupDuration;
   }
 
   public TimelineSettings Clone() {
@@ -27,6 +37,10 @@ public class TimelineSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is TimelineSettings settings;
+    return obj is TimelineSettings settings &&
+           SyncSelection == settings.SyncSelection &&
+           ShowCallStackPopup == settings.ShowCallStackPopup &&
+           CallStackPopupDuration == settings.CallStackPopupDuration &&
+           GroupThreads == settings.GroupThreads;
   }
 }

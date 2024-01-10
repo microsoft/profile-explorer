@@ -93,7 +93,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     parsedSection_ = parsedSection;
     ShowModeButtons = true;
     ShowAssembly = showAssembly;
-    
+
     if(!showAssembly) {
       await SwitchAssemblySourceMode();
     }
@@ -111,7 +111,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
   public static async Task<IRDocumentPopup> CreateNew(ParsedIRTextSection parsedSection,
                                                       Point position, double width, double height,
-                                                      UIElement owner, ISession session, 
+                                                      UIElement owner, ISession session,
                                                       string titlePrefix = "", bool showAssembly = false) {
     var popup = CreatePopup(parsedSection.Section, null, position, width, height,
                             owner, session, titlePrefix);
@@ -308,7 +308,7 @@ public class IRDocumentPopupInstance {
   }
 
   private async Task ShowPreviewPopupForDocument(PreviewPopupArgs args) {
-    await ShowPreviewPopupForDocument(args.Document, args.Element, args.RelativeElement, 
+    await ShowPreviewPopupForDocument(args.Document, args.Element, args.RelativeElement,
                                       width_, height_, args.Title);
   }
 
@@ -467,8 +467,7 @@ public class PreviewPopupArgs {
   }
 
   public static PreviewPopupArgs ForFunction(IRTextFunction function,
-                                             UIElement relativeElement, string title = "",
-                                             bool showAssembly = true) {
+                                             UIElement relativeElement, string title = "") {
     if (function == null || function.Sections.Count == 0) {
       return null;
     }
@@ -477,18 +476,17 @@ public class PreviewPopupArgs {
       Section = function.Sections[0],
       RelativeElement = relativeElement,
       Title = title,
-      ShowAssembly = showAssembly
+      ShowAssembly = App.Settings.PreviewPopupSettings.ShowSourcePreviewPopup
     };
   }
 
   public static PreviewPopupArgs ForLoadedSection(ParsedIRTextSection section,
-                                                   UIElement relativeElement, string title = "",
-                                                   bool showAssembly = true) {
+                                                   UIElement relativeElement, string title = "") {
     return new PreviewPopupArgs {
       LoadedSection = section,
       RelativeElement = relativeElement,
       Title = title,
-      ShowAssembly = showAssembly
+      ShowAssembly = App.Settings.PreviewPopupSettings.ShowSourcePreviewPopup
     };
   }
 
