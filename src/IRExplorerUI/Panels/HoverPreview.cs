@@ -21,6 +21,7 @@ public abstract class HoverPreview {
   private DelayedAction removeHoveredAction_;
 
   public HoverPreview(UIElement control, TimeSpan hoverDuration) {
+    hoverDuration = TimeSpan.FromTicks(Math.Max(hoverDuration.Ticks, HoverDuration.Ticks));
     control_ = control;
     hover_ = new MouseHoverLogic(control, hoverDuration);
     hover_.MouseHover += Hover_MouseHover;

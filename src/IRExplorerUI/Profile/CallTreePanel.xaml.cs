@@ -165,7 +165,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     get => settings_;
     set => SetField(ref settings_, value);
   }
-  
+
   public event PropertyChangedEventHandler PropertyChanged;
 
   //? TODO: Replace all other commands with RelayCommand.
@@ -367,13 +367,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     CallTreeList.NodeExpanded += CallTreeOnNodeExpanded;
     SetupPreviewPopup();
   }
-  
+
   private void SetupPreviewPopup() {
     if (nodeHoverPreview_ != null) {
       nodeHoverPreview_.Unregister();
       nodeHoverPreview_ = null;
     }
-    
+
     if(!settings_.ShowNodePopup) {
       return;
     }
@@ -953,7 +953,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     FrameworkElement relativeControl = CallTreeList;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<CallTreeOptionsPanel, CallTreeSettings>(
-      settings_, relativeControl, Session,
+      settings_.Clone(), relativeControl, Session,
       (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
           settings_ = newSettings;
@@ -969,7 +969,10 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
           if (commit) {
             App.SaveApplicationSettings();
           }
+          return settings_.Clone();
         }
+
+        return null;
       },
       () => optionsPanelWindow_ = null);
   }

@@ -35,7 +35,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private const double ScrollWheelZoomAnimationDuration = TimePerFrame * 8;
   private const int MaxPreviewNameLength = 80;
   private static readonly Typeface DefaultTextFont = new Typeface("Segoe UI");
-  private FlameGraphSettings settings_;
+  private TimelineSettings settings_;
   private bool panelVisible_;
   private ProfileCallTree callTree_;
   private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
@@ -56,7 +56,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   public TimelinePanel() {
     InitializeComponent();
-    settings_ = App.Settings.FlameGraphSettings;
+    settings_ = App.Settings.TimelineSettings;
     threadActivityViews_ = new List<ActivityTimelineView>();
     threadActivityViewsMap_ = new Dictionary<int, ActivityTimelineView>();
     threadHoverPreviewMap_ = new Dictionary<int, PopupHoverPreview>();
@@ -84,50 +84,8 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
+  public TimelineSettings Settings => settings_;
   public bool HasCallTree => callTree_ != null;
-
-  public bool PrependModuleToFunction {
-    get => settings_.PrependModuleToFunction;
-    set {
-      if (value != settings_.PrependModuleToFunction) {
-        settings_.PrependModuleToFunction = value;
-        //? GraphViewer.SettingsUpdated(settings_);
-        OnPropertyChanged();
-      }
-    }
-  }
-
-  public bool SyncSelection {
-    get => settings_.SyncSelection;
-    set {
-      //? TODO: Use SetField everywhere
-      if (value != settings_.SyncSelection) {
-        settings_.SyncSelection = value;
-        OnPropertyChanged();
-      }
-    }
-  }
-
-  public bool SyncSourceFile {
-    get => settings_.SyncSourceFile;
-    set {
-      if (value != settings_.SyncSourceFile) {
-        settings_.SyncSourceFile = value;
-        OnPropertyChanged();
-      }
-    }
-  }
-
-  public bool UseCompactMode {
-    get => settings_.UseCompactMode;
-    set {
-      if (value != settings_.UseCompactMode) {
-        settings_.UseCompactMode = value;
-        //? GraphViewer.SettingsUpdated(settings_);
-        OnPropertyChanged();
-      }
-    }
-  }
 
   public bool ShowSearchSection {
     get => showSearchSection_;
@@ -358,6 +316,16 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
   }
 
+  private void UpdateHoverPreviewPopups() {
+    Trace.WriteLine($"Update hover {settings_.ShowCallStackPopup}");
+
+    SetupActivityHoverPreview(ActivityView);
+
+    foreach (var threadView in threadActivityViews_) {
+      SetupActivityHoverPreview(threadView.ActivityHost);
+    }
+  }
+
   private async void ThreadView_ThreadActivityAction(object sender, ThreadActivityAction action) {
     var view = sender as ActivityTimelineView;
     Trace.WriteLine($"Thread action {action} for thread {view.ThreadId}");
@@ -439,8 +407,17 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void SetupActivityHoverPreview(ActivityView view) {
+    if (threadHoverPreviewMap_.TryGetValue(view.ThreadId, out var hover)) {
+      hover.Unregister();
+      threadHoverPreviewMap_.Remove(view.ThreadId);
+    }
+
+    if (!settings_.ShowCallStackPopup) {
+      return;
+    }
+
     var preview = new PopupHoverPreview(
-      view, HoverPreview.ExtraLongHoverDuration,
+      view, TimeSpan.FromMilliseconds(settings_.CallStackPopupDuration),
       (mousePoint, previewPoint) => {
         var timePoint = view.CurrentTimePoint;
 
@@ -747,7 +724,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
 
-    if (SyncSelection) {
+    if (settings_.SyncSelection) {
       await Session.ProfileSampleRangeDeselected();
     }
   }
@@ -775,13 +752,13 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
 
-    if (SyncSelection) {
+    if (settings_.SyncSelection) {
       await Session.ProfileSampleRangeSelected(range);
     }
   }
 
   private async void ActivityView_SelectedTimePoint(object sender, SampleTimePointInfo point) {
-    if (SyncSelection) {
+    if (settings_.SyncSelection) {
       var range = new SampleTimeRangeInfo(point.Time, point.Time, point.SampleIndex, point.SampleIndex, point.ThreadId);
       await Session.ProfileSampleRangeSelected(range);
     }
@@ -1059,16 +1036,21 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     FrameworkElement relativeControl = ShowNodePanel ? NodeDetailsPanel : TimelineHost;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<TimelineOptionsPanel, TimelineSettings>(
-      settings_, relativeControl, Session,
+      settings_.Clone(), relativeControl, Session,
       (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
-         // settings_ = newSettings;
-          //App.Settings.TimelineSettings = newSettings;
+          settings_ = newSettings;
+          App.Settings.TimelineSettings = newSettings;
+          UpdateHoverPreviewPopups();
 
           if (commit) {
             App.SaveApplicationSettings();
           }
+
+          return settings_.Clone();
         }
+
+        return null;
       },
       () => optionsPanelWindow_ = null);
   }

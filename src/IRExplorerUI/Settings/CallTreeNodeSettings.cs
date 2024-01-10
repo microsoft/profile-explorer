@@ -12,7 +12,7 @@ public class CallTreeNodeSettings : SettingsBase {
   public CallTreeNodeSettings() {
     Reset();
   }
-  
+
   [ProtoMember(1)]
   public bool ShowPreviewPopup { get; set; }
   [ProtoMember(2)]
@@ -23,9 +23,7 @@ public class CallTreeNodeSettings : SettingsBase {
   public bool ExpandHistogram { get; set; }
   [ProtoMember(5)]
   public bool PrependModuleToFunction { get; set; }
-  [ProtoMember(6)]
-  public bool ShowSourcePreviewPopup { get; set; }
-  
+
   public override void Reset() {
     ShowPreviewPopup = true;
     ExpandInstances = true;
@@ -44,7 +42,6 @@ public class CallTreeNodeSettings : SettingsBase {
            PreviewPopupDuration == settings.PreviewPopupDuration &&
            ExpandInstances == settings.ExpandInstances &&
            ExpandHistogram == settings.ExpandHistogram &&
-           PrependModuleToFunction == settings.PrependModuleToFunction &&
-           ShowSourcePreviewPopup == settings.ShowSourcePreviewPopup;
+           PrependModuleToFunction == settings.PrependModuleToFunction;
   }
 }

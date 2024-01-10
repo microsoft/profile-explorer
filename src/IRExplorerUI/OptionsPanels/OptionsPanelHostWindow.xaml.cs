@@ -37,7 +37,7 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
   }
 
   public static OptionsPanelHostWindow Create<T, S>(SettingsBase settings, FrameworkElement relativeControl, ISession session,
-                                                    Action<S, bool> newSettingsHandler,
+                                                    Func<S, bool, S> newSettingsHandler,
                                                     Action panelClosedHandler)
     where T : OptionsPanelBase, new()
     where S: SettingsBase, new() {
@@ -55,7 +55,11 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
     panelHost.PanelReset += (sender, args) => {
       var newSettings =  new S();
       panelHost.Settings = newSettings;
-      newSettingsHandler(newSettings, true);
+      var result = newSettingsHandler(newSettings, true);
+
+      if (result != null) {
+        panel.Settings = result;
+      }
     };
     panelHost.PanelClosed += (sender, args) => {
       panelHost.IsOpen = false;

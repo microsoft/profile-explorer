@@ -715,7 +715,7 @@
                 <Expander.Header>
                   <TextBlock FontWeight="Medium" Text="Symbol options" />
                 </Expander.Header>
-                
+
                 <Grid Margin="0,4,0,0">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -725,7 +725,7 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="80" />
                   </Grid.ColumnDefinitions>
-                  
+
                   <ListView
                     x:Name="SymbolPathsList"
                     Grid.Row="0"
@@ -754,7 +754,7 @@
                       </Style>
                     </ListView.ItemContainerStyle>
                   </ListView>
-                  
+
                   <StackPanel
                     Grid.Row="0"
                     Grid.Column="1"
@@ -769,7 +769,8 @@
                         <Image
                           Width="16"
                           Height="16"
-                          Source="{StaticResource PlusIcon}" />
+                          Source="{StaticResource PlusIcon}"
+                          Style="{StaticResource DisabledImageStyle}"/>
                         <TextBlock Margin="4,0,0,0" Text="Add" />
                       </StackPanel>
                     </Button>
@@ -784,7 +785,8 @@
                         <Image
                           Width="16"
                           Height="16"
-                          Source="{StaticResource MinusIcon}" />
+                          Source="{StaticResource MinusIcon}"
+                          Style="{StaticResource DisabledImageStyle}"/>
                         <TextBlock Margin="4,0,0,0" Text="Remove" />
                       </StackPanel>
                     </Button>
@@ -799,7 +801,8 @@
                         <Image
                           Width="16"
                           Height="16"
-                          Source="{StaticResource UpArrowIcon}" />
+                          Source="{StaticResource UpArrowIcon}"
+                          Style="{StaticResource DisabledImageStyle}"/>
                         <TextBlock Margin="4,0,0,0" Text="Up" />
                       </StackPanel>
                     </Button>
@@ -814,7 +817,8 @@
                         <Image
                           Width="16"
                           Height="16"
-                          Source="{StaticResource DownArrowIcon}" />
+                          Source="{StaticResource DownArrowIcon}"
+                          Style="{StaticResource DisabledImageStyle}"/>
                         <TextBlock Margin="4,0,0,0" Text="Down" />
                       </StackPanel>
                     </Button>
@@ -828,7 +832,7 @@
                     VerticalAlignment="Top"
                     Orientation="Horizontal"
                     ToolTip="Restore the predefined workspaces">
-                    
+
                     <Button
                       Height="24"
                       Padding="4,2,4,2"
@@ -839,7 +843,8 @@
                         <Image
                           Width="16"
                           Height="16"
-                          Source="{StaticResource PlusIcon}" />
+                          Source="{StaticResource PlusIcon}"
+                          Style="{StaticResource DisabledImageStyle}"/>
                         <TextBlock Margin="4,0,0,0" Text="Public Server" />
                       </StackPanel>
                     </Button>
@@ -854,14 +859,15 @@
                         <Image
                           Width="16"
                           Height="16"
-                          Source="{StaticResource PlusIcon}" />
+                          Source="{StaticResource PlusIcon}"
+                          Style="{StaticResource DisabledImageStyle}"/>
                         <TextBlock Margin="4,0,0,0" Text="Private Server" />
                       </StackPanel>
                     </Button>
                   </StackPanel>
 
                 </Grid>
-                
+
               </Expander>
 
               <Expander
