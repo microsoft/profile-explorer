@@ -952,7 +952,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
   private void AddSymbolPathButton_Click(object sender, RoutedEventArgs e) {
     symbolOptions_.SymbolPaths.Add("");
-
     ReloadSymbolPathsList();
 
     // Wait for the UI to update
@@ -993,7 +992,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     var selectedItem = SymbolPathsList.SelectedItem as string;
     symbolOptions_.SymbolPaths.RemoveAt(selectedIndex);
     symbolOptions_.SymbolPaths.Insert(selectedIndex - 1, selectedItem);
-
     ReloadSymbolPathsList();
   }
 
@@ -1010,7 +1008,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     var selectedItem = SymbolPathsList.SelectedItem as string;
     symbolOptions_.SymbolPaths.RemoveAt(selectedIndex);
     symbolOptions_.SymbolPaths.Insert(selectedIndex + 1, selectedItem);
-
     ReloadSymbolPathsList();
   }
   private void ReloadSymbolPathsList() {
@@ -1067,5 +1064,23 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     return null;
+  }
+
+  private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+    if (sender is TextBox textBox && !textBox.IsKeyboardFocusWithin) {
+      if (e.OriginalSource.GetType().Name == "TextBoxView") {
+        e.Handled = true;
+        textBox.Focus();
+        textBox.SelectAll();
+        
+        // Try to move selection to the item in the list view.
+        var listViewItem = (ListViewItem)SymbolPathsList.ItemContainerGenerator.ContainerFromItem(textBox.Text);
+
+        if (listViewItem != null) {
+          SymbolPathsList.SelectedItem = null;
+          listViewItem.IsSelected = true;
+        }
+      }
+    }
   }
 }
