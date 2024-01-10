@@ -53,7 +53,11 @@ public class SymbolFileSourceOptions : SettingsBase {
 
   public void AddSymbolServer(bool usePrivateServer) {
     string symbolServer = usePrivateServer ? DefaultPrivateSymbolServer : DefaultPublicSymbolServer;
-    SymbolPaths.Add($"srv*{DefaultSymbolCachePath}*{symbolServer}");
+    var path = $"srv*{DefaultSymbolCachePath}*{symbolServer}";
+
+    if (!SymbolPaths.Contains(path)) {
+      SymbolPaths.Add(path);
+    }
   }
 
   public bool HasSymbolPath(string path) {
@@ -67,7 +71,11 @@ public class SymbolFileSourceOptions : SettingsBase {
     }
 
     foreach (string p in path.Split(";")) {
-      SymbolPaths.Add(p);
+      var dir = Utils.TryGetDirectoryName(p);
+      
+      if(!string.IsNullOrEmpty(dir) && !HasSymbolPath(dir)) {
+        SymbolPaths.Add(dir);
+      }
     }
   }
 

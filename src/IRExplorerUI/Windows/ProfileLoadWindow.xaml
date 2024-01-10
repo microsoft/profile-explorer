@@ -716,7 +716,7 @@
                   <TextBlock FontWeight="Medium" Text="Symbol options" />
                 </Expander.Header>
                 
-                <Grid Margin="4">
+                <Grid Margin="0,4,0,0">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="*" />
@@ -730,7 +730,7 @@
                     x:Name="SymbolPathsList"
                     Grid.Row="0"
                     Grid.Column="0"
-                    Margin="4,4,4,8"
+                    Margin="0,4,4,4"
                     IsTextSearchEnabled="True"
                     SelectionMode="Extended"
                     TextSearch.TextPath="Name">
@@ -739,7 +739,8 @@
                         <GridViewColumn Width="Auto" Header="Symbol Paths">
                           <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                              <TextBox Text="{Binding Path=.}" LostFocus="SymbolPath_LostFocus" KeyDown="SymbolPath_KeyDown"/>
+                              <TextBox Text="{Binding Path=.}" LostFocus="SymbolPath_LostFocus" KeyDown="SymbolPath_KeyDown"
+                                       PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"/>
                             </DataTemplate>
                           </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -823,7 +824,7 @@
                     Grid.Row="1"
                     Grid.Column="0"
                     Grid.ColumnSpan="2"
-                    Margin="4,0,4,4"
+                    Margin="0,0,4,4"
                     VerticalAlignment="Top"
                     Orientation="Horizontal"
                     ToolTip="Restore the predefined workspaces">
@@ -839,7 +840,7 @@
                           Width="16"
                           Height="16"
                           Source="{StaticResource PlusIcon}" />
-                        <TextBlock Margin="4,0,0,0" Text="Add Public Server" />
+                        <TextBlock Margin="4,0,0,0" Text="Public Server" />
                       </StackPanel>
                     </Button>
                     <Button
@@ -854,7 +855,7 @@
                           Width="16"
                           Height="16"
                           Source="{StaticResource PlusIcon}" />
-                        <TextBlock Margin="4,0,0,0" Text="Add Private Server" />
+                        <TextBlock Margin="4,0,0,0" Text="Private Server" />
                       </StackPanel>
                     </Button>
                   </StackPanel>

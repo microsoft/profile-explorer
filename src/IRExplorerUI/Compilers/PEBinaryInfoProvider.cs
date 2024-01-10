@@ -142,6 +142,8 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
 
         string userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);
 
+        //? TODO: Making a new instance clears the "dead servers",
+        //? have a way to share the list between multiple instances.
         using var symbolReader = new SymbolReader(logWriter, userSearchPath);
         symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 

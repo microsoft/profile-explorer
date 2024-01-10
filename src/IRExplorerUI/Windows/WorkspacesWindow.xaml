@@ -121,7 +121,7 @@
         </StackPanel>
       </Button>
       <Button
-
+        IsEnabled="False"
         Height="24"
         Margin="0,2,0,0"
         Padding="2"
@@ -136,7 +136,7 @@
         </StackPanel>
       </Button>
       <Button
-
+        IsEnabled="False"
         Height="24"
         Margin="0,2,0,0"
         Padding="2"
