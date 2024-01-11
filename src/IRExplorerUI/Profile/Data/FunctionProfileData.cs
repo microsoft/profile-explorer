@@ -42,8 +42,9 @@ public class FunctionProfileData {
     int multiplier = offsetData.InitialMultiplier;
 
     do {
-      if (metadataTag.OffsetToElementMap.TryGetValue(offset - multiplier * offsetData.OffsetAdjustIncrement,
-                                                     out element)) {
+      long candidateOffset = Math.Max(0, offset - multiplier * offsetData.OffsetAdjustIncrement);
+
+      if (metadataTag.OffsetToElementMap.TryGetValue(candidateOffset, out element)) {
         return true;
       }
 

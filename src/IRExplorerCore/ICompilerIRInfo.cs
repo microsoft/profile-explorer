@@ -38,7 +38,7 @@ public class InstructionOffsetData {
     return new InstructionOffsetData {
       OffsetAdjustIncrement = size,
       MaxOffsetAdjust = size,
-      InitialMultiplier = 0
+      InitialMultiplier = 1
     };
   }
 
