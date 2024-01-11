@@ -30,7 +30,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private bool disableCaretEvent_;
   private ReadOnlyMemory<char> sourceText_;
   private bool hasProfileInfo_;
-  private bool useCompactMode_;
   private Brush selectedLineBrush_;
   private DocumentSettings settings_;
 
@@ -38,7 +37,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     InitializeComponent();
     UpdateDocumentStyle();
     DataContext = this;
-    ReloadSettings();
+    InitializeDocument();
     SetupEvents();
   }
 
@@ -95,12 +94,13 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     set => SetField(ref hasProfileInfo_, value);
   }
 
-  public bool UseCompactProfilingColumns {
-    get => useCompactMode_;
-    set => SetField(ref useCompactMode_, value);
-  }
+  public bool UseCompactProfilingColumns { get; set; }
+  public bool ShowPerformanceCounterColumns { get; set; }
 
-  public bool UseSmallerFontSize { get; set; }
+  public bool UseSmallerFontSize {
+    get => ProfileColumns.UseSmallerFontSize;
+    set => ProfileColumns.UseSmallerFontSize = value;
+  }
 
   public bool ColumnsVisible {
     get => columnsVisible_;
@@ -191,16 +191,14 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.SuspendUpdate();
     await profileMarker.MarkSourceLines(TextView, processingResult);
 
-    //? TODO: UI option?
-    if (true) {
-      // Annotate call sites next to source lines by parsing the actual section
-      // and mapping back the call sites to the dummy elements representing the source lines.
-      var parsedSection = await Task.Run(() => Session.LoadAndParseSection(section));
+    //? TODO: UI option maybe?
+    // Annotate call sites next to source lines by parsing the actual section
+    // and mapping back the call sites to the dummy elements representing the source lines.
+    var parsedSection = await Task.Run(() => Session.LoadAndParseSection(section));
 
-      if (parsedSection != null) {
-        profileMarker.MarkCallSites(TextView, parsedSection.Function,
-                                    section.ParentFunction, processingResult);
-      }
+    if (parsedSection != null) {
+      profileMarker.MarkCallSites(TextView, parsedSection.Function,
+                                  section.ParentFunction, processingResult);
     }
 
     TextView.ResumeUpdate();
@@ -226,6 +224,18 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         }
       }
 
+      if (!ShowPerformanceCounterColumns) {
+        // Hide perf counter columns.
+        foreach (var column in sourceColumnData_.Columns) {
+          if (!column.Equals(ProfileDocumentMarker.TIME_COLUMN) &&
+              !column.Equals(ProfileDocumentMarker.TIME_PERCENTAGE_COLUMN)) {
+            column.IsVisible = false;
+          }
+        }
+      }
+
+      ProfileColumns.UseSmallerFontSize = UseSmallerFontSize;
+      ProfileColumns.Settings = settings_;
       await ProfileColumns.Display(sourceColumnData_, TextView);
       profileElements_ = TextView.ProfileProcessingResult.SampledElements;
       UpdateHighlighting();
@@ -506,15 +516,20 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
 
-  public void ReloadSettings() {
+  public async Task ReloadSettings() {
+    InitializeDocument();
+    await ShowProfilingColumns();
+  }
+
+  private void InitializeDocument() {
     settings_ = App.Settings.DocumentSettings;
-    FontFamily = new FontFamily(settings_.FontName);
+    TextView.FontFamily = new FontFamily(settings_.FontName);
 
     if (UseSmallerFontSize) {
-      FontSize = settings_.FontSize;
+      TextView.FontSize = settings_.FontSize - 1;
     }
     else {
-      FontSize = settings_.FontSize - 1;
+      TextView.FontSize = settings_.FontSize;
     }
   }
 }

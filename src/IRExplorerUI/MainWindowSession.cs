@@ -242,7 +242,7 @@ public partial class MainWindow : Window, ISession {
     }
 
     foreach (var docHostInfo in sessionState_.DocumentHosts) {
-      await docHostInfo.DocumentHost.ReloadSettings(true);
+      await docHostInfo.DocumentHost.ReloadSettings();
     }
 
     await ForEachPanelAsync(async (panel) => await panel.OnReloadSettings());

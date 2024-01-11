@@ -419,15 +419,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     await HandleNewRemarkSettings(newSettings, false);
   }
 
-  public async Task ReloadSettings(bool force = false) {
-    await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, force);
-    ProfileColumns.UpdateColumnsList();
-
-    if (force) {
-      TextView.Initialize(settings_, session_);
-      SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
-      ProfileColumns.UpdateColumnsList();
-    }
+  public async Task ReloadSettings() {
+    await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, true);
+    TextView.Initialize(settings_, session_);
+    SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
+    await ShowProfilingColumns();
   }
 
   public async void UnloadSection(IRTextSection section, bool switchingActiveDocument) {
@@ -507,8 +503,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   public async Task LoadSection(ParsedIRTextSection parsedSection) {
     duringSectionSwitching_ = true;
-    await ReloadSettings();
-
     object data = Session.LoadDocumentState(parsedSection.Section);
     double horizontalOffset = 0;
     double verticalOffset = 0;
@@ -985,10 +979,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     if (force || newSettings.HasChanges(Settings)) {
       App.Settings.DocumentSettings = newSettings;
       Settings = newSettings;
-      await ReloadSettings(force);
+      await ReloadSettings();
     }
 
     if (commit) {
+      // Apply settings to other open documents in the session.
       await Session.ReloadDocumentSettings(newSettings, TextView);
       App.SaveApplicationSettings();
     }
@@ -1090,6 +1085,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     //? TODO: Replace with code from DocumentColumns
     // Show optional columns with timing, counters, etc.
     // First remove any previous columns.
+    return await ShowProfilingColumns();
+  }
+
+  private async Task<bool> ShowProfilingColumns() {
     var columnData = TextView.ProfileColumnData;
     ColumnsVisible = columnData.HasData;
 
@@ -1098,6 +1097,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       return false;
     }
 
+    ProfileColumns.Settings = settings_;
     await ProfileColumns.Display(columnData, TextView);
     return true;
   }

@@ -63,6 +63,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     set => settings_ = value;
   }
 
+  public bool UseSmallerFontSize { get; set; }
+
   public void SelectRow(int index) {
     if (index >= 0 && ColumnsList.Items.Count > index) {
       ColumnsList.SelectedIndex = index;
@@ -91,7 +93,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
       var oddBackColor = settings_.AlternateBackgroundColor.AsBrush();
       var blockSeparatorColor = settings_.ShowBlockSeparatorLine ? settings_.BlockSeparatorColor.AsBrush() : null;
       var font = new FontFamily(settings_.FontName);
-      double fontSize = settings_.FontSize;
+      double fontSize = UseSmallerFontSize ? settings_.FontSize - 1 : settings_.FontSize;
 
       ElementColumnValue MakeDummyCell() {
         var columnValue = ElementColumnValue.Empty;

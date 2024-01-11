@@ -97,7 +97,6 @@
         VerticalAlignment="Stretch"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         DockPanel.Dock="Bottom"
-        UseCompactMode="True"
         ScrollViewer.HorizontalScrollBarVisibility="Hidden"
         ScrollViewer.VerticalScrollBarVisibility="Hidden" />
 

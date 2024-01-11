@@ -349,8 +349,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     ShowOptionsPanel();
   }
 
-  public override Task OnReloadSettings() {
-    TextView.ReloadSettings();
-    return base.OnReloadSettings();
+  public override async Task OnReloadSettings() {
+    await TextView.ReloadSettings();
   }
 }
