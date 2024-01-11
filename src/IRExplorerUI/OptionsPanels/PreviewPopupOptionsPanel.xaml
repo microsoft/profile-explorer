@@ -23,23 +23,23 @@
         Content="Jump to hottest profiled part"
         IsChecked="{Binding JumpToHottestElement, Mode=TwoWay}"
         Margin="0,4,0,2"
-        ToolTip="Jump to the hottest profiled instruction/source line on load" />
+        ToolTip="Jump to the hottest profiled instruction/source line" />
       <CheckBox
         Content="Use compact profiling time columns"
         IsChecked="{Binding UseCompactProfilingColumns, Mode=TwoWay}"
         Margin="0,2,0,2"
-        ToolTip="TODO" />
+        ToolTip="Display only the profiling duration column" />
       <CheckBox
-        IsEnabled="False"
+        IsEnabled="True"
         Content="Show performance counter columns"
         IsChecked="{Binding ShowPerformanceCounterColumns, Mode=TwoWay}"
         Margin="0,2,0,2"
-        ToolTip="TODO" />
+        ToolTip="Display the performance counter columns" />
       <CheckBox
         Content="Use smaller font size"
         IsChecked="{Binding UseSmallerFontSize, Mode=TwoWay}"
         Margin="0,2,0,2"
-        ToolTip="TODO" />
+        ToolTip="Use a more compact, smaller font size" />
     </StackPanel>
   </Grid>
 </local:OptionsPanelBase>
