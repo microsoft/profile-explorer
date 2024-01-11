@@ -932,7 +932,7 @@ public partial class MainWindow : Window, ISession {
         break;
       }
       default: {
-        await SwitchCompilerTarget(new ASMCompilerInfoProvider(irMode, this));
+        await SwitchCompilerTarget(new ASMCompilerInfoProvider(IRMode.x86_64, this));
         break;
       }
     }
