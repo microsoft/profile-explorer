@@ -32,12 +32,13 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private bool hasProfileInfo_;
   private bool useCompactMode_;
   private Brush selectedLineBrush_;
+  private DocumentSettings settings_;
 
   public ProfileIRDocument() {
     InitializeComponent();
     UpdateDocumentStyle();
     DataContext = this;
-
+    ReloadSettings();
     SetupEvents();
   }
 
@@ -55,22 +56,22 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if(sourceLineProfileResult_ == null) {
       return;
     }
-    
+
     int startLine = TextView.TextArea.Selection.StartPosition.Line;
     int endLine = TextView.TextArea.Selection.EndPosition.Line;
     var weightSum = TimeSpan.Zero;
-    
+
     for(int i = startLine; i<= endLine; i++) {
       if(sourceLineProfileResult_.SourceLineWeight.TryGetValue(i, out var weight)) {
         weightSum += weight;
       }
     }
-    
+
     if(weightSum == TimeSpan.Zero) {
       Session.SetApplicationStatus("");
       return;
     }
-    
+
     var funcProfile = Session.ProfileData.GetFunctionProfile(TextView.Section.ParentFunction);
     double weightPercentage = funcProfile.ScaleWeight(weightSum);
     string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
@@ -94,10 +95,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     set => SetField(ref hasProfileInfo_, value);
   }
 
-  public bool UseCompactMode {
+  public bool UseCompactProfilingColumns {
     get => useCompactMode_;
     set => SetField(ref useCompactMode_, value);
   }
+
+  public bool UseSmallerFontSize { get; set; }
 
   public bool ColumnsVisible {
     get => columnsVisible_;
@@ -124,12 +127,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.Initialize(App.Settings.DocumentSettings, Session);
     TextView.EarlyLoadSectionSetup(parsedSection);
     await TextView.LoadSection(parsedSection);
-
-    //? TODO: UI option?
-    if (true) {
-      await ShowProfilingColumns();
-    }
-
+    await ShowProfilingColumns();
     return true;
   }
 
@@ -182,7 +180,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       return;
     }
 
-    //
     if (TextView.IsLoaded) {
       TextView.ClearInstructionMarkers();
     }
@@ -210,7 +207,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     sourceProfileResult_ = processingResult.Result;
     sourceLineProfileResult_ = processingResult.SourceLineResult;
 
-    //? TODO: UI Option?
     await ShowProfilingColumns();
   }
 
@@ -219,7 +215,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ColumnsVisible = sourceColumnData_ != null && sourceColumnData_.HasData;
 
     if (ColumnsVisible) {
-      if (UseCompactMode) {
+      if (UseCompactProfilingColumns) {
         // Use compact mode that shows only the time column.
         if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TIME_COLUMN) is var timeColumn) {
           timeColumn.Style.ShowMainColumnIcon = false;
@@ -508,5 +504,17 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
     Utils.PatchToolbarStyle(sender as ToolBar);
+  }
+
+  public void ReloadSettings() {
+    settings_ = App.Settings.DocumentSettings;
+    FontFamily = new FontFamily(settings_.FontName);
+
+    if (UseSmallerFontSize) {
+      FontSize = settings_.FontSize;
+    }
+    else {
+      FontSize = settings_.FontSize - 1;
+    }
   }
 }

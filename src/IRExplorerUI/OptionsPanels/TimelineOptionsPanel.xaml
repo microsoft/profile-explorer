@@ -17,12 +17,6 @@
         Margin="0,2,0,2"
         ToolTip="Mark the functions covered by the selected time range in the other profiling panels" />
       <CheckBox
-        IsEnabled="False"
-        Content="Group threads by name"
-        IsChecked="{Binding GroupThreads, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Partition threads into groups based on their name" />
-      <CheckBox
         x:Name="ShowCallStackPopupCheckbox"
         Content="Show hottest call stack popup on hover"
         IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
@@ -68,12 +62,18 @@
               ToolTip="Reset value to default duration" />
           </StackPanel>
       <Separator Margin="0,4,0,4" />
-      <TextBlock FontWeight="Medium" Text="Threads style" />
+      <TextBlock FontWeight="Medium" Text="Threads" />
+      <CheckBox
+        IsEnabled="False"
+        Content="Group threads by name"
+        IsChecked="{Binding GroupThreads, Mode=TwoWay}"
+        Margin="0,4,0,2"
+        ToolTip="Partition threads into groups based on their name" />
       <CheckBox
         IsEnabled="False"
         Content="Use background color based on thread name"
         IsChecked="{Binding GroupThreads, Mode=TwoWay}"
-        Margin="0,4,0,2"
+        Margin="0,2,0,2"
         ToolTip="Mark the functions covered by the selected time range in the other profiling panels" />
     </StackPanel>
   </Grid>

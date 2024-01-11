@@ -103,7 +103,7 @@ public class ApplicationSettings {
     CallTreeNodeSettings.Reset();
     PreviewPopupSettings.Reset();
     AutoReloadDocument = true;
-    ThemeIndex = 2; // Blue theme.
+    ThemeIndex = 0; // Light theme.
   }
 
   public void AddRecentFile(string path) {

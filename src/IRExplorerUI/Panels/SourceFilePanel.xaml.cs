@@ -348,4 +348,9 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private void PanelToolbarTray_OnSettingsClicked(object sender, EventArgs e) {
     ShowOptionsPanel();
   }
+
+  public override Task OnReloadSettings() {
+    TextView.ReloadSettings();
+    return base.OnReloadSettings();
+  }
 }

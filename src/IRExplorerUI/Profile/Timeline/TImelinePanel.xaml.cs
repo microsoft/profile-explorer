@@ -84,7 +84,16 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
-  public TimelineSettings Settings => settings_;
+  public TimelineSettings Settings {
+    get => settings_;
+    set {
+      if (value != settings_) {
+        settings_ = value;
+        OnPropertyChanged();
+      }
+    }
+  }
+
   public bool HasCallTree => callTree_ != null;
 
   public bool ShowSearchSection {
