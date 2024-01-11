@@ -667,7 +667,9 @@ public sealed class ASMParser : ParserBase {
         break;
       }
       default: {
-        throw new NotImplementedException();
+        Debug.Assert(false, "Unsupported IR mode");
+        Trace.WriteLine($"Unsupported IR mode {irInfo_.Mode}");
+        break;
       }
     }
   }
