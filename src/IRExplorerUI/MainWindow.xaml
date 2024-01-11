@@ -625,6 +625,7 @@
                     VerticalAlignment="Center"
                     SnapsToDevicePixels="True"
                     Source="{StaticResource BookIcon}"
+                    Style="{StaticResource DisabledImageStyle}"
                     UseLayoutRounding="True" />
                   <TextBlock
                     Margin="2,0,0,0"
@@ -803,6 +804,7 @@
                   VerticalAlignment="Center"
                   SnapsToDevicePixels="True"
                   Source="{StaticResource UploadIcon}"
+                  Style="{StaticResource DisabledImageStyle}"
                   UseLayoutRounding="True" />
                 <TextBlock
                   Margin="2,0,0,0"
@@ -835,6 +837,7 @@
                 VerticalAlignment="Center"
                 SnapsToDevicePixels="True"
                 Source="{StaticResource SearchIcon}"
+                Style="{StaticResource DisabledImageStyle}"
                 UseLayoutRounding="True" />
             </Button>
           </Border>

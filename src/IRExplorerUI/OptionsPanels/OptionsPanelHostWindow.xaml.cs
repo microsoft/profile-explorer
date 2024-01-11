@@ -50,7 +50,11 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
     var panelHost = new OptionsPanelHostWindow(panel, position, width, height, relativeControl,
                                                settings, session);
     panelHost.SettingsChanged += (sender, args) => {
-      newSettingsHandler((S)panelHost.Settings, false);
+      var result = newSettingsHandler((S)panelHost.Settings, false);
+
+      if (result != null) {
+        panel.Settings = result;
+      }
     };
     panelHost.PanelReset += (sender, args) => {
       var newSettings =  new S();

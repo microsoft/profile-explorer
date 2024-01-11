@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -30,6 +31,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private bool showModeButtons_;
   private ISession session;
   private ParsedIRTextSection parsedSection_;
+  private PreviewPopupSettings settings_;
 
   public IRDocumentPopup(Point position, double width, double height,
                          UIElement owner, ISession session) {
@@ -40,6 +42,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     DataContext = this;
     Session = session;
     owner_ = owner;
+    settings_ = App.Settings.PreviewPopupSettings;
   }
 
   protected override void SetPanelAccentColor(Color color) {
@@ -89,13 +92,17 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     set => SetField(ref showModeButtons_, value);
   }
 
-  private async Task SetupInitialMode(ParsedIRTextSection parsedSection, bool showAssembly) {
+  private async Task SetupInitialMode(ParsedIRTextSection parsedSection) {
     parsedSection_ = parsedSection;
     ShowModeButtons = true;
-    ShowAssembly = showAssembly;
+    ShowAssembly = !settings_.ShowSourcePreviewPopup;
 
-    if(!showAssembly) {
+    if(!ShowAssembly) { // Be default assembly is displayed.
       await SwitchAssemblySourceMode();
+    }
+
+    if (settings_.JumpToHottestElement) {
+      ProfileTextView.JumpToHottestProfiledElement();
     }
   }
 
@@ -112,13 +119,21 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   public static async Task<IRDocumentPopup> CreateNew(ParsedIRTextSection parsedSection,
                                                       Point position, double width, double height,
                                                       UIElement owner, ISession session,
-                                                      string titlePrefix = "", bool showAssembly = false) {
+                                                      string titlePrefix = "") {
     var popup = CreatePopup(parsedSection.Section, null, position, width, height,
                             owner, session, titlePrefix);
-    await popup.ProfileTextView.LoadSection(parsedSection);
-    await popup.SetupInitialMode(parsedSection, showAssembly);
+    await popup.InitializeFromSection(parsedSection);
     popup.CaptureMouseWheel();
     return popup;
+  }
+
+  private async Task InitializeFromSection(ParsedIRTextSection parsedSection) {
+    ProfileTextView.UseSmallerFontSize = settings_.UseSmallerFontSize;
+    ProfileTextView.UseCompactProfilingColumns = settings_.UseCompactProfilingColumns;
+    //? TODO: settings_.ShowPerformanceCounterColumns
+    ProfileTextView.ReloadSettings();
+    await ProfileTextView.LoadSection(parsedSection);
+    await SetupInitialMode(parsedSection);
   }
 
   private static IRDocumentPopup CreatePopup(IRTextSection section, IRElement previewedElement,
@@ -326,27 +341,27 @@ public class IRDocumentPopupInstance {
 
   private async Task ShowPreviewPopupForLoadedSection(PreviewPopupArgs args) {
     await ShowPreviewPopupForSection(args.LoadedSection, args.RelativeElement,
-                                     width_, height_, args.Title, args.ShowAssembly);
+                                     width_, height_, args.Title);
   }
 
   private async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection, UIElement relativeElement,
-                                                double width, double height, string title, bool showAssembly) {
+                                                double width, double height, string title) {
     if (!Prepare()) {
       return;
     }
 
     var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
     previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position, width, height,
-                                                    relativeElement, session_, title, showAssembly);
+                                                    relativeElement, session_, title);
     Complete();
   }
 
   private async Task ShowPreviewPopupForSection(PreviewPopupArgs args) {
-    await ShowPreviewPopupForSection(args.Section, args.RelativeElement, width_, height_, args.Title, args.ShowAssembly);
+    await ShowPreviewPopupForSection(args.Section, args.RelativeElement, width_, height_, args.Title);
   }
 
   private async Task ShowPreviewPopupForSection(IRTextSection section, UIElement relativeElement,
-                                                double width, double height, string title, bool showAssembly) {
+                                                double width, double height, string title) {
     if (!Prepare()) {
       return;
     }
@@ -356,7 +371,7 @@ public class IRDocumentPopupInstance {
     if (parsedSection != null) {
       var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
       previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position, width, height,
-                                                      relativeElement, session_, title, showAssembly);
+                                                      relativeElement, session_, title);
       Complete();
     }
   }
@@ -462,7 +477,6 @@ public class PreviewPopupArgs {
       Section = section,
       RelativeElement = relativeElement,
       Title = title,
-      ShowAssembly = showAssembly
     };
   }
 
@@ -476,7 +490,6 @@ public class PreviewPopupArgs {
       Section = function.Sections[0],
       RelativeElement = relativeElement,
       Title = title,
-      ShowAssembly = App.Settings.PreviewPopupSettings.ShowSourcePreviewPopup
     };
   }
 
@@ -486,7 +499,6 @@ public class PreviewPopupArgs {
       LoadedSection = section,
       RelativeElement = relativeElement,
       Title = title,
-      ShowAssembly = App.Settings.PreviewPopupSettings.ShowSourcePreviewPopup
     };
   }
 
@@ -496,5 +508,4 @@ public class PreviewPopupArgs {
   public IRDocument Document { get; set; }
   public ParsedIRTextSection LoadedSection { get; set; }
   public IRTextSection Section { get; set; }
-  public bool ShowAssembly { get; set; }
 }
