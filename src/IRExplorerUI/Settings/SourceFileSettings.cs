@@ -15,6 +15,9 @@ public class SourceFileSettings : SettingsBase {
 
   [ProtoMember(1)]
   public SourceFileFinderSettings FinderSettings { get; set; }
+  [ProtoMember(2)]
+  public ProfileDocumentSettings ProfileSettings { get; set; }
+
   //? TODO: Options for
   //? - font, font size
   //? - syntax highlighting
@@ -23,11 +26,13 @@ public class SourceFileSettings : SettingsBase {
   public override void Reset() {
     InitializeReferenceMembers();
     FinderSettings.Reset();
+    ProfileSettings.Reset();
   }
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     FinderSettings ??= new();
+    ProfileSettings ??= new();
   }
 
   public SourceFileSettings Clone() {
@@ -37,7 +42,8 @@ public class SourceFileSettings : SettingsBase {
 
   public override bool Equals(object obj) {
     return obj is SourceFileSettings settings &&
-           FinderSettings.Equals(settings.FinderSettings);
+           FinderSettings.Equals(settings.FinderSettings) &&
+           ProfileSettings.Equals(settings.ProfileSettings);
   }
 }
 

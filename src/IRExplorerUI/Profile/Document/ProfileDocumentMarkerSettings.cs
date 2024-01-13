@@ -12,7 +12,8 @@ public class ProfileDocumentMarkerSettings {
 
   static ProfileDocumentMarkerSettings() {
     defaultInstance_ = new ProfileDocumentMarkerSettings {
-      ColumnSettings = App.Settings.ColumnSettings,
+      //? TODO: Inject from outside
+      ColumnSettings = App.Settings.DocumentSettings.ProfileSettings.ColumnSettings,
       VirtualColumnPosition = 350,
       ElementWeightCutoff = 0.003, // 0.3%
       LineWeightCutoff = 0.005,    // 0.5%,
@@ -120,17 +121,17 @@ public class ProfileDocumentMarkerSettings {
     return !column.Style.TextColor.IsTransparent() ?
       ColorBrushes.GetBrush(column.Style.TextColor) : ColumnTextColor;
   }
-  
+
   public FontWeight PickTextWeight(OptionalColumn column, int order, double percentage) {
     if (column.Style.PickColorForPercentage &&
-        !ShouldOverridePercentage(order, percentage)) { 
+        !ShouldOverridePercentage(order, percentage)) {
       return percentage switch {
         >= 0.9 => FontWeights.Bold,
         >= 0.7 => FontWeights.Medium,
         >= 0.5 => FontWeights.SemiBold,
         _ => FontWeights.Normal
       };
-    } 
+    }
 
     return order switch {
       0 => FontWeights.Bold,
@@ -237,13 +238,13 @@ public class ProfileDocumentMarkerSettings {
   private bool InvertColorPalette(OptionalColumn column) {
     return column != null && column.Style.InvertColorPalette;
   }
-  
+
   private bool ShouldOverridePercentage(int order, double percentage) {
     // Hottest elements still handled by order.
     return order == 0 ||
            (order < 3 && percentage > 0.2); // 20%
   }
-  
+
   private bool ShouldOverrideIconPercentage(int order, double percentage) {
     // Hottest elements still handled by order.
     return order == 0 ||

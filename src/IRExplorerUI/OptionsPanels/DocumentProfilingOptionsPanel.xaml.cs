@@ -13,10 +13,17 @@ public partial class DocumentProfilingOptionsPanel : OptionsPanelBase {
   public const double DefaultWidth = 350;
   public const double MinimumWidth = 350;
 
+  private bool showsDocumentSettings_;
+
   public DocumentProfilingOptionsPanel() {
     InitializeComponent();
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
     PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
+  }
+
+  public bool ShowsDocumentSettings {
+    get => showsDocumentSettings_;
+    set => SetField(ref showsDocumentSettings_, value);
   }
 
   private void SectionOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {

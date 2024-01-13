@@ -104,39 +104,69 @@
             Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Timeline" IsEnabled="False" Style="{StaticResource TabControlStyle}">
+      <TabItem Header="Timeline" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO" />
+          <options:TimelineOptionsPanel
+            x:Name="TimelineOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Flame Graph" IsEnabled="False" Style="{StaticResource TabControlStyle}">
+      <TabItem Header="Flame Graph" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO" />
+          <options:FlameGraphOptionsPanel
+            x:Name="FlameGraphOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Call Tree" IsEnabled="False" Style="{StaticResource TabControlStyle}">
+      <TabItem Header="Call Tree" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO" />
+          <options:CallTreeOptionsPanel
+            x:Name="CallTreeOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Caller/Callee" IsEnabled="False" Style="{StaticResource TabControlStyle}">
+      <TabItem Header="Caller/Callee" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO" />
+          <options:CallTreeOptionsPanel
+            x:Name="CallerCalleeOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Source File" IsEnabled="False" Style="{StaticResource TabControlStyle}">
+      <TabItem Header="Source File" Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO" />
+          <options:SourceFileOptionsPanel
+            x:Name="SourceFileOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Profiling" IsEnabled="False" Style="{StaticResource TabControlStyle}">

@@ -2,6 +2,9 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -20,7 +23,7 @@ public interface IOptionsPanel {
   void PanelAfterReset();
 }
 
-public class OptionsPanelBase : UserControl, IOptionsPanel {
+public class OptionsPanelBase : UserControl, IOptionsPanel, INotifyPropertyChanged {
   private bool initialized_;
 
   public virtual double DefaultHeight => 320;
@@ -84,4 +87,17 @@ public class OptionsPanelBase : UserControl, IOptionsPanel {
   public virtual void PanelClosing() { }
   public virtual void PanelResetting() { }
   public virtual void PanelAfterReset() { }
+  public event PropertyChangedEventHandler PropertyChanged;
+
+  protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
+    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+  }
+
+  protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
+    if (EqualityComparer<T>.Default.Equals(field, value))
+      return false;
+    field = value;
+    OnPropertyChanged(propertyName);
+    return true;
+  }
 }

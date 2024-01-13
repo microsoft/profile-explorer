@@ -38,6 +38,7 @@ public class DocumentSettings : SettingsBase {
   [ProtoMember(25)] public bool MarkMultipleDefinitionExpressions { get; set; }
   [ProtoMember(26)] public bool FilterSourceDefinitions { get; set; }
   [ProtoMember(27)] public bool FilterDestinationUses { get; set; }
+  [ProtoMember(28)] public ProfileDocumentSettings ProfileSettings { get; set; }
 
   public override void Reset() {
     ShowBlockSeparatorLine = true;
@@ -63,6 +64,12 @@ public class DocumentSettings : SettingsBase {
     UseValueColor = Utils.ColorFromString("#B7E5C6");
     BorderColor = Colors.Black;
     SyntaxHighlightingName = "";
+    ProfileSettings.Reset();
+  }
+
+  [ProtoAfterDeserialization]
+  private void InitializeReferenceMembers() {
+    ProfileSettings ??= new ProfileDocumentSettings();
   }
 
   public DocumentSettings Clone() {
@@ -94,6 +101,7 @@ public class DocumentSettings : SettingsBase {
            DefinitionValueColor.Equals(settings.DefinitionValueColor) &&
            UseValueColor.Equals(settings.UseValueColor) &&
            BorderColor.Equals(settings.BorderColor) &&
-           SyntaxHighlightingName == settings.SyntaxHighlightingName;
+           SyntaxHighlightingName == settings.SyntaxHighlightingName &&
+           ProfileSettings.Equals(settings.ProfileSettings);
   }
 }
