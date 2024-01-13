@@ -607,16 +607,6 @@
                          Style="{StaticResource DisabledImageStyle}" />
                 </Button>
                 <Separator />
-                <Button
-                  IsEnabled="False"
-                  Margin="2,0,0,0"
-                  Padding="0"
-                  ToolTip="Jump to hottest profiled instruction"
-                  VerticalAlignment="Center"
-                  Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                  <Image Source="{StaticResource SettingsIcon}"
-                         Style="{StaticResource DisabledImageStyle}" />
-                </Button>
               </ToolBar>
             </ToolBarTray>
           </Border>

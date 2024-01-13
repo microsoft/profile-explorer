@@ -26,6 +26,11 @@ public partial class OptionsWindow : Window {
     GraphOptionsPanel.Initialize(this, App.Settings.FlowGraphSettings, Session);
     ExpressionGraphOptionsPanel.Initialize(this, App.Settings.ExpressionGraphSettings, Session);
     DiffOptionsPanel.Initialize(this, App.Settings.DiffSettings, Session);
+    TimelineOptionsPanel.Initialize(this, App.Settings.TimelineSettings, Session);
+    FlameGraphOptionsPanel.Initialize(this, App.Settings.FlameGraphSettings, Session);
+    CallTreeOptionsPanel.Initialize(this, App.Settings.CallTreeSettings, Session);
+    CallerCalleeOptionsPanel.Initialize(this, App.Settings.CallerCalleeSettings, Session);
+    SourceFileOptionsPanel.Initialize(this, App.Settings.SourceFileSettings, Session);
   }
 
   private async Task SaveAndReloadSettings() {
@@ -83,7 +88,6 @@ public partial class OptionsWindow : Window {
       }
       else {
         Utils.ShowErrorMessageBox("Failed to import settings.", this);
-        return;
       }
     }
   }

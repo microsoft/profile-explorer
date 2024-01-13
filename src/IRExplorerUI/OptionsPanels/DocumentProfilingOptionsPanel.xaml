@@ -11,24 +11,61 @@
   xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
   <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <StackPanel Margin="4,4,4,4">
-      <TextBlock FontWeight="Medium" Text="Section List" />
       <CheckBox
-        Content="Use indentation for nested section names"
+        Content="Mark lines based on duration"
         IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
         Margin="0,2,0,2"
-        Name="IndentationCheckbox"
-        ToolTip="Show section names indentend based on the parent/child relationship" />
+        ToolTip="Mark document lines with a color based on the profile weight" />
+      <CheckBox
+        Visibility="{Binding ShowsDocumentSettings, Converter={StaticResource BoolToVisibilityConverter},
+        RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:DocumentProfilingOptionsPanel}}"
+        Content="Mark blocks based on duration"
+        IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="Mark document lines with a color based on the profile weight" />
+      <CheckBox
+        Visibility="{Binding ShowsDocumentSettings, Converter={StaticResource BoolToVisibilityConverter},
+        RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:DocumentProfilingOptionsPanel}}"
+        Content="Also mark blocks in Flow Graph panel"
+        IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
+        Margin="20,2,0,2"
+        ToolTip="Mark document lines with a color based on the profile weight" />
+      <CheckBox
+        Content="Display called function list for calls"
+        IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="Mark document lines with a color based on the profile weight" />
+      <CheckBox
+        Content="Jump to hottest function line"
+        IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="Mark document lines with a color based on the profile weight" />
       <Separator Margin="0,4,0,4" />
 
-      <TextBlock FontWeight="Medium" Text="Function List" />
+      <TextBlock FontWeight="Medium" Text="Columns" />
       <CheckBox
-        Content="Compute instruction statistics"
+        IsEnabled="False"
+        Content="Show icons for hottest lines"
         IsChecked="{Binding ComputeStatistics, Mode=TwoWay}"
         Margin="0,4,0,2"
-        ToolTip="Compute function IR statistics on document load and show extra columns"
-        x:Name="StatisticsCheckbox" />
+        ToolTip="Compute function IR statistics on document load and show extra columns"/>
+      <CheckBox
+        IsEnabled="False"
+        Content="Show percentage bars"
+        IsChecked="{Binding ComputeStatistics, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="Compute function IR statistics on document load and show extra columns"/>
+      <CheckBox
+        IsEnabled="False"
+        Content="Hide empty columns"
+        IsChecked="{Binding ComputeStatistics, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="Compute function IR statistics on document load and show extra columns"/>
 
-      <Grid Margin="0,4,0,0">
+      <Separator Margin="0,4,0,4" />
+
+      <TextBlock FontWeight="Medium" Text="Colors" />
+      <Grid Margin="0,4,0,0" IsEnabled="False">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="70" />
           <ColumnDefinition />

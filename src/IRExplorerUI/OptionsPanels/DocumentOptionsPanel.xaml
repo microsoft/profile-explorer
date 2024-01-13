@@ -41,6 +41,9 @@
   </local:OptionsPanelBase.Resources>
 
   <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <TabControl BorderThickness="0"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+      <TabItem Header="General" Style="{StaticResource TabControlStyle}">
     <StackPanel Grid.Row="0" Margin="4,4,4,4">
       <TextBlock FontWeight="Medium" Text="Document Style" />
       <StackPanel Margin="0,4,0,2" Orientation="Horizontal">
@@ -58,7 +61,7 @@
 
         <ToggleButton
           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-
+          IsEnabled="{Binding HasItems, ElementName=IRSyntaxCombobox}"
           Click="SyntaxEditButton_Click"
           DockPanel.Dock="Right"
           Height="20"
@@ -68,9 +71,7 @@
           Width="20"
           x:Name="SyntaxEditButton">
           <Image Source="{StaticResource ThemeIcon}" />
-
         </ToggleButton>
-
 
         <Button
           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
@@ -377,7 +378,6 @@
             VerticalAlignment="Center" />
         </Grid>
       </StackPanel>
-
       <Separator Margin="0,4,0,4" />
 
       <TextBlock FontWeight="Medium" Text="IR Value Colors" />
@@ -470,5 +470,10 @@
         </Grid>
       </StackPanel>
     </StackPanel>
+      </TabItem>
+      <TabItem Header="Profiling" Style="{StaticResource TabControlStyle}">
+        <local:DocumentProfilingOptionsPanel ShowsDocumentSettings="True"></local:DocumentProfilingOptionsPanel>
+      </TabItem>
+    </TabControl>
   </Grid>
 </local:OptionsPanelBase>
