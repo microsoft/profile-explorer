@@ -49,6 +49,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     InitializeComponent();
     DataContext = this;
     disabledSourceMappings_ = new HashSet<string>();
+    settings_ = App.Settings.SourceFileSettings;
   }
 
   public override ISession Session {
@@ -196,6 +197,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public async Task LoadSourceFile(IRTextSection section) {
     section_ = section;
+    TextView.ProfileMarkerOptions = settings_.ProfileMarkerSettings;
+    TextView.ColumnOptions = settings_.ColumnSettings;
     TextView.TextView.Initialize(App.Settings.DocumentSettings, Session);
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
@@ -205,9 +208,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     base.OnDocumentSectionLoaded(section, document);
-    section_ = section;
     TextView.AssociatedDocument = document;
-    await LoadSourceFile(section_);
+    await LoadSourceFile(section);
   }
 
   private async Task<bool> LoadSourceFileForFunction(IRTextFunction function) {

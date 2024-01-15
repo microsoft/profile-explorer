@@ -667,8 +667,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       Percentage = weightPercentage,
       ExclusivePercentage = exclusiveWeightPercentage,
       TextColor = Brushes.Black,
-      BackColor = ProfileDocumentMarkerSettings.Default.PickBrushForPercentage(weightPercentage),
-      BackColor2 = ProfileDocumentMarkerSettings.Default.PickBrushForPercentage(exclusiveWeightPercentage)
+      BackColor = App.Settings.DocumentSettings.ProfileMarkerSettings.PickBrushForPercentage(weightPercentage),
+      BackColor2 = App.Settings.DocumentSettings.ProfileMarkerSettings.PickBrushForPercentage(exclusiveWeightPercentage)
     };
 
     callTreeNodeToNodeExMap_[node] = result;
@@ -686,8 +686,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       Percentage = weightPercentage,
       ExclusivePercentage = exclusiveWeightPercentage,
       TextColor = Brushes.Black,
-      BackColor = ProfileDocumentMarkerSettings.Default.PickBrushForPercentage(weightPercentage),
-      BackColor2 = ProfileDocumentMarkerSettings.Default.PickBrushForPercentage(exclusiveWeightPercentage),
+      BackColor = App.Settings.DocumentSettings.ProfileMarkerSettings.PickBrushForPercentage(weightPercentage),
+      BackColor2 = App.Settings.DocumentSettings.ProfileMarkerSettings.PickBrushForPercentage(exclusiveWeightPercentage),
       IsMarked = true
     };
   }

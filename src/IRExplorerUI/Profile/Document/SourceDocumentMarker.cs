@@ -16,10 +16,10 @@ using OxyPlot;
 namespace IRExplorerUI.Profile;
 
 public class SourceDocumentMarker {
-  private ProfileDocumentMarkerSettings settings_;
+  private SourceDocumentMarkerSettings settings_;
   private ICompilerInfoProvider irInfo_;
 
-  public SourceDocumentMarker(ProfileDocumentMarkerSettings settings, ICompilerInfoProvider ir) {
+  public SourceDocumentMarker(SourceDocumentMarkerSettings settings, ICompilerInfoProvider ir) {
     settings_ = settings;
     irInfo_ = ir;
   }
@@ -46,8 +46,8 @@ public class SourceDocumentMarker {
           string tooltip = $"Line number for {funcName}";
           var overlay = document.RegisterIconElementOverlay(instr, null, 16, 0, label, tooltip);
           overlay.IsLabelPinned = true;
-          overlay.TextColor = settings_.ElementOverlayTextColor;
-          overlay.Background = settings_.ElementOverlayBackColor;
+          overlay.TextColor = settings_.ElementOverlayTextColor.AsBrush();
+          overlay.Background = settings_.ElementOverlayBackColor.AsBrush();
 
           overlays.Add(overlay);
           lineLengths.Add(instr.TextLength);
@@ -78,8 +78,8 @@ public class SourceDocumentMarker {
         // AppendInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
         var inlineeOverlay =
           document.RegisterIconElementOverlay(instr, null, 16, 0, sb.ToString(), tooltipSb.ToString());
-        inlineeOverlay.TextColor = settings_.InlineeOverlayTextColor;
-        inlineeOverlay.Background = settings_.ElementOverlayBackColor;
+        inlineeOverlay.TextColor = settings_.InlineeOverlayTextColor.AsBrush();
+        inlineeOverlay.Background = settings_.ElementOverlayBackColor.AsBrush();
         inlineeOverlay.IsLabelPinned = true;
         inlineeOverlays.Add(inlineeOverlay);
       }
@@ -109,6 +109,8 @@ public class SourceDocumentMarker {
     }
   }
 
+  //? Currently calls are marked only with profiling data, here could be a mode
+  //? that instead uses only the IR to mark calls.
   //private void MarkCallInstruction(InstructionIR instr, MarkedDocument document) {
   //  if (irInfo_.IR.IsCallInstruction(instr) &&
   //          irInfo_.IR.GetCallTarget(instr) is OperandIR callTargetOp &&
