@@ -1,56 +1,56 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System.Windows.Media;
 using IRExplorerUI.Profile;
 using ProtoBuf;
 
 namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
-public class ProfileDocumentSettings : SettingsBase {
-  public ProfileDocumentSettings() {
+public class SourceDocumentMarkerSettings : SettingsBase {
+  public SourceDocumentMarkerSettings() {
     Reset();
   }
 
-  //? TODO:
-
-  [ProtoMember(1)] public bool MarkElements { get; set; }
-  [ProtoMember(1)] public bool MarkBlocks { get; set; }
-  [ProtoMember(1)] public bool MarkBlocksInFlowGraph { get; set; }
-  [ProtoMember(1)] public bool MarkCallTargets { get; set; }
-  [ProtoMember(1)] public bool JumpToHottestElement { get; set; }
-  public OptionalColumnSettings ColumnSettings { get; set; }
-  public ProfileDocumentMarkerSettings MarkerSettings { get; set; }
+  [ProtoMember(1)]
+  public bool AnnotateSourceLines { get; set; }
+  [ProtoMember(2)]
+  public bool AnnotateInlinees { get; set; }
+  [ProtoMember(3)]
+  public double VirtualColumnPosition { get; set; }
+  [ProtoMember(4)]
+  public Color ElementOverlayTextColor { get; set; }
+  [ProtoMember(5)]
+  public Color ElementOverlayBackColor { get; set; }
+  [ProtoMember(6)]
+  public Color InlineeOverlayTextColor { get; set; }
+  [ProtoMember(7)]
+  public Color InlineeOverlayBackColor { get; set; }
 
   public override void Reset() {
-    InitializeReferenceMembers();
-
-    MarkElements = true;
-    MarkBlocks = true;
-    MarkBlocksInFlowGraph = true;
-    MarkCallTargets = true;
-    ColumnSettings.Reset();
-    MarkerSettings.Reset();
+    AnnotateSourceLines = true;
+    AnnotateInlinees = true;
+    VirtualColumnPosition = 0.5;
+    ElementOverlayTextColor = Colors.DimGray;
+    ElementOverlayBackColor = Colors.Transparent;
+    InlineeOverlayTextColor = Colors.Green;
+    InlineeOverlayBackColor = Colors.Transparent;
   }
 
-  [ProtoAfterDeserialization]
-  private void InitializeReferenceMembers() {
-    ColumnSettings ??= new OptionalColumnSettings();
-    MarkerSettings ??= new ProfileDocumentMarkerSettings();
-  }
-
-  public ProfileDocumentSettings Clone() {
+  public SourceDocumentMarkerSettings Clone() {
     byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<ProfileDocumentSettings>(serialized);
+    return StateSerializer.Deserialize<SourceDocumentMarkerSettings>(serialized);
   }
 
   public override bool Equals(object obj) {
-    return obj is ProfileDocumentSettings settings &&
-           MarkElements == settings.MarkElements &&
-           MarkBlocks == settings.MarkBlocks &&
-           MarkBlocksInFlowGraph == settings.MarkBlocksInFlowGraph &&
-           MarkCallTargets == settings.MarkCallTargets &&
-           JumpToHottestElement == settings.JumpToHottestElement &&
-           ColumnSettings.Equals(settings.ColumnSettings);
+    return obj is SourceDocumentMarkerSettings settings &&
+            AnnotateSourceLines == settings.AnnotateSourceLines &&
+            AnnotateInlinees == settings.AnnotateInlinees &&
+            VirtualColumnPosition == settings.VirtualColumnPosition &&
+            ElementOverlayTextColor == settings.ElementOverlayTextColor &&
+            ElementOverlayBackColor == settings.ElementOverlayBackColor &&
+            InlineeOverlayTextColor == settings.InlineeOverlayTextColor &&
+            InlineeOverlayBackColor == settings.InlineeOverlayBackColor;
   }
 }

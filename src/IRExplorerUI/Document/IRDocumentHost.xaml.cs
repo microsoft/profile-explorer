@@ -1110,8 +1110,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     ProfileBlocksMenu.Items.Clear();
     var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
-    var valueStyle = ProfileDocumentMarkerSettings.Default; //? TODO: Use options from UI
-    int index = 0;
+    var valueStyle = App.Settings.DocumentSettings.ProfileMarkerSettings;
 
     foreach (var pair in result.BlockSampledElements) {
       var block = pair.Item1;
@@ -1125,7 +1124,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         PrefixText = prefixText,
         ShowPercentageBar = valueStyle.ShowPercentageBar(weightPercentage),
         TextWeight = valueStyle.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = valueStyle.PercentageBarBackColor
+        PercentageBarBackColor = valueStyle.PercentageBarBackColor.AsBrush()
       };
 
       var item = new MenuItem {

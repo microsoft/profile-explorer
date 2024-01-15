@@ -38,9 +38,13 @@ public class DocumentSettings : SettingsBase {
   [ProtoMember(25)] public bool MarkMultipleDefinitionExpressions { get; set; }
   [ProtoMember(26)] public bool FilterSourceDefinitions { get; set; }
   [ProtoMember(27)] public bool FilterDestinationUses { get; set; }
-  [ProtoMember(28)] public ProfileDocumentSettings ProfileSettings { get; set; }
+  [ProtoMember(28)] public ProfileDocumentMarkerSettings ProfileMarkerSettings { get; set; }
+  [ProtoMember(29)] public SourceDocumentMarkerSettings SourceMarkerSettings { get; set; }
+  [ProtoMember(30)] public OptionalColumnSettings ColumnSettings { get; set; }
+
 
   public override void Reset() {
+    InitializeReferenceMembers();
     ShowBlockSeparatorLine = true;
     FontName = "Consolas";
     FontSize = 12;
@@ -64,12 +68,16 @@ public class DocumentSettings : SettingsBase {
     UseValueColor = Utils.ColorFromString("#B7E5C6");
     BorderColor = Colors.Black;
     SyntaxHighlightingName = "";
-    ProfileSettings.Reset();
+    ProfileMarkerSettings.Reset();
+    SourceMarkerSettings.Reset();
+    ColumnSettings.Reset();
   }
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
-    ProfileSettings ??= new ProfileDocumentSettings();
+    ProfileMarkerSettings ??= new ProfileDocumentMarkerSettings();
+    SourceMarkerSettings ??= new SourceDocumentMarkerSettings();
+    ColumnSettings ??= new OptionalColumnSettings();
   }
 
   public DocumentSettings Clone() {
@@ -102,6 +110,10 @@ public class DocumentSettings : SettingsBase {
            UseValueColor.Equals(settings.UseValueColor) &&
            BorderColor.Equals(settings.BorderColor) &&
            SyntaxHighlightingName == settings.SyntaxHighlightingName &&
-           ProfileSettings.Equals(settings.ProfileSettings);
+           DefaultExpressionsLevel == settings.DefaultExpressionsLevel &&
+           MarkMultipleDefinitionExpressions == settings.MarkMultipleDefinitionExpressions &&
+           ProfileMarkerSettings.Equals(settings.ProfileMarkerSettings) &&
+           SourceMarkerSettings.Equals(settings.SourceMarkerSettings) &&
+           ColumnSettings.Equals(settings.ColumnSettings);
   }
 }

@@ -128,6 +128,8 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private async Task InitializeFromSection(ParsedIRTextSection parsedSection) {
+    ProfileTextView.ProfileMarkerOptions = App.Settings.DocumentSettings.ProfileMarkerSettings;
+    ProfileTextView.ColumnOptions = App.Settings.DocumentSettings.ColumnSettings;
     ProfileTextView.UseSmallerFontSize = settings_.UseSmallerFontSize;
     ProfileTextView.UseCompactProfilingColumns = settings_.UseCompactProfilingColumns;
     ProfileTextView.ShowPerformanceCounterColumns = settings_.ShowPerformanceCounterColumns;

@@ -689,7 +689,7 @@
                 IsEnabled="{Binding InputControlsEnabled}"
                 IsExpanded="True">
                 <Expander.Header>
-                  <TextBlock FontWeight="Medium" Text="Processing options" />
+                  <TextBlock FontWeight="Medium" Text="Processing" />
                 </Expander.Header>
                 <StackPanel>
                   <CheckBox
@@ -713,7 +713,7 @@
                 IsEnabled="{Binding InputControlsEnabled}"
                 IsExpanded="True">
                 <Expander.Header>
-                  <TextBlock FontWeight="Medium" Text="Symbol options" />
+                  <TextBlock FontWeight="Medium" Text="Symbols" />
                 </Expander.Header>
 
                 <Grid Margin="0,4,0,0">
@@ -875,7 +875,7 @@
                 IsEnabled="{Binding InputControlsEnabled}"
                 IsExpanded="True">
                 <Expander.Header>
-                  <TextBlock FontWeight="Medium" Text="Source file options" />
+                  <TextBlock FontWeight="Medium" Text="Source files" />
                 </Expander.Header>
 
                 <StackPanel>
@@ -908,7 +908,7 @@
                 IsEnabled="{Binding InputControlsEnabled}"
                 IsExpanded="True">
                 <Expander.Header>
-                  <TextBlock FontWeight="Medium" Text="Binary file options" />
+                  <TextBlock FontWeight="Medium" Text="Binary files" />
                 </Expander.Header>
 
                 <StackPanel>

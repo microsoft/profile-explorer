@@ -175,8 +175,9 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     var profile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
 
     if (profile != null) {
-      var profileOptions = ProfileDocumentMarkerSettings.Default;
-      var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, this);
+      var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, 
+        App.Settings.DocumentSettings.ProfileMarkerSettings,
+        App.Settings.DocumentSettings.ColumnSettings, this);
       await profileMarker.Mark(document, function, section.ParentFunction);
 
       // Redraw the flow graphs, may have loaded before the marker set the node tags.
@@ -184,14 +185,13 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     }
 
     // Annotate instrs. with source line numbers if debug info is available.
-    var markerOptions = ProfileDocumentMarkerSettings.Default;
-    var sourceMarker = new SourceDocumentMarker(markerOptions, this);
+    var sourceMarker = new SourceDocumentMarker(App.Settings.DocumentSettings.SourceMarkerSettings, this);
     await sourceMarker.Mark(document, function);
   }
 
   private static void CreateBlockLabelOverlays(IRDocument document, FunctionIR function) {
     double overlayHeight = document.TextArea.TextView.DefaultLineHeight;
-    var options = ProfileDocumentMarkerSettings.Default; //? TODO: Use App.Settings...
+    var options = App.Settings.DocumentSettings.ProfileMarkerSettings;
     var blockPen = ColorPens.GetPen(options.BlockOverlayBorderColor,
                                     options.BlockOverlayBorderThickness);
 
@@ -208,7 +208,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
       overlay.ShowOnMarkerBar = false;
       overlay.IsLabelPinned = true;
       overlay.TextWeight = FontWeights.Bold;
-      overlay.TextColor = options.BlockOverlayTextColor;
+      overlay.TextColor = options.BlockOverlayTextColor.AsBrush();
 
       var backColor = block.HasEvenIndexInFunction ?
         App.Settings.DocumentSettings.BackgroundColor :

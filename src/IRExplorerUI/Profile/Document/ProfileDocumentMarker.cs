@@ -53,14 +53,14 @@ public class ProfileDocumentMarker {
                             null, 50.0, "TimeColumnHeaderTemplate");
 
   public OptionalColumn TimeColumnTemplate() {
-    TIME_COLUMN.Style = settings_.ColumnSettings.GetColumnStyle(TIME_COLUMN) ??
+    TIME_COLUMN.Style = columnSettings_.GetColumnStyle(TIME_COLUMN) ??
                         OptionalColumnSettings.DefaultTimeColumnStyle;
 
     return TIME_COLUMN;
   }
 
   public OptionalColumn TimePerrcentageColumnTemplate() {
-    TIME_PERCENTAGE_COLUMN.Style = settings_.ColumnSettings.GetColumnStyle(TIME_PERCENTAGE_COLUMN) ??
+    TIME_PERCENTAGE_COLUMN.Style = columnSettings_.GetColumnStyle(TIME_PERCENTAGE_COLUMN) ??
                                    OptionalColumnSettings.DefaultTimePercentageColumnStyle;
     return TIME_PERCENTAGE_COLUMN;
   }
@@ -73,7 +73,7 @@ public class ProfileDocumentMarker {
                                          /*counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" :*/
                                          $"{counter.Name}",
                                          null, 50, "TimeColumnHeaderTemplate");
-    column.Style = settings_.ColumnSettings.GetColumnStyle(column);
+    column.Style = columnSettings_.GetColumnStyle(column);
 
     if (column.Style == null) {
       column.Style = counter.IsMetric ?
@@ -98,13 +98,17 @@ public class ProfileDocumentMarker {
   private FunctionProfileData profile_;
   private ProfileData globalProfile_;
   private ProfileDocumentMarkerSettings settings_;
+  private OptionalColumnSettings columnSettings_;
   private ICompilerInfoProvider irInfo_;
 
   public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile,
-                               ProfileDocumentMarkerSettings settings, ICompilerInfoProvider ir) {
+                               ProfileDocumentMarkerSettings settings,
+                               OptionalColumnSettings columnSettings,
+                               ICompilerInfoProvider ir) {
     profile_ = profile;
     globalProfile_ = globalProfile;
     settings_ = settings;
+    columnSettings_ = columnSettings;
     irInfo_ = ir;
   }
 
@@ -475,11 +479,11 @@ public class ProfileDocumentMarker {
       overlay.Padding = 2;
 
       if (markOnFlowGraph) {
-        overlay.TextColor = settings_.HotBlockOverlayTextColor;
+        overlay.TextColor = settings_.HotBlockOverlayTextColor.AsBrush();
         overlay.TextWeight = FontWeights.Bold;
       }
       else {
-        overlay.TextColor = settings_.BlockOverlayTextColor;
+        overlay.TextColor = settings_.BlockOverlayTextColor.AsBrush();
       }
 
       // Mark the block itself with a color.

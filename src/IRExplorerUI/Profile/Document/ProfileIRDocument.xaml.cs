@@ -111,6 +111,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     get => selectedLineBrush_;
     set => SetField(ref selectedLineBrush_, value);
   }
+  public ProfileDocumentMarkerSettings ProfileMarkerOptions { get; internal set; }
+  public OptionalColumnSettings ColumnOptions { get; internal set; }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -171,9 +173,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     //? TODO: Check if it's still the case
     //? Accessing the PDB (DIA) from another thread fails.
     //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
-    var profileOptions = ProfileDocumentMarkerSettings.Default;
     var profileMarker =
-      new ProfileDocumentMarker(funcProfile, Session.ProfileData, profileOptions, Session.CompilerInfo);
+      new ProfileDocumentMarker(funcProfile, Session.ProfileData,
+      ProfileMarkerOptions, ColumnOptions,
+      Session.CompilerInfo);
     var processingResult = profileMarker.PrepareSourceLineProfile(funcProfile, TextView, debugInfo);
 
     if (processingResult == null) {

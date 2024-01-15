@@ -3,41 +3,16 @@
 // See the LICENSE file in the project root for more information.
 using System.Windows;
 using System.Windows.Media;
+using ProtoBuf;
 
-namespace IRExplorerUI.Profile;
+namespace IRExplorerUI;
 
-public class ProfileDocumentMarkerSettings {
-  private static ProfileDocumentMarkerSettings defaultInstance_;
+[ProtoContract(SkipConstructor = true)]
+public class ProfileDocumentMarkerSettings : SettingsBase {
   private static ColorPalette defaultBackColorPalette_ = ColorPalette.Profile;
 
-  static ProfileDocumentMarkerSettings() {
-    defaultInstance_ = new ProfileDocumentMarkerSettings {
-      //? TODO: Inject from outside
-      ColumnSettings = App.Settings.DocumentSettings.ProfileSettings.ColumnSettings,
-      VirtualColumnPosition = 350,
-      ElementWeightCutoff = 0.003, // 0.3%
-      LineWeightCutoff = 0.005,    // 0.5%,
-      TopOrderCutoff = 10,
-      IconBarWeightCutoff = 0.03,  // 3%
-      MaxPercentageBarWidth = 50,
-      DisplayIcons = true,
-      RemoveEmptyColumns = true,
-      DisplayPercentageBar = true,
-      ColumnTextColor = Brushes.Black,
-      ElementOverlayTextColor = Brushes.DimGray,
-      HotElementOverlayTextColor = Brushes.DarkRed,
-      ElementOverlayBackColor = Brushes.Transparent,
-      HotElementOverlayBackColor = Brushes.AntiqueWhite,
-      BlockOverlayTextColor = Brushes.DarkBlue,
-      HotBlockOverlayTextColor = Brushes.DarkRed,
-      BlockOverlayBackColor = Brushes.AliceBlue,
-      BlockOverlayBorderColor = Brushes.DimGray,
-      BlockOverlayBorderThickness = 1,
-      HotBlockOverlayBackColor = Brushes.AntiqueWhite,
-      InlineeOverlayTextColor = Brushes.Green,
-      InlineeOverlayBackColor = Brushes.Transparent,
-      PercentageBarBackColor = Utils.ColorFromString("#Aa4343").AsBrush()
-    };
+  public ProfileDocumentMarkerSettings() {
+    Reset();
   }
 
   public enum ValueUnitKind {
@@ -48,32 +23,53 @@ public class ProfileDocumentMarkerSettings {
     Value
   }
 
-  public static ProfileDocumentMarkerSettings Default => defaultInstance_;
-  public OptionalColumnSettings ColumnSettings { get; set; }
-  public double VirtualColumnPosition { get; set; }
-  public double ElementWeightCutoff { get; set; }
-  public double LineWeightCutoff { get; set; }
-  public int TopOrderCutoff { get; set; }
-  public double IconBarWeightCutoff { get; set; }
-  public Brush ColumnTextColor { get; set; }
-  public Brush ElementOverlayTextColor { get; set; }
-  public Brush HotElementOverlayTextColor { get; set; }
-  public Brush InlineeOverlayTextColor { get; set; }
-  public Brush BlockOverlayTextColor { get; set; }
-  public Brush HotBlockOverlayTextColor { get; set; }
-  public Brush InlineeOverlayBackColor { get; set; }
-  public Brush ElementOverlayBackColor { get; set; }
-  public Brush HotElementOverlayBackColor { get; set; }
-  public Brush BlockOverlayBackColor { get; set; }
-  public Brush HotBlockOverlayBackColor { get; set; }
-  public Brush BlockOverlayBorderColor { get; set; }
-  public double BlockOverlayBorderThickness { get; set; }
-  public Brush PercentageBarBackColor { get; set; }
-  public int MaxPercentageBarWidth { get; set; }
-  public bool DisplayPercentageBar { get; set; }
-  public bool DisplayIcons { get; set; }
-  public bool RemoveEmptyColumns { get; set; }
-  public ValueUnitKind ValueUnit { get; set; }
+  [ProtoMember(1)] public bool MarkElements { get; set; }
+  [ProtoMember(2)] public bool MarkBlocks { get; set; }
+  [ProtoMember(3)] public bool MarkBlocksInFlowGraph { get; set; }
+  [ProtoMember(4)] public bool MarkCallTargets { get; set; }
+  [ProtoMember(5)] public bool JumpToHottestElement { get; set; }
+  [ProtoMember(6)] public double VirtualColumnPosition { get; set; }
+  [ProtoMember(7)]  public double ElementWeightCutoff { get; set; }
+  [ProtoMember(8)]  public double LineWeightCutoff { get; set; }
+  [ProtoMember(9)]  public int TopOrderCutoff { get; set; }
+  [ProtoMember(10)]  public double IconBarWeightCutoff { get; set; }
+  [ProtoMember(11)]  public Color ColumnTextColor { get; set; }
+  [ProtoMember(12)]  public Color HotElementOverlayTextColor { get; set; }
+  [ProtoMember(13)]  public Color BlockOverlayTextColor { get; set; }
+  [ProtoMember(14)]  public Color HotBlockOverlayTextColor { get; set; }
+  [ProtoMember(15)]  public Color HotElementOverlayBackColor { get; set; }
+  [ProtoMember(16)]  public Color BlockOverlayBackColor { get; set; }
+  [ProtoMember(17)]  public Color HotBlockOverlayBackColor { get; set; }
+  [ProtoMember(18)]  public Color BlockOverlayBorderColor { get; set; }
+  [ProtoMember(19)]  public double BlockOverlayBorderThickness { get; set; }
+  [ProtoMember(20)]  public Color PercentageBarBackColor { get; set; }
+  [ProtoMember(21)]  public int MaxPercentageBarWidth { get; set; }
+  [ProtoMember(22)]  public bool DisplayPercentageBar { get; set; }
+  [ProtoMember(23)]  public bool DisplayIcons { get; set; }
+  [ProtoMember(24)]  public bool RemoveEmptyColumns { get; set; }
+  [ProtoMember(25)]  public ValueUnitKind ValueUnit { get; set; }
+
+  public override void Reset() {
+    VirtualColumnPosition = 350;
+    ElementWeightCutoff = 0.003; // 0.3%
+    LineWeightCutoff = 0.005; // 0.5%;
+    TopOrderCutoff = 10;
+    IconBarWeightCutoff = 0.03; // 3%
+    MaxPercentageBarWidth = 50;
+    DisplayIcons = true;
+    RemoveEmptyColumns = true;
+    DisplayPercentageBar = true;
+    ColumnTextColor = Colors.Black;
+    HotElementOverlayTextColor = Colors.DarkRed;
+    HotElementOverlayBackColor = Colors.AntiqueWhite;
+    BlockOverlayTextColor = Colors.DarkBlue;
+    HotBlockOverlayTextColor = Colors.DarkRed;
+    BlockOverlayBackColor = Colors.AliceBlue;
+    BlockOverlayBorderColor = Colors.DimGray;
+    BlockOverlayBorderThickness = 1;
+    HotBlockOverlayBackColor = Colors.AntiqueWhite;
+    PercentageBarBackColor = Utils.ColorFromString("#Aa4343");
+  }
 
   public Color PickBackColor(OptionalColumn column, int order, double percentage) {
     if (!ShouldUseBackColor(column)) {
@@ -119,7 +115,7 @@ public class ProfileDocumentMarkerSettings {
 
   public Brush PickTextColor(OptionalColumn column, int order, double percentage) {
     return !column.Style.TextColor.IsTransparent() ?
-      ColorBrushes.GetBrush(column.Style.TextColor) : ColumnTextColor;
+      ColorBrushes.GetBrush(column.Style.TextColor) : ColumnTextColor.AsBrush();
   }
 
   public FontWeight PickTextWeight(OptionalColumn column, int order, double percentage) {
@@ -208,7 +204,7 @@ public class ProfileDocumentMarkerSettings {
   public Brush PickPercentageBarColor(OptionalColumn column) {
     return !column.Style.PercentageBarBackColor.IsTransparent() ?
       ColorBrushes.GetBrush(column.Style.PercentageBarBackColor) :
-      PercentageBarBackColor;
+      PercentageBarBackColor.AsBrush();
   }
 
   private bool ShouldShowPercentageBar(OptionalColumn column) {
@@ -242,12 +238,45 @@ public class ProfileDocumentMarkerSettings {
   private bool ShouldOverridePercentage(int order, double percentage) {
     // Hottest elements still handled by order.
     return order == 0 ||
-           (order < 3 && percentage > 0.2); // 20%
+           order < 3 && percentage > 0.2; // 20%
   }
 
   private bool ShouldOverrideIconPercentage(int order, double percentage) {
     // Hottest elements still handled by order.
     return order == 0 ||
-           (order < 3 && percentage > 0.05); // 5%
+           order < 3 && percentage > 0.05; // 5%
+  }
+
+  public ProfileDocumentMarkerSettings Clone() {
+    byte[] serialized = StateSerializer.Serialize(this);
+    return StateSerializer.Deserialize<ProfileDocumentMarkerSettings>(serialized);
+  }
+
+  protected bool Equals(ProfileDocumentMarkerSettings other) {
+    return ElementWeightCutoff.Equals(other.ElementWeightCutoff) && LineWeightCutoff.Equals(other.LineWeightCutoff) &&
+           TopOrderCutoff == other.TopOrderCutoff && IconBarWeightCutoff.Equals(other.IconBarWeightCutoff) &&
+           Equals(ColumnTextColor, other.ColumnTextColor) &&
+           Equals(HotElementOverlayTextColor, other.HotElementOverlayTextColor) &&
+           Equals(BlockOverlayTextColor, other.BlockOverlayTextColor) &&
+           Equals(HotBlockOverlayTextColor, other.HotBlockOverlayTextColor) &&
+           Equals(HotElementOverlayBackColor, other.HotElementOverlayBackColor) &&
+           Equals(BlockOverlayBackColor, other.BlockOverlayBackColor) &&
+           Equals(HotBlockOverlayBackColor, other.HotBlockOverlayBackColor) &&
+           Equals(BlockOverlayBorderColor, other.BlockOverlayBorderColor) &&
+           BlockOverlayBorderThickness.Equals(other.BlockOverlayBorderThickness) &&
+           Equals(PercentageBarBackColor, other.PercentageBarBackColor) &&
+           MaxPercentageBarWidth == other.MaxPercentageBarWidth && DisplayPercentageBar == other.DisplayPercentageBar &&
+           DisplayIcons == other.DisplayIcons && RemoveEmptyColumns == other.RemoveEmptyColumns &&
+           ValueUnit == other.ValueUnit;
+  }
+
+  public override bool Equals(object obj) {
+    if (ReferenceEquals(null, obj))
+      return false;
+    if (ReferenceEquals(this, obj))
+      return true;
+    if (obj.GetType() != GetType())
+      return false;
+    return Equals((ProfileDocumentMarkerSettings)obj);
   }
 }
