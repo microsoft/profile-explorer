@@ -28,8 +28,8 @@ public class OptionsPanelBase : UserControl, IOptionsPanel, INotifyPropertyChang
 
   public virtual double DefaultHeight => 320;
   public virtual double MinimumHeight => 200;
-  public virtual double DefaultWidth => 350;
-  public virtual double MinimumWidth => 350;
+  public virtual double DefaultWidth => 380;
+  public virtual double MinimumWidth => 380;
 
   public event EventHandler PanelClosed;
   public event EventHandler PanelReset;
