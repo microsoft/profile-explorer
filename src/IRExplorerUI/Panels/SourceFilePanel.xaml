@@ -101,12 +101,15 @@
             ToolTip="Inlined functions call stack"
             Width="150" />
           <Button Click="Button_Click_1" ToolTip="Switch to callee" IsEnabled="False">
-            <Image Source="{StaticResource UpArrowIcon}" />
+            <Image Source="{StaticResource UpArrowIcon}" 
+                   Style="{StaticResource DisabledImageStyle}"/>
           </Button>
           <Button Click="Button_Click_2" ToolTip="Switch to caller" IsEnabled="False">
-            <Image Source="{StaticResource DownArrowIcon}" />
+            <Image Source="{StaticResource DownArrowIcon}"
+                   Style="{StaticResource DisabledImageStyle}"/>
           </Button>
           <TextBlock
+            Visibility="Collapsed"
             IsEnabled="False"
             Margin="4,0,0,0"
             Text="0/0"
