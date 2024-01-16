@@ -28,7 +28,8 @@
           <TextBlock
             Width="70"
             VerticalAlignment="Center"
-            Text="Time (total)" />
+            Text="Total time"
+            ToolTip="Inclusive (total) time for this function instance"/>
 
           <ContentControl
             MinWidth="180"
@@ -39,7 +40,8 @@
             ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
         </StackPanel>
         <StackPanel Orientation="Horizontal">
-          <TextBlock Width="70" Text="Time (self)" />
+          <TextBlock Width="70" Text="Self time"
+                     ToolTip="Exclusive (self) time for this function instance"/>
           <ContentControl
             MinWidth="180"
             MaxWidth="180" Width="180"
