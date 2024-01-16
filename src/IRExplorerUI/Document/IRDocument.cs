@@ -1188,7 +1188,9 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
 
     // Notify overlay layer in case there is a selected overlay visual.
-    overlayRenderer_.KeyPressed(e);
+    if(overlayRenderer_.KeyPressed(e)) {
+      return;
+    }
 
     switch (e.Key) {
       case Key.Return: {

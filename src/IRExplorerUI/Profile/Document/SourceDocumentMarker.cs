@@ -46,8 +46,9 @@ public class SourceDocumentMarker {
           string tooltip = $"Line number for {funcName}";
           var overlay = document.RegisterIconElementOverlay(instr, null, 16, 0, label, tooltip);
           overlay.IsLabelPinned = true;
-          overlay.TextColor = settings_.ElementOverlayTextColor.AsBrush();
-          overlay.Background = settings_.ElementOverlayBackColor.AsBrush();
+          overlay.AllowLabelEditing = false;
+          overlay.TextColor = settings_.SourceLineTextColor.AsBrush();
+          overlay.Background = settings_.SourceLineBackColor.AsBrush();
 
           overlays.Add(overlay);
           lineLengths.Add(instr.TextLength);
@@ -79,8 +80,9 @@ public class SourceDocumentMarker {
         var inlineeOverlay =
           document.RegisterIconElementOverlay(instr, null, 16, 0, sb.ToString(), tooltipSb.ToString());
         inlineeOverlay.TextColor = settings_.InlineeOverlayTextColor.AsBrush();
-        inlineeOverlay.Background = settings_.ElementOverlayBackColor.AsBrush();
+        inlineeOverlay.Background = settings_.SourceLineBackColor.AsBrush();
         inlineeOverlay.IsLabelPinned = true;
+        inlineeOverlay.AllowLabelEditing = false;
         inlineeOverlays.Add(inlineeOverlay);
       }
 

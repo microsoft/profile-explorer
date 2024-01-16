@@ -154,43 +154,55 @@ public abstract class ElementOverlayBase : IElementOverlay {
   public virtual bool KeyPressed(KeyEventArgs e) {
     OnKeyPress?.Invoke(this, e);
 
-    if (!AllowLabelEditing || !IsSelected) {
+    if (!IsSelected) {
       return e.Handled;
     }
 
-    var keyInfo = Utils.KeyToChar(e.Key);
+    if (AllowLabelEditing) {
+      var keyInfo = Utils.KeyToChar(e.Key);
 
-    if (keyInfo.IsLetter) {
-      // Append a new letter.
-      string keyString = keyInfo.Letter.ToString();
+      if (keyInfo.IsLetter && Keyboard.Modifiers == ModifierKeys.None) {
+        // Append a new letter.
+        string keyString = keyInfo.Letter.ToString();
 
-      if (string.IsNullOrEmpty(Label)) {
-        Label = keyString;
+        if (string.IsNullOrEmpty(Label)) {
+          Label = keyString;
+        }
+        else {
+          Label += keyString;
+        }
+
+        return true;
       }
-      else {
-        Label += keyString;
+      else if (e.Key == Key.Back) {
+        // Remove last letter.
+        if (!string.IsNullOrEmpty(Label)) {
+          Label = Label.Substring(0, Label.Length - 1);
+          return true;
+        }
       }
-
-      return true;
-    }
-
-    if (e.Key == Key.Back) {
-      // Remove last letter.
-      if (!string.IsNullOrEmpty(Label)) {
-        Label = Label.Substring(0, Label.Length - 1);
+      else if (e.Key == Key.Delete) {
+        Label = null; // Delete all text.
+        return true;
+      }
+      else if (e.Key == Key.Enter) {
+        IsLabelPinned = true;
+        return true;
+      }
+      else if (e.Key == Key.Escape) {
+        IsLabelPinned = false;
         return true;
       }
     }
-    else if (e.Key == Key.Delete) {
-      Label = null; // Delete all text.
-      return true;
-    }
-    else if (e.Key == Key.Enter) {
-      IsLabelPinned = true;
-      return true;
-    }
-    else if (e.Key == Key.Escape) {
-      IsLabelPinned = false;
+    
+    if(e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) {
+      // Copy the label to the clipboard.
+      if (HasToolTip) {
+        Clipboard.SetText($"{Label}\n({ToolTip})");
+      }
+      else {
+        Clipboard.SetText(Label);
+      }
       return true;
     }
 

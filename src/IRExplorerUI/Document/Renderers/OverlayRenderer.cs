@@ -133,12 +133,15 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     HandleMouseMoved(e.GetPosition(this), e);
   }
 
-  public void KeyPressed(KeyEventArgs e) {
+  public bool KeyPressed(KeyEventArgs e) {
     if (selectedOverlay_ != null) {
       if (selectedOverlay_.KeyPressed(e)) {
         TextView.Redraw(); // Force refresh
+        return true;
       }
     }
+
+    return false;
   }
 
   public void Clear() {

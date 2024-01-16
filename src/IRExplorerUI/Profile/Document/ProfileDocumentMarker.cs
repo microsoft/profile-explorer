@@ -380,6 +380,7 @@ public class ProfileDocumentMarker {
       var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16);
       overlay.Background = color.AsBrush();
       overlay.IsLabelPinned = false;
+      overlay.AllowLabelEditing = false;
       overlay.UseLabelBackground = true;
       overlay.ShowBackgroundOnMouseOverOnly = true;
       overlay.ShowBorderOnMouseOverOnly = true;
@@ -471,6 +472,7 @@ public class ProfileDocumentMarker {
       overlay.Border = blockPen;
 
       overlay.IsLabelPinned = true;
+      overlay.AllowLabelEditing = false;
       overlay.UseLabelBackground = true;
       overlay.ShowBackgroundOnMouseOverOnly = false;
       overlay.ShowBorderOnMouseOverOnly = false;
