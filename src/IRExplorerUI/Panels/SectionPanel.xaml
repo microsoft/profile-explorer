@@ -220,7 +220,7 @@
               Padding="0,0,2,0"
               BorderThickness="0"
               IsChecked="{Binding Path=SyncSelection, Mode=TwoWay}"
-              ToolTip="Sync function displayed in other profiling panels with selectionSync function displayed in other profiling panels with selection"
+              ToolTip="Sync function displayed in other profiling panels with selection"
               Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
               <StackPanel Orientation="Horizontal">
                 <Image
