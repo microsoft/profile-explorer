@@ -207,6 +207,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
       overlay.Padding = 4;
       overlay.ShowOnMarkerBar = false;
       overlay.IsLabelPinned = true;
+      overlay.AllowLabelEditing = false;
       overlay.TextWeight = FontWeights.Bold;
       overlay.TextColor = options.BlockOverlayTextColor.AsBrush();
 

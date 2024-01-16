@@ -20,9 +20,9 @@ public class SourceDocumentMarkerSettings : SettingsBase {
   [ProtoMember(3)]
   public double VirtualColumnPosition { get; set; }
   [ProtoMember(4)]
-  public Color ElementOverlayTextColor { get; set; }
+  public Color SourceLineTextColor { get; set; }
   [ProtoMember(5)]
-  public Color ElementOverlayBackColor { get; set; }
+  public Color SourceLineBackColor { get; set; }
   [ProtoMember(6)]
   public Color InlineeOverlayTextColor { get; set; }
   [ProtoMember(7)]
@@ -32,8 +32,8 @@ public class SourceDocumentMarkerSettings : SettingsBase {
     AnnotateSourceLines = true;
     AnnotateInlinees = true;
     VirtualColumnPosition = 0.5;
-    ElementOverlayTextColor = Colors.DimGray;
-    ElementOverlayBackColor = Colors.Transparent;
+    SourceLineTextColor = Colors.DimGray;
+    SourceLineBackColor = Colors.Transparent;
     InlineeOverlayTextColor = Colors.Green;
     InlineeOverlayBackColor = Colors.Transparent;
   }
@@ -48,8 +48,8 @@ public class SourceDocumentMarkerSettings : SettingsBase {
             AnnotateSourceLines == settings.AnnotateSourceLines &&
             AnnotateInlinees == settings.AnnotateInlinees &&
             VirtualColumnPosition == settings.VirtualColumnPosition &&
-            ElementOverlayTextColor == settings.ElementOverlayTextColor &&
-            ElementOverlayBackColor == settings.ElementOverlayBackColor &&
+            SourceLineTextColor == settings.SourceLineTextColor &&
+            SourceLineBackColor == settings.SourceLineBackColor &&
             InlineeOverlayTextColor == settings.InlineeOverlayTextColor &&
             InlineeOverlayBackColor == settings.InlineeOverlayBackColor;
   }

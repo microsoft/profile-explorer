@@ -188,7 +188,7 @@
       <CheckBox
         Content="Highlight current text line"
         IsChecked="{Binding Path=HighlightCurrentLine, Mode=TwoWay}"
-        Margin="0,3,0,2" />
+        Margin="0,4,0,2" />
       <CheckBox
         Content="Show block separator lines"
         IsChecked="{Binding Path=ShowBlockSeparatorLine, Mode=TwoWay}"
@@ -471,8 +471,113 @@
       </StackPanel>
     </StackPanel>
       </TabItem>
-      <TabItem Header="Profiling" Style="{StaticResource TabControlStyle}">
+      <TabItem Header="Profiling" Style="{StaticResource TabControlStyle}"
+               ToolTip="Options for profiling UI and code annotations">
         <local:DocumentProfilingOptionsPanel ShowsDocumentSettings="True"></local:DocumentProfilingOptionsPanel>
+      </TabItem>
+      <TabItem Header="Debug" Style="{StaticResource TabControlStyle}"
+               ToolTip="Options for code annotations based on debug info">
+        <StackPanel Margin="4,4,4,4">
+          <CheckBox
+  Content="Annotate instrs. with source line numbers"
+  IsChecked="{Binding Path=AnnotateSourceLines, Mode=TwoWay}"
+            ToolTip="Append the associated source code line based on the debug info file"
+  Margin="0,4,0,2" />
+        <CheckBox
+Content="Annotate instrs. with inlined functions (inlinees)"
+IsChecked="{Binding Path=AnnotateInlinees, Mode=TwoWay}"
+          ToolTip="Append the associated list of inlined functions (inlinees) based on the debug info file"
+Margin="0,4,0,2" />
+          <Separator Margin="0,4,0,4" />
+
+          <TextBlock FontWeight="Medium" Text="Annotation Colors" />
+          <StackPanel Margin="0,4,0,0" Orientation="Vertical">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+      AvailableColorsSortingMode="HueSaturationBrightness"
+      BorderBrush="#707070"
+      Grid.Column="0"
+      HorizontalAlignment="Left"
+      SelectedColor="{Binding Path=SourceLineTextColor, Mode=TwoWay}"
+      ShowDropDownButton="True"
+      UsingAlphaChannel="False"
+      VerticalAlignment="Center"
+      Width="64" />
+              <TextBlock
+      Grid.Column="1"
+      HorizontalAlignment="Left"
+      Text="Line number text color"
+      VerticalAlignment="Center" />
+            </Grid>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+AvailableColorsSortingMode="HueSaturationBrightness"
+BorderBrush="#707070"
+Grid.Column="0"
+HorizontalAlignment="Left"
+SelectedColor="{Binding Path=SourceLineBackColor, Mode=TwoWay}"
+ShowDropDownButton="True"
+UsingAlphaChannel="False"
+VerticalAlignment="Center"
+Width="64" />
+              <TextBlock
+Grid.Column="1"
+HorizontalAlignment="Left"
+Text="Line number background color"
+VerticalAlignment="Center" />
+            </Grid>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+      AvailableColorsSortingMode="HueSaturationBrightness"
+      BorderBrush="#707070"
+      Grid.Column="0"
+      HorizontalAlignment="Left"
+      SelectedColor="{Binding Path=InlineeOverlayTextColor, Mode=TwoWay}"
+      ShowDropDownButton="True"
+      UsingAlphaChannel="False"
+      VerticalAlignment="Center"
+      Width="64" />
+              <TextBlock
+      Grid.Column="1"
+      HorizontalAlignment="Left"
+      Text="Inlinee list text color"
+      VerticalAlignment="Center" />
+            </Grid>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+AvailableColorsSortingMode="HueSaturationBrightness"
+BorderBrush="#707070"
+Grid.Column="0"
+HorizontalAlignment="Left"
+SelectedColor="{Binding Path=InlineeOverlayBackColor, Mode=TwoWay}"
+ShowDropDownButton="True"
+UsingAlphaChannel="False"
+VerticalAlignment="Center"
+Width="64" />
+              <TextBlock
+Grid.Column="1"
+HorizontalAlignment="Left"
+Text="Inlinee list background color"
+VerticalAlignment="Center" />
+            </Grid>
+          </StackPanel>
+        </StackPanel>
       </TabItem>
     </TabControl>
   </Grid>
