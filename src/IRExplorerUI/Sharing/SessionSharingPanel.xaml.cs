@@ -15,8 +15,7 @@ public partial class SessionSharingPanel : Popup {
   public const double MinimumHeight = 90;
   public const double DefaultWidth = 400;
   public const double MinimumWidth = 200;
-  private const string DefaultConnectionString =
-    @"DefaultEndpointsProtocol=https;AccountName=irexplorer;AccountKey=+2FT4HoGoXXJm+LBaZ3cgGczYa3CMig2KE7ETkD5mgI5mjUL2jMQiZLVR+boTtIhj1XkxXBJFiZ+oH/D3effng==;EndpointSuffix=core.windows.net";
+  private const string DefaultConnectionString = @""; // TODO: Remove sharing or implement securely
   private const string DefaultContainerName = "share";
 
   public SessionSharingPanel(Point position, double width, double height,
