@@ -44,24 +44,74 @@
 
       <TextBlock FontWeight="Medium" Text="Columns" />
       <CheckBox
+        Content="Show performance counter columns"
+        IsChecked="{Binding ShowPerformanceCounterColumns, Mode=TwoWay}"
+        Margin="0,4,0,2"
+        ToolTip="Show the CPU performance counter columns"/>
+      <CheckBox
+        Content="Show performance metrics columns"
+        IsChecked="{Binding ShowPerformanceMetricColumns, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="Show the CPU performance metric columns"/>
+      <CheckBox
+        Content="Hide empty columns"
+        IsChecked="{Binding RemoveEmptyColumns, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="Compute function IR statistics on document load and show extra columns"/>
+      <CheckBox
         IsEnabled="False"
+        Content="Use compact profiling time columns"
+        IsChecked="{Binding UseCompactProfilingColumns, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="Display only the profiling duration column" />
+      <CheckBox
         Content="Show icons for hottest lines"
-        IsChecked="{Binding ComputeStatistics, Mode=TwoWay}"
+        IsChecked="{Binding DisplayIcons, Mode=TwoWay}"
         Margin="0,4,0,2"
         ToolTip="Compute function IR statistics on document load and show extra columns"/>
       <CheckBox
-        IsEnabled="False"
         Content="Show percentage bars"
-        IsChecked="{Binding ComputeStatistics, Mode=TwoWay}"
+        IsChecked="{Binding DisplayPercentageBar, Mode=TwoWay}"
         Margin="0,2,0,2"
         ToolTip="Compute function IR statistics on document load and show extra columns"/>
-      <CheckBox
-        IsEnabled="False"
-        Content="Hide empty columns"
-        IsChecked="{Binding ComputeStatistics, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Compute function IR statistics on document load and show extra columns"/>
-
+      <StackPanel Margin="0,2,0,2" Orientation="Horizontal">
+        <TextBlock
+          Text="Time unit"
+          VerticalAlignment="Center"
+          Width="50" />
+        <ComboBox
+          IsSynchronizedWithCurrentItem="True"
+          Margin="8,0,0,0"
+          VerticalAlignment="Center"
+          Width="91">
+          <ComboBoxItem Content="Nanosecond"></ComboBoxItem>
+          <ComboBoxItem Content="Millisecond"></ComboBoxItem>
+          <ComboBoxItem Content="Second"></ComboBoxItem>
+        </ComboBox>
+      </StackPanel>
+      <StackPanel Margin="0,0,0,2" Orientation="Horizontal">
+        <TextBlock Text="Weight cutoff" VerticalAlignment="Center"
+                   ToolTip="Only show lines with a weight greater than this value"/>
+        <xctk:IntegerUpDown
+          Margin="8,0,0,0"
+          Maximum="100"
+          Minimum="0"
+          Increment="1"
+          Width="70"
+          ParsingNumberStyle="Float"
+          ToolTip="Only show lines with a weight greater than this value"
+          ShowButtonSpinner="True"
+          Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
+        <TextBlock Text="%" Margin="2,0,0,0" VerticalAlignment="Center"/>
+        <Button
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+          VerticalAlignment="Center"
+          Margin="8,0,0,0"
+          Padding="2,0,2,0"
+          Content="Default"
+          Height="20"
+          ToolTip="Reset value to default weight cutoff" />
+        </StackPanel>
       <Separator Margin="0,4,0,4" />
 
       <TextBlock FontWeight="Medium" Text="Colors" />
@@ -83,7 +133,28 @@
         <TextBlock
           Grid.Column="1"
           HorizontalAlignment="Left"
-          Text="New section border color"
+          Text="Column text color"
+          VerticalAlignment="Center" />
+      </Grid>
+      <Grid Margin="0,4,0,0" IsEnabled="False">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="70" />
+          <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <xctk:ColorPicker
+          AvailableColorsSortingMode="HueSaturationBrightness"
+          BorderBrush="Gray"
+          Grid.Column="0"
+          HorizontalAlignment="Left"
+          SelectedColor="{Binding NewSectionColor, Mode=TwoWay}"
+          ShowDropDownButton="True"
+          UsingAlphaChannel="False"
+          VerticalAlignment="Center"
+          Width="64" />
+        <TextBlock
+          Grid.Column="1"
+          HorizontalAlignment="Left"
+          Text="Percentage bar color"
           VerticalAlignment="Center" />
       </Grid>
     </StackPanel>
