@@ -14,6 +14,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Navigation;
 using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
@@ -1044,7 +1045,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       symbolOptions_.SymbolPaths.RemoveAt(index);
       ReloadSymbolPathsList();
 
-      return; 
+      return;
     }
 
     // Update list with the new text
@@ -1072,7 +1073,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         e.Handled = true;
         textBox.Focus();
         textBox.SelectAll();
-        
+
         // Try to move selection to the item in the list view.
         var listViewItem = (ListViewItem)SymbolPathsList.ItemContainerGenerator.ContainerFromItem(textBox.Text);
 
@@ -1082,5 +1083,11 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         }
       }
     }
+  }
+
+  private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e) {
+    Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) {
+      UseShellExecute = true
+    });
   }
 }

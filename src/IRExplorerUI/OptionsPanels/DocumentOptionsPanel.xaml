@@ -471,12 +471,8 @@
       </StackPanel>
     </StackPanel>
       </TabItem>
-      <TabItem Header="Profiling" Style="{StaticResource TabControlStyle}"
-               ToolTip="Options for profiling UI and code annotations">
-        <local:DocumentProfilingOptionsPanel ShowsDocumentSettings="True"></local:DocumentProfilingOptionsPanel>
-      </TabItem>
-      <TabItem Header="Debug" Style="{StaticResource TabControlStyle}"
-               ToolTip="Options for code annotations based on debug info">
+      <TabItem Header="Source File" Style="{StaticResource TabControlStyle}"
+               ToolTip="Options for code annotations based on source code debug info">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
   Content="Annotate instrs. with source line numbers"
@@ -484,7 +480,7 @@
             ToolTip="Append the associated source code line based on the debug info file"
   Margin="0,4,0,2" />
         <CheckBox
-Content="Annotate instrs. with inlined functions (inlinees)"
+Content="Annotate instrs. with inlined functions trace (inlinees)"
 IsChecked="{Binding Path=AnnotateInlinees, Mode=TwoWay}"
           ToolTip="Append the associated list of inlined functions (inlinees) based on the debug info file"
 Margin="0,4,0,2" />
@@ -552,7 +548,7 @@ VerticalAlignment="Center" />
               <TextBlock
       Grid.Column="1"
       HorizontalAlignment="Left"
-      Text="Inlinee list text color"
+      Text="Inlined functions text color"
       VerticalAlignment="Center" />
             </Grid>
             <Grid>
@@ -573,12 +569,17 @@ Width="64" />
               <TextBlock
 Grid.Column="1"
 HorizontalAlignment="Left"
-Text="Inlinee list background color"
+Text="Inlined functions background color"
 VerticalAlignment="Center" />
             </Grid>
           </StackPanel>
         </StackPanel>
       </TabItem>
+      <TabItem Header="Profiling" Style="{StaticResource TabControlStyle}"
+               ToolTip="Options for profiling UI and code annotations">
+        <local:DocumentProfilingOptionsPanel ShowsDocumentSettings="True"></local:DocumentProfilingOptionsPanel>
+      </TabItem>
+
     </TabControl>
   </Grid>
 </local:OptionsPanelBase>

@@ -694,11 +694,11 @@
                 <StackPanel>
                   <CheckBox
                     Margin="0,8,0,0"
-                    Content="Consider Kernel profile samples"
+                    Content="Handle Kernel profile samples"
                     IsChecked="{Binding Path=Options.IncludeKernelEvents, Mode=TwoWay}" />
                   <CheckBox
                     Margin="0,4,0,0"
-                    Content="Consider CPU performance counter samples"
+                    Content="Handle CPU performance counter samples"
                     IsChecked="{Binding Path=Options.IncludePerformanceCounters, Mode=TwoWay}" />
                   <CheckBox
                     Margin="0,4,0,0"
@@ -716,6 +716,12 @@
                   <TextBlock FontWeight="Medium" Text="Symbols" />
                 </Expander.Header>
 
+                <StackPanel>
+                  <CheckBox
+                    Margin="0,8,0,0"
+                    IsEnabled="False"
+                    Content="Include __NT_SYMBOL_PATH environment variable"
+                    IsChecked="{Binding Path=Options.IncludeKernelEvents, Mode=TwoWay}" />
                 <Grid Margin="0,4,0,0">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -864,10 +870,17 @@
                         <TextBlock Margin="4,0,0,0" Text="Private Server" />
                       </StackPanel>
                     </Button>
+                    <TextBlock Foreground="DarkBlue" Cursor="Hand" VerticalAlignment="Center"
+                               Margin="10,0,0,0">
+                      <Hyperlink NavigateUri="https://learn.microsoft.com/en-us/windows/win32/debug/using-symsrv"
+                                 RequestNavigate="Hyperlink_RequestNavigate">
+                        Symbol configuration help
+                      </Hyperlink>
+                    </TextBlock>
                   </StackPanel>
 
                 </Grid>
-
+                </StackPanel>
               </Expander>
 
               <Expander

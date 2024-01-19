@@ -30,41 +30,37 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   [ProtoMember(5)] public bool JumpToHottestElement { get; set; }
   [ProtoMember(6)] public double VirtualColumnPosition { get; set; }
   [ProtoMember(7)]  public double ElementWeightCutoff { get; set; }
-  [ProtoMember(8)]  public double LineWeightCutoff { get; set; }
-  [ProtoMember(9)]  public int TopOrderCutoff { get; set; }
-  [ProtoMember(10)]  public double IconBarWeightCutoff { get; set; }
-  [ProtoMember(11)]  public Color ColumnTextColor { get; set; }
-  [ProtoMember(12)]  public Color HotElementOverlayTextColor { get; set; }
-  [ProtoMember(13)]  public Color BlockOverlayTextColor { get; set; }
-  [ProtoMember(14)]  public Color HotBlockOverlayTextColor { get; set; }
-  [ProtoMember(15)]  public Color HotElementOverlayBackColor { get; set; }
-  [ProtoMember(16)]  public Color BlockOverlayBackColor { get; set; }
-  [ProtoMember(17)]  public Color HotBlockOverlayBackColor { get; set; }
-  [ProtoMember(18)]  public Color BlockOverlayBorderColor { get; set; }
-  [ProtoMember(19)]  public double BlockOverlayBorderThickness { get; set; }
-  [ProtoMember(20)]  public Color PercentageBarBackColor { get; set; }
-  [ProtoMember(21)]  public int MaxPercentageBarWidth { get; set; }
-  [ProtoMember(22)]  public bool DisplayPercentageBar { get; set; }
-  [ProtoMember(23)]  public bool DisplayIcons { get; set; }
-  [ProtoMember(24)]  public bool RemoveEmptyColumns { get; set; }
-  [ProtoMember(25)]  public ValueUnitKind ValueUnit { get; set; }
+  [ProtoMember(8)]  public int TopOrderCutoff { get; set; }
+  [ProtoMember(9)]  public double IconBarWeightCutoff { get; set; }
+  [ProtoMember(10)]  public Color ColumnTextColor { get; set; }
+  [ProtoMember(11)]  public Color BlockOverlayTextColor { get; set; }
+  [ProtoMember(12)]  public Color HotBlockOverlayTextColor { get; set; }
+  [ProtoMember(13)]  public Color HotBlockOverlayBackColor { get; set; }
+  [ProtoMember(14)]  public Color BlockOverlayBorderColor { get; set; }
+  [ProtoMember(15)]  public double BlockOverlayBorderThickness { get; set; }
+  [ProtoMember(16)]  public Color PercentageBarBackColor { get; set; }
+  [ProtoMember(17)]  public int MaxPercentageBarWidth { get; set; }
+  [ProtoMember(18)]  public bool DisplayPercentageBar { get; set; }
+  [ProtoMember(19)]  public bool DisplayIcons { get; set; }
+  [ProtoMember(20)]  public bool RemoveEmptyColumns { get; set; }
+  [ProtoMember(21)]  public bool ShowPerformanceCounterColumns { get; set; }
+  [ProtoMember(22)]  public bool ShowPerformanceMetricColumns { get; set; }
+  [ProtoMember(23)]  public ValueUnitKind ValueUnit { get; set; }
 
   public override void Reset() {
     VirtualColumnPosition = 350;
     ElementWeightCutoff = 0.003; // 0.3%
-    LineWeightCutoff = 0.005; // 0.5%;
     TopOrderCutoff = 10;
     IconBarWeightCutoff = 0.03; // 3%
     MaxPercentageBarWidth = 50;
     DisplayIcons = true;
     RemoveEmptyColumns = true;
     DisplayPercentageBar = true;
+    ShowPerformanceCounterColumns = true;
+    ShowPerformanceMetricColumns = true;
     ColumnTextColor = Colors.Black;
-    HotElementOverlayTextColor = Colors.DarkRed;
-    HotElementOverlayBackColor = Colors.AntiqueWhite;
     BlockOverlayTextColor = Colors.DarkBlue;
     HotBlockOverlayTextColor = Colors.DarkRed;
-    BlockOverlayBackColor = Colors.AliceBlue;
     BlockOverlayBorderColor = Colors.DimGray;
     BlockOverlayBorderThickness = 1;
     HotBlockOverlayBackColor = Colors.AntiqueWhite;
@@ -253,30 +249,21 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   }
 
   protected bool Equals(ProfileDocumentMarkerSettings other) {
-    return ElementWeightCutoff.Equals(other.ElementWeightCutoff) && LineWeightCutoff.Equals(other.LineWeightCutoff) &&
+    return ElementWeightCutoff.Equals(other.ElementWeightCutoff) &&
            TopOrderCutoff == other.TopOrderCutoff && IconBarWeightCutoff.Equals(other.IconBarWeightCutoff) &&
            Equals(ColumnTextColor, other.ColumnTextColor) &&
-           Equals(HotElementOverlayTextColor, other.HotElementOverlayTextColor) &&
            Equals(BlockOverlayTextColor, other.BlockOverlayTextColor) &&
            Equals(HotBlockOverlayTextColor, other.HotBlockOverlayTextColor) &&
-           Equals(HotElementOverlayBackColor, other.HotElementOverlayBackColor) &&
-           Equals(BlockOverlayBackColor, other.BlockOverlayBackColor) &&
            Equals(HotBlockOverlayBackColor, other.HotBlockOverlayBackColor) &&
            Equals(BlockOverlayBorderColor, other.BlockOverlayBorderColor) &&
            BlockOverlayBorderThickness.Equals(other.BlockOverlayBorderThickness) &&
            Equals(PercentageBarBackColor, other.PercentageBarBackColor) &&
-           MaxPercentageBarWidth == other.MaxPercentageBarWidth && DisplayPercentageBar == other.DisplayPercentageBar &&
-           DisplayIcons == other.DisplayIcons && RemoveEmptyColumns == other.RemoveEmptyColumns &&
+           MaxPercentageBarWidth == other.MaxPercentageBarWidth &&
+           DisplayPercentageBar == other.DisplayPercentageBar &&
+           DisplayIcons == other.DisplayIcons &&
+           RemoveEmptyColumns == other.RemoveEmptyColumns &&
+           ShowPerformanceCounterColumns == other.ShowPerformanceCounterColumns &&
+           ShowPerformanceMetricColumns == other.ShowPerformanceMetricColumns &&
            ValueUnit == other.ValueUnit;
-  }
-
-  public override bool Equals(object obj) {
-    if (ReferenceEquals(null, obj))
-      return false;
-    if (ReferenceEquals(this, obj))
-      return true;
-    if (obj.GetType() != GetType())
-      return false;
-    return Equals((ProfileDocumentMarkerSettings)obj);
   }
 }
