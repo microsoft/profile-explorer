@@ -25,6 +25,10 @@ public class SourceDocumentMarker {
   }
 
   public async Task Mark(MarkedDocument document, FunctionIR function) {
+    if (!settings_.AnnotateSourceLines && !settings_.AnnotateInlinees) {
+      return;
+    }
+
     var overlays = new List<IconElementOverlay>(function.InstructionCount);
     var inlineeOverlays = new List<IconElementOverlay>(function.InstructionCount);
     var lineLengths = new List<int>(function.InstructionCount);
@@ -39,9 +43,8 @@ public class SourceDocumentMarker {
           continue;
         }
 
-        string funcName = irInfo_.NameProvider.FormatFunctionName(function.Name);
-
-        if (tag.Line != 0) {
+        if (tag.Line != 0 && settings_.AnnotateSourceLines) {
+          string funcName = irInfo_.NameProvider.FormatFunctionName(function.Name);
           string label = $"{tag.Line}";
           string tooltip = $"Line number for {funcName}";
           var overlay = document.RegisterIconElementOverlay(instr, null, 16, 0, label, tooltip);
@@ -54,36 +57,34 @@ public class SourceDocumentMarker {
           lineLengths.Add(instr.TextLength);
         }
 
-        if (!tag.HasInlinees) {
-          continue;
-        }
+        if (tag.HasInlinees && settings_.AnnotateInlinees) {
+          var sb = new StringBuilder();
+          var tooltipSb = new StringBuilder();
+          tooltipSb.AppendLine("Inlined functions");
+          tooltipSb.AppendLine("name:line (file) in call tree order:\n");
 
-        var sb = new StringBuilder();
-        var tooltipSb = new StringBuilder();
-        tooltipSb.AppendLine("Inlined functions");
-        tooltipSb.AppendLine("name:line (file) in call tree order:\n");
+          for (int k = 0; k < tag.Inlinees.Count; k++) {
+            var inlinee = tag.Inlinees[tag.Inlinees.Count - k - 1]; // Append backwards.
+            string inlineeName = irInfo_.NameProvider.FormatFunctionName(inlinee.Function);
+            sb.Append($"{inlineeName}:{tag.Inlinees[k].Line}");
 
-        for (int k = 0; k < tag.Inlinees.Count; k++) {
-          var inlinee = tag.Inlinees[tag.Inlinees.Count - k - 1]; // Append backwards.
-          string inlineeName = irInfo_.NameProvider.FormatFunctionName(inlinee.Function);
-          sb.Append($"{inlineeName}:{tag.Inlinees[k].Line}");
+            AppendInlineeTooltip(inlineeName, inlinee.Line, inlinee.FilePath, k, tooltipSb);
+            tooltipSb.AppendLine();
 
-          AppendInlineeTooltip(inlineeName, inlinee.Line, inlinee.FilePath, k, tooltipSb);
-          tooltipSb.AppendLine();
-
-          if (k != tag.Inlinees.Count - 1) {
-            sb.Append("  |  ");
+            if (k != tag.Inlinees.Count - 1) {
+              sb.Append("  |  ");
+            }
           }
-        }
 
-        // AppendInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
-        var inlineeOverlay =
-          document.RegisterIconElementOverlay(instr, null, 16, 0, sb.ToString(), tooltipSb.ToString());
-        inlineeOverlay.TextColor = settings_.InlineeOverlayTextColor.AsBrush();
-        inlineeOverlay.Background = settings_.SourceLineBackColor.AsBrush();
-        inlineeOverlay.IsLabelPinned = true;
-        inlineeOverlay.AllowLabelEditing = false;
-        inlineeOverlays.Add(inlineeOverlay);
+          // AppendInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
+          var inlineeOverlay =
+            document.RegisterIconElementOverlay(instr, null, 16, 0, sb.ToString(), tooltipSb.ToString());
+          inlineeOverlay.TextColor = settings_.InlineeOverlayTextColor.AsBrush();
+          inlineeOverlay.Background = settings_.SourceLineBackColor.AsBrush();
+          inlineeOverlay.IsLabelPinned = true;
+          inlineeOverlay.AllowLabelEditing = false;
+          inlineeOverlays.Add(inlineeOverlay);
+        }
       }
 
       lineLengths.Sort();

@@ -165,7 +165,6 @@ public class ProfileDocumentMarker {
       document.ProfileProcessingResult = result;
       document.ProfileColumnData = columnData;
 
-      //? TODO: UI option to display these
       MarkProfiledBlocks(result.BlockSampledElements, document);
       MarkCallSites(document, function, textFunction, metadataTag);
     }
@@ -276,7 +275,10 @@ public class ProfileDocumentMarker {
     //? Needs a tag so later a RemoveMarkedElements(tag) can be done
     if (column.IsMainColumn && document != null) {
       document.ClearInstructionMarkers();
-      document.MarkElements(elementColorPairs);
+
+      if (settings_.MarkElements) {
+        document.MarkElements(elementColorPairs);
+      }
     }
   }
 
@@ -310,7 +312,7 @@ public class ProfileDocumentMarker {
     // Useful especially for virtual function calls.
     var callTree = globalProfile_.CallTree;
 
-    if (callTree == null) {
+    if (callTree == null || !settings_.MarkCallTargets) {
       return;
     }
 
@@ -445,6 +447,10 @@ public class ProfileDocumentMarker {
   }
 
   private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, MarkedDocument document) {
+    if (!settings_.MarkBlocks) {
+      return;
+    }
+    
     document.SuspendUpdate();
     double overlayHeight = document.DefaultLineHeight;
     var blockPen = ColorPens.GetPen(settings_.BlockOverlayBorderColor,
@@ -491,7 +497,8 @@ public class ProfileDocumentMarker {
       // Mark the block itself with a color.
       document.MarkBlock(block, color, markOnFlowGraph);
 
-      if (weightPercentage > settings_.ElementWeightCutoff) {
+      if (settings_.MarkBlocksInFlowGraph &&
+          weightPercentage > settings_.ElementWeightCutoff) {
         block.AddTag(GraphNodeTag.MakeColor(weightPercentage.AsTrimmedPercentageString(), color));
       }
     }
