@@ -1,162 +1,167 @@
 ﻿<local:OptionsPanelBase
-  d:DesignHeight="450"
-  d:DesignWidth="350"
-  mc:Ignorable="d"
-  x:Class="IRExplorerUI.OptionsPanels.DocumentProfilingOptionsPanel"
-  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-  xmlns:local="clr-namespace:IRExplorerUI.OptionsPanels"
-  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
-  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-    <StackPanel Margin="4,4,4,4">
-      <CheckBox
-        Content="Mark lines based on duration"
-        IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Mark document lines with a color based on the profile weight" />
-      <CheckBox
-        Visibility="{Binding ShowsDocumentSettings, Converter={StaticResource BoolToVisibilityConverter},
-        RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:DocumentProfilingOptionsPanel}}"
-        Content="Mark blocks based on duration"
-        IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Mark document lines with a color based on the profile weight" />
-      <CheckBox
-        Visibility="{Binding ShowsDocumentSettings, Converter={StaticResource BoolToVisibilityConverter},
-        RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:DocumentProfilingOptionsPanel}}"
-        Content="Also mark blocks in Flow Graph panel"
-        IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
-        Margin="20,2,0,2"
-        ToolTip="Mark document lines with a color based on the profile weight" />
-      <CheckBox
-        Content="Display called function list for calls"
-        IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Mark document lines with a color based on the profile weight" />
-      <CheckBox
-        Content="Jump to hottest function line"
-        IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Mark document lines with a color based on the profile weight" />
-      <Separator Margin="0,4,0,4" />
+    x:Class="IRExplorerUI.OptionsPanels.DocumentProfilingOptionsPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:IRExplorerUI.OptionsPanels"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+    d:DesignHeight="450"
+    d:DesignWidth="350"
+    mc:Ignorable="d">
+    <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+        <StackPanel Margin="4,4,4,4">
+            <CheckBox
+                Margin="0,2,0,2"
+                Content="Mark lines based on duration"
+                IsChecked="{Binding MarkElements, Mode=TwoWay}"
+                ToolTip="Mark document lines with a color based on the profile weight" />
+            <CheckBox
+                x:Name="MarkBlocksCheckbox"
+                Margin="0,2,0,2"
+                Content="Mark blocks based on duration"
+                IsChecked="{Binding MarkBlocks, Mode=TwoWay}"
+                ToolTip="Mark document lines with a color based on the profile weight"
+                Visibility="{Binding ShowsDocumentSettings, Converter={StaticResource BoolToVisibilityConverter}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:DocumentProfilingOptionsPanel}}" />
+            <CheckBox
+                Margin="20,2,0,2"
+                Content="Also mark blocks in Flow Graph panel"
+                IsChecked="{Binding MarkBlocksInFlowGraph, Mode=TwoWay}"
+                IsEnabled="{Binding ElementName=MarkBlocksCheckbox, Path=IsChecked}"
+                ToolTip="Mark document lines with a color based on the profile weight"
+                Visibility="{Binding ShowsDocumentSettings, Converter={StaticResource BoolToVisibilityConverter}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:DocumentProfilingOptionsPanel}}" />
+            <CheckBox
+                Margin="0,2,0,2"
+                Content="Display called function list for calls"
+                IsChecked="{Binding MarkCallTargets, Mode=TwoWay}"
+                ToolTip="Mark document lines with a color based on the profile weight" />
+            <CheckBox
+                Margin="0,2,0,2"
+                Content="Jump to hottest function line"
+                IsChecked="{Binding JumpToHottestElement, Mode=TwoWay}"
+                ToolTip="Mark document lines with a color based on the profile weight" />
+            <Separator Margin="0,4,0,4" />
 
-      <TextBlock FontWeight="Medium" Text="Columns" />
-      <CheckBox
-        Content="Show performance counter columns"
-        IsChecked="{Binding ShowPerformanceCounterColumns, Mode=TwoWay}"
-        Margin="0,4,0,2"
-        ToolTip="Show the CPU performance counter columns"/>
-      <CheckBox
-        Content="Show performance metrics columns"
-        IsChecked="{Binding ShowPerformanceMetricColumns, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Show the CPU performance metric columns"/>
-      <CheckBox
-        Content="Hide empty columns"
-        IsChecked="{Binding RemoveEmptyColumns, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Compute function IR statistics on document load and show extra columns"/>
-      <CheckBox
-        IsEnabled="False"
-        Content="Use compact profiling time columns"
-        IsChecked="{Binding UseCompactProfilingColumns, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Display only the profiling duration column" />
-      <CheckBox
-        Content="Show icons for hottest lines"
-        IsChecked="{Binding DisplayIcons, Mode=TwoWay}"
-        Margin="0,4,0,2"
-        ToolTip="Compute function IR statistics on document load and show extra columns"/>
-      <CheckBox
-        Content="Show percentage bars"
-        IsChecked="{Binding DisplayPercentageBar, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Compute function IR statistics on document load and show extra columns"/>
-      <StackPanel Margin="0,2,0,2" Orientation="Horizontal">
-        <TextBlock
-          Text="Time unit"
-          VerticalAlignment="Center"
-          Width="50" />
-        <ComboBox
-          IsSynchronizedWithCurrentItem="True"
-          Margin="8,0,0,0"
-          VerticalAlignment="Center"
-          Width="91">
-          <ComboBoxItem Content="Nanosecond"></ComboBoxItem>
-          <ComboBoxItem Content="Millisecond"></ComboBoxItem>
-          <ComboBoxItem Content="Second"></ComboBoxItem>
-        </ComboBox>
-      </StackPanel>
-      <StackPanel Margin="0,0,0,2" Orientation="Horizontal">
-        <TextBlock Text="Weight cutoff" VerticalAlignment="Center"
-                   ToolTip="Only show lines with a weight greater than this value"/>
-        <xctk:IntegerUpDown
-          Margin="8,0,0,0"
-          Maximum="100"
-          Minimum="0"
-          Increment="1"
-          Width="70"
-          ParsingNumberStyle="Float"
-          ToolTip="Only show lines with a weight greater than this value"
-          ShowButtonSpinner="True"
-          Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
-        <TextBlock Text="%" Margin="2,0,0,0" VerticalAlignment="Center"/>
-        <Button
-          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-          VerticalAlignment="Center"
-          Margin="8,0,0,0"
-          Padding="2,0,2,0"
-          Content="Default"
-          Height="20"
-          ToolTip="Reset value to default weight cutoff" />
+            <TextBlock FontWeight="Medium" Text="Columns" />
+            <CheckBox
+                Margin="0,4,0,2"
+                Content="Show performance counter columns"
+                IsChecked="{Binding ShowPerformanceCounterColumns, Mode=TwoWay}"
+                ToolTip="Show the CPU performance counter columns" />
+            <CheckBox
+                Margin="0,2,0,2"
+                Content="Show performance metrics columns"
+                IsChecked="{Binding ShowPerformanceMetricColumns, Mode=TwoWay}"
+                ToolTip="Show the CPU performance metric columns" />
+            <CheckBox
+                Margin="0,2,0,2"
+                Content="Hide empty columns"
+                IsChecked="{Binding RemoveEmptyColumns, Mode=TwoWay}"
+                ToolTip="Compute function IR statistics on document load and show extra columns" />
+            <CheckBox
+                Margin="0,2,0,2"
+                Content="Use compact profiling time columns"
+                IsChecked="{Binding UseCompactProfilingColumns, Mode=TwoWay}"
+                IsEnabled="False"
+                ToolTip="Display only the profiling duration column" />
+            <CheckBox
+                Margin="0,4,0,2"
+                Content="Show icons for hottest lines"
+                IsChecked="{Binding DisplayIcons, Mode=TwoWay}"
+                ToolTip="Compute function IR statistics on document load and show extra columns" />
+            <CheckBox
+                Margin="0,2,0,2"
+                Content="Show percentage bars"
+                IsChecked="{Binding DisplayPercentageBar, Mode=TwoWay}"
+                ToolTip="Compute function IR statistics on document load and show extra columns" />
+            <StackPanel Margin="0,2,0,2" Orientation="Horizontal">
+                <TextBlock
+                    Width="50"
+                    VerticalAlignment="Center"
+                    Text="Time unit" />
+                <ComboBox
+                    Width="91"
+                    Margin="8,0,0,0"
+                    VerticalAlignment="Center"
+                    IsSynchronizedWithCurrentItem="True">
+                    <ComboBoxItem Content="Nanosecond" />
+                    <ComboBoxItem Content="Millisecond" />
+                    <ComboBoxItem Content="Second" />
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,2" Orientation="Horizontal">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="Weight cutoff"
+                    ToolTip="Only show lines with a weight greater than this value" />
+                <xctk:IntegerUpDown
+                    Width="70"
+                    Margin="8,0,0,0"
+                    Increment="1"
+                    Maximum="100"
+                    Minimum="0"
+                    ParsingNumberStyle="Float"
+                    ShowButtonSpinner="True"
+                    ToolTip="Only show lines with a weight greater than this value"
+                    Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
+                <TextBlock
+                    Margin="2,0,0,0"
+                    VerticalAlignment="Center"
+                    Text="%" />
+                <Button
+                    Height="20"
+                    Margin="8,0,0,0"
+                    Padding="2,0,2,0"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    Content="Default"
+                    ToolTip="Reset value to default weight cutoff" />
+            </StackPanel>
+            <Separator Margin="0,4,0,4" />
+
+            <TextBlock FontWeight="Medium" Text="Colors" />
+            <Grid Margin="0,4,0,0" IsEnabled="False">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="70" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <xctk:ColorPicker
+                    Grid.Column="0"
+                    Width="64"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    AvailableColorsSortingMode="HueSaturationBrightness"
+                    BorderBrush="Gray"
+                    SelectedColor="{Binding NewSectionColor, Mode=TwoWay}"
+                    ShowDropDownButton="True"
+                    UsingAlphaChannel="False" />
+                <TextBlock
+                    Grid.Column="1"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Text="Column text color" />
+            </Grid>
+            <Grid Margin="0,4,0,0" IsEnabled="False">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="70" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <xctk:ColorPicker
+                    Grid.Column="0"
+                    Width="64"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    AvailableColorsSortingMode="HueSaturationBrightness"
+                    BorderBrush="Gray"
+                    SelectedColor="{Binding NewSectionColor, Mode=TwoWay}"
+                    ShowDropDownButton="True"
+                    UsingAlphaChannel="False" />
+                <TextBlock
+                    Grid.Column="1"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Text="Percentage bar color" />
+            </Grid>
         </StackPanel>
-      <Separator Margin="0,4,0,4" />
-
-      <TextBlock FontWeight="Medium" Text="Colors" />
-      <Grid Margin="0,4,0,0" IsEnabled="False">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="70" />
-          <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-        <xctk:ColorPicker
-          AvailableColorsSortingMode="HueSaturationBrightness"
-          BorderBrush="Gray"
-          Grid.Column="0"
-          HorizontalAlignment="Left"
-          SelectedColor="{Binding NewSectionColor, Mode=TwoWay}"
-          ShowDropDownButton="True"
-          UsingAlphaChannel="False"
-          VerticalAlignment="Center"
-          Width="64" />
-        <TextBlock
-          Grid.Column="1"
-          HorizontalAlignment="Left"
-          Text="Column text color"
-          VerticalAlignment="Center" />
-      </Grid>
-      <Grid Margin="0,4,0,0" IsEnabled="False">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="70" />
-          <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-        <xctk:ColorPicker
-          AvailableColorsSortingMode="HueSaturationBrightness"
-          BorderBrush="Gray"
-          Grid.Column="0"
-          HorizontalAlignment="Left"
-          SelectedColor="{Binding NewSectionColor, Mode=TwoWay}"
-          ShowDropDownButton="True"
-          UsingAlphaChannel="False"
-          VerticalAlignment="Center"
-          Width="64" />
-        <TextBlock
-          Grid.Column="1"
-          HorizontalAlignment="Left"
-          Text="Percentage bar color"
-          VerticalAlignment="Center" />
-      </Grid>
-    </StackPanel>
-  </Grid>
+    </Grid>
 </local:OptionsPanelBase>

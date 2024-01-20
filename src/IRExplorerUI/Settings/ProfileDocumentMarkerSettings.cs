@@ -48,6 +48,11 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   [ProtoMember(23)]  public ValueUnitKind ValueUnit { get; set; }
 
   public override void Reset() {
+    MarkElements = true;
+    MarkBlocks = true;
+    MarkBlocksInFlowGraph = true;
+    MarkCallTargets = true;
+    ValueUnit = ValueUnitKind.Millisecond;
     VirtualColumnPosition = 350;
     ElementWeightCutoff = 0.003; // 0.3%
     TopOrderCutoff = 10;
@@ -249,8 +254,15 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   }
 
   protected bool Equals(ProfileDocumentMarkerSettings other) {
-    return ElementWeightCutoff.Equals(other.ElementWeightCutoff) &&
-           TopOrderCutoff == other.TopOrderCutoff && IconBarWeightCutoff.Equals(other.IconBarWeightCutoff) &&
+    return MarkElements == other.MarkElements &&
+           MarkBlocks == other.MarkBlocks &&
+           MarkBlocksInFlowGraph == other.MarkBlocksInFlowGraph &&
+           MarkCallTargets == other.MarkCallTargets &&
+           JumpToHottestElement == other.JumpToHottestElement &&
+           VirtualColumnPosition.Equals(other.VirtualColumnPosition) &&
+           ElementWeightCutoff.Equals(other.ElementWeightCutoff) &&
+           TopOrderCutoff == other.TopOrderCutoff && 
+           IconBarWeightCutoff.Equals(other.IconBarWeightCutoff) &&
            Equals(ColumnTextColor, other.ColumnTextColor) &&
            Equals(BlockOverlayTextColor, other.BlockOverlayTextColor) &&
            Equals(HotBlockOverlayTextColor, other.HotBlockOverlayTextColor) &&

@@ -53,11 +53,15 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);
     settings_ = (DocumentSettings)Settings;
+    ProfilingOptionsPanel.DataContext = settings_.ProfileMarkerSettings;
+    SourceOptionsPanel.DataContext = settings_.SourceMarkerSettings;
     ReloadSyntaxHighlightingList();
   }
 
   public override void OnSettingsChanged(object newSettings) {
     settings_ = (DocumentSettings)newSettings;
+    ProfilingOptionsPanel.DataContext = settings_.ProfileMarkerSettings;
+    SourceOptionsPanel.DataContext = settings_.SourceMarkerSettings;
     ReloadSyntaxHighlightingList();
   }
 
