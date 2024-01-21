@@ -37,8 +37,9 @@
                 ToolTip="Mark document lines with a color based on the profile weight" />
             <CheckBox
                 Margin="0,2,0,2"
-                Content="Jump to hottest function line"
+                Content="Jump to the hottest function line"
                 IsChecked="{Binding JumpToHottestElement, Mode=TwoWay}"
+                IsEnabled="False"
                 ToolTip="Mark document lines with a color based on the profile weight" />
             <Separator Margin="0,4,0,4" />
 
@@ -60,54 +61,33 @@
                 ToolTip="Compute function IR statistics on document load and show extra columns" />
             <CheckBox
                 Margin="0,2,0,2"
-                Content="Use compact profiling time columns"
-                IsChecked="{Binding UseCompactProfilingColumns, Mode=TwoWay}"
-                IsEnabled="False"
-                ToolTip="Display only the profiling duration column" />
-            <CheckBox
-                Margin="0,4,0,2"
                 Content="Show icons for hottest lines"
                 IsChecked="{Binding DisplayIcons, Mode=TwoWay}"
                 ToolTip="Compute function IR statistics on document load and show extra columns" />
             <CheckBox
+                x:Name="PercentageBarCheckBox"
                 Margin="0,2,0,2"
                 Content="Show percentage bars"
                 IsChecked="{Binding DisplayPercentageBar, Mode=TwoWay}"
                 ToolTip="Compute function IR statistics on document load and show extra columns" />
-            <StackPanel Margin="0,2,0,2" Orientation="Horizontal">
-                <TextBlock
-                    Width="50"
-                    VerticalAlignment="Center"
-                    Text="Time unit" />
-                <ComboBox
-                    Width="91"
-                    Margin="8,0,0,0"
-                    VerticalAlignment="Center"
-                    IsSynchronizedWithCurrentItem="True">
-                    <ComboBoxItem Content="Nanosecond" />
-                    <ComboBoxItem Content="Millisecond" />
-                    <ComboBoxItem Content="Second" />
-                </ComboBox>
-            </StackPanel>
-            <StackPanel Margin="0,0,0,2" Orientation="Horizontal">
+            <StackPanel
+                Margin="20,0,0,2"
+                IsEnabled="{Binding ElementName=PercentageBarCheckBox, Path=IsChecked}"
+                Orientation="Horizontal">
                 <TextBlock
                     VerticalAlignment="Center"
-                    Text="Weight cutoff"
-                    ToolTip="Only show lines with a weight greater than this value" />
+                    Text="Max width (px)"
+                    ToolTip="Maximum width of the percentage bar in the column" />
                 <xctk:IntegerUpDown
-                    Width="70"
+                    Width="64"
                     Margin="8,0,0,0"
                     Increment="1"
                     Maximum="100"
-                    Minimum="0"
-                    ParsingNumberStyle="Float"
+                    Minimum="10"
+                    ParsingNumberStyle="Integer"
                     ShowButtonSpinner="True"
                     ToolTip="Only show lines with a weight greater than this value"
-                    Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
-                <TextBlock
-                    Margin="2,0,0,0"
-                    VerticalAlignment="Center"
-                    Text="%" />
+                    Value="{Binding Path=MaxPercentageBarWidth, Mode=TwoWay}" />
                 <Button
                     Height="20"
                     Margin="8,0,0,0"
@@ -117,10 +97,50 @@
                     Content="Default"
                     ToolTip="Reset value to default weight cutoff" />
             </StackPanel>
+
+            <StackPanel Margin="0,2,0,0" Orientation="Horizontal">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="Weight cutoff (%)"
+                    ToolTip="Only show lines with a weight greater than this value" />
+                <xctk:IntegerUpDown
+                    Width="65"
+                    Margin="14,0,0,0"
+                    Increment="1"
+                    Maximum="100"
+                    Minimum="0"
+                    ParsingNumberStyle="Float"
+                    ShowButtonSpinner="True"
+                    ToolTip="Only show lines with a weight greater than this value"
+                    Value="{Binding Path=ElementWeightCutoff, Mode=TwoWay}" />
+                <Button
+                    Height="20"
+                    Margin="8,0,0,0"
+                    Padding="2,0,2,0"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    Content="Default"
+                    ToolTip="Reset value to default weight cutoff" />
+            </StackPanel>
+            <StackPanel Margin="0,2,0,2" Orientation="Horizontal">
+                <TextBlock
+                    Width="50"
+                    VerticalAlignment="Center"
+                    Text="Time unit" />
+                <ComboBox
+                    Width="112"
+                    Margin="8,0,0,0"
+                    VerticalAlignment="Center"
+                    IsSynchronizedWithCurrentItem="True">
+                    <ComboBoxItem Content="Nanosecond" />
+                    <ComboBoxItem Content="Millisecond" />
+                    <ComboBoxItem Content="Second" />
+                </ComboBox>
+            </StackPanel>
             <Separator Margin="0,4,0,4" />
 
             <TextBlock FontWeight="Medium" Text="Colors" />
-            <Grid Margin="0,4,0,0" IsEnabled="False">
+            <Grid Margin="0,4,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="70" />
                     <ColumnDefinition />
@@ -132,7 +152,7 @@
                     VerticalAlignment="Center"
                     AvailableColorsSortingMode="HueSaturationBrightness"
                     BorderBrush="Gray"
-                    SelectedColor="{Binding NewSectionColor, Mode=TwoWay}"
+                    SelectedColor="{Binding ColumnTextColor, Mode=TwoWay}"
                     ShowDropDownButton="True"
                     UsingAlphaChannel="False" />
                 <TextBlock
@@ -141,7 +161,7 @@
                     VerticalAlignment="Center"
                     Text="Column text color" />
             </Grid>
-            <Grid Margin="0,4,0,0" IsEnabled="False">
+            <Grid Margin="0,2,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="70" />
                     <ColumnDefinition />
@@ -153,7 +173,7 @@
                     VerticalAlignment="Center"
                     AvailableColorsSortingMode="HueSaturationBrightness"
                     BorderBrush="Gray"
-                    SelectedColor="{Binding NewSectionColor, Mode=TwoWay}"
+                    SelectedColor="{Binding PercentageBarBackColor, Mode=TwoWay}"
                     ShowDropDownButton="True"
                     UsingAlphaChannel="False" />
                 <TextBlock
@@ -161,6 +181,78 @@
                     HorizontalAlignment="Left"
                     VerticalAlignment="Center"
                     Text="Percentage bar color" />
+            </Grid>
+            <Grid
+                Margin="0,2,0,0"
+                IsEnabled="{Binding ElementName=MarkBlocksCheckbox, Path=IsChecked}"
+                Visibility="{Binding ShowsDocumentSettings, Converter={StaticResource BoolToVisibilityConverter}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:DocumentProfilingOptionsPanel}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="70" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <xctk:ColorPicker
+                    Grid.Column="0"
+                    Width="64"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    AvailableColorsSortingMode="HueSaturationBrightness"
+                    BorderBrush="Gray"
+                    SelectedColor="{Binding BlockOverlayTextColor, Mode=TwoWay}"
+                    ShowDropDownButton="True"
+                    UsingAlphaChannel="False" />
+                <TextBlock
+                    Grid.Column="1"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Text="Marked block text color" />
+            </Grid>
+            <Grid
+                Margin="0,2,0,0"
+                IsEnabled="{Binding ElementName=MarkBlocksCheckbox, Path=IsChecked}"
+                Visibility="{Binding ShowsDocumentSettings, Converter={StaticResource BoolToVisibilityConverter}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:DocumentProfilingOptionsPanel}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="70" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <xctk:ColorPicker
+                    Grid.Column="0"
+                    Width="64"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    AvailableColorsSortingMode="HueSaturationBrightness"
+                    BorderBrush="Gray"
+                    SelectedColor="{Binding HotBlockOverlayTextColor, Mode=TwoWay}"
+                    ShowDropDownButton="True"
+                    UsingAlphaChannel="False" />
+                <TextBlock
+                    Grid.Column="1"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Text="Marked hot block text color" />
+            </Grid>
+            <Grid
+                Margin="0,2,0,0"
+                IsEnabled="{Binding ElementName=MarkBlocksCheckbox, Path=IsChecked}"
+                Visibility="{Binding ShowsDocumentSettings, Converter={StaticResource BoolToVisibilityConverter}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:DocumentProfilingOptionsPanel}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="70" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <xctk:ColorPicker
+                    Grid.Column="0"
+                    Width="64"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    AvailableColorsSortingMode="HueSaturationBrightness"
+                    BorderBrush="Gray"
+                    SelectedColor="{Binding BlockOverlayBorderColor, Mode=TwoWay}"
+                    ShowDropDownButton="True"
+                    UsingAlphaChannel="False" />
+                <TextBlock
+                    Grid.Column="1"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Text="Marked block border color" />
             </Grid>
         </StackPanel>
     </Grid>

@@ -13,6 +13,21 @@ using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Utilities;
 
+public class FontFamilyConverter : IValueConverter {
+  public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    try {
+      return new FontFamily((string)value);
+    }
+    catch (Exception) {
+      return null;
+    }
+  }
+
+  public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    return ((FontFamily)value).Source;
+  }
+}
+
 public class ListToStringConverter : IValueConverter {
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
     var sb = new StringBuilder();

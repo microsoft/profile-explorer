@@ -35,7 +35,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   [ProtoMember(10)]  public Color ColumnTextColor { get; set; }
   [ProtoMember(11)]  public Color BlockOverlayTextColor { get; set; }
   [ProtoMember(12)]  public Color HotBlockOverlayTextColor { get; set; }
-  [ProtoMember(13)]  public Color HotBlockOverlayBackColor { get; set; }
   [ProtoMember(14)]  public Color BlockOverlayBorderColor { get; set; }
   [ProtoMember(15)]  public double BlockOverlayBorderThickness { get; set; }
   [ProtoMember(16)]  public Color PercentageBarBackColor { get; set; }
@@ -68,7 +67,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     HotBlockOverlayTextColor = Colors.DarkRed;
     BlockOverlayBorderColor = Colors.DimGray;
     BlockOverlayBorderThickness = 1;
-    HotBlockOverlayBackColor = Colors.AntiqueWhite;
     PercentageBarBackColor = Utils.ColorFromString("#Aa4343");
   }
 
@@ -266,7 +264,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
            Equals(ColumnTextColor, other.ColumnTextColor) &&
            Equals(BlockOverlayTextColor, other.BlockOverlayTextColor) &&
            Equals(HotBlockOverlayTextColor, other.HotBlockOverlayTextColor) &&
-           Equals(HotBlockOverlayBackColor, other.HotBlockOverlayBackColor) &&
            Equals(BlockOverlayBorderColor, other.BlockOverlayBorderColor) &&
            BlockOverlayBorderThickness.Equals(other.BlockOverlayBorderThickness) &&
            Equals(PercentageBarBackColor, other.PercentageBarBackColor) &&
