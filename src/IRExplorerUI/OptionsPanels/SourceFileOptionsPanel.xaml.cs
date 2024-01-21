@@ -2,12 +2,14 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Input;
 
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class SourceFileOptionsPanel : OptionsPanelBase {
+  private SourceFileSettings settings_;
   public const double DefaultHeight = 320;
   public const double MinimumHeight = 200;
   public const double DefaultWidth = 350;
@@ -17,6 +19,15 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
     InitializeComponent();
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
     PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
+  }
+
+
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+    base.Initialize(parent, settings, session);
+    settings_ = (SourceFileSettings)Settings;
+    ProfilingOptionsPanel.DataContext = settings_.ProfileMarkerSettings;
+    ReloadMappedPathsList();
+    ReloadExcludedPathsList();
   }
 
   private void SectionOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
@@ -31,5 +42,32 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
     DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
       RaiseSettingsChanged(null);
     });
+  }
+
+  private void ReloadMappedPathsList() {
+    var mappings = new List<KeyValuePair<string, string>>();
+
+    foreach (var pair in settings_.FinderSettings.SourceMappings) {
+      mappings.Add(pair);
+    }
+    var list = new ObservableCollectionRefresh<KeyValuePair<string, string>> (mappings);
+    MappedPathsList.ItemsSource = list;
+  }
+
+  private void ReloadExcludedPathsList() {
+    var list = new ObservableCollectionRefresh<string>(settings_.FinderSettings.DisabledSourceMappings.ToList());
+    ExcludedPathsList.ItemsSource = list;
+  }
+
+  private void SymbolPath_KeyDown(object sender, KeyEventArgs e) {
+
+    }
+
+  private void SymbolPath_LostFocus(object sender, RoutedEventArgs e) {
+
+  }
+
+  private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+
   }
 }

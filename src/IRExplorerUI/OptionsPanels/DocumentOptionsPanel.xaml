@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI.OptionsPanels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:utilities="clr-namespace:IRExplorerUI.Utilities"
     xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
     d:DesignHeight="600"
     d:DesignWidth="400"
@@ -12,7 +13,7 @@
 
     <local:OptionsPanelBase.Resources>
         <CollectionViewSource x:Key="FontCollection" Source="{Binding Source={x:Static Fonts.SystemFontFamilies}}" />
-        <local:FontFamilyConverter x:Key="FontFamilyConverter" />
+        <utilities:FontFamilyConverter x:Key="FontFamilyConverter" />
 
         <DataTemplate x:Key="ColorPickerItemList">
             <Grid>

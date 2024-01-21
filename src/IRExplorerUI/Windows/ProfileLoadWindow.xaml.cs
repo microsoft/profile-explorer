@@ -974,7 +974,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     foreach (var item in SymbolPathsList.SelectedItems) {
       string symbolPath = item as string;
       symbolOptions_.SymbolPaths.Remove(symbolPath);
-
     }
 
     ReloadSymbolPathsList();
@@ -1011,6 +1010,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     symbolOptions_.SymbolPaths.Insert(selectedIndex + 1, selectedItem);
     ReloadSymbolPathsList();
   }
+
   private void ReloadSymbolPathsList() {
     var list = new ObservableCollectionRefresh<string>(symbolOptions_.SymbolPaths);
     SymbolPathsList.ItemsSource = list;

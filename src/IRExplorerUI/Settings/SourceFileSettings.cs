@@ -1,8 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Windows.Media;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -19,6 +21,13 @@ public class SourceFileSettings : SettingsBase {
   public ProfileDocumentMarkerSettings ProfileMarkerSettings { get; set; }
   [ProtoMember(3)]
   public OptionalColumnSettings ColumnSettings { get; set; }
+  [ProtoMember(4)]
+  public bool SyncWithDocument { get; set; }
+  [ProtoMember(5)] public string FontName { get; set; }
+  [ProtoMember(6)] public double FontSize { get; set; }
+  [ProtoMember(7)] public Color BackgroundColor { get; set; }
+  [ProtoMember(8)] public Color MarginBackgroundColor { get; set; }
+  [ProtoMember(9)] public Color TextColor { get; set; }
 
   //? TODO: Options for
   //? - font, font size
@@ -27,6 +36,12 @@ public class SourceFileSettings : SettingsBase {
 
   public override void Reset() {
     InitializeReferenceMembers();
+    SyncWithDocument = true;
+    FontName = "Consolas";
+    FontSize = 12;
+    BackgroundColor = Utils.ColorFromString("#FFFAFA");
+    TextColor = Colors.Black;
+    MarginBackgroundColor = Colors.Gainsboro;
     FinderSettings.Reset();
     ProfileMarkerSettings.Reset();
     ColumnSettings.Reset();
@@ -46,6 +61,12 @@ public class SourceFileSettings : SettingsBase {
 
   public override bool Equals(object obj) {
     return obj is SourceFileSettings settings &&
+           SyncWithDocument == settings.SyncWithDocument &&
+           FontName == settings.FontName &&
+           Math.Abs(FontSize - settings.FontSize) < double.Epsilon &&
+           BackgroundColor == settings.BackgroundColor &&
+           MarginBackgroundColor == settings.MarginBackgroundColor &&
+           TextColor == settings.TextColor &&
            FinderSettings.Equals(settings.FinderSettings) &&
            ProfileMarkerSettings.Equals(settings.ProfileMarkerSettings) &&
            ColumnSettings.Equals(settings.ColumnSettings);
