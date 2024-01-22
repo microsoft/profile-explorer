@@ -33,7 +33,7 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
   public SymbolFileDescriptor ManagedSymbolFile { get; set; }
   public string ManagedAsmFilePath { get; set; }
   public Machine? Architecture => architecture_;
-  public SymbolFileSourceOptions SymbolOptions { get; set; }
+  public SymbolFileSourceSettings SymbolSettings { get; set; }
 
   public void UpdateArchitecture(Machine architecture) {
     if (architecture_ == Machine.Unknown) {
@@ -176,7 +176,7 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
     }
 
     // Locate the managed debug file.
-    var options = SymbolOptions != null ? SymbolOptions : App.Settings.SymbolOptions.Clone();
+    var options = SymbolSettings != null ? SymbolSettings : App.Settings.SymbolSettings.Clone();
 
     if (File.Exists(ManagedSymbolFile.FileName)) {
       options.InsertSymbolPath(ManagedSymbolFile.FileName);

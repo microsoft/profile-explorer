@@ -125,7 +125,7 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
   }
 
   public static async Task<BinaryFileSearchResult> LocateBinaryFile(BinaryFileDescriptor binaryFile,
-                                                                    SymbolFileSourceOptions options) {
+                                                                    SymbolFileSourceSettings settings) {
     // Check if the binary was requested before.
     if (resolvedBinariesCache_.TryGetValue(binaryFile, out var searchResult)) {
       return searchResult;
@@ -137,10 +137,10 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
 
       try {
         if (File.Exists(binaryFile.ImagePath)) {
-          options = options.WithSymbolPaths(binaryFile.ImagePath);
+          settings = settings.WithSymbolPaths(binaryFile.ImagePath);
         }
 
-        string userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);
+        string userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(settings);
 
         //? TODO: Making a new instance clears the "dead servers",
         //? have a way to share the list between multiple instances.
@@ -174,7 +174,7 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
             return !rel.StartsWith('.') && !Path.IsPathRooted(rel);
           }
 
-          foreach (string path in options.SymbolPaths) {
+          foreach (string path in settings.SymbolPaths) {
             if (PathIsSubPath(path, winPath) ||
                 PathIsSubPath(path, sysPath) ||
                 PathIsSubPath(path, sysx86Path)) {

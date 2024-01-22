@@ -36,14 +36,14 @@ public enum ProfileSessionKind {
 public interface IProfileDataProvider {
   Task<ProfileData> LoadTraceAsync(RawProfileData rawProfile, List<int> processIds,
                                    ProfileDataProviderOptions options,
-                                   SymbolFileSourceOptions symbolOptions,
+                                   SymbolFileSourceSettings symbolSettings,
                                    ProfileDataReport report,
                                    ProfileLoadProgressHandler progressCallback,
                                    CancelableTask cancelableTask = null);
 
   Task<ProfileData> LoadTraceAsync(string tracePath, List<int> processIds,
                                    ProfileDataProviderOptions options,
-                                   SymbolFileSourceOptions symbolOptions,
+                                   SymbolFileSourceSettings symbolSettings,
                                    ProfileDataReport report,
                                    ProfileLoadProgressHandler progressCallback,
                                    CancelableTask cancelableTask = null);

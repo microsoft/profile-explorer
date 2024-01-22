@@ -95,14 +95,14 @@ public interface ISession {
   //? and sending the activity/timeline events to all of them.
   Task<bool> LoadProfileData(string profileFilePath, List<int> processIds,
                              ProfileDataProviderOptions options,
-                             SymbolFileSourceOptions symbolOptions,
+                             SymbolFileSourceSettings symbolSettings,
                              ProfileDataReport report,
                              ProfileLoadProgressHandler progressCallback,
                              CancelableTask cancelableTask);
 
   Task<bool> LoadProfileData(RawProfileData data, List<int> processIds,
                              ProfileDataProviderOptions options,
-                             SymbolFileSourceOptions symbolOptions,
+                             SymbolFileSourceSettings symbolSettings,
                              ProfileDataReport report,
                              ProfileLoadProgressHandler progressCallback,
                              CancelableTask cancelableTask);

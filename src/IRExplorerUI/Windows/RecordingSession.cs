@@ -51,7 +51,7 @@ public class RecordingSession : BindableObject {
         return null;
       }
 
-      report.SymbolOptions = App.Settings.SymbolOptions.WithSymbolPaths(args[3]);
+      report.SymbolSettings = App.Settings.SymbolSettings.WithSymbolPaths(args[3]);
 
       if (!int.TryParse(args[4], out int processId)) {
         MessageBox.Show("Process ID is not an integer.");
