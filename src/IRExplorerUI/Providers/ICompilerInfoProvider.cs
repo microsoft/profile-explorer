@@ -38,8 +38,8 @@ public interface ICompilerInfoProvider {
   IDiffOutputFilter CreateDiffOutputFilter();
   IDebugInfoProvider CreateDebugInfoProvider(string imagePath);
   IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile);
-  Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options = null);
-  Task<BinaryFileSearchResult> FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceOptions options = null);
+  Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null);
+  Task<BinaryFileSearchResult> FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceSettings settings = null);
 }
 
 [ProtoContract]

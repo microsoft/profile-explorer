@@ -32,7 +32,7 @@ public sealed class ModuleInfo {
   public bool Initialized { get; set; }
   public bool IsManaged { get; set; }
 
-  public async Task<bool> Initialize(BinaryFileDescriptor binaryInfo, SymbolFileSourceOptions symbolOptions,
+  public async Task<bool> Initialize(BinaryFileDescriptor binaryInfo, SymbolFileSourceSettings symbolSettings,
                                      IDebugInfoProvider debugInfo) {
     if (Initialized) {
       return true;
@@ -42,7 +42,7 @@ public sealed class ModuleInfo {
     string imageName = binaryInfo.ImageName;
     Trace.WriteLine($"ModuleInfo init {imageName}");
 
-    var binFile = await FindBinaryFilePath(symbolOptions).ConfigureAwait(false);
+    var binFile = await FindBinaryFilePath(symbolSettings).ConfigureAwait(false);
 
     if (binFile == null || !binFile.Found) {
       Trace.TraceWarning($"  Could not find local path for image {imageName}");
@@ -102,10 +102,10 @@ public sealed class ModuleInfo {
     return HasDebugInfo;
   }
 
-  public async Task<BinaryFileSearchResult> FindBinaryFilePath(SymbolFileSourceOptions options) {
+  public async Task<BinaryFileSearchResult> FindBinaryFilePath(SymbolFileSourceSettings settings) {
     // Use the symbol server to locate the image,
     // this will also attempt to download it if not found locally.
-    return await session_.CompilerInfo.FindBinaryFile(binaryInfo_, options).ConfigureAwait(false);
+    return await session_.CompilerInfo.FindBinaryFile(binaryInfo_, settings).ConfigureAwait(false);
   }
 
   public FunctionDebugInfo FindFunctionDebugInfo(long funcAddress) {

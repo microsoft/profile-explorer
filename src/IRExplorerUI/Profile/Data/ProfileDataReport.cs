@@ -21,7 +21,7 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
   [ProtoMember(4)]
   public ProfileProcess Process { get; set; }
   [ProtoMember(5)]
-  public SymbolFileSourceOptions SymbolOptions { get; set; }
+  public SymbolFileSourceSettings SymbolSettings { get; set; }
   [ProtoMember(6)]
   public ProfileRecordingSessionOptions RecordingSessionOptions { get; set; } // For recording mode
   public bool IsRecordingSession => RecordingSessionOptions != null;

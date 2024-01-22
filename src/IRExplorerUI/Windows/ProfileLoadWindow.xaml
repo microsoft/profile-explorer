@@ -701,8 +701,7 @@
                                     <CheckBox
                                         Margin="0,8,0,0"
                                         Content="Include __NT_SYMBOL_PATH environment variable"
-                                        IsChecked="{Binding Path=Options.IncludeKernelEvents, Mode=TwoWay}"
-                                        IsEnabled="False" />
+                                        IsChecked="{Binding Path=SymbolSettings.UseEnvironmentVarSymbolPaths, Mode=TwoWay}"/>
                                     <Grid Margin="0,4,0,0">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="*" />
@@ -885,14 +884,14 @@
                                     <CheckBox
                                         Margin="0,8,0,0"
                                         Content="Download source files from Source Server"
-                                        IsChecked="{Binding Path=SymbolOptions.SourceServerEnabled, Mode=TwoWay}"
+                                        IsChecked="{Binding Path=SymbolSettings.SourceServerEnabled, Mode=TwoWay}"
                                         ToolTip="Download source files using the SourceLink info from the symbol files" />
 
                                     <CheckBox
                                         x:Name="AuthorizationTokenCheckbox"
                                         Margin="0,4,0,0"
                                         Content="Use Source Server authentication token (PAT)"
-                                        IsChecked="{Binding Path=SymbolOptions.AuthorizationTokenEnabled, Mode=TwoWay}"
+                                        IsChecked="{Binding Path=SymbolSettings.AuthorizationTokenEnabled, Mode=TwoWay}"
                                         ToolTip="Personal Authentication Token used with private SourceLink servers" />
 
                                     <TextBox
@@ -902,7 +901,7 @@
                                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                         IsEnabled="{Binding ElementName=AuthorizationTokenCheckbox, Path=IsChecked}"
-                                        Text="{Binding Path=SymbolOptions.AuthorizationToken, Mode=TwoWay}"
+                                        Text="{Binding Path=SymbolSettings.AuthorizationToken, Mode=TwoWay}"
                                         TextWrapping="Wrap" />
                                 </StackPanel>
                             </Expander>

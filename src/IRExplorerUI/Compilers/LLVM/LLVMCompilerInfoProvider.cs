@@ -59,19 +59,19 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
   }
 
   public IDebugInfoProvider CreateDebugInfoProvider(string imagePath) {
-    return new PDBDebugInfoProvider(App.Settings.SymbolOptions);
+    return new PDBDebugInfoProvider(App.Settings.SymbolSettings);
   }
 
   public IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile) {
     return null;
   }
 
-  public async Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options) {
+  public async Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings) {
     return Utils.LocateDebugInfoFile(imagePath, ".pdb");
   }
 
   public Task<BinaryFileSearchResult> FindBinaryFile(BinaryFileDescriptor binaryFile,
-                                                     SymbolFileSourceOptions options = null) {
+                                                     SymbolFileSourceSettings settings = null) {
     return null;
   }
 

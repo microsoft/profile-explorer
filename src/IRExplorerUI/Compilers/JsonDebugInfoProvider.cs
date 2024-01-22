@@ -14,7 +14,7 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
   private Dictionary<string, FunctionDebugInfo> functionMap_;
   private List<FunctionDebugInfo> functions_;
   public Machine? Architecture => null;
-  public SymbolFileSourceOptions SymbolOptions { get; set; }
+  public SymbolFileSourceSettings SymbolSettings { get; set; }
 
   private static SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info) {
     return new SourceFileDebugInfo(info.FirstSourceLine.FilePath,

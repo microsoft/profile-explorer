@@ -30,7 +30,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   //? to be searched for in new locations.
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ =
     new ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult>();
-  private SymbolFileSourceOptions options_;
+  private SymbolFileSourceSettings settings_;
   private string debugFilePath_;
   private IDiaDataSource diaSource_;
   private IDiaSession session_;
@@ -39,20 +39,20 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private bool loadFailed_;
   private bool disposed_;
 
-  public PDBDebugInfoProvider(SymbolFileSourceOptions options) {
-    options_ = options;
+  public PDBDebugInfoProvider(SymbolFileSourceSettings settings) {
+    settings_ = settings;
   }
 
   ~PDBDebugInfoProvider() {
     Dispose(false);
   }
 
-  public SymbolFileSourceOptions SymbolOptions { get; set; }
+  public SymbolFileSourceSettings SymbolSettings { get; set; }
   public Machine? Architecture => null;
 
   public static async Task<DebugFileSearchResult>
     LocateDebugInfoFile(SymbolFileDescriptor symbolFile,
-                        SymbolFileSourceOptions options) {
+                        SymbolFileSourceSettings settings) {
     if (symbolFile == null) {
       return DebugFileSearchResult.None;
     }
@@ -67,7 +67,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       DebugFileSearchResult searchResult = null;
 
       // In case there is a timeout downloading the symbols, try again.
-      string symbolSearchPath = ConstructSymbolSearchPath(options);
+      string symbolSearchPath = ConstructSymbolSearchPath(settings);
       using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
       symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
@@ -98,12 +98,23 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }).ConfigureAwait(false);
   }
 
-  public static string ConstructSymbolSearchPath(SymbolFileSourceOptions options) {
-    //? TODO: Also consider Environment.GetEnvironmentVariable("_NT_SYMBOL_PATH")?
-
+  public static string ConstructSymbolSearchPath(SymbolFileSourceSettings settings) {
     string symbolPath = "";
 
-    foreach (string path in options.SymbolPaths) {
+    if (settings.UseEnvironmentVarSymbolPaths) {
+      try {
+        var envVar = Environment.GetEnvironmentVariable("_NT_SYMBOL_PATH");
+
+        if (!string.IsNullOrEmpty(envVar)) {
+          symbolPath += $"{envVar};";
+        }
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to read _NT_SYMBOL_PATH: {ex.Message}");
+      }
+    }
+
+    foreach (string path in settings.SymbolPaths) {
       if (!string.IsNullOrEmpty(path)) {
         symbolPath += $"{path};";
       }
@@ -113,11 +124,11 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   }
 
   public static async Task<DebugFileSearchResult>
-    LocateDebugInfoFile(string imagePath, SymbolFileSourceOptions options) {
+    LocateDebugInfoFile(string imagePath, SymbolFileSourceSettings settings) {
     using var binaryInfo = new PEBinaryInfoProvider(imagePath);
 
     if (binaryInfo.Initialize()) {
-      return await LocateDebugInfoFile(binaryInfo.SymbolFileInfo, options).ConfigureAwait(false);
+      return await LocateDebugInfoFile(binaryInfo.SymbolFileInfo, settings).ConfigureAwait(false);
     }
 
     return null;
@@ -366,7 +377,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     // Try to use the source server if no exact local file found.
-    if ((!localFileFound || hasChecksumMismatch) && options_.SourceServerEnabled) {
+    if ((!localFileFound || hasChecksumMismatch) && settings_.SourceServerEnabled) {
       try {
         using var logWriter = new StringWriter();
         using var symbolReader = new SymbolReader(logWriter);
@@ -377,7 +388,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         Trace.WriteLine($"Query source server for {sourceLine?.SourceFile?.BuildTimeFilePath}");
 
         if (sourceLine?.SourceFile != null) {
-          if (options_.HasAuthorizationToken) {
+          if (settings_.HasAuthorizationToken) {
             // SourceLink HTTP personal authentication token.
             //? TODO: New way for more recent TraceEvent versions:
             //? https://github.com/microsoft/perfview/blob/main/documentation/TraceEvent/SymbolReader/AzureDevOpsPATAuthenticationExample.cs

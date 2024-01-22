@@ -30,13 +30,13 @@ public partial class MainWindow : Window, ISession {
 
   public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds,
                                           ProfileDataProviderOptions options,
-                                          SymbolFileSourceOptions symbolOptions,
+                                          SymbolFileSourceSettings symbolSettings,
                                           ProfileDataReport report,
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
     using var provider = new ETWProfileDataProvider(this);
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
-                                               options, symbolOptions,
+                                               options, symbolSettings,
                                                report, progressCallback, cancelableTask);
 
     if (!IsSessionStarted) {
@@ -55,13 +55,13 @@ public partial class MainWindow : Window, ISession {
 
   public async Task<bool> LoadProfileData(RawProfileData data, List<int> processIds,
                                           ProfileDataProviderOptions options,
-                                          SymbolFileSourceOptions symbolOptions,
+                                          SymbolFileSourceSettings symbolSettings,
                                           ProfileDataReport report,
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
     using var provider = new ETWProfileDataProvider(this);
     var result = await provider.LoadTraceAsync(data, processIds,
-                                               options, symbolOptions,
+                                               options, symbolSettings,
                                                report, progressCallback, cancelableTask);
 
     if (!IsSessionStarted) {

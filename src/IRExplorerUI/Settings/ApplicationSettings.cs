@@ -58,7 +58,7 @@ public class ApplicationSettings {
   [ProtoMember(16)]
   public ProfileDataProviderOptions ProfileOptions;
   [ProtoMember(17)]
-  public SymbolFileSourceOptions SymbolOptions;
+  public SymbolFileSourceSettings SymbolSettings;
   [ProtoMember(18)]
   public CallTreeSettings CallTreeSettings;
   [ProtoMember(19)]
@@ -224,7 +224,7 @@ public class ApplicationSettings {
     SectionSettings ??= new SectionSettings();
     FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
     ProfileOptions ??= new ProfileDataProviderOptions();
-    SymbolOptions ??= new SymbolFileSourceOptions();
+    SymbolSettings ??= new SymbolFileSourceSettings();
     CallTreeSettings ??= new CallTreeSettings();
     CallerCalleeSettings ??= new CallTreeSettings();
     FlameGraphSettings ??= new FlameGraphSettings();

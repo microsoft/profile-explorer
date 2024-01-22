@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using IRExplorerCore;
@@ -14,7 +13,7 @@ namespace IRExplorerUI.Compilers;
 
 public interface IDebugInfoProvider : IDisposable {
   public Machine? Architecture { get; }
-  public SymbolFileSourceOptions SymbolOptions { get; set; }
+  public SymbolFileSourceSettings SymbolSettings { get; set; }
   bool LoadDebugInfo(string debugFilePath);
   void Unload();
   bool LoadDebugInfo(DebugFileSearchResult debugFile);
@@ -29,88 +28,6 @@ public interface IDebugInfoProvider : IDisposable {
   SourceFileDebugInfo FindFunctionSourceFilePath(string functionName);
   SourceFileDebugInfo FindSourceFilePathByRVA(long rva);
   SourceLineDebugInfo FindSourceLineByRVA(long rva);
-}
-
-[ProtoContract(SkipConstructor = true)]
-public class SymbolFileSourceOptions : SettingsBase {
-  private const string DefaultPrivateSymbolServer = @"https://symweb";
-  private const string DefaultPublicSymbolServer = @"https://msdl.microsoft.com/download/symbols";
-  private const string DefaultSymbolCachePath = @"C:\Symbols";
-
-  public SymbolFileSourceOptions() {
-    Reset();
-  }
-
-  [ProtoMember(1)]
-  public List<string> SymbolPaths { get; set; }
-  [ProtoMember(2)]
-  public bool SourceServerEnabled { get; set; }
-  [ProtoMember(3)]
-  public bool AuthorizationTokenEnabled { get; set; }
-  [ProtoMember(4)]
-  public string AuthorizationToken { get; set; }
-  public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
-
-  public void AddSymbolServer(bool usePrivateServer) {
-    string symbolServer = usePrivateServer ? DefaultPrivateSymbolServer : DefaultPublicSymbolServer;
-    var path = $"srv*{DefaultSymbolCachePath}*{symbolServer}";
-
-    if (!SymbolPaths.Contains(path)) {
-      SymbolPaths.Add(path);
-    }
-  }
-
-  public bool HasSymbolPath(string path) {
-    path = Utils.TryGetDirectoryName(path).ToLowerInvariant();
-    return SymbolPaths.Find(item => item.ToLowerInvariant() == path) != null;
-  }
-
-  public void InsertSymbolPath(string path) {
-    if (string.IsNullOrEmpty(path)) {
-      return;
-    }
-
-    foreach (string p in path.Split(";")) {
-      var dir = Utils.TryGetDirectoryName(p);
-      
-      if(!string.IsNullOrEmpty(dir) && !HasSymbolPath(dir)) {
-        SymbolPaths.Add(dir);
-      }
-    }
-  }
-
-  public void InsertSymbolPaths(IEnumerable<string> paths) {
-    foreach (string path in paths) {
-      InsertSymbolPath(path);
-    }
-  }
-
-  public SymbolFileSourceOptions WithSymbolPaths(params string[] paths) {
-    var options = Clone();
-
-    foreach (string path in paths) {
-      options.InsertSymbolPath(path);
-    }
-
-    return options;
-  }
-
-  public override void Reset() {
-    InitializeReferenceMembers();
-
-    AddSymbolServer(usePrivateServer : true);
-    AddSymbolServer(usePrivateServer: false);
-  }
-
-  public SymbolFileSourceOptions Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<SymbolFileSourceOptions>(serialized);
-  }
-
-  [ProtoAfterDeserialization]
-  private void InitializeReferenceMembers() {
-    SymbolPaths ??= new List<string>();
-  }
 }
 
 [ProtoContract(SkipConstructor = true)]

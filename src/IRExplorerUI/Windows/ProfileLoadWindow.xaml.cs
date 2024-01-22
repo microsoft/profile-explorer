@@ -27,7 +27,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private bool isLoadingProfile_;
   private ProfileDataProviderOptions options_;
   private ProfileRecordingSessionOptions recordingOptions_;
-  private SymbolFileSourceOptions symbolOptions_;
+  private SymbolFileSourceSettings symbolSettings_;
   private RawProfileData recordedProfile_;
   private bool isLoadingProcessList_;
   private bool showProcessList_;
@@ -61,7 +61,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     Options = App.Settings.ProfileOptions;
-    SymbolOptions = App.Settings.SymbolOptions;
+    SymbolSettings = App.Settings.SymbolSettings;
     RecordingOptions = new ProfileRecordingSessionOptions();
 
     UpdatePerfCounterList();
@@ -175,11 +175,11 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
   }
 
-  public SymbolFileSourceOptions SymbolOptions {
-    get => symbolOptions_;
+  public SymbolFileSourceSettings SymbolSettings {
+    get => symbolSettings_;
     set {
-      symbolOptions_ = value;
-      OnPropertyChange(nameof(SymbolOptions));
+      symbolSettings_ = value;
+      OnPropertyChange(nameof(SymbolSettings));
     }
   }
 
@@ -320,17 +320,17 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private async void LoadButton_Click(object sender, RoutedEventArgs e) {
-    await OpenFilesAndComplete(symbolOptions_);
+    await OpenFilesAndComplete(symbolSettings_);
   }
 
-  private async Task OpenFilesAndComplete(SymbolFileSourceOptions symbolOptions) {
-    if (await OpenFiles(symbolOptions) && !windowClosed_) {
+  private async Task OpenFilesAndComplete(SymbolFileSourceSettings symbolSettings) {
+    if (await OpenFiles(symbolSettings) && !windowClosed_) {
       DialogResult = true;
       Close();
     }
   }
 
-  private async Task<bool> OpenFiles(SymbolFileSourceOptions symbolOptions) {
+  private async Task<bool> OpenFiles(SymbolFileSourceSettings symbolSettings) {
     ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
     BinaryFilePath = Utils.CleanupPath(BinaryFilePath);
 
@@ -343,7 +343,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     var report = new ProfileDataReport {
       RunningProcesses = processList_,
-      SymbolOptions = symbolOptions_.Clone()
+      SymbolSettings = symbolSettings_.Clone()
     };
 
     bool success = false;
@@ -359,20 +359,20 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     if (IsRecordMode) {
       report.RecordingSessionOptions = recordingOptions_.Clone();
-      symbolOptions = symbolOptions_.WithSymbolPaths(recordingOptions_.ApplicationPath);
+      symbolSettings = symbolSettings_.WithSymbolPaths(recordingOptions_.ApplicationPath);
 
       if (recordingOptions_.HasWorkingDirectory) {
-        symbolOptions = symbolOptions.WithSymbolPaths(recordingOptions_.WorkingDirectory);
+        symbolSettings = symbolSettings.WithSymbolPaths(recordingOptions_.WorkingDirectory);
       }
 
       success = await Session.LoadProfileData(recordedProfile_, processIds,
-                                              options_, symbolOptions, report,
+                                              options_, symbolSettings, report,
                                               ProfileLoadProgressCallback, task);
     }
     else {
-      symbolOptions = symbolOptions_.Clone();
+      symbolSettings = symbolSettings_.Clone();
       success = await Session.LoadProfileData(ProfileFilePath, processIds,
-                                              options_, symbolOptions, report,
+                                              options_, symbolSettings, report,
                                               ProfileLoadProgressCallback, task);
     }
 
@@ -744,14 +744,13 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private async void LoadProfileFromArgs(string traceFilePath, string symbolPath, int processId, string imageFileName) {
     ProfileFilePath = traceFilePath;
     BinaryFilePath = imageFileName;
-    var symbolOptions = symbolOptions_.WithSymbolPaths(symbolPath);
 
     var process = new ProfileProcess(processId, imageFileName);
     selectedProcSummary_ = new List<ProcessSummary>() {
       new ProcessSummary(process, TimeSpan.Zero)
     };
 
-    await OpenFilesAndComplete(symbolOptions);
+    await OpenFilesAndComplete(symbolSettings_.WithSymbolPaths(symbolPath));
   }
 
   private async void SessionList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
@@ -768,7 +767,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       await StartRecordingSession();
     }
     else {
-      await OpenFilesAndComplete(symbolOptions_);
+      await OpenFilesAndComplete(symbolSettings_);
     }
   }
 
@@ -942,23 +941,23 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void AddPrivateSymbolServer_OnClick(object sender, RoutedEventArgs e) {
-    SymbolOptions.AddSymbolServer(usePrivateServer: true);
+    SymbolSettings.AddSymbolServer(usePrivateServer: true);
     ReloadSymbolPathsList();
   }
 
   private void AddPublicSymbolServer_OnClick(object sender, RoutedEventArgs e) {
-    SymbolOptions.AddSymbolServer(usePrivateServer: false);
+    SymbolSettings.AddSymbolServer(usePrivateServer: false);
     ReloadSymbolPathsList();
   }
 
   private void AddSymbolPathButton_Click(object sender, RoutedEventArgs e) {
-    symbolOptions_.SymbolPaths.Add("");
+    symbolSettings_.SymbolPaths.Add("");
     ReloadSymbolPathsList();
 
     // Wait for the UI to update
     Dispatcher.BeginInvoke((Action)(() => {
       // Get the ListViewItem for the new item
-      var newItem = symbolOptions_.SymbolPaths.Last();
+      var newItem = symbolSettings_.SymbolPaths.Last();
       var listViewItem = (ListViewItem)SymbolPathsList.ItemContainerGenerator.ContainerFromItem(newItem);
 
       // Find the TextBox within the ListViewItem
@@ -973,7 +972,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private void RemoveSymbolPathButton_Click(object sender, RoutedEventArgs e) {
     foreach (var item in SymbolPathsList.SelectedItems) {
       string symbolPath = item as string;
-      symbolOptions_.SymbolPaths.Remove(symbolPath);
+      symbolSettings_.SymbolPaths.Remove(symbolPath);
     }
 
     ReloadSymbolPathsList();
@@ -990,8 +989,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     var selectedIndex = SymbolPathsList.SelectedIndex;
     var selectedItem = SymbolPathsList.SelectedItem as string;
-    symbolOptions_.SymbolPaths.RemoveAt(selectedIndex);
-    symbolOptions_.SymbolPaths.Insert(selectedIndex - 1, selectedItem);
+    symbolSettings_.SymbolPaths.RemoveAt(selectedIndex);
+    symbolSettings_.SymbolPaths.Insert(selectedIndex - 1, selectedItem);
     ReloadSymbolPathsList();
   }
 
@@ -1006,13 +1005,13 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     var selectedIndex = SymbolPathsList.SelectedIndex;
     var selectedItem = SymbolPathsList.SelectedItem as string;
-    symbolOptions_.SymbolPaths.RemoveAt(selectedIndex);
-    symbolOptions_.SymbolPaths.Insert(selectedIndex + 1, selectedItem);
+    symbolSettings_.SymbolPaths.RemoveAt(selectedIndex);
+    symbolSettings_.SymbolPaths.Insert(selectedIndex + 1, selectedItem);
     ReloadSymbolPathsList();
   }
 
   private void ReloadSymbolPathsList() {
-    var list = new ObservableCollectionRefresh<string>(symbolOptions_.SymbolPaths);
+    var list = new ObservableCollectionRefresh<string>(symbolSettings_.SymbolPaths);
     SymbolPathsList.ItemsSource = list;
   }
 
@@ -1034,7 +1033,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     var item = textBox.DataContext;
-    var index = symbolOptions_.SymbolPaths.IndexOf(item as string);
+    var index = symbolSettings_.SymbolPaths.IndexOf(item as string);
 
     if (index == -1) {
       return;
@@ -1042,14 +1041,14 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     if (string.IsNullOrEmpty(textBox.Text)) {
       // Remove entry if there is no text in it
-      symbolOptions_.SymbolPaths.RemoveAt(index);
+      symbolSettings_.SymbolPaths.RemoveAt(index);
       ReloadSymbolPathsList();
 
       return;
     }
 
     // Update list with the new text
-    symbolOptions_.SymbolPaths[index] = textBox.Text;
+    symbolSettings_.SymbolPaths[index] = textBox.Text;
     ReloadSymbolPathsList();
   }
 

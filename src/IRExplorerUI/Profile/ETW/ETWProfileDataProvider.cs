@@ -114,7 +114,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
   public async Task<ProfileData> LoadTraceAsync(string tracePath, List<int> processIds,
                                                 ProfileDataProviderOptions options,
-                                                SymbolFileSourceOptions symbolOptions,
+                                                SymbolFileSourceSettings symbolSettings,
                                                 ProfileDataReport report,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
@@ -123,7 +123,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     var rawProfile = await Task.Run(() => {
       int acceptedProcessId = processIds.Count == 1 ? processIds[0] : 0;
-      symbolOptions.InsertSymbolPath(tracePath); // Include the trace path in the symbol search path.
+      symbolSettings.InsertSymbolPath(tracePath); // Include the trace path in the symbol search path.
 
       using var eventProcessor = new ETWEventProcessor(tracePath, options, acceptedProcessId);
       return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
@@ -134,7 +134,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       return null;
     }
 
-    var result = await LoadTraceAsync(rawProfile, processIds, options, symbolOptions,
+    var result = await LoadTraceAsync(rawProfile, processIds, options, symbolSettings,
                                       report, progressCallback, cancelableTask);
     rawProfile.Dispose();
     return result;
@@ -142,7 +142,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
   public async Task<ProfileData> LoadTraceAsync(RawProfileData rawProfile, List<int> processIds,
                                                 ProfileDataProviderOptions options,
-                                                SymbolFileSourceOptions symbolOptions,
+                                                SymbolFileSourceSettings symbolSettings,
                                                 ProfileDataReport report,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
@@ -172,7 +172,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       string imageName = Utils.TryGetFileNameWithoutExtension(mainProcess.ImageFileName);
 
       if (options.HasBinarySearchPaths) {
-        symbolOptions.InsertSymbolPaths(options.BinarySearchPaths);
+        symbolSettings.InsertSymbolPaths(options.BinarySearchPaths);
       }
 
       // The entire ETW processing must be done on the same thread.
@@ -196,7 +196,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         //profile.PrintSamples(mainProcessId);
 
         await LoadBinaryAndDebugFiles(rawProfile, mainProcess, imageName,
-                                      symbolOptions, progressCallback, cancelableTask);
+                                      symbolSettings, progressCallback, cancelableTask);
 
         if (cancelableTask is {IsCanceled: true}) {
           return false;
@@ -205,7 +205,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         // Start early load of all modules that are used by the binary
         // to reduce the wait time when resolving the stack frame functions.
         UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing, 0, 0);
-        StartEarlyModuleLoad(rawProfile, mainProcess, symbolOptions);
+        StartEarlyModuleLoad(rawProfile, mainProcess, symbolSettings);
 
         var sw = Stopwatch.StartNew();
 
@@ -236,7 +236,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           tasks.Add(taskFactory.StartNew(() => {
             var chunkSamples = ProcessSamplesChunk(rawProfile, start, end,
                                                    processIds, options.IncludeKernelEvents, callTree,
-                                                   symbolOptions, progressCallback, cancelableTask, chunks);
+                                                   symbolSettings, progressCallback, cancelableTask, chunks);
             return chunkSamples;
           }));
         }
@@ -280,7 +280,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         if (rawProfile.PerformanceCountersEvents.Count > 0) {
           // Process performance counters.
-          ProcessPerformanceCounters(rawProfile, processIds, symbolOptions, progressCallback, cancelableTask);
+          ProcessPerformanceCounters(rawProfile, processIds, symbolSettings, progressCallback, cancelableTask);
         }
 
         Trace.WriteLine($"Done in {totalSw.Elapsed}");
@@ -329,7 +329,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private List<(ProfileSample Sample, ResolvedProfileStack Stack)>
     ProcessSamplesChunk(RawProfileData rawProfile, int start, int end, List<int> processIds,
                         bool includeKernelEvents, ProfileCallTree callTree,
-                        SymbolFileSourceOptions symbolOptions,
+                        SymbolFileSourceSettings symbolSettings,
                         ProfileLoadProgressHandler progressCallback,
                         CancelableTask cancelableTask, int chunks) {
     int index = 0;
@@ -396,7 +396,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       }
       else {
         resolvedStack = ProcessUnresolvedStack(stack, sampleWeight, context, rawProfile,
-                                               stackModules, stackFuncts, symbolOptions);
+                                               stackModules, stackFuncts, symbolSettings);
         stack.SetOptionalData(resolvedStack); // Cache resolved stack.
       }
 
@@ -414,7 +414,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private ResolvedProfileStack ProcessUnresolvedStack(ProfileStack stack, TimeSpan sampleWeight,
                                                       ProfileContext context, RawProfileData rawProfile,
                                                       HashSet<int> stackModules, HashSet<IRTextFunction> stackFuncts,
-                                                      SymbolFileSourceOptions symbolOptions) {
+                                                      SymbolFileSourceSettings symbolSettings) {
     bool isTopFrame = true;
     var resolvedStack = new ResolvedProfileStack(stack.FrameCount, context);
     long[] stackFrames = stack.FramePointers;
@@ -463,7 +463,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       FunctionDebugInfo funcDebugInfo = null;
       IRTextFunction textFunction = null;
 
-      module = FindModuleInfo(rawProfile, frameImage, context.ProcessId, symbolOptions);
+      module = FindModuleInfo(rawProfile, frameImage, context.ProcessId, symbolSettings);
 
       if (module == null) {
         resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
@@ -565,7 +565,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
   private async Task LoadBinaryAndDebugFiles(RawProfileData rawProfile, ProfileProcess mainProcess,
                                              string mainImageName,
-                                             SymbolFileSourceOptions symbolOptions,
+                                             SymbolFileSourceSettings symbolSettings,
                                              ProfileLoadProgressHandler progressCallback,
                                              CancelableTask cancelableTask) {
     var imageList = mainProcess.Images(rawProfile).ToList();
@@ -579,7 +579,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     for (int i = 0; i < imageLimit; i++) {
       var binaryFile = FromProfileImage(imageList[i]);
-      binTaskList[i] = PEBinaryInfoProvider.LocateBinaryFile(binaryFile, symbolOptions);
+      binTaskList[i] = PEBinaryInfoProvider.LocateBinaryFile(binaryFile, symbolSettings);
       //? TODO: Immediately after bin download PDB can be too binTaskList[i].ContinueWith()
     }
 
@@ -672,12 +672,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   private void StartEarlyModuleLoad(RawProfileData rawProfile, ProfileProcess mainProcess,
-                                    SymbolFileSourceOptions symbolOptions) {
+                                    SymbolFileSourceSettings symbolSettings) {
     var imageList = mainProcess.Images(rawProfile).ToList();
 
     foreach (var image in imageList) {
       imageModuleLoadTasks_[image.Id] = Task.Run(() => {
-        var imageModule = LoadModuleInfo(image, rawProfile, mainProcess.ProcessId, symbolOptions);
+        var imageModule = LoadModuleInfo(image, rawProfile, mainProcess.ProcessId, symbolSettings);
         imageModuleMap_.TryAdd(image.Id, imageModule);
         return imageModule;
       });
@@ -685,15 +685,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   private ModuleInfo LoadModuleInfo(ProfileImage image, RawProfileData rawProfile, int processId,
-                                    SymbolFileSourceOptions symbolOptions) {
+                                    SymbolFileSourceSettings symbolSettings) {
     var imageModule = new ModuleInfo(report_, session_);
     var imageDebugInfo = rawProfile.GetDebugInfoForImage(image, processId);
 
     if (imageDebugInfo != null) {
-      imageDebugInfo.SymbolOptions = symbolOptions;
+      imageDebugInfo.SymbolSettings = symbolSettings;
     }
 
-    if (imageModule.Initialize(FromProfileImage(image), symbolOptions, imageDebugInfo).ConfigureAwait(false).
+    if (imageModule.Initialize(FromProfileImage(image), symbolSettings, imageDebugInfo).ConfigureAwait(false).
       GetAwaiter().GetResult()) {
       if (!imageModule.InitializeDebugInfo().ConfigureAwait(false).GetAwaiter().GetResult()) {
         Trace.TraceWarning($"Failed to load debug debugInfo for image: {image.FilePath}");
@@ -720,7 +720,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   private ModuleInfo FindModuleInfo(RawProfileData rawProfile, ProfileImage queryImage, int processId,
-                                    SymbolFileSourceOptions symbolOptions) {
+                                    SymbolFileSourceSettings symbolSettings) {
     // prevImage_/prevModule_ are TLS variables since this is called from multiple threads.
     if (queryImage == prevImage_) {
       return prevModule_;
@@ -740,7 +740,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             return imageModule;
           }
 
-          imageModule = LoadModuleInfo(queryImage, rawProfile, processId, symbolOptions);
+          imageModule = LoadModuleInfo(queryImage, rawProfile, processId, symbolSettings);
           imageModuleMap_.TryAdd(queryImage.Id, imageModule);
         }
       }
@@ -752,7 +752,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   private void ProcessPerformanceCounters(RawProfileData rawProfile, List<int> processIds,
-                                          SymbolFileSourceOptions symbolOptions,
+                                          SymbolFileSourceSettings symbolSettings,
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
     // Register the counters found in the trace.
@@ -811,7 +811,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           profileData_.AddModuleCounter(frameImage.ModuleName, counter.CounterId, 1);
         }
 
-        var module = FindModuleInfo(rawProfile, frameImage, context.ProcessId, symbolOptions);
+        var module = FindModuleInfo(rawProfile, frameImage, context.ProcessId, symbolSettings);
 
         if (module == null) {
           continue;
