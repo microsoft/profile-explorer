@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.IO.Enumeration;
 using System.Threading.Tasks;
 using System.Windows;
 using IRExplorerCore;
@@ -10,7 +11,7 @@ namespace IRExplorerUI.Document;
 
 public class SourceFileFinder {
   private SourceFileMapper sourceFileMapper_;
-  private HashSet<string> disabledSourceMappings_;
+  private List<string> disabledSourceMappings_;
   private ISession session_;
 
   public SourceFileFinder(ISession session) {
@@ -20,14 +21,14 @@ public class SourceFileFinder {
 
   private void LoadSettings() {
     var settings = App.Settings.SourceFileSettings.FinderSettings;
-    disabledSourceMappings_ = settings.DisabledSourceMappings.CloneHashSet();
+    disabledSourceMappings_ = settings.DisabledSourceMappings;
     sourceFileMapper_ = new SourceFileMapper(settings.SourceMappings.CloneDictionary());
   }
 
   public void SaveSettings() {
     var settings = App.Settings.SourceFileSettings.FinderSettings;
     settings.SourceMappings = sourceFileMapper_.SourceMap.CloneDictionary();
-    settings.DisabledSourceMappings = disabledSourceMappings_.CloneHashSet();
+    settings.DisabledSourceMappings = disabledSourceMappings_;
   }
 
   public async Task<(SourceFileDebugInfo, IDebugInfoProvider)>
@@ -57,7 +58,7 @@ public class SourceFileFinder {
       if (File.Exists(sourceInfo.FilePath)) {
         return (sourceInfo, debugInfo);
       }
-      else if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
+      else if (!IsDisabledSourceFilePath(sourceInfo.FilePath)) {
         var filePath = sourceFileMapper_.Map(sourceInfo.FilePath, () =>
                                                Utils.ShowOpenFileDialog(
                                                  $"Source File|{Utils.TryGetFileName(sourceInfo.OriginalFilePath)}",
@@ -67,7 +68,9 @@ public class SourceFileFinder {
         }
         else if (Utils.ShowYesNoMessageBox("Continue asking for the location of this source file?", owner) ==
                  MessageBoxResult.No) {
-          disabledSourceMappings_.Add(sourceInfo.FilePath);
+          if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
+            disabledSourceMappings_.Add(sourceInfo.FilePath);
+          }
         }
 
         SaveSettings();
@@ -76,6 +79,17 @@ public class SourceFileFinder {
     }
 
     return (SourceFileDebugInfo.Unknown, null);
+  }
+
+  private bool IsDisabledSourceFilePath(string filePath) {
+    foreach (var path in disabledSourceMappings_) {
+      // Do a case-insensitive wildcard (*) match.
+      if (FileSystemName.MatchesSimpleExpression(path, filePath)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public void Reset() {

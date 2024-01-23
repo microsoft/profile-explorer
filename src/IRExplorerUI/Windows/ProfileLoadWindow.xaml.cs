@@ -958,14 +958,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     Dispatcher.BeginInvoke((Action)(() => {
       // Get the ListViewItem for the new item
       var newItem = symbolSettings_.SymbolPaths.Last();
-      var listViewItem = (ListViewItem)SymbolPathsList.ItemContainerGenerator.ContainerFromItem(newItem);
-
-      // Find the TextBox within the ListViewItem
-      var textBox = FindVisualChild<TextBox>(listViewItem);
-      if (textBox != null) {
-        // Set keyboard focus to the TextBox
-        textBox.Focus();
-      }
+      Utils.FocusTextBoxListViewItem(newItem, SymbolPathsList);
     }), DispatcherPriority.ContextIdle);
   }
 
@@ -1052,35 +1045,10 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     ReloadSymbolPathsList();
   }
 
-  private static T FindVisualChild<T>(DependencyObject obj) where T : DependencyObject {
-    for (var i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++) {
-      var child = VisualTreeHelper.GetChild(obj, i);
-      if (child is T typedChild)
-        return typedChild;
-
-      var childOfChild = FindVisualChild<T>(child);
-      if (childOfChild != null)
-        return childOfChild;
-    }
-
-    return null;
-  }
-
   private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-    if (sender is TextBox textBox && !textBox.IsKeyboardFocusWithin) {
-      if (e.OriginalSource.GetType().Name == "TextBoxView") {
-        e.Handled = true;
-        textBox.Focus();
-        textBox.SelectAll();
-
-        // Try to move selection to the item in the list view.
-        var listViewItem = (ListViewItem)SymbolPathsList.ItemContainerGenerator.ContainerFromItem(textBox.Text);
-
-        if (listViewItem != null) {
-          SymbolPathsList.SelectedItem = null;
-          listViewItem.IsSelected = true;
-        }
-      }
+    if (sender is TextBox textBox) {
+      Utils.SelectTextBoxListViewItem(textBox, SymbolPathsList);
+      e.Handled = true;
     }
   }
 

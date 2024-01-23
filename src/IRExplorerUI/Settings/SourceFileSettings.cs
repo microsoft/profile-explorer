@@ -78,7 +78,7 @@ public class SourceFileFinderSettings : SettingsBase {
   [ProtoMember(1)]
   public Dictionary<string, string> SourceMappings;
   [ProtoMember(2)]
-  public HashSet<string> DisabledSourceMappings;
+  public List<string> DisabledSourceMappings;
 
   public SourceFileFinderSettings() {
     Reset();

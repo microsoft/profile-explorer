@@ -74,21 +74,9 @@ public partial class WorkspacesWindow : Window {
   }
 
   private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-    //? TODO: Duplicate code with ProfileLoadWindow.
-    if (sender is TextBox textBox && !textBox.IsKeyboardFocusWithin) {
-      if (e.OriginalSource.GetType().Name == "TextBoxView") {
-        e.Handled = true;
-        textBox.Focus();
-        textBox.SelectAll();
-        
-        // Try to move selection to the item in the list view.
-        var listViewItem = (ListViewItem)WorkspacesList.ItemContainerGenerator.ContainerFromItem(textBox.Text);
-
-        if (listViewItem != null) {
-          WorkspacesList.SelectedItem = null;
-          listViewItem.IsSelected = true;
-        }
-      }
+    if (sender is TextBox textBox) {
+      Utils.SelectTextBoxListViewItem(textBox, WorkspacesList);
+      e.Handled = true;
     }
   }
 

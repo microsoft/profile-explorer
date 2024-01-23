@@ -161,6 +161,28 @@ public class OptionalColumnStyle : SettingsBase {
   public bool InvertColorPalette { get; set; }
 
   public OptionalColumnStyle Clone() {
-    throw new NotImplementedException();
+    byte[] serialized = StateSerializer.Serialize(this);
+    return StateSerializer.Deserialize<OptionalColumnStyle>(serialized);
+  }
+
+  public override bool Equals(object other) {
+    if (ReferenceEquals(null, other))
+      return false;
+    if (ReferenceEquals(this, other))
+      return true;
+    if (other.GetType() != this.GetType())
+      return false;
+    return Equals((OptionalColumnStyle)other);
+  }
+
+  protected bool Equals(OptionalColumnStyle other) {
+    return IsVisible == other.IsVisible && Order == other.Order && Width.Equals(other.Width) &&
+           Abbreviation == other.Abbreviation && ShowPercentageBar == other.ShowPercentageBar &&
+           ShowMainColumnPercentageBar == other.ShowMainColumnPercentageBar &&
+           PercentageBarBackColor.Equals(other.PercentageBarBackColor) && TextColor.Equals(other.TextColor) &&
+           ShowIcon == other.ShowIcon && ShowMainColumnIcon == other.ShowMainColumnIcon &&
+           PickColorForPercentage == other.PickColorForPercentage && UseBackColor == other.UseBackColor &&
+           UseMainColumnBackColor == other.UseMainColumnBackColor && Equals(BackColorPalette, other.BackColorPalette) &&
+           InvertColorPalette == other.InvertColorPalette;
   }
 }

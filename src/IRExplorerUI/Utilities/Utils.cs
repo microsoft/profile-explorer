@@ -18,6 +18,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Xml;
+using DocumentFormat.OpenXml.Spreadsheet;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using IRExplorerCore;
@@ -1130,6 +1131,35 @@ static class Utils {
     var mousePosition = Mouse.GetPosition(listView);
     var result = listView.GetObjectAtPoint<ListViewItem>(mousePosition);
     return result;
+  }
+
+  public static void SelectTextBoxListViewItem(TextBox textBox, ListView listView) {
+    if (textBox.IsKeyboardFocused) {
+      return;
+    }
+
+    textBox.Focus();
+    textBox.SelectAll();
+
+    // Try to move selection to the item in the list view.
+    var listViewItem = (ListViewItem)listView.ItemContainerGenerator.ContainerFromItem(textBox.Text);
+
+    if (listViewItem != null) {
+      listView.SelectedItem = null;
+      listViewItem.IsSelected = true;
+    }
+  }
+
+  public static void FocusTextBoxListViewItem(object item, ListView listView) {
+    var listViewItem = (ListViewItem)listView.ItemContainerGenerator.ContainerFromItem(item);
+
+    // Find the TextBox within the ListViewItem
+    var textBox = Utils.FindChild<TextBox>(listViewItem);
+
+    if (textBox != null) {
+      // Set keyboard focus to the TextBox
+      textBox.Focus();
+    }
   }
 
   private static void Control_SizeChanged(object sender, SizeChangedEventArgs e) {
