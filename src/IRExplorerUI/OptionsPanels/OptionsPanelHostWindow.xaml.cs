@@ -38,7 +38,8 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
 
   public static OptionsPanelHostWindow Create<T, S>(SettingsBase settings, FrameworkElement relativeControl, ISession session,
                                                     Func<S, bool, S> newSettingsHandler,
-                                                    Action panelClosedHandler)
+                                                    Action panelClosedHandler,
+                                                    Point positionAdjustment = new Point())
     where T : OptionsPanelBase, new()
     where S: SettingsBase, new() {
     var panel = new T();
@@ -47,6 +48,7 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
     double height = Math.Max(panel.MinimumHeight,
                              Math.Min(relativeControl.ActualHeight, panel.DefaultHeight));
     var position = new Point(relativeControl.ActualWidth - width, 0);
+    position .Offset(positionAdjustment.X, positionAdjustment.Y);
     var panelHost = new OptionsPanelHostWindow(panel, position, width, height, relativeControl,
                                                settings, session);
     panelHost.SettingsChanged += (sender, args) => {

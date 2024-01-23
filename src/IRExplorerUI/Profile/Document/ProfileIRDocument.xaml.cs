@@ -218,11 +218,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (ColumnsVisible) {
       if (UseCompactProfilingColumns) {
         // Use compact mode that shows only the time column.
-        if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TIME_COLUMN) is var timeColumn) {
+        if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TimeColumnDefinition) is var timeColumn) {
           timeColumn.Style.ShowMainColumnIcon = false;
         }
 
-        if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TIME_PERCENTAGE_COLUMN) is var timePercColumn) {
+        if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timePercColumn) {
           timePercColumn.IsVisible = false;
         }
       }
@@ -230,8 +230,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       if (!ShowPerformanceCounterColumns) {
         // Hide perf counter columns.
         foreach (var column in sourceColumnData_.Columns) {
-          if (!column.Equals(ProfileDocumentMarker.TIME_COLUMN) &&
-              !column.Equals(ProfileDocumentMarker.TIME_PERCENTAGE_COLUMN)) {
+          if (!column.Equals(ProfileDocumentMarker.TimeColumnDefinition) &&
+              !column.Equals(ProfileDocumentMarker.TimePercentageColumnDefinition)) {
             column.IsVisible = false;
           }
         }

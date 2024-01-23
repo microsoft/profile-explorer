@@ -198,7 +198,7 @@ public abstract class ElementOverlayBase : IElementOverlay {
     if(e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) {
       // Copy the label to the clipboard.
       if (HasToolTip) {
-        Clipboard.SetText($"{Label}\n({ToolTip})");
+        Clipboard.SetText($"{Label}\n{ToolTip}");
       }
       else {
         Clipboard.SetText(Label);

@@ -10,10 +10,11 @@ using System.Windows.Media;
 
 namespace IRExplorerUI;
 
-public delegate void OptionalColumnEventHandler(OptionalColumn column);
+public delegate void OptionalColumnEventHandler(OptionalColumn column, GridViewColumnHeader columnHeader);
 
 public class OptionalColumn : ICloneable {
   public OptionalColumnEventHandler HeaderClickHandler;
+  public OptionalColumnEventHandler HeaderRightClickHandler;
   public OptionalColumnEventHandler HeaderDoubleClickHandler;
   private int hashCode_;
 
@@ -229,6 +230,7 @@ public class OptionalColumn : ICloneable {
     var clone = new OptionalColumn(BindingName, CellTemplateName, ColumnName, Title, Tooltip,
                                    Converter, Width, ColumnStyle, Style, IsVisible) {
       HeaderClickHandler = HeaderClickHandler,
+      HeaderRightClickHandler = HeaderRightClickHandler,
       HeaderDoubleClickHandler = HeaderDoubleClickHandler
     };
 
