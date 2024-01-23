@@ -1,35 +1,27 @@
 ﻿<UserControl
-  d:DesignHeight="450"
-  d:DesignWidth="800"
-  mc:Ignorable="d"
   x:Class="IRExplorerUI.IRDocumentHost"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:doc="clr-namespace:IRExplorerUI.Document"
   xmlns:local="clr-namespace:IRExplorerUI"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  d:DesignHeight="450"
+  d:DesignWidth="800"
+  mc:Ignorable="d">
   <UserControl.CommandBindings>
     <CommandBinding Command="local:DocumentCommand.NextBlock" Executed="NextBlockExecuted" />
     <CommandBinding Command="local:DocumentCommand.PreviousBlock" Executed="PreviousBlockExecuted" />
-    <CommandBinding Command="local:DocumentCommand.FocusBlockSelector"
-                    Executed="FocusBlockSelectorExecuted" />
+    <CommandBinding Command="local:DocumentCommand.FocusBlockSelector" Executed="FocusBlockSelectorExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.ShowSearch" Executed="ShowSearchExecuted" />
-    <CommandBinding Command="local:DocumentHostCommand.ToggleSearch"
-                    Executed="ToggleSearchExecuted" />
-    <CommandBinding Command="local:DocumentHostCommand.ShowSectionList"
-                    Executed="ShowSectionListExecuted" />
-    <CommandBinding Command="local:DocumentHostCommand.PreviousSection"
-                    Executed="PreviousSectionExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.ToggleSearch" Executed="ToggleSearchExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.ShowSectionList" Executed="ShowSectionListExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.PreviousSection" Executed="PreviousSectionExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.NextSection" Executed="NextSectionExecuted" />
-    <CommandBinding Command="local:DocumentHostCommand.SearchSymbol"
-                    Executed="SearchSymbolExecuted" />
-    <CommandBinding Command="local:DocumentHostCommand.SearchSymbolAllSections"
-                    Executed="SearchSymbolAllSectionsExecuted" />
-    <CommandBinding Command="local:DocumentHostCommand.JumpToProfiledElement"
-                    Executed="JumpToProfiledElementExecuted" />
-    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfile"
-                    Executed="ExportFunctionProfileExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.SearchSymbol" Executed="SearchSymbolExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.SearchSymbolAllSections" Executed="SearchSymbolAllSectionsExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.JumpToProfiledElement" Executed="JumpToProfiledElementExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfile" Executed="ExportFunctionProfileExecuted" />
 
     <CommandBinding
       CanExecute="JumpToNextProfiledElementCanExecute"
@@ -50,7 +42,7 @@
   </UserControl.CommandBindings>
 
   <UserControl.Resources>
-    <Style TargetType="{x:Type ColumnDefinition}" x:Key="ColumnsGridSplitterStyle">
+    <Style x:Key="ColumnsGridSplitterStyle" TargetType="{x:Type ColumnDefinition}">
       <Style.Setters>
         <Setter Property="Width" Value="2" />
       </Style.Setters>
@@ -64,7 +56,7 @@
       </Style.Triggers>
     </Style>
 
-    <Style TargetType="{x:Type ColumnDefinition}" x:Key="ColumnsStyle">
+    <Style x:Key="ColumnsStyle" TargetType="{x:Type ColumnDefinition}">
       <Style.Setters>
         <Setter Property="Width" Value="*" />
       </Style.Setters>
@@ -78,7 +70,7 @@
       </Style.Triggers>
     </Style>
 
-    <Style TargetType="{x:Type RowDefinition}" x:Key="GridSplitterStyle">
+    <Style x:Key="GridSplitterStyle" TargetType="{x:Type RowDefinition}">
       <Style.Setters>
         <Setter Property="Height" Value="2" />
       </Style.Setters>
@@ -92,7 +84,7 @@
       </Style.Triggers>
     </Style>
 
-    <Style TargetType="{x:Type RowDefinition}" x:Key="PassOutputStyle">
+    <Style x:Key="PassOutputStyle" TargetType="{x:Type RowDefinition}">
       <Style.Setters>
         <Setter Property="Height" Value="*" />
       </Style.Setters>
@@ -117,74 +109,74 @@
       </Grid.RowDefinitions>
 
       <Grid
-        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         Grid.Row="0"
-        HorizontalAlignment="Stretch">
+        HorizontalAlignment="Stretch"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="50" />
         </Grid.ColumnDefinitions>
         <ToolBarTray
-          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+          x:Name="DocumentToolbar"
           Grid.Column="0"
           Height="28"
           HorizontalAlignment="Stretch"
-          IsLocked="True"
           VerticalAlignment="Top"
-          x:Name="DocumentToolbar">
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+          IsLocked="True">
           <ToolBar
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             HorizontalAlignment="Stretch"
-            Loaded="ToolBar_Loaded"
-            VerticalAlignment="Top">
+            VerticalAlignment="Top"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+            Loaded="ToolBar_Loaded">
 
             <Button
               Command="local:DocumentHostCommand.ShowSectionList"
               CommandTarget="{Binding ElementName=TextView}"
               ToolTip="Switch to section (Alt+S)">
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource SwitchIcon}"
-                Width="16" />
+                Source="{StaticResource SwitchIcon}" />
             </Button>
             <Button
               Command="local:DocumentHostCommand.PreviousSection"
               CommandTarget="{Binding ElementName=TextView}"
               ToolTip="Switch to previous section (Ctrl+P)">
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource LeftArrowIcon}"
-                Width="16" />
+                Source="{StaticResource LeftArrowIcon}" />
             </Button>
             <Button
               Command="local:DocumentHostCommand.NextSection"
               CommandTarget="{Binding ElementName=TextView}"
               ToolTip="Switch to next section (Ctrl+N)">
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource RightArrowIcon}"
-                Width="16" />
+                Source="{StaticResource RightArrowIcon}" />
             </Button>
             <Separator />
 
             <TextBlock
-              HorizontalAlignment="Center"
               Margin="4,0,0,0"
-              Text="Block"
-              VerticalAlignment="Center" />
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Text="Block" />
             <ComboBox
+              x:Name="BlockSelector"
+              Width="70"
+              Margin="4,0,0,0"
               Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
               DisplayMemberPath="Number"
               Loaded="ComboBox_Loaded"
-              Margin="4,0,0,0"
               SelectedValuePath="Number"
               SelectionChanged="BlockSelector_SelectionChanged"
               ToolTip="Jump to block (Alt+G)"
               VirtualizingStackPanel.IsVirtualizing="True"
-              VirtualizingStackPanel.VirtualizationMode="Recycling"
-              Width="70"
-              x:Name="BlockSelector">
+              VirtualizingStackPanel.VirtualizationMode="Recycling">
               <ComboBox.Resources>
                 <Style TargetType="ComboBoxItem">
                   <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -220,9 +212,9 @@
               </ComboBox.ItemsPanel>
             </ComboBox>
             <Button
+              Margin="4,0,0,0"
               Command="local:DocumentCommand.PreviousBlock"
               CommandTarget="{Binding ElementName=TextView}"
-              Margin="4,0,0,0"
               ToolTip="Go to previous block (Ctrl+Arrow Up)">
               <Image Source="{StaticResource UpArrowIcon}" />
             </Button>
@@ -235,21 +227,20 @@
             </Button>
             <Separator />
 
-            <Menu Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                  VerticalAlignment="Center">
+            <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
               <MenuItem
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Height="20"
                 Margin="0,0,-1,0"
-                OverridesDefaultStyle="True"
-                Padding="0,0,0,0">
+                Padding="0,0,0,0"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                OverridesDefaultStyle="True">
                 <MenuItem.Icon>
                   <Image
+                    Width="16"
                     Height="16"
                     Margin="-4,0,0,0"
-                    Source="{StaticResource BookmarkIcon}"
-                    Width="16" />
+                    Source="{StaticResource BookmarkIcon}" />
                 </MenuItem.Icon>
 
                 <MenuItem
@@ -260,9 +251,9 @@
                   ToolTip="Add a new bookmark associated with the selected value">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource AddBookmarkIcon}"
-                      Width="16" />
+                      Source="{StaticResource AddBookmarkIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
@@ -273,9 +264,9 @@
                   Header="Jump to First Bookmark">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource BoldUpArrowIcon}"
-                      Width="16" />
+                      Source="{StaticResource BoldUpArrowIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -284,9 +275,9 @@
                   Header="Jump to Last Bookmark">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource BoldDownArrowIcon}"
-                      Width="16" />
+                      Source="{StaticResource BoldDownArrowIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
@@ -298,9 +289,9 @@
                   InputGestureText="Ctrl+Shift+B">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource RemoveIcon}"
-                      Width="16" />
+                      Source="{StaticResource RemoveIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -328,53 +319,52 @@
 
             <ToggleButton
               Height="20"
-              IsChecked="{Binding Path=ShowRemarks, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
               Margin="0,0,0,0"
               Padding="0,0,2,0"
+              IsChecked="{Binding Path=ShowRemarks, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
               ToolTip="Enable/disable showing of remarks">
               <StackPanel Orientation="Horizontal">
                 <Image
+                  Width="16"
                   Height="16"
                   Margin="0,1,0,0"
-                  Source="{StaticResource RemarkIcon}"
-                  Width="16" />
+                  Source="{StaticResource RemarkIcon}" />
                 <TextBlock Text="Remarks" />
               </StackPanel>
             </ToggleButton>
             <ToggleButton
+              Width="20"
               Height="20"
-              IsChecked="{Binding Path=ShowPreviousSections, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-              IsEnabled="{Binding Path=ShowRemarks}"
               Margin="0,0,2,0"
               Padding="0,0,0,0"
-              ToolTip="Show remarks from previous sections"
-              Width="20">
+              IsChecked="{Binding Path=ShowPreviousSections, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+              IsEnabled="{Binding Path=ShowRemarks}"
+              ToolTip="Show remarks from previous sections">
               <Image Source="{StaticResource HistoryIcon}" />
             </ToggleButton>
             <Button
-              Click="MenuItem_Click_1"
+              Width="20"
               Height="20"
               Padding="0,0,0,0"
-              ToolTip="Show remarks options panel"
-              Width="20">
+              Click="MenuItem_Click_1"
+              ToolTip="Show remarks options panel">
               <Image Source="{StaticResource ConfigIcon}" />
             </Button>
 
             <Separator />
-            <Menu Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                  VerticalAlignment="Center">
+            <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
               <MenuItem
+                Padding="0,2,2,2"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Header="Clear"
-                OverridesDefaultStyle="True"
-                Padding="0,2,2,2">
+                OverridesDefaultStyle="True">
                 <MenuItem.Icon>
                   <Image
+                    Width="18"
                     Height="18"
                     Margin="-2,0,-2,0"
-                    Source="{StaticResource RemoveIcon}"
-                    Width="18" />
+                    Source="{StaticResource RemoveIcon}" />
                 </MenuItem.Icon>
                 <MenuItem
                   Command="local:DocumentCommand.ClearMarker"
@@ -398,43 +388,42 @@
             </Menu>
             <Separator />
 
-            <Menu Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                  VerticalAlignment="Center">
+            <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
               <MenuItem
+                x:Name="TaskMenuItem"
+                Padding="0,0,0,0"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Header="Tasks"
                 OverridesDefaultStyle="True"
-                Padding="0,0,0,0"
-                SubmenuOpened="TaskMenuItem_SubmenuOpened"
-                x:Name="TaskMenuItem">
+                SubmenuOpened="TaskMenuItem_SubmenuOpened">
                 <MenuItem.Icon>
                   <Image
+                    Width="16"
                     Height="16"
-                    HorizontalAlignment="Center"
                     Margin="-2,0,-2,0"
-                    Source="{StaticResource TasklistIcon}"
+                    HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Width="16" />
+                    Source="{StaticResource TasklistIcon}" />
                 </MenuItem.Icon>
                 <Separator />
                 <MenuItem Header="Edit Task Definitions" />
               </MenuItem>
               <MenuItem
+                x:Name="QueryMenuItem"
+                Padding="0,0,0,0"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Header="Queries"
                 OverridesDefaultStyle="True"
-                Padding="0,0,0,0"
-                SubmenuOpened="QueryMenuItem_SubmenuOpened"
-                x:Name="QueryMenuItem">
+                SubmenuOpened="QueryMenuItem_SubmenuOpened">
                 <MenuItem.Icon>
                   <Image
+                    Width="18"
                     Height="18"
-                    HorizontalAlignment="Center"
                     Margin="-2,0,-2,0"
-                    Source="{StaticResource QueryIcon}"
-                    Width="18" />
+                    HorizontalAlignment="Center"
+                    Source="{StaticResource QueryIcon}" />
                 </MenuItem.Icon>
                 <Separator />
                 <MenuItem Click="CloseAllQueryPanelsMenuItem_Click" Header="Close All Query Panels" />
@@ -445,25 +434,24 @@
 
 
             <ToggleButton
+              Width="20"
               Height="20"
-              IsChecked="{Binding Path=PassOutputVisible, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
               Margin="0,0,2,0"
               Padding="0,0,0,0"
-              ToolTip="Show associated pass output in this document"
-              Width="20">
+              IsChecked="{Binding Path=PassOutputVisible, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+              ToolTip="Show associated pass output in this document">
               <Image Source="{StaticResource ListIcon}" />
             </ToggleButton>
 
             <ToggleButton
+              x:Name="SearchButton"
               Command="local:DocumentHostCommand.ShowSearch"
               CommandTarget="{Binding ElementName=TextView}"
-              ToolTip="Search section text (Ctrl+F)"
-              x:Name="SearchButton">
+              ToolTip="Search section text (Ctrl+F)">
               <Image Source="{StaticResource SearchIcon}" />
             </ToggleButton>
 
-            <Separator
-              Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Separator Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
           </ToolBar>
         </ToolBarTray>
@@ -484,98 +472,93 @@
 
         <DockPanel Grid.Column="0" LastChildFill="True">
           <Border
-            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-            BorderThickness="0,1,0,1"
-            DockPanel.Dock="Top"
             Height="23"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Top"
+            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            BorderThickness="0,1,0,1"
+            DockPanel.Dock="Top"
             Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
             <ToolBarTray
-              Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
+              x:Name="ProfileToolbar"
               HorizontalAlignment="Stretch"
-              IsLocked="True"
               VerticalAlignment="Stretch"
-              x:Name="ProfileToolbar">
+              Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
+              IsLocked="True">
               <ToolBar
-                Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
                 Height="22"
                 HorizontalAlignment="Stretch"
-                Loaded="ToolBar_Loaded"
-                VerticalAlignment="Center">
-                <TextBlock Text="Profile" VerticalAlignment="Center" />
+                VerticalAlignment="Center"
+                Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
+                Loaded="ToolBar_Loaded">
+                <TextBlock VerticalAlignment="Center" Text="Profile" />
                 <Button
-                  Command="local:DocumentHostCommand.JumpToProfiledElement"
-                  CommandTarget="{Binding ElementName=TextView}"
                   Margin="4,0,0,0"
                   Padding="0"
-                  ToolTip="Jump to hottest profiled instruction"
                   VerticalAlignment="Center"
+                  Command="local:DocumentHostCommand.JumpToProfiledElement"
+                  CommandTarget="{Binding ElementName=TextView}"
+                  ToolTip="Jump to hottest profiled instruction"
                   Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                  <Image Source="{StaticResource HotFlameIcon}"
-                         Style="{StaticResource DisabledImageStyle}" />
+                  <Image Source="{StaticResource HotFlameIcon}" Style="{StaticResource DisabledImageStyle}" />
                 </Button>
                 <Button
-                  Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
-                  CommandTarget="{Binding ElementName=TextView}"
                   Margin="2,0,0,0"
                   Padding="0"
+                  Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
+                  CommandTarget="{Binding ElementName=TextView}"
                   ToolTip="Jump to previous less hot instruction (Shift+F2)">
-                  <Image Source="{StaticResource MinusIcon}"
-                         Style="{StaticResource DisabledImageStyle}" />
+                  <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
                 </Button>
                 <Button
+                  Padding="0"
                   Command="local:DocumentHostCommand.JumpToNextProfiledElement"
                   CommandTarget="{Binding ElementName=TextView}"
-                  Padding="0"
                   ToolTip="Jump to next hotter instruction (Shift+F2)">
-                  <Image Source="{StaticResource PlusIcon}"
-                         Style="{StaticResource DisabledImageStyle}" />
+                  <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
                 </Button>
                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
 
                 <Menu Margin="2,0,0,0" VerticalAlignment="Center">
                   <MenuItem
+                    x:Name="ProfileBlocksMenu"
                     Margin="0,0,0,0"
-                    OverridesDefaultStyle="True"
                     Padding="0,0,0,0"
-                    x:Name="ProfileBlocksMenu">
+                    OverridesDefaultStyle="True">
                     <MenuItem.Header>
                       <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Blocks" VerticalAlignment="Bottom" />
+                        <TextBlock VerticalAlignment="Bottom" Text="Blocks" />
                         <Path
-                          Data="M 0 0 L 3 3 L 6 0 Z"
-                          Fill="Black"
                           Margin="4,2,0,0"
-                          VerticalAlignment="Center" />
+                          VerticalAlignment="Center"
+                          Data="M 0 0 L 3 3 L 6 0 Z"
+                          Fill="Black" />
                       </StackPanel>
                     </MenuItem.Header>
                   </MenuItem>
                 </Menu>
 
                 <Button
-                  Command="local:DocumentHostCommand.JumpToPreviousProfiledBlock"
-                  CommandTarget="{Binding ElementName=TextView}"
                   Margin="2,0,0,0"
                   Padding="0"
+                  Command="local:DocumentHostCommand.JumpToPreviousProfiledBlock"
+                  CommandTarget="{Binding ElementName=TextView}"
                   ToolTip="Jump to the previous hottest block (Shift+F2)">
-                  <Image Source="{StaticResource MinusIcon}"
-                         Style="{StaticResource DisabledImageStyle}" />
+                  <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
                 </Button>
                 <Button
+                  Padding="0"
                   Command="local:DocumentHostCommand.JumpToNextProfiledBlock"
                   CommandTarget="{Binding ElementName=TextView}"
-                  Padding="0"
                   ToolTip="Jump to next hottest block (Shift+F2)">
-                  <Image Source="{StaticResource PlusIcon}"
-                         Style="{StaticResource DisabledImageStyle}" />
+                  <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
                 </Button>
                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
 
                 <Button
+                  Padding="0"
                   Command="local:DocumentHostCommand.ExportFunctionProfile"
                   CommandTarget="{Binding ElementName=TextView}"
-                  Padding="0"
                   ToolTip="Export profiling results as an Excel sheet">
                   <StackPanel Orientation="Horizontal">
                     <Image
@@ -589,35 +572,40 @@
                 </Button>
                 <Separator />
 
-                <TextBlock
-                  IsEnabled="False"
-                  Margin="2,0,0,0"
-                  Text="Columns"
-                  VerticalAlignment="Center" />
-                <Button
-                  Command="local:DocumentHostCommand.JumpToNextProfiledBlock"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  IsEnabled="False"
-                  Margin="4,0,0,0"
-                  Padding="0"
-                  ToolTip="Jump to hottest profiled instruction"
-                  VerticalAlignment="Center"
-                  Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                  <Image Source="{StaticResource EyeIcon}"
-                         Style="{StaticResource DisabledImageStyle}" />
-                </Button>
+                <Menu Margin="2,0,0,0" VerticalAlignment="Center">
+                  <MenuItem
+                    x:Name="ProfileColumnsMenu"
+                    Margin="0,0,0,0"
+                    Padding="0,0,0,0"
+                    OverridesDefaultStyle="True">
+                    <MenuItem.Header>
+                      <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource EyeIcon}" Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock
+                          Margin="4,0,0,0"
+                          VerticalAlignment="Bottom"
+                          Text="Columns" />
+                        <Path
+                          Margin="4,2,0,0"
+                          VerticalAlignment="Center"
+                          Data="M 0 0 L 3 3 L 6 0 Z"
+                          Fill="Black" />
+                      </StackPanel>
+                    </MenuItem.Header>
+                  </MenuItem>
+                </Menu>
                 <Separator />
               </ToolBar>
             </ToolBarTray>
           </Border>
 
           <local:IRDocument
+            x:Name="TextView"
             DockPanel.Dock="Bottom"
             FontFamily="Consolas"
             FontSize="13"
             ShowLineNumbers="True"
-            VerticalScrollBarVisibility="Visible"
-            x:Name="TextView">
+            VerticalScrollBarVisibility="Visible">
             <local:IRDocument.ContextMenu>
               <ContextMenu>
                 <MenuItem
@@ -628,9 +616,9 @@
                   ToolTip="Preview operand definition or call target function">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource OpenExternalIcon}"
-                      Width="16" />
+                      Source="{StaticResource OpenExternalIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -640,9 +628,9 @@
                   InputGestureText="Return">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource GotoDefinitionIcon}"
-                      Width="16" />
+                      Source="{StaticResource GotoDefinitionIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -652,9 +640,9 @@
                   InputGestureText="Ctrl+Return">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource GotoDefinitionIconSkipIcon}"
-                      Width="16" />
+                      Source="{StaticResource GotoDefinitionIconSkipIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
@@ -666,9 +654,9 @@
                   InputGestureText="Ctrl+F">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource SearchIcon}"
-                      Width="16" />
+                      Source="{StaticResource SearchIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -678,9 +666,9 @@
                   InputGestureText="Ctrl+Shift+F">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource SearchIcon}"
-                      Width="16" />
+                      Source="{StaticResource SearchIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
@@ -692,9 +680,9 @@
                   InputGestureText="Ctrl+R">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource ListIcon}"
-                      Width="16" />
+                      Source="{StaticResource ListIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -704,9 +692,9 @@
                   InputGestureText="Ctrl+U">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource SectionIcon}"
-                      Width="16" />
+                      Source="{StaticResource SectionIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -716,9 +704,9 @@
                   InputGestureText="Ctrl+E">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource GraphIcon}"
-                      Width="16" />
+                      Source="{StaticResource GraphIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
 
@@ -732,9 +720,9 @@
                   ToolTip="Add a new bookmark associated with the selected value">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource AddBookmarkIcon}"
-                      Width="16" />
+                      Source="{StaticResource AddBookmarkIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -745,9 +733,9 @@
                   ToolTip="Remove the bookmark associated with the selected value">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource RemoveIcon}"
-                      Width="16" />
+                      Source="{StaticResource RemoveIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -757,9 +745,9 @@
                   InputGestureText="Shift+F2">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource UpArrowIcon}"
-                      Width="16" />
+                      Source="{StaticResource UpArrowIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -769,9 +757,9 @@
                   InputGestureText="F2">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource DownArrowIcon}"
-                      Width="16" />
+                      Source="{StaticResource DownArrowIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
@@ -790,8 +778,7 @@
 
                 <MenuItem>
                   <MenuItem.Header>
-                    <local:IconSelector IconSelectedCommand="local:DocumentCommand.MarkIcon"
-                                        Margin="0,2,0,2" />
+                    <local:IconSelector Margin="0,2,0,2" IconSelectedCommand="local:DocumentCommand.MarkIcon" />
                   </MenuItem.Header>
                 </MenuItem>
                 <Separator />
@@ -810,16 +797,14 @@
                   InputGestureText="Ctrl+D">
                   <MenuItem>
                     <MenuItem.Header>
-                      <local:ColorSelector
-                        ColorSelectedCommand="local:DocumentCommand.MarkDefinition" />
+                      <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkDefinition" />
                     </MenuItem.Header>
                   </MenuItem>
                 </MenuItem>
                 <MenuItem Header="Mark Definition Block" InputGestureText="Ctrl+Shift+D">
                   <MenuItem>
                     <MenuItem.Header>
-                      <local:ColorSelector
-                        ColorSelectedCommand="local:DocumentCommand.MarkDefinitionBlock" />
+                      <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkDefinitionBlock" />
                     </MenuItem.Header>
                   </MenuItem>
                 </MenuItem>
@@ -848,9 +833,9 @@
                   InputGestureText="Ctrl+Z">
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource UndoIcon}"
-                      Width="16" />
+                      Source="{StaticResource UndoIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
 
@@ -875,9 +860,9 @@
                     Header="All Instruction Markers" />
                   <MenuItem.Icon>
                     <Image
+                      Width="16"
                       Height="16"
-                      Source="{StaticResource RemoveIcon}"
-                      Width="16" />
+                      Source="{StaticResource RemoveIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
               </ContextMenu>
@@ -886,127 +871,127 @@
         </DockPanel>
 
         <GridSplitter
-          Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
           Grid.Column="1"
           HorizontalAlignment="Stretch"
-          ResizeBehavior="PreviousAndNext"
-          VerticalAlignment="Stretch" />
+          VerticalAlignment="Stretch"
+          Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+          ResizeBehavior="PreviousAndNext" />
 
         <doc:DocumentColumns
-          Grid.Column="2"
           x:Name="ProfileColumns"
-          HorizontalAlignment="Stretch"
+          Grid.Column="2"
           Padding="-1,0,0,0"
+          HorizontalAlignment="Stretch"
           VerticalAlignment="Stretch" />
       </Grid>
       <GridSplitter
-        Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
         Grid.Row="2"
         HorizontalAlignment="Stretch"
-        ResizeBehavior="PreviousAndNext"
-        VerticalAlignment="Stretch" />
+        VerticalAlignment="Stretch"
+        Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+        ResizeBehavior="PreviousAndNext" />
 
       <local:PassOutputPanel
+        x:Name="PassOutput"
         Grid.Row="3"
         HasDuplicateButton="false"
         HasPinButton="false"
-        Visibility="{Binding PassOutputVisible, Converter={StaticResource BoolToVisibilityConverter}}"
-        x:Name="PassOutput" />
+        Visibility="{Binding PassOutputVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
     </Grid>
 
     <Border
+      x:Name="SectionPanelHost"
+      Width="415"
+      Height="500"
+      Margin="0,28,0,0"
+      HorizontalAlignment="Left"
+      VerticalAlignment="Top"
+      Panel.ZIndex="99"
       BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
       BorderThickness="0,2,2,2"
-      Height="500"
-      HorizontalAlignment="Left"
-      Margin="0,28,0,0"
-      Panel.ZIndex="99"
-      VerticalAlignment="Top"
-      Visibility="Collapsed"
-      Width="415"
-      x:Name="SectionPanelHost">
+      Visibility="Collapsed">
       <local:SectionPanel
-        BottomSectionToolbar="True"
+        x:Name="SectionPanel"
+        Width="415"
         Height="500"
         HorizontalAlignment="Left"
         VerticalAlignment="Top"
-        Width="415"
-        x:Name="SectionPanel" />
+        BottomSectionToolbar="True" />
     </Border>
 
     <Grid Panel.ZIndex="99">
       <doc:SearchPanel
-        Height="28"
-        HorizontalAlignment="Right"
-        Margin="0,28,0,0"
-        Opacity="1"
-        VerticalAlignment="Top"
-        Visibility="Collapsed"
+        x:Name="SearchPanel"
         Width="500"
-        x:Name="SearchPanel" />
+        Height="28"
+        Margin="0,28,0,0"
+        HorizontalAlignment="Right"
+        VerticalAlignment="Top"
+        Opacity="1"
+        Visibility="Collapsed" />
     </Grid>
 
-    <Canvas Panel.ZIndex="100" x:Name="DocumentCanvas">
+    <Canvas x:Name="DocumentCanvas" Panel.ZIndex="100">
       <doc:ActionPanel
+        x:Name="ActionPanel"
         MouseEnter="ActionPanel_MouseEnter"
         MouseLeave="ActionPanel_MouseLeave"
-        RemarksButtonClicked="ActionPanel_RemarksButtonClicked"
-        x:Name="ActionPanel" />
+        RemarksButtonClicked="ActionPanel_RemarksButtonClicked" />
     </Canvas>
   </Grid>
 
 
   <UserControl.InputBindings>
     <KeyBinding
+      Key="Up"
       Command="local:DocumentCommand.PreviousBlock"
       CommandTarget="{Binding ElementName=TextView}"
-      Key="Up"
       Modifiers="Ctrl" />
     <KeyBinding
+      Key="Down"
       Command="local:DocumentCommand.NextBlock"
       CommandTarget="{Binding ElementName=TextView}"
-      Key="Down"
       Modifiers="Ctrl" />
     <KeyBinding
+      Key="G"
       Command="local:DocumentCommand.FocusBlockSelector"
       CommandTarget="{Binding ElementName=TextView}"
-      Key="G"
       Modifiers="Alt" />
     <KeyBinding
+      Key="F"
       Command="local:DocumentHostCommand.ToggleSearch"
       CommandTarget="{Binding ElementName=TextView}"
-      Key="F"
       Modifiers="Ctrl" />
     <KeyBinding
+      Key="F"
       Command="local:DocumentHostCommand.SearchSymbol"
       CommandTarget="{Binding ElementName=TextView}"
-      Key="F"
       Modifiers="Ctrl+Shift" />
     <KeyBinding
+      Key="S"
       Command="local:DocumentHostCommand.ShowSectionList"
       CommandTarget="{Binding ElementName=TextView}"
-      Key="S"
       Modifiers="Alt" />
     <KeyBinding
+      Key="P"
       Command="local:DocumentHostCommand.PreviousSection"
       CommandTarget="{Binding ElementName=TextView}"
-      Key="P"
       Modifiers="Ctrl" />
     <KeyBinding
+      Key="N"
       Command="local:DocumentHostCommand.NextSection"
       CommandTarget="{Binding ElementName=TextView}"
-      Key="N"
       Modifiers="Ctrl" />
 
     <KeyBinding
+      Key="F3"
       Command="doc:SearchCommand.PreviousResult"
       CommandTarget="{Binding ElementName=SearchPanel}"
-      Key="F3"
       Modifiers="Shift" />
 
     <KeyBinding
+      Key="F3"
       Command="doc:SearchCommand.NextResult"
-      CommandTarget="{Binding ElementName=SearchPanel}"
-      Key="F3" />
+      CommandTarget="{Binding ElementName=SearchPanel}" />
   </UserControl.InputBindings>
 </UserControl>
