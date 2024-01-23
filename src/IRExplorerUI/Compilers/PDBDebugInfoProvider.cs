@@ -102,16 +102,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     string symbolPath = "";
 
     if (settings.UseEnvironmentVarSymbolPaths) {
-      try {
-        var envVar = Environment.GetEnvironmentVariable("_NT_SYMBOL_PATH");
-
-        if (!string.IsNullOrEmpty(envVar)) {
-          symbolPath += $"{envVar};";
-        }
-      }
-      catch (Exception ex) {
-        Trace.WriteLine($"Failed to read _NT_SYMBOL_PATH: {ex.Message}");
-      }
+      symbolPath += $"{settings.EnvironmentVarSymbolPath};";
     }
 
     foreach (string path in settings.SymbolPaths) {

@@ -700,8 +700,9 @@
                                 <StackPanel>
                                     <CheckBox
                                         Margin="0,8,0,0"
-                                        Content="Include __NT_SYMBOL_PATH environment variable"
-                                        IsChecked="{Binding Path=SymbolSettings.UseEnvironmentVarSymbolPaths, Mode=TwoWay}"/>
+                                        Content="Include __NT__SYMBOL__PATH environment variable"
+                                        IsChecked="{Binding Path=SymbolSettings.UseEnvironmentVarSymbolPaths, Mode=TwoWay}"
+                                        ToolTip="{Binding Path=SymbolSettings.EnvironmentVarSymbolPath}"/>
                                     <Grid Margin="0,4,0,0">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="*" />
@@ -731,6 +732,9 @@
                                                         <GridViewColumn.CellTemplate>
                                                             <DataTemplate>
                                                                 <TextBox
+                                                                  Background="Transparent"
+                                                                  BorderThickness="0"
+                                                                  MaxLines="1"
                                                                     KeyDown="SymbolPath_KeyDown"
                                                                     LostFocus="SymbolPath_LostFocus"
                                                                     PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"

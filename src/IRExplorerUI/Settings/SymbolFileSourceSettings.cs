@@ -36,6 +36,7 @@ public class SymbolFileSourceSettings : SettingsBase {
   private const string DefaultPrivateSymbolServer = @"https://symweb";
   private const string DefaultPublicSymbolServer = @"https://msdl.microsoft.com/download/symbols";
   private const string DefaultSymbolCachePath = @"C:\Symbols";
+  private const string DefaultEnvironmentVarSymbolPath = @"_NT_SYMBOL_PATH";
 
   public SymbolFileSourceSettings() {
     Reset();
@@ -51,7 +52,20 @@ public class SymbolFileSourceSettings : SettingsBase {
   public string AuthorizationToken { get; set; }
   [ProtoMember(5)]
   public bool UseEnvironmentVarSymbolPaths { get; set; }
+
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
+
+  public string EnvironmentVarSymbolPath {
+    get {
+      try {
+        return Environment.GetEnvironmentVariable(DefaultEnvironmentVarSymbolPath);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to read symbol env var: {ex.Message}");
+        return null;
+      }
+    }
+  }
 
   public void AddSymbolServer(bool usePrivateServer) {
     string symbolServer = usePrivateServer ? DefaultPrivateSymbolServer : DefaultPublicSymbolServer;
@@ -164,5 +178,33 @@ public class SymbolFileSourceSettings : SettingsBase {
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     SymbolPaths ??= new List<string>();
+  }
+
+
+  class NetAPI32 {
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct DSREG_JOIN_INFO {
+      public int joinType;
+      public IntPtr pJoinCertificate;
+      [MarshalAs(UnmanagedType.LPWStr)] public string DeviceId;
+      [MarshalAs(UnmanagedType.LPWStr)] public string IdpDomain;
+      [MarshalAs(UnmanagedType.LPWStr)] public string TenantId;
+      [MarshalAs(UnmanagedType.LPWStr)] public string JoinUserEmail;
+      [MarshalAs(UnmanagedType.LPWStr)] public string TenantDisplayName;
+      [MarshalAs(UnmanagedType.LPWStr)] public string MdmEnrollmentUrl;
+      [MarshalAs(UnmanagedType.LPWStr)] public string MdmTermsOfUseUrl;
+      [MarshalAs(UnmanagedType.LPWStr)] public string MdmComplianceUrl;
+      [MarshalAs(UnmanagedType.LPWStr)] public string UserSettingSyncUrl;
+      public IntPtr pUserInfo;
+    }
+
+    [DllImport("netapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern void NetFreeAadJoinInformation(
+      IntPtr pJoinInfo);
+
+    [DllImport("netapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern int NetGetAadJoinInformation(
+      string pcszTenantId,
+      out IntPtr ppJoinInfo);
   }
 }
