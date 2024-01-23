@@ -214,12 +214,9 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
 
     foreach (var columnHeader in profileColumnHeaders_) {
-      columnHeader.Header.Click += ColumnHeaderOnClick;
+      columnHeader.Header.MouseLeftButtonDown += ColumnHeaderOnClick;
       columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
-      columnHeader.Header.ContextMenu = new ContextMenu();
-
-      //? TODO: Add context menu
-      //? columnHeader.Header.ContextMenu.Items.Add(new MenuItem() { Header = "hey" });
+      columnHeader.Header.MouseRightButtonUp += ColumnHeaderOnRightClick;
     }
 
     profileRowCollection_ = new ListCollectionView(elementValueList);
@@ -398,16 +395,27 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private void ColumnHeaderOnClick(object sender, RoutedEventArgs e) {
     if (((GridViewColumnHeader)sender).Tag is OptionalColumn column &&
         column.HeaderClickHandler != null) {
-      column.HeaderClickHandler(column);
+      column.HeaderClickHandler(column, (GridViewColumnHeader)sender);
       UpdateColumnWidths();
+      e.Handled = true;
+    }
+  }
+
+  private void ColumnHeaderOnRightClick(object sender, RoutedEventArgs e) {
+    if (((GridViewColumnHeader)sender).Tag is OptionalColumn column &&
+        column.HeaderRightClickHandler != null) {
+      column.HeaderRightClickHandler(column, (GridViewColumnHeader)sender);
+      UpdateColumnWidths();
+      e.Handled = true;
     }
   }
 
   private void ColumnHeaderOnDoubleClick(object sender, RoutedEventArgs e) {
     if (((GridViewColumnHeader)sender).Tag is OptionalColumn column &&
         column.HeaderDoubleClickHandler != null) {
-      column.HeaderDoubleClickHandler(column);
+      column.HeaderDoubleClickHandler(column, (GridViewColumnHeader)sender);
       UpdateColumnWidths();
+      e.Handled = true;
     }
   }
 

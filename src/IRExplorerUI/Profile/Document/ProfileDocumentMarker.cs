@@ -16,6 +16,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
+using IRExplorerUI.OptionsPanels;
 using TextLocation = IRExplorerCore.TextLocation;
 
 namespace IRExplorerUI.Profile;
@@ -43,26 +44,26 @@ public interface MarkedDocument {
 
 public class ProfileDocumentMarker {
   // Templates for the time columns defining the style.
-  public static readonly OptionalColumn TIME_COLUMN =
+  public static readonly OptionalColumn TimeColumnDefinition =
     OptionalColumn.Template("[TimeHeader]", "TimePercentageColumnValueTemplate",
                             "TimeHeader", "Time (ms)", "Instruction time",
                             null, 50.0, "TimeColumnHeaderTemplate");
-  public static readonly OptionalColumn TIME_PERCENTAGE_COLUMN =
+  public static readonly OptionalColumn TimePercentageColumnDefinition =
     OptionalColumn.Template("[TimePercentageHeader]", "TimePercentageColumnValueTemplate",
                             "TimePercentageHeader", "Time (%)", "Instruction time percentage relative to function time",
                             null, 50.0, "TimeColumnHeaderTemplate");
 
   public OptionalColumn TimeColumnTemplate() {
-    TIME_COLUMN.Style = columnSettings_.GetColumnStyle(TIME_COLUMN) ??
+    TimeColumnDefinition.Style = columnSettings_.GetColumnStyle(TimeColumnDefinition) ??
                         OptionalColumnSettings.DefaultTimeColumnStyle;
 
-    return TIME_COLUMN;
+    return TimeColumnDefinition;
   }
 
-  public OptionalColumn TimePerrcentageColumnTemplate() {
-    TIME_PERCENTAGE_COLUMN.Style = columnSettings_.GetColumnStyle(TIME_PERCENTAGE_COLUMN) ??
+  public OptionalColumn TimePercentageColumnTemplate() {
+    TimePercentageColumnDefinition.Style = columnSettings_.GetColumnStyle(TimePercentageColumnDefinition) ??
                                    OptionalColumnSettings.DefaultTimePercentageColumnStyle;
-    return TIME_PERCENTAGE_COLUMN;
+    return TimePercentageColumnDefinition;
   }
 
   public OptionalColumn CounterColumnTemplate(PerformanceCounter counter, int index) {
@@ -100,6 +101,7 @@ public class ProfileDocumentMarker {
   private ProfileDocumentMarkerSettings settings_;
   private OptionalColumnSettings columnSettings_;
   private ICompilerInfoProvider irInfo_;
+  private OptionsPanelHostWindow optionsPanelWindow_;
 
   public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile,
                                ProfileDocumentMarkerSettings settings,
@@ -511,7 +513,7 @@ public class ProfileDocumentMarker {
 
     // Add a time column.
     var columnData = new IRDocumentColumnData(function.InstructionCount);
-    var percentageColumn = columnData.AddColumn(TimePerrcentageColumnTemplate());
+    var percentageColumn = columnData.AddColumn(TimePercentageColumnTemplate());
     var timeColumn = columnData.AddColumn(TimeColumnTemplate());
 
     await Task.Run(() => {
@@ -537,12 +539,11 @@ public class ProfileDocumentMarker {
     ApplyColumnStyle(percentageColumn, columnData, function, document);
     ApplyColumnStyle(timeColumn, columnData, function, document);
 
-    percentageColumn.HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
-    timeColumn.HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
-
+    // Handle performance counter columns.
     var counterElements = result.CounterElements;
 
     if (counterElements.Count == 0) {
+      SetupColumnHeaderEvents(function, document, columnData);
       return columnData;
     }
 
@@ -647,7 +648,16 @@ public class ProfileDocumentMarker {
       ApplyColumnStyle(column, columnData, function, document);
     }
 
+    SetupColumnHeaderEvents(function, document, columnData);
     return columnData;
+  }
+
+  private void SetupColumnHeaderEvents(FunctionIR function, MarkedDocument document,
+                                       IRDocumentColumnData columnData) {
+    foreach (var column in columnData.Columns) {
+      column.HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
+      column.HeaderRightClickHandler += ColumnHeaderRightClickHandler(document, function, columnData);
+    }
   }
 
   private void CreatePerfCounterColumn(FunctionIR function, MarkedDocument document,
@@ -656,13 +666,12 @@ public class ProfileDocumentMarker {
     var counterInfo = perfCounters[k];
     counterColumns[k] = CounterColumnTemplate(counterInfo, k);
     counterColumns[k].IsVisible = IsPerfCounterVisible(counterInfo);
-    counterColumns[k].HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
     columnData.AddColumn(counterColumns[k]);
   }
 
   private OptionalColumnEventHandler ColumnHeaderClickHandler(MarkedDocument document, FunctionIR function,
                                                               IRDocumentColumnData columnData) {
-    return column => {
+    return (column, columnHeader) => {
       var currentMainColumn = columnData.MainColumn;
 
       if (column == currentMainColumn) {
@@ -677,6 +686,46 @@ public class ProfileDocumentMarker {
       column.IsMainColumn = true;
       ApplyColumnStyle(column, columnData, function, document);
     };
+  }
+
+  private OptionalColumnEventHandler ColumnHeaderRightClickHandler(MarkedDocument document, FunctionIR function,
+                                                                   IRDocumentColumnData columnData) {
+    return (column, columnHeader) => {
+      Trace.WriteLine($"Right click on {column.Title}");
+
+      if (optionsPanelWindow_ != null) {
+        optionsPanelWindow_.Close();
+        optionsPanelWindow_ = null;
+        return;
+      }
+
+      //? TODO: Add new style only if something changed, use clone initially
+      var columnSettings = GetOrCreateColumnStyle(column);
+
+      FrameworkElement relativeControl = columnHeader;
+      optionsPanelWindow_ = OptionsPanelHostWindow.Create<ColumnOptionsPanel, OptionalColumnStyle>(
+        columnSettings, relativeControl, null,
+        (newSettings, commit) => {
+          if (!newSettings.Equals(settings_)) {
+            return newSettings;
+          }
+
+          return null;
+        },
+        () => optionsPanelWindow_ = null,
+        new Point(0, columnHeader.ActualHeight));
+    };
+  }
+
+  //? TODO: Add new style only if something changed
+  private OptionalColumnStyle GetOrCreateColumnStyle(OptionalColumn column) {
+    var style = columnSettings_.GetColumnStyle(column);
+
+    if (style == null) {
+      columnSettings_.AddColumnStyle(column, column.Style.Clone());
+    }
+
+    return style;
   }
 
   private struct CounterSortHelper {

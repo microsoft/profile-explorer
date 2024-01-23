@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 using IRExplorerCore.Utilities;
@@ -86,6 +87,10 @@ public class OptionalColumnSettings : SettingsBase {
     return columnStyles_.GetValueOrNull(column.ColumnName);
   }
 
+  public void AddColumnStyle(OptionalColumn column, OptionalColumnStyle style) {
+    columnStyles_[column.ColumnName] = style;
+  }
+
   public bool IsColumnVisible(OptionalColumn column) {
     return !hiddenColumns_.Contains(column.ColumnName);
   }
@@ -114,7 +119,7 @@ public class OptionalColumnSettings : SettingsBase {
 }
 
 [ProtoContract(SkipConstructor = true)]
-public class OptionalColumnStyle {
+public class OptionalColumnStyle : SettingsBase {
   public OptionalColumnStyle() : this(int.MaxValue) {
   }
 
@@ -154,4 +159,8 @@ public class OptionalColumnStyle {
   public ColorPalette BackColorPalette { get; set; }
   [ProtoMember(15)]
   public bool InvertColorPalette { get; set; }
+
+  public OptionalColumnStyle Clone() {
+    throw new NotImplementedException();
+  }
 }
