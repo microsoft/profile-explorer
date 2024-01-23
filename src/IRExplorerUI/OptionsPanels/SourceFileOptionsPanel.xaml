@@ -18,7 +18,7 @@
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
         <TabControl Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderThickness="0">
             <TabItem Header="General" Style="{StaticResource TabControlStyle}">
-                <StackPanel Grid.Row="0" Margin="4,4,4,4">
+                <StackPanel Margin="4,4,4,4">
 
                     <TextBlock FontWeight="Medium" Text="Document Style" />
                     <CheckBox
@@ -149,125 +149,18 @@
                                 Text="Left margin background color" />
                         </Grid>
                     </StackPanel>
-                    <Separator Margin="0,4,0,4" />
+                </StackPanel>
+            </TabItem>
+            <TabItem
+                Header="Source File"
+                Style="{StaticResource TabControlStyle}"
+                ToolTip="Options for finding source files">
+                <StackPanel Margin="4,4,4,4">
 
-                    <TextBlock FontWeight="Medium" Text="Excluded File Paths" />
-                    <Grid Margin="0,0,0,0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="80" />
-                        </Grid.ColumnDefinitions>
-
-                        <ListView
-                            x:Name="ExcludedPathsList"
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            MinHeight="70"
-                            MaxHeight="200"
-                            Margin="0,4,4,4"
-                            IsTextSearchEnabled="True"
-                            ScrollViewer.VerticalScrollBarVisibility="Auto"
-                            SelectionMode="Extended"
-                            TextSearch.TextPath="Name">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Width="Auto" Header="Path">
-                                        <GridViewColumn.HeaderContainerStyle>
-                                            <Style TargetType="{x:Type GridViewColumnHeader}">
-                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                            </Style>
-                                        </GridViewColumn.HeaderContainerStyle>
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBox
-                                                    KeyDown="SymbolPath_KeyDown"
-                                                    LostFocus="SymbolPath_LostFocus"
-                                                    PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
-                                                    Text="{Binding Path=.}" />
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                </GridView>
-                            </ListView.View>
-                            <ListView.ItemContainerStyle>
-                                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                </Style>
-                            </ListView.ItemContainerStyle>
-                        </ListView>
-
-                        <StackPanel
-                            Grid.Row="0"
-                            Grid.Column="1"
-                            Margin="2,4,4,4">
-                            <Button
-                                Height="24"
-                                Padding="2"
-                                HorizontalContentAlignment="Left"
-                                IsEnabled="False"
-                                ToolTip="Add new symbol path to the list">
-                                <StackPanel Orientation="Horizontal">
-                                    <Image
-                                        Width="16"
-                                        Height="16"
-                                        Source="{StaticResource PlusIcon}"
-                                        Style="{StaticResource DisabledImageStyle}" />
-                                    <TextBlock Margin="4,0,0,0" Text="Add" />
-                                </StackPanel>
-                            </Button>
-                            <Button
-                                Height="24"
-                                Margin="0,2,0,0"
-                                Padding="2"
-                                HorizontalContentAlignment="Left"
-                                IsEnabled="False"
-                                ToolTip="Remove path from the list">
-                                <StackPanel Orientation="Horizontal">
-                                    <Image
-                                        Width="16"
-                                        Height="16"
-                                        Source="{StaticResource MinusIcon}"
-                                        Style="{StaticResource DisabledImageStyle}" />
-                                    <TextBlock Margin="4,0,0,0" Text="Remove" />
-                                </StackPanel>
-                            </Button>
-                            <Button
-                                Height="24"
-                                Margin="0,2,0,0"
-                                Padding="2"
-                                HorizontalContentAlignment="Left"
-                                IsEnabled="False"
-                                ToolTip="Remove all paths from the list">
-                                <StackPanel Orientation="Horizontal">
-                                    <Image
-                                        Width="16"
-                                        Height="16"
-                                        Source="{StaticResource RemoveIcon}"
-                                        Style="{StaticResource DisabledImageStyle}" />
-                                    <TextBlock Margin="4,0,0,0" Text="Clear" />
-                                </StackPanel>
-                            </Button>
-
-                        </StackPanel>
-
-                        <StackPanel
-                            Grid.Row="1"
-                            Grid.Column="0"
-                            Grid.ColumnSpan="2"
-                            Margin="0,0,4,4"
-                            VerticalAlignment="Top"
-                            Orientation="Horizontal" />
-
-                    </Grid>
-                    <Separator Margin="0,4,0,4" />
 
                     <TextBlock FontWeight="Medium" Text="File Path Mappings" />
-                    <Grid Margin="0,0,0,0">
+                    <TextBlock Text="Mappings from original source file path to local path" />
+                    <Grid Margin="0,2,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                             <RowDefinition Height="*" />
@@ -332,6 +225,7 @@
                                 Margin="0,2,0,0"
                                 Padding="2"
                                 HorizontalContentAlignment="Left"
+                                Click="RemoveMappedPath_Click"
                                 IsEnabled="False"
                                 ToolTip="Remove path from the list">
                                 <StackPanel Orientation="Horizontal">
@@ -348,6 +242,120 @@
                                 Margin="0,2,0,0"
                                 Padding="2"
                                 HorizontalContentAlignment="Left"
+                                Click="ClearMappedPath_Click"
+                                IsEnabled="False"
+                                ToolTip="Remove all paths from the list">
+                                <StackPanel Orientation="Horizontal">
+                                    <Image
+                                        Width="16"
+                                        Height="16"
+                                        Source="{StaticResource RemoveIcon}"
+                                        Style="{StaticResource DisabledImageStyle}" />
+                                    <TextBlock Margin="4,0,0,0" Text="Clear" />
+                                </StackPanel>
+                            </Button>
+
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="2"
+                            Margin="0,0,4,4"
+                            VerticalAlignment="Top"
+                            Orientation="Horizontal" />
+                    </Grid>
+                    <Separator Margin="0,0,0,4" />
+
+                    <TextBlock FontWeight="Medium" Text="Excluded File Paths" />
+                    <TextBlock Text="Original source file paths excluded from mapping" />
+                    <Grid Margin="0,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="80" />
+                        </Grid.ColumnDefinitions>
+
+                        <ListView
+                            x:Name="ExcludedPathsList"
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            MinHeight="70"
+                            MaxHeight="200"
+                            Margin="0,4,4,4"
+                            IsTextSearchEnabled="True"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            SelectionMode="Extended"
+                            TextSearch.TextPath="Name">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Width="Auto" Header="Path">
+                                        <GridViewColumn.HeaderContainerStyle>
+                                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                            </Style>
+                                        </GridViewColumn.HeaderContainerStyle>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBox PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown" Text="{Binding Path=., Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                            <ListView.ItemContainerStyle>
+                                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                        </ListView>
+
+                        <StackPanel
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Margin="2,4,4,4">
+                            <Button
+                                Height="24"
+                                Padding="2"
+                                HorizontalContentAlignment="Left"
+                                Click="AddExcludedPath_Click"
+                                IsEnabled="False"
+                                ToolTip="Add new symbol path to the list">
+                                <StackPanel Orientation="Horizontal">
+                                    <Image
+                                        Width="16"
+                                        Height="16"
+                                        Source="{StaticResource PlusIcon}"
+                                        Style="{StaticResource DisabledImageStyle}" />
+                                    <TextBlock Margin="4,0,0,0" Text="Add" />
+                                </StackPanel>
+                            </Button>
+                            <Button
+                                Height="24"
+                                Margin="0,2,0,0"
+                                Padding="2"
+                                HorizontalContentAlignment="Left"
+                                Click="RemoveExcludedPath_Click"
+                                IsEnabled="False"
+                                ToolTip="Remove path from the list">
+                                <StackPanel Orientation="Horizontal">
+                                    <Image
+                                        Width="16"
+                                        Height="16"
+                                        Source="{StaticResource MinusIcon}"
+                                        Style="{StaticResource DisabledImageStyle}" />
+                                    <TextBlock Margin="4,0,0,0" Text="Remove" />
+                                </StackPanel>
+                            </Button>
+                            <Button
+                                Height="24"
+                                Margin="0,2,0,0"
+                                Padding="2"
+                                HorizontalContentAlignment="Left"
+                                Click="ClearExcludedPath_Click"
                                 IsEnabled="False"
                                 ToolTip="Remove all paths from the list">
                                 <StackPanel Orientation="Horizontal">
@@ -371,8 +379,10 @@
                             Orientation="Horizontal" />
 
                     </Grid>
+                    <TextBlock FontSize="11" Text="Wildcards in the path are accepted, e.g. *path\foo*" />
                 </StackPanel>
             </TabItem>
+
             <TabItem
                 x:Name="ProfilingOptionsPanel"
                 Header="Profiling"

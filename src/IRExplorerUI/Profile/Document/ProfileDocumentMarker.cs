@@ -691,23 +691,22 @@ public class ProfileDocumentMarker {
   private OptionalColumnEventHandler ColumnHeaderRightClickHandler(MarkedDocument document, FunctionIR function,
                                                                    IRDocumentColumnData columnData) {
     return (column, columnHeader) => {
-      Trace.WriteLine($"Right click on {column.Title}");
-
       if (optionsPanelWindow_ != null) {
         optionsPanelWindow_.Close();
         optionsPanelWindow_ = null;
         return;
       }
 
-      //? TODO: Add new style only if something changed, use clone initially
-      var columnSettings = GetOrCreateColumnStyle(column);
-
+      var columnSettings = column.Style.Clone();
       FrameworkElement relativeControl = columnHeader;
       optionsPanelWindow_ = OptionsPanelHostWindow.Create<ColumnOptionsPanel, OptionalColumnStyle>(
         columnSettings, relativeControl, null,
         (newSettings, commit) => {
-          if (!newSettings.Equals(settings_)) {
-            return newSettings;
+          if (!newSettings.Equals(columnSettings)) {
+            if (commit) {
+              columnSettings_.AddColumnStyle(column, newSettings);
+            }
+            return newSettings.Clone();
           }
 
           return null;
@@ -715,17 +714,6 @@ public class ProfileDocumentMarker {
         () => optionsPanelWindow_ = null,
         new Point(0, columnHeader.ActualHeight));
     };
-  }
-
-  //? TODO: Add new style only if something changed
-  private OptionalColumnStyle GetOrCreateColumnStyle(OptionalColumn column) {
-    var style = columnSettings_.GetColumnStyle(column);
-
-    if (style == null) {
-      columnSettings_.AddColumnStyle(column, column.Style.Clone());
-    }
-
-    return style;
   }
 
   private struct CounterSortHelper {

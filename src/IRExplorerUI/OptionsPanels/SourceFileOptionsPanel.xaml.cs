@@ -3,8 +3,11 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using Microsoft.Diagnostics.Tracing.Parsers.MicrosoftWindowsWPF;
 
 namespace IRExplorerUI.OptionsPanels;
 
@@ -50,24 +53,56 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
     foreach (var pair in settings_.FinderSettings.SourceMappings) {
       mappings.Add(pair);
     }
+
     var list = new ObservableCollectionRefresh<KeyValuePair<string, string>> (mappings);
     MappedPathsList.ItemsSource = list;
   }
 
   private void ReloadExcludedPathsList() {
-    var list = new ObservableCollectionRefresh<string>(settings_.FinderSettings.DisabledSourceMappings.ToList());
+    var list = new ObservableCollectionRefresh<string>(settings_.FinderSettings.DisabledSourceMappings);
     ExcludedPathsList.ItemsSource = list;
   }
 
-  private void SymbolPath_KeyDown(object sender, KeyEventArgs e) {
-
+  private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+    if (sender is TextBox textBox) {
+      Utils.SelectTextBoxListViewItem(textBox, ExcludedPathsList);
+      e.Handled = true;
     }
-
-  private void SymbolPath_LostFocus(object sender, RoutedEventArgs e) {
-
   }
 
-  private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+  private void RemoveMappedPath_Click(object sender, RoutedEventArgs e) {
+    if (MappedPathsList.SelectedItem is KeyValuePair<string, string> pair) {
+      settings_.FinderSettings.SourceMappings.Remove(pair.Key);
+      ReloadExcludedPathsList();
+    }
+  }
 
+  private void ClearMappedPath_Click(object sender, RoutedEventArgs e) {
+    settings_.FinderSettings.SourceMappings.Clear();
+    ReloadMappedPathsList();
+  }
+
+  private void AddExcludedPath_Click(object sender, RoutedEventArgs e) {
+    settings_.FinderSettings.DisabledSourceMappings.Add("");
+    ReloadExcludedPathsList();
+
+    // Wait for the UI to update
+    Dispatcher.BeginInvoke((Action)(() => {
+      // Get the ListViewItem for the new item
+      var newItem = settings_.FinderSettings.DisabledSourceMappings.Last();
+      Utils.FocusTextBoxListViewItem(newItem, ExcludedPathsList);
+    }), DispatcherPriority.ContextIdle);
+  }
+
+  private void ClearExcludedPath_Click(object sender, RoutedEventArgs e) {
+    settings_.FinderSettings.DisabledSourceMappings.Clear();
+    ReloadExcludedPathsList();
+  }
+
+  private void RemoveExcludedPath_Click(object sender, RoutedEventArgs e) {
+    if (ExcludedPathsList.SelectedItem is string path) {
+      settings_.FinderSettings.DisabledSourceMappings.Remove((path));
+      ReloadExcludedPathsList();
+    }
   }
 }
