@@ -1082,7 +1082,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     profileElements_ = result.SampledElements;
     ProfileVisible = true;
 
-    //? TODO: Replace with code from DocumentColumns
     // Show optional columns with timing, counters, etc.
     // First remove any previous columns.
     return await ShowProfilingColumns();
@@ -1094,11 +1093,16 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     if (!columnData.HasData) {
       ProfileColumns.Reset();
+      ProfileBlocksMenu.Items.Clear();
       return false;
     }
 
     ProfileColumns.Settings = settings_;
     await ProfileColumns.Display(columnData, TextView);
+    ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileColumnsMenu, 
+                                              async () => {
+      await ShowProfilingColumns();
+    });
     return true;
   }
 

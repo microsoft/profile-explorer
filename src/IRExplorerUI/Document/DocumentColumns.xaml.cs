@@ -229,6 +229,37 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     UpdateColumnsList();
   }
 
+  public void BuildColumnsVisibilityMenu(IRDocumentColumnData columnData, MenuItem menu,
+                                         Action columnsChanged) {
+    menu.Items.Clear();
+
+    foreach (var column in columnData.Columns) {
+      var item = new MenuItem {
+        Header = column.Title,
+        Tag = column,
+        IsCheckable = true,
+        IsChecked = column.IsVisible
+      };
+
+      item.Checked += (sender, args) => {
+        if (sender is MenuItem menuItem && 
+            menuItem.Tag is OptionalColumn column) {
+          column.IsVisible = menuItem.IsChecked;
+          columnsChanged();
+        }
+      };
+      item.Unchecked += (sender, args) => {
+        if (sender is MenuItem menuItem &&
+            menuItem.Tag is OptionalColumn column) {
+          column.IsVisible = menuItem.IsChecked;
+          columnsChanged();
+        }
+      };
+
+      menu.Items.Add(item);
+    }
+  }
+
   public void HandleTextRegionFolded(FoldingSection section) {
     foldedTextRegions_.Add(section);
     foldedTextRegions_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
