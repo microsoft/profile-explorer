@@ -30,22 +30,18 @@ public class OptionalColumnSettings : SettingsBase {
 
   public static OptionalColumnStyle DefaultTimePercentageColumnStyle =>
     new OptionalColumnStyle(1) {
-      ShowPercentageBar = true,
-      ShowMainColumnPercentageBar = true,
-      UseBackColor = true,
-      UseMainColumnBackColor = true,
-      ShowIcon = true,
+      ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
+      UseBackColor = OptionalColumnStyle.PartVisibility.Always,
+      ShowIcon = OptionalColumnStyle.PartVisibility.Always,
       BackColorPalette = ColorPalette.Profile,
       InvertColorPalette = false,
       PickColorForPercentage = true
     };
   public static OptionalColumnStyle DefaultTimeColumnStyle =>
     new OptionalColumnStyle(0) {
-      ShowPercentageBar = false,
-      ShowMainColumnPercentageBar = false,
-      UseBackColor = true,
-      UseMainColumnBackColor = true,
-      ShowMainColumnIcon = true,
+      ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
+      UseBackColor = OptionalColumnStyle.PartVisibility.Always,
+      ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       BackColorPalette = ColorPalette.Profile,
       InvertColorPalette = false,
       PickColorForPercentage = true
@@ -53,13 +49,10 @@ public class OptionalColumnSettings : SettingsBase {
 
   public static OptionalColumnStyle DefaultMetricsColumnStyle(int k) {
     return new OptionalColumnStyle(k + 2) {
-      ShowPercentageBar = true,
-      ShowMainColumnPercentageBar = true,
-      UseBackColor = true,
-      UseMainColumnBackColor = true,
+      ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
+      UseBackColor = OptionalColumnStyle.PartVisibility.IfActiveColumn,
+      ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       PickColorForPercentage = false,
-      ShowIcon = false,
-      ShowMainColumnIcon = true,
       BackColorPalette = ColorPalette.Profile,
       InvertColorPalette = true,
       TextColor = ColorPalette.DarkHue.PickColor(k),
@@ -69,13 +62,10 @@ public class OptionalColumnSettings : SettingsBase {
 
   public static OptionalColumnStyle DefaultCounterColumnStyle(int k) {
     return new OptionalColumnStyle(k + 2) {
-      ShowPercentageBar = true,
-      ShowMainColumnPercentageBar = true,
-      UseBackColor = false,
-      UseMainColumnBackColor = true,
+      ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
+      UseBackColor = OptionalColumnStyle.PartVisibility.IfActiveColumn,
+      ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       PickColorForPercentage = false,
-      ShowIcon = false,
-      ShowMainColumnIcon = true,
       BackColorPalette = ColorPalette.Profile,
       InvertColorPalette = true,
       TextColor = ColorPalette.DarkHue.PickColor(k),
@@ -129,6 +119,12 @@ public class OptionalColumnStyle : SettingsBase {
     Width = 50;
   }
 
+  public enum PartVisibility {
+    Always,
+    IfActiveColumn,
+    Never
+  }
+
   [ProtoMember(1)]
   public bool IsVisible { get; set; }
   [ProtoMember(2)]
@@ -136,25 +132,19 @@ public class OptionalColumnStyle : SettingsBase {
   [ProtoMember(3)]
   public double Width { get; set; }
   [ProtoMember(4)]
-  public string Abbreviation { get; set; }
+  public string AlternateTitle { get; set; }
   [ProtoMember(5)]
-  public bool ShowPercentageBar { get; set; }
-  [ProtoMember(6)]
-  public bool ShowMainColumnPercentageBar { get; set; }
+  public PartVisibility ShowPercentageBar { get; set; }
   [ProtoMember(7)]
   public Color PercentageBarBackColor { get; set; }
   [ProtoMember(8)]
   public Color TextColor { get; set; }
   [ProtoMember(9)]
-  public bool ShowIcon { get; set; }
-  [ProtoMember(10)]
-  public bool ShowMainColumnIcon { get; set; }
+  public PartVisibility ShowIcon { get; set; }
   [ProtoMember(11)]
   public bool PickColorForPercentage { get; set; }
   [ProtoMember(12)]
-  public bool UseBackColor { get; set; }
-  [ProtoMember(13)]
-  public bool UseMainColumnBackColor { get; set; }
+  public PartVisibility UseBackColor { get; set; }
   [ProtoMember(14)]
   public ColorPalette BackColorPalette { get; set; }
   [ProtoMember(15)]
@@ -165,24 +155,14 @@ public class OptionalColumnStyle : SettingsBase {
     return StateSerializer.Deserialize<OptionalColumnStyle>(serialized);
   }
 
-  public override bool Equals(object other) {
-    if (ReferenceEquals(null, other))
-      return false;
-    if (ReferenceEquals(this, other))
-      return true;
-    if (other.GetType() != this.GetType())
-      return false;
-    return Equals((OptionalColumnStyle)other);
-  }
-
-  protected bool Equals(OptionalColumnStyle other) {
-    return IsVisible == other.IsVisible && Order == other.Order && Width.Equals(other.Width) &&
-           Abbreviation == other.Abbreviation && ShowPercentageBar == other.ShowPercentageBar &&
-           ShowMainColumnPercentageBar == other.ShowMainColumnPercentageBar &&
+  public override bool Equals(object obj) {
+    return obj is OptionalColumnStyle other &&
+           IsVisible == other.IsVisible && Order == other.Order && Width.Equals(other.Width) &&
+           AlternateTitle == other.AlternateTitle && ShowPercentageBar == other.ShowPercentageBar &&
            PercentageBarBackColor.Equals(other.PercentageBarBackColor) && TextColor.Equals(other.TextColor) &&
-           ShowIcon == other.ShowIcon && ShowMainColumnIcon == other.ShowMainColumnIcon &&
+           ShowIcon == other.ShowIcon &&
            PickColorForPercentage == other.PickColorForPercentage && UseBackColor == other.UseBackColor &&
-           UseMainColumnBackColor == other.UseMainColumnBackColor && Equals(BackColorPalette, other.BackColorPalette) &&
+           Equals(BackColorPalette, other.BackColorPalette) &&
            InvertColorPalette == other.InvertColorPalette;
   }
 }

@@ -39,4 +39,16 @@ public partial class DocumentProfilingOptionsPanel : OptionsPanelBase {
       RaiseSettingsChanged(null);
     });
   }
+
+  private void MaxWidthButton_Click(object sender, RoutedEventArgs e) {
+    ((ProfileDocumentMarkerSettings)Settings).MaxPercentageBarWidth =
+      ProfileDocumentMarkerSettings.DefaultMaxPercentageBarWidth;
+    ReloadSettings();
+  }
+
+  private void WeightCutoffButton_Click(object sender, RoutedEventArgs e) {
+    ((ProfileDocumentMarkerSettings)Settings).ElementWeightCutoff =
+      ProfileDocumentMarkerSettings.DefaultElementWeightCutoff;
+    ReloadSettings();
+  }
 }

@@ -2389,6 +2389,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private async void FunctionDoubleClick(object sender, MouseButtonEventArgs e) {
+    await OpenFunction(sender);
+  }
+
+  private async Task OpenFunction(object sender) {
     // A double-click on the +/- icon doesn't have an actual node selected.
     var functionEx = ((ListViewItem)sender).Content as IRTextFunctionEx;
 
@@ -2525,6 +2529,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private void ModuleDoubleClick(object sender, MouseButtonEventArgs e) {
+    SwitchModule(sender);
+  }
+
+  private void SwitchModule(object sender) {
     var moduleEx = ((ListViewItem)sender).Content as ModuleEx;
 
     if (moduleEx != null) {
@@ -3008,5 +3016,25 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
 
-        #endregion
+  #endregion
+
+  private void SectionPreviewKeyDown(object sender, KeyEventArgs e) {
+    if (e.Key == Key.Return) {
+      var sectionEx = ((ListViewItem)sender).Content as IRTextSectionEx;
+      OpenSectionImpl(sectionEx);
+      e.Handled = true;
+    }
+  }
+
+  private async void FunctionPreviewKeyDown(object sender, KeyEventArgs e) {
+    if (e.Key == Key.Return) {
+      await OpenFunction(sender);
+    }
+  }
+
+  private void ModulePreviewKeyDown(object sender, KeyEventArgs e) {
+    if (e.Key == Key.Return) {
+      SwitchModule(sender);
+    }
+  }
 }

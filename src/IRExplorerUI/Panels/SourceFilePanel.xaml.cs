@@ -144,8 +144,12 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     sourceFileFinder_.Reset();
 
     // Try to reload source file.
+    await ReloadSourceFile();
+  }
+
+  private async Task ReloadSourceFile() {
     if (section_ == null) {
-      return; //? TODO: Button should be disabled, needs commands
+      return;
     }
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
@@ -177,8 +181,9 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       settings_.Clone(), relativeControl, Session,
       (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
-          settings_ = newSettings;
           App.Settings.SourceFileSettings = newSettings;
+          settings_ = newSettings;
+          ReloadSourceFile();
 
           if (commit) {
             App.SaveApplicationSettings();
@@ -197,8 +202,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public async Task LoadSourceFile(IRTextSection section) {
     section_ = section;
-    TextView.ProfileMarkerOptions = settings_.ProfileMarkerSettings;
-    TextView.ColumnOptions = settings_.ColumnSettings;
+    TextView.ProfileMarkerSettings = settings_.ProfileMarkerSettings;
+    TextView.ColumnSettings = settings_.ColumnSettings;
     TextView.TextView.Initialize(App.Settings.DocumentSettings, Session);
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {

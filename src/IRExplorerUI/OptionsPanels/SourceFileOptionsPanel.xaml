@@ -226,7 +226,6 @@
                                 Padding="2"
                                 HorizontalContentAlignment="Left"
                                 Click="RemoveMappedPath_Click"
-                                IsEnabled="False"
                                 ToolTip="Remove path from the list">
                                 <StackPanel Orientation="Horizontal">
                                     <Image
@@ -243,7 +242,6 @@
                                 Padding="2"
                                 HorizontalContentAlignment="Left"
                                 Click="ClearMappedPath_Click"
-                                IsEnabled="False"
                                 ToolTip="Remove all paths from the list">
                                 <StackPanel Orientation="Horizontal">
                                     <Image
@@ -299,7 +297,10 @@
                                         </GridViewColumn.HeaderContainerStyle>
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBox PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown" Text="{Binding Path=., Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                <TextBox
+                                                    BorderThickness="0"
+                                                    PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
+                                                    Text="{Binding Path=., Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
@@ -322,7 +323,6 @@
                                 Padding="2"
                                 HorizontalContentAlignment="Left"
                                 Click="AddExcludedPath_Click"
-                                IsEnabled="False"
                                 ToolTip="Add new symbol path to the list">
                                 <StackPanel Orientation="Horizontal">
                                     <Image
@@ -339,7 +339,6 @@
                                 Padding="2"
                                 HorizontalContentAlignment="Left"
                                 Click="RemoveExcludedPath_Click"
-                                IsEnabled="False"
                                 ToolTip="Remove path from the list">
                                 <StackPanel Orientation="Horizontal">
                                     <Image
@@ -356,7 +355,6 @@
                                 Padding="2"
                                 HorizontalContentAlignment="Left"
                                 Click="ClearExcludedPath_Click"
-                                IsEnabled="False"
                                 ToolTip="Remove all paths from the list">
                                 <StackPanel Orientation="Horizontal">
                                     <Image

@@ -111,8 +111,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     get => selectedLineBrush_;
     set => SetField(ref selectedLineBrush_, value);
   }
-  public ProfileDocumentMarkerSettings ProfileMarkerOptions { get; internal set; }
-  public OptionalColumnSettings ColumnOptions { get; internal set; }
+  public ProfileDocumentMarkerSettings ProfileMarkerSettings { get; internal set; }
+  public OptionalColumnSettings ColumnSettings { get; internal set; }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -129,7 +129,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.Initialize(App.Settings.DocumentSettings, Session);
     TextView.EarlyLoadSectionSetup(parsedSection);
     await TextView.LoadSection(parsedSection);
-    await ShowProfilingColumns();
+    await UpdateProfilingColumns();
     return true;
   }
 
@@ -175,7 +175,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
     var profileMarker =
       new ProfileDocumentMarker(funcProfile, Session.ProfileData,
-      ProfileMarkerOptions, ColumnOptions,
+      ProfileMarkerSettings, ColumnSettings,
       Session.CompilerInfo);
     var processingResult = profileMarker.PrepareSourceLineProfile(funcProfile, TextView, debugInfo);
 
@@ -208,10 +208,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     sourceProfileResult_ = processingResult.Result;
     sourceLineProfileResult_ = processingResult.SourceLineResult;
 
-    await ShowProfilingColumns();
+    await UpdateProfilingColumns();
   }
 
-  public async Task ShowProfilingColumns() {
+  public async Task UpdateProfilingColumns() {
     sourceColumnData_ = TextView.ProfileColumnData;
     ColumnsVisible = sourceColumnData_ != null && sourceColumnData_.HasData;
 
@@ -219,7 +219,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       if (UseCompactProfilingColumns) {
         // Use compact mode that shows only the time column.
         if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TimeColumnDefinition) is var timeColumn) {
-          timeColumn.Style.ShowMainColumnIcon = false;
+          timeColumn.Style.ShowIcon = OptionalColumnStyle.PartVisibility.Never;
         }
 
         if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timePercColumn) {
@@ -239,6 +239,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
       ProfileColumns.UseSmallerFontSize = UseSmallerFontSize;
       ProfileColumns.Settings = settings_;
+      ProfileColumns.ColumnSettings = ColumnSettings;
+
       await ProfileColumns.Display(sourceColumnData_, TextView);
       profileElements_ = TextView.ProfileProcessingResult.SampledElements;
       UpdateHighlighting();
@@ -521,7 +523,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public async Task ReloadSettings() {
     InitializeDocument();
-    await ShowProfilingColumns();
+    await UpdateProfilingColumns();
   }
 
   private void InitializeDocument() {

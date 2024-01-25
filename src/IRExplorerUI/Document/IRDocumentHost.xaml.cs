@@ -335,6 +335,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     set {
       settings_ = value;
       ProfileColumns.Settings = value;
+      ProfileColumns.ColumnSettings = value.ColumnSettings;
     }
   }
 
@@ -423,7 +424,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, true);
     TextView.Initialize(settings_, session_);
     SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
-    await ShowProfilingColumns();
+    await UpdateProfilingColumns();
   }
 
   public async void UnloadSection(IRTextSection section, bool switchingActiveDocument) {
@@ -1084,10 +1085,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     // Show optional columns with timing, counters, etc.
     // First remove any previous columns.
-    return await ShowProfilingColumns();
+    return await UpdateProfilingColumns();
   }
 
-  private async Task<bool> ShowProfilingColumns() {
+  private async Task<bool> UpdateProfilingColumns() {
     var columnData = TextView.ProfileColumnData;
     ColumnsVisible = columnData.HasData;
 
@@ -1098,12 +1099,23 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     ProfileColumns.Settings = settings_;
+    ProfileColumns.ColumnSettings = settings_.ColumnSettings;
+
     await ProfileColumns.Display(columnData, TextView);
-    ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileColumnsMenu, 
-                                              async () => {
-      await ShowProfilingColumns();
+
+    ProfileColumns.ColumnSettingsChanged -= OnProfileColumnsOnColumnSettingsChanged;
+    ProfileColumns.ColumnSettingsChanged += OnProfileColumnsOnColumnSettingsChanged;
+
+    ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileColumnsMenu, async () => {
+      await UpdateProfilingColumns();
     });
     return true;
+  }
+
+  private async void OnProfileColumnsOnColumnSettingsChanged(object sender, OptionalColumn column) {
+    ProfileDocumentMarker.UpdateColumnStyle(column, TextView.ProfileColumnData, Function,
+                                            TextView, settings_.ProfileMarkerSettings);
+    //await UpdateProfilingColumns();
   }
 
   private void BuildProfileBlocksList(FunctionProfileData funcProfile,
