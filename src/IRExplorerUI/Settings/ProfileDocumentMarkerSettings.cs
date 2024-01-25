@@ -46,6 +46,9 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   [ProtoMember(22)]  public bool ShowPerformanceMetricColumns { get; set; }
   [ProtoMember(23)]  public ValueUnitKind ValueUnit { get; set; }
 
+  public static int DefaultMaxPercentageBarWidth = 50;
+  public static double DefaultElementWeightCutoff = 0.003; // 0.3%;
+
   public override void Reset() {
     MarkElements = true;
     MarkBlocks = true;
@@ -53,10 +56,10 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     MarkCallTargets = true;
     ValueUnit = ValueUnitKind.Millisecond;
     VirtualColumnPosition = 350;
-    ElementWeightCutoff = 0.003; // 0.3%
+    ElementWeightCutoff = DefaultElementWeightCutoff; // 0.3%
     TopOrderCutoff = 10;
     IconBarWeightCutoff = 0.03; // 3%
-    MaxPercentageBarWidth = 50;
+    MaxPercentageBarWidth = DefaultMaxPercentageBarWidth;
     DisplayIcons = true;
     RemoveEmptyColumns = true;
     DisplayPercentageBar = true;
@@ -208,18 +211,21 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
 
   private bool ShouldShowPercentageBar(OptionalColumn column) {
     return DisplayPercentageBar &&
-           (column.Style.ShowPercentageBar ||
-            column.IsMainColumn && column.Style.ShowMainColumnPercentageBar);
+           (column.Style.ShowPercentageBar == OptionalColumnStyle.PartVisibility.Always ||
+            column.IsMainColumn && 
+            column.Style.ShowPercentageBar == OptionalColumnStyle.PartVisibility.IfActiveColumn);
   }
 
   private bool ShouldShowIcon(OptionalColumn column) {
-    return DisplayIcons && (column.Style.ShowIcon ||
-                            column.IsMainColumn && column.Style.ShowMainColumnIcon);
+    return DisplayIcons && (column.Style.ShowIcon == OptionalColumnStyle.PartVisibility.Always ||
+                            column.IsMainColumn && 
+                            column.Style.ShowIcon == OptionalColumnStyle.PartVisibility.IfActiveColumn);
   }
 
   private bool ShouldUseBackColor(OptionalColumn column) {
-    return column.Style.UseBackColor ||
-           column.IsMainColumn && column.Style.UseMainColumnBackColor;
+    return column.Style.UseBackColor == OptionalColumnStyle.PartVisibility.Always ||
+           column.IsMainColumn &&
+           column.Style.UseBackColor == OptionalColumnStyle.PartVisibility.IfActiveColumn;
   }
 
   public Color PickColorForPercentage(double percentage) {
@@ -251,8 +257,9 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     return StateSerializer.Deserialize<ProfileDocumentMarkerSettings>(serialized);
   }
 
-  protected bool Equals(ProfileDocumentMarkerSettings other) {
-    return MarkElements == other.MarkElements &&
+  public override bool Equals(object obj) {
+    return obj is ProfileDocumentMarkerSettings other &&
+           MarkElements == other.MarkElements &&
            MarkBlocks == other.MarkBlocks &&
            MarkBlocksInFlowGraph == other.MarkBlocksInFlowGraph &&
            MarkCallTargets == other.MarkCallTargets &&

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -11,14 +12,14 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Folding;
-using ICSharpCode.AvalonEdit.Rendering;
-using IRExplorerCore.IR;
+using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Document;
 
 public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private DocumentSettings settings_;
+  private OptionalColumnSettings columnSettings_;
   private double previousVerticalOffset_;
   private List<ElementRowValue> profileDataRows_;
   private List<(GridViewColumnHeader Header, GridViewColumn Column)> profileColumnHeaders_;
@@ -28,10 +29,10 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private List<FoldingSection> foldedTextRegions_;
   private int rowFilterIndex_;
   private MarkedDocument associatedDocument_;
+  private OptionsPanelHostWindow optionsPanelWindow_;
 
   public DocumentColumns() {
     InitializeComponent();
-    settings_ = App.Settings.DocumentSettings;
     profileColumnHeaders_ = new List<(GridViewColumnHeader Header, GridViewColumn Column)>();
     profileDataRows_ = new List<ElementRowValue>();
     foldedTextRegions_ = new List<FoldingSection>();
@@ -39,6 +40,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
   public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
   public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler<OptionalColumn> ColumnSettingsChanged;
 
   public double ColumnsListItemHeight {
     get => columnsListItemHeight_;
@@ -63,6 +65,11 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     set => settings_ = value;
   }
 
+  public OptionalColumnSettings ColumnSettings {
+    get => columnSettings_;
+    set => columnSettings_ = value;
+  }
+
   public bool UseSmallerFontSize { get; set; }
 
   public void SelectRow(int index) {
@@ -72,21 +79,30 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   public void Reset() {
+    // Unregister column header event handlers.
+    foreach (var columnHeader in profileColumnHeaders_) {
+      columnHeader.Header.MouseLeftButtonDown -= ColumnHeaderOnClick;
+      columnHeader.Header.MouseDoubleClick -= ColumnHeaderOnDoubleClick;
+      columnHeader.Header.MouseRightButtonUp -= ColumnHeaderOnRightClick;
+      columnHeader.Header.MouseRightButtonUp -= ColumnSettingsClickHandler;
+    }
+
     OptionalColumn.RemoveListViewColumns(ColumnsList);
     ColumnsList.ItemsSource = null;
-    UpdateColumnsList();
+    profileColumnHeaders_.Clear();
   }
 
   public async Task Display(IRDocumentColumnData columnData, MarkedDocument associatedDocument) {
-    Reset();
-    ColumnsList.ItemsSource = null;
-    associatedDocument_ = associatedDocument;
-    var function = associatedDocument.Function;
-    int rowCount = associatedDocument.LineCount;
-
+    Reset(); // Remove any existing columns.
+    UpdateColumnsList();
+    
     if (!columnData.HasData) {
       return;
     }
+
+    associatedDocument_ = associatedDocument;
+    var function = associatedDocument.Function;
+    int rowCount = associatedDocument.LineCount;
 
     var elementValueList = await Task.Run(() => {
       var elementValueList = new List<ElementRowValue>(function.TupleCount);
@@ -211,19 +227,54 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
       return elementValueList;
     });
 
+    // Handle clicks on the column headers.
+    Trace.WriteLine($"Show {columnData.Columns.Count} columns");
     profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
 
     foreach (var columnHeader in profileColumnHeaders_) {
       columnHeader.Header.MouseLeftButtonDown += ColumnHeaderOnClick;
       columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
       columnHeader.Header.MouseRightButtonUp += ColumnHeaderOnRightClick;
+      columnHeader.Header.MouseRightButtonUp += ColumnSettingsClickHandler;
     }
 
+    // Display the columns.
     profileRowCollection_ = new ListCollectionView(elementValueList);
     profileRowCollection_.Filter += ProfileListRowFilter;
     UpdateColumnWidths();
     ColumnsList.ItemsSource = profileRowCollection_;
     UpdateColumnsList();
+  }
+
+  private void ColumnSettingsClickHandler(object sender, RoutedEventArgs e) {
+    if (optionsPanelWindow_ != null) {
+      optionsPanelWindow_.Close();
+      optionsPanelWindow_ = null;
+      return;
+    }
+
+    Trace.WriteLine($"Show settings");
+
+    var columnHeader = (GridViewColumnHeader)sender;
+    var column = (OptionalColumn)columnHeader.Tag;
+    optionsPanelWindow_ = OptionsPanelHostWindow.Create<ColumnOptionsPanel, OptionalColumnStyle>(
+      column.Style.Clone(), columnHeader, null,
+      (newSettings, commit) => {
+        if (!newSettings.Equals(column.Style)) {
+          column.Style = newSettings;
+          ColumnSettingsChanged?.Invoke(this, column);
+
+          if (commit) {
+            columnSettings_.AddColumnStyle(column, newSettings);
+          }
+
+          return newSettings.Clone();
+        }
+
+        return null;
+      },
+      () => optionsPanelWindow_ = null,
+      new Point(0, columnHeader.ActualHeight));
   }
 
   public void BuildColumnsVisibilityMenu(IRDocumentColumnData columnData, MenuItem menu,

@@ -82,9 +82,8 @@ public class ProfileDocumentMarker {
         OptionalColumnSettings.DefaultCounterColumnStyle(index);
     }
 
-    //? TODO: UI part
-    if (!string.IsNullOrEmpty(column.Style.Abbreviation)) {
-      column.Title = column.Style.Abbreviation;
+    if (!string.IsNullOrEmpty(column.Style.AlternateTitle)) {
+      column.Title = column.Style.AlternateTitle;
     }
 
     return column;
@@ -244,8 +243,9 @@ public class ProfileDocumentMarker {
     return new SourceLineProfileResult(processingResult, result, dummyFunc, lineToElementMap);
   }
 
-  public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
-                               FunctionIR function, MarkedDocument document) {
+  public static void UpdateColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
+                               FunctionIR function, MarkedDocument document,
+                               ProfileDocumentMarkerSettings settings) {
     Trace.WriteLine($"Apply {column.ColumnName}, is main column: {column.IsMainColumn}");
     var elementColorPairs = new List<ValueTuple<IRElement, Color>>(function.TupleCount);
 
@@ -256,20 +256,20 @@ public class ProfileDocumentMarker {
 
       int order = value.ValueOrder;
       double percentage = value.ValuePercentage;
-      var color = settings_.PickBackColor(column, order, percentage);
+      var color = settings.PickBackColor(column, order, percentage);
 
-      if (column.IsMainColumn && percentage >= settings_.ElementWeightCutoff) {
+      if (column.IsMainColumn && percentage >= settings.ElementWeightCutoff) {
         elementColorPairs.Add(new ValueTuple<IRElement, Color>(tuple, color));
       }
 
       value.BackColor = color.AsBrush();
-      value.TextColor = settings_.PickTextColor(column, order, percentage);
-      value.TextWeight = settings_.PickTextWeight(column, order, percentage);
+      value.TextColor = settings.PickTextColor(column, order, percentage);
+      value.TextWeight = settings.PickTextWeight(column, order, percentage);
 
-      value.Icon = settings_.PickIcon(column, value.ValueOrder, value.ValuePercentage).Icon;
-      value.ShowPercentageBar = value.ShowPercentageBar && // Disabled per value
-                                settings_.ShowPercentageBar(column, value.ValueOrder, value.ValuePercentage);
-      value.PercentageBarBackColor = settings_.PickPercentageBarColor(column);
+      value.Icon = settings.PickIcon(column, value.ValueOrder, value.ValuePercentage).Icon;
+      value.ShowPercentageBar = value.CanShowPercentageBar && // Disabled per value
+                                settings.ShowPercentageBar(column, value.ValueOrder, value.ValuePercentage);
+      value.PercentageBarBackColor = settings.PickPercentageBarColor(column);
     }
 
     // Mark the elements themselves with a color.
@@ -278,7 +278,7 @@ public class ProfileDocumentMarker {
     if (column.IsMainColumn && document != null) {
       document.ClearInstructionMarkers();
 
-      if (settings_.MarkElements) {
+      if (settings.MarkElements) {
         document.MarkElements(elementColorPairs);
       }
     }
@@ -536,8 +536,8 @@ public class ProfileDocumentMarker {
     });
 
     percentageColumn.IsMainColumn = true;
-    ApplyColumnStyle(percentageColumn, columnData, function, document);
-    ApplyColumnStyle(timeColumn, columnData, function, document);
+    UpdateColumnStyle(percentageColumn, columnData, function, document, settings_);
+    UpdateColumnStyle(timeColumn, columnData, function, document, settings_);
 
     // Handle performance counter columns.
     var counterElements = result.CounterElements;
@@ -622,7 +622,7 @@ public class ProfileDocumentMarker {
             columnValue.BackColor = Brushes.Beige;
           columnValue.ValuePercentage = valuePercentage;
           //? TODO: Show bar only if any value is much higher? Std dev
-          columnValue.ShowPercentageBar = !isValueBasedMetric && valuePercentage >= 0.03;
+          columnValue.CanShowPercentageBar = !isValueBasedMetric && valuePercentage >= 0.03;
           columnValue.PercentageBarBackColor = color;
           columnData.AddValue(columnValue, element, counterColumns[k]);
 
@@ -645,7 +645,7 @@ public class ProfileDocumentMarker {
     }
 
     foreach (var column in counterColumns) {
-      ApplyColumnStyle(column, columnData, function, document);
+      UpdateColumnStyle(column, columnData, function, document, settings_);
     }
 
     SetupColumnHeaderEvents(function, document, columnData);
@@ -656,7 +656,6 @@ public class ProfileDocumentMarker {
                                        IRDocumentColumnData columnData) {
     foreach (var column in columnData.Columns) {
       column.HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
-      column.HeaderRightClickHandler += ColumnHeaderRightClickHandler(document, function, columnData);
     }
   }
 
@@ -680,39 +679,11 @@ public class ProfileDocumentMarker {
 
       if (currentMainColumn != null) {
         currentMainColumn.IsMainColumn = false;
-        ApplyColumnStyle(currentMainColumn, columnData, function, document);
+        UpdateColumnStyle(currentMainColumn, columnData, function, document, settings_);
       }
 
       column.IsMainColumn = true;
-      ApplyColumnStyle(column, columnData, function, document);
-    };
-  }
-
-  private OptionalColumnEventHandler ColumnHeaderRightClickHandler(MarkedDocument document, FunctionIR function,
-                                                                   IRDocumentColumnData columnData) {
-    return (column, columnHeader) => {
-      if (optionsPanelWindow_ != null) {
-        optionsPanelWindow_.Close();
-        optionsPanelWindow_ = null;
-        return;
-      }
-
-      var columnSettings = column.Style.Clone();
-      FrameworkElement relativeControl = columnHeader;
-      optionsPanelWindow_ = OptionsPanelHostWindow.Create<ColumnOptionsPanel, OptionalColumnStyle>(
-        columnSettings, relativeControl, null,
-        (newSettings, commit) => {
-          if (!newSettings.Equals(columnSettings)) {
-            if (commit) {
-              columnSettings_.AddColumnStyle(column, newSettings);
-            }
-            return newSettings.Clone();
-          }
-
-          return null;
-        },
-        () => optionsPanelWindow_ = null,
-        new Point(0, columnHeader.ActualHeight));
+      UpdateColumnStyle(column, columnData, function, document, settings_);
     };
   }
 

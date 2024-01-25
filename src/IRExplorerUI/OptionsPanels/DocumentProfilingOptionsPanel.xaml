@@ -14,33 +14,28 @@
             <CheckBox
                 Margin="0,2,0,2"
                 Content="Mark lines based on duration"
-                IsChecked="{Binding MarkElements, Mode=TwoWay}"
-                ToolTip="Mark document lines with a color based on the profile weight" />
+                IsChecked="{Binding MarkElements, Mode=TwoWay}" />
             <CheckBox
                 x:Name="MarkBlocksCheckbox"
                 Margin="0,2,0,2"
                 Content="Mark blocks based on duration"
                 IsChecked="{Binding MarkBlocks, Mode=TwoWay}"
-                ToolTip="Mark document lines with a color based on the profile weight"
                 Visibility="{Binding ShowsDocumentSettings, Converter={StaticResource BoolToVisibilityConverter}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:DocumentProfilingOptionsPanel}}" />
             <CheckBox
                 Margin="20,2,0,2"
                 Content="Also mark blocks in Flow Graph panel"
                 IsChecked="{Binding MarkBlocksInFlowGraph, Mode=TwoWay}"
                 IsEnabled="{Binding ElementName=MarkBlocksCheckbox, Path=IsChecked}"
-                ToolTip="Mark document lines with a color based on the profile weight"
                 Visibility="{Binding ShowsDocumentSettings, Converter={StaticResource BoolToVisibilityConverter}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:DocumentProfilingOptionsPanel}}" />
             <CheckBox
                 Margin="0,2,0,2"
                 Content="Display called function list for calls"
-                IsChecked="{Binding MarkCallTargets, Mode=TwoWay}"
-                ToolTip="Mark document lines with a color based on the profile weight" />
+                IsChecked="{Binding MarkCallTargets, Mode=TwoWay}" />
             <CheckBox
                 Margin="0,2,0,2"
                 Content="Jump to the hottest function line"
                 IsChecked="{Binding JumpToHottestElement, Mode=TwoWay}"
-                IsEnabled="False"
-                ToolTip="Mark document lines with a color based on the profile weight" />
+                IsEnabled="False" />
             <Separator Margin="0,4,0,4" />
 
             <TextBlock FontWeight="Medium" Text="Columns" />
@@ -94,6 +89,7 @@
                     Padding="2,0,2,0"
                     VerticalAlignment="Center"
                     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    Click="MaxWidthButton_Click"
                     Content="Default"
                     ToolTip="Reset value to default weight cutoff" />
             </StackPanel>
@@ -103,13 +99,13 @@
                     VerticalAlignment="Center"
                     Text="Weight cutoff (%)"
                     ToolTip="Only show lines with a weight greater than this value" />
-                <xctk:IntegerUpDown
+                <xctk:DoubleUpDown
                     Width="65"
                     Margin="14,0,0,0"
                     Increment="1"
                     Maximum="100"
                     Minimum="0"
-                    ParsingNumberStyle="Float"
+                    ParsingNumberStyle="AllowThousands"
                     ShowButtonSpinner="True"
                     ToolTip="Only show lines with a weight greater than this value"
                     Value="{Binding Path=ElementWeightCutoff, Mode=TwoWay}" />
@@ -119,6 +115,7 @@
                     Padding="2,0,2,0"
                     VerticalAlignment="Center"
                     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    Click="WeightCutoffButton_Click"
                     Content="Default"
                     ToolTip="Reset value to default weight cutoff" />
             </StackPanel>
@@ -131,6 +128,7 @@
                     Width="112"
                     Margin="8,0,0,0"
                     VerticalAlignment="Center"
+                    IsEnabled="False"
                     IsSynchronizedWithCurrentItem="True">
                     <ComboBoxItem Content="Nanosecond" />
                     <ComboBoxItem Content="Millisecond" />

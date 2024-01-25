@@ -113,6 +113,7 @@ public sealed class ElementColumnValue : BindableObject {
   private FontWeight textWeight_;
   private double textSize_;
   private FontFamily textFont_;
+  private bool canShowPercentageBar_;
 
   public ElementColumnValue(string text, long value = 0, double valueValuePercentage = 0.0,
                             int valueOrder = int.MaxValue, string tooltip = null) {
@@ -179,6 +180,11 @@ public sealed class ElementColumnValue : BindableObject {
   public bool ShowPercentageBar {
     get => showPercentageBar_;
     set => SetAndNotify(ref showPercentageBar_, value);
+  }
+
+  public bool CanShowPercentageBar {
+    get => canShowPercentageBar_;
+    set => SetAndNotify(ref canShowPercentageBar_, value);
   }
 
   public Brush PercentageBarBackColor {

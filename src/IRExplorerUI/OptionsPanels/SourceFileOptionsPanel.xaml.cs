@@ -33,6 +33,12 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
     ReloadExcludedPathsList();
   }
 
+  public override void OnSettingsChanged(object newSettings) {
+    settings_ = (SourceFileSettings)newSettings;
+    ProfilingOptionsPanel.DataContext = null;
+    ProfilingOptionsPanel.DataContext = settings_.ProfileMarkerSettings;
+  }
+
   private void SectionOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
     NotifySettingsChanged();
   }

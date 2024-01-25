@@ -45,7 +45,9 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
 
   public override void OnSettingsChanged(object newSettings) {
     settings_ = (DocumentSettings)newSettings;
+    ProfilingOptionsPanel.DataContext = null;
     ProfilingOptionsPanel.DataContext = settings_.ProfileMarkerSettings;
+    SourceOptionsPanel.DataContext = null;
     SourceOptionsPanel.DataContext = settings_.SourceMarkerSettings;
     ReloadSyntaxHighlightingList();
   }
