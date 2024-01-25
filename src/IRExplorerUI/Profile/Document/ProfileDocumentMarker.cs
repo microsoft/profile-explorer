@@ -82,10 +82,6 @@ public class ProfileDocumentMarker {
         OptionalColumnSettings.DefaultCounterColumnStyle(index);
     }
 
-    if (!string.IsNullOrEmpty(column.Style.AlternateTitle)) {
-      column.Title = column.Style.AlternateTitle;
-    }
-
     return column;
   }
 

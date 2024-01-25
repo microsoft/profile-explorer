@@ -57,9 +57,14 @@ public class IRDocumentColumnData {
   public OptionalColumn AddColumn(OptionalColumn column) {
     // Make a clone so that changing values such as the width
     // doesn't modify the column template.
-    column = (OptionalColumn)column.Clone();
-    Columns.Add(column);
-    return column;
+    var columnClone = (OptionalColumn)column.Clone();
+
+    if (!string.IsNullOrEmpty(column.Style.AlternateTitle)) {
+      columnClone.Title = column.Style.AlternateTitle;
+    }
+
+    Columns.Add(columnClone);
+    return columnClone;
   }
 
   public OptionalColumn GetColumn(OptionalColumn templateColumn) {
