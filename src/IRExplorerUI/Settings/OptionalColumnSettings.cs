@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Media;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using IRExplorerCore.Utilities;
 using ProtoBuf;
 
@@ -114,9 +115,8 @@ public class OptionalColumnStyle : SettingsBase {
   }
 
   public OptionalColumnStyle(int order) {
+    Reset();
     Order = order;
-    IsVisible = true;
-    Width = 50;
   }
 
   public enum PartVisibility {
@@ -150,6 +150,11 @@ public class OptionalColumnStyle : SettingsBase {
   [ProtoMember(15)]
   public bool InvertColorPalette { get; set; }
 
+  public override void Reset() {
+    IsVisible = true;
+    Width = 50;
+  }
+
   public OptionalColumnStyle Clone() {
     byte[] serialized = StateSerializer.Serialize(this);
     return StateSerializer.Deserialize<OptionalColumnStyle>(serialized);
@@ -158,7 +163,8 @@ public class OptionalColumnStyle : SettingsBase {
   public override bool Equals(object obj) {
     return obj is OptionalColumnStyle other &&
            IsVisible == other.IsVisible && Order == other.Order && Width.Equals(other.Width) &&
-           AlternateTitle == other.AlternateTitle && ShowPercentageBar == other.ShowPercentageBar &&
+           AlternateTitle == other.AlternateTitle && 
+           ShowPercentageBar == other.ShowPercentageBar &&
            PercentageBarBackColor.Equals(other.PercentageBarBackColor) && TextColor.Equals(other.TextColor) &&
            ShowIcon == other.ShowIcon &&
            PickColorForPercentage == other.PickColorForPercentage && UseBackColor == other.UseBackColor &&

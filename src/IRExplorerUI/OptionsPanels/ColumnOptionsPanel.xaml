@@ -65,7 +65,7 @@
                     Margin="8,0,0,0"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Center"
-                    Text="{Binding AlternateTitle, Mode=TwoWay}"
+                    Text="{Binding AlternateTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     ToolTip="Alternate column title to use instead of the fault one" />
             </StackPanel>
             <CheckBox
