@@ -253,8 +253,6 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
       return;
     }
 
-    Trace.WriteLine($"Show settings");
-
     var columnHeader = (GridViewColumnHeader)sender;
     var column = (OptionalColumn)columnHeader.Tag;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<ColumnOptionsPanel, OptionalColumnStyle>(
@@ -266,6 +264,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
           if (commit) {
             columnSettings_.AddColumnStyle(column, newSettings);
+            App.SaveApplicationSettings();
           }
 
           return newSettings.Clone();

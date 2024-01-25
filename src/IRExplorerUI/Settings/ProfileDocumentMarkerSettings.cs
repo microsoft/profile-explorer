@@ -56,7 +56,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     MarkCallTargets = true;
     ValueUnit = ValueUnitKind.Millisecond;
     VirtualColumnPosition = 350;
-    ElementWeightCutoff = DefaultElementWeightCutoff; // 0.3%
+    ElementWeightCutoff = DefaultElementWeightCutoff;
     TopOrderCutoff = 10;
     IconBarWeightCutoff = 0.03; // 3%
     MaxPercentageBarWidth = DefaultMaxPercentageBarWidth;

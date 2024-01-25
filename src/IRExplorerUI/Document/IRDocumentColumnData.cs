@@ -124,7 +124,7 @@ public sealed class ElementColumnValue : BindableObject {
     TextWeight = FontWeights.Normal;
     TextColor = Brushes.Black;
     ToolTip = tooltip;
-    ShowPercentageBar = true;
+    CanShowPercentageBar = true;
   }
 
   public IRElement Element { get; set; }
