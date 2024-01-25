@@ -621,8 +621,8 @@ public class ProfileDocumentMarker {
           if (counter.IsMetric)
             columnValue.BackColor = Brushes.Beige;
           columnValue.ValuePercentage = valuePercentage;
-          //? TODO: Show bar only if any value is much higher? Std dev
-          columnValue.CanShowPercentageBar = !isValueBasedMetric && valuePercentage >= 0.03;
+          columnValue.CanShowPercentageBar = !isValueBasedMetric &&
+                                             valuePercentage >= settings_.ElementWeightCutoff;
           columnValue.PercentageBarBackColor = color;
           columnData.AddValue(columnValue, element, counterColumns[k]);
 

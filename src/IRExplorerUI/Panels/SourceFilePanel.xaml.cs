@@ -152,7 +152,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       return;
     }
 
-    if (await LoadSourceFileForFunction(section_.ParentFunction)) {
+    if (await LoadSourceFileForFunction(section_.ParentFunction, true)) {
       TextView.JumpToHottestProfiledElement();
     }
   }
@@ -217,8 +217,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     await LoadSourceFile(section);
   }
 
-  private async Task<bool> LoadSourceFileForFunction(IRTextFunction function) {
-    if (sourceFileLoaded_ && sourceFileFunc_ == function) {
+  private async Task<bool> LoadSourceFileForFunction(IRTextFunction function, bool force = false) {
+    if (!force && sourceFileLoaded_ && sourceFileFunc_ == function) {
       return true; // Right file already loaded.
     }
 
