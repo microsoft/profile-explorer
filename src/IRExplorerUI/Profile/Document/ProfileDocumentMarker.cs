@@ -663,6 +663,7 @@ public class ProfileDocumentMarker {
     var counterInfo = perfCounters[k];
     counterColumns[k] = CounterColumnTemplate(counterInfo, k);
     counterColumns[k].IsVisible = IsPerfCounterVisible(counterInfo);
+    counterColumns[k].PerformanceCounter = counterInfo;
     columnData.AddColumn(counterColumns[k]);
   }
 

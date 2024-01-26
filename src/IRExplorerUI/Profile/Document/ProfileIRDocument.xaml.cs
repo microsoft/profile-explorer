@@ -213,7 +213,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public async Task UpdateProfilingColumns() {
     sourceColumnData_ = TextView.ProfileColumnData;
-    ColumnsVisible = sourceColumnData_ != null && sourceColumnData_.HasData;
+    ColumnsVisible = sourceColumnData_ is {HasData: true};
 
     if (ColumnsVisible) {
       if (UseCompactProfilingColumns) {
@@ -287,6 +287,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       }
       case ".cs": {
         highlightingDef = HighlightingManager.Instance.GetDefinition("C#");
+        break;
+      }
+      case ".rs": {
+        //? TODO: Rust syntax highlighting
+        highlightingDef = HighlightingManager.Instance.GetDefinition("C++");
         break;
       }
     }

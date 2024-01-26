@@ -592,17 +592,26 @@
                                             </StackPanel>
                                         </MenuItem.Header>
                                         <MenuItem
-                                            Header="Show performance counters columns"
+                                            Checked="ViewMenuItem_OnCheckedChanged"
+                                            Header="Show performance counters"
                                             IsCheckable="True"
-                                            IsChecked="{Binding ShowPerformanceCounterColumns}" />
+                                            IsChecked="{Binding ShowPerformanceCounterColumns}"
+                                            Style="{DynamicResource SubMenuItemHeaderStyle}"
+                                            Unchecked="ViewMenuItem_OnCheckedChanged" />
                                         <MenuItem
-                                            Header="Show performance metrics columns"
+                                            Checked="ViewMenuItem_OnCheckedChanged"
+                                            Header="Show performance metrics"
                                             IsCheckable="True"
-                                            IsChecked="{Binding ShowPerformanceMetricsColumns}" />
+                                            IsChecked="{Binding ShowPerformanceMetricsColumns}"
+                                            Style="{DynamicResource SubMenuItemHeaderStyle}"
+                                            Unchecked="ViewMenuItem_OnCheckedChanged" />
                                         <MenuItem
+                                            Checked="ViewMenuItem_OnCheckedChanged"
                                             Header="Hide empty columns"
                                             IsCheckable="True"
-                                            IsChecked="{Binding RemoveEmptyColumns}" />
+                                            IsChecked="{Binding RemoveEmptyColumns}"
+                                            Style="{DynamicResource SubMenuItemHeaderStyle}"
+                                            Unchecked="ViewMenuItem_OnCheckedChanged" />
                                     </MenuItem>
                                 </Menu>
                                 <Menu Margin="2,0,0,0" VerticalAlignment="Center">

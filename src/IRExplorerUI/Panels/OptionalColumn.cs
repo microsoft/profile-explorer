@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI;
 
@@ -47,12 +48,16 @@ public class OptionalColumn : ICloneable {
   public double Width { get; set; }
   public IValueConverter Converter { get; set; }
   public OptionalColumnStyle Style { get; set; }
+  public PerformanceCounter PerformanceCounter { get; set; }
   public bool IsVisible { get; set; }
   public bool IsMainColumn { get; set; }
   public bool IsTemplateBinding { get; set; }
   public bool HasCustomStyle => !string.IsNullOrEmpty(ColumnTemplateName);
   public Style CustomStyle =>
     !string.IsNullOrEmpty(ColumnTemplateName) ? (Style)Application.Current.FindResource(ColumnTemplateName) : null;
+
+  public bool IsPerformanceCounter => PerformanceCounter is {IsMetric: false};
+  public bool IsPerformanceMetric => PerformanceCounter is { IsMetric: true };
 
   public static OptionalColumn Binding(string binding, string columnName, string title, string tooltip = null,
                                        IValueConverter converter = null, double width = double.NaN,
