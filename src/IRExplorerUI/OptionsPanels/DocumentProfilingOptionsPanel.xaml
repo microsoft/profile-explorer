@@ -39,7 +39,7 @@
 
             <TextBlock FontWeight="Medium" Text="Columns" />
             <CheckBox
-                Margin="0,24,0,2"
+                Margin="0,4,0,2"
                 Content="Show icons for hottest lines"
                 IsChecked="{Binding DisplayIcons, Mode=TwoWay}"
                 ToolTip="Compute function IR statistics on document load and show extra columns" />

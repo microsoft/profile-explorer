@@ -55,7 +55,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     get => base.Session;
     set {
       base.Session = value;
-      TextView.Session = value;
+      ProfileTextView.Session = value;
 
       if (value != null) {
         sourceFileFinder_ = value.CompilerInfo.SourceFileFinder;
@@ -68,14 +68,14 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     get => settings_;
     set {
       settings_ = value;
-      TextView.TextView.Initialize(App.Settings.DocumentSettings, Session);
+      ProfileTextView.TextView.Initialize(App.Settings.DocumentSettings, Session);
 
       if (!settings_.SyncWithDocument) {
         // Override font and colors.
-        TextView.TextView.FontFamily = new FontFamily(settings_.FontName);
-        TextView.TextView.FontSize = settings_.FontSize;
-        TextView.TextView.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
-        TextView.TextView.Foreground = ColorBrushes.GetBrush(settings_.TextColor);
+        ProfileTextView.TextView.FontFamily = new FontFamily(settings_.FontName);
+        ProfileTextView.TextView.FontSize = settings_.FontSize;
+        ProfileTextView.TextView.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
+        ProfileTextView.TextView.Foreground = ColorBrushes.GetBrush(settings_.TextColor);
       }
     }
   }
@@ -122,7 +122,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       var sourceInfo = new SourceFileDebugInfo(path, path);
       var debugInfo = await Session.GetDebugInfoProvider(section_.ParentFunction);
 
-      if (await TextView.LoadSourceFile(sourceInfo, section_, debugInfo)) {
+      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_, debugInfo)) {
         HandleLoadedSourceFile(sourceInfo, section_.ParentFunction);
       }
     }
@@ -192,7 +192,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       return;
     }
 
-    FrameworkElement relativeControl = TextView;
+    FrameworkElement relativeControl = ProfileTextView;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<SourceFileOptionsPanel, SourceFileSettings>(
       settings_.Clone(), relativeControl, Session,
       (newSettings, commit) => {
@@ -218,8 +218,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public async Task LoadSourceFile(IRTextSection section) {
     section_ = section;
-    TextView.ProfileMarkerSettings = settings_.ProfileMarkerSettings;
-    TextView.ColumnSettings = settings_.ColumnSettings;
+    ProfileTextView.ProfileMarkerSettings = settings_.ProfileMarkerSettings;
+    ProfileTextView.ColumnSettings = settings_.ColumnSettings;
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
       await JumpToFunctionStart();
@@ -228,21 +228,21 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   private async Task JumpToFunctionStart() {
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
-      TextView.JumpToHottestProfiledElement();
+      ProfileTextView.JumpToHottestProfiledElement();
     }
     else {
       var (firstSourceLineIndex, lastSourceLineIndex) = 
-        await TextView.FindFunctionSourceLineRange(section_.ParentFunction);
+        await ProfileTextView.FindFunctionSourceLineRange(section_.ParentFunction);
 
       if (firstSourceLineIndex != 0) {
-        TextView.SelectLine(firstSourceLineIndex);
+        ProfileTextView.SelectLine(firstSourceLineIndex);
       }
     }
   }
 
   public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     base.OnDocumentSectionLoaded(section, document);
-    TextView.AssociatedDocument = document;
+    ProfileTextView.AssociatedDocument = document;
     await LoadSourceFile(section);
   }
 
@@ -257,7 +257,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var (sourceInfo, debugInfo) = await sourceFileFinder_.FindLocalSourceFile(function);
 
     if (!sourceInfo.IsUnknown) {
-      if (await TextView.LoadSourceFile(sourceInfo, section_, debugInfo)) {
+      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_, debugInfo)) {
         HandleLoadedSourceFile(sourceInfo, function);
         return true;
       }
@@ -280,7 +280,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private void HandleMissingSourceFile(string failureText) {
-    TextView.HandleMissingSourceFile(failureText);
+    ProfileTextView.HandleMissingSourceFile(failureText);
     SetPanelName("");
     sourceFileLoaded_ = false;
     sourceFileFunc_ = null;
@@ -292,7 +292,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private void ResetState() {
-    TextView.Reset();
+    ProfileTextView.Reset();
     section_ = null;
     sourceFileLoaded_ = false;
     sourceFileFunc_ = null;
@@ -320,7 +320,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       //}
 
       if (await LoadSourceFileForFunction(section_.ParentFunction)) {
-        TextView.SelectLine(tag.Line);
+        ProfileTextView.SelectLine(tag.Line);
       }
     }
   }
@@ -362,7 +362,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     //? TODO: The func ASM is not needed, profile is created by mapping ASM lines in main func
     //? to corresponding lines in the selected inlinee
     if (fileLoaded) {
-      TextView.SelectLine(inlinee.Line);
+      ProfileTextView.SelectLine(inlinee.Line);
     }
 
     currentInlinee_ = inlinee;
@@ -372,7 +372,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   public override void OnSessionEnd() {
     base.OnSessionEnd();
     ResetState();
-    TextView.SetSourceText("", "");
+    ProfileTextView.SetSourceText("", "");
   }
 
   private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
@@ -386,6 +386,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   public override async Task OnReloadSettings() {
-    await TextView.ReloadSettings();
+    await ProfileTextView.ReloadSettings();
   }
 }

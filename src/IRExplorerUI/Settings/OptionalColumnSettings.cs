@@ -111,18 +111,24 @@ public class OptionalColumnSettings : SettingsBase {
     GetOrCreateColumnState(column).IsVisible = visible;
   }
 
-  public List<OptionalColumn> SortColumns(List<OptionalColumn> columns) {
+  public List<OptionalColumn> FilterAndSortColumns(List<OptionalColumn> columns) {
     NumberColumnStates();
     var sortedColumns = new List<OptionalColumn>();
     
     foreach (var column in columns) {
-      GetOrCreateColumnState(column);
+      // Filter out columns.
+      if ((column.IsPerformanceCounter && !ShowPerformanceCounterColumns) ||
+          (column.IsPerformanceMetric && !ShowPerformanceMetricColumns)) {
+        continue;
+      }
+
+      GetOrCreateColumnState(column); // Ensure column state exists.
       sortedColumns.Add(column);
     }
     
     sortedColumns.Sort((a, b) => {
-      var aState = columnStates_.GetValueOrNull(a.ColumnName);
-      var bState = columnStates_.GetValueOrNull(b.ColumnName);
+      var aState = columnStates_[a.ColumnName];
+      var bState = columnStates_[b.ColumnName];
       return aState.Order.CompareTo(bState.Order);
     });
 

@@ -1097,9 +1097,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async Task<bool> UpdateProfilingColumns() {
     var columnData = TextView.ProfileColumnData;
-    ColumnsVisible = columnData.HasData;
+    ColumnsVisible = columnData is {HasData: true};
 
-    if (!columnData.HasData) {
+    if (columnData == null || !columnData.HasData) {
       ProfileColumns.Reset();
       ProfileBlocksMenu.Items.Clear();
       return false;
@@ -2205,6 +2205,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     public bool Execute(QueryData data) {
       return true;
     }
+  }
+
+  private async void ViewMenuItem_OnCheckedChanged(object sender, RoutedEventArgs e) {
+    await UpdateProfilingColumns();
   }
 }
 

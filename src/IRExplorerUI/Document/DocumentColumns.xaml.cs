@@ -228,8 +228,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
     // Handle clicks on the column headers.
     Trace.WriteLine($"Show {columnData.Columns.Count} columns");
-    var sortedColumns = columnSettings_.SortColumns(columnData.Columns);
-
+    var sortedColumns = columnSettings_.FilterAndSortColumns(columnData.Columns);
     profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, sortedColumns);
 
     foreach (var columnHeader in profileColumnHeaders_) {
@@ -286,7 +285,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         Header = column.Title,
         Tag = column,
         IsCheckable = true,
-        IsChecked = column.IsVisible
+        IsChecked = column.IsVisible,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };
 
       item.Checked += (sender, args) => {

@@ -392,4 +392,77 @@
             </oxy:TrackerControl.Content>
         </oxy:TrackerControl>
     </ControlTemplate>
+
+
+    <Style x:Key="GridViewColumnHeaderGripper" TargetType="Thumb">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <LinearGradientBrush.GradientStops>
+                        <GradientStopCollection>
+                            <GradientStop Offset="0.0" Color="{DynamicResource BorderLightColor}" />
+                            <GradientStop Offset="1.0" Color="{DynamicResource BorderDarkColor}" />
+                        </GradientStopCollection>
+                    </LinearGradientBrush.GradientStops>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Border Padding="{TemplateBinding Padding}" Background="Transparent">
+                        <Rectangle
+                            Width="1"
+                            HorizontalAlignment="Center"
+                            Fill="{TemplateBinding Background}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                    <GradientStop Offset="0" Color="Black" />
+                    <GradientStop Offset="1" Color="White" />
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="TimeColumnHeaderTemplate" TargetType="GridViewColumnHeader">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type GridViewColumnHeader}">
+                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Border
+                            Width="{TemplateBinding Width}"
+                            Height="22"
+                            Margin="-1,-1,0,0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            BorderThickness="0,0,1,1">
+                            <ContentPresenter
+                                x:Name="HeaderContent"
+                                Width="{TemplateBinding Width}"
+                                Margin="4,0,4,0"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="Center"
+                                RecognizesAccessKey="True"
+                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                        </Border>
+                        <Thumb
+                            x:Name="PART_HeaderGripper"
+                            Margin="0,0,-9,0"
+                            HorizontalAlignment="Right"
+                            Style="{StaticResource GridViewColumnHeaderGripper}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
 </ResourceDictionary>
