@@ -195,7 +195,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     BacktraceList.Show(await Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode.CallTreeNode)));
     FunctionList.Show(await Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode.CallTreeNode)),
-                      App.Settings.ProfileOptions.FunctionListViewFilter);
+                      settings_.FunctionListViewFilter);
     ModuleList.Show(await Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode.CallTreeNode)));
   }
 

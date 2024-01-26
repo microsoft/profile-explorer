@@ -20,7 +20,7 @@
                     Text="Show background" />
                 <ComboBox
                     x:Name="ShowBackgroundComboBox"
-                    Width="100"
+                    Width="120"
                     Height="20"
                     Margin="4,0,0,0"
                     VerticalAlignment="Center"
@@ -35,7 +35,7 @@
                     Text="Show percentage bar" />
                 <ComboBox
                     x:Name="ShowPercentageComboBox"
-                    Width="100"
+                    Width="120"
                     Height="20"
                     Margin="4,0,0,0"
                     VerticalAlignment="Center"
@@ -50,7 +50,7 @@
                     Text="Show icon" />
                 <ComboBox
                     x:Name="ShowIconsComboBox"
-                    Width="100"
+                    Width="120"
                     Height="20"
                     Margin="4,0,0,0"
                     VerticalAlignment="Center"
@@ -61,9 +61,9 @@
             <StackPanel Margin="0,4,0,2" Orientation="Horizontal">
                 <TextBlock VerticalAlignment="Center" Text="Title" />
                 <TextBox
+                    Width="208"
                     MinWidth="188"
                     Margin="8,0,0,0"
-                    HorizontalAlignment="Stretch"
                     VerticalAlignment="Center"
                     Text="{Binding AlternateTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     ToolTip="Alternate column title to use instead of the fault one" />
@@ -118,6 +118,7 @@
                     VerticalAlignment="Center"
                     Text="Percentage bar color" />
             </Grid>
+            <TextBlock Text="TODO: Color palette settings" />
         </StackPanel>
     </Grid>
 </local:OptionsPanelBase>

@@ -35,7 +35,7 @@ public partial class NotesPopup : DraggablePopup, INotifyPropertyChanged {
 
   public void SetText(string text) {
     TextView.SetText(text);
-    //? TextView.EnableIRSyntaxHighlighting();
+    //? ProfileTextView.EnableIRSyntaxHighlighting();
   }
 
   public async Task SetText(string text, FunctionIR function, IRTextSection section,

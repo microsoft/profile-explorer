@@ -56,7 +56,6 @@ public class ProfileDocumentMarker {
   public OptionalColumn TimeColumnTemplate() {
     TimeColumnDefinition.Style = columnSettings_.GetColumnStyle(TimeColumnDefinition) ??
                         OptionalColumnSettings.DefaultTimeColumnStyle;
-
     return TimeColumnDefinition;
   }
 
@@ -241,8 +240,11 @@ public class ProfileDocumentMarker {
 
   public static void UpdateColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
                                FunctionIR function, MarkedDocument document,
-                               ProfileDocumentMarkerSettings settings) {
+                               ProfileDocumentMarkerSettings settings,
+                               OptionalColumnSettings columnSettings) {
     Trace.WriteLine($"Apply {column.ColumnName}, is main column: {column.IsMainColumn}");
+    column.IsVisible = columnSettings.IsColumnVisible(column);
+    
     var elementColorPairs = new List<ValueTuple<IRElement, Color>>(function.TupleCount);
 
     foreach (var tuple in function.AllTuples) {
@@ -532,8 +534,8 @@ public class ProfileDocumentMarker {
     });
 
     percentageColumn.IsMainColumn = true;
-    UpdateColumnStyle(percentageColumn, columnData, function, document, settings_);
-    UpdateColumnStyle(timeColumn, columnData, function, document, settings_);
+    UpdateColumnStyle(percentageColumn, columnData, function, document, settings_, columnSettings_);
+    UpdateColumnStyle(timeColumn, columnData, function, document, settings_, columnSettings_);
 
     // Handle performance counter columns.
     var counterElements = result.CounterElements;
@@ -641,9 +643,9 @@ public class ProfileDocumentMarker {
     }
 
     foreach (var column in counterColumns) {
-      UpdateColumnStyle(column, columnData, function, document, settings_);
+      UpdateColumnStyle(column, columnData, function, document, settings_, columnSettings_);
     }
-
+    
     SetupColumnHeaderEvents(function, document, columnData);
     return columnData;
   }
@@ -675,11 +677,11 @@ public class ProfileDocumentMarker {
 
       if (currentMainColumn != null) {
         currentMainColumn.IsMainColumn = false;
-        UpdateColumnStyle(currentMainColumn, columnData, function, document, settings_);
+        UpdateColumnStyle(currentMainColumn, columnData, function, document, settings_, columnSettings_);
       }
 
       column.IsMainColumn = true;
-      UpdateColumnStyle(column, columnData, function, document, settings_);
+      UpdateColumnStyle(column, columnData, function, document, settings_, columnSettings_);
     };
   }
 

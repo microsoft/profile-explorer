@@ -41,9 +41,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   [ProtoMember(17)]  public int MaxPercentageBarWidth { get; set; }
   [ProtoMember(18)]  public bool DisplayPercentageBar { get; set; }
   [ProtoMember(19)]  public bool DisplayIcons { get; set; }
-  [ProtoMember(20)]  public bool RemoveEmptyColumns { get; set; }
-  [ProtoMember(21)]  public bool ShowPerformanceCounterColumns { get; set; }
-  [ProtoMember(22)]  public bool ShowPerformanceMetricColumns { get; set; }
   [ProtoMember(23)]  public ValueUnitKind ValueUnit { get; set; }
 
   public static int DefaultMaxPercentageBarWidth = 50;
@@ -61,10 +58,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     IconBarWeightCutoff = 0.03; // 3%
     MaxPercentageBarWidth = DefaultMaxPercentageBarWidth;
     DisplayIcons = true;
-    RemoveEmptyColumns = true;
     DisplayPercentageBar = true;
-    ShowPerformanceCounterColumns = true;
-    ShowPerformanceMetricColumns = true;
     ColumnTextColor = Colors.Black;
     BlockOverlayTextColor = Colors.DarkBlue;
     HotBlockOverlayTextColor = Colors.DarkRed;
@@ -277,9 +271,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
            MaxPercentageBarWidth == other.MaxPercentageBarWidth &&
            DisplayPercentageBar == other.DisplayPercentageBar &&
            DisplayIcons == other.DisplayIcons &&
-           RemoveEmptyColumns == other.RemoveEmptyColumns &&
-           ShowPerformanceCounterColumns == other.ShowPerformanceCounterColumns &&
-           ShowPerformanceMetricColumns == other.ShowPerformanceMetricColumns &&
            ValueUnit == other.ValueUnit;
   }
 }

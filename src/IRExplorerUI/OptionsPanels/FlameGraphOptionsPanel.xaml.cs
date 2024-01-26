@@ -17,6 +17,7 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     InitializeComponent();
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
     PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
+    FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
     PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
   }
@@ -27,6 +28,9 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
     PreviewPopupOptionsPanel.DataContext = null;
     PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
+    FunctionListOptionsPanel.DataContext = null;
+    FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
+
   }
 
   public override void PanelResetting() {
@@ -76,6 +80,11 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
 
   private void LongDetailsPopupDurationButton_Click(object sender, RoutedEventArgs e) {
     ((CallTreeNodeSettings)DetailsPanel.DataContext).PreviewPopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
+    ReloadSettings();
+  }
+
+  private void ResetFilterWeightButton_Click(object sender, RoutedEventArgs e) {
+    ((ProfileListViewFilter)FunctionListOptionsPanel.DataContext).MinWeight = ProfileListViewFilter.DefaultMinWeight;
     ReloadSettings();
   }
 }

@@ -12,6 +12,10 @@
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
         <StackPanel Margin="4,4,4,4">
             <CheckBox
+                Margin="0,4,0,2"
+                Content="Jump to the hottest function line"
+                IsChecked="{Binding JumpToHottestElement, Mode=TwoWay}" />
+            <CheckBox
                 Margin="0,2,0,2"
                 Content="Mark lines based on duration"
                 IsChecked="{Binding MarkElements, Mode=TwoWay}" />
@@ -31,31 +35,11 @@
                 Margin="0,2,0,2"
                 Content="Display called function list for calls"
                 IsChecked="{Binding MarkCallTargets, Mode=TwoWay}" />
-            <CheckBox
-                Margin="0,2,0,2"
-                Content="Jump to the hottest function line"
-                IsChecked="{Binding JumpToHottestElement, Mode=TwoWay}"
-                IsEnabled="False" />
             <Separator Margin="0,4,0,4" />
 
             <TextBlock FontWeight="Medium" Text="Columns" />
             <CheckBox
-                Margin="0,4,0,2"
-                Content="Show performance counter columns"
-                IsChecked="{Binding ShowPerformanceCounterColumns, Mode=TwoWay}"
-                ToolTip="Show the CPU performance counter columns" />
-            <CheckBox
-                Margin="0,2,0,2"
-                Content="Show performance metrics columns"
-                IsChecked="{Binding ShowPerformanceMetricColumns, Mode=TwoWay}"
-                ToolTip="Show the CPU performance metric columns" />
-            <CheckBox
-                Margin="0,2,0,2"
-                Content="Hide empty columns"
-                IsChecked="{Binding RemoveEmptyColumns, Mode=TwoWay}"
-                ToolTip="Compute function IR statistics on document load and show extra columns" />
-            <CheckBox
-                Margin="0,2,0,2"
+                Margin="0,24,0,2"
                 Content="Show icons for hottest lines"
                 IsChecked="{Binding DisplayIcons, Mode=TwoWay}"
                 ToolTip="Compute function IR statistics on document load and show extra columns" />
@@ -71,12 +55,14 @@
                 Orientation="Horizontal">
                 <TextBlock
                     VerticalAlignment="Center"
+                    IsEnabled="False"
                     Text="Max width (px)"
                     ToolTip="Maximum width of the percentage bar in the column" />
                 <xctk:IntegerUpDown
                     Width="64"
                     Margin="8,0,0,0"
                     Increment="1"
+                    IsEnabled="False"
                     Maximum="100"
                     Minimum="10"
                     ParsingNumberStyle="Integer"
@@ -91,6 +77,7 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                     Click="MaxWidthButton_Click"
                     Content="Default"
+                    IsEnabled="False"
                     ToolTip="Reset value to default weight cutoff" />
             </StackPanel>
 
