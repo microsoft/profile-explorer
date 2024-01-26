@@ -49,7 +49,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     InitializeComponent();
     DataContext = this;
     disabledSourceMappings_ = new HashSet<string>();
-    settings_ = App.Settings.SourceFileSettings;
   }
 
   public override ISession Session {
@@ -60,6 +59,23 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
       if (value != null) {
         sourceFileFinder_ = value.CompilerInfo.SourceFileFinder;
+        Settings = App.Settings.SourceFileSettings;
+      }
+    }
+  }
+
+  public SourceFileSettings Settings {
+    get => settings_;
+    set {
+      settings_ = value;
+      TextView.TextView.Initialize(App.Settings.DocumentSettings, Session);
+
+      if (!settings_.SyncWithDocument) {
+        // Override font and colors.
+        TextView.TextView.FontFamily = new FontFamily(settings_.FontName);
+        TextView.TextView.FontSize = settings_.FontSize;
+        TextView.TextView.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
+        TextView.TextView.Foreground = ColorBrushes.GetBrush(settings_.TextColor);
       }
     }
   }
@@ -153,7 +169,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
 
     if (await LoadSourceFileForFunction(section_.ParentFunction, true)) {
-      TextView.JumpToHottestProfiledElement();
+      JumpToFunctionStart();
     }
   }
 
@@ -182,7 +198,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
           App.Settings.SourceFileSettings = newSettings;
-          settings_ = newSettings;
+          Settings = newSettings;
           ReloadSourceFile();
 
           if (commit) {
@@ -204,10 +220,23 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     section_ = section;
     TextView.ProfileMarkerSettings = settings_.ProfileMarkerSettings;
     TextView.ColumnSettings = settings_.ColumnSettings;
-    TextView.TextView.Initialize(App.Settings.DocumentSettings, Session);
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
+      await JumpToFunctionStart();
+    }
+  }
+
+  private async Task JumpToFunctionStart() {
+    if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
       TextView.JumpToHottestProfiledElement();
+    }
+    else {
+      var (firstSourceLineIndex, lastSourceLineIndex) = 
+        await TextView.FindFunctionSourceLineRange(section_.ParentFunction);
+
+      if (firstSourceLineIndex != 0) {
+        TextView.SelectLine(firstSourceLineIndex);
+      }
     }
   }
 

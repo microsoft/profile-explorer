@@ -3,8 +3,8 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows.Media;
-using DocumentFormat.OpenXml.Drawing.Charts;
 using IRExplorerCore.Utilities;
 using ProtoBuf;
 
@@ -15,10 +15,12 @@ public class OptionalColumnSettings : SettingsBase {
   [ProtoMember(1)]
   private Dictionary<string, OptionalColumnStyle> columnStyles_;
   [ProtoMember(2)]
-  private HashSet<string> hiddenColumns_;
+  private Dictionary<string, OptionalColumnState> columnStates_;
+  [ProtoMember(3)]  public bool RemoveEmptyColumns { get; set; }
+  [ProtoMember(4)]  public bool ShowPerformanceCounterColumns { get; set; }
+  [ProtoMember(5)]  public bool ShowPerformanceMetricColumns { get; set; }
 
-  //? TODO: Column order, width
-
+  
   public OptionalColumnSettings() {
     Reset();
   }
@@ -26,11 +28,11 @@ public class OptionalColumnSettings : SettingsBase {
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     columnStyles_ ??= new Dictionary<string, OptionalColumnStyle>();
-    hiddenColumns_ ??= new HashSet<string>();
+    columnStates_ ??= new Dictionary<string, OptionalColumnState>();
   }
 
   public static OptionalColumnStyle DefaultTimePercentageColumnStyle =>
-    new OptionalColumnStyle(1) {
+    new OptionalColumnStyle() {
       ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
       UseBackColor = OptionalColumnStyle.PartVisibility.Always,
       ShowIcon = OptionalColumnStyle.PartVisibility.Always,
@@ -39,7 +41,7 @@ public class OptionalColumnSettings : SettingsBase {
       PickColorForPercentage = true
     };
   public static OptionalColumnStyle DefaultTimeColumnStyle =>
-    new OptionalColumnStyle(0) {
+    new OptionalColumnStyle() {
       ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
       UseBackColor = OptionalColumnStyle.PartVisibility.Always,
       ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
@@ -49,7 +51,7 @@ public class OptionalColumnSettings : SettingsBase {
     };
 
   public static OptionalColumnStyle DefaultMetricsColumnStyle(int k) {
-    return new OptionalColumnStyle(k + 2) {
+    return new OptionalColumnStyle() {
       ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
       UseBackColor = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
@@ -62,7 +64,7 @@ public class OptionalColumnSettings : SettingsBase {
   }
 
   public static OptionalColumnStyle DefaultCounterColumnStyle(int k) {
-    return new OptionalColumnStyle(k + 2) {
+    return new OptionalColumnStyle() {
       ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
       UseBackColor = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
@@ -82,21 +84,58 @@ public class OptionalColumnSettings : SettingsBase {
     columnStyles_[column.ColumnName] = style;
   }
 
+  private OptionalColumnState GetOrCreateColumnState(OptionalColumn column) {
+    if(!columnStates_.TryGetValue(column.ColumnName, out var state)) {
+      state = new OptionalColumnState();
+      columnStates_[column.ColumnName] = state;
+      NumberColumnStates();
+    }
+    
+    return state;
+  }
+
+  private void NumberColumnStates() {
+    var stateList = columnStates_.ToValueList();
+    stateList.Sort((a, b) => a.Order.CompareTo(b.Order));
+    
+    for (int i = 0; i < stateList.Count; ++i) {
+      stateList[i].Order = i;
+    }
+  }
+  
   public bool IsColumnVisible(OptionalColumn column) {
-    return !hiddenColumns_.Contains(column.ColumnName);
+    return GetOrCreateColumnState(column).IsVisible;
   }
 
   public void SetColumnVisibility(OptionalColumn column, bool visible) {
-    if (visible) {
-      hiddenColumns_.Add(column.ColumnName);
-    }
-    else {
-      hiddenColumns_.Remove(column.ColumnName);
-    }
+    GetOrCreateColumnState(column).IsVisible = visible;
   }
 
+  public List<OptionalColumn> SortColumns(List<OptionalColumn> columns) {
+    NumberColumnStates();
+    var sortedColumns = new List<OptionalColumn>();
+    
+    foreach (var column in columns) {
+      GetOrCreateColumnState(column);
+      sortedColumns.Add(column);
+    }
+    
+    sortedColumns.Sort((a, b) => {
+      var aState = columnStates_.GetValueOrNull(a.ColumnName);
+      var bState = columnStates_.GetValueOrNull(b.ColumnName);
+      return aState.Order.CompareTo(bState.Order);
+    });
+
+    return sortedColumns;
+  }
+  
   public override void Reset() {
     InitializeReferenceMembers();
+    columnStyles_.Clear();
+    columnStates_.Clear();
+    RemoveEmptyColumns = true;
+    ShowPerformanceCounterColumns = true;
+    ShowPerformanceMetricColumns = true;
   }
 
   public OptionalColumnSettings Clone() {
@@ -105,18 +144,51 @@ public class OptionalColumnSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is OptionalColumnSettings settings;
+    return obj is OptionalColumnSettings other &&
+           RemoveEmptyColumns == other.RemoveEmptyColumns &&
+           ShowPerformanceCounterColumns == other.ShowPerformanceCounterColumns &&
+           ShowPerformanceMetricColumns == other.ShowPerformanceMetricColumns &&
+           columnStyles_.AreEqual(other.columnStyles_) &&
+           columnStates_.AreEqual(other.columnStates_);
+  }
+}
+
+[ProtoContract(SkipConstructor = true)]
+public class OptionalColumnState : SettingsBase {
+  [ProtoMember(1)]
+  public bool IsVisible { get; set; }
+  [ProtoMember(2)]
+  public int Width { get; set; }
+  [ProtoMember(3)]
+  public int Order { get; set; }
+  
+  public OptionalColumnState() {
+    Reset();
+  }
+  
+  public override void Reset() {
+    IsVisible = true;
+    Order = int.MaxValue;
+    Width = 50;
+  }
+  
+  public OptionalColumnState Clone() {
+    byte[] serialized = StateSerializer.Serialize(this);
+    return StateSerializer.Deserialize<OptionalColumnState>(serialized);
+  }
+  
+  public override bool Equals(object obj) {
+    return obj is OptionalColumnState other &&
+           IsVisible == other.IsVisible &&
+           Width == other.Width && 
+           Order == other.Order;
   }
 }
 
 [ProtoContract(SkipConstructor = true)]
 public class OptionalColumnStyle : SettingsBase {
-  public OptionalColumnStyle() : this(int.MaxValue) {
-  }
-
-  public OptionalColumnStyle(int order) {
+  public OptionalColumnStyle() {
     Reset();
-    Order = order;
   }
 
   public enum PartVisibility {
@@ -125,12 +197,6 @@ public class OptionalColumnStyle : SettingsBase {
     Never
   }
 
-  [ProtoMember(1)]
-  public bool IsVisible { get; set; }
-  [ProtoMember(2)]
-  public int Order { get; set; }
-  [ProtoMember(3)]
-  public double Width { get; set; }
   [ProtoMember(4)]
   public string AlternateTitle { get; set; }
   [ProtoMember(5)]
@@ -151,8 +217,6 @@ public class OptionalColumnStyle : SettingsBase {
   public bool InvertColorPalette { get; set; }
 
   public override void Reset() {
-    IsVisible = true;
-    Width = 50;
   }
 
   public OptionalColumnStyle Clone() {
@@ -162,7 +226,6 @@ public class OptionalColumnStyle : SettingsBase {
 
   public override bool Equals(object obj) {
     return obj is OptionalColumnStyle other &&
-           IsVisible == other.IsVisible && Order == other.Order && Width.Equals(other.Width) &&
            AlternateTitle == other.AlternateTitle && 
            ShowPercentageBar == other.ShowPercentageBar &&
            PercentageBarBackColor.Equals(other.PercentageBarBackColor) && TextColor.Equals(other.TextColor) &&

@@ -433,19 +433,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private async Task ExportFunctionAsExcelFile(string filePath) {
     var function = TextView.Section.ParentFunction;
-    var debugInfo = await Session.GetDebugInfoProvider(function);
-    var funcProfile = Session.ProfileData?.GetFunctionProfile(function);
+    var (firstSourceLineIndex, lastSourceLineIndex) = await FindFunctionSourceLineRange(function);
 
-    if (debugInfo == null || funcProfile == null) {
+    if (firstSourceLineIndex == 0) {
+      Utils.ShowWarningMessageBox("Failed to export source file", this);
       return;
-    }
-
-    int firstSourceLineIndex = 0;
-    int lastSourceLineIndex = 0;
-
-    if (debugInfo.PopulateSourceLines(funcProfile.FunctionDebugInfo)) {
-      firstSourceLineIndex = funcProfile.FunctionDebugInfo.FirstSourceLine.Line;
-      lastSourceLineIndex = funcProfile.FunctionDebugInfo.LastSourceLine.Line;
     }
 
     var wb = new XLWorkbook();
@@ -504,6 +496,25 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     wb.SaveAs(filePath);
+  }
+
+  public async Task<(int, int)> FindFunctionSourceLineRange(IRTextFunction function) {
+    var debugInfo = await Session.GetDebugInfoProvider(function);
+    var funcProfile = Session.ProfileData?.GetFunctionProfile(function);
+
+    if (debugInfo == null || funcProfile == null) {
+      return (0, 0);
+    }
+
+    int firstSourceLineIndex = 0;
+    int lastSourceLineIndex = 0;
+
+    if (debugInfo.PopulateSourceLines(funcProfile.FunctionDebugInfo)) {
+      firstSourceLineIndex = funcProfile.FunctionDebugInfo.FirstSourceLine.Line;
+      lastSourceLineIndex = funcProfile.FunctionDebugInfo.LastSourceLine.Line;
+    }
+
+    return (firstSourceLineIndex, lastSourceLineIndex);
   }
 
   private IRElement FindTupleOnSourceLine(int line) {

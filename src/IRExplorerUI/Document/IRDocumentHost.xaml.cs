@@ -336,6 +336,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       settings_ = value;
       ProfileColumns.Settings = value;
       ProfileColumns.ColumnSettings = value.ColumnSettings;
+      ProfileViewMenu.DataContext = value.ColumnSettings;
     }
   }
 
@@ -1085,7 +1086,13 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     // Show optional columns with timing, counters, etc.
     // First remove any previous columns.
-    return await UpdateProfilingColumns();
+    await UpdateProfilingColumns();
+
+    if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
+      JumpToHottestProfiledElement();
+    }
+
+    return true;
   }
 
   private async Task<bool> UpdateProfilingColumns() {
@@ -1113,8 +1120,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void OnProfileColumnsOnColumnSettingsChanged(object sender, OptionalColumn column) {
-    ProfileDocumentMarker.UpdateColumnStyle(column, TextView.ProfileColumnData, Function,
-                                            TextView, settings_.ProfileMarkerSettings);
+    ProfileDocumentMarker.UpdateColumnStyle(column, TextView.ProfileColumnData, Function, TextView, 
+                                            settings_.ProfileMarkerSettings, 
+                                            settings_.ColumnSettings);
     //await UpdateProfilingColumns();
   }
 
@@ -2021,6 +2029,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void JumpToProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
+    JumpToHottestProfiledElement();
+  }
+
+  private void JumpToHottestProfiledElement() {
     if (!HasProfileElements()) {
       return;
     }

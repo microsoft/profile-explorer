@@ -205,7 +205,6 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
             rowValues.BorderBrush = blockSeparatorColor;
           }
 
-          //? TODO: UI option if (showColumnSeparators) {
           foreach (var value in rowValues.Values) {
             value.BorderBrush = blockSeparatorColor;
             value.BorderThickness = new Thickness(0, 0, 1, 0);
@@ -229,7 +228,9 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
     // Handle clicks on the column headers.
     Trace.WriteLine($"Show {columnData.Columns.Count} columns");
-    profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
+    var sortedColumns = columnSettings_.SortColumns(columnData.Columns);
+
+    profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, sortedColumns);
 
     foreach (var columnHeader in profileColumnHeaders_) {
       columnHeader.Header.MouseLeftButtonDown += ColumnHeaderOnClick;
@@ -292,6 +293,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         if (sender is MenuItem menuItem && 
             menuItem.Tag is OptionalColumn column) {
           column.IsVisible = menuItem.IsChecked;
+          columnSettings_.SetColumnVisibility(column, menuItem.IsChecked);
           columnsChanged();
         }
       };
@@ -299,6 +301,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         if (sender is MenuItem menuItem &&
             menuItem.Tag is OptionalColumn column) {
           column.IsVisible = menuItem.IsChecked;
+          columnSettings_.SetColumnVisibility(column, menuItem.IsChecked);
           columnsChanged();
         }
       };
@@ -353,8 +356,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     var maxColumnExtraSize = new Dictionary<OptionalColumn, double>();
     var font = new FontFamily(settings_.FontName);
     double fontSize = settings_.FontSize;
-    const double maxBarWidth = 50; //? TODO: Shared def with Styles.xaml TimePercentageColumnValueTemplate
-    const double columnMargin = 4;
+    const double maxBarWidth = 50; //? TODO: Hardcoded in Styles.xaml TimePercentageColumnValueTemplate
+    const double columnMargin = 4; //?   use UI option from profileMarker settings
 
     foreach (var rowValues in profileDataRows_) {
       foreach (var columnValue in rowValues.ColumnValues) {
@@ -395,8 +398,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         columnWidth += extraSize;
       }
 
-      //? TODO: Pass options and check RemoveEmptyColumns
-      if (columnWidth == 0) {
+      if (columnWidth == 0 && columnSettings_.RemoveEmptyColumns) {
         pair.Key.IsVisible = false;
       }
       else {

@@ -1,129 +1,130 @@
 ﻿<local:ToolPanelControl
-  d:DesignHeight="450"
-  d:DesignWidth="1000"
-  mc:Ignorable="d"
-  x:Class="IRExplorerUI.SourceFilePanel"
-  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-  xmlns:local="clr-namespace:IRExplorerUI"
-  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:document1="clr-namespace:IRExplorerUI.Profile.Document">
-  <local:ToolPanelControl.Resources>
+    x:Class="IRExplorerUI.SourceFilePanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:document1="clr-namespace:IRExplorerUI.Profile.Document"
+    xmlns:local="clr-namespace:IRExplorerUI"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="1000"
+    mc:Ignorable="d">
+    <local:ToolPanelControl.Resources />
 
-  </local:ToolPanelControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="28" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-  <Grid>
-    <Grid.RowDefinitions>
-      <RowDefinition Height="28" />
-      <RowDefinition Height="*" />
-    </Grid.RowDefinitions>
+        <Grid
+            Grid.Row="0"
+            HorizontalAlignment="Stretch"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="48" />
+            </Grid.ColumnDefinitions>
+            <ToolBarTray
+                Grid.Column="0"
+                Height="28"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                IsLocked="True">
+                <ToolBar
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Top"
+                    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    Loaded="ToolBar_Loaded">
+                    <Button Click="OpenButton_Click" ToolTip="Open a source file">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,1,0"
+                                Source="{StaticResource FolderIcon}" />
+                            <TextBlock Text="Open" />
+                        </StackPanel>
+                    </Button>
 
-    <Grid
-      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-      Grid.Row="0"
-      HorizontalAlignment="Stretch">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="48" />
-      </Grid.ColumnDefinitions>
-      <ToolBarTray
-        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-        Grid.Column="0"
-        Height="28"
-        HorizontalAlignment="Stretch"
-        IsLocked="True"
-        VerticalAlignment="Top">
-        <ToolBar
-          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-          HorizontalAlignment="Stretch"
-          Loaded="ToolBar_Loaded"
-          VerticalAlignment="Top">
-          <Button Click="OpenButton_Click" ToolTip="Open a source file">
-            <StackPanel Orientation="Horizontal">
-              <Image
-                Height="16"
-                Margin="0,1,1,0"
-                Source="{StaticResource FolderIcon}"
-                Width="16" />
-              <TextBlock Text="Open" />
-            </StackPanel>
-          </Button>
+                    <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                        <MenuItem
+                            Padding="0,0,0,0"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                            Header="Path"
+                            OverridesDefaultStyle="True"
+                            ToolTip="Source file operations">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="18"
+                                    Height="18"
+                                    Margin="-2,0,-2,0"
+                                    Source="{StaticResource EditIcon}" />
+                            </MenuItem.Icon>
+                            <MenuItem Click="SourceFile_CopyPath" Header="Copy source file path" />
+                            <MenuItem Click="SourceFile_Open" Header="Open source file" />
+                        </MenuItem>
+                    </Menu>
+                    <Button Click="ResetButton_Click" ToolTip="Reset source file mappings and exclusions">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource ReloadIcon}" />
+                            <TextBlock Text="Reset" />
+                        </StackPanel>
+                    </Button>
+                    <Separator />
 
-          <Menu Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                VerticalAlignment="Center">
-            <MenuItem
-              Header="Path"
-              ToolTip="Source file operations"
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              OverridesDefaultStyle="True"
-              Padding="0,0,0,0">
-              <MenuItem.Icon>
-                <Image
-                  Height="18"
-                  Margin="-2,0,-2,0"
-                  Source="{StaticResource EditIcon}"
-                  Width="18" />
-              </MenuItem.Icon>
-              <MenuItem Click="SourceFile_CopyPath" Header="Copy source file path" />
-              <MenuItem Click="SourceFile_Open" Header="Open source file" />
-            </MenuItem>
-          </Menu>
-          <Button Click="ResetButton_Click" ToolTip="Reset source file mappings and exclusions">
-            <StackPanel Orientation="Horizontal">
-              <Image
-                Height="16"
-                Margin="0,1,0,0"
-                Source="{StaticResource ReloadIcon}"
-                Width="16" />
-              <TextBlock Text="Reset" />
-            </StackPanel>
-          </Button>
-          <Separator />
+                    <TextBlock
+                        Margin="0,0,4,0"
+                        VerticalAlignment="Center"
+                        IsEnabled="False"
+                        Text="Inlinees" />
+                    <ComboBox
+                        Name="InlineeCombobox"
+                        Width="150"
+                        MinWidth="100"
+                        MaxWidth="200"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        DisplayMemberPath="Function"
+                        IsEnabled="False"
+                        Loaded="ComboBox_Loaded"
+                        SelectedValue="Function"
+                        SelectionChanged="InlineeCombobox_SelectionChanged"
+                        ToolTip="Inlined functions call stack" />
+                    <Button
+                        Click="Button_Click_1"
+                        IsEnabled="False"
+                        ToolTip="Switch to callee">
+                        <Image Source="{StaticResource UpArrowIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    </Button>
+                    <Button
+                        Click="Button_Click_2"
+                        IsEnabled="False"
+                        ToolTip="Switch to caller">
+                        <Image Source="{StaticResource DownArrowIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    </Button>
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        IsEnabled="False"
+                        Text="0/0"
+                        Visibility="Collapsed" />
+                </ToolBar>
+            </ToolBarTray>
+            <local:PanelToolbarTray
+                Grid.Column="1"
+                HasDuplicateButton="False"
+                HasHelpButton="True"
+                HasPinButton="False"
+                SettingsClicked="PanelToolbarTray_OnSettingsClicked" />
+        </Grid>
 
-          <TextBlock
-            Margin="0,0,4,0"
-            Text="Inlinees"
-            IsEnabled="False"
-            VerticalAlignment="Center" />
-          <ComboBox
-            IsEnabled="False"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-            DisplayMemberPath="Function"
-            Loaded="ComboBox_Loaded"
-            MaxWidth="200"
-            MinWidth="100"
-            Name="InlineeCombobox"
-            SelectedValue="Function"
-            SelectionChanged="InlineeCombobox_SelectionChanged"
-            ToolTip="Inlined functions call stack"
-            Width="150" />
-          <Button Click="Button_Click_1" ToolTip="Switch to callee" IsEnabled="False">
-            <Image Source="{StaticResource UpArrowIcon}" 
-                   Style="{StaticResource DisabledImageStyle}"/>
-          </Button>
-          <Button Click="Button_Click_2" ToolTip="Switch to caller" IsEnabled="False">
-            <Image Source="{StaticResource DownArrowIcon}"
-                   Style="{StaticResource DisabledImageStyle}"/>
-          </Button>
-          <TextBlock
-            Visibility="Collapsed"
-            IsEnabled="False"
-            Margin="4,0,0,0"
-            Text="0/0"
-            VerticalAlignment="Center" />
-        </ToolBar>
-      </ToolBarTray>
-      <local:PanelToolbarTray
-        Grid.Column="1"
-        HasHelpButton="True"
-        HasDuplicateButton="False"
-        HasPinButton="False"
-        SettingsClicked="PanelToolbarTray_OnSettingsClicked"/>
+        <document1:ProfileIRDocument x:Name="ProfileTextView" Grid.Row="1" />
     </Grid>
-
-    <document1:ProfileIRDocument x:Name="TextView" Grid.Row="1" />
-  </Grid>
 </local:ToolPanelControl>
