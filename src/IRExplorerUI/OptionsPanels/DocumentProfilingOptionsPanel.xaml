@@ -41,14 +41,12 @@
             <CheckBox
                 Margin="0,4,0,2"
                 Content="Show icons for hottest lines"
-                IsChecked="{Binding DisplayIcons, Mode=TwoWay}"
-                ToolTip="Compute function IR statistics on document load and show extra columns" />
+                IsChecked="{Binding DisplayIcons, Mode=TwoWay}" />
             <CheckBox
                 x:Name="PercentageBarCheckBox"
                 Margin="0,2,0,2"
                 Content="Show percentage bars"
-                IsChecked="{Binding DisplayPercentageBar, Mode=TwoWay}"
-                ToolTip="Compute function IR statistics on document load and show extra columns" />
+                IsChecked="{Binding DisplayPercentageBar, Mode=TwoWay}" />
             <StackPanel
                 Margin="20,0,0,2"
                 IsEnabled="{Binding ElementName=PercentageBarCheckBox, Path=IsChecked}"
@@ -106,22 +104,33 @@
                     Content="Default"
                     ToolTip="Reset value to default weight cutoff" />
             </StackPanel>
-            <StackPanel Margin="0,2,0,2" Orientation="Horizontal">
-                <TextBlock
-                    Width="50"
-                    VerticalAlignment="Center"
-                    Text="Time unit" />
+            <StackPanel Margin="0,4,0,2" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="Time format" />
                 <ComboBox
-                    Width="112"
+                    x:Name="ValueUnitComboBox"
+                    Width="151"
+                    Height="20"
                     Margin="8,0,0,0"
-                    VerticalAlignment="Center"
-                    IsEnabled="False"
-                    IsSynchronizedWithCurrentItem="True">
-                    <ComboBoxItem Content="Nanosecond" />
-                    <ComboBoxItem Content="Millisecond" />
-                    <ComboBoxItem Content="Second" />
-                </ComboBox>
+                    DisplayMemberPath="Value"
+                    SelectedValue="{Binding ValueUnit, Mode=TwoWay}"
+                    SelectedValuePath="Key" />
             </StackPanel>
+            <CheckBox
+                Margin="0,2,0,2"
+                Content="Append time format suffix"
+                IsChecked="{Binding AppendValueUnitSuffix, Mode=TwoWay}"
+                ToolTip="Append the time format suffix (ms) to each value" />
+            <ToggleButton
+                Height="20"
+                Margin="0,4,0,0"
+                Padding="2,2,2,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                Click="WeightCutoffButton_Click"
+                Content="Edit Columns"
+                IsEnabled="False"
+                ToolTip="Reset value to default weight cutoff" />
             <Separator Margin="0,4,0,4" />
 
             <TextBlock FontWeight="Medium" Text="Colors" />

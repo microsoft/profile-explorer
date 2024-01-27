@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Windows;
 using System.Windows.Media;
 using ProtoBuf;
@@ -17,10 +18,12 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
 
   public enum ValueUnitKind {
     Nanosecond,
+    Microsecond,
     Millisecond,
     Second,
     Percent,
-    Value
+    Value,
+    Default
   }
 
   [ProtoMember(1)] public bool MarkElements { get; set; }
@@ -28,7 +31,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   [ProtoMember(3)] public bool MarkBlocksInFlowGraph { get; set; }
   [ProtoMember(4)] public bool MarkCallTargets { get; set; }
   [ProtoMember(5)] public bool JumpToHottestElement { get; set; }
-  [ProtoMember(6)] public double VirtualColumnPosition { get; set; }
   [ProtoMember(7)]  public double ElementWeightCutoff { get; set; }
   [ProtoMember(8)]  public int TopOrderCutoff { get; set; }
   [ProtoMember(9)]  public double IconBarWeightCutoff { get; set; }
@@ -41,7 +43,9 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   [ProtoMember(17)]  public int MaxPercentageBarWidth { get; set; }
   [ProtoMember(18)]  public bool DisplayPercentageBar { get; set; }
   [ProtoMember(19)]  public bool DisplayIcons { get; set; }
-  [ProtoMember(23)]  public ValueUnitKind ValueUnit { get; set; }
+  [ProtoMember(20)]  public ValueUnitKind ValueUnit { get; set; }
+  [ProtoMember(21)] public bool AppendValueUnitSuffix { get; set; }
+  [ProtoMember(22)] public int ValueUnitDecimals { get; set; }
 
   public static int DefaultMaxPercentageBarWidth = 50;
   public static double DefaultElementWeightCutoff = 0.003; // 0.3%;
@@ -52,7 +56,8 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     MarkBlocksInFlowGraph = true;
     MarkCallTargets = true;
     ValueUnit = ValueUnitKind.Millisecond;
-    VirtualColumnPosition = 350;
+    ValueUnitDecimals = 2;
+    AppendValueUnitSuffix = true;
     ElementWeightCutoff = DefaultElementWeightCutoff;
     TopOrderCutoff = 10;
     IconBarWeightCutoff = 0.03; // 3%
@@ -65,6 +70,27 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     BlockOverlayBorderColor = Colors.DimGray;
     BlockOverlayBorderThickness = 1;
     PercentageBarBackColor = Utils.ColorFromString("#Aa4343");
+  }
+
+  public string FormatWeightValue(OptionalColumn column, TimeSpan weight) {
+    string suffix = "";
+    if (AppendValueUnitSuffix) {
+      suffix = ValueUnit switch {
+        ValueUnitKind.Millisecond => "ms",
+        ValueUnitKind.Microsecond => "µs",
+        ValueUnitKind.Nanosecond => "ns",
+        ValueUnitKind.Second => "s",
+        _ => ""
+      };
+    }
+
+    return ValueUnit switch {
+      ValueUnitKind.Millisecond => weight.AsMillisecondsString(ValueUnitDecimals, suffix),
+      ValueUnitKind.Microsecond => weight.AsMicrosecondString(ValueUnitDecimals, suffix),
+      ValueUnitKind.Nanosecond => weight.AsNanosecondsString(ValueUnitDecimals, suffix),
+      ValueUnitKind.Second => weight.AsSecondsString(ValueUnitDecimals, suffix),
+      _ => weight.Ticks.ToString()
+    };
   }
 
   public Color PickBackColor(OptionalColumn column, int order, double percentage) {
@@ -258,7 +284,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
            MarkBlocksInFlowGraph == other.MarkBlocksInFlowGraph &&
            MarkCallTargets == other.MarkCallTargets &&
            JumpToHottestElement == other.JumpToHottestElement &&
-           VirtualColumnPosition.Equals(other.VirtualColumnPosition) &&
            ElementWeightCutoff.Equals(other.ElementWeightCutoff) &&
            TopOrderCutoff == other.TopOrderCutoff && 
            IconBarWeightCutoff.Equals(other.IconBarWeightCutoff) &&
@@ -271,6 +296,8 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
            MaxPercentageBarWidth == other.MaxPercentageBarWidth &&
            DisplayPercentageBar == other.DisplayPercentageBar &&
            DisplayIcons == other.DisplayIcons &&
-           ValueUnit == other.ValueUnit;
+           ValueUnit == other.ValueUnit &&
+           AppendValueUnitSuffix == other.AppendValueUnitSuffix &&
+           ValueUnitDecimals == other.ValueUnitDecimals;
   }
 }

@@ -11,9 +11,9 @@ namespace IRExplorerUI.OptionsPanels;
 
 public partial class ColumnOptionsPanel : OptionsPanelBase {
   public override double DefaultHeight => 340;
-  public const double MinimumHeight = 340;
+  public override double MinimumHeight => 340;
   public override double DefaultWidth => 280;
-  public const double MinimumWidth = 300;
+  public override double MinimumWidth => 300;
 
   public Dictionary<OptionalColumnStyle.PartVisibility, string>
     PartVisibilityKinds { get; } =

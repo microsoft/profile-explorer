@@ -203,23 +203,23 @@ public class OptionalColumnStyle : SettingsBase {
     Never
   }
 
-  [ProtoMember(4)]
+  [ProtoMember(1)]
   public string AlternateTitle { get; set; }
-  [ProtoMember(5)]
+  [ProtoMember(2)]
   public PartVisibility ShowPercentageBar { get; set; }
-  [ProtoMember(7)]
+  [ProtoMember(3)]
   public Color PercentageBarBackColor { get; set; }
-  [ProtoMember(8)]
+  [ProtoMember(4)]
   public Color TextColor { get; set; }
-  [ProtoMember(9)]
+  [ProtoMember(5)]
   public PartVisibility ShowIcon { get; set; }
-  [ProtoMember(11)]
+  [ProtoMember(6)]
   public bool PickColorForPercentage { get; set; }
-  [ProtoMember(12)]
+  [ProtoMember(7)]
   public PartVisibility UseBackColor { get; set; }
-  [ProtoMember(14)]
+  [ProtoMember(8)]
   public ColorPalette BackColorPalette { get; set; }
-  [ProtoMember(15)]
+  [ProtoMember(9)]
   public bool InvertColorPalette { get; set; }
 
   public override void Reset() {
@@ -232,7 +232,7 @@ public class OptionalColumnStyle : SettingsBase {
 
   public override bool Equals(object obj) {
     return obj is OptionalColumnStyle other &&
-           AlternateTitle == other.AlternateTitle && 
+           AlternateTitle == other.AlternateTitle &&
            ShowPercentageBar == other.ShowPercentageBar &&
            PercentageBarBackColor.Equals(other.PercentageBarBackColor) && TextColor.Equals(other.TextColor) &&
            ShowIcon == other.ShowIcon &&

@@ -450,9 +450,6 @@
                             ToolTip="Search section text (Ctrl+F)">
                             <Image Source="{StaticResource SearchIcon}" />
                         </ToggleButton>
-
-                        <Separator Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
-
                     </ToolBar>
                 </ToolBarTray>
                 <local:PanelToolbarTray

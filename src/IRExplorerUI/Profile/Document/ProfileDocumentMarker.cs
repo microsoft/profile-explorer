@@ -54,6 +54,14 @@ public class ProfileDocumentMarker {
                             null, 50.0, "TimeColumnHeaderTemplate");
 
   public OptionalColumn TimeColumnTemplate() {
+    string timeUnit = settings_.ValueUnit switch {
+      ProfileDocumentMarkerSettings.ValueUnitKind.Second => "sec",
+      ProfileDocumentMarkerSettings.ValueUnitKind.Millisecond => "ms",
+      ProfileDocumentMarkerSettings.ValueUnitKind.Microsecond => "µs",
+      ProfileDocumentMarkerSettings.ValueUnitKind.Nanosecond => "ns",
+    };
+
+    TimeColumnDefinition.Title = $"Time ({timeUnit})";
     TimeColumnDefinition.Style = columnSettings_.GetColumnStyle(TimeColumnDefinition) ??
                         OptionalColumnSettings.DefaultTimeColumnStyle;
     return TimeColumnDefinition;
@@ -520,7 +528,7 @@ public class ProfileDocumentMarker {
         var weight = elements[i].Item2;
         double weightPercentage = profile_.ScaleWeight(weight);
 
-        string label = weight.AsMillisecondsString();
+        string label = settings_.FormatWeightValue(timeColumn, weight);
         string percentageLabel = weightPercentage.AsTrimmedPercentageString();
         var columnValue = new ElementColumnValue(label, weight.Ticks, weightPercentage, i);
         var percentageColumnValue = new ElementColumnValue(percentageLabel, weight.Ticks, weightPercentage, i);
@@ -529,7 +537,7 @@ public class ProfileDocumentMarker {
 
         columnData.AddValue(percentageColumnValue, element, percentageColumn);
         var valueGroup = columnData.AddValue(columnValue, element, timeColumn);
-        //valueGroup.BackColor = Brushes.Bisque;
+        //? valueGroup.BackColor = Brushes.Bisque;
       }
     });
 
@@ -545,7 +553,6 @@ public class ProfileDocumentMarker {
       return columnData;
     }
 
-    //? TODO: Filter to hide counters
     //? TODO: Order of counters (custom sorting or fixed)
     //? TODO: Way to set a counter as a baseline, another diff to it in %
     //?    misspredictedBranches / totalBranches

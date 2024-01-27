@@ -46,9 +46,6 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     SnapsToDevicePixels = true;
     IsHitTestVisible = true;
     Background = Brushes.Transparent; // Needed for mouse events to fire...
-    MouseLeave += OverlayRenderer_MouseLeave;
-    //PreviewMouseMove += OverlayRenderer_PreviewMouseMove;
-    //PreviewMouseLeftButtonDown += OverlayRenderer_PreviewMouseLeftButtonDown;
     highlighter_ = highlighter;
     ClearConnectedElements();
   }
@@ -131,6 +128,16 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
 
   public void MouseMoved(MouseEventArgs e) {
     HandleMouseMoved(e.GetPosition(this), e);
+  }
+
+  public new void MouseLeave() {
+    HideTooltip();
+
+    if (hoveredOverlay_ != null) {
+      hoveredOverlay_.IsMouseOver = false;
+      hoveredOverlay_ = null;
+      TextView.Redraw();
+    }
   }
 
   public bool KeyPressed(KeyEventArgs e) {
@@ -558,10 +565,6 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
         }
       }
     }
-  }
-
-  private void OverlayRenderer_MouseLeave(object sender, MouseEventArgs e) {
-    HideTooltip();
   }
 
   public sealed class IROverlaySegment : IRSegment {

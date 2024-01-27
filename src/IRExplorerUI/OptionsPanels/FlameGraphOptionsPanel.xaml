@@ -114,7 +114,7 @@
                         IsChecked="{Binding SyncSelection, Mode=TwoWay}"
                         IsEnabled="False"
                         ToolTip="Sync function displayed in other profiling panels with selection" />
-                    <TextBlock Text="TODO: Select color pallettes" />
+                    <TextBlock Text="TODO: Select color palettes" />
                 </StackPanel>
             </TabItem>
             <TabItem

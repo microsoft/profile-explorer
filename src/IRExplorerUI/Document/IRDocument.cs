@@ -89,6 +89,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private DiffLineHighlighter diffHighlighter_;
   private List<DiffTextSegment> diffSegments_;
   private bool disableCaretEvent_;
+  public bool disableOverlayEvents_;
   private ScrollBar docVerticalScrollbar_;
   private bool duringDiffModeSetup_;
   private bool duringSectionLoading_;
@@ -211,6 +212,15 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public void BookmarkInfoChanged(Bookmark bookmark) {
     UpdateHighlighting();
+  }
+
+  public void DisableOverlayEventHandlers() {
+    disableOverlayEvents_ = true;
+    overlayRenderer_.MouseLeave();
+  }
+
+  public void EnableOverlayEventHandlers() {
+    disableOverlayEvents_ = false;
   }
 
   public void ExecuteDocumentAction(DocumentAction action) {
@@ -2588,7 +2598,9 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     // Don't send event to overlays that may extend under the scrollbar.
     if (docVerticalScrollbar_ == null || !docVerticalScrollbar_.IsMouseOver) {
-      overlayRenderer_.MouseMoved(e);
+      if (!disableOverlayEvents_) {
+        overlayRenderer_.MouseMoved(e);
+      }
     }
   }
 
@@ -3363,6 +3375,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private void IRDocument_MouseLeave(object sender, MouseEventArgs e) {
     HideTemporaryUI();
+    overlayRenderer_.MouseLeave();
   }
 
   //? TODO: Profile hanling should be moved out of IRDocument,

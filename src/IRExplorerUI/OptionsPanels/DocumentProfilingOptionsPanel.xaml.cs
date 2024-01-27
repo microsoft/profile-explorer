@@ -2,8 +2,10 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Input;
+using static IRExplorerUI.ProfileDocumentMarkerSettings;
 
 namespace IRExplorerUI.OptionsPanels;
 
@@ -15,8 +17,18 @@ public partial class DocumentProfilingOptionsPanel : OptionsPanelBase {
 
   private bool showsDocumentSettings_;
 
+  public Dictionary<ValueUnitKind, string>
+    ValueUnitKinds { get; } =
+    new Dictionary<ValueUnitKind, string>() {
+      {ValueUnitKind.Second, "Second"},
+      {ValueUnitKind.Millisecond, "Millisecond"},
+      {ValueUnitKind.Microsecond, "Microsecond"},
+      {ValueUnitKind.Nanosecond, "Nanosecond"},
+    };  
+
   public DocumentProfilingOptionsPanel() {
     InitializeComponent();
+    ValueUnitComboBox.ItemsSource = ValueUnitKinds;
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
     PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
   }
