@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Windows;
@@ -25,6 +26,24 @@ public class FontFamilyConverter : IValueConverter {
 
   public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
     return ((FontFamily)value).Source;
+  }
+}
+
+public class ColorPaletteConverter : IValueConverter {
+  public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    try {
+      // return ColorPalette.GetPalette((string)value);
+      Trace.WriteLine("Get paletter");
+     return ColorPalette.ProfileKernel;
+    }
+    catch (Exception) {
+      return null;
+    }
+  }
+
+  public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    Trace.WriteLine($"Set new palette: {((ColorPalette)value).Name}");
+    return ((ColorPalette)value).Name;
   }
 }
 

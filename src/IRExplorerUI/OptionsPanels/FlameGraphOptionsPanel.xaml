@@ -2,11 +2,13 @@
     x:Class="IRExplorerUI.OptionsPanels.FlameGraphOptionsPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:IRExplorerUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI.OptionsPanels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-    d:DesignHeight="450"
+    d:DesignHeight="550"
     d:DesignWidth="350"
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
@@ -100,21 +102,162 @@
                         Margin="0,4,0,2"
                         Content="Use compact mode"
                         IsChecked="{Binding UseCompactMode, Mode=TwoWay}"
-                        IsEnabled="False"
-                        ToolTip="Make flame graph view more dense by using a smaller font size" />
+                        IsEnabled="False" />
                     <CheckBox
+                        x:Name="KernelCheckBox"
                         Margin="0,2,0,2"
                         Content="Use different color palette for kernel code"
-                        IsChecked="{Binding SyncSelection, Mode=TwoWay}"
-                        IsEnabled="False"
-                        ToolTip="Sync function displayed in other profiling panels with selection" />
+                        IsChecked="{Binding UseKernelColorPalette, Mode=TwoWay}" />
                     <CheckBox
+                        x:Name="ManagedCheckBox"
                         Margin="0,2,0,2"
                         Content="Use different color palette for managed (.NET) code"
-                        IsChecked="{Binding SyncSelection, Mode=TwoWay}"
-                        IsEnabled="False"
-                        ToolTip="Sync function displayed in other profiling panels with selection" />
-                    <TextBlock Text="TODO: Select color palettes" />
+                        IsChecked="{Binding UseManagedColorPalette, Mode=TwoWay}" />
+
+                    <Separator Margin="0,4,0,4" />
+                    <TextBlock
+                        Margin="0,0,0,4"
+                        FontWeight="Medium"
+                        Text="Color Palettes" />
+                    <StackPanel Orientation="Horizontal">
+                        <controls:ColorPaletteSelector
+                            x:Name="DefaultPaletteSelector"
+                            Width="150"
+                            Height="20"
+                            HorizontalAlignment="Left"
+                            PreviewWidth="200"
+                            SelectedPalette="{Binding DefaultColorPalette, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
+                        <TextBlock
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            Text="Default" />
+                    </StackPanel>
+                    <StackPanel
+                        Margin="0,2,0,0"
+                        IsEnabled="{Binding ElementName=KernelCheckBox, Path=IsChecked}"
+                        Orientation="Horizontal">
+                        <controls:ColorPaletteSelector
+                            x:Name="KernelPaletteSelector"
+                            Width="150"
+                            Height="20"
+                            HorizontalAlignment="Left"
+                            PreviewWidth="200"
+                            SelectedPalette="{Binding KernelColorPalette, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
+                        <TextBlock
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            Text="Kernel code" />
+                    </StackPanel>
+                    <StackPanel
+                        Margin="0,2,0,0"
+                        IsEnabled="{Binding ElementName=ManagedCheckBox, Path=IsChecked}"
+                        Orientation="Horizontal">
+                        <controls:ColorPaletteSelector
+                            x:Name="ManagedPaletteSelector"
+                            Width="150"
+                            Height="20"
+                            HorizontalAlignment="Left"
+                            PreviewWidth="200"
+                            SelectedPalette="{Binding ManagedColorPalette, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
+                        <TextBlock
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            Text="Managed (.NET) code" />
+                    </StackPanel>
+
+                    <Separator Margin="0,4,0,4" />
+                    <TextBlock
+                        Margin="0,0,0,4"
+                        FontWeight="Medium"
+                        Text="Colors" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                            Grid.Column="0"
+                            Width="64"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            AvailableColorsSortingMode="HueSaturationBrightness"
+                            BorderBrush="#707070"
+                            IsManipulationEnabled="True"
+                            SelectedColor="{Binding Path=SelectedNodeColor, Mode=TwoWay}"
+                            ShowDropDownButton="True"
+                            UsingAlphaChannel="False" />
+                        <TextBlock
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Text="Selected node color" />
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                            Grid.Column="0"
+                            Width="64"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            AvailableColorsSortingMode="HueSaturationBrightness"
+                            BorderBrush="#707070"
+                            IsManipulationEnabled="True"
+                            SelectedColor="{Binding Path=SelectedNodeBorderColor, Mode=TwoWay}"
+                            ShowDropDownButton="True"
+                            UsingAlphaChannel="False" />
+                        <TextBlock
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Text="Selected node border color" />
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                            Grid.Column="0"
+                            Width="64"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            AvailableColorsSortingMode="HueSaturationBrightness"
+                            BorderBrush="#707070"
+                            IsManipulationEnabled="True"
+                            SelectedColor="{Binding Path=SearchResultNodeColor, Mode=TwoWay}"
+                            ShowDropDownButton="True"
+                            UsingAlphaChannel="False" />
+                        <TextBlock
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Text="Search result node color" />
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                            Grid.Column="0"
+                            Width="64"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            AvailableColorsSortingMode="HueSaturationBrightness"
+                            BorderBrush="#707070"
+                            IsManipulationEnabled="True"
+                            SelectedColor="{Binding Path=SearchResultNodeBorderColor, Mode=TwoWay}"
+                            ShowDropDownButton="True"
+                            UsingAlphaChannel="False" />
+                        <TextBlock
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Text="Search result node border color" />
+                    </Grid>
                 </StackPanel>
             </TabItem>
             <TabItem

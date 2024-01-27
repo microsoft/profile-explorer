@@ -2,8 +2,12 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.OptionsPanels;
 
@@ -15,6 +19,10 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
 
   public FlameGraphOptionsPanel() {
     InitializeComponent();
+    DefaultPaletteSelector.PalettesSource = ColorPalette.BuiltinPalettes;
+    KernelPaletteSelector.PalettesSource = ColorPalette.BuiltinPalettes;
+    ManagedPaletteSelector.PalettesSource = ColorPalette.BuiltinPalettes;
+
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
     PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
@@ -86,5 +94,13 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   private void ResetFilterWeightButton_Click(object sender, RoutedEventArgs e) {
     ((ProfileListViewFilter)FunctionListOptionsPanel.DataContext).MinWeight = ProfileListViewFilter.DefaultMinWeight;
     ReloadSettings();
+  }
+}
+
+public class ComboBoxItemTemplateSelector : DataTemplateSelector {
+  public DataTemplate SelectedTemplate { get; set; }
+
+  public override DataTemplate SelectTemplate(object item, DependencyObject container) {
+    return SelectedTemplate;
   }
 }
