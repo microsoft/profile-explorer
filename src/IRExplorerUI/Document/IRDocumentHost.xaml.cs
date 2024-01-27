@@ -997,8 +997,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     optionsPanelWindow_.Settings = newOptions;
   }
 
-  private void OptionsPanel_PanelClosed(object sender, EventArgs e) {
-    CloseOptionsPanel(optionsPanel_.SyntaxFileChanged);
+  private async void OptionsPanel_PanelClosed(object sender, EventArgs e) {
+    await CloseOptionsPanel(optionsPanel_.SyntaxFileChanged);
   }
 
   private void TextView_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) {
@@ -1517,9 +1517,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
 
-  private void PanelToolbarTray_SettingsClicked(object sender, EventArgs e) {
+  private async void PanelToolbarTray_SettingsClicked(object sender, EventArgs e) {
     if (optionsPanelVisible_) {
-      CloseOptionsPanel(false);
+      await CloseOptionsPanel(false);
     }
     else {
       ShowOptionsPanel();
@@ -1548,9 +1548,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;
     optionsPanelWindow_.IsOpen = true;
     optionsPanelVisible_ = true;
+    TextView.DisableOverlayEventHandlers();
   }
 
-  private void CloseOptionsPanel(bool syntaxFileChanged) {
+  private async Task CloseOptionsPanel(bool syntaxFileChanged) {
     if (!optionsPanelVisible_) {
       return;
     }
@@ -1561,7 +1562,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     optionsPanelWindow_.SettingsChanged -= OptionsPanel_SettingsChanged;
 
     var newSettings = (DocumentSettings)optionsPanelWindow_.Settings;
-    LoadNewSettings(newSettings, syntaxFileChanged, true);
+    await LoadNewSettings(newSettings, syntaxFileChanged, true);
+    TextView.EnableOverlayEventHandlers();
 
     optionsPanel_ = null;
     optionsPanelWindow_ = null;

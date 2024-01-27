@@ -104,6 +104,18 @@ static class ExtensionMethods {
     };
   }
 
+  public static string AsNanosecondsString(this TimeSpan value, int digits = 2,
+                                            string suffix = " ns") {
+    double roundedValue = value.TotalNanoseconds.TruncateToDigits(digits);
+    return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
+  }
+
+  public static string AsMicrosecondString(this TimeSpan value, int digits = 2,
+                                           string suffix = " µs") {
+    double roundedValue = value.TotalMicroseconds.TruncateToDigits(digits);
+    return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
+  }
+
   public static string AsMillisecondsString(this TimeSpan value, int digits = 2,
                                             string suffix = " ms") {
     double roundedValue = value.TotalMilliseconds.TruncateToDigits(digits);
