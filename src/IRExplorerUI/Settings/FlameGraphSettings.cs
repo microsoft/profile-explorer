@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System.Windows.Media;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -31,7 +32,25 @@ public class FlameGraphSettings : SettingsBase {
   public bool AppendDurationToFunction { get; set; }
   [ProtoMember(9)]
   public int NodePopupDuration { get; set; }
-  
+  [ProtoMember(10)]
+  public string DefaultColorPalette { get; set; }
+  [ProtoMember(11)]
+  public string KernelColorPalette { get; set; }
+  [ProtoMember(12)]
+  public string ManagedColorPalette { get; set; }
+  [ProtoMember(13)]
+  public bool UseKernelColorPalette { get; set; }
+  [ProtoMember(14)]
+  public bool UseManagedColorPalette { get; set; }
+  [ProtoMember(15)]
+  public Color SelectedNodeColor { get; set; }
+  [ProtoMember(16)]
+  public Color SearchResultNodeColor { get; set; }
+  [ProtoMember(17)]
+  public Color SelectedNodeBorderColor { get; set; }
+  [ProtoMember(18)]
+  public Color SearchResultNodeBorderColor { get; set; }
+
   //? TODO: Options for
   //? - diff color scheme for kernel/managed
   //?      - enabled or not
@@ -50,6 +69,14 @@ public class FlameGraphSettings : SettingsBase {
     AppendPercentageToFunction = true;
     AppendDurationToFunction = true;
     NodePopupDuration = DefaultNodePopupDuration;
+    UseKernelColorPalette = true;
+    UseManagedColorPalette = true;
+    DefaultColorPalette = ColorPalette.Profile.Name;
+    KernelColorPalette = ColorPalette.ProfileKernel.Name;
+    ManagedColorPalette = ColorPalette.ProfileManaged.Name;
+
+    //? TODO: Define SelectedNodeColor
+    //? Use paletter in flame graph
   }
 
   public FlameGraphSettings Clone() {
@@ -67,6 +94,15 @@ public class FlameGraphSettings : SettingsBase {
            ShowNodePopup == settings.ShowNodePopup &&
            AppendPercentageToFunction == settings.AppendPercentageToFunction &&
            AppendDurationToFunction == settings.AppendDurationToFunction &&
-           NodePopupDuration == settings.NodePopupDuration;
+           NodePopupDuration == settings.NodePopupDuration &&
+           DefaultColorPalette == settings.DefaultColorPalette &&
+           KernelColorPalette == settings.KernelColorPalette &&
+           ManagedColorPalette == settings.ManagedColorPalette &&
+           UseKernelColorPalette == settings.UseKernelColorPalette &&
+           UseManagedColorPalette == settings.UseManagedColorPalette &&
+           SelectedNodeColor == settings.SelectedNodeColor &&
+           SearchResultNodeColor == settings.SearchResultNodeColor &&
+           SelectedNodeBorderColor == settings.SelectedNodeBorderColor &&
+           SearchResultNodeBorderColor == settings.SearchResultNodeBorderColor;
   }
 }

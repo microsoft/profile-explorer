@@ -22,6 +22,22 @@ public class ColorPalette {
     Colors = new List<Color>(colors);
   }
 
+  public static List<ColorPalette> BuiltinPalettes => [
+    Profile,
+    ProfileManaged,
+    ProfileKernel,
+  ];
+
+  public static ColorPalette GetPalette(string name) {
+    foreach (var palette in BuiltinPalettes) {
+      if (palette.Name == name) {
+        return palette;
+      }
+    }
+
+    return null;
+  }
+
   public static ColorPalette Profile =>
     new ColorPalette(new[] {
       Utils.ColorFromString("#FFFCF4D6"),
@@ -40,7 +56,7 @@ public class ColorPalette {
       Utils.ColorFromString("#FFFCDAD7"),
       Utils.ColorFromString("#FFFCD9D7"),
       Utils.ColorFromString("#FFFCD7D7")
-    });
+    }, "Profile");
   public static ColorPalette ProfileManaged =>
     new ColorPalette(new[] {
       Utils.ColorFromString("#FFC9DBF3"),
@@ -59,7 +75,7 @@ public class ColorPalette {
       Utils.ColorFromString("#FFF4DEE7"),
       Utils.ColorFromString("#FFF6DEE7"),
       Utils.ColorFromString("#FFF7E0E7")
-    });
+    }, "ProfileManaged");
   public static ColorPalette ProfileKernel =>
     new ColorPalette(new[] {
       Utils.ColorFromString("#FFCFFAFB"),
@@ -78,7 +94,7 @@ public class ColorPalette {
       Utils.ColorFromString("#FFD1D8FB"),
       Utils.ColorFromString("#FFD2D5FB"),
       Utils.ColorFromString("#FFD2D3FB")
-    });
+    }, "ProfileKernel");
   public static ColorPalette DarkHue => MakeHue(0.9f, 0.2f, 10);
   public static ColorPalette LightHue => MakeHue(0.9f, 0.5f, 10);
   [ProtoMember(1)]

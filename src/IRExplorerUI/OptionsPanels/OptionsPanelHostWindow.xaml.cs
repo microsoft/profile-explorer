@@ -34,6 +34,8 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
     optionsPanel_.SettingsChanged += SettingsPanel_SettingsChanged;
     optionsPanel_.StayOpenChanged += OptionsPanel_StayOpenChanged;
     PanelHost.Content = panel;
+
+    StaysOpen = true;
   }
 
   public static OptionsPanelHostWindow Create<T, S>(SettingsBase settings, FrameworkElement relativeControl, ISession session,

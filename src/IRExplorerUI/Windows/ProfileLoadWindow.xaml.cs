@@ -1058,7 +1058,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     });
   }
 
-  private async void RunningProcessList_PreviewKeyDown(object sender, KeyEventArgs e) {
+  private async void ProcessList_PreviewKeyDown(object sender, KeyEventArgs e) {
     await StartRecordingSession();
   }
 }

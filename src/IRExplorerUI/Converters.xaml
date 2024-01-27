@@ -28,4 +28,5 @@
     <utils:PerformanceCounterListConverter x:Key="PerformanceCounterConverter" />
     <utils:InvertedBooleanConverter x:Key="InvertedBoolConverter" />
     <utils:ProfileCallTreeNodeKindConverter x:Key="CallTreeNodeKindConverter" />
+    <utils:ColorPaletteConverter x:Key="ColorPaletteConverter" />
 </ResourceDictionary>

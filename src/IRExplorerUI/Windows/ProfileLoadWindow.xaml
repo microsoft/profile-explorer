@@ -264,7 +264,6 @@
                                                 <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                                                 <Setter Property="ToolTip" Value="{Binding Process.CommandLine}" />
                                                 <EventSetter Event="MouseDoubleClick" Handler="RunningProcessList_DoubleClick" />
-                                                <EventSetter Event="PreviewKeyDown" Handler="RunningProcessList_PreviewKeyDown" />
                                             </Style>
                                         </ListView.ItemContainerStyle>
 
@@ -588,7 +587,7 @@
                                             </GridViewColumn.HeaderContainerStyle>
                                         </GridViewColumn>
 
-                                        <GridViewColumn Width="100" DisplayMemberBinding="{Binding Process.CommandLine}">
+                                        <GridViewColumn Width="150" DisplayMemberBinding="{Binding Process.CommandLine}">
                                             <GridViewColumnHeader Content="Command line" />
                                             <GridViewColumn.HeaderContainerStyle>
                                                 <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -604,6 +603,7 @@
                                         <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                                         <Setter Property="ToolTip" Value="{Binding Process.CommandLine}" />
                                         <EventSetter Event="MouseDoubleClick" Handler="LoadButton_Click" />
+                                        <EventSetter Event="PreviewKeyDown" Handler="ProcessList_PreviewKeyDown" />
                                     </Style>
                                 </ListView.ItemContainerStyle>
 
