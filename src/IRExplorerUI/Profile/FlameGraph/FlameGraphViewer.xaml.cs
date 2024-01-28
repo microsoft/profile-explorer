@@ -27,6 +27,7 @@ public partial class FlameGraphViewer : FrameworkElement {
   private Dictionary<FlameGraphNode, HighlightingStyle> markedNodes_;
   private Dictionary<FlameGraphNode, HighlightingStyle> fixedMarkedNodes_;
   private Dictionary<FlameGraphNode, HighlightingStyle> selectedNodes_;
+  private FlameGraphSettings settings_;
 
   public FlameGraphViewer() {
     InitializeComponent();
@@ -34,12 +35,6 @@ public partial class FlameGraphViewer : FrameworkElement {
     markedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
     fixedMarkedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
     selectedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
-    markedNodeBackColor_ = ColorBrushes.GetBrush("#c3ebbc");
-    selectedNodeBackColor_ = ColorBrushes.GetBrush("#D0E3F1");
-    selectedNodeBorderColor_ = ColorPens.GetBoldPen(Colors.Black);
-    markedNodeBorderColor_ = ColorPens.GetPen(Colors.Black, 2);
-    searchResultBorderColor_ = ColorPens.GetPen(Colors.Black, 2);
-
     SelectedNodeStyle = new HighlightingStyle(selectedNodeBackColor_, selectedNodeBorderColor_);
     MarkedNodeStyle = new HighlightingStyle(markedNodeBackColor_, markedNodeBorderColor_);
 
@@ -214,6 +209,9 @@ public partial class FlameGraphViewer : FrameworkElement {
       await Task.Run(() => flameGraph_.Build(rootNode));
     }
 
+    settings_ = settings;
+    ReloadSettings();
+
     renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea, settings, isTimelineView_);
     graphVisual_ = renderer_.Setup();
     AddVisualChild(graphVisual_);
@@ -222,7 +220,18 @@ public partial class FlameGraphViewer : FrameworkElement {
     initialized_ = true;
   }
 
+  private void ReloadSettings() {
+    markedNodeBackColor_ = ColorBrushes.GetBrush(settings_.SearchedNodeColor);
+    markedNodeBorderColor_ = ColorPens.GetPen(settings_.NodeBorderColor, 2);
+    selectedNodeBackColor_ = ColorBrushes.GetBrush(settings_.SelectedNodeColor);
+    selectedNodeBorderColor_ = ColorPens.GetPen(settings_.SelectedNodeBorderColor, 1.5);
+    searchResultBorderColor_ = ColorPens.GetPen(settings_.SearchedNodeBorderColor, 2);
+  }
+
   public void SettingsUpdated(FlameGraphSettings settings) {
+    settings_ = settings;
+    ReloadSettings();
+
     renderer_.SettingsUpdated(settings);
     InvalidateMeasure();
     InvalidateVisual();

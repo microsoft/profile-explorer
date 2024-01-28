@@ -20,13 +20,31 @@ public class ColorPalette {
     Name = name;
     Description = description;
     Colors = new List<Color>(colors);
+    Brushes = new List<Brush>();
+
+    foreach (var color in Colors) {
+      Brushes.Add(color.AsBrush());
+    }
   }
 
-  public static List<ColorPalette> BuiltinPalettes => [
-    Profile,
-    ProfileManaged,
-    ProfileKernel,
-  ];
+  public static List<ColorPalette> BuiltinPalettes {
+    get {
+      var list = new List<ColorPalette> {
+        Profile,
+        ProfileManaged,
+        ProfileKernel,
+      };
+
+      for (int i = 0; i < ColorUtils.LightPastelColors.Length; i++) {
+        var color = Utils.ColorFromString(ColorUtils.LightPastelColors[i]);
+        list.Add(new ColorPalette(new List<Color> {
+          color
+        }, $"LightPastelColor{i}"));
+      }
+
+      return list;
+    }
+  }
 
   public static ColorPalette GetPalette(string name) {
     foreach (var palette in BuiltinPalettes) {
@@ -35,64 +53,40 @@ public class ColorPalette {
       }
     }
 
-    return null;
+    return Profile;
   }
 
   public static ColorPalette Profile =>
     new ColorPalette(new[] {
-      Utils.ColorFromString("#FFFCF4D6"),
       Utils.ColorFromString("#FFFCF2D6"),
-      Utils.ColorFromString("#FFFCF0D6"),
       Utils.ColorFromString("#FFFCEED6"),
-      Utils.ColorFromString("#FFFCECD6"),
       Utils.ColorFromString("#FFFCEAD6"),
-      Utils.ColorFromString("#FFFCE8D6"),
       Utils.ColorFromString("#FFFCE6D6"),
-      Utils.ColorFromString("#FFFCE4D6"),
       Utils.ColorFromString("#FFFCE2D6"),
-      Utils.ColorFromString("#FFFCE0D6"),
       Utils.ColorFromString("#FFFCDED6"),
-      Utils.ColorFromString("#FFFCDCD6"),
       Utils.ColorFromString("#FFFCDAD7"),
-      Utils.ColorFromString("#FFFCD9D7"),
       Utils.ColorFromString("#FFFCD7D7")
     }, "Profile");
   public static ColorPalette ProfileManaged =>
     new ColorPalette(new[] {
-      Utils.ColorFromString("#FFC9DBF3"),
       Utils.ColorFromString("#FFCCDAF2"),
-      Utils.ColorFromString("#FFD1DAF0"),
       Utils.ColorFromString("#FFD4DAEE"),
-      Utils.ColorFromString("#FFD9DAEE"),
       Utils.ColorFromString("#FFDCDAEC"),
-      Utils.ColorFromString("#FFDFDBEB"),
       Utils.ColorFromString("#FFE3DBEA"),
-      Utils.ColorFromString("#FFE6DBE9"),
       Utils.ColorFromString("#FFE9DBE8"),
-      Utils.ColorFromString("#FFECDCE8"),
       Utils.ColorFromString("#FFEEDCE8"),
-      Utils.ColorFromString("#FFF1DDE7"),
       Utils.ColorFromString("#FFF4DEE7"),
-      Utils.ColorFromString("#FFF6DEE7"),
       Utils.ColorFromString("#FFF7E0E7")
     }, "ProfileManaged");
   public static ColorPalette ProfileKernel =>
     new ColorPalette(new[] {
-      Utils.ColorFromString("#FFCFFAFB"),
       Utils.ColorFromString("#FFCFF7FB"),
-      Utils.ColorFromString("#FFD0F4FB"),
       Utils.ColorFromString("#FFD0F1FB"),
-      Utils.ColorFromString("#FFD0EFFB"),
       Utils.ColorFromString("#FFD0ECFB"),
-      Utils.ColorFromString("#FFD0EAFB"),
       Utils.ColorFromString("#FFD0E7FB"),
-      Utils.ColorFromString("#FFD1E4FB"),
       Utils.ColorFromString("#FFD1E2FB"),
-      Utils.ColorFromString("#FFD1E0FB"),
       Utils.ColorFromString("#FFD1DDFB"),
-      Utils.ColorFromString("#FFD1DAFB"),
       Utils.ColorFromString("#FFD1D8FB"),
-      Utils.ColorFromString("#FFD2D5FB"),
       Utils.ColorFromString("#FFD2D3FB")
     }, "ProfileKernel");
   public static ColorPalette DarkHue => MakeHue(0.9f, 0.2f, 10);
@@ -103,8 +97,11 @@ public class ColorPalette {
   public string Description { get; set; }
   [ProtoMember(3)]
   public List<Color> Colors { get; set; }
+  public List<Brush> Brushes { get; set; }
+
   public int Count => Colors.Count;
   public Color this[int index] => Colors[index];
+
 
   public static ColorPalette MakeHue(float saturation, float light, int lightSteps) {
     var colors = new List<Color>();
@@ -150,7 +147,7 @@ public class ColorPalette {
   }
 
   public Brush PickScaleBrush(long value, long maxValue) {
-    return PickScaleColor(value, maxValue).AsBrush();
+    return PickBrush((int)Math.Floor((double)value * Colors.Count / maxValue));
   }
 
   public Brush PickBrushForPercentage(double weightPercentage, bool reverse = false) {
@@ -159,6 +156,6 @@ public class ColorPalette {
 
   public Brush PickBrush(int colorIndex) {
     colorIndex = Math.Clamp(colorIndex, 0, Colors.Count - 1);
-    return Colors[colorIndex].AsBrush();
+    return Brushes[colorIndex];
   }
 }

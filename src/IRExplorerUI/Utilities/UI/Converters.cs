@@ -32,9 +32,7 @@ public class FontFamilyConverter : IValueConverter {
 public class ColorPaletteConverter : IValueConverter {
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
     try {
-      // return ColorPalette.GetPalette((string)value);
-      Trace.WriteLine("Get paletter");
-     return ColorPalette.ProfileKernel;
+      return ColorPalette.GetPalette((string)value);
     }
     catch (Exception) {
       return null;
@@ -42,7 +40,6 @@ public class ColorPaletteConverter : IValueConverter {
   }
 
   public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
-    Trace.WriteLine($"Set new palette: {((ColorPalette)value).Name}");
     return ((ColorPalette)value).Name;
   }
 }

@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-    d:DesignHeight="550"
+    d:DesignHeight="750"
     d:DesignWidth="350"
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
@@ -96,13 +96,22 @@
                             ToolTip="Reset value to default duration" />
                     </StackPanel>
 
-                    <Separator Margin="0,4,0,4" />
-                    <TextBlock FontWeight="Medium" Text="Style" />
+
+                </StackPanel>
+            </TabItem>
+            <TabItem
+                x:Name="StylePanel"
+                Header="Style"
+                Style="{StaticResource TabControlStyle}">
+                <StackPanel Margin="4,4,4,4">
                     <CheckBox
-                        Margin="0,4,0,2"
+                        Margin="0,2,0,2"
                         Content="Use compact mode"
-                        IsChecked="{Binding UseCompactMode, Mode=TwoWay}"
-                        IsEnabled="False" />
+                        IsChecked="{Binding UseCompactMode, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="0,2,0,2"
+                        Content="Color functions based on module name"
+                        IsChecked="{Binding PickColorByModule, Mode=TwoWay}" />
                     <CheckBox
                         x:Name="KernelCheckBox"
                         Margin="0,2,0,2"
@@ -122,7 +131,7 @@
                     <StackPanel Orientation="Horizontal">
                         <controls:ColorPaletteSelector
                             x:Name="DefaultPaletteSelector"
-                            Width="150"
+                            Width="120"
                             Height="20"
                             HorizontalAlignment="Left"
                             PreviewWidth="200"
@@ -138,7 +147,7 @@
                         Orientation="Horizontal">
                         <controls:ColorPaletteSelector
                             x:Name="KernelPaletteSelector"
-                            Width="150"
+                            Width="120"
                             Height="20"
                             HorizontalAlignment="Left"
                             PreviewWidth="200"
@@ -154,7 +163,7 @@
                         Orientation="Horizontal">
                         <controls:ColorPaletteSelector
                             x:Name="ManagedPaletteSelector"
-                            Width="150"
+                            Width="120"
                             Height="20"
                             HorizontalAlignment="Left"
                             PreviewWidth="200"
@@ -183,6 +192,116 @@
                             AvailableColorsSortingMode="HueSaturationBrightness"
                             BorderBrush="#707070"
                             IsManipulationEnabled="True"
+                            SelectedColor="{Binding Path=NodeTextColor, Mode=TwoWay}"
+                            ShowDropDownButton="True"
+                            UsingAlphaChannel="False" />
+                        <TextBlock
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Text="Function text color" />
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                            Grid.Column="0"
+                            Width="64"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            AvailableColorsSortingMode="HueSaturationBrightness"
+                            BorderBrush="#707070"
+                            IsManipulationEnabled="True"
+                            SelectedColor="{Binding Path=NodeModuleColor, Mode=TwoWay}"
+                            ShowDropDownButton="True"
+                            UsingAlphaChannel="False" />
+                        <TextBlock
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Text="Module text color" />
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                            Grid.Column="0"
+                            Width="64"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            AvailableColorsSortingMode="HueSaturationBrightness"
+                            BorderBrush="#707070"
+                            IsManipulationEnabled="True"
+                            SelectedColor="{Binding Path=NodePercentageColor, Mode=TwoWay}"
+                            ShowDropDownButton="True"
+                            UsingAlphaChannel="False" />
+                        <TextBlock
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Text="Percentage text color" />
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                            Grid.Column="0"
+                            Width="64"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            AvailableColorsSortingMode="HueSaturationBrightness"
+                            BorderBrush="#707070"
+                            IsManipulationEnabled="True"
+                            SelectedColor="{Binding Path=NodeWeightColor, Mode=TwoWay}"
+                            ShowDropDownButton="True"
+                            UsingAlphaChannel="False" />
+                        <TextBlock
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Text="Time text color" />
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                            Grid.Column="0"
+                            Width="64"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            AvailableColorsSortingMode="HueSaturationBrightness"
+                            BorderBrush="#707070"
+                            IsManipulationEnabled="True"
+                            SelectedColor="{Binding Path=NodeBorderColor, Mode=TwoWay}"
+                            ShowDropDownButton="True"
+                            UsingAlphaChannel="False" />
+                        <TextBlock
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Text="Function border color" />
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                            Grid.Column="0"
+                            Width="64"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            AvailableColorsSortingMode="HueSaturationBrightness"
+                            BorderBrush="#707070"
+                            IsManipulationEnabled="True"
                             SelectedColor="{Binding Path=SelectedNodeColor, Mode=TwoWay}"
                             ShowDropDownButton="True"
                             UsingAlphaChannel="False" />
@@ -190,7 +309,7 @@
                             Grid.Column="1"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
-                            Text="Selected node color" />
+                            Text="Selected function color" />
                     </Grid>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -212,7 +331,7 @@
                             Grid.Column="1"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
-                            Text="Selected node border color" />
+                            Text="Selected function border color" />
                     </Grid>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -227,14 +346,14 @@
                             AvailableColorsSortingMode="HueSaturationBrightness"
                             BorderBrush="#707070"
                             IsManipulationEnabled="True"
-                            SelectedColor="{Binding Path=SearchResultNodeColor, Mode=TwoWay}"
+                            SelectedColor="{Binding Path=SearchResultMarkingColor, Mode=TwoWay}"
                             ShowDropDownButton="True"
                             UsingAlphaChannel="False" />
                         <TextBlock
                             Grid.Column="1"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
-                            Text="Search result node color" />
+                            Text="Search result marking color" />
                     </Grid>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -249,14 +368,36 @@
                             AvailableColorsSortingMode="HueSaturationBrightness"
                             BorderBrush="#707070"
                             IsManipulationEnabled="True"
-                            SelectedColor="{Binding Path=SearchResultNodeBorderColor, Mode=TwoWay}"
+                            SelectedColor="{Binding Path=SearchedNodeColor, Mode=TwoWay}"
                             ShowDropDownButton="True"
                             UsingAlphaChannel="False" />
                         <TextBlock
                             Grid.Column="1"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
-                            Text="Search result node border color" />
+                            Text="Search result function color" />
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                            Grid.Column="0"
+                            Width="64"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            AvailableColorsSortingMode="HueSaturationBrightness"
+                            BorderBrush="#707070"
+                            IsManipulationEnabled="True"
+                            SelectedColor="{Binding Path=SearchedNodeBorderColor, Mode=TwoWay}"
+                            ShowDropDownButton="True"
+                            UsingAlphaChannel="False" />
+                        <TextBlock
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Text="Search result border color" />
                     </Grid>
                 </StackPanel>
             </TabItem>

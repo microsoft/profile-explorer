@@ -11,6 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using DocumentFormat.OpenXml.Office2010.PowerPoint;
+using DocumentFormat.OpenXml.Wordprocessing;
 using IRExplorerCore;
 using IRExplorerUI.Controls;
 using IRExplorerUI.OptionsPanels;
@@ -473,5 +474,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         return null;
       },
       () => optionsPanelWindow_ = null);
+  }
+
+  private void ToggleButton_Click(object sender, RoutedEventArgs e) {
+    // Force an update for toolbar buttons.
+    GraphHost.SettingsUpdated(settings_);
   }
 }

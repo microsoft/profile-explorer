@@ -45,20 +45,29 @@ public class FlameGraphSettings : SettingsBase {
   [ProtoMember(15)]
   public Color SelectedNodeColor { get; set; }
   [ProtoMember(16)]
-  public Color SearchResultNodeColor { get; set; }
+  public Color SearchResultMarkingColor { get; set; }
   [ProtoMember(17)]
   public Color SelectedNodeBorderColor { get; set; }
   [ProtoMember(18)]
-  public Color SearchResultNodeBorderColor { get; set; }
+  public Color SearchedNodeBorderColor { get; set; }
+  [ProtoMember(19)]
+  public Color NodeBorderColor { get; set; }
+  [ProtoMember(20)]
+  public Color NodeTextColor { get; set; }
+  [ProtoMember(21)]
+  public Color NodeModuleColor { get; set; }
+  [ProtoMember(22)]
+  public Color NodeWeightColor { get; set; }
+  [ProtoMember(23)]
+  public Color NodePercentageColor { get; set; }
+  [ProtoMember(24)]
+  public Color SearchedNodeColor { get; set; }
+  [ProtoMember(25)]
+  public bool PickColorByModule { get; set; }
 
   //? TODO: Options for
-  //? - diff color scheme for kernel/managed
-  //?      - enabled or not
-  //?      - pick builtin color scheme
   //? - custom color scheme for module
   //? - auto-colors for functs using TextSearcher
-  //? - show node percentage
-  //?      - text color
 
   public override void Reset() {
     PrependModuleToFunction = true;
@@ -74,9 +83,16 @@ public class FlameGraphSettings : SettingsBase {
     DefaultColorPalette = ColorPalette.Profile.Name;
     KernelColorPalette = ColorPalette.ProfileKernel.Name;
     ManagedColorPalette = ColorPalette.ProfileManaged.Name;
-
-    //? TODO: Define SelectedNodeColor
-    //? Use paletter in flame graph
+    SearchResultMarkingColor = Colors.Khaki;
+    NodeTextColor = Colors.DarkBlue;
+    NodeBorderColor = Colors.Black;
+    NodeModuleColor = Colors.DimGray;
+    NodeWeightColor = Colors.Maroon;
+    NodePercentageColor = Colors.DarkSlateBlue;
+    SelectedNodeColor = Utils.ColorFromString("#D0E3F1");
+    SelectedNodeBorderColor = Colors.Black;
+    SearchedNodeColor = Utils.ColorFromString("#c3ebbc");
+    SearchedNodeBorderColor = Colors.Black;
   }
 
   public FlameGraphSettings Clone() {
@@ -101,8 +117,15 @@ public class FlameGraphSettings : SettingsBase {
            UseKernelColorPalette == settings.UseKernelColorPalette &&
            UseManagedColorPalette == settings.UseManagedColorPalette &&
            SelectedNodeColor == settings.SelectedNodeColor &&
-           SearchResultNodeColor == settings.SearchResultNodeColor &&
+           SearchResultMarkingColor == settings.SearchResultMarkingColor &&
            SelectedNodeBorderColor == settings.SelectedNodeBorderColor &&
-           SearchResultNodeBorderColor == settings.SearchResultNodeBorderColor;
+           SearchedNodeBorderColor == settings.SearchedNodeBorderColor &&
+           NodeBorderColor == settings.NodeBorderColor &&
+           NodeTextColor == settings.NodeTextColor &&
+           NodeModuleColor == settings.NodeModuleColor &&
+           NodeWeightColor == settings.NodeWeightColor &&
+           NodePercentageColor == settings.NodePercentageColor &&
+           SearchedNodeColor == settings.SearchedNodeColor &&
+           PickColorByModule == settings.PickColorByModule;
   }
 }

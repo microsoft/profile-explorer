@@ -12,6 +12,8 @@ namespace IRExplorerUI.Profile;
 public class FlameGraphRenderer {
   internal const double DefaultTextSize = 12;
   internal const double DefaultNodeHeight = 18;
+  internal const double CompactTextSize = 11;
+  internal const double CompactNodeHeight = 15;
   private FlameGraphSettings settings_;
   private FlameGraph flameGraph_;
   private int maxNodeDepth_;
@@ -19,7 +21,6 @@ public class FlameGraphRenderer {
   private double maxWidth_;
   private double prevMaxWidth_;
   private double minVisibleRectWidth_;
-  private bool nodeLayoutComputed_;
   private Rect visibleArea_;
   private Rect quadVisibleArea_;
   private Rect quadGraphArea_;
@@ -39,6 +40,11 @@ public class FlameGraphRenderer {
   private GuidelineSet cachedTextGuidelines_;
   private GuidelineSet cachedNodeGuidelines_;
   private GuidelineSet cachedDummyNodeGuidelines_;
+  private SolidColorBrush nodeTextBrush_;
+  private SolidColorBrush nodeModuleBrush_;
+  private SolidColorBrush nodeWeightBrush_;
+  private SolidColorBrush nodePercentageBrush_;
+  private SolidColorBrush searchResultMarkingBrush_;
 
   public FlameGraphRenderer(FlameGraph flameGraph, Rect visibleArea, FlameGraphSettings settings, bool isTimeline) {
     isTimeline_ = isTimeline;
@@ -48,20 +54,40 @@ public class FlameGraphRenderer {
     prevMaxWidth_ = maxWidth_;
     visibleArea_ = visibleArea;
     UpdateGraphSizes();
+    ReloadSettings();
+    dummyNodeStyles_ = new Dictionary<HighlightingStyle, HighlightingStyle>();
+  }
 
-    palettes_ = new Dictionary<ProfileCallTreeNodeKind, ColorPalette>();
-    palettes_[ProfileCallTreeNodeKind.Unset] = ColorPalette.Profile;
-    palettes_[ProfileCallTreeNodeKind.NativeUser] = ColorPalette.Profile;
-    palettes_[ProfileCallTreeNodeKind.NativeKernel] = ColorPalette.ProfileKernel;
-    palettes_[ProfileCallTreeNodeKind.Managed] = ColorPalette.ProfileManaged;
+  private void ReloadSettings() {
+    palettes_ = new Dictionary<ProfileCallTreeNodeKind, ColorPalette> {
+      [ProfileCallTreeNodeKind.Unset] = ColorPalette.GetPalette(settings_.DefaultColorPalette),
+      [ProfileCallTreeNodeKind.NativeUser] = ColorPalette.GetPalette(settings_.DefaultColorPalette),
+      [ProfileCallTreeNodeKind.NativeKernel] = settings_.UseKernelColorPalette ?
+        ColorPalette.GetPalette(settings_.KernelColorPalette) :
+        ColorPalette.GetPalette(settings_.DefaultColorPalette),
+      [ProfileCallTreeNodeKind.Managed] = settings_.UseManagedColorPalette ?
+        ColorPalette.GetPalette(settings_.ManagedColorPalette) :
+        ColorPalette.GetPalette(settings_.DefaultColorPalette)
+    };
 
-    defaultBorder_ = ColorPens.GetPen(Colors.Black, 0.5);
-    nodeHeight_ = DefaultNodeHeight; //? TODO: Option
-    font_ = new Typeface("Segoe UI");
+    defaultBorder_ = ColorPens.GetPen(settings_.NodeBorderColor, 0.5);
+    font_ = new Typeface("Segoe UI"); //? TODO: Option
     nameFont_ = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Medium,
                              FontStretch.FromOpenTypeStretch(5));
-    fontSize_ = DefaultTextSize;
-    dummyNodeStyles_ = new Dictionary<HighlightingStyle, HighlightingStyle>();
+    nodeTextBrush_ = settings_.NodeTextColor.AsBrush();
+    nodeModuleBrush_ = settings_.NodeModuleColor.AsBrush();
+    nodeWeightBrush_ = settings_.NodeWeightColor.AsBrush();
+    nodePercentageBrush_ = settings_.NodePercentageColor.AsBrush();
+    searchResultMarkingBrush_ = settings_.SearchResultMarkingColor.AsBrush();
+
+    if (settings_.UseCompactMode) {
+      nodeHeight_ = CompactNodeHeight;
+      fontSize_ = CompactNodeHeight;
+    }
+    else {
+      nodeHeight_ = DefaultNodeHeight;
+      fontSize_ = DefaultTextSize;
+    }
   }
 
   public GlyphRunCache GlyphsCache => glyphs_;
@@ -91,6 +117,10 @@ public class FlameGraphRenderer {
 
   public void SettingsUpdated(FlameGraphSettings settings) {
     settings_ = settings;
+    ReloadSettings();
+
+    // Use potentially new node style.
+    SetupNode(flameGraph_.RootNode);
     RedrawGraph();
   }
 
@@ -115,7 +145,14 @@ public class FlameGraphRenderer {
     //? TODO: Cache style based on colorIndex
     var palette = node.HasFunction ? palettes_[node.CallTreeNode.Kind] : palettes_[ProfileCallTreeNodeKind.Unset];
     int colorIndex = node.Depth % palette.Count;
-    var backColor = palette[palette.Count - colorIndex - 1];
+    var backColor = palette.PickBrush(palette.Count - colorIndex - 1);
+
+    if (settings_.PickColorByModule && !string.IsNullOrEmpty(node.ModuleName)) {
+      // Use a color based on the module name.
+      var hash = (uint)node.ModuleName.GetStableHashCode();
+      return new HighlightingStyle(ColorUtils.GenerateLightPastelBrush(hash), defaultBorder_);
+    }
+
     return new HighlightingStyle(backColor, defaultBorder_);
   }
 
@@ -233,7 +270,7 @@ public class FlameGraphRenderer {
           if (settings_.AppendPercentageToFunction) {
             label = flameGraph_.ScaleWeight(node).AsPercentageString();
             margin = FlameGraphNode.ExtraValueMargin;
-            textColor = node.WeightTextColor;
+            textColor = node.PercentageTextColor;
             useNameFont = true;
           }
 
@@ -285,9 +322,11 @@ public class FlameGraphRenderer {
 
   private void SetupNode(FlameGraphNode node) {
     node.Style = GetNodeStyle(node);
-    node.TextColor = Brushes.DarkBlue;
-    node.ModuleTextColor = Brushes.DimGray;
-    node.WeightTextColor = Brushes.Maroon;
+    //? TODO: Use settings
+    node.TextColor = nodeTextBrush_;
+    node.ModuleTextColor = nodeModuleBrush_;
+    node.WeightTextColor = nodeWeightBrush_;
+    node.PercentageTextColor = nodePercentageBrush_;
     node.Owner = this;
 
     if (node.Children != null) {
@@ -299,9 +338,7 @@ public class FlameGraphRenderer {
 
   private void RedrawGraph(bool updateLayout = true) {
     if (!RedrawGraphImpl(updateLayout)) {
-      nodeLayoutComputed_ = false;
-      //Trace.WriteLine($"Redraw {Environment.TickCount64}");
-      RedrawGraphImpl();
+      RedrawGraphImpl(true); // Force layout update.
     }
   }
 
@@ -314,7 +351,6 @@ public class FlameGraphRenderer {
       // Recompute the position of all nodes and rebuild the quad tree.
       // This is done once, with node position/size being relative to the maxWidth,
       // except when dummy nodes get involved, which can force a re-layout.
-      if (!nodeLayoutComputed_) {
         nodesQuadTree_ = new QuadTree<FlameGraphNode>();
         dummyNodesQuadTree_ = new QuadTree<FlameGraphGroupNode>();
         nodesQuadTree_.Bounds = quadGraphArea_;
@@ -322,9 +358,7 @@ public class FlameGraphRenderer {
         maxNodeDepth_ = 0;
 
         UpdateNodeLayout(flameGraph_.RootNode, 0, 0, true);
-        nodeLayoutComputed_ = true;
         nodeLayoutRecomputed = true;
-      }
     }
 
     // Update only the visible nodes on scrolling.
@@ -415,10 +449,6 @@ public class FlameGraphRenderer {
         }
 #else
 
-    return false;
-
-    nodeLayoutComputed_ = false;
-    RedrawGraph();
     return false;
 #endif
   }
@@ -621,10 +651,6 @@ public class FlameGraphRenderer {
     RenderOptions.SetCachingHint(brush, CachingHint.Cache);
     brush.Freeze();
     placeholderTileBrush_ = brush;
-
-    // var bitmap = BitmapSourceFromBrush(brush);
-    // var imageBrush = new ImageBrush(bitmap);
-    //placeholderTileBrush_ = imageBrush;
     return placeholderTileBrush_;
   }
 
@@ -649,7 +675,7 @@ public class FlameGraphRenderer {
     }
 
     var selectionBounds = new Rect(offsetX, offsetY, width, nodeHeight_ - 2);
-    dc.DrawRectangle(Brushes.Khaki, null, selectionBounds);
+    dc.DrawRectangle(searchResultMarkingBrush_, null, selectionBounds);
   }
 
   private void DrawText(GlyphRun glyphs, Rect bounds, Brush textColor, double offsetX, double offsetY,
@@ -677,11 +703,6 @@ public class FlameGraphRenderer {
     if (maxWidth <= 0 || string.IsNullOrEmpty(text)) {
       return ("", glyphsCache.GetGlyphs("").Glyphs, false, new Size(0, 0));
     }
-
-    //? TODO: cache measurement and reuse if
-    //  - size is larger than prev
-    //  - size is smaller, but less than a delta that's some multiple of avg letter width
-    //? could also remember based on # of letter,  letters -> Size mapping
 
     var glyphInfo = glyphsCache.GetGlyphs(text, maxWidth);
     bool trimmed = false;
