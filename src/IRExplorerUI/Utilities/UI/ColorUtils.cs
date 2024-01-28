@@ -8,7 +8,7 @@ using System.Windows.Media;
 namespace IRExplorerUI;
 
 class ColorUtils {
-  private static readonly string[] PastelColors = {
+  public static readonly string[] PastelColors = {
     "#f4a3a3",
     "#fbc29c",
     "#dabdce",
@@ -33,7 +33,7 @@ class ColorUtils {
     "#ceb9de",
     "#eed3af"
   };
-  private static readonly string[] LightPastelColors = {
+  public static readonly string[] LightPastelColors = {
     "#fed7d7",
     "#fee6d6",
     "#f0e4eb",
@@ -58,6 +58,34 @@ class ColorUtils {
     "#ede2f2",
     "#f8eddc"
   };
+
+  private static Color[] cachedLightPastelColors_;
+  private static Color[] cachedPastelColors_;
+  private static Brush[] cachedPastelBrushes_;
+  private static Brush[] cachedLightPastelBrushes_;
+
+  static ColorUtils() {
+    cachedLightPastelColors_ = new Color[LightPastelColors.Length];
+    cachedPastelColors_ = new Color[PastelColors.Length];
+    cachedLightPastelBrushes_ = new Brush[LightPastelColors.Length];
+    cachedPastelBrushes_ = new Brush[PastelColors.Length];
+
+    for (int i = 0; i < LightPastelColors.Length; i++) {
+      cachedLightPastelColors_[i] = Utils.ColorFromString(LightPastelColors[i]);
+    }
+
+    for (int i = 0; i < PastelColors.Length; i++) {
+      cachedPastelColors_[i] = Utils.ColorFromString(PastelColors[i]);
+    }
+
+    for (int i = 0; i < LightPastelColors.Length; i++) {
+      cachedLightPastelBrushes_[i] = ColorBrushes.GetBrush(cachedLightPastelColors_[i]);
+    }
+
+    for (int i = 0; i < PastelColors.Length; i++) {
+      cachedPastelBrushes_[i] = ColorBrushes.GetBrush(cachedPastelColors_[i]);
+    }
+  }
 
   public static Color AdjustSaturation(Color color, float saturationAdjustment = 2f) {
     RGBToHSL(color, out float h, out float s, out float l);
@@ -85,19 +113,35 @@ class ColorUtils {
   }
 
   public static Color GenerateRandomPastelColor() {
-    return Utils.ColorFromString(PastelColors[new Random().Next(PastelColors.Length)]);
+    return cachedPastelColors_[new Random().Next(PastelColors.Length)];
   }
 
   public static Color GeneratePastelColor(uint id) {
-    return Utils.ColorFromString(PastelColors[id % PastelColors.Length]);
+    return cachedPastelColors_[id % PastelColors.Length];
   }
 
   public static Color GenerateRandomLightPastelColor() {
-    return Utils.ColorFromString(LightPastelColors[new Random().Next(LightPastelColors.Length)]);
+    return cachedLightPastelColors_[new Random().Next(LightPastelColors.Length)];
   }
 
   public static Color GenerateLightPastelColor(uint id) {
-    return Utils.ColorFromString(LightPastelColors[id % LightPastelColors.Length]);
+    return cachedLightPastelColors_[id % LightPastelColors.Length];
+  }
+
+  public static Brush GenerateRandomPastelBrush() {
+    return cachedPastelBrushes_[new Random().Next(PastelColors.Length)];
+  }
+
+  public static Brush GeneratePastelBrush(uint id) {
+    return cachedPastelBrushes_[id % PastelColors.Length];
+  }
+
+  public static Brush GenerateRandomLightPastelBrush() {
+    return cachedLightPastelBrushes_[new Random().Next(LightPastelColors.Length)];
+  }
+
+  public static Brush GenerateLightPastelBrush(uint id) {
+    return cachedLightPastelBrushes_[id % LightPastelColors.Length];
   }
 
   public static Color HSLToRGB(float h, float s, float l) {
