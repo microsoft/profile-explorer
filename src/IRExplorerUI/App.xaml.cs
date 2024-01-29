@@ -587,6 +587,9 @@ public partial class App : Application {
       SetupExceptionHandling();
     }
 
+    // Disable most data-binding error reporting, slows down debugging too much.
+    PresentationTraceSources.DataBindingSource.Switch.Level = SourceLevels.Critical;
+
     // Enable file output for tracing.
     OpenLogFile();
     SetupJumplist();
