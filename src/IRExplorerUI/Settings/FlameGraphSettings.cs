@@ -97,7 +97,8 @@ public class FlameGraphSettings : SettingsBase {
 
   public bool GetModuleColor(string name, out Color color) {
     foreach (var pair in ModuleColors) {
-      if (name.Contains(pair.Name, StringComparison.OrdinalIgnoreCase)) {
+      if (name.Length > 0 && // Initial new module name is empty, ignore.
+          name.Contains(pair.Name, StringComparison.OrdinalIgnoreCase)) {
         color =  pair.Color;
         return true;
       }
