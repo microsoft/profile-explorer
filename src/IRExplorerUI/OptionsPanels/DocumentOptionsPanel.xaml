@@ -239,7 +239,11 @@
                         Content="Only when the Alt key is pressed"
                         IsChecked="{Binding Path=ShowInfoOnHoverWithModifier, Mode=TwoWay}"
                         IsEnabled="{Binding ElementName=HoverCheckbox, Path=IsChecked}" />
-                    <Separator Margin="0,4,0,4" />
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="Appearance" Style="{StaticResource TabControlStyle}">
+                <StackPanel Margin="4,4,4,4">
 
                     <DockPanel>
                         <TextBlock FontWeight="Medium" Text="Document Colors" />

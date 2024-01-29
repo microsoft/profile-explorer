@@ -32,9 +32,9 @@
                         ToolTip="Sync file displayed in the Source File panel with selection" />
 
                     <Separator Margin="0,4,0,4" />
-                    <TextBlock FontWeight="Medium" Text="Function node" />
+                    <TextBlock FontWeight="Medium" Text="Function nodes" />
                     <CheckBox
-                        Margin="0,2,0,2"
+                        Margin="0,4,0,2"
                         Content="Include module name"
                         IsChecked="{Binding PrependModuleToFunction, Mode=TwoWay}"
                         ToolTip="Show the module name in front of the function name" />
@@ -568,12 +568,12 @@
                             Margin="0,4,0,2"
                             Content="Filter out insignificant functions"
                             IsChecked="{Binding FilterByWeight, Mode=TwoWay}"
-                            ToolTip="" />
+                            ToolTip="Filter out functions with a time less than this value" />
                         <StackPanel
                             Margin="20,0,0,2"
                             IsEnabled="{Binding ElementName=FilterWeightCheckBox, Path=IsChecked}"
                             Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center" Text="Min. duration (ms)" />
+                            <TextBlock VerticalAlignment="Center" Text="Minimum time (ms)" />
                             <xctk:DoubleUpDown
                                 Width="70"
                                 Margin="8,0,0,0"
@@ -581,6 +581,7 @@
                                 Minimum="0"
                                 ParsingNumberStyle="AllowThousands"
                                 ShowButtonSpinner="True"
+                                ToolTip="Filter out functions with a time less than this value"
                                 Value="{Binding Path=MinWeight, Mode=TwoWay}" />
                             <Button
                                 Height="20"
