@@ -244,6 +244,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       await ProfileColumns.Display(sourceColumnData_, TextView);
       profileElements_ = TextView.ProfileProcessingResult.SampledElements;
       UpdateHighlighting();
+
+      ProfileColumns.BuildColumnsVisibilityMenu(sourceColumnData_, ProfileColumnsMenu, async () => {
+        await UpdateProfilingColumns();
+      });
     }
     else {
       ProfileColumns.Reset();
@@ -552,5 +556,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     else {
       TextView.FontSize = settings_.FontSize;
     }
+  }
+
+  private async void ViewMenuItem_OnCheckedChanged(object sender, RoutedEventArgs e) {
+    await UpdateProfilingColumns();
   }
 }

@@ -178,7 +178,7 @@
                     <CheckBox
                         x:Name="ModuleCheckBox"
                         Margin="0,2,0,2"
-                        Content="Override function color for modules"
+                        Content="Mark functions based on module"
                         IsChecked="{Binding UseModuleColors, Mode=TwoWay}"
                         ToolTip="Use a different color for specified modules" />
                     <Grid Margin="0,0,0,0" IsEnabled="{Binding ElementName=ModuleCheckBox, Path=IsChecked}">

@@ -12,7 +12,7 @@ using IRExplorerUI.Utilities.UI;
 namespace IRExplorerUI;
 
 public abstract class HoverPreview {
-  public static readonly TimeSpan HoverDuration = TimeSpan.FromMilliseconds(100);
+  public static readonly TimeSpan HoverDuration = TimeSpan.FromMilliseconds(200);
   public static readonly TimeSpan LongHoverDuration = TimeSpan.FromMilliseconds(800);
   public static readonly TimeSpan ExtraLongHoverDuration = TimeSpan.FromMilliseconds(1500);
   protected UIElement control_;

@@ -179,10 +179,10 @@
                         ToolTip="Color functions based on the module name">
                         <MenuItem
                             x:Name="ModuleMenu"
-                            SubmenuOpened="ModuleMenu_OnSubmenuOpened"
                             Margin="0,0,0,0"
                             Padding="0,0,0,0"
-                            OverridesDefaultStyle="True">
+                            OverridesDefaultStyle="True"
+                            SubmenuOpened="ModuleMenu_OnSubmenuOpened">
                             <MenuItem.Header>
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="{StaticResource TagIcon}" Style="{StaticResource DisabledImageStyle}" />
@@ -206,7 +206,7 @@
                                 ToolTip="Automatically pick a function color based on the module name" />
                             <MenuItem
                                 Click="ToggleButton_Click"
-                                Header="Override function color for modules"
+                                Header="Mark functions based on module"
                                 IsCheckable="True"
                                 IsChecked="{Binding Settings.UseModuleColors}"
                                 Style="{DynamicResource SubMenuItemHeaderStyle}"
