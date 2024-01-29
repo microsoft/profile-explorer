@@ -4,15 +4,20 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using IRExplorerUI.Controls;
+using Microsoft.Diagnostics.Tracing.Parsers.MicrosoftWindowsWPF;
+using DispatcherPriority = System.Windows.Threading.DispatcherPriority;
 
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class FlameGraphOptionsPanel : OptionsPanelBase {
-  public const double DefaultHeight = 320;
+  private FlameGraphSettings settings_;
+  public override double DefaultHeight => 450;
   public const double MinimumHeight = 200;
   public const double DefaultWidth = 350;
   public const double MinimumWidth = 350;
@@ -27,7 +32,23 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
-    PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
+  }
+
+
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+    base.Initialize(parent, settings, session);
+    settings_ = (FlameGraphSettings)Settings;
+    ReloadModuleList();
+  }
+
+  public override void OnSettingsChanged(object newSettings) {
+    settings_ = (FlameGraphSettings)newSettings;
+    ReloadModuleList();
+  }
+
+  private void ReloadModuleList() {
+    var list = new ObservableCollectionRefresh<FlameGraphSettings.ModuleStyle>(settings_.ModuleColors);
+    ModuleList.ItemsSource = list;
   }
 
   protected override void ReloadSettings() {
@@ -38,7 +59,6 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
     FunctionListOptionsPanel.DataContext = null;
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
-
   }
 
   public override void PanelResetting() {
@@ -62,22 +82,23 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   }
 
   private void ResetNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((FlameGraphSettings)Settings).NodePopupDuration = FlameGraphSettings.DefaultNodePopupDuration;
+    settings_.NodePopupDuration = FlameGraphSettings.DefaultNodePopupDuration;
     ReloadSettings();
   }
 
   private void ShortNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((FlameGraphSettings)Settings).NodePopupDuration = HoverPreview.HoverDuration.Milliseconds;
+    settings_.NodePopupDuration = HoverPreview.HoverDuration.Milliseconds;
     ReloadSettings();
   }
 
   private void LongNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((FlameGraphSettings)Settings).NodePopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
+    settings_.NodePopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
     ReloadSettings();
   }
 
   private void ResetDetailsPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((CallTreeNodeSettings)DetailsPanel.DataContext).PreviewPopupDuration = CallTreeNodeSettings.DefaultPreviewPopupDuration;
+    ((CallTreeNodeSettings)DetailsPanel.DataContext).PreviewPopupDuration =
+      CallTreeNodeSettings.DefaultPreviewPopupDuration;
     ReloadSettings();
   }
 
@@ -95,12 +116,38 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     ((ProfileListViewFilter)FunctionListOptionsPanel.DataContext).MinWeight = ProfileListViewFilter.DefaultMinWeight;
     ReloadSettings();
   }
-}
 
-public class ComboBoxItemTemplateSelector : DataTemplateSelector {
-  public DataTemplate SelectedTemplate { get; set; }
+  private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+    if (sender is TextBox textBox) {
+      Utils.SelectTextBoxListViewItem(textBox, ModuleList);
+      e.Handled = true;
+    }
+  }
 
-  public override DataTemplate SelectTemplate(object item, DependencyObject container) {
-    return SelectedTemplate;
+  private void ModuleRemove_Click(object sender, RoutedEventArgs e) {
+    if (ModuleList.SelectedItem is FlameGraphSettings.ModuleStyle pair) {
+      settings_.ModuleColors.Remove((pair));
+      ReloadModuleList();
+      NotifySettingsChanged();
+    }
+  }
+
+  private void ModuleAdd_Click(object sender, RoutedEventArgs e) {
+    settings_.ModuleColors.Add(new FlameGraphSettings.ModuleStyle("", Colors.White));
+    ReloadModuleList();
+    NotifySettingsChanged();
+
+    Dispatcher.BeginInvoke(() => {
+      var newItem = settings_.ModuleColors.Last();
+      Utils.FocusTextBoxListViewItem(newItem, ModuleList);
+    }, DispatcherPriority.ContextIdle);
+  }
+
+  private void ClearModule_Click(object sender, RoutedEventArgs e) {
+    if (Utils.ShowYesNoMessageBox("Do you want to clear the list?", this) == MessageBoxResult.Yes) {
+      settings_.ModuleColors.Clear();
+      ReloadModuleList();
+      NotifySettingsChanged();
+    }
   }
 }

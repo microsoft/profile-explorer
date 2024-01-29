@@ -9,11 +9,14 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
+using System.Windows.Media;
 using System.Windows.Threading;
 using DocumentFormat.OpenXml.Office2010.PowerPoint;
 using DocumentFormat.OpenXml.Wordprocessing;
 using IRExplorerCore;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 
@@ -478,6 +481,56 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private void ToggleButton_Click(object sender, RoutedEventArgs e) {
     // Force an update for toolbar buttons.
+    ReloadSettings();
+  }
+
+  private void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
+    settings_.ModuleColors.Clear();
+    ReloadSettings();
+  }
+
+  private void ReloadSettings() {
     GraphHost.SettingsUpdated(settings_);
+  }
+
+  private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    var defaultItems = DocumentUtils.SaveDefaultMenuItems(ModuleMenu);
+    var separatorIndex = defaultItems.FindIndex(item => item is Separator);
+
+    // Insert module markers after separator.
+    foreach (var moduleStyle in settings_.ModuleColors) {
+      var item = new MenuItem {
+        Header = moduleStyle.Name,
+        ToolTip = "Click to remove module marking",
+        Icon = CreateModuleMenuIcon(moduleStyle),
+        Tag = moduleStyle
+      };
+
+      item.Click += (o, args) => {
+        settings_.ModuleColors.Remove(item.Tag as FlameGraphSettings.ModuleStyle);
+        ReloadSettings();
+      };
+
+      defaultItems.Insert(separatorIndex + 1, item);
+    }
+
+    // Populate the module menu.
+    ModuleMenu.Items.Clear();
+
+    foreach (var item in defaultItems) {
+      ModuleMenu.Items.Add(item);
+    }
+  }
+
+  private Image CreateModuleMenuIcon(FlameGraphSettings.ModuleStyle moduleStyle) {
+    var visual = new DrawingVisual();
+
+    using (var dc = visual.RenderOpen()) {
+      dc.DrawRectangle(moduleStyle.Color.AsBrush(), ColorPens.GetPen(Colors.Black), new Rect(0, 0, 16, 16));
+    }
+
+    var targetBitmap = new RenderTargetBitmap(16, 16, 96, 96, PixelFormats.Default);
+    targetBitmap.Render(visual);
+    return new Image { Source = targetBitmap };
   }
 }

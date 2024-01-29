@@ -172,20 +172,52 @@
                         Content="m!F"
                         IsChecked="{Binding Path=Settings.PrependModuleToFunction, Mode=TwoWay}"
                         ToolTip="Show the module name in front of the function name" />
-                    <ToggleButton
-                        Click="ToggleButton_Click"
-                        IsChecked="{Binding Path=Settings.PickColorByModule, Mode=TwoWay}"
+                    <Menu
+                        Height="20"
+                        Margin="2,0,0,0"
+                        VerticalAlignment="Center"
                         ToolTip="Color functions based on the module name">
-                        <StackPanel Orientation="Horizontal">
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Margin="0,1,0,0"
-                                Source="{StaticResource TagIcon}"
-                                Style="{StaticResource DisabledImageStyle}" />
-                            <TextBlock Text="Mod" />
-                        </StackPanel>
-                    </ToggleButton>
+                        <MenuItem
+                            x:Name="ModuleMenu"
+                            SubmenuOpened="ModuleMenu_OnSubmenuOpened"
+                            Margin="0,0,0,0"
+                            Padding="0,0,0,0"
+                            OverridesDefaultStyle="True">
+                            <MenuItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <Image Source="{StaticResource TagIcon}" Style="{StaticResource DisabledImageStyle}" />
+                                    <TextBlock
+                                        Margin="4,0,0,0"
+                                        VerticalAlignment="Bottom"
+                                        Text="Module" />
+                                    <Path
+                                        Margin="4,2,0,0"
+                                        VerticalAlignment="Center"
+                                        Data="M 0 0 L 3 3 L 6 0 Z"
+                                        Fill="Black" />
+                                </StackPanel>
+                            </MenuItem.Header>
+                            <MenuItem
+                                Click="ToggleButton_Click"
+                                Header="Pick function color based on module"
+                                IsCheckable="True"
+                                IsChecked="{Binding Settings.UseAutoModuleColors}"
+                                Style="{DynamicResource SubMenuItemHeaderStyle}"
+                                ToolTip="Automatically pick a function color based on the module name" />
+                            <MenuItem
+                                Click="ToggleButton_Click"
+                                Header="Override function color for modules"
+                                IsCheckable="True"
+                                IsChecked="{Binding Settings.UseModuleColors}"
+                                Style="{DynamicResource SubMenuItemHeaderStyle}"
+                                ToolTip="Use a different color for specified modules" />
+                            <Separator />
+                            <MenuItem
+                                Click="ClearModulesButton_Click"
+                                Header="Clear marked modules"
+                                Style="{DynamicResource SubMenuItemHeaderStyle}" />
+                        </MenuItem>
+                    </Menu>
                     <ToggleButton
                         Height="20"
                         Margin="0,0,0,0"

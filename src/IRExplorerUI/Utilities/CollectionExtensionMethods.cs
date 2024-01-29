@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore.IR;
 
@@ -8,6 +9,10 @@ namespace IRExplorerUI;
 public static class CollectionExtensionMethods {
   public static List<T> CloneList<T>(this List<T> list) {
     return list.ConvertAll(item => item);
+  }
+
+  public static bool AreEqual<T>(this List<T> list, List<T> other) {
+    return list.SequenceEqual(other);
   }
 
   public static Dictionary<TKey, TValue> CloneDictionary<TKey, TValue>(

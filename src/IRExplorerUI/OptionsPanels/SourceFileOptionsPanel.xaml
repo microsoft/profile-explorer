@@ -375,7 +375,6 @@
                             Margin="0,0,4,4"
                             VerticalAlignment="Top"
                             Orientation="Horizontal" />
-
                     </Grid>
                     <TextBlock FontSize="11" Text="Wildcards in the path are accepted, e.g. *path\foo*" />
                 </StackPanel>

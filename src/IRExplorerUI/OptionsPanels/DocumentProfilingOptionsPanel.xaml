@@ -120,17 +120,7 @@
                 Content="Append time format suffix"
                 IsChecked="{Binding AppendValueUnitSuffix, Mode=TwoWay}"
                 ToolTip="Append the time format suffix (ms) to each value" />
-            <ToggleButton
-                Height="20"
-                Margin="0,4,0,0"
-                Padding="2,2,2,0"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                Click="WeightCutoffButton_Click"
-                Content="Edit Columns"
-                IsEnabled="False"
-                ToolTip="Reset value to default weight cutoff" />
+
             <Separator Margin="0,4,0,4" />
 
             <TextBlock FontWeight="Medium" Text="Colors" />

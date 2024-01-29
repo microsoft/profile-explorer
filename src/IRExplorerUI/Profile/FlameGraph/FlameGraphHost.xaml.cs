@@ -90,6 +90,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       MarkFunctionInstances(GraphViewer.SelectedNode.Function, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
     }
   });
+  public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
+    if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is { HasFunction: true }) {
+      settings_.AddModuleColor(GraphViewer.SelectedNode.ModuleName, e.SelectedColor);
+      SettingsUpdated(settings_);
+    }
+  });
   public RelayCommand<object> MarkTimelineCommand => new RelayCommand<object>(async obj => {
     if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
       GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));

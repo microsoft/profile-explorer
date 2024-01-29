@@ -23,6 +23,7 @@ using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using Microsoft.Win32;
+using Xceed.Wpf.Toolkit.Core.Utilities;
 
 namespace IRExplorerUI;
 
@@ -1141,7 +1142,7 @@ static class Utils {
     textBox.SelectAll();
 
     // Try to move selection to the item in the list view.
-    var listViewItem = (ListViewItem)listView.ItemContainerGenerator.ContainerFromItem(textBox.Text);
+    var listViewItem = VisualTreeHelperEx.FindAncestorByType<ListViewItem>(textBox);
 
     if (listViewItem != null) {
       listView.SelectedItem = null;
@@ -1152,12 +1153,14 @@ static class Utils {
   public static void FocusTextBoxListViewItem(object item, ListView listView) {
     var listViewItem = (ListViewItem)listView.ItemContainerGenerator.ContainerFromItem(item);
 
-    // Find the TextBox within the ListViewItem
-    var textBox = Utils.FindChild<TextBox>(listViewItem);
+    if (listViewItem != null) {
+      // Find the TextBox within the ListViewItem
+      var textBox = Utils.FindChild<TextBox>(listViewItem);
 
-    if (textBox != null) {
-      // Set keyboard focus to the TextBox
-      textBox.Focus();
+      if (textBox != null) {
+        // Set keyboard focus to the TextBox
+        textBox.Focus();
+      }
     }
   }
 

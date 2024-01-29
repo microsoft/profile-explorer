@@ -196,18 +196,7 @@
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center"
                 FontWeight="Medium"
-                Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}">
-                <TextBlock.Style>
-                    <Style TargetType="{x:Type TextBlock}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                                <Setter Property="FontWeight" Value="Bold" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
-
+                Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}" />
             <Border
                 Height="16"
                 Margin="50,0,0,1"
