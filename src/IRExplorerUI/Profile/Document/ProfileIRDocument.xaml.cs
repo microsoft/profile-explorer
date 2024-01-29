@@ -350,7 +350,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public void JumpToHottestProfiledElement() {
-    Dispatcher.BeginInvoke(() => JumpToProfiledElement(0), DispatcherPriority.Background);
+    Dispatcher.BeginInvoke(() => JumpToProfiledElement(0), DispatcherPriority.ContextIdle);
   }
 
   private void JumpToProfiledElement(int offset) {

@@ -13,6 +13,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 using ClosedXML.Excel;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
@@ -2035,12 +2036,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void JumpToHottestProfiledElement() {
-    if (!HasProfileElements()) {
-      return;
-    }
+    Dispatcher.BeginInvoke(() => {
+      if (!HasProfileElements()) {
+        return;
+      }
 
-    profileElementIndex_ = 0;
-    JumpToProfiledElement(profileElements_[profileElementIndex_].Item1);
+      profileElementIndex_ = 0;
+      JumpToProfiledElement(profileElements_[profileElementIndex_].Item1);
+    }, DispatcherPriority.ContextIdle);
   }
 
   private bool HasProfileElements() {
