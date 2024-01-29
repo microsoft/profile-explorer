@@ -23,7 +23,7 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
     PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
   }
-
+  
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);
@@ -84,8 +84,10 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
   }
 
   private void ClearMappedPath_Click(object sender, RoutedEventArgs e) {
-    settings_.FinderSettings.SourceMappings.Clear();
-    ReloadMappedPathsList();
+    if (Utils.ShowYesNoMessageBox("Do you want to clear the list?", this) == MessageBoxResult.Yes) {
+      settings_.FinderSettings.SourceMappings.Clear();
+      ReloadMappedPathsList();
+    }
   }
 
   private void AddExcludedPath_Click(object sender, RoutedEventArgs e) {
@@ -94,15 +96,16 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
 
     // Wait for the UI to update
     Dispatcher.BeginInvoke((Action)(() => {
-      // Get the ListViewItem for the new item
       var newItem = settings_.FinderSettings.DisabledSourceMappings.Last();
       Utils.FocusTextBoxListViewItem(newItem, ExcludedPathsList);
     }), DispatcherPriority.ContextIdle);
   }
 
   private void ClearExcludedPath_Click(object sender, RoutedEventArgs e) {
-    settings_.FinderSettings.DisabledSourceMappings.Clear();
-    ReloadExcludedPathsList();
+    if (Utils.ShowYesNoMessageBox("Do you want to clear the list?", this) == MessageBoxResult.Yes) {
+      settings_.FinderSettings.DisabledSourceMappings.Clear();
+      ReloadExcludedPathsList();
+    }
   }
 
   private void RemoveExcludedPath_Click(object sender, RoutedEventArgs e) {

@@ -12,7 +12,7 @@ namespace IRExplorerUI.Profile;
 public class FlameGraphRenderer {
   internal const double DefaultTextSize = 12;
   internal const double DefaultNodeHeight = 18;
-  internal const double CompactTextSize = 11;
+  internal const double CompactTextSize = 10;
   internal const double CompactNodeHeight = 15;
   private FlameGraphSettings settings_;
   private FlameGraph flameGraph_;
@@ -140,17 +140,21 @@ public class FlameGraphRenderer {
   }
 
   public HighlightingStyle GetNodeStyle(FlameGraphNode node) {
-    //? TODO: Palette based on module
-    //? int colorIndex = Math.Min(node.Depth, palettes_.Count - 1);
-    //? TODO: Cache style based on colorIndex
     var palette = node.HasFunction ? palettes_[node.CallTreeNode.Kind] : palettes_[ProfileCallTreeNodeKind.Unset];
     int colorIndex = node.Depth % palette.Count;
     var backColor = palette.PickBrush(palette.Count - colorIndex - 1);
 
-    if (settings_.PickColorByModule && !string.IsNullOrEmpty(node.ModuleName)) {
-      // Use a color based on the module name.
-      var hash = (uint)node.ModuleName.GetStableHashCode();
-      return new HighlightingStyle(ColorUtils.GenerateLightPastelBrush(hash), defaultBorder_);
+    // Override color based on module name.
+    if (!string.IsNullOrEmpty(node.ModuleName)) {
+      if (settings_.UseModuleColors &&
+          settings_.GetModuleColor(node.ModuleName, out var moduleColor)) {
+        backColor = moduleColor.AsBrush();
+      }
+      else if (settings_.UseAutoModuleColors) {
+        // Use a color based on the module name.
+        uint hash = (uint)node.ModuleName.GetStableHashCode();
+        backColor = ColorUtils.GenerateLightPastelBrush(hash);
+      }
     }
 
     return new HighlightingStyle(backColor, defaultBorder_);
@@ -322,7 +326,6 @@ public class FlameGraphRenderer {
 
   private void SetupNode(FlameGraphNode node) {
     node.Style = GetNodeStyle(node);
-    //? TODO: Use settings
     node.TextColor = nodeTextBrush_;
     node.ModuleTextColor = nodeModuleBrush_;
     node.WeightTextColor = nodeWeightBrush_;

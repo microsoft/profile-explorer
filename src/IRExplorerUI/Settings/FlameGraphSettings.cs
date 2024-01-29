@@ -1,6 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Windows.Media;
 using ProtoBuf;
 
@@ -8,6 +12,28 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class FlameGraphSettings : SettingsBase {
+  [ProtoContract(SkipConstructor = true)]
+  public class ModuleStyle(string name, Color color) {
+    [ProtoMember(1)]
+    public string Name { get; set; } = name;
+    [ProtoMember(2)]
+    public Color Color { get; set; } = color;
+
+    protected bool Equals(ModuleStyle other) {
+      return Name == other.Name && Color.Equals(other.Color);
+    }
+
+    public override bool Equals(object obj) {
+      if (ReferenceEquals(null, obj))
+        return false;
+      if (ReferenceEquals(this, obj))
+        return true;
+      if (obj.GetType() != this.GetType())
+        return false;
+      return Equals((ModuleStyle)obj);
+    }
+  }
+
   public static readonly int DefaultNodePopupDuration = HoverPreview.HoverDuration.Milliseconds;
 
   public FlameGraphSettings() {
@@ -23,7 +49,7 @@ public class FlameGraphSettings : SettingsBase {
   [ProtoMember(4)]
   public bool SyncSelection { get; set; }
   [ProtoMember(5)]
-  public bool UseCompactMode { get; set; } // font size, node height
+  public bool UseCompactMode { get; set; }
   [ProtoMember(6)]
   public bool ShowNodePopup { get; set; }
   [ProtoMember(7)]
@@ -63,13 +89,38 @@ public class FlameGraphSettings : SettingsBase {
   [ProtoMember(24)]
   public Color SearchedNodeColor { get; set; }
   [ProtoMember(25)]
-  public bool PickColorByModule { get; set; }
+  public bool UseAutoModuleColors { get; set; }
+  [ProtoMember(26)]
+  public bool UseModuleColors { get; set; }
+  [ProtoMember(27)]
+  public List<ModuleStyle> ModuleColors { get; set; }
 
-  //? TODO: Options for
-  //? - custom color scheme for module
-  //? - auto-colors for functs using TextSearcher
+  public bool GetModuleColor(string name, out Color color) {
+    foreach (var pair in ModuleColors) {
+      if (name.Contains(pair.Name, StringComparison.OrdinalIgnoreCase)) {
+        color =  pair.Color;
+        return true;
+      }
+    }
+
+    color = default(Color);
+    return false;
+  }
+
+  public void AddModuleColor(string moduleName, Color color) {
+    foreach (var pair in ModuleColors) {
+      if (pair.Name.Length > 0 &&
+          pair.Name.Equals(moduleName, StringComparison.OrdinalIgnoreCase)) {
+        pair.Color = color;
+        return;
+      }
+    }
+
+    ModuleColors.Add(new ModuleStyle(moduleName, color));
+  }
 
   public override void Reset() {
+    InitializeReferenceMembers();
     PrependModuleToFunction = true;
     SyncSelection = true;
     SyncSourceFile = false;
@@ -95,12 +146,27 @@ public class FlameGraphSettings : SettingsBase {
     SearchedNodeBorderColor = Colors.Black;
   }
 
+  [ProtoAfterDeserialization]
+  private void InitializeReferenceMembers() {
+    ModuleColors ??= new List<ModuleStyle>();
+  }
+
   public FlameGraphSettings Clone() {
     byte[] serialized = StateSerializer.Serialize(this);
     return StateSerializer.Deserialize<FlameGraphSettings>(serialized);
   }
 
   public override bool Equals(object obj) {
+    Trace.WriteLine($"Compare eq ");
+    {
+      if (obj is FlameGraphSettings s) {
+        foreach (var p in ModuleColors) {
+          Trace.WriteLine($"Style: {p.Name}, {p.Color}");
+          Trace.WriteLine($"    eq: {ModuleColors.AreEqual(s.ModuleColors)}");
+        }
+      }
+    }
+
     return obj is FlameGraphSettings settings &&
            PrependModuleToFunction == settings.PrependModuleToFunction &&
            ShowDetailsPanel == settings.ShowDetailsPanel &&
@@ -126,6 +192,8 @@ public class FlameGraphSettings : SettingsBase {
            NodeWeightColor == settings.NodeWeightColor &&
            NodePercentageColor == settings.NodePercentageColor &&
            SearchedNodeColor == settings.SearchedNodeColor &&
-           PickColorByModule == settings.PickColorByModule;
+           UseAutoModuleColors == settings.UseAutoModuleColors &&
+           UseModuleColors == settings.UseModuleColors &&
+           ModuleColors.AreEqual(settings.ModuleColors);
   }
 }
