@@ -252,7 +252,7 @@ public class ProfileDocumentMarker {
                                OptionalColumnSettings columnSettings) {
     Trace.WriteLine($"Apply {column.ColumnName}, is main column: {column.IsMainColumn}");
     column.IsVisible = columnSettings.IsColumnVisible(column);
-    
+
     var elementColorPairs = new List<ValueTuple<IRElement, Color>>(function.TupleCount);
 
     foreach (var tuple in function.AllTuples) {
@@ -268,7 +268,12 @@ public class ProfileDocumentMarker {
         elementColorPairs.Add(new ValueTuple<IRElement, Color>(tuple, color));
       }
 
-      value.BackColor = color.AsBrush();
+      // Don't override initial back color if no color is picked,
+      // mostly done for perf metrics column which have an initial back color.
+      if (color != Colors.Transparent) {
+        value.BackColor = color.AsBrush();
+      }
+
       value.TextColor = settings.PickTextColor(column, order, percentage);
       value.TextWeight = settings.PickTextWeight(column, order, percentage);
 
@@ -458,7 +463,7 @@ public class ProfileDocumentMarker {
     if (!settings_.MarkBlocks) {
       return;
     }
-    
+
     document.SuspendUpdate();
     double overlayHeight = document.DefaultLineHeight;
     var blockPen = ColorPens.GetPen(settings_.BlockOverlayBorderColor,
@@ -621,9 +626,13 @@ public class ProfileDocumentMarker {
           var columnValue = new ElementColumnValue(label, value, valuePercentage, i, tooltip);
 
           var color = colors[counter.Index % colors.Length];
-          //? TODO: columnValue.TextColor = color;
-          if (counter.IsMetric)
-            columnValue.BackColor = Brushes.Bisque;
+
+          //? TODO: Re-enable
+          //? - add back color option in per-column settings
+          //? - add "use metrics back color" to global settings
+          //if (counter.IsMetric)
+          //  columnValue.BackColor = Brushes.Bisque;
+
           columnValue.ValuePercentage = valuePercentage;
           columnValue.CanShowPercentageBar = !isValueBasedMetric &&
                                              valuePercentage >= settings_.ElementWeightCutoff;
@@ -651,7 +660,7 @@ public class ProfileDocumentMarker {
     foreach (var column in counterColumns) {
       UpdateColumnStyle(column, columnData, function, document, settings_, columnSettings_);
     }
-    
+
     SetupColumnHeaderEvents(function, document, columnData);
     return columnData;
   }

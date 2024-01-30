@@ -305,6 +305,11 @@
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="TODO" />
+          <CheckBox
+            IsEnabled="False"
+            Margin="0,2,0,2"
+            Content="Show percentage bars"
+            IsChecked="{Binding DisplayPercentageBar, Mode=TwoWay}" />
         </StackPanel>
       </TabItem>
     </TabControl>

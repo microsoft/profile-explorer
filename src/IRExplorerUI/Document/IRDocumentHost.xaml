@@ -578,7 +578,7 @@
                                             <StackPanel Orientation="Horizontal">
                                                 <Image Source="{StaticResource EyeIcon}" Style="{StaticResource DisabledImageStyle}" />
                                                 <TextBlock
-                                                    Margin="4,0,0,0"
+                                                    Margin="2,0,0,0"
                                                     VerticalAlignment="Bottom"
                                                     Text="View" />
                                                 <Path

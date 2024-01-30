@@ -238,20 +238,20 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   private bool ShouldShowPercentageBar(OptionalColumn column) {
     return DisplayPercentageBar &&
            (column.Style.ShowPercentageBar == OptionalColumnStyle.PartVisibility.Always ||
-            column.IsMainColumn && 
-            column.Style.ShowPercentageBar == OptionalColumnStyle.PartVisibility.IfActiveColumn);
+            (column.IsMainColumn &&
+             column.Style.ShowPercentageBar == OptionalColumnStyle.PartVisibility.IfActiveColumn));
   }
 
   private bool ShouldShowIcon(OptionalColumn column) {
     return DisplayIcons && (column.Style.ShowIcon == OptionalColumnStyle.PartVisibility.Always ||
-                            column.IsMainColumn && 
-                            column.Style.ShowIcon == OptionalColumnStyle.PartVisibility.IfActiveColumn);
+                            (column.IsMainColumn &&
+                            column.Style.ShowIcon == OptionalColumnStyle.PartVisibility.IfActiveColumn));
   }
 
   private bool ShouldUseBackColor(OptionalColumn column) {
     return column.Style.UseBackColor == OptionalColumnStyle.PartVisibility.Always ||
-           column.IsMainColumn &&
-           column.Style.UseBackColor == OptionalColumnStyle.PartVisibility.IfActiveColumn;
+           (column.IsMainColumn &&
+            column.Style.UseBackColor == OptionalColumnStyle.PartVisibility.IfActiveColumn);
   }
 
   public Color PickColorForPercentage(double percentage) {
@@ -291,7 +291,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
            MarkCallTargets == other.MarkCallTargets &&
            JumpToHottestElement == other.JumpToHottestElement &&
            ElementWeightCutoff.Equals(other.ElementWeightCutoff) &&
-           TopOrderCutoff == other.TopOrderCutoff && 
+           TopOrderCutoff == other.TopOrderCutoff &&
            IconBarWeightCutoff.Equals(other.IconBarWeightCutoff) &&
            Equals(ColumnTextColor, other.ColumnTextColor) &&
            Equals(BlockOverlayTextColor, other.BlockOverlayTextColor) &&
