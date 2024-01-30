@@ -559,7 +559,6 @@ public class ProfileDocumentMarker {
     //?    takenBranches / total, etc JSON
     var perfCounters = globalProfile_.SortedPerformanceCounters;
     var colors = new Brush[] {Brushes.DarkSlateBlue, Brushes.DarkOliveGreen, Brushes.DarkSlateGray};
-    var counterIcon = IconDrawing.FromIconResource("QueryIcon");
     var counterColumns = new OptionalColumn[perfCounters.Count];
     var counterSortMap = new List<List<CounterSortHelper>>();
 
