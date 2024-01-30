@@ -427,9 +427,13 @@ public partial class MainWindow : Window, ISession {
   public void SetApplicationProgress(bool visible, double percentage, string title = null) {
     Dispatcher.BeginInvoke(() => {
       if (visible && !documentLoadProgressVisible_) {
+        Mouse.OverrideCursor = Cursors.AppStarting;
+        Mouse.UpdateCursor();
         ShowProgressBar(title);
       }
       else if (!visible) {
+        Mouse.OverrideCursor = Cursors.Arrow;
+        Mouse.UpdateCursor();
         HideProgressBar();
         return;
       }

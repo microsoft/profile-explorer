@@ -3381,7 +3381,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   //? TODO: Profile hanling should be moved out of IRDocument,
   //? handled up when a TextSelection event is fired.
   private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
-    if (Session.ProfileData == null) {
+    if (!IsInitialized || Session.ProfileData == null) {
       return;
     }
 
@@ -3414,7 +3414,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       Session.SetApplicationStatus("");
       return;
     }
-    
+
     double weightPercentage = funcProfile.ScaleWeight(weightSum);
     string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
     Session.SetApplicationStatus(text, "Sum of time for the selected instructions");

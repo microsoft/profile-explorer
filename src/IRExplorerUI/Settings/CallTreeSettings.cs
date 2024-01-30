@@ -11,7 +11,7 @@ namespace IRExplorerUI;
 //?      - hover time
 //? - color list item based on module name
 public class CallTreeSettings : SettingsBase {
-  public static readonly int DefaultNodePopupDuration = HoverPreview.HoverDuration.Milliseconds;
+  public static readonly int DefaultNodePopupDuration = (int)HoverPreview.HoverDuration.TotalMilliseconds;
 
   public CallTreeSettings() {
     Reset();
@@ -33,7 +33,7 @@ public class CallTreeSettings : SettingsBase {
   public bool ShowNodePopup { get; set; }
   [ProtoMember(8)]
   public int NodePopupDuration { get; set; }
-  
+
   public override void Reset() {
     CombineInstances = true;
     PrependModuleToFunction = true;

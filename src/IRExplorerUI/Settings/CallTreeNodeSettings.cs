@@ -9,7 +9,7 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class CallTreeNodeSettings : SettingsBase {
-  public static readonly int DefaultPreviewPopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
+  public static readonly int DefaultPreviewPopupDuration = (int)HoverPreview.LongHoverDuration.TotalMilliseconds;
 
   public CallTreeNodeSettings() {
     Reset();
@@ -27,7 +27,7 @@ public class CallTreeNodeSettings : SettingsBase {
   public bool PrependModuleToFunction { get; set; }
   [ProtoMember(6)]
   public ProfileListViewFilter FunctionListViewFilter { get; set; }
-  
+
   public override void Reset() {
     InitializeReferenceMembers();
     ShowPreviewPopup = true;

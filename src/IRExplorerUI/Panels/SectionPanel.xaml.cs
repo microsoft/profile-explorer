@@ -17,6 +17,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using ClosedXML.Excel;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
@@ -1592,8 +1593,14 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
           }
 
           if (!counterColumnsAdded) {
-            AddCountersFunctionListColumns(false);
             counterColumnsAdded = true;
+
+            // Wait for all other columns to be added to the UI first
+            // before adding the counter columns, which are relative to other
+            // columns, such as the mangled name.
+            Dispatcher.BeginInvoke(() => {
+              AddCountersFunctionListColumns(false);
+            }, DispatcherPriority.ContextIdle);
           }
         }
       }
@@ -1626,7 +1633,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       preview_.Unregister();
       preview_ = null;
     }
-    
+
     preview_ = new PopupHoverPreview(
       FunctionList, TimeSpan.FromMilliseconds(settings_.CallStackPopupDuration),
       (mousePoint, previewPoint) => {
@@ -2256,7 +2263,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       SetupSectionList(currentFunction_, true);
       RefreshSectionList();
       await ComputeConsecutiveSectionDiffs();
-      
+
       if(ProfileControlsVisible) {
         SetupStackFunctionHoverPreview();
         OnPropertyChanged(nameof(SyncSelection));
