@@ -12,8 +12,8 @@ public class SectionSettings : SettingsBase {
     Reset();
   }
 
-  public static readonly int DefaultCallStackPopupDuration = HoverPreview.ExtraLongHoverDuration.Milliseconds;
-  
+  public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
+
   [ProtoMember(1)] public bool ColorizeSectionNames { get; set; }
   [ProtoMember(2)] public bool MarkAnnotatedSections { get; set; }
   [ProtoMember(3)] public bool MarkNoDiffSectionGroups { get; set; }
@@ -37,7 +37,7 @@ public class SectionSettings : SettingsBase {
   [ProtoMember(24)] public bool SyncSelection { get; set; }
   [ProtoMember(25)] public bool ShowCallStackPopup { get; set; }
   [ProtoMember(26)] public int CallStackPopupDuration { get; set; }
-  
+
 
   public FunctionNameDemanglingOptions DemanglingOptions {
     get {

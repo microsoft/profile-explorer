@@ -442,11 +442,11 @@
                                 RecognizesAccessKey="True"
                                 SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
                         </Border>
-                        <Thumb
-                            x:Name="PART_HeaderGripper"
-                            Margin="0,0,-9,0"
-                            HorizontalAlignment="Right"
-                            Style="{StaticResource GridViewColumnHeaderGripper}" />
+                        <!-- <Thumb -->
+                        <!--     x:Name="PART_HeaderGripper" -->
+                        <!--     Margin="0,0,-9,0" -->
+                        <!--     HorizontalAlignment="Right" -->
+                        <!--     Style="{StaticResource GridViewColumnHeaderGripper}" /> -->
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

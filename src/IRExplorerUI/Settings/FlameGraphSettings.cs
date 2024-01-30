@@ -34,7 +34,7 @@ public class FlameGraphSettings : SettingsBase {
     }
   }
 
-  public static readonly int DefaultNodePopupDuration = HoverPreview.HoverDuration.Milliseconds;
+  public static readonly int DefaultNodePopupDuration = (int)HoverPreview.HoverDuration.TotalMilliseconds;
 
   public FlameGraphSettings() {
     Reset();

@@ -18,7 +18,7 @@ public class TimelineSettings : SettingsBase {
   //?    - max depth
   //?    - hover time
   //?    - same settings in SectionPanel
-  public static readonly int DefaultCallStackPopupDuration = HoverPreview.ExtraLongHoverDuration.Milliseconds;
+  public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
 
   [ProtoMember(1)] public bool SyncSelection { get; set; }
   [ProtoMember(2)] public bool ShowCallStackPopup { get; set; }

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Shell;
@@ -587,6 +588,8 @@ public partial class App : Application {
       SetupExceptionHandling();
     }
 
+    FixPopupPlacement();
+
     // Disable most data-binding error reporting, slows down debugging too much.
     PresentationTraceSources.DataBindingSource.Switch.Level = SourceLevels.Critical;
 
@@ -599,6 +602,19 @@ public partial class App : Application {
       Utils.TryDeleteFile(GetSettingsFilePath());
       Settings = new ApplicationSettings();
       IsFirstRun = true;
+    }
+  }
+
+  private static void FixPopupPlacement() {
+    // On touchscreen laptops, popups are not displayed in the right place.
+    // Hack taken from https://stackoverflow.com/a/54298981 to fix it.
+    var ifLeft = SystemParameters.MenuDropAlignment;
+
+    if (ifLeft) {
+      // change to false
+      var t = typeof(SystemParameters);
+      var field = t.GetField("_menuDropAlignment", BindingFlags.NonPublic | BindingFlags.Static);
+      field.SetValue(null, false);
     }
   }
 
