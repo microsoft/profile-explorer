@@ -35,9 +35,6 @@ public partial class FlameGraphViewer : FrameworkElement {
     markedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
     fixedMarkedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
     selectedNodes_ = new Dictionary<FlameGraphNode, HighlightingStyle>();
-    SelectedNodeStyle = new HighlightingStyle(selectedNodeBackColor_, selectedNodeBorderColor_);
-    MarkedNodeStyle = new HighlightingStyle(markedNodeBackColor_, markedNodeBorderColor_);
-
     SetupEvents();
   }
 
@@ -226,6 +223,8 @@ public partial class FlameGraphViewer : FrameworkElement {
     selectedNodeBackColor_ = ColorBrushes.GetBrush(settings_.SelectedNodeColor);
     selectedNodeBorderColor_ = ColorPens.GetPen(settings_.SelectedNodeBorderColor, 1.5);
     searchResultBorderColor_ = ColorPens.GetPen(settings_.SearchedNodeBorderColor, 2);
+    SelectedNodeStyle = new HighlightingStyle(selectedNodeBackColor_, selectedNodeBorderColor_);
+    MarkedNodeStyle = new HighlightingStyle(markedNodeBackColor_, markedNodeBorderColor_);
   }
 
   public void SettingsUpdated(FlameGraphSettings settings) {

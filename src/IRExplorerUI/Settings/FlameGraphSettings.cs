@@ -158,16 +158,6 @@ public class FlameGraphSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    Trace.WriteLine($"Compare eq ");
-    {
-      if (obj is FlameGraphSettings s) {
-        foreach (var p in ModuleColors) {
-          Trace.WriteLine($"Style: {p.Name}, {p.Color}");
-          Trace.WriteLine($"    eq: {ModuleColors.AreEqual(s.ModuleColors)}");
-        }
-      }
-    }
-
     return obj is FlameGraphSettings settings &&
            PrependModuleToFunction == settings.PrependModuleToFunction &&
            ShowDetailsPanel == settings.ShowDetailsPanel &&
