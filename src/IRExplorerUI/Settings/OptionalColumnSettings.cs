@@ -20,7 +20,7 @@ public class OptionalColumnSettings : SettingsBase {
   [ProtoMember(4)]  public bool ShowPerformanceCounterColumns { get; set; }
   [ProtoMember(5)]  public bool ShowPerformanceMetricColumns { get; set; }
 
-  
+
   public OptionalColumnSettings() {
     Reset();
   }
@@ -42,7 +42,7 @@ public class OptionalColumnSettings : SettingsBase {
     };
   public static OptionalColumnStyle DefaultTimeColumnStyle =>
     new OptionalColumnStyle() {
-      ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
+      ShowPercentageBar = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       UseBackColor = OptionalColumnStyle.PartVisibility.Always,
       ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       BackColorPalette = ColorPalette.Profile,
@@ -90,19 +90,19 @@ public class OptionalColumnSettings : SettingsBase {
       columnStates_[column.ColumnName] = state;
       NumberColumnStates();
     }
-    
+
     return state;
   }
 
   private void NumberColumnStates() {
     var stateList = columnStates_.ToValueList();
     stateList.Sort((a, b) => a.Order.CompareTo(b.Order));
-    
+
     for (int i = 0; i < stateList.Count; ++i) {
       stateList[i].Order = i;
     }
   }
-  
+
   public bool IsColumnVisible(OptionalColumn column) {
     return GetOrCreateColumnState(column).IsVisible;
   }
@@ -114,7 +114,7 @@ public class OptionalColumnSettings : SettingsBase {
   public List<OptionalColumn> FilterAndSortColumns(List<OptionalColumn> columns) {
     NumberColumnStates();
     var sortedColumns = new List<OptionalColumn>();
-    
+
     foreach (var column in columns) {
       // Filter out columns.
       if ((column.IsPerformanceCounter && !ShowPerformanceCounterColumns) ||
@@ -125,7 +125,7 @@ public class OptionalColumnSettings : SettingsBase {
       GetOrCreateColumnState(column); // Ensure column state exists.
       sortedColumns.Add(column);
     }
-    
+
     sortedColumns.Sort((a, b) => {
       var aState = columnStates_[a.ColumnName];
       var bState = columnStates_[b.ColumnName];
@@ -134,7 +134,7 @@ public class OptionalColumnSettings : SettingsBase {
 
     return sortedColumns;
   }
-  
+
   public override void Reset() {
     InitializeReferenceMembers();
     columnStyles_.Clear();
@@ -167,26 +167,26 @@ public class OptionalColumnState : SettingsBase {
   public int Width { get; set; }
   [ProtoMember(3)]
   public int Order { get; set; }
-  
+
   public OptionalColumnState() {
     Reset();
   }
-  
+
   public override void Reset() {
     IsVisible = true;
     Order = int.MaxValue;
     Width = 50;
   }
-  
+
   public OptionalColumnState Clone() {
     byte[] serialized = StateSerializer.Serialize(this);
     return StateSerializer.Deserialize<OptionalColumnState>(serialized);
   }
-  
+
   public override bool Equals(object obj) {
     return obj is OptionalColumnState other &&
            IsVisible == other.IsVisible &&
-           Width == other.Width && 
+           Width == other.Width &&
            Order == other.Order;
   }
 }
