@@ -53,11 +53,11 @@ public class OptionalColumnSettings : SettingsBase {
   public static OptionalColumnStyle DefaultMetricsColumnStyle(int k) {
     return new OptionalColumnStyle() {
       ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
-      UseBackColor = OptionalColumnStyle.PartVisibility.IfActiveColumn,
+      UseBackColor = OptionalColumnStyle.PartVisibility.Always,
       ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       PickColorForPercentage = false,
       BackColorPalette = ColorPalette.Profile,
-      InvertColorPalette = true,
+      InvertColorPalette = false,
       TextColor = ColorPalette.DarkHue.PickColor(k),
       PercentageBarBackColor = ColorPalette.DarkHue.PickColor(k)
     };
@@ -70,7 +70,7 @@ public class OptionalColumnSettings : SettingsBase {
       ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       PickColorForPercentage = false,
       BackColorPalette = ColorPalette.Profile,
-      InvertColorPalette = true,
+      InvertColorPalette = false,
       TextColor = ColorPalette.DarkHue.PickColor(k),
       PercentageBarBackColor = ColorPalette.DarkHue.PickColor(k)
     };

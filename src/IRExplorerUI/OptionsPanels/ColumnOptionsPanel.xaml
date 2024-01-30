@@ -88,7 +88,7 @@
                     VerticalAlignment="Center"
                     AvailableColorsSortingMode="HueSaturationBrightness"
                     BorderBrush="Gray"
-                    SelectedColor="{Binding ColumnTextColor, Mode=TwoWay}"
+                    SelectedColor="{Binding TextColor, Mode=TwoWay}"
                     ShowDropDownButton="True"
                     UsingAlphaChannel="False" />
                 <TextBlock

@@ -236,7 +236,8 @@ public class OptionalColumn : ICloneable {
                                    Converter, Width, ColumnTemplateName, Style, IsVisible) {
       HeaderClickHandler = HeaderClickHandler,
       HeaderRightClickHandler = HeaderRightClickHandler,
-      HeaderDoubleClickHandler = HeaderDoubleClickHandler
+      HeaderDoubleClickHandler = HeaderDoubleClickHandler,
+      PerformanceCounter = PerformanceCounter
     };
 
     return clone;

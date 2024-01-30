@@ -26,6 +26,12 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     Default
   }
 
+  //? TODO: Counter shortening list
+  // private static readonly (string, string)[] PerfCounterNameReplacements = {
+  //   ("Instruction", "Instr"),
+  //   ("Misprediction", "Mispred")
+  // };
+
   [ProtoMember(1)] public bool MarkElements { get; set; }
   [ProtoMember(2)] public bool MarkBlocks { get; set; }
   [ProtoMember(3)] public bool MarkBlocksInFlowGraph { get; set; }
