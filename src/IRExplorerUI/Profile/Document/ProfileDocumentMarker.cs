@@ -76,7 +76,7 @@ public class ProfileDocumentMarker {
   public OptionalColumn CounterColumnTemplate(PerformanceCounter counter, int index) {
     var column = OptionalColumn.Template($"[CounterHeader{counter.Id}]",
                                          "TimePercentageColumnValueTemplate",
-                                         $"CounterHeader{counter.Name}",
+                                         $"CounterHeader{counter.Id}",
                                          $"{ShortenPerfCounterName(counter.Name)}",
                                          /*counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" :*/
                                          $"{counter.Name}",
@@ -623,7 +623,7 @@ public class ProfileDocumentMarker {
           var color = colors[counter.Index % colors.Length];
           //? TODO: columnValue.TextColor = color;
           if (counter.IsMetric)
-            columnValue.BackColor = Brushes.Beige;
+            columnValue.BackColor = Brushes.Bisque;
           columnValue.ValuePercentage = valuePercentage;
           columnValue.CanShowPercentageBar = !isValueBasedMetric &&
                                              valuePercentage >= settings_.ElementWeightCutoff;

@@ -599,7 +599,7 @@
                                             Checked="ViewMenuItem_OnCheckedChanged"
                                             Header="Show performance metrics"
                                             IsCheckable="True"
-                                            IsChecked="{Binding ShowPerformanceMetricsColumns}"
+                                            IsChecked="{Binding ShowPerformanceMetricColumns}"
                                             Style="{DynamicResource SubMenuItemHeaderStyle}"
                                             Unchecked="ViewMenuItem_OnCheckedChanged" />
                                         <MenuItem
