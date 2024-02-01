@@ -79,21 +79,26 @@ public class OptionalColumn : ICloneable {
   public static void RemoveListViewColumns(ListView listView, OptionalColumn[] columns,
                                            IGridViewColumnValueSorter columnSorter = null) {
     foreach (var column in columns) {
-      RemoveListViewColumn(listView, column.ColumnName);
+      RemoveListViewColumn(listView, column.ColumnName, columnSorter);
     }
   }
 
-  public static void RemoveListViewColumns(ListView listView, IGridViewColumnValueSorter columnSorter = null) {
+  public static void RemoveListViewColumns(ListView listView, Func<GridViewColumnHeader, bool> predicate = null,
+                                           IGridViewColumnValueSorter columnSorter = null) {
     var functionGrid = (GridView)listView.View;
+    var removedColumns = new List<GridViewColumn>();
 
-    while (functionGrid.Columns.Count > 0) {
-      var column = functionGrid.Columns[0];
+    foreach(var column in functionGrid.Columns) { 
+      var header = column.Header as GridViewColumnHeader;
 
-      if (column.Header is GridViewColumnHeader header) {
-        columnSorter?.UnregisterColumnHeader(header);
+      if (predicate == null || predicate(header)) {
+        removedColumns.Add(column);
       }
+    }
 
+    foreach (var column in removedColumns) {
       functionGrid.Columns.Remove(column);
+      columnSorter?.UnregisterColumnHeader((GridViewColumnHeader)column.Header);
     }
   }
 

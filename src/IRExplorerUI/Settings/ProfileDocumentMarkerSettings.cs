@@ -82,10 +82,10 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     string suffix = "";
     if (AppendValueUnitSuffix) {
       suffix = ValueUnit switch {
-        ValueUnitKind.Millisecond => "ms",
-        ValueUnitKind.Microsecond => "µs",
-        ValueUnitKind.Nanosecond => "ns",
-        ValueUnitKind.Second => "s",
+        ValueUnitKind.Millisecond => " ms",
+        ValueUnitKind.Microsecond => " µs",
+        ValueUnitKind.Nanosecond => " ns",
+        ValueUnitKind.Second => " s",
         _ => ""
       };
     }

@@ -116,4 +116,9 @@ public class DocumentSettings : SettingsBase {
            SourceMarkerSettings.Equals(settings.SourceMarkerSettings) &&
            ColumnSettings.Equals(settings.ColumnSettings);
   }
+
+  public bool HasProfilingChanges(DocumentSettings other) {
+    return ProfileMarkerSettings.HasChanges(other.ProfileMarkerSettings) ||
+           ColumnSettings.HasChanges(other.ColumnSettings);
+  }
 }

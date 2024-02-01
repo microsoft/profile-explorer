@@ -469,7 +469,7 @@
                                 </GridViewColumn.HeaderContainerStyle>
                             </GridViewColumn>
 
-                            <GridViewColumn Width="150" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible}">
+                            <GridViewColumn Width="{Binding SelfTimeColumnWidth}" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible}">
                                 <GridViewColumnHeader x:Name="OptionalColumnHeader" Content="{Binding OptionalDataColumnName}" />
 
                                 <GridViewColumn.HeaderContainerStyle>
@@ -480,17 +480,25 @@
 
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
+                                        <Grid HorizontalAlignment="Stretch" Background="{Binding BackColor}">
+                                            <TextBlock
+                                                Width="45"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center"
+                                                FontWeight="Medium"
+                                                Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}"
+                                                Visibility="{Binding Settings.AppendTimeToSelfColumn, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:SectionPanel}}, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
                                             <ContentControl
                                                 HorizontalAlignment="Stretch"
                                                 Content="{Binding}"
-                                                ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
-                                        </Border>
+                                                ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}"
+                                                Visibility="{Binding Settings.AppendTimeToSelfColumn, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:SectionPanel}}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        </Grid>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
 
-                            <GridViewColumn Width="150" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible2}">
+                            <GridViewColumn Width="{Binding TotalTimeColumnWidth}" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible2}">
                                 <GridViewColumnHeader x:Name="OptionalColumnHeader2" Content="{Binding OptionalDataColumnName2}" />
 
                                 <GridViewColumn.HeaderContainerStyle>
@@ -501,12 +509,19 @@
 
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Border HorizontalAlignment="Stretch" Background="{Binding BackColor2}">
+                                        <Grid HorizontalAlignment="Stretch" Background="{Binding BackColor2}">
+                                            <TextBlock
+                                                Width="45"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center"
+                                                FontWeight="Medium"
+                                                Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}"
+                                                Visibility="{Binding Settings.AppendTimeToTotalColumn, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:SectionPanel}}, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
                                             <ContentControl
                                                 HorizontalAlignment="Stretch"
                                                 Content="{Binding}"
                                                 ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
-                                        </Border>
+                                        </Grid>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>

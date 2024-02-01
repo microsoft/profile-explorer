@@ -493,7 +493,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private bool optionalDataColumnVisible2_;
   private bool alternateNameColumnVisible_;
   private bool childTimeColumnVisible_;
-  private bool showModules_;
   private bool showChildren_;
   private bool showSections_;
   private bool profileControlsVisible_;
@@ -918,6 +917,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
+  //? TODO: Remember column width, order
+  public double SelfTimeColumnWidth => settings_ is {AppendTimeToSelfColumn: true} ? 150 : 60;
+  public double TotalTimeColumnWidth => settings_ is { AppendTimeToTotalColumn: true } ? 150 : 60;
+
   public IRTextSummary Summary {
     get => summary_;
     set {
@@ -1002,10 +1005,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   public bool ShowModules {
-    get => showModules_;
+    get => settings_.ShowModulePanel;
     set {
-      if (showModules_ != value) {
-        showModules_ = value;
+      if (settings_.ShowModulePanel != value) {
+        settings_.ShowModulePanel = value;
         OnPropertyChanged();
         ResizeFunctionFilter(FunctionToolbar.RenderSize.Width);
       }
@@ -1385,12 +1388,18 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   public void AddCountersFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "",
                                              double columnWidth = double.NaN) {
+    OptionalColumn.RemoveListViewColumns(FunctionList, header => header.Tag is PerformanceCounter);
     var counters = Session.ProfileData.SortedPerformanceCounters;
 
     for (int i = 0; i < counters.Count; i++) {
       var counter = counters[i];
 
       if (!ProfileDocumentMarker.IsPerfCounterVisible(counter)) {
+        continue;
+      }
+
+      if ((!settings_.ShowPerformanceCounterColumns && !counter.IsMetric) ||
+          (!settings_.ShowPerformanceMetricColumns && counter.IsMetric)) {
         continue;
       }
 
@@ -1617,10 +1626,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     IsFunctionListVisible = true;
     SectionCountColumnVisible = false;
     ShowSections = false;
-
-    if (modulesEx.Count > 1) {
-      ShowModules = true;
-    }
 
     UseProfileCallTree = true;
     GridViewColumnVisibility.UpdateListView(FunctionList);
@@ -2268,6 +2273,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         SetupStackFunctionHoverPreview();
         OnPropertyChanged(nameof(SyncSelection));
         OnPropertyChanged(nameof(SyncSourceFile));
+        OnPropertyChanged(nameof(ShowModules));
+        OnPropertyChanged(nameof(ModuleColumnVisible));
       }
     }
   }
@@ -2780,6 +2787,11 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         UpdateSectionListView();
       }
     }
+  }
+
+  public SectionSettings Settings {
+    get => settings_;
+    set => settings_ = value;
   }
 
   public IRTextSectionEx GetSectionExtension(IRTextSection section) {
