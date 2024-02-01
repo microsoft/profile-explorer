@@ -2274,7 +2274,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         OnPropertyChanged(nameof(SyncSelection));
         OnPropertyChanged(nameof(SyncSourceFile));
         OnPropertyChanged(nameof(ShowModules));
-        OnPropertyChanged(nameof(ModuleColumnVisible));
       }
     }
   }

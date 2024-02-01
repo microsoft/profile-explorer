@@ -372,6 +372,7 @@ public class ProfileDocumentMarker {
       // Mark if any of the calls are indirect.
       if (!isDirectCall) {
         pair.HasIndirectCalls = true;
+        overlayMap[element] = pair; // Update dictionary, since pair is a value type.
       }
 
       foreach (var target in callsite.SortedTargets) {
