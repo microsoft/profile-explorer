@@ -422,11 +422,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     await HandleNewRemarkSettings(newSettings, false);
   }
 
-  public async Task ReloadSettings() {
+  public async Task ReloadSettings(bool hasProfilingChanges = true) {
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, true);
     TextView.Initialize(settings_, session_);
     SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
-    await UpdateProfilingColumns();
+
+    if (hasProfilingChanges) {
+      await ReloadProfile();
+    }
   }
 
   public async void UnloadSection(IRTextSection section, bool switchingActiveDocument) {
@@ -980,9 +983,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async Task LoadNewSettings(DocumentSettings newSettings, bool force, bool commit) {
     if (force || newSettings.HasChanges(Settings)) {
+      bool hasProfilingChanges = newSettings.HasProfilingChanges(Settings);
       App.Settings.DocumentSettings = newSettings;
       Settings = newSettings;
-      await ReloadSettings();
+      await ReloadSettings(hasProfilingChanges);
     }
 
     if (commit) {

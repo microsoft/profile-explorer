@@ -37,7 +37,11 @@ public class SectionSettings : SettingsBase {
   [ProtoMember(24)] public bool SyncSelection { get; set; }
   [ProtoMember(25)] public bool ShowCallStackPopup { get; set; }
   [ProtoMember(26)] public int CallStackPopupDuration { get; set; }
-
+  [ProtoMember(28)] public bool ShowPerformanceCounterColumns { get; set; }
+  [ProtoMember(29)] public bool ShowPerformanceMetricColumns { get; set; }
+  [ProtoMember(30)] public bool AppendTimeToTotalColumn { get; set; }
+  [ProtoMember(31)] public bool AppendTimeToSelfColumn { get; set; }
+  [ProtoMember(32)] public bool ShowModulePanel { get; set; }
 
   public FunctionNameDemanglingOptions DemanglingOptions {
     get {
@@ -63,7 +67,11 @@ public class SectionSettings : SettingsBase {
     return ShowDemangledNames != other.ShowDemangledNames ||
            DemangleOnlyNames != other.DemangleOnlyNames ||
            DemangleNoReturnType != other.DemangleNoReturnType ||
-           DemangleNoSpecialKeywords != other.DemangleNoSpecialKeywords;
+           DemangleNoSpecialKeywords != other.DemangleNoSpecialKeywords ||
+           ShowPerformanceCounterColumns != other.ShowPerformanceCounterColumns ||
+           ShowPerformanceMetricColumns != other.ShowPerformanceMetricColumns ||
+           AppendTimeToTotalColumn != other.AppendTimeToTotalColumn ||
+           AppendTimeToSelfColumn != other.AppendTimeToSelfColumn;
   }
 
   public override void Reset() {
@@ -82,6 +90,11 @@ public class SectionSettings : SettingsBase {
     DemangleNoReturnType = true;
     SyncSelection = true;
     ShowCallStackPopup = true;
+    ShowModulePanel = true;
+    ShowPerformanceCounterColumns = true;
+    ShowPerformanceMetricColumns = true;
+    AppendTimeToSelfColumn = true;
+    AppendTimeToTotalColumn = true;
     CallStackPopupDuration = DefaultCallStackPopupDuration;
     NewSectionColor = Utils.ColorFromString("#007200");
     MissingSectionColor = Utils.ColorFromString("#BB0025");
@@ -116,6 +129,11 @@ public class SectionSettings : SettingsBase {
            ShowCallStackPopup == settings.ShowCallStackPopup &&
            CallStackPopupDuration == settings.CallStackPopupDuration &&
            SyncSourceFile == settings.SyncSourceFile &&
-           SyncSelection == settings.SyncSelection;
+           SyncSelection == settings.SyncSelection &&
+           ShowPerformanceCounterColumns == settings.ShowPerformanceCounterColumns &&
+           ShowPerformanceMetricColumns == settings.ShowPerformanceMetricColumns &&
+           AppendTimeToTotalColumn == settings.AppendTimeToTotalColumn &&
+           AppendTimeToSelfColumn == settings.AppendTimeToSelfColumn &&
+           ShowModulePanel == settings.ShowModulePanel;
   }
 }

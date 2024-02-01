@@ -237,7 +237,8 @@ public class OptionalColumnStyle : SettingsBase {
            PercentageBarBackColor.Equals(other.PercentageBarBackColor) && TextColor.Equals(other.TextColor) &&
            ShowIcon == other.ShowIcon &&
            PickColorForPercentage == other.PickColorForPercentage && UseBackColor == other.UseBackColor &&
-           Equals(BackColorPalette, other.BackColorPalette) &&
+           //? TODO: Use a string as the name
+           //Equals(BackColorPalette, other.BackColorPalette) &&
            InvertColorPalette == other.InvertColorPalette;
   }
 }

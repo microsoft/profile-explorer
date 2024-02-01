@@ -141,7 +141,7 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private void RegisterDefaultToolPanels() {
+  private void RegisterDefaultToolPanels(bool reloadWorkspace = true) {
     Trace.WriteLine($"Register default tool panels");
     RegisterPanel(SectionPanel, SectionPanelHost);
     RegisterPanel(FlowGraphPanel, FlowGraphPanelHost);
@@ -163,10 +163,12 @@ public partial class MainWindow : Window, ISession {
     RegisterPanel(HelpPanel, HelpPanelHost);
     RenameAllPanels();
 
-    var defaultWs = App.Settings.WorkspaceOptions.GetDefaultWorkspace();
-    SaveDockLayout(defaultWs.FilePath);
-    PopulateWorkspacesCombobox();
-    RestoreDockLayout(defaultWs.FilePath);
+    if (reloadWorkspace) {
+      var defaultWs = App.Settings.WorkspaceOptions.GetDefaultWorkspace();
+      SaveDockLayout(defaultWs.FilePath);
+      PopulateWorkspacesCombobox();
+      RestoreDockLayout(defaultWs.FilePath);
+    }
   }
 
   private void NotifyPanelsOfElementEvent(HandledEventKind eventKind, IRDocument document,
@@ -1328,7 +1330,7 @@ public partial class MainWindow : Window, ISession {
 
   public async Task ShowPanel(ToolPanelKind panelKind) {
     // Panel hosts must be found at runtime because of deserialization.
-    RegisterDefaultToolPanels();
+    RegisterDefaultToolPanels(false);
     var panelHost = FindPanelHostForKind(panelKind);
 
     if (panelHost != null) {

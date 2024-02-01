@@ -93,6 +93,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
     if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is { HasFunction: true }) {
       settings_.AddModuleColor(GraphViewer.SelectedNode.ModuleName, e.SelectedColor);
+      settings_.UseModuleColors = true;
       SettingsUpdated(settings_);
     }
   });
