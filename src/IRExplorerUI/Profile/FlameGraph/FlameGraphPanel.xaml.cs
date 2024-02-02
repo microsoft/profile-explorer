@@ -460,11 +460,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     FrameworkElement relativeControl = settings_.ShowDetailsPanel ? NodeDetailsPanel : GraphHost;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<FlameGraphOptionsPanel, FlameGraphSettings>(
       settings_.Clone(), relativeControl, Session,
-      (newSettings, commit) => {
+      async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
           Settings = newSettings;
-          //? TODO: Pick one of SettingsUpdated and assigning Settings
-          GraphHost.SettingsUpdated(newSettings);
           NodeDetailsPanel.Settings = App.Settings.CallTreeNodeSettings;
           App.Settings.FlameGraphSettings = newSettings;
 
@@ -491,6 +489,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private void ReloadSettings() {
     GraphHost.SettingsUpdated(settings_);
+  }
+
+  public override async Task OnReloadSettings() {
+    Settings = App.Settings.FlameGraphSettings;
   }
 
   private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {

@@ -41,7 +41,6 @@
                     ToolTip="{Binding ToolTip}" />
 
                 <Rectangle
-                    Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=50.0}"
                     Height="Auto"
                     Margin="4,0,2,0"
                     HorizontalAlignment="Left"
@@ -50,7 +49,14 @@
                     Stroke="{Binding PercentageBarBorderBrush}"
                     StrokeThickness="{Binding PercentageBarBorderThickness}"
                     ToolTip="{Binding ToolTip}"
-                    Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Rectangle.Width>
+                        <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
+                            <Binding Path="ValuePercentage" />
+                            <Binding FallbackValue="50.0" Path="PercentageBarMaxWidth" />
+                        </MultiBinding>
+                    </Rectangle.Width>
+                </Rectangle>
             </StackPanel>
         </Border>
     </DataTemplate>
@@ -75,7 +81,6 @@
                     Text="{Binding PrefixText}"
                     ToolTip="{Binding ToolTip}" />
                 <Rectangle
-                    Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=50.0}"
                     Height="Auto"
                     Margin="4,0,2,0"
                     HorizontalAlignment="Left"
@@ -84,7 +89,14 @@
                     Stroke="{Binding PercentageBarBorderBrush}"
                     StrokeThickness="{Binding PercentageBarBorderThickness}"
                     ToolTip="{Binding ToolTip}"
-                    Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Rectangle.Width>
+                        <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
+                            <Binding Path="ValuePercentage" />
+                            <Binding FallbackValue="50.0" Path="PercentageBarMaxWidth" />
+                        </MultiBinding>
+                    </Rectangle.Width>
+                </Rectangle>
                 <TextBlock
                     Margin="4,0,2,0"
                     VerticalAlignment="Center"
@@ -442,11 +454,11 @@
                                 RecognizesAccessKey="True"
                                 SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
                         </Border>
-                        <!-- <Thumb -->
-                        <!--     x:Name="PART_HeaderGripper" -->
-                        <!--     Margin="0,0,-9,0" -->
-                        <!--     HorizontalAlignment="Right" -->
-                        <!--     Style="{StaticResource GridViewColumnHeaderGripper}" /> -->
+                        <!--  <Thumb  -->
+                        <!--  x:Name="PART_HeaderGripper"  -->
+                        <!--  Margin="0,0,-9,0"  -->
+                        <!--  HorizontalAlignment="Right"  -->
+                        <!--  Style="{StaticResource GridViewColumnHeaderGripper}" />  -->
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

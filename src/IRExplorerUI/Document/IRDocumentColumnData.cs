@@ -119,6 +119,7 @@ public sealed class ElementColumnValue : BindableObject {
   private double textSize_;
   private FontFamily textFont_;
   private bool canShowPercentageBar_;
+  private double percentageBarMaxWidth_;
 
   public ElementColumnValue(string text, long value = 0, double valueValuePercentage = 0.0,
                             int valueOrder = int.MaxValue, string tooltip = null) {
@@ -205,6 +206,11 @@ public sealed class ElementColumnValue : BindableObject {
   public Brush PercentageBarBorderBrush {
     get => percentageBarBorderBrush_;
     set => SetAndNotify(ref percentageBarBorderBrush_, value);
+  }
+
+  public double PercentageBarMaxWidth {
+    get => percentageBarMaxWidth_;
+    set => SetAndNotify(ref percentageBarMaxWidth_, value);
   }
 
   public FontWeight TextWeight {

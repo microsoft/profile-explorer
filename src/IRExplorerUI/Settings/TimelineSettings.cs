@@ -12,8 +12,9 @@ public class TimelineSettings : SettingsBase {
   }
 
   //? TODO: Options for
-  //? - grouping by thread na
+  //? - grouping by thread name
   //? - custom colors for thread names
+  //? - auto-pick colors by name + select palette
   //? - show backtrace preview on hover
   //?    - max depth
   //?    - hover time

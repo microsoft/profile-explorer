@@ -17,7 +17,6 @@ public partial class LightDocumentOptionsPanel : OptionsPanelBase {
   public LightDocumentOptionsPanel() {
     InitializeComponent();
     PreviewMouseUp += DocumentOptionsPanel_PreviewMouseUp;
-    PreviewKeyUp += DocumentOptionsPanel_PreviewKeyUp;
   }
 
   public bool SyntaxFileChanged { get; set; }
@@ -33,10 +32,6 @@ public partial class LightDocumentOptionsPanel : OptionsPanelBase {
   }
 
   public override void PanelResetting() {
-  }
-
-  private void DocumentOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
-    NotifySettingsChanged();
   }
 
   private void DocumentOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {

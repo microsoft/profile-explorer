@@ -53,14 +53,12 @@
                 Orientation="Horizontal">
                 <TextBlock
                     VerticalAlignment="Center"
-                    IsEnabled="False"
                     Text="Max width (px)"
                     ToolTip="Maximum width of the percentage bar in the column" />
                 <xctk:IntegerUpDown
                     Width="64"
                     Margin="8,0,0,0"
                     Increment="1"
-                    IsEnabled="False"
                     Maximum="100"
                     Minimum="10"
                     ParsingNumberStyle="Integer"
@@ -75,10 +73,27 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                     Click="MaxWidthButton_Click"
                     Content="Default"
-                    IsEnabled="False"
                     ToolTip="Reset value to default weight cutoff" />
             </StackPanel>
 
+            <CheckBox
+                Margin="0,4,0,2"
+                Content="Append time format suffix"
+                IsChecked="{Binding AppendValueUnitSuffix, Mode=TwoWay}"
+                ToolTip="Append the time format suffix (ms) to each value" />
+
+
+            <StackPanel Margin="0,2,0,2" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="Time format" />
+                <ComboBox
+                    x:Name="ValueUnitComboBox"
+                    Width="151"
+                    Height="20"
+                    Margin="8,0,0,0"
+                    DisplayMemberPath="Value"
+                    SelectedValue="{Binding ValueUnit, Mode=TwoWay}"
+                    SelectedValuePath="Key" />
+            </StackPanel>
             <StackPanel Margin="0,2,0,0" Orientation="Horizontal">
                 <TextBlock
                     VerticalAlignment="Center"
@@ -104,23 +119,6 @@
                     Content="Default"
                     ToolTip="Reset value to default weight cutoff" />
             </StackPanel>
-            <StackPanel Margin="0,4,0,2" Orientation="Horizontal">
-                <TextBlock VerticalAlignment="Center" Text="Time format" />
-                <ComboBox
-                    x:Name="ValueUnitComboBox"
-                    Width="151"
-                    Height="20"
-                    Margin="8,0,0,0"
-                    DisplayMemberPath="Value"
-                    SelectedValue="{Binding ValueUnit, Mode=TwoWay}"
-                    SelectedValuePath="Key" />
-            </StackPanel>
-            <CheckBox
-                Margin="0,2,0,2"
-                Content="Append time format suffix"
-                IsChecked="{Binding AppendValueUnitSuffix, Mode=TwoWay}"
-                ToolTip="Append the time format suffix (ms) to each value" />
-
             <Separator Margin="0,4,0,4" />
 
             <TextBlock FontWeight="Medium" Text="Colors" />

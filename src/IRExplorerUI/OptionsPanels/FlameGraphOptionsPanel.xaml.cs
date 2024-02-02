@@ -67,10 +67,6 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     App.Settings.PreviewPopupSettings.Reset();
   }
 
-  private void SectionOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
-    NotifySettingsChanged();
-  }
-
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
     NotifySettingsChanged();
   }

@@ -31,13 +31,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private ReadOnlyMemory<char> sourceText_;
   private bool hasProfileInfo_;
   private Brush selectedLineBrush_;
-  private DocumentSettings settings_;
+  private TextViewSettingsBase settings_;
 
   public ProfileIRDocument() {
     InitializeComponent();
     UpdateDocumentStyle();
     DataContext = this;
-    InitializeDocument();
     SetupEvents();
   }
 
@@ -111,8 +110,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     get => selectedLineBrush_;
     set => SetField(ref selectedLineBrush_, value);
   }
-  public ProfileDocumentMarkerSettings ProfileMarkerSettings { get; internal set; }
-  public OptionalColumnSettings ColumnSettings { get; internal set; }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -175,7 +172,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
     var profileMarker =
       new ProfileDocumentMarker(funcProfile, Session.ProfileData,
-      ProfileMarkerSettings, ColumnSettings,
+      settings_.ProfileMarkerSettings, settings_.ColumnSettings,
       Session.CompilerInfo);
     var processingResult = profileMarker.PrepareSourceLineProfile(funcProfile, TextView, debugInfo);
 
@@ -239,7 +236,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
       ProfileColumns.UseSmallerFontSize = UseSmallerFontSize;
       ProfileColumns.Settings = settings_;
-      ProfileColumns.ColumnSettings = ColumnSettings;
+      ProfileColumns.ColumnSettings = settings_.ColumnSettings;
 
       await ProfileColumns.Display(sourceColumnData_, TextView);
       profileElements_ = TextView.ProfileProcessingResult.SampledElements;
@@ -542,16 +539,17 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public async Task ReloadSettings() {
-    InitializeDocument();
+    InitializeDocument(settings_);
     await UpdateProfilingColumns();
   }
 
-  private void InitializeDocument() {
-    settings_ = App.Settings.DocumentSettings;
+  public void InitializeDocument(TextViewSettingsBase settings) {
+    settings_ = settings;
+    ProfileViewMenu.DataContext = settings_.ColumnSettings;
     TextView.FontFamily = new FontFamily(settings_.FontName);
 
     if (UseSmallerFontSize) {
-      TextView.FontSize = settings_.FontSize - 1;
+      TextView.FontSize = settings_.FontSize - 2;
     }
     else {
       TextView.FontSize = settings_.FontSize;

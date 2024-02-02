@@ -21,7 +21,6 @@ public partial class RemarkOptionsPanel : OptionsPanelBase {
   public RemarkOptionsPanel() {
     InitializeComponent();
     PreviewMouseUp += RemarkOptionsPanel_PreviewMouseUp;
-    PreviewKeyUp += RemarkOptionsPanel_PreviewKeyUp;
 
     kindCheckboxes_ = new List<CheckBox>();
     kindCheckboxes_.Add(OptimizationCheckbox);
@@ -38,10 +37,6 @@ public partial class RemarkOptionsPanel : OptionsPanelBase {
 
   private void SetCheckboxesState(List<CheckBox> list, bool state) {
     list.ForEach(item => item.IsChecked = state);
-  }
-
-  private void RemarkOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
-    NotifySettingsChanged();
   }
 
   private void RemarkOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {

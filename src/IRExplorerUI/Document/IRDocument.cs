@@ -2700,6 +2700,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void SetupBlockHighlighter() {
+    if (!settings_.ShowBlockSeparatorLine) {
+      return;
+    }
+
     // Setup highlighting of block background.
     blockHighlighter_.Clear();
 

@@ -135,7 +135,7 @@
                                         Text="Number"
                                         ToolTip="Number of unique instances of the selected function" />
                                     <TextBlock
-                                        Margin="4,0,0,0"
+                                        Margin="8,0,0,0"
                                         FontWeight="Medium"
                                         Text="{Binding FunctionInstancesCount}" />
                                 </StackPanel>

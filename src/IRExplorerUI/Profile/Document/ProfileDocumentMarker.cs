@@ -281,12 +281,12 @@ public class ProfileDocumentMarker {
       value.ShowPercentageBar = value.CanShowPercentageBar && // Disabled per value
                                 settings.ShowPercentageBar(column, value.ValueOrder, value.ValuePercentage);
       value.PercentageBarBackColor = settings.PickPercentageBarColor(column);
+      value.PercentageBarMaxWidth = settings.MaxPercentageBarWidth;
     }
 
     // Mark the elements themselves with a color.
-    //? TODO: Check settings from UI
-    //? Needs a tag so later a RemoveMarkedElements(tag) can be done
     if (column.IsMainColumn && document != null) {
+      //? TODO: This will also remove non-profiling markers the user set, fix.
       document.ClearInstructionMarkers();
 
       if (settings.MarkElements) {
@@ -401,7 +401,7 @@ public class ProfileDocumentMarker {
       overlay.ShowBackgroundOnMouseOverOnly = true;
       overlay.ShowBorderOnMouseOverOnly = true;
       overlay.AlignmentX = HorizontalAlignment.Left;
-      overlay.MarginY = 1;
+      overlay.MarginY = 2;
 
       if (element is InstructionIR instr) {
         // Place before the call opcode.

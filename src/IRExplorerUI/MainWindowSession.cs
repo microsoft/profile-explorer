@@ -428,12 +428,10 @@ public partial class MainWindow : Window, ISession {
     Dispatcher.BeginInvoke(() => {
       if (visible && !documentLoadProgressVisible_) {
         Mouse.OverrideCursor = Cursors.AppStarting;
-        Mouse.UpdateCursor();
         ShowProgressBar(title);
       }
       else if (!visible) {
-        Mouse.OverrideCursor = Cursors.Arrow;
-        Mouse.UpdateCursor();
+        Mouse.OverrideCursor = null;
         HideProgressBar();
         return;
       }
@@ -1473,7 +1471,7 @@ public partial class MainWindow : Window, ISession {
 
     Utils.DisableControl(DockManager, 0.85);
     Utils.DisableControl(StartPage, 0.85);
-    Mouse.OverrideCursor = Cursors.Wait;
+    Mouse.OverrideCursor = Cursors.AppStarting;
     SetApplicationProgress(true, double.NaN, "Loading session");
   }
 
@@ -1488,7 +1486,7 @@ public partial class MainWindow : Window, ISession {
   private void StartUIUpdate() {
     Utils.DisableControl(DockManager, 0.85);
     Utils.DisableControl(StartPage, 0.85);
-    Mouse.OverrideCursor = Cursors.Wait;
+    Mouse.OverrideCursor = Cursors.AppStarting;
   }
 
   private void StopUIUpdate() {

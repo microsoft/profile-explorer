@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using IRExplorerUI.Controls;
@@ -37,7 +38,7 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
   }
 
   public static OptionsPanelHostWindow Create<T, S>(SettingsBase settings, FrameworkElement relativeControl, ISession session,
-                                                    Func<S, bool, S> newSettingsHandler,
+                                                    Func<S, bool, Task<S>> newSettingsHandler,
                                                     Action panelClosedHandler,
                                                     Point positionAdjustment = new Point())
     where T : OptionsPanelBase, new()
@@ -51,17 +52,17 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
     position .Offset(positionAdjustment.X, positionAdjustment.Y);
     var panelHost = new OptionsPanelHostWindow(panel, position, width, height, relativeControl,
                                                settings, session);
-    panelHost.SettingsChanged += (sender, args) => {
-      var result = newSettingsHandler((S)panelHost.Settings, false);
+    panelHost.SettingsChanged += async (sender, args) => {
+      var result = await newSettingsHandler((S)panelHost.Settings, false);
 
       if (result != null) {
         panel.Settings = result;
       }
     };
-    panelHost.PanelReset += (sender, args) => {
+    panelHost.PanelReset += async (sender, args) => {
       var newSettings =  new S();
       panelHost.Settings = newSettings;
-      var result = newSettingsHandler(newSettings, true);
+      var result = await newSettingsHandler(newSettings, true);
 
       if (result != null) {
         panel.Settings = result;

@@ -89,6 +89,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     set {
       if (value != settings_) {
         settings_ = value;
+        UpdateHoverPreviewPopups();
         OnPropertyChanged();
       }
     }
@@ -326,8 +327,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void UpdateHoverPreviewPopups() {
-    Trace.WriteLine($"Update hover {settings_.ShowCallStackPopup}");
-
     SetupActivityHoverPreview(ActivityView);
 
     foreach (var threadView in threadActivityViews_) {
@@ -825,22 +824,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
-  private void CancelWidthAnimation() {
-    if (widthAnimation_ != null) {
-      widthAnimation_.BeginTime = null;
-      //BeginAnimation(FlameGraphWidthProperty, widthAnimation_);
-      widthAnimation_ = null;
-    }
-  }
-
-  private void CancelZoomAnimation() {
-    if (zoomAnimation_ != null) {
-      zoomAnimation_.BeginTime = null;
-      //BeginAnimation(FlameGraphWidthProperty, zoomAnimation_);
-      zoomAnimation_ = null;
-    }
-  }
-
   private async void ExecuteGraphResetWidth(object sender, ExecutedRoutedEventArgs e) {
     ActivityScrollBar.ScrollToHorizontalOffset(0);
     SetMaxWidth(ActivityViewAreaWidth);
@@ -1046,11 +1029,10 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     FrameworkElement relativeControl = ShowNodePanel ? NodeDetailsPanel : TimelineHost;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<TimelineOptionsPanel, TimelineSettings>(
       settings_.Clone(), relativeControl, Session,
-      (newSettings, commit) => {
+      async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
-          settings_ = newSettings;
+          Settings = newSettings;
           App.Settings.TimelineSettings = newSettings;
-          UpdateHoverPreviewPopups();
 
           if (commit) {
             App.SaveApplicationSettings();
@@ -1062,5 +1044,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         return null;
       },
       () => optionsPanelWindow_ = null);
+  }
+
+  public override async Task OnReloadSettings() {
+    Settings = App.Settings.TimelineSettings;
   }
 }
