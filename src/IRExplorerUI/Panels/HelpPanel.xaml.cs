@@ -152,10 +152,17 @@ public partial class HelpPanel : ToolPanelControl {
 
     // Place cache files in the settings directory.
     var webView2Environment = await CoreWebView2Environment.CreateAsync(null, App.GetSettingsDirectoryPath());
-    await Browser.EnsureCoreWebView2Async(webView2Environment);
 
-    if (Browser.CoreWebView2 == null) {
-      Trace.WriteLine("Failed to initialize WebView2 control in HelpPanel.");
+    try {
+      await Browser.EnsureCoreWebView2Async(webView2Environment);
+
+      if (Browser.CoreWebView2 == null) {
+        Trace.WriteLine("Failed to initialize WebView2 control in HelpPanel.");
+        return;
+      }
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to initialize WebView2 control in HelpPanel: {ex.Message}");
       return;
     }
 

@@ -401,7 +401,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       }
       catch (Exception ex) {
         Trace.TraceError($"Failed to locate source file for {debugFilePath_}: {ex.Message}");
-        return SourceFileDebugInfo.Unknown;
       }
     }
 
