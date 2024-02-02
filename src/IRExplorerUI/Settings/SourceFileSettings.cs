@@ -65,4 +65,18 @@ public class SourceFileFinderSettings : SettingsBase {
     SourceMappings ??= new();
     DisabledSourceMappings ??= new();
   }
+  protected bool Equals(SourceFileFinderSettings other) {
+    return SourceMappings.AreEqual(other.SourceMappings) &&
+           DisabledSourceMappings.AreEqual(other.DisabledSourceMappings);
+  }
+
+  public override bool Equals(object obj) {
+    if (ReferenceEquals(null, obj))
+      return false;
+    if (ReferenceEquals(this, obj))
+      return true;
+    if (obj.GetType() != this.GetType())
+      return false;
+    return Equals((SourceFileFinderSettings)obj);
+  }
 }

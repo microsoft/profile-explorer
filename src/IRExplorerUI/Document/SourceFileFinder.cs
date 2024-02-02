@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Enumeration;
 using System.Threading.Tasks;
@@ -84,7 +85,8 @@ public class SourceFileFinder {
   private bool IsDisabledSourceFilePath(string filePath) {
     foreach (var path in disabledSourceMappings_) {
       // Do a case-insensitive wildcard (*) match.
-      if (FileSystemName.MatchesSimpleExpression(path, filePath)) {
+      if (path.Equals(filePath, StringComparison.OrdinalIgnoreCase) ||
+          FileSystemName.MatchesSimpleExpression(path, filePath)) {
         return true;
       }
     }
