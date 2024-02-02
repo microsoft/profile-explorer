@@ -87,11 +87,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public TimelineSettings Settings {
     get => settings_;
     set {
-      if (value != settings_) {
-        settings_ = value;
-        UpdateHoverPreviewPopups();
-        OnPropertyChanged();
-      }
+      settings_ = value;
+      UpdateHoverPreviewPopups();
+      OnPropertyChanged();
     }
   }
 

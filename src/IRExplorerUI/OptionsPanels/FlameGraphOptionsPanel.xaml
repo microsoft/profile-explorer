@@ -217,6 +217,7 @@
                                                     Height="20"
                                                     HorizontalAlignment="Left"
                                                     VerticalAlignment="Center"
+                                                    VerticalContentAlignment="Center"
                                                     BorderThickness="0"
                                                     PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
                                                     Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
