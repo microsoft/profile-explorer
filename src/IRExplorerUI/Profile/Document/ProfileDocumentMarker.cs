@@ -384,6 +384,7 @@ public class ProfileDocumentMarker {
     // Add the overlays to the document.
     var indirectIcon = IconDrawing.FromIconResource("ExecuteIconColor");
     var directIcon = IconDrawing.FromIconResource("ExecuteIcon");
+    document.SuspendUpdate();
 
     foreach (var (element, pair) in overlayMap) {
       var color = App.Settings.DocumentSettings.BackgroundColor;
@@ -413,6 +414,8 @@ public class ProfileDocumentMarker {
       // Show a popup on hover with the list of call targets.
       SetupCallSiteHoverPreview(overlay, pair.List, document);
     }
+
+    document.ResumeUpdate();
   }
 
   private void SetupCallSiteHoverPreview(IconElementOverlay overlay, List<ProfileCallTreeNode> list,
@@ -420,7 +423,7 @@ public class ProfileDocumentMarker {
     // The overlay hover preview is somewhat of a hack,
     // since the hover event is fired over the entire document,
     // but the popup should be shown only if mouse is over the overlay.
-    //? TODO: Find a way to integrate hover login into overaly.OnHover
+    //? TODO: Find a way to integrate hover login into overlay.OnHover
     var view = document as UIElement;
     CallTreeNodePopup popup = null;
     IElementOverlay hoveredOverlay = null;

@@ -39,7 +39,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   private IElementOverlay hoveredOverlay_;
   private IElementOverlay selectedOverlay_;
   private ToolTip hoverTooltip_;
-
+  private bool updateSuspended_;
   public OverlayRenderer(ElementHighlighter highlighter) {
     overlaySegments_ = new TextSegmentCollection<IROverlaySegment>();
     overlaySegmentMap_ = new Dictionary<IRElement, IROverlaySegment>();
@@ -216,6 +216,10 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   }
 
   public void Draw(TextView textView, DrawingContext drawingContext) {
+    if (updateSuspended_) {
+      return;
+    }
+    
     TextView = textView;
     Width = textView.RenderSize.Width;
     Height = textView.RenderSize.Height;
@@ -360,6 +364,13 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     if (hoverSegment != null) {
       ShowTooltip(hoverSegment.Item1);
     }
+  }
+  public void SuspendUpdate() {
+    updateSuspended_ = true;
+  }
+
+  public void ResumeUpdate() {
+    updateSuspended_ = false;
   }
 
   private Rect GetRemarkSegmentRect(IRElement element, TextView textView) {

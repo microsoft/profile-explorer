@@ -1182,10 +1182,12 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public void SuspendUpdate() {
     updateSuspended_ = true;
+    overlayRenderer_.SuspendUpdate();
   }
 
   public void ResumeUpdate() {
     updateSuspended_ = false;
+    overlayRenderer_.ResumeUpdate();
     UpdateHighlighting();
   }
 
