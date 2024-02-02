@@ -18,7 +18,7 @@ using IRExplorerUI.Profile;
 namespace IRExplorerUI.Document;
 
 public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
-  private DocumentSettings settings_;
+  private TextViewSettingsBase settings_;
   private OptionalColumnSettings columnSettings_;
   private double previousVerticalOffset_;
   private List<ElementRowValue> profileDataRows_;
@@ -60,7 +60,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     }
   }
 
-  public DocumentSettings Settings {
+  public TextViewSettingsBase Settings {
     get => settings_;
     set => settings_ = value;
   }
@@ -257,7 +257,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     var column = (OptionalColumn)columnHeader.Tag;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<ColumnOptionsPanel, OptionalColumnStyle>(
       column.Style.Clone(), columnHeader, null,
-      (newSettings, commit) => {
+      async (newSettings, commit) => {
         if (!newSettings.Equals(column.Style)) {
           column.Style = newSettings;
           ColumnSettingsChanged?.Invoke(this, column);
@@ -356,8 +356,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     var maxColumnExtraSize = new Dictionary<OptionalColumn, double>();
     var font = new FontFamily(settings_.FontName);
     double fontSize = settings_.FontSize;
-    const double maxBarWidth = 50; //? TODO: Hardcoded in Styles.xaml TimePercentageColumnValueTemplate
-    const double columnMargin = 4; //?   use UI option from profileMarker settings
+    double maxBarWidth = settings_.ProfileMarkerSettings.MaxPercentageBarWidth;
+    const double columnMargin = 4;
 
     foreach (var rowValues in profileDataRows_) {
       foreach (var columnValue in rowValues.ColumnValues) {
@@ -441,7 +441,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     ColumnsList.Background = settings_.BackgroundColor.AsBrush();
     SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
     ColumnsList.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
-    ColumnsListItemHeight = Utils.MeasureString("0123456789ABCFEFGH", settings_.FontName, settings_.FontSize).Height;
+    ColumnsListItemHeight = Utils.MeasureString("0123456789ABCXYZ!?|()", settings_.FontName, settings_.FontSize).Height;
   }
 
   private void ColumnHeaderOnClick(object sender, RoutedEventArgs e) {

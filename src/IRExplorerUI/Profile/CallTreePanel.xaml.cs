@@ -157,13 +157,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     SetupEvents();
   }
 
-  public CallTreePanel(ISession session) : this() {
-    Session = session;
-  }
-
   public CallTreeSettings Settings {
     get => settings_;
-    set => SetField(ref settings_, value);
+    set {
+      settings_ = value;
+      SetupPreviewPopup();
+      OnPropertyChanged();
+    }
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
@@ -954,10 +954,9 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     FrameworkElement relativeControl = CallTreeList;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<CallTreeOptionsPanel, CallTreeSettings>(
       settings_.Clone(), relativeControl, Session,
-      (newSettings, commit) => {
+      async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
-          settings_ = newSettings;
-          SetupPreviewPopup();
+          Settings = newSettings;
 
           if (IsCallerCalleePanel) {
             App.Settings.CallerCalleeSettings = newSettings;
@@ -965,6 +964,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
           else {
             App.Settings.CallTreeSettings = newSettings;
           }
+
+          await UpdateCallTree();
 
           if (commit) {
             App.SaveApplicationSettings();
@@ -977,7 +978,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       () => optionsPanelWindow_ = null);
   }
 
-    #region IToolPanel
+  public override async Task OnReloadSettings() {
+    Settings = PanelKind == ToolPanelKind.CallTree ?
+      App.Settings.CallTreeSettings :
+      App.Settings.CallerCalleeSettings;
+  }
+
+  #region IToolPanel
 
   public override ToolPanelKind PanelKind => ToolPanelKind.CallTree;
   public override bool SavesStateToFile => false;

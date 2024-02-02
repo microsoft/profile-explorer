@@ -30,7 +30,6 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
   public DocumentOptionsPanel() {
     InitializeComponent();
     PreviewMouseUp += DocumentOptionsPanel_PreviewMouseUp;
-    PreviewKeyUp += DocumentOptionsPanel_PreviewKeyUp;
   }
 
   public bool SyntaxFileChanged { get; set; }
@@ -78,10 +77,6 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
     IRSyntaxCombobox.ItemsSource = new CollectionView(syntaxFiles_);
     IRSyntaxCombobox.SelectedItem = selectedSyntaxFile_;
     IRSyntaxCombobox.SelectionChanged += IRSyntaxCombobox_SelectionChanged;
-  }
-
-  private void DocumentOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
-    NotifySettingsChanged();
   }
 
   private void DocumentOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {

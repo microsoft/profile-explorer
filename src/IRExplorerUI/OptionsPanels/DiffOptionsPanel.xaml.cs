@@ -18,16 +18,7 @@ public partial class DiffOptionsPanel : OptionsPanelBase {
   public DiffOptionsPanel() {
     InitializeComponent();
     PreviewMouseUp += DiffOptionsPanel_PreviewMouseUp;
-    PreviewKeyUp += DiffOptionsPanel_PreviewKeyUp;
     ExternalAppPathTextbox.ExtensionFilter = "*.exe";
-  }
-
-  private void DiffOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
-    if (ExternalAppPathTextbox.IsKeyboardFocusWithin) {
-      return;
-    }
-
-    NotifySettingsChanged();
   }
 
   private void DiffOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {

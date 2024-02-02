@@ -164,7 +164,6 @@ public class OptionalColumn : ICloneable {
       CellTemplate = column.IsTemplateBinding ?
         CreateGridColumnTemplateBindingTemplate(column.BindingName, column.CellTemplateName) :
         CreateGridColumnBindingTemplate(column.BindingName, converter)
-      //HeaderContainerStyle = (Style)Application.Current.FindResource("ListViewHeaderStyle")
     };
 
     if (index != -1) {

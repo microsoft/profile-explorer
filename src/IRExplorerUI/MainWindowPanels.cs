@@ -392,6 +392,11 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async Task SetActiveDocument(DocumentHostInfo newActivePanel, bool updateUI = true) {
+    // Sometimes this is triggered when closing the app after the session was closed.
+    if (!IsSessionStarted) {
+      return;
+    }
+
     activeDocumentPanel_ = newActivePanel.HostParent;
 
     foreach (var item in sessionState_.DocumentHosts) {

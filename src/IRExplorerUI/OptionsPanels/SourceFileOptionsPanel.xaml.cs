@@ -21,7 +21,6 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
   public SourceFileOptionsPanel() {
     InitializeComponent();
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
-    PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
   }
   
 
@@ -37,10 +36,6 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
     settings_ = (SourceFileSettings)newSettings;
     ProfilingOptionsPanel.DataContext = null;
     ProfilingOptionsPanel.DataContext = settings_.ProfileMarkerSettings;
-  }
-
-  private void SectionOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
-    NotifySettingsChanged();
   }
 
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {

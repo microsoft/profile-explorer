@@ -12,7 +12,7 @@ namespace IRExplorerUI.Profile;
 public class FlameGraphRenderer {
   internal const double DefaultTextSize = 12;
   internal const double DefaultNodeHeight = 18;
-  internal const double CompactTextSize = 10;
+  internal const double CompactTextSize = 11;
   internal const double CompactNodeHeight = 15;
   private FlameGraphSettings settings_;
   private FlameGraph flameGraph_;
@@ -82,11 +82,16 @@ public class FlameGraphRenderer {
 
     if (settings_.UseCompactMode) {
       nodeHeight_ = CompactNodeHeight;
-      fontSize_ = CompactNodeHeight;
+      fontSize_ = CompactTextSize;
     }
     else {
       nodeHeight_ = DefaultNodeHeight;
       fontSize_ = DefaultTextSize;
+    }
+
+    if (graphVisual_ != null) {
+      glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(graphVisual_).PixelsPerDip);
+      nameGlyphs_ = new GlyphRunCache(nameFont_, fontSize_, VisualTreeHelper.GetDpi(graphVisual_).PixelsPerDip);
     }
   }
 

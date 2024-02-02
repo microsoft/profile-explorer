@@ -76,6 +76,18 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
         ProfileTextView.TextView.FontSize = settings_.FontSize;
         ProfileTextView.TextView.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
         ProfileTextView.TextView.Foreground = ColorBrushes.GetBrush(settings_.TextColor);
+        ProfileTextView.InitializeDocument(settings_);
+      }
+      else {
+        // Patch the settings with the document settings.
+        //? TODO: Ideally IRDocument would also accept TextViewSettingsBase,
+        //? and activate extra features only for DocumentSettings.
+        var clone = settings_.Clone();
+        clone.FontName = App.Settings.DocumentSettings.FontName;
+        clone.FontSize = App.Settings.DocumentSettings.FontSize;
+        clone.BackgroundColor = App.Settings.DocumentSettings.BackgroundColor;
+        clone.TextColor = App.Settings.DocumentSettings.TextColor;
+        ProfileTextView.InitializeDocument(clone);
       }
     }
   }
@@ -195,11 +207,11 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     FrameworkElement relativeControl = ProfileTextView;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<SourceFileOptionsPanel, SourceFileSettings>(
       settings_.Clone(), relativeControl, Session,
-      (newSettings, commit) => {
+      async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
-          App.Settings.SourceFileSettings = newSettings;
           Settings = newSettings;
           ReloadSourceFile();
+          App.Settings.SourceFileSettings = newSettings;
 
           if (commit) {
             App.SaveApplicationSettings();
@@ -218,8 +230,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public async Task LoadSourceFile(IRTextSection section) {
     section_ = section;
-    ProfileTextView.ProfileMarkerSettings = settings_.ProfileMarkerSettings;
-    ProfileTextView.ColumnSettings = settings_.ColumnSettings;
 
     if (await LoadSourceFileForFunction(section_.ParentFunction)) {
       await JumpToFunctionStart();
@@ -386,6 +396,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   public override async Task OnReloadSettings() {
-    await ProfileTextView.ReloadSettings();
+    Settings = App.Settings.SourceFileSettings;
   }
 }

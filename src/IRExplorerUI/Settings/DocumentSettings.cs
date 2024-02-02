@@ -8,46 +8,32 @@ using ProtoBuf;
 namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
-public class DocumentSettings : SettingsBase {
+public class DocumentSettings : TextViewSettingsBase {
   public DocumentSettings() {
     Reset();
   }
 
-  [ProtoMember(1)] public bool ShowBlockSeparatorLine { get; set; }
-  [ProtoMember(2)] public string FontName { get; set; }
-  [ProtoMember(3)] public double FontSize { get; set; }
-  [ProtoMember(4)] public bool HighlightCurrentLine { get; set; }
-  [ProtoMember(5)] public bool ShowBlockFolding { get; set; }
-  [ProtoMember(6)] public bool HighlightSourceDefinition { get; set; }
-  [ProtoMember(7)] public bool HighlightDestinationUses { get; set; }
-  [ProtoMember(8)] public bool HighlightInstructionOperands { get; set; }
-  [ProtoMember(9)] public bool ShowInfoOnHover { get; set; }
-  [ProtoMember(10)] public bool ShowInfoOnHoverWithModifier { get; set; }
-  [ProtoMember(11)] public bool ShowPreviewPopup { get; set; }
-  [ProtoMember(13)] public Color BackgroundColor { get; set; }
-  [ProtoMember(14)] public Color AlternateBackgroundColor { get; set; }
-  [ProtoMember(15)] public Color MarginBackgroundColor { get; set; }
-  [ProtoMember(16)] public Color TextColor { get; set; }
-  [ProtoMember(17)] public Color BlockSeparatorColor { get; set; }
-  [ProtoMember(18)] public Color SelectedValueColor { get; set; }
-  [ProtoMember(19)] public Color DefinitionValueColor { get; set; }
-  [ProtoMember(20)] public Color UseValueColor { get; set; }
-  [ProtoMember(21)] public Color BorderColor { get; set; }
-  [ProtoMember(23)] public string SyntaxHighlightingName { get; set; }
-  [ProtoMember(24)] public int DefaultExpressionsLevel { get; set; }
-  [ProtoMember(25)] public bool MarkMultipleDefinitionExpressions { get; set; }
-  [ProtoMember(26)] public bool FilterSourceDefinitions { get; set; }
-  [ProtoMember(27)] public bool FilterDestinationUses { get; set; }
-  [ProtoMember(28)] public ProfileDocumentMarkerSettings ProfileMarkerSettings { get; set; }
-  [ProtoMember(29)] public SourceDocumentMarkerSettings SourceMarkerSettings { get; set; }
-  [ProtoMember(30)] public OptionalColumnSettings ColumnSettings { get; set; }
-
+  [ProtoMember(2)] public bool HighlightCurrentLine { get; set; }
+  [ProtoMember(3)] public bool ShowBlockFolding { get; set; }
+  [ProtoMember(4)] public bool HighlightSourceDefinition { get; set; }
+  [ProtoMember(5)] public bool HighlightDestinationUses { get; set; }
+  [ProtoMember(6)] public bool HighlightInstructionOperands { get; set; }
+  [ProtoMember(7)] public bool ShowInfoOnHover { get; set; }
+  [ProtoMember(8)] public bool ShowInfoOnHoverWithModifier { get; set; }
+  [ProtoMember(9)] public bool ShowPreviewPopup { get; set; }
+  [ProtoMember(13)] public Color DefinitionValueColor { get; set; }
+  [ProtoMember(14)] public Color UseValueColor { get; set; }
+  [ProtoMember(15)] public Color BorderColor { get; set; }
+  [ProtoMember(16)] public string SyntaxHighlightingName { get; set; }
+  [ProtoMember(17)] public int DefaultExpressionsLevel { get; set; }
+  [ProtoMember(18)] public bool MarkMultipleDefinitionExpressions { get; set; }
+  [ProtoMember(19)] public bool FilterSourceDefinitions { get; set; }
+  [ProtoMember(20)] public bool FilterDestinationUses { get; set; }
+  [ProtoMember(21)] public SourceDocumentMarkerSettings SourceMarkerSettings { get; set; }
 
   public override void Reset() {
+    base.Reset();
     InitializeReferenceMembers();
-    ShowBlockSeparatorLine = true;
-    FontName = "Consolas";
-    FontSize = 12;
     HighlightCurrentLine = true;
     ShowBlockFolding = true;
     HighlightSourceDefinition = true;
@@ -58,26 +44,16 @@ public class DocumentSettings : SettingsBase {
     ShowPreviewPopup = true;
     FilterSourceDefinitions = true;
     FilterDestinationUses = true;
-    BackgroundColor = Utils.ColorFromString("#FFFAFA");
-    AlternateBackgroundColor = Utils.ColorFromString("#f5f5f5");
-    TextColor = Colors.Black;
-    BlockSeparatorColor = Colors.Silver;
-    MarginBackgroundColor = Colors.Gainsboro;
-    SelectedValueColor = Utils.ColorFromString("#C5DEEA");
     DefinitionValueColor = Utils.ColorFromString("#EDE4A6");
     UseValueColor = Utils.ColorFromString("#B7E5C6");
     BorderColor = Colors.Black;
     SyntaxHighlightingName = "";
-    ProfileMarkerSettings.Reset();
     SourceMarkerSettings.Reset();
-    ColumnSettings.Reset();
   }
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
-    ProfileMarkerSettings ??= new ProfileDocumentMarkerSettings();
     SourceMarkerSettings ??= new SourceDocumentMarkerSettings();
-    ColumnSettings ??= new OptionalColumnSettings();
   }
 
   public DocumentSettings Clone() {
@@ -87,9 +63,7 @@ public class DocumentSettings : SettingsBase {
 
   public override bool Equals(object obj) {
     return obj is DocumentSettings settings &&
-           ShowBlockSeparatorLine == settings.ShowBlockSeparatorLine &&
-           FontName == settings.FontName &&
-           Math.Abs(FontSize - settings.FontSize) < double.Epsilon &&
+           base.Equals(settings) &&
            HighlightCurrentLine == settings.HighlightCurrentLine &&
            ShowBlockFolding == settings.ShowBlockFolding &&
            HighlightSourceDefinition == settings.HighlightSourceDefinition &&
@@ -100,11 +74,6 @@ public class DocumentSettings : SettingsBase {
            ShowPreviewPopup == settings.ShowPreviewPopup &&
            FilterSourceDefinitions == settings.FilterSourceDefinitions &&
            FilterDestinationUses == settings.FilterDestinationUses &&
-           BackgroundColor.Equals(settings.BackgroundColor) &&
-           AlternateBackgroundColor.Equals(settings.AlternateBackgroundColor) &&
-           MarginBackgroundColor.Equals(settings.MarginBackgroundColor) &&
-           TextColor.Equals(settings.TextColor) &&
-           BlockSeparatorColor.Equals(settings.BlockSeparatorColor) &&
            SelectedValueColor.Equals(settings.SelectedValueColor) &&
            DefinitionValueColor.Equals(settings.DefinitionValueColor) &&
            UseValueColor.Equals(settings.UseValueColor) &&
@@ -112,13 +81,6 @@ public class DocumentSettings : SettingsBase {
            SyntaxHighlightingName == settings.SyntaxHighlightingName &&
            DefaultExpressionsLevel == settings.DefaultExpressionsLevel &&
            MarkMultipleDefinitionExpressions == settings.MarkMultipleDefinitionExpressions &&
-           ProfileMarkerSettings.Equals(settings.ProfileMarkerSettings) &&
-           SourceMarkerSettings.Equals(settings.SourceMarkerSettings) &&
-           ColumnSettings.Equals(settings.ColumnSettings);
-  }
-
-  public bool HasProfilingChanges(DocumentSettings other) {
-    return ProfileMarkerSettings.HasChanges(other.ProfileMarkerSettings) ||
-           ColumnSettings.HasChanges(other.ColumnSettings);
+           SourceMarkerSettings.Equals(settings.SourceMarkerSettings);
   }
 }

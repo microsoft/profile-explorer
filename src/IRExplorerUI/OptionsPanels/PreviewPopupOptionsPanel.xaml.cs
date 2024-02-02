@@ -16,11 +16,6 @@ public partial class PreviewPopupOptionsPanel : OptionsPanelBase {
   public PreviewPopupOptionsPanel() {
     InitializeComponent();
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
-    PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
-  }
-
-  private void SectionOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
-    NotifySettingsChanged();
   }
 
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {

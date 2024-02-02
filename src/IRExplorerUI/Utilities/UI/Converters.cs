@@ -305,7 +305,7 @@ class DoubleScalingConverter : IValueConverter {
 }
 
 // This version allows the parameter itself to be bound to another value,
-// such as the with of some UI element., which is not possible with ConverterParameter.
+// such as the width of some UI element., which is not possible with ConverterParameter.
 // https://stackoverflow.com/a/15309844
 class DoubleScalingBoundConverter : IMultiValueConverter {
   public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) {

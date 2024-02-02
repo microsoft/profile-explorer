@@ -128,12 +128,10 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private async Task InitializeFromSection(ParsedIRTextSection parsedSection) {
-    ProfileTextView.ProfileMarkerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
-    ProfileTextView.ColumnSettings = App.Settings.DocumentSettings.ColumnSettings;
     ProfileTextView.UseSmallerFontSize = settings_.UseSmallerFontSize;
     ProfileTextView.UseCompactProfilingColumns = settings_.UseCompactProfilingColumns;
     ProfileTextView.ShowPerformanceCounterColumns = settings_.ShowPerformanceCounterColumns;
-    await ProfileTextView.ReloadSettings();
+    ProfileTextView.InitializeDocument(App.Settings.DocumentSettings);
     await ProfileTextView.LoadSection(parsedSection);
     await SetupInitialMode(parsedSection);
   }
@@ -272,6 +270,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     ProfileTextView.Reset();
 
     if (showSourceFile_) {
+      ProfileTextView.InitializeDocument(App.Settings.SourceFileSettings);
       var function = parsedSection_.Section.ParentFunction;
       var (sourceInfo, debugInfo) = await Session.CompilerInfo.SourceFileFinder.FindLocalSourceFile(function);
 
@@ -285,6 +284,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     }
     else {
       // Show assembly.
+      ProfileTextView.InitializeDocument(App.Settings.DocumentSettings);
       await ProfileTextView.LoadSection(parsedSection_);
     }
   }

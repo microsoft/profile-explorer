@@ -30,16 +30,11 @@ public partial class DocumentProfilingOptionsPanel : OptionsPanelBase {
     InitializeComponent();
     ValueUnitComboBox.ItemsSource = ValueUnitKinds;
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
-    PreviewKeyUp += SectionOptionsPanel_PreviewKeyUp;
   }
 
   public bool ShowsDocumentSettings {
     get => showsDocumentSettings_;
     set => SetField(ref showsDocumentSettings_, value);
-  }
-
-  private void SectionOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
-    NotifySettingsChanged();
   }
 
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
