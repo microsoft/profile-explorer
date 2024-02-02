@@ -63,11 +63,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   public FlameGraphSettings Settings {
     get => settings_;
     set {
-      if (value != settings_) {
-        settings_ = value;
-        GraphHost.SettingsUpdated(value);
-        OnPropertyChanged();
-      }
+      settings_ = value;
+      GraphHost.SettingsUpdated(value);
+      OnPropertyChanged();
     }
   }
 
