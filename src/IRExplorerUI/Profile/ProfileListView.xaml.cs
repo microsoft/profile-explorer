@@ -114,8 +114,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       return;
     }
 
-    previewPopup_ = new IRDocumentPopupInstance(IRDocumentPopup.DefaultWidth,
-                                                IRDocumentPopup.DefaultHeight, Session);
+    previewPopup_ = new IRDocumentPopupInstance(App.Settings.PreviewPopupSettings, Session);
     previewPopup_.SetupHoverEvents(ItemList, TimeSpan.FromMilliseconds(Settings.PreviewPopupDuration), () => {
       var hoveredItem = Utils.FindPointedListViewItem(ItemList);
       if (hoveredItem == null)
@@ -125,7 +124,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
       if (item.CallTreeNode != null) {
         return PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList,
-                                            $"Function {item.CallTreeNode.FunctionName}");
+                                            $"Function {item.FunctionName}");
       }
 
       return null;

@@ -489,7 +489,7 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     previewPopup_ = await IRDocumentPopup.CreateNew(Document, element, position,
                                                     IRDocumentPopup.DefaultWidth,
                                                     IRDocumentPopup.DefaultElementHeight,
-                                                    relativeElement, "Use of ");
+                                                    relativeElement, null, "Use of ");
     previewPopup_.PopupDetached += Popup_PopupDetached;
     previewPopup_.ShowPopup();
   }

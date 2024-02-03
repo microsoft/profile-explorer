@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -21,10 +22,16 @@ public class PreviewPopupSettings : SettingsBase {
   public bool UseSmallerFontSize { get; set; }
   [ProtoMember(5)]
   public bool ShowSourcePreviewPopup { get; set; }
-
+  [ProtoMember(6)]
+  public double PopupWidth { get; set; }
+  [ProtoMember(7)]
+  public double PopupHeight { get; set; }
+  
   public override void Reset() {
     JumpToHottestElement = true;
     UseCompactProfilingColumns = true;
+    PopupWidth = 600;
+    PopupHeight = 400;
   }
 
   public PreviewPopupSettings Clone() {
@@ -38,6 +45,8 @@ public class PreviewPopupSettings : SettingsBase {
            UseCompactProfilingColumns == settings.UseCompactProfilingColumns &&
            ShowPerformanceCounterColumns == settings.ShowPerformanceCounterColumns &&
            UseSmallerFontSize == settings.UseSmallerFontSize &&
-           ShowSourcePreviewPopup == settings.ShowSourcePreviewPopup;
+           ShowSourcePreviewPopup == settings.ShowSourcePreviewPopup &&
+           Math.Abs(PopupWidth - settings.PopupWidth) < Double.Epsilon &&
+           Math.Abs(PopupHeight - settings.PopupHeight) < Double.Epsilon;
   }
 }
