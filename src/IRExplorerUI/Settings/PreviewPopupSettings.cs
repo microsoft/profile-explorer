@@ -26,7 +26,16 @@ public class PreviewPopupSettings : SettingsBase {
   public double PopupWidth { get; set; }
   [ProtoMember(7)]
   public double PopupHeight { get; set; }
-  
+
+  public static PreviewPopupSettings Default => new PreviewPopupSettings() {
+    PopupWidth = 600,
+    PopupHeight = 400 // For ASM/source preview.
+  };
+  public static PreviewPopupSettings ElementDefault => new PreviewPopupSettings() {
+    PopupWidth = 600,
+    PopupHeight = 200
+  };
+
   public override void Reset() {
     JumpToHottestElement = true;
     UseCompactProfilingColumns = true;

@@ -3757,8 +3757,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private async Task<IRDocumentPopup> CreateElementPreviewPopup(IRElement element, Point position) {
     return await IRDocumentPopup.CreateNew(this, element, position,
-                                           IRDocumentPopup.DefaultWidth,
-                                           IRDocumentPopup.DefaultElementHeight, this, null);
+                                            this, PreviewPopupSettings.ElementDefault);
   }
 
   private async Task<IRDocumentPopup> CreateCallTargetPreviewPopup(IRElement element, bool alwaysShow, Point position) {
@@ -3778,9 +3777,9 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     if (result == null)
       return null;
 
-    return await IRDocumentPopup.CreateNew(result, position, IRDocumentPopup.DefaultWidth,
-                                           IRDocumentPopup.DefaultHeight,
-                                           this, Session, App.Settings.PreviewPopupSettings, $"Function: {element.Name}");
+    return await IRDocumentPopup.CreateNew(result, position,this, Session, 
+                                           App.Settings.PreviewPopupSettings, 
+                                           $"Function: {element.Name}");
   }
 
   private IRTextSection FindCallTargetSection(IRElement element) {
