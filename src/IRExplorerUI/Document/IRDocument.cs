@@ -1201,6 +1201,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     // Notify overlay layer in case there is a selected overlay visual.
     if(overlayRenderer_.KeyPressed(e)) {
+      e.Handled = true;
       return;
     }
 
@@ -2608,6 +2609,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private void IRDocument_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
     Focus();
+    Keyboard.Focus(this);
     HideTemporaryUI();
   }
 
@@ -3837,6 +3839,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
 
     Focus();
+    Keyboard.Focus(this);
     HideTemporaryUI();
 
     // Check if there is any overlay being clicked

@@ -35,21 +35,19 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private PreviewPopupSettings settings_;
 
   public IRDocumentPopup(Point position, UIElement owner, ISession session, PreviewPopupSettings settings) {
+    Debug.Assert(settings != null);
     InitializeComponent();
 
-    if (settings == null) {
-      Utils.WaitForDebugger();
-    }
-
-    var width = settings != null ? Math.Max(settings.PopupWidth, MinWidth) : MinWidth;
-    var height = settings != null ? Math.Max(settings.PopupHeight, MinHeight) : MinHeight;
+    settings_ = settings;
+    double width = Math.Max(settings.PopupWidth, MinWidth);
+    double height = Math.Max(settings.PopupHeight, MinHeight);
     Initialize(position, width, height, owner);
+
     ProfileTextView.PreviewMouseWheel += ProfileTextViewOnMouseWheel;
     PanelResizeGrip.ResizedControl = this;
-    DataContext = this;
     Session = session;
     owner_ = owner;
-    settings_ = settings;
+    DataContext = this;
   }
 
   protected override void SetPanelAccentColor(Color color) {
@@ -132,14 +130,12 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     var popup = CreatePopup(parsedSection.Section, null, position,
                             owner, session, settings, titlePrefix);
     await popup.InitializeFromSection(parsedSection);
-    popup.CaptureMouseWheel();
+    popup.PopupClosed += (sender, args) => {
+      settings.PopupWidth = popup.Width;
+      settings.PopupHeight = popup.Height;
+    };
 
-    if (settings != null) {
-      popup.PopupClosed += (sender, args) => {
-        settings.PopupWidth = popup.Width;
-        settings.PopupHeight = popup.Height;
-      };
-    }
+    popup.CaptureMouseWheel();
     return popup;
   }
 
