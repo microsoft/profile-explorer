@@ -13,6 +13,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -22,11 +23,8 @@ using MouseHoverLogic = IRExplorerUI.Utilities.UI.MouseHoverLogic;
 namespace IRExplorerUI.Controls;
 
 public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
-  public static readonly double DefaultWidth = 600;
-  public static readonly double DefaultHeight = 400; // For ASM/source preview.
   public static readonly double MinWidth = 300;
   public static readonly double MinHeight = 200; // For ASM/source preview.
-  public static readonly double DefaultElementHeight = 200; // For single element preview.
   private string panelTitle_;
   private string panelToolTip_;
   private UIElement owner_;
@@ -36,9 +34,15 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private ParsedIRTextSection parsedSection_;
   private PreviewPopupSettings settings_;
 
-  public IRDocumentPopup(Point position, double width, double height,
-                         UIElement owner, ISession session, PreviewPopupSettings settings) {
+  public IRDocumentPopup(Point position, UIElement owner, ISession session, PreviewPopupSettings settings) {
     InitializeComponent();
+
+    if (settings == null) {
+      Utils.WaitForDebugger();
+    }
+
+    var width = settings != null ? Math.Max(settings.PopupWidth, MinWidth) : MinWidth;
+    var height = settings != null ? Math.Max(settings.PopupHeight, MinHeight) : MinHeight;
     Initialize(position, width, height, owner);
     ProfileTextView.PreviewMouseWheel += ProfileTextViewOnMouseWheel;
     PanelResizeGrip.ResizedControl = this;
@@ -110,10 +114,10 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   public static async Task<IRDocumentPopup> CreateNew(IRDocument document, IRElement previewedElement,
-                                                      Point position, double width, double height, UIElement owner,
+                                                      Point position, UIElement owner,
                                                       PreviewPopupSettings settings,
                                                       string titlePrefix = "") {
-    var popup = CreatePopup(document.Section, previewedElement, position, width, height,
+    var popup = CreatePopup(document.Section, previewedElement, position,
                             owner ?? document.TextArea.TextView, document.Session, settings, titlePrefix);
     await popup.InitializeFromDocument(document);
     popup.CaptureMouseWheel();
@@ -121,11 +125,11 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   public static async Task<IRDocumentPopup> CreateNew(ParsedIRTextSection parsedSection,
-                                                      Point position, double width, double height,
+                                                      Point position, 
                                                       UIElement owner, ISession session,
                                                       PreviewPopupSettings settings,
                                                       string titlePrefix = "") {
-    var popup = CreatePopup(parsedSection.Section, null, position, width, height,
+    var popup = CreatePopup(parsedSection.Section, null, position,
                             owner, session, settings, titlePrefix);
     await popup.InitializeFromSection(parsedSection);
     popup.CaptureMouseWheel();
@@ -149,10 +153,10 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private static IRDocumentPopup CreatePopup(IRTextSection section, IRElement previewedElement,
-                                             Point position, double width, double height,
+                                             Point position,
                                              UIElement owner, ISession session, PreviewPopupSettings settings,
                                              string titlePrefix) {
-    var popup = new IRDocumentPopup(position, width, height, owner, session, settings);
+    var popup = new IRDocumentPopup(position, owner, session, settings);
 
     if (previewedElement != null) {
       string elementText = Utils.MakeElementDescription(previewedElement);
@@ -340,45 +344,42 @@ public class IRDocumentPopupInstance {
   }
 
   private async Task ShowPreviewPopupForDocument(PreviewPopupArgs args) {
-    await ShowPreviewPopupForDocument(args.Document, args.Element, args.RelativeElement,
-                                      width_, height_, args.Title);
+    await ShowPreviewPopupForDocument(args.Document, args.Element, args.RelativeElement, args.Title);
   }
 
   private async Task ShowPreviewPopupForDocument(IRDocument document, IRElement element, UIElement relativeElement,
-                                                 double width, double height, string titlePrefix) {
+                                                 string titlePrefix) {
     if (!Prepare(element)) {
       return;
     }
 
     var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
-    previewPopup_ = await IRDocumentPopup.CreateNew(document, element, position, width, height,
+    previewPopup_ = await IRDocumentPopup.CreateNew(document, element, position,
                                                     relativeElement, settings_, titlePrefix);
     Complete();
   }
 
   private async Task ShowPreviewPopupForLoadedSection(PreviewPopupArgs args) {
-    await ShowPreviewPopupForSection(args.LoadedSection, args.RelativeElement,
-                                     width_, height_, args.Title);
+    await ShowPreviewPopupForSection(args.LoadedSection, args.RelativeElement, args.Title);
   }
 
   private async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection, UIElement relativeElement,
-                                                double width, double height, string title) {
+                                                string title) {
     if (!Prepare()) {
       return;
     }
 
     var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
-    previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position, width, height,
+    previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position,
                                                     relativeElement, session_, settings_, title);
     Complete();
   }
 
   private async Task ShowPreviewPopupForSection(PreviewPopupArgs args) {
-    await ShowPreviewPopupForSection(args.Section, args.RelativeElement, width_, height_, args.Title);
+    await ShowPreviewPopupForSection(args.Section, args.RelativeElement, args.Title);
   }
 
-  private async Task ShowPreviewPopupForSection(IRTextSection section, UIElement relativeElement,
-                                                double width, double height, string title) {
+  private async Task ShowPreviewPopupForSection(IRTextSection section, UIElement relativeElement, string title) {
     if (!Prepare()) {
       return;
     }
@@ -387,7 +388,7 @@ public class IRDocumentPopupInstance {
 
     if (parsedSection != null) {
       var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
-      previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position, width, height,
+      previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position,
                                                       relativeElement, session_, settings_, title);
       Complete();
     }
