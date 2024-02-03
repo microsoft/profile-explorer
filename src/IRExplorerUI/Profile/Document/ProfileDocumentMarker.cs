@@ -490,10 +490,10 @@ public class ProfileDocumentMarker {
 
       bool markOnFlowGraph = settings_.IsSignificantValue(i, weightPercentage);
       string label = $"{weightPercentage.AsTrimmedPercentageString()}";
-      var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label, "");
+      string tooltip = settings_.FormatWeightValue(null, weight);
+      var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label, tooltip);
       overlay.Background = color.AsBrush();
       overlay.Border = blockPen;
-
       overlay.IsLabelPinned = true;
       overlay.AllowLabelEditing = false;
       overlay.UseLabelBackground = true;

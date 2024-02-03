@@ -3758,7 +3758,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private async Task<IRDocumentPopup> CreateElementPreviewPopup(IRElement element, Point position) {
     return await IRDocumentPopup.CreateNew(this, element, position,
                                            IRDocumentPopup.DefaultWidth,
-                                           IRDocumentPopup.DefaultElementHeight, this);
+                                           IRDocumentPopup.DefaultElementHeight, this, null);
   }
 
   private async Task<IRDocumentPopup> CreateCallTargetPreviewPopup(IRElement element, bool alwaysShow, Point position) {
@@ -3780,7 +3780,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     return await IRDocumentPopup.CreateNew(result, position, IRDocumentPopup.DefaultWidth,
                                            IRDocumentPopup.DefaultHeight,
-                                           this, Session, $"Function: {element.Name}");
+                                           this, Session, App.Settings.PreviewPopupSettings, $"Function: {element.Name}");
   }
 
   private IRTextSection FindCallTargetSection(IRElement element) {
@@ -3837,6 +3837,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return;
     }
 
+    Focus();
     HideTemporaryUI();
 
     // Check if there is any overlay being clicked

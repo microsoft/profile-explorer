@@ -847,7 +847,7 @@ public partial class GraphPanel : ToolPanelControl {
     previewPopup_ = await IRDocumentPopup.CreateNew(Document, node.NodeInfo.ElementData, position,
                                                     IRDocumentPopup.DefaultWidth,
                                                     IRDocumentPopup.DefaultElementHeight,
-                                                    GraphHost, "Block ");
+                                                    GraphHost, null, "Block ");
     previewPopup_.PopupDetached += Popup_PopupDetached;
     previewPopup_.ShowPopup();
   }

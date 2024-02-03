@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
@@ -40,6 +41,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   private IElementOverlay selectedOverlay_;
   private ToolTip hoverTooltip_;
   private bool updateSuspended_;
+  
   public OverlayRenderer(ElementHighlighter highlighter) {
     overlaySegments_ = new TextSegmentCollection<IROverlaySegment>();
     overlaySegmentMap_ = new Dictionary<IRElement, IROverlaySegment>();
@@ -413,9 +415,14 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     if (!(overlay is ElementOverlayBase elementOverlay) || !elementOverlay.HasToolTip) {
       return;
     }
+    
+    if(hoverTooltip_ != null && hoveredOverlay_ == elementOverlay) {
+      return; // Already showing the right tooltip.
+    }
 
     HideTooltip();
     hoverTooltip_ = new ToolTip();
+    hoverTooltip_.Placement = PlacementMode.Mouse;
     hoverTooltip_.Content = elementOverlay.ToolTip;
     hoverTooltip_.FontFamily = new FontFamily("Consolas");
     hoverTooltip_.IsOpen = true;
