@@ -94,7 +94,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public bool UseCompactProfilingColumns { get; set; }
-  public bool ShowPerformanceCounterColumns { get; set; }
 
   public bool UseSmallerFontSize {
     get => ProfileColumns.UseSmallerFontSize;
@@ -221,16 +220,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
         if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timePercColumn) {
           timePercColumn.IsVisible = false;
-        }
-      }
-
-      if (!ShowPerformanceCounterColumns) {
-        // Hide perf counter columns.
-        foreach (var column in sourceColumnData_.Columns) {
-          if (!column.Equals(ProfileDocumentMarker.TimeColumnDefinition) &&
-              !column.Equals(ProfileDocumentMarker.TimePercentageColumnDefinition)) {
-            column.IsVisible = false;
-          }
         }
       }
 
