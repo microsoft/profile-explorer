@@ -955,11 +955,11 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     ReloadSymbolPathsList();
 
     // Wait for the UI to update
-    Dispatcher.BeginInvoke((Action)(() => {
+    Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle , () => {
       // Get the ListViewItem for the new item
       var newItem = symbolSettings_.SymbolPaths.Last();
       Utils.FocusTextBoxListViewItem(newItem, SymbolPathsList);
-    }), DispatcherPriority.ContextIdle);
+    });
   }
 
   private void RemoveSymbolPathButton_Click(object sender, RoutedEventArgs e) {

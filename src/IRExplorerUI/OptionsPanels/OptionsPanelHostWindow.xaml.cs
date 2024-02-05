@@ -23,6 +23,7 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
     // Offset to account for drop shadow margin.
     position.Offset(6, 0);
     Initialize(position, width, height, referenceElement);
+    StaysOpen = true; // Keep popup open when clicking outside.
 
     PanelResizeGrip.ResizedControl = this;
     ShowResetButton = showResetButton;
