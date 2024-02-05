@@ -133,10 +133,10 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     ReloadModuleList();
     NotifySettingsChanged();
 
-    Dispatcher.BeginInvoke(() => {
+    Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => {
       var newItem = settings_.ModuleColors.Last();
       Utils.FocusTextBoxListViewItem(newItem, ModuleList);
-    }, DispatcherPriority.ContextIdle);
+    });
   }
 
   private void ClearModule_Click(object sender, RoutedEventArgs e) {

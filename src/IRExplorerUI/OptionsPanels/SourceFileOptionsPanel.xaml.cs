@@ -7,7 +7,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Microsoft.Diagnostics.Tracing.Parsers.MicrosoftWindowsWPF;
+using System.Windows.Threading;
 
 namespace IRExplorerUI.OptionsPanels;
 
@@ -74,7 +74,7 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
   private void RemoveMappedPath_Click(object sender, RoutedEventArgs e) {
     if (MappedPathsList.SelectedItem is KeyValuePair<string, string> pair) {
       settings_.FinderSettings.SourceMappings.Remove(pair.Key);
-      ReloadExcludedPathsList();
+      ReloadMappedPathsList();
     }
   }
 
@@ -90,10 +90,10 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
     ReloadExcludedPathsList();
 
     // Wait for the UI to update
-    Dispatcher.BeginInvoke((Action)(() => {
+    Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => {
       var newItem = settings_.FinderSettings.DisabledSourceMappings.Last();
       Utils.FocusTextBoxListViewItem(newItem, ExcludedPathsList);
-    }), DispatcherPriority.ContextIdle);
+    });
   }
 
   private void ClearExcludedPath_Click(object sender, RoutedEventArgs e) {
