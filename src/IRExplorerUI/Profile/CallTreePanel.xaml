@@ -11,21 +11,15 @@
   d:DesignWidth="800"
   mc:Ignorable="d">
   <irExplorerUi:ToolPanelControl.CommandBindings>
-    <CommandBinding Command="local:CallTreeCommand.ExpandHottestCallPath"
-                    Executed="ExpandHottestCallPathExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.CollapseCallPath"
-                    Executed="CollapseCallPathExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.SelectFunction"
-                    Executed="SelectFunctionExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.ExpandHottestCallPath" Executed="ExpandHottestCallPathExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.CollapseCallPath" Executed="CollapseCallPathExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.SelectFunction" Executed="SelectFunctionExecuted" />
     <CommandBinding Command="local:CallTreeCommand.OpenFunction" Executed="OpenFunctionExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab"
-                    Executed="OpenFunctionInNewTab" />
+    <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab" Executed="OpenFunctionInNewTab" />
     <CommandBinding Command="local:CallTreeCommand.FocusSearch" Executed="FocusSearchExecuted" />
     <CommandBinding Command="local:CallTreeCommand.ClearSearch" Executed="ClearSearchExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult"
-                    Executed="PreviousSearchResultExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.NextSearchResult"
-                    Executed="NextSearchResultExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult" Executed="PreviousSearchResultExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.NextSearchResult" Executed="NextSearchResultExecuted" />
     <CommandBinding Command="local:CallTreeCommand.GoBack" Executed="GoBackExecuted" />
     <CommandBinding Command="local:CallTreeCommand.CollapseNodes" Executed="CollapseNodesExecuted" />
   </irExplorerUi:ToolPanelControl.CommandBindings>
@@ -58,8 +52,7 @@
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource DockLeftIcon}"
-                     Style="{StaticResource DisabledImageStyle}" />
+              <Image Source="{StaticResource DockLeftIcon}" Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Back" />
             </StackPanel>
           </Button>
@@ -69,15 +62,13 @@
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Reset call tree to initial state (Ctrl+R)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource ResetWidthIcon}"
-                     Style="{StaticResource DisabledImageStyle}" />
+              <Image Source="{StaticResource ResetWidthIcon}" Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Reset" />
             </StackPanel>
           </Button>
           <Separator />
 
-          <Button ToolTip="Expand hottest call path"
-                  Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+          <Button ToolTip="Expand hottest call path" Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <Image Source="{StaticResource HotFlameIcon}" />
           </Button>
           <Separator />
@@ -115,8 +106,8 @@
           <Separator />
 
           <ToggleButton
-            IsChecked="{Binding Settings.CombineNodes, Mode=TwoWay}"
             Click="ToggleButton_Click"
+            IsChecked="{Binding Settings.CombineInstances, Mode=TwoWay}"
             ToolTip="Combine all function instances into one"
             Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
@@ -131,8 +122,8 @@
           </ToggleButton>
 
           <ToggleButton
-            Content="m!F"
             Click="ToggleButton_Click"
+            Content="m!F"
             IsChecked="{Binding Path=Settings.PrependModuleToFunction, Mode=TwoWay}"
             ToolTip="Show the module name in front of the function name" />
 
@@ -145,18 +136,17 @@
             ToolTip="Enable/disable function details panel">
             <StackPanel Orientation="Horizontal">
               <Image
-                VerticalAlignment="Center"
                 Width="16"
                 Height="16"
+                VerticalAlignment="Center"
                 Source="{StaticResource DetailsIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Text="Details" VerticalAlignment="Center" />
+              <TextBlock VerticalAlignment="Center" Text="Details" />
             </StackPanel>
           </ToggleButton>
           <Separator />
 
-          <Image Source="{StaticResource SearchIcon}"
-                 Style="{StaticResource DisabledImageStyle}" />
+          <Image Source="{StaticResource SearchIcon}" Style="{StaticResource DisabledImageStyle}" />
           <Grid Height="24">
             <TextBox
               x:Name="FunctionFilter"
@@ -202,15 +192,13 @@
             Command="local:CallTreeCommand.PreviousSearchResult"
             CommandTarget="{Binding ElementName=CallTreeList}"
             ToolTip="Previous search result">
-            <Image Source="{StaticResource UpArrowIcon}"
-                   Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Image Source="{StaticResource UpArrowIcon}" Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
           </Button>
           <Button
             Command="local:CallTreeCommand.NextSearchResult"
             CommandTarget="{Binding ElementName=CallTreeList}"
             ToolTip="Next search result">
-            <Image Source="{StaticResource DownArrowIcon}"
-                   Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Image Source="{StaticResource DownArrowIcon}" Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
           </Button>
 
           <TextBlock
@@ -224,11 +212,11 @@
 
       <irExplorerUi:PanelToolbarTray
         DockPanel.Dock="Right"
-        HelpClicked="PanelToolbarTray_OnHelpClicked"
-        SettingsClicked="PanelToolbarTray_OnSettingsClicked"
         HasDuplicateButton="False"
         HasHelpButton="True"
-        HasPinButton="False" />
+        HasPinButton="False"
+        HelpClicked="PanelToolbarTray_OnHelpClicked"
+        SettingsClicked="PanelToolbarTray_OnSettingsClicked" />
     </DockPanel>
 
     <tree:TreeList
@@ -328,8 +316,7 @@
       <ListView.ItemContainerStyle>
         <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
           <EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />
-          <Setter Property="Background"
-                  Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+          <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
           <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         </Style>
       </ListView.ItemContainerStyle>
@@ -343,9 +330,9 @@
             ToolTip="Show a preview popup of the function ASM or source code">
             <MenuItem.Icon>
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource PeekDefinitionIcon}"
-                Width="16" />
+                Source="{StaticResource PeekDefinitionIcon}" />
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
@@ -357,9 +344,9 @@
             ToolTip="Open the function assembly view">
             <MenuItem.Icon>
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource LayoutOpenIcon}"
-                Width="16" />
+                Source="{StaticResource LayoutOpenIcon}" />
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
@@ -371,9 +358,9 @@
             ToolTip="Open the function assembly view in a new tab">
             <MenuItem.Icon>
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource LayoutOpenNewIcon}"
-                Width="16" />
+                Source="{StaticResource LayoutOpenNewIcon}" />
             </MenuItem.Icon>
           </MenuItem>
           <Separator />
@@ -387,9 +374,9 @@
             ToolTip="Expand several levels following the hottest path starting with the selected function">
             <MenuItem.Icon>
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource PlusIcon}"
-                Width="16" />
+                Source="{StaticResource PlusIcon}" />
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
@@ -401,9 +388,9 @@
             ToolTip="Collapse the expanded node starting under the selected function">
             <MenuItem.Icon>
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource MinusIcon}"
-                Width="16" />
+                Source="{StaticResource MinusIcon}" />
             </MenuItem.Icon>
           </MenuItem>
           <Separator />
@@ -416,9 +403,9 @@
             ToolTip="Copy the function name to the clipboard">
             <MenuItem.Icon>
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource ClipboardIcon}"
-                Width="16" />
+                Source="{StaticResource ClipboardIcon}" />
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
@@ -429,9 +416,9 @@
             ToolTip="Copy the demangled function name to the clipboard (C/C++)">
             <MenuItem.Icon>
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource ClipboardIcon}"
-                Width="16" />
+                Source="{StaticResource ClipboardIcon}" />
             </MenuItem.Icon>
           </MenuItem>
           <Separator />
@@ -444,9 +431,9 @@
             ToolTip="Select the function in the Summary panel">
             <MenuItem.Icon>
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource SummaryIcon}"
-                Width="16" />
+                Source="{StaticResource SummaryIcon}" />
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
@@ -458,9 +445,9 @@
             Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
             <MenuItem.Icon>
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource FlowChartIcon}"
-                Width="16" />
+                Source="{StaticResource FlowChartIcon}" />
             </MenuItem.Icon>
           </MenuItem>
 
@@ -472,9 +459,9 @@
             ToolTip="Select the function instance in the Flame Graph panel">
             <MenuItem.Icon>
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource FlameGraphIcon}"
-                Width="16" />
+                Source="{StaticResource FlameGraphIcon}" />
             </MenuItem.Icon>
           </MenuItem>
 
@@ -486,9 +473,9 @@
             ToolTip="Select the function instance in the Timeline panel">
             <MenuItem.Icon>
               <Image
+                Width="16"
                 Height="16"
-                Source="{StaticResource TimelineIcon}"
-                Width="16" />
+                Source="{StaticResource TimelineIcon}" />
             </MenuItem.Icon>
           </MenuItem>
         </ContextMenu>
