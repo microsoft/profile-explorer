@@ -943,17 +943,13 @@ public partial class GraphPanel : ToolPanelControl {
     if (document.DuringSectionLoading) {
       Trace.TraceInformation(
         $"Graph panel {ObjectTracker.Track(this)}: Ignore graph reload during section switch");
-
       return;
     }
 
     //? TODO: Implement switching for expressions
-    if (PanelKind == ToolPanelKind.ExpressionGraph) {
+    if (PanelKind == ToolPanelKind.ExpressionGraph ||
+        PanelKind == ToolPanelKind.CallGraph) {
       HideGraph();
-      return;
-    }
-
-    if (PanelKind == ToolPanelKind.CallGraph) {
       return;
     }
 

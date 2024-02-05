@@ -207,8 +207,9 @@ public partial class MainWindow : Window, ISession {
           // After this action, the load/unload events for the panel
           // will trigger, but since it was done here already,
           // don't do it again, slows down UI for no reason.
-          panel.IgnoreNextLoadEvent = true;
-          panel.IgnoreNextUnloadEvent = true;
+          //? TODO: Breaks proper switching of Flow Graph
+          // panel.IgnoreNextLoadEvent = true;
+          // panel.IgnoreNextUnloadEvent = true;
         }
 
         action(panel);

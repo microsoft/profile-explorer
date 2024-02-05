@@ -3403,17 +3403,21 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return;
     }
 
+    var weightSum = TimeSpan.Zero;
     int startLine = TextArea.Selection.StartPosition.Line;
     int endLine = TextArea.Selection.EndPosition.Line;
-    var weightSum = TimeSpan.Zero;
 
+    if (startLine > endLine) {
+      // Happens when selecting bottom-up.
+      (startLine, endLine) = (endLine, startLine);
+    }
+    
     foreach (var tuple in tupleElements_) {
       if (tuple.TextLocation.Line >= startLine &&
           tuple.TextLocation.Line <= endLine) {
-        if (metadataTag.ElementToOffsetMap.TryGetValue(tuple, out long offset)) {
-          if (funcProfile.InstructionWeight.TryGetValue(offset, out var weight)) {
-            weightSum += weight;
-          }
+        if (metadataTag.ElementToOffsetMap.TryGetValue(tuple, out long offset) && 
+            funcProfile.InstructionWeight.TryGetValue(offset, out var weight)) {
+          weightSum += weight;
         }
       }
     }
