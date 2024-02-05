@@ -208,6 +208,11 @@ public partial class HelpPanel : ToolPanelControl {
 
   private async Task NavigateToURL(string url) {
     await InitializeBrowser();
+
+    if (Browser.Source != null) {
+      Browser.Stop();
+    }
+
     Browser.Source = new Uri(url);
   }
 
