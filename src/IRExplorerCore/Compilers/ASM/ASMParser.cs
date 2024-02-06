@@ -405,8 +405,9 @@ public sealed class ASMParser : ParserBase {
           ConnectBlocks(block, targetBlock);
           referencedBlocks_[targetBlock] = targetAddress;
 
-          instr.Sources[0].Kind = OperandKind.LabelAddress;
-          instr.Sources[0].Value = GetOrCreateBlockLabel(targetBlock);
+          int opIndex = instr.Sources.IndexOf(targetOp);
+          instr.Sources[opIndex].Kind = OperandKind.LabelAddress;
+          instr.Sources[opIndex].Value = GetOrCreateBlockLabel(targetBlock);
         }
       }
       else {
