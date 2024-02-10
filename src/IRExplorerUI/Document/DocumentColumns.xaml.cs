@@ -20,7 +20,6 @@ namespace IRExplorerUI.Document;
 public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private TextViewSettingsBase settings_;
   private OptionalColumnSettings columnSettings_;
-  private double previousVerticalOffset_;
   private List<ElementRowValue> profileDataRows_;
   private List<(GridViewColumnHeader Header, GridViewColumn Column)> profileColumnHeaders_;
   private double columnsListItemHeight_;
@@ -45,7 +44,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   public double ColumnsListItemHeight {
     get => columnsListItemHeight_;
     set {
-      if (columnsListItemHeight_ != value) {
+      if (Math.Abs(columnsListItemHeight_ - value) > double.Epsilon) {
         columnsListItemHeight_ = value;
         OnPropertyChanged();
       }
@@ -95,7 +94,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   public async Task Display(IRDocumentColumnData columnData, MarkedDocument associatedDocument) {
     Reset(); // Remove any existing columns.
     UpdateColumnsList();
-    
+
     if (!columnData.HasData) {
       return;
     }
@@ -111,8 +110,13 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
       var font = new FontFamily(settings_.FontName);
       double fontSize = UseSmallerFontSize ? settings_.FontSize - 1 : settings_.FontSize;
 
-      ElementColumnValue MakeDummyCell() {
-        var columnValue = ElementColumnValue.Empty;
+      var comparer = new IRDocumentColumnData.ColumnComparer();
+      Dictionary<OptionalColumn, ElementColumnValue> dummyCells = new(comparer);
+      Dictionary<OptionalColumn, ElementColumnValue> separatorDummyCells = new(comparer);
+
+      ElementColumnValue MakeDummyCell(bool hasSeparator) {
+        //? TODO: Per-column dummy cell to get its own back color
+        var columnValue = new ElementColumnValue("");
 
         //? if (showColumnSeparators) {
         columnValue.BorderBrush = blockSeparatorColor;
@@ -122,27 +126,47 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         return columnValue;
       }
 
-      ElementRowValue MakeDummyRow(Brush backColor = null) {
+      ElementColumnValue GetDummyCell(OptionalColumn column, bool hasSeparator) {
+        return hasSeparator ? separatorDummyCells[column] : dummyCells[column];
+      }
+
+      ElementRowValue MakeDummyRow(bool hasSeparator, Brush backColor = null) {
         var row = new ElementRowValue(null) {
           BackColor = backColor,
           BorderBrush = blockSeparatorColor
         };
 
         foreach (var column in columnData.Columns) {
-          row.ColumnValues[column] = MakeDummyCell();
+          var cell = MakeDummyCell(hasSeparator);
+          row.ColumnValues[column] = cell;
+          columnData.AddColumnValue(cell, column);
+
+          if (hasSeparator) {
+            separatorDummyCells[column] = cell;
+          }
+          else {
+            dummyCells[column] = cell;
+          }
+        }
+
+        if (hasSeparator) {
+          row.BorderThickness = new Thickness(0, 0, 0, 1);
+          row.BorderBrush = blockSeparatorColor;
         }
 
         return row;
       }
 
-      var dummyValues = MakeDummyRow();
-      var oddDummyValues = MakeDummyRow(oddBackColor);
+      var dummyRow = MakeDummyRow(false);
+      var separatorDummyRow = MakeDummyRow(true);
+      var oddDummyRow = MakeDummyRow(false, oddBackColor);
+      var oddSeparatorDummyRow = MakeDummyRow(true, oddBackColor);
       int prevLine = -1;
       bool prevIsOddBlock = false;
 
       void AddDummyRows(int count, bool isOddBlock) {
         for (int i = 0; i < count; i++) {
-          elementValueList.Add(isOddBlock ? oddDummyValues : dummyValues);
+          elementValueList.Add(isOddBlock ? oddDummyRow: dummyRow);
         }
       }
 
@@ -182,32 +206,33 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
             if (rowValues.ColumnValues.Count != columnData.Columns.Count) {
               foreach (var column in columnData.Columns) {
                 if (!rowValues.Columns.Contains(column)) {
-                  rowValues.ColumnValues[column] = MakeDummyCell();
+                  rowValues.ColumnValues[column] = GetDummyCell(column, isSeparatorLine);
                 }
               }
+            }
+
+            // Add a separator line at the bottom of the current row
+            // if the next instr. is found in another block.
+            if (isSeparatorLine) {
+              rowValues.BorderThickness = new Thickness(0, 0, 0, 1);
+              rowValues.BorderBrush = blockSeparatorColor;
+            }
+
+            foreach (var value in rowValues.Values) {
+              value.BorderBrush = blockSeparatorColor;
+              value.BorderThickness = new Thickness(0, 0, 1, 0);
             }
 
             profileDataRows_.Add(rowValues);
           }
           else {
+            // No data at all, use an empty row.
             if (isSeparatorLine) {
-              rowValues = isOddBlock ? MakeDummyRow(oddBackColor) : MakeDummyRow();
+              rowValues = isOddBlock ? oddSeparatorDummyRow : separatorDummyRow;
             }
             else {
-              rowValues = isOddBlock ? oddDummyValues : dummyValues;
+              rowValues = isOddBlock ? oddDummyRow : dummyRow;
             }
-          }
-
-          // Add a separator line at the bottom of the current row
-          // if the next instr. is found in another block.
-          if (isSeparatorLine) {
-            rowValues.BorderThickness = new Thickness(0, 0, 0, 1);
-            rowValues.BorderBrush = blockSeparatorColor;
-          }
-
-          foreach (var value in rowValues.Values) {
-            value.BorderBrush = blockSeparatorColor;
-            value.BorderThickness = new Thickness(0, 0, 1, 0);
           }
 
           elementValueList.Add(rowValues);
@@ -290,7 +315,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
       };
 
       item.Checked += (sender, args) => {
-        if (sender is MenuItem menuItem && 
+        if (sender is MenuItem menuItem &&
             menuItem.Tag is OptionalColumn column) {
           column.IsVisible = menuItem.IsChecked;
           columnSettings_.SetColumnVisibility(column, menuItem.IsChecked);

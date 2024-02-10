@@ -65,6 +65,15 @@ static class ExtensionMethods {
     return color.A == 0;
   }
 
+  public static bool IsTransparent(this SolidColorBrush brush) {
+    return brush.Color.A == 0;
+  }
+
+
+  public static bool IsTransparent(this Brush brush) {
+    return brush is SolidColorBrush {Color.A: 0};
+  }
+
   public static SolidColorBrush AsBrush(this Color color) {
     return ColorBrushes.GetBrush(color);
   }

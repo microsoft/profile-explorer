@@ -231,6 +231,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private DelayedAction delayedHideActionPanel_;
   private bool profileVisible_;
   private double columnsListItemHeight_;
+  private ProfileDocumentMarker profileMarker_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -1082,11 +1083,19 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       return false;
     }
 
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    var result = await Task.Run(() => funcProfile.Process(Function, Session.CompilerInfo.IR));
+    //? TODO: Also for source file panel
+    // Mark instructions.
+    profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
+                                                  settings_.ProfileMarkerSettings,
+                                                  settings_.ColumnSettings, Session.CompilerInfo);
+    await profileMarker_.Mark(TextView, Function, Section.ParentFunction);
 
-    BuildProfileBlocksList(funcProfile, result);
-    profileElements_ = result.SampledElements;
+    // Redraw the flow graphs, may have loaded before the marker set the node tags.
+    Session.RedrawPanels();
+
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    BuildProfileBlocksList(funcProfile, TextView.ProfileProcessingResult);
+    profileElements_ = TextView.ProfileProcessingResult.SampledElements;
     ProfileVisible = true;
 
     // Show optional columns with timing, counters, etc.
@@ -1114,6 +1123,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileColumns.ColumnSettings = settings_.ColumnSettings;
 
     await ProfileColumns.Display(columnData, TextView);
+    profileMarker_.UpdateColumnStyles(columnData, Function, TextView);
 
     ProfileColumns.ColumnSettingsChanged -= OnProfileColumnsOnColumnSettingsChanged;
     ProfileColumns.ColumnSettingsChanged += OnProfileColumnsOnColumnSettingsChanged;
@@ -1125,8 +1135,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void OnProfileColumnsOnColumnSettingsChanged(object sender, OptionalColumn column) {
-    ProfileDocumentMarker.UpdateColumnStyle(column, TextView.ProfileColumnData, Function, TextView, 
-                                            settings_.ProfileMarkerSettings, 
+    ProfileDocumentMarker.UpdateColumnStyle(column, TextView.ProfileColumnData, Function, TextView,
+                                            settings_.ProfileMarkerSettings,
                                             settings_.ColumnSettings);
     //await UpdateProfilingColumns();
   }

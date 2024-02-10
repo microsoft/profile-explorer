@@ -36,7 +36,7 @@ public class OptionalColumnSettings : SettingsBase {
       ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
       UseBackColor = OptionalColumnStyle.PartVisibility.Always,
       ShowIcon = OptionalColumnStyle.PartVisibility.Always,
-      BackColorPalette = ColorPalette.Profile,
+      //BackColorPalette = ColorPalette.Profile,
       InvertColorPalette = false,
       PickColorForPercentage = true
     };
@@ -45,7 +45,7 @@ public class OptionalColumnSettings : SettingsBase {
       ShowPercentageBar = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       UseBackColor = OptionalColumnStyle.PartVisibility.Always,
       ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
-      BackColorPalette = ColorPalette.Profile,
+      //BackColorPalette = ColorPalette.Profile,
       InvertColorPalette = false,
       PickColorForPercentage = true
     };
@@ -56,7 +56,7 @@ public class OptionalColumnSettings : SettingsBase {
       UseBackColor = OptionalColumnStyle.PartVisibility.Always,
       ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       PickColorForPercentage = false,
-      BackColorPalette = ColorPalette.Profile,
+      //BackColorPalette = ColorPalette.Profile,
       InvertColorPalette = false,
       TextColor = ColorPalette.DarkHue.PickColor(k),
       PercentageBarBackColor = ColorPalette.DarkHue.PickColor(k)
@@ -69,7 +69,7 @@ public class OptionalColumnSettings : SettingsBase {
       UseBackColor = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       PickColorForPercentage = false,
-      BackColorPalette = ColorPalette.Profile,
+      //BackColorPalette = ColorPalette.Profile,
       InvertColorPalette = false,
       TextColor = ColorPalette.DarkHue.PickColor(k),
       PercentageBarBackColor = ColorPalette.DarkHue.PickColor(k)
@@ -218,9 +218,11 @@ public class OptionalColumnStyle : SettingsBase {
   [ProtoMember(7)]
   public PartVisibility UseBackColor { get; set; }
   [ProtoMember(8)]
-  public ColorPalette BackColorPalette { get; set; }
+  public string BackColorPalette { get; set; }
   [ProtoMember(9)]
   public bool InvertColorPalette { get; set; }
+  [ProtoMember(10)]
+  public Color BackgroundColor { get; set; }
 
   public override void Reset() {
   }
@@ -234,11 +236,12 @@ public class OptionalColumnStyle : SettingsBase {
     return obj is OptionalColumnStyle other &&
            AlternateTitle == other.AlternateTitle &&
            ShowPercentageBar == other.ShowPercentageBar &&
-           PercentageBarBackColor.Equals(other.PercentageBarBackColor) && TextColor.Equals(other.TextColor) &&
+           PercentageBarBackColor.Equals(other.PercentageBarBackColor) &&
+           TextColor.Equals(other.TextColor) &&
            ShowIcon == other.ShowIcon &&
            PickColorForPercentage == other.PickColorForPercentage && UseBackColor == other.UseBackColor &&
-           //? TODO: Use a string as the name
-           //Equals(BackColorPalette, other.BackColorPalette) &&
-           InvertColorPalette == other.InvertColorPalette;
+           Equals(BackColorPalette, other.BackColorPalette) &&
+           InvertColorPalette == other.InvertColorPalette &&
+           BackgroundColor == other.BackgroundColor;
   }
 }

@@ -164,6 +164,48 @@
                     VerticalAlignment="Center"
                     Text="Percentage bar color" />
             </Grid>
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="Gray"
+                SelectedColor="{Binding PerformanceCounterBackColor, Mode=TwoWay}"
+                ShowDropDownButton="True"
+                UsingAlphaChannel="False" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Performance counter column color" />
+            </Grid>
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="Gray"
+                SelectedColor="{Binding PerformanceMetricBackColor, Mode=TwoWay}"
+                ShowDropDownButton="True"
+                UsingAlphaChannel="False" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Performance metric column color" />
+            </Grid>
             <Grid
                 Margin="0,2,0,0"
                 IsEnabled="{Binding ElementName=MarkBlocksCheckbox, Path=IsChecked}"

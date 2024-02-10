@@ -11,14 +11,34 @@ using IRExplorerCore.Utilities;
 namespace IRExplorerUI;
 
 public class IRDocumentColumnData {
+  public class ColumnComparer : IEqualityComparer<OptionalColumn> {
+    public bool Equals(OptionalColumn x, OptionalColumn y) {
+      if (ReferenceEquals(x, y))
+        return true;
+      if (ReferenceEquals(x, null))
+        return false;
+      if (ReferenceEquals(y, null))
+        return false;
+      if (x.GetType() != y.GetType())
+        return false;
+      return x.ColumnName == y.ColumnName;
+    }
+
+    public int GetHashCode(OptionalColumn obj) {
+      return (obj.ColumnName != null ? obj.ColumnName.GetHashCode() : 0);
+    }
+  }
+
   public IRDocumentColumnData(int capacity = 0) {
     Columns = new List<OptionalColumn>();
-    Values = new Dictionary<IRElement, ElementRowValue>(capacity);
+    Rows = new Dictionary<IRElement, ElementRowValue>(capacity);
+    ColumnValues = new Dictionary<OptionalColumn, List<ElementColumnValue>>(new ColumnComparer());
   }
 
   public List<OptionalColumn> Columns { get; set; }
-  public Dictionary<IRElement, ElementRowValue> Values { get; set; }
-  public bool HasData => Values.Count > 0;
+  public Dictionary<IRElement, ElementRowValue> Rows { get; set; }
+  public Dictionary<OptionalColumn, List<ElementColumnValue>> ColumnValues { get; set; }
+  public bool HasData => Rows.Count > 0;
   public OptionalColumn MainColumn => Columns.Find(column => column.IsMainColumn);
 
   public static void ExportColumnsToExcel(IRDocumentColumnData columnData, IRElement tuple,
@@ -72,22 +92,37 @@ public class IRDocumentColumnData {
   }
 
   public ElementRowValue AddValue(ElementColumnValue value, IRElement element, OptionalColumn column) {
-    if (!Values.TryGetValue(element, out var valueGroup)) {
-      valueGroup = new ElementRowValue(element);
-      Values[element] = valueGroup;
+    if (!Rows.TryGetValue(element, out var rowValues)) {
+      rowValues = new ElementRowValue(element);
+      Rows[element] = rowValues;
     }
 
-    valueGroup.ColumnValues[column] = value;
+    rowValues.ColumnValues[column] = value;
     value.Element = element;
-    return valueGroup;
+    AddColumnValue(value, column);
+    return rowValues;
+  }
+
+  public void AddColumnValue(ElementColumnValue value, OptionalColumn column) {
+    if (!ColumnValues.TryGetValue(column, out var list)) {
+      list = new List<ElementColumnValue>();
+      ColumnValues[column] = list;
+    }
+
+    list.Add(value);
   }
 
   public ElementRowValue GetValues(IRElement element) {
-    if (Values.TryGetValue(element, out var valueGroup)) {
+    if (Rows.TryGetValue(element, out var valueGroup)) {
       return valueGroup;
     }
 
     return null;
+  }
+
+  public void AddRow(ElementRowValue rowValues, IRElement element) {
+    rowValues.Element = element;
+    Rows[element] = rowValues;
   }
 
   public ElementColumnValue GetColumnValue(IRElement element, OptionalColumn column) {

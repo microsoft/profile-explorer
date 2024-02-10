@@ -1139,8 +1139,13 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     MarkBlock(element, style, raiseEvent);
   }
 
-  public void MarkElements(ICollection<ValueTuple<IRElement, Color>> elementColorPairs) {
-    var colorGroupMap = new Dictionary<Color, HighlightedGroup>(elementColorPairs.Count);
+  public void MarkBlock(IRElement element, Brush selectedColor, bool raiseEvent = true) {
+    var style = new HighlightingStyle(selectedColor, null);
+    MarkBlock(element, style, raiseEvent);
+  }
+
+  public void MarkElements(ICollection<ValueTuple<IRElement, Brush>> elementColorPairs) {
+    var colorGroupMap = new Dictionary<Brush, HighlightedGroup>(elementColorPairs.Count);
     ClearTemporaryHighlighting();
 
     foreach (var pair in elementColorPairs) {
@@ -1164,7 +1169,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   public void ClearInstructionMarkers() {
-    markedHighlighter_.ForEachElement(element => { RaiseElementRemoveHighlightingEvent(element); });
+    markedHighlighter_.ForEachElement(RaiseElementRemoveHighlightingEvent);
     markedHighlighter_.Clear();
     UpdateHighlighting();
   }
@@ -3411,11 +3416,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       // Happens when selecting bottom-up.
       (startLine, endLine) = (endLine, startLine);
     }
-    
+
     foreach (var tuple in tupleElements_) {
       if (tuple.TextLocation.Line >= startLine &&
           tuple.TextLocation.Line <= endLine) {
-        if (metadataTag.ElementToOffsetMap.TryGetValue(tuple, out long offset) && 
+        if (metadataTag.ElementToOffsetMap.TryGetValue(tuple, out long offset) &&
             funcProfile.InstructionWeight.TryGetValue(offset, out var weight)) {
           weightSum += weight;
         }
@@ -3783,8 +3788,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     if (result == null)
       return null;
 
-    return await IRDocumentPopup.CreateNew(result, position,this, Session, 
-                                           App.Settings.PreviewPopupSettings, 
+    return await IRDocumentPopup.CreateNew(result, position,this, Session,
+                                           App.Settings.PreviewPopupSettings,
                                            $"Function: {element.Name}");
   }
 
