@@ -36,8 +36,8 @@ public partial class MainWindow : Window, ISession {
     }
     else {
       // Only diff style must be updated.
-      sessionState_.SectionDiffState.LeftDocument.ReloadSettings();
-      sessionState_.SectionDiffState.RightDocument.ReloadSettings();
+      await sessionState_.SectionDiffState.LeftDocument.ReloadSettings();
+      await sessionState_.SectionDiffState.RightDocument.ReloadSettings();
     }
   }
 

@@ -32,8 +32,8 @@ public interface MarkedDocument {
   public void SuspendUpdate();
   public void ResumeUpdate();
   public void ClearInstructionMarkers();
-  public void MarkElements(ICollection<ValueTuple<IRElement, Color>> elementColorPairs);
-  public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true);
+  public void MarkElements(ICollection<ValueTuple<IRElement, Brush>> elementColorPairs);
+  public void MarkBlock(IRElement element, Brush selectedColor, bool raiseEvent = true);
   public DocumentLine GetLineByNumber(int lineNumber);
   public DocumentLine GetLineByOffset(int offset);
 
@@ -103,7 +103,6 @@ public class ProfileDocumentMarker {
   private ProfileDocumentMarkerSettings settings_;
   private OptionalColumnSettings columnSettings_;
   private ICompilerInfoProvider irInfo_;
-  private OptionsPanelHostWindow optionsPanelWindow_;
 
   public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile,
                                ProfileDocumentMarkerSettings settings,
@@ -253,7 +252,20 @@ public class ProfileDocumentMarker {
     Trace.WriteLine($"Apply {column.ColumnName}, is main column: {column.IsMainColumn}");
     column.IsVisible = columnSettings.IsColumnVisible(column);
 
-    var elementColorPairs = new List<ValueTuple<IRElement, Color>>(function.TupleCount);
+    var elementColorPairs = new List<ValueTuple<IRElement, Brush>>(function.TupleCount);
+
+    //? TODO: Make list of all cells corresponding to a column
+    //?  - set background of column cells
+    //?  - overwritten by going over the tuples with !color.IsTransparent
+
+    if (column.IsPerformanceCounter ||
+        column.IsPerformanceMetric) {
+      var cells = columnData.ColumnValues[column];
+
+      foreach (var value in cells) {
+        value.BackColor = settings.PickDefaultBackColor(column);
+      }
+    }
 
     foreach (var tuple in function.AllTuples) {
       var value = columnData.GetColumnValue(tuple, column);
@@ -265,13 +277,13 @@ public class ProfileDocumentMarker {
       var color = settings.PickBackColor(column, order, percentage);
 
       if (column.IsMainColumn && percentage >= settings.ElementWeightCutoff) {
-        elementColorPairs.Add(new ValueTuple<IRElement, Color>(tuple, color));
+        elementColorPairs.Add(new ValueTuple<IRElement, Brush>(tuple, color));
       }
 
       // Don't override initial back color if no color is picked,
       // mostly done for perf metrics column which have an initial back color.
-      if (color != Colors.Transparent) {
-        value.BackColor = color.AsBrush();
+      if (!color.IsTransparent()) {
+        value.BackColor = color;
       }
 
       value.TextColor = settings.PickTextColor(column, order, percentage);
@@ -481,18 +493,18 @@ public class ProfileDocumentMarker {
       var icon = settings_.PickIconForOrder(i, weightPercentage);
       var color = settings_.PickBackColorForPercentage(weightPercentage);
 
-      if (color == Colors.Transparent) {
+      if (color.IsTransparent()) {
         // Match the background color of the corresponding text line.
         color = block.HasEvenIndexInFunction ?
-          App.Settings.DocumentSettings.BackgroundColor :
-          App.Settings.DocumentSettings.AlternateBackgroundColor;
+          App.Settings.DocumentSettings.BackgroundColor.AsBrush() :
+          App.Settings.DocumentSettings.AlternateBackgroundColor.AsBrush();
       }
 
       bool markOnFlowGraph = settings_.IsSignificantValue(i, weightPercentage);
       string label = $"{weightPercentage.AsTrimmedPercentageString()}";
       string tooltip = settings_.FormatWeightValue(null, weight);
       var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label, tooltip);
-      overlay.Background = color.AsBrush();
+      overlay.Background = color;
       overlay.Border = blockPen;
       overlay.IsLabelPinned = true;
       overlay.AllowLabelEditing = false;
@@ -516,7 +528,8 @@ public class ProfileDocumentMarker {
 
       if (settings_.MarkBlocksInFlowGraph &&
           weightPercentage > settings_.ElementWeightCutoff) {
-        block.AddTag(GraphNodeTag.MakeColor(weightPercentage.AsTrimmedPercentageString(), color));
+        block.AddTag(GraphNodeTag.MakeColor(weightPercentage.AsTrimmedPercentageString(),
+                                            ((SolidColorBrush)color).Color));
       }
     }
   }
@@ -530,6 +543,7 @@ public class ProfileDocumentMarker {
     var columnData = new IRDocumentColumnData(function.InstructionCount);
     var percentageColumn = columnData.AddColumn(TimePercentageColumnTemplate());
     var timeColumn = columnData.AddColumn(TimeColumnTemplate());
+    percentageColumn.IsMainColumn = true;
 
     await Task.Run(() => {
       for (int i = 0; i < elements.Count; i++) {
@@ -550,10 +564,6 @@ public class ProfileDocumentMarker {
       }
     });
 
-    percentageColumn.IsMainColumn = true;
-    UpdateColumnStyle(percentageColumn, columnData, function, document, settings_, columnSettings_);
-    UpdateColumnStyle(timeColumn, columnData, function, document, settings_, columnSettings_);
-
     // Handle performance counter columns.
     var counterElements = result.CounterElements;
 
@@ -562,12 +572,7 @@ public class ProfileDocumentMarker {
       return columnData;
     }
 
-    //? TODO: Order of counters (custom sorting or fixed)
-    //? TODO: Way to set a counter as a baseline, another diff to it in %
-    //?    misspredictedBranches / totalBranches
-    //?    takenBranches / total, etc JSON
     var perfCounters = globalProfile_.SortedPerformanceCounters;
-    var colors = new Brush[] {Brushes.DarkSlateBlue, Brushes.DarkOliveGreen, Brushes.DarkSlateGray};
     var counterColumns = new OptionalColumn[perfCounters.Count];
     var counterSortMap = new List<List<CounterSortHelper>>();
 
@@ -625,22 +630,12 @@ public class ProfileDocumentMarker {
             tooltip = FormatPerformanceCounter(value, counter);
           }
 
-          //? Could have a config for all/per-counter to pick % or value as label
+          //? TODO: Could have a config for all/per-counter to pick % or value as label
           //var label = $"{value * counter.Interval}";
           var columnValue = new ElementColumnValue(label, value, valuePercentage, i, tooltip);
-
-          var color = colors[counter.Index % colors.Length];
-
-          //? TODO: Re-enable
-          //? - add back color option in per-column settings
-          //? - add "use metrics back color" to global settings
-          //if (counter.IsMetric)
-          //  columnValue.BackColor = Brushes.Bisque;
-
           columnValue.ValuePercentage = valuePercentage;
           columnValue.CanShowPercentageBar = !isValueBasedMetric &&
                                              valuePercentage >= settings_.ElementWeightCutoff;
-          columnValue.PercentageBarBackColor = color;
           columnData.AddValue(columnValue, element, counterColumns[k]);
 
           var counterValueList = counterSortMap[k];
@@ -661,12 +656,15 @@ public class ProfileDocumentMarker {
       }
     }
 
-    foreach (var column in counterColumns) {
-      UpdateColumnStyle(column, columnData, function, document, settings_, columnSettings_);
-    }
-
     SetupColumnHeaderEvents(function, document, columnData);
     return columnData;
+  }
+
+  public void UpdateColumnStyles(IRDocumentColumnData columnData,
+                                 FunctionIR function, MarkedDocument document) {
+    foreach (var column in columnData.Columns) {
+      UpdateColumnStyle(column, columnData, function, document, settings_, columnSettings_);
+    }
   }
 
   private void SetupColumnHeaderEvents(FunctionIR function, MarkedDocument document,

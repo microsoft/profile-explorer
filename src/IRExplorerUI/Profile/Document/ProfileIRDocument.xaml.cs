@@ -32,6 +32,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private bool hasProfileInfo_;
   private Brush selectedLineBrush_;
   private TextViewSettingsBase settings_;
+  private ProfileDocumentMarker profileMarker_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -169,11 +170,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     //? TODO: Check if it's still the case
     //? Accessing the PDB (DIA) from another thread fails.
     //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
-    var profileMarker =
+    profileMarker_ =
       new ProfileDocumentMarker(funcProfile, Session.ProfileData,
       settings_.ProfileMarkerSettings, settings_.ColumnSettings,
       Session.CompilerInfo);
-    var processingResult = profileMarker.PrepareSourceLineProfile(funcProfile, TextView, debugInfo);
+    var processingResult = profileMarker_.PrepareSourceLineProfile(funcProfile, TextView, debugInfo);
 
     if (processingResult == null) {
       return;
@@ -188,7 +189,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     await TextView.LoadSection(dummyParsedSection);
 
     TextView.SuspendUpdate();
-    await profileMarker.MarkSourceLines(TextView, processingResult);
+    await profileMarker_.MarkSourceLines(TextView, processingResult);
 
     //? TODO: UI option maybe?
     // Annotate call sites next to source lines by parsing the actual section
@@ -196,8 +197,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var parsedSection = await Task.Run(() => Session.LoadAndParseSection(section));
 
     if (parsedSection != null) {
-      profileMarker.MarkCallSites(TextView, parsedSection.Function,
-                                  section.ParentFunction, processingResult);
+      profileMarker_.MarkCallSites(TextView, parsedSection.Function,
+                                   section.ParentFunction, processingResult);
     }
 
     TextView.ResumeUpdate();
@@ -228,6 +229,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       ProfileColumns.ColumnSettings = settings_.ColumnSettings;
 
       await ProfileColumns.Display(sourceColumnData_, TextView);
+      profileMarker_.UpdateColumnStyles(sourceColumnData_, TextView.Function, TextView);
+
       profileElements_ = TextView.ProfileProcessingResult.SampledElements;
       UpdateHighlighting();
 

@@ -14,6 +14,7 @@ public class ColorPalette {
     Name = name;
     Description = description;
     Colors = new List<Color>();
+    Brushes = new List<Brush>();
   }
 
   public ColorPalette(IEnumerable<Color> colors, string name = "", string description = "") {
@@ -154,7 +155,11 @@ public class ColorPalette {
     return PickColorForPercentage(weightPercentage, reverse).AsBrush();
   }
 
-  public Brush PickBrush(int colorIndex) {
+  public Brush PickBrush(int colorIndex, bool reverse = false) {
+    if (reverse) {
+      colorIndex = Colors.Count - colorIndex - 1;
+    }
+
     colorIndex = Math.Clamp(colorIndex, 0, Colors.Count - 1);
     return Brushes[colorIndex];
   }

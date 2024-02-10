@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 using ProtoBuf;
@@ -52,6 +53,8 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   [ProtoMember(20)]  public ValueUnitKind ValueUnit { get; set; }
   [ProtoMember(21)] public bool AppendValueUnitSuffix { get; set; }
   [ProtoMember(22)] public int ValueUnitDecimals { get; set; }
+  [ProtoMember(23)]  public Color PerformanceMetricBackColor { get; set; }
+  [ProtoMember(24)]  public Color PerformanceCounterBackColor { get; set; }
 
   public static int DefaultMaxPercentageBarWidth = 50;
   public static double DefaultElementWeightCutoff = 0.003; // 0.3%;
@@ -76,6 +79,8 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     BlockOverlayBorderColor = Colors.DimGray;
     BlockOverlayBorderThickness = 1;
     PercentageBarBackColor = Utils.ColorFromString("#Aa4343");
+    PerformanceMetricBackColor = Colors.AntiqueWhite;
+    PerformanceCounterBackColor = Colors.WhiteSmoke;
   }
 
   public string FormatWeightValue(OptionalColumn column, TimeSpan weight) {
@@ -99,9 +104,9 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     };
   }
 
-  public Color PickBackColor(OptionalColumn column, int order, double percentage) {
+  public Brush PickBackColor(OptionalColumn column, int order, double percentage) {
     if (!ShouldUseBackColor(column)) {
-      return Colors.Transparent;
+      return Brushes.Transparent;
     }
 
     //? TODO: ShouldUsePalette, ColorPalette in Appearance
@@ -111,33 +116,47 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
       : PickBackColorForOrder(column, order, percentage, !InvertColorPalette(column));
   }
 
-  public Color PickBackColorForPercentage(double percentage) {
+  public Brush PickBackColorForPercentage(double percentage) {
     return PickBackColorForPercentage(null, percentage);
   }
 
-  private Color PickBackColorForPercentage(OptionalColumn column, double percentage) {
+  private Brush PickBackColorForPercentage(OptionalColumn column, double percentage) {
     if (percentage < ElementWeightCutoff) {
-      return Colors.Transparent;
+      return Brushes.Transparent;
     }
 
     var palette = PickColorPalette(column);
-    return palette.PickColorForPercentage(percentage, InvertColorPalette(column));
+    return palette.PickBrushForPercentage(percentage, InvertColorPalette(column));
   }
 
-  private Color PickBackColorForOrder(OptionalColumn column, int order, double percentage, bool inverted) {
+  private Brush PickBackColorForOrder(OptionalColumn column, int order, double percentage, bool inverted) {
     if (!IsSignificantValue(order, percentage)) {
-      return Colors.Transparent;
+      return Brushes.Transparent;
     }
 
     var palette = PickColorPalette(column);
-    return palette.PickColor(order, inverted);
+    return palette.PickBrush(order, inverted);
+  }
+
+  public Brush PickDefaultBackColor(OptionalColumn column) {
+    if (!column.Style.BackgroundColor.IsTransparent()) {
+      return column.Style.BackgroundColor.AsBrush();
+    }
+
+    if (column.PerformanceCounter != null) {
+      return column.IsPerformanceCounter ?
+        PerformanceCounterBackColor.AsBrush() :
+        PerformanceMetricBackColor.AsBrush();
+    }
+
+    return Brushes.Transparent;
   }
 
   public bool IsSignificantValue(int order, double percentage) {
     return order < TopOrderCutoff && percentage >= IconBarWeightCutoff;
   }
 
-  public Color PickBackColorForOrder(int order, double percentage, bool inverted) {
+  public Brush PickBackColorForOrder(int order, double percentage, bool inverted) {
     return PickBackColorForOrder(null, order, percentage, inverted);
   }
 
@@ -175,7 +194,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   }
 
   public Brush PickBrushForPercentage(double weightPercentage) {
-    return PickBackColorForPercentage(null, weightPercentage).AsBrush();
+    return PickBackColorForPercentage(null, weightPercentage);
   }
 
   //? TODO: Cache IconDrawing between calls
@@ -189,6 +208,10 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
       ? PickIconForPercentage(percentage)
       : PickIconForOrder(order, percentage);
   }
+
+  //? TODO:
+  //? private void PreloadIcons() {
+  //? }
 
   public IconDrawing PickIconForOrder(int order, double percentage) {
     return order switch {
@@ -254,12 +277,14 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
             column.Style.UseBackColor == OptionalColumnStyle.PartVisibility.IfActiveColumn);
   }
 
-  public Color PickColorForPercentage(double percentage) {
+  public Brush PickColorForPercentage(double percentage) {
     return PickBackColorForPercentage(null, percentage);
   }
 
   private ColorPalette PickColorPalette(OptionalColumn column) {
-    return column?.Style?.BackColorPalette ?? defaultBackColorPalette_;
+    return !string.IsNullOrEmpty(column?.Style?.BackColorPalette) ?
+      ColorPalette.GetPalette(column.Style.BackColorPalette) :
+      defaultBackColorPalette_;
   }
 
   private bool InvertColorPalette(OptionalColumn column) {
@@ -293,17 +318,19 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
            ElementWeightCutoff.Equals(other.ElementWeightCutoff) &&
            TopOrderCutoff == other.TopOrderCutoff &&
            IconBarWeightCutoff.Equals(other.IconBarWeightCutoff) &&
-           Equals(ColumnTextColor, other.ColumnTextColor) &&
-           Equals(BlockOverlayTextColor, other.BlockOverlayTextColor) &&
-           Equals(HotBlockOverlayTextColor, other.HotBlockOverlayTextColor) &&
-           Equals(BlockOverlayBorderColor, other.BlockOverlayBorderColor) &&
+           ColumnTextColor == other.ColumnTextColor &&
+           BlockOverlayTextColor == other.BlockOverlayTextColor &&
+           HotBlockOverlayTextColor == other.HotBlockOverlayTextColor &&
+           BlockOverlayBorderColor == other.BlockOverlayBorderColor &&
            BlockOverlayBorderThickness.Equals(other.BlockOverlayBorderThickness) &&
-           Equals(PercentageBarBackColor, other.PercentageBarBackColor) &&
+           PercentageBarBackColor == other.PercentageBarBackColor &&
            MaxPercentageBarWidth == other.MaxPercentageBarWidth &&
            DisplayPercentageBar == other.DisplayPercentageBar &&
            DisplayIcons == other.DisplayIcons &&
            ValueUnit == other.ValueUnit &&
            AppendValueUnitSuffix == other.AppendValueUnitSuffix &&
-           ValueUnitDecimals == other.ValueUnitDecimals;
+           ValueUnitDecimals == other.ValueUnitDecimals &&
+           PerformanceMetricBackColor == other.PerformanceMetricBackColor &&
+           PerformanceCounterBackColor == other.PerformanceCounterBackColor;
   }
 }

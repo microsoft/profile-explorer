@@ -171,19 +171,6 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     // attach an overlay label next to the first instr. in the block.
     CreateBlockLabelOverlays(document, function);
 
-    // Check if there is profile info and annotate the instrs. with timing info.
-    var profile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
-
-    if (profile != null) {
-      var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, 
-        App.Settings.DocumentSettings.ProfileMarkerSettings,
-        App.Settings.DocumentSettings.ColumnSettings, this);
-      await profileMarker.Mark(document, function, section.ParentFunction);
-
-      // Redraw the flow graphs, may have loaded before the marker set the node tags.
-      Session.RedrawPanels();
-    }
-
     // Annotate instrs. with source line numbers if debug info is available.
     var sourceMarker = new SourceDocumentMarker(App.Settings.DocumentSettings.SourceMarkerSettings, this);
     await sourceMarker.Mark(document, function);
