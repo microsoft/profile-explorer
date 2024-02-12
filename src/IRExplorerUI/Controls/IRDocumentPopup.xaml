@@ -26,7 +26,8 @@
         ShadowDepth="2"
         Color="#FF929292" />
     </Border.Effect>
-    <Grid x:Name="ToolbarPanel" ContextMenu="{StaticResource PopupContextMenu}">
+    <Grid x:Name="ToolbarPanel" ContextMenu="{StaticResource PopupContextMenu}"
+    Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="130" />

@@ -83,7 +83,24 @@
             VerticalAlignment="Center"
             Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
             Loaded="ToolBar_Loaded">
-            <TextBlock VerticalAlignment="Center" Text="Profile" />
+            <Menu Margin="2,0,0,0" VerticalAlignment="Center">
+              <MenuItem
+                x:Name="ProfileElementsMenu"
+                Margin="0,0,0,0"
+                Padding="0,0,0,0"
+                OverridesDefaultStyle="True">
+                <MenuItem.Header>
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock VerticalAlignment="Bottom" Text="Profile" />
+                    <Path
+                      Margin="4,2,0,0"
+                      VerticalAlignment="Center"
+                      Data="M 0 0 L 3 3 L 6 0 Z"
+                      Fill="Black" />
+                  </StackPanel>
+                </MenuItem.Header>
+              </MenuItem>
+            </Menu>
             <Button
               Margin="4,0,0,0"
               Padding="0"
