@@ -16,8 +16,115 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Document;
 
 namespace IRExplorerUI.Profile.Document;
+
+
+public class ProfileMenuItem : BindableObject {
+  private Thickness borderThickness_;
+  private Brush borderBrush_;
+  private string text_;
+  private string prefixText_;
+  private double minTextWidth_;
+  private string toolTip_;
+  private Brush textColor_;
+  private Brush backColor_;
+  private bool showPercentageBar_;
+  private Brush percentageBarBackColor__;
+  private double percentageBarBorderThickness_;
+  private Brush percentageBarBorderBrush_;
+  private FontWeight textWeight_;
+  private double textSize_;
+  private FontFamily textFont_;
+
+  public ProfileMenuItem(string text, long value = 0, double valueValuePercentage = 0.0) {
+    Text = text;
+    Value = value;
+    ValuePercentage = valueValuePercentage;
+    TextWeight = FontWeights.Normal;
+    TextColor = Brushes.Black;
+  }
+
+  public IRElement Element { get; set; }
+  public long Value { get; set; }
+  public double ValuePercentage { get; set; }
+
+  public Thickness BorderThickness {
+    get => borderThickness_;
+    set => SetAndNotify(ref borderThickness_, value);
+  }
+
+  public Brush BorderBrush {
+    get => borderBrush_;
+    set => SetAndNotify(ref borderBrush_, value);
+  }
+
+  public string Text {
+    get => text_;
+    set => SetAndNotify(ref text_, value);
+  }
+
+  public string PrefixText {
+    get => prefixText_;
+    set => SetAndNotify(ref prefixText_, value);
+  }
+
+  public double MinTextWidth {
+    get => minTextWidth_;
+    set => SetAndNotify(ref minTextWidth_, value);
+  }
+
+  public string ToolTip {
+    get => toolTip_;
+    set => SetAndNotify(ref toolTip_, value);
+  }
+
+  public Brush TextColor {
+    get => textColor_;
+    set => SetAndNotify(ref textColor_, value);
+  }
+
+  public Brush BackColor {
+    get => backColor_;
+    set => SetAndNotify(ref backColor_, value);
+  }
+
+  public bool ShowPercentageBar {
+    get => showPercentageBar_;
+    set => SetAndNotify(ref showPercentageBar_, value);
+  }
+
+  public Brush PercentageBarBackColor {
+    get => percentageBarBackColor__;
+    set => SetAndNotify(ref percentageBarBackColor__, value);
+  }
+
+  public double PercentageBarBorderThickness {
+    get => percentageBarBorderThickness_;
+    set => SetAndNotify(ref percentageBarBorderThickness_, value);
+  }
+
+  public Brush PercentageBarBorderBrush {
+    get => percentageBarBorderBrush_;
+    set => SetAndNotify(ref percentageBarBorderBrush_, value);
+  }
+
+  public FontWeight TextWeight {
+    get => textWeight_;
+    set => SetAndNotify(ref textWeight_, value);
+  }
+
+  public double TextSize {
+    get => textSize_;
+    set => SetAndNotify(ref textSize_, value);
+  }
+
+  public FontFamily TextFont {
+    get => textFont_;
+    set => SetAndNotify(ref textFont_, value);
+  }
+}
 
 public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private List<(IRElement, TimeSpan)> profileElements_;
@@ -155,6 +262,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                                settings_.ColumnSettings, Session.CompilerInfo);
     await profileMarker_.Mark(TextView, parsedSection.Function,
                               parsedSection.Section.ParentFunction);
+    CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, true);
     await UpdateProfilingColumns();
   }
 
@@ -231,6 +339,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.ResumeUpdate();
     sourceProfileResult_ = processingResult.Result;
     sourceLineProfileResult_ = processingResult.SourceLineResult;
+    CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, false);
     await UpdateProfilingColumns();
   }
 
@@ -280,6 +389,68 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     HasProfileInfo = true;
+  }
+
+  private void CreateProfileElementMenu(FunctionProfileData funcProfile,
+                                        FunctionProcessingResult result,
+                                        bool isAssemblyView) {
+    var list = new List<ProfileMenuItem>(result.SampledElements.Count);
+    double maxWidth = 0;
+
+    ProfileElementsMenu.Items.Clear();
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var markerSettings = settings_.ProfileMarkerSettings;
+    int order = 0;
+
+    foreach (var (element, weight) in result.SampledElements) {
+      double weightPercentage = funcProfile.ScaleWeight(weight);
+
+      if (!markerSettings.IsVisibleValue(order++, weightPercentage)) {
+        break;
+      }
+
+      string text = $"({markerSettings.FormatWeightValue(null, weight)})";
+      string prefixText;
+
+      if (isAssemblyView) {
+        prefixText = DocumentUtils.GenerateElementPreviewText(element, TextView.SectionText, 50);
+      }
+      else {
+        prefixText = element.GetText(TextView.SectionText).ToString();
+        prefixText = Utils.TrimToLength(prefixText.Trim(), 50);
+      }
+
+      var value = new ProfileMenuItem(text, weight.Ticks, weightPercentage) {
+        Element = element,
+        PrefixText = prefixText,
+        ToolTip = $"Line {element.TextLocation.Line + 1}",
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
+      var item = new MenuItem {
+        Header = value,
+        Tag = list.Count,
+        HeaderTemplate = valueTemplate
+      };
+
+      item.Click += (sender, args) => {
+        var menuItem = (MenuItem)sender;
+        JumpToProfiledElementAt((int)menuItem.Tag);
+      };
+
+      ProfileElementsMenu.Items.Add(item);
+
+      // Make sure percentage rects are aligned.
+      double width = Utils.MeasureString(prefixText, settings_.FontName, settings_.FontSize).Width;
+      maxWidth = Math.Max(width, maxWidth);
+      list.Add(value);
+    }
+
+    foreach (var value in list) {
+      value.MinTextWidth = maxWidth;
+    }
   }
 
   private async void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -392,6 +563,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.ScrollToLine(element.TextLocation.Line);
     double offset = TextView.TextArea.TextView.VerticalOffset;
     SyncColumnsVerticalScrollOffset(offset);
+  }
+
+  private void JumpToProfiledElementAt(int index) {
+    profileElementIndex_ = index;
+    JumpToProfiledElement(0);
   }
 
   private void JumpToNextProfiledElementCanExecute(object sender, CanExecuteRoutedEventArgs e) {

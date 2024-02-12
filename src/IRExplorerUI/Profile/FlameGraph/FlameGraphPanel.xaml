@@ -267,7 +267,7 @@
                             Source="{StaticResource ClearIcon}"
                             Style="{StaticResource DisabledImageStyle}" />
                     </Button>
-                    <Separator Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <Separator Visibility="{Binding HasRootNode, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <Image Source="{StaticResource SearchIcon}" />
                     <Grid Height="24">

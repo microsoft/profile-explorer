@@ -127,23 +127,14 @@
             Background="{Binding BackColor}"
             BorderBrush="{Binding BorderBrush}"
             BorderThickness="{Binding BorderThickness}">
-            <StackPanel Orientation="Horizontal">
-                <Image
-                    Width="Auto"
-                    Height="Auto"
-                    VerticalAlignment="Stretch"
-                    Source="{Binding Icon}"
-                    Stretch="Uniform"
-                    Visibility="{Binding Path=ShowIcon, Converter={StaticResource BoolToVisibilityConverter}}" />
-                <TextBlock
-                    VerticalAlignment="Center"
-                    FontFamily="Consolas"
-                    FontSize="12"
-                    FontWeight="{Binding TextWeight}"
-                    Foreground="{Binding TextColor}"
-                    Text="{Binding Text}"
-                    ToolTip="{Binding ToolTip}" />
-            </StackPanel>
+            <TextBlock
+              VerticalAlignment="Center"
+              FontFamily="Consolas"
+              FontSize="12"
+              FontWeight="{Binding TextWeight}"
+              Foreground="{Binding TextColor}"
+              Text="{Binding Text}"
+              ToolTip="{Binding ToolTip}" />
         </Border>
     </DataTemplate>
 

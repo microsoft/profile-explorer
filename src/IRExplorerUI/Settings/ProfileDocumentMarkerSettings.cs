@@ -229,7 +229,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     };
   }
 
-  private IconDrawing PickIconForPercentage(double percentage) {
+  public IconDrawing PickIconForPercentage(double percentage) {
     return percentage switch {
       >= 0.9 => IconDrawing.FromIconResource("HotFlameIcon1"),
       >= 0.7 => IconDrawing.FromIconResource("HotFlameIcon2"),

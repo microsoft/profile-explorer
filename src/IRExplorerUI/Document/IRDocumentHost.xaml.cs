@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -24,9 +23,9 @@ using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Profile;
+using IRExplorerUI.Profile.Document;
 using IRExplorerUI.Query;
 using ProtoBuf;
-using MouseHoverLogic = IRExplorerUI.Utilities.UI.MouseHoverLogic;
 
 namespace IRExplorerUI;
 
@@ -68,123 +67,6 @@ public class IRDocumentHostState {
   [ProtoMember(3)]
   public double VerticalOffset;
   public bool HasAnnotations => DocumentState.HasAnnotations;
-}
-
-public class ProfiledBlockEx : BindableObject {
-  public static readonly ElementColumnValue Empty = new ElementColumnValue(string.Empty);
-  private Thickness borderThickness_;
-  private Brush borderBrush_;
-  private string text_;
-  private string prefixText_;
-  private double minTextWidth_;
-  private string toolTip_;
-  private Brush textColor_;
-  private Brush backColor_;
-  private ImageSource icon_;
-  private bool showPercentageBar_;
-  private Brush percentageBarBackColor__;
-  private double percentageBarBorderThickness_;
-  private Brush percentageBarBorderBrush_;
-  private FontWeight textWeight_;
-  private double textSize_;
-  private FontFamily textFont_;
-
-  public ProfiledBlockEx(string text, long value = 0, double valueValuePercentage = 0.0) {
-    Text = text;
-    Value = value;
-    ValuePercentage = valueValuePercentage;
-    TextWeight = FontWeights.Normal;
-    TextColor = Brushes.Black;
-  }
-
-  public IRElement Element { get; set; }
-  public long Value { get; set; }
-  public double ValuePercentage { get; set; }
-
-  public Thickness BorderThickness {
-    get => borderThickness_;
-    set => SetAndNotify(ref borderThickness_, value);
-  }
-
-  public Brush BorderBrush {
-    get => borderBrush_;
-    set => SetAndNotify(ref borderBrush_, value);
-  }
-
-  public string Text {
-    get => text_;
-    set => SetAndNotify(ref text_, value);
-  }
-
-  public string PrefixText {
-    get => prefixText_;
-    set => SetAndNotify(ref prefixText_, value);
-  }
-
-  public double MinTextWidth {
-    get => minTextWidth_;
-    set => SetAndNotify(ref minTextWidth_, value);
-  }
-
-  public string ToolTip {
-    get => toolTip_;
-    set => SetAndNotify(ref toolTip_, value);
-  }
-
-  public Brush TextColor {
-    get => textColor_;
-    set => SetAndNotify(ref textColor_, value);
-  }
-
-  public Brush BackColor {
-    get => backColor_;
-    set => SetAndNotify(ref backColor_, value);
-  }
-
-  public ImageSource Icon {
-    get => icon_;
-    set {
-      SetAndNotify(ref icon_, value);
-      Notify(nameof(ShowIcon));
-    }
-  }
-
-  public bool ShowIcon => icon_ != null;
-
-  public bool ShowPercentageBar {
-    get => showPercentageBar_;
-    set => SetAndNotify(ref showPercentageBar_, value);
-  }
-
-  public Brush PercentageBarBackColor {
-    get => percentageBarBackColor__;
-    set => SetAndNotify(ref percentageBarBackColor__, value);
-  }
-
-  public double PercentageBarBorderThickness {
-    get => percentageBarBorderThickness_;
-    set => SetAndNotify(ref percentageBarBorderThickness_, value);
-  }
-
-  public Brush PercentageBarBorderBrush {
-    get => percentageBarBorderBrush_;
-    set => SetAndNotify(ref percentageBarBorderBrush_, value);
-  }
-
-  public FontWeight TextWeight {
-    get => textWeight_;
-    set => SetAndNotify(ref textWeight_, value);
-  }
-
-  public double TextSize {
-    get => textSize_;
-    set => SetAndNotify(ref textSize_, value);
-  }
-
-  public FontFamily TextFont {
-    get => textFont_;
-    set => SetAndNotify(ref textFont_, value);
-  }
 }
 
 public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
@@ -1093,8 +975,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     Session.RedrawPanels();
 
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    BuildProfileBlockList(funcProfile, TextView.ProfileProcessingResult);
-    BuildProfileElementList(funcProfile, TextView.ProfileProcessingResult);
+    CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
+    CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
     profileElements_ = TextView.ProfileProcessingResult.SampledElements;
     ProfileVisible = true;
 
@@ -1141,10 +1023,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     //await UpdateProfilingColumns();
   }
 
-  private void BuildProfileBlockList(FunctionProfileData funcProfile,
+  private void CreateProfileBlockMenu(FunctionProfileData funcProfile,
                                       FunctionProcessingResult result) {
     profileBlocks_ = result.BlockSampledElements;
-    var list = new List<ProfiledBlockEx>(result.BlockSampledElements.Count);
+    var list = new List<ProfileMenuItem>(result.BlockSampledElements.Count);
     double maxWidth = 0;
 
     ProfileBlocksMenu.Items.Clear();
@@ -1162,12 +1044,13 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       string prefixText = $"B{block.Number}";
       string text = $"({markerSettings.FormatWeightValue(null, weight)})";
 
-      var value = new ProfiledBlockEx(text, weight.Ticks, weightPercentage) {
+      var value = new ProfileMenuItem(text, weight.Ticks, weightPercentage) {
         Element = block,
         PrefixText = prefixText,
+        ToolTip = $"Line {block.TextLocation.Line + 1}",
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
       };
 
       var item = new MenuItem {
@@ -1194,9 +1077,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private void BuildProfileElementList(FunctionProfileData funcProfile,
+  private void CreateProfileElementMenu(FunctionProfileData funcProfile,
                                       FunctionProcessingResult result) {
-    var list = new List<ProfiledBlockEx>(result.SampledElements.Count);
+    var list = new List<ProfileMenuItem>(result.SampledElements.Count);
     double maxWidth = 0;
 
     ProfileElementsMenu.Items.Clear();
@@ -1211,15 +1094,16 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         break;
       }
 
-      string prefixText = DocumentUtils.GenerateElementPreviewText(element, TextView.SectionText, 32);
+      string prefixText = DocumentUtils.GenerateElementPreviewText(element, TextView.SectionText, 50);
       string text = $"({markerSettings.FormatWeightValue(null, weight)})";
 
-      var value = new ProfiledBlockEx(text, weight.Ticks, weightPercentage) {
+      var value = new ProfileMenuItem(text, weight.Ticks, weightPercentage) {
         Element = element,
         PrefixText = prefixText,
+        ToolTip = $"Line {element.TextLocation.Line + 1}",
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
       };
 
       var item = new MenuItem {
