@@ -19,12 +19,14 @@ public class PreviewPopupSettings : SettingsBase {
   [ProtoMember(3)]
   public bool ShowPerformanceCounterColumns { get; set; }
   [ProtoMember(4)]
-  public bool UseSmallerFontSize { get; set; }
+  public bool ShowPerformanceMetricColumns { get; set; }
   [ProtoMember(5)]
-  public bool ShowSourcePreviewPopup { get; set; }
+  public bool UseSmallerFontSize { get; set; }
   [ProtoMember(6)]
-  public double PopupWidth { get; set; }
+  public bool ShowSourcePreviewPopup { get; set; }
   [ProtoMember(7)]
+  public double PopupWidth { get; set; }
+  [ProtoMember(8)]
   public double PopupHeight { get; set; }
 
   public static PreviewPopupSettings Default => new PreviewPopupSettings() {
@@ -53,6 +55,7 @@ public class PreviewPopupSettings : SettingsBase {
            JumpToHottestElement == settings.JumpToHottestElement &&
            UseCompactProfilingColumns == settings.UseCompactProfilingColumns &&
            ShowPerformanceCounterColumns == settings.ShowPerformanceCounterColumns &&
+           ShowPerformanceMetricColumns == settings.ShowPerformanceMetricColumns &&
            UseSmallerFontSize == settings.UseSmallerFontSize &&
            ShowSourcePreviewPopup == settings.ShowSourcePreviewPopup &&
            Math.Abs(PopupWidth - settings.PopupWidth) < Double.Epsilon &&

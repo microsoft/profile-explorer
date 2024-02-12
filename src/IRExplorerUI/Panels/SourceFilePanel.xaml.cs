@@ -76,7 +76,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
         ProfileTextView.TextView.FontSize = settings_.FontSize;
         ProfileTextView.TextView.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
         ProfileTextView.TextView.Foreground = ColorBrushes.GetBrush(settings_.TextColor);
-        ProfileTextView.InitializeDocument(settings_);
+        ProfileTextView.Initialize(settings_);
       }
       else {
         // Patch the settings with the document settings.
@@ -87,7 +87,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
         clone.FontSize = App.Settings.DocumentSettings.FontSize;
         clone.BackgroundColor = App.Settings.DocumentSettings.BackgroundColor;
         clone.TextColor = App.Settings.DocumentSettings.TextColor;
-        ProfileTextView.InitializeDocument(clone);
+        ProfileTextView.Initialize(clone);
       }
     }
   }

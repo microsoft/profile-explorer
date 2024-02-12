@@ -101,10 +101,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     parsedSection_ = parsedSection;
     ShowModeButtons = true;
     ShowAssembly = !settings_.ShowSourcePreviewPopup;
-
-    if(!ShowAssembly) { // Be default assembly is displayed.
-      await SwitchAssemblySourceMode();
-    }
+    await SwitchAssemblySourceMode();
 
     if (settings_.JumpToHottestElement) {
       ProfileTextView.JumpToHottestProfiledElement();
@@ -123,7 +120,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   public static async Task<IRDocumentPopup> CreateNew(ParsedIRTextSection parsedSection,
-                                                      Point position, 
+                                                      Point position,
                                                       UIElement owner, ISession session,
                                                       PreviewPopupSettings settings,
                                                       string titlePrefix = "") {
@@ -140,9 +137,12 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private async Task InitializeFromSection(ParsedIRTextSection parsedSection) {
+    ProfileTextView.IsPreviewDocument = true;
     ProfileTextView.UseSmallerFontSize = settings_.UseSmallerFontSize;
     ProfileTextView.UseCompactProfilingColumns = settings_.UseCompactProfilingColumns;
-    ProfileTextView.InitializeDocument(App.Settings.DocumentSettings);
+    ProfileTextView.ShowPerformanceCounterColumns = settings_.ShowPerformanceCounterColumns;
+    ProfileTextView.ShowPerformanceMetricColumns = settings_.ShowPerformanceMetricColumns;
+    ProfileTextView.Initialize(App.Settings.DocumentSettings);
     await ProfileTextView.LoadSection(parsedSection);
     await SetupInitialMode(parsedSection);
   }
@@ -282,7 +282,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     ProfileTextView.Reset();
 
     if (showSourceFile_) {
-      ProfileTextView.InitializeDocument(App.Settings.SourceFileSettings);
+      ProfileTextView.Initialize(App.Settings.SourceFileSettings);
       var function = parsedSection_.Section.ParentFunction;
       var (sourceInfo, debugInfo) = await Session.CompilerInfo.SourceFileFinder.FindLocalSourceFile(function);
 
@@ -296,7 +296,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     }
     else {
       // Show assembly.
-      ProfileTextView.InitializeDocument(App.Settings.DocumentSettings);
+      ProfileTextView.Initialize(App.Settings.DocumentSettings);
       await ProfileTextView.LoadSection(parsedSection_);
     }
   }

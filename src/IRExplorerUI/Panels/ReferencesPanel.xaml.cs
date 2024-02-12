@@ -16,6 +16,7 @@ using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Document;
 using IRExplorerUI.Utilities.UI;
 using ProtoBuf;
 
@@ -44,11 +45,12 @@ public class ReferenceInfo {
   //? Needs to listen to DocumentSettings event change to update font used too
   private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
   private OperandIR operand_;
-  private string documentText_;
+  private ReadOnlyMemory<char> documentText_;
   private string previewText_;
   private TextBlock preview_;
 
-  public ReferenceInfo(int index, OperandIR operand, Reference info, string documentText) {
+  public ReferenceInfo(int index, OperandIR operand, Reference info,
+                       ReadOnlyMemory<char> documentText) {
     Index = index;
     Info = info;
     operand_ = operand;
@@ -87,9 +89,10 @@ public class ReferenceInfo {
   }
 
   private static (TextBlock, string)
-    CreatePreviewTextBlock(OperandIR operand, Reference reference, string documentText) {
+    CreatePreviewTextBlock(OperandIR operand, Reference reference,
+                           ReadOnlyMemory<char> documentText) {
     // Mark every instance of the symbol name in the preview text (usually an instr).
-    string text = FindPreviewText(reference, documentText);
+    string text = GeneratePreviewText(reference, documentText);
     string symbolName = Utils.GetSymbolName(operand);
     int index = 0;
 
@@ -130,57 +133,8 @@ public class ReferenceInfo {
     return (textBlock, text);
   }
 
-  private static string FindPreviewText(Reference reference, string documentText) {
-    var instr = reference.Element.ParentInstruction;
-    string text = "";
-
-    if (instr != null) {
-      text = instr.GetText(documentText).ToString();
-    }
-    else {
-      if (reference.Element is OperandIR op) {
-        // This is usually a parameter.
-        text = op.GetText(documentText).ToString();
-      }
-      else {
-        return "";
-      }
-    }
-
-    int start = 0;
-    int length = text.Length;
-
-    if (instr != null && instr.Destinations.Count > 0) {
-      var firstDest = instr.Destinations[0];
-      start = firstDest.TextLocation.Offset - instr.TextLocation.Offset;
-      start = Math.Max(0, start); //? TODO: Workaround for offset not being right
-    }
-
-    if (instr != null && instr.Sources.Count > 0) {
-      var lastSource = instr.Sources.FindLast(s => s.TextLocation.Offset != 0);
-
-      if (lastSource != null) {
-        length = lastSource.TextLocation.Offset -
-                 instr.TextLocation.Offset +
-                 lastSource.TextLength;
-
-        if (length <= 0) {
-          length = text.Length;
-        }
-
-        length = Math.Min(text.Length, length); //? TODO: Workaround for offset not being right
-      }
-    }
-
-    if (start != 0 || length > 0) {
-      int actualLength = Math.Min(length - start, text.Length - start);
-
-      if (actualLength > 0) {
-        text = text.Substring(start, actualLength);
-      }
-    }
-
-    return text.RemoveNewLines();
+  private static string GeneratePreviewText(Reference reference, ReadOnlyMemory<char> documentText) {
+    return DocumentUtils.GenerateElementPreviewText(reference.Element, documentText);
   }
 
   private void CreateOnDemandPreview() {
@@ -208,7 +162,7 @@ public class ReferencePanelState {
 }
 
 public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged {
-  private string documentText_;
+  private ReadOnlyMemory<char> documentText_;
   private IRElement element_;
   private ReferenceKind filterKind_;
   private bool ignoreNextElement_;
@@ -336,7 +290,7 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     if (Document != document ||
         section_ != document.Section) {
       Document = document;
-      documentText_ = document.Text; // Cache text.
+      documentText_ = document.SectionText; // Cache text.
       section_ = document.Section;
       Element = null;
     }

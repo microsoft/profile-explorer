@@ -33,12 +33,15 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private Brush selectedLineBrush_;
   private TextViewSettingsBase settings_;
   private ProfileDocumentMarker profileMarker_;
+  private bool isPreviewDocument_;
 
   public ProfileIRDocument() {
     InitializeComponent();
     UpdateDocumentStyle();
-    DataContext = this;
     SetupEvents();
+    ShowPerformanceCounterColumns = true;
+    ShowPerformanceMetricColumns = true;
+    DataContext = this;
   }
 
   private void SetupEvents() {
@@ -95,6 +98,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public bool UseCompactProfilingColumns { get; set; }
+  public bool ShowPerformanceCounterColumns { get; set; }
+  public bool ShowPerformanceMetricColumns { get; set; }
 
   public bool UseSmallerFontSize {
     get => ProfileColumns.UseSmallerFontSize;
@@ -104,6 +109,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public bool ColumnsVisible {
     get => columnsVisible_;
     set => SetField(ref columnsVisible_, value);
+  }
+
+  public bool IsPreviewDocument {
+    get => isPreviewDocument_;
+    set => SetField(ref isPreviewDocument_, value);
   }
 
   public Brush SelectedLineBrush {
@@ -126,8 +136,26 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.Initialize(App.Settings.DocumentSettings, Session);
     TextView.EarlyLoadSectionSetup(parsedSection);
     await TextView.LoadSection(parsedSection);
-    await UpdateProfilingColumns();
+
+    var debugInfo = await Session.GetDebugInfoProvider(parsedSection.Section.ParentFunction);
+    await AnnotateAssemblyProfile(parsedSection, debugInfo);
     return true;
+  }
+
+  private async Task AnnotateAssemblyProfile(ParsedIRTextSection parsedSection,
+                                             IDebugInfoProvider debugInfo) {
+    var funcProfile = Session.ProfileData?.GetFunctionProfile(parsedSection.Section.ParentFunction);
+
+    if (funcProfile == null) {
+      return;
+    }
+
+    profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
+                                               settings_.ProfileMarkerSettings,
+                                               settings_.ColumnSettings, Session.CompilerInfo);
+    await profileMarker_.Mark(TextView, parsedSection.Function,
+                              parsedSection.Section.ParentFunction);
+    await UpdateProfilingColumns();
   }
 
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
@@ -136,7 +164,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     try {
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
       SetSourceText(text, sourceInfo.FilePath);
-      await AnnotateSourceFileProfilerData(section, debugInfo);
+      await AnnotateSourceFileProfile(section, debugInfo);
 
       //? TODO: Is panel is not visible, scroll doesn't do anything,
       //? should be executed again when panel is activated
@@ -159,8 +187,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     SetSourceText(text, "");
   }
 
-  private async Task AnnotateSourceFileProfilerData(IRTextSection section,
-                                                    IDebugInfoProvider debugInfo) {
+  private async Task AnnotateSourceFileProfile(IRTextSection section,
+                                               IDebugInfoProvider debugInfo) {
     var funcProfile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
 
     if (funcProfile == null) {
@@ -191,7 +219,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.SuspendUpdate();
     await profileMarker_.MarkSourceLines(TextView, processingResult);
 
-    //? TODO: UI option maybe?
     // Annotate call sites next to source lines by parsing the actual section
     // and mapping back the call sites to the dummy elements representing the source lines.
     var parsedSection = await Task.Run(() => Session.LoadAndParseSection(section));
@@ -204,7 +231,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.ResumeUpdate();
     sourceProfileResult_ = processingResult.Result;
     sourceLineProfileResult_ = processingResult.SourceLineResult;
-
     await UpdateProfilingColumns();
   }
 
@@ -221,6 +247,17 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
         if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timePercColumn) {
           timePercColumn.IsVisible = false;
+        }
+      }
+
+      // Hide perf counter columns.
+      if (!ShowPerformanceCounterColumns ||
+          !ShowPerformanceMetricColumns) {
+        foreach (var column in sourceColumnData_.Columns) {
+          if ((!ShowPerformanceCounterColumns && column.IsPerformanceCounter) ||
+              (!ShowPerformanceMetricColumns && column.IsPerformanceMetric)) {
+            column.IsVisible = false;
+          }
         }
       }
 
@@ -442,7 +479,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var ws = wb.Worksheets.Add("Source");
     var columnData = sourceColumnData_;
     int rowId = 2; // First row is for the table column names.
-    int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
     int maxLineLength = 0;
 
     for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
@@ -531,11 +567,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public async Task ReloadSettings() {
-    InitializeDocument(settings_);
+    Initialize(settings_);
     await UpdateProfilingColumns();
   }
 
-  public void InitializeDocument(TextViewSettingsBase settings) {
+  public void Initialize(TextViewSettingsBase settings) {
     settings_ = settings;
     ProfileViewMenu.DataContext = settings_.ColumnSettings;
     TextView.FontFamily = new FontFamily(settings_.FontName);
