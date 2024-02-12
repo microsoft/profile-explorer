@@ -1083,7 +1083,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       return false;
     }
 
-    //? TODO: Also for source file panel
     // Mark instructions.
     profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
                                                   settings_.ProfileMarkerSettings,
@@ -1094,7 +1093,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     Session.RedrawPanels();
 
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    BuildProfileBlocksList(funcProfile, TextView.ProfileProcessingResult);
+    BuildProfileBlockList(funcProfile, TextView.ProfileProcessingResult);
+    BuildProfileElementList(funcProfile, TextView.ProfileProcessingResult);
     profileElements_ = TextView.ProfileProcessingResult.SampledElements;
     ProfileVisible = true;
 
@@ -1141,7 +1141,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     //await UpdateProfilingColumns();
   }
 
-  private void BuildProfileBlocksList(FunctionProfileData funcProfile,
+  private void BuildProfileBlockList(FunctionProfileData funcProfile,
                                       FunctionProcessingResult result) {
     profileBlocks_ = result.BlockSampledElements;
     var list = new List<ProfiledBlockEx>(result.BlockSampledElements.Count);
@@ -1149,21 +1149,25 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     ProfileBlocksMenu.Items.Clear();
     var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
-    var valueStyle = App.Settings.DocumentSettings.ProfileMarkerSettings;
+    var markerSettings = settings_.ProfileMarkerSettings;
+    int order = 0;
 
-    foreach (var pair in result.BlockSampledElements) {
-      var block = pair.Item1;
-      var weight = pair.Item2;
+    foreach (var (block, weight) in result.BlockSampledElements) {
       double weightPercentage = funcProfile.ScaleWeight(weight);
+
+      if (!markerSettings.IsVisibleValue(order++, weightPercentage)) {
+        break;
+      }
+
       string prefixText = $"B{block.Number}";
-      string text = $"({weight.AsMillisecondsString()})";
+      string text = $"({markerSettings.FormatWeightValue(null, weight)})";
 
       var value = new ProfiledBlockEx(text, weight.Ticks, weightPercentage) {
         Element = block,
         PrefixText = prefixText,
-        ShowPercentageBar = valueStyle.ShowPercentageBar(weightPercentage),
-        TextWeight = valueStyle.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = valueStyle.PercentageBarBackColor.AsBrush()
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
       };
 
       var item = new MenuItem {
@@ -1174,11 +1178,62 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
       item.Click += (sender, args) => {
         var menuItem = (MenuItem)sender;
-        profileBlockIndex_ = (int)menuItem.Tag;
-        JumpToProfiledBlock(profileBlocks_[profileBlockIndex_].Item1);
+        JumpToProfiledBlockAt((int)menuItem.Tag);
       };
 
       ProfileBlocksMenu.Items.Add(item);
+
+      // Make sure percentage rects are aligned.
+      double width = Utils.MeasureString(prefixText, settings_.FontName, settings_.FontSize).Width;
+      maxWidth = Math.Max(width, maxWidth);
+      list.Add(value);
+    }
+
+    foreach (var value in list) {
+      value.MinTextWidth = maxWidth;
+    }
+  }
+
+  private void BuildProfileElementList(FunctionProfileData funcProfile,
+                                      FunctionProcessingResult result) {
+    var list = new List<ProfiledBlockEx>(result.SampledElements.Count);
+    double maxWidth = 0;
+
+    ProfileElementsMenu.Items.Clear();
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var markerSettings = settings_.ProfileMarkerSettings;
+    int order = 0;
+
+    foreach (var (element, weight) in result.SampledElements) {
+      double weightPercentage = funcProfile.ScaleWeight(weight);
+
+      if (!markerSettings.IsVisibleValue(order++, weightPercentage)) {
+        break;
+      }
+
+      string prefixText = DocumentUtils.GenerateElementPreviewText(element, TextView.SectionText, 32);
+      string text = $"({markerSettings.FormatWeightValue(null, weight)})";
+
+      var value = new ProfiledBlockEx(text, weight.Ticks, weightPercentage) {
+        Element = element,
+        PrefixText = prefixText,
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
+      };
+
+      var item = new MenuItem {
+        Header = value,
+        Tag = list.Count,
+        HeaderTemplate = valueTemplate
+      };
+
+      item.Click += (sender, args) => {
+        var menuItem = (MenuItem)sender;
+        JumpToProfiledElementAt((int)menuItem.Tag);
+      };
+
+      ProfileElementsMenu.Items.Add(item);
 
       // Make sure percentage rects are aligned.
       double width = Utils.MeasureString(prefixText, settings_.FontName, settings_.FontSize).Width;
@@ -2089,6 +2144,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     JumpToProfiledElement(profileElements_[profileElementIndex_].Item1);
   }
 
+  private void JumpToProfiledElementAt(int index) {
+    profileElementIndex_ = index;
+    JumpToProfiledElement(0);
+  }
+
   private void JumpToProfiledBlock(int offset) {
     if (!HasProfiledBlock(offset)) {
       return;
@@ -2096,6 +2156,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     profileBlockIndex_ += offset;
     JumpToProfiledBlock(profileBlocks_[profileBlockIndex_].Item1);
+  }
+
+  private void JumpToProfiledBlockAt(int index) {
+    profileBlockIndex_ = index;
+    JumpToProfiledBlock(0);
   }
 
   private void JumpToProfiledBlock(BlockIR block) {

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
@@ -176,5 +177,71 @@ public static class DocumentUtils {
 
   public static void RestoreDefaultMenuItems(MenuItem menu, List<object> defaultItems) {
     defaultItems.ForEach(item => menu.Items.Add(item));
+  }
+
+  public static string GenerateElementPreviewText(IRElement element, ReadOnlyMemory<char> documentText,
+    int maxLength = 0) {
+    var instr = element.ParentInstruction;
+    string text = "";
+
+    if (instr != null) {
+      text = instr.GetText(documentText).ToString();
+    }
+    else {
+      if (element is OperandIR op) {
+        // This is usually a parameter.
+        text = op.GetText(documentText).ToString();
+      }
+      else {
+        return "";
+      }
+    }
+
+    int start = 0;
+    int length = text.Length;
+
+    if (instr != null) {
+      // Set range start to cover destination.
+      if (instr.Destinations.Count > 0) {
+        var firstDest = instr.Destinations[0];
+        start = firstDest.TextLocation.Offset - instr.TextLocation.Offset;
+        start = Math.Min(instr.OpcodeLocation.Offset - instr.TextLocation.Offset, start); // Include opcode.
+
+      }
+      else {
+        start = instr.OpcodeLocation.Offset - instr.TextLocation.Offset; // Include opcode.
+      }
+    }
+
+    start = Math.Max(0, start); //? TODO: Workaround for offset not being right
+
+    // Extend range to cover all sources.
+    if (instr != null && instr.Sources.Count > 0) {
+      var lastSource = instr.Sources.FindLast(s => s.TextLocation.Offset != 0);
+
+      if (lastSource != null) {
+        length = lastSource.TextLocation.Offset -
+                 instr.TextLocation.Offset +
+                 lastSource.TextLength;
+
+        if (length <= 0) {
+          length = text.Length;
+        }
+
+        length = Math.Min(text.Length, length); //? TODO: Workaround for offset not being right
+      }
+    }
+
+    // Extract the text in the range.
+    if (start != 0 || length > 0) {
+      int actualLength = Math.Min(length - start, text.Length - start);
+
+      if (actualLength > 0) {
+        text = text.Substring(start, actualLength);
+      }
+    }
+
+    text = text.RemoveNewLines();
+    return maxLength != 0 ? Utils.TrimToLength(text, maxLength) : text;
   }
 }

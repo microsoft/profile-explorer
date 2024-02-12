@@ -156,6 +156,10 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     return order < TopOrderCutoff && percentage >= IconBarWeightCutoff;
   }
 
+  public bool IsVisibleValue(int order, double percentage) {
+    return order < TopOrderCutoff || percentage >= ElementWeightCutoff;
+  }
+
   public Brush PickBackColorForOrder(int order, double percentage, bool inverted) {
     return PickBackColorForOrder(null, order, percentage, inverted);
   }

@@ -39,6 +39,12 @@
                 IsEnabled="True"
                 ToolTip="Display the performance counter columns" />
             <CheckBox
+              Margin="0,2,0,2"
+              Content="Show performance metric columns"
+              IsChecked="{Binding ShowPerformanceMetricColumns, Mode=TwoWay}"
+              IsEnabled="True"
+              ToolTip="Display the performance metric columns" />
+            <CheckBox
                 Margin="0,2,0,2"
                 Content="Use smaller font size"
                 IsChecked="{Binding UseSmallerFontSize, Mode=TwoWay}"
