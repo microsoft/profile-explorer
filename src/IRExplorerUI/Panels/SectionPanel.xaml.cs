@@ -553,21 +553,21 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
                                                            case FunctionFieldKind.Name: {
                                                              int result = string.Compare(
                                                                functionY.Name, functionX.Name,
-                                                               StringComparison.Ordinal);
+                                                               StringComparison.OrdinalIgnoreCase);
                                                              return direction == ListSortDirection.Ascending ? -result
                                                                : result;
                                                            }
                                                            case FunctionFieldKind.AlternateName: {
                                                              int result = string.Compare(
                                                                functionY.AlternateName, functionX.AlternateName,
-                                                               StringComparison.Ordinal);
+                                                               StringComparison.OrdinalIgnoreCase);
                                                              return direction == ListSortDirection.Ascending ? -result
                                                                : result;
                                                            }
                                                            case FunctionFieldKind.Module: {
                                                              int result = string.Compare(
                                                                functionY.ModuleName, functionX.ModuleName,
-                                                               StringComparison.Ordinal);
+                                                               StringComparison.OrdinalIgnoreCase);
                                                              return direction == ListSortDirection.Ascending ? -result
                                                                : result;
                                                            }

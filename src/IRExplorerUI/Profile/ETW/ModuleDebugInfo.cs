@@ -106,7 +106,7 @@ public sealed class ModuleDebugInfo {
     HasDebugInfo = DebugInfo != null;
 
     if (HasDebugInfo) {
-      HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
+      await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
     }
     else {
       Trace.TraceWarning($"Failed to load debug info: {ModuleDocument.DebugInfoFile}");
