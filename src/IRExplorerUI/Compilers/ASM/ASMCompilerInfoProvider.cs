@@ -53,25 +53,60 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     return Task.CompletedTask;
   }
 
-  public bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
+  public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
     // Annotate the instructions with debug info (line numbers, source files)
     // if the debug file is specified and available.
-    var loadedDoc = Session.SessionState.FindLoadedDocument(section);
-    var debugFile = loadedDoc.DebugInfoFile;
+    var debugInfo = await GetOrCreateDebugInfoProvider(section.ParentFunction);
 
-    if (loadedDoc.DebugInfo != null) {
-      // Used for managed methods.
-      loadedDoc.DebugInfo.AnnotateSourceLocations(function, section.ParentFunction);
-    }
-    else if (debugFile != null && debugFile.Found) {
-      using var debugInfo = CreateDebugInfoProvider(loadedDoc.BinaryFile.FilePath);
-
-      if (debugInfo.LoadDebugInfo(debugFile)) {
-        debugInfo.AnnotateSourceLocations(function, section.ParentFunction);
-      }
+    if (debugInfo != null) {
+      debugInfo.AnnotateSourceLocations(function, section.ParentFunction);
     }
 
     return true;
+  }
+
+  public async Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function) {
+    var loadedDoc = Session.SessionState.FindLoadedDocument(function);
+
+    lock (loadedDoc) {
+      if (loadedDoc.DebugInfo != null &&
+          loadedDoc.DebugInfo.CanUseInstance()) {
+        // Used for managed binaries, where the debug info is constructed during profiling.
+        return loadedDoc.DebugInfo;
+      }
+    }
+
+    if (!loadedDoc.DebugInfoFileExists) {
+        return null;
+    }
+
+    if (loadedDoc.BinaryFileExists) {
+      var debugInfo = CreateDebugInfoProvider(loadedDoc.DebugInfoFile);
+
+      if (debugInfo != null) {
+        lock (loadedDoc) {
+          loadedDoc.DebugInfo = debugInfo;
+          return debugInfo;
+        }
+      }
+    }
+
+    if (loadedDoc.HasSymbolFileInfo) {
+      var debugFile = await FindDebugInfoFile(loadedDoc.SymbolFileInfo);
+
+      if (debugFile != null && debugFile.Found) {
+        var debugInfo = CreateDebugInfoProvider(debugFile);
+
+        if (debugInfo != null) {
+          lock (loadedDoc) {
+            loadedDoc.DebugInfo = debugInfo;
+            return debugInfo;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   public IDiffInputFilter CreateDiffInputFilter() {
@@ -86,34 +121,14 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
 
   //? TODO: Debug/Binary related functs should not be part of CompilerInfoProvider,
   //? probably inside SessionState
-  public IDebugInfoProvider CreateDebugInfoProvider(string imagePath) {
-    using var info = new PEBinaryInfoProvider(imagePath);
-
-    if (!info.Initialize()) {
-      return new JsonDebugInfoProvider();
-    }
-
-    switch (info.BinaryFileInfo.FileKind) {
-      case BinaryFileKind.Native: {
-        return new PDBDebugInfoProvider(App.Settings.SymbolSettings);
-      }
-      case BinaryFileKind.DotNetR2R:
-      case BinaryFileKind.DotNet: {
-        return new JsonDebugInfoProvider();
-      }
-      default: {
-        throw new InvalidOperationException();
-      }
-    }
-  }
-
   public IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile) {
     if (!debugFile.Found) {
       return null;
     }
 
     lock (this) {
-      if (loadedDebugInfo_.TryGetValue(debugFile, out var provider)) {
+      if (loadedDebugInfo_.TryGetValue(debugFile, out var provider) &&
+          provider.CanUseInstance()) {
         return provider;
       }
 
@@ -143,11 +158,20 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
           settings.InsertSymbolPath(imagePath);
         }
 
-        return await PDBDebugInfoProvider.LocateDebugInfoFile(info.SymbolFileInfo, settings).ConfigureAwait(false);
+        return await FindDebugInfoFile(info.SymbolFileInfo, settings).ConfigureAwait(false);
       }
     }
 
     return DebugFileSearchResult.None;
+  }
+
+  public async Task<DebugFileSearchResult>
+    FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
+    if (settings == null) {
+      settings = App.Settings.SymbolSettings;
+    }
+
+    return await PDBDebugInfoProvider.LocateDebugInfoFile(symbolFile, settings).ConfigureAwait(false);
   }
 
   public async Task<BinaryFileSearchResult> FindBinaryFile(BinaryFileDescriptor binaryFile,

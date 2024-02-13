@@ -329,7 +329,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     // Annotate call sites next to source lines by parsing the actual section
     // and mapping back the call sites to the dummy elements representing the source lines.
-    var parsedSection = await Task.Run(() => Session.LoadAndParseSection(section));
+    var parsedSection = await Session.LoadAndParseSection(section);
 
     if (parsedSection != null) {
       profileMarker_.MarkCallSites(TextView, parsedSection.Function,

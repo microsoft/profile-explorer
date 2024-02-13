@@ -421,10 +421,10 @@ public partial class MainWindow : Window, ISession {
                      DiffStatistics diffStats) {
     var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
 
-    return Task.Run(() => {
+    return Task.Run(async () => {
       var result = diffUpdater.MarkDiffs(text, otherText, diff, otherDiff,
                                          isRightDoc, filteredInput, diffStats);
-      diffUpdater.ReparseDiffedFunction(result, section);
+      await diffUpdater.ReparseDiffedFunction(result, section);
       return result;
     });
   }
@@ -433,9 +433,9 @@ public partial class MainWindow : Window, ISession {
                                                             IDiffOutputFilter diffFilter) {
     var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
 
-    return Task.Run(() => {
+    return Task.Run(async () => {
       var result = diffUpdater.CreateNoDiffDocument(text);
-      diffUpdater.ReparseDiffedFunction(result, section);
+      await diffUpdater.ReparseDiffedFunction(result, section);
       return result;
     });
   }
@@ -671,7 +671,7 @@ public partial class MainWindow : Window, ISession {
     IRTextSection newRightSection = null;
 
     if (document == sessionState_.SectionDiffState.LeftDocument) {
-      var result = await Task.Run(() => LoadAndParseSection(section));
+      var result = await LoadAndParseSection(section);
       leftText = result.Text.ToString(); //? TODO: Use Span
       newLeftSection = section;
 
@@ -681,7 +681,7 @@ public partial class MainWindow : Window, ISession {
       newRightSection ??= sessionState_.SectionDiffState.RightDocument.Section;
     }
     else if (document == sessionState_.SectionDiffState.RightDocument) {
-      var result = await Task.Run(() => LoadAndParseSection(section));
+      var result = await LoadAndParseSection(section);
       rightText = result.Text.ToString(); //? TODO: Use Span
       newRightSection = section;
 
@@ -733,7 +733,7 @@ public partial class MainWindow : Window, ISession {
       var diffSection = FindDiffDocumentSection(section, otherDocument);
 
       if (diffSection != null) {
-        var result = await Task.Run(() => LoadAndParseSection(diffSection));
+        var result = await LoadAndParseSection(diffSection);
         return (result.Text.ToString(), diffSection);
       }
 
@@ -742,7 +742,7 @@ public partial class MainWindow : Window, ISession {
 
     {
       // Load the text of the other section, but don't reload anything else.
-      var result = await Task.Run(() => LoadAndParseSection(otherSection));
+      var result = await LoadAndParseSection(otherSection);
       return (result.Text.ToString(), null); //? TODO: Use span
     }
   }

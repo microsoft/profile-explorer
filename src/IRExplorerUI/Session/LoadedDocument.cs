@@ -65,6 +65,7 @@ public class LoadedDocument : IDisposable {
   public string FilePath { get; set; }
   public BinaryFileSearchResult BinaryFile { get; set; }
   public DebugFileSearchResult DebugInfoFile { get; set; }
+  public SymbolFileDescriptor SymbolFileInfo { get; set; }
   public IRTextSectionLoader Loader { get; set; }
 
   public IRTextSummary Summary {
@@ -83,6 +84,7 @@ public class LoadedDocument : IDisposable {
   public bool IsDummyDocument => Loader is DummySectionLoader;
   public bool DebugInfoFileExists => DebugInfoFile != null && DebugInfoFile.Found;
   public bool BinaryFileExists => BinaryFile != null && BinaryFile.Found;
+  public bool HasSymbolFileInfo => SymbolFileInfo != null;
   public string FileName => Utils.TryGetFileName(FilePath);
 
   public static LoadedDocument CreateDummyDocument(string name) {

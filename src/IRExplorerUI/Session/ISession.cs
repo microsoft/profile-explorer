@@ -66,7 +66,7 @@ public interface ISession {
   void SetSectionAnnotationState(IRTextSection section, bool hasAnnotations);
   IRTextSection GetPreviousSection(IRTextSection section);
   IRTextSection GetNextSection(IRTextSection section);
-  ParsedIRTextSection LoadAndParseSection(IRTextSection section);
+  Task<ParsedIRTextSection> LoadAndParseSection(IRTextSection section);
   Task<string> GetSectionOutputTextAsync(IRPassOutput output, IRTextSection section);
   Task<List<string>> GetSectionOutputTextLinesAsync(IRPassOutput output, IRTextSection section);
   Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null);
@@ -90,7 +90,7 @@ public interface ISession {
   Task<LoadedDocument> OpenSessionDocument(string filePath);
   Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null);
   Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function);
-  
+
   //? TODO: Extract into an IProfilingSession, connecting all profile panels
   //? and sending the activity/timeline events to all of them.
   Task<bool> LoadProfileData(string profileFilePath, List<int> processIds,

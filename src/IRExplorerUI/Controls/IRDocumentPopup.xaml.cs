@@ -379,7 +379,7 @@ public class IRDocumentPopupInstance {
       return;
     }
 
-    var parsedSection = await Task.Run(() => session_.LoadAndParseSection(section));
+    var parsedSection = await session_.LoadAndParseSection(section);
 
     if (parsedSection != null) {
       var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();

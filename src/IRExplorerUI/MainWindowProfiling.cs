@@ -576,21 +576,6 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function) {
-    var loadedDoc = SessionState.FindLoadedDocument(function);
-
-    if (loadedDoc.DebugInfo != null) {
-      // Used for managed binaries, where the debug info is constructed during profiling.
-      return loadedDoc.DebugInfo;
-    }
-
-    if (loadedDoc.DebugInfoFileExists) {
-      var debugInfo = CompilerInfo.CreateDebugInfoProvider(loadedDoc.BinaryFile.FilePath);
-
-      if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFile)) {
-        return debugInfo;
-      }
-    }
-
-    return null;
+    return await CompilerInfo.GetOrCreateDebugInfoProvider(function);
   }
 }

@@ -205,6 +205,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
     // Info used to handle compressed stack event
     var kernelStackKeyToPendingSamples = new Dictionary<ulong, List<int>>();
     var userStackKeyToPendingSamples = new Dictionary<ulong, List<int>>();
+    var profile = new RawProfileData(tracePath_, handleDotNetEvents_);
 
     // For ETL file, the image timestamp (needed to find a binary on a symbol server)
     // can show up in the ImageID event instead the usual Kernel.ImageGroup.
@@ -213,7 +214,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
     symbolParser.ImageID += data => {
       // The image timestamp often is part of this event when reading an ETL file.
       // A correct timestamp is needed to locate and download the image.
-
       if (lastProfileImage != null &&
           lastProfileImageTime == data.TimeStampQPC) {
         lastProfileImage.OriginalFileName = data.OriginalFileName;
@@ -228,8 +228,15 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
     };
 
-    var profile = new RawProfileData(tracePath_, handleDotNetEvents_);
+    symbolParser.ImageIDDbgID_RSDS += data => {
+      if (IsAcceptedProcess(data.ProcessID)) {
+        Trace.WriteLine($"PDB signature: imageBase: {data.ImageBase}, file: {data.PdbFileName}, age: {data.Age}, guid: {data.GuidSig}");
+        var symbolFile = new SymbolFileDescriptor(data.PdbFileName, data.GuidSig, data.Age);
+        profile.AddDebugFileForImage(symbolFile, (long)data.ImageBase, data.ProcessID);
+      }
+    };
 
+    // Start of main ETW event handlers.
     source_.Kernel.ProcessStartGroup += data => {
       var proc = new ProfileProcess(data.ProcessID, data.ParentID,
                                     data.ProcessName, data.ImageFileName,
@@ -572,10 +579,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
         return; // Ignore events from other processes.
       }
 
-      if (cancelableTask != null && cancelableTask.IsCanceled) {
-        source_.StopProcessing();
-      }
-
       // If the time since the last sample is greater than the sampling interval + some error margin,
       // it likely means that some samples were lost, use the sampling interval as the weight.
       int cpu = data.ProcessorNumber;
@@ -617,6 +620,10 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
       // Report progress.
       if (progressCallback != null && sampleId - lastReportedSample >= SampleReportingInterval) {
+        if (cancelableTask != null && cancelableTask.IsCanceled) {
+          source_.StopProcessing();
+        }
+
         int current = (int)data.TimeStampRelativeMSec; // Copy since data gets reused.
         int total = (int)source_.SessionDuration.TotalMilliseconds;
         UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, total, current);
@@ -704,10 +711,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
         if (!IsAcceptedProcess(data.ProcessID)) {
           return; // Ignore events from other processes.
         }
-
-        //if (cancelableTask != null && cancelableTask.IsCanceled) {
-        //    source_.StopProcessing();
-        //}
 
         var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
         int contextId = profile.AddContext(context);
@@ -813,7 +816,8 @@ public sealed partial class ETWEventProcessor : IDisposable {
       return true; // No filtering.
     }
 
-    if (processID == acceptedProcessId_) {
+    if (processID == acceptedProcessId_ ||
+        processID == 0) { // Always accept the System process.
       return true;
     }
 

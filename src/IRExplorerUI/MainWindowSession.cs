@@ -191,19 +191,21 @@ public partial class MainWindow : Window, ISession {
     return await OpenDocumentSectionAsync(args, args.TargetDocument);
   }
 
-  public ParsedIRTextSection LoadAndParseSection(IRTextSection section) {
-    var docInfo = sessionState_.FindLoadedDocument(section);
-    var parsedSection = docInfo.Loader.LoadSection(section);
+  public async Task<ParsedIRTextSection> LoadAndParseSection(IRTextSection section) {
+    return await Task.Run(async () => {
+      var docInfo = sessionState_.FindLoadedDocument(section);
+      var parsedSection = docInfo.Loader.LoadSection(section);
 
-    if (parsedSection != null && parsedSection.Function != null) {
-      compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section);
-      addressTag_ = parsedSection.Function.GetTag<AssemblyMetadataTag>();
-      return parsedSection;
-    }
+      if (parsedSection != null && parsedSection.Function != null) {
+        await compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section);
+        addressTag_ = parsedSection.Function.GetTag<AssemblyMetadataTag>();
+        return parsedSection;
+      }
 
-    string placeholderText = "Could not find function code";
-    var dummyFunc = new FunctionIR(section.ParentFunction.Name);
-    return new ParsedIRTextSection(section, placeholderText.AsMemory(), dummyFunc);
+      string placeholderText = "Could not find function code";
+      var dummyFunc = new FunctionIR(section.ParentFunction.Name);
+      return new ParsedIRTextSection(section, placeholderText.AsMemory(), dummyFunc);
+    });
   }
 
   public async Task<Graph> ComputeGraphAsync(GraphKind kind, IRTextSection section,
@@ -1035,7 +1037,7 @@ public partial class MainWindow : Window, ISession {
     ResetDocumentEvents(document);
     ResetStatusBar();
     var delayedAction = UpdateUIBeforeSectionLoad(section, document);
-    var result = await Task.Run(() => LoadAndParseSection(section));
+    var result = await LoadAndParseSection(section);
 
     if (result == null || result.Function == null) {
       Trace.TraceError($"Document {ObjectTracker.Track(document)}: Failed to parse function");

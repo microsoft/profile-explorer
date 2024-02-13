@@ -30,15 +30,16 @@ public interface ICompilerInfoProvider {
   string OpenFileFilter { get; }
   string OpenDebugFileFilter { get; }
   Task ReloadSettings();
-  bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section);
+  Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section);
   Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section);
   Task HandleLoadedDocument(LoadedDocument document, string modulePath);
   IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);
   IDiffInputFilter CreateDiffInputFilter();
   IDiffOutputFilter CreateDiffOutputFilter();
-  IDebugInfoProvider CreateDebugInfoProvider(string imagePath);
   IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile);
+  Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function);
   Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null);
+  Task<DebugFileSearchResult> FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null);
   Task<BinaryFileSearchResult> FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceSettings settings = null);
 }
 

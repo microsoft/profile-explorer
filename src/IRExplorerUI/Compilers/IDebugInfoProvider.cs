@@ -16,6 +16,7 @@ public interface IDebugInfoProvider : IDisposable {
   public SymbolFileSourceSettings SymbolSettings { get; set; }
   bool LoadDebugInfo(string debugFilePath);
   void Unload();
+  bool CanUseInstance();
   bool LoadDebugInfo(DebugFileSearchResult debugFile);
   bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc);
   bool AnnotateSourceLocations(FunctionIR function, string functionName);

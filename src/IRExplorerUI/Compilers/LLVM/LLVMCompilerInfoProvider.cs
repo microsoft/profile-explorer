@@ -58,10 +58,6 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
     return new DefaultDiffOutputFilter();
   }
 
-  public IDebugInfoProvider CreateDebugInfoProvider(string imagePath) {
-    return new PDBDebugInfoProvider(App.Settings.SymbolSettings);
-  }
-
   public IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile) {
     return null;
   }
@@ -70,12 +66,21 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
     return Utils.LocateDebugInfoFile(imagePath, ".pdb");
   }
 
+  public async Task<DebugFileSearchResult>
+    FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
+    return null;
+  }
+
+  public async Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function) {
+    return null;
+  }
+
   public Task<BinaryFileSearchResult> FindBinaryFile(BinaryFileDescriptor binaryFile,
                                                      SymbolFileSourceSettings settings = null) {
     return null;
   }
 
-  public bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
+  public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
     //? TODO: var loopGraph = new LoopGraph(function);
     //loopGraph.FindLoops();
     return true;

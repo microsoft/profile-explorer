@@ -10,7 +10,7 @@ using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.Profile;
 
-public sealed class ModuleInfo {
+public sealed class ModuleDebugInfo {
   private ISession session_;
   private BinaryFileDescriptor binaryInfo_;
   private List<FunctionDebugInfo> sortedFuncList_;
@@ -18,8 +18,9 @@ public sealed class ModuleInfo {
   private Dictionary<long, IRTextFunction> externalsFuncMap_;
   private ProfileDataReport report_;
   private ReaderWriterLockSlim lock_;
+  private SymbolFileSourceSettings symbolSettings_;
 
-  public ModuleInfo(ProfileDataReport report, ISession session) {
+  public ModuleDebugInfo(ProfileDataReport report, ISession session) {
     report_ = report;
     session_ = session;
     lock_ = new ReaderWriterLockSlim();
@@ -39,6 +40,7 @@ public sealed class ModuleInfo {
     }
 
     binaryInfo_ = binaryInfo;
+    symbolSettings_ = symbolSettings;
     string imageName = binaryInfo.ImageName;
     Trace.WriteLine($"ModuleInfo init {imageName}");
 
@@ -48,7 +50,7 @@ public sealed class ModuleInfo {
       Trace.TraceWarning($"  Could not find local path for image {imageName}");
       report_.AddModuleInfo(binaryInfo, binFile, ModuleLoadState.NotFound);
       CreateDummyDocument(binaryInfo);
-      return false;
+      return true; // Try to continue just with debug info.
     }
 
     var loadedDoc = await session_.LoadBinaryDocument(binFile.FilePath, binaryInfo.ImageName, debugInfo).
@@ -83,9 +85,21 @@ public sealed class ModuleInfo {
     return true;
   }
 
-  public async Task<bool> InitializeDebugInfo() {
+  public async Task<bool> InitializeDebugInfo(SymbolFileDescriptor symbolFile) {
     if (DebugInfo != null) {
       return HasDebugInfo;
+    }
+
+    if (ModuleDocument.DebugInfoFile == null && symbolFile != null) {
+      // If binary not available, try to initialize using
+      // the PDB signature from the trace file.
+      ModuleDocument.SymbolFileInfo = symbolFile;
+      ModuleDocument.DebugInfoFile = await session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings_).ConfigureAwait(false);
+    }
+
+    if (ModuleDocument.DebugInfoFile == null ||
+        !ModuleDocument.DebugInfoFile.Found) {
+      return false;
     }
 
     DebugInfo = session_.CompilerInfo.CreateDebugInfoProvider(ModuleDocument.DebugInfoFile);
