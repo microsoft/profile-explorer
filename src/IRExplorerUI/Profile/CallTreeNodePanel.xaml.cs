@@ -85,6 +85,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       BacktraceList.Session = value;
       FunctionList.Session = value;
       ModuleList.Session = value;
+      ModuleFunctionList.Session = value;
       InstancesList.Session = value;
     }
   }
@@ -96,6 +97,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       BacktraceList.Settings = value;
       FunctionList.Settings = value;
       ModuleList.Settings = value;
+      ModuleFunctionList.Settings = value;
       InstancesList.Settings = value;
     }
   }
@@ -166,7 +168,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     get => showInstanceNavigation_ && showDetails_;
     set => SetField(ref showInstanceNavigation_, value);
   }
-  
+
   public bool UseSelfTimeHistogram {
     get => useSelfTimeHistogram_;
     set {
@@ -193,10 +195,11 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     await SetupInstanceInfo(CallTreeNode.CallTreeNode);
     ShowDetails = true;
 
-    BacktraceList.Show(await Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode.CallTreeNode)));
-    FunctionList.Show(await Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode.CallTreeNode)),
+    BacktraceList.ShowFunctions(await Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode.CallTreeNode)));
+    FunctionList.ShowFunctions(await Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode.CallTreeNode)),
                       settings_.FunctionListViewFilter);
-    ModuleList.Show(await Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode.CallTreeNode)));
+    ModuleList.ShowModules(await Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode.CallTreeNode)));
+    ModuleFunctionList.Reset();
   }
 
   public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {
@@ -225,6 +228,13 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     InstancesList.NodeDoubleClick += (sender, node) => InstanceNodeDoubleClick?.Invoke(sender, node);
     ModuleList.NodeClick += (sender, node) => ModuleNodeClick?.Invoke(sender, node);
     ModuleList.NodeDoubleClick += (sender, node) => ModuleNodeDoubleClick?.Invoke(sender, node);
+    ModuleList.ModuleClick += (sender, moduleInfo) => UpdateModuleFunctions(moduleInfo);
+    ModuleFunctionList.NodeClick += (sender, node) => FunctionNodeClick?.Invoke(sender, node);
+    ModuleFunctionList.NodeDoubleClick += (sender, node) => FunctionNodeDoubleClick?.Invoke(sender, node);
+  }
+
+  private void UpdateModuleFunctions(ModuleProfileInfo moduleInfo) {
+    ModuleFunctionList.ShowFunctions(moduleInfo.Functions, settings_.FunctionListViewFilter);
   }
 
   private async Task SetupInstanceInfo(ProfileCallTreeNode node) {
@@ -242,7 +252,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     FunctionInstancesCount = instanceNodes_.Count;
 
     // Show all instances.
-    InstancesList.Show(instanceNodes_);
+    InstancesList.ShowFunctions(instanceNodes_);
     ShowInstanceNavigation = instanceNodes_.Count > 1;
 
     nodeInstanceIndex_ = instanceNodes_.FindIndex(instanceNode => instanceNode == node);
@@ -266,7 +276,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     InstancesExpander.IsExpanded = settings_.ExpandInstances;
     HistogramExpander.IsExpanded = settings_.ExpandHistogram;
-    
+
     if (settings_.ExpandHistogram) {
       InvokeSetupInstancesHistogram();
     }
@@ -473,7 +483,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       InvokeSetupInstancesHistogram();
     }
   }
-  
+
   private void InvokeSetupInstancesHistogram() {
     // Create the histogram on the next render pass,
     // after the host has been expanded, otherwise some computations assert.
