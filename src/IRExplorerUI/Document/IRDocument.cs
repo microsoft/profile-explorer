@@ -1615,6 +1615,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return;
     }
 
+    if (e.LeftButton != MouseButtonState.Released ||
+        e.RightButton != MouseButtonState.Released) {
+      return;
+    }
+
     bool needsRendering = false;
 
     if (hoveredBarElement_ != null) {
@@ -2605,10 +2610,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     margin_.MouseMoved(e);
 
     // Don't send event to overlays that may extend under the scrollbar.
-    if (docVerticalScrollbar_ == null || !docVerticalScrollbar_.IsMouseOver) {
-      if (!disableOverlayEvents_) {
-        overlayRenderer_.MouseMoved(e);
-      }
+    if (!disableOverlayEvents_ &&
+      (docVerticalScrollbar_ == null || !docVerticalScrollbar_.IsMouseOver) &&
+      (e.LeftButton == MouseButtonState.Released &&
+       e.RightButton == MouseButtonState.Released)) {
+      overlayRenderer_.MouseMoved(e);
     }
   }
 

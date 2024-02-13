@@ -27,12 +27,15 @@ public class CallTreeNodeSettings : SettingsBase {
   public bool PrependModuleToFunction { get; set; }
   [ProtoMember(6)]
   public ProfileListViewFilter FunctionListViewFilter { get; set; }
+  [ProtoMember(7)]
+  public bool AlternateListRows { get; set; }
 
   public override void Reset() {
     InitializeReferenceMembers();
     ShowPreviewPopup = true;
     ExpandInstances = true;
     PrependModuleToFunction = true;
+    AlternateListRows = true;
     PreviewPopupDuration = DefaultPreviewPopupDuration;
     FunctionListViewFilter.Reset();
   }
@@ -54,10 +57,10 @@ public class CallTreeNodeSettings : SettingsBase {
            ExpandInstances == settings.ExpandInstances &&
            ExpandHistogram == settings.ExpandHistogram &&
            PrependModuleToFunction == settings.PrependModuleToFunction &&
+           AlternateListRows == settings.AlternateListRows &&
            FunctionListViewFilter.Equals(settings.FunctionListViewFilter);
   }
 }
-
 
 [ProtoContract(SkipConstructor = true)]
 public class ProfileListViewFilter : SettingsBase {

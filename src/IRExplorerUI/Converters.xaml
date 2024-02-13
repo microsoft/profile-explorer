@@ -29,4 +29,5 @@
     <utils:InvertedBooleanConverter x:Key="InvertedBoolConverter" />
     <utils:ProfileCallTreeNodeKindConverter x:Key="CallTreeNodeKindConverter" />
     <utils:ColorPaletteConverter x:Key="ColorPaletteConverter" />
+    <utils:AlternateRowConverter x:Key="AlternateRowConverter" />
 </ResourceDictionary>

@@ -20,7 +20,7 @@
     x:Name="ItemList"
     Panel.ZIndex="1"
     irExplorerUi:GridViewColumnVisibility.Enabled="True"
-    AlternationCount="2"
+    AlternationCount="{Binding Settings.AlternateListRows, Converter={StaticResource AlternateRowConverter}}"
     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
     BorderBrush="{x:Null}"
     BorderThickness="0,0,0,0"

@@ -328,7 +328,7 @@
                     x:Name="ModulesList"
                     Grid.Column="0"
                     Panel.ZIndex="2"
-                    AlternationCount="2"
+                    AlternationCount="{Binding Settings.AlternateListRows, Converter={StaticResource AlternateRowConverter}}"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     BorderBrush="{x:Null}"
                     BorderThickness="0,0,0,0"
@@ -417,7 +417,7 @@
                     Grid.Column="2"
                     Panel.ZIndex="1"
                     local:GridViewColumnVisibility.Enabled="True"
-                    AlternationCount="2"
+                    AlternationCount="{Binding Settings.AlternateListRows, Converter={StaticResource AlternateRowConverter}}"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     BorderBrush="{x:Null}"
                     BorderThickness="0,0,0,0"
@@ -581,12 +581,12 @@
                                     <Setter Property="BorderThickness" Value="1" />
                                 </DataTrigger>
 
-                                <!-- <Trigger Property="ItemsControl.AlternationIndex" Value="0"> -->
-                                <!--     <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" /> -->
-                                <!-- </Trigger> -->
-                                <!-- <Trigger Property="ItemsControl.AlternationIndex" Value="1"> -->
-                                <!--     <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" /> -->
-                                <!-- </Trigger> -->
+                                <Trigger Property="ItemsControl.AlternationIndex" Value="0">
+                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                                </Trigger>
+                                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
+                                </Trigger>
 
                                 <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
                                     <Setter Property="Background" Value="#D0E3F1" />

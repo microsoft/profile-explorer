@@ -452,3 +452,13 @@ class ExclusivePercentageConverter : IValueConverter {
     return null;
   }
 }
+
+class AlternateRowConverter : IValueConverter {
+  public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    return (bool)value ? 2 : 1;
+  }
+
+  public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    return null;
+  }
+}
