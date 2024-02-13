@@ -560,6 +560,11 @@
                         Content="Auto-expand Histogram section"
                         IsChecked="{Binding ExpandHistogram, Mode=TwoWay}"
                         ToolTip="Histogram section expanded by default" />
+                    <CheckBox
+                      Margin="0,2,0,2"
+                      Content="Alternate list view background color"
+                      IsChecked="{Binding AlternateListRows, Mode=TwoWay}"
+                      ToolTip="Alternate the background color of the function/module list view items" />
                     <Separator Margin="0,4,0,4" />
 
                     <TextBlock FontWeight="Medium" Text="Function List" />

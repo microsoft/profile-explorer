@@ -42,6 +42,7 @@ public class SectionSettings : SettingsBase {
   [ProtoMember(30)] public bool AppendTimeToTotalColumn { get; set; }
   [ProtoMember(31)] public bool AppendTimeToSelfColumn { get; set; }
   [ProtoMember(32)] public bool ShowModulePanel { get; set; }
+  [ProtoMember(33)] public bool AlternateListRows { get; set; }
 
   public FunctionNameDemanglingOptions DemanglingOptions {
     get {
@@ -95,6 +96,7 @@ public class SectionSettings : SettingsBase {
     ShowPerformanceMetricColumns = true;
     AppendTimeToSelfColumn = true;
     AppendTimeToTotalColumn = true;
+    AlternateListRows = true;
     CallStackPopupDuration = DefaultCallStackPopupDuration;
     NewSectionColor = Utils.ColorFromString("#007200");
     MissingSectionColor = Utils.ColorFromString("#BB0025");
@@ -134,6 +136,7 @@ public class SectionSettings : SettingsBase {
            ShowPerformanceMetricColumns == settings.ShowPerformanceMetricColumns &&
            AppendTimeToTotalColumn == settings.AppendTimeToTotalColumn &&
            AppendTimeToSelfColumn == settings.AppendTimeToSelfColumn &&
-           ShowModulePanel == settings.ShowModulePanel;
+           ShowModulePanel == settings.ShowModulePanel &&
+           AlternateListRows == settings.AlternateListRows;
   }
 }

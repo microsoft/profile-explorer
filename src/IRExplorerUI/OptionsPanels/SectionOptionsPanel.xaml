@@ -51,6 +51,11 @@
                         IsChecked="{Binding DemangleOnlyNames, Mode=TwoWay}"
                         IsEnabled="{Binding ElementName=DemanglingCheckbox, Path=IsChecked}"
                         ToolTip="Demangle only the scope and function name, without parameters" />
+                    <CheckBox
+                      Margin="0,4,0,2"
+                      Content="Alternate list view background color"
+                      IsChecked="{Binding AlternateListRows, Mode=TwoWay}"
+                      ToolTip="Alternate the background color of the function/module list view items" />
                     <Separator Margin="0,4,0,4" />
                     <TextBlock FontWeight="Medium" Text="Section List" />
                     <StackPanel Orientation="Horizontal">

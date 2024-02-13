@@ -99,11 +99,17 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     get => settings_;
     set {
       settings_ = value;
+      OnPropertyChanged();
 
       if (settings_ != null && session_ != null) {
         SetupPreviewPopup();
       }
     }
+  }
+
+  public ISession Session {
+    get => session_;
+    set => session_ = value;
   }
 
   private void SetupPreviewPopup() {
@@ -137,11 +143,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public event EventHandler<ProfileCallTreeNode> NodeClick;
   public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
   public event PropertyChangedEventHandler PropertyChanged;
-
-  public ISession Session {
-    get => session_;
-    set => session_ = value;
-  }
 
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
