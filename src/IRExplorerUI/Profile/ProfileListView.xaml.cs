@@ -25,6 +25,7 @@ public class ProfileListViewItem : SearchableProfileItem {
   }
 
   public ProfileCallTreeNode CallTreeNode { get; set; }
+  public ModuleProfileInfo ModuleInfo { get; set; }
 
   protected override string GetFunctionName() {
     return CallTreeNode?.FunctionName;
@@ -43,13 +44,14 @@ public class ProfileListViewItem : SearchableProfileItem {
     };
   }
 
-  public static ProfileListViewItem From(ModuleProfileInfo node, ProfileData profileData,
+  public static ProfileListViewItem From(ModuleProfileInfo moduleInfo, ProfileData profileData,
                                          FunctionNameFormatter funcNameFormatter,
                                          CallTreeNodeSettings settings) {
     return new ProfileListViewItem(funcNameFormatter, settings) {
-      FunctionName = node.Name, // Override name, disables GetFunctionName.
-      Weight = node.Weight,
-      Percentage = node.Percentage
+      ModuleInfo = moduleInfo,
+      FunctionName = moduleInfo.Name, // Override name, disables GetFunctionName.
+      Weight = moduleInfo.Weight,
+      Percentage = moduleInfo.Percentage
     };
   }
 
@@ -131,6 +133,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     });
   }
 
+  public event EventHandler<ModuleProfileInfo> ModuleClick;
   public event EventHandler<ProfileCallTreeNode> NodeClick;
   public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
   public event PropertyChangedEventHandler PropertyChanged;
@@ -235,7 +238,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   }
 
   public void ShowSimpleList(List<ProfileCallTreeNode> nodes) {
-    Show(nodes);
+    ShowFunctions(nodes);
 
     //? TODO: Hack for what looks like a WPF bug where the
     // ProfileListView columns visibility is not read from the property
@@ -243,7 +246,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     GridViewColumnVisibility.RemoveAllColumnsExcept("FunctionColumnHeader", ItemList);
   }
 
-  public void Show(List<ProfileCallTreeNode> nodes, ProfileListViewFilter filter = null) {
+  public void ShowFunctions(List<ProfileCallTreeNode> nodes, ProfileListViewFilter filter = null) {
     var filteredNodes = new List<ProfileCallTreeNode>();
 
     if (filter is {IsEnabled: true}) {
@@ -292,12 +295,13 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     GridViewColumnVisibility.UpdateListView(ItemList);
   }
 
-  public void Show(List<ModuleProfileInfo> nodes) {
+  public void ShowModules(List<ModuleProfileInfo> nodes) {
     var list = new List<ProfileListViewItem>(nodes.Count);
     nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData,
                                                             Session.CompilerInfo.NameProvider.FormatFunctionName,
                                                             Settings)));
     ItemList.ItemsSource = new ListCollectionView(list);
+    ItemList.ContextMenu = null;
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
@@ -325,6 +329,9 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     if (node?.CallTreeNode != null) {
       NodeClick?.Invoke(this, node.CallTreeNode);
     }
+    else if (node?.ModuleInfo != null) {
+      ModuleClick?.Invoke(this, node.ModuleInfo);
+    }
 
     // Show the sum of the selected functions.
     if (ItemList.SelectedItems.Count > 1) {
@@ -348,5 +355,9 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     else {
       Session.SetApplicationStatus("");
     }
+  }
+
+  public void Reset() {
+    ItemList.ItemsSource = null;
   }
 }

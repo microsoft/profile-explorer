@@ -360,11 +360,32 @@
                 Header="Modules"
                 Style="{StaticResource TabControlStyle}"
                 ToolTip="Exclusive (self) time for modules under this instance">
+              <Grid>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="2*" />
+                  <RowDefinition Height="3" />
+                  <RowDefinition Height="3*" />
+                </Grid.RowDefinitions>
                 <profile:ProfileListView
                     x:Name="ModuleList"
+                    Grid.Row="0"
                     ExclusiveTimeColumnTitle="Time"
                     NameColumnTitle="Module"
                     ShowTimeNameRow="True" />
+                <GridSplitter
+                  Grid.Row="1"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                  ResizeBehavior="PreviousAndNext" />
+                <profile:ProfileListView
+                  x:Name="ModuleFunctionList"
+                  Grid.Row="2"
+                  ExclusiveTimeColumnTitle="Time"
+                  NameColumnTitle="Module Function"
+                  ShowContextColumn="True"
+                  ShowExclusiveTimeNameRow="True"/>
+              </Grid>
             </TabItem>
 
             <TabItem
