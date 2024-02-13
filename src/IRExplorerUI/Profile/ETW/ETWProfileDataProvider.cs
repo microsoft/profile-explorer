@@ -22,7 +22,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   [ThreadStatic]
   private static ProfileImage prevImage_;
   [ThreadStatic]
-  private static ModuleInfo prevModule_;
+  private static ModuleDebugInfo prevModuleDebugInfo_;
   private ProfileDataProviderOptions options_;
   private ProfileDataReport report_;
   private ISession session_;
@@ -30,8 +30,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private ProfileData profileData_;
   private object lockObject_;
   private object[] imageLocks_;
-  private ConcurrentDictionary<int, ModuleInfo> imageModuleMap_;
-  private ConcurrentDictionary<int, Task<ModuleInfo>> imageModuleLoadTasks_;
+  private ConcurrentDictionary<int, ModuleDebugInfo> imageModuleMap_;
+  private ConcurrentDictionary<int, Task<ModuleDebugInfo>> imageModuleLoadTasks_;
   private int currentSampleIndex_;
 
   public ETWProfileDataProvider(ISession session) {
@@ -40,8 +40,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     // Data structs used for module loading.
     lockObject_ = new object();
-    imageModuleMap_ = new ConcurrentDictionary<int, ModuleInfo>();
-    imageModuleLoadTasks_ = new ConcurrentDictionary<int, Task<ModuleInfo>>();
+    imageModuleMap_ = new ConcurrentDictionary<int, ModuleDebugInfo>();
+    imageModuleLoadTasks_ = new ConcurrentDictionary<int, Task<ModuleDebugInfo>>();
     imageLocks_ = new object[IMAGE_LOCK_COUNT];
 
     for (int i = 0; i < imageLocks_.Length; i++) {
@@ -183,7 +183,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         // Start getting the function address data while the trace is loading.
         UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
         ProfileImage prevImage = null;
-        ModuleInfo prevModule = null;
+        ModuleDebugInfo prevModuleDebugInfo = null;
 
         // Start getting the function address data while the trace is loading.
         Trace.WriteLine($"Start load at {DateTime.Now}");
@@ -459,13 +459,13 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // Try to resolve the frame using the lists of processes/images and debug info.
       long frameRva = 0;
       long funcRva = 0;
-      ModuleInfo module = null;
+      ModuleDebugInfo moduleDebugInfo = null;
       FunctionDebugInfo funcDebugInfo = null;
       IRTextFunction textFunction = null;
 
-      module = FindModuleInfo(rawProfile, frameImage, context.ProcessId, symbolSettings);
+      moduleDebugInfo = FindModuleInfo(rawProfile, frameImage, context.ProcessId, symbolSettings);
 
-      if (module == null) {
+      if (moduleDebugInfo == null) {
         resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
         isTopFrame = false;
         continue;
@@ -479,18 +479,18 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       }
 
       // Find the function the sample belongs to.
-      if (module.HasDebugInfo) {
-        funcDebugInfo = module.FindFunctionDebugInfo(frameRva);
+      if (moduleDebugInfo.HasDebugInfo) {
+        funcDebugInfo = moduleDebugInfo.FindFunctionDebugInfo(frameRva);
       }
 
       if (funcDebugInfo == null) {
         // No debug info available for the RVA, make a placeholder function
         // to have something to associate the sample with.
-        textFunction = module.FindFunction(frameRva, out _);
+        textFunction = moduleDebugInfo.FindFunction(frameRva, out _);
 
         if (textFunction == null) {
           string placeholderName = $"{frameRva:X}";
-          textFunction = module.AddPlaceholderFunction(placeholderName, frameRva);
+          textFunction = moduleDebugInfo.AddPlaceholderFunction(placeholderName, frameRva);
         }
 
         funcDebugInfo = new FunctionDebugInfo(textFunction.Name, frameRva, 0);
@@ -499,7 +499,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // Find the corresponding text function in the module, which may
       // be set already above for placeholders.
       if (textFunction == null) {
-        textFunction = module.FindFunction(funcDebugInfo.RVA, out bool isExternalFunc);
+        textFunction = moduleDebugInfo.FindFunction(funcDebugInfo.RVA, out bool isExternalFunc);
 
         if (textFunction == null) {
           resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
@@ -511,7 +511,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // Create the function profile data, with the merged weight of all instances
       // of the func. across all call stacks.
       var resolvedFrame = new ResolvedProfileStackFrameDetails(funcDebugInfo, textFunction,
-                                                               frameImage, module.IsManaged);
+                                                               frameImage, moduleDebugInfo.IsManaged);
       resolvedStack.AddFrame(frameIp, frameRva, resolvedFrame, frameIndex, stack);
       isTopFrame = false;
     }
@@ -578,6 +578,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     var pdbTaskList = new Task<DebugFileSearchResult>[imageLimit];
 
     for (int i = 0; i < imageLimit; i++) {
+      if (!IsAcceptedModule(imageList[i])) {
+        continue;
+      }
+
       var binaryFile = FromProfileImage(imageList[i]);
       binTaskList[i] = PEBinaryInfoProvider.LocateBinaryFile(binaryFile, symbolSettings);
       //? TODO: Immediately after bin download PDB can be too binTaskList[i].ContinueWith()
@@ -626,7 +630,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     // Locate the needed debug files, in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.
     int pdbCount = 0;
-    int downloadedPdbCount = 0;
     var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 32);
     var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
 
@@ -635,15 +638,28 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         return;
       }
 
+      if (binTaskList[i] == null) {
+        continue; // Rejected module.
+      }
+
       var binaryFile = await binTaskList[i].ConfigureAwait(false);
 
       if (binaryFile is {Found: true}) {
         pdbCount++;
 
         pdbTaskList[i] = taskFactory.StartNew(() => {
-          var result = session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath).Result;
-          return result;
+          return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings).Result;
         });
+      }
+      else {
+        // Try to use ETL info if binary not available.
+        var symbolFile = rawProfile.GetDebugFileForImage(imageList[i], mainProcess.ProcessId);
+
+        if (symbolFile != null) {
+          pdbTaskList[i] = taskFactory.StartNew(() => {
+            return session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings).Result;
+          });
+        }
       }
     }
 
@@ -658,7 +674,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       if (pdbTaskList[i] != null) {
         var pdbPath = await pdbTaskList[i].ConfigureAwait(false);
-        downloadedPdbCount++;
 
         if (pdbPath.Found) {
           UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, i,
@@ -684,18 +699,32 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
   }
 
-  private ModuleInfo LoadModuleInfo(ProfileImage image, RawProfileData rawProfile, int processId,
-                                    SymbolFileSourceSettings symbolSettings) {
-    var imageModule = new ModuleInfo(report_, session_);
+  private ModuleDebugInfo LoadModuleInfo(ProfileImage image, RawProfileData rawProfile, int processId,
+                                         SymbolFileSourceSettings symbolSettings) {
+    var imageModule = new ModuleDebugInfo(report_, session_);
     var imageDebugInfo = rawProfile.GetDebugInfoForImage(image, processId);
 
     if (imageDebugInfo != null) {
       imageDebugInfo.SymbolSettings = symbolSettings;
     }
 
+    if (!IsAcceptedModule(image)) {
+      return imageModule;
+    }
+
     if (imageModule.Initialize(FromProfileImage(image), symbolSettings, imageDebugInfo).ConfigureAwait(false).
       GetAwaiter().GetResult()) {
-      if (!imageModule.InitializeDebugInfo().ConfigureAwait(false).GetAwaiter().GetResult()) {
+      // If binary couldn't be found, try to initialize using
+      // the PDB signature from the trace file.
+      var symbolFile = rawProfile.GetDebugFileForImage(image, processId);
+
+      if (symbolFile == null) {
+        // Also try the System process for the kernel.
+        symbolFile = rawProfile.GetDebugFileForImage(image, 0);
+      }
+
+      if (!imageModule.InitializeDebugInfo(symbolFile).
+        ConfigureAwait(false).GetAwaiter().GetResult()) {
         Trace.TraceWarning($"Failed to load debug debugInfo for image: {image.FilePath}");
       }
     }
@@ -703,7 +732,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     return imageModule;
   }
 
-  private bool IsAcceptedModule(string name) {
+  private bool IsAcceptedModule(ProfileImage image) {
     if (!options_.HasBinaryNameWhitelist) {
       return true;
     }
@@ -711,7 +740,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     foreach (string file in options_.BinaryNameWhitelist) {
       string fileName = Utils.TryGetFileNameWithoutExtension(file);
 
-      if (fileName.ToLowerInvariant() == name) {
+      if (fileName.Equals(image.ModuleName, StringComparison.OrdinalIgnoreCase)) {
         return true;
       }
     }
@@ -719,11 +748,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     return false;
   }
 
-  private ModuleInfo FindModuleInfo(RawProfileData rawProfile, ProfileImage queryImage, int processId,
+  private ModuleDebugInfo FindModuleInfo(RawProfileData rawProfile, ProfileImage queryImage, int processId,
                                     SymbolFileSourceSettings symbolSettings) {
     // prevImage_/prevModule_ are TLS variables since this is called from multiple threads.
     if (queryImage == prevImage_) {
-      return prevModule_;
+      return prevModuleDebugInfo_;
     }
 
     if (!imageModuleMap_.TryGetValue(queryImage.Id, out var imageModule)) {
@@ -747,7 +776,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
 
     prevImage_ = queryImage;
-    prevModule_ = imageModule;
+    prevModuleDebugInfo_ = imageModule;
     return imageModule;
   }
 

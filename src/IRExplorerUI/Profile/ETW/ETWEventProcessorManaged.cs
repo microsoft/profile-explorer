@@ -100,7 +100,7 @@ public sealed partial class ETWEventProcessor {
 #endif
     var runtimeArch = Machine.Amd64;
     string moduleName = data.ModuleILFileName;
-    var moduleDebugInfo = profile.GetOrAddModuleDebugInfo(data.ProcessID, moduleName, data.ModuleID, runtimeArch);
+    var moduleDebugInfo = profile.GetOrAddManagedModuleDebugInfo(data.ProcessID, moduleName, data.ModuleID, runtimeArch);
 
     if (moduleDebugInfo != null) {
       moduleDebugInfo.ManagedSymbolFile = FromModuleLoad(data);

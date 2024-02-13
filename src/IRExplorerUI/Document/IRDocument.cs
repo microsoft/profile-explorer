@@ -90,7 +90,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private List<DiffTextSegment> diffSegments_;
   private bool disableCaretEvent_;
   public bool disableOverlayEvents_;
-  private ScrollBar docVerticalScrollbar_;
+  private ScrollBar docVerticalScrollBar_;
   private bool duringDiffModeSetup_;
   private bool duringSectionLoading_;
   private bool eventSetupDone_;
@@ -1585,7 +1585,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
   }
 
-  private void B_MouseLeave(object sender, MouseEventArgs e) {
+  private void ScrollBar_MouseLeave(object sender, MouseEventArgs e) {
     if (hoveredBarElement_ != null) {
       hoveredBarElement_.Style.Border = null;
       hoveredBarElement_ = null;
@@ -1595,7 +1595,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     HideTemporaryUI();
   }
 
-  private void B_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+  private void ScrollBar_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
     HideTemporaryUI();
     var position = e.GetPosition(markerMargin_);
     var barElement = FindMarkerBarElement(position);
@@ -1609,7 +1609,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
   }
 
-  private async void B_PreviewMouseMove(object sender, MouseEventArgs e) {
+  private async void ScrollBar_PreviewMouseMove(object sender, MouseEventArgs e) {
     if (ignoreNextBarHover_) {
       ignoreNextBarHover_ = false;
       return;
@@ -1727,18 +1727,18 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     var scrollViewer = Utils.FindChild<ScrollViewer>(this);
 
     if (scrollViewer != null) {
-      docVerticalScrollbar_ = Utils.FindChild<ScrollBar>(scrollViewer);
+      docVerticalScrollBar_ = Utils.FindChild<ScrollBar>(scrollViewer);
 
-      if (docVerticalScrollbar_ != null) {
-        docVerticalScrollbar_.Opacity = 0.6;
-        docVerticalScrollbar_.PreviewMouseMove += B_PreviewMouseMove;
-        docVerticalScrollbar_.PreviewMouseLeftButtonDown += B_PreviewMouseLeftButtonDown;
-        docVerticalScrollbar_.MouseLeave += B_MouseLeave;
-        var parent = VisualTreeHelper.GetParent(docVerticalScrollbar_) as Grid;
+      if (docVerticalScrollBar_ != null) {
+        docVerticalScrollBar_.Opacity = 0.6;
+        docVerticalScrollBar_.PreviewMouseMove += ScrollBar_PreviewMouseMove;
+        docVerticalScrollBar_.PreviewMouseLeftButtonDown += ScrollBar_PreviewMouseLeftButtonDown;
+        docVerticalScrollBar_.MouseLeave += ScrollBar_MouseLeave;
+        var parent = VisualTreeHelper.GetParent(docVerticalScrollBar_) as Grid;
         markerMargin_ = new Canvas();
         Panel.SetZIndex(markerMargin_, 1);
-        Panel.SetZIndex(docVerticalScrollbar_, 2);
-        Grid.SetColumn(markerMargin_, Grid.GetColumn(docVerticalScrollbar_));
+        Panel.SetZIndex(docVerticalScrollBar_, 2);
+        Grid.SetColumn(markerMargin_, Grid.GetColumn(docVerticalScrollBar_));
         markerMargin_.Background = Brushes.White;
         parent.Children.Add(markerMargin_);
       }
@@ -2611,7 +2611,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     // Don't send event to overlays that may extend under the scrollbar.
     if (!disableOverlayEvents_ &&
-      (docVerticalScrollbar_ == null || !docVerticalScrollbar_.IsMouseOver) &&
+      (docVerticalScrollBar_ == null || !docVerticalScrollBar_.IsMouseOver) &&
       (e.LeftButton == MouseButtonState.Released &&
        e.RightButton == MouseButtonState.Released)) {
       overlayRenderer_.MouseMoved(e);
@@ -2677,8 +2677,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   //? TODO: Check if other sections have marked elements and try to mark same ones
-  private void CloneOtherSectionAnnotations(IRTextSection otherSection) {
-    var parsedSection = Session.LoadAndParseSection(otherSection);
+  private async Task CloneOtherSectionAnnotations(IRTextSection otherSection) {
+    var parsedSection = await Session.LoadAndParseSection(otherSection);
     if (parsedSection == null)
       return;
 
@@ -3789,7 +3789,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return null;
     }
 
-    var result = await Task.Run(() => Session.LoadAndParseSection(targetSection));
+    var result = await Session.LoadAndParseSection(targetSection);
 
     if (result == null)
       return null;

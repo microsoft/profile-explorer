@@ -12,6 +12,7 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Dia2Lib;
 using IRExplorerCore;
@@ -38,9 +39,11 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private List<FunctionDebugInfo> sortedFunctionList_;
   private bool loadFailed_;
   private bool disposed_;
+  private int creationThreadId_;
 
   public PDBDebugInfoProvider(SymbolFileSourceSettings settings) {
     settings_ = settings;
+    creationThreadId_ = Thread.CurrentThread.ManagedThreadId;
   }
 
   ~PDBDebugInfoProvider() {
@@ -122,7 +125,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       return await LocateDebugInfoFile(binaryInfo.SymbolFileInfo, settings).ConfigureAwait(false);
     }
 
-    return null;
+    return DebugFileSearchResult.None;
   }
 
   public static string DemangleFunctionName(string name, FunctionNameDemanglingOptions options =
@@ -208,6 +211,15 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       Marshal.ReleaseComObject(diaSource_);
       diaSource_ = null;
     }
+  }
+
+  public bool CanUseInstance() {
+#if DEBUG
+    if (creationThreadId_ != Thread.CurrentThread.ManagedThreadId) {
+      Trace.WriteLine($"Cross-thread PDB access: {creationThreadId_} != {Thread.CurrentThread.ManagedThreadId}");
+    }
+#endif
+    return creationThreadId_ == Thread.CurrentThread.ManagedThreadId;
   }
 
   public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {

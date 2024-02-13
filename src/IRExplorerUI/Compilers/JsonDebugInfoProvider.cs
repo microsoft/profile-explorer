@@ -132,6 +132,10 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
   public void Unload() {
   }
 
+  public bool CanUseInstance() {
+    return true;
+  }
+
   public void Dispose() {
   }
 }

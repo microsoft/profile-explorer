@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using DiffPlex.DiffBuilder.Model;
 using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore;
@@ -171,15 +172,15 @@ public class DocumentDiffUpdater {
     return result;
   }
 
-  public void ReparseDiffedFunction(DiffMarkingResult diffResult,
-                                    IRTextSection originalSection) {
+  public async Task ReparseDiffedFunction(DiffMarkingResult diffResult,
+                                          IRTextSection originalSection) {
     try {
       var errorHandler = compilerInfo_.IR.CreateParsingErrorHandler();
       var sectionParser = compilerInfo_.IR.CreateSectionParser(errorHandler);
       diffResult.DiffFunction = sectionParser.ParseSection(originalSection, diffResult.DiffText);
 
       if (diffResult.DiffFunction != null) {
-        compilerInfo_.AnalyzeLoadedFunction(diffResult.DiffFunction, originalSection);
+        await compilerInfo_.AnalyzeLoadedFunction(diffResult.DiffFunction, originalSection);
       }
       else {
         Trace.TraceWarning("Failed re-parsing diffed section\n");

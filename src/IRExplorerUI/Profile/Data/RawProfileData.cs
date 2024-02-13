@@ -54,6 +54,7 @@ public class RawProfileData : IDisposable {
   private Dictionary<ProfileContext, int> contextsMap_;
   private Dictionary<ProfileImage, int> imagesMap_;
   private Dictionary<int, Dictionary<ProfileStack, int>> stacksMap_;
+  private Dictionary<int, Dictionary<long, SymbolFileDescriptor>> imageSymbols_;
   private HashSet<long[]> stackData_;
   private Dictionary<int, ManagedRawProfileData> procManagedDataMap_;
   private Dictionary<ProfileStack, int> lastProcStacks_;
@@ -74,6 +75,7 @@ public class RawProfileData : IDisposable {
     samples_ = new List<ProfileSample>();
     perfCounters_ = new List<PerformanceCounter>();
     perfCountersEvents_ = new CompressedSegmentedList<PerformanceCounterEvent>();
+    imageSymbols_ = new Dictionary<int, Dictionary<long, SymbolFileDescriptor>>();
 
     if (handlesDotNetEvents) {
       procManagedDataMap_ = new Dictionary<int, ManagedRawProfileData>();
@@ -173,7 +175,17 @@ public class RawProfileData : IDisposable {
     return data.imageDebugInfo_?.GetValueOrNull(image);
   }
 
-  public DotNetDebugInfoProvider GetOrAddModuleDebugInfo(int processId, string moduleName,
+  public void AddDebugFileForImage(SymbolFileDescriptor symbolFile, long imageBase, int processId) {
+    var procImageSymbols = imageSymbols_.GetOrAddValue(processId);
+    procImageSymbols[imageBase] = symbolFile;
+  }
+
+  public SymbolFileDescriptor GetDebugFileForImage(ProfileImage image, int processId) {
+    var procImageSymbols = imageSymbols_.GetOrAddValue(processId);
+    return procImageSymbols.GetValueOrNull(image.BaseAddress);
+  }
+
+  public DotNetDebugInfoProvider GetOrAddManagedModuleDebugInfo(int processId, string moduleName,
                                                          long moduleId, Machine architecture) {
     var data = GetOrCreateManagedData(processId);
     var proc = GetOrCreateProcess(processId);

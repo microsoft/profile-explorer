@@ -18,6 +18,7 @@ namespace IRExplorerUI;
 
 public partial class IRInfoPanel : ToolPanelControl {
   private DispatcherTimer logFileTimer_;
+  private string previousLogFileText_;
 
   public IRInfoPanel() {
     InitializeComponent();
@@ -109,8 +110,13 @@ public partial class IRInfoPanel : ToolPanelControl {
         using var stream = new FileStream(traceFile, FileMode.Open,
                                           FileAccess.Read, FileShare.ReadWrite);
         using var streamReader = new StreamReader(stream);
-        await TextView.SetText(await streamReader.ReadToEndAsync());
-        TextView.ScrollToEnd();
+        var text = await streamReader.ReadToEndAsync();
+
+        if (text != previousLogFileText_) {
+          await TextView.SetText(text);
+          TextView.ScrollToEnd();
+          previousLogFileText_ = text;
+        }
       }
       catch (Exception ex) {
         await TextView.SetText($"Failed to load log file: {ex.Message}");
