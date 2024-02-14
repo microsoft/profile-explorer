@@ -463,11 +463,11 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       nodeHoverPreview_.Unregister();
       nodeHoverPreview_ = null;
     }
-    
+
     if(!settings_.ShowNodePopup) {
       return;
     }
-    
+
     nodeHoverPreview_ = new PopupHoverPreview(GraphViewer,
                                               TimeSpan.FromMilliseconds(settings_.NodePopupDuration),
                                               (mousePoint, previewPoint) => {
@@ -599,11 +599,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   private void BringNodeIntoViewZoom(FlameGraphNode node) {
+    const double MinNodeWidth = 10;
     var bounds = GraphViewer.ComputeNodeBounds(node);
     double zoomX = 0;
 
-    if (bounds.Width < 100) {
-      zoomX = 100 - bounds.Width;
+    if (bounds.Width < MinNodeWidth) {
+      zoomX = MinNodeWidth - bounds.Width;
     }
     else if (bounds.Width > GraphAreaWidth) {
       zoomX = GraphAreaWidth - bounds.Width;
