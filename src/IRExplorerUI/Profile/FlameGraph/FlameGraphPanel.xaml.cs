@@ -157,7 +157,11 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       return; //? TODO: Maybe do the init now?
     }
 
-    GraphHost.SelectNode(node, false, bringIntoView);
+    if (node is ProfileCallTreeGroupNode groupNode) {
+      node = groupNode.Nodes[0];
+    }
+
+    GraphHost.SelectNode(node, true, bringIntoView);
     await NodeDetailsPanel.ShowWithDetailsAsync(node);
   }
 
@@ -397,6 +401,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     if (text.Length > 1) {
       searchResultNodes_ = await Task.Run(() => GraphHost.GraphViewer.FlameGraph.SearchNodes(text));
       GraphHost.GraphViewer.MarkSearchResultNodes(searchResultNodes_);
+      UpdateSearchResultText();
 
       searchResultIndex_ = -1;
       SelectNextSearchResult();
@@ -408,7 +413,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void UpdateSearchResultText() {
-    SearchResultText = searchResultNodes_ is {Count: > 0} ? $"{searchResultIndex_ + 1} / {searchResultNodes_.Count}"
+    SearchResultText = searchResultNodes_ is {Count: > 0} ?
+      $"{searchResultIndex_ + 1} / {searchResultNodes_.Count}"
       : "Not found";
   }
 
@@ -416,7 +422,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     if (searchResultNodes_ != null && searchResultIndex_ > 0) {
       searchResultIndex_--;
       UpdateSearchResultText();
-      GraphHost.SelectNode(searchResultNodes_[searchResultIndex_]);
+      GraphHost.SelectNode(searchResultNodes_[searchResultIndex_], true);
     }
   }
 
@@ -424,7 +430,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     if (searchResultNodes_ != null && searchResultIndex_ < searchResultNodes_.Count - 1) {
       searchResultIndex_++;
       UpdateSearchResultText();
-      GraphHost.SelectNode(searchResultNodes_[searchResultIndex_]);
+      GraphHost.SelectNode(searchResultNodes_[searchResultIndex_], true);
     }
   }
 
