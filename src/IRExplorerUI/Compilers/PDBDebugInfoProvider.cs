@@ -158,15 +158,15 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return DemangleFunctionName(function.Name, options);
   }
 
-  public bool LoadDebugInfo(DebugFileSearchResult debugFile) {
+  public bool LoadDebugInfo(DebugFileSearchResult debugFile, IDebugInfoProvider other = null) {
     if (debugFile == null || !debugFile.Found) {
       return false;
     }
 
-    return LoadDebugInfo(debugFile.FilePath);
+    return LoadDebugInfo(debugFile.FilePath, other);
   }
 
-  public bool LoadDebugInfo(string debugFilePath) {
+  public bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null) {
     if (loadFailed_) {
       return false; // Failed before, don't try again.
     }
@@ -191,6 +191,14 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       Trace.TraceError($"Failed to locate global sym for file {debugFilePath}: {ex.Message}");
       loadFailed_ = true;
       return false;
+    }
+
+    if (other is PDBDebugInfoProvider otherPdb) {
+      // Copy the already loaded function list from another PDB
+      // provider that was created on another thread and is unusable otherwise.
+      lock (this) {
+        sortedFunctionList_ = otherPdb.sortedFunctionList_;
+      }
     }
 
     return true;

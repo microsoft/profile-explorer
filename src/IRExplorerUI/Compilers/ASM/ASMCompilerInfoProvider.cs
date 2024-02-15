@@ -132,11 +132,12 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
         return provider;
       }
 
-      provider = new PDBDebugInfoProvider(App.Settings.SymbolSettings);
+      var newProvider = new PDBDebugInfoProvider(App.Settings.SymbolSettings);
 
-      if (provider.LoadDebugInfo(debugFile.FilePath)) {
-        loadedDebugInfo_[debugFile] = provider;
-        return provider;
+      if (newProvider.LoadDebugInfo(debugFile.FilePath, provider)) {
+        loadedDebugInfo_[debugFile] = newProvider;
+        provider?.Dispose();
+        return newProvider;
       }
 
       return null;
