@@ -6,12 +6,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Document;
 using IRExplorerUI.Utilities;
-using Irony.Parsing.Construction;
 
 namespace IRExplorerUI.Profile;
 
@@ -77,6 +78,9 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   private ISession session_;
   private IRDocumentPopupInstance previewPopup_;
   private CallTreeNodeSettings settings_;
+  private bool searchPanelVisible_;
+  private List<ProfileListViewItem> itemList_;
+  private List<ProfileListViewItem> resultList_;
 
   public double FunctionColumnWidth {
     get => functionColumnWidth_;
@@ -87,6 +91,59 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     InitializeComponent();
     FunctionColumnWidth = DefaultFunctionColumnWidth;
     DataContext = this;
+
+    SearchPanel.SearchChanged += SearchPanel_SearchChanged;
+    SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
+    SearchPanel.NavigateToPreviousResult += SearchPanel_NaviateToPreviousResult;
+    SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
+  }
+
+  private void SearchPanel_NavigateToNextResult(object sender, SearchInfo e) {
+    SelectSearchResult(e.CurrentResult);
+  }
+
+  private void SearchPanel_NaviateToPreviousResult(object sender, SearchInfo e) {
+    SelectSearchResult(e.CurrentResult);
+  }
+
+  private void SearchPanel_CloseSearchPanel(object sender, SearchInfo e) {
+    SearchPanelVisible = false;
+    resultList_ = null;
+  }
+
+  private void SearchPanel_SearchChanged(object sender, SearchInfo e) {
+    if (itemList_ == null) {
+      return;
+    }
+
+    resultList_ = new List<ProfileListViewItem>();
+
+    foreach (var item in itemList_) {
+      var result = TextSearcher.FirstIndexOf(item.FunctionName, e.SearchedText, 0,
+                                             e.SearchKind);
+
+      if (result.HasValue) {
+        item.SearchResult = result;
+        item.ResetCachedName();
+        resultList_.Add(item);
+      }
+      else {
+        item.SearchResult = null;
+        item.ResetCachedName();
+      }
+    }
+
+    e.CurrentResult = 0;
+    e.ResultCount = resultList_.Count;
+  }
+
+  private void SelectSearchResult(int index) {
+    if (resultList_ == null) {
+      return;
+    }
+
+    ItemList.SelectedItem = resultList_[index];
+    ItemList.ScrollIntoView(ItemList.SelectedItem);
   }
 
   ~ProfileListView() {
@@ -176,10 +233,33 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public RelayCommand<object> SelectFunctionTimelineCommand => new RelayCommand<object>(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.Timeline);
   });
+  public RelayCommand<object> ToggleSearchCommand => new RelayCommand<object>(async obj => {
+    SearchPanelVisible = !SearchPanelVisible;
+  });
 
   private async Task SelectFunctionInPanel(ToolPanelKind panelKind) {
     if (ItemList.SelectedItem is ProfileListViewItem item) {
       await Session.SelectProfileFunctionInPanel(item.CallTreeNode, panelKind);
+    }
+  }
+
+  public bool SearchPanelVisible {
+    get => searchPanelVisible_;
+    set {
+      if (value != searchPanelVisible_) {
+        searchPanelVisible_ = value;
+
+        if (searchPanelVisible_) {
+          SearchPanel.Visibility = Visibility.Visible;
+          SearchPanel.Show();
+        }
+        else {
+          SearchPanel.Reset();
+          SearchPanel.Visibility = Visibility.Collapsed;
+        }
+
+        OnPropertyChanged();
+      }
     }
   }
 
@@ -288,20 +368,20 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       filteredNodes = nodes;
     }
 
-    var list = new List<ProfileListViewItem>(nodes.Count);
-    filteredNodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData,
-                                                                    Session.CompilerInfo.NameProvider.FormatFunctionName,
-                                                                    Settings)));
-    ItemList.ItemsSource = new ListCollectionView(list);
+    itemList_ = new List<ProfileListViewItem>(nodes.Count);
+    filteredNodes.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
+                                                                         Session.CompilerInfo.NameProvider.FormatFunctionName,
+                                                                         Settings)));
+    ItemList.ItemsSource = itemList_;
     GridViewColumnVisibility.UpdateListView(ItemList);
   }
 
   public void ShowModules(List<ModuleProfileInfo> nodes) {
-    var list = new List<ProfileListViewItem>(nodes.Count);
-    nodes.ForEach(node => list.Add(ProfileListViewItem.From(node, Session.ProfileData,
-                                                            Session.CompilerInfo.NameProvider.FormatFunctionName,
-                                                            Settings)));
-    ItemList.ItemsSource = new ListCollectionView(list);
+    itemList_ = new List<ProfileListViewItem>(nodes.Count);
+    nodes.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
+                                                                 Session.CompilerInfo.NameProvider.FormatFunctionName,
+                                                                 Settings)));
+    ItemList.ItemsSource = new ListCollectionView(itemList_);
     ItemList.ContextMenu = null;
   }
 
@@ -360,5 +440,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
   public void Reset() {
     ItemList.ItemsSource = null;
+    itemList_ = null;
   }
 }

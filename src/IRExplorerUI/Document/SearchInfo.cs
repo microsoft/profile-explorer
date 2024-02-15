@@ -131,12 +131,12 @@ public class SearchInfo : INotifyPropertyChanged {
     }
   }
 
-  public bool ShowNavigationnSection {
+  public bool ShowNavigationSection {
     get => showNavigationSection_;
     set {
       if (value != showNavigationSection_) {
         showNavigationSection_ = value;
-        OnPropertyChange(nameof(ShowNavigationnSection));
+        OnPropertyChange(nameof(ShowNavigationSection));
       }
     }
   }

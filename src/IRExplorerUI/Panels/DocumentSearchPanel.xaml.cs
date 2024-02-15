@@ -56,7 +56,7 @@ public partial class DocumentSearchPanel : DraggablePopup {
   private void SetupSearchPanel() {
     searchInfo_ = new SearchInfo {
       ShowSearchAllButton = false,
-      ShowNavigationnSection = false
+      ShowNavigationSection = false
     };
 
     SearchPanel.SearchChanged += SearchPanel_SearchChanged;

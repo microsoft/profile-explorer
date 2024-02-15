@@ -753,6 +753,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
             await OpenFunction(GraphViewer.SelectedNode);
             e.Handled = true;
           }
+          else if (Utils.IsAltModifierActive()) {
+            PreviewFunctionCommand.Execute(GraphViewer.SelectedNode);
+            e.Handled = true;
+          }
           else {
             await EnlargeNode(GraphViewer.SelectedNode);
             e.Handled = true;
