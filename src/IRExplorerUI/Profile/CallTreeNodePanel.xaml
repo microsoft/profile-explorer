@@ -371,6 +371,7 @@
                     Grid.Row="0"
                     ExclusiveTimeColumnTitle="Time"
                     NameColumnTitle="Module"
+                    MinHeight="100"
                     ShowTimeNameRow="True" />
                 <GridSplitter
                   Grid.Row="1"
@@ -381,6 +382,7 @@
                 <profile:ProfileListView
                   x:Name="ModuleFunctionList"
                   Grid.Row="2"
+                  MinHeight="100"
                   ExclusiveTimeColumnTitle="Time"
                   NameColumnTitle="Module Function"
                   ShowContextColumn="True"
