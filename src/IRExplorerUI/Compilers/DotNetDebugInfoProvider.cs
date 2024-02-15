@@ -144,7 +144,7 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
     return SourceLineDebugInfo.Unknown;
   }
 
-  public bool LoadDebugInfo(string debugFilePath) {
+  public bool LoadDebugInfo(string debugFilePath,  IDebugInfoProvider other = null) {
     return true;
   }
 
@@ -155,7 +155,7 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
     return true;
   }
 
-  public bool LoadDebugInfo(DebugFileSearchResult debugFile) {
+  public bool LoadDebugInfo(DebugFileSearchResult debugFile,  IDebugInfoProvider other = null) {
     return true;
   }
 
