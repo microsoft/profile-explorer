@@ -362,9 +362,9 @@
                 ToolTip="Exclusive (self) time for modules under this instance">
               <Grid>
                 <Grid.RowDefinitions>
-                  <RowDefinition Height="2*" />
-                  <RowDefinition Height="3" />
                   <RowDefinition Height="3*" />
+                  <RowDefinition Height="3" />
+                  <RowDefinition Height="2*" />
                 </Grid.RowDefinitions>
                 <profile:ProfileListView
                     x:Name="ModuleList"

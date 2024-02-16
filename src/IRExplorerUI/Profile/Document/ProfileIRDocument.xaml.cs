@@ -262,8 +262,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                                settings_.ColumnSettings, Session.CompilerInfo);
     await profileMarker_.Mark(TextView, parsedSection.Function,
                               parsedSection.Section.ParentFunction);
-    CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, true);
     await UpdateProfilingColumns();
+
+    if (TextView.ProfileProcessingResult != null) {
+      CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, true);
+    }
   }
 
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
@@ -339,8 +342,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.ResumeUpdate();
     sourceProfileResult_ = processingResult.Result;
     sourceLineProfileResult_ = processingResult.SourceLineResult;
-    CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, false);
     await UpdateProfilingColumns();
+
+    if (TextView.ProfileProcessingResult != null) {
+      CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, false);
+    }
   }
 
   public async Task UpdateProfilingColumns() {
