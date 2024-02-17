@@ -31,6 +31,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   //? to be searched for in new locations.
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ =
     new ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult>();
+  private static object undecorateLock_ = new object();
+
   private SymbolFileSourceSettings settings_;
   private string debugFilePath_;
   private IDiaDataSource diaSource_;
@@ -149,7 +151,12 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_FUNCTION_RETURNS;
     }
 
-    NativeMethods.UnDecorateSymbolName(name, sb, MaxDemangledFunctionNameLength, flags);
+    // DbgHelp UnDecorateSymbolName is not thread safe and can
+    // return bogus function names if not under a global lock.
+    lock (undecorateLock_) {
+      NativeMethods.UnDecorateSymbolName(name, sb, MaxDemangledFunctionNameLength, flags);
+    }
+
     return sb.ToString();
   }
 

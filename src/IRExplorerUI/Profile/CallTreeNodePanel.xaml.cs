@@ -396,7 +396,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       var line = new LineAnnotation();
       line.Type = LineAnnotationType.Vertical;
       line.X = value;
-      line.StrokeThickness = 1.5;
+      line.StrokeThickness = 2;
       line.Color = color;
       line.LineStyle = lineStyle;
       model.Annotations.Add(line);
