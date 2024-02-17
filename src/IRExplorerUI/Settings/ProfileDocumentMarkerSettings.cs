@@ -57,7 +57,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   [ProtoMember(24)]  public Color PerformanceCounterBackColor { get; set; }
 
   public static int DefaultMaxPercentageBarWidth = 50;
-  public static double DefaultElementWeightCutoff = 0.003; // 0.3%;
+  public static double DefaultElementWeightCutoff = 0.009; // 0.9%;
 
   public override void Reset() {
     MarkElements = true;
@@ -69,7 +69,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     AppendValueUnitSuffix = true;
     ElementWeightCutoff = DefaultElementWeightCutoff;
     TopOrderCutoff = 10;
-    IconBarWeightCutoff = 0.03; // 3%
+    IconBarWeightCutoff = DefaultElementWeightCutoff;
     MaxPercentageBarWidth = DefaultMaxPercentageBarWidth;
     DisplayIcons = true;
     DisplayPercentageBar = true;

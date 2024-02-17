@@ -129,9 +129,9 @@ public class ProfileDocumentMarker {
   }
 
   public static string FormatPerformanceCounter(long value, PerformanceCounter counter) {
-    if (counter.Frequency > 1000) {
+    if (counter.Frequency >= 1000) {
       double valueK = (double)(value * counter.Frequency) / 1000;
-      return $"{valueK:##}K";
+      return $"{valueK:n0} K";
     }
 
     return $"{value * counter.Frequency}";
@@ -253,18 +253,10 @@ public class ProfileDocumentMarker {
     column.IsVisible = columnSettings.IsColumnVisible(column);
 
     var elementColorPairs = new List<ValueTuple<IRElement, Brush>>(function.TupleCount);
+    var cells = columnData.ColumnValues[column];
 
-    //? TODO: Make list of all cells corresponding to a column
-    //?  - set background of column cells
-    //?  - overwritten by going over the tuples with !color.IsTransparent
-
-    if (column.IsPerformanceCounter ||
-        column.IsPerformanceMetric) {
-      var cells = columnData.ColumnValues[column];
-
-      foreach (var value in cells) {
-        value.BackColor = settings.PickDefaultBackColor(column);
-      }
+    foreach (var value in cells) {
+      value.BackColor = settings.PickDefaultBackColor(column);
     }
 
     foreach (var tuple in function.AllTuples) {

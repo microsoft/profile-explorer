@@ -115,12 +115,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
       Dictionary<OptionalColumn, ElementColumnValue> separatorDummyCells = new(comparer);
 
       ElementColumnValue MakeDummyCell(bool hasSeparator) {
-        //? TODO: Per-column dummy cell to get its own back color
         var columnValue = new ElementColumnValue("");
-
-        //? if (showColumnSeparators) {
-        columnValue.BorderBrush = blockSeparatorColor;
-        columnValue.BorderThickness = new Thickness(0, 0, 1, 0);
         columnValue.TextFont = font;
         columnValue.TextSize = fontSize;
         return columnValue;
@@ -154,7 +149,21 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
           row.BorderBrush = blockSeparatorColor;
         }
 
+        SetValueBorder(row);
         return row;
+      }
+
+      void SetValueBorder(ElementRowValue row) {
+        bool first = true;
+
+        foreach (var value in row.Values) {
+          if (!first) {
+            value.BorderBrush = blockSeparatorColor;
+            value.BorderThickness = new Thickness(1, 0, 0, 0);
+          }
+
+          first = false;
+        }
       }
 
       var dummyRow = MakeDummyRow(false);
@@ -214,15 +223,11 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
             // Add a separator line at the bottom of the current row
             // if the next instr. is found in another block.
             if (isSeparatorLine) {
-              rowValues.BorderThickness = new Thickness(0, 0, 0, 1);
               rowValues.BorderBrush = blockSeparatorColor;
+              rowValues.BorderThickness = new Thickness(0, 0, 0, 1);
             }
 
-            foreach (var value in rowValues.Values) {
-              value.BorderBrush = blockSeparatorColor;
-              value.BorderThickness = new Thickness(0, 0, 1, 0);
-            }
-
+            SetValueBorder(rowValues);
             profileDataRows_.Add(rowValues);
           }
           else {
@@ -298,7 +303,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         return null;
       },
       () => optionsPanelWindow_ = null,
-      new Point(0, columnHeader.ActualHeight));
+      new Point(0, columnHeader.ActualHeight - 1));
   }
 
   public void BuildColumnsVisibilityMenu(IRDocumentColumnData columnData, MenuItem menu,
@@ -382,7 +387,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     var font = new FontFamily(settings_.FontName);
     double fontSize = settings_.FontSize;
     double maxBarWidth = settings_.ProfileMarkerSettings.MaxPercentageBarWidth;
-    const double columnMargin = 4;
+    const double columnMargin = 8;
 
     foreach (var rowValues in profileDataRows_) {
       foreach (var columnValue in rowValues.ColumnValues) {

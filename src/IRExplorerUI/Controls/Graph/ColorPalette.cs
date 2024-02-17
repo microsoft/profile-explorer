@@ -59,6 +59,7 @@ public class ColorPalette {
 
   public static ColorPalette Profile =>
     new ColorPalette(new[] {
+      Utils.ColorFromString("#FFF4F1E8"),
       Utils.ColorFromString("#FFFCF2D6"),
       Utils.ColorFromString("#FFFCEED6"),
       Utils.ColorFromString("#FFFCEAD6"),

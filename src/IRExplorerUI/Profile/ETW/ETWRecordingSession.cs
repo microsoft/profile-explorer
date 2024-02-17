@@ -83,7 +83,7 @@ public sealed class ETWRecordingSession : IDisposable {
         new PerformanceMetricConfig("ICacheMiss", "ICFetch", "ICMiss", true, "Instruction cache miss percentage"));
       list.Add(new PerformanceMetricConfig("MispredBr", "BranchInstructions", "BranchMispredictions", true,
                                            "Branch misprediction percentage"));
-      list.Add(new PerformanceMetricConfig("CPI", "InstructionRetired", "TotalCycles", false,
+      list.Add(new PerformanceMetricConfig("CPI", "InstructionRetired", "UnhaltedCoreCycles", false,
                                            "Clockticks per Instructions retired rate"));
       return list;
     }
