@@ -56,7 +56,7 @@ public partial class DefinitionPanel : ToolPanelControl {
       return;
     }
 
-    if (!(element is OperandIR op)) {
+    if (Document == null || !(element is OperandIR op)) {
       return;
     }
 
@@ -94,25 +94,6 @@ public partial class DefinitionPanel : ToolPanelControl {
     Document = document;
 
     if (Session.LoadPanelState(this, section, document) is DefinitionPanelState savedState) {
-#if DEBUG
-      bool found = false;
-
-      foreach (var op in document.Function.AllElements) {
-        if (op.TextLocation == savedState.DefinedOperand.TextLocation) {
-          found = true;
-          break;
-        }
-      }
-
-      if (!found) {
-        Trace.WriteLine(
-          $"=> ERROR for {savedState.DefinedOperand}, offset {savedState.DefinedOperand.TextLocation.Offset}");
-        Trace.WriteLine($"     doc length: {TextView.Text.Length}");
-        MessageBox.Show("Definition panel offset error, attach debugger");
-        Utils.WaitForDebugger();
-      }
-#endif
-
       SwitchSelectedElement(savedState.DefinedOperand, document);
 
       TextView.SetCaretAtOffset(savedState.CaretOffset);

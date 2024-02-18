@@ -251,7 +251,8 @@ public abstract class ElementOverlayBase : IElementOverlay {
     if (AlignmentX == HorizontalAlignment.Left) {
       double leftEdgeX = rect.Left;
 
-      if (previousOveraly != null) {
+      if (previousOveraly != null &&
+          previousOveraly.AlignmentX == HorizontalAlignment.Left) {
         // Align to the right of the previous overlay.
         leftEdgeX = Math.Max(rect.Left, previousOveraly.Bounds.Right);
       }
@@ -262,7 +263,8 @@ public abstract class ElementOverlayBase : IElementOverlay {
     if (AlignmentX == HorizontalAlignment.Right) {
       double rightEdgeX = rect.Right;
 
-      if (previousOveraly != null) {
+      if (previousOveraly != null &&
+          previousOveraly.AlignmentX == HorizontalAlignment.Right) {
         // Align to the right of the previous overlay.
         rightEdgeX = Math.Max(rect.Right, previousOveraly.Bounds.Right);
       }

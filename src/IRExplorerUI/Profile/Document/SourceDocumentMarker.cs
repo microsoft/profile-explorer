@@ -32,7 +32,6 @@ public class SourceDocumentMarker {
     var overlays = new List<IconElementOverlay>(function.InstructionCount);
     var inlineeOverlays = new List<IconElementOverlay>(function.InstructionCount);
     var lineLengths = new List<int>(function.InstructionCount);
-    int maxLineLength = 0;
 
     await Task.Run(() => {
       foreach (var instr in function.AllInstructions) {
@@ -93,8 +92,8 @@ public class SourceDocumentMarker {
     // Place the line numbers on a column aligned with most instrs.
     var settings = App.Settings.DocumentSettings;
     const double lengthPercentile = 0.9; // Consider length of most lines.
-    const int overlayMargin = 20; // Distance from instruction end.
-    const int inlineeOverlayMargin = 30;
+    const int overlayMargin = 10; // Distance from instruction end.
+    const int inlineeOverlayMargin = 20;
 
     int percentileLength =
       lineLengths.Count > 0 ? lineLengths[(int)Math.Floor(lineLengths.Count * lengthPercentile)] : 0;
