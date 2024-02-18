@@ -60,19 +60,8 @@ public sealed class BlockBackgroundHighlighter : IBackgroundRenderer {
 
     int viewStart = visualLines[0].FirstDocumentLine.Offset;
     int viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
-
     var firstLinePos = visualLines[0].GetVisualPosition(0, VisualYPosition.LineTop);
     double scrollOffsetY = textView.ScrollOffset.Y % textView.DefaultLineHeight;
-
-    // When a new line becomes the first in the view
-    // it seems to happen after this code runs, so consider
-    // the next one instead as first to get proper coordinates.
-    //if (scrollOffsetY == 0 && textView.ScrollOffset.Y > 0 &&
-    //    visualLines.Count > 1) {
-    //    Trace.WriteLine($"=> Instead of {firstLinePos}");
-    //    firstLinePos.Y -= textView.DefaultLineHeight;
-    //    Trace.WriteLine($"    use  {firstLinePos}");
-    //}
 
     double lineAdjustmentY = firstLinePos.Y + scrollOffsetY;
     int minOffset = viewStart;

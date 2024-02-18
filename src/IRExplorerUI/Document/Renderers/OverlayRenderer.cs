@@ -40,6 +40,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   private IElementOverlay hoveredOverlay_;
   private IElementOverlay selectedOverlay_;
   private ToolTip hoverTooltip_;
+  private IElementOverlay tooltipOverlay_;
   private bool updateSuspended_;
   
   public OverlayRenderer(ElementHighlighter highlighter) {
@@ -412,16 +413,16 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   }
 
   private void ShowTooltip(IElementOverlay overlay) {
-    if (!(overlay is ElementOverlayBase elementOverlay) || !elementOverlay.HasToolTip) {
+    if (!(overlay is ElementOverlayBase {HasToolTip: true} elementOverlay)) {
       return;
     }
     
-    if(hoverTooltip_ != null && hoveredOverlay_ == elementOverlay) {
+    if(hoverTooltip_ != null && tooltipOverlay_ == elementOverlay) {
       return; // Already showing the right tooltip.
     }
 
-    HideTooltip();
-    hoverTooltip_ = new ToolTip();
+    tooltipOverlay_ = elementOverlay;
+    hoverTooltip_ ??= new ToolTip();
     hoverTooltip_.Placement = PlacementMode.Mouse;
     hoverTooltip_.Content = elementOverlay.ToolTip;
     hoverTooltip_.FontFamily = new FontFamily("Consolas");
@@ -431,7 +432,6 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   private void HideTooltip() {
     if (hoverTooltip_ != null) {
       hoverTooltip_.IsOpen = false;
-      hoverTooltip_ = null;
     }
   }
 
