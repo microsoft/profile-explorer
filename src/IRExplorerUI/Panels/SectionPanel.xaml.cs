@@ -2594,6 +2594,47 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
+  private string ExportFunctionListAsMarkdown(List<IRTextFunctionEx> list) {
+    var sb = new StringBuilder();
+    string header    = "| Function | Module |";
+    string separator = "|----------|--------|";
+
+    if (profileControlsVisible_) {
+      header    += " Time (ms) | Time (%) | Time incl (ms) | Time incl (%) |";
+      separator += "-----------|----------|----------------|---------------|";
+    }
+
+    if (alternateNameColumnVisible_) {
+      header    += " Mangled name |";
+      separator += "--------------|";
+    }
+
+    sb.AppendLine(header);
+    sb.AppendLine(separator);
+
+    foreach (var func in list) {
+      if (profileControlsVisible_) {
+        sb.Append($"| {func.Name} | {func.ModuleName} " +
+                    $"| {func.ExclusiveWeight.TotalMilliseconds} " +
+                    $"| {func.ExclusivePercentage.AsPercentageString(2, false)} " +
+                    $"| {func.Weight.TotalMilliseconds} " +
+                    $"| {func.Percentage.AsPercentageString(2, false)} |");
+      }
+      else {
+        sb.Append($"| {func.Name} | {func.ModuleName} |");
+      }
+
+      if (alternateNameColumnVisible_) {
+        sb.AppendLine($" {func.AlternateName} |");
+      }
+      else {
+        sb.AppendLine();
+      }
+    }
+
+    return sb.ToString();
+  }
+
   private HtmlNode ExportFunctionListAsHtml(List<IRTextFunctionEx> list) {
     string TableStyle = @"border-collapse:collapse;border-spacing:0;";
     string HeaderStyle = @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
@@ -2707,7 +2748,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     doc.DocumentNode.AppendChild(ExportFunctionListAsHtml(funcList));
     var writer = new StringWriter();
     doc.Save(writer);
-    Utils.CopyHtmlToClipboard(writer.ToString());
+
+    // Also save as Markdown so that it can be pasted in plain text editors.
+    var plainText = ExportFunctionListAsMarkdown(funcList);
+    Utils.CopyHtmlToClipboard(writer.ToString(), plainText);
   }
 
   private bool ExportFunctionListAsHtmlFile(string filePath) {
@@ -2862,8 +2906,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  private class FunctionDiffKindConverter : IValueConverter {
-    public virtual object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+  private sealed class FunctionDiffKindConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
       if (value is DiffKind diffKind) {
         return diffKind switch {
           DiffKind.Insertion => "Diff only",
@@ -2877,13 +2921,13 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return "";
     }
 
-    public virtual object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
       return null;
     }
   }
 
-  private class FunctionDiffValueConverter : IValueConverter {
-    public virtual object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+  private sealed class FunctionDiffValueConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
       if (value is int intValue) {
         if (intValue > 0) {
           return $"+{intValue}";
@@ -2906,7 +2950,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return value;
     }
 
-    public virtual object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
       return null;
     }
   }
