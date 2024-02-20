@@ -1204,10 +1204,15 @@ static class Utils {
                         element.FontWeight, element.FontStretch);
   }
 
-  public static void CopyHtmlToClipboard(string html) {
+  public static void CopyHtmlToClipboard(string html, string text = null) {
     try {
       var dataObject = new DataObject();
       dataObject.SetData(DataFormats.Html, ConvertHtmlToClipboardFormat(html));
+
+      if (!string.IsNullOrEmpty(text)) {
+        dataObject.SetData(DataFormats.Text, text);
+      }
+
       Clipboard.SetDataObject(dataObject);
     }
     catch (Exception ex) {
