@@ -12,6 +12,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -19,6 +20,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ClosedXML.Excel;
+using HtmlAgilityPack;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerUI.OptionsPanels;
@@ -134,6 +136,10 @@ public static class Command {
     new RoutedUICommand("Untitled", "ExportFunctionList", typeof(SectionPanel));
   public static readonly RoutedUICommand ExportModuleList =
     new RoutedUICommand("Untitled", "ExportModuleList", typeof(SectionPanel));
+  public static readonly RoutedUICommand CopyFunctionDetails =
+    new RoutedUICommand("Untitled", "CopyFunctionDetails", typeof(SectionPanel));
+  public static readonly RoutedUICommand ExportFunctionListHtml =
+    new RoutedUICommand("Untitled", "ExportFunctionListHtml", typeof(SectionPanel));
 }
 
 public class OpenSectionEventArgs : EventArgs {
@@ -2339,22 +2345,31 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private void CopyFunctionNameExecuted(object sender, ExecutedRoutedEventArgs e) {
-    var func = GetSelectedFunction(e);
+    string text = "";
 
-    if (func != null) {
-      string text = Session.CompilerInfo.NameProvider.GetFunctionName(func);
-      Clipboard.SetText(text);
+    foreach (IRTextFunctionEx func in FunctionList.SelectedItems) {
+      if (!string.IsNullOrEmpty(text)) {
+        text += Environment.NewLine;
+      }
+
+      text += Session.CompilerInfo.NameProvider.GetFunctionName(func.Function);
     }
+    
+    Clipboard.SetText(text);
   }
 
   private void CopyDemangledFunctionNameExecuted(object sender, ExecutedRoutedEventArgs e) {
-    var func = GetSelectedFunction(e);
+    string text = "";
 
-    if (func != null) {
-      var options = FunctionNameDemanglingOptions.Default;
-      string text = Session.CompilerInfo.NameProvider.DemangleFunctionName(func, options);
-      Clipboard.SetText(text);
+    foreach (IRTextFunctionEx func in FunctionList.SelectedItems) {
+      if (!string.IsNullOrEmpty(text)) {
+        text += Environment.NewLine;
+      }
+
+      text += Session.CompilerInfo.NameProvider.FormatFunctionName(func.Function);
     }
+    
+    Clipboard.SetText(text);
   }
 
   private void DisplayCallGraphExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -2579,6 +2594,139 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
+  private HtmlNode ExportFunctionListAsHtml(List<IRTextFunctionEx> list) {
+    string TableStyle = @"border-collapse:collapse;border-spacing:0;";
+    string HeaderStyle = @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
+    string CellStyle = @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
+
+    var doc = new HtmlDocument();
+    var table = doc.CreateElement("table");
+    table.SetAttributeValue("style", TableStyle);
+
+    var thead = doc.CreateElement("thead");
+    var tbody = doc.CreateElement("tbody");
+    var tr = doc.CreateElement("tr");
+
+    var th = doc.CreateElement("th");
+    th.InnerHtml = "Function";
+    th.SetAttributeValue("style", HeaderStyle);
+    tr.AppendChild(th);
+    th = doc.CreateElement("th");
+    th.InnerHtml = "Module";
+    th.SetAttributeValue("style", HeaderStyle);
+    tr.AppendChild(th);
+    thead.AppendChild(tr);
+
+    if (profileControlsVisible_) {
+      th = doc.CreateElement("th");
+      th.InnerHtml = HttpUtility.HtmlEncode("Time (ms)");
+      th.SetAttributeValue("style", HeaderStyle);
+      tr.AppendChild(th);
+
+      th = doc.CreateElement("th");
+      th.InnerHtml = HttpUtility.HtmlEncode("Time (%)");
+      th.SetAttributeValue("style", HeaderStyle);
+      tr.AppendChild(th);
+
+      th = doc.CreateElement("th");
+      th.InnerHtml = HttpUtility.HtmlEncode("Tine incl (ms)");
+      th.SetAttributeValue("style", HeaderStyle);
+      tr.AppendChild(th);
+
+      th = doc.CreateElement("th");
+      th.InnerHtml = HttpUtility.HtmlEncode("Time incl (%)");
+      th.SetAttributeValue("style", HeaderStyle);
+      tr.AppendChild(th);
+    }
+
+    if (alternateNameColumnVisible_) {
+      th = doc.CreateElement("th");
+      th.InnerHtml = HttpUtility.HtmlEncode("Mangled name");
+      th.SetAttributeValue("style", HeaderStyle);
+      tr.AppendChild(th);
+    }
+
+    table.AppendChild(thead);
+
+    foreach (IRTextFunctionEx func in list) {
+      tr = doc.CreateElement("tr");
+      var td = doc.CreateElement("td");
+      td.InnerHtml = HttpUtility.HtmlEncode(func.Name);
+      td.SetAttributeValue("style", CellStyle);
+      tr.AppendChild(td);
+      td = doc.CreateElement("td");
+      td.InnerHtml = HttpUtility.HtmlEncode(func.ModuleName);
+      td.SetAttributeValue("style", CellStyle);
+      tr.AppendChild(td);
+
+      if (profileControlsVisible_) {
+        var backColor = Utils.BrushToString(func.BackColor);
+        var colorAttr = backColor != null ? $";background-color:{backColor}" : "";
+
+        td = doc.CreateElement("td");
+        td.InnerHtml = HttpUtility.HtmlEncode($"{func.ExclusiveWeight.TotalMilliseconds}");
+        td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
+        tr.AppendChild(td);
+        td = doc.CreateElement("td");
+        td.InnerHtml = HttpUtility.HtmlEncode($"{func.ExclusivePercentage.AsPercentageString(2, false)}");
+        td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
+        tr.AppendChild(td);
+        td = doc.CreateElement("td");
+        td.InnerHtml = HttpUtility.HtmlEncode($"{func.Weight.TotalMilliseconds}");
+        td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
+        tr.AppendChild(td);
+        td = doc.CreateElement("td");
+        td.InnerHtml = HttpUtility.HtmlEncode($"{func.Percentage.AsPercentageString(2, false)}");
+        td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
+        tr.AppendChild(td);
+      }
+
+      if (alternateNameColumnVisible_) {
+        td = doc.CreateElement("td");
+        td.InnerHtml = HttpUtility.HtmlEncode(func.AlternateName);
+        td.SetAttributeValue("style", CellStyle);
+        tr.AppendChild(td);
+      }
+
+      tbody.AppendChild(tr);
+    }
+
+    table.AppendChild(tbody);
+    doc.DocumentNode.AppendChild(table);
+    return doc.DocumentNode;
+  }
+
+  private void CopyFunctionListAsHtml() {
+    var doc = new HtmlDocument();
+    var funcList = new List<IRTextFunctionEx>();
+
+    foreach (var item in FunctionList.SelectedItems) {
+      funcList.Add((IRTextFunctionEx)item);
+    }
+
+    doc.DocumentNode.AppendChild(ExportFunctionListAsHtml(funcList));
+    var writer = new StringWriter();
+    doc.Save(writer);
+    Utils.CopyHtmlToClipboard(writer.ToString());
+  }
+
+  private bool ExportFunctionListAsHtmlFile(string filePath) {
+    try {
+      var funcList = (ListCollectionView)FunctionList.ItemsSource;
+      var doc = new HtmlDocument();
+      doc.DocumentNode.AppendChild(ExportFunctionListAsHtml(funcList.ToList<IRTextFunctionEx>()));
+      var writer = new StringWriter();
+      doc.Save(writer);
+      File.WriteAllText(filePath, writer.ToString());
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to export to HTML file: {filePath}, {ex.Message}");
+      return false;
+    }
+
+    return true;
+  }
+
   private void ExportFunctionListAsExcelFile(string filePath) {
     var wb = new XLWorkbook();
     var ws = wb.Worksheets.Add("Functions");
@@ -2652,10 +2800,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       else if (alternateNameColumnVisible_) {
         cell.Value = "Mangled name";
       }
-      //else if (columnData != null && (cell.Address.ColumnNumber - 3) < columnData.Columns.Count) {
-      //    cell.Value = columnData.Columns[cell.Address.ColumnNumber - 3].Title;
-      //}
-
+      
       cell.Style.Font.Bold = true;
       cell.Style.Fill.BackgroundColor = XLColor.LightGray;
     }
@@ -3053,6 +3198,35 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private void ModulePreviewKeyDown(object sender, KeyEventArgs e) {
     if (e.Key == Key.Return) {
       SwitchModule(sender);
+    }
+  }
+
+  private void FunctionToolbar_OnMouseDoubleClick(object sender, MouseButtonEventArgs e) {
+    ExportFunctionListAsHtmlFile(@"C:\work\out.html");
+  }
+
+  private void CopyFunctionDetailsExecuted(object sender, ExecutedRoutedEventArgs e) {
+    CopyFunctionListAsHtml();
+  }
+
+  private void ExportFunctionListHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        ExportFunctionListAsHtmlFile(path);
+      }
+      catch (Exception ex) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save function list to {path}: {ex.Message}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  private void ScrollUpButton_OnClick(object sender, RoutedEventArgs e) {
+    if (FunctionList.Items is {Count: > 0}) {
+      FunctionList.ScrollIntoView(FunctionList.Items[0]);
     }
   }
 }

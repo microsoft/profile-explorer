@@ -22,7 +22,8 @@ public interface INameProvider {
   FunctionNameDemanglingOptions GlobalDemanglingOptions { get; }
   string GetSectionName(IRTextSection section, bool includeNumber = true);
   string GetFunctionName(IRTextFunction function);
-  string DemangleFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options);
+  string DemangleFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options =
+                                FunctionNameDemanglingOptions.Default);
   string DemangleFunctionName(string name, FunctionNameDemanglingOptions options);
   string FormatFunctionName(IRTextFunction function);
 

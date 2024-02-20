@@ -18,6 +18,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Xml;
+using DocumentFormat.OpenXml.Vml.Spreadsheet;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using IRExplorerCore;
@@ -1202,4 +1203,53 @@ static class Utils {
     return new Typeface(element.FontFamily, element.FontStyle,
                         element.FontWeight, element.FontStretch);
   }
+
+  public static void CopyHtmlToClipboard(string html) {
+    try {
+      var dataObject = new DataObject();
+      dataObject.SetData(DataFormats.Html, ConvertHtmlToClipboardFormat(html));
+      Clipboard.SetDataObject(dataObject);
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to copy HTML to clipboard: {ex.Message}");
+    }
+  }
+
+  public static string ConvertHtmlToClipboardFormat(string html) {
+    var encoding = new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+    var data = Array.Empty<byte>();
+    var header = encoding.GetBytes(String.Format(HEADER, 0, 1, 2, 3));
+    data = data.Concat(header).ToArray();
+
+    var startHtml = data.Length;
+    data = data.Concat(encoding.GetBytes(HTML_START)).ToArray();
+
+    var startFragment = data.Length;
+    data = data.Concat(encoding.GetBytes(html)).ToArray();
+    var endFragment = data.Length;
+    data = data.Concat(encoding.GetBytes(HTML_END)).ToArray();
+
+    var endHtml = data.Length;
+    var newHeader = encoding.GetBytes(
+      String.Format(HEADER, startHtml, endHtml, startFragment, endFragment));
+    Array.Copy(newHeader, data, length: startHtml);
+    return encoding.GetString(data);
+  }
+
+  static readonly string HEADER =
+    "Version:0.9\r\n" +
+    "StartHTML:{0:0000000000}\r\n" +
+    "EndHTML:{1:0000000000}\r\n" +
+    "StartFragment:{2:0000000000}\r\n" +
+    "EndFragment:{3:0000000000}\r\n";
+
+  static readonly string HTML_START =
+    "<html>\r\n" +
+    "<body>\r\n" +
+    "<!--StartFragment-->";
+
+  static readonly string HTML_END =
+    "<!--EndFragment-->\r\n" +
+    "</body>\r\n" +
+    "</html>";
 }
