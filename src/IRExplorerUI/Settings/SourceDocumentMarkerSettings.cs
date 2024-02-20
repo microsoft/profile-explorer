@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Windows.Media;
 using IRExplorerUI.Profile;
 using ProtoBuf;
@@ -47,10 +48,20 @@ public class SourceDocumentMarkerSettings : SettingsBase {
     return obj is SourceDocumentMarkerSettings settings &&
             AnnotateSourceLines == settings.AnnotateSourceLines &&
             AnnotateInlinees == settings.AnnotateInlinees &&
-            VirtualColumnPosition == settings.VirtualColumnPosition &&
+            Math.Abs(VirtualColumnPosition - settings.VirtualColumnPosition) < double.Epsilon &&
             SourceLineTextColor == settings.SourceLineTextColor &&
             SourceLineBackColor == settings.SourceLineBackColor &&
             InlineeOverlayTextColor == settings.InlineeOverlayTextColor &&
             InlineeOverlayBackColor == settings.InlineeOverlayBackColor;
+  }
+
+  public override string ToString() {
+      return $"AnnotateSourceLines: {AnnotateSourceLines}\n" +
+              $"AnnotateInlinees: {AnnotateInlinees}\n" +
+              $"VirtualColumnPosition: {VirtualColumnPosition}\n" +
+              $"SourceLineTextColor: {SourceLineTextColor}\n" +
+              $"SourceLineBackColor: {SourceLineBackColor}\n" +
+              $"InlineeOverlayTextColor: {InlineeOverlayTextColor}\n" +
+              $"InlineeOverlayBackColor: {InlineeOverlayBackColor}";
   }
 }

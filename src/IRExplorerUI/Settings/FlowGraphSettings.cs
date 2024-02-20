@@ -68,4 +68,16 @@ public class FlowGraphSettings : GraphSettings {
   protected override GraphSettings MakeClone() {
     return Clone();
   }
+
+  public override string ToString() {
+    return $"EmptyNodeColor: {EmptyNodeColor}\n" +
+           $"BranchNodeBorderColor: {BranchNodeBorderColor}\n" +
+           $"SwitchNodeBorderColor: {SwitchNodeBorderColor}\n" +
+           $"LoopNodeBorderColor: {LoopNodeBorderColor}\n" +
+           $"ReturnNodeBorderColor: {ReturnNodeBorderColor}\n" +
+           $"MarkLoopBlocks: {MarkLoopBlocks}\n" +
+           $"ShowImmDominatorEdges: {ShowImmDominatorEdges}\n" +
+           $"DominatorEdgeColor: {DominatorEdgeColor}\n" +
+           $"LoopNodeColors: {string.Join(", ", LoopNodeColors)}";
+  }
 }

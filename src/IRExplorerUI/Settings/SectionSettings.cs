@@ -139,4 +139,35 @@ public class SectionSettings : SettingsBase {
            ShowModulePanel == settings.ShowModulePanel &&
            AlternateListRows == settings.AlternateListRows;
   }
+
+  public override string ToString() {
+    return $"ColorizeSectionNames: {ColorizeSectionNames}\n" +
+           $"MarkAnnotatedSections: {MarkAnnotatedSections}\n" +
+           $"MarkNoDiffSectionGroups: {MarkNoDiffSectionGroups}\n" +
+           $"ShowSectionSeparators: {ShowSectionSeparators}\n" +
+           $"UseNameIndentation: {UseNameIndentation}\n" +
+           $"IndentationAmount: {IndentationAmount}\n" +
+           $"NewSectionColor: {NewSectionColor}\n" +
+           $"MissingSectionColor: {MissingSectionColor}\n" +
+           $"ChangedSectionColor: {ChangedSectionColor}\n" +
+           $"FunctionSearchCaseSensitive: {FunctionSearchCaseSensitive}\n" +
+           $"SectionSearchCaseSensitive: {SectionSearchCaseSensitive}\n" +
+           $"MarkSectionsIdenticalToPrevious: {MarkSectionsIdenticalToPrevious}\n" +
+           $"LowerIdenticalToPreviousOpacity: {LowerIdenticalToPreviousOpacity}\n" +
+           $"ShowDemangledNames: {ShowDemangledNames}\n" +
+           $"DemangleOnlyNames: {DemangleOnlyNames}\n" +
+           $"DemangleNoReturnType: {DemangleNoReturnType}\n" +
+           $"DemangleNoSpecialKeywords: {DemangleNoSpecialKeywords}\n" +
+           $"ComputeStatistics: {ComputeStatistics}\n" +
+           $"ShowCallStackPopup: {ShowCallStackPopup}\n" +
+           $"CallStackPopupDuration: {CallStackPopupDuration}\n" +
+           $"SyncSourceFile: {SyncSourceFile}\n" +
+           $"SyncSelection: {SyncSelection}\n" +
+           $"ShowPerformanceCounterColumns: {ShowPerformanceCounterColumns}\n" +
+           $"ShowPerformanceMetricColumns: {ShowPerformanceMetricColumns}\n" +
+           $"AppendTimeToTotalColumn: {AppendTimeToTotalColumn}\n" +
+           $"AppendTimeToSelfColumn: {AppendTimeToSelfColumn}\n" +
+           $"ShowModulePanel: {ShowModulePanel}\n" +
+           $"AlternateListRows: {AlternateListRows}";
+  }
 }

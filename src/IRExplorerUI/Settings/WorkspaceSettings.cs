@@ -17,6 +17,19 @@ namespace IRExplorerUI.Settings;
 
 [ProtoContract(SkipConstructor = true)]
 public class Workspace : IEquatable<Workspace> {
+  [ProtoMember(1)]
+  public string Name { get; set; }
+  [ProtoMember(2)]
+  public string Description { get; set; }
+  [ProtoMember(3)]
+  public string FilePath { get; set; }
+  [ProtoMember(4)]
+  public int Order { get; set; }
+  public bool IsNew { get; set; }
+
+  public Workspace() { }
+
+
   public bool Equals(Workspace other) {
     if (ReferenceEquals(null, other))
       return false;
@@ -48,19 +61,8 @@ public class Workspace : IEquatable<Workspace> {
     return !Equals(left, right);
   }
 
-  [ProtoMember(1)]
-  public string Name { get; set; }
-  [ProtoMember(2)]
-  public string Description { get; set; }
-  [ProtoMember(3)]
-  public string FilePath { get; set; }
-  [ProtoMember(4)]
-  public int Order { get; set; }
-  public bool IsNew { get; set; }
-  public Workspace() { }
-
   public override string ToString() {
-    return Name;
+    return $"Name: {Name}, FilePath: {FilePath}";
   }
 }
 
@@ -329,5 +331,9 @@ public class WorkspaceSettings {
       Trace.WriteLine($"Failed to save workspaces to Zip {ex.Message}");
       return false;
     }
+  }
+
+  public override string ToString() {
+    return $"Workspaces: {Workspaces.Count}, ActiveWorkspace: {ActiveWorkspace}";
   }
 }

@@ -19,8 +19,7 @@ public class OptionalColumnSettings : SettingsBase {
   [ProtoMember(3)]  public bool RemoveEmptyColumns { get; set; }
   [ProtoMember(4)]  public bool ShowPerformanceCounterColumns { get; set; }
   [ProtoMember(5)]  public bool ShowPerformanceMetricColumns { get; set; }
-
-
+  
   public OptionalColumnSettings() {
     Reset();
   }
@@ -157,6 +156,15 @@ public class OptionalColumnSettings : SettingsBase {
            columnStyles_.AreEqual(other.columnStyles_) &&
            columnStates_.AreEqual(other.columnStates_);
   }
+
+  public override string ToString() {
+    return $"RemoveEmptyColumns: {RemoveEmptyColumns}\n" +
+           $"ShowPerformanceCounterColumns: {ShowPerformanceCounterColumns}\n" +
+           $"ShowPerformanceMetricColumns: {ShowPerformanceMetricColumns}\n" +
+           $"columnStyles_: {columnStyles_}\n" +
+           $"columnStates_: {columnStates_}";
+  
+  }
 }
 
 [ProtoContract(SkipConstructor = true)]
@@ -188,6 +196,10 @@ public class OptionalColumnState : SettingsBase {
            IsVisible == other.IsVisible &&
            Width == other.Width &&
            Order == other.Order;
+  }
+
+  public override string ToString() {
+    return $"IsVisible: {IsVisible}, Width: {Width}, Order: {Order}";
   }
 }
 
@@ -243,5 +255,18 @@ public class OptionalColumnStyle : SettingsBase {
            Equals(BackColorPalette, other.BackColorPalette) &&
            InvertColorPalette == other.InvertColorPalette &&
            BackgroundColor == other.BackgroundColor;
+  }
+
+  public override string ToString() {
+    return $"AlternateTitle: {AlternateTitle}\n" +
+           $"ShowPercentageBar: {ShowPercentageBar}\n" +
+           $"PercentageBarBackColor: {PercentageBarBackColor}\n" +
+           $"TextColor: {TextColor}\n" +
+           $"ShowIcon: {ShowIcon}\n" +
+           $"PickColorForPercentage: {PickColorForPercentage}\n" +
+           $"UseBackColor: {UseBackColor}\n" +
+           $"BackColorPalette: {BackColorPalette}\n" +
+           $"InvertColorPalette: {InvertColorPalette}\n" +
+           $"BackgroundColor: {BackgroundColor}";
   }
 }

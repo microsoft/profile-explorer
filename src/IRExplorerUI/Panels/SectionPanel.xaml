@@ -669,13 +669,16 @@
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Copy Demangled Function Name"
                                 ToolTip="Copy the demangled function name to the clipboard (C/C++)">
-                                <MenuItem.Icon>
-                                    <Image
-                                        Width="16"
-                                        Height="16"
-                                        Source="{StaticResource ClipboardIcon}" />
-                                </MenuItem.Icon>
                             </MenuItem>
+                            <MenuItem
+                              Command="local:Command.CopyDemangledFunctionName"
+                              CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                              CommandTarget="{Binding ElementName=FunctionList}"
+                              Header="Copy Function Details"
+                              ToolTip="Copy the function name and additional columns as a HTML table">
+                            </MenuItem>
+                            <Separator/>
+
                             <MenuItem
                                 Command="local:Command.ExportFunctionList"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -688,6 +691,19 @@
                                         Height="16"
                                         Source="{StaticResource ExcelIcon}" />
                                 </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem
+                              Command="local:Command.ExportFunctionList"
+                              CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                              CommandTarget="{Binding ElementName=FunctionList}"
+                              Header="Export Function List as HTML File"
+                              ToolTip="Save the list of functions and associated column data as an Excel worksheet">
+                              <MenuItem.Icon>
+                                <Image
+                                  Width="16"
+                                  Height="16"
+                                  Source="{StaticResource DocumentIcon}" />
+                              </MenuItem.Icon>
                             </MenuItem>
                             <Separator />
 

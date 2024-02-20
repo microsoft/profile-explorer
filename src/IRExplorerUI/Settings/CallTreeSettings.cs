@@ -59,4 +59,15 @@ public class CallTreeSettings : SettingsBase {
            ShowNodePopup == settings.ShowNodePopup &&
            NodePopupDuration == settings.NodePopupDuration;
   }
+
+  public override string ToString() {
+    return $"CombineInstances: {CombineInstances}\n" +
+           $"PrependModuleToFunction: {PrependModuleToFunction}\n" +
+           $"ShowTimeAfterPercentage: {ShowTimeAfterPercentage}\n" +
+           $"ShowDetailsPanel: {ShowDetailsPanel}\n" +
+           $"SyncSourceFile: {SyncSourceFile}\n" +
+           $"SyncSelection: {SyncSelection}\n" +
+           $"ShowNodePopup: {ShowNodePopup}\n" +
+           $"NodePopupDuration: {NodePopupDuration}";
+  }
 }

@@ -70,7 +70,7 @@ public class ProcessSummary {
   public TimeSpan Duration { get; set; }
 
   public override string ToString() {
-    return Process.ToString();
+    return $"{Process.Name} ({Weight})";
   }
 }
 
@@ -83,10 +83,18 @@ public class ProfileLoadProgress {
   public int Total { get; set; }
   public int Current { get; set; }
   public string Optional { get; set; }
+
+  public override string ToString() {
+    return $"{Stage}: {Current}/{Total} {Optional}";
+  }
 }
 
 public class ProcessListProgress {
   public int Total { get; set; }
   public int Current { get; set; }
   public List<ProcessSummary> Processes { get; set; }
+
+  public override string ToString() {
+    return $"{Current}/{Total}";
+  }
 }

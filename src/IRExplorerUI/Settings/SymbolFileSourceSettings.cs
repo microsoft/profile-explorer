@@ -8,31 +8,6 @@ namespace IRExplorerUI.Compilers;
 
 [ProtoContract(SkipConstructor = true)]
 public class SymbolFileSourceSettings : SettingsBase {
-  protected bool Equals(SymbolFileSourceSettings other) {
-    return Equals(SymbolPaths, other.SymbolPaths) && SourceServerEnabled == other.SourceServerEnabled && AuthorizationTokenEnabled == other.AuthorizationTokenEnabled && AuthorizationToken == other.AuthorizationToken && UseEnvironmentVarSymbolPaths == other.UseEnvironmentVarSymbolPaths;
-  }
-
-  public override bool Equals(object obj) {
-    if (ReferenceEquals(null, obj))
-      return false;
-    if (ReferenceEquals(this, obj))
-      return true;
-    if (obj.GetType() != this.GetType())
-      return false;
-    return Equals((SymbolFileSourceSettings)obj);
-  }
-
-  public override int GetHashCode() {
-    unchecked {
-      int hashCode = (SymbolPaths != null ? SymbolPaths.GetHashCode() : 0);
-      hashCode = (hashCode * 397) ^ SourceServerEnabled.GetHashCode();
-      hashCode = (hashCode * 397) ^ AuthorizationTokenEnabled.GetHashCode();
-      hashCode = (hashCode * 397) ^ (AuthorizationToken != null ? AuthorizationToken.GetHashCode() : 0);
-      hashCode = (hashCode * 397) ^ UseEnvironmentVarSymbolPaths.GetHashCode();
-      return hashCode;
-    }
-  }
-
   private const string DefaultPrivateSymbolServer = @"https://symweb";
   private const string DefaultPublicSymbolServer = @"https://msdl.microsoft.com/download/symbols";
   private const string DefaultSymbolCachePath = @"C:\Symbols";
@@ -179,7 +154,27 @@ public class SymbolFileSourceSettings : SettingsBase {
   private void InitializeReferenceMembers() {
     SymbolPaths ??= new List<string>();
   }
+  protected bool Equals(SymbolFileSourceSettings other) {
+    return Equals(SymbolPaths, other.SymbolPaths) && SourceServerEnabled == other.SourceServerEnabled && AuthorizationTokenEnabled == other.AuthorizationTokenEnabled && AuthorizationToken == other.AuthorizationToken && UseEnvironmentVarSymbolPaths == other.UseEnvironmentVarSymbolPaths;
+  }
 
+  public override bool Equals(object obj) {
+    if (ReferenceEquals(null, obj))
+      return false;
+    if (ReferenceEquals(this, obj))
+      return true;
+    if (obj.GetType() != this.GetType())
+      return false;
+    return Equals((SymbolFileSourceSettings)obj);
+  }
+
+  public override string ToString() {
+    return $"SymbolPaths: {SymbolPaths}\n" +
+           $"SourceServerEnabled: {SourceServerEnabled}\n" +
+           $"AuthorizationTokenEnabled: {AuthorizationTokenEnabled}\n" +
+           $"AuthorizationToken: {AuthorizationToken}\n" +
+           $"UseEnvironmentVarSymbolPaths: {UseEnvironmentVarSymbolPaths}";
+  }
 
   class NetAPI32 {
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

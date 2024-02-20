@@ -69,4 +69,18 @@ public class TextViewSettingsBase : SettingsBase {
            ProfileMarkerSettings.Equals(settings.ProfileMarkerSettings) &&
            ColumnSettings.Equals(settings.ColumnSettings);
   }
+
+  public override string ToString() {
+      return $"FontName:{FontName}\n" +
+              $"FontSize:{FontSize}\n" +
+              $"BackgroundColor:{BackgroundColor}\n" +
+              $"AlternateBackgroundColor:{AlternateBackgroundColor}\n" +
+              $"MarginBackgroundColor:{MarginBackgroundColor}\n" +
+              $"TextColor:{TextColor}\n" +
+              $"SelectedValueColor:{SelectedValueColor}\n" +
+              $"ShowBlockSeparatorLine:{ShowBlockSeparatorLine}\n" +
+              $"BlockSeparatorColor:{BlockSeparatorColor}\n" +
+              $"ProfileMarkerSettings:{ProfileMarkerSettings}\n" +
+              $"ColumnSettings:{ColumnSettings}";
+  }
 }
