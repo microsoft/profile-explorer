@@ -325,6 +325,7 @@
         <ContextMenu>
           <MenuItem
             Command="{Binding PreviewFunctionCommand}"
+            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Preview Function"
             ToolTip="Show a preview popup of the function ASM or source code">

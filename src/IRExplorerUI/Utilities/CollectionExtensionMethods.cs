@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Data;
 using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore.IR;
 
@@ -85,6 +86,16 @@ public static class CollectionExtensionMethods {
 
     foreach (var item in dict) {
       list.Add((item.Key, item.Value));
+    }
+
+    return list;
+  }
+
+  public static List<T> ToList<T>(this ListCollectionView view) where T:class {
+    var list = new List<T>(view.Count);
+
+    foreach (T item in view) {
+      list.Add(item);
     }
 
     return list;

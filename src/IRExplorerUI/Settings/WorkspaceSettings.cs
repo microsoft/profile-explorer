@@ -62,7 +62,7 @@ public class Workspace : IEquatable<Workspace> {
   }
 
   public override string ToString() {
-    return $"Name: {Name}, FilePath: {FilePath}";
+    return Name;
   }
 }
 
