@@ -94,19 +94,6 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
     return Equals((ProfileRecordingSessionOptions)obj);
   }
 
-  public override int GetHashCode() {
-    var hashCode = new HashCode();
-    hashCode.Add((int)SessionKind);
-    hashCode.Add(Title);
-    hashCode.Add(ApplicationPath);
-    hashCode.Add(ApplicationArguments);
-    hashCode.Add(WorkingDirectory);
-    hashCode.Add(ProfileChildProcesses);
-    hashCode.Add(RecordPerformanceCounters);
-    hashCode.Add(EnableEnvironmentVars);
-    return hashCode.ToHashCode();
-  }
-
   public bool Equals(ProfileRecordingSessionOptions other) {
     if (ReferenceEquals(null, other)) {
       return false;
@@ -135,6 +122,23 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
   private void ResetAndInitializeReferenceMembers() {
     EnvironmentVariables?.Clear();
     InitializeReferenceMembers();
+  }
+
+  public override string ToString() {
+    return $"SessionKind: {SessionKind}, " +
+           $"ApplicationPath: {ApplicationPath}, " +
+           $"ApplicationArguments: {ApplicationArguments}, " +
+           $"WorkingDirectory: {WorkingDirectory}, " +
+           $"SamplingFrequency: {SamplingFrequency}, " +
+           $"ProfileDotNet: {ProfileDotNet}, " +
+           $"ProfileChildProcesses: {ProfileChildProcesses}, " +
+           $"RecordPerformanceCounters: {RecordPerformanceCounters}, " +
+           $"EnableEnvironmentVars: {EnableEnvironmentVars}, " +
+           $"EnvironmentVariables: {EnvironmentVariables.Count}, " +
+           $"PerformanceCounters: {PerformanceCounters.Count}, " +
+           $"Title: {Title}, " +
+           $"TargetProcessId: {TargetProcessId}, " +
+           $"RecordDotNetAssembly: {RecordDotNetAssembly}";
   }
 }
 
@@ -225,5 +229,18 @@ public class ProfileDataProviderOptions : SettingsBase {
     BinaryNameWhitelist?.Clear();
     RecordingSessionOptions?.Reset();
     InitializeReferenceMembers();
+  }
+
+  public override string ToString() {
+    return $"BinarySearchPathsEnabled: {BinarySearchPathsEnabled}, " +
+           $"BinaryNameWhitelistEnabled: {BinaryNameWhitelistEnabled}, " +
+           $"DownloadBinaryFiles: {DownloadBinaryFiles}, " +
+           $"MarkInlinedFunctions: {MarkInlinedFunctions}, " +
+           $"IncludeKernelEvents: {IncludeKernelEvents}, " +
+           $"IncludePerformanceCounters: {IncludePerformanceCounters}, " +
+           $"RecordingSessionOptions: {RecordingSessionOptions}, " +
+           $"PerformanceMetrics: {PerformanceMetrics.Count}, " +
+           $"PreviousRecordingSessions: {PreviousRecordingSessions.Count}, " +
+           $"PreviousLoadedSessions: {PreviousLoadedSessions.Count}";
   }
 }

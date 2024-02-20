@@ -172,4 +172,8 @@ public class RecordingSession : BindableObject {
     x = new TimeSpan(Math.Abs(x.Ticks));
     return offsets.First(n => x.TotalMinutes < n.Key).Value(x) + " ago";
   }
+
+  public override string ToString() {
+    return Title;
+  }
 }

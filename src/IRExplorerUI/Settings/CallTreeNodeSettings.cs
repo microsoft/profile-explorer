@@ -98,4 +98,12 @@ public class ProfileListViewFilter : SettingsBase {
            MinItems == other.MinItems &&
            Math.Abs(MinWeight - other.MinWeight) < double.Epsilon;
   }
+
+  public override string ToString() {
+    return $"IsEnabled: {IsEnabled}\n" +
+           $"FilterByWeight: {FilterByWeight}\n" +
+           $"SortByExclusiveTime: {SortByExclusiveTime}\n" +
+           $"MinItems: {MinItems}\n" +
+           $"MinWeight: {MinWeight}";
+  }
 }

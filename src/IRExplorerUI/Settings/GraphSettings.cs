@@ -71,4 +71,21 @@ public class GraphSettings : SettingsBase {
   protected virtual GraphSettings MakeClone() {
     throw new NotImplementedException();
   }
+
+  public override string ToString() {
+    return $"SyncSelectedNodes: {SyncSelectedNodes}\n" +
+           $"SyncMarkedNodes: {SyncMarkedNodes}\n" +
+           $"BringNodesIntoView: {BringNodesIntoView}\n" +
+           $"ShowPreviewPopup: {ShowPreviewPopup}\n" +
+           $"ShowPreviewPopupWithModifier: {ShowPreviewPopupWithModifier}\n" +
+           $"ColorizeNodes: {ColorizeNodes}\n" +
+           $"ColorizeEdges: {ColorizeEdges}\n" +
+           $"HighlightConnectedNodesOnHover: {HighlightConnectedNodesOnHover}\n" +
+           $"HighlightConnectedNodesOnSelection: {HighlightConnectedNodesOnSelection}\n" +
+           $"BackgroundColor: {BackgroundColor}\n" +
+           $"TextColor: {TextColor}\n" +
+           $"NodeColor: {NodeColor}\n" +
+           $"NodeBorderColor: {NodeBorderColor}\n" +
+           $"EdgeColor: {EdgeColor}";
+  }
 }

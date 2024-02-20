@@ -61,4 +61,15 @@ public class PreviewPopupSettings : SettingsBase {
            Math.Abs(PopupWidth - settings.PopupWidth) < Double.Epsilon &&
            Math.Abs(PopupHeight - settings.PopupHeight) < Double.Epsilon;
   }
+
+  public override string ToString() {
+    return $"JumpToHottestElement: {JumpToHottestElement}\n" +
+           $"UseCompactProfilingColumns: {UseCompactProfilingColumns}\n" +
+           $"ShowPerformanceCounterColumns: {ShowPerformanceCounterColumns}\n" +
+           $"ShowPerformanceMetricColumns: {ShowPerformanceMetricColumns}\n" +
+           $"UseSmallerFontSize: {UseSmallerFontSize}\n" +
+           $"ShowSourcePreviewPopup: {ShowSourcePreviewPopup}\n" +
+           $"PopupWidth: {PopupWidth}\n" +
+           $"PopupHeight: {PopupHeight}";
+  }
 }

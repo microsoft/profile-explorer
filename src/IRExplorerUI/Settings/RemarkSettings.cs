@@ -104,4 +104,27 @@ public class RemarkSettings : SettingsBase {
            HasCategoryFilters == state.HasCategoryFilters &&
            CategoryFilter.AreEqual(state.CategoryFilter);
   }
+
+  public override string ToString() {
+    return $"ShowRemarks: {ShowRemarks}\n" +
+           $"ShowPreviousSections: {ShowPreviousSections}\n" +
+           $"StopAtSectionBoundaries: {StopAtSectionBoundaries}\n" +
+           $"SectionHistoryDepth: {SectionHistoryDepth}\n" +
+           $"ShowPreviousOptimizationRemarks: {ShowPreviousOptimizationRemarks}\n" +
+           $"ShowPreviousAnalysisRemarks: {ShowPreviousAnalysisRemarks}\n" +
+           $"ShowActionButtonOnHover: {ShowActionButtonOnHover}\n" +
+           $"ShowActionButtonWithModifier: {ShowActionButtonWithModifier}\n" +
+           $"ShowMarginRemarks: {ShowMarginRemarks}\n" +
+           $"ShowDocumentRemarks: {ShowDocumentRemarks}\n" +
+           $"UseRemarkBackground: {UseRemarkBackground}\n" +
+           $"UseTransparentRemarkBackground: {UseTransparentRemarkBackground}\n" +
+           $"RemarkBackgroundOpacity: {RemarkBackgroundOpacity}\n" +
+           $"Default: {Default}\n" +
+           $"Verbose: {Verbose}\n" +
+           $"Trace: {Trace}\n" +
+           $"Analysis: {Analysis}\n" +
+           $"Optimization: {Optimization}\n" +
+           $"CategoryFilter: {CategoryFilter}\n" +
+           $"ShowPreviousAnalysisRemarks: {ShowPreviousAnalysisRemarks}";
+  }
 }

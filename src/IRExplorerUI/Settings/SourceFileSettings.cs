@@ -79,4 +79,9 @@ public class SourceFileFinderSettings : SettingsBase {
       return false;
     return Equals((SourceFileFinderSettings)obj);
   }
+
+  public override string ToString() {
+    return $"SourceMappings: {SourceMappings.Count}\n" +
+           $"DisabledSourceMappings: {DisabledSourceMappings.Count}";
+  }
 }

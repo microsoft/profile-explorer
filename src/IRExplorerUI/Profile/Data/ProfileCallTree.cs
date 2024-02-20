@@ -476,6 +476,10 @@ public sealed class ProfileCallTree {
     return builder.ToString();
   }
 
+  public override string ToString() {
+    return $"Root nodes: {rootNodes_.Count}, Weight: {TotalRootNodesWeight}";
+  }
+
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     rootNodes_ ??= new ConcurrentDictionary<IRTextFunction, ProfileCallTreeNode>();
@@ -744,8 +748,12 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   }
 
   public override string ToString() {
-    return
-      $"{FunctionName}, weight: {Weight}, exc weight {ExclusiveWeight}, children: {(HasCallers ? Children.Count : 0)}";
+    return $"Name: {FunctionDebugInfo?.Name}\n" +
+           $"RVA {FunctionDebugInfo.RVA}, Id {Id}\n" +
+           $"Weight: {Weight}\n" +
+           $"ExclusiveWeight: {ExclusiveWeight}\n" +
+           $"Children: {Children?.Count ?? 0}\n" +
+           $"CallSites: {CallSites?.Count ?? 0}";
   }
 
   public ProfileCallTreeNode Clone() {
@@ -787,6 +795,10 @@ public sealed class ProfileCallTreeGroupNode : ProfileCallTreeNode {
   public List<ProfileCallTreeNode> Nodes => nodes_;
   public override List<ProfileCallTreeNode> Callers => callers_;
   public override bool HasCallers => callers_ != null && callers_.Count > 0;
+
+  public override string ToString() {
+    return $"{FunctionDebugInfo.Name}, RVA {FunctionDebugInfo.RVA}, Id {Id}, Nodes: {nodes_.Count}";
+  }
 }
 
 [ProtoContract(SkipConstructor = true)]
@@ -878,6 +890,10 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     Targets ??= new List<(ProfileCallTreeNode NodeId, TimeSpan Weight)>();
+  }
+
+  public override string ToString() {
+    return $"RVA: {RVA}, Weight: {Weight.TotalMilliseconds}, Targets: {Targets.Count}";
   }
 }
 

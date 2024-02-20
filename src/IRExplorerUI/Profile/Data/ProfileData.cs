@@ -455,6 +455,11 @@ public partial class ProfileData {
     public Dictionary<int, TimeSpan> ModuleWeights { get; set; }
     public TimeSpan ProfileWeight { get; set; }
     public TimeSpan TotalWeight { get; set; }
+
+    public override string ToString() {
+      return $"ProfileWeight: {ProfileWeight}, TotalWeight: {TotalWeight}, " +
+             $"FunctionProfiles: {FunctionProfiles.Count}, CallTree: {CallTree}";
+    }
   }
 
   [ProtoContract(SkipConstructor = true)]

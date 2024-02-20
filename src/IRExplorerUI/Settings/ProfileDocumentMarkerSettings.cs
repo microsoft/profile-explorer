@@ -337,4 +337,29 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
            PerformanceMetricBackColor == other.PerformanceMetricBackColor &&
            PerformanceCounterBackColor == other.PerformanceCounterBackColor;
   }
+
+  public override string ToString() {
+    return $"MarkElements: {MarkElements}\n" +
+           $"MarkBlocks: {MarkBlocks}\n" +
+           $"MarkBlocksInFlowGraph: {MarkBlocksInFlowGraph}\n" +
+           $"MarkCallTargets: {MarkCallTargets}\n" +
+           $"JumpToHottestElement: {JumpToHottestElement}\n" +
+           $"ElementWeightCutoff: {ElementWeightCutoff}\n" +
+           $"TopOrderCutoff: {TopOrderCutoff}\n" +
+           $"IconBarWeightCutoff: {IconBarWeightCutoff}\n" +
+           $"ColumnTextColor: {ColumnTextColor}\n" +
+           $"BlockOverlayTextColor: {BlockOverlayTextColor}\n" +
+           $"HotBlockOverlayTextColor: {HotBlockOverlayTextColor}\n" +
+           $"BlockOverlayBorderColor: {BlockOverlayBorderColor}\n" +
+           $"BlockOverlayBorderThickness: {BlockOverlayBorderThickness}\n" +
+           $"PercentageBarBackColor: {PercentageBarBackColor}\n" +
+           $"MaxPercentageBarWidth: {MaxPercentageBarWidth}\n" +
+           $"DisplayPercentageBar: {DisplayPercentageBar}\n" +
+           $"DisplayIcons: {DisplayIcons}\n" +
+           $"ValueUnit: {ValueUnit}\n" +
+           $"AppendValueUnitSuffix: {AppendValueUnitSuffix}\n" +
+           $"ValueUnitDecimals: {ValueUnitDecimals}\n" +
+           $"PerformanceMetricBackColor: {PerformanceMetricBackColor}\n" +
+           $"PerformanceCounterBackColor: {PerformanceCounterBackColor}";
+  }
 }

@@ -83,4 +83,25 @@ public class DocumentSettings : TextViewSettingsBase {
            MarkMultipleDefinitionExpressions == settings.MarkMultipleDefinitionExpressions &&
            SourceMarkerSettings.Equals(settings.SourceMarkerSettings);
   }
+
+  public override string ToString() {
+    return base.ToString() +
+           $"HighlightCurrentLine: {HighlightCurrentLine}\n" +
+           $"ShowBlockFolding: {ShowBlockFolding}\n" +
+           $"HighlightSourceDefinition: {HighlightSourceDefinition}\n" +
+           $"HighlightDestinationUses: {HighlightDestinationUses}\n" +
+           $"HighlightInstructionOperands: {HighlightInstructionOperands}\n" +
+           $"ShowInfoOnHover: {ShowInfoOnHover}\n" +
+           $"ShowInfoOnHoverWithModifier: {ShowInfoOnHoverWithModifier}\n" +
+           $"ShowPreviewPopup: {ShowPreviewPopup}\n" +
+           $"FilterSourceDefinitions: {FilterSourceDefinitions}\n" +
+           $"FilterDestinationUses: {FilterDestinationUses}\n" +
+           $"DefinitionValueColor: {DefinitionValueColor}\n" +
+           $"UseValueColor: {UseValueColor}\n" +
+           $"BorderColor: {BorderColor}\n" +
+           $"SyntaxHighlightingName: {SyntaxHighlightingName}\n" +
+           $"DefaultExpressionsLevel: {DefaultExpressionsLevel}\n" +
+           $"MarkMultipleDefinitionExpressions: {MarkMultipleDefinitionExpressions}\n" +
+           $"SourceMarkerSettings: {SourceMarkerSettings}";
+  }
 }

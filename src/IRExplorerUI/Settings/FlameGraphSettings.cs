@@ -187,4 +187,34 @@ public class FlameGraphSettings : SettingsBase {
            UseModuleColors == settings.UseModuleColors &&
            ModuleColors.AreEqual(settings.ModuleColors);
   }
+
+  public override string ToString() {
+    return $"PrependModuleToFunction: {PrependModuleToFunction}\n" +
+           $"ShowDetailsPanel: {ShowDetailsPanel}\n" +
+           $"SyncSelection: {SyncSelection}\n" +
+           $"SyncSourceFile: {SyncSourceFile}\n" +
+           $"UseCompactMode: {UseCompactMode}\n" +
+           $"ShowNodePopup: {ShowNodePopup}\n" +
+           $"AppendPercentageToFunction: {AppendPercentageToFunction}\n" +
+           $"AppendDurationToFunction: {AppendDurationToFunction}\n" +
+           $"NodePopupDuration: {NodePopupDuration}\n" +
+           $"DefaultColorPalette: {DefaultColorPalette}\n" +
+           $"KernelColorPalette: {KernelColorPalette}\n" +
+           $"ManagedColorPalette: {ManagedColorPalette}\n" +
+           $"UseKernelColorPalette: {UseKernelColorPalette}\n" +
+           $"UseManagedColorPalette: {UseManagedColorPalette}\n" +
+           $"SelectedNodeColor: {SelectedNodeColor}\n" +
+           $"SearchResultMarkingColor: {SearchResultMarkingColor}\n" +
+           $"SelectedNodeBorderColor: {SelectedNodeBorderColor}\n" +
+           $"SearchedNodeBorderColor: {SearchedNodeBorderColor}\n" +
+           $"NodeBorderColor: {NodeBorderColor}\n" +
+           $"NodeTextColor: {NodeTextColor}\n" +
+           $"NodeModuleColor: {NodeModuleColor}\n" +
+           $"NodeWeightColor: {NodeWeightColor}\n" +
+           $"NodePercentageColor: {NodePercentageColor}\n" +
+           $"SearchedNodeColor: {SearchedNodeColor}\n" +
+           $"UseAutoModuleColors: {UseAutoModuleColors}\n" +
+           $"UseModuleColors: {UseModuleColors}\n" +
+           $"ModuleColors: {ModuleColors}";
+  }
 }

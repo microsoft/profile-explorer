@@ -93,4 +93,25 @@ public class ExpressionGraphSettings : GraphSettings {
   protected override GraphSettings MakeClone() {
     return Clone();
   }
+
+  public override string ToString() {
+    return base.ToString() +
+           $"UnaryInstructionNodeColor: {UnaryInstructionNodeColor}\n" +
+           $"BinaryInstructionNodeColor: {BinaryInstructionNodeColor}\n" +
+           $"CopyInstructionNodeColor: {CopyInstructionNodeColor}\n" +
+           $"PhiInstructionNodeColor: {PhiInstructionNodeColor}\n" +
+           $"OperandNodeColor: {OperandNodeColor}\n" +
+           $"NumberOperandNodeColor: {NumberOperandNodeColor}\n" +
+           $"IndirectionOperandNodeColor: {IndirectionOperandNodeColor}\n" +
+           $"AddressOperandNodeColor: {AddressOperandNodeColor}\n" +
+           $"LoopPhiBackedgeColor: {LoopPhiBackedgeColor}\n" +
+           $"LoadStoreInstructionNodeColor: {LoadStoreInstructionNodeColor}\n" +
+           $"CallInstructionNodeColor: {CallInstructionNodeColor}\n" +
+           $"PrintVariableNames: {PrintVariableNames}\n" +
+           $"PrintSSANumbers: {PrintSSANumbers}\n" +
+           $"GroupInstructions: {GroupInstructions}\n" +
+           $"PrintBottomUp: {PrintBottomUp}\n" +
+           $"SkipCopyInstructions: {SkipCopyInstructions}\n" +
+           $"MaxExpressionDepth: {MaxExpressionDepth}";
+  }
 }

@@ -44,4 +44,11 @@ public class TimelineSettings : SettingsBase {
            CallStackPopupDuration == settings.CallStackPopupDuration &&
            GroupThreads == settings.GroupThreads;
   }
+
+  public override string ToString() {
+      return $"SyncSelection: {SyncSelection}\n" +
+              $"ShowCallStackPopup: {ShowCallStackPopup}\n" +
+              $"CallStackPopupDuration: {CallStackPopupDuration}\n" +
+              $"GroupThreads: {GroupThreads}";
+  }
 }

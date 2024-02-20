@@ -118,4 +118,29 @@ public class DiffSettings : SettingsBase {
       ShowMinorModifications = true;
     }
   }
+
+  public override string ToString() {
+    return $"IdentifyMinorDiffs: {IdentifyMinorDiffs}\n" +
+           $"FilterInsignificantDiffs: {FilterInsignificantDiffs}\n" +
+           $"FilterTempVariableNames: {FilterTempVariableNames}\n" +
+           $"FilterSSADefNumbers: {FilterSSADefNumbers}\n" +
+           $"ManyDiffsMarkWholeLine: {ManyDiffsMarkWholeLine}\n" +
+           $"ManyDiffsModificationPercentage: {ManyDiffsModificationPercentage}\n" +
+           $"ManyDiffsInsertionPercentage: {ManyDiffsInsertionPercentage}\n" +
+           $"ModificationColor: {ModificationColor}\n" +
+           $"ModificationBorderColor: {ModificationBorderColor}\n" +
+           $"InsertionColor: {InsertionColor}\n" +
+           $"InsertionBorderColor: {InsertionBorderColor}\n" +
+           $"DeletionColor: {DeletionColor}\n" +
+           $"DeletionBorderColor: {DeletionBorderColor}\n" +
+           $"MinorModificationColor: {MinorModificationColor}\n" +
+           $"MinorModificationBorderColor: {MinorModificationBorderColor}\n" +
+           $"PlaceholderBorderColor: {PlaceholderBorderColor}\n" +
+           $"ExternalDiffAppPath: {ExternalDiffAppPath}\n" +
+           $"DiffImplementation: {DiffImplementation}\n" +
+           $"ShowInsertions: {ShowInsertions}\n" +
+           $"ShowDeletions: {ShowDeletions}\n" +
+           $"ShowModifications: {ShowModifications}\n" +
+           $"ShowMinorModifications: {ShowMinorModifications}";
+  }
 }
