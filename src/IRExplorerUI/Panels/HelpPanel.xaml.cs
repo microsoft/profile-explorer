@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -59,19 +60,26 @@ public class HelpIndex {
 public partial class HelpPanel : ToolPanelControl {
   private HelpIndex helpIndex_;
   private HelpTopic currentTopic_;
+  private SemaphoreSlim loadingTopic_;
   private bool browserInitialized_;
   private Window videoWindow_;
 
   public HelpPanel() {
+    loadingTopic_ = new SemaphoreSlim(1);
+
     InitializeComponent();
   }
 
   public override async void OnActivatePanel() {
     base.OnActivatePanel();
 
+    await loadingTopic_.WaitAsync();
+
     if (currentTopic_ == null) {
       await LoadHomeTopic();
     }
+
+    loadingTopic_.Release();
   }
 
   private async Task<bool> DownloadHelpIndex() {
