@@ -319,12 +319,13 @@ public class RawProfileData : IDisposable {
     return samples_.Count;
   }
 
-  public bool TrySetSampleStack(int sampleId, int stackId, int contextId) {
+  public bool TrySetSampleStack(int sampleId, int stackId, long frameIp, int contextId) {
     if (sampleId == 0) {
       return false;
     }
 
-    if (samples_[sampleId - 1].ContextId == contextId) {
+    if (samples_[sampleId - 1].ContextId == contextId &&
+        samples_[sampleId - 1].IP == frameIp) {
       SetSampleStack(sampleId, stackId, contextId);
       return true;
     }
