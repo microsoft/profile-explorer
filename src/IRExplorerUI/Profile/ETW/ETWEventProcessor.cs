@@ -335,6 +335,8 @@ public sealed partial class ETWEventProcessor : IDisposable {
       bool isKernelStackStart = data.FrameCount > 0 &&
                                 IsKernelAddress(data.InstructionPointer(0), data.PointerSize);
 
+      //? TODO: Also fix StackWalkStackKeyKernel
+
       //Trace.WriteLine($"User stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
       var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
       int contextId = profile.AddContext(context);
@@ -390,15 +392,11 @@ public sealed partial class ETWEventProcessor : IDisposable {
         int sampleId = perCoreLastSample[data.ProcessorNumber];
         long frameIp = (long)data.InstructionPointer(0);
 
-        if (!profile.TrySetSampleStack(sampleId, stackId, contextId)) {
-          if (perContextLastSample.TryGetValue(contextId, out sampleId)) {
-            profile.SetSampleStack(sampleId, stackId, contextId);
-          }
+        //? TODO: Check fmore than the last sample?
         if (!profile.TrySetSampleStack(sampleId, stackId, frameIp, contextId)) {
-          // if (perContextLastSample.TryGetValue(contextId, out sampleId)) {
-          //   profile.SetSampleStack(sampleId, stackId, contextId);
-          // }
-        }
+#if DEBUG
+          Trace.WriteLine($"Couldn't set stack {stackId} for sample {sampleId}");
+#endif
         }
 
         if (isKernelStack) {
