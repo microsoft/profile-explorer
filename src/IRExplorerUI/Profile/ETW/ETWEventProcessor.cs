@@ -331,7 +331,9 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
 
       bool isKernelStack = data.FrameCount > 0 &&
-                           IsKernelAddress(data.InstructionPointer(0), data.PointerSize);
+                           IsKernelAddress(data.InstructionPointer(data.FrameCount - 1), data.PointerSize);
+      bool isKernelStackStart = data.FrameCount > 0 &&
+                                IsKernelAddress(data.InstructionPointer(0), data.PointerSize);
 
       //Trace.WriteLine($"User stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
       var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
@@ -339,7 +341,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       int frameCount = data.FrameCount;
       ProfileStack kstack = null;
 
-      if (!isKernelStack) {
+      if (!isKernelStack && !isKernelStackStart) {
         // This is a user mode stack, check if before it an associated
         // kernel mode stack was recorded - if so, merge the two stacks.
         var lastKernelStack = perCoreLastKernelStack[data.ProcessorNumber];
@@ -360,6 +362,8 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
           kstack.FramePointers = frames;
           kstack.UserModeTransitionIndex = kstackFrameCount; // Frames after index are user mode.
+          //? TODO
+          perCoreLastKernelStack[data.ProcessorNumber] = (0, 0); // Clear the last kernel stack.
         }
       }
 
@@ -384,11 +388,17 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
         // Try to associate with a previous sample from the same context.
         int sampleId = perCoreLastSample[data.ProcessorNumber];
+        long frameIp = (long)data.InstructionPointer(0);
 
         if (!profile.TrySetSampleStack(sampleId, stackId, contextId)) {
           if (perContextLastSample.TryGetValue(contextId, out sampleId)) {
             profile.SetSampleStack(sampleId, stackId, contextId);
           }
+        if (!profile.TrySetSampleStack(sampleId, stackId, frameIp, contextId)) {
+          // if (perContextLastSample.TryGetValue(contextId, out sampleId)) {
+          //   profile.SetSampleStack(sampleId, stackId, contextId);
+          // }
+        }
         }
 
         if (isKernelStack) {

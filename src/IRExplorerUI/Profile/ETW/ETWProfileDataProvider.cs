@@ -223,8 +223,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         // Process the raw samples and stacks by resolving stack frame symbols
         // and creating the function profiles.
-        var callTree = new ProfileCallTree();
-
         for (int k = 0; k < chunks; k++) {
           int start = Math.Min(k * chunkSize, rawProfile.Samples.Count);
           int end = Math.Min((k + 1) * chunkSize, rawProfile.Samples.Count);
@@ -235,7 +233,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
           tasks.Add(taskFactory.StartNew(() => {
             var chunkSamples = ProcessSamplesChunk(rawProfile, start, end,
-                                                   processIds, options.IncludeKernelEvents, callTree,
+                                                   processIds, options.IncludeKernelEvents,
                                                    symbolSettings, progressCallback, cancelableTask, chunks);
             return chunkSamples;
           }));
@@ -328,21 +326,19 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
   private List<(ProfileSample Sample, ResolvedProfileStack Stack)>
     ProcessSamplesChunk(RawProfileData rawProfile, int start, int end, List<int> processIds,
-                        bool includeKernelEvents, ProfileCallTree callTree,
+                        bool includeKernelEvents,
                         SymbolFileSourceSettings symbolSettings,
                         ProfileLoadProgressHandler progressCallback,
                         CancelableTask cancelableTask, int chunks) {
-    int index = 0;
-    var stackFuncts = new HashSet<IRTextFunction>();
-    var stackModules = new HashSet<int>();
     var totalWeight = TimeSpan.Zero;
     var profileWeight = TimeSpan.Zero;
     var samples = new List<(ProfileSample Sample, ResolvedProfileStack Stack)>(end - start + 1);
     var sampleRefs = CollectionsMarshal.AsSpan(rawProfile.Samples).Slice(start, end - start);
+    int sampleIndex = 0;
 
     foreach (var sample in sampleRefs) {
       // Update progress every pow2 N samples.
-      if ((++index & PROGRESS_UPDATE_INTERVAL - 1) == 0) {
+      if ((++sampleIndex & PROGRESS_UPDATE_INTERVAL - 1) == 0) {
         if (cancelableTask is {IsCanceled: true}) {
           return samples;
         }
@@ -386,17 +382,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // Process each stack frame to map it to a module:function
       // using the debug info. A stack is resolved only once, future
       // occurrences use the cached version.
-      stackFuncts.Clear();
-      stackModules.Clear();
-
       resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
-      if (resolvedStack != null) {
-        //ProcessResolvedStack(resolvedStack, sampleWeight, stackModules, stackFuncts);
-      }
-      else {
-        resolvedStack = ProcessUnresolvedStack(stack, sampleWeight, context, rawProfile,
-                                               stackModules, stackFuncts, symbolSettings);
+      if (resolvedStack == null) {
+        resolvedStack = ProcessUnresolvedStack(stack, context, rawProfile, symbolSettings);
         stack.SetOptionalData(resolvedStack); // Cache resolved stack.
       }
 
@@ -411,11 +400,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     return samples;
   }
 
-  private ResolvedProfileStack ProcessUnresolvedStack(ProfileStack stack, TimeSpan sampleWeight,
+  private ResolvedProfileStack ProcessUnresolvedStack(ProfileStack stack,
                                                       ProfileContext context, RawProfileData rawProfile,
-                                                      HashSet<int> stackModules, HashSet<IRTextFunction> stackFuncts,
                                                       SymbolFileSourceSettings symbolSettings) {
-    bool isTopFrame = true;
     var resolvedStack = new ResolvedProfileStack(stack.FrameCount, context);
     long[] stackFrames = stack.FramePointers;
     bool isManagedCode = false;
@@ -428,11 +415,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       long frameIp = stackFrames[frameIndex];
       ProfileImage frameImage = null;
       isManagedCode = false;
-      bool isKernel = false;
 
       if (ETWEventProcessor.IsKernelAddress((ulong)frameIp, pointerSize)) {
         frameImage = rawProfile.FindImageForIP(frameIp, ETWEventProcessor.KernelProcessId);
-        isKernel = true;
       }
       else {
         frameImage = rawProfile.FindImageForIP(frameIp, context.ProcessId);
@@ -451,14 +436,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         if (frameImage == null) {
           resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
-          isTopFrame = false;
           continue;
         }
       }
 
       // Try to resolve the frame using the lists of processes/images and debug info.
       long frameRva = 0;
-      long funcRva = 0;
       ModuleDebugInfo moduleDebugInfo = null;
       FunctionDebugInfo funcDebugInfo = null;
       IRTextFunction textFunction = null;
@@ -467,7 +450,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       if (moduleDebugInfo == null) {
         resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
-        isTopFrame = false;
         continue;
       }
 
@@ -503,7 +485,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         if (textFunction == null) {
           resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
-          isTopFrame = false;
           continue;
         }
       }
@@ -513,7 +494,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       var resolvedFrame = new ResolvedProfileStackFrameDetails(funcDebugInfo, textFunction,
                                                                frameImage, moduleDebugInfo.IsManaged);
       resolvedStack.AddFrame(frameIp, frameRva, resolvedFrame, frameIndex, stack);
-      isTopFrame = false;
     }
 
     return resolvedStack;

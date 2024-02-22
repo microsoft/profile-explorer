@@ -1210,6 +1210,13 @@ public partial class MainWindow : Window, ISession {
   private async Task UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentHost document,
                                                 DelayedAction delayedAction = null) {
     var docHostPair = FindDocumentHostPair(document);
+
+    //? TODO: Can happen if the loading is slow (debug mode?)
+    //? and doc view is closed by user.
+    if (docHostPair == null) {
+      return;
+    }
+
     docHostPair.Host.Title = GetDocumentTitle(document, section);
     docHostPair.Host.ToolTip = GetDocumentDescription(document, section);
 
