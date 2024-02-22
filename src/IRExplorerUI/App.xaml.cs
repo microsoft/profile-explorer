@@ -51,8 +51,8 @@ public partial class App : Application {
   private const string SettingsPath = @"Microsoft\IRExplorer";
   private const string SettingsFile = "IRExplorer.settings";
 #if DEBUG
-  //private const string HelpLocation = @"help"; // Local directory.
-  private const string HelpLocation = @"D:\github\irx\resources\help";
+  private const string HelpLocation = @"help"; // Local directory.
+  //private const string HelpLocation = @"D:\github\irx\resources\help";
 #else
   private const string HelpLocation = @"https://irx.z5.web.core.windows.net/";
 #endif
