@@ -221,7 +221,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     markedNodeBackColor_ = ColorBrushes.GetBrush(settings_.SearchedNodeColor);
     markedNodeBorderColor_ = ColorPens.GetPen(settings_.NodeBorderColor, 2);
     selectedNodeBackColor_ = ColorBrushes.GetBrush(settings_.SelectedNodeColor);
-    selectedNodeBorderColor_ = ColorPens.GetPen(settings_.SelectedNodeBorderColor, 1.5);
+    selectedNodeBorderColor_ = ColorPens.GetPen(settings_.SelectedNodeBorderColor, 2);
     searchResultBorderColor_ = ColorPens.GetPen(settings_.SearchedNodeBorderColor, 2);
     SelectedNodeStyle = new HighlightingStyle(selectedNodeBackColor_, selectedNodeBorderColor_);
     MarkedNodeStyle = new HighlightingStyle(markedNodeBackColor_, markedNodeBorderColor_);
