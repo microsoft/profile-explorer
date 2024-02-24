@@ -166,7 +166,7 @@ public class RawProfileData : IDisposable {
     return data.managedMethodIdMap_.GetValueOrNull(new ManagedMethodId(id, rejitId));
   }
 
-  public IDebugInfoProvider GetDebugInfoForImage(ProfileImage image, int processId) {
+  public IDebugInfoProvider GetDebugInfoForManagedImage(ProfileImage image, int processId) {
     if (!HasManagedMethods(processId)) {
       return null;
     }

@@ -17,57 +17,89 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   private IDebugInfoProvider debugInfo_;
   private ICompilerInfoProvider compilerInfo_;
   private Dictionary<IRTextFunction, FunctionDebugInfo> funcToDebugInfoMap_;
-  private DebugFileSearchResult debugInfoFile_;
   private bool isManagedImage_;
+  private bool preloadFunctions_;
 
   public DisassemblerSectionLoader(string binaryFilePath, ICompilerInfoProvider compilerInfo,
-                                   IDebugInfoProvider debugInfo) {
+                                   IDebugInfoProvider debugInfo, bool preloadFunctions = true) {
     Initialize(compilerInfo.IR, false);
     binaryFilePath_ = binaryFilePath;
     compilerInfo_ = compilerInfo;
     debugInfo_ = debugInfo;
+    preloadFunctions_ = preloadFunctions;
     isManagedImage_ = debugInfo != null;
     summary_ = new IRTextSummary();
     funcToDebugInfoMap_ = new Dictionary<IRTextFunction, FunctionDebugInfo>();
   }
 
-  public DebugFileSearchResult DebugInfoFile => debugInfoFile_;
+  public void RegisterFunction(IRTextFunction function, FunctionDebugInfo debugInfo) {
+    funcToDebugInfoMap_[function] = debugInfo;
+  }
+
+  public void Initialize(IDebugInfoProvider debugInfo) {
+    debugInfo_ = debugInfo;
+    InitializeDisassembler();
+  }
 
   public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
-    //progressHandler?.Invoke(null, new SectionReaderProgressInfo(true));
+    progressHandler?.Invoke(null, new SectionReaderProgressInfo(true));
 
-    if (!InitializeDebugInfo()) {
-      return summary_;
+    if (debugInfo_ == null) {
+      if (preloadFunctions_) {
+        // When opening in non-profiling mode, lookup the debug info now.
+        var debugInfoFile = compilerInfo_.FindDebugInfoFile(binaryFilePath_).Result;
+        debugInfo_ = compilerInfo_.CreateDebugInfoProvider(debugInfoFile);
+      }
+
+      if (debugInfo_ == null) {
+        return summary_;
+      }
     }
 
+    InitializeDisassembler();
+
+    if (preloadFunctions_) {
+      var functs = debugInfo_.GetSortedFunctions();
+
+      foreach (var funcInfo in functs) {
+        if (funcInfo.RVA == 0) {
+          continue; // Some entries don't represent real functions.
+        }
+
+        // The debug info function list can have duplicates, ignore them.
+        var func = summary_.FindFunction(funcInfo.Name);
+
+        if (func == null) {
+          func = new IRTextFunction(funcInfo.Name);
+          var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
+          func.AddSection(section);
+          summary_.AddFunction(func);
+          summary_.AddSection(section);
+          funcToDebugInfoMap_[func] = funcInfo;
+        }
+      }
+    }
+
+    progressHandler?.Invoke(null, new SectionReaderProgressInfo(false));
+    return summary_;
+  }
+
+  private bool InitializeDisassembler() {
     if (!isManagedImage_) {
       // This preloads all code sections in the binary.
       disassembler_ = Disassembler.CreateForBinary(binaryFilePath_, debugInfo_,
                                                    compilerInfo_.NameProvider.FormatFunctionName);
+      return true;
     }
 
-    var functs = debugInfo_.GetSortedFunctions();
+    // For managed code, the code data is found on each function.
 
-    foreach (var funcInfo in functs) {
-      if (funcInfo.RVA == 0) {
-        continue; // Some entries don't represent real functions.
-      }
-
-      // The debug info function list can have duplicates, ignore them.
-      var func = summary_.FindFunction(funcInfo.Name);
-
-      if (func == null) {
-        func = new IRTextFunction(funcInfo.Name);
-        var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
-        func.AddSection(section);
-        summary_.AddFunction(func);
-        summary_.AddSection(section);
-        funcToDebugInfoMap_[func] = funcInfo;
-      }
+    if (debugInfo_.LoadDebugInfo("")) {
+      disassembler_ = Disassembler.CreateForMachine(debugInfo_, compilerInfo_.NameProvider.FormatFunctionName);
+      return true;
     }
 
-    //progressHandler?.Invoke(null, new SectionReaderProgressInfo(false));
-    return summary_;
+    return false;
   }
 
   public override string GetDocumentOutputText() {
@@ -106,6 +138,10 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   }
 
   public override string GetSectionText(IRTextSection section) {
+    if (disassembler_ == null) {
+      return null; // Failed to initialize.
+    }
+
     if (!funcToDebugInfoMap_.TryGetValue(section.ParentFunction, out var funcInfo)) {
       return "";
     }
@@ -164,20 +200,5 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   protected override void Dispose(bool disposing) {
     disassembler_?.Dispose();
     debugInfo_?.Dispose();
-  }
-
-  private bool InitializeDebugInfo() {
-    if (debugInfo_ != null) {
-      if (debugInfo_.LoadDebugInfo("")) {
-        // For managed code, the code data is found on each function.
-        disassembler_ = Disassembler.CreateForMachine(debugInfo_, compilerInfo_.NameProvider.FormatFunctionName);
-      }
-
-      return true;
-    }
-
-    debugInfoFile_ = compilerInfo_.FindDebugInfoFile(binaryFilePath_).Result;
-    debugInfo_ = compilerInfo_.CreateDebugInfoProvider(debugInfoFile_);
-    return debugInfo_ != null;
   }
 }

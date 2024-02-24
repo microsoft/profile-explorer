@@ -100,6 +100,8 @@ public class LoadedDocument : IDisposable {
 
   public IRTextFunction AddDummyFunction(string name) {
     var func = new IRTextFunction(name);
+    func.ParentSummary = summary_;
+
     var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
     func.AddSection(section);
     summary_.AddFunction(func);

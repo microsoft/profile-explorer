@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using IRExplorerCore;
@@ -91,17 +92,18 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
       }
     }
 
-    if (loadedDoc.HasSymbolFileInfo) {
-      var debugFile = await FindDebugInfoFile(loadedDoc.SymbolFileInfo);
+    if (loadedDoc.DebugInfoFileExists) {
+      if (loadedDoc.SymbolFileInfo.FileName.Contains("Windows.FileExplorer.Common")) {
+        Utils.WaitForDebugger();
+        Trace.WriteLine("Here");
+      }
 
-      if (debugFile != null && debugFile.Found) {
-        var debugInfo = CreateDebugInfoProvider(debugFile);
+      var debugInfo = CreateDebugInfoProvider(loadedDoc.DebugInfoFile);
 
-        if (debugInfo != null) {
-          lock (loadedDoc) {
-            loadedDoc.DebugInfo = debugInfo;
-            return debugInfo;
-          }
+      if (debugInfo != null) {
+        lock (loadedDoc) {
+          loadedDoc.DebugInfo = debugInfo;
+          return debugInfo;
         }
       }
     }
@@ -170,6 +172,11 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
     if (settings == null) {
       settings = App.Settings.SymbolSettings;
+    }
+
+    if (symbolFile.FileName.Contains("Windows.FileExplorer.Common")) {
+      Utils.WaitForDebugger();
+      Trace.WriteLine("Here");
     }
 
     return await PDBDebugInfoProvider.LocateDebugInfoFile(symbolFile, settings).ConfigureAwait(false);

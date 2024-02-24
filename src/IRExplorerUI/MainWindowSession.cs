@@ -181,8 +181,18 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<LoadedDocument>
-    LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo) {
-    return await Task.Run(() => LoadBinaryDocument(filePath, modulePath, Guid.NewGuid(), debugInfo, null)).
+    LoadProfileBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo) {
+    return await Task.Run(async () => {
+        var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo, false);
+        var result = await LoadDocument(filePath, modulePath, Guid.NewGuid(), null, loader);
+
+        if (result != null) {
+          result.BinaryFile = BinaryFileSearchResult.Success(filePath);
+          result.DebugInfo = debugInfo;
+        }
+
+        return result;
+      }).
       ConfigureAwait(false);
   }
 
@@ -881,7 +891,6 @@ public partial class MainWindow : Window, ISession {
 
     if (result != null) {
       result.BinaryFile = BinaryFileSearchResult.Success(filePath);
-      result.DebugInfoFile = loader.DebugInfoFile;
     }
 
     return result;

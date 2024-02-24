@@ -182,6 +182,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Reference Include="ChromeTracing.NET">
+		  <HintPath>C:\work\ChromeTracing.NET-master\ChromeTracing.NET\bin\Debug\ChromeTracing.NET.dll</HintPath>
+		</Reference>
 		<Reference Include="Dia2Lib">
 			<HintPath>..\external\Dia2Lib.dll</HintPath>
 		</Reference>
