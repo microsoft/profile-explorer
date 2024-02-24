@@ -1848,7 +1848,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private void SetupSectionList(IRTextFunction function, bool force = false) {
-    if (function != null && function.Equals(currentFunction_, false) && !force) {
+    if (function != null && function.Equals(currentFunction_) && !force) {
       return;
     }
 
@@ -3035,7 +3035,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   public async Task SelectFunction(IRTextFunction function, bool handleProfiling = true) {
-    if (function.Equals(currentFunction_, false)) {
+    if (function.Equals(currentFunction_)) {
       return;
     }
 
@@ -3103,7 +3103,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   //    CallGraphNode otherNode = null;
 
   //    if (otherSummary_ != null) {
-  //        var otherFunction = otherSummary_.FindFunction(function);
+  //        var otherFunction = otherSummary_.GetOrCreateFunction(function);
 
   //        if (otherFunction != null) {
   //            (_, otherNode) = await GenerateFunctionCallGraph(otherSummary_, otherFunction);
@@ -3134,7 +3134,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   //        parentNode.Children.Add(callerInfo);
 
   //        foreach (var callerNode in node.UniqueCallers) {
-  //            var callerFunc = function.ParentSummary.FindFunction(callerNode.FunctionName);
+  //            var callerFunc = function.ParentSummary.GetOrCreateFunction(callerNode.FunctionName);
   //            if (callerFunc == null)
   //                continue;
 
@@ -3144,7 +3144,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   //    }
 
   //    foreach (var calleeNode in node.UniqueCallees) {
-  //        var childFunc = function.ParentSummary.FindFunction(calleeNode.FunctionName);
+  //        var childFunc = function.ParentSummary.GetOrCreateFunction(calleeNode.FunctionName);
   //        if (childFunc == null) continue;
 
   //        // Create node and attach statistics if available.

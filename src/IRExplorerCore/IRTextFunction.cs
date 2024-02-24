@@ -53,22 +53,13 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
     return Sections.FindAll(section => section.Name.Contains(nameSubstring));
   }
 
-  public bool Equals(IRTextFunction other, bool considerUnique) {
+  public bool Equals(IRTextFunction other) {
     if (ReferenceEquals(null, other)) {
       return false;
     }
 
     if (ReferenceEquals(this, other)) {
       return true;
-    }
-
-    // Except for the case where in diff mode functions with the same name,
-    // but from diff documents, should be considered the same, each
-    // IRTextFunction is unique and if reference check fails, thee is no equality.
-    if (considerUnique) {
-      Debug.Assert(!Name.Equals(other.Name, StringComparison.Ordinal) ||
-                   !ParentSummary.Equals(other.ParentSummary));
-      return false;
     }
 
     return Name.Equals(other.Name, StringComparison.Ordinal);
@@ -102,10 +93,6 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
 
   public override string ToString() {
     return Name;
-  }
-
-  public bool Equals(IRTextFunction other) {
-    return Equals(other, true);
   }
 
   private bool HasSameModule(IRTextFunction other) {

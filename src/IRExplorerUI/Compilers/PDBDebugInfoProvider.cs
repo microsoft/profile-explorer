@@ -14,6 +14,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ChromeTracing.NET;
 using Dia2Lib;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -77,7 +78,30 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
       try {
-        result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
+        Trace.WriteLine($"Start PDB download for {symbolFile.FileName}, {symbolFile.Id}, {symbolFile.Age}");
+
+        if (symbolFile.FileName.Contains("Windows.FileExplorer.Common")) {
+          Utils.WaitForDebugger();
+          Trace.WriteLine("Here");
+        }
+
+        var sw = Stopwatch.StartNew();
+
+        using (ChromeTrace.Profile("PDB " + Utils.TryGetFileName(symbolFile.FileName))) {
+          result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
+        }
+
+        sw.Stop();
+
+        if (sw.ElapsedMilliseconds > 1000) {
+          Trace.WriteLine($"PDB download time for {symbolFile.FileName}: {sw.ElapsedMilliseconds}ms");
+          Trace.WriteLine(logWriter.ToString());
+          Trace.WriteLine("---------------------------------------");
+          Trace.Flush();
+        }
+        else {
+          Trace.WriteLine("Fast enough");
+        }
       }
       catch (Exception ex) {
         Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");

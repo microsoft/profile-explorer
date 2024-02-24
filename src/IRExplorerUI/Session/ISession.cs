@@ -88,7 +88,7 @@ public interface ISession {
   void UnregisterDetachedPanel(DraggablePopup panel);
   Task<bool> SaveSessionDocument(string filePath);
   Task<LoadedDocument> OpenSessionDocument(string filePath);
-  Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null);
+  Task<LoadedDocument> LoadProfileBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null);
   Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function);
 
   //? TODO: Extract into an IProfilingSession, connecting all profile panels

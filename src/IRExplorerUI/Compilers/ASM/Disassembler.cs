@@ -291,14 +291,19 @@ public class Disassembler : IDisposable {
   }
 
   private FunctionDebugInfo FindFunctionByRva(long rva) {
-    var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva);
-    return result;
+    if (debugInfo_ != null) {
+      return debugInfo_.FindFunctionByRVA(rva);
+    }
+
+    return null;
+    // var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva);
+    // return result;
   }
 
   private void BuildFunctionRvaCache() {
     // Cache RVA -> function mapping, much faster to query.
     if (debugInfo_ != null) {
-      sortedFuncList_ = debugInfo_.GetSortedFunctions();
+      //sortedFuncList_ = debugInfo_.GetSortedFunctions();
     }
   }
 

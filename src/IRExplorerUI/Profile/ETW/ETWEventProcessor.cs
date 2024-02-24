@@ -335,6 +335,17 @@ public sealed partial class ETWEventProcessor : IDisposable {
       bool isKernelStackStart = data.FrameCount > 0 &&
                                 IsKernelAddress(data.InstructionPointer(0), data.PointerSize);
 
+      // if (data.FrameCount > 0) {
+      //   Trace.WriteLine("-----------------------------------");
+      //   Trace.WriteLine($"Stack {data.InstructionPointer(0):X}, timestamp {data.EventTimeStampRelativeMSec}, TS {data.EventTimeStampQPC}, thread {data.ThreadID}");
+      //   Trace.WriteLine($"   kernel {isKernelStack}, kernelStart {isKernelStackStart}");
+      // }
+
+      //? TODO: Change
+      // - per thread list of unresolved kernel stacks
+      //     - search by matching timestamp
+      //     - clear list once user stack processed
+      // - assoc sample stack only on matching IP
       //? TODO: Also fix StackWalkStackKeyKernel
 
       //Trace.WriteLine($"User stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
@@ -350,7 +361,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
         if (lastKernelStack.StackId != 0 &&
             lastKernelStack.Timestamp == data.EventTimeStampQPC) {
-          //Trace.WriteLine($"Found Kstack {lastKernelStack.StackId} at {lastKernelStack.Timestamp}");
+          //Trace.WriteLine($"  Found matching KernelStack {lastKernelStack.StackId} at {lastKernelStack.Timestamp} on CPU {data.ProcessorNumber}");
 
           // Append at the end of the kernel stack, marking a user -> kernel mode transition.
           kstack = profile.FindStack(lastKernelStack.StackId);
@@ -358,12 +369,16 @@ public sealed partial class ETWEventProcessor : IDisposable {
           long[] frames = new long[kstack.FrameCount + data.FrameCount];
           kstack.FramePointers.CopyTo(frames, 0);
 
+          //Trace.WriteLine($"    kernel mode end IP: {frames[kstackFrameCount - 1]:X}");
+          //Trace.WriteLine($"    user mode start IP: {data.InstructionPointer(0):X}");
+
           for (int i = 0; i < frameCount; i++) {
             frames[kstackFrameCount + i] = (long)data.InstructionPointer(i);
           }
 
           kstack.FramePointers = frames;
           kstack.UserModeTransitionIndex = kstackFrameCount; // Frames after index are user mode.
+
           //? TODO
           perCoreLastKernelStack[data.ProcessorNumber] = (0, 0); // Clear the last kernel stack.
         }
@@ -388,6 +403,13 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
         int stackId = profile.AddStack(stack, context);
 
+        // if (isKernelStack) {
+        //   Trace.WriteLine($"  New KernelStack {stackId} at {data.EventTimeStampQPC}");
+        // }
+        // else {
+        //   Trace.WriteLine($"  New UserStack {stackId} at {data.EventTimeStampQPC}");
+        // }
+
         // Try to associate with a previous sample from the same context.
         int sampleId = perCoreLastSample[data.ProcessorNumber];
         long frameIp = (long)data.InstructionPointer(0);
@@ -400,6 +422,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
         }
 
         if (isKernelStack) {
+          //Trace.WriteLine($"    register KernelStack {stackId} on CPU {data.ProcessorNumber}");
           perCoreLastKernelStack[data.ProcessorNumber] = (stackId, data.EventTimeStampQPC);
         }
 
@@ -621,6 +644,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
                                      isKernelCode, contextId);
       int sampleId = profile.AddSample(sample);
       profile.ReturnContext(contextId);
+      // Trace.WriteLine($"Sample {sampleId}, timestamp {timestamp}, IP {data.InstructionPointer:X} kernel {isKernelCode}, CPU {cpu}, thread {data.ThreadID}");
 
       // Remember the sample, to be matched later with a call stack.
       perCoreLastSample[cpu] = sampleId;
