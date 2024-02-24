@@ -14,7 +14,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ChromeTracing.NET;
 using Dia2Lib;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -87,9 +86,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
         var sw = Stopwatch.StartNew();
 
-        using (ChromeTrace.Profile("PDB " + Utils.TryGetFileName(symbolFile.FileName))) {
           result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
-        }
 
         sw.Stop();
 

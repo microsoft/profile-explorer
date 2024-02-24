@@ -44,6 +44,17 @@
                     Text="{Binding Process.Name}" />
                 </Grid>
                 <Grid>
+                  <TextBlock VerticalAlignment="Center" Text="Process ID" />
+                  <TextBox
+                    Margin="100,0,0,1"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="DarkBlue"
+                    IsReadOnly="True"
+                    Text="{Binding Process.ProcessId}" />
+                </Grid>
+                <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Image file" />
                   <TextBox
                     Margin="100,0,0,1"

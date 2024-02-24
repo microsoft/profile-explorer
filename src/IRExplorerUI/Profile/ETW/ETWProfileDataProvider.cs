@@ -10,7 +10,6 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using ChromeTracing.NET;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
@@ -314,8 +313,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // Trace.WriteLine($"Frames: {Interlocked.Read(ref ResolvedProfileStack.frames_)}");
       // Trace.WriteLine($"Unique: {ResolvedProfileStack.uniqueFrames_.Count}");
       // Trace.Flush();
-
-      ChromeTrace.Dispose();
 
       return result ? profileData_ : null;
     }
@@ -804,7 +801,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       GetAwaiter().GetResult()) {
       // If binary couldn't be found, try to initialize using
       // the PDB signature from the trace file.
-      
+
       if (rejectedDebugModules_.Contains(image)) {
         Trace.WriteLine($"=> Skipped rejected module {image.ModuleName}");
         return imageModule;
