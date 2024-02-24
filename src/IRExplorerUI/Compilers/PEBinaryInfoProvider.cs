@@ -9,7 +9,6 @@ using System.IO;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using ChromeTracing.NET;
 using Microsoft.Diagnostics.Symbols;
 
 namespace IRExplorerUI.Compilers;
@@ -159,11 +158,10 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
         Trace.WriteLine($"Start download of {Utils.TryGetFileName(binaryFile.ImageName)}");
         var sw = Stopwatch.StartNew();
 
-        using (ChromeTrace.Profile("BIN " + binaryFile.ImageName)) {
           result = symbolReader.FindExecutableFilePath(binaryFile.ImageName,
                                                        binaryFile.TimeStamp,
                                                        (int)binaryFile.ImageSize);
-        }
+
 
         sw.Stop();
         if(sw.ElapsedMilliseconds > 1000) {

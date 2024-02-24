@@ -82,8 +82,8 @@ public class LoadedDocument : IDisposable {
 
   public IDebugInfoProvider DebugInfo { get; set; } // Used for managed binaries.
   public bool IsDummyDocument => Loader is DummySectionLoader;
-  public bool DebugInfoFileExists => DebugInfoFile != null && DebugInfoFile.Found;
-  public bool BinaryFileExists => BinaryFile != null && BinaryFile.Found;
+  public bool DebugInfoFileExists => DebugInfoFile is {Found: true};
+  public bool BinaryFileExists => BinaryFile is {Found: true};
   public bool HasSymbolFileInfo => SymbolFileInfo != null;
   public string FileName => Utils.TryGetFileName(FilePath);
 

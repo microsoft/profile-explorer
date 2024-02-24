@@ -154,15 +154,9 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
       }
 
       void SetValueBorder(ElementRowValue row) {
-        bool first = true;
-
         foreach (var value in row.Values) {
-          if (!first) {
             value.BorderBrush = blockSeparatorColor;
-            value.BorderThickness = new Thickness(1, 0, 0, 0);
-          }
-
-          first = false;
+            value.BorderThickness = new Thickness(1, 0, 1, 0);
         }
       }
 

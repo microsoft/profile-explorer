@@ -70,10 +70,15 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     var loadedDoc = Session.SessionState.FindLoadedDocument(function);
 
     lock (loadedDoc) {
-      if (loadedDoc.DebugInfo != null &&
-          loadedDoc.DebugInfo.CanUseInstance()) {
-        // Used for managed binaries, where the debug info is constructed during profiling.
-        return loadedDoc.DebugInfo;
+      if (loadedDoc.DebugInfo != null) {
+        if (loadedDoc.DebugInfo.CanUseInstance()) {
+          // Used for managed binaries, where the debug info is constructed during profiling.
+          return loadedDoc.DebugInfo;
+        }
+        else {
+          loadedDoc.DebugInfo.Dispose();
+          loadedDoc.DebugInfo = null;
+        }
       }
     }
 
@@ -93,11 +98,6 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     }
 
     if (loadedDoc.DebugInfoFileExists) {
-      if (loadedDoc.SymbolFileInfo.FileName.Contains("Windows.FileExplorer.Common")) {
-        Utils.WaitForDebugger();
-        Trace.WriteLine("Here");
-      }
-
       var debugInfo = CreateDebugInfoProvider(loadedDoc.DebugInfoFile);
 
       if (debugInfo != null) {
@@ -172,11 +172,6 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
     if (settings == null) {
       settings = App.Settings.SymbolSettings;
-    }
-
-    if (symbolFile.FileName.Contains("Windows.FileExplorer.Common")) {
-      Utils.WaitForDebugger();
-      Trace.WriteLine("Here");
     }
 
     return await PDBDebugInfoProvider.LocateDebugInfoFile(symbolFile, settings).ConfigureAwait(false);

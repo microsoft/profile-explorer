@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Shell;
 using System.Xml;
-using ChromeTracing.NET;
 using IRExplorerUI.Settings;
 
 namespace IRExplorerUI;
@@ -588,8 +587,7 @@ public partial class App : Application {
     if (!Debugger.IsAttached) {
       SetupExceptionHandling();
     }
-    
-    ChromeTrace.Init();
+
 
     FixPopupPlacement();
 
