@@ -101,6 +101,7 @@ public class FlameGraphRenderer {
   public double MaxGraphHeight => (maxNodeDepth_ + 1) * nodeHeight_;
   public Rect VisibleArea => visibleArea_;
   public Rect GraphArea => new Rect(0, 0, MaxGraphWidth, MaxGraphHeight);
+  public Dictionary<FlameGraphNode, HighlightingStyle> SelectedNodes { get; set; }
 
   public static BitmapSource BitmapSourceFromBrush(Brush drawingBrush, int size = 32, int dpi = 96) {
     // RenderTargetBitmap = builds a bitmap rendering of a visual
@@ -207,7 +208,7 @@ public class FlameGraphRenderer {
     return new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top, node.Bounds.Width * maxWidth_, node.Bounds.Height);
   }
 
-  public void DrawNode(FlameGraphNode node, DrawingContext dc, FlameGraphSettings settings) {
+  public void DrawNode(FlameGraphNode node, DrawingContext dc) {
     if (node.IsDummyNode) {
       return;
     }
@@ -287,8 +288,8 @@ public class FlameGraphRenderer {
         }
         case 2: {
           if (settings_.AppendDurationToFunction) {
-            label = settings_.AppendPercentageToFunction ? 
-              $"({node.Weight.AsMillisecondsString()})" : 
+            label = settings_.AppendPercentageToFunction ?
+              $"({node.Weight.AsMillisecondsString()})" :
               $"{node.Weight.AsMillisecondsString()}";
             margin = FlameGraphNode.DefaultMargin;
             textColor = node.WeightTextColor;
@@ -374,7 +375,7 @@ public class FlameGraphRenderer {
     int shrinkingNodes = 0;
 
     foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
-      node.Owner.DrawNode(node, graphDC, settings_);
+      DrawNode(node, graphDC);
 
       if (layoutChanged && ScaleNode(node) < minVisibleRectWidth_) {
         shrinkingNodes++;
@@ -386,6 +387,11 @@ public class FlameGraphRenderer {
       //? recompute the entire layout instead...
       //! Consider a faster implementation or other kind of spatial tree.
       return false;
+    }
+
+    // Redraw selected nodes to show on top.
+    foreach (var node in SelectedNodes.Keys) {
+      DrawNode(node, graphDC);
     }
 
     return DrawDummyNodes(graphDC, layoutChanged);
