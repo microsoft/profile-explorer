@@ -71,7 +71,7 @@ public class IRTextSection : IEquatable<IRTextSection> {
   }
 
   public override int GetHashCode() {
-    return HashCode.Combine(Id, Number, ParentFunction?.GetHashCode() ?? 0);
+    return HashCode.Combine(Number, ParentFunction?.GetHashCode() ?? 0);
   }
 
   public override string ToString() {
@@ -87,7 +87,7 @@ public class IRTextSection : IEquatable<IRTextSection> {
       return true;
     }
 
-    return Id == other.Id && Number == other.Number &&
+    return Number == other.Number &&
            Name.Equals(other.Name, StringComparison.Ordinal) &&
            (ParentFunction == null && other.ParentFunction == null ||
             ParentFunction != null && ParentFunction.Equals(other.ParentFunction));

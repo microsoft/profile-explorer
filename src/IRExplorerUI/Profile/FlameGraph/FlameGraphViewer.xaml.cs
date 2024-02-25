@@ -210,7 +210,9 @@ public partial class FlameGraphViewer : FrameworkElement {
     ReloadSettings();
 
     renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea, settings, isTimelineView_);
+    renderer_.SelectedNodes = selectedNodes_;
     graphVisual_ = renderer_.Setup();
+
     AddVisualChild(graphVisual_);
     AddLogicalChild(graphVisual_);
     UpdateMaxWidth(renderer_.MaxGraphWidth);
