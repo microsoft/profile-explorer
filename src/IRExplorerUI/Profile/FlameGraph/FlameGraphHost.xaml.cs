@@ -398,6 +398,18 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
   }
 
+  public void SelectNodes(List<ProfileCallTreeNode> nodes, bool fitSize = false, bool bringIntoView = true) {
+    if (!IsInitialized) {
+      return;
+    }
+
+    var fgNodes = GraphViewer.SelectNodes(nodes);
+    
+    if(bringIntoView && fgNodes.Count > 0) {
+      BringNodeIntoView(fgNodes[0], fitSize);
+    }
+  }
+
   public void MarkFunctions(List<ProfileCallTreeNode> nodes, HighlightingStyle style) {
     if (!IsInitialized) {
       return;
