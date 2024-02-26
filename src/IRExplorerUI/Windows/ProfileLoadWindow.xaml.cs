@@ -382,6 +382,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     IsLoadingProfile = false;
+    UpdateRejectedFiles(report);
 
     if (!success && !task.IsCanceled) {
       using var centerForm = new DialogCenteringHelper(this);
@@ -403,6 +404,26 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     return success;
+  }
+
+  private void UpdateRejectedFiles(ProfileDataReport report) {
+    symbolSettings_.RejectPreviouslyFailedFiles = true;
+
+    if (symbolSettings_.RejectPreviouslyFailedFiles) {
+      foreach (var module in report.Modules) {
+        if (!module.HasBinaryLoaded && module.BinaryFileInfo != null) {
+          symbolSettings_.RejectBinaryFile(module.BinaryFileInfo.BinaryFile);
+        }
+
+        if (!module.HasDebugInfoLoaded && module.DebugInfoFile != null) {
+          symbolSettings_.RejectSymbolFile(module.DebugInfoFile.SymbolFile);
+        }
+      }
+
+      Trace.WriteLine($"New symbol settings ----------------\n{symbolSettings_}");
+      App.Settings.SymbolSettings = symbolSettings_;
+      App.SaveApplicationSettings();
+    }
   }
 
   private void ProfileLoadProgressCallback(ProfileLoadProgress progressInfo) {
@@ -1060,5 +1081,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
   private async void ProcessList_PreviewKeyDown(object sender, KeyEventArgs e) {
     await OpenFilesAndComplete(symbolSettings_);
+  }
+
+  private void ClearRejectedButton_Click(object sender, RoutedEventArgs e) {
+    symbolSettings_.ClearRejectedFiles();
+    OnPropertyChange(nameof(SymbolSettings));
+    App.Settings.SymbolSettings = symbolSettings_;
+    App.SaveApplicationSettings();
   }
 }

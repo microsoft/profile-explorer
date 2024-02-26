@@ -98,21 +98,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         Trace.WriteLine("Here");
       }
 
-      var sw = Stopwatch.StartNew();
+      result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
 
-        result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
-
-      sw.Stop();
-
-      if (sw.ElapsedMilliseconds > 1000) {
-        Trace.WriteLine($"PDB download time for {symbolFile.FileName}: {sw.ElapsedMilliseconds}ms");
-        Trace.WriteLine(logWriter.ToString());
-        Trace.WriteLine("---------------------------------------");
-        Trace.Flush();
-      }
-      else {
-        Trace.WriteLine("Fast enough");
-      }
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");

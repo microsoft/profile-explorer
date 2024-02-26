@@ -168,8 +168,7 @@ public static class CollectionExtensionMethods {
     var valueComparer = EqualityComparer<TValue>.Default;
 
     foreach (var kvp in first) {
-      TValue value2;
-      if (!second.TryGetValue(kvp.Key, out value2))
+      if (!second.TryGetValue(kvp.Key, out var value2))
         return false;
       if (!valueComparer.Equals(kvp.Value, value2))
         return false;
@@ -177,6 +176,27 @@ public static class CollectionExtensionMethods {
 
     return true;
   }
+
+  public static bool AreEqual<T>(this HashSet<T> first, HashSet<T> second) {
+    if (first == second)
+      return true;
+    if (first == null || second == null)
+      return false;
+    if (first.Count != second.Count)
+      return false;
+
+    var valueComparer = EqualityComparer<T>.Default;
+
+    foreach (var value in first) {
+      if (!second.TryGetValue(value, out var value2))
+        return false;
+      if (!valueComparer.Equals(value, value2))
+        return false;
+    }
+
+    return true;
+  }
+
 
   public static int AccumulateValue<K>(this Dictionary<K, int> dict, K key, int value) {
     if (dict.TryGetValue(key, out int currentValue)) {

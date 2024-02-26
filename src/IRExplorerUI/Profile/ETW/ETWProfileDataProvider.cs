@@ -567,6 +567,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       imageList.AddRange(kernelProc.Images(rawProfile));
     }
 
+    symbolSettings.RejectPreviouslyFailedFiles = true;
+
     int imageLimit = imageList.Count;
 
     // Find the modules with samples, sorted by sample count.
@@ -597,6 +599,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       if(!acceptModule) continue;
 
       var binaryFile = FromProfileImage(imageList[i]);
+
+      if (symbolSettings.IsRejectedBinaryFile(binaryFile)) {
+        continue;
+      }
 
       binTaskList[i] = binTaskFactory.StartNew(() => {
         return PEBinaryInfoProvider.LocateBinaryFile(binaryFile, symbolSettings);
@@ -677,22 +683,26 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         continue;
       }
 
-      if (binaryFile is {Found: true}) {
+      // Try to use ETL info if binary not available.
+      var symbolFile = rawProfile.GetDebugFileForImage(imageList[i], mainProcess.ProcessId);
+
+      if (symbolFile != null) {
+        Trace.WriteLine($"Using pdb sym: {symbolFile}");
+        if (symbolSettings.IsRejectedSymbolFile(symbolFile)) {
+          continue;
+        }
+
+        pdbTaskList[i] = taskFactory.StartNew(() => {
+          return session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings);
+        });
+      }
+      else if (binaryFile is {Found: true}) {
+        Trace.WriteLine($"Using binfile: {binaryFile}");
         pdbCount++;
 
         pdbTaskList[i] = taskFactory.StartNew(() => {
           return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings);
         });
-      }
-      else {
-        // Try to use ETL info if binary not available.
-        var symbolFile = rawProfile.GetDebugFileForImage(imageList[i], mainProcess.ProcessId);
-
-        if (symbolFile != null) {
-          pdbTaskList[i] = taskFactory.StartNew(() => {
-            return session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings);
-          });
-        }
       }
     }
 
