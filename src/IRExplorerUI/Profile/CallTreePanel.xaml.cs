@@ -194,6 +194,11 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       Clipboard.SetText(text);
     }
   });
+  public RelayCommand<object> CopyFunctionDetailsCommand => new RelayCommand<object>(async obj => {
+    if (obj is TreeNode node && node.Tag is ChildFunctionEx childInfo) {
+
+    }
+  });
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (obj is TreeNode node && node.Tag is ChildFunctionEx childInfo) {
       await IRDocumentPopupInstance.ShowPreviewPopup(childInfo.Function,
@@ -900,7 +905,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         await Session.ProfileFunctionSelected(funcEx.CallTreeNode, PanelKind);
       }
     }
-    else if (settings_.SyncSelection) {
+    else if (CallTreeList.SelectedItem == null && settings_.SyncSelection) {
       await Session.ProfileFunctionDeselected();
     }
   }

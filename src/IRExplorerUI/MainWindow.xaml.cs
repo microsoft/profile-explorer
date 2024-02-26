@@ -230,7 +230,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void CloseDetachedPanels() {
-    // Close all remark preview panels.
+    // Close all popups.
     detachedPanels_.ForEach(panel => panel.Close());
     detachedPanels_.Clear();
   }

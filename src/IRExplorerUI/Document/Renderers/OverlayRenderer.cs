@@ -42,7 +42,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   private ToolTip hoverTooltip_;
   private IElementOverlay tooltipOverlay_;
   private bool updateSuspended_;
-  
+
   public OverlayRenderer(ElementHighlighter highlighter) {
     overlaySegments_ = new TextSegmentCollection<IROverlaySegment>();
     overlaySegmentMap_ = new Dictionary<IRElement, IROverlaySegment>();
@@ -70,7 +70,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     }
   }
 
-  public bool RemoveElementOverlays(IRElement element) {
+  public bool RemoveAllElementOverlays(IRElement element) {
     if (overlaySegmentMap_.TryGetValue(element, out var segment)) {
       overlaySegmentMap_.Remove(element);
       overlaySegments_.Remove(segment);
@@ -222,7 +222,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     if (updateSuspended_) {
       return;
     }
-    
+
     TextView = textView;
     Width = textView.RenderSize.Width;
     Height = textView.RenderSize.Height;
@@ -416,7 +416,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     if (!(overlay is ElementOverlayBase {HasToolTip: true} elementOverlay)) {
       return;
     }
-    
+
     if(hoverTooltip_ != null && tooltipOverlay_ == elementOverlay) {
       return; // Already showing the right tooltip.
     }

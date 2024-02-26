@@ -40,6 +40,7 @@ public interface MarkedDocument {
   public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
                                                        double width, double height,
                                                        string label = null, string tooltip = null);
+  public void RemoveElementOverlays(IRElement element);
 }
 
 public class ProfileDocumentMarker {
@@ -491,6 +492,9 @@ public class ProfileDocumentMarker {
           App.Settings.DocumentSettings.BackgroundColor.AsBrush() :
           App.Settings.DocumentSettings.AlternateBackgroundColor.AsBrush();
       }
+
+      // Remove any overlays from a previous marking.
+      document.RemoveElementOverlays(block);
 
       bool markOnFlowGraph = settings_.IsSignificantValue(i, weightPercentage);
       string label = $"{weightPercentage.AsTrimmedPercentageString()}";

@@ -236,6 +236,24 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public RelayCommand<object> ToggleSearchCommand => new RelayCommand<object>(async obj => {
     SearchPanelVisible = !SearchPanelVisible;
   });
+  public RelayCommand<object> CopyFunctionNameCommand => new RelayCommand<object>(async obj => {
+    if (ItemList.SelectedItem is ProfileListViewItem item) {
+      string text = Session.CompilerInfo.NameProvider.GetFunctionName(item.CallTreeNode.Function);
+      Clipboard.SetText(text);
+    }
+  });
+  public RelayCommand<object> CopyDemangledFunctionNameCommand => new RelayCommand<object>(async obj => {
+    if (ItemList.SelectedItem is ProfileListViewItem item) {
+      var options = FunctionNameDemanglingOptions.Default;
+      string text = Session.CompilerInfo.NameProvider.DemangleFunctionName(item.CallTreeNode.Function, options);
+      Clipboard.SetText(text);
+    }
+  });
+  public RelayCommand<object> CopyFunctionDetailsCommand => new RelayCommand<object>(async obj => {
+    if (ItemList.SelectedItem is ProfileListViewItem item) {
+      
+    }
+  });
 
   private async Task SelectFunctionInPanel(ToolPanelKind panelKind) {
     if (ItemList.SelectedItem is ProfileListViewItem item) {

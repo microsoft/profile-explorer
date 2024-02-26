@@ -11,6 +11,7 @@
   AllowsTransparency="True"
   SnapsToDevicePixels="True"
   UseLayoutRounding="True"
+  FocusManager.IsFocusScope="True"
   mc:Ignorable="d">
   <Border
     x:Name="PanelBorder"
@@ -94,6 +95,7 @@
         x:Name="ProfileTextView"
         Grid.Row="1"
         Grid.ColumnSpan="4"
+        FocusManager.IsFocusScope="True"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"

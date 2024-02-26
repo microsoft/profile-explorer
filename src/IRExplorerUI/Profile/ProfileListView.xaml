@@ -231,6 +231,36 @@
         <Separator />
 
         <MenuItem
+          Command="{Binding CopyDemangledFunctionNameCommand}"
+          CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+          Header="Copy Function Name"
+          InputGestureText="Ctrl+C"
+          ToolTip="Copy the function name to the clipboard">
+          <MenuItem.Icon>
+            <Image
+              Width="16"
+              Height="16"
+              Source="{StaticResource ClipboardIcon}" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem
+            Command="{Binding CopyFunctionNameCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Copy Mangled Function Name"
+            InputGestureText="Ctrl+Shift+C"
+            ToolTip="Copy the mangled function name to the clipboard (C++)">
+        </MenuItem>
+        <MenuItem
+          IsEnabled="False"
+          Command="{Binding CopyFunctionDetailsCommand}"
+          CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+          Header="Copy Function Details"
+          InputGestureText="Ctrl+Alt+C"
+          ToolTip="Copy the function name and additional information as an HTML table">
+        </MenuItem>
+        <Separator />
+
+        <MenuItem
           Command="{Binding SelectFunctionSummaryCommand}"
           CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
           Header="Select in Summary"
@@ -287,6 +317,9 @@
     <KeyBinding Command="{Binding OpenFunctionInNewTabCommand}" Key="Return"
                 Modifiers="Control+Shift" />
     <KeyBinding Command="{Binding PreviewFunctionCommand}" Key="Return" Modifiers="Alt" />
+    <KeyBinding Command="{Binding CopyFunctionNameCommand}" Key="C" Modifiers="Control+Shift" />
+    <KeyBinding Command="{Binding CopyDemangledFunctionNameCommand}" Key="C" Modifiers="Control" />
+    <KeyBinding Command="{Binding CopyFunctionDetailsCommand}" Key="C" Modifiers="Control+Alt" />
     <KeyBinding
       Key="F"
       Command="{Binding ToggleSearchCommand}"

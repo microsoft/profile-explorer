@@ -33,7 +33,7 @@ public sealed class ProfileModuleBuilder {
   public bool Initialized { get; set; }
   public bool IsManaged { get; set; }
 
-  public async Task<bool> Initialize(BinaryFileDescriptor binaryInfo, 
+  public async Task<bool> Initialize(BinaryFileDescriptor binaryInfo,
     SymbolFileSourceSettings symbolSettings,
                                      IDebugInfoProvider debugInfo) {
     if (Initialized) {
@@ -119,7 +119,7 @@ public sealed class ProfileModuleBuilder {
     return await session_.CompilerInfo.FindBinaryFile(binaryInfo_, settings).ConfigureAwait(false);
   }
 
-  public (IRTextFunction Function, FunctionDebugInfo DebugInfo) 
+  public (IRTextFunction Function, FunctionDebugInfo DebugInfo)
     GetOrCreateFunction(long funcAddress) {
     try {
       lock_.EnterUpgradeableReadLock();
