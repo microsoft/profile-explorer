@@ -599,7 +599,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       var binaryFile = FromProfileImage(imageList[i]);
 
       binTaskList[i] = binTaskFactory.StartNew(() => {
-        return PEBinaryInfoProvider.LocateBinaryFile(binaryFile, symbolSettings).Result;
+        return PEBinaryInfoProvider.LocateBinaryFile(binaryFile, symbolSettings);
       });
     }
 
@@ -681,7 +681,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         pdbCount++;
 
         pdbTaskList[i] = taskFactory.StartNew(() => {
-          return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings).Result;
+          return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings);
         });
       }
       else {
@@ -690,7 +690,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         if (symbolFile != null) {
           pdbTaskList[i] = taskFactory.StartNew(() => {
-            return session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings).Result;
+            return session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings);
           });
         }
       }
@@ -786,14 +786,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                              SymbolFileSourceSettings symbolSettings) {
     DebugFileSearchResult result = null;
     if (binaryFile is {Found: true}) {
-      return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings).GetAwaiter().GetResult();
+      return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings);
     }
     else {
       // Try to use ETL info if binary not available.
       var symbolFile = rawProfile.GetDebugFileForImage(image, processId);
 
       if (symbolFile != null) {
-        return session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings).GetAwaiter().GetResult();
+        return session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings);
       }
     }
 

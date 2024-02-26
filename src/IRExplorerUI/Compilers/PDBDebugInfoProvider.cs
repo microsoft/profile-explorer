@@ -56,7 +56,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   public Machine? Architecture => null;
 
   public static async Task<DebugFileSearchResult>
-    LocateDebugInfoFile(SymbolFileDescriptor symbolFile,
+    LocateDebugInfoFileAsync(SymbolFileDescriptor symbolFile,
                         SymbolFileSourceSettings settings) {
     if (symbolFile == null) {
       return DebugFileSearchResult.None;
@@ -67,61 +67,74 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     return await Task.Run(() => {
-      string result = null;
-      using var logWriter = new StringWriter();
-      DebugFileSearchResult searchResult = null;
+      return LocateDebugInfoFile(symbolFile, settings);
+    }).ConfigureAwait(false);
+  }
 
-      // In case there is a timeout downloading the symbols, try again.
-      string symbolSearchPath = ConstructSymbolSearchPath(settings);
-      using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
-      symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
+  public static DebugFileSearchResult
+    LocateDebugInfoFile(SymbolFileDescriptor symbolFile,
+                        SymbolFileSourceSettings settings) {
+    if (symbolFile == null) {
+      return DebugFileSearchResult.None;
+    }
 
-      try {
-        Trace.WriteLine($"Start PDB download for {symbolFile.FileName}, {symbolFile.Id}, {symbolFile.Age}");
+    if (resolvedSymbolsCache_.TryGetValue(symbolFile, out var searchResult)) {
+      return searchResult;
+    }
 
-        if (symbolFile.FileName.Contains("Windows.FileExplorer.Common")) {
-          Utils.WaitForDebugger();
-          Trace.WriteLine("Here");
-        }
+    string result = null;
+    using var logWriter = new StringWriter();
 
-        var sw = Stopwatch.StartNew();
+    // In case there is a timeout downloading the symbols, try again.
+    string symbolSearchPath = ConstructSymbolSearchPath(settings);
+    using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
+    symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
-          result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
+    try {
+      Trace.WriteLine($"Start PDB download for {symbolFile.FileName}, {symbolFile.Id}, {symbolFile.Age}");
 
-        sw.Stop();
-
-        if (sw.ElapsedMilliseconds > 1000) {
-          Trace.WriteLine($"PDB download time for {symbolFile.FileName}: {sw.ElapsedMilliseconds}ms");
-          Trace.WriteLine(logWriter.ToString());
-          Trace.WriteLine("---------------------------------------");
-          Trace.Flush();
-        }
-        else {
-          Trace.WriteLine("Fast enough");
-        }
-      }
-      catch (Exception ex) {
-        Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");
+      if (symbolFile.FileName.Contains("Windows.FileExplorer.Common")) {
+        Utils.WaitForDebugger();
+        Trace.WriteLine("Here");
       }
 
-#if DEBUG
-      Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
-      Trace.IndentLevel = 1;
-      Trace.WriteLine(logWriter.ToString());
-      Trace.IndentLevel = 0;
-      Trace.WriteLine("<< TraceEvent");
-#endif
+      var sw = Stopwatch.StartNew();
 
-      if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
-        searchResult = DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
+        result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
+
+      sw.Stop();
+
+      if (sw.ElapsedMilliseconds > 1000) {
+        Trace.WriteLine($"PDB download time for {symbolFile.FileName}: {sw.ElapsedMilliseconds}ms");
+        Trace.WriteLine(logWriter.ToString());
+        Trace.WriteLine("---------------------------------------");
+        Trace.Flush();
       }
       else {
-        searchResult = DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
+        Trace.WriteLine("Fast enough");
       }
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");
+    }
 
-      resolvedSymbolsCache_.TryAdd(symbolFile, searchResult);
-      return searchResult;
-    }).ConfigureAwait(false);
+#if DEBUG
+    Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
+    Trace.IndentLevel = 1;
+    Trace.WriteLine(logWriter.ToString());
+    Trace.IndentLevel = 0;
+    Trace.WriteLine("<< TraceEvent");
+#endif
+
+    if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
+      searchResult = DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
+    }
+    else {
+      searchResult = DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
+    }
+
+    resolvedSymbolsCache_.TryAdd(symbolFile, searchResult);
+    return searchResult;
   }
 
   public static string ConstructSymbolSearchPath(SymbolFileSourceSettings settings) {
@@ -145,7 +158,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     using var binaryInfo = new PEBinaryInfoProvider(imagePath);
 
     if (binaryInfo.Initialize()) {
-      return await LocateDebugInfoFile(binaryInfo.SymbolFileInfo, settings).ConfigureAwait(false);
+      return await LocateDebugInfoFileAsync(binaryInfo.SymbolFileInfo, settings).ConfigureAwait(false);
     }
 
     return DebugFileSearchResult.None;

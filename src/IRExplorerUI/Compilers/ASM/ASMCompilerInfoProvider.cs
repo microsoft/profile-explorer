@@ -146,7 +146,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     }
   }
 
-  public async Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null) {
+  public async Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath, SymbolFileSourceSettings settings = null) {
     using var info = new PEBinaryInfoProvider(imagePath);
 
     if (!info.Initialize()) {
@@ -161,7 +161,29 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
           settings.InsertSymbolPath(imagePath);
         }
 
-        return await FindDebugInfoFile(info.SymbolFileInfo, settings).ConfigureAwait(false);
+        return await FindDebugInfoFileAsync(info.SymbolFileInfo, settings).ConfigureAwait(false);
+      }
+    }
+
+    return DebugFileSearchResult.None;
+  }
+
+  public DebugFileSearchResult FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null) {
+    using var info = new PEBinaryInfoProvider(imagePath);
+
+    if (!info.Initialize()) {
+      return Utils.LocateDebugInfoFile(imagePath, ".json");
+    }
+
+    switch (info.BinaryFileInfo.FileKind) {
+      case BinaryFileKind.Native: {
+        if (settings == null) {
+          // Make sure the binary directory is also included in the symbol search.
+          settings = App.Settings.SymbolSettings.Clone();
+          settings.InsertSymbolPath(imagePath);
+        }
+
+        return FindDebugInfoFile(info.SymbolFileInfo, settings);
       }
     }
 
@@ -169,22 +191,30 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   }
 
   public async Task<DebugFileSearchResult>
+    FindDebugInfoFileAsync(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
+    if (settings == null) {
+      settings = App.Settings.SymbolSettings;
+    }
+
+    return await PDBDebugInfoProvider.LocateDebugInfoFileAsync(symbolFile, settings).ConfigureAwait(false);
+  }
+
+  public DebugFileSearchResult
     FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
     if (settings == null) {
       settings = App.Settings.SymbolSettings;
     }
 
-    return await PDBDebugInfoProvider.LocateDebugInfoFile(symbolFile, settings).ConfigureAwait(false);
+    return PDBDebugInfoProvider.LocateDebugInfoFile(symbolFile, settings);
   }
-
-  public async Task<BinaryFileSearchResult> FindBinaryFile(BinaryFileDescriptor binaryFile,
+  public async Task<BinaryFileSearchResult> FindBinaryFileAsync(BinaryFileDescriptor binaryFile,
                                                            SymbolFileSourceSettings settings = null) {
     if (settings == null) {
       // Make sure the binary directory is also included in the symbol search.
       settings = App.Settings.SymbolSettings.Clone();
     }
 
-    return await PEBinaryInfoProvider.LocateBinaryFile(binaryFile, settings).ConfigureAwait(false);
+    return await PEBinaryInfoProvider.LocateBinaryFileAsync(binaryFile, settings).ConfigureAwait(false);
   }
 
   //? TODO: << Debug/Binary related functs should not be part of CompilerInfoProvider

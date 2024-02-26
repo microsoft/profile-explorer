@@ -47,7 +47,7 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     if (debugInfo_ == null) {
       if (preloadFunctions_) {
         // When opening in non-profiling mode, lookup the debug info now.
-        var debugInfoFile = compilerInfo_.FindDebugInfoFile(binaryFilePath_).Result;
+        var debugInfoFile = compilerInfo_.FindDebugInfoFile(binaryFilePath_);
         debugInfo_ = compilerInfo_.CreateDebugInfoProvider(debugInfoFile);
       }
 

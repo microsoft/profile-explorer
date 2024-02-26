@@ -38,9 +38,11 @@ public interface ICompilerInfoProvider {
   IDiffOutputFilter CreateDiffOutputFilter();
   IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile);
   Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function);
-  Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null);
-  Task<DebugFileSearchResult> FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null);
-  Task<BinaryFileSearchResult> FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceSettings settings = null);
+  DebugFileSearchResult FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null);
+  DebugFileSearchResult FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null);
+  Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath, SymbolFileSourceSettings settings = null);
+  Task<DebugFileSearchResult> FindDebugInfoFileAsync(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null);
+  Task<BinaryFileSearchResult> FindBinaryFileAsync(BinaryFileDescriptor binaryFile, SymbolFileSourceSettings settings = null);
 }
 
 [ProtoContract]
