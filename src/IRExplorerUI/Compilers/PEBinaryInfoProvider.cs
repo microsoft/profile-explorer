@@ -155,69 +155,56 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
           binaryFile.TimeStamp = binInfo.TimeStamp;
         }
 
-        Trace.WriteLine($"Start download of {Utils.TryGetFileName(binaryFile.ImageName)}");
-        var sw = Stopwatch.StartNew();
+        //Trace.WriteLine($"Start download of {Utils.TryGetFileName(binaryFile.ImageName)}");
+        result = symbolReader.FindExecutableFilePath(binaryFile.ImageName,
+                                                     binaryFile.TimeStamp,
+                                                     (int)binaryFile.ImageSize);
 
-          result = symbolReader.FindExecutableFilePath(binaryFile.ImageName,
-                                                       binaryFile.TimeStamp,
-                                                       (int)binaryFile.ImageSize);
+        if (result == null) {
+          // Manually search in the provided directories.
+          // This helps in cases where the original fine name doesn't match
+          // the one on disk, like it seems to happen sometimes with the SPEC runner.
+          string winPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+          string sysPath = Environment.GetFolderPath(Environment.SpecialFolder.System);
+          string sysx86Path = Environment.GetFolderPath(Environment.SpecialFolder.SystemX86);
 
+          // Don't search in the system dirs though, it's pointless
+          // and takes a long time checking thousands of binaries.
+          bool PathIsSubPath(string subPath, string basePath) {
+            string rel = Path.GetRelativePath(basePath, subPath);
+            return !rel.StartsWith('.') && !Path.IsPathRooted(rel);
+          }
 
-        sw.Stop();
-        if(sw.ElapsedMilliseconds > 1000) {
-          Trace.WriteLine($"SymbolReader.FindExecutableFilePath took {sw.ElapsedMilliseconds}ms for {binaryFile.ImageName}");
-          Trace.Flush();
+          foreach (string path in settings.SymbolPaths) {
+            if (PathIsSubPath(path, winPath) ||
+                PathIsSubPath(path, sysPath) ||
+                PathIsSubPath(path, sysx86Path)) {
+              continue;
+            }
+
+            try {
+              string searchPath = Utils.TryGetDirectoryName(path);
+
+              foreach (string file in Directory.EnumerateFiles(searchPath, "*.*", SearchOption.TopDirectoryOnly)) {
+                if (!Utils.IsBinaryFile(file)) {
+                  continue;
+                }
+
+                var fileInfo = GetBinaryFileInfo(file);
+
+                if (fileInfo != null &&
+                    fileInfo.TimeStamp == binaryFile.TimeStamp &&
+                    fileInfo.ImageSize == binaryFile.ImageSize) {
+                  result = file;
+                  break;
+                }
+              }
+            }
+            catch (Exception ex) {
+              Trace.TraceError($"Exception searching for binary {binaryFile.ImageName} in {path}: {ex.Message}");
+            }
+          }
         }
-        else {
-          Trace.WriteLine("Fast enough");
-          Trace.Flush();
-        }
-
-        // if (result == null) {
-        //   // Manually search in the provided directories.
-        //   // This helps in cases where the original fine name doesn't match
-        //   // the one on disk, like it seems to happen sometimes with the SPEC runner.
-        //   string winPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-        //   string sysPath = Environment.GetFolderPath(Environment.SpecialFolder.System);
-        //   string sysx86Path = Environment.GetFolderPath(Environment.SpecialFolder.SystemX86);
-        //
-        //   // Don't search in the system dirs though, it's pointless
-        //   // and takes a long time checking thousands of binaries.
-        //   bool PathIsSubPath(string subPath, string basePath) {
-        //     string rel = Path.GetRelativePath(basePath, subPath);
-        //     return !rel.StartsWith('.') && !Path.IsPathRooted(rel);
-        //   }
-        //
-        //   foreach (string path in settings.SymbolPaths) {
-        //     if (PathIsSubPath(path, winPath) ||
-        //         PathIsSubPath(path, sysPath) ||
-        //         PathIsSubPath(path, sysx86Path)) {
-        //       continue;
-        //     }
-        //
-        //     try {
-        //       string searchPath = Utils.TryGetDirectoryName(path);
-        //
-        //       foreach (string file in Directory.EnumerateFiles(searchPath, "*.*", SearchOption.TopDirectoryOnly)) {
-        //         if (!Utils.IsBinaryFile(file)) {
-        //           continue;
-        //         }
-        //
-        //         var fileInfo = GetBinaryFileInfo(file);
-        //
-        //         if (fileInfo != null &&
-        //             fileInfo.TimeStamp == binaryFile.TimeStamp &&
-        //             fileInfo.ImageSize == binaryFile.ImageSize) {
-        //           result = file;
-        //           break;
-        //         }
-        //       }
-        //     }
-        //     catch (Exception ex) {
-        //       Trace.TraceError($"Exception searching for binary {binaryFile.ImageName} in {path}: {ex.Message}");
-        //     }
-        //   }
-        // }
       }
       catch (Exception ex) {
         Trace.TraceError($"Failed FindExecutableFilePath: {ex.Message}");
