@@ -80,6 +80,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       Clipboard.SetText(text);
     }
   });
+  public RelayCommand<object> CopyFunctionDetailsCommand => new RelayCommand<object>(async obj => {
+    if (GraphViewer.SelectedNode is {HasFunction: true}) {
+    }
+  });
   public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
     if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
       GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));

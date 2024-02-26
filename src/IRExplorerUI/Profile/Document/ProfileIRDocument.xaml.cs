@@ -380,8 +380,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       ProfileColumns.Settings = settings_;
       ProfileColumns.ColumnSettings = settings_.ColumnSettings;
 
-      await ProfileColumns.Display(sourceColumnData_, TextView);
       profileMarker_.UpdateColumnStyles(sourceColumnData_, TextView.Function, TextView);
+      await ProfileColumns.Display(sourceColumnData_, TextView);
 
       profileElements_ = TextView.ProfileProcessingResult.SampledElements;
       UpdateHighlighting();

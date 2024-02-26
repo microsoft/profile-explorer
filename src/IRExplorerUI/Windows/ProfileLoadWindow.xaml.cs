@@ -444,7 +444,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void ProcessListProgressCallback(ProcessListProgress progressInfo) {
-    Dispatcher.Invoke((Action)(() => {
+    Dispatcher.Invoke(() => {
       if (progressInfo == null) {
         return;
       }
@@ -465,7 +465,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       if (progressInfo.Processes != null) {
         DisplayProcessList(progressInfo.Processes, selectedProcSummary_);
       }
-    }));
+    });
   }
 
   private async void CancelButton_Click(object sender, RoutedEventArgs e) {

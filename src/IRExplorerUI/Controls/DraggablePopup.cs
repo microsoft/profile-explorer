@@ -2,12 +2,14 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI.Controls;
@@ -71,6 +73,15 @@ public class DraggablePopup : Popup {
 
   public virtual void ShowPopup() {
     IsOpen = true;
+  }
+
+  public virtual void PopupOpened() {
+
+  }
+
+  protected override void OnOpened(EventArgs e) {
+    base.OnOpened(e);
+    PopupOpened();
   }
 
   public virtual void ClosePopup() {
@@ -147,6 +158,7 @@ public class DraggablePopup : Popup {
 
   public void Close() {
     IsOpen = false;
+    PopupClosed?.Invoke(this, null);
   }
 
   protected override void OnClosed(EventArgs e) {
@@ -162,11 +174,13 @@ public class DraggablePopup : Popup {
     PopupClosed?.Invoke(this, e);
   }
 
-  protected override void OnPreviewMouseDown(MouseButtonEventArgs e) {
-    base.OnPreviewMouseDown(e);
-    //? TODO: This breaks the ComboBox in the documents options panel
-    //? by bringing the panel on top of the ComboBox on mouse down when selecting item
-    //BringToFront();
+  protected override void OnPreviewKeyDown(KeyEventArgs e) {
+    base.OnPreviewKeyDown(e);
+
+    if (e.Key == Key.Escape) {
+      ClosePopup();
+      e.Handled = true;
+    }
   }
 
   protected override void OnInitialized(EventArgs e) {

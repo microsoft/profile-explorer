@@ -1142,6 +1142,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     return overlay;
   }
 
+  public void RemoveElementOverlays(IRElement element) {
+    overlayRenderer_.RemoveAllElementOverlays(element);
+  }
+
   public void ClearElementOverlays() {
     overlayRenderer_.ClearElementOverlays();
     UpdateHighlighting();

@@ -495,6 +495,12 @@
               CommandParameter="{Binding ElementName=FunctionList, Path=SelectedItem}"
               CommandTarget="{Binding ElementName=FunctionList}"
               Modifiers="Control+Alt" />
+            <KeyBinding
+              Key="Return"
+              Command="{Binding PreviewFunctionCommand}"
+              CommandParameter="{Binding ElementName=FunctionList, Path=SelectedItem}"
+              CommandTarget="{Binding ElementName=FunctionList}"
+              Modifiers="Alt" />
           </ListView.InputBindings>
           <ListView.View>
             <GridView>
@@ -718,14 +724,28 @@
                     Source="{StaticResource LayoutRightIcon}" />
                 </MenuItem.Icon>
               </MenuItem>
+              <MenuItem
+                Command="{Binding PreviewFunctionCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Preview Function"
+                InputGestureText="Alt+Return"
+                ToolTip="Show a preview popup of the function ASM or source code">
+                <MenuItem.Icon>
+                  <Image
+                    Height="16"
+                    Source="{StaticResource PeekDefinitionIcon}"
+                    Width="16" />
+                </MenuItem.Icon>
+              </MenuItem>
               <Separator />
 
               <MenuItem
-                Command="local:Command.CopyFunctionName"
+                Command="local:Command.CopyDemangledFunctionName"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Copy Function Name"
-                InputGestureText="Ctrl+Shift+C"
+                InputGestureText="Ctrl+C"
                 ToolTip="Copy the function name to the clipboard">
                 <MenuItem.Icon>
                   <Image
@@ -733,21 +753,23 @@
                     Height="16"
                     Source="{StaticResource ClipboardIcon}" />
                 </MenuItem.Icon>
-              </MenuItem>
+                </MenuItem>
               <MenuItem
-                Command="local:Command.CopyDemangledFunctionName"
+                Command="local:Command.CopyFunctionName"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Copy Demangled Function Name"
-                InputGestureText="Ctrl+C"
-                ToolTip="Copy the demangled function name to the clipboard (C/C++)" />
+                Header="Copy Mangled Function Name"
+                InputGestureText="Ctrl+Shift+C"
+                ToolTip="Copy the mangled function name to the clipboard (C++)">
+              </MenuItem>
+
               <MenuItem
                 Command="local:Command.CopyFunctionDetails"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Copy Function Details"
                 InputGestureText="Ctrl+Alt+C"
-                ToolTip="Copy the function name and additional columns as an HTML table" />
+                ToolTip="Copy the function name and additional information as an HTML table" />
               <Separator />
 
               <MenuItem

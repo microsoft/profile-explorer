@@ -178,6 +178,10 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     }
   }
 
+  public override void PopupOpened() {
+    ProfileTextView.Focus();
+  }
+
   public override void ClosePopup() {
     owner_.PreviewMouseWheel -= Owner_OnPreviewMouseWheel;
     Session.UnregisterDetachedPanel(this);

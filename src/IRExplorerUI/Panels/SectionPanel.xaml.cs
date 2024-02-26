@@ -23,6 +23,7 @@ using ClosedXML.Excel;
 using HtmlAgilityPack;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
+using IRExplorerUI.Controls;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Profile;
@@ -791,6 +792,14 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   });
   public RelayCommand<object> SelectFunctionTimelineCommand => new RelayCommand<object>(async obj => {
     await SelectFunctionInPanel(obj, ToolPanelKind.Timeline);
+  });
+
+  public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
+    if (obj is IRTextFunctionEx funcEx) {
+      await IRDocumentPopupInstance.ShowPreviewPopup(funcEx.Function,
+                                                     $"Function {funcEx.Name}",
+                                                     FunctionList, Session);
+    }
   });
 
   public bool BottomSectionToolbar {
@@ -2354,7 +2363,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
       text += Session.CompilerInfo.NameProvider.GetFunctionName(func.Function);
     }
-    
+
     Clipboard.SetText(text);
   }
 
@@ -2368,7 +2377,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
       text += Session.CompilerInfo.NameProvider.FormatFunctionName(func.Function);
     }
-    
+
     Clipboard.SetText(text);
   }
 
@@ -2844,7 +2853,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       else if (alternateNameColumnVisible_) {
         cell.Value = "Mangled name";
       }
-      
+
       cell.Style.Font.Bold = true;
       cell.Style.Fill.BackgroundColor = XLColor.LightGray;
     }
