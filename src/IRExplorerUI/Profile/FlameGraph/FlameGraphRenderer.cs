@@ -390,11 +390,30 @@ public class FlameGraphRenderer {
     }
 
     // Redraw selected nodes to show on top.
-    foreach (var node in SelectedNodes.Keys) {
-      DrawNode(node, graphDC);
-    }
-
+    DrawSelectedNodes(graphDC);
     return DrawDummyNodes(graphDC, layoutChanged);
+  }
+
+  private void DrawSelectedNodes(DrawingContext graphDC) {
+    foreach (var node in SelectedNodes.Keys) {
+      // When a different root node is used, the selected nodes
+      // may not be part of the view, don't draw them in that case.
+      bool onPath = false;
+      var pathNode = node;
+      
+      while (pathNode != null) {
+        if(pathNode == flameGraph_.RootNode) {
+          onPath = true;
+          break;
+        }
+
+        pathNode = pathNode.Parent;
+      }
+      
+      if(onPath) {
+        DrawNode(node, graphDC);
+      }
+    }
   }
 
   private double ScaleNode(FlameGraphNode node) {

@@ -145,14 +145,15 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       return; //? TODO: Maybe do the init now?
     }
 
-    var nodeList = callTree_.GetSortedCallTreeNodes(function);
+    var nodes = callTree_.GetSortedCallTreeNodes(function);
 
-    if (nodeList != null && nodeList.Count > 0) {
-      await SelectFunction(nodeList[0], bringIntoView);
+    if (nodes is {Count: > 0}) {
+      GraphHost.SelectNodes(nodes, false, bringIntoView);
+      await NodeDetailsPanel.ShowWithDetailsAsync(nodes[^1]);
     }
   }
 
-  public async Task SelectFunction(ProfileCallTreeNode node, bool bringIntoView = true) {
+  public async Task SelectFunction(ProfileCallTreeNode node, bool bringIntoView = true, bool showDetails = true) {
     if (!HasCallTree) {
       return; //? TODO: Maybe do the init now?
     }
@@ -162,7 +163,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     GraphHost.SelectNode(node, true, bringIntoView);
-    await NodeDetailsPanel.ShowWithDetailsAsync(node);
+
+    if (showDetails) {
+      await NodeDetailsPanel.ShowWithDetailsAsync(node);
+    }
   }
 
   public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
@@ -330,11 +334,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void NodeDetailsPanel_NodesSelected(object sender, List<ProfileCallTreeNode> e) {
-    var nodes = GraphHost.GraphViewer.SelectNodes(e);
-
-    if (nodes.Count > 0) {
-      GraphHost.BringNodeIntoView(nodes[0], false);
-    }
+    GraphHost.SelectNodes(e);
   }
 
   private void NodeDetailsPanel_NodeInstanceChanged(object sender, ProfileCallTreeNode e) {
