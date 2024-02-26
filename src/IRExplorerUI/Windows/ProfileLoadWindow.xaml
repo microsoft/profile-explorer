@@ -699,18 +699,7 @@
                                 </Expander.Header>
 
                                 <StackPanel>
-                                    <CheckBox
-                                        Margin="0,8,0,0"
-                                        Content="Include __NT__SYMBOL__PATH environment variable"
-                                        IsChecked="{Binding Path=SymbolSettings.UseEnvironmentVarSymbolPaths, Mode=TwoWay}"
-                                        ToolTip="Append the NT__SYMBOL__PATH environment variable to the list of sources" />
-                                    <CheckBox
-                                      Margin="0,4,0,0"
-                                      Content="Don't load symbols for very low sample modules"
-                                      IsChecked="{Binding Path=SymbolSettings.SkipLowSampleModules, Mode=TwoWay}"
-                                      ToolTip="Skip downloading and loading of symbols for insignificant modules with very few samples" />
-
-                                    <Grid Margin="0,4,0,0">
+                                    <Grid >
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="*" />
                                             <RowDefinition Height="*" />
@@ -880,11 +869,42 @@
                                         </StackPanel>
 
                                     </Grid>
+                                  <CheckBox
+                                    Margin="0,8,0,0"
+                                    Content="Include __NT__SYMBOL__PATH environment variable"
+                                    IsChecked="{Binding Path=SymbolSettings.UseEnvironmentVarSymbolPaths, Mode=TwoWay}"
+                                    ToolTip="Append the NT__SYMBOL__PATH environment variable to the list of sources" />
+
+                                    <CheckBox
+                                      Margin="0,4,0,0"
+                                      Content="Don't load symbols for very low sample modules"
+                                      IsChecked="{Binding Path=SymbolSettings.SkipLowSampleModules, Mode=TwoWay}"
+                                      ToolTip="Skip downloading and loading of symbols for insignificant modules with very few samples" />
+                                    <CheckBox
+                                      Margin="0,4,0,0"
+                                      Content="Don't load symbols that failed in previous sessions"
+                                      IsChecked="{Binding Path=SymbolSettings.RejectPreviouslyFailedFiles, Mode=TwoWay}"
+                                      ToolTip="Skip downloading and loading of symbols that could not be found in previous sessions" />
+<StackPanel Orientation="Horizontal"  Margin="20,2,0,0">
+  <TextBlock Text="Excluded binaries:" VerticalAlignment="Center"></TextBlock>
+  <TextBlock Margin="4,0,0,0" Text="{Binding  SymbolSettings.RejectedBinaryFiles.Count}" VerticalAlignment="Center"></TextBlock>
+  <TextBlock  Margin="24,0,0,0" Text="Excluded symbols:"  VerticalAlignment="Center"></TextBlock>
+  <TextBlock  Margin="4,0,0,0" Text="{Binding  SymbolSettings.RejectedSymbolFiles.Count}" VerticalAlignment="Center"></TextBlock>
+  <Button
+    Height="22"
+    Margin="24,0,0,0"
+    Padding="4,2,4,2"
+    HorizontalAlignment="Right"
+    VerticalAlignment="Center"
+    Click="ClearRejectedButton_Click"
+    Content="Clear"
+    IsEnabled="{Binding InputControlsEnabled}" />
+</StackPanel>
                                 </StackPanel>
                             </Expander>
 
                             <Expander
-                                Margin="8,10,8,0"
+                                Margin="8,8,8,0"
                                 IsEnabled="{Binding InputControlsEnabled}"
                                 IsExpanded="True">
                                 <Expander.Header>

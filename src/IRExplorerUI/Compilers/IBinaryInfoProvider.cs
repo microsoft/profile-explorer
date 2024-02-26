@@ -78,7 +78,7 @@ public class BinaryFileDescriptor : IEquatable<BinaryFileDescriptor> {
   }
 
   public override string ToString() {
-    return $"{ImageName}, Version: {MajorVersion}.{MinorVersion}, ImageSze: {ImageSize}";
+    return $"{ImageName}, Version: {MajorVersion}.{MinorVersion}, TimeStamp: {TimeStamp}, ImageSze: {ImageSize}";
   }
 
   public bool Equals(BinaryFileDescriptor other) {
