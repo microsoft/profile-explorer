@@ -116,7 +116,7 @@ public sealed class ProfileModuleBuilder {
   public async Task<BinaryFileSearchResult> FindBinaryFilePath(SymbolFileSourceSettings settings) {
     // Use the symbol server to locate the image,
     // this will also attempt to download it if not found locally.
-    return await session_.CompilerInfo.FindBinaryFile(binaryInfo_, settings).ConfigureAwait(false);
+    return await session_.CompilerInfo.FindBinaryFileAsync(binaryInfo_, settings).ConfigureAwait(false);
   }
 
   public (IRTextFunction Function, FunctionDebugInfo DebugInfo)

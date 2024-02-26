@@ -124,7 +124,7 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     return null;
   }
 
-  public static async Task<BinaryFileSearchResult> LocateBinaryFile(BinaryFileDescriptor binaryFile,
+  public static async Task<BinaryFileSearchResult> LocateBinaryFileAsync(BinaryFileDescriptor binaryFile,
                                                                     SymbolFileSourceSettings settings) {
     // Check if the binary was requested before.
     if (resolvedBinariesCache_.TryGetValue(binaryFile, out var searchResult)) {
@@ -132,102 +132,111 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     }
 
     return await Task.Run(() => {
-      string result = null;
-      using var logWriter = new StringWriter();
+      return LocateBinaryFile(binaryFile, settings);
+    }).ConfigureAwait(false);
+  }
 
-      try {
-        if (File.Exists(binaryFile.ImagePath)) {
-          settings = settings.WithSymbolPaths(binaryFile.ImagePath);
+  public static BinaryFileSearchResult LocateBinaryFile(BinaryFileDescriptor binaryFile,
+                                                        SymbolFileSourceSettings settings) {
+    // Check if the binary was requested before.
+    if (resolvedBinariesCache_.TryGetValue(binaryFile, out var searchResult)) {
+      return searchResult;
+    }
+
+    string result = null;
+    using var logWriter = new StringWriter();
+
+    try {
+      if (File.Exists(binaryFile.ImagePath)) {
+        settings = settings.WithSymbolPaths(binaryFile.ImagePath);
+      }
+
+      string userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(settings);
+
+      //? TODO: Making a new instance clears the "dead servers",
+      //? have a way to share the list between multiple instances.
+      using var symbolReader = new SymbolReader(logWriter, userSearchPath);
+      symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
+
+      //? TODO: Workaround for cases where the ETL file doesn't have a timestamp
+      //? and SymbolReader would reject the bin even on the same machine...
+      //? Better way to handle this is to have SymReader accept a func to check if PDB is valid to use
+      if (binaryFile.TimeStamp == 0 && File.Exists(binaryFile.ImagePath)) {
+        var binInfo = GetBinaryFileInfo(binaryFile.ImagePath);
+        binaryFile.TimeStamp = binInfo.TimeStamp;
+      }
+
+      //Trace.WriteLine($"Start download of {Utils.TryGetFileName(binaryFile.ImageName)}");
+      result = symbolReader.FindExecutableFilePath(binaryFile.ImageName,
+                                                   binaryFile.TimeStamp,
+                                                   (int)binaryFile.ImageSize);
+
+      if (result == null) {
+        // Manually search in the provided directories.
+        // This helps in cases where the original fine name doesn't match
+        // the one on disk, like it seems to happen sometimes with the SPEC runner.
+        string winPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        string sysPath = Environment.GetFolderPath(Environment.SpecialFolder.System);
+        string sysx86Path = Environment.GetFolderPath(Environment.SpecialFolder.SystemX86);
+
+        // Don't search in the system dirs though, it's pointless
+        // and takes a long time checking thousands of binaries.
+        bool PathIsSubPath(string subPath, string basePath) {
+          string rel = Path.GetRelativePath(basePath, subPath);
+          return !rel.StartsWith('.') && !Path.IsPathRooted(rel);
         }
 
-        string userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(settings);
-
-        //? TODO: Making a new instance clears the "dead servers",
-        //? have a way to share the list between multiple instances.
-        using var symbolReader = new SymbolReader(logWriter, userSearchPath);
-        symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
-
-        //? TODO: Workaround for cases where the ETL file doesn't have a timestamp
-        //? and SymbolReader would reject the bin even on the same machine...
-        //? Better way to handle this is to have SymReader accept a func to check if PDB is valid to use
-        if (binaryFile.TimeStamp == 0 && File.Exists(binaryFile.ImagePath)) {
-          var binInfo = GetBinaryFileInfo(binaryFile.ImagePath);
-          binaryFile.TimeStamp = binInfo.TimeStamp;
-        }
-
-        //Trace.WriteLine($"Start download of {Utils.TryGetFileName(binaryFile.ImageName)}");
-        result = symbolReader.FindExecutableFilePath(binaryFile.ImageName,
-                                                     binaryFile.TimeStamp,
-                                                     (int)binaryFile.ImageSize);
-
-        if (result == null) {
-          // Manually search in the provided directories.
-          // This helps in cases where the original fine name doesn't match
-          // the one on disk, like it seems to happen sometimes with the SPEC runner.
-          string winPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-          string sysPath = Environment.GetFolderPath(Environment.SpecialFolder.System);
-          string sysx86Path = Environment.GetFolderPath(Environment.SpecialFolder.SystemX86);
-
-          // Don't search in the system dirs though, it's pointless
-          // and takes a long time checking thousands of binaries.
-          bool PathIsSubPath(string subPath, string basePath) {
-            string rel = Path.GetRelativePath(basePath, subPath);
-            return !rel.StartsWith('.') && !Path.IsPathRooted(rel);
+        foreach (string path in settings.SymbolPaths) {
+          if (PathIsSubPath(path, winPath) ||
+              PathIsSubPath(path, sysPath) ||
+              PathIsSubPath(path, sysx86Path)) {
+            continue;
           }
 
-          foreach (string path in settings.SymbolPaths) {
-            if (PathIsSubPath(path, winPath) ||
-                PathIsSubPath(path, sysPath) ||
-                PathIsSubPath(path, sysx86Path)) {
-              continue;
-            }
+          try {
+            string searchPath = Utils.TryGetDirectoryName(path);
 
-            try {
-              string searchPath = Utils.TryGetDirectoryName(path);
+            foreach (string file in Directory.EnumerateFiles(searchPath, "*.*", SearchOption.TopDirectoryOnly)) {
+              if (!Utils.IsBinaryFile(file)) {
+                continue;
+              }
 
-              foreach (string file in Directory.EnumerateFiles(searchPath, "*.*", SearchOption.TopDirectoryOnly)) {
-                if (!Utils.IsBinaryFile(file)) {
-                  continue;
-                }
+              var fileInfo = GetBinaryFileInfo(file);
 
-                var fileInfo = GetBinaryFileInfo(file);
-
-                if (fileInfo != null &&
-                    fileInfo.TimeStamp == binaryFile.TimeStamp &&
-                    fileInfo.ImageSize == binaryFile.ImageSize) {
-                  result = file;
-                  break;
-                }
+              if (fileInfo != null &&
+                  fileInfo.TimeStamp == binaryFile.TimeStamp &&
+                  fileInfo.ImageSize == binaryFile.ImageSize) {
+                result = file;
+                break;
               }
             }
-            catch (Exception ex) {
-              Trace.TraceError($"Exception searching for binary {binaryFile.ImageName} in {path}: {ex.Message}");
-            }
+          }
+          catch (Exception ex) {
+            Trace.TraceError($"Exception searching for binary {binaryFile.ImageName} in {path}: {ex.Message}");
           }
         }
       }
-      catch (Exception ex) {
-        Trace.TraceError($"Failed FindExecutableFilePath: {ex.Message}");
-      }
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed FindExecutableFilePath: {ex.Message}");
+    }
 #if DEBUG
-      Trace.WriteLine($">> TraceEvent FindExecutableFilePath for {binaryFile.ImageName}");
-      Trace.WriteLine(logWriter.ToString());
-      Trace.WriteLine("<< TraceEvent");
+    Trace.WriteLine($">> TraceEvent FindExecutableFilePath for {binaryFile.ImageName}");
+    Trace.WriteLine(logWriter.ToString());
+    Trace.WriteLine("<< TraceEvent");
 #endif
-      BinaryFileSearchResult searchResult;
 
-      if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
-        // Read the binary info from the local file to fill in all fields.
-        binaryFile = GetBinaryFileInfo(result);
-        searchResult = BinaryFileSearchResult.Success(binaryFile, result, logWriter.ToString());
-      }
-      else {
-        searchResult = BinaryFileSearchResult.Failure(binaryFile, logWriter.ToString());
-      }
+    if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
+      // Read the binary info from the local file to fill in all fields.
+      binaryFile = GetBinaryFileInfo(result);
+      searchResult = BinaryFileSearchResult.Success(binaryFile, result, logWriter.ToString());
+    }
+    else {
+      searchResult = BinaryFileSearchResult.Failure(binaryFile, logWriter.ToString());
+    }
 
-      resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
-      return searchResult;
-    }).ConfigureAwait(false);
+    resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
+    return searchResult;
   }
 
   public bool Initialize() {

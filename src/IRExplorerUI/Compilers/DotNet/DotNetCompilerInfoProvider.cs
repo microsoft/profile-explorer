@@ -17,6 +17,6 @@ public class DotNetCompilerInfoProvider : ASMCompilerInfoProvider {
   public override string OpenDebugFileFilter => "Debug Files|*.json|All Files|*.*";
 
   public override async Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
-    document.DebugInfoFile = await FindDebugInfoFile(modulePath);
+    document.DebugInfoFile = await FindDebugInfoFileAsync(modulePath);
   }
 }
