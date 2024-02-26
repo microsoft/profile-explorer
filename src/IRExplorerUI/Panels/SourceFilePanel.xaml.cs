@@ -56,11 +56,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     set {
       base.Session = value;
       ProfileTextView.Session = value;
-
-      if (value != null) {
-        sourceFileFinder_ = value.CompilerInfo.SourceFileFinder;
-        Settings = App.Settings.SourceFileSettings;
-      }
+      Settings = App.Settings.SourceFileSettings;
     }
   }
 
@@ -68,6 +64,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     get => settings_;
     set {
       settings_ = value;
+      sourceFileFinder_ = Session.CompilerInfo.SourceFileFinder;
       ProfileTextView.TextView.Initialize(App.Settings.DocumentSettings, Session);
 
       if (!settings_.SyncWithDocument) {
@@ -210,7 +207,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
           Settings = newSettings;
-          ReloadSourceFile();
+          await ReloadSourceFile();
           App.Settings.SourceFileSettings = newSettings;
 
           if (commit) {

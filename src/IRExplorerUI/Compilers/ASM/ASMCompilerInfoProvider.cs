@@ -25,13 +25,11 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   private readonly DummySectionStyleProvider styles_ = new DummySectionStyleProvider();
   private readonly DefaultRemarkProvider remarks_;
   private readonly ASMCompilerIRInfo ir_;
-  private readonly SourceFileFinder sourceFileFinder_;
 
   public ASMCompilerInfoProvider(IRMode mode, ISession session) {
     session_ = session;
     remarks_ = new DefaultRemarkProvider(this);
     ir_ = new ASMCompilerIRInfo(mode);
-    sourceFileFinder_ = new SourceFileFinder(session);
   }
 
   public virtual string CompilerIRName => "ASM";
@@ -45,7 +43,8 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   public INameProvider NameProvider => names_;
   public ISectionStyleProvider SectionStyleProvider => styles_;
   public IRRemarkProvider RemarkProvider => remarks_;
-  public SourceFileFinder SourceFileFinder => sourceFileFinder_;
+  // Recreate SourceFileFinder on each request to use updated settings.
+  public SourceFileFinder SourceFileFinder => new SourceFileFinder(session_);
   public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>();
   public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>();
   public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>();
