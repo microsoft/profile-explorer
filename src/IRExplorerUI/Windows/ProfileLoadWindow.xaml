@@ -703,7 +703,13 @@
                                         Margin="0,8,0,0"
                                         Content="Include __NT__SYMBOL__PATH environment variable"
                                         IsChecked="{Binding Path=SymbolSettings.UseEnvironmentVarSymbolPaths, Mode=TwoWay}"
-                                        ToolTip="{Binding Path=SymbolSettings.EnvironmentVarSymbolPath}" />
+                                        ToolTip="Append the NT__SYMBOL__PATH environment variable to the list of sources" />
+                                    <CheckBox
+                                      Margin="0,4,0,0"
+                                      Content="Don't load symbols for very low sample modules"
+                                      IsChecked="{Binding Path=SymbolSettings.SkipLowSampleModules, Mode=TwoWay}"
+                                      ToolTip="Skip downloading and loading of symbols for insignificant modules with very few samples" />
+
                                     <Grid Margin="0,4,0,0">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="*" />

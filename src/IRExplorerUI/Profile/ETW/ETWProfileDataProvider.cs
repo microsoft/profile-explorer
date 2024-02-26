@@ -569,27 +569,38 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     int imageLimit = imageList.Count;
 
+    // Find the modules with samples, sorted by sample count.
+    // Used to skip loading of insignificant modules with few samples.
+    var topModules = CollectTopModules(rawProfile, mainProcess);
+    int moduleSampleCutOff = symbolSettings.SkipLowSampleModules ?
+      SymbolFileSourceSettings.LowSampleModuleCutoff : 0;
+
     // Locate the referenced binary files in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.
     UpdateProgress(progressCallback, ProfileLoadStage.BinaryLoading, imageLimit, 0);
     var binTaskList = new Task<BinaryFileSearchResult>[imageLimit];
     var pdbTaskList = new Task<DebugFileSearchResult>[imageLimit];
 
-    var topModules = CollectTopModules(rawProfile, mainProcess);
-    int moduleSampleCutOff = 10;
+    // Start downloading binaries.
+    var binTaskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
+    var binTaskFactory = new TaskFactory(binTaskScheduler.ConcurrentScheduler);
 
     for (int i = 0; i < imageLimit; i++) {
       if (!IsAcceptedModule(imageList[i])) {
         continue;
       }
 
+      // Accept only images that have any samples from
+      // all the images ones loaded in the process.
       int moduleIndex = topModules.FindIndex(pair => pair.Item1 == imageList[i]);
-
       bool acceptModule = moduleIndex >= 0;
       if(!acceptModule) continue;
 
       var binaryFile = FromProfileImage(imageList[i]);
-      binTaskList[i] = PEBinaryInfoProvider.LocateBinaryFile(binaryFile, symbolSettings);
+
+      binTaskList[i] = binTaskFactory.StartNew(() => {
+        return PEBinaryInfoProvider.LocateBinaryFile(binaryFile, symbolSettings).Result;
+      });
     }
 
     // Determine the compiler target for the new session.
@@ -641,73 +652,71 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     // Locate the needed debug files, in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.
-    if (true) {
-      int pdbCount = 0;
-      var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 8);
-      var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
+    int pdbCount = 0;
+    var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
+    var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
 
-      for (int i = 0; i < imageLimit; i++) {
-        if (cancelableTask is {IsCanceled: true}) {
-          return;
-        }
+    for (int i = 0; i < imageLimit; i++) {
+      if (cancelableTask is {IsCanceled: true}) {
+        return;
+      }
 
-        if (binTaskList[i] == null) {
-          rejectedDebugModules_.Add(imageList[i]);
-          continue; // Rejected module.
-        }
+      if (binTaskList[i] == null) {
+        rejectedDebugModules_.Add(imageList[i]);
+        continue; // Rejected module.
+      }
 
-        var binaryFile = await binTaskList[i].ConfigureAwait(false);
+      var binaryFile = await binTaskList[i].ConfigureAwait(false);
 
-        int moduleIndex = topModules.FindIndex(pair => pair.Item1 == imageList[i]);
-        bool acceptModule = moduleIndex >= 0 &&
-                            (moduleIndex < 10 || (topModules[moduleIndex].SampleCount > moduleSampleCutOff));
+      int moduleIndex = topModules.FindIndex(pair => pair.Item1 == imageList[i]);
+      bool acceptModule = moduleIndex >= 0 &&
+                          (topModules[moduleIndex].SampleCount > moduleSampleCutOff);
 
-        if (!acceptModule) {
-          rejectedDebugModules_.Add(imageList[i]);
-          continue;
-        }
+      if (!acceptModule) {
+        rejectedDebugModules_.Add(imageList[i]);
+        continue;
+      }
 
-        if (binaryFile is {Found: true}) {
-          pdbCount++;
+      if (binaryFile is {Found: true}) {
+        pdbCount++;
 
+        pdbTaskList[i] = taskFactory.StartNew(() => {
+          return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings).Result;
+        });
+      }
+      else {
+        // Try to use ETL info if binary not available.
+        var symbolFile = rawProfile.GetDebugFileForImage(imageList[i], mainProcess.ProcessId);
+
+        if (symbolFile != null) {
           pdbTaskList[i] = taskFactory.StartNew(() => {
-            return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings).Result;
+            return session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings).Result;
           });
         }
-        else {
-          // Try to use ETL info if binary not available.
-          var symbolFile = rawProfile.GetDebugFileForImage(imageList[i], mainProcess.ProcessId);
-
-          if (symbolFile != null) {
-            pdbTaskList[i] = taskFactory.StartNew(() => {
-              return session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings).Result;
-            });
-          }
-        }
       }
-
-      UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
-      var sw = Stopwatch.StartNew();
-
-      // Wait for the PDBs to be loaded.
-      for (int i = 0; i < imageLimit; i++) {
-        if (cancelableTask is {IsCanceled: true}) {
-          return;
-        }
-
-        if (pdbTaskList[i] != null) {
-          var pdbPath = await pdbTaskList[i].ConfigureAwait(false);
-
-          if (pdbPath.Found) {
-            UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, i,
-                           Utils.TryGetFileName(pdbPath.SymbolFile.FileName));
-          }
-        }
-      }
-
-      UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
-      Trace.WriteLine($"PDB download time: {sw.Elapsed}");
     }
+
+    UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
+    var sw = Stopwatch.StartNew();
+
+    // Wait for the PDBs to be loaded.
+    for (int i = 0; i < imageLimit; i++) {
+      if (cancelableTask is {IsCanceled: true}) {
+        return;
+      }
+
+      if (pdbTaskList[i] != null) {
+        var pdbPath = await pdbTaskList[i].ConfigureAwait(false);
+
+        if (pdbPath.Found) {
+          UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, i,
+                         Utils.TryGetFileName(pdbPath.SymbolFile.FileName));
+        }
+      }
+    }
+
+    UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
+    Trace.WriteLine($"PDB download time: {sw.Elapsed}");
   }
 
   private ProfileModuleBuilder CreateModuleBuilder(ProfileImage image, RawProfileData rawProfile, int processId,

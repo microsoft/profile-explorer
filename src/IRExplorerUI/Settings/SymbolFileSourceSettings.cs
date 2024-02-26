@@ -13,6 +13,8 @@ public class SymbolFileSourceSettings : SettingsBase {
   private const string DefaultSymbolCachePath = @"C:\Symbols";
   private const string DefaultEnvironmentVarSymbolPath = @"_NT_SYMBOL_PATH";
 
+  public const int LowSampleModuleCutoff = 10;
+
   public SymbolFileSourceSettings() {
     Reset();
   }
@@ -27,6 +29,10 @@ public class SymbolFileSourceSettings : SettingsBase {
   public string AuthorizationToken { get; set; }
   [ProtoMember(5)]
   public bool UseEnvironmentVarSymbolPaths { get; set; }
+  [ProtoMember(6)]
+  public bool SkipLowSampleModules { get; set; }
+  [ProtoMember(7)]
+  public string AuthorizationUser { get; set; }
 
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
 
@@ -138,6 +144,7 @@ public class SymbolFileSourceSettings : SettingsBase {
 
     UseEnvironmentVarSymbolPaths = true;
     SourceServerEnabled = true;
+    SkipLowSampleModules = true;
     AddSymbolServer(usePrivateServer: false);
 
     if (ShouldUsePrivateSymbolPath()) {
@@ -155,7 +162,13 @@ public class SymbolFileSourceSettings : SettingsBase {
     SymbolPaths ??= new List<string>();
   }
   protected bool Equals(SymbolFileSourceSettings other) {
-    return Equals(SymbolPaths, other.SymbolPaths) && SourceServerEnabled == other.SourceServerEnabled && AuthorizationTokenEnabled == other.AuthorizationTokenEnabled && AuthorizationToken == other.AuthorizationToken && UseEnvironmentVarSymbolPaths == other.UseEnvironmentVarSymbolPaths;
+    return SymbolPaths.AreEqual(other.SymbolPaths) &&
+           SourceServerEnabled == other.SourceServerEnabled &&
+           AuthorizationTokenEnabled == other.AuthorizationTokenEnabled &&
+           AuthorizationToken == other.AuthorizationToken &&
+           AuthorizationUser == AuthorizationToken &&
+           UseEnvironmentVarSymbolPaths == other.UseEnvironmentVarSymbolPaths &&
+           SkipLowSampleModules == other.SkipLowSampleModules;
   }
 
   public override bool Equals(object obj) {
@@ -172,7 +185,9 @@ public class SymbolFileSourceSettings : SettingsBase {
     return $"SymbolPaths: {SymbolPaths}\n" +
            $"SourceServerEnabled: {SourceServerEnabled}\n" +
            $"AuthorizationTokenEnabled: {AuthorizationTokenEnabled}\n" +
+           $"AuthorizationUser: {AuthorizationUser}\n" +
            $"AuthorizationToken: {AuthorizationToken}\n" +
+           $"SkipLowSampleModules: {SkipLowSampleModules}\n" +
            $"UseEnvironmentVarSymbolPaths: {UseEnvironmentVarSymbolPaths}";
   }
 
