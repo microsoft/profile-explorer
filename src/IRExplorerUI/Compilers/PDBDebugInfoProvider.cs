@@ -88,7 +88,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
     // In case there is a timeout downloading the symbols, try again.
     string symbolSearchPath = ConstructSymbolSearchPath(settings);
-    using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
+    using var authHandler = new BasicAuthenticationHandler(settings);
+    using var symbolReader = new SymbolReader(logWriter, symbolSearchPath, authHandler);
     symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
     try {
@@ -413,7 +414,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     if ((!localFileFound || hasChecksumMismatch) && settings_.SourceServerEnabled) {
       try {
         using var logWriter = new StringWriter();
-        using var symbolReader = new SymbolReader(logWriter,  null, new BasicAuthenticationHandler(settings_));
+        using var authHandler = new BasicAuthenticationHandler(settings_);
+        using var symbolReader = new SymbolReader(logWriter, null, authHandler);
         symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
         using var pdb = symbolReader.OpenNativeSymbolFile(debugFilePath_);
         var sourceLine = pdb.SourceLocationForRva(rva);
@@ -421,23 +423,12 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         Trace.WriteLine($"Query source server for {sourceLine?.SourceFile?.BuildTimeFilePath}");
 
         if (sourceLine?.SourceFile != null) {
-          if (settings_.HasAuthorizationToken) {
-            // SourceLink HTTP personal authentication token.
-            //? TODO: New way for more recent TraceEvent versions:
-            //? https://github.com/microsoft/perfview/blob/main/documentation/TraceEvent/SymbolReader/AzureDevOpsPATAuthenticationExample.cs
-            // string token = $":{options_.AuthorizationToken}";
-            // string tokenB64 = Convert.ToBase64String(Encoding.ASCII.GetBytes(token));
-            // pdb.SymbolReader.AuthorizationHeaderForSourceLink = $"Basic {tokenB64}";
-          }
-
           // Download the source file.
           // The checksum should match, but do a check just in case.
           string filePath = sourceLine.SourceFile.GetSourceFile();
 
           if (File.Exists(filePath)) {
             Trace.WriteLine($"Downloaded source file {filePath}");
-            Trace.WriteLine(logWriter.ToString());
-            Trace.WriteLine("---------------------------------");
             localFilePath = filePath;
             hasChecksumMismatch = !SourceFileChecksumMatchesPDB(sourceFile, localFilePath);
           }
@@ -710,6 +701,8 @@ sealed class BasicAuthenticationHandler : MessageProcessingHandler {
     if (settings_.AuthorizationTokenEnabled) {
       string username = settings_.AuthorizationUser;
       string pat = settings_.AuthorizationToken;
+      Trace.WriteLine($"Using PAT for user {username}, token {new string('*', pat.Length)}");
+
       string headerValue = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{pat}"));
       request.Headers.Add("Authorization", $"Basic {headerValue}");
     }

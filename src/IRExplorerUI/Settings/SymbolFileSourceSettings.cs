@@ -180,11 +180,12 @@ public class SymbolFileSourceSettings : SettingsBase {
     UseEnvironmentVarSymbolPaths = true;
     SourceServerEnabled = true;
     SkipLowSampleModules = true;
-    AddSymbolServer(usePrivateServer: false);
 
     if (ShouldUsePrivateSymbolPath()) {
       AddSymbolServer(usePrivateServer : true);
     }
+
+    AddSymbolServer(usePrivateServer: false);
   }
 
   public SymbolFileSourceSettings Clone() {

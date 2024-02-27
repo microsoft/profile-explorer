@@ -496,7 +496,7 @@
 
                             <StackPanel x:Name="ProfileLoadPanel" Visibility="{Binding IsRecordMode, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                                 <TextBlock Margin="8,8,8,0" Text="Profile data file" />
-                                <Grid Margin="8,4,8,0">
+                                <Grid Margin="8,2,8,0">
                                     <controls:FileSystemTextBox
                                         x:Name="ProfileAutocompleteBox"
                                         Height="22"
@@ -522,7 +522,7 @@
                                 </Grid>
 
                                 <TextBlock Margin="8,4,8,0" Text="Process executable binary" />
-                                <Grid Margin="8,4,8,0">
+                                <Grid Margin="8,2,8,0">
                                     <TextBox
                                         x:Name="BinaryAutocompleteBox"
                                         Height="22"
@@ -683,6 +683,12 @@
                                         Content="Handle CPU performance counter samples"
                                         IsChecked="{Binding Path=Options.IncludePerformanceCounters, Mode=TwoWay}" />
                                     <CheckBox
+                                      Margin="0,4,0,0"
+                                      Content="Download source files from Source Server"
+                                      IsChecked="{Binding Path=SymbolSettings.SourceServerEnabled, Mode=TwoWay}"
+                                      ToolTip="Download source files using the SourceLink info from the symbol files" />
+
+                                    <CheckBox
                                         Margin="0,4,0,0"
                                         Content="Mark source lines in inlined functions"
                                         IsChecked="{Binding Path=Options.MarkInlinedFunctions, Mode=TwoWay}"
@@ -713,7 +719,7 @@
                                             x:Name="SymbolPathsList"
                                             Grid.Row="0"
                                             Grid.Column="0"
-                                            Margin="0,4,4,4"
+                                            Margin="0,8,4,4"
                                             IsTextSearchEnabled="True"
                                             SelectionMode="Extended"
                                             TextSearch.TextPath="Name">
@@ -908,32 +914,39 @@
                                 IsEnabled="{Binding InputControlsEnabled}"
                                 IsExpanded="True">
                                 <Expander.Header>
-                                    <TextBlock FontWeight="Medium" Text="Source files" />
+                                    <TextBlock FontWeight="Medium" Text="Authentication" />
                                 </Expander.Header>
 
                                 <StackPanel>
-                                    <CheckBox
-                                        Margin="0,8,0,0"
-                                        Content="Download source files from Source Server"
-                                        IsChecked="{Binding Path=SymbolSettings.SourceServerEnabled, Mode=TwoWay}"
-                                        ToolTip="Download source files using the SourceLink info from the symbol files" />
 
                                     <CheckBox
                                         x:Name="AuthorizationTokenCheckbox"
-                                        Margin="0,4,0,0"
-                                        Content="Use Source Server authentication token (PAT)"
+                                        Margin="0,8,0,0"
+                                        Content="Use personal authentication token (PAT)"
                                         IsChecked="{Binding Path=SymbolSettings.AuthorizationTokenEnabled, Mode=TwoWay}"
-                                        ToolTip="Personal Authentication Token used with private SourceLink servers" />
+                                        ToolTip="Personal Authentication Token used for symbol and source servers" />
 
-                                    <TextBox
+                                      <TextBlock Text="User/email address" Margin="0,4,0,0"></TextBlock>
+                                      <TextBox
                                         Height="22"
-                                        Margin="20,4,55,0"
+                                        Margin="0,2,8,0"
                                         HorizontalAlignment="Stretch"
                                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                         IsEnabled="{Binding ElementName=AuthorizationTokenCheckbox, Path=IsChecked}"
-                                        Text="{Binding Path=SymbolSettings.AuthorizationToken, Mode=TwoWay}"
+                                        Text="{Binding Path=SymbolSettings.AuthorizationUser, Mode=TwoWay}"
                                         TextWrapping="Wrap" />
+
+                                    <TextBlock Text="Authentication token" Margin="0,4,0,0"></TextBlock>
+                                    <PasswordBox
+                                      local:PasswordHelper.Attach="True"
+                                      local:PasswordHelper.Password="{Binding Path=SymbolSettings.AuthorizationToken, Mode=TwoWay}"
+                                      Height="22"
+                                      Margin="0,2,8,0"
+                                      HorizontalAlignment="Stretch"
+                                      Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                      BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                      IsEnabled="{Binding ElementName=AuthorizationTokenCheckbox, Path=IsChecked}"/>
                                 </StackPanel>
                             </Expander>
                             <Expander
@@ -947,13 +960,13 @@
                                 <StackPanel>
                                     <CheckBox
                                         x:Name="BinarySearchPathsCheckbox"
-                                        Margin="0,4,0,0"
+                                        Margin="0,8,0,0"
                                         Content="Optional binary directories (one per line)"
                                         IsChecked="{Binding Path=Options.BinarySearchPathsEnabled, Mode=TwoWay}" />
                                     <Grid Margin="0,4,0,0">
                                         <TextBox
                                             MinHeight="36"
-                                            Margin="20,4,55,0"
+                                            Margin="20,2,55,0"
                                             HorizontalAlignment="Stretch"
                                             AcceptsReturn="True"
                                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
@@ -971,7 +984,7 @@
                                     <Grid Margin="0,4,0,0">
                                         <TextBox
                                             MinHeight="36"
-                                            Margin="20,4,55,0"
+                                            Margin="20,2,55,0"
                                             HorizontalAlignment="Stretch"
                                             AcceptsReturn="True"
                                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
