@@ -199,6 +199,13 @@ public class ProfileDocumentMarker {
       return null;
     }
 
+    // Check for cases where instead of the source code smth. like
+    // a source server authentication failure response is displayed.
+    if (result.FirstLineIndex > document.LineCount ||
+        result.LastLineIndex > document.LineCount) {
+      return null;
+    }
+
     //? TODO: Pretty hacky approach that makes a fake function
     //? with IR elements to represent each source line.
     var ids = IRElementId.NewFunctionId();
