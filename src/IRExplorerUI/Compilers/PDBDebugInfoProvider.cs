@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -92,14 +93,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
     try {
       Trace.WriteLine($"Start PDB download for {symbolFile.FileName}, {symbolFile.Id}, {symbolFile.Age}");
-
-      if (symbolFile.FileName.Contains("Windows.FileExplorer.Common")) {
-        Utils.WaitForDebugger();
-        Trace.WriteLine("Here");
-      }
-
       result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
-
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");
@@ -419,7 +413,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     if ((!localFileFound || hasChecksumMismatch) && settings_.SourceServerEnabled) {
       try {
         using var logWriter = new StringWriter();
-        using var symbolReader = new SymbolReader(logWriter);
+        using var symbolReader = new SymbolReader(logWriter,  null, new BasicAuthenticationHandler(settings_));
         symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
         using var pdb = symbolReader.OpenNativeSymbolFile(debugFilePath_);
         var sourceLine = pdb.SourceLocationForRva(rva);
@@ -442,8 +436,15 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
           if (File.Exists(filePath)) {
             Trace.WriteLine($"Downloaded source file {filePath}");
+            Trace.WriteLine(logWriter.ToString());
+            Trace.WriteLine("---------------------------------");
             localFilePath = filePath;
             hasChecksumMismatch = !SourceFileChecksumMatchesPDB(sourceFile, localFilePath);
+          }
+          else {
+            Trace.WriteLine($"Failed to download source file {filePath}");
+            Trace.WriteLine(logWriter.ToString());
+            Trace.WriteLine("---------------------------------");
           }
         }
       }
@@ -693,5 +694,30 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       Trace.TraceError($"Failed to get function symbol for {functionName}: {ex.Message}");
       return null;
     }
+  }
+}
+
+sealed class BasicAuthenticationHandler : MessageProcessingHandler {
+  private SymbolFileSourceSettings settings_;
+  public BasicAuthenticationHandler(SymbolFileSourceSettings settings) {
+    settings_ = settings;
+    InnerHandler = new HttpClientHandler();
+  }
+
+  protected override HttpRequestMessage ProcessRequest(HttpRequestMessage request, CancellationToken cancellationToken) {
+    Trace.WriteLine($"HTTP request: {request.RequestUri}, host: {request.RequestUri.Host}");
+
+    if (settings_.AuthorizationTokenEnabled) {
+      string username = settings_.AuthorizationUser;
+      string pat = settings_.AuthorizationToken;
+      string headerValue = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{pat}"));
+      request.Headers.Add("Authorization", $"Basic {headerValue}");
+    }
+
+    return request;
+  }
+
+  protected override HttpResponseMessage ProcessResponse(HttpResponseMessage response, CancellationToken cancellationToken) {
+    return response;
   }
 }
