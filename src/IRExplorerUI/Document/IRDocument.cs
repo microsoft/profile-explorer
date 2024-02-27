@@ -53,7 +53,7 @@ public class IRElementEventArgs : EventArgs {
 public class IRHighlightingEventArgs : EventArgs {
   public HighlightingEventAction Action { get; set; }
   public IRElement Element { get; set; }
-  public HighlightedGroup Group { get; set; }
+  public HighlightedElementGroup Group { get; set; }
   public bool MirrorAction { get; set; }
   public HighlighingType Type { get; set; }
 }
@@ -145,7 +145,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private BlockBackgroundHighlighter blockHighlighter_;
   private BookmarkManager bookmarks_;
   private BlockIR currentBlock_;
-  private HighlightedGroup currentSearchResultGroup_;
+  private HighlightedElementGroup currentSearchResultGroup_;
   private PairHighlightingStyle definitionStyle_;
   private DiffLineHighlighter diffHighlighter_;
   private List<DiffTextSegment> diffSegments_;
@@ -182,7 +182,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private RemarkHighlighter remarkHighlighter_;
   private DelayedAction removeHoveredAction_;
   private Dictionary<TextSearchResult, IRElement> searchResultMap_;
-  private HighlightedGroup searchResultsGroup_;
+  private HighlightedElementGroup searchResultsGroup_;
   private HighlightingStyle selectedBlockStyle_;
   private HashSet<IRElement> selectedElements_;
   private ElementHighlighter selectedHighlighter_;
@@ -626,7 +626,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   public void MarkBlock(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
-    var group = new HighlightedGroup(element, style);
+    var group = new HighlightedElementGroup(element, style);
     margin_.AddBlock(group, raiseEvent);
 
     if (raiseEvent) {
@@ -651,7 +651,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public void MarkElements(IEnumerable<IRElement> elements, Color selectedColor) {
     var style = new HighlightingStyle(selectedColor, null);
-    var group = new HighlightedGroup(style);
+    var group = new HighlightedElementGroup(style);
     group.AddRange(elements);
 
     ClearTemporaryHighlighting();
@@ -666,7 +666,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
 
     ClearTemporaryHighlighting();
-    var group = new HighlightedGroup(element, style);
+    var group = new HighlightedElementGroup(element, style);
     markedHighlighter_.Remove(element);
     markedHighlighter_.Add(group);
     UpdateHighlighting();
@@ -699,7 +699,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element.Id}");
     var highlighter = GetHighlighter(highlightingType);
 
-    var group = new HighlightedGroup(element, style);
+    var group = new HighlightedElementGroup(element, style);
     highlighter.Remove(element);
     highlighter.Add(group);
 
@@ -742,7 +742,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public void MarkTextRange(int offset, int length, Color color) {
     var style = new HighlightingStyle(color, ColorPens.GetPen(Colors.DarkGray));
     var element = CreateDummyElement(offset, length);
-    var group = new HighlightedGroup(element, style);
+    var group = new HighlightedElementGroup(element, style);
     markedHighlighter_.Add(group);
     UpdateHighlighting();
   }
@@ -756,7 +756,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     var style = new HighlightingStyle(color, ColorPens.GetPen(Colors.DarkGray));
     searchResultMap_ = new Dictionary<TextSearchResult, IRElement>(results.Count);
-    searchResultsGroup_ = new HighlightedGroup(style);
+    searchResultsGroup_ = new HighlightedElementGroup(style);
 
     foreach (var result in results) {
       var element = CreateDummyElement(result.Offset, result.Length);
@@ -790,7 +790,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
 
     var style = new HighlightingStyle(color, ColorPens.GetPen(Colors.Black));
-    currentSearchResultGroup_ = new HighlightedGroup(style);
+    currentSearchResultGroup_ = new HighlightedElementGroup(style);
     var element = searchResultMap_[result];
     searchResultsGroup_.Remove(element);
     currentSearchResultGroup_.Add(element);
@@ -1142,8 +1142,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     return overlay;
   }
 
-  public void RemoveElementOverlays(IRElement element) {
-    overlayRenderer_.RemoveAllElementOverlays(element);
+  public void RemoveElementOverlays(IRElement element, object onlyWithTag = null) {
+    overlayRenderer_.RemoveAllElementOverlays(element, onlyWithTag);
   }
 
   public void ClearElementOverlays() {
@@ -1210,7 +1210,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   public void MarkElements(ICollection<ValueTuple<IRElement, Brush>> elementColorPairs) {
-    var colorGroupMap = new Dictionary<Brush, HighlightedGroup>(elementColorPairs.Count);
+    var colorGroupMap = new Dictionary<Brush, HighlightedElementGroup>(elementColorPairs.Count);
     ClearTemporaryHighlighting();
 
     foreach (var pair in elementColorPairs) {
@@ -1219,7 +1219,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
       if (!colorGroupMap.TryGetValue(color, out var group)) {
         var style = new HighlightingStyle(color, null);
-        group = new HighlightedGroup(style);
+        group = new HighlightedElementGroup(style);
         colorGroupMap[color] = group;
       }
 
@@ -1557,7 +1557,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private void MarkElementsOnSourceLine(ElementHighlighter highlighter, int lineNumber, Color selectedColor,
                                         bool raiseEvent, bool bringIntoView, IRExplorerCore.IR.StackFrame inlinee) {
     var style = highlighter == selectedHighlighter_ ? selectedStyle_ : new HighlightingStyle(selectedColor);
-    var group = new HighlightedGroup(style);
+    var group = new HighlightedElementGroup(style);
     IRElement firstTuple = null;
 
     foreach (var block in Function.Blocks) {
@@ -2158,7 +2158,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
 
     // Mark all branches referencing the label.
-    var group = new HighlightedGroup(ssaDefinitionStyle_.ChildStyle);
+    var group = new HighlightedElementGroup(ssaDefinitionStyle_.ChildStyle);
 
     foreach (var predBlock in block.Predecessors) {
       var branchInstr = Session.CompilerInfo.IR.GetTransferInstruction(predBlock);
@@ -2347,7 +2347,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private void HandleOtherElement(IRElement element, ElementHighlighter highlighter,
                                   HighlightingStyle style, HighlightingEventAction action) {
-    var group = new HighlightedGroup(element, style);
+    var group = new HighlightedElementGroup(element, style);
     highlighter.Add(group);
     RaiseElementHighlightingEvent(element, group, highlighter.Type, action);
   }
@@ -2374,7 +2374,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return false;
     }
 
-    var group = new HighlightedGroup(style.ChildStyle);
+    var group = new HighlightedElementGroup(style.ChildStyle);
     group.Add(op);
     group.Add(labelOp);
     highlighter.Add(group);
@@ -2382,26 +2382,26 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     return true;
   }
 
-  private HighlightedGroup HighlightDefinedOperand(IRElement op, IRElement defElement,
+  private HighlightedElementGroup HighlightDefinedOperand(IRElement op, IRElement defElement,
                                                    ElementHighlighter highlighter,
                                                    PairHighlightingStyle style) {
-    var group = new HighlightedGroup(style.ChildStyle);
+    var group = new HighlightedElementGroup(style.ChildStyle);
     group.Add(op);
     group.Add(defElement);
     highlighter.Add(group);
     return group;
   }
 
-  private HighlightedGroup HighlightInstruction(InstructionIR instr, ElementHighlighter highlighter,
+  private HighlightedElementGroup HighlightInstruction(InstructionIR instr, ElementHighlighter highlighter,
                                                 PairHighlightingStyle style) {
-    var group = new HighlightedGroup(instr, style.ParentStyle);
+    var group = new HighlightedElementGroup(instr, style.ParentStyle);
     highlighter.Add(group);
     return group;
   }
 
-  private HighlightedGroup HighlightOperand(IRElement op, ElementHighlighter highlighter,
+  private HighlightedElementGroup HighlightOperand(IRElement op, ElementHighlighter highlighter,
                                             PairHighlightingStyle style) {
-    var group = new HighlightedGroup(op, style.ChildStyle);
+    var group = new HighlightedElementGroup(op, style.ChildStyle);
     highlighter.Add(group);
     return group;
   }
@@ -2412,14 +2412,14 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     if (element is OperandIR op && op.Parent != null) {
       // Also highlight operand's parent instruction.
-      highlighter.Add(new HighlightedGroup(op.Parent, definitionStyle_.ParentStyle));
+      highlighter.Add(new HighlightedElementGroup(op.Parent, definitionStyle_.ParentStyle));
     }
 
     if (element is BlockIR && highlighter.Type == HighlighingType.Hovered) {
-      highlighter.Add(new HighlightedGroup(element, selectedBlockStyle_));
+      highlighter.Add(new HighlightedElementGroup(element, selectedBlockStyle_));
     }
     else {
-      highlighter.Add(new HighlightedGroup(element, definitionStyle_.ChildStyle));
+      highlighter.Add(new HighlightedElementGroup(element, definitionStyle_.ChildStyle));
     }
 
     BringElementIntoView(element);
@@ -2439,7 +2439,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     // Highlight the definition instructions.
     if (highlightDefInstr) {
-      var instrGroup = new HighlightedGroup(style.ParentStyle);
+      var instrGroup = new HighlightedElementGroup(style.ParentStyle);
 
       foreach (var element in defList) {
         instrGroup.Add(element.ParentTuple);
@@ -2449,7 +2449,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
 
     // Highlight the definitions.
-    var group = new HighlightedGroup(op, style.ChildStyle);
+    var group = new HighlightedElementGroup(op, style.ChildStyle);
 
     foreach (var element in defList) {
       group.Add(element);
@@ -2495,7 +2495,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     switch (element) {
       case OperandIR op: {
         //highlighter.Add(new HighlightedGroup(element, style.ForIndex(styleIndex)));
-        highlighter.Add(new HighlightedGroup(element, iteratedDefinitionStyle_.ChildStyle));
+        highlighter.Add(new HighlightedElementGroup(element, iteratedDefinitionStyle_.ChildStyle));
 
         if (level >= maxLevel) {
           return;
@@ -2505,7 +2505,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
         if (sourceDefOp != null) {
           //highlighter.Add(new HighlightedGroup(sourceDefOp, style.ForIndex(styleIndex)));
-          highlighter.Add(new HighlightedGroup(sourceDefOp, iteratedDefinitionStyle_.ChildStyle));
+          highlighter.Add(new HighlightedElementGroup(sourceDefOp, iteratedDefinitionStyle_.ChildStyle));
 
           if (sourceDefOp.ParentInstruction != null) {
             HighlightExpression(sourceDefOp.ParentInstruction, parent, handledElements,
@@ -2518,7 +2518,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       }
       case InstructionIR instr: {
         //highlighter.Add(new HighlightedGroup(instr, instrStyle.ForIndex(styleIndex)));
-        highlighter.Add(new HighlightedGroup(instr, iteratedDefinitionStyle_.ParentStyle));
+        highlighter.Add(new HighlightedElementGroup(instr, iteratedDefinitionStyle_.ParentStyle));
 
         if (level >= maxLevel) {
           return;
@@ -2551,8 +2551,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private void HighlightUsers(OperandIR op, List<IRElement> useList, ElementHighlighter highlighter,
                               PairHighlightingStyle style, HighlightingEventAction action) {
-    var instrGroup = new HighlightedGroup(style.ParentStyle);
-    var useGroup = new HighlightedGroup(style.ChildStyle);
+    var instrGroup = new HighlightedElementGroup(style.ParentStyle);
+    var useGroup = new HighlightedElementGroup(style.ChildStyle);
     useGroup.Add(op);
 
     //? TODO: Implement arrows - either to all uses, or just ones outside view
@@ -2756,7 +2756,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
       if (markerState != null && markerState.Groups != null) {
         foreach (var groupState in markerState.Groups) {
-          var group = new HighlightedGroup(groupState.Style);
+          var group = new HighlightedElementGroup(groupState.Style);
 
           foreach (var item in groupState.Elements) {
             if (item.Value == null) {
@@ -2904,7 +2904,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private void MarkLoopBlocks() {
     var dummyGraph = new Graph(GraphKind.FlowGraph);
     var graphStyle = new FlowGraphStyleProvider(dummyGraph, App.Settings.FlowGraphSettings);
-    var loopGroups = new Dictionary<HighlightingStyle, HighlightedGroup>();
+    var loopGroups = new Dictionary<HighlightingStyle, HighlightedElementGroup>();
 
     foreach (var block in Function.Blocks) {
       var loopTag = block.GetTag<LoopBlockTag>();
@@ -2913,7 +2913,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
         var style = graphStyle.GetBlockNodeStyle(block);
 
         if (!loopGroups.TryGetValue(style, out var group)) {
-          group = new HighlightedGroup(style);
+          group = new HighlightedElementGroup(style);
           loopGroups[style] = group;
         }
 
@@ -3288,7 +3288,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     });
   }
 
-  private void RaiseElementHighlightingEvent(IRElement element, HighlightedGroup group,
+  private void RaiseElementHighlightingEvent(IRElement element, HighlightedElementGroup group,
                                              HighlighingType type, HighlightingEventAction action) {
     ElementHighlighting?.Invoke(this, new IRHighlightingEventArgs {
       Action = action,
@@ -3626,6 +3626,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     // Create the overlay and place it on top of the text.
     overlayRenderer_ ??= new OverlayRenderer(markedHighlighter_);
+    overlayRenderer_.TextFont =  new Typeface(FontFamily, FontStyle,
+                                          FontWeight, FontStretch);
     TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
     TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
 
@@ -3719,7 +3721,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
           if (!markedElements.Contains(elementKindPair)) {
             var style = GetRemarkLineStyle(remark, hasContextFilter);
-            var group = new HighlightedGroup(element, style);
+            var group = new HighlightedElementGroup(element, style);
             remarkHighlighter_.Add(group);
             markedElements.Add(elementKindPair);
           }

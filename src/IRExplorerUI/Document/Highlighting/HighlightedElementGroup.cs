@@ -6,13 +6,13 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI;
 
-public sealed class HighlightedGroup {
-  public HighlightedGroup(HighlightingStyle style) {
+public sealed class HighlightedElementGroup {
+  public HighlightedElementGroup(HighlightingStyle style) {
     Elements = new List<IRElement>();
     Style = style;
   }
 
-  public HighlightedGroup(IRElement element, HighlightingStyle style) : this(style) {
+  public HighlightedElementGroup(IRElement element, HighlightingStyle style) : this(style) {
     Add(element);
   }
 

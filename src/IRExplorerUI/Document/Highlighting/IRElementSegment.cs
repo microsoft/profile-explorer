@@ -29,7 +29,7 @@ public class IRSegment : TextSegment {
 }
 
 public sealed class HighlightedSegmentGroup {
-  public HighlightedSegmentGroup(HighlightedGroup group, bool saveToFile = true) {
+  public HighlightedSegmentGroup(HighlightedElementGroup group, bool saveToFile = true) {
     Group = group;
     Segments = new TextSegmentCollection<IRSegment>();
     SavesStateToFile = saveToFile;
@@ -39,7 +39,7 @@ public sealed class HighlightedSegmentGroup {
     }
   }
 
-  public HighlightedGroup Group { get; set; }
+  public HighlightedElementGroup Group { get; set; }
   public TextSegmentCollection<IRSegment> Segments { get; set; }
   public bool SavesStateToFile { get; set; }
   public Brush BackColor => Group.Style.BackColor;

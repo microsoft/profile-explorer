@@ -29,8 +29,9 @@ public interface IElementOverlay {
   public bool IsSelected { get; set; }
   public bool ShowOnMarkerBar { get; set; }
   public bool SaveStateToFile { get; set; }
+  object Tag { get; set; }
 
-  public void Draw(Rect elementRect, IRElement element,
+  public void Draw(Rect elementRect, IRElement element, Typeface font,
                    IElementOverlay previousOverlay, DrawingContext drawingContext);
 
   public bool CheckIsMouseOver(Point point);

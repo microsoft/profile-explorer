@@ -174,7 +174,7 @@ public class DocumentMargin : AbstractMargin {
     });
   }
 
-  public void AddBlock(HighlightedGroup group, bool saveToFile = true) {
+  public void AddBlock(HighlightedElementGroup group, bool saveToFile = true) {
     foreach (var block in group.Elements) {
       RemoveBlock(block);
       blockElements_.Add(block);

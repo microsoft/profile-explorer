@@ -40,10 +40,12 @@ public interface MarkedDocument {
   public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
                                                        double width, double height,
                                                        string label = null, string tooltip = null);
-  public void RemoveElementOverlays(IRElement element);
+  public void RemoveElementOverlays(IRElement element, object onlyWithTag = null);
 }
 
 public class ProfileDocumentMarker {
+  private static readonly string ProfileOverlayTag = "ProfileTag";
+
   // Templates for the time columns defining the style.
   public static readonly OptionalColumn TimeColumnDefinition =
     OptionalColumn.Template("[TimeHeader]", "TimePercentageColumnValueTemplate",
@@ -298,7 +300,6 @@ public class ProfileDocumentMarker {
 
     // Mark the elements themselves with a color.
     if (column.IsMainColumn && document != null) {
-      //? TODO: This will also remove non-profiling markers the user set, fix.
       document.ClearInstructionMarkers();
 
       if (settings.MarkElements) {
@@ -407,6 +408,7 @@ public class ProfileDocumentMarker {
 
       var icon = pair.HasIndirectCalls ? indirectIcon : directIcon;
       var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16);
+      overlay.Tag = ProfileOverlayTag;
       overlay.Background = color.AsBrush();
       overlay.IsLabelPinned = false;
       overlay.AllowLabelEditing = false;
@@ -501,12 +503,13 @@ public class ProfileDocumentMarker {
       }
 
       // Remove any overlays from a previous marking.
-      document.RemoveElementOverlays(block);
+      document.RemoveElementOverlays(block, ProfileOverlayTag);
 
       bool markOnFlowGraph = settings_.IsSignificantValue(i, weightPercentage);
       string label = $"{weightPercentage.AsTrimmedPercentageString()}";
       string tooltip = settings_.FormatWeightValue(null, weight);
       var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label, tooltip);
+      overlay.Tag = ProfileOverlayTag;
       overlay.Background = color;
       overlay.Border = blockPen;
       overlay.IsLabelPinned = true;
