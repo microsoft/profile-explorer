@@ -21,6 +21,7 @@ public class SourceFileSettings : TextViewSettingsBase {
   public override void Reset() {
     base.Reset();
     InitializeReferenceMembers();
+    ProfileMarkerSettings.JumpToHottestElement = true;
     SyncWithDocument = true;
     FinderSettings.Reset();
   }
