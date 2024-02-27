@@ -601,6 +601,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       var binaryFile = FromProfileImage(imageList[i]);
 
       if (symbolSettings.IsRejectedBinaryFile(binaryFile)) {
+        Trace.WriteLine($"Rejected failed binary: {binaryFile}");
+        rejectedDebugModules_.Add(imageList[i]);
         continue;
       }
 
@@ -687,8 +689,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       var symbolFile = rawProfile.GetDebugFileForImage(imageList[i], mainProcess.ProcessId);
 
       if (symbolFile != null) {
-        Trace.WriteLine($"Using pdb sym: {symbolFile}");
         if (symbolSettings.IsRejectedSymbolFile(symbolFile)) {
+          Trace.WriteLine($"Rejected failed PDB: {symbolFile}");
+          rejectedDebugModules_.Add(imageList[i]);
           continue;
         }
 
@@ -697,7 +700,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         });
       }
       else if (binaryFile is {Found: true}) {
-        Trace.WriteLine($"Using binfile: {binaryFile}");
         pdbCount++;
 
         pdbTaskList[i] = taskFactory.StartNew(() => {
@@ -751,41 +753,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         Trace.WriteLine($"=> Skipped rejected module {image.ModuleName}");
         return imageModule;
       }
-      else {
-        Trace.WriteLine($"=> Accept module {image.ModuleName}");
 
-        if (image.ModuleName.Contains("ahcache")) {
-          foreach (var x in rejectedDebugModules_) {
-            Trace.WriteLine(x.ModuleName);
-          }
-          Trace.WriteLine("-----------------------------");
-        }
-
-        bool found = false;
-
-        foreach (var module in rejectedDebugModules_) {
-          if (module.ModuleName == image.ModuleName) {
-            found = true;
-            Trace.WriteLine($"=> Found match for rejectd {module.ModuleName}");
-            break;
-          }
-        }
-      }
-
-      var sw = Stopwatch.StartNew();
       var debugInfoFile = GetDebugInfoFile(imageModule.ModuleDocument.BinaryFile,
-                                                 image, rawProfile, processId, symbolSettings);
-      sw.Stop();
+                                           image, rawProfile, processId, symbolSettings);
 
       if (!imageModule.InitializeDebugInfo(debugInfoFile).
         ConfigureAwait(false).GetAwaiter().GetResult()) {
         Trace.TraceWarning($"Failed to load debug debugInfo for image: {image.FilePath}");
       }
 
-
-      if(sw.ElapsedMilliseconds > 1000) {
-        Trace.WriteLine($"=> CreateModuleBuilder load for image: {image.FilePath} in {sw.Elapsed}");
-      }
     }
 
     return imageModule;

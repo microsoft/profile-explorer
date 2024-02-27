@@ -122,7 +122,6 @@
                         ToolTip="Copy the mangled function name to the clipboard (C++)">
                     </MenuItem>
                     <MenuItem
-                      IsEnabled="False"
                       Command="{Binding CopyFunctionDetailsCommand}"
                       CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Header="Copy Function Details"

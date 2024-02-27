@@ -143,10 +143,20 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
       return searchResult;
     }
 
-    string result = null;
+    // Quick check if trace was recorded on local machine.
+    string result = FindExactLocalBinaryFile(binaryFile);
+
+    if (result != null) {
+      binaryFile = GetBinaryFileInfo(result);
+      searchResult = BinaryFileSearchResult.Success(binaryFile, result, "");
+      resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
+      return searchResult;
+    }
+
     using var logWriter = new StringWriter();
 
     try {
+      // Try to use symbol server to download binary.
       if (File.Exists(binaryFile.ImagePath)) {
         settings = settings.WithSymbolPaths(binaryFile.ImagePath);
       }
@@ -173,49 +183,8 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
                                                    (int)binaryFile.ImageSize);
 
       if (result == null) {
-        // Manually search in the provided directories.
-        // This helps in cases where the original fine name doesn't match
-        // the one on disk, like it seems to happen sometimes with the SPEC runner.
-        string winPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-        string sysPath = Environment.GetFolderPath(Environment.SpecialFolder.System);
-        string sysx86Path = Environment.GetFolderPath(Environment.SpecialFolder.SystemX86);
-
-        // Don't search in the system dirs though, it's pointless
-        // and takes a long time checking thousands of binaries.
-        bool PathIsSubPath(string subPath, string basePath) {
-          string rel = Path.GetRelativePath(basePath, subPath);
-          return !rel.StartsWith('.') && !Path.IsPathRooted(rel);
-        }
-
-        foreach (string path in settings.SymbolPaths) {
-          if (PathIsSubPath(path, winPath) ||
-              PathIsSubPath(path, sysPath) ||
-              PathIsSubPath(path, sysx86Path)) {
-            continue;
-          }
-
-          try {
-            string searchPath = Utils.TryGetDirectoryName(path);
-
-            foreach (string file in Directory.EnumerateFiles(searchPath, "*.*", SearchOption.TopDirectoryOnly)) {
-              if (!Utils.IsBinaryFile(file)) {
-                continue;
-              }
-
-              var fileInfo = GetBinaryFileInfo(file);
-
-              if (fileInfo != null &&
-                  fileInfo.TimeStamp == binaryFile.TimeStamp &&
-                  fileInfo.ImageSize == binaryFile.ImageSize) {
-                result = file;
-                break;
-              }
-            }
-          }
-          catch (Exception ex) {
-            Trace.TraceError($"Exception searching for binary {binaryFile.ImageName} in {path}: {ex.Message}");
-          }
-        }
+        // Finally, try an approximate manual search.
+        result = FindMatchingLocalBinaryFile(binaryFile, settings);
       }
     }
     catch (Exception ex) {
@@ -238,6 +207,68 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
 
     resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
     return searchResult;
+  }
+
+  private static string FindExactLocalBinaryFile(BinaryFileDescriptor binaryFile) {
+    if (File.Exists(binaryFile.ImagePath)) {
+      var fileInfo = GetBinaryFileInfo(binaryFile.ImagePath);
+
+      if (fileInfo != null &&
+          fileInfo.TimeStamp == binaryFile.TimeStamp &&
+          fileInfo.ImageSize == binaryFile.ImageSize) {
+        return binaryFile.ImagePath;
+      }
+    }
+
+    return null;
+  }
+
+  private static string FindMatchingLocalBinaryFile(BinaryFileDescriptor binaryFile,
+                                                    SymbolFileSourceSettings settings) {
+    // Manually search in the provided directories.
+    // This helps in cases where the original fine name doesn't match
+    // the one on disk, like it seems to happen sometimes with the SPEC runner.
+    string winPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+    string sysPath = Environment.GetFolderPath(Environment.SpecialFolder.System);
+    string sysx86Path = Environment.GetFolderPath(Environment.SpecialFolder.SystemX86);
+
+    // Don't search in the system dirs though, it's pointless
+    // and takes a long time checking thousands of binaries.
+    bool PathIsSubPath(string subPath, string basePath) {
+      string rel = Path.GetRelativePath(basePath, subPath);
+      return !rel.StartsWith('.') && !Path.IsPathRooted(rel);
+    }
+
+    foreach (string path in settings.SymbolPaths) {
+      if (PathIsSubPath(path, winPath) ||
+          PathIsSubPath(path, sysPath) ||
+          PathIsSubPath(path, sysx86Path)) {
+        continue;
+      }
+
+      try {
+        string searchPath = Utils.TryGetDirectoryName(path);
+
+        foreach (string file in Directory.EnumerateFiles(searchPath, "*.*", SearchOption.AllDirectories)) {
+          if (!Utils.IsBinaryFile(file)) {
+            continue;
+          }
+
+          var fileInfo = GetBinaryFileInfo(file);
+
+          if (fileInfo != null &&
+              fileInfo.TimeStamp == binaryFile.TimeStamp &&
+              fileInfo.ImageSize == binaryFile.ImageSize) {
+            return file;
+          }
+        }
+      }
+      catch (Exception ex) {
+        Trace.TraceError($"Exception searching for binary {binaryFile.ImageName} in {path}: {ex.Message}");
+      }
+    }
+
+    return null;
   }
 
   public bool Initialize() {
