@@ -279,6 +279,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void ProfileLoadWindow_Closing(object sender, CancelEventArgs e) {
+    // Don't close the window while profile is loading.
+    if (IsLoadingProfile) {
+      e.Cancel = true;
+      return;
+    }
+
     SaveCurrentOptions();
   }
 

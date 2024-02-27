@@ -333,7 +333,7 @@
 
             <MenuItem
               Click="ShowPanelMenuClicked"
-              Header="Section Panel"
+              Header="Summary Panel"
               Tag="Section" />
             <MenuItem
               Click="ShowPanelMenuClicked"
@@ -430,17 +430,28 @@
             </MenuItem>
             <Separator />
 
-            <MenuItem Command="local:AppCommand.ViewProfileReport" Header="Open profiling report">
+            <MenuItem Command="local:AppCommand.ViewProfileReport" Header="Profiling report">
               <MenuItem.Icon>
                 <Image
                   Width="16"
                   Height="16"
-                  Source="{StaticResource DetailsIcon}" />
+                  Source="{StaticResource ReportIcon}" />
               </MenuItem.Icon>
             </MenuItem>
             <Separator />
 
             <MenuItem
+              Click="ShowPanelMenuClicked"
+              Header="Summary Panel"
+              Tag="Section">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource SummaryIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+              <MenuItem
               Click="ShowPanelMenuClicked"
               Header="Timeline Panel"
               Tag="Timeline">
@@ -509,38 +520,6 @@
             </MenuItem>
             <Separator />
 
-            <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio Extension" />
-
-            <MenuItem Header="IR Kind">
-              <MenuItem.Icon>
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource VersionsIcon}" />
-              </MenuItem.Icon>
-              <MenuItem
-                Name="LLVMMenuItem"
-                Click="LLVMMenuItem_Click"
-                Header="LLVM" />
-              <Separator />
-              <MenuItem
-                Name="ASMMenuItem"
-                Click="ASMMenuItem_Click"
-                Header="ASM x86/x64" />
-              <MenuItem
-                Name="ARM64ASMMenuItem"
-                Click="ARM64ASMMenuItem_Click"
-                Header="ASM ARM64" />
-              <Separator />
-              <MenuItem
-                Name="DotNetMenuItem"
-                Click="DotNetMenuItem_Click"
-                Header=".NET ASM x86/x64" />
-              <MenuItem
-                Name="DotNetARM64MenuItem"
-                Click="DotNetARM64MenuItem_Click"
-                Header=".NET ASM ARM64" />
-            </MenuItem>
             <MenuItem
               Click="MenuItem_Click_6"
               Header="Settings">

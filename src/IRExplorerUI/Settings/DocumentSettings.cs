@@ -44,7 +44,7 @@ public class DocumentSettings : TextViewSettingsBase {
     ShowPreviewPopup = true;
     FilterSourceDefinitions = true;
     FilterDestinationUses = true;
-    DefinitionValueColor = Utils.ColorFromString("#EDE4A6");
+    DefinitionValueColor = Utils.ColorFromString("#EAE4BB");
     UseValueColor = Utils.ColorFromString("#B7E5C6");
     BorderColor = Colors.Black;
     SyntaxHighlightingName = "";
