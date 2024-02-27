@@ -16,7 +16,7 @@ public sealed class TextElementOverlay : ElementOverlayBase {
     base(width, height, marginX, marginY, alignmentX, alignmentY, text, toolTip) {
   }
 
-  public override void Draw(Rect elementRect, IRElement element,
+  public override void Draw(Rect elementRect, IRElement element, Typeface font,
                             IElementOverlay previousOverlay, DrawingContext drawingContext) {
   }
 }

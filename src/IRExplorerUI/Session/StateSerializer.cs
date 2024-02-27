@@ -245,7 +245,7 @@ static class StateSerializer {
     }
 
     foreach (var groupState in groupStates) {
-      var group = new HighlightedGroup(groupState.Style);
+      var group = new HighlightedElementGroup(groupState.Style);
 
       foreach (var item in groupState.Elements) {
         if (item.Value != null) {

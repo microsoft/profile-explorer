@@ -16,6 +16,8 @@ using OxyPlot;
 namespace IRExplorerUI.Profile;
 
 public class SourceDocumentMarker {
+  private static readonly string SourceOverlayTag = "ProfileTag";
+
   private SourceDocumentMarkerSettings settings_;
   private ICompilerInfoProvider irInfo_;
 
@@ -47,6 +49,7 @@ public class SourceDocumentMarker {
           string label = $"{tag.Line}";
           string tooltip = $"Line number for {funcName}";
           var overlay = document.RegisterIconElementOverlay(instr, null, 16, 0, label, tooltip);
+          overlay.Tag = SourceOverlayTag;
           overlay.IsLabelPinned = true;
           overlay.AllowLabelEditing = false;
           overlay.TextColor = settings_.SourceLineTextColor.AsBrush();
@@ -78,6 +81,7 @@ public class SourceDocumentMarker {
           // AppendInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
           var inlineeOverlay =
             document.RegisterIconElementOverlay(instr, null, 16, 0, sb.ToString(), tooltipSb.ToString());
+          inlineeOverlay.Tag = SourceOverlayTag;
           inlineeOverlay.TextColor = settings_.InlineeOverlayTextColor.AsBrush();
           inlineeOverlay.Background = settings_.SourceLineBackColor.AsBrush();
           inlineeOverlay.IsLabelPinned = true;

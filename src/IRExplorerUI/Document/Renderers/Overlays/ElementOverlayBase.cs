@@ -67,8 +67,6 @@ public abstract class ElementOverlayBase : IElementOverlay {
   public double DefaultOpacity { get; set; }
   [ProtoMember(18)]
   public double MouseOverOpacity { get; set; }
-  public bool HasLabel => !string.IsNullOrEmpty(Label);
-  public bool HasToolTip => !string.IsNullOrEmpty(ToolTip);
   [ProtoMember(19)]
   public Brush Background { get; set; }
   [ProtoMember(20)]
@@ -87,12 +85,6 @@ public abstract class ElementOverlayBase : IElementOverlay {
   public double VirtualColumn { get; set; }
   [ProtoMember(27)]
   public string ToolTip { get; set; }
-
-  public IRElement Element {
-    get => elementRef_;
-    set => elementRef_ = value;
-  }
-
   [ProtoMember(5)]
   public double MarginX { get; set; }
   [ProtoMember(6)]
@@ -106,11 +98,21 @@ public abstract class ElementOverlayBase : IElementOverlay {
   public VerticalAlignment AlignmentY { get; set; }
   [ProtoMember(16)]
   public bool ShowOnMarkerBar { get; set; }
-  public bool IsMouseOver { get; set; }
-  public bool IsSelected { get; set; }
   public Rect Bounds { get; set; }
   [ProtoMember(28)]
   public bool SaveStateToFile { get; set; }
+  [ProtoMember(29)]
+  public object Tag { get; set; }
+  public bool IsMouseOver { get; set; }
+  public bool IsSelected { get; set; }
+
+  public IRElement Element {
+    get => elementRef_;
+    set => elementRef_ = value;
+  }
+
+  public bool HasLabel => !string.IsNullOrEmpty(Label);
+  public bool HasToolTip => !string.IsNullOrEmpty(ToolTip);
   protected virtual bool ShowLabel => !string.IsNullOrEmpty(Label) &&
                                       (!ShowLabelOnMouseOverOnly ||
                                        IsLabelPinned || IsMouseOver || IsSelected);
@@ -130,7 +132,7 @@ public abstract class ElementOverlayBase : IElementOverlay {
   protected double ActualWidth => Width + 2 * Padding;
   protected double ActualHeight => Height + 2 * Padding;
 
-  public abstract void Draw(Rect elementRect, IRElement element,
+  public abstract void Draw(Rect elementRect, IRElement element, Typeface font,
                             IElementOverlay previousOverlay, DrawingContext drawingContext);
 
   public virtual bool CheckIsMouseOver(Point point) {
@@ -196,7 +198,7 @@ public abstract class ElementOverlayBase : IElementOverlay {
         return true;
       }
     }
-    
+
     if(e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) {
       // Copy the label to the clipboard.
       if (HasToolTip) {
@@ -221,11 +223,11 @@ public abstract class ElementOverlayBase : IElementOverlay {
     }
   }
 
-  protected Rect DrawLabel(Rect elementRect, double opacity, DrawingContext drawingContext) {
+  protected Rect DrawLabel(Rect elementRect, Typeface font, double opacity, DrawingContext drawingContext) {
     var host = Application.Current.MainWindow; // Used to get DPI.
     double fontSize = TextSize != 0 ? TextSize : App.Settings.DocumentSettings.FontSize;
 
-    var text = DocumentUtils.CreateFormattedText(host, Label, DefaultFont, fontSize,
+    var text = DocumentUtils.CreateFormattedText(host, Label, font, fontSize,
                                                  ActiveTextBrush, TextWeight);
     string[] lines = Label.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None);
     double extraHeight = lines.Length > 1 ? elementRect.Height * (lines.Length - 1) : 0;

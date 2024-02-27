@@ -59,7 +59,7 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
 
   public KnownLayer Layer => KnownLayer.Background;
 
-  public void Add(HighlightedGroup group, bool saveToFile = true) {
+  public void Add(HighlightedElementGroup group, bool saveToFile = true) {
     groups_.Add(new HighlightedSegmentGroup(group, saveToFile));
     Version++;
   }
@@ -69,7 +69,7 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
     Version++;
   }
 
-  public void AddFront(HighlightedGroup group, bool saveToFile = true) {
+  public void AddFront(HighlightedElementGroup group, bool saveToFile = true) {
     groups_.Insert(0, new HighlightedSegmentGroup(group, saveToFile));
     Version++;
   }
@@ -82,7 +82,7 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
     Version++;
   }
 
-  public void Remove(HighlightedGroup group) {
+  public void Remove(HighlightedElementGroup group) {
     for (int i = 0; i < groups_.Count; i++) {
       if (groups_[i].Group == group) {
         groups_.RemoveAt(i);

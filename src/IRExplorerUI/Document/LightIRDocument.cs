@@ -220,7 +220,7 @@ public sealed class LightIRDocument : TextEditor {
     hoverElementMarker_.Clear();
 
     if (element != null) {
-      hoverElementMarker_.Add(new HighlightedGroup(element, hoverElementStyle_));
+      hoverElementMarker_.Add(new HighlightedElementGroup(element, hoverElementStyle_));
       ForceCursor = true;
       Cursor = Cursors.Arrow;
     }
@@ -351,7 +351,7 @@ public sealed class LightIRDocument : TextEditor {
       return;
     }
 
-    var defElements = new HighlightedGroup(elementStyle_);
+    var defElements = new HighlightedElementGroup(elementStyle_);
     updateHighlightingTask_ = new CancelableTask();
 
     await Task.Run(() => {
@@ -419,7 +419,7 @@ public sealed class LightIRDocument : TextEditor {
   }
 
   private void HighlightSearchResults(List<TextSearchResult> searchResults) {
-    var group = new HighlightedGroup(searchResultStyle_);
+    var group = new HighlightedElementGroup(searchResultStyle_);
 
     foreach (var result in searchResults) {
       int line = Document.GetLineByOffset(result.Offset).LineNumber;

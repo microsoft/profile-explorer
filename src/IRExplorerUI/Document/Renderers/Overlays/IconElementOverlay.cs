@@ -48,7 +48,7 @@ public sealed class IconElementOverlay : ElementOverlayBase {
     };
   }
 
-  public override void Draw(Rect elementRect, IRElement element,
+  public override void Draw(Rect elementRect, IRElement element, Typeface font,
                             IElementOverlay previousOverlay, DrawingContext drawingContext) {
     double x = ComputePositionX(elementRect, previousOverlay);
     double y = ComputePositionY(elementRect, previousOverlay);
@@ -61,14 +61,14 @@ public sealed class IconElementOverlay : ElementOverlayBase {
         Bounds = Utils.SnapRectToPixels(Bounds.X + Bounds.Width, Bounds.Y, 0, Bounds.Height);
       }
 
-      Bounds = DrawLabel(Bounds, opacity, drawingContext);
+      Bounds = DrawLabel(Bounds, font, opacity, drawingContext);
     }
 
     if (Icon != null) {
       DrawBackground(Bounds, opacity, drawingContext);
       Icon.Draw(x + 1, y - 1, Width, Width, iconHeight, opacity, drawingContext);
     }
-    
+
     // For debugging, border around whole element.
     // drawingContext.DrawRectangle(Brushes.Transparent, ColorPens.GetPen(Colors.Red), elementRect);
   }

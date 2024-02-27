@@ -28,8 +28,7 @@ public class ElementOverlayState {
 }
 
 public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
-  private static readonly Typeface DefaultFont = new Typeface("Consolas");
-  private TextView TextView;
+  private TextView textView_;
   private ElementHighlighter highlighter_;
   private ConnectedElement rootConnectedElement_;
   private List<ConnectedElement> connectedElements_;
@@ -54,6 +53,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   }
 
   public int Version { get; set; }
+  public Typeface TextFont { get; set; }
   public KnownLayer Layer => KnownLayer.Background;
 
   public void AddElementOverlay(IRElement element, IElementOverlay overlay) {
@@ -70,10 +70,20 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     }
   }
 
-  public bool RemoveAllElementOverlays(IRElement element) {
+  public bool RemoveAllElementOverlays(IRElement element, object onlyWithTag = null) {
     if (overlaySegmentMap_.TryGetValue(element, out var segment)) {
-      overlaySegmentMap_.Remove(element);
-      overlaySegments_.Remove(segment);
+      if(onlyWithTag != null) {
+        segment.Overlays.RemoveAll(overlay => overlay.Tag == onlyWithTag);
+      }
+      else {
+        segment.Overlays.Clear();
+      }
+
+      if (segment.Overlays.Count == 0) {
+        overlaySegmentMap_.Remove(element);
+        overlaySegments_.Remove(segment);
+      }
+
       Version++;
       return true;
     }
@@ -139,14 +149,14 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     if (hoveredOverlay_ != null) {
       hoveredOverlay_.IsMouseOver = false;
       hoveredOverlay_ = null;
-      TextView.Redraw();
+      textView_.Redraw();
     }
   }
 
   public bool KeyPressed(KeyEventArgs e) {
     if (selectedOverlay_ != null) {
       if (selectedOverlay_.KeyPressed(e)) {
-        TextView.Redraw(); // Force refresh
+        textView_.Redraw(); // Force refresh
         return true;
       }
     }
@@ -158,14 +168,14 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     Children.Clear();
     ClearConnectedElements();
     ClearElementOverlays();
-    TextView?.Redraw();
+    textView_?.Redraw();
     Version++;
   }
 
   public void ClearElementOverlays() {
     overlaySegments_.Clear();
     overlaySegmentMap_.Clear();
-    TextView?.Redraw();
+    textView_?.Redraw();
   }
 
   public void Add(Visual drawingVisual) {
@@ -223,7 +233,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
       return;
     }
 
-    TextView = textView;
+    textView_ = textView;
     Width = textView.RenderSize.Width;
     Height = textView.RenderSize.Height;
     Children.Clear();
@@ -245,7 +255,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     IElementOverlay hoverPrevOverlay = null;
     IElementOverlay selectedPrevOverlay = null;
 
-    foreach (var segment in overlaySegments_.FindOverlappingSegments(TextView)) {
+    foreach (var segment in overlaySegments_.FindOverlappingSegments(textView_)) {
       bool isBlockElement = segment.Element is BlockIR;
       IElementOverlay prevOverlay = null;
 
@@ -267,7 +277,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
             continue;
           }
 
-          overlay.Draw(rect, segment.Element, prevOverlay, overlayDC);
+          overlay.Draw(rect, segment.Element, TextFont, prevOverlay, overlayDC);
           prevOverlay = overlay;
         }
 
@@ -280,11 +290,11 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     }
 
     if (selectedSegment != null) {
-      selectedSegment.Item1.Draw(selectedSegment.Item3, selectedSegment.Item2, selectedPrevOverlay, overlayDC);
+      selectedSegment.Item1.Draw(selectedSegment.Item3, selectedSegment.Item2, TextFont, selectedPrevOverlay, overlayDC);
     }
 
     if (hoverSegment != null) {
-      hoverSegment.Item1.Draw(hoverSegment.Item3, hoverSegment.Item2, hoverPrevOverlay, overlayDC);
+      hoverSegment.Item1.Draw(hoverSegment.Item3, hoverSegment.Item2, TextFont, hoverPrevOverlay, overlayDC);
     }
 
     double dotSize = 3;
@@ -464,13 +474,13 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   }
 
   private void HandleMouseMoved(Point point, MouseEventArgs e) {
-    if (overlaySegments_.Count == 0 || TextView == null) {
+    if (overlaySegments_.Count == 0 || textView_ == null) {
       return;
     }
 
     IElementOverlay hoverOverlay = null;
 
-    foreach (var segment in overlaySegments_.FindOverlappingSegments(TextView)) {
+    foreach (var segment in overlaySegments_.FindOverlappingSegments(textView_)) {
       if (hoverOverlay != null) {
         break;
       }
@@ -498,19 +508,19 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
       }
 
       HideTooltip();
-      TextView.Redraw();
+      textView_.Redraw();
     }
   }
 
   private bool HandleMouseClicked(Point point, MouseEventArgs e) {
-    if (overlaySegments_.Count == 0 || TextView == null) {
+    if (overlaySegments_.Count == 0 || textView_ == null) {
       return false;
     }
 
     IElementOverlay hoverOverlay = null;
     bool redraw = false;
 
-    foreach (var segment in overlaySegments_.FindOverlappingSegments(TextView)) {
+    foreach (var segment in overlaySegments_.FindOverlappingSegments(textView_)) {
       if (hoverOverlay != null) {
         break;
       }
@@ -546,7 +556,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     }
 
     if (redraw) {
-      TextView.Redraw();
+      textView_.Redraw();
     }
 
     return hoverOverlay != null;
@@ -557,7 +567,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     IRElement element = null;
     double fontSize = App.Settings.DocumentSettings.FontSize;
 
-    foreach (var segment in group.Segments.FindOverlappingSegments(TextView)) {
+    foreach (var segment in group.Segments.FindOverlappingSegments(textView_)) {
       element = segment.Element;
 
       foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
@@ -573,7 +583,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
           //}
 
           var pen = group.Border ?? ColorPens.GetPen(Colors.Gray);
-          var text = DocumentUtils.CreateFormattedText(textView, label, DefaultFont,
+          var text = DocumentUtils.CreateFormattedText(textView, label, TextFont,
                                                        fontSize, Brushes.Black);
           drawingContext.DrawRectangle(group.BackColor, pen,
                                        Utils.SnapRectToPixels(rect.X + rect.Width + 8, rect.Y,
