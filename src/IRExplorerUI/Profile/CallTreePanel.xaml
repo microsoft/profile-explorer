@@ -427,7 +427,6 @@
             ToolTip="Copy the mangled function name to the clipboard (C++)">
           </MenuItem>
           <MenuItem
-            IsEnabled="False"
             Command="{Binding CopyFunctionDetailsCommand}"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTreeList}"

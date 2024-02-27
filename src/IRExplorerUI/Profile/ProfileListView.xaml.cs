@@ -6,10 +6,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using HtmlAgilityPack;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.Utilities;
@@ -250,8 +252,14 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
   });
   public RelayCommand<object> CopyFunctionDetailsCommand => new RelayCommand<object>(async obj => {
-    if (ItemList.SelectedItem is ProfileListViewItem item) {
-      
+    if (ItemList.SelectedItems.Count > 0) {
+      var funcList = new List<SearchableProfileItem>();
+
+      foreach (var item in ItemList.SelectedItems) {
+        funcList.Add((SearchableProfileItem)item);
+      }
+
+      SearchableProfileItem.CopyFunctionListAsHtml(funcList);
     }
   });
 

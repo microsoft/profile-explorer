@@ -81,7 +81,16 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
   });
   public RelayCommand<object> CopyFunctionDetailsCommand => new RelayCommand<object>(async obj => {
-    if (GraphViewer.SelectedNode is {HasFunction: true}) {
+    if (SelectedNodes.Count > 0) {
+      var funcList = new List<SearchableProfileItem>();
+
+      foreach (var item in SelectedNodes) {
+        if (item.HasFunction) {
+          funcList.Add(item);
+        }
+      }
+
+      SearchableProfileItem.CopyFunctionListAsHtml(funcList);
     }
   });
   public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
@@ -404,7 +413,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     var fgNodes = GraphViewer.SelectNodes(nodes);
-    
+
     if(bringIntoView && fgNodes.Count > 0) {
       BringNodeIntoView(fgNodes[0], fitSize);
     }

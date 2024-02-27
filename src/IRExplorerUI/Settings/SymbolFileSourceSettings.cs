@@ -177,7 +177,7 @@ public class SymbolFileSourceSettings : SettingsBase {
 
     RejectedSymbolFiles.Clear();
     RejectedBinaryFiles.Clear();
-    UseEnvironmentVarSymbolPaths = true;
+    UseEnvironmentVarSymbolPaths = false;
     SourceServerEnabled = true;
     SkipLowSampleModules = true;
 
