@@ -77,7 +77,7 @@ public class SymbolFileSourceSettings : SettingsBase {
       var dir = Utils.TryGetDirectoryName(p);
 
       if(!string.IsNullOrEmpty(dir) && !HasSymbolPath(dir)) {
-        SymbolPaths.Add(dir);
+        SymbolPaths.Insert(0, dir); // Prepend path.
       }
     }
   }
@@ -232,6 +232,12 @@ public class SymbolFileSourceSettings : SettingsBase {
                $"SkipLowSampleModules: {SkipLowSampleModules}\n" +
                $"UseEnvironmentVarSymbolPaths: {UseEnvironmentVarSymbolPaths}\n" +
                $"RejectPreviouslyFailedFiles: {RejectPreviouslyFailedFiles}\n";
+    text += "Symbol paths:\n";
+
+    foreach(var path in SymbolPaths) {
+      text += $" - {path}\n";
+    }
+
     text += $"Rejected binaries: {RejectedBinaryFiles.Count}\n";
 
     foreach (var file in RejectedBinaryFiles) {

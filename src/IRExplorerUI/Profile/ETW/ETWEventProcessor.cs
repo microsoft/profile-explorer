@@ -400,7 +400,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
         }
 
         int stackId = profile.AddStack(stack, context);
-        
+
         // Try to associate with a previous sample from the same context.
         int sampleId = perThreadLastSample.GetValueOrDefault(data.ThreadID);
         long frameIp = (long)data.InstructionPointer(0);
@@ -408,7 +408,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
         //? TODO: Check fmore than the last sample?
         if (!profile.TrySetSampleStack(sampleId, stackId, frameIp, contextId)) {
 #if DEBUG
-          Trace.WriteLine($"Couldn't set stack {stackId} for sample {sampleId}");
+          //Trace.WriteLine($"Couldn't set stack {stackId} for sample {sampleId}");
 #endif
         }
 
