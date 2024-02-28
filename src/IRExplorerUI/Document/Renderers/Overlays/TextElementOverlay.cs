@@ -17,6 +17,7 @@ public sealed class TextElementOverlay : ElementOverlayBase {
   }
 
   public override void Draw(Rect elementRect, IRElement element, Typeface font,
-                            IElementOverlay previousOverlay, DrawingContext drawingContext) {
+                            IElementOverlay previousOverlay, double horizontalOffset,
+                            DrawingContext drawingContext) {
   }
 }

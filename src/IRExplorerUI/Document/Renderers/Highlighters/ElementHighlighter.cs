@@ -168,7 +168,8 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
       else if (segment.Element is TupleIR) {
         // Extend width to cover entire line.
         foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
-          var actualRect = Utils.SnapRectToPixels(rect.X - 1, rect.Y, textView.ActualWidth, rect.Height);
+          var width = textView.ActualWidth + textView.HorizontalOffset;
+          var actualRect = Utils.SnapRectToPixels(rect.X - 1, rect.Y, width, rect.Height);
           geoBuilder.AddRectangle(textView, actualRect);
         }
       }

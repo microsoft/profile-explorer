@@ -49,8 +49,9 @@ public sealed class IconElementOverlay : ElementOverlayBase {
   }
 
   public override void Draw(Rect elementRect, IRElement element, Typeface font,
-                            IElementOverlay previousOverlay, DrawingContext drawingContext) {
-    double x = ComputePositionX(elementRect, previousOverlay);
+                            IElementOverlay previousOverlay, double horizontalOffset,
+                            DrawingContext drawingContext) {
+    double x = ComputePositionX(elementRect, previousOverlay, horizontalOffset);
     double y = ComputePositionY(elementRect, previousOverlay);
     double opacity = ActiveOpacity;
     Bounds = Utils.SnapRectToPixels(x, y, ActualWidth, ComputeHeight(elementRect));
@@ -70,6 +71,6 @@ public sealed class IconElementOverlay : ElementOverlayBase {
     }
 
     // For debugging, border around whole element.
-    // drawingContext.DrawRectangle(Brushes.Transparent, ColorPens.GetPen(Colors.Red), elementRect);
+     drawingContext.DrawRectangle(Brushes.Transparent, ColorPens.GetPen(Colors.Red), elementRect);
   }
 }

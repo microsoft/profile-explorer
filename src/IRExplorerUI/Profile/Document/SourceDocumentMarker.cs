@@ -97,7 +97,7 @@ public class SourceDocumentMarker {
     var settings = App.Settings.DocumentSettings;
     const double lengthPercentile = 0.9; // Consider length of most lines.
     const int overlayMargin = 10; // Distance from instruction end.
-    const int inlineeOverlayMargin = 20;
+    const int inlineeOverlayMargin = 30;
 
     int percentileLength =
       lineLengths.Count > 0 ? lineLengths[(int)Math.Floor(lineLengths.Count * lengthPercentile)] : 0;
