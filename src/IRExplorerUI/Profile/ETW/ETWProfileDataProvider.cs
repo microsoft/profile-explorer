@@ -567,8 +567,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       imageList.AddRange(kernelProc.Images(rawProfile));
     }
 
-    symbolSettings.RejectPreviouslyFailedFiles = true;
-
     int imageLimit = imageList.Count;
 
     // Find the modules with samples, sorted by sample count.

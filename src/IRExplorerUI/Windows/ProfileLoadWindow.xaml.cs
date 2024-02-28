@@ -413,8 +413,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void UpdateRejectedFiles(ProfileDataReport report) {
-    symbolSettings_.RejectPreviouslyFailedFiles = true;
-
     if (symbolSettings_.RejectPreviouslyFailedFiles) {
       foreach (var module in report.Modules) {
         if (!module.HasBinaryLoaded && module.BinaryFileInfo != null) {
@@ -426,7 +424,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         }
       }
 
-      Trace.WriteLine($"New symbol settings ----------------\n{symbolSettings_}");
       App.Settings.SymbolSettings = symbolSettings_;
       App.SaveApplicationSettings();
     }
