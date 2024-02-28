@@ -898,12 +898,13 @@
   <TextBlock  Margin="4,0,0,0" Text="{Binding  SymbolSettings.RejectedSymbolFiles.Count}" VerticalAlignment="Center"></TextBlock>
   <Button
     Height="22"
-    Margin="24,0,0,0"
+    Margin="16,0,0,0"
     Padding="4,2,4,2"
     HorizontalAlignment="Right"
     VerticalAlignment="Center"
     Click="ClearRejectedButton_Click"
     Content="Clear"
+    ToolTip="Reset lists of rejected binaries and symbols"
     IsEnabled="{Binding InputControlsEnabled}" />
 </StackPanel>
                                 </StackPanel>
@@ -926,10 +927,10 @@
                                         IsChecked="{Binding Path=SymbolSettings.AuthorizationTokenEnabled, Mode=TwoWay}"
                                         ToolTip="Personal Authentication Token used for symbol and source servers" />
 
-                                      <TextBlock Text="User/email address" Margin="0,4,0,0"></TextBlock>
+                                      <TextBlock Text="User/email address" Margin="20,8,0,0"></TextBlock>
                                       <TextBox
                                         Height="22"
-                                        Margin="0,2,8,0"
+                                        Margin="20,2,8,0"
                                         HorizontalAlignment="Stretch"
                                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -937,12 +938,12 @@
                                         Text="{Binding Path=SymbolSettings.AuthorizationUser, Mode=TwoWay}"
                                         TextWrapping="Wrap" />
 
-                                    <TextBlock Text="Authentication token" Margin="0,4,0,0"></TextBlock>
+                                    <TextBlock Text="Authentication token" Margin="20,4,0,0"></TextBlock>
                                     <PasswordBox
                                       local:PasswordHelper.Attach="True"
                                       local:PasswordHelper.Password="{Binding Path=SymbolSettings.AuthorizationToken, Mode=TwoWay}"
                                       Height="22"
-                                      Margin="0,2,8,0"
+                                      Margin="20,2,8,0"
                                       HorizontalAlignment="Stretch"
                                       Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                       BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -963,10 +964,8 @@
                                         Margin="0,8,0,0"
                                         Content="Optional binary directories (one per line)"
                                         IsChecked="{Binding Path=Options.BinarySearchPathsEnabled, Mode=TwoWay}" />
-                                    <Grid Margin="0,4,0,0">
                                         <TextBox
-                                            MinHeight="36"
-                                            Margin="20,2,55,0"
+                                            Margin="20,4,55,0"
                                             HorizontalAlignment="Stretch"
                                             AcceptsReturn="True"
                                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
@@ -974,17 +973,14 @@
                                             IsEnabled="{Binding ElementName=BinarySearchPathsCheckbox, Path=IsChecked}"
                                             Text="{Binding Path=Options.BinarySearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
                                             TextWrapping="Wrap" />
-                                    </Grid>
 
                                     <CheckBox
                                         x:Name="BinaryNameWhitelistCheckbox"
                                         Margin="0,8,0,0"
                                         Content="Processed binary whitelist (one per line)"
                                         IsChecked="{Binding Path=Options.BinaryNameWhitelistEnabled, Mode=TwoWay}" />
-                                    <Grid Margin="0,4,0,0">
                                         <TextBox
-                                            MinHeight="36"
-                                            Margin="20,2,55,0"
+                                            Margin="20,4,55,0"
                                             HorizontalAlignment="Stretch"
                                             AcceptsReturn="True"
                                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
@@ -992,7 +988,6 @@
                                             IsEnabled="{Binding ElementName=BinaryNameWhitelistCheckbox, Path=IsChecked}"
                                             Text="{Binding Path=Options.BinaryNameWhitelist, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
                                             TextWrapping="Wrap" />
-                                    </Grid>
                                 </StackPanel>
                             </Expander>
                         </StackPanel>

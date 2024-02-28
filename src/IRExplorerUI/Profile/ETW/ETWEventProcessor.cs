@@ -195,10 +195,10 @@ public sealed partial class ETWEventProcessor : IDisposable {
     ProfileImage lastProfileImage = null;
     long lastProfileImageTime = 0;
 
-    // Info used to associate a sample with the last call stack running on a CPU core.
-    double[] perCoreLastTime = new double[MaxCoreCount];
-    int[] perCoreLastSample = new int[MaxCoreCount];
-    var perCoreLastKernelStack = new (int StackId, long Timestamp)[MaxCoreCount];
+    // Info used to associate a sample with the last call stack running on a thread.
+    var perThreadLastTime = new Dictionary<int, double>();
+    var perThreadLastSample = new Dictionary<int, int>();
+    var perThreadLastKernelStack = new Dictionary<int, (int StackId, long Timestamp)>();
     var perContextLastSample = new Dictionary<int, int>();
     int lastReportedSample = 0;
 
@@ -357,7 +357,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       if (!isKernelStack && !isKernelStackStart) {
         // This is a user mode stack, check if before it an associated
         // kernel mode stack was recorded - if so, merge the two stacks.
-        var lastKernelStack = perCoreLastKernelStack[data.ProcessorNumber];
+        var lastKernelStack = perThreadLastKernelStack.GetValueOrDefault(data.ThreadID);
 
         if (lastKernelStack.StackId != 0 &&
             lastKernelStack.Timestamp == data.EventTimeStampQPC) {
@@ -378,9 +378,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
           kstack.FramePointers = frames;
           kstack.UserModeTransitionIndex = kstackFrameCount; // Frames after index are user mode.
-
-          //? TODO
-          perCoreLastKernelStack[data.ProcessorNumber] = (0, 0); // Clear the last kernel stack.
+          perThreadLastKernelStack[data.ThreadID] = (0, 0); // Clear the last kernel stack.
         }
       }
 
@@ -402,16 +400,9 @@ public sealed partial class ETWEventProcessor : IDisposable {
         }
 
         int stackId = profile.AddStack(stack, context);
-
-        // if (isKernelStack) {
-        //   Trace.WriteLine($"  New KernelStack {stackId} at {data.EventTimeStampQPC}");
-        // }
-        // else {
-        //   Trace.WriteLine($"  New UserStack {stackId} at {data.EventTimeStampQPC}");
-        // }
-
+        
         // Try to associate with a previous sample from the same context.
-        int sampleId = perCoreLastSample[data.ProcessorNumber];
+        int sampleId = perThreadLastSample.GetValueOrDefault(data.ThreadID);
         long frameIp = (long)data.InstructionPointer(0);
 
         //? TODO: Check fmore than the last sample?
@@ -423,7 +414,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
         if (isKernelStack) {
           //Trace.WriteLine($"    register KernelStack {stackId} on CPU {data.ProcessorNumber}");
-          perCoreLastKernelStack[data.ProcessorNumber] = (stackId, data.EventTimeStampQPC);
+          perThreadLastKernelStack[data.ThreadID] = (stackId, data.EventTimeStampQPC);
         }
 
         profile.ReturnStack(stackId);
@@ -440,7 +431,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
       int contextId = profile.AddContext(context);
 
-      int sampleId = perCoreLastSample[data.ProcessorNumber];
+      int sampleId = perThreadLastSample.GetValueOrDefault(data.ThreadID);
       var triggeringEventTimestamp = TimeSpan.FromMilliseconds(data.EventTimeStampRelativeMSec);
 
       // Check if the last sample on the core did not trigger this stack collection
@@ -472,7 +463,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
       int contextId = profile.AddContext(context);
 
-      int sampleId = perCoreLastSample[data.ProcessorNumber];
+      int sampleId = perThreadLastSample.GetValueOrDefault(data.ThreadID);
       var triggeringEventTimestamp = TimeSpan.FromMilliseconds(data.EventTimeStampRelativeMSec);
 
       // Check if the last sample on the core did not trigger this stack collection
@@ -614,13 +605,13 @@ public sealed partial class ETWEventProcessor : IDisposable {
       // it likely means that some samples were lost, use the sampling interval as the weight.
       int cpu = data.ProcessorNumber;
       double timestamp = data.TimeStampRelativeMSec;
-      double weight = timestamp - perCoreLastTime[cpu];
+      double weight = timestamp - perThreadLastTime.GetValueOrDefault(data.ThreadID);
 
       if (weight > samplingIntervalLimitMS_) {
         weight = samplingIntervalMS_;
       }
 
-      perCoreLastTime[cpu] = timestamp;
+      perThreadLastTime[data.ThreadID] = timestamp;
 
       // Skip unknown process.
       if (data.ProcessID < 0) {
@@ -647,7 +638,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       // Trace.WriteLine($"Sample {sampleId}, timestamp {timestamp}, IP {data.InstructionPointer:X} kernel {isKernelCode}, CPU {cpu}, thread {data.ThreadID}");
 
       // Remember the sample, to be matched later with a call stack.
-      perCoreLastSample[cpu] = sampleId;
+      perThreadLastSample[data.ThreadID] = sampleId;
       perContextLastSample[contextId] = sampleId;
 
       // Report progress.

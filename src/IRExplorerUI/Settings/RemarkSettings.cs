@@ -54,8 +54,8 @@ public class RemarkSettings : SettingsBase {
   public bool HasCategoryFilters => CategoryFilter != null && CategoryFilter.Count > 0;
 
   public override void Reset() {
-    ShowRemarks = true;
-    ShowPreviousSections = true;
+    ShowRemarks = false;
+    ShowPreviousSections = false;
     StopAtSectionBoundaries = true;
     SectionHistoryDepth = 4;
     ShowPreviousOptimizationRemarks = true;
