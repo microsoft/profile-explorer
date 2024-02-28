@@ -14,6 +14,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
+using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
@@ -263,10 +264,13 @@ public class ProfileDocumentMarker {
     column.IsVisible = columnSettings.IsColumnVisible(column);
 
     var elementColorPairs = new List<ValueTuple<IRElement, Brush>>(function.TupleCount);
-    var cells = columnData.ColumnValues[column];
+    var cells = columnData.ColumnValues.GetValueOrNull(column);
 
-    foreach (var value in cells) {
-      value.BackColor = settings.PickDefaultBackColor(column);
+    // Empty columns don't have any values, ignore.
+    if (cells != null) {
+      foreach (var value in cells) {
+        value.BackColor = settings.PickDefaultBackColor(column);
+      }
     }
 
     foreach (var tuple in function.AllTuples) {
