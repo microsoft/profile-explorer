@@ -133,7 +133,8 @@ public abstract class ElementOverlayBase : IElementOverlay {
   protected double ActualHeight => Height + 2 * Padding;
 
   public abstract void Draw(Rect elementRect, IRElement element, Typeface font,
-                            IElementOverlay previousOverlay, DrawingContext drawingContext);
+                            IElementOverlay previousOverlay, double horizontalOffset,
+                            DrawingContext drawingContext);
 
   public virtual bool CheckIsMouseOver(Point point) {
     IsMouseOver = Bounds.Contains(point);
@@ -249,7 +250,7 @@ public abstract class ElementOverlayBase : IElementOverlay {
     return labelBounds_;
   }
 
-  protected double ComputePositionX(Rect rect, IElementOverlay previousOveraly) {
+  protected double ComputePositionX(Rect rect, IElementOverlay previousOveraly, double horizontalOffset) {
     if (AlignmentX == HorizontalAlignment.Left) {
       double leftEdgeX = rect.Left;
 
@@ -271,7 +272,9 @@ public abstract class ElementOverlayBase : IElementOverlay {
         rightEdgeX = Math.Max(rect.Right, previousOveraly.Bounds.Right);
       }
 
-      return Utils.SnapToPixels(Math.Max(VirtualColumn, rightEdgeX + MarginX));
+      // Consider the horizontal scrollbar offset change.
+      return Utils.SnapToPixels(Math.Max(VirtualColumn - horizontalOffset,
+                                         rightEdgeX + MarginX - horizontalOffset));
     }
 
     return Utils.SnapToPixels(rect.Left + (rect.Width - ActualWidth) / 2);

@@ -277,7 +277,8 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
             continue;
           }
 
-          overlay.Draw(rect, segment.Element, TextFont, prevOverlay, overlayDC);
+          overlay.Draw(rect, segment.Element, TextFont, prevOverlay,
+                       textView.HorizontalOffset, overlayDC);
           prevOverlay = overlay;
         }
 
@@ -290,11 +291,13 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     }
 
     if (selectedSegment != null) {
-      selectedSegment.Item1.Draw(selectedSegment.Item3, selectedSegment.Item2, TextFont, selectedPrevOverlay, overlayDC);
+      selectedSegment.Item1.Draw(selectedSegment.Item3, selectedSegment.Item2, TextFont,
+                                 selectedPrevOverlay, textView.HorizontalOffset, overlayDC);
     }
 
     if (hoverSegment != null) {
-      hoverSegment.Item1.Draw(hoverSegment.Item3, hoverSegment.Item2, TextFont, hoverPrevOverlay, overlayDC);
+      hoverSegment.Item1.Draw(hoverSegment.Item3, hoverSegment.Item2, TextFont,
+                              hoverPrevOverlay, textView.HorizontalOffset, overlayDC);
     }
 
     double dotSize = 3;

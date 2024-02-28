@@ -32,7 +32,7 @@ public interface IElementOverlay {
   object Tag { get; set; }
 
   public void Draw(Rect elementRect, IRElement element, Typeface font,
-                   IElementOverlay previousOverlay, DrawingContext drawingContext);
+                   IElementOverlay previousOverlay, double horizontalOffset, DrawingContext drawingContext);
 
   public bool CheckIsMouseOver(Point point);
   public bool MouseClicked(MouseEventArgs e);
