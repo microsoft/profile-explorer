@@ -182,13 +182,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     await SelectFunctionInPanel(obj, ToolPanelKind.Source);
   });
   public RelayCommand<object> CopyFunctionNameCommand => new RelayCommand<object>(async obj => {
-    if (obj is TreeNode node && node.Tag is CallTreeListItem childInfo) {
+    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem childInfo) {
       string text = Session.CompilerInfo.NameProvider.GetFunctionName(childInfo.Function);
       Clipboard.SetText(text);
     }
   });
   public RelayCommand<object> CopyDemangledFunctionNameCommand => new RelayCommand<object>(async obj => {
-    if (obj is TreeNode node && node.Tag is CallTreeListItem childInfo) {
+    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem childInfo) {
       var options = FunctionNameDemanglingOptions.Default;
       string text = Session.CompilerInfo.NameProvider.DemangleFunctionName(childInfo.Function, options);
       Clipboard.SetText(text);
@@ -208,7 +208,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   });
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
-    if (obj is TreeNode node && node.Tag is CallTreeListItem childInfo) {
+    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem childInfo) {
       await IRDocumentPopupInstance.ShowPreviewPopup(childInfo.Function,
                                                      $"Function {childInfo.FunctionName}",
                                                      CallTreeList, Session);
@@ -778,33 +778,33 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void ExpandHottestCallPathExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (e.Parameter is TreeNode node) {
+    if (CallTreeList.SelectedItem is TreeNode node) {
       ExpandHottestFunctionPath(node);
     }
   }
 
   private void CollapseCallPathExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (e.Parameter is TreeNode node) {
+    if (CallTreeList.SelectedItem is TreeNode node) {
       CollapseFunctionPath(node);
     }
   }
 
   private async void SelectFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (e.Parameter is TreeNode node) {
+    if (CallTreeList.SelectedItem is TreeNode node) {
       var childInfo = node.Tag as CallTreeListItem;
       await SwitchFunction(childInfo);
     }
   }
 
   private async void OpenFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (e.Parameter is TreeNode node) {
+    if (CallTreeList.SelectedItem is TreeNode node) {
       var childInfo = node.Tag as CallTreeListItem;
       await OpenFunction(childInfo, OpenSectionKind.ReplaceCurrent);
     }
   }
 
   private async void OpenFunctionInNewTab(object sender, ExecutedRoutedEventArgs e) {
-    if (e.Parameter is TreeNode node) {
+    if (CallTreeList.SelectedItem is TreeNode node) {
       var childInfo = node.Tag as CallTreeListItem;
       await OpenFunction(childInfo, OpenSectionKind.NewTabDockRight);
     }
