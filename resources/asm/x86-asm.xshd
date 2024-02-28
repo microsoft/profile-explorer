@@ -33,160 +33,242 @@
             <Word>global</Word>
             <Word>declare</Word>
         </Keywords>
+		
+        <Keywords color="TransferOpcodes">
+			<Word>je</Word>
+			<Word>jne</Word>
+            <Word>jo</Word>
+			<Word>jno</Word>
+			<Word>jb</Word>
+			<Word>jnb</Word>
+			<Word>jz</Word>
+			<Word>jnz</Word>
+			<Word>jbe</Word>
+			<Word>ja</Word>
+			<Word>js</Word>
+			<Word>jns</Word>
+			<Word>jp</Word>
+			<Word>jnp</Word>
+			<Word>jmp</Word>
+			<Word>jl</Word>
+			<Word>jge</Word>
+			<Word>jle</Word>
+			<Word>jg</Word>
+            <Word>ret</Word>
+            <Word>retf</Word>
+            <Word>iret</Word>
+			<Word>int3</Word>
+        </Keywords>
+
+        <Keywords color="CallOpcodes">
+            <Word>call</Word>
+        </Keywords>
 
         <Keywords color="Opcodes">
-			<Word>nop</Word>   
-			<Word>push</Word>  
-			<Word>pop</Word>   
-			<Word>mov</Word>
-			<Word>add</Word>
-			<Word>or</Word>
-			<Word>adc</Word>
-			<Word>sbb</Word>
-			<Word>and</Word>
-			<Word>sub</Word>
-			<Word>xor</Word>
-			<Word>cmp</Word>
-			<Word>daa</Word>
-			<Word>das</Word>
 			<Word>aaa</Word>
+			<Word>aad</Word>
+			<Word>aam</Word>
 			<Word>aas</Word>
-			<Word>inc</Word>
-			<Word>dec</Word>
-			<Word>xchg</Word>
-			<Word>test</Word>
-			<Word>lea</Word>
+			<Word>adc</Word>
+			<Word>adcx</Word>
+			<Word>add</Word>
+			<Word>addpd</Word>
+			<Word>vaddpd</Word>
+			<Word>addps</Word>
+			<Word>vaddps</Word>
+			<Word>addsd</Word>
+			<Word>vaddsd</Word>
+			<Word>addss</Word>
+			<Word>vaddss</Word>
+			<Word>addsubpd</Word>
+			<Word>vaddsubpd</Word>
+			<Word>addsubps</Word>
+			<Word>vaddsubps</Word>
+			<Word>adox</Word>
+			<Word>aesdec</Word>
+			<Word>vaesdec</Word>
+			<Word>aesdeclast</Word>
+			<Word>vaesdeclast</Word>
+			<Word>aesenc</Word>
+			<Word>vaesenc</Word>
+			<Word>aesenclast</Word>
+			<Word>vaesenclast</Word>
+			<Word>aesimc</Word>
+			<Word>vaesimc</Word>
+			<Word>aeskeygenassist</Word>
+			<Word>vaeskeygenassist</Word>
+			<Word>and</Word>
+			<Word>andn</Word>
+			<Word>andnpd</Word>
+			<Word>vandnpd</Word>
+			<Word>andnps</Word>
+			<Word>vandnps</Word>
+			<Word>andpd</Word>
+			<Word>vandpd</Word>
+			<Word>andps</Word>
+			<Word>vandps</Word>
 			<Word>arpl</Word>
+			<Word>bextr</Word>
+			<Word>blendpd</Word>
+			<Word>vblendpd</Word>
+			<Word>blendps</Word>
+			<Word>vblendps</Word>
+			<Word>blendvpd</Word>
+			<Word>vblendvpd</Word>
+			<Word>blendvps</Word>
+			<Word>vblendvps</Word>
+			<Word>blsi</Word>
+			<Word>blsmsk</Word>
+			<Word>blsr</Word>
+			<Word>bndcl</Word>
+			<Word>bndcu</Word>
+			<Word>bndcn</Word>
+			<Word>bndldx</Word>
+			<Word>bndmk</Word>
+			<Word>bndmov</Word>
+			<Word>bndstx</Word>
 			<Word>bound</Word>
-			<Word>clts</Word>
-			<Word>lar</Word>
-			<Word>lgdt</Word>
-			<Word>lidt</Word>
-			<Word>lldt</Word>
-			<Word>lmsw</Word>
-			<Word>lsl</Word>
-			<Word>ltr</Word>
-			<Word>sgdt</Word>
-			<Word>sidt</Word>
-			<Word>sldt</Word>
-			<Word>str</Word>
-			<Word>smsw</Word>
-			<Word>verr</Word>
-			<Word>verw</Word>
-			<Word>ins</Word>
-			<Word>outs</Word>
-			<Word>enter</Word>
-			<Word>leave</Word>
-			<Word>pusha</Word>
-			<Word>popa</Word>
-			<Word>pushad</Word>
-			<Word>popad</Word>
-			<Word>movs</Word>
-			<Word>stos</Word>
-			<Word>lods</Word>
-			<Word>scas</Word>
 			<Word>bsf</Word>
 			<Word>bsr</Word>
-			<Word>aam</Word>
-			<Word>aad</Word>
-			<Word>addps</Word>
-			<Word>addpd</Word>
-			<Word>addsd</Word>
-			<Word>addss</Word>
-			<Word>addsubpd</Word>
-			<Word>addsubps</Word>
-			<Word>andps</Word>
-			<Word>andpd</Word>
-			<Word>andnps</Word>
-			<Word>andnpd</Word>
 			<Word>bswap</Word>
 			<Word>bt</Word>
 			<Word>btc</Word>
 			<Word>btr</Word>
 			<Word>bts</Word>
+			<Word>bzhi</Word>
+			<Word>call</Word>
 			<Word>cbw</Word>
 			<Word>cwde</Word>
+			<Word>cdqe</Word>
+			<Word>clac</Word>
 			<Word>clc</Word>
 			<Word>cld</Word>
 			<Word>clflush</Word>
+			<Word>clflushopt</Word>
 			<Word>cli</Word>
+			<Word>clts</Word>
+			<Word>clwb</Word>
 			<Word>cmc</Word>
-			<Word>cmpps</Word>
-			<Word>cmppd</Word>
-			<Word>cmps</Word>
-			<Word>cmovo</Word>
-			<Word>cmovno</Word>
-			<Word>cmovc</Word>
-			<Word>cmovnc</Word>
-			<Word>cmovz</Word>
-			<Word>cmovnz</Word>
-			<Word>cmovbe</Word>
 			<Word>cmova</Word>
-			<Word>cmovs</Word>
-			<Word>cmovns</Word>
-			<Word>cmovp</Word>
-			<Word>cmovnp</Word>
-			<Word>cmovl</Word>
-			<Word>cmovnl</Word>
-			<Word>cmovng</Word>
+			<Word>cmovae</Word>
+			<Word>cmovb</Word>
+			<Word>cmovbe</Word>
+			<Word>cmovc</Word>
+			<Word>cmove</Word>
 			<Word>cmovg</Word>
+			<Word>cmovge</Word>
+			<Word>cmovl</Word>
+			<Word>cmovle</Word>
+			<Word>cmovna</Word>
+			<Word>cmovnae</Word>
+			<Word>cmovnb</Word>
+			<Word>cmovnbe</Word>
+			<Word>cmovnc</Word>
+			<Word>cmovne</Word>
+			<Word>cmovng</Word>
+			<Word>cmovnge</Word>
+			<Word>cmovnl</Word>
+			<Word>cmovnle</Word>
+			<Word>cmovno</Word>
+			<Word>cmovnp</Word>
+			<Word>cmovns</Word>
+			<Word>cmovnz</Word>
+			<Word>cmovo</Word>
+			<Word>cmovp</Word>
+			<Word>cmovpe</Word>
+			<Word>cmp</Word>
+			<Word>cmppd</Word>
+			<Word>vcmppd</Word>
+			<Word>cmpps</Word>
+			<Word>vcmpps</Word>
+			<Word>cmps</Word>
+			<Word>cmpsb</Word>
+			<Word>cmpsw</Word>
 			<Word>cmpsd</Word>
+			<Word>cmpsq</Word>
+			<Word>vcmpsd</Word>
 			<Word>cmpss</Word>
+			<Word>vcmpss</Word>
 			<Word>cmpxchg</Word>
 			<Word>cmpxchg8b</Word>
-			<Word>blendps</Word>
-			<Word>blendpd</Word>
-			<Word>blendvps</Word>
-			<Word>blendvpd</Word>
-			<Word>crc32</Word>
-			<Word>comiss</Word>
+			<Word>cmpxchg16b</Word>
 			<Word>comisd</Word>
+			<Word>vcomisd</Word>
+			<Word>comiss</Word>
+			<Word>vcomiss</Word>
 			<Word>cpuid</Word>
-			<Word>cvtpi2ps</Word>
-			<Word>cvtpi2pd</Word>
-			<Word>cvtsi2sd</Word>
-			<Word>cvtps2pi</Word>
-			<Word>cvtpd2pi</Word>
-			<Word>cvtsd2si</Word>
-			<Word>cvtps2pd</Word>
-			<Word>cvtpd2ps</Word>
-			<Word>cvtsd2ss</Word>
-			<Word>cvtdq2ps</Word>
-			<Word>cvtps2dq</Word>
-			<Word>cvtpd2dq</Word>
+			<Word>crc32</Word>
 			<Word>cvtdq2pd</Word>
-			<Word>cvttps2dq</Word>
-			<Word>cvttpd2dq</Word>
-			<Word>cvttps2pi</Word>
-			<Word>cvttpd2pi</Word>
+			<Word>vcvtdq2pd</Word>
+			<Word>cvtdq2ps</Word>
+			<Word>vcvtdq2ps</Word>
+			<Word>cvtpd2dq</Word>
+			<Word>vcvtpd2dq</Word>
+			<Word>cvtpd2pi</Word>
+			<Word>cvtpd2ps</Word>
+			<Word>vcvtpd2ps</Word>
+			<Word>cvtpi2pd</Word>
+			<Word>cvtpi2ps</Word>
+			<Word>cvtps2dq</Word>
+			<Word>vcvtps2dq</Word>
+			<Word>cvtps2pd</Word>
+			<Word>vcvtps2pd</Word>
+			<Word>cvtps2pi</Word>
+			<Word>cvtsd2si</Word>
+			<Word>vcvtsd2si</Word>
+			<Word>cvtsd2ss</Word>
+			<Word>vcvtsd2ss</Word>
+			<Word>cvtsi2sd</Word>
+			<Word>vcvtsi2sd</Word>
 			<Word>cvtsi2ss</Word>
+			<Word>vcvtsi2ss</Word>
 			<Word>cvtss2sd</Word>
+			<Word>vcvtss2sd</Word>
 			<Word>cvtss2si</Word>
+			<Word>vcvtss2si</Word>
+			<Word>cvttpd2dq</Word>
+			<Word>vcvttpd2dq</Word>
+			<Word>cvttpd2pi</Word>
+			<Word>cvttps2dq</Word>
+			<Word>vcvttps2dq</Word>
+			<Word>cvttps2pi</Word>
 			<Word>cvttsd2si</Word>
+			<Word>vcvttsd2si</Word>
 			<Word>cvttss2si</Word>
+			<Word>vcvttss2si</Word>
 			<Word>cwd</Word>
 			<Word>cdq</Word>
+			<Word>cqo</Word>
+			<Word>daa</Word>
+			<Word>das</Word>
+			<Word>dec</Word>
 			<Word>div</Word>
-			<Word>divps</Word>
 			<Word>divpd</Word>
+			<Word>vdivpd</Word>
+			<Word>divps</Word>
+			<Word>vdivps</Word>
 			<Word>divsd</Word>
+			<Word>vdivsd</Word>
 			<Word>divss</Word>
-			<Word>dpps</Word>
+			<Word>vdivss</Word>
 			<Word>dppd</Word>
+			<Word>vdppd</Word>
+			<Word>dpps</Word>
+			<Word>vdpps</Word>
 			<Word>emms</Word>
+			<Word>enter</Word>
 			<Word>extractps</Word>
+			<Word>vextractps</Word>
 			<Word>f2xm1</Word>
 			<Word>fabs</Word>
 			<Word>fadd</Word>
 			<Word>faddp</Word>
 			<Word>fiadd</Word>
-			<Word>fiaddp</Word>
 			<Word>fbld</Word>
 			<Word>fbstp</Word>
 			<Word>fchs</Word>
 			<Word>fclex</Word>
 			<Word>fnclex</Word>
-			<Word>fwait</Word>
 			<Word>fcmovb</Word>
 			<Word>fcmove</Word>
 			<Word>fcmovbe</Word>
@@ -195,6 +277,9 @@
 			<Word>fcmovne</Word>
 			<Word>fcmovnbe</Word>
 			<Word>fcmovnu</Word>
+			<Word>fcom</Word>
+			<Word>fcomp</Word>
+			<Word>fcompp</Word>
 			<Word>fcomi</Word>
 			<Word>fcomip</Word>
 			<Word>fucomi</Word>
@@ -264,540 +349,1036 @@
 			<Word>fxam</Word>
 			<Word>fxch</Word>
 			<Word>fxrstor</Word>
+			<Word>fxrstor64</Word>
 			<Word>fxsave</Word>
+			<Word>fxsave64</Word>
 			<Word>fxtract</Word>
 			<Word>fyl2x</Word>
 			<Word>fyl2xp1</Word>
 			<Word>haddpd</Word>
+			<Word>vhaddpd</Word>
 			<Word>haddps</Word>
+			<Word>vhaddps</Word>
 			<Word>hlt</Word>
 			<Word>hsubpd</Word>
+			<Word>vhsubpd</Word>
 			<Word>hsubps</Word>
+			<Word>vhsubps</Word>
 			<Word>idiv</Word>
 			<Word>imul</Word>
 			<Word>in</Word>
+			<Word>inc</Word>
+			<Word>ins</Word>
+			<Word>insb</Word>
+			<Word>insw</Word>
+			<Word>insd</Word>
 			<Word>insertps</Word>
+			<Word>vinsertps</Word>
 			<Word>int</Word>
 			<Word>into</Word>
 			<Word>invd</Word>
 			<Word>invlpg</Word>
+			<Word>invpcid</Word>
+			<Word>iret</Word>
+			<Word>iretd</Word>
+			<Word>iretq</Word>
+			<Word>ja</Word>
+			<Word>jae</Word>
+			<Word>jb</Word>
+			<Word>jbe</Word>
+			<Word>jc</Word>
 			<Word>jcxz</Word>
+			<Word>jecxz</Word>
+			<Word>jrcxz</Word>
+			<Word>je</Word>
+			<Word>jg</Word>
+			<Word>jge</Word>
+			<Word>jl</Word>
+			<Word>jle</Word>
+			<Word>jna</Word>
+			<Word>jnae</Word>
+			<Word>jnb</Word>
+			<Word>jnbe</Word>
+			<Word>jnc</Word>
+			<Word>jne</Word>
+			<Word>jng</Word>
+			<Word>jnge</Word>
+			<Word>jnl</Word>
+			<Word>jnle</Word>
+			<Word>jno</Word>
+			<Word>jnp</Word>
+			<Word>jns</Word>
+			<Word>jnz</Word>
+			<Word>jo</Word>
+			<Word>jp</Word>
+			<Word>jpe</Word>
+			<Word>jpo</Word>
+			<Word>js</Word>
+			<Word>jz</Word>
+			<Word>jmp</Word>
+			<Word>kaddw</Word>
+			<Word>kaddb</Word>
+			<Word>kaddq</Word>
+			<Word>kaddd</Word>
+			<Word>kandnw</Word>
+			<Word>kandnb</Word>
+			<Word>kandnq</Word>
+			<Word>kandnd</Word>
+			<Word>kandw</Word>
+			<Word>kandb</Word>
+			<Word>kandq</Word>
+			<Word>kandd</Word>
+			<Word>kmovw</Word>
+			<Word>kmovb</Word>
+			<Word>kmovq</Word>
+			<Word>kmovd</Word>
+			<Word>knotw</Word>
+			<Word>knotb</Word>
+			<Word>knotq</Word>
+			<Word>knotd</Word>
+			<Word>kortestw</Word>
+			<Word>kortestb</Word>
+			<Word>kortestq</Word>
+			<Word>kortestd</Word>
+			<Word>korw</Word>
+			<Word>korb</Word>
+			<Word>korq</Word>
+			<Word>kord</Word>
+			<Word>kshiftlw</Word>
+			<Word>kshiftlb</Word>
+			<Word>kshiftlq</Word>
+			<Word>kshiftld</Word>
+			<Word>kshiftrw</Word>
+			<Word>kshiftrb</Word>
+			<Word>kshiftrq</Word>
+			<Word>kshiftrd</Word>
+			<Word>ktestw</Word>
+			<Word>ktestb</Word>
+			<Word>ktestq</Word>
+			<Word>ktestd</Word>
+			<Word>kunpckbw</Word>
+			<Word>kunpckwd</Word>
+			<Word>kunpckdq</Word>
+			<Word>kxnorw</Word>
+			<Word>kxnorb</Word>
+			<Word>kxnorq</Word>
+			<Word>kxnord</Word>
+			<Word>kxorw</Word>
+			<Word>kxorb</Word>
+			<Word>kxorq</Word>
+			<Word>kxord</Word>
 			<Word>lahf</Word>
-			<Word>lfence</Word>
+			<Word>lar</Word>
 			<Word>lddqu</Word>
+			<Word>vlddqu</Word>
 			<Word>ldmxcsr</Word>
+			<Word>vldmxcsr</Word>
 			<Word>lds</Word>
 			<Word>lss</Word>
 			<Word>les</Word>
 			<Word>lfs</Word>
 			<Word>lgs</Word>
+			<Word>lea</Word>
+			<Word>leave</Word>
+			<Word>lfence</Word>
+			<Word>lgdt</Word>
+			<Word>lidt</Word>
+			<Word>lldt</Word>
+			<Word>lmsw</Word>
+			<Word>lock</Word>
+			<Word>lods</Word>
+			<Word>lodsb</Word>
+			<Word>lodsw</Word>
+			<Word>lodsd</Word>
+			<Word>lodsq</Word>
 			<Word>loop</Word>
 			<Word>loope</Word>
 			<Word>loopne</Word>
+			<Word>lsl</Word>
+			<Word>ltr</Word>
+			<Word>lzcnt</Word>
 			<Word>maskmovdqu</Word>
+			<Word>vmaskmovdqu</Word>
 			<Word>maskmovq</Word>
-			<Word>mfence</Word>
-			<Word>monitor</Word>
 			<Word>maxpd</Word>
+			<Word>vmaxpd</Word>
 			<Word>maxps</Word>
+			<Word>vmaxps</Word>
 			<Word>maxsd</Word>
+			<Word>vmaxsd</Word>
 			<Word>maxss</Word>
+			<Word>vmaxss</Word>
+			<Word>mfence</Word>
 			<Word>minpd</Word>
+			<Word>vminpd</Word>
 			<Word>minps</Word>
+			<Word>vminps</Word>
 			<Word>minsd</Word>
+			<Word>vminsd</Word>
 			<Word>minss</Word>
-			<Word>mwait</Word>
+			<Word>vminss</Word>
+			<Word>monitor</Word>
+			<Word>mov</Word>
+			<Word>movabs</Word>
 			<Word>movapd</Word>
+			<Word>vmovapd</Word>
 			<Word>movaps</Word>
+			<Word>vmovaps</Word>
 			<Word>movbe</Word>
 			<Word>movd</Word>
-			<Word>movddup</Word>
-			<Word>movdqa</Word>
-			<Word>movdq2q</Word>
-			<Word>movhlps</Word>
-			<Word>movhpd</Word>
-			<Word>movlhps</Word>
-			<Word>movlpd</Word>
-			<Word>movlps</Word>
 			<Word>movq</Word>
+			<Word>vmovd</Word>
+			<Word>vmovq</Word>
+			<Word>movddup</Word>
+			<Word>vmovddup</Word>
+			<Word>movdq2q</Word>
+			<Word>movdqa</Word>
+			<Word>vmovdqa</Word>
+			<Word>vmovdqa32</Word>
+			<Word>vmovdqa64</Word>
 			<Word>movdqu</Word>
-			<Word>movq2dq</Word>
+			<Word>vmovdqu</Word>
+			<Word>vmovdqu8</Word>
+			<Word>vmovdqu16</Word>
+			<Word>vmovdqu32</Word>
+			<Word>vmovdqu64</Word>
+			<Word>movhlps</Word>
+			<Word>vmovhlps</Word>
+			<Word>movhpd</Word>
+			<Word>vmovhpd</Word>
 			<Word>movhps</Word>
-			<Word>movshdup</Word>
+			<Word>vmovhps</Word>
+			<Word>movlhps</Word>
+			<Word>vmovlhps</Word>
+			<Word>movlpd</Word>
+			<Word>vmovlpd</Word>
+			<Word>movlps</Word>
+			<Word>vmovlps</Word>
 			<Word>movmskpd</Word>
+			<Word>vmovmskpd</Word>
 			<Word>movmskps</Word>
-			<Word>movntdqa</Word>
+			<Word>vmovmskps</Word>
 			<Word>movntdq</Word>
+			<Word>vmovntdq</Word>
+			<Word>movntdqa</Word>
+			<Word>vmovntdqa</Word>
 			<Word>movnti</Word>
 			<Word>movntpd</Word>
+			<Word>vmovntpd</Word>
 			<Word>movntps</Word>
+			<Word>vmovntps</Word>
 			<Word>movntq</Word>
-			<Word>movsldup</Word>
-			<Word>movss</Word>
-			<Word>movsx</Word>
-			<Word>movupd</Word>
-			<Word>movups</Word>
-			<Word>movzx</Word>
+			<Word>movq2dq</Word>
+			<Word>movs</Word>
+			<Word>movsb</Word>
+			<Word>movsw</Word>
 			<Word>movsd</Word>
+			<Word>movsq</Word>
+			<Word>vmovsd</Word>
+			<Word>movshdup</Word>
+			<Word>vmovshdup</Word>
+			<Word>movsldup</Word>
+			<Word>vmovsldup</Word>
+			<Word>movss</Word>
+			<Word>vmovss</Word>
+			<Word>movsx</Word>
+			<Word>movsxd</Word>
+			<Word>movupd</Word>
+			<Word>vmovupd</Word>
+			<Word>movups</Word>
+			<Word>vmovups</Word>
+			<Word>movzx</Word>
 			<Word>mpsadbw</Word>
+			<Word>vmpsadbw</Word>
 			<Word>mul</Word>
-			<Word>mulps</Word>
 			<Word>mulpd</Word>
+			<Word>vmulpd</Word>
+			<Word>mulps</Word>
+			<Word>vmulps</Word>
 			<Word>mulsd</Word>
+			<Word>vmulsd</Word>
 			<Word>mulss</Word>
+			<Word>vmulss</Word>
+			<Word>mulx</Word>
+			<Word>mwait</Word>
 			<Word>neg</Word>
+			<Word>nop</Word>
 			<Word>not</Word>
-			<Word>orps</Word>
+			<Word>or</Word>
 			<Word>orpd</Word>
+			<Word>vorpd</Word>
+			<Word>orps</Word>
+			<Word>vorps</Word>
 			<Word>out</Word>
-			<Word>popcnt</Word>
-			<Word>popf</Word>
-			<Word>popfd</Word>
-			<Word>pushf</Word>
-			<Word>pushfd</Word>
-			<Word>rcl</Word>
-			<Word>shl</Word>
-			<Word>shr</Word>
-			<Word>sar</Word>
-			<Word>sfence</Word>
-			<Word>dummy_2</Word>
-			<Word>seto</Word>
-			<Word>setno</Word>
-			<Word>setb</Word>
-			<Word>setnb</Word>
-			<Word>setz</Word>
-			<Word>setnz</Word>
-			<Word>setbe</Word>
-			<Word>seta</Word>
-			<Word>sets</Word>
-			<Word>setns</Word>
-			<Word>setp</Word>
-			<Word>setnp</Word>
-			<Word>setl</Word>
-			<Word>setge</Word>
-			<Word>setle</Word>
-			<Word>setg</Word>
-			<Word>shld</Word>
-			<Word>shrd</Word>
-			<Word>shufps</Word>
-			<Word>shufpd</Word>
-			<Word>sqrtps</Word>
-			<Word>sqrtsd</Word>
-			<Word>sqrtss</Word>
-			<Word>stc</Word>
-			<Word>std</Word>
-			<Word>sti</Word>
-			<Word>stmxcsr</Word>
-			<Word>rcr</Word>
-			<Word>subpd</Word>
-			<Word>subps</Word>
-			<Word>subsd</Word>
-			<Word>subss</Word>
-			<Word>syscall</Word>
-			<Word>sysenter</Word>
-			<Word>sysexit</Word>
-			<Word>sysret</Word>
-			<Word>ucomiss</Word>
-			<Word>ucomisd</Word>
-			<Word>ud2</Word>
-			<Word>wbinvd</Word>
-			<Word>wrmsr</Word>
-			<Word>xadd</Word>
-			<Word>xgetbv</Word>
-			<Word>xlat</Word>
-			<Word>xorps</Word>
-			<Word>xorpd</Word>
-			<Word>xrstor</Word>
-			<Word>xsave</Word>
-			<Word>xsetbv</Word>
-			<Word>pxor</Word>
-			<Word>unpcklps</Word>
-			<Word>unpcklpd</Word>
-			<Word>unpckhps</Word>
-			<Word>unpckhpd</Word>
-			<Word>roundps</Word>
-			<Word>roundpd</Word>
-			<Word>roundss</Word>
-			<Word>roundsd</Word>
-			<Word>rsm</Word>
-			<Word>sahf</Word>
-			<Word>rsqrtps</Word>
-			<Word>rsqrtss</Word>
-			<Word>rdtsc</Word>
-			<Word>rdmsr</Word>
-			<Word>rdpmc</Word>
-			<Word>rdtscp</Word>
-			<Word>rcpps</Word>
-			<Word>rcpss</Word>
-			<Word>invept</Word>
-			<Word>invvpid</Word>
-			<Word>vmclear</Word>
-			<Word>vmcall</Word>
-			<Word>vmlaunch</Word>
-			<Word>vmresume</Word>
-			<Word>vmptrld</Word>
-			<Word>vmptrst</Word>
-			<Word>vmread</Word>
-			<Word>vmwrite</Word>
-			<Word>vmxoff</Word>
-			<Word>vmxon</Word>
-			<Word>por</Word>
-			<Word>prefetchnta</Word>
-			<Word>prefetcht0</Word>
-			<Word>prefetcht1</Word>
-			<Word>prefetcht2</Word>
-			<Word>swapgs</Word>
+			<Word>outs</Word>
+			<Word>outsb</Word>
+			<Word>outsw</Word>
+			<Word>outsd</Word>
 			<Word>pabsb</Word>
 			<Word>pabsw</Word>
 			<Word>pabsd</Word>
+			<Word>vpabsb</Word>
+			<Word>vpabsw</Word>
+			<Word>vpabsd</Word>
+			<Word>packsswb</Word>
+			<Word>packssdw</Word>
+			<Word>vpacksswb</Word>
+			<Word>vpackssdw</Word>
+			<Word>packusdw</Word>
+			<Word>vpackusdw</Word>
+			<Word>packuswb</Word>
+			<Word>vpackuswb</Word>
 			<Word>paddb</Word>
 			<Word>paddw</Word>
 			<Word>paddd</Word>
+			<Word>paddq</Word>
+			<Word>vpaddb</Word>
+			<Word>vpaddw</Word>
+			<Word>vpaddd</Word>
+			<Word>vpaddq</Word>
 			<Word>paddsb</Word>
 			<Word>paddsw</Word>
+			<Word>vpaddsb</Word>
+			<Word>vpaddsw</Word>
 			<Word>paddusb</Word>
 			<Word>paddusw</Word>
+			<Word>vpaddusb</Word>
+			<Word>vpaddusw</Word>
+			<Word>palignr</Word>
+			<Word>vpalignr</Word>
+			<Word>pand</Word>
+			<Word>vpand</Word>
+			<Word>vpandd</Word>
+			<Word>vpandq</Word>
+			<Word>pandn</Word>
+			<Word>vpandn</Word>
+			<Word>vpandnd</Word>
+			<Word>vpandnq</Word>
+			<Word>pause</Word>
+			<Word>pavgb</Word>
+			<Word>pavgw</Word>
+			<Word>vpavgb</Word>
+			<Word>vpavgw</Word>
+			<Word>pblendvb</Word>
+			<Word>vpblendvb</Word>
+			<Word>pblendw</Word>
+			<Word>vpblendw</Word>
+			<Word>pclmulqdq</Word>
+			<Word>vpclmulqdq</Word>
 			<Word>pcmpeqb</Word>
 			<Word>pcmpeqw</Word>
 			<Word>pcmpeqd</Word>
+			<Word>vpcmpeqb</Word>
+			<Word>vpcmpeqw</Word>
+			<Word>vpcmpeqd</Word>
+			<Word>pcmpeqq</Word>
+			<Word>vpcmpeqq</Word>
+			<Word>pcmpestri</Word>
+			<Word>vpcmpestri</Word>
+			<Word>pcmpestrm</Word>
+			<Word>vpcmpestrm</Word>
 			<Word>pcmpgtb</Word>
 			<Word>pcmpgtw</Word>
 			<Word>pcmpgtd</Word>
-			<Word>pcmpestrm</Word>
-			<Word>pcmpestri</Word>
-			<Word>pcmpistrm</Word>
+			<Word>vpcmpgtb</Word>
+			<Word>vpcmpgtw</Word>
+			<Word>vpcmpgtd</Word>
+			<Word>pcmpgtq</Word>
+			<Word>vpcmpgtq</Word>
 			<Word>pcmpistri</Word>
-			<Word>pause</Word>
-			<Word>pshufb</Word>
+			<Word>vpcmpistri</Word>
+			<Word>pcmpistrm</Word>
+			<Word>vpcmpistrm</Word>
+			<Word>pdep</Word>
+			<Word>pext</Word>
+			<Word>pextrb</Word>
+			<Word>pextrd</Word>
+			<Word>pextrq</Word>
+			<Word>vpextrb</Word>
+			<Word>vpextrd</Word>
+			<Word>vpextrq</Word>
+			<Word>pextrw</Word>
+			<Word>vpextrw</Word>
+			<Word>phaddsw</Word>
+			<Word>vphaddsw</Word>
 			<Word>phaddw</Word>
 			<Word>phaddd</Word>
-			<Word>phaddsw</Word>
-			<Word>pmaddubsw</Word>
+			<Word>vphaddw</Word>
+			<Word>vphaddd</Word>
+			<Word>phminposuw</Word>
+			<Word>vphminposuw</Word>
+			<Word>phsubsw</Word>
+			<Word>vphsubsw</Word>
 			<Word>phsubw</Word>
 			<Word>phsubd</Word>
-			<Word>phsubsw</Word>
-			<Word>psignb</Word>
-			<Word>psignw</Word>
-			<Word>psignd</Word>
-			<Word>pmulhrsw</Word>
-			<Word>pblendvb</Word>
-			<Word>ptest</Word>
+			<Word>vphsubw</Word>
+			<Word>vphsubd</Word>
+			<Word>pinsrb</Word>
+			<Word>pinsrd</Word>
+			<Word>pinsrq</Word>
+			<Word>vpinsrb</Word>
+			<Word>vpinsrd</Word>
+			<Word>vpinsrq</Word>
+			<Word>pinsrw</Word>
+			<Word>vpinsrw</Word>
+			<Word>pmaddubsw</Word>
+			<Word>vpmaddubsw</Word>
+			<Word>pmaddwd</Word>
+			<Word>vpmaddwd</Word>
+			<Word>pmaxsw</Word>
+			<Word>pmaxsb</Word>
+			<Word>pmaxsd</Word>
+			<Word>vpmaxsb</Word>
+			<Word>vpmaxsw</Word>
+			<Word>vpmaxsd</Word>
+			<Word>pmaxub</Word>
+			<Word>pmaxuw</Word>
+			<Word>vpmaxub</Word>
+			<Word>vpmaxuw</Word>
+			<Word>pmaxud</Word>
+			<Word>vpmaxud</Word>
+			<Word>vpmaxuq</Word>
+			<Word>pminsw</Word>
+			<Word>pminsb</Word>
+			<Word>vpminsb</Word>
+			<Word>vpminsw</Word>
+			<Word>pminsd</Word>
+			<Word>vpminsd</Word>
+			<Word>vpminsq</Word>
+			<Word>pminub</Word>
+			<Word>pminuw</Word>
+			<Word>vpminub</Word>
+			<Word>vpminuw</Word>
+			<Word>pminud</Word>
+			<Word>vpminud</Word>
+			<Word>vpminuq</Word>
+			<Word>pmovmskb</Word>
+			<Word>vpmovmskb</Word>
 			<Word>pmovsxbw</Word>
 			<Word>pmovsxbd</Word>
 			<Word>pmovsxbq</Word>
 			<Word>pmovsxwd</Word>
 			<Word>pmovsxwq</Word>
 			<Word>pmovsxdq</Word>
-			<Word>pmuldq</Word>
-			<Word>pcmpeqq</Word>
-			<Word>packusdw</Word>
+			<Word>vpmovsxbw</Word>
+			<Word>vpmovsxbd</Word>
+			<Word>vpmovsxbq</Word>
+			<Word>vpmovsxwd</Word>
+			<Word>vpmovsxwq</Word>
+			<Word>vpmovsxdq</Word>
 			<Word>pmovzxbw</Word>
 			<Word>pmovzxbd</Word>
 			<Word>pmovzxbq</Word>
 			<Word>pmovzxwd</Word>
 			<Word>pmovzxwq</Word>
 			<Word>pmovzxdq</Word>
-			<Word>pcmpgtq</Word>
-			<Word>pminsb</Word>
-			<Word>pminsd</Word>
-			<Word>pminuw</Word>
-			<Word>pminud</Word>
-			<Word>pmaxsb</Word>
-			<Word>pmaxsd</Word>
-			<Word>pmaxuw</Word>
-			<Word>pmaxud</Word>
-			<Word>pmulld</Word>
-			<Word>phminposuw</Word>
-			<Word>getsec</Word>
-			<Word>salc</Word>
-			<Word>icebp</Word>
-			<Word>umov</Word>
-			<Word>loadall_286</Word>
-			<Word>loadall_386</Word>
-			<Word>add4s</Word>
-			<Word>brkem</Word>
-			<Word>clear1</Word>
-			<Word>cmp4s</Word>
-			<Word>ext</Word>
-			<Word>fp02</Word>
-			<Word>necins</Word>
-			<Word>not1</Word>
-			<Word>rol4</Word>
-			<Word>ror4</Word>
-			<Word>set1</Word>
-			<Word>sub4s</Word>
-			<Word>test1</Word>
-			<Word>retem</Word>
-			<Word>unknown_286_0f04</Word>
-			<Word>aesenc</Word>
-			<Word>aesenclast</Word>
-			<Word>asedec</Word>
-			<Word>aesdeclast</Word>
-			<Word>aesimc</Word>
-			<Word>pblendw</Word>
-			<Word>palignr</Word>
-			<Word>pextrb</Word>
-			<Word>pextrd</Word>
-			<Word>pinsrb</Word>
-			<Word>pinsrd</Word>
-			<Word>punpcklbw</Word>
-			<Word>punpcklwd</Word>
-			<Word>punpckldq</Word>
-			<Word>packsswb</Word>
-			<Word>packssdw</Word>
-			<Word>aeskeygenassist</Word>
-			<Word>broadcastss</Word>
-			<Word>broadcastsd</Word>
-			<Word>broadcastf128</Word>
-			<Word>femms</Word>
-			<Word>pavgusb</Word>
-			<Word>pf2id</Word>
-			<Word>pfacc</Word>
-			<Word>pfadd</Word>
-			<Word>pfcmpeq</Word>
-			<Word>pfcmpge</Word>
-			<Word>pfcmpgt</Word>
-			<Word>pfmax</Word>
-			<Word>pfmin</Word>
-			<Word>pfmul</Word>
-			<Word>pfrcp</Word>
-			<Word>pfrcpit1</Word>
-			<Word>pfrcpit2</Word>
-			<Word>pfrsqit1</Word>
-			<Word>pfrsqrt</Word>
-			<Word>pfsub</Word>
-			<Word>pfsubr</Word>
-			<Word>pi2fd</Word>
-			<Word>pmulhrwa</Word>
-			<Word>prefetch</Word>
-			<Word>prefetchw</Word>
-			<Word>pf2iw</Word>
-			<Word>pi2fw</Word>
-			<Word>pswapd</Word>
-			<Word>pfnacc</Word>
-			<Word>pfpnacc</Word>
-			<Word>paddsiw</Word>
-			<Word>paveb</Word>
-			<Word>pdistib</Word>
-			<Word>pmachriw</Word>
-			<Word>pmagw</Word>
-			<Word>pmulhrwc</Word>
-			<Word>pmulhriw</Word>
-			<Word>pmvzb</Word>
-			<Word>pmvnzb</Word>
-			<Word>pmvlzb</Word>
-			<Word>pmvgezb</Word>
-			<Word>psubsiw</Word>
-			<Word>pfrcpv</Word>
-			<Word>pfrsqrtv</Word>
-			<Word>montmul</Word>
-			<Word>xstore</Word>
-			<Word>xcryptecb</Word>
-			<Word>xcryptcbc</Word>
-			<Word>xcryptctr</Word>
-			<Word>xcryptcfb</Word>
-			<Word>xcryptofb</Word>
-			<Word>xsha1</Word>
-			<Word>xsha256</Word>
-			<Word>ibts</Word>
-			<Word>xbts</Word>
-			<Word>fdisi</Word>
-			<Word>fndisi</Word>
-			<Word>feni</Word>
-			<Word>fneni</Word>
-			<Word>fsetpm</Word>
-			<Word>rol</Word>
-			<Word>ror</Word>
-			<Word>fcom</Word>
-			<Word>fcomp</Word>
-			<Word>fcompp</Word>
-			<Word>umc_ident</Word>
-			<Word>clgi</Word>
-			<Word>invlpga</Word>
-			<Word>skinit</Word>
-			<Word>stgi</Word>
-			<Word>vmload</Word>
-			<Word>vmmcall</Word>
-			<Word>vmrun</Word>
-			<Word>vmsave</Word>
-			<Word>packuswb</Word>
-			<Word>paddq</Word>
-			<Word>pand</Word>
-			<Word>pandn</Word>
-			<Word>pavgb</Word>
-			<Word>pavgw</Word>
-			<Word>pextrw</Word>
-			<Word>pinsrw</Word>
-			<Word>pmaddwd</Word>
-			<Word>pmaxsw</Word>
-			<Word>pmaxub</Word>
-			<Word>pminsw</Word>
-			<Word>pminub</Word>
-			<Word>pmovmskb</Word>
+			<Word>vpmovzxbw</Word>
+			<Word>vpmovzxbd</Word>
+			<Word>vpmovzxbq</Word>
+			<Word>vpmovzxwd</Word>
+			<Word>vpmovzxwq</Word>
+			<Word>vpmovzxdq</Word>
+			<Word>pmuldq</Word>
+			<Word>vpmuldq</Word>
+			<Word>pmulhrsw</Word>
+			<Word>vpmulhrsw</Word>
 			<Word>pmulhuw</Word>
+			<Word>vpmulhuw</Word>
 			<Word>pmulhw</Word>
+			<Word>vpmulhw</Word>
+			<Word>pmulld</Word>
+			<Word>vpmulld</Word>
+			<Word>vpmullq</Word>
 			<Word>pmullw</Word>
+			<Word>vpmullw</Word>
 			<Word>pmuludq</Word>
-			<Word>pshufw</Word>
+			<Word>vpmuludq</Word>
+			<Word>pop</Word>
+			<Word>popa</Word>
+			<Word>popad</Word>
+			<Word>popcnt</Word>
+			<Word>popf</Word>
+			<Word>popfd</Word>
+			<Word>popfq</Word>
+			<Word>por</Word>
+			<Word>vpor</Word>
+			<Word>vpord</Word>
+			<Word>vporq</Word>
+			<Word>prefetcht0</Word>
+			<Word>prefetcht1</Word>
+			<Word>prefetcht2</Word>
+			<Word>prefetchnta</Word>
+			<Word>prefetchw</Word>
+			<Word>prefetchwt1</Word>
 			<Word>psadbw</Word>
+			<Word>vpsadbw</Word>
+			<Word>pshufb</Word>
+			<Word>vpshufb</Word>
+			<Word>pshufd</Word>
+			<Word>vpshufd</Word>
+			<Word>pshufhw</Word>
+			<Word>vpshufhw</Word>
+			<Word>pshuflw</Word>
+			<Word>vpshuflw</Word>
+			<Word>pshufw</Word>
+			<Word>psignb</Word>
+			<Word>psignw</Word>
+			<Word>psignd</Word>
+			<Word>vpsignb</Word>
+			<Word>vpsignw</Word>
+			<Word>vpsignd</Word>
+			<Word>pslldq</Word>
+			<Word>vpslldq</Word>
+			<Word>psllw</Word>
 			<Word>pslld</Word>
 			<Word>psllq</Word>
-			<Word>psllw</Word>
-			<Word>psrad</Word>
+			<Word>vpsllw</Word>
+			<Word>vpslld</Word>
+			<Word>vpsllq</Word>
 			<Word>psraw</Word>
+			<Word>psrad</Word>
+			<Word>vpsraw</Word>
+			<Word>vpsrad</Word>
+			<Word>vpsraq</Word>
+			<Word>psrldq</Word>
+			<Word>vpsrldq</Word>
+			<Word>psrlw</Word>
 			<Word>psrld</Word>
 			<Word>psrlq</Word>
-			<Word>psrlw</Word>
+			<Word>vpsrlw</Word>
+			<Word>vpsrld</Word>
+			<Word>vpsrlq</Word>
 			<Word>psubb</Word>
 			<Word>psubw</Word>
 			<Word>psubd</Word>
+			<Word>vpsubb</Word>
+			<Word>vpsubw</Word>
+			<Word>vpsubd</Word>
 			<Word>psubq</Word>
+			<Word>vpsubq</Word>
 			<Word>psubsb</Word>
 			<Word>psubsw</Word>
+			<Word>vpsubsb</Word>
+			<Word>vpsubsw</Word>
 			<Word>psubusb</Word>
 			<Word>psubusw</Word>
+			<Word>vpsubusb</Word>
+			<Word>vpsubusw</Word>
+			<Word>ptest</Word>
+			<Word>vptest</Word>
+			<Word>ptwrite</Word>
 			<Word>punpckhbw</Word>
-			<Word>punpckhdq</Word>
 			<Word>punpckhwd</Word>
-			<Word>extrq</Word>
-			<Word>insertq</Word>
-			<Word>movntsd</Word>
-			<Word>movntss</Word>
-			<Word>pshuflw</Word>
-			<Word>pshufhw</Word>
-			<Word>pslldq</Word>
-			<Word>psrldq</Word>
+			<Word>punpckhdq</Word>
 			<Word>punpckhqdq</Word>
+			<Word>vpunpckhbw</Word>
+			<Word>vpunpckhwd</Word>
+			<Word>vpunpckhdq</Word>
+			<Word>vpunpckhqdq</Word>
+			<Word>punpcklbw</Word>
+			<Word>punpcklwd</Word>
+			<Word>punpckldq</Word>
 			<Word>punpcklqdq</Word>
+			<Word>vpunpcklbw</Word>
+			<Word>vpunpcklwd</Word>
+			<Word>vpunpckldq</Word>
+			<Word>vpunpcklqdq</Word>
+			<Word>push</Word>
+			<Word>pusha</Word>
+			<Word>pushad</Word>
+			<Word>pushf</Word>
+			<Word>pushfd</Word>
+			<Word>pushfq</Word>
+			<Word>pxor</Word>
+			<Word>vpxor</Word>
+			<Word>vpxord</Word>
+			<Word>vpxorq</Word>
+			<Word>rcl</Word>
+			<Word>rcr</Word>
+			<Word>rol</Word>
+			<Word>ror</Word>
+			<Word>rcpps</Word>
+			<Word>vrcpps</Word>
+			<Word>rcpss</Word>
+			<Word>vrcpss</Word>
+			<Word>rdfsbase</Word>
+			<Word>rdgsbase</Word>
+			<Word>rdmsr</Word>
+			<Word>rdpid</Word>
+			<Word>rdpkru</Word>
+			<Word>rdpmc</Word>
+			<Word>rdrand</Word>
+			<Word>rdseed</Word>
+			<Word>rdtsc</Word>
+			<Word>rdtscp</Word>
+			<Word>ret</Word>
+			<Word>rorx</Word>
+			<Word>roundpd</Word>
+			<Word>vroundpd</Word>
+			<Word>roundps</Word>
+			<Word>vroundps</Word>
+			<Word>roundsd</Word>
+			<Word>vroundsd</Word>
+			<Word>roundss</Word>
+			<Word>vroundss</Word>
+			<Word>rsm</Word>
+			<Word>rsqrtps</Word>
+			<Word>vrsqrtps</Word>
+			<Word>rsqrtss</Word>
+			<Word>vrsqrtss</Word>
+			<Word>sahf</Word>
+			<Word>sal</Word>
+			<Word>sar</Word>
+			<Word>shl</Word>
+			<Word>shr</Word>
+			<Word>sarx</Word>
+			<Word>shlx</Word>
+			<Word>shrx</Word>
+			<Word>sbb</Word>
+			<Word>scas</Word>
+			<Word>scasb</Word>
+			<Word>scasw</Word>
+			<Word>scasd</Word>
+			<Word>scasq</Word>
+			<Word>seta</Word>
+			<Word>setae</Word>
+			<Word>setb</Word>
+			<Word>setbe</Word>
+			<Word>setc</Word>
+			<Word>sete</Word>
+			<Word>setg</Word>
+			<Word>setge</Word>
+			<Word>setl</Word>
+			<Word>setle</Word>
+			<Word>setna</Word>
+			<Word>setnae</Word>
+			<Word>setnb</Word>
+			<Word>setnbe</Word>
+			<Word>setnc</Word>
+			<Word>setne</Word>
+			<Word>setng</Word>
+			<Word>setnge</Word>
+			<Word>setnl</Word>
+			<Word>setnle</Word>
+			<Word>sfence</Word>
+			<Word>sgdt</Word>
+			<Word>sha1msg1</Word>
+			<Word>sha1msg2</Word>
+			<Word>sha1nexte</Word>
+			<Word>sha1rnds4</Word>
+			<Word>sha256msg1</Word>
+			<Word>sha256msg2</Word>
+			<Word>sha256rnds2</Word>
+			<Word>shld</Word>
+			<Word>shrd</Word>
+			<Word>shufpd</Word>
+			<Word>vshufpd</Word>
+			<Word>shufps</Word>
+			<Word>vshufps</Word>
+			<Word>sidt</Word>
+			<Word>sldt</Word>
+			<Word>smsw</Word>
 			<Word>sqrtpd</Word>
-			<Word>vfmaddps</Word>
-			<Word>vfmaddpd</Word>
-			<Word>vfmaddss</Word>
-			<Word>vfmaddsd</Word>
-			<Word>vfmaddsubps</Word>
-			<Word>vfmaddsubpd</Word>
-			<Word>vfmsubaddps</Word>
-			<Word>vfmsubaddpd</Word>
-			<Word>vfmsubps</Word>
-			<Word>vfmsubpd</Word>
-			<Word>vfmsubss</Word>
-			<Word>vfmsubsd</Word>
-			<Word>vfnmaddps</Word>
-			<Word>vfnmaddpd</Word>
-			<Word>vfnmaddss</Word>
-			<Word>vfnmaddsd</Word>
-			<Word>vfnmsubps</Word>
-			<Word>vfnmsubpd</Word>
-			<Word>vfnmsubss</Word>
-			<Word>vfnmsubsd</Word>
-			<Word>vfrczps</Word>
-			<Word>vfrczpd</Word>
-			<Word>vfrczss</Word>
-			<Word>vfrczsd</Word>
-			<Word>vpcmov</Word>
-			<Word>vpcomb</Word>
-			<Word>vpcomw</Word>
-			<Word>vpcomd</Word>
-			<Word>vpcomq</Word>
-			<Word>vpcomub</Word>
-			<Word>vpcomuw</Word>
-			<Word>vpcomud</Word>
-			<Word>vpcomuq</Word>
-			<Word>vpermil2ps</Word>
-			<Word>vpermil2pd</Word>
-			<Word>vphaddbw</Word>
-			<Word>vphaddbd</Word>
-			<Word>vphaddbq</Word>
-			<Word>vphadddq</Word>
-			<Word>vphaddubw</Word>
-			<Word>vphaddubd</Word>
-			<Word>vphaddubq</Word>
-			<Word>vphaddudq</Word>
-			<Word>vphadduwd</Word>
-			<Word>vphadduwq</Word>
-			<Word>vphaddwd</Word>
-			<Word>vphaddwq</Word>
-			<Word>vphsubbw</Word>
-			<Word>vphsubwd</Word>
-			<Word>vphsubdq</Word>
-			<Word>vpmacsdd</Word>
-			<Word>vpmacsdqh</Word>
-			<Word>vpmacssdd</Word>
-			<Word>vpmacsswd</Word>
-			<Word>vpmacssww</Word>
-			<Word>vpmacswd</Word>
-			<Word>vpmacsww</Word>
-			<Word>vpmadcsswd</Word>
-			<Word>vpmadcswd</Word>
-			<Word>vpperm</Word>
-			<Word>vprotb</Word>
-			<Word>vprotw</Word>
-			<Word>vprotd</Word>
-			<Word>vprotq</Word>
-			<Word>vpshab</Word>
-			<Word>vpshaw</Word>
-			<Word>vpshad</Word>
-			<Word>vpshaq</Word>
-			<Word>vpshlb</Word>
-			<Word>vpshlw</Word>
-			<Word>vpshld</Word>
-			<Word>vpshlq</Word>
-			<Word>cqo</Word>
-			<Word>cdqe</Word>
-			<Word>brkcs</Word>
-			<Word>brkn</Word>
-			<Word>brks</Word>
-			<Word>brkxa</Word>
-			<Word>fint</Word>
-			<Word>frstpm</Word>
-			<Word>frichop</Word>
-			<Word>frinear</Word>
-			<Word>frint2</Word>
-			<Word>movspa</Word>
-			<Word>movspb</Word>
-			<Word>oio</Word>
-			<Word>res3</Word>
-			<Word>res4</Word>
-			<Word>smi</Word>
-			<Word>retrbi</Word>
-			<Word>retxa</Word>
-			<Word>stop</Word>
-			<Word>tsksw</Word>
-			<Word>iceret</Word>
-			<Word>f4x4</Word>
-			<Word>fsbp0</Word>
-			<Word>fsbp1</Word>
-			<Word>fsbp2</Word>
-			<Word>lzcnt</Word>
-			<Word>jmpx</Word>
-        </Keywords>
-
-        <Keywords color="TransferOpcodes">
-			<Word>je</Word>
-			<Word>jne</Word>
-            <Word>jo</Word>
-			<Word>jno</Word>
-			<Word>jb</Word>
-			<Word>jnb</Word>
-			<Word>jz</Word>
-			<Word>jnz</Word>
-			<Word>jbe</Word>
-			<Word>ja</Word>
-			<Word>js</Word>
-			<Word>jns</Word>
-			<Word>jp</Word>
-			<Word>jnp</Word>
-			<Word>jl</Word>
-			<Word>jge</Word>
-			<Word>jle</Word>
-			<Word>jg</Word>
-            <Word>ret</Word>
-            <Word>retf</Word>
-            <Word>iret</Word>
-        </Keywords>
-
-        <Keywords color="CallOpcodes">
-            <Word>call</Word>
+			<Word>vsqrtpd</Word>
+			<Word>sqrtps</Word>
+			<Word>vsqrtps</Word>
+			<Word>sqrtsd</Word>
+			<Word>vsqrtsd</Word>
+			<Word>sqrtss</Word>
+			<Word>vsqrtss</Word>
+			<Word>stac</Word>
+			<Word>stc</Word>
+			<Word>std</Word>
+			<Word>sti</Word>
+			<Word>stmxcsr</Word>
+			<Word>vstmxcsr</Word>
+			<Word>stos</Word>
+			<Word>stosb</Word>
+			<Word>stosw</Word>
+			<Word>stosd</Word>
+			<Word>stosq</Word>
+			<Word>str</Word>
+			<Word>sub</Word>
+			<Word>subpd</Word>
+			<Word>vsubpd</Word>
+			<Word>subps</Word>
+			<Word>vsubps</Word>
+			<Word>subsd</Word>
+			<Word>vsubsd</Word>
+			<Word>subss</Word>
+			<Word>vsubss</Word>
+			<Word>swapgs</Word>
+			<Word>syscall</Word>
+			<Word>sysenter</Word>
+			<Word>sysexit</Word>
+			<Word>sysret</Word>
+			<Word>test</Word>
+			<Word>tzcnt</Word>
+			<Word>ucomisd</Word>
+			<Word>vucomisd</Word>
+			<Word>ucomiss</Word>
+			<Word>vucomiss</Word>
+			<Word>ud0</Word>
+			<Word>ud1</Word>
+			<Word>ud2</Word>
+			<Word>unpckhpd</Word>
+			<Word>vunpckhpd</Word>
+			<Word>unpckhps</Word>
+			<Word>vunpckhps</Word>
+			<Word>unpcklpd</Word>
+			<Word>vunpcklpd</Word>
+			<Word>unpcklps</Word>
+			<Word>vunpcklps</Word>
+			<Word>valignd</Word>
+			<Word>valignq</Word>
+			<Word>vblendmpd</Word>
+			<Word>vblendmps</Word>
+			<Word>vbroadcastss</Word>
+			<Word>vbroadcastsd</Word>
+			<Word>vbroadcastf128</Word>
+			<Word>vbroadcastf32x2</Word>
+			<Word>vbroadcastf32x4</Word>
+			<Word>vbroadcastf64x2</Word>
+			<Word>vcompresspd</Word>
+			<Word>vcompressps</Word>
+			<Word>vcvtpd2qq</Word>
+			<Word>vcvtpd2udq</Word>
+			<Word>vcvtpd2uqq</Word>
+			<Word>vcvtph2ps</Word>
+			<Word>vcvtps2ph</Word>
+			<Word>vcvtps2qq</Word>
+			<Word>vcvtps2udq</Word>
+			<Word>vcvtps2uqq</Word>
+			<Word>vcvtqq2pd</Word>
+			<Word>vcvtqq2ps</Word>
+			<Word>vcvtsd2usi</Word>
+			<Word>vcvtss2usi</Word>
+			<Word>vcvttpd2qq</Word>
+			<Word>vcvttpd2udq</Word>
+			<Word>vcvttpd2uqq</Word>
+			<Word>vcvttps2qq</Word>
+			<Word>vcvttps2udq</Word>
+			<Word>vcvttps2uqq</Word>
+			<Word>vcvttsd2usi</Word>
+			<Word>vcvttss2usi</Word>
+			<Word>vcvtudq2pd</Word>
+			<Word>vcvtudq2ps</Word>
+			<Word>vcvtuqq2pd</Word>
+			<Word>vcvtuqq2ps</Word>
+			<Word>vcvtusi2sd</Word>
+			<Word>vcvtusi2ss</Word>
+			<Word>vdbpsadbw</Word>
+			<Word>verr</Word>
+			<Word>verw</Word>
+			<Word>vexp2pd</Word>
+			<Word>vexp2ps</Word>
+			<Word>vexpandpd</Word>
+			<Word>vexpandps</Word>
+			<Word>vextractf128</Word>
+			<Word>vextractf32x4</Word>
+			<Word>vextractf64x4</Word>
+			<Word>vextracti128</Word>
+			<Word>vextracti32x4</Word>
+			<Word>vextracti64x4</Word>
+			<Word>vfixupimmpd</Word>
+			<Word>vfixupimmps</Word>
+			<Word>vfixupimmsd</Word>
+			<Word>vfixupimmss</Word>
+			<Word>vfmadd132pd</Word>
+			<Word>vfmadd213pd</Word>
+			<Word>vfmadd231pd</Word>
+			<Word>vfmadd132ps</Word>
+			<Word>vfmadd213ps</Word>
+			<Word>vfmadd231ps</Word>
+			<Word>vfmadd132sd</Word>
+			<Word>vfmadd213sd</Word>
+			<Word>vfmadd231sd</Word>
+			<Word>vfmadd132ss</Word>
+			<Word>vfmadd213ss</Word>
+			<Word>vfmadd231ss</Word>
+			<Word>vfmaddsub132pd</Word>
+			<Word>vfmaddsub213pd</Word>
+			<Word>vfmaddsub231pd</Word>
+			<Word>vfmaddsub132ps</Word>
+			<Word>vfmaddsub213ps</Word>
+			<Word>vfmaddsub231ps</Word>
+			<Word>vfmsub132pd</Word>
+			<Word>vfmsub213pd</Word>
+			<Word>vfmsub231pd</Word>
+			<Word>vfmsub132ps</Word>
+			<Word>vfmsub213ps</Word>
+			<Word>vfmsub231ps</Word>
+			<Word>vfmsub132sd</Word>
+			<Word>vfmsub213sd</Word>
+			<Word>vfmsub231sd</Word>
+			<Word>vfmsub132ss</Word>
+			<Word>vfmsub213ss</Word>
+			<Word>vfmsub231ss</Word>
+			<Word>vfmsubadd132pd</Word>
+			<Word>vfmsubadd213pd</Word>
+			<Word>vfmsubadd231pd</Word>
+			<Word>vfmsubadd132ps</Word>
+			<Word>vfmsubadd213ps</Word>
+			<Word>vfmsubadd231ps</Word>
+			<Word>vfnmadd132pd</Word>
+			<Word>vfnmadd213pd</Word>
+			<Word>vfnmadd231pd</Word>
+			<Word>vfnmadd132ps</Word>
+			<Word>vfnmadd213ps</Word>
+			<Word>vfnmadd231ps</Word>
+			<Word>vfnmadd132sd</Word>
+			<Word>vfnmadd213sd</Word>
+			<Word>vfnmadd231sd</Word>
+			<Word>vfnmadd132ss</Word>
+			<Word>vfnmadd213ss</Word>
+			<Word>vfnmadd231ss</Word>
+			<Word>vfnmsub132pd</Word>
+			<Word>vfnmsub213pd</Word>
+			<Word>vfnmsub231pd</Word>
+			<Word>vfnmsub132ps</Word>
+			<Word>vfnmsub213ps</Word>
+			<Word>vfnmsub231ps</Word>
+			<Word>vfnmsub132sd</Word>
+			<Word>vfnmsub213sd</Word>
+			<Word>vfnmsub231sd</Word>
+			<Word>vfnmsub132ss</Word>
+			<Word>vfnmsub213ss</Word>
+			<Word>vfnmsub231ss</Word>
+			<Word>vfpclasspd</Word>
+			<Word>vfpclassps</Word>
+			<Word>vfpclasssd</Word>
+			<Word>vfpclassss</Word>
+			<Word>vgatherdpd</Word>
+			<Word>vgatherqpd</Word>
+			<Word>vgatherdps</Word>
+			<Word>vgatherqps</Word>
+			<Word>vgatherpf0dps</Word>
+			<Word>vgatherpf0qps</Word>
+			<Word>vgatherpf0dpd</Word>
+			<Word>vgatherpf0qpd</Word>
+			<Word>vgatherpf1dps</Word>
+			<Word>vgatherpf1qps</Word>
+			<Word>vgatherpf1dpd</Word>
+			<Word>vgatherpf1qpd</Word>
+			<Word>vgetexppd</Word>
+			<Word>vgetexpps</Word>
+			<Word>vgetexpsd</Word>
+			<Word>vgetexpss</Word>
+			<Word>vgetmantpd</Word>
+			<Word>vgetmantps</Word>
+			<Word>vgetmantsd</Word>
+			<Word>vgetmantss</Word>
+			<Word>vinsertf128</Word>
+			<Word>vinserti128</Word>
+			<Word>vmaskmovps</Word>
+			<Word>vmaskmovpd</Word>
+			<Word>vpblendd</Word>
+			<Word>vpblendmb</Word>
+			<Word>vpblendmw</Word>
+			<Word>vpblendmd</Word>
+			<Word>vpblendmq</Word>
+			<Word>vpbroadcastb</Word>
+			<Word>vpbroadcastw</Word>
+			<Word>vpbroadcastd</Word>
+			<Word>vpbroadcastq</Word>
+			<Word>vbroadcasti32x2</Word>
+			<Word>vbroadcasti128</Word>
+			<Word>vbroadcasti32x4</Word>
+			<Word>vbroadcasti64x2</Word>
+			<Word>vbroadcasti32x8</Word>
+			<Word>vbroadcasti64x4</Word>
+			<Word>vpbroadcastmb2q</Word>
+			<Word>vpbroadcastmw2d</Word>
+			<Word>vpcmpb</Word>
+			<Word>vpcmpub</Word>
+			<Word>vpcmpd</Word>
+			<Word>vpcmpud</Word>
+			<Word>vpcmpq</Word>
+			<Word>vpcmpuq</Word>
+			<Word>vpcmpw</Word>
+			<Word>vpcmpuw</Word>
+			<Word>vpcompressd</Word>
+			<Word>vpcompressq</Word>
+			<Word>vpconflictd</Word>
+			<Word>vpconflictq</Word>
+			<Word>vperm2f128</Word>
+			<Word>vperm2i128</Word>
+			<Word>vpermd</Word>
+			<Word>vpermw</Word>
+			<Word>vpermi2w</Word>
+			<Word>vpermi2d</Word>
+			<Word>vpermi2q</Word>
+			<Word>vpermi2ps</Word>
+			<Word>vpermi2pd</Word>
+			<Word>vpermilpd</Word>
+			<Word>vpermilps</Word>
+			<Word>vpermpd</Word>
+			<Word>vpermps</Word>
+			<Word>vpermq</Word>
+			<Word>vpermt2w</Word>
+			<Word>vpermt2d</Word>
+			<Word>vpermt2q</Word>
+			<Word>vpermt2ps</Word>
+			<Word>vpermt2pd</Word>
+			<Word>vpexpandd</Word>
+			<Word>vpexpandq</Word>
+			<Word>vpgatherdd</Word>
+			<Word>vpgatherdq</Word>
+			<Word>vpgatherqd</Word>
+			<Word>vpgatherqq</Word>
+			<Word>vplzcntd</Word>
+			<Word>vplzcntq</Word>
+			<Word>vpmaskmovd</Word>
+			<Word>vpmaskmovq</Word>
+			<Word>vpmovb2m</Word>
+			<Word>vpmovw2m</Word>
+			<Word>vpmovd2m</Word>
+			<Word>vpmovq2m</Word>
+			<Word>vpmovdb</Word>
+			<Word>vpmovsdb</Word>
+			<Word>vpmovusdb</Word>
+			<Word>vpmovdw</Word>
+			<Word>vpmovsdw</Word>
+			<Word>vpmovusdw</Word>
+			<Word>vpmovm2b</Word>
+			<Word>vpmovm2w</Word>
+			<Word>vpmovm2d</Word>
+			<Word>vpmovm2q</Word>
+			<Word>vpmovqb</Word>
+			<Word>vpmovsqb</Word>
+			<Word>vpmovusqb</Word>
+			<Word>vpmovqd</Word>
+			<Word>vpmovsqd</Word>
+			<Word>vpmovusqd</Word>
+			<Word>vpmovqw</Word>
+			<Word>vpmovsqw</Word>
+			<Word>vpmovusqw</Word>
+			<Word>vpmovwb</Word>
+			<Word>vpmovswb</Word>
+			<Word>vpmovuswb</Word>
+			<Word>vprolvd</Word>
+			<Word>vprold</Word>
+			<Word>vprolvq</Word>
+			<Word>vprolq</Word>
+			<Word>vprorvd</Word>
+			<Word>vprord</Word>
+			<Word>vprorvq</Word>
+			<Word>vprorq</Word>
+			<Word>vpscatterdd</Word>
+			<Word>vpscatterdq</Word>
+			<Word>vpscatterqd</Word>
+			<Word>vpscatterqq</Word>
+			<Word>vpsllvd</Word>
+			<Word>vpsllvq</Word>
+			<Word>vpsllvw</Word>
+			<Word>vpsravd</Word>
+			<Word>vpsravw</Word>
+			<Word>vpsravq</Word>
+			<Word>vpsrlvd</Word>
+			<Word>vpsrlvq</Word>
+			<Word>vpsrlvw</Word>
+			<Word>vpternlogd</Word>
+			<Word>vpternlogq</Word>
+			<Word>vptestmb</Word>
+			<Word>vptestmw</Word>
+			<Word>vptestmd</Word>
+			<Word>vptestmq</Word>
+			<Word>vptestnmb</Word>
+			<Word>vptestnmw</Word>
+			<Word>vptestnmd</Word>
+			<Word>vptestnmq</Word>
+			<Word>vrangepd</Word>
+			<Word>vrangeps</Word>
+			<Word>vrangesd</Word>
+			<Word>vrangess</Word>
+			<Word>vrcp14pd</Word>
+			<Word>vrcp14ps</Word>
+			<Word>vrcp14sd</Word>
+			<Word>vrcp14ss</Word>
+			<Word>vrcp28pd</Word>
+			<Word>vrcp28ps</Word>
+			<Word>vrcp28sd</Word>
+			<Word>vrcp28ss</Word>
+			<Word>vreducepd</Word>
+			<Word>vreduceps</Word>
+			<Word>vreducesd</Word>
+			<Word>vreducess</Word>
+			<Word>vrndscalepd</Word>
+			<Word>vrndscaleps</Word>
+			<Word>vrndscalesd</Word>
+			<Word>vrndscaless</Word>
+			<Word>vrsqrt14pd</Word>
+			<Word>vrsqrt14ps</Word>
+			<Word>vrsqrt14sd</Word>
+			<Word>vrsqrt14ss</Word>
+			<Word>vrsqrt28pd</Word>
+			<Word>vrsqrt28ps</Word>
+			<Word>vrsqrt28sd</Word>
+			<Word>vrsqrt28ss</Word>
+			<Word>vscalefpd</Word>
+			<Word>vscalefps</Word>
+			<Word>vscalefsd</Word>
+			<Word>vscalefss</Word>
+			<Word>vscatterdps</Word>
+			<Word>vscatterdpd</Word>
+			<Word>vscatterqps</Word>
+			<Word>vscatterqpd</Word>
+			<Word>vscatterpf0dps</Word>
+			<Word>vscatterpf0qps</Word>
+			<Word>vscatterpf0dpd</Word>
+			<Word>vscatterpf0qpd</Word>
+			<Word>vscatterpf1dps</Word>
+			<Word>vscatterpf1qps</Word>
+			<Word>vscatterpf1dpd</Word>
+			<Word>vscatterpf1qpd</Word>
+			<Word>vshuff32x4</Word>
+			<Word>vshuff64x2</Word>
+			<Word>vshufi32x4</Word>
+			<Word>vshufi64x2</Word>
+			<Word>vtestps</Word>
+			<Word>vtestpd</Word>
+			<Word>vzeroall</Word>
+			<Word>vzeroupper</Word>
+			<Word>wait</Word>
+			<Word>fwait</Word>
+			<Word>wbinvd</Word>
+			<Word>wrfsbase</Word>
+			<Word>wrgsbase</Word>
+			<Word>wrmsr</Word>
+			<Word>wrpkru</Word>
+			<Word>xabort</Word>
+			<Word>xacquire</Word>
+			<Word>xrelease</Word>
+			<Word>xadd</Word>
+			<Word>xbegin</Word>
+			<Word>xchg</Word>
+			<Word>xend</Word>
+			<Word>xgetbv</Word>
+			<Word>xlat</Word>
+			<Word>xlatb</Word>
+			<Word>xor</Word>
+			<Word>xorpd</Word>
+			<Word>vxorpd</Word>
+			<Word>xorps</Word>
+			<Word>vxorps</Word>
+			<Word>xrstor</Word>
+			<Word>xrstor64</Word>
+			<Word>xrstors</Word>
+			<Word>xrstors64</Word>
+			<Word>xsave</Word>
+			<Word>xsave64</Word>
+			<Word>xsavec</Word>
+			<Word>xsavec64</Word>
+			<Word>xsaveopt</Word>
+			<Word>xsaveopt64</Word>
+			<Word>xsaves</Word>
+			<Word>xsaves64</Word>
+			<Word>xsetbv</Word>
+			<Word>xtest</Word>
+			<Word>incsspq</Word>
+			<Word>rdsspq</Word>
+			<Word>xtest</Word>
+			
         </Keywords>
 
         <Keywords color="Type">
