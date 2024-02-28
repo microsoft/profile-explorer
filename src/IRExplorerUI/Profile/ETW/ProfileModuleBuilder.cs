@@ -94,6 +94,7 @@ public sealed class ProfileModuleBuilder {
 
     if (ModuleDocument.DebugInfoFile == null ||
         !ModuleDocument.DebugInfoFile.Found) {
+      report_.AddDebugInfo(binaryInfo_, ModuleDocument.DebugInfoFile);
       return false;
     }
 
