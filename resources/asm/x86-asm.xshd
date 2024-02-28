@@ -60,9 +60,7 @@
 			<Word>int3</Word>
         </Keywords>
 
-        <Keywords color="CallOpcodes">
-            <Word>call</Word>
-        </Keywords>
+		<Rule color="CallOpcodes">call\s+.*</Rule>
 
         <Keywords color="Opcodes">
 			<Word>aaa</Word>
@@ -1378,20 +1376,17 @@
 			<Word>incsspq</Word>
 			<Word>rdsspq</Word>
 			<Word>xtest</Word>
-			
         </Keywords>
 
         <Keywords color="Type">
-            <Word>type</Word>
-            <Word>i1</Word>
-            <Word>i8</Word>
-            <Word>i16</Word>
-            <Word>i32</Word>
-            <Word>i64</Word>
-            <Word>float</Word>
-            <Word>double</Word>
-            <Word>void</Word>
-            <Word>undef</Word>
+            <Word>byte</Word>
+            <Word>word</Word>
+            <Word>dword</Word>
+            <Word>qword</Word>
+            <Word>ptr</Word>
+            <Word>xmmword</Word>
+            <Word>ymmword</Word>
+            <Word>zmmword</Word>
         </Keywords>
 
         <Span color="ArrayType">
@@ -1410,6 +1405,7 @@
         <Rule color="Digits">\b((0x)?[0-9a-fA-F]+|[0-9]+)\b</Rule>
         
         <Keywords color="Attributes">
+			<Word>rep</Word>
             <Word>true</Word>
             <Word>false</Word>
         </Keywords>
