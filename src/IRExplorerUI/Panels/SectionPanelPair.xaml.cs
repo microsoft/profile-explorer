@@ -224,6 +224,12 @@ public partial class SectionPanelPair : ToolPanelControl {
     DiffPanel.OnSessionEnd();
   }
 
+  public void EnterBinaryDisplayMode() {
+    // Update UI for viewing a binary, similar to profiling mode.
+    MainPanel.EnterBinaryDisplayMode();
+    DiffPanel.EnterBinaryDisplayMode();
+  }
+
   public async Task AnalyzeDocumentDiffs() {
     Trace.TraceInformation("AnalyzeDocumentDiffs: waiting");
     await MainPanel.WaitForStatistics();

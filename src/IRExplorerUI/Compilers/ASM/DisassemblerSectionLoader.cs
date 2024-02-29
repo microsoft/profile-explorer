@@ -19,6 +19,7 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   private Dictionary<IRTextFunction, FunctionDebugInfo> funcToDebugInfoMap_;
   private bool isManagedImage_;
   private bool preloadFunctions_;
+  private DebugFileSearchResult debugInfoFile_;
 
   public DisassemblerSectionLoader(string binaryFilePath, ICompilerInfoProvider compilerInfo,
                                    IDebugInfoProvider debugInfo, bool preloadFunctions = true) {
@@ -30,6 +31,16 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     isManagedImage_ = debugInfo != null;
     summary_ = new IRTextSummary();
     funcToDebugInfoMap_ = new Dictionary<IRTextFunction, FunctionDebugInfo>();
+  }
+
+  public IDebugInfoProvider DebugInfo {
+    get => debugInfo_;
+    set => debugInfo_ = value;
+  }
+
+  public DebugFileSearchResult DebugInfoFile {
+    get => debugInfoFile_;
+    set => debugInfoFile_ = value;
   }
 
   public void RegisterFunction(IRTextFunction function, FunctionDebugInfo debugInfo) {
@@ -47,8 +58,8 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     if (debugInfo_ == null) {
       if (preloadFunctions_) {
         // When opening in non-profiling mode, lookup the debug info now.
-        var debugInfoFile = compilerInfo_.FindDebugInfoFile(binaryFilePath_);
-        debugInfo_ = compilerInfo_.CreateDebugInfoProvider(debugInfoFile);
+        debugInfoFile_ = compilerInfo_.FindDebugInfoFile(binaryFilePath_);
+        debugInfo_ = compilerInfo_.CreateDebugInfoProvider(debugInfoFile_);
       }
 
       if (debugInfo_ == null) {

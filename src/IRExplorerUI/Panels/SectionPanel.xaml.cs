@@ -3282,4 +3282,12 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       FunctionList.ScrollIntoView(FunctionList.Items[0]);
     }
   }
+
+  public void EnterBinaryDisplayMode() {
+    IsFunctionListVisible = false;
+    IsFunctionListVisible = true;
+    SectionCountColumnVisible = false;
+    ShowModules = false;
+    ShowSections = false;
+  }
 }
