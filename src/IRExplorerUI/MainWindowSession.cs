@@ -552,7 +552,13 @@ public partial class MainWindow : Window, ISession {
 
   private async Task<LoadedDocument> OpenBinaryDocument(string filePath) {
     await SwitchBinaryCompilerTarget(filePath);
-    return await OpenIRDocument(filePath, filePath, LoadBinaryDocument);
+    var result = await OpenIRDocument(filePath, filePath, LoadBinaryDocument);
+
+    if (result != null) {
+      SectionPanel.EnterBinaryDisplayMode();
+    }
+
+    return result;
   }
 
   private async void OpenDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -891,6 +897,11 @@ public partial class MainWindow : Window, ISession {
 
     if (result != null) {
       result.BinaryFile = BinaryFileSearchResult.Success(filePath);
+
+      if (debugInfo == null) {
+        result.DebugInfo = loader.DebugInfo;
+        result.DebugInfoFile = loader.DebugInfoFile;
+      }
     }
 
     return result;
