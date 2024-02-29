@@ -409,13 +409,12 @@ public partial class MainWindow : Window, ISession {
     string[] args = Environment.GetCommandLineArgs();
 
     if (args.Length > 1 && args[1] == "--open-trace") {
-      var window = new ProfileLoadWindow(this, false, true);
+      var window = new ProfileLoadWindow(this, false);
       window.Owner = this;
       bool? result = window.ShowDialog();
 
       if (result.HasValue && result.Value) {
-        await SectionPanel.RefreshModuleSummaries();
-        SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
+        await SetupLoadedProfile();
       }
     }
   }

@@ -46,14 +46,13 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private string binaryFilePath_;
   private bool showOnlyManagedProcesses_;
 
-  public ProfileLoadWindow(ISession session, bool recordMode, bool isOnLaunch = false,
+  public ProfileLoadWindow(ISession session, bool recordMode,
                            RecordingSession loadedSession = null) {
     InitializeComponent();
     DataContext = this;
     Session = session;
-    loadTask_ = new CancelableTaskInstance(false);
+    loadTask_ = new CancelableTaskInstance();
     IsRecordMode = recordMode;
-    IsOnLaunch = isOnLaunch;
     loadedSession_ = loadedSession;
 
     if (IsRecordMode) {
@@ -155,7 +154,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   public bool RecordingControlsEnabled => !IsLoadingProfile && !IsRecordingProfile;
   public bool RecordingStopControlsEnabled => !IsLoadingProfile && IsRecordingProfile;
   public bool IsRecordMode { get; }
-  public bool IsOnLaunch { get; }
 
   public ProfileRecordingSessionOptions RecordingOptions {
     get => recordingOptions_;
@@ -250,28 +248,30 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
   private void ProfileLoadWindow_ContentRendered(object sender, EventArgs e) {
     //? TODO: Use CreateSessionFromCommandLineArgs
-    if (IsOnLaunch) {
-      string[] args = Environment.GetCommandLineArgs();
+    string[] args = Environment.GetCommandLineArgs();
 
-      if (args.Length >= 6 && args[1] == "--open-trace") {
-        string traceFilePath = args[2];
+    // -- open-trace file.etl processName processId optionalSymbolPath
+    if (args.Length >= 5 && args[1] == "--open-trace") {
+      string symbolPath = "";
+      string traceFilePath = args[2];
 
-        if (!File.Exists(traceFilePath) || Path.GetExtension(traceFilePath) != ".etl") {
-          MessageBox.Show("Trace file does not exist.");
-          return;
-        }
-
-        string symbolPath = args[3];
-
-        if (!int.TryParse(args[4], out int processId)) {
-          MessageBox.Show("Process ID is not an integer.");
-          return;
-        }
-
-        string imageFileName = args[5];
-
-        LoadProfileFromArgs(traceFilePath, symbolPath, processId, imageFileName);
+      if (!File.Exists(traceFilePath) || Path.GetExtension(traceFilePath) != ".etl") {
+        MessageBox.Show("Trace file does not exist.");
+        return;
       }
+
+      string imageFileName = args[3];
+
+      if (!int.TryParse(args[4], out int processId)) {
+        MessageBox.Show("Process ID is not an integer.");
+        return;
+      }
+
+      if (args.Length >= 6) {
+        symbolPath = args[5];
+      }
+
+      LoadProfileFromArgs(traceFilePath, symbolPath, processId, imageFileName);
     }
     else if (loadedSession_ != null) {
       SwitchCurrentSession(loadedSession_);
@@ -340,12 +340,19 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
     BinaryFilePath = Utils.CleanupPath(BinaryFilePath);
 
+    Trace.WriteLine("Start open");
+
     if (!IsRecordMode &&
         !Utils.ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile", this)) {
+      MessageBox.Show("Exit 1");
       return false;
     }
 
+    Trace.WriteLine("Start wait");
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
+    Trace.WriteLine("Done wait");
+
 
     var report = new ProfileDataReport {
       RunningProcesses = processList_,
@@ -358,6 +365,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     if (selectedProcSummary_ == null) {
       IsLoadingProfile = false;
+      MessageBox.Show("Exit 2");
       return false;
     }
 
@@ -396,6 +404,9 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
                       MessageBoxButton.OK, MessageBoxImage.Exclamation);
       ProfileReportPanel.ShowReportWindow(report, Session);
     }
+    else if (task.IsCanceled) {
+      MessageBox.Show("Exit 3");
+    }
 
     if (success) {
       if (IsRecordMode) {
@@ -408,6 +419,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
       App.SaveApplicationSettings();
     }
+    else {
+      MessageBox.Show("Exit 4");
+
+    }
+
+    Trace.WriteLine($"End open: {success}");
 
     return success;
   }
@@ -515,9 +532,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     Utils.ShowOpenFileDialog(ProfileAutocompleteBox, "ETW Trace Files|*.etl|All Files|*.*");
   }
 
-  private async Task<bool> LoadProcessList() {
+  private async Task<List<ProcessSummary>> LoadProcessList(string filePath) {
     await CancelLoadingTask();
-    ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
 
     if (File.Exists(ProfileFilePath)) {
       using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
@@ -528,19 +544,13 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       LoadProgressBar.Value = 0;
       ResetProcessList();
 
-      processList_ =
-        await ETWProfileDataProvider.FindTraceProcesses(ProfileFilePath, options_, ProcessListProgressCallback, task);
+      var list = await ETWProfileDataProvider.FindTraceProcesses(ProfileFilePath, options_, ProcessListProgressCallback, task);
       IsLoadingProfile = false;
       IsLoadingProcessList = false;
-
-      if (task.IsCanceled) {
-        return false;
-      }
-
-      return processList_ != null;
+      return list;
     }
 
-    return false;
+    return null;
   }
 
   private void ResetProcessList() {
@@ -692,17 +702,19 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     ShowProcessList = false;
+    ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
 
     if (!string.IsNullOrEmpty(ProfileFilePath)) {
-      if (await LoadProcessList()) {
-        if (processList_ == null) {
-          using var centerForm = new DialogCenteringHelper(this);
-          MessageBox.Show("Failed to load ETL process list!", "IR Explorer",
-                          MessageBoxButton.OK, MessageBoxImage.Exclamation);
-        }
+      processList_ = await LoadProcessList(ProfileFilePath);
 
-        DisplayProcessList(processList_);
+      if (processList_ == null) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show("Failed to load ETL process list!", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+        return;
       }
+
+      DisplayProcessList(processList_);
     }
   }
 
@@ -785,7 +797,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     IsLoadingProfile = true; // Prevent process list to be loaded.
-    LoadPreviousSession(sessionEx.Report);
+    ActivatePreviousSession(sessionEx.Report);
 
     if (IsRecordMode) {
       await StartRecordingSession();
@@ -813,7 +825,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     if (report != null) {
-      LoadPreviousSession(report);
+      ActivatePreviousSession(report);
     }
     else {
       // Reload default new options.
@@ -830,7 +842,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     currentSession_ = session;
   }
 
-  private void LoadPreviousSession(ProfileDataReport report) {
+  private void ActivatePreviousSession(ProfileDataReport report) {
     if (report.Process != null) {
       // Set previous selected process.
       selectedProcSummary_ = new List<ProcessSummary> {

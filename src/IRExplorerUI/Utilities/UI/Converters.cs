@@ -300,7 +300,14 @@ class DoubleScalingConverter : IValueConverter {
   }
 
   public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
-    return null;
+    double doubleValue = (double)value;
+    double maxValue = double.Parse((string)parameter);
+
+    if (maxValue == 0) {
+      return 0.0;
+    }
+
+    return doubleValue / maxValue;
   }
 }
 

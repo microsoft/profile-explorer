@@ -479,7 +479,7 @@ public partial class MainWindow : Window, ISession {
       }
       else if (Utils.FileHasExtension(filePath, ".etl")) {
         var profileSession = RecordingSession.FromFile(filePath);
-        var window = new ProfileLoadWindow(this, false, false, profileSession);
+        var window = new ProfileLoadWindow(this, false, profileSession);
         window.Owner = this;
         isProfilingFile = true;
 
