@@ -81,8 +81,7 @@ public sealed class ResolvedProfileStackFrameDetails : IEquatable<ResolvedProfil
   [ProtoMember(1)]
   public FunctionDebugInfo DebugInfo { get; set; }
   [ProtoMember(2)]
-  //? TODO: Remove Reference, bloated, needed only to serialize
-  public IRTextFunctionReference Function { get; set; }
+  public IRTextFunction Function { get; set; }
   [ProtoMember(3)]
   public ProfileImage Image { get; set; }
   public bool IsKernelCode { get; set; }

@@ -478,7 +478,7 @@ public partial class MainWindow : Window, ISession {
           break;
         }
 
-        if (stackFrame.FrameDetails.Function.Value.Equals(currentNode.Function)) {
+        if (stackFrame.FrameDetails.Function.Equals(currentNode.Function)) {
           // Continue checking if the callers show up on the stack trace
           // to make the search context-sensitive.
           match = true;

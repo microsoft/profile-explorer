@@ -182,7 +182,6 @@ public class Disassembler : IDisposable {
   private void Initialize(bool checkValidCallAddress) {
     checkValidCallAddress_ = checkValidCallAddress;
     disasmHandle_ = Interop.Create(architecture_);
-    BuildFunctionRvaCache();
   }
 
   private unsafe void AppendMnemonic(Interop.Instruction instr, StringBuilder builder) {
@@ -296,15 +295,6 @@ public class Disassembler : IDisposable {
     }
 
     return null;
-    // var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva);
-    // return result;
-  }
-
-  private void BuildFunctionRvaCache() {
-    // Cache RVA -> function mapping, much faster to query.
-    if (debugInfo_ != null) {
-      //sortedFuncList_ = debugInfo_.GetSortedFunctions();
-    }
   }
 
   private bool ShouldLookupAddressByName(Interop.Instruction instr, ref bool isJump) {

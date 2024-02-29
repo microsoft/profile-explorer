@@ -192,19 +192,19 @@ public partial class ProfileData {
           continue; // Unknown frame.
         }
 
-        if (!summaryMap.ContainsKey(frame.FrameDetails.Function.Id.SummaryId)) {
-          continue;
-        }
+        // if (!summaryMap.ContainsKey(frame.FrameDetails.Function.Id.SummaryId)) {
+        //   continue;
+        // }
+        //
+        // var summary = summaryMap[frame.FrameDetails.Function.Id.SummaryId];
+        // var function = summary.GetFunctionWithId(frame.FrameDetails.Function.Id.FunctionNumber);
 
-        var summary = summaryMap[frame.FrameDetails.Function.Id.SummaryId];
-        var function = summary.GetFunctionWithId(frame.FrameDetails.Function.Id.FunctionNumber);
-
-        if (function == null) {
-          Debug.Assert(false, "Could not find node for func");
-          continue;
-        }
-
-        frame.FrameDetails.Function = function;
+        // if (function == null) {
+        //   Debug.Assert(false, "Could not find node for func");
+        //   continue;
+        // }
+        //
+        // frame.FrameDetails.Function = function;
       }
     }
   }
