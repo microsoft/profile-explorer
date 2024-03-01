@@ -42,6 +42,7 @@ public class FlameGraphNode : SearchableProfileItem, IEquatable<FlameGraphNode> 
   public Brush PercentageTextColor { get; set; }
   public Rect Bounds { get; set; }
   public bool IsDummyNode { get; set; }
+  public bool IsHidden { get; set; }
   public bool HasFunction => CallTreeNode != null;
   public bool HasChildren => Children is {Count: > 0};
   public IRTextFunction Function => CallTreeNode?.Function;
