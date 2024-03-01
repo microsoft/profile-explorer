@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<item>
+    <version>1.0.0.0</version>
+    <url>https://path/to/irexplorer_versionN.zip</url>
+    <changelog>https://path/to/irexplorer_release_notes.html</changelog>
+    <mandatory>false</mandatory>
+</item>

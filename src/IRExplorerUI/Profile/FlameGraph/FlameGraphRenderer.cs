@@ -400,16 +400,21 @@ public class FlameGraphRenderer {
       // may not be part of the view, don't draw them in that case.
       bool onPath = false;
       var pathNode = node;
-      
+
       while (pathNode != null) {
         if(pathNode == flameGraph_.RootNode) {
           onPath = true;
           break;
         }
+        else if (pathNode.IsHidden) {
+          // If node is collapsed itself or a descendant
+          // of a collapsed node, don't select it since it's not visible.
+          break;
+        }
 
         pathNode = pathNode.Parent;
       }
-      
+
       if(onPath) {
         DrawNode(node, graphDC);
       }
@@ -520,6 +525,7 @@ public class FlameGraphRenderer {
     var prevBounds = node.Bounds;
     node.Bounds = new Rect(x, y, width, nodeHeight_);
     node.IsDummyNode = !redraw;
+    node.IsHidden = false;
 
     if (redraw) {
       maxNodeDepth_ = Math.Max(node.Depth, maxNodeDepth_);
@@ -611,6 +617,7 @@ public class FlameGraphRenderer {
       totalWeight += childNode.Weight;
       startTime = TimeSpan.FromTicks(Math.Min(startTime.Ticks, childNode.StartTime.Ticks));
       endTime = TimeSpan.FromTicks(Math.Max(endTime.Ticks, childNode.EndTime.Ticks));
+      childNode.IsHidden = true;
     }
 
     skippedChildren = k - startIndex; // Caller should ignore these children.

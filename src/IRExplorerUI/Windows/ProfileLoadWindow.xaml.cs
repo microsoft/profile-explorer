@@ -340,19 +340,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
     BinaryFilePath = Utils.CleanupPath(BinaryFilePath);
 
-    Trace.WriteLine("Start open");
-
     if (!IsRecordMode &&
         !Utils.ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile", this)) {
-      MessageBox.Show("Exit 1");
       return false;
     }
 
-    Trace.WriteLine("Start wait");
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-
-    Trace.WriteLine("Done wait");
-
 
     var report = new ProfileDataReport {
       RunningProcesses = processList_,
@@ -365,7 +358,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     if (selectedProcSummary_ == null) {
       IsLoadingProfile = false;
-      MessageBox.Show("Exit 2");
       return false;
     }
 
@@ -404,9 +396,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
                       MessageBoxButton.OK, MessageBoxImage.Exclamation);
       ProfileReportPanel.ShowReportWindow(report, Session);
     }
-    else if (task.IsCanceled) {
-      MessageBox.Show("Exit 3");
-    }
 
     if (success) {
       if (IsRecordMode) {
@@ -419,12 +408,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
       App.SaveApplicationSettings();
     }
-    else {
-      MessageBox.Show("Exit 4");
-
-    }
-
-    Trace.WriteLine($"End open: {success}");
 
     return success;
   }

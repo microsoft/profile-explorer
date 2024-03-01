@@ -605,7 +605,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       }
 
       binTaskList[i] = binTaskFactory.StartNew(() => {
-        return PEBinaryInfoProvider.LocateBinaryFile(binaryFile, symbolSettings);
+        return PEBinaryInfoProvider.LocateBinaryFileAsync(binaryFile, symbolSettings).Result;
       });
     }
 
@@ -701,7 +701,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         pdbCount++;
 
         pdbTaskList[i] = taskFactory.StartNew(() => {
-          return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings);
+          return session_.CompilerInfo.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings).Result;
         });
       }
     }
