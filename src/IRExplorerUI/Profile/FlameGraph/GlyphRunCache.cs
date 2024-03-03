@@ -107,7 +107,7 @@ public class GlyphRunCache {
                                 glyphIndexes, ZeroPoint, advanceWidths,
                                 null, null, null, null, null, null);
     double height = glyphTypeface_.Height * size;
-    return new GlyphInfo(glyphRun, totalWidth, height);
+    return new GlyphInfo(glyphRun, totalWidth, height, false);
   }
 
   public struct GlyphInfo {
@@ -115,11 +115,13 @@ public class GlyphRunCache {
     public double TextWidth;
     public double TextHeight;
     public bool IsCached;
+    public bool IsTrimmed;
 
-    public GlyphInfo(GlyphRun glyphs, double textWidth, double textHeight) {
+    public GlyphInfo(GlyphRun glyphs, double textWidth, double textHeight, bool isTrimmed) {
       Glyphs = glyphs;
       TextWidth = textWidth;
       TextHeight = textHeight;
+      IsTrimmed = isTrimmed;
       IsCached = false;
     }
   }
