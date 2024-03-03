@@ -259,9 +259,9 @@ public class FlameGraphRenderer {
       bool useNameFont = false;
       var textColor = node.TextColor;
 
-      double TryAlignTextWithParentNode() {
+      void TryAlignTextWithParentNode() {
         if (alignedWithParent || node.Parent == null) {
-          return offsetX;
+          return;
         }
 
         // If the parent node is outside the view and was not rendered,
@@ -275,24 +275,29 @@ public class FlameGraphRenderer {
         // If the position of text after the function name is close enough
         // to the one in the parent and text will not get trimmed
         // because of it, use it to align the percentage/time text.
-        double diff = node.Parent.PercentageTextPosition - offsetX;
+        double offsetDiff = node.Parent.PercentageTextPosition - offsetX;
 
-        if (diff > 0 && diff < 150) {
-          double availableWidth = maxWidth - margin - diff;
+        if (offsetDiff > 0 && offsetDiff < 150) {
+          // Align by matching the parent offset.
+          double availableWidth = maxWidth - margin - offsetDiff;
 
           if (availableWidth > 0) {
             (_, _, bool textTrimmed, var size) =
               TrimTextToWidth(label, availableWidth, useNameFont);
 
             if (!textTrimmed && size.Width < maxWidth) {
-              offsetX = node.Parent.PercentageTextPosition;
-              maxWidth -= diff;
+              offsetX = node.Parent.PercentageTextPosition - margin;
+              maxWidth -= offsetDiff;
             }
           }
         }
+        else if (offsetDiff < 0 && Math.Abs(offsetDiff) < (margin * 0.5)) {
+          // Align by reducing the margin from previous text
+          // to match the parent offset.
+          margin += offsetDiff;
+        }
 
         alignedWithParent = true;
-        return offsetX;
       }
 
       switch (index) {
@@ -327,7 +332,7 @@ public class FlameGraphRenderer {
             margin = FlameGraphNode.ExtraValueMargin;
             textColor = node.PercentageTextColor;
             useNameFont = true;
-            offsetX = TryAlignTextWithParentNode();
+            TryAlignTextWithParentNode();
           }
 
           break;
@@ -339,7 +344,7 @@ public class FlameGraphRenderer {
               $"{node.Weight.AsMillisecondsString()}";
             margin = FlameGraphNode.DefaultMargin;
             textColor = node.WeightTextColor;
-            offsetX = TryAlignTextWithParentNode();
+            TryAlignTextWithParentNode();
           }
 
           break;
@@ -365,7 +370,7 @@ public class FlameGraphRenderer {
         // Remember starting position after function name
         // to be used for aligning the same text in descendants.
         if (index > 0 && !setPercentagePosition) {
-          node.PercentageTextPosition = offsetX;
+          node.PercentageTextPosition = offsetX + margin;
           setPercentagePosition = true;
         }
       }
