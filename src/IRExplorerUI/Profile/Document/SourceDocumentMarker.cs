@@ -17,6 +17,7 @@ namespace IRExplorerUI.Profile;
 
 public class SourceDocumentMarker {
   private static readonly string SourceOverlayTag = "ProfileTag";
+  private static const int FunctionNameMaxLength = 80;
 
   private SourceDocumentMarkerSettings settings_;
   private ICompilerInfoProvider irInfo_;
@@ -46,6 +47,7 @@ public class SourceDocumentMarker {
 
         if (tag.Line != 0 && settings_.AnnotateSourceLines) {
           string funcName = irInfo_.NameProvider.FormatFunctionName(function.Name);
+          funcName = funcName.TrimToLength(FunctionNameMaxLength);
           string label = $"{tag.Line}";
           string tooltip = $"Line number for {funcName}";
           var overlay = document.RegisterIconElementOverlay(instr, null, 16, 0, label, tooltip);
@@ -138,10 +140,7 @@ public class SourceDocumentMarker {
   private void AppendInlineeTooltip(string inlineeName, int inlineeLine, string inlineeFilePath,
                                     int index, StringBuilder tooltipSb) {
     string inlineeFileName = Utils.TryGetFileName(inlineeFilePath);
-
-    if (inlineeName.Length > 80) {
-      inlineeName = $"{inlineeName.Substring(0, 80)}...";
-    }
+    inlineeName = inlineeName.TrimToLength(FunctionNameMaxLength);
 
     if (!string.IsNullOrEmpty(inlineeFileName)) {
       tooltipSb.Append($"{inlineeName}:{inlineeLine} ({inlineeFileName})");

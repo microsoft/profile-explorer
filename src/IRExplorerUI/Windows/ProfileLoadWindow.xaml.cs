@@ -448,10 +448,10 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         ProfileLoadStage.TraceProcessing => "Processing trace",
         ProfileLoadStage.BinaryLoading => "Loading binaries" +
                                           (!string.IsNullOrEmpty(progressInfo.Optional) ?
-                                            $" ({Utils.TrimToLength(progressInfo.Optional, 15)})" : ""),
+                                            $" ({progressInfo.Optional.TrimToLength(15)})" : ""),
         ProfileLoadStage.SymbolLoading => "Loading symbols" +
                                           (!string.IsNullOrEmpty(progressInfo.Optional) ?
-                                            $" ({Utils.TrimToLength(progressInfo.Optional, 15)})" : ""),
+                                            $" ({progressInfo.Optional.TrimToLength(15)})" : ""),
         ProfileLoadStage.PerfCounterProcessing => "Processing CPU perf. counters",
         _ => ""
       };
