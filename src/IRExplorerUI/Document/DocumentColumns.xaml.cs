@@ -182,6 +182,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
           var tuple = block.Tuples[i];
           int currentLine = tuple.TextLocation.Line;
           bool isSeparatorLine = settings_.ShowBlockSeparatorLine &&
+                                 i < function.Blocks.Count - 1 &&
                                  i == block.Tuples.Count - 1;
 
           // Add dummy empty list view lines to match document text.
