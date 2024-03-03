@@ -17,7 +17,7 @@ namespace IRExplorerUI.Profile;
 
 public class SourceDocumentMarker {
   private static readonly string SourceOverlayTag = "ProfileTag";
-  private static const int FunctionNameMaxLength = 80;
+  private const int FunctionNameMaxLength = 80;
 
   private SourceDocumentMarkerSettings settings_;
   private ICompilerInfoProvider irInfo_;

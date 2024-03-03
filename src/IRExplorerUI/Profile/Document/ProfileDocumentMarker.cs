@@ -367,7 +367,8 @@ public class ProfileDocumentMarker {
 
       // Mark direct, known call targets with a different icon.
       var callTarget = irInfo_.IR.GetCallTarget(instr);
-      bool isDirectCall = callTarget is {HasName: true};
+      bool isDirectCall = callTarget is {HasName: true} &&
+                          !callTarget.HasTag<RegisterTag>();
 
       // When annotating a source file, map the instruction to the
       // fake tuple used the represent the source line.
