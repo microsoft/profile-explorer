@@ -423,7 +423,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       }
       else {
         prefixText = element.GetText(TextView.SectionText).ToString();
-        prefixText = Utils.TrimToLength(prefixText.Trim(), 50);
+        prefixText = prefixText.Trim().TrimToLength(50);
       }
 
       var value = new ProfileMenuItem(text, weight.Ticks, weightPercentage) {
