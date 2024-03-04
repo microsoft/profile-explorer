@@ -45,6 +45,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private string profileFilePath_;
   private string binaryFilePath_;
   private bool showOnlyManagedProcesses_;
+  private bool showLoadingProgress_;
 
   public ProfileLoadWindow(ISession session, bool recordMode,
                            RecordingSession loadedSession = null) {
@@ -135,6 +136,16 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         showProcessList_ = value;
         OnPropertyChange(nameof(ShowProcessList));
         OnPropertyChange(nameof(LoadingControlsVisible));
+      }
+    }
+  }
+
+  public bool ShowLoadingProgress {
+    get => showLoadingProgress_;
+    set {
+      if (showLoadingProgress_ != value) {
+        showLoadingProgress_ = value;
+        OnPropertyChange(nameof(ShowLoadingProgress));
       }
     }
   }
@@ -326,17 +337,17 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private async void LoadButton_Click(object sender, RoutedEventArgs e) {
-    await OpenFilesAndComplete(symbolSettings_);
+    await LoadProfileTraceFileAndCloseWindow(symbolSettings_);
   }
 
-  private async Task OpenFilesAndComplete(SymbolFileSourceSettings symbolSettings) {
-    if (await OpenFiles(symbolSettings) && !windowClosed_) {
+  private async Task LoadProfileTraceFileAndCloseWindow(SymbolFileSourceSettings symbolSettings) {
+    if (await LoadProfileTraceFile(symbolSettings) && !windowClosed_) {
       DialogResult = true;
       Close();
     }
   }
 
-  private async Task<bool> OpenFiles(SymbolFileSourceSettings symbolSettings) {
+  private async Task<bool> LoadProfileTraceFile(SymbolFileSourceSettings symbolSettings) {
     ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
     BinaryFilePath = Utils.CleanupPath(BinaryFilePath);
 
@@ -346,7 +357,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-
     var report = new ProfileDataReport {
       RunningProcesses = processList_,
       SymbolSettings = symbolSettings_.Clone()
@@ -354,6 +364,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     bool success = false;
     IsLoadingProfile = true;
+    ShowLoadingProgress = true;
     LoadProgressBar.Value = 0;
 
     if (selectedProcSummary_ == null) {
@@ -388,6 +399,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     IsLoadingProfile = false;
+    ShowLoadingProgress = false;
     UpdateRejectedFiles(report);
 
     if (!success && !task.IsCanceled) {
@@ -493,17 +505,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private async void CancelButton_Click(object sender, RoutedEventArgs e) {
-    bool closeWindow = !IsLoadingProfile; // Canceling task resets flags, decide now.
-
     if (isLoadingProfile_) {
       await CancelLoadingTask();
-    }
-
-    if (closeWindow) {
-      App.SaveApplicationSettings();
-      DialogResult = false;
-      windowClosed_ = true;
-      Close();
     }
   }
 
@@ -522,14 +525,20 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
 
       IsLoadingProcessList = true;
-      IsLoadingProfile = true;
+      ShowLoadingProgress = true;
       BinaryFilePath = "";
       LoadProgressBar.Value = 0;
       ResetProcessList();
 
       var list = await ETWProfileDataProvider.FindTraceProcesses(ProfileFilePath, options_, ProcessListProgressCallback, task);
-      IsLoadingProfile = false;
       IsLoadingProcessList = false;
+
+      if (!IsLoadingProfile) {
+        // Don't hide progress controls if the process summary
+        // was canceled and replaced by loading a process async.
+        ShowLoadingProgress = false;
+      }
+
       return list;
     }
 
@@ -549,10 +558,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     if (ProcessList.SelectedItems.Count > 0) {
       selectedProcSummary_ = new List<ProcessSummary>(ProcessList.SelectedItems.OfType<ProcessSummary>());
       BinaryFilePath = selectedProcSummary_[0].Process.Name;
-    }
-    else {
-      selectedProcSummary_ = null;
-      BinaryFilePath = null;
     }
   }
 
@@ -769,7 +774,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       new ProcessSummary(process, TimeSpan.Zero)
     };
 
-    await OpenFilesAndComplete(symbolSettings_.WithSymbolPaths(symbolPath));
+    await LoadProfileTraceFileAndCloseWindow(symbolSettings_.WithSymbolPaths(symbolPath));
   }
 
   private async void SessionList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
@@ -786,7 +791,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       await StartRecordingSession();
     }
     else {
-      await OpenFilesAndComplete(symbolSettings_);
+      await LoadProfileTraceFileAndCloseWindow(symbolSettings_);
     }
   }
 
@@ -1078,7 +1083,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private async void ProcessList_PreviewKeyDown(object sender, KeyEventArgs e) {
-    await OpenFilesAndComplete(symbolSettings_);
+    await LoadProfileTraceFileAndCloseWindow(symbolSettings_);
   }
 
   private void ClearRejectedButton_Click(object sender, RoutedEventArgs e) {

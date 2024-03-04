@@ -179,11 +179,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
     // Go over events and accumulate samples to build the process summary.
     source_.Process();
-
-    if (cancelableTask.IsCanceled) {
-      return new List<ProcessSummary>();
-    }
-
     profile.Dispose();
     return summaryBuilder.MakeSummaries();
   }
