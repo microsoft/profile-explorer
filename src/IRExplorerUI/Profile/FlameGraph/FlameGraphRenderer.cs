@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -17,6 +18,7 @@ public class FlameGraphRenderer {
   private FlameGraphSettings settings_;
   private FlameGraph flameGraph_;
   private int maxNodeDepth_;
+  private uint renderVersion_;
   private double nodeHeight_;
   private double maxWidth_;
   private double prevMaxWidth_;
@@ -208,7 +210,10 @@ public class FlameGraphRenderer {
     return new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top, node.Bounds.Width * maxWidth_, node.Bounds.Height);
   }
 
-  public void DrawNode(FlameGraphNode node, DrawingContext dc) {
+  public void DrawNode(FlameGraphNode node, DrawingContext dc, bool issueDraw = true) {
+    // Mark the node as part of this rendering step.
+    node.RenderVersion = renderVersion_;
+
     if (node.IsDummyNode) {
       return;
     }
@@ -226,12 +231,16 @@ public class FlameGraphRenderer {
       cachedNodeGuidelines_ = CreateGuidelineSet(bounds, 0.5f);
     }
 
-    dc.PushGuidelineSet(cachedNodeGuidelines_);
-    dc.DrawRectangle(node.Style.BackColor, node.Style.Border, bounds);
+    if (issueDraw) {
+      dc.PushGuidelineSet(cachedNodeGuidelines_);
+      dc.DrawRectangle(node.Style.BackColor, node.Style.Border, bounds);
+    }
 
-    // ...
+    // Draw each text part of the node (module, func name, percentage, time).
     int index = 0;
     bool trimmed = false;
+    bool alignedWithParent = false;
+    bool setPercentagePosition = false;
     double margin = FlameGraphNode.DefaultMargin;
 
     // Start the text in the visible area.
@@ -250,6 +259,47 @@ public class FlameGraphRenderer {
       bool useNameFont = false;
       var textColor = node.TextColor;
 
+      void TryAlignTextWithParentNode() {
+        if (alignedWithParent || node.Parent == null) {
+          return;
+        }
+
+        // If the parent node is outside the view and was not rendered,
+        // force a pass that only computes the coordinates, without actual
+        // rendering. This is recursive and over the entire flame graph
+        // will visit each node a single time.
+        if (node.Parent.RenderVersion != renderVersion_) {
+          DrawNode(node.Parent, dc, false);
+        }
+
+        // If the position of text after the function name is close enough
+        // to the one in the parent and text will not get trimmed
+        // because of it, use it to align the percentage/time text.
+        double offsetDiff = node.Parent.PercentageTextPosition - offsetX;
+
+        if (offsetDiff > 0 && offsetDiff < 150) {
+          // Align by matching the parent offset.
+          double availableWidth = maxWidth - margin - offsetDiff;
+
+          if (availableWidth > 0) {
+            (_, _, bool textTrimmed, var size) =
+              TrimTextToWidth(label, availableWidth, useNameFont);
+
+            if (!textTrimmed && size.Width < maxWidth) {
+              offsetX = node.Parent.PercentageTextPosition - margin;
+              maxWidth -= offsetDiff;
+            }
+          }
+        }
+        else if (offsetDiff < 0 && Math.Abs(offsetDiff) < (margin * 0.5)) {
+          // Align by reducing the margin from previous text
+          // to match the parent offset.
+          margin += offsetDiff;
+        }
+
+        alignedWithParent = true;
+      }
+
       switch (index) {
         case 0: {
           if (node.HasFunction) {
@@ -260,7 +310,7 @@ public class FlameGraphRenderer {
               (string modText, var modGlyphs, bool modTextTrimmed, var modTextSize) =
                 TrimTextToWidth(moduleLabel, maxWidth - margin, false);
 
-              if (modText.Length > 0) {
+              if (modText.Length > 0 && issueDraw) {
                 DrawText(modGlyphs, bounds, node.ModuleTextColor, offsetX + margin, offsetY, modTextSize, dc);
               }
 
@@ -282,6 +332,7 @@ public class FlameGraphRenderer {
             margin = FlameGraphNode.ExtraValueMargin;
             textColor = node.PercentageTextColor;
             useNameFont = true;
+            TryAlignTextWithParentNode();
           }
 
           break;
@@ -293,6 +344,7 @@ public class FlameGraphRenderer {
               $"{node.Weight.AsMillisecondsString()}";
             margin = FlameGraphNode.DefaultMargin;
             textColor = node.WeightTextColor;
+            TryAlignTextWithParentNode();
           }
 
           break;
@@ -307,11 +359,20 @@ public class FlameGraphRenderer {
         TrimTextToWidth(label, maxWidth - margin, useNameFont);
 
       if (text.Length > 0) {
-        if (index == 0 && node.SearchResult.HasValue) {
-          DrawSearchResultSelection(node.SearchResult.Value, text, glyphs, bounds, offsetX + margin, offsetY, dc);
+        if (issueDraw) {
+          if (index == 0 && node.SearchResult.HasValue) {
+            DrawSearchResultSelection(node.SearchResult.Value, text, glyphs, bounds, offsetX + margin, offsetY, dc);
+          }
+
+          DrawText(glyphs, bounds, textColor, offsetX + margin, offsetY, textSize, dc);
         }
 
-        DrawText(glyphs, bounds, textColor, offsetX + margin, offsetY, textSize, dc);
+        // Remember starting position after function name
+        // to be used for aligning the same text in descendants.
+        if (index > 0 && !setPercentagePosition) {
+          node.PercentageTextPosition = offsetX + margin;
+          setPercentagePosition = true;
+        }
       }
 
       trimmed = textTrimmed;
@@ -320,7 +381,9 @@ public class FlameGraphRenderer {
       index++;
     }
 
-    dc.Pop(); // PushGuidelineSet
+    if (issueDraw) {
+      dc.Pop(); // PushGuidelineSet
+    }
   }
 
   private void UpdateGraphSizes() {
@@ -373,6 +436,7 @@ public class FlameGraphRenderer {
     // Update only the visible nodes on scrolling.
     bool layoutChanged = !nodeLayoutRecomputed && Math.Abs(maxWidth_ - prevMaxWidth_) > double.Epsilon;
     int shrinkingNodes = 0;
+    renderVersion_++; // Mark a new rendering pass.
 
     foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
       DrawNode(node, graphDC);
@@ -745,7 +809,7 @@ public class FlameGraphRenderer {
     }
 
     var glyphInfo = glyphsCache.GetGlyphs(text, maxWidth);
-    bool trimmed = false;
+    bool trimmed = glyphInfo.IsTrimmed;
 
     if (glyphInfo.TextWidth > maxWidth) {
       // The width of letters is the same only for monospace fonts,
@@ -778,6 +842,7 @@ public class FlameGraphRenderer {
       }
     }
 
+    glyphInfo.IsTrimmed = trimmed;
     glyphsCache.CacheGlyphs(glyphInfo, originalText, maxWidth);
 
     return (text, glyphInfo.Glyphs, trimmed,

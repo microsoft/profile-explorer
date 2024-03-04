@@ -140,7 +140,7 @@ public class FlameGraphSettings : SettingsBase {
     NodeBorderColor = Colors.Black;
     NodeModuleColor = Colors.DimGray;
     NodeWeightColor = Colors.Maroon;
-    NodePercentageColor = Colors.DarkSlateBlue;
+    NodePercentageColor = Colors.Black;
     SelectedNodeColor = Utils.ColorFromString("#D0E3F1");
     SelectedNodeBorderColor = Colors.Black;
     SearchedNodeColor = Utils.ColorFromString("#c3ebbc");

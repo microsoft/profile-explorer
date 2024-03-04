@@ -242,6 +242,6 @@ public static class DocumentUtils {
     }
 
     text = text.RemoveNewLines();
-    return maxLength != 0 ? Utils.TrimToLength(text, maxLength) : text;
+    return maxLength != 0 ? text.TrimToLength(maxLength) : text;
   }
 }
