@@ -119,7 +119,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
     UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
-    var sw = Stopwatch.StartNew();
 
     var rawProfile = await Task.Run(() => {
       int acceptedProcessId = processIds.Count == 1 ? processIds[0] : 0;

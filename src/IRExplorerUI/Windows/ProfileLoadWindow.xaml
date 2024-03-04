@@ -625,9 +625,9 @@
                                         Height="4"
                                         HorizontalAlignment="Stretch"
                                         Maximum="100"
-                                        Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibilityConverter}}"
+                                        Visibility="{Binding ShowLoadingProgress, Converter={StaticResource BoolToVisibilityConverter}}"
                                         Value="40" />
-                                    <DockPanel Margin="0,2,0,0" Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <DockPanel Margin="0,2,0,0" Visibility="{Binding ShowLoadingProgress, Converter={StaticResource BoolToVisibilityConverter}}">
                                         <TextBlock
                                             x:Name="LoadProgressLabel"
                                             DockPanel.Dock="Left"
@@ -649,6 +649,7 @@
                                         VerticalAlignment="Top"
                                         Click="CancelButton_Click"
                                         Content="Cancel"
+                                        IsEnabled="{Binding InputControlsEnabled, Converter={StaticResource InvertedBoolConverter}}"
                                         Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                                     <Button
                                         x:Name="LoadButton"
