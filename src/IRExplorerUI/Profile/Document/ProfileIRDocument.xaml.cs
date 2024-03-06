@@ -156,8 +156,13 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
     TextView.TextArea.SelectionChanged += TextAreaOnSelectionChanged;
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
+    ProfileColumns.RowSelected += ProfileColumns_RowSelected;
     TextView.TextRegionFolded += TextViewOnTextRegionFolded;
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
+  }
+
+  private void ProfileColumns_RowSelected(object sender, int line) {
+    TextView.SelectLine(line + 1);
   }
 
   private void TextAreaOnSelectionChanged(object sender, EventArgs e) {

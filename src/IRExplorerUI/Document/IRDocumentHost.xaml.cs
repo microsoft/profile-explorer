@@ -102,7 +102,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private bool columnsVisible_;
   private bool duringSectionSwitching_;
   private double previousVerticalOffset_;
-  private Brush selectedLineBrush_;
   private List<(IRElement, TimeSpan)> profileElements_;
   private List<(BlockIR, TimeSpan)> profileBlocks_;
   private int profileElementIndex_;
@@ -166,7 +165,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
     SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
+    ProfileColumns.RowSelected += ProfileColumns_RowSelected;
     Unloaded += IRDocumentHost_Unloaded;
+  }
+
+  private void ProfileColumns_RowSelected(object sender, int line) {
+    TextView.SelectLine(line + 1);
   }
 
   private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
@@ -198,14 +202,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         columnsListItemHeight_ = value;
         NotifyPropertyChanged(nameof(ColumnsListItemHeight));
       }
-    }
-  }
-
-  public Brush SelectedLineBrush {
-    get => selectedLineBrush_;
-    set {
-      selectedLineBrush_ = value;
-      NotifyPropertyChanged(nameof(SelectedLineBrush));
     }
   }
 
@@ -308,7 +304,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   public async Task ReloadSettings(bool hasProfilingChanges = true) {
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, true);
     TextView.Initialize(settings_, session_);
-    SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
 
     if (hasProfilingChanges) {
       await ReloadProfile();
