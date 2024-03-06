@@ -684,7 +684,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         tuple = FindTupleOnSourceLine(i);
 
         if (tuple != null) {
-          IRDocumentColumnData.ExportColumnsToExcel(columnData, tuple, ws, rowId, 3);
+          columnData.ExportColumnsToExcel(tuple, ws, rowId, 3);
         }
       }
 

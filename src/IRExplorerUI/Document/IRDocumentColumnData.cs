@@ -2,11 +2,15 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System.Collections.Generic;
+using System.Web;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Media;
 using ClosedXML.Excel;
+using HtmlAgilityPack;
 using IRExplorerCore.IR;
 using IRExplorerCore.Utilities;
+using HtmlDocument = HtmlAgilityPack.HtmlDocument;
 
 namespace IRExplorerUI;
 
@@ -41,10 +45,10 @@ public class IRDocumentColumnData {
   public bool HasData => Rows.Count > 0;
   public OptionalColumn MainColumn => Columns.Find(column => column.IsMainColumn);
 
-  public static void ExportColumnsToExcel(IRDocumentColumnData columnData, IRElement tuple,
-                                          IXLWorksheet ws, int rowId, int columnId) {
-    foreach (var column in columnData.Columns) {
-      var value = columnData.GetColumnValue(tuple, column);
+  public void ExportColumnsToExcel(IRElement tuple, IXLWorksheet ws,
+                                   int rowId, int columnId) {
+    foreach (var column in Columns) {
+      var value = GetColumnValue(tuple, column);
 
       if (value != null) {
         ws.Cell(rowId, columnId).Value = value.Text.Replace(" ms", "");
@@ -71,6 +75,40 @@ public class IRDocumentColumnData {
       }
 
       columnId++;
+    }
+  }
+
+
+  public void ExportColumnsAsHTML(IRElement tuple, HtmlDocument doc, HtmlNode tr,
+                                  int rowId, int columnId) {
+    string CellStyle =
+      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:500px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
+
+    foreach (var column in Columns) {
+      var value = GetColumnValue(tuple, column);
+      var td = doc.CreateElement("td");
+      var style = CellStyle;
+
+      if (value != null) {
+        td.InnerHtml = HttpUtility.HtmlEncode(value.Text);
+
+        if(value.BackColor is SolidColorBrush colorBrush) {
+          style += $"background-color:{Utils.ColorToString(colorBrush.Color)};";
+        }
+
+        if (value.TextWeight != FontWeights.Normal) {
+          style += $"font-weight:bold;";
+        }
+      }
+
+      // Apply main column style for entire row.
+      if (column.IsMainColumn && tr.ChildNodes.Count >= 2) {
+        tr.ChildNodes[0].SetAttributeValue("style", style);
+        tr.ChildNodes[1].SetAttributeValue("style", style);
+      }
+
+      td.SetAttributeValue("style", style);
+      tr.AppendChild(td);
     }
   }
 
