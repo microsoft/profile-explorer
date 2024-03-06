@@ -8,20 +8,12 @@ using ICSharpCode.AvalonEdit.Rendering;
 namespace IRExplorerUI;
 
 public sealed class CurrentLineHighlighter : IBackgroundRenderer {
-  private Brush backgroundBrush_;
   private TextEditor editor_;
+  private Pen borderPen_;
 
-  public CurrentLineHighlighter(TextEditor editor, Color backColor) {
+  public CurrentLineHighlighter(TextEditor editor, Color borderColor) {
     editor_ = editor;
-
-    //? TODO: Right now it appears on top of the selected element colors,
-    //? should be rendered before and only the border on top
-    if (backColor != Colors.Transparent) {
-      backgroundBrush_ = backColor.AsBrush();
-    }
-    else {
-      backgroundBrush_ = ColorBrushes.GetBrush(Colors.LightGray);
-    }
+    borderPen_ = ColorPens.GetPen(borderColor, 1.5);
   }
 
   public KnownLayer Layer => KnownLayer.Background;
@@ -34,11 +26,12 @@ public sealed class CurrentLineHighlighter : IBackgroundRenderer {
     // Draw a border around the current line.
     textView.EnsureVisualLines();
     var currentLine = textView.Document.GetLineByOffset(editor_.CaretOffset);
+    var width = textView.ActualWidth + textView.HorizontalOffset;
 
     foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, currentLine)) {
-      var lineRect = Utils.SnapRectToPixels(rect.X, rect.Y,
-                                            textView.ActualWidth, rect.Height);
-      drawingContext.DrawRectangle(backgroundBrush_, null, lineRect);
+      var lineRect = Utils.SnapRectToPixels(rect.X, rect.Y, width, rect.Height);
+      lineRect.Inflate(1, 1);
+      drawingContext.DrawRectangle(null, borderPen_, lineRect);
     }
   }
 }

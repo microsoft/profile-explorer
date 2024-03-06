@@ -38,6 +38,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
+  public event EventHandler<int> RowSelected;
   public event PropertyChangedEventHandler PropertyChanged;
   public event EventHandler<OptionalColumn> ColumnSettingsChanged;
 
@@ -48,14 +49,6 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         columnsListItemHeight_ = value;
         OnPropertyChanged();
       }
-    }
-  }
-
-  public Brush SelectedLineBrush {
-    get => selectedLineBrush_;
-    set {
-      selectedLineBrush_ = value;
-      OnPropertyChanged();
     }
   }
 
@@ -464,7 +457,6 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
   public void UpdateColumnsList() {
     ColumnsList.Background = settings_.BackgroundColor.AsBrush();
-    SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
     ColumnsList.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
     ColumnsListItemHeight = Utils.MeasureString("0123456789ABCXYZ!?|()", settings_.FontName, settings_.FontSize).Height;
   }
@@ -502,5 +494,11 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     }
 
     ScrollChanged?.Invoke(this, e);
+  }
+
+  private void ColumnsList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
+    if(ColumnsList.SelectedItem != null) {
+      RowSelected?.Invoke(this, ColumnsList.SelectedIndex);
+    }
   }
 }

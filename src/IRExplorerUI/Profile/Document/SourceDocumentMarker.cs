@@ -46,10 +46,9 @@ public class SourceDocumentMarker {
         }
 
         if (tag.Line != 0 && settings_.AnnotateSourceLines) {
-          string funcName = irInfo_.NameProvider.FormatFunctionName(function.Name);
-          funcName = funcName.TrimToLength(FunctionNameMaxLength);
+          string fileName = Utils.TryGetFileName(tag.FilePath);
           string label = $"{tag.Line}";
-          string tooltip = $"Line number for {funcName}";
+          string tooltip = $"Line number for file {fileName}";
           var overlay = document.RegisterIconElementOverlay(instr, null, 16, 0, label, tooltip);
           overlay.Tag = SourceOverlayTag;
           overlay.IsLabelPinned = true;

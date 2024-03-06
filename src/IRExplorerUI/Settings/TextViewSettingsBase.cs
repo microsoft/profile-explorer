@@ -21,6 +21,7 @@ public class TextViewSettingsBase : SettingsBase {
   [ProtoMember(9)] public Color SelectedValueColor { get; set; }
   [ProtoMember(10)] public bool ShowBlockSeparatorLine { get; set; }
   [ProtoMember(11)] public Color BlockSeparatorColor { get; set; }
+  [ProtoMember(12)] public Color CurrentLineBorderColor { get; set; }
 
   public TextViewSettingsBase() {
     Reset();
@@ -36,6 +37,7 @@ public class TextViewSettingsBase : SettingsBase {
     MarginBackgroundColor = Colors.Gainsboro;
     SelectedValueColor = Utils.ColorFromString("#C5DEEA");
     BlockSeparatorColor = Colors.Silver;
+    CurrentLineBorderColor = Colors.DimGray;
     ShowBlockSeparatorLine = true;
     ProfileMarkerSettings.Reset();
     ColumnSettings.Reset();
@@ -66,6 +68,7 @@ public class TextViewSettingsBase : SettingsBase {
            SelectedValueColor == settings.SelectedValueColor &&
            ShowBlockSeparatorLine == settings.ShowBlockSeparatorLine &&
            BlockSeparatorColor == settings.BlockSeparatorColor &&
+           CurrentLineBorderColor == settings.CurrentLineBorderColor &&
            ProfileMarkerSettings.Equals(settings.ProfileMarkerSettings) &&
            ColumnSettings.Equals(settings.ColumnSettings);
   }
@@ -80,6 +83,7 @@ public class TextViewSettingsBase : SettingsBase {
               $"SelectedValueColor:{SelectedValueColor}\n" +
               $"ShowBlockSeparatorLine:{ShowBlockSeparatorLine}\n" +
               $"BlockSeparatorColor:{BlockSeparatorColor}\n" +
+              $"CurrentLineBorderColor:{CurrentLineBorderColor}\n" +
               $"ProfileMarkerSettings:{ProfileMarkerSettings}\n" +
               $"ColumnSettings:{ColumnSettings}";
   }
