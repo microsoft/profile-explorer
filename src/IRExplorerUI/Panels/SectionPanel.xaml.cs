@@ -2771,13 +2771,12 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       var writer = new StringWriter();
       doc.Save(writer);
       File.WriteAllText(filePath, writer.ToString());
+      return true;
     }
     catch (Exception ex) {
       Trace.WriteLine($"Failed to export to HTML file: {filePath}, {ex.Message}");
       return false;
     }
-
-    return true;
   }
 
   private void ExportFunctionListAsExcelFile(string filePath) {
@@ -3264,14 +3263,19 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private void ExportFunctionListHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
     string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
+    bool success = true;
 
     if (!string.IsNullOrEmpty(path)) {
       try {
-        ExportFunctionListAsHtmlFile(path);
+        success = ExportFunctionListAsHtmlFile(path);
       }
       catch (Exception ex) {
+        Trace.WriteLine($"Failed to save function list to {path}: {ex.Message}");
+      }
+
+      if (!success) {
         using var centerForm = new DialogCenteringHelper(this);
-        MessageBox.Show($"Failed to save function list to {path}: {ex.Message}", "IR Explorer",
+        MessageBox.Show($"Failed to save function list to {path}", "IR Explorer",
                         MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }

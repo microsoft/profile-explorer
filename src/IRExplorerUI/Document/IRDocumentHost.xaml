@@ -22,6 +22,7 @@
     <CommandBinding Command="local:DocumentHostCommand.SearchSymbolAllSections" Executed="SearchSymbolAllSectionsExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.JumpToProfiledElement" Executed="JumpToProfiledElementExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfile" Executed="ExportFunctionProfileExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportFunctionProfileHTMLExecuted" />
 
     <CommandBinding
       CanExecute="JumpToNextProfiledElementCanExecute"
@@ -569,21 +570,57 @@
                 </Button>
                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
 
-                <Button
-                  Padding="0"
+                 <Menu
+              Margin="0,0,0,0"
+              VerticalAlignment="Center"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+              <MenuItem
+                Padding="0,0,0,0"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                OverridesDefaultStyle="True"
+                ToolTip="Export function list">
+                <MenuItem.Header>
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock
+                      Margin="2,0,0,0"
+                      VerticalAlignment="Bottom"
+                      Text="Export" />
+                    <Path
+                      Margin="4,2,0,0"
+                      VerticalAlignment="Center"
+                      Data="M 0 0 L 3 3 L 6 0 Z"
+                      Fill="Black" />
+                  </StackPanel>
+                </MenuItem.Header>
+                <MenuItem
                   Command="local:DocumentHostCommand.ExportFunctionProfile"
                   CommandTarget="{Binding ElementName=TextView}"
-                  ToolTip="Export profiling results as an Excel sheet">
-                  <StackPanel Orientation="Horizontal">
+                  Header="Export as Excel worksheet"
+                  ToolTip="Save the list of functions and additional columns as an Excel worksheet">
+                  <MenuItem.Icon>
                     <Image
-                      Width="15"
-                      Height="15"
-                      Margin="0,0,2,0"
-                      Source="{StaticResource ExcelIcon}"
-                      Style="{StaticResource DisabledImageStyle}" />
-                    <TextBlock Text="Export" />
-                  </StackPanel>
-                </Button>
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource ExcelIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem
+                  Command="local:DocumentHostCommand.ExportFunctionProfile"
+                  CommandTarget="{Binding ElementName=TextView}"
+                  Header="Export as HTML page"
+                  ToolTip="Save the list of functions and additional columns as an HTML page">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource SourceIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+              </MenuItem>
+            </Menu>
+
                 <Separator />
                 <Menu Margin="2,0,0,0" VerticalAlignment="Center">
                   <MenuItem
