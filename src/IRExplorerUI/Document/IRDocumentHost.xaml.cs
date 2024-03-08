@@ -2192,7 +2192,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
       var p = doc.CreateElement("p");
       var funcName = Session.CompilerInfo.NameProvider.FormatFunctionName(Section.ParentFunction);
-      p.InnerHtml = HttpUtility.HtmlEncode(funcName);
+      p.InnerHtml = $"Function: {HttpUtility.HtmlEncode(funcName)}";
+      p.SetAttributeValue("style", TitleStyle);
+      doc.DocumentNode.AppendChild(p);
+
+      p = doc.CreateElement("p");
+      p.InnerHtml = $"Module: {HttpUtility.HtmlEncode(Section.ParentFunction.ParentSummary.ModuleName)}";
       p.SetAttributeValue("style", TitleStyle);
       doc.DocumentNode.AppendChild(p);
 
