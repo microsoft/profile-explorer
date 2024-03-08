@@ -1,11 +1,14 @@
 // Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using IRExplorerCore;
+using IRExplorerUI.Controls;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI;
 
@@ -24,11 +27,12 @@ public static class BookmarkCommand {
 
 public partial class BookmarksPanel : ToolPanelControl {
   private ObservableCollectionRefresh<Bookmark> bookmarks_;
-  private IRPreviewToolTipHost previewTooltip_;
+  private IRDocumentPopupInstance previewPopup_;
 
   public BookmarksPanel() {
     InitializeComponent();
     ResetBookmarks();
+    SetupPreviewPopup();
   }
 
   public ObservableCollectionRefresh<Bookmark> Bookmarks => bookmarks_;
@@ -42,19 +46,23 @@ public partial class BookmarksPanel : ToolPanelControl {
     Document.BookmarkInfoChanged(bookmark);
   }
 
-  private void HideToolTip() {
-    if (previewTooltip_ != null) {
-      previewTooltip_.Hide();
-      previewTooltip_ = null;
+  private void SetupPreviewPopup() {
+    if (previewPopup_ != null) {
+      previewPopup_.UnregisterHoverEvents();
+      previewPopup_ = null;
     }
-  }
 
-  private void ListViewItem_MouseEnter(object sender, MouseEventArgs e) {
-    HideToolTip();
-    var listItem = sender as ListViewItem;
-    var bookmark = listItem.DataContext as Bookmark;
-    previewTooltip_ = new IRPreviewToolTipHost(600, 100, Document, bookmark.Element);
-    listItem.ToolTip = previewTooltip_;
+    previewPopup_ = new IRDocumentPopupInstance(App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Bookmarks), Session);
+    previewPopup_.SetupHoverEvents(BookmarkList, HoverPreview.HoverDuration, () => {
+      var hoveredItem = Utils.FindPointedListViewItem(BookmarkList);
+
+      if (hoveredItem?.DataContext is Bookmark bookmark) {
+        return PreviewPopupArgs.ForDocument(Document, bookmark.Element, BookmarkList,
+                                            $"Bookmark {bookmark.Text}");
+      }
+
+      return null;
+    });
   }
 
   private void TextBox_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) {

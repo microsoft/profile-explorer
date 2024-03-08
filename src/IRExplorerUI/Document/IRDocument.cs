@@ -3849,7 +3849,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private async Task<IRDocumentPopup> CreateElementPreviewPopup(IRElement element, Point position) {
     return await IRDocumentPopup.CreateNew(this, element, position,
-                                            this, PreviewPopupSettings.ElementDefault);
+                                            this, App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Other));
   }
 
   private async Task<IRDocumentPopup> CreateCallTargetPreviewPopup(IRElement element, bool alwaysShow, Point position) {
@@ -3870,7 +3870,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return null;
 
     return await IRDocumentPopup.CreateNew(result, position,this, Session,
-                                           App.Settings.PreviewPopupSettings,
+                                           App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Other),
                                            $"Function: {element.Name}");
   }
 

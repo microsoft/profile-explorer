@@ -72,7 +72,6 @@ public class RemarkSettings : SettingsBase {
     Optimization = true;
     Analysis = true;
     Trace = false;
-    ShowRemarks = true;
     CategoryFilter = new Dictionary<string, bool>();
   }
 

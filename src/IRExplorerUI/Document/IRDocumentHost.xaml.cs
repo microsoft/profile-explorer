@@ -695,7 +695,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       }
 
       var linePos = visualLine.GetVisualPosition(0, VisualYPosition.LineBottom);
-      var t = Mouse.GetPosition(this);
       double x = Mouse.GetPosition(this).X + ActionPanelOffset;
       double y = linePos.Y + DocumentToolbar.ActualHeight -
                  1 - TextView.TextArea.TextView.ScrollOffset.Y;

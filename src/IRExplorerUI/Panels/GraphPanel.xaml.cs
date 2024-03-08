@@ -845,7 +845,8 @@ public partial class GraphPanel : ToolPanelControl {
 
     var position = Mouse.GetPosition(GraphHost).AdjustForMouseCursor();
     previewPopup_ = await IRDocumentPopup.CreateNew(Document, node.NodeInfo.ElementData, position,
-                                                    GraphHost, PreviewPopupSettings.ElementDefault, "Block ");
+                                                    GraphHost, App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.FlowGraph),
+                                                    "Block ");
     previewPopup_.PopupDetached += Popup_PopupDetached;
     previewPopup_.ShowPopup();
   }

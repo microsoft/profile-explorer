@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using IRExplorerCore;
+using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Query;
@@ -77,6 +78,8 @@ public class ApplicationSettings {
   public CallTreeNodeSettings CallTreeNodeSettings;
   [ProtoMember(27)]
   public PreviewPopupSettings PreviewPopupSettings;
+  [ProtoMember(28)]
+  public Dictionary<ToolPanelKind, PreviewPopupSettings> ElementPreviewPopupSettings;
 
   public ApplicationSettings() {
     Reset();
@@ -99,6 +102,7 @@ public class ApplicationSettings {
     TimelineSettings.Reset();
     CallTreeNodeSettings.Reset();
     PreviewPopupSettings.Reset();
+    ElementPreviewPopupSettings.Clear();
     AutoReloadDocument = true;
     ThemeIndex = 0; // Light theme.
   }
@@ -233,7 +237,21 @@ public class ApplicationSettings {
     DocumentPopupSettings ??= new IRDocumentPopupSettings();
     TimelineSettings ??= new TimelineSettings();
     CallTreeNodeSettings ??= new CallTreeNodeSettings();
-    PreviewPopupSettings ??= new PreviewPopupSettings();
+
+    if (PreviewPopupSettings == null) {
+      PreviewPopupSettings = new PreviewPopupSettings(false);
+      PreviewPopupSettings.Reset();
+    }
+
+    ElementPreviewPopupSettings ??= new Dictionary<ToolPanelKind, PreviewPopupSettings>();
+  }
+
+  public PreviewPopupSettings GetElementPreviewPopupSettings(ToolPanelKind panelKind) {
+    return ElementPreviewPopupSettings.GetOrAddValue(panelKind, () => {
+      var settings = new PreviewPopupSettings(true);
+      settings.Reset();
+      return settings;
+    });
   }
 
   private void AddProfilingSession(ProfileDataReport report, List<ProfileDataReport> list) {

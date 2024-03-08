@@ -149,9 +149,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   }
 
   ~ProfileListView() {
-    if(previewPopup_ != null) {
-      previewPopup_.UnregisterHoverEvents();
-    }
+    previewPopup_?.UnregisterHoverEvents();
   }
 
   public CallTreeNodeSettings Settings {
