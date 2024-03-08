@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net7.0-windows</TargetFramework>
+		<TargetFramework>net8.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<ApplicationIcon>main.ico</ApplicationIcon>
 		<AssemblyVersion>1.0.0.3</AssemblyVersion>

@@ -1177,12 +1177,6 @@ public partial class MainWindow : Window, ISession {
               break;
             }
           }
-
-          // Manually invoke the events, they are not triggered automatically.
-          foreach (var visiblePanel in visiblePanels) {
-            visiblePanel.OnShowPanel();
-            visiblePanel.OnActivatePanel();
-          }
         }
       };
 
@@ -1191,6 +1185,13 @@ public partial class MainWindow : Window, ISession {
 
       // Load panels from layout file.
       serializer.Deserialize(dockLayoutFile);
+
+      // Manually invoke the events, they are not triggered automatically.
+      foreach (var visiblePanel in visiblePanels) {
+        visiblePanel.OnShowPanel();
+        visiblePanel.OnActivatePanel();
+      }
+
       RegisterNewVersionPanels(registeredPanelKinds);
       RenameAllPanels();
       return true;
