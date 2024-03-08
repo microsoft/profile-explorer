@@ -8,8 +8,8 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class PreviewPopupSettings : SettingsBase {
-  public PreviewPopupSettings() {
-    Reset();
+  public PreviewPopupSettings(bool isElementPopup) {
+    IsElementPopup = isElementPopup;
   }
 
   [ProtoMember(1)]
@@ -28,21 +28,31 @@ public class PreviewPopupSettings : SettingsBase {
   public double PopupWidth { get; set; }
   [ProtoMember(8)]
   public double PopupHeight { get; set; }
+  [ProtoMember(9)]
+  public bool IsElementPopup { get; set; }
 
-  public static PreviewPopupSettings Default => new PreviewPopupSettings() {
+  private static PreviewPopupSettings Default => new PreviewPopupSettings(false) {
     PopupWidth = 600,
-    PopupHeight = 400 // For ASM/source preview.
+    PopupHeight = 400, // For ASM/source preview.
+    JumpToHottestElement = true,
+    UseCompactProfilingColumns = true
   };
-  public static PreviewPopupSettings ElementDefault => new PreviewPopupSettings() {
+
+  private static PreviewPopupSettings ElementDefault => new PreviewPopupSettings(true) {
     PopupWidth = 600,
     PopupHeight = 200
   };
 
   public override void Reset() {
-    JumpToHottestElement = true;
-    UseCompactProfilingColumns = true;
-    PopupWidth = 600;
-    PopupHeight = 400;
+    var settings = IsElementPopup ? ElementDefault : Default;
+    PopupWidth = settings.PopupWidth;
+    PopupHeight = settings.PopupHeight;
+    JumpToHottestElement = settings.JumpToHottestElement ;
+    UseCompactProfilingColumns = settings.UseCompactProfilingColumns ;
+    ShowPerformanceCounterColumns = settings.ShowPerformanceCounterColumns ;
+    ShowPerformanceMetricColumns = settings.ShowPerformanceMetricColumns ;
+    UseSmallerFontSize = settings.UseSmallerFontSize ;
+    ShowSourcePreviewPopup = settings.ShowSourcePreviewPopup ;
   }
 
   public PreviewPopupSettings Clone() {
@@ -63,7 +73,8 @@ public class PreviewPopupSettings : SettingsBase {
   }
 
   public override string ToString() {
-    return $"JumpToHottestElement: {JumpToHottestElement}\n" +
+    return $"IsElementPopup: {IsElementPopup}\n" +
+           $"JumpToHottestElement: {JumpToHottestElement}\n" +
            $"UseCompactProfilingColumns: {UseCompactProfilingColumns}\n" +
            $"ShowPerformanceCounterColumns: {ShowPerformanceCounterColumns}\n" +
            $"ShowPerformanceMetricColumns: {ShowPerformanceMetricColumns}\n" +

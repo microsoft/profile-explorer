@@ -205,7 +205,6 @@
       <ListView.ItemContainerStyle>
         <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
           <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
-          <EventSetter Event="MouseEnter" Handler="ListViewItem_MouseEnter" />
           <Setter Property="Background"
                   Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
 
