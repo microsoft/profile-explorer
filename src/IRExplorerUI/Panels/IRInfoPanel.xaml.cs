@@ -142,4 +142,9 @@ public partial class IRInfoPanel : ToolPanelControl {
       logFileTimer_ = null;
     }
   }
+
+  public override void OnSessionStart() {
+    base.OnSessionStart();
+    TextView.Session = Session;
+  }
 }

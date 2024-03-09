@@ -313,7 +313,11 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
 
   public FunctionIR Function { get; set; }
   public IRTextSection Section { get; set; }
-  public ISession Session { get; set; }
+
+  public ISession Session {
+    get => RemarkTextView.Session;
+    set => RemarkTextView.Session = value;
+  }
 
   public void NotifyPropertyChanged(string propertyName) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

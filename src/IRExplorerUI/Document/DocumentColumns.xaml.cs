@@ -342,14 +342,11 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   private bool ProfileListRowFilter(object item) {
-    var rowValue = (ElementRowValue)item;
-
     foreach (var range in foldedTextRegions_) {
       var startLine = associatedDocument_.GetLineByOffset(range.StartOffset);
       var endLine = associatedDocument_.GetLineByOffset(range.EndOffset);
 
       if (startLine.LineNumber - 1 > rowFilterIndex_) {
-        rowFilterIndex_++;
         break; // Early stop in sorted range list.
       }
 
@@ -364,7 +361,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     return true;
   }
 
-  public void UpdateColumnWidths() {
+  private void UpdateColumnWidths() {
     if (profileDataRows_ == null ||
         profileColumnHeaders_ == null) {
       return;

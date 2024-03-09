@@ -304,6 +304,12 @@ public sealed class ProfileCallTree {
       return nodes[0];
     }
 
+    // In case of recursive functions, the total time
+    // should not be counted again for the recursive calls.
+    // Sort by weight so that parent nodes (more inclusive time)
+    // get processed first and have the recursive instances ignored.
+    nodes.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+    var handledNodes = new HashSet<ProfileCallTreeNode>();
     var comparer = new ProfileCallTreeNodeComparer();
     var childrenSet = new HashSet<ProfileCallTreeNode>(comparer);
     var callersSet = new HashSet<ProfileCallTreeNode>(comparer);
@@ -320,7 +326,26 @@ public sealed class ProfileCallTree {
         continue;
       }
 
-      weight += node.Weight;
+      // If the node is being called by another
+      // instance recursively which has its total time counted,
+      // don't count the total time of this instance.
+      var callerNode = node.Caller;
+      bool countWeight = true;
+
+      while (callerNode != null) {
+        if (handledNodes.Contains(callerNode)) {
+          countWeight = false;
+          break;
+        }
+
+        callerNode = callerNode.Caller;
+      }
+
+      if (countWeight) {
+        weight += node.Weight;
+        handledNodes.Add(node);
+      }
+
       excWeight += node.ExclusiveWeight;
       kind = node.Kind;
 

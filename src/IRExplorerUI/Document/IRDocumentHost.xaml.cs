@@ -1865,6 +1865,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         var view = new NotesPopup(new Point(queryPanel.HorizontalOffset,
                                             queryPanel.VerticalOffset + queryPanel.Height),
                                   500, 200, null);
+        view.Session = Session;
         Session.RegisterDetachedPanel(view);
         var button = (QueryButton)sender;
         button.IsEnabled = false;

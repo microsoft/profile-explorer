@@ -45,7 +45,7 @@ public sealed class LightIRDocument : TextEditor {
   private CancelableTask updateHighlightingTask_;
   private DiffLineHighlighter diffHighlighter_;
   private IRDocumentPopupInstance previewPopup_;
-
+  private ISession session_;
 
   public LightIRDocument() {
     lockObject_ = new object();
@@ -71,7 +71,6 @@ public sealed class LightIRDocument : TextEditor {
     TextArea.SelectionBorder = null;
     Options.EnableEmailHyperlinks = false;
     Options.EnableHyperlinks = false;
-    SetupPreviewPopup();
   }
 
   public enum TextSearchMode {
@@ -79,7 +78,14 @@ public sealed class LightIRDocument : TextEditor {
     Filter
   }
 
-  public ISession Session { get; set; }
+  public ISession Session {
+    get => session_;
+    set {
+      session_ = value;
+      SetupPreviewPopup();
+    }
+  }
+
   public IRTextSection Section => section_;
   public FunctionIR Function => function_;
   public IRDocument AssociatedDocument => associatedDocument_;

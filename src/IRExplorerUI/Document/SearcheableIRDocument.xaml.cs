@@ -54,6 +54,11 @@ public partial class SearcheableIRDocument : UserControl, INotifyPropertyChanged
     }
   }
 
+  public ISession Session {
+    get => TextView.Session;
+    set => TextView.Session = value;
+  }
+
   public bool UseAutoComplete {
     get => SearchPanel.UseAutoComplete;
     set => SearchPanel.UseAutoComplete = value;

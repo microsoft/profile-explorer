@@ -234,6 +234,9 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public event EventHandler<IRElementEventArgs> ElementSelected;
   public event EventHandler<IRElementEventArgs> ElementUnselected;
   public event EventHandler<int> CaretChanged;
+  public event EventHandler<FoldingSection> TextRegionFolded;
+  public event EventHandler<FoldingSection> TextRegionUnfolded;
+
   public event PropertyChangedEventHandler PropertyChanged;
   public List<BlockIR> Blocks => Function.Blocks;
   public BookmarkManager BookmarkManager => bookmarks_;
@@ -1019,7 +1022,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     var foldedBlocks = new HashSet<FoldingSection>();
 
-    foldingMargin.PreviewMouseLeftButtonUp += (sender, args) => {
+    void DetectFoldingChanges() {
       // Check each folding if there is a change, since there is
       // no event for a single folding being changed.
       foreach (var folding in folding_.AllFoldings) {
@@ -1034,11 +1037,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
           }
         }
       }
-    };
-  }
+    }
 
-  public event EventHandler<FoldingSection> TextRegionFolded;
-  public event EventHandler<FoldingSection> TextRegionUnfolded;
+    foldingMargin.PreviewMouseLeftButtonUp += (sender, args) => DetectFoldingChanges();
+    foldingMargin.PreviewTouchUp += (sender, args) => DetectFoldingChanges();
+  }
 
   private void AddDiffTextSegments(List<DiffTextSegment> segments) {
     diffSegments_ = segments;
@@ -2902,7 +2905,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
       if (e != null && e.Parameter is SelectedIconEventArgs iconArgs) {
         var icon = IconDrawing.FromIconResource(iconArgs.SelectedIconName);
-        AddIconElementOverlay(element, icon, DefaultLineHeight, DefaultLineHeight);
+        var overlay = AddIconElementOverlay(element, icon, DefaultLineHeight, DefaultLineHeight);
+        overlay.Background = Background;
+        overlay.ShowBorderOnMouseOverOnly = true;
+        overlay.ShowBackgroundOnMouseOverOnly = true;
+        overlay.IsLabelPinned = true;
         // MirrorAction(DocumentActionKind.MarkIcon, element, iconArgs);
       }
     }

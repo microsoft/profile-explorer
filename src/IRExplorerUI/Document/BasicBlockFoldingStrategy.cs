@@ -1,7 +1,9 @@
 // Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
 using IRExplorerCore.IR;
@@ -32,32 +34,41 @@ public sealed class BasicBlockFoldingStrategy : IBlockFoldingStrategy {
 
   private IEnumerable<NewFolding> CreateNewFoldings(ITextSource document) {
     var newFoldings = new List<NewFolding>(Function.Blocks.Count);
+
+    if (Function.Blocks.Count == 0) {
+      return newFoldings;
+    }
+
     BlockIR lastBlock = null;
     int lastOffset = 0;
     int textLength = document.TextLength;
-    bool sorted = true;
 
     foreach (var block in Function.Blocks) {
       int offset = block.TextLocation.Offset;
       int foldingLength = offset - lastOffset;
 
-      if (lastBlock != null && foldingLength > 1 && lastBlock.Tuples.Count > 0) {
-        //? TODO: This seems to be a bug with diff mode
-        if (offset + foldingLength < textLength) {
-          newFoldings.Add(new NewFolding(lastOffset, offset - 2));
-        }
-      }
+      Trace.WriteLine($"Fold B{block.Number}, offset {offset}, length {foldingLength}");
 
-      if (offset < lastOffset) {
-        sorted = false;
+      if (lastBlock != null && foldingLength > 1) {
+        //? TODO: This seems to be a bug with diff mode
+        int endOffset = Math.Min(offset, textLength - 1);
+
+        if (endOffset > lastOffset) {
+          newFoldings.Add(new NewFolding(lastOffset, endOffset - 2));
+        }
       }
 
       lastOffset = offset;
       lastBlock = block;
     }
 
-    if (!sorted) {
-      newFoldings.Sort((a, b) => a.StartOffset - b.StartOffset);
+    // Handle the last block.
+    if (lastOffset < textLength - 1) {
+      int endOffset = Math.Min(lastOffset + Function.Blocks[^1].TextLength, textLength - 1);
+
+      if (endOffset > lastOffset) {
+        newFoldings.Add(new NewFolding(lastOffset, endOffset - 2));
+      }
     }
 
     return newFoldings;
