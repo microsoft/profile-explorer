@@ -580,9 +580,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     var binTaskList = new Task<BinaryFileSearchResult>[imageLimit];
     var pdbTaskList = new Task<DebugFileSearchResult>[imageLimit];
 
-    // Start downloading binaries.
-    var binTaskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
-    var binTaskFactory = new TaskFactory(binTaskScheduler.ConcurrentScheduler);
+    // Start downloading binaries
+    var binTaskSemaphore = new SemaphoreSlim(8);
 
     for (int i = 0; i < imageLimit; i++) {
       if (!IsAcceptedModule(imageList[i])) {
@@ -603,8 +602,18 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         continue;
       }
 
-      binTaskList[i] = binTaskFactory.StartNew(() => {
-        return PEBinaryInfoProvider.LocateBinaryFileAsync(binaryFile, symbolSettings).Result;
+      binTaskList[i] = Task.Run(async () => {
+        await binTaskSemaphore.WaitAsync();
+        BinaryFileSearchResult result;
+
+        try {
+          result = await PEBinaryInfoProvider.LocateBinaryFileAsync(binaryFile, symbolSettings);
+        }
+        finally {
+          binTaskSemaphore.Release();
+        }
+
+        return result;
       });
     }
 
@@ -658,8 +667,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     // Locate the needed debug files, in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.
     int pdbCount = 0;
-    var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
-    var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
+    var pdbTaskSemaphore = new SemaphoreSlim(8);
 
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
@@ -692,15 +700,35 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           continue;
         }
 
-        pdbTaskList[i] = taskFactory.StartNew(() => {
-          return session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings);
+        pdbTaskList[i] = Task.Run(async () => {
+          await pdbTaskSemaphore.WaitAsync();
+          DebugFileSearchResult result;
+
+          try {
+            result = await session_.CompilerInfo.FindDebugInfoFileAsync(symbolFile, symbolSettings);
+          }
+          finally {
+            pdbTaskSemaphore.Release();
+          }
+
+          return result;
         });
       }
       else if (binaryFile is {Found: true}) {
         pdbCount++;
 
-        pdbTaskList[i] = taskFactory.StartNew(() => {
-          return session_.CompilerInfo.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings).Result;
+        pdbTaskList[i] = Task.Run(async () => {
+          await pdbTaskSemaphore.WaitAsync();
+          DebugFileSearchResult result;
+
+          try {
+            result = session_.CompilerInfo.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings).Result;
+          }
+          finally {
+            pdbTaskSemaphore.Release();
+          }
+
+          return result;
         });
       }
     }
