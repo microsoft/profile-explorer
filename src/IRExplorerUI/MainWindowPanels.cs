@@ -1089,6 +1089,7 @@ public partial class MainWindow : Window, ISession {
             case ToolPanelKind.Bookmarks: {
               BookmarksPanel = (BookmarksPanel)panel;
               BookmarksPanelHost = (LayoutAnchorable)args.Model;
+              RegisterPanel(BookmarksPanel, BookmarksPanelHost);
               break;
             }
             case ToolPanelKind.Definition: {

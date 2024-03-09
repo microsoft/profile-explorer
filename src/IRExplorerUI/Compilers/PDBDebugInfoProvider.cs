@@ -537,6 +537,10 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         locationTag.Line = (int)lineNumber.lineNumber;
         locationTag.Column = (int)lineNumber.columnNumber;
 
+        if (lineNumber.sourceFile != null) {
+          locationTag.FilePath = string.Intern(lineNumber.sourceFile.fileName);
+        }
+
         // Enumerate the functions that got inlined at this call site.
         funcSymbol.findInlineFramesByRVA(instrRVA, out var inlineeFrameEnum);
 

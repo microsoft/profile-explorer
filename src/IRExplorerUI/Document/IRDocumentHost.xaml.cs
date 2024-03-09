@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -14,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using ClosedXML.Excel;
+using HtmlAgilityPack;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
@@ -56,6 +59,8 @@ public static class DocumentHostCommand {
     new RoutedUICommand("Untitled", "JumpToPreviousProfiledBlock", typeof(IRDocumentHost));
   public static readonly RoutedUICommand ExportFunctionProfile =
     new RoutedUICommand("Untitled", "ExportFunctionProfile", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand ExportFunctionProfileHTML =
+    new RoutedUICommand("Untitled", "ExportFunctionProfileHTML", typeof(IRDocumentHost));
 }
 
 [ProtoContract]
@@ -102,7 +107,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private bool columnsVisible_;
   private bool duringSectionSwitching_;
   private double previousVerticalOffset_;
-  private Brush selectedLineBrush_;
   private List<(IRElement, TimeSpan)> profileElements_;
   private List<(BlockIR, TimeSpan)> profileBlocks_;
   private int profileElementIndex_;
@@ -166,7 +170,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
     SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
+    ProfileColumns.RowSelected += ProfileColumns_RowSelected;
     Unloaded += IRDocumentHost_Unloaded;
+  }
+
+  private void ProfileColumns_RowSelected(object sender, int line) {
+    TextView.SelectLine(line + 1);
   }
 
   private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
@@ -198,14 +207,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         columnsListItemHeight_ = value;
         NotifyPropertyChanged(nameof(ColumnsListItemHeight));
       }
-    }
-  }
-
-  public Brush SelectedLineBrush {
-    get => selectedLineBrush_;
-    set {
-      selectedLineBrush_ = value;
-      NotifyPropertyChanged(nameof(SelectedLineBrush));
     }
   }
 
@@ -308,7 +309,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   public async Task ReloadSettings(bool hasProfilingChanges = true) {
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, true);
     TextView.Initialize(settings_, session_);
-    SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
 
     if (hasProfilingChanges) {
       await ReloadProfile();
@@ -695,7 +695,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       }
 
       var linePos = visualLine.GetVisualPosition(0, VisualYPosition.LineBottom);
-      var t = Mouse.GetPosition(this);
       double x = Mouse.GetPosition(this).X + ActionPanelOffset;
       double y = linePos.Y + DocumentToolbar.ActualHeight -
                  1 - TextView.TextArea.TextView.ScrollOffset.Y;
@@ -2115,7 +2114,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         }
 
         if (columnData != null) {
-          IRDocumentColumnData.ExportColumnsToExcel(columnData, tuple, ws, rowId, 3);
+          columnData.ExportColumnsToExcel(tuple, ws, rowId, 3);
         }
       }
     }
@@ -2161,6 +2160,162 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
                         MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }
+  }
+
+  private void ExportFunctionProfileHTMLExecuted(object sender, ExecutedRoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        success = ExportFunctionAsHtmlFile(path);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  private bool ExportFunctionAsHtmlFile(string filePath) {
+    try {
+      Trace.WriteLine("ExportFunctionAsHtmlFile");
+      var doc = new HtmlDocument();
+      string TitleStyle =
+        @"text-align:left;font-family:Arial, sans-serif;font-weight:bold";
+
+      var p = doc.CreateElement("p");
+      var funcName = Session.CompilerInfo.NameProvider.FormatFunctionName(Section.ParentFunction);
+      p.InnerHtml = $"Function: {HttpUtility.HtmlEncode(funcName)}";
+      p.SetAttributeValue("style", TitleStyle);
+      doc.DocumentNode.AppendChild(p);
+
+      p = doc.CreateElement("p");
+      p.InnerHtml = $"Module: {HttpUtility.HtmlEncode(Section.ParentFunction.ParentSummary.ModuleName)}";
+      p.SetAttributeValue("style", TitleStyle);
+      doc.DocumentNode.AppendChild(p);
+
+      doc.DocumentNode.AppendChild(ExportFunctionAsHtml());
+      var writer = new StringWriter();
+      doc.Save(writer);
+      File.WriteAllText(filePath, writer.ToString());
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to export to HTML file: {filePath}, {ex.Message}");
+      return false;
+    }
+  }
+
+  private void CopyFunctionAsHtml() {
+    var doc = new HtmlDocument();
+    doc.DocumentNode.AppendChild( ExportFunctionAsHtml());
+    var writer = new StringWriter();
+    doc.Save(writer);
+
+    // Also save as Markdown so that it can be pasted in plain text editors.
+    //var plainText = ExportFunctionListAsMarkdown(funcList);
+    string plainText = null;
+    Utils.CopyHtmlToClipboard(writer.ToString(), plainText);
+  }
+
+  private HtmlNode ExportFunctionAsHtml(bool includeBlocks = true) {
+    string TableStyle = @"border-collapse:collapse;border-spacing:0;";
+    string HeaderStyle =
+      @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
+    string CellStyle =
+      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:500px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
+    string BlockStyle =
+      @"color:#00008B;font-weight:bold;text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
+    string LineNumberStyle =
+      @"color:#006400;text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
+
+    var columnData = TextView.ProfileColumnData;
+    int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
+    int rowId = 1; // First row is for the table column names.
+    var doc = new HtmlDocument();
+    var table = doc.CreateElement("table");
+    table.SetAttributeValue("style", TableStyle);
+
+    var thead = doc.CreateElement("thead");
+    var tbody = doc.CreateElement("tbody");
+    var tr = doc.CreateElement("tr");
+
+    var th = doc.CreateElement("th");
+    th.InnerHtml = "Instruction";
+    th.SetAttributeValue("style", HeaderStyle);
+    tr.AppendChild(th);
+    th = doc.CreateElement("th");
+    th.InnerHtml = "Line";
+    th.SetAttributeValue("style", HeaderStyle);
+    tr.AppendChild(th);
+
+    if (columnData != null) {
+      foreach (var column in columnData.Columns) {
+        th = doc.CreateElement("th");
+        th.InnerHtml = HttpUtility.HtmlEncode(column.Title);
+        th.SetAttributeValue("style", HeaderStyle);
+        tr.AppendChild(th);
+      }
+    }
+
+    thead.AppendChild(tr);
+    table.AppendChild(thead);
+
+    foreach (var block in Function.Blocks) {
+      if (includeBlocks) {
+        tr = doc.CreateElement("tr");
+        var td = doc.CreateElement("td");
+        td.InnerHtml = HttpUtility.HtmlEncode($"Block {block.Number}");
+        td.SetAttributeValue("style", BlockStyle);
+        tr.AppendChild(td);
+
+        for (int i = 1; i < maxColumn; i++) {
+          td = doc.CreateElement("td");
+          td.SetAttributeValue("style", BlockStyle);
+          tr.AppendChild(td);
+        }
+
+        tbody.AppendChild(tr);
+      }
+
+      foreach (var tuple in block.Tuples) {
+        rowId++;
+
+        var line = TextView.Document.GetLineByNumber(tuple.TextLocation.Line + 1);
+        string text = TextView.Document.GetText(line.Offset, line.Length);
+        tr = doc.CreateElement("tr");
+        var td = doc.CreateElement("td");
+        td.InnerHtml = HttpUtility.HtmlEncode(text);
+        td.SetAttributeValue("style", CellStyle);
+        tr.AppendChild(td);
+        td = doc.CreateElement("td");
+
+        var sourceTag = tuple.GetTag<SourceLocationTag>();
+
+        if (sourceTag != null) {
+          td.InnerHtml = HttpUtility.HtmlEncode(sourceTag.Line);
+        }
+
+        td.SetAttributeValue("style", LineNumberStyle);
+        tr.AppendChild(td);
+
+        if (columnData != null) {
+          columnData.ExportColumnsAsHTML(tuple, doc, tr, rowId, 3);
+        }
+
+        tbody.AppendChild(tr);
+      }
+    }
+
+    table.AppendChild(tbody);
+    doc.DocumentNode.AppendChild(table);
+    return doc.DocumentNode;
   }
 
   private class DummyQuery : IElementQuery {

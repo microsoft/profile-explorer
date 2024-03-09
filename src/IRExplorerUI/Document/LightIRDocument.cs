@@ -13,6 +13,7 @@ using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
+using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using TextLocation = IRExplorerCore.TextLocation;
 
@@ -32,7 +33,6 @@ public sealed class LightIRDocument : TextEditor {
   private string initialText_;
   private bool initialTextChanged_;
   private List<Tuple<int, int>> initialTextLines_;
-  private IRPreviewToolTipHost previewTooltip_;
   private IRElement prevSelectedElement_;
   private TextSearchMode searchMode_;
   private ElementHighlighter searchResultMarker_;
@@ -44,6 +44,8 @@ public sealed class LightIRDocument : TextEditor {
   private bool syntaxHighlightingLoaded_;
   private CancelableTask updateHighlightingTask_;
   private DiffLineHighlighter diffHighlighter_;
+  private IRDocumentPopupInstance previewPopup_;
+
 
   public LightIRDocument() {
     lockObject_ = new object();
@@ -61,7 +63,6 @@ public sealed class LightIRDocument : TextEditor {
     TextArea.TextView.BackgroundRenderers.Add(hoverElementMarker_);
     TextChanged += TextView_TextChanged;
     PreviewMouseLeftButtonDown += TextView_PreviewMouseLeftButtonDown;
-    PreviewMouseHover += TextView_PreviewMouseHover;
     MouseLeave += TextView_MouseLeave;
     PreviewMouseMove += TextView_PreviewMouseMove;
 
@@ -70,6 +71,7 @@ public sealed class LightIRDocument : TextEditor {
     TextArea.SelectionBorder = null;
     Options.EnableEmailHyperlinks = false;
     Options.EnableHyperlinks = false;
+    SetupPreviewPopup();
   }
 
   public enum TextSearchMode {
@@ -177,41 +179,47 @@ public sealed class LightIRDocument : TextEditor {
     ScrollToLine(line);
   }
 
-  private void TextView_PreviewMouseHover(object sender, MouseEventArgs e) {
-    HideToolTip();
-    var position = e.GetPosition(TextArea.TextView);
-    var element = DocumentUtils.FindPointedElement(position, this, elements_);
 
-    if (element != null) {
-      var refFinder = new ReferenceFinder(Session.CurrentDocument.Function);
-      var refElement = refFinder.FindEquivalentValue(element);
+  private void SetupPreviewPopup() {
+    if (previewPopup_ != null) {
+      previewPopup_.UnregisterHoverEvents();
+      previewPopup_ = null;
+    }
 
-      if (refElement != null) {
-        // Don't show tooltip when user switches between references.
-        if (selectedElementRefs_ != null && refElement == prevSelectedElement_) {
-          return;
-        }
-
-        var refElementDef = refFinder.FindSingleDefinition(refElement);
-        var tooltipElement = refElementDef ?? refElement;
-        previewTooltip_ = new IRPreviewToolTipHost(600, 100, Session.CurrentDocument, tooltipElement);
-        previewTooltip_.Show();
+    previewPopup_ = new IRDocumentPopupInstance(App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Other), Session);
+    previewPopup_.SetupHoverEvents(this, HoverPreview.HoverDuration, () => {
+      if (Session.CurrentDocument == null) {
+        return null;
       }
-    }
-  }
 
-  private void HideToolTip() {
-    if (previewTooltip_ != null) {
-      previewTooltip_.Hide();
-      previewTooltip_ = null;
-    }
+      var position = Mouse.GetPosition(TextArea.TextView);
+      var element = DocumentUtils.FindPointedElement(position, this, elements_);
+
+      if (element != null) {
+        var refFinder = new ReferenceFinder(Session.CurrentDocument.Function);
+        var refElement = refFinder.FindEquivalentValue(element);
+
+        if (refElement != null) {
+          // Don't show tooltip when user switches between references.
+          if (selectedElementRefs_ != null && refElement == prevSelectedElement_) {
+            return null;
+          }
+
+          var refElementDef = refFinder.FindSingleDefinition(refElement);
+          var tooltipElement = refElementDef ?? refElement;
+          return PreviewPopupArgs.ForDocument(Session.CurrentDocument, tooltipElement, this,
+                                              $"Preview");
+        }
+      }
+
+      return null;
+    });
   }
 
   private void TextView_MouseLeave(object sender, MouseEventArgs e) {
     hoverElementMarker_.Clear();
     ForceCursor = false;
     UpdateHighlighting();
-    HideToolTip();
   }
 
   private void TextView_PreviewMouseMove(object sender, MouseEventArgs e) {
@@ -247,7 +255,7 @@ public sealed class LightIRDocument : TextEditor {
   }
 
   private void TextView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-    HideToolTip();
+    previewPopup_.HidePreviewPopup(true);
     var position = e.GetPosition(TextArea.TextView);
 
     // Ignore click outside the text view.

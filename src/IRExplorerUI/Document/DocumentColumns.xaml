@@ -19,6 +19,7 @@
         ScrollViewer.CanContentScroll="True"
         ScrollViewer.ScrollChanged="ColumnsList_ScrollChanged"
         ScrollViewer.VerticalScrollBarVisibility="Hidden"
+        SelectionChanged="ColumnsList_OnSelectionChanged"
         SelectionMode="Single"
         UseLayoutRounding="False"
         VirtualizingPanel.CacheLengthUnit="Pixel"

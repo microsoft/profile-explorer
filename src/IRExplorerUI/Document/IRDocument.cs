@@ -525,6 +525,13 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
                              false, true, inlinee);
   }
 
+  public void SelectLine(int line) {
+    if (line >= 0 && line < Document.LineCount) {
+      TextArea.Caret.Line = line;
+      ScrollToLine(line);
+    }
+  }
+
   public void MarkElementsOnSourceLine(int lineNumber, Color selectedColor, bool raiseEvent = true) {
     MarkElementsOnSourceLine(markedHighlighter_, lineNumber, selectedColor, raiseEvent, false, null);
   }
@@ -3582,11 +3589,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       lineHighlighter_ = null;
     }
 
-    if (settings_.HighlightCurrentLine) {
-      lineHighlighter_ = new CurrentLineHighlighter(this, settings_.SelectedValueColor);
-      TextArea.TextView.BackgroundRenderers.Insert(0, lineHighlighter_);
-    }
-
     if (blockHighlighter_ != null) {
       TextArea.TextView.BackgroundRenderers.Remove(blockHighlighter_);
       blockHighlighter_ = null;
@@ -3659,6 +3661,12 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
         AddDiffTextSegments(diffSegments_);
         AllDiffSegmentsAdded();
       }
+    }
+
+
+    if (settings_.HighlightCurrentLine) {
+      lineHighlighter_ = new CurrentLineHighlighter(this, settings_.CurrentLineBorderColor);
+      TextArea.TextView.BackgroundRenderers.Add(lineHighlighter_);
     }
   }
 
@@ -3841,7 +3849,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private async Task<IRDocumentPopup> CreateElementPreviewPopup(IRElement element, Point position) {
     return await IRDocumentPopup.CreateNew(this, element, position,
-                                            this, PreviewPopupSettings.ElementDefault);
+                                            this, App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Other));
   }
 
   private async Task<IRDocumentPopup> CreateCallTargetPreviewPopup(IRElement element, bool alwaysShow, Point position) {
@@ -3862,7 +3870,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return null;
 
     return await IRDocumentPopup.CreateNew(result, position,this, Session,
-                                           App.Settings.PreviewPopupSettings,
+                                           App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Other),
                                            $"Function: {element.Name}");
   }
 

@@ -115,7 +115,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     var popup = CreatePopup(document.Section, previewedElement, position,
                             owner ?? document.TextArea.TextView, document.Session, settings, titlePrefix);
     await popup.InitializeFromDocument(document);
-    popup.CaptureMouseWheel();
+    SetupNewPopup(popup, settings);
     return popup;
   }
 
@@ -127,13 +127,18 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     var popup = CreatePopup(parsedSection.Section, null, position,
                             owner, session, settings, titlePrefix);
     await popup.InitializeFromSection(parsedSection);
+    SetupNewPopup(popup, settings);
+    return popup;
+  }
+
+  private static void SetupNewPopup(IRDocumentPopup popup, PreviewPopupSettings settings) {
     popup.PopupClosed += (sender, args) => {
+      // Save resized popup dimension for next use.
       settings.PopupWidth = popup.Width;
       settings.PopupHeight = popup.Height;
     };
 
     popup.CaptureMouseWheel();
-    return popup;
   }
 
   private async Task InitializeFromSection(ParsedIRTextSection parsedSection) {
@@ -188,7 +193,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     base.ClosePopup();
   }
 
-  public void MarkPreviewedElement(IRElement element, IRDocument document) {
+  private void MarkPreviewedElement(IRElement element, IRDocument document) {
     if (PreviewedElement is BlockIR block) {
       if (block.HasLabel) {
         document.MarkElementWithDefaultStyle(block.Label);
@@ -203,7 +208,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     document.BringElementIntoView(PreviewedElement, BringIntoViewStyle.FirstLine);
   }
 
-  public void CaptureMouseWheel() {
+  private void CaptureMouseWheel() {
     owner_.PreviewMouseWheel += Owner_OnPreviewMouseWheel;
   }
 

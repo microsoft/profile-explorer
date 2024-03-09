@@ -441,7 +441,8 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
 
     var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
     previewPopup_ = await IRDocumentPopup.CreateNew(Document, element, position,
-                                                    relativeElement, PreviewPopupSettings.ElementDefault, "Use of ");
+                                                    relativeElement, App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.References),
+                                                    "Use of ");
     previewPopup_.PopupDetached += Popup_PopupDetached;
     previewPopup_.ShowPopup();
   }
