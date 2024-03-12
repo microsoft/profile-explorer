@@ -62,6 +62,8 @@ public static class DocumentHostCommand {
     new RoutedUICommand("Untitled", "ExportFunctionProfile", typeof(IRDocumentHost));
   public static readonly RoutedUICommand ExportFunctionProfileHTML =
     new RoutedUICommand("Untitled", "ExportFunctionProfileHTML", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand ExportFunctionProfileMarkdown =
+    new RoutedUICommand("Untitled", "ExportFunctionProfileMarkdown", typeof(IRDocumentHost));
   public static readonly RoutedUICommand CopySelectedLinesAsHTML =
     new RoutedUICommand("Untitled", "CopySelectedLinesAsHTML", typeof(IRDocumentHost));
 }
@@ -2166,7 +2168,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private void ExportFunctionProfileHTMLExecuted(object sender, ExecutedRoutedEventArgs e) {
+  //? TODO: Merge the save-file code across Section, IRDoc, SourceFile panels.
+  //? Generic: ExportToFile(filter, saveAction)
+  private void ExportFunctionProfileHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
     string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
     bool success = true;
 
@@ -2186,8 +2190,40 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private void CopySelectedLinesAsHTMLExecuted(object sender, ExecutedRoutedEventArgs e) {
+  private void ExportFunctionProfileMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("Markdown file|*.md", "*.md|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        success = ExportFunctionAsMarkdownFile(path);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  private void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
     CopySelectedLinesAsHtml();
+  }
+
+  private bool ExportFunctionAsMarkdownFile(string filePath) {
+    try {
+      var text = ExportFunctionAsMarkdown();
+      File.WriteAllText(filePath, text);
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to export to Markdown file: {filePath}, {ex.Message}");
+      return false;
+    }
   }
 
   private bool ExportFunctionAsHtmlFile(string filePath) {
@@ -2360,7 +2396,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private string ExportFunctionAsMarkdown(bool includeBlocks = true,
-                                          int startLine = 0, int endLine = 0) {
+                                          int startLine = -1, int endLine = -1) {
     var sb = new StringBuilder();
     string header    = "| Instruction | Line |";
     string separator = "|-------------|------|";

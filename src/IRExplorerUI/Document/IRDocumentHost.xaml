@@ -22,8 +22,9 @@
     <CommandBinding Command="local:DocumentHostCommand.SearchSymbolAllSections" Executed="SearchSymbolAllSectionsExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.JumpToProfiledElement" Executed="JumpToProfiledElementExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfile" Executed="ExportFunctionProfileExecuted" />
-    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportFunctionProfileHTMLExecuted" />
-    <CommandBinding Command="local:DocumentHostCommand.CopySelectedLinesAsHTML" Executed="CopySelectedLinesAsHTMLExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportFunctionProfileHtmlExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.CopySelectedLinesAsHTML" Executed="CopySelectedLinesAsHtmlExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileMarkdown" Executed="ExportFunctionProfileMarkdownExecuted" />
 
     <CommandBinding
       CanExecute="JumpToNextProfiledElementCanExecute"
@@ -608,7 +609,7 @@
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
-                  Command="local:DocumentHostCommand.ExportFunctionProfile"
+                  Command="local:DocumentHostCommand.ExportFunctionProfileHTML"
                   CommandTarget="{Binding ElementName=TextView}"
                   Header="Export as HTML page"
                   ToolTip="Save the list of functions and additional columns as an HTML page">
@@ -617,6 +618,18 @@
                       Width="16"
                       Height="16"
                       Source="{StaticResource SourceIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem
+                  Command="local:DocumentHostCommand.ExportFunctionProfileMarkdown"
+                  CommandTarget="{Binding ElementName=TextView}"
+                  Header="Export as Markdown file"
+                  ToolTip="Save the list of functions and additional columns as a Markdown file">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource DocumentIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
               </MenuItem>

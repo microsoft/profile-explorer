@@ -47,6 +47,7 @@
     <CommandBinding Command="local:Command.ExportFunctionList" Executed="ExportFunctionListExecuted" />
     <CommandBinding Command="local:Command.CopyFunctionDetails" Executed="CopyFunctionDetailsExecuted" />
     <CommandBinding Command="local:Command.ExportFunctionListHtml" Executed="ExportFunctionListHtmlExecuted" />
+    <CommandBinding Command="local:Command.ExportFunctionListMarkdown" Executed="ExportFunctionListMarkdownExecuted" />
   </local:ToolPanelControl.CommandBindings>
 
   <local:ToolPanelControl.Resources>
@@ -290,6 +291,18 @@
                       Width="16"
                       Height="16"
                       Source="{StaticResource SourceIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem
+                  Command="local:Command.ExportFunctionListMarkdown"
+                  CommandTarget="{Binding ElementName=FunctionList}"
+                  Header="Export as Markdown file"
+                  ToolTip="Save the list of functions and additional columns as Markdown file">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource DocumentIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
               </MenuItem>
@@ -789,13 +802,26 @@
                 Command="local:Command.ExportFunctionListHtml"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Export Function List as HTML File"
-                ToolTip="Save the list of functions and additional columns as an HTML file">
+                Header="Export Function List as HTML page"
+                ToolTip="Save the list of functions and additional columns as an HTML page">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
                     Height="16"
                     Source="{StaticResource SourceIcon}" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <MenuItem
+                Command="local:Command.ExportFunctionListMarkdown"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding ElementName=FunctionList}"
+                Header="Export Function List as Markdown File"
+                ToolTip="Save the list of functions and additional columns as a Markdown file">
+                <MenuItem.Icon>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource DocumentIcon}" />
                 </MenuItem.Icon>
               </MenuItem>
               <Separator />
