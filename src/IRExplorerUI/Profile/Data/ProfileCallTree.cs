@@ -223,17 +223,13 @@ public sealed class ProfileCallTree {
         try {
           nodeList = new List<ProfileCallTreeNode>();
           funcToNodesMap_[node.Function] = nodeList;
-          nodeList.Add(node);
         }
         finally {
           //funcLock_.ExitWriteLock();
         }
       }
-      else {
-        lock (nodeList) {
-          nodeList.Add(node);
-        }
-      }
+
+      nodeList.Add(node);
     }
     finally {
       //funcLock_.ExitUpgradeableReadLock();
@@ -287,14 +283,15 @@ public sealed class ProfileCallTree {
     }
 
     // Make a copy of the list since it's shared with all other instances
-    // of the node and it may be iterated on another thread.
+    // of the node and it may be iterated on another thread, sorting may
+    // modifies the list which invalidates iteration and throws.
     var nodeListCopy = new List<ProfileCallTreeNode>(nodeList);
     nodeListCopy.Sort((a, b) => b.Weight.CompareTo(a.Weight));
     return nodeListCopy;
   }
 
   public ProfileCallTreeNode GetCombinedCallTreeNode(IRTextFunction function, ProfileCallTreeNode parentNode = null) {
-    var nodes = GetCallTreeNodes(function);
+    var nodes = GetSortedCallTreeNodes(function);
 
     if (nodes == null) {
       return null;
@@ -304,11 +301,8 @@ public sealed class ProfileCallTree {
       return nodes[0];
     }
 
-    // In case of recursive functions, the total time
-    // should not be counted again for the recursive calls.
     // Sort by weight so that parent nodes (more inclusive time)
     // get processed first and have the recursive instances ignored.
-    nodes.Sort((a, b) => b.Weight.CompareTo(a.Weight));
     var handledNodes = new HashSet<ProfileCallTreeNode>();
     var comparer = new ProfileCallTreeNodeComparer();
     var childrenSet = new HashSet<ProfileCallTreeNode>(comparer);
@@ -319,6 +313,8 @@ public sealed class ProfileCallTree {
     var kind = ProfileCallTreeNodeKind.Unset;
 
     foreach (var node in nodes) {
+      // In case of recursive functions, the total time
+      // should not be counted again for the recursive calls.
       // When the function is a callee, consider only the nodes that are actually being called
       // by the parent node - by default the list contains every node representing the function,
       // on all paths through the call tree.
