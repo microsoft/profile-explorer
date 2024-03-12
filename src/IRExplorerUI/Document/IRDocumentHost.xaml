@@ -756,7 +756,7 @@
                   Command="local:DocumentHostCommand.CopySelectedLinesAsHTML"
                   CommandTarget="{Binding ElementName=TextView}"
                   Header="Copy Selection Details"
-                  InputGestureText="Ctrl+F">
+                  InputGestureText="Ctrl+Alt+C">
                   <MenuItem.Icon>
                     <Image
                       Width="16"
@@ -769,7 +769,7 @@
                   Command="local:DocumentHostCommand.SearchSymbol"
                   CommandTarget="{Binding ElementName=TextView}"
                   Header="Search Symbol"
-                  InputGestureText="Ctrl+Alt+C">
+                  InputGestureText="Ctrl+F">
                   <MenuItem.Icon>
                     <Image
                       Width="16"

@@ -4,19 +4,24 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.JavaScript;
+using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ClosedXML.Excel;
+using HtmlAgilityPack;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
+using Microsoft.Extensions.Primitives;
 
 namespace IRExplorerUI.Profile.Document;
 
@@ -464,7 +469,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private async void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+  private async void ExportSourceExecuted(object sender, ExecutedRoutedEventArgs e) {
     string path = Utils.ShowSaveFileDialog("Excel Worksheets|*.xlsx", "*.xlsx|All Files|*.*");
 
     if (!string.IsNullOrEmpty(path)) {
@@ -473,6 +478,26 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       }
       catch (Exception ex) {
         Utils.ShowErrorMessageBox($"Failed to save source profiling results to {path}: {ex.Message}", this);
+      }
+    }
+  }
+
+  private async void ExportSourceHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        success = await ExportSourceAsHtmlFile(path);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }
   }
@@ -663,7 +688,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private async Task ExportFunctionAsExcelFile(string filePath) {
     var function = TextView.Section.ParentFunction;
-    var (firstSourceLineIndex, lastSourceLineIndex) = await FindFunctionSourceLineRange(function);
+    var (firstSourceLineIndex, lastSourceLineIndex) =
+      await FindFunctionSourceLineRange(function);
 
     if (firstSourceLineIndex == 0) {
       Utils.ShowWarningMessageBox("Failed to export source file", this);
@@ -727,6 +753,193 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     wb.SaveAs(filePath);
   }
 
+  private async Task<bool> ExportSourceAsHtmlFile(string filePath) {
+    try {
+      Trace.WriteLine("ExportFunctionAsHtmlFile");
+      var doc = new HtmlDocument();
+      string TitleStyle =
+        @"text-align:left;font-family:Arial, sans-serif;font-weight:bold";
+
+      var p = doc.CreateElement("p");
+      var function = TextView.Section.ParentFunction;
+      var funcName = Session.CompilerInfo.NameProvider.FormatFunctionName(function);
+      p.InnerHtml = $"Function: {HttpUtility.HtmlEncode(funcName)}";
+      p.SetAttributeValue("style", TitleStyle);
+      doc.DocumentNode.AppendChild(p);
+
+      p = doc.CreateElement("p");
+      p.InnerHtml = $"Module: {HttpUtility.HtmlEncode(function.ParentSummary.ModuleName)}";
+      p.SetAttributeValue("style", TitleStyle);
+      doc.DocumentNode.AppendChild(p);
+
+      var node = await ExportSourceAsHtml();
+      doc.DocumentNode.AppendChild(node);
+      var writer = new StringWriter();
+      doc.Save(writer);
+      await File.WriteAllTextAsync(filePath, writer.ToString());
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to export to HTML file: {filePath}, {ex.Message}");
+      return false;
+    }
+  }
+
+  private async Task<HtmlNode> ExportSourceAsHtml(int startLine = -1, int endLine = -1) {
+    string TableStyle = @"border-collapse:collapse;border-spacing:0;";
+    string HeaderStyle =
+      @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
+    string CellStyle =
+      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:500px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
+    string LineNumberStyle =
+      @"color:#006400;text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
+
+    var function = TextView.Section.ParentFunction;
+    var (firstSourceLineIndex, lastSourceLineIndex) =
+      await FindFunctionSourceLineRange(function);
+
+    var columnData = TextView.ProfileColumnData;
+    bool filterByLine = startLine != -1 && endLine != -1;
+    int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
+    var doc = new HtmlDocument();
+    var table = doc.CreateElement("table");
+    table.SetAttributeValue("style", TableStyle);
+
+    var thead = doc.CreateElement("thead");
+    var tbody = doc.CreateElement("tbody");
+    var tr = doc.CreateElement("tr");
+
+    var th = doc.CreateElement("th");
+    th.InnerHtml = "Source";
+    th.SetAttributeValue("style", HeaderStyle);
+    tr.AppendChild(th);
+    th = doc.CreateElement("th");
+    th.InnerHtml = "Line";
+    th.SetAttributeValue("style", HeaderStyle);
+    tr.AppendChild(th);
+
+    if (columnData != null) {
+      foreach (var column in columnData.Columns) {
+        th = doc.CreateElement("th");
+        th.InnerHtml = HttpUtility.HtmlEncode(column.Title);
+        th.SetAttributeValue("style", HeaderStyle);
+        tr.AppendChild(th);
+      }
+    }
+
+    thead.AppendChild(tr);
+    table.AppendChild(thead);
+
+    for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
+      var line = TextView.Document.GetLineByNumber(i);
+      string text = TextView.Document.GetText(line.Offset, line.Length);
+      var tuple = columnData != null ? FindTupleOnSourceLine(i) : null;
+
+      // Filter out instructions not in line range if requested.
+      if (filterByLine && (i < startLine || i > endLine)) {
+        continue;
+      }
+
+      tr = doc.CreateElement("tr");
+      var td = doc.CreateElement("td");
+      td.InnerHtml =  PreprocessHtmlIndentation(text);
+      td.SetAttributeValue("style", CellStyle);
+      tr.AppendChild(td);
+
+      td = doc.CreateElement("td");
+      td.InnerHtml = HttpUtility.HtmlEncode(i);
+      td.SetAttributeValue("style", LineNumberStyle);
+      tr.AppendChild(td);
+
+      if (columnData != null && tuple != null) {
+        columnData.ExportColumnsAsHTML(tuple, doc, tr);
+      }
+      else {
+        // Use empty cells for lines without data.
+        for (int k = 2; k < maxColumn; k++) {
+          td = doc.CreateElement("td");
+          td.InnerHtml = "";
+          td.SetAttributeValue("style", CellStyle);
+          tr.AppendChild(td);
+        }
+      }
+
+      tbody.AppendChild(tr);
+    }
+
+    table.AppendChild(tbody);
+    doc.DocumentNode.AppendChild(table);
+    return doc.DocumentNode;
+  }
+
+  private async Task<string> ExportSourceAsMarkdown(int startLine = -1, int endLine = -1) {
+    var sb = new StringBuilder();
+    string header =    "| Source | Line |";
+    string separator = "|--------|------|";
+
+    var function = TextView.Section.ParentFunction;
+    var (firstSourceLineIndex, lastSourceLineIndex) =
+      await FindFunctionSourceLineRange(function);
+
+    var columnData = TextView.ProfileColumnData;
+    int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
+    bool filterByLine = startLine != -1 && endLine != -1;
+
+    if (columnData != null) {
+      foreach (var column in columnData.Columns) {
+        header += $" {column.Title} |";
+        separator += $"{new string('-', column.Title.Length)}|";
+      }
+    }
+
+    sb.AppendLine(header);
+    sb.AppendLine(separator);
+
+    for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
+      var line = TextView.Document.GetLineByNumber(i);
+      string text = TextView.Document.GetText(line.Offset, line.Length);
+      var tuple = columnData != null ? FindTupleOnSourceLine(i) : null;
+
+      // Filter out instructions not in line range if requested.
+      if (filterByLine && (i < startLine || i > endLine)) {
+        continue;
+      }
+
+      sb.Append($"| {PreprocessHtmlIndentation(text)} | {i} |");
+
+      if (columnData != null && tuple != null) {
+        columnData.ExportColumnsAsMarkdown(tuple, sb);
+      }
+      else {
+        for (int k = 2; k < maxColumn; k++) {
+          sb.Append(" |");
+        }
+      }
+
+      sb.AppendLine();
+    }
+
+    return sb.ToString();
+  }
+
+  string PreprocessHtmlIndentation(string text) {
+    var sb = new StringBuilder();
+
+    for (int i = 0; i < text.Length; i++) {
+      if (text[i] == ' ') {
+        sb.Append("&nbsp;");
+      }
+      else if (text[i] == '\t') {
+        sb.Append("&emsp;");
+      }
+      else {
+        sb.Append(text[i]);
+      }
+    }
+
+    return sb.ToString();
+  }
+
   public async Task<(int, int)> FindFunctionSourceLineRange(IRTextFunction function) {
     var debugInfo = await Session.GetDebugInfoProvider(function);
     var funcProfile = Session.ProfileData?.GetFunctionProfile(function);
@@ -781,5 +994,57 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private async void ViewMenuItem_OnCheckedChanged(object sender, RoutedEventArgs e) {
     await UpdateProfilingColumns();
+  }
+
+  private async void ExportFunctionProfileHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        success = await ExportSourceAsHtmlFile(path);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  private async void ExportFunctionProfileMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("Markdown file|*.md", "*.md|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        success = await ExportSourceAsMarkdownFile(path);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  private async Task<bool> ExportSourceAsMarkdownFile(string filePath) {
+    try {
+      var text = await ExportSourceAsMarkdown();
+      await File.WriteAllTextAsync(filePath, text);
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to export to Markdown file: {filePath}, {ex.Message}");
+      return false;
+    }
   }
 }
