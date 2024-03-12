@@ -529,7 +529,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   public void SelectLine(int line) {
-    if (line >= 0 && line < Document.LineCount) {
+    if (line >= 0 && line <= Document.LineCount) {
       TextArea.Caret.Line = line;
       ScrollToLine(line);
     }

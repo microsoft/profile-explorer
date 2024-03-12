@@ -557,8 +557,16 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     JumpToProfiledElement(1);
   }
 
-  public void JumpToHottestProfiledElement() {
-    Dispatcher.BeginInvoke(() => JumpToProfiledElement(0), DispatcherPriority.ContextIdle);
+  public void JumpToHottestProfiledElement(bool onLoad = false) {
+    Dispatcher.BeginInvoke(() => {
+      if (onLoad) {
+        // Don't select the associated document instructions
+        // when jumping during the source file load.
+        ignoreNextCaretEvent_ = true;
+      }
+
+      JumpToProfiledElement(0);
+    }, DispatcherPriority.ContextIdle);
   }
 
   private void JumpToProfiledElement(int offset) {
@@ -571,7 +579,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void JumpToProfiledElement(IRElement element) {
-    TextView.ScrollToLine(element.TextLocation.Line);
+    TextView.SetCaretAtElement(element);
     double offset = TextView.TextArea.TextView.VerticalOffset;
     SyncColumnsVerticalScrollOffset(offset);
   }

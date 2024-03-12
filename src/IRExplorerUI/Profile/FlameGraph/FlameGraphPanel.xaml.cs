@@ -338,8 +338,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void NodeDetailsPanel_NodeInstanceChanged(object sender, ProfileCallTreeNode e) {
-    var node = GraphHost.GraphViewer.SelectNode(e);
-    GraphHost.BringNodeIntoView(node);
+    GraphHost.SelectNode(e, true);
   }
 
   private async void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
@@ -380,7 +379,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
 
-  private async void UndoButtoon_Click(object sender, RoutedEventArgs e) {
+  private async void UndoButton_Click(object sender, RoutedEventArgs e) {
     await GraphHost.RestorePreviousState();
   }
 

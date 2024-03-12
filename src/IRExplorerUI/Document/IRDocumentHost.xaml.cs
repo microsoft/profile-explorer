@@ -1415,12 +1415,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private void JumpToProfiledElement(IRElement element) {
     TextView.SetCaretAtElement(element);
-    TextView.BringElementIntoView(element);
-
-    //? TODO: Still needed?
-    ProfileColumns.InvalidateVisual();
-    ProfileColumns.UpdateLayout();
-
     double offset = TextView.TextArea.TextView.VerticalOffset;
     SyncColumnsVerticalScrollOffset(offset);
   }

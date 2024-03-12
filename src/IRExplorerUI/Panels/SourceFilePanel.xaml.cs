@@ -178,7 +178,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
 
     if (await LoadSourceFileForFunction(section_.ParentFunction, true)) {
-      JumpToFunctionStart();
+      await JumpToFunctionStart();
     }
   }
 
@@ -235,10 +235,10 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   private async Task JumpToFunctionStart() {
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
-      ProfileTextView.JumpToHottestProfiledElement();
+      ProfileTextView.JumpToHottestProfiledElement(true);
     }
     else {
-      var (firstSourceLineIndex, lastSourceLineIndex) = 
+      var (firstSourceLineIndex, lastSourceLineIndex) =
         await ProfileTextView.FindFunctionSourceLineRange(section_.ParentFunction);
 
       if (firstSourceLineIndex != 0) {
