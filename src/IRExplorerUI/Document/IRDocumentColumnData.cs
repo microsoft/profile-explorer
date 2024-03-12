@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System.Collections.Generic;
+using System.Text;
 using System.Web;
 using System.Windows;
 using System.Windows.Forms;
@@ -79,8 +80,7 @@ public class IRDocumentColumnData {
   }
 
 
-  public void ExportColumnsAsHTML(IRElement tuple, HtmlDocument doc, HtmlNode tr,
-                                  int rowId, int columnId) {
+  public void ExportColumnsAsHTML(IRElement tuple, HtmlDocument doc, HtmlNode tr) {
     string CellStyle =
       @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:500px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
 
@@ -109,6 +109,14 @@ public class IRDocumentColumnData {
 
       td.SetAttributeValue("style", style);
       tr.AppendChild(td);
+    }
+  }
+
+  public void ExportColumnsAsMarkdown(IRElement tuple, StringBuilder sb) {
+    foreach (var column in Columns) {
+      var value = GetColumnValue(tuple, column);
+      string text = value != null ? value.Text : "";
+      sb.Append($" {text} |");
     }
   }
 

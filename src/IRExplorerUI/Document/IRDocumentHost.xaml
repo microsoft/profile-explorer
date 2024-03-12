@@ -23,6 +23,7 @@
     <CommandBinding Command="local:DocumentHostCommand.JumpToProfiledElement" Executed="JumpToProfiledElementExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfile" Executed="ExportFunctionProfileExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportFunctionProfileHTMLExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.CopySelectedLinesAsHTML" Executed="CopySelectedLinesAsHTMLExecuted" />
 
     <CommandBinding
       CanExecute="JumpToNextProfiledElementCanExecute"
@@ -739,10 +740,23 @@
                 <Separator />
 
                 <MenuItem
+                  Command="local:DocumentHostCommand.CopySelectedLinesAsHTML"
+                  CommandTarget="{Binding ElementName=TextView}"
+                  Header="Copy Selection Details"
+                  InputGestureText="Ctrl+F">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource ClipboardIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+
+                <MenuItem
                   Command="local:DocumentHostCommand.SearchSymbol"
                   CommandTarget="{Binding ElementName=TextView}"
                   Header="Search Symbol"
-                  InputGestureText="Ctrl+F">
+                  InputGestureText="Ctrl+Alt+C">
                   <MenuItem.Icon>
                     <Image
                       Width="16"
@@ -1073,16 +1087,19 @@
       Command="local:DocumentHostCommand.NextSection"
       CommandTarget="{Binding ElementName=TextView}"
       Modifiers="Ctrl" />
-
     <KeyBinding
       Key="F3"
       Command="doc:SearchCommand.PreviousResult"
       CommandTarget="{Binding ElementName=SearchPanel}"
       Modifiers="Shift" />
-
     <KeyBinding
       Key="F3"
       Command="doc:SearchCommand.NextResult"
       CommandTarget="{Binding ElementName=SearchPanel}" />
+    <KeyBinding
+      Key="C"
+      Command="local:DocumentHostCommand.CopySelectedLinesAsHTML"
+      CommandTarget="{Binding ElementName=TextView}"
+      Modifiers="Ctrl+Alt" />
   </UserControl.InputBindings>
 </UserControl>

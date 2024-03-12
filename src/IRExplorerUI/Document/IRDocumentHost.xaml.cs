@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using System.Windows;
@@ -61,6 +62,8 @@ public static class DocumentHostCommand {
     new RoutedUICommand("Untitled", "ExportFunctionProfile", typeof(IRDocumentHost));
   public static readonly RoutedUICommand ExportFunctionProfileHTML =
     new RoutedUICommand("Untitled", "ExportFunctionProfileHTML", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand CopySelectedLinesAsHTML =
+    new RoutedUICommand("Untitled", "CopySelectedLinesAsHTML", typeof(IRDocumentHost));
 }
 
 [ProtoContract]
@@ -2183,6 +2186,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
+  private void CopySelectedLinesAsHTMLExecuted(object sender, ExecutedRoutedEventArgs e) {
+    CopySelectedLinesAsHtml();
+  }
+
   private bool ExportFunctionAsHtmlFile(string filePath) {
     try {
       Trace.WriteLine("ExportFunctionAsHtmlFile");
@@ -2213,19 +2220,28 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private void CopyFunctionAsHtml() {
+  private void CopySelectedLinesAsHtml() {
+    int startLine = TextView.TextArea.Selection.StartPosition.Line - 1;
+    int endLine = TextView.TextArea.Selection.EndPosition.Line - 1;
+
+    if (startLine > endLine) {
+      // Happens when selecting bottom-up.
+      (startLine, endLine) = (endLine, startLine);
+    }
+
     var doc = new HtmlDocument();
-    doc.DocumentNode.AppendChild( ExportFunctionAsHtml());
+    doc.DocumentNode.AppendChild( ExportFunctionAsHtml(false, startLine, endLine));
     var writer = new StringWriter();
     doc.Save(writer);
 
     // Also save as Markdown so that it can be pasted in plain text editors.
     //var plainText = ExportFunctionListAsMarkdown(funcList);
-    string plainText = null;
+    string plainText = ExportFunctionAsMarkdown(false, startLine, endLine);
     Utils.CopyHtmlToClipboard(writer.ToString(), plainText);
   }
 
-  private HtmlNode ExportFunctionAsHtml(bool includeBlocks = true) {
+  private HtmlNode ExportFunctionAsHtml(bool includeBlocks = true,
+                                        int startLine = -1, int endLine = -1) {
     string TableStyle = @"border-collapse:collapse;border-spacing:0;";
     string HeaderStyle =
       @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
@@ -2237,6 +2253,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       @"color:#006400;text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
 
     var columnData = TextView.ProfileColumnData;
+    bool filterByLine = startLine != -1 && endLine != -1;
     int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
     int rowId = 1; // First row is for the table column names.
     var doc = new HtmlDocument();
@@ -2268,26 +2285,49 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     thead.AppendChild(tr);
     table.AppendChild(thead);
 
-    foreach (var block in Function.Blocks) {
-      if (includeBlocks) {
-        tr = doc.CreateElement("tr");
-        var td = doc.CreateElement("td");
-        td.InnerHtml = HttpUtility.HtmlEncode($"Block {block.Number}");
+    void AddSimpleRow(string text, string style) {
+      tr = doc.CreateElement("tr");
+      var td = doc.CreateElement("td");
+      td.InnerHtml = HttpUtility.HtmlEncode(text);
+      td.SetAttributeValue("style", style);
+      tr.AppendChild(td);
+
+      for (int i = 1; i < maxColumn; i++) {
+        td = doc.CreateElement("td");
         td.SetAttributeValue("style", BlockStyle);
         tr.AppendChild(td);
+      }
 
-        for (int i = 1; i < maxColumn; i++) {
-          td = doc.CreateElement("td");
-          td.SetAttributeValue("style", BlockStyle);
-          tr.AppendChild(td);
-        }
+      tbody.AppendChild(tr);
+    }
 
-        tbody.AppendChild(tr);
+    foreach (var block in Function.Blocks) {
+      bool addedBlockRow = false;
+
+      if (includeBlocks && !filterByLine) {
+        AddSimpleRow($"Block {block.Number}", BlockStyle);
+        addedBlockRow = true;
       }
 
       foreach (var tuple in block.Tuples) {
-        rowId++;
+        // Filter out instructions not in line range if requested.
+        if (filterByLine) {
+          if (tuple.TextLocation.Line < startLine ||
+              tuple.TextLocation.Line > endLine) {
+            continue;
+          }
 
+          if (!addedBlockRow) {
+            AddSimpleRow($"Block {block.Number}", BlockStyle);
+            addedBlockRow = true;
+
+            if (tuple.IndexInBlock > 0) {
+              AddSimpleRow($"...", CellStyle);
+            }
+          }
+        }
+
+        rowId++;
         var line = TextView.Document.GetLineByNumber(tuple.TextLocation.Line + 1);
         string text = TextView.Document.GetText(line.Offset, line.Length);
         tr = doc.CreateElement("tr");
@@ -2307,7 +2347,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         tr.AppendChild(td);
 
         if (columnData != null) {
-          columnData.ExportColumnsAsHTML(tuple, doc, tr, rowId, 3);
+          columnData.ExportColumnsAsHTML(tuple, doc, tr);
         }
 
         tbody.AppendChild(tr);
@@ -2317,6 +2357,79 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     table.AppendChild(tbody);
     doc.DocumentNode.AppendChild(table);
     return doc.DocumentNode;
+  }
+
+  private string ExportFunctionAsMarkdown(bool includeBlocks = true,
+                                          int startLine = 0, int endLine = 0) {
+    var sb = new StringBuilder();
+    string header    = "| Instruction | Line |";
+    string separator = "|-------------|------|";
+
+    var columnData = TextView.ProfileColumnData;
+    int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
+    bool filterByLine = startLine != -1 && endLine != -1;
+
+    if (columnData != null) {
+      foreach (var column in columnData.Columns) {
+        header += $" {column.Title} |";
+        separator += $"{new string('-', column.Title.Length)}|";
+      }
+    }
+
+    sb.AppendLine(header);
+    sb.AppendLine(separator);
+
+    void AddSimpleRow(string text) {
+      sb.Append($"| {text} |");
+
+      for (int i = 1; i < maxColumn; i++) {
+        sb.Append(" |");
+      }
+
+      sb.AppendLine();
+    }
+
+    foreach (var block in Function.Blocks) {
+      bool addedBlockRow = false;
+
+      if (includeBlocks && !filterByLine) {
+        AddSimpleRow($"Block {block.Number}");
+        addedBlockRow = true;
+      }
+
+      foreach (var tuple in block.Tuples) {
+        // Filter out instructions not in line range if requested.
+        if (filterByLine) {
+          if (tuple.TextLocation.Line < startLine ||
+              tuple.TextLocation.Line > endLine) {
+            continue;
+          }
+
+          if (!addedBlockRow) {
+            AddSimpleRow($"Block {block.Number}");
+            addedBlockRow = true;
+
+            if (tuple.IndexInBlock > 0) {
+              AddSimpleRow($"...");
+            }
+          }
+        }
+
+        var line = TextView.Document.GetLineByNumber(tuple.TextLocation.Line + 1);
+        string text = TextView.Document.GetText(line.Offset, line.Length);
+        var sourceTag = tuple.GetTag<SourceLocationTag>();
+        var sourceLine = sourceTag != null ? sourceTag.Line.ToString() : "";
+        sb.Append($"| {text} | {sourceLine} |");
+
+        if (columnData != null) {
+          columnData.ExportColumnsAsMarkdown(tuple, sb);
+        }
+
+        sb.AppendLine();
+      }
+    }
+
+    return sb.ToString();
   }
 
   private class DummyQuery : IElementQuery {
