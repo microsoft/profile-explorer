@@ -4,12 +4,16 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Threading;
+using Microsoft.Extensions.Primitives;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
@@ -39,6 +43,16 @@ public class ProfileCallTreeNodeEx : BindableObject {
   public bool IsMarked { get; set; }
   public TimeSpan Weight => CallTreeNode.Weight;
   public TimeSpan ExclusiveWeight => CallTreeNode.ExclusiveWeight;
+}
+
+public class ThreadListItem {
+  public string Title { get; set; }
+  public string ToolTip { get; set; }
+  public virtual TimeSpan Weight { get; set; }
+  public virtual TimeSpan ExclusiveWeight { get; set; }
+  public double Percentage { get; set; }
+  public double ExclusivePercentage { get; set; }
+  public Brush Background { get; set; }
 }
 
 public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChanged {
@@ -109,10 +123,19 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       OnPropertyChanged();
     }
   }
+
   public bool IsHistogramExpanded {
     get => settings_ is {ExpandHistogram: true};
     set {
       settings_.ExpandHistogram = value;
+      OnPropertyChanged();
+    }
+  }
+
+  public bool IsThreadsListExpanded {
+    get => settings_ is {ExpandThreads: true};
+    set {
+      settings_.ExpandThreads = value;
       OnPropertyChanged();
     }
   }
@@ -274,12 +297,35 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     medianNodeEx.ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(medianNodeEx.ExclusiveWeight);
     MedianNode = medianNodeEx;
 
+    SetupThreadList(node);
     InstancesExpander.IsExpanded = settings_.ExpandInstances;
     HistogramExpander.IsExpanded = settings_.ExpandHistogram;
 
     if (settings_.ExpandHistogram) {
       InvokeSetupInstancesHistogram();
     }
+  }
+
+  private void SetupThreadList(ProfileCallTreeNode node) {
+    var threadList = node.SortedByWeightPerThreadWeights;
+    var itemsList = new List<ThreadListItem>();
+
+    foreach (var item in threadList) {;
+      var threadInfo = Session.ProfileData.FindThread(item.ThreadId);
+      var backColor = TimelinePanel.GetThreadBackgroundColors(threadInfo, item.ThreadId).Margin;
+
+      itemsList.Add(new ThreadListItem() {
+        Title = $"{item.ThreadId}",
+        ToolTip = threadInfo != null ? threadInfo.Name : null,
+        Background = backColor,
+        Weight = item.Values.Weight,
+        ExclusiveWeight = item.Values.ExclusiveWeight,
+        Percentage = Session.ProfileData.ScaleFunctionWeight(item.Values.Weight),
+        ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(item.Values.ExclusiveWeight)
+      });
+    }
+
+    ThreadList.ItemsSource = itemsList;
   }
 
   private void SetupInstancesHistogram(List<ProfileCallTreeNode> nodes,

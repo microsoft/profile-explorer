@@ -126,7 +126,7 @@
                             x:Name="InstancesExpander"
                             Margin="0,4,0,4"
                             HorizontalAlignment="Stretch"
-                            Header="Instances"
+                            Header="Instances Statistics"
                             IsExpanded="{Binding IsInstancesExpanded}">
                             <StackPanel Orientation="Vertical">
                                 <StackPanel Margin="4,4,0,0" Orientation="Horizontal">
@@ -183,7 +183,7 @@
 
                         <Expander
                             x:Name="HistogramExpander"
-                            Margin="0,0,0,8"
+                            Margin="0,0,0,4"
                             HorizontalAlignment="Stretch"
                             Expanded="HistogramHost_Expanded"
                             Header="Histogram"
@@ -192,7 +192,7 @@
                                 Height="150"
                                 Margin="0,4,0,0"
                                 BorderBrush="DarkGray"
-                                BorderThickness="1">
+                                BorderThickness="0.5">
                                 <StackPanel>
                                     <Canvas
                                         x:Name="InstanceHistogramHost"
@@ -265,6 +265,53 @@
                             </Border>
                         </Expander>
 
+                      <Expander
+                        x:Name="ThreadsExpander"
+                        Margin="0,0,0,8"
+                        HorizontalAlignment="Stretch"
+                        Header="Threads"
+                        IsExpanded="{Binding IsThreadsListExpanded}">
+                        <ItemsControl x:Name="ThreadList" Margin="4">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <StackPanel Orientation="Horizontal"
+                                          ToolTip="{Binding ToolTip}">
+                                <Border Background="{Binding Background}"
+                                        Margin="0,0,8,0"
+                                        BorderBrush="DarkGray"
+                                        BorderThickness="0.5">
+                                <TextBlock Text="{Binding Title}"
+                                           Padding="4,0,0,0"
+                                           Width="70"
+                                           FontWeight="Medium"
+                                           VerticalAlignment="Center"></TextBlock>
+                                  </Border>
+                                <ContentControl
+                                  Width="200"
+                                VerticalAlignment="Center"
+                                Content="{Binding}"
+                                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"/>
+                              </StackPanel>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                          <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                              <StackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                          </ItemsControl.ItemsPanel>
+
+                          <ItemsControl.Template>
+                          <ControlTemplate>
+                            <ScrollViewer x:Name="ScrollViewer" Padding="{TemplateBinding Padding}"
+                                          HorizontalScrollBarVisibility="Disabled"
+                                          VerticalScrollBarVisibility="Auto">
+                              <ItemsPresenter />
+                            </ScrollViewer>
+                          </ControlTemplate>
+                          </ItemsControl.Template>
+                        </ItemsControl>
+                      </Expander>
+
                         <Separator />
                         <TextBlock
                             Margin="4,4,0,0"
@@ -330,7 +377,7 @@
             <TabItem
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
-                Header="Backtrace"
+                Header="Stack"
                 Style="{StaticResource TabControlStyle}"
                 ToolTip="Reverse call stack for current function instance">
                 <profile:ProfileListView

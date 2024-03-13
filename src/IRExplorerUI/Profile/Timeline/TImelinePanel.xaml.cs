@@ -283,23 +283,11 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
       threadView.ThreadActivityAction += ThreadView_ThreadActivityAction;
 
-      // Set thread color based on name, if available,
-      // otherwise on the thread ID. The picked color is stable
-      // between different sessions loading the same trace.
+      // Set thread background colors.
       var threadInfo = Session.ProfileData.FindThread(thread.ThreadId);
-      uint colorIndex = 0;
 
-      if (threadInfo != null && threadInfo.HasName) {
-        colorIndex = (uint)threadInfo.Name.GetStableHashCode();
-      }
-      else {
-        colorIndex = (uint)thread.ThreadId;
-      }
-
-      threadView.MarginBackColor =
-        ColorBrushes.GetBrush(ColorUtils.GenerateLightPastelColor(colorIndex));
-      threadView.ActivityHost.SamplesBackColor =
-        ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(colorIndex));
+      (threadView.MarginBackColor, threadView.ActivityHost.SamplesBackColor) =
+        GetThreadBackgroundColors(threadInfo, thread.ThreadId);
 
       threadActivityViews_.Add(threadView);
       threadActivityViewsMap_[thread.ThreadId] = threadView;
@@ -323,6 +311,25 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     ActivityViewList.ItemsSource = new CollectionView(threadActivityViews_);
   }
+
+  public static (Brush Margin, Brush Samples)
+    GetThreadBackgroundColors(ProfileThread threadInfo, int threadId) {
+    // Set thread color based on name, if available,
+    // otherwise on the thread ID. The picked color is stable
+    // between different sessions loading the same trace.
+    uint colorIndex = 0;
+
+    if (threadInfo != null &&threadInfo.HasName) {
+      colorIndex = (uint)threadInfo.Name.GetStableHashCode();
+    }
+    else {
+      colorIndex = (uint)threadId;
+    }
+
+    return (ColorBrushes.GetBrush(ColorUtils.GenerateLightPastelColor(colorIndex)),
+            ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(colorIndex)));
+  }
+
 
   private void UpdateHoverPreviewPopups() {
     SetupActivityHoverPreview(ActivityView);
