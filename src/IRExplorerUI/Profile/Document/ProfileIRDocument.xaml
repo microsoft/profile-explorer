@@ -54,8 +54,9 @@
       Command="irExplorerUi:DocumentHostCommand.JumpToPreviousProfiledElement"
       Executed="JumpToPreviousProfiledElementExecuted" />
     <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfile" Executed="ExportSourceExecuted" />
-    <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportFunctionProfileHtmlExecuted" />
-    <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileMarkdown" Executed="ExportFunctionProfileMarkdownExecuted" />
+    <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportSourceHtmlExecuted" />
+    <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileMarkdown" Executed="ExportSourceMarkdownExecuted" />
+    <CommandBinding Command="irExplorerUi:DocumentHostCommand.CopySelectedLinesAsHTML" Executed="CopySelectedLinesAsHtmlExecuted" />
   </UserControl.CommandBindings>
   <Grid>
     <Grid.ColumnDefinitions>
@@ -133,8 +134,7 @@
                <Menu
               Margin="0,0,0,0"
               VerticalAlignment="Center"
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
               <MenuItem
                 Padding="0,0,0,0"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
@@ -273,7 +273,24 @@
         HorizontalScrollBarVisibility="Auto"
         ShowLineNumbers="True"
         SyntaxHighlighting="C++"
-        VerticalScrollBarVisibility="Auto" />
+        VerticalScrollBarVisibility="Auto">
+        <irExplorerUi:IRDocument.ContextMenu>
+          <ContextMenu>
+            <MenuItem
+              Command="irExplorerUi:DocumentHostCommand.CopySelectedLinesAsHTML"
+              CommandTarget="{Binding ElementName=TextView}"
+              Header="Copy Selection Details"
+              InputGestureText="Ctrl+Alt+C">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource ClipboardIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+          </ContextMenu>
+        </irExplorerUi:IRDocument.ContextMenu>
+        </irExplorerUi:IRDocument>
     </DockPanel>
 
     <GridSplitter
@@ -290,4 +307,12 @@
       HorizontalAlignment="Stretch"
       VerticalAlignment="Stretch" />
   </Grid>
+
+  <UserControl.InputBindings>
+    <KeyBinding
+      Key="C"
+      Command="irExplorerUi:DocumentHostCommand.CopySelectedLinesAsHTML"
+      CommandTarget="{Binding ElementName=ProfileTextView}"
+      Modifiers="Ctrl+Alt" />
+  </UserControl.InputBindings>
 </UserControl>

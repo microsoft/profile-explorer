@@ -26,6 +26,7 @@ using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Profile;
+using IRExplorerUI.Profile.Document;
 using Microsoft.Win32;
 using TextLocation = IRExplorerCore.TextLocation;
 
@@ -239,7 +240,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
     else {
       var (firstSourceLineIndex, lastSourceLineIndex) =
-        await ProfileTextView.FindFunctionSourceLineRange(section_.ParentFunction);
+        await DocumentExporting.FindFunctionSourceLineRange(section_.ParentFunction, Session);
 
       if (firstSourceLineIndex != 0) {
         ProfileTextView.SelectLine(firstSourceLineIndex);
@@ -394,5 +395,9 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public override async Task OnReloadSettings() {
     Settings = App.Settings.SourceFileSettings;
+  }
+
+  private void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    //ProfileTextView.CopySelectionDetails();
   }
 }

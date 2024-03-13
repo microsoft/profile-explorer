@@ -82,7 +82,7 @@ public class IRDocumentColumnData {
 
   public void ExportColumnsAsHTML(IRElement tuple, HtmlDocument doc, HtmlNode tr) {
     string CellStyle =
-      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:500px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
+      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:500px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-size:14px;font-family:Arial, sans-serif;";
 
     foreach (var column in Columns) {
       var value = GetColumnValue(tuple, column);

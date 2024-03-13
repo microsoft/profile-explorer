@@ -244,4 +244,18 @@ public static class DocumentUtils {
     text = text.RemoveNewLines();
     return maxLength != 0 ? text.TrimToLength(maxLength) : text;
   }
+
+  public static IRElement FindTupleOnSourceLine(int line, IRDocument textView) {
+    var pair1 = textView.ProfileProcessingResult.SampledElements.
+      Find(e => e.Item1.TextLocation.Line == line - 1);
+
+    if (pair1.Item1 != null) {
+      return pair1.Item1;
+    }
+
+    // Look into performance counters.
+    var pair2 = textView.ProfileProcessingResult.CounterElements.
+      Find(e => e.Item1.TextLocation.Line == line - 1);
+    return pair2.Item1;
+  }
 }

@@ -1249,7 +1249,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     await SetupFunctionListUI(functionsEx);
 
     // Attach additional data to the UI.
-    await SetFunctionProfileInfo(functionsEx);
+    await LoadFunctionProfileInfo(functionsEx);
 
     if (analyzeFunctions) {
       await RunFunctionAnalysis(functionsEx);
@@ -1526,7 +1526,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     AlternateNameColumnVisible = true;
   }
 
-  private async Task SetFunctionProfileInfo(List<IRTextFunctionEx> functions) {
+  private async Task LoadFunctionProfileInfo(List<IRTextFunctionEx> functions) {
     var profile = Session.ProfileData;
 
     if (profile == null) {
@@ -1764,10 +1764,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private void CreateFunctionExtensions(IRTextSummary summary, List<IRTextFunctionEx> functionsEx) {
     foreach (var func in summary.Functions) {
-      if (IsHiddenFunction(func)) {
-        continue;
-      }
-
       if (!functionExtMap_.TryGetValue(func, out var funcEx)) {
         funcEx = new IRTextFunctionEx(func, functionsEx.Count, Session.CompilerInfo.NameProvider.FormatFunctionName);
         functionExtMap_[func] = funcEx;
@@ -1778,17 +1774,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
       functionsEx.Add(funcEx);
     }
-  }
-
-  private bool IsHiddenFunction(IRTextFunction func) {
-    // Don't display functions that have no profile data.
-    if (Session.ProfileData != null) {
-      var funcProfile = Session.ProfileData.GetFunctionProfile(func);
-      return funcProfile == null ||
-             funcProfile.Weight == TimeSpan.Zero;
-    }
-
-    return false;
   }
 
   private void ResetSectionPanel() {
@@ -1843,10 +1828,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private void SetupSectionExtensions(IRTextSummary summary) {
     foreach (var func in summary.Functions) {
-      if (IsHiddenFunction(func)) {
-        continue;
-      }
-
       int index = 0;
 
       foreach (var section in func.Sections) {

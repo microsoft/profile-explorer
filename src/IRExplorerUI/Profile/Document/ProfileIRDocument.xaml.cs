@@ -134,7 +134,6 @@ public class ProfileMenuItem : BindableObject {
 public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private List<(IRElement, TimeSpan)> profileElements_;
   private int profileElementIndex_;
-  private FunctionProcessingResult sourceProfileResult_;
   private SourceLineProcessingResult sourceLineProfileResult_;
   private IRDocumentColumnData sourceColumnData_;
   private bool columnsVisible_;
@@ -146,6 +145,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private TextViewSettingsBase settings_;
   private ProfileDocumentMarker profileMarker_;
   private bool isPreviewDocument_;
+  private bool isSourceFileDocument_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -250,6 +250,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public async Task<bool> LoadSection(ParsedIRTextSection parsedSection) {
+    isSourceFileDocument_ = false;
     TextView.Initialize(App.Settings.DocumentSettings, Session);
     TextView.EarlyLoadSectionSetup(parsedSection);
     await TextView.LoadSection(parsedSection);
@@ -283,6 +284,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                          IRTextSection section,
                                          IDebugInfoProvider debugInfo) {
     try {
+      isSourceFileDocument_ = true;
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
       SetSourceText(text, sourceInfo.FilePath);
       await AnnotateSourceFileProfile(section, debugInfo);
@@ -350,7 +352,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     TextView.ResumeUpdate();
-    sourceProfileResult_ = processingResult.Result;
     sourceLineProfileResult_ = processingResult.SourceLineResult;
     await UpdateProfilingColumns();
 
@@ -466,39 +467,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     foreach (var value in list) {
       value.MinTextWidth = maxWidth;
-    }
-  }
-
-  private async void ExportSourceExecuted(object sender, ExecutedRoutedEventArgs e) {
-    string path = Utils.ShowSaveFileDialog("Excel Worksheets|*.xlsx", "*.xlsx|All Files|*.*");
-
-    if (!string.IsNullOrEmpty(path)) {
-      try {
-        await ExportFunctionAsExcelFile(path);
-      }
-      catch (Exception ex) {
-        Utils.ShowErrorMessageBox($"Failed to save source profiling results to {path}: {ex.Message}", this);
-      }
-    }
-  }
-
-  private async void ExportSourceHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
-    string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
-    bool success = true;
-
-    if (!string.IsNullOrEmpty(path)) {
-      try {
-        success = await ExportSourceAsHtmlFile(path);
-      }
-      catch (Exception ex) {
-        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
-      }
-
-      if (!success) {
-        using var centerForm = new DialogCenteringHelper(this);
-        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
-                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
-      }
     }
   }
 
@@ -664,7 +632,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ProfileColumns.Reset();
     sourceText_ = null;
     profileElements_ = null;
-    sourceProfileResult_ = null;
     sourceLineProfileResult_ = null;
     sourceColumnData_ = null;
   }
@@ -684,290 +651,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private void UpdateHighlighting() {
     TextView.TextArea.TextView.Redraw();
-  }
-
-  private async Task ExportFunctionAsExcelFile(string filePath) {
-    var function = TextView.Section.ParentFunction;
-    var (firstSourceLineIndex, lastSourceLineIndex) =
-      await FindFunctionSourceLineRange(function);
-
-    if (firstSourceLineIndex == 0) {
-      Utils.ShowWarningMessageBox("Failed to export source file", this);
-      return;
-    }
-
-    var wb = new XLWorkbook();
-    var ws = wb.Worksheets.Add("Source");
-    var columnData = sourceColumnData_;
-    int rowId = 2; // First row is for the table column names.
-    int maxLineLength = 0;
-
-    for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
-      var line = TextView.Document.GetLineByNumber(i);
-      string text = TextView.Document.GetText(line.Offset, line.Length);
-      ws.Cell(rowId, 1).Value = text;
-      ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-      maxLineLength = Math.Max(text.Length, maxLineLength);
-
-      ws.Cell(rowId, 2).Value = i;
-      ws.Cell(rowId, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-      ws.Cell(rowId, 2).Style.Font.FontColor = XLColor.DarkGreen;
-
-      if (columnData != null) {
-        IRElement tuple = null;
-        tuple = FindTupleOnSourceLine(i);
-
-        if (tuple != null) {
-          columnData.ExportColumnsToExcel(tuple, ws, rowId, 3);
-        }
-      }
-
-      rowId++;
-    }
-
-    var firstCell = ws.Cell(1, 1);
-    var lastCell = ws.LastCellUsed();
-    var range = ws.Range(firstCell.Address, lastCell.Address);
-    var table = range.CreateTable();
-    table.Theme = XLTableTheme.None;
-
-    foreach (var cell in table.HeadersRow().Cells()) {
-      if (cell.Address.ColumnNumber == 1) {
-        cell.Value = "Source";
-      }
-      else if (cell.Address.ColumnNumber == 2) {
-        cell.Value = "Line";
-      }
-      else if (columnData != null && cell.Address.ColumnNumber - 3 < columnData.Columns.Count) {
-        cell.Value = columnData.Columns[cell.Address.ColumnNumber - 3].Title;
-      }
-
-      cell.Style.Font.Bold = true;
-      cell.Style.Fill.BackgroundColor = XLColor.LightGray;
-    }
-
-    for (int i = 1; i <= 1; i++) {
-      ws.Column(i).AdjustToContents((double)1, maxLineLength);
-    }
-
-    wb.SaveAs(filePath);
-  }
-
-  private async Task<bool> ExportSourceAsHtmlFile(string filePath) {
-    try {
-      Trace.WriteLine("ExportFunctionAsHtmlFile");
-      var doc = new HtmlDocument();
-      string TitleStyle =
-        @"text-align:left;font-family:Arial, sans-serif;font-weight:bold";
-
-      var p = doc.CreateElement("p");
-      var function = TextView.Section.ParentFunction;
-      var funcName = Session.CompilerInfo.NameProvider.FormatFunctionName(function);
-      p.InnerHtml = $"Function: {HttpUtility.HtmlEncode(funcName)}";
-      p.SetAttributeValue("style", TitleStyle);
-      doc.DocumentNode.AppendChild(p);
-
-      p = doc.CreateElement("p");
-      p.InnerHtml = $"Module: {HttpUtility.HtmlEncode(function.ParentSummary.ModuleName)}";
-      p.SetAttributeValue("style", TitleStyle);
-      doc.DocumentNode.AppendChild(p);
-
-      var node = await ExportSourceAsHtml();
-      doc.DocumentNode.AppendChild(node);
-      var writer = new StringWriter();
-      doc.Save(writer);
-      await File.WriteAllTextAsync(filePath, writer.ToString());
-      return true;
-    }
-    catch (Exception ex) {
-      Trace.WriteLine($"Failed to export to HTML file: {filePath}, {ex.Message}");
-      return false;
-    }
-  }
-
-  private async Task<HtmlNode> ExportSourceAsHtml(int startLine = -1, int endLine = -1) {
-    string TableStyle = @"border-collapse:collapse;border-spacing:0;";
-    string HeaderStyle =
-      @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
-    string CellStyle =
-      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:500px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
-    string LineNumberStyle =
-      @"color:#006400;text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
-
-    var function = TextView.Section.ParentFunction;
-    var (firstSourceLineIndex, lastSourceLineIndex) =
-      await FindFunctionSourceLineRange(function);
-
-    var columnData = TextView.ProfileColumnData;
-    bool filterByLine = startLine != -1 && endLine != -1;
-    int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
-    var doc = new HtmlDocument();
-    var table = doc.CreateElement("table");
-    table.SetAttributeValue("style", TableStyle);
-
-    var thead = doc.CreateElement("thead");
-    var tbody = doc.CreateElement("tbody");
-    var tr = doc.CreateElement("tr");
-
-    var th = doc.CreateElement("th");
-    th.InnerHtml = "Source";
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-    th = doc.CreateElement("th");
-    th.InnerHtml = "Line";
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-
-    if (columnData != null) {
-      foreach (var column in columnData.Columns) {
-        th = doc.CreateElement("th");
-        th.InnerHtml = HttpUtility.HtmlEncode(column.Title);
-        th.SetAttributeValue("style", HeaderStyle);
-        tr.AppendChild(th);
-      }
-    }
-
-    thead.AppendChild(tr);
-    table.AppendChild(thead);
-
-    for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
-      var line = TextView.Document.GetLineByNumber(i);
-      string text = TextView.Document.GetText(line.Offset, line.Length);
-      var tuple = columnData != null ? FindTupleOnSourceLine(i) : null;
-
-      // Filter out instructions not in line range if requested.
-      if (filterByLine && (i < startLine || i > endLine)) {
-        continue;
-      }
-
-      tr = doc.CreateElement("tr");
-      var td = doc.CreateElement("td");
-      td.InnerHtml =  PreprocessHtmlIndentation(text);
-      td.SetAttributeValue("style", CellStyle);
-      tr.AppendChild(td);
-
-      td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode(i);
-      td.SetAttributeValue("style", LineNumberStyle);
-      tr.AppendChild(td);
-
-      if (columnData != null && tuple != null) {
-        columnData.ExportColumnsAsHTML(tuple, doc, tr);
-      }
-      else {
-        // Use empty cells for lines without data.
-        for (int k = 2; k < maxColumn; k++) {
-          td = doc.CreateElement("td");
-          td.InnerHtml = "";
-          td.SetAttributeValue("style", CellStyle);
-          tr.AppendChild(td);
-        }
-      }
-
-      tbody.AppendChild(tr);
-    }
-
-    table.AppendChild(tbody);
-    doc.DocumentNode.AppendChild(table);
-    return doc.DocumentNode;
-  }
-
-  private async Task<string> ExportSourceAsMarkdown(int startLine = -1, int endLine = -1) {
-    var sb = new StringBuilder();
-    string header =    "| Source | Line |";
-    string separator = "|--------|------|";
-
-    var function = TextView.Section.ParentFunction;
-    var (firstSourceLineIndex, lastSourceLineIndex) =
-      await FindFunctionSourceLineRange(function);
-
-    var columnData = TextView.ProfileColumnData;
-    int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
-    bool filterByLine = startLine != -1 && endLine != -1;
-
-    if (columnData != null) {
-      foreach (var column in columnData.Columns) {
-        header += $" {column.Title} |";
-        separator += $"{new string('-', column.Title.Length)}|";
-      }
-    }
-
-    sb.AppendLine(header);
-    sb.AppendLine(separator);
-
-    for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
-      var line = TextView.Document.GetLineByNumber(i);
-      string text = TextView.Document.GetText(line.Offset, line.Length);
-      var tuple = columnData != null ? FindTupleOnSourceLine(i) : null;
-
-      // Filter out instructions not in line range if requested.
-      if (filterByLine && (i < startLine || i > endLine)) {
-        continue;
-      }
-
-      sb.Append($"| {PreprocessHtmlIndentation(text)} | {i} |");
-
-      if (columnData != null && tuple != null) {
-        columnData.ExportColumnsAsMarkdown(tuple, sb);
-      }
-      else {
-        for (int k = 2; k < maxColumn; k++) {
-          sb.Append(" |");
-        }
-      }
-
-      sb.AppendLine();
-    }
-
-    return sb.ToString();
-  }
-
-  string PreprocessHtmlIndentation(string text) {
-    var sb = new StringBuilder();
-
-    for (int i = 0; i < text.Length; i++) {
-      if (text[i] == ' ') {
-        sb.Append("&nbsp;");
-      }
-      else if (text[i] == '\t') {
-        sb.Append("&emsp;");
-      }
-      else {
-        sb.Append(text[i]);
-      }
-    }
-
-    return sb.ToString();
-  }
-
-  public async Task<(int, int)> FindFunctionSourceLineRange(IRTextFunction function) {
-    var debugInfo = await Session.GetDebugInfoProvider(function);
-    var funcProfile = Session.ProfileData?.GetFunctionProfile(function);
-
-    if (debugInfo == null || funcProfile == null) {
-      return (0, 0);
-    }
-
-    int firstSourceLineIndex = 0;
-    int lastSourceLineIndex = 0;
-
-    if (debugInfo.PopulateSourceLines(funcProfile.FunctionDebugInfo)) {
-      firstSourceLineIndex = funcProfile.FunctionDebugInfo.FirstSourceLine.Line;
-      lastSourceLineIndex = funcProfile.FunctionDebugInfo.LastSourceLine.Line;
-    }
-
-    return (firstSourceLineIndex, lastSourceLineIndex);
-  }
-
-  private IRElement FindTupleOnSourceLine(int line) {
-    var pair1 = sourceProfileResult_.SampledElements.Find(e => e.Item1.TextLocation.Line == line - 1);
-
-    if (pair1.Item1 != null) {
-      return pair1.Item1;
-    }
-
-    var pair2 = sourceProfileResult_.CounterElements.Find(e => e.Item1.TextLocation.Line == line - 1);
-    return pair2.Item1;
   }
 
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
@@ -1002,7 +685,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     if (!string.IsNullOrEmpty(path)) {
       try {
-        success = await ExportSourceAsHtmlFile(path);
+        success = await DocumentExporting.ExportSourceAsHtmlFile(TextView, path);
       }
       catch (Exception ex) {
         Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
@@ -1016,35 +699,33 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private async void ExportFunctionProfileMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
-    string path = Utils.ShowSaveFileDialog("Markdown file|*.md", "*.md|All Files|*.*");
-    bool success = true;
-
-    if (!string.IsNullOrEmpty(path)) {
-      try {
-        success = await ExportSourceAsMarkdownFile(path);
-      }
-      catch (Exception ex) {
-        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
-      }
-
-      if (!success) {
-        using var centerForm = new DialogCenteringHelper(this);
-        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
-                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
-      }
-    }
+  private async void ExportSourceExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.ExportToExcelFile(TextView,
+                                              isSourceFileDocument_ ?
+                                              DocumentExporting.ExportSourceAsExcelFile :
+                                              DocumentExporting.ExportFunctionAsExcelFile);
   }
 
-  private async Task<bool> ExportSourceAsMarkdownFile(string filePath) {
-    try {
-      var text = await ExportSourceAsMarkdown();
-      await File.WriteAllTextAsync(filePath, text);
-      return true;
+  private async void ExportSourceHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.ExportToHtmlFile(TextView,
+                                             isSourceFileDocument_ ?
+                                             DocumentExporting.ExportSourceAsHtmlFile :
+                                             DocumentExporting.ExportFunctionAsHtmlFile);
+  }
+
+  private async void ExportSourceMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.ExportToMarkdownFile(TextView,
+                                                 isSourceFileDocument_ ?
+                                                 DocumentExporting.ExportSourceAsMarkdownFile :
+                                                 DocumentExporting.ExportFunctionAsMarkdownFile);
+  }
+
+  private async void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (isSourceFileDocument_) {
+      await DocumentExporting.CopySelectedSourceLinesAsHtml(TextView);
     }
-    catch (Exception ex) {
-      Trace.WriteLine($"Failed to export to Markdown file: {filePath}, {ex.Message}");
-      return false;
+    else {
+      await DocumentExporting.CopySelectedLinesAsHtml(TextView);
     }
   }
 }

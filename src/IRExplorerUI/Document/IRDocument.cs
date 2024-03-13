@@ -3479,7 +3479,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   //? TODO: Profile hanling should be moved out of IRDocument,
   //? handled up when a TextSelection event is fired.
   private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
-    if (!IsInitialized || Session.ProfileData == null) {
+    if (Function == null || Session.ProfileData == null) {
       return;
     }
 
