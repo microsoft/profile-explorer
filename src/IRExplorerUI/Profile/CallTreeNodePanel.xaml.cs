@@ -11,8 +11,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using IRExplorerUI.Utilities;
 using Microsoft.Extensions.Primitives;
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -45,9 +47,11 @@ public class ProfileCallTreeNodeEx : BindableObject {
   public TimeSpan ExclusiveWeight => CallTreeNode.ExclusiveWeight;
 }
 
-public class ThreadListItem {
+public class ThreadListViewItem {
+  public int ThreadId { get; set; }
   public string Title { get; set; }
   public string ToolTip { get; set; }
+  public string WeightToolTip { get; set; }
   public virtual TimeSpan Weight { get; set; }
   public virtual TimeSpan ExclusiveWeight { get; set; }
   public double Percentage { get; set; }
@@ -308,15 +312,22 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
   private void SetupThreadList(ProfileCallTreeNode node) {
     var threadList = node.SortedByWeightPerThreadWeights;
-    var itemsList = new List<ThreadListItem>();
+    var itemsList = new List<ThreadListViewItem>();
 
     foreach (var item in threadList) {;
       var threadInfo = Session.ProfileData.FindThread(item.ThreadId);
       var backColor = TimelinePanel.GetThreadBackgroundColors(threadInfo, item.ThreadId).Margin;
+      double threadPercentage = node.Weight.Ticks > 0 ?
+        (double)item.Values.Weight.Ticks / node.Weight.Ticks : 0;
+      double selfThreadPercentage = node.ExclusiveWeight.Ticks > 0 ?
+        (double)item.Values.ExclusiveWeight.Ticks / node.ExclusiveWeight.Ticks : 0;
 
-      itemsList.Add(new ThreadListItem() {
+      itemsList.Add(new ThreadListViewItem() {
+        ThreadId = item.ThreadId,
         Title = $"{item.ThreadId}",
         ToolTip = threadInfo != null ? threadInfo.Name : null,
+        WeightToolTip = $"{threadPercentage.AsPercentageString()} of instance time\n" +
+                        $"{selfThreadPercentage.AsPercentageString()} of instance self time",
         Background = backColor,
         Weight = item.Values.Weight,
         ExclusiveWeight = item.Values.ExclusiveWeight,
@@ -556,4 +567,56 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   public void Reset() {
     Utils.DisableControl(this);
   }
+
+  private async void ThreadListItem_MouseDown(object sender, MouseButtonEventArgs e) {
+    if (e.LeftButton == MouseButtonState.Pressed &&
+        e.ClickCount >= 2) {
+      var threadItem = ((FrameworkElement)sender).DataContext as ThreadListViewItem;
+      await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToThread);
+    }
+  }
+
+  private async Task ApplyThreadFilterAction(ThreadListViewItem threadItem, ThreadActivityAction action) {
+    var timelinePanel = Session.FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
+
+    if (timelinePanel != null && threadItem != null) {
+      await timelinePanel.ApplyThreadFilterAction(threadItem.ThreadId, action);
+    }
+  }
+
+  public RelayCommand<object> ExcludeThreadCommand =>
+    new RelayCommand<object>(async obj => {
+      var threadItem = ((FrameworkElement)obj).DataContext as ThreadListViewItem;
+
+      if (threadItem != null) {
+        await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeThread);
+      }
+    });
+
+  public RelayCommand<object> ExcludeSameNameThreadCommand =>
+    new RelayCommand<object>(async obj => {
+      var threadItem = ((FrameworkElement)obj).DataContext as ThreadListViewItem;
+
+      if (threadItem != null) {
+        await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeSameNameThread);
+      }
+    });
+
+  public RelayCommand<object> FilterToThreadCommand =>
+    new RelayCommand<object>(async obj => {
+      var threadItem = ((FrameworkElement)obj).DataContext as ThreadListViewItem;
+
+      if (threadItem != null) {
+        await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToThread);
+      }
+    });
+
+  public RelayCommand<object> FilterToSameNameThreadCommand =>
+    new RelayCommand<object>(async obj => {
+      var threadItem = ((FrameworkElement)obj).DataContext as ThreadListViewItem;
+
+      if (threadItem != null) {
+        await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToSameNameThread);
+      }
+    });
 }

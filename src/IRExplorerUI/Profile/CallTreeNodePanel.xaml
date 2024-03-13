@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:profile="clr-namespace:IRExplorerUI.Profile"
+    x:Name="Root"
     d:DesignHeight="450"
     d:DesignWidth="800"
     SnapsToDevicePixels="True"
@@ -270,13 +271,17 @@
                         Margin="0,0,0,8"
                         HorizontalAlignment="Stretch"
                         Header="Threads"
+                        MaxHeight="300"
                         IsExpanded="{Binding IsThreadsListExpanded}">
                         <ItemsControl x:Name="ThreadList" Margin="4">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate>
                               <StackPanel Orientation="Horizontal"
-                                          ToolTip="{Binding ToolTip}">
-                                <Border Background="{Binding Background}"
+                                          ToolTip="{Binding ToolTip}"
+                                          Tag="{Binding ElementName=Root}"
+                                          MouseDown="ThreadListItem_MouseDown">
+                                <Border x:Name="ThreadTitleBorder"
+                                  Background="{Binding Background}"
                                         Margin="0,0,8,0"
                                         BorderBrush="DarkGray"
                                         BorderThickness="0.5">
@@ -290,8 +295,51 @@
                                   Width="200"
                                 VerticalAlignment="Center"
                                 Content="{Binding}"
+                                  ToolTip="{Binding WeightToolTip}"
                                 ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"/>
+                                <StackPanel.ContextMenu>
+                                  <ContextMenu DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}" Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
+          <MenuItem
+            Command="{Binding DataContext.FilterToThreadCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+            Header="Filter to Thread"
+            ToolTip="Display activity from only this thread">
+            <MenuItem.Icon>
+              <Image
+                Height="16"
+                Source="{StaticResource FilterIcon}"
+                Width="16" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
+            Command="{Binding DataContext.ExcludeThreadCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+            Header="Exclude Thread">
+          </MenuItem>
+          <Separator />
+
+          <MenuItem
+            Command="{Binding DataContext.FilterToSameNameThreadCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+            Header="Filter to Same Name Threads"
+            ToolTip="Display activity from only threads with the same name" />
+          <MenuItem
+            Command="{Binding DataContext.ExcludeSameNameThreadCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+            Header="Exclude Same Name Threads" />
+        </ContextMenu>
+                                </StackPanel.ContextMenu>
                               </StackPanel>
+
+                              <DataTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                  <Setter TargetName="ThreadTitleBorder" Property="BorderBrush" Value="Black" />
+                                </Trigger>
+                              </DataTemplate.Triggers>
                             </DataTemplate>
                           </ItemsControl.ItemTemplate>
                           <ItemsControl.ItemsPanel>

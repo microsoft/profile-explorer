@@ -339,10 +339,21 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
+  public async Task ApplyThreadFilterAction(int threadId, ThreadActivityAction action) {
+    var view = threadActivityViews_.Find(item => item.ThreadId == threadId);
+
+    if (view != null) {
+      await ApplyThreadFilterChange(view, action);
+    }
+  }
+
   private async void ThreadView_ThreadActivityAction(object sender, ThreadActivityAction action) {
     var view = sender as ActivityTimelineView;
-    Trace.WriteLine($"Thread action {action} for thread {view.ThreadId}");
+    await ApplyThreadFilterChange(view, action);
+  }
 
+  private async Task ApplyThreadFilterChange(ActivityTimelineView view, ThreadActivityAction action) {
+    Trace.WriteLine($"Thread action {action} for thread {view.ThreadId}");
     bool changed = false;
     changingThreadFiltering_ = true;
 

@@ -214,6 +214,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private async Task InitializeCallTree(ProfileCallTree callTree) {
     CallTree = callTree;
+    NodeDetailsPanel.Reset();
     await GraphHost.InitializeFlameGraph(callTree);
   }
 

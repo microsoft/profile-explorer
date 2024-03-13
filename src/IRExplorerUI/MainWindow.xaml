@@ -593,7 +593,6 @@
                 BorderBrush="{x:Null}"
                 Checked="ToggleButton_Checked"
                 FontSize="11"
-                FontWeight="Medium"
                 ToolTip="Enter/exit diffing two sections (F9)"
                 Unchecked="DiffModeButton_Unchecked">
                 <StackPanel Orientation="Horizontal">
@@ -610,7 +609,6 @@
                     Margin="2,0,0,0"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
-                    FontSize="11"
                     Text="Diff Mode" />
                 </StackPanel>
               </ToggleButton>
@@ -796,7 +794,6 @@
           BorderBrush="{x:Null}"
           Click="HelpButton_Click"
           FontSize="11"
-          FontWeight="Medium"
           ToolTip="Open Help Panel">
           <StackPanel Orientation="Horizontal">
             <Image
