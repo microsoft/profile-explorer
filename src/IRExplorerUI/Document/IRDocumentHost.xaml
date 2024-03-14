@@ -638,6 +638,36 @@
                 <Separator />
                 <Menu Margin="2,0,0,0" VerticalAlignment="Center">
                   <MenuItem
+                    x:Name="InstancesMenu"
+                    Margin="0,0,0,0"
+                    Padding="0,0,0,0"
+                    OverridesDefaultStyle="True">
+                    <MenuItem.Header>
+                      <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource TasklistIcon}" Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock
+                          Margin="2,0,0,0"
+                          VerticalAlignment="Bottom"
+                          Text="Instances" />
+                        <Path
+                          Margin="4,2,0,0"
+                          VerticalAlignment="Center"
+                          Data="M 0 0 L 3 3 L 6 0 Z"
+                          Fill="Black" />
+                      </StackPanel>
+                    </MenuItem.Header>
+                    <MenuItem
+                      Click="InstanceMenuItem_OnClick"
+                      Header="All Instances"
+                      IsCheckable="True"
+                      IsChecked="{Binding RemoveEmptyColumns}"
+                      Style="{DynamicResource SubMenuItemHeaderStyle}"/>
+                    <Separator/>
+                  </MenuItem>
+                </Menu>
+                <Separator/>
+                <Menu Margin="2,0,0,0" VerticalAlignment="Center">
+                  <MenuItem
                     x:Name="ProfileViewMenu"
                     Margin="0,0,0,0"
                     Padding="0,0,0,0"

@@ -15,46 +15,6 @@ using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI.Profile;
 
-public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
-  public SampleTimeRangeInfo TimeRange { get; set; }
-  public List<int> ThreadIds { get; set; }
-  public bool IncludesAll => TimeRange == null && (ThreadIds == null || ThreadIds.Count == 0);
-
-  public static bool operator ==(ProfileSampleFilter left, ProfileSampleFilter right) {
-    return Equals(left, right);
-  }
-
-  public static bool operator !=(ProfileSampleFilter left, ProfileSampleFilter right) {
-    return !Equals(left, right);
-  }
-
-  public override bool Equals(object obj) {
-    if (ReferenceEquals(null, obj))
-      return false;
-    if (ReferenceEquals(this, obj))
-      return true;
-    if (obj.GetType() != GetType())
-      return false;
-    return Equals((ProfileSampleFilter)obj);
-  }
-
-  public override int GetHashCode() {
-    return HashCode.Combine(TimeRange, ThreadIds);
-  }
-
-  public override string ToString() {
-    return $"TimeRange: {TimeRange}, ThreadIds: {ThreadIds}";
-  }
-
-  public bool Equals(ProfileSampleFilter other) {
-    if (ReferenceEquals(null, other))
-      return false;
-    if (ReferenceEquals(this, other))
-      return true;
-    return Equals(TimeRange, other.TimeRange) && Equals(ThreadIds, other.ThreadIds);
-  }
-}
-
 public class MarkedSamples {
   public MarkedSamples(int index, ProfileCallTreeNode node, List<SampleIndex> samples, HighlightingStyle style) {
     Index = index;

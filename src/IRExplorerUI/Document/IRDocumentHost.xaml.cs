@@ -29,6 +29,7 @@ using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Profile.Document;
 using IRExplorerUI.Query;
+using Microsoft.Extensions.Primitives;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -317,7 +318,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.Initialize(settings_, session_);
 
     if (hasProfilingChanges) {
-      await ReloadProfile();
+      await LoadProfile();
     }
   }
 
@@ -416,7 +417,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       await PassOutput.SwitchSection(parsedSection.Section, TextView);
     }
 
-    if (!await ReloadProfile()) {
+    if (!await LoadProfile()) {
       await HideProfile();
     }
 
@@ -958,7 +959,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     Session.SetSectionAnnotationState(section, state.HasAnnotations);
   }
 
-  private async Task<bool> ReloadProfile() {
+  private async Task<bool> LoadProfile() {
     if (Session.ProfileData == null) {
       return false;
     }
@@ -970,24 +971,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       return false;
     }
 
-    // Mark instructions.
-    profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
-                                                  settings_.ProfileMarkerSettings,
-                                                  settings_.ColumnSettings, Session.CompilerInfo);
-    await profileMarker_.Mark(TextView, Function, Section.ParentFunction);
-
-    // Redraw the flow graphs, may have loaded before the marker set the node tags.
-    Session.RedrawPanels();
-
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
-    CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
-    profileElements_ = TextView.ProfileProcessingResult.SampledElements;
-    ProfileVisible = true;
-
-    // Show optional columns with timing, counters, etc.
-    // First remove any previous columns.
-    await UpdateProfilingColumns();
+    await MarkFunctionProfile(funcProfile);
+    CreateInstancesMenu(funcProfile);
 
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
       JumpToHottestProfiledElement();
@@ -1090,12 +1075,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private void CreateProfileElementMenu(FunctionProfileData funcProfile,
                                       FunctionProcessingResult result) {
     var list = new List<ProfileMenuItem>(result.SampledElements.Count);
-    double maxWidth = 0;
-
     ProfileElementsMenu.Items.Clear();
+
     var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
     var markerSettings = settings_.ProfileMarkerSettings;
     int order = 0;
+    double maxWidth = 0;
 
     foreach (var (element, weight) in result.SampledElements) {
       double weightPercentage = funcProfile.ScaleWeight(weight);
@@ -1138,6 +1123,157 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     foreach (var value in list) {
       value.MinTextWidth = maxWidth;
     }
+  }
+
+  private void CreateInstancesMenu(FunctionProfileData funcProfile) {
+    var defaultItems = DocumentUtils.SaveDefaultMenuItems(InstancesMenu);
+    var profileItems = new List<ProfileMenuItem>();
+    InstancesMenu.Items.Clear();
+
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var markerSettings = settings_.ProfileMarkerSettings;
+    int order = 0;
+    double maxWidth = 0;
+
+    var nodes = Session.ProfileData.CallTree.GetSortedCallTreeNodes(Section.ParentFunction);
+    int maxCallers = nodes.Count >= 2 ? CommonParentCallerIndex(nodes[0], nodes[1]) : Int32.MaxValue;
+
+    foreach (var node in nodes) {
+      double weightPercentage = funcProfile.ScaleWeight(node.Weight);
+
+      if (!markerSettings.IsVisibleValue(order++, weightPercentage) ||
+          !node.HasCallers) {
+        break;
+      }
+
+      string prefixText = GenerateInstancePreviewText(node, maxCallers, 80, Session);
+      string text = $"({markerSettings.FormatWeightValue(null, node.Weight)})";
+
+      var value = new ProfileMenuItem(text, node.Weight.Ticks, weightPercentage) {
+        PrefixText = prefixText,
+        //ToolTip = $"Line {element.TextLocation.Line + 1}",
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
+      var item = new MenuItem {
+        Header = value,
+        IsCheckable = true,
+        Tag = node,
+        HeaderTemplate = valueTemplate,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+      };
+
+      item.Click += InstanceMenuItem_OnClick;
+      defaultItems.Add(item);
+      profileItems.Add(value);
+
+      // Make sure percentage rects are aligned.
+      double width = Utils.MeasureString(prefixText, settings_.FontName, settings_.FontSize).Width;
+      maxWidth = Math.Max(width, maxWidth);
+    }
+
+    foreach (var value in profileItems) {
+      value.MinTextWidth = maxWidth;
+    }
+
+    DocumentUtils.RestoreDefaultMenuItems(InstancesMenu, defaultItems);
+  }
+
+  private async Task HandleInstanceMenuItemSelected(object sender) {
+    var menuItem = (MenuItem)sender;
+    UncheckMenuItems(InstancesMenu, menuItem);
+
+    if (menuItem.Tag is ProfileCallTreeNode node) {
+      await LoadInstanceProfile(node);
+    }
+    else {
+     await LoadProfile();
+    }
+  }
+
+  private void UncheckMenuItems(MenuItem menu, MenuItem excludedItem) {
+    foreach (var item in menu.Items) {
+      if (item is MenuItem menuItem && menuItem != excludedItem) {
+        menuItem.IsChecked = false;
+      }
+    }
+  }
+
+  private async Task LoadInstanceProfile(ProfileCallTreeNode instanceNode) {
+    var filter = new ProfileSampleFilter() {
+      FunctionInstance = instanceNode
+    };
+
+    var instanceProfile = Session.ProfileData.ComputeProfile(Session.ProfileData, filter, false);
+    var funcProfile = instanceProfile.GetFunctionProfile(Section.ParentFunction);
+    var metadataTag = Function.GetTag<AssemblyMetadataTag>();
+
+    if (funcProfile == null || metadataTag == null) {
+      return;
+    }
+
+    await MarkFunctionProfile(funcProfile);
+  }
+
+  private async Task MarkFunctionProfile(FunctionProfileData funcProfile) {
+    // Mark instructions.
+    profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
+                                               settings_.ProfileMarkerSettings,
+                                               settings_.ColumnSettings, Session.CompilerInfo);
+    await profileMarker_.Mark(TextView, Function, Section.ParentFunction);
+
+    // Redraw the flow graphs, may have loaded before the marker set the node tags.
+    Session.RedrawPanels();
+
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
+    CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
+    profileElements_ = TextView.ProfileProcessingResult.SampledElements;
+    ProfileVisible = true;
+
+    // Show optional columns with timing, counters, etc.
+    // First remove any previous columns.
+    await UpdateProfilingColumns();
+  }
+
+  private static int CommonParentCallerIndex(ProfileCallTreeNode a, ProfileCallTreeNode b) {
+    int index = 0;
+
+    do {
+      index++;
+      a = a.Caller;
+      b = b.Caller;
+    } while (a != b && a != null && b != null);
+
+    return index;
+  }
+
+  private static string GenerateInstancePreviewText(ProfileCallTreeNode node, int maxCallers, int maxLength, ISession session) {
+    const string Separator = " \ud83e\udc70 ";
+    var sb = new StringBuilder();
+    var nameProvider = session.CompilerInfo.NameProvider;
+    int remaining = maxLength;
+    int index = 0;
+    node = node.Caller;
+
+    while (node != null && index < maxCallers && remaining > 0) {
+      var name = node.FormatFunctionName(nameProvider.FormatFunctionName, remaining);
+
+      if (index == 0) {
+        sb.Append(name);
+      }
+      else {
+        sb.Append($"{Separator}{name}");
+      }
+
+      node = node.Caller;
+      remaining -= name.Length;
+      index++;
+    }
+
+    return sb.ToString();
   }
 
   private async Task HideProfile() {
@@ -2116,6 +2252,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     if (!suspendColumnVisibilityHandler_) {
       await UpdateProfilingColumns();
     }
+  }
+
+  private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    await HandleInstanceMenuItemSelected(sender);
   }
 }
 

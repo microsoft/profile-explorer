@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using IRExplorerCore;
 
@@ -34,11 +35,32 @@ public partial class ProfileData {
       public TimeSpan ProfileWeight = TimeSpan.Zero;
     }
 
+    private ProfileSampleFilter filter_;
+    private List<IRTextFunction> filterStackFuncts_;
+
+    private FunctionProfileProcessor(ProfileSampleFilter filter) {
+      filter_ = filter;
+
+      if (filter_ != null) {
+        // Compute once the list of functions on the path
+        // from call tree root to the function instance node.
+        filterStackFuncts_ = new List<IRTextFunction>();
+        var node = filter_.FunctionInstance;
+
+        while (node != null) {
+          filterStackFuncts_.Add(node.Function);
+          node = node.Caller;
+        }
+
+        filterStackFuncts_.Reverse();
+      }
+    }
+
     public ProfileData Profile { get; } = new ProfileData();
 
     public static ProfileData Compute(ProfileData profile, ProfileSampleFilter filter,
                                       int maxChunks = int.MaxValue) {
-      var funcProcessor = new FunctionProfileProcessor();
+      var funcProcessor = new FunctionProfileProcessor(filter);
       funcProcessor.ProcessSampleChunk(profile, filter, maxChunks);
       return funcProcessor.Profile;
     }
@@ -49,6 +71,22 @@ public partial class ProfileData {
 
     protected override void ProcessSample(ProfileSample sample, ResolvedProfileStack stack,
                                           int sampleIndex, object chunkData) {
+      if (filterStackFuncts_ != null) {
+        // Filtering of functions to a single instance is enabled,
+        // accept only samples that have the instance path nodes
+        // as a prefix of the call stack, this accounts for total weight.
+        if (stack.FrameCount < filterStackFuncts_.Count) {
+          return;
+        }
+
+        for (int i = 0; i < filterStackFuncts_.Count; i++) {
+          if (filterStackFuncts_[i] !=
+              stack.StackFrames[stack.FrameCount - i - 1].FrameDetails.Function) {
+            return;
+          }
+        }
+      }
+
       var data = (ChunkData)chunkData;
       data.TotalWeight += sample.Weight;
       data.ProfileWeight += sample.Weight;
@@ -197,5 +235,48 @@ public partial class ProfileData {
       Task.WhenAll(tasks.ToArray()).Wait();
       Complete();
     }
+  }
+}
+
+public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
+  public SampleTimeRangeInfo TimeRange { get; set; }
+  public List<int> ThreadIds { get; set; }
+  public ProfileCallTreeNode FunctionInstance { get; set; }
+  public bool IncludesAll => TimeRange == null &&
+                             FunctionInstance == null &&
+                             (ThreadIds == null || ThreadIds.Count == 0);
+
+  public static bool operator ==(ProfileSampleFilter left, ProfileSampleFilter right) {
+    return Equals(left, right);
+  }
+
+  public static bool operator !=(ProfileSampleFilter left, ProfileSampleFilter right) {
+    return !Equals(left, right);
+  }
+
+  public override bool Equals(object obj) {
+    if (ReferenceEquals(null, obj))
+      return false;
+    if (ReferenceEquals(this, obj))
+      return true;
+    if (obj.GetType() != GetType())
+      return false;
+    return Equals((ProfileSampleFilter)obj);
+  }
+
+  public override int GetHashCode() {
+    return HashCode.Combine(TimeRange, ThreadIds, FunctionInstance);
+  }
+
+  public override string ToString() {
+    return $"TimeRange: {TimeRange}, FunctionInstance: {FunctionInstance}, ThreadIds: {ThreadIds}";
+  }
+
+  public bool Equals(ProfileSampleFilter other) {
+    if (ReferenceEquals(null, other))
+      return false;
+    if (ReferenceEquals(this, other))
+      return true;
+    return Equals(TimeRange, other.TimeRange) && Equals(ThreadIds, other.ThreadIds);
   }
 }

@@ -351,7 +351,7 @@ public partial class ProfileData {
     ProfileWeight = TimeSpan.Zero;
     TotalWeight = TimeSpan.Zero;
 
-    var profile = ComputeProfile(this, filter, int.MaxValue);
+    var profile = ComputeProfile(this, filter);
     ModuleWeights = profile.ModuleWeights;
     ProfileWeight = profile.ProfileWeight;
     TotalWeight = profile.TotalWeight;
@@ -381,12 +381,17 @@ public partial class ProfileData {
   }
 
   public ProfileData ComputeProfile(ProfileData baseProfile, ProfileSampleFilter filter,
+                                    bool computeCallTree = true,
                                     int maxChunks = int.MaxValue) {
     // Compute the call tree in parallel with the per-function profiles.
     var tasks = new List<Task>();
 
     var callTreeTask = Task.Run(() => {
-      return CallTreeProcessor.Compute(baseProfile, filter, maxChunks);
+      if (computeCallTree) {
+        return CallTreeProcessor.Compute(baseProfile, filter, maxChunks);
+      }
+
+      return null;
     });
 
     var funcProfileTask = Task.Run(() => {
