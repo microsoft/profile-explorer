@@ -146,6 +146,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private ProfileDocumentMarker profileMarker_;
   private bool isPreviewDocument_;
   private bool isSourceFileDocument_;
+  private bool suspendColumnVisibilityHandler_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -397,9 +398,14 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       profileElements_ = TextView.ProfileProcessingResult.SampledElements;
       UpdateHighlighting();
 
-      ProfileColumns.BuildColumnsVisibilityMenu(sourceColumnData_, ProfileColumnsMenu, async () => {
+      // Add the columns to the View menu.
+      // While doing that, disable handling the MenuItem Checked event,
+      // it gets triggered when the MenuItems are temporarily removed.
+      suspendColumnVisibilityHandler_ = true;
+      ProfileColumns.BuildColumnsVisibilityMenu(sourceColumnData_, ProfileViewMenu, async () => {
         await UpdateProfilingColumns();
       });
+      suspendColumnVisibilityHandler_ = false;
     }
     else {
       ProfileColumns.Reset();
@@ -676,7 +682,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void ViewMenuItem_OnCheckedChanged(object sender, RoutedEventArgs e) {
-    await UpdateProfilingColumns();
+    if (!suspendColumnVisibilityHandler_) {
+      await UpdateProfilingColumns();
+    }
   }
 
   private async void ExportFunctionProfileHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {

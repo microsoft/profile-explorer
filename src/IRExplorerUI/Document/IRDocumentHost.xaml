@@ -658,46 +658,31 @@
                     </MenuItem.Header>
                     <MenuItem
                       Checked="ViewMenuItem_OnCheckedChanged"
-                      Header="Show performance counters"
+                      Header="Show Performance Counters"
                       IsCheckable="True"
                       IsChecked="{Binding ShowPerformanceCounterColumns}"
                       Style="{DynamicResource SubMenuItemHeaderStyle}"
                       Unchecked="ViewMenuItem_OnCheckedChanged" />
                     <MenuItem
                       Checked="ViewMenuItem_OnCheckedChanged"
-                      Header="Show performance metrics"
+                      Header="Show Performance Metrics"
                       IsCheckable="True"
                       IsChecked="{Binding ShowPerformanceMetricColumns}"
                       Style="{DynamicResource SubMenuItemHeaderStyle}"
                       Unchecked="ViewMenuItem_OnCheckedChanged" />
                     <MenuItem
                       Checked="ViewMenuItem_OnCheckedChanged"
-                      Header="Hide empty columns"
+                      Header="Hide Empty Columns"
                       IsCheckable="True"
                       IsChecked="{Binding RemoveEmptyColumns}"
                       Style="{DynamicResource SubMenuItemHeaderStyle}"
                       Unchecked="ViewMenuItem_OnCheckedChanged" />
-                  </MenuItem>
-                </Menu>
-                <Menu Margin="2,0,0,0" VerticalAlignment="Center">
-                  <MenuItem
-                    x:Name="ProfileColumnsMenu"
-                    Margin="0,0,0,0"
-                    Padding="0,0,0,0"
-                    OverridesDefaultStyle="True">
-                    <MenuItem.Header>
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock
-                          Margin="4,0,0,0"
-                          VerticalAlignment="Bottom"
-                          Text="Columns" />
-                        <Path
-                          Margin="4,2,0,0"
-                          VerticalAlignment="Center"
-                          Data="M 0 0 L 3 3 L 6 0 Z"
-                          Fill="Black" />
-                      </StackPanel>
-                    </MenuItem.Header>
+                   <Separator/>
+                    <MenuItem
+                      Checked="ViewMenuItem_OnCheckedChanged"
+                      Header="Columns"
+                      IsHitTestVisible="False"
+                      Style="{DynamicResource SubMenuItemHeaderStyle}"/>
                   </MenuItem>
                 </Menu>
               </ToolBar>

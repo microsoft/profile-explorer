@@ -304,6 +304,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     SetupThreadList(node);
     InstancesExpander.IsExpanded = settings_.ExpandInstances;
     HistogramExpander.IsExpanded = settings_.ExpandHistogram;
+    ThreadsExpander.IsExpanded = settings_.ExpandThreads;
 
     if (settings_.ExpandHistogram) {
       InvokeSetupInstancesHistogram();
@@ -316,7 +317,10 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     foreach (var item in threadList) {;
       var threadInfo = Session.ProfileData.FindThread(item.ThreadId);
-      var backColor = TimelinePanel.GetThreadBackgroundColors(threadInfo, item.ThreadId).Margin;
+      var backColor = App.Settings.TimelineSettings.
+        GetThreadBackgroundColors(threadInfo, item.ThreadId).Margin;
+
+      // Compute thread percentage relative to selected node instance.
       double threadPercentage = node.Weight.Ticks > 0 ?
         (double)item.Values.Weight.Ticks / node.Weight.Ticks : 0;
       double selfThreadPercentage = node.ExclusiveWeight.Ticks > 0 ?

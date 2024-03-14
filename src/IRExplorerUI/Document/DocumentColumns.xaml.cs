@@ -296,6 +296,9 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
   public void BuildColumnsVisibilityMenu(IRDocumentColumnData columnData, MenuItem menu,
                                          Action columnsChanged) {
+    // Add the columns at the end of the menu,
+    // keeping the original items.
+    var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     menu.Items.Clear();
 
     foreach (var column in columnData.Columns) {
@@ -324,8 +327,10 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         }
       };
 
-      menu.Items.Add(item);
+      defaultItems.Add(item);
     }
+
+    DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
   }
 
   public void HandleTextRegionFolded(FoldingSection section) {

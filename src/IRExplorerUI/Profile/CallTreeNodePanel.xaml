@@ -273,10 +273,11 @@
                         Header="Threads"
                         MaxHeight="300"
                         IsExpanded="{Binding IsThreadsListExpanded}">
-                        <ItemsControl x:Name="ThreadList" Margin="4">
+                        <ItemsControl x:Name="ThreadList" Margin="4,8,4,4">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                              <StackPanel Orientation="Horizontal"
+                              <StackPanel x:Name="ThreadItemHost"
+                                Orientation="Horizontal"
                                           ToolTip="{Binding ToolTip}"
                                           Tag="{Binding ElementName=Root}"
                                           MouseDown="ThreadListItem_MouseDown">
@@ -338,6 +339,7 @@
                               <DataTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
                                   <Setter TargetName="ThreadTitleBorder" Property="BorderBrush" Value="Black" />
+                                  <Setter TargetName="ThreadItemHost" Property="Background" Value="#D0E3F1" />
                                 </Trigger>
                               </DataTemplate.Triggers>
                             </DataTemplate>

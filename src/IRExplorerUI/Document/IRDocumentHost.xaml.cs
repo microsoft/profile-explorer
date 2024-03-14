@@ -123,6 +123,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private bool profileVisible_;
   private double columnsListItemHeight_;
   private ProfileDocumentMarker profileMarker_;
+  private bool suspendColumnVisibilityHandler_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -1014,9 +1015,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileColumns.ColumnSettingsChanged -= OnProfileColumnsOnColumnSettingsChanged;
     ProfileColumns.ColumnSettingsChanged += OnProfileColumnsOnColumnSettingsChanged;
 
-    ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileColumnsMenu, async () => {
+    // Add the columns to the View menu.
+    // While doing that, disable handling the MenuItem Checked event,
+    // it gets triggered when the MenuItems are temporarily removed.
+    suspendColumnVisibilityHandler_ = true;
+    ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileViewMenu, async () => {
       await UpdateProfilingColumns();
     });
+    suspendColumnVisibilityHandler_ = false;
     return true;
   }
 
@@ -2107,7 +2113,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void ViewMenuItem_OnCheckedChanged(object sender, RoutedEventArgs e) {
-    await UpdateProfilingColumns();
+    if (!suspendColumnVisibilityHandler_) {
+      await UpdateProfilingColumns();
+    }
   }
 }
 

@@ -522,10 +522,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     // Populate the module menu.
     ModuleMenu.Items.Clear();
-
-    foreach (var item in defaultItems) {
-      ModuleMenu.Items.Add(item);
-    }
+    DocumentUtils.RestoreDefaultMenuItems(ModuleMenu, defaultItems);
   }
 
   private Image CreateModuleMenuIcon(FlameGraphSettings.ModuleStyle moduleStyle) {
