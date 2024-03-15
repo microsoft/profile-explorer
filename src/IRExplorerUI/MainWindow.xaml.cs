@@ -903,14 +903,6 @@ public partial class MainWindow : Window, ISession {
     await SwitchCompilerTarget("ASM", IRMode.ARM64);
   }
 
-  private async void DotNetMenuItem_Click(object sender, RoutedEventArgs e) {
-    await SwitchCompilerTarget("DotNet", IRMode.x86_64);
-  }
-
-  private async void DotNetARM64MenuItem_Click(object sender, RoutedEventArgs e) {
-    await SwitchCompilerTarget("DotNet", IRMode.ARM64);
-  }
-
   private async Task SetupCompilerTarget() {
     await SwitchCompilerTarget(App.Settings.DefaultCompilerIR, App.Settings.DefaultIRMode);
   }
@@ -924,10 +916,6 @@ public partial class MainWindow : Window, ISession {
       }
       case "ASM": {
         await SwitchCompilerTarget(new ASMCompilerInfoProvider(irMode, this));
-        break;
-      }
-      case "DotNet": {
-        await SwitchCompilerTarget(new DotNetCompilerInfoProvider(irMode, this));
         break;
       }
       default: {
