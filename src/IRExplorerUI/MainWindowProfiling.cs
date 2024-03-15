@@ -22,12 +22,6 @@ public partial class MainWindow : Window, ISession {
     new Dictionary<ProfileSampleFilter, ProfileData.ProcessingResult>();
   public ProfileData ProfileData => sessionState_?.ProfileData;
 
-  public async Task<bool> OpenProfileFunction(IRTextFunction function, OpenSectionKind openMode) {
-    var args = new OpenSectionEventArgs(function.Sections[0], openMode);
-    await SwitchDocumentSectionAsync(args);
-    return true;
-  }
-
   public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds,
                                           ProfileDataProviderOptions options,
                                           SymbolFileSourceSettings symbolSettings,
@@ -133,12 +127,25 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
-  public async Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode) {
+  public async Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode,
+                                              ProfileSampleFilter instanceFilter = null) {
     if (node.Function == null) {
       return false;
     }
 
-    return await OpenProfileFunction(node.Function, openMode);
+    return await OpenProfileFunction(node.Function, openMode, instanceFilter);
+  }
+
+  public async Task<bool> OpenProfileFunction(IRTextFunction function, OpenSectionKind openMode,
+                                              ProfileSampleFilter instanceFilter = null) {
+    var args = new OpenSectionEventArgs(function.Sections[0], openMode);
+    var docHost = await SwitchDocumentSectionAsync(args);
+
+    if (instanceFilter != null) {
+      await docHost.SwitchProfileInstanceAsync(instanceFilter);
+    }
+
+    return true;
   }
 
   public async Task<bool> SwitchActiveProfileFunction(ProfileCallTreeNode node) {

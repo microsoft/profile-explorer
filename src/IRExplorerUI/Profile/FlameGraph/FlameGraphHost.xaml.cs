@@ -474,6 +474,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     // Setup events for the flame graph area.
     MouseLeftButtonDown += OnMouseLeftButtonDown;
     MouseLeftButtonUp += OnMouseLeftButtonUp;
+    MouseRightButtonDown += OnMouseRightButtonDown;
     MouseDoubleClick += OnMouseDoubleClick;
     MouseMove += OnMouseMove;
     MouseDown += OnMouseDown; // Handles back button.
@@ -724,9 +725,28 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       EndMouseDragging();
       e.Handled = true;
     }
+  }
 
+  private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+    // Start dragging the graph only if the click starts inside the scroll area,
+    // excluding the scroll bars, and it in an empty spot.
     if (IsMouseOutsideViewport(e)) {
       return;
+    }
+
+    if (!HandleNodeSelection(e)) {
+      StartMouseDragging(e);
+      e.Handled = true;
+    }
+  }
+
+  private void OnMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
+    HandleNodeSelection(e);
+  }
+
+  private bool HandleNodeSelection(MouseButtonEventArgs e) {
+    if (IsMouseOutsideViewport(e)) {
+      return false;
     }
 
     var point = e.GetPosition(GraphViewer);
@@ -735,21 +755,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     if (pointedNode == null) {
       GraphViewer.ClearSelection(); // Click outside graph is captured here.
       NodesDeselected?.Invoke(this, EventArgs.Empty);
+      return false;
     }
     else {
       NodeSelected?.Invoke(this, pointedNode);
+      return true;
     }
-  }
-
-  private async void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-    // Start dragging the graph only if the click starts inside the scroll area,
-    // excluding the scroll bars, and it in an empty spot.
-    if (IsMouseOutsideViewport(e)) {
-      return;
-    }
-
-    StartMouseDragging(e);
-    e.Handled = true;
   }
 
   private void StartMouseDragging(MouseButtonEventArgs e) {

@@ -175,8 +175,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
           var tuple = block.Tuples[i];
           int currentLine = tuple.TextLocation.Line;
           bool isSeparatorLine = settings_.ShowBlockSeparatorLine &&
-                                 i < function.Blocks.Count - 1 &&
-                                 i == block.Tuples.Count - 1;
+                                 block.IndexInFunction < function.BlockCount - 1 &&
+                                 i == block.TupleCount - 1;
 
           // Add dummy empty list view lines to match document text.
           if (currentLine > prevLine + 1) {
@@ -296,6 +296,9 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
   public void BuildColumnsVisibilityMenu(IRDocumentColumnData columnData, MenuItem menu,
                                          Action columnsChanged) {
+    // Add the columns at the end of the menu,
+    // keeping the original items.
+    var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     menu.Items.Clear();
 
     foreach (var column in columnData.Columns) {
@@ -324,8 +327,10 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         }
       };
 
-      menu.Items.Add(item);
+      defaultItems.Add(item);
     }
+
+    DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
   }
 
   public void HandleTextRegionFolded(FoldingSection section) {

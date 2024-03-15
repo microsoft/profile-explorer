@@ -22,7 +22,9 @@
     <CommandBinding Command="local:DocumentHostCommand.SearchSymbolAllSections" Executed="SearchSymbolAllSectionsExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.JumpToProfiledElement" Executed="JumpToProfiledElementExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfile" Executed="ExportFunctionProfileExecuted" />
-    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportFunctionProfileHTMLExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportFunctionProfileHtmlExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.CopySelectedLinesAsHTML" Executed="CopySelectedLinesAsHtmlExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileMarkdown" Executed="ExportFunctionProfileMarkdownExecuted" />
 
     <CommandBinding
       CanExecute="JumpToNextProfiledElementCanExecute"
@@ -607,7 +609,7 @@
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
-                  Command="local:DocumentHostCommand.ExportFunctionProfile"
+                  Command="local:DocumentHostCommand.ExportFunctionProfileHTML"
                   CommandTarget="{Binding ElementName=TextView}"
                   Header="Export as HTML page"
                   ToolTip="Save the list of functions and additional columns as an HTML page">
@@ -618,10 +620,84 @@
                       Source="{StaticResource SourceIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem
+                  Command="local:DocumentHostCommand.ExportFunctionProfileMarkdown"
+                  CommandTarget="{Binding ElementName=TextView}"
+                  Header="Export as Markdown file"
+                  ToolTip="Save the list of functions and additional columns as a Markdown file">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource DocumentIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
               </MenuItem>
             </Menu>
 
                 <Separator />
+                <Menu Margin="2,0,0,0" VerticalAlignment="Center">
+                  <MenuItem
+                    x:Name="InstancesMenu"
+                    Background="{Binding Path=HasProfileInstanceFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                    Margin="0,0,0,0"
+                    Padding="0,0,0,0"
+                    OverridesDefaultStyle="True">
+                    <MenuItem.Header>
+                      <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource TasklistIcon}" Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock
+                          Margin="2,0,0,0"
+                          VerticalAlignment="Bottom"
+                          Text="Instances" />
+                        <Path
+                          Margin="4,2,0,0"
+                          VerticalAlignment="Center"
+                          Data="M 0 0 L 3 3 L 6 0 Z"
+                          Fill="Black" />
+                      </StackPanel>
+                    </MenuItem.Header>
+                    <MenuItem
+                      Click="InstanceMenuItem_OnClick"
+                      Header="All Instances"
+                      IsCheckable="True"
+                      IsChecked="{Binding RemoveEmptyColumns}"
+                      Style="{DynamicResource SubMenuItemHeaderStyle}"/>
+                    <Separator/>
+                  </MenuItem>
+                </Menu>
+                <Menu Margin="2,0,0,0" VerticalAlignment="Center">
+                  <MenuItem
+                    Background="{Binding Path=HasProfileThreadFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                    x:Name="ThreadsMenu"
+                    Margin="0,0,0,0"
+                    Padding="0,0,0,0"
+                    StaysOpenOnClick="True"
+                    OverridesDefaultStyle="True">
+                    <MenuItem.Header>
+                      <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource FilterIcon}" Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock
+                          Margin="2,0,0,0"
+                          VerticalAlignment="Bottom"
+                          Text="Threads" />
+                        <Path
+                          Margin="4,2,0,0"
+                          VerticalAlignment="Center"
+                          Data="M 0 0 L 3 3 L 6 0 Z"
+                          Fill="Black" />
+                      </StackPanel>
+                    </MenuItem.Header>
+                    <MenuItem
+                      Click="ThreadMenuItem_OnClick"
+                      Header="All Threads"
+                      IsCheckable="True"
+                      IsChecked="{Binding RemoveEmptyColumns}"
+                      Style="{DynamicResource SubMenuItemHeaderStyle}"/>
+                    <Separator/>
+                  </MenuItem>
+                </Menu>
+                <Separator/>
                 <Menu Margin="2,0,0,0" VerticalAlignment="Center">
                   <MenuItem
                     x:Name="ProfileViewMenu"
@@ -644,46 +720,31 @@
                     </MenuItem.Header>
                     <MenuItem
                       Checked="ViewMenuItem_OnCheckedChanged"
-                      Header="Show performance counters"
+                      Header="Show Performance Counters"
                       IsCheckable="True"
                       IsChecked="{Binding ShowPerformanceCounterColumns}"
                       Style="{DynamicResource SubMenuItemHeaderStyle}"
                       Unchecked="ViewMenuItem_OnCheckedChanged" />
                     <MenuItem
                       Checked="ViewMenuItem_OnCheckedChanged"
-                      Header="Show performance metrics"
+                      Header="Show Performance Metrics"
                       IsCheckable="True"
                       IsChecked="{Binding ShowPerformanceMetricColumns}"
                       Style="{DynamicResource SubMenuItemHeaderStyle}"
                       Unchecked="ViewMenuItem_OnCheckedChanged" />
                     <MenuItem
                       Checked="ViewMenuItem_OnCheckedChanged"
-                      Header="Hide empty columns"
+                      Header="Hide Empty Columns"
                       IsCheckable="True"
                       IsChecked="{Binding RemoveEmptyColumns}"
                       Style="{DynamicResource SubMenuItemHeaderStyle}"
                       Unchecked="ViewMenuItem_OnCheckedChanged" />
-                  </MenuItem>
-                </Menu>
-                <Menu Margin="2,0,0,0" VerticalAlignment="Center">
-                  <MenuItem
-                    x:Name="ProfileColumnsMenu"
-                    Margin="0,0,0,0"
-                    Padding="0,0,0,0"
-                    OverridesDefaultStyle="True">
-                    <MenuItem.Header>
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock
-                          Margin="4,0,0,0"
-                          VerticalAlignment="Bottom"
-                          Text="Columns" />
-                        <Path
-                          Margin="4,2,0,0"
-                          VerticalAlignment="Center"
-                          Data="M 0 0 L 3 3 L 6 0 Z"
-                          Fill="Black" />
-                      </StackPanel>
-                    </MenuItem.Header>
+                   <Separator/>
+                    <MenuItem
+                      Checked="ViewMenuItem_OnCheckedChanged"
+                      Header="Columns"
+                      IsHitTestVisible="False"
+                      Style="{DynamicResource SubMenuItemHeaderStyle}"/>
                   </MenuItem>
                 </Menu>
               </ToolBar>
@@ -737,6 +798,19 @@
                   </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
+
+                <MenuItem
+                  Command="local:DocumentHostCommand.CopySelectedLinesAsHTML"
+                  CommandTarget="{Binding ElementName=TextView}"
+                  Header="Copy Selection Details"
+                  InputGestureText="Ctrl+Alt+C">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource ClipboardIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
 
                 <MenuItem
                   Command="local:DocumentHostCommand.SearchSymbol"
@@ -1073,16 +1147,19 @@
       Command="local:DocumentHostCommand.NextSection"
       CommandTarget="{Binding ElementName=TextView}"
       Modifiers="Ctrl" />
-
     <KeyBinding
       Key="F3"
       Command="doc:SearchCommand.PreviousResult"
       CommandTarget="{Binding ElementName=SearchPanel}"
       Modifiers="Shift" />
-
     <KeyBinding
       Key="F3"
       Command="doc:SearchCommand.NextResult"
       CommandTarget="{Binding ElementName=SearchPanel}" />
+    <KeyBinding
+      Key="C"
+      Command="local:DocumentHostCommand.CopySelectedLinesAsHTML"
+      CommandTarget="{Binding ElementName=TextView}"
+      Modifiers="Ctrl+Alt" />
   </UserControl.InputBindings>
 </UserControl>

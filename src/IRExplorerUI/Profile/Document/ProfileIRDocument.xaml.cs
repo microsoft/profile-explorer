@@ -4,19 +4,24 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.JavaScript;
+using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ClosedXML.Excel;
+using HtmlAgilityPack;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
+using Microsoft.Extensions.Primitives;
 
 namespace IRExplorerUI.Profile.Document;
 
@@ -129,7 +134,6 @@ public class ProfileMenuItem : BindableObject {
 public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private List<(IRElement, TimeSpan)> profileElements_;
   private int profileElementIndex_;
-  private FunctionProcessingResult sourceProfileResult_;
   private SourceLineProcessingResult sourceLineProfileResult_;
   private IRDocumentColumnData sourceColumnData_;
   private bool columnsVisible_;
@@ -141,6 +145,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private TextViewSettingsBase settings_;
   private ProfileDocumentMarker profileMarker_;
   private bool isPreviewDocument_;
+  private bool isSourceFileDocument_;
+  private bool suspendColumnVisibilityHandler_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -245,6 +251,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public async Task<bool> LoadSection(ParsedIRTextSection parsedSection) {
+    isSourceFileDocument_ = false;
     TextView.Initialize(App.Settings.DocumentSettings, Session);
     TextView.EarlyLoadSectionSetup(parsedSection);
     await TextView.LoadSection(parsedSection);
@@ -278,6 +285,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                          IRTextSection section,
                                          IDebugInfoProvider debugInfo) {
     try {
+      isSourceFileDocument_ = true;
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
       SetSourceText(text, sourceInfo.FilePath);
       await AnnotateSourceFileProfile(section, debugInfo);
@@ -345,7 +353,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     TextView.ResumeUpdate();
-    sourceProfileResult_ = processingResult.Result;
     sourceLineProfileResult_ = processingResult.SourceLineResult;
     await UpdateProfilingColumns();
 
@@ -391,9 +398,14 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       profileElements_ = TextView.ProfileProcessingResult.SampledElements;
       UpdateHighlighting();
 
-      ProfileColumns.BuildColumnsVisibilityMenu(sourceColumnData_, ProfileColumnsMenu, async () => {
+      // Add the columns to the View menu.
+      // While doing that, disable handling the MenuItem Checked event,
+      // it gets triggered when the MenuItems are temporarily removed.
+      suspendColumnVisibilityHandler_ = true;
+      ProfileColumns.BuildColumnsVisibilityMenu(sourceColumnData_, ProfileViewMenu, async () => {
         await UpdateProfilingColumns();
       });
+      suspendColumnVisibilityHandler_ = false;
     }
     else {
       ProfileColumns.Reset();
@@ -461,19 +473,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     foreach (var value in list) {
       value.MinTextWidth = maxWidth;
-    }
-  }
-
-  private async void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
-    string path = Utils.ShowSaveFileDialog("Excel Worksheets|*.xlsx", "*.xlsx|All Files|*.*");
-
-    if (!string.IsNullOrEmpty(path)) {
-      try {
-        await ExportFunctionAsExcelFile(path);
-      }
-      catch (Exception ex) {
-        Utils.ShowErrorMessageBox($"Failed to save source profiling results to {path}: {ex.Message}", this);
-      }
     }
   }
 
@@ -557,8 +556,16 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     JumpToProfiledElement(1);
   }
 
-  public void JumpToHottestProfiledElement() {
-    Dispatcher.BeginInvoke(() => JumpToProfiledElement(0), DispatcherPriority.ContextIdle);
+  public void JumpToHottestProfiledElement(bool onLoad = false) {
+    Dispatcher.BeginInvoke(() => {
+      if (onLoad) {
+        // Don't select the associated document instructions
+        // when jumping during the source file load.
+        ignoreNextCaretEvent_ = true;
+      }
+
+      JumpToProfiledElement(0);
+    }, DispatcherPriority.ContextIdle);
   }
 
   private void JumpToProfiledElement(int offset) {
@@ -571,7 +578,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void JumpToProfiledElement(IRElement element) {
-    TextView.ScrollToLine(element.TextLocation.Line);
+    TextView.SetCaretAtElement(element);
     double offset = TextView.TextArea.TextView.VerticalOffset;
     SyncColumnsVerticalScrollOffset(offset);
   }
@@ -631,7 +638,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ProfileColumns.Reset();
     sourceText_ = null;
     profileElements_ = null;
-    sourceProfileResult_ = null;
     sourceLineProfileResult_ = null;
     sourceColumnData_ = null;
   }
@@ -651,102 +657,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private void UpdateHighlighting() {
     TextView.TextArea.TextView.Redraw();
-  }
-
-  private async Task ExportFunctionAsExcelFile(string filePath) {
-    var function = TextView.Section.ParentFunction;
-    var (firstSourceLineIndex, lastSourceLineIndex) = await FindFunctionSourceLineRange(function);
-
-    if (firstSourceLineIndex == 0) {
-      Utils.ShowWarningMessageBox("Failed to export source file", this);
-      return;
-    }
-
-    var wb = new XLWorkbook();
-    var ws = wb.Worksheets.Add("Source");
-    var columnData = sourceColumnData_;
-    int rowId = 2; // First row is for the table column names.
-    int maxLineLength = 0;
-
-    for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
-      var line = TextView.Document.GetLineByNumber(i);
-      string text = TextView.Document.GetText(line.Offset, line.Length);
-      ws.Cell(rowId, 1).Value = text;
-      ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-      maxLineLength = Math.Max(text.Length, maxLineLength);
-
-      ws.Cell(rowId, 2).Value = i;
-      ws.Cell(rowId, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-      ws.Cell(rowId, 2).Style.Font.FontColor = XLColor.DarkGreen;
-
-      if (columnData != null) {
-        IRElement tuple = null;
-        tuple = FindTupleOnSourceLine(i);
-
-        if (tuple != null) {
-          columnData.ExportColumnsToExcel(tuple, ws, rowId, 3);
-        }
-      }
-
-      rowId++;
-    }
-
-    var firstCell = ws.Cell(1, 1);
-    var lastCell = ws.LastCellUsed();
-    var range = ws.Range(firstCell.Address, lastCell.Address);
-    var table = range.CreateTable();
-    table.Theme = XLTableTheme.None;
-
-    foreach (var cell in table.HeadersRow().Cells()) {
-      if (cell.Address.ColumnNumber == 1) {
-        cell.Value = "Source";
-      }
-      else if (cell.Address.ColumnNumber == 2) {
-        cell.Value = "Line";
-      }
-      else if (columnData != null && cell.Address.ColumnNumber - 3 < columnData.Columns.Count) {
-        cell.Value = columnData.Columns[cell.Address.ColumnNumber - 3].Title;
-      }
-
-      cell.Style.Font.Bold = true;
-      cell.Style.Fill.BackgroundColor = XLColor.LightGray;
-    }
-
-    for (int i = 1; i <= 1; i++) {
-      ws.Column(i).AdjustToContents((double)1, maxLineLength);
-    }
-
-    wb.SaveAs(filePath);
-  }
-
-  public async Task<(int, int)> FindFunctionSourceLineRange(IRTextFunction function) {
-    var debugInfo = await Session.GetDebugInfoProvider(function);
-    var funcProfile = Session.ProfileData?.GetFunctionProfile(function);
-
-    if (debugInfo == null || funcProfile == null) {
-      return (0, 0);
-    }
-
-    int firstSourceLineIndex = 0;
-    int lastSourceLineIndex = 0;
-
-    if (debugInfo.PopulateSourceLines(funcProfile.FunctionDebugInfo)) {
-      firstSourceLineIndex = funcProfile.FunctionDebugInfo.FirstSourceLine.Line;
-      lastSourceLineIndex = funcProfile.FunctionDebugInfo.LastSourceLine.Line;
-    }
-
-    return (firstSourceLineIndex, lastSourceLineIndex);
-  }
-
-  private IRElement FindTupleOnSourceLine(int line) {
-    var pair1 = sourceProfileResult_.SampledElements.Find(e => e.Item1.TextLocation.Line == line - 1);
-
-    if (pair1.Item1 != null) {
-      return pair1.Item1;
-    }
-
-    var pair2 = sourceProfileResult_.CounterElements.Find(e => e.Item1.TextLocation.Line == line - 1);
-    return pair2.Item1;
   }
 
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
@@ -772,6 +682,58 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void ViewMenuItem_OnCheckedChanged(object sender, RoutedEventArgs e) {
-    await UpdateProfilingColumns();
+    if (!suspendColumnVisibilityHandler_) {
+      await UpdateProfilingColumns();
+    }
+  }
+
+  private async void ExportFunctionProfileHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        success = await DocumentExporting.ExportSourceAsHtmlFile(TextView, path);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  private async void ExportSourceExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.ExportToExcelFile(TextView,
+                                              isSourceFileDocument_ ?
+                                              DocumentExporting.ExportSourceAsExcelFile :
+                                              DocumentExporting.ExportFunctionAsExcelFile);
+  }
+
+  private async void ExportSourceHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.ExportToHtmlFile(TextView,
+                                             isSourceFileDocument_ ?
+                                             DocumentExporting.ExportSourceAsHtmlFile :
+                                             DocumentExporting.ExportFunctionAsHtmlFile);
+  }
+
+  private async void ExportSourceMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.ExportToMarkdownFile(TextView,
+                                                 isSourceFileDocument_ ?
+                                                 DocumentExporting.ExportSourceAsMarkdownFile :
+                                                 DocumentExporting.ExportFunctionAsMarkdownFile);
+  }
+
+  private async void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (isSourceFileDocument_) {
+      await DocumentExporting.CopySelectedSourceLinesAsHtml(TextView);
+    }
+    else {
+      await DocumentExporting.CopySelectedLinesAsHtml(TextView);
+    }
   }
 }

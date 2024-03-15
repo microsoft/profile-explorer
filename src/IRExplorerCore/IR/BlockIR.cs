@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using IRExplorerCore.Utilities;
 
@@ -28,6 +29,8 @@ public sealed class BlockIR : IRElement {
   public BlockLabelIR Label { get; set; }
   public FunctionIR Parent { get; set; }
   public bool IsEmpty => Tuples == null || Tuples.Count == 0;
+  public int TupleCount => Tuples.Count;
+  public int InstructionCount => Instructions.Count();
 
   public bool IsBranchBlock {
     get {

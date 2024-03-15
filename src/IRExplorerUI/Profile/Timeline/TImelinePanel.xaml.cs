@@ -283,23 +283,11 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
       threadView.ThreadActivityAction += ThreadView_ThreadActivityAction;
 
-      // Set thread color based on name, if available,
-      // otherwise on the thread ID. The picked color is stable
-      // between different sessions loading the same trace.
+      // Set thread background colors.
       var threadInfo = Session.ProfileData.FindThread(thread.ThreadId);
-      uint colorIndex = 0;
 
-      if (threadInfo != null && threadInfo.HasName) {
-        colorIndex = (uint)threadInfo.Name.GetStableHashCode();
-      }
-      else {
-        colorIndex = (uint)thread.ThreadId;
-      }
-
-      threadView.MarginBackColor =
-        ColorBrushes.GetBrush(ColorUtils.GenerateLightPastelColor(colorIndex));
-      threadView.ActivityHost.SamplesBackColor =
-        ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(colorIndex));
+      (threadView.MarginBackColor, threadView.ActivityHost.SamplesBackColor) =
+        settings_.GetThreadBackgroundColors(threadInfo, thread.ThreadId);
 
       threadActivityViews_.Add(threadView);
       threadActivityViewsMap_[thread.ThreadId] = threadView;
@@ -332,10 +320,21 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
+  public async Task ApplyThreadFilterAction(int threadId, ThreadActivityAction action) {
+    var view = threadActivityViews_.Find(item => item.ThreadId == threadId);
+
+    if (view != null) {
+      await ApplyThreadFilterChange(view, action);
+    }
+  }
+
   private async void ThreadView_ThreadActivityAction(object sender, ThreadActivityAction action) {
     var view = sender as ActivityTimelineView;
-    Trace.WriteLine($"Thread action {action} for thread {view.ThreadId}");
+    await ApplyThreadFilterChange(view, action);
+  }
 
+  private async Task ApplyThreadFilterChange(ActivityTimelineView view, ThreadActivityAction action) {
+    Trace.WriteLine($"Thread action {action} for thread {view.ThreadId}");
     bool changed = false;
     changingThreadFiltering_ = true;
 
@@ -440,7 +439,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
         //? TODO: if selection, use range covered by it
         ProfileCallTreeNode callNode = null;
-        var rangeProfile = Session.ProfileData.ComputeProfile(Session.ProfileData, filter, 1);
+        var rangeProfile = Session.ProfileData.ComputeProfile(Session.ProfileData, filter, true, 1);
         var funcs = rangeProfile.GetSortedFunctions();
 
         if (funcs.Count > 0) {

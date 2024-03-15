@@ -552,7 +552,7 @@
                 <StackPanel Margin="4,4,4,4">
                     <CheckBox
                         Margin="0,2,0,2"
-                        Content="Auto-expand Instances section"
+                        Content="Auto-expand Instance Statistics section"
                         IsChecked="{Binding ExpandInstances, Mode=TwoWay}"
                         ToolTip="Instances section expanded by default" />
                     <CheckBox
@@ -560,6 +560,11 @@
                         Content="Auto-expand Histogram section"
                         IsChecked="{Binding ExpandHistogram, Mode=TwoWay}"
                         ToolTip="Histogram section expanded by default" />
+                    <CheckBox
+                      Margin="0,2,0,2"
+                      Content="Auto-expand Threads section"
+                      IsChecked="{Binding ExpandThreads, Mode=TwoWay}"
+                      ToolTip="Threads list section expanded by default" />
                     <CheckBox
                       Margin="0,2,0,2"
                       Content="Alternate list view background color"

@@ -93,7 +93,7 @@
                     Loaded="ToolBar_Loaded">
                     <Button
                         Margin="4,0,0,0"
-                        Click="UndoButtoon_Click"
+                        Click="UndoButton_Click"
                         CommandTarget="{Binding ElementName=GraphHost}"
                         ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
                         <StackPanel Orientation="Horizontal">

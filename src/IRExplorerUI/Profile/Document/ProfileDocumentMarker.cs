@@ -171,6 +171,16 @@ public class ProfileDocumentMarker {
       columnData = await MarkProfiledElements(result, function, document);
       document.ProfileProcessingResult = result;
       document.ProfileColumnData = columnData;
+      
+      
+      // Remove any overlays from a previous marking.
+      foreach (var block in function.Blocks) {
+        document.RemoveElementOverlays(block, ProfileOverlayTag);
+      }
+      
+      foreach(var tuple in function.AllTuples) {
+        document.RemoveElementOverlays(tuple, ProfileOverlayTag);
+      }
 
       MarkProfiledBlocks(result.BlockSampledElements, document);
       MarkCallSites(document, function, textFunction, metadataTag);
@@ -506,9 +516,6 @@ public class ProfileDocumentMarker {
           App.Settings.DocumentSettings.BackgroundColor.AsBrush() :
           App.Settings.DocumentSettings.AlternateBackgroundColor.AsBrush();
       }
-
-      // Remove any overlays from a previous marking.
-      document.RemoveElementOverlays(block, ProfileOverlayTag);
 
       bool markOnFlowGraph = settings_.IsSignificantValue(i, weightPercentage);
       string label = $"{weightPercentage.AsTrimmedPercentageString()}";

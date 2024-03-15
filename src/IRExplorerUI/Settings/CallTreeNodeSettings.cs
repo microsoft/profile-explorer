@@ -29,11 +29,14 @@ public class CallTreeNodeSettings : SettingsBase {
   public ProfileListViewFilter FunctionListViewFilter { get; set; }
   [ProtoMember(7)]
   public bool AlternateListRows { get; set; }
+  [ProtoMember(8)]
+  public bool ExpandThreads { get; set; }
 
   public override void Reset() {
     InitializeReferenceMembers();
     ShowPreviewPopup = true;
     ExpandInstances = true;
+    ExpandThreads = true;
     PrependModuleToFunction = true;
     AlternateListRows = true;
     PreviewPopupDuration = DefaultPreviewPopupDuration;
@@ -56,6 +59,7 @@ public class CallTreeNodeSettings : SettingsBase {
            PreviewPopupDuration == settings.PreviewPopupDuration &&
            ExpandInstances == settings.ExpandInstances &&
            ExpandHistogram == settings.ExpandHistogram &&
+           ExpandThreads == settings.ExpandThreads &&
            PrependModuleToFunction == settings.PrependModuleToFunction &&
            AlternateListRows == settings.AlternateListRows &&
            FunctionListViewFilter.Equals(settings.FunctionListViewFilter);

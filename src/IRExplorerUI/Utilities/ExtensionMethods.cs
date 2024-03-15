@@ -263,8 +263,13 @@ static class ExtensionMethods {
 
     name = nameFormatter != null ? nameFormatter(name) : name;
 
-    if (name.Length > maxLength && name.Length > 2) {
-      name = $"{name.Substring(0, maxLength - 2)}...";
+    if (name.Length > maxLength) {
+      if (maxLength > 3) {
+        name = $"{name.Substring(0, maxLength - 3)}...";
+      }
+      else {
+        name = name.Substring(0, maxLength);
+      }
     }
 
     return name;

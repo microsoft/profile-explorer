@@ -110,23 +110,11 @@
             Command="{Binding IncludeThreadCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Include Thread">
-            <MenuItem.Icon>
-              <Image
-                Width="16"
-                Height="16"
-                Source="{StaticResource PlusIcon}" />
-            </MenuItem.Icon>
           </MenuItem>
           <MenuItem
             Command="{Binding ExcludeThreadCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Exclude Thread">
-            <MenuItem.Icon>
-              <Image
-                Width="16"
-                Height="16"
-                Source="{StaticResource MinusIcon}" />
-            </MenuItem.Icon>
           </MenuItem>
           <Separator />
 

@@ -141,6 +141,8 @@ public static class Command {
     new RoutedUICommand("Untitled", "CopyFunctionDetails", typeof(SectionPanel));
   public static readonly RoutedUICommand ExportFunctionListHtml =
     new RoutedUICommand("Untitled", "ExportFunctionListHtml", typeof(SectionPanel));
+  public static readonly RoutedUICommand ExportFunctionListMarkdown =
+    new RoutedUICommand("Untitled", "ExportFunctionListMarkdown", typeof(SectionPanel));
 }
 
 public class OpenSectionEventArgs : EventArgs {
@@ -1247,7 +1249,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     await SetupFunctionListUI(functionsEx);
 
     // Attach additional data to the UI.
-    await SetFunctionProfileInfo(functionsEx);
+    await LoadFunctionProfileInfo(functionsEx);
 
     if (analyzeFunctions) {
       await RunFunctionAnalysis(functionsEx);
@@ -1524,7 +1526,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     AlternateNameColumnVisible = true;
   }
 
-  private async Task SetFunctionProfileInfo(List<IRTextFunctionEx> functions) {
+  private async Task LoadFunctionProfileInfo(List<IRTextFunctionEx> functions) {
     var profile = Session.ProfileData;
 
     if (profile == null) {
@@ -1762,10 +1764,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private void CreateFunctionExtensions(IRTextSummary summary, List<IRTextFunctionEx> functionsEx) {
     foreach (var func in summary.Functions) {
-      if (IsHiddenFunction(func)) {
-        continue;
-      }
-
       if (!functionExtMap_.TryGetValue(func, out var funcEx)) {
         funcEx = new IRTextFunctionEx(func, functionsEx.Count, Session.CompilerInfo.NameProvider.FormatFunctionName);
         functionExtMap_[func] = funcEx;
@@ -1776,17 +1774,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
       functionsEx.Add(funcEx);
     }
-  }
-
-  private bool IsHiddenFunction(IRTextFunction func) {
-    // Don't display functions that have no profile data.
-    if (Session.ProfileData != null) {
-      var funcProfile = Session.ProfileData.GetFunctionProfile(func);
-      return funcProfile == null ||
-             funcProfile.Weight == TimeSpan.Zero;
-    }
-
-    return false;
   }
 
   private void ResetSectionPanel() {
@@ -1841,10 +1828,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private void SetupSectionExtensions(IRTextSummary summary) {
     foreach (var func in summary.Functions) {
-      if (IsHiddenFunction(func)) {
-        continue;
-      }
-
       int index = 0;
 
       foreach (var section in func.Sections) {
@@ -2779,6 +2762,19 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
+  private bool ExportFunctionListAsMarkdownFile(string filePath) {
+    try {
+      var funcList = (ListCollectionView)FunctionList.ItemsSource;
+      var text = ExportFunctionListAsMarkdown(funcList.ToList<IRTextFunctionEx>());
+      File.WriteAllText(filePath, text);
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to export to Markdown file: {filePath}, {ex.Message}");
+      return false;
+    }
+  }
+
   private void ExportFunctionListAsExcelFile(string filePath) {
     var wb = new XLWorkbook();
     var ws = wb.Worksheets.Add("Functions");
@@ -3268,6 +3264,26 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     if (!string.IsNullOrEmpty(path)) {
       try {
         success = ExportFunctionListAsHtmlFile(path);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save function list to {path}: {ex.Message}");
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save function list to {path}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  private void ExportFunctionListMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("Markdown file|*.md", "*.md|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        success = ExportFunctionListAsMarkdownFile(path);
       }
       catch (Exception ex) {
         Trace.WriteLine($"Failed to save function list to {path}: {ex.Message}");
