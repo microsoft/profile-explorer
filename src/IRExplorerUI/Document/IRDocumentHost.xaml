@@ -639,6 +639,7 @@
                 <Menu Margin="2,0,0,0" VerticalAlignment="Center">
                   <MenuItem
                     x:Name="InstancesMenu"
+                    Background="{Binding Path=HasProfileInstanceFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
                     Margin="0,0,0,0"
                     Padding="0,0,0,0"
                     OverridesDefaultStyle="True">
@@ -667,6 +668,7 @@
                 </Menu>
                 <Menu Margin="2,0,0,0" VerticalAlignment="Center">
                   <MenuItem
+                    Background="{Binding Path=HasProfileThreadFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
                     x:Name="ThreadsMenu"
                     Margin="0,0,0,0"
                     Padding="0,0,0,0"
@@ -687,7 +689,7 @@
                       </StackPanel>
                     </MenuItem.Header>
                     <MenuItem
-                      Click="InstanceMenuItem_OnClick"
+                      Click="ThreadMenuItem_OnClick"
                       Header="All Threads"
                       IsCheckable="True"
                       IsChecked="{Binding RemoveEmptyColumns}"

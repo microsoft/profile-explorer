@@ -305,6 +305,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
+  public bool HasProfileInstanceFilter {
+    get => instanceFilter_ is {HasInstanceFilter:true};
+  }
+
+  public bool HasProfileThreadFilter {
+    get => instanceFilter_ is {HasThreadFilter:true};
+  }
+
   public void NotifyPropertyChanged(string propertyName) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
   }
@@ -960,11 +968,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     Session.SetSectionAnnotationState(section, state.HasAnnotations);
   }
 
-  private async Task<bool> LoadProfile() {
+  private async Task<bool> LoadProfile(bool reloadFilterMenus = true) {
     if (Session.ProfileData == null) {
       return false;
     }
 
+    UpdateProfileFilterUI();
     var funcProfile = Session.ProfileData.GetFunctionProfile(Section.ParentFunction);
     var metadataTag = Function.GetTag<AssemblyMetadataTag>();
 
@@ -973,8 +982,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     await MarkFunctionProfile(funcProfile);
-    CreateInstancesMenu(funcProfile);
-    CreateThreadsMenu(funcProfile);
+
+    if (reloadFilterMenus) {
+      CreateInstancesMenu(funcProfile);
+      CreateThreadsMenu(funcProfile);
+    }
 
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
       JumpToHottestProfiledElement();
@@ -1146,8 +1158,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         break;
       }
 
-      var (title, tooltip) = 
-        GenerateInstancePreviewText(node, maxCallers, 50, 30, 
+      var (title, tooltip) =
+        GenerateInstancePreviewText(node, maxCallers, 50, 30,
                                     1000, 50, Session);
       string text = $"({markerSettings.FormatWeightValue(null, node.Weight)})";
 
@@ -1184,7 +1196,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     InstancesMenu.Items.Clear();
     DocumentUtils.RestoreDefaultMenuItems(InstancesMenu, defaultItems);
   }
-  
+
   private void CreateThreadsMenu(FunctionProfileData funcProfile) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(ThreadsMenu);
     var profileItems = new List<ProfileMenuItem>();
@@ -1195,12 +1207,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     int order = 0;
     double maxWidth = 0;
 
-    var node = Session.ProfileData.CallTree.GetCombinedCallTreeNode(Section.ParentFunction); 
+    var node = Session.ProfileData.CallTree.GetCombinedCallTreeNode(Section.ParentFunction);
 
     foreach (var thread in node.ThreadWeights) {
       double weightPercentage = funcProfile.ScaleWeight(thread.Value.Weight);
 
-      
+
       var threadInfo = Session.ProfileData.FindThread(thread.Key);
       var backColor = timelineSettings.GetThreadBackgroundColors(threadInfo, thread.Key).Margin;
 
@@ -1242,7 +1254,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ThreadsMenu.Items.Clear();
     DocumentUtils.RestoreDefaultMenuItems(ThreadsMenu, defaultItems);
   }
-  
+
   private static int CommonParentCallerIndex(ProfileCallTreeNode a, ProfileCallTreeNode b) {
     int index = 0;
 
@@ -1255,7 +1267,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     return index;
   }
 
-  private static (string, string) 
+  private static (string, string)
     GenerateInstancePreviewText(ProfileCallTreeNode node, int maxCallers,
                                 int maxLength, int maxSingleLength,
                                 int maxCompleteLength, int maxCompleteLineLength, ISession session) {
@@ -1304,7 +1316,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
           completeLineRemaining = maxCompleteLineLength;
         }
       }
-      
+
       node = node.Caller;
       index++;
     }
@@ -1326,19 +1338,19 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       }
 
       if (!instanceFilter_.HasInstanceFilter) {
-        UncheckMenuItems(InstancesMenu, menuItem); 
+        UncheckMenuItems(InstancesMenu, menuItem);
       }
     }
-     
+
     if (instanceFilter_ is {IncludesAll: false}) {
-      await LoadInstanceProfile();
+      await LoadProfileInstance();
     }
     else {
-      await LoadProfile();
+      await LoadProfile(false);
     }
   }
 
-  
+
   private async Task HandleThreadMenuItemChanged(object sender) {
     var menuItem = (MenuItem)sender;
 
@@ -1353,18 +1365,18 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       }
 
       if (!instanceFilter_.HasThreadFilter) {
-        UncheckMenuItems(ThreadsMenu, menuItem); 
+        UncheckMenuItems(ThreadsMenu, menuItem);
       }
     }
-    
+
     if (instanceFilter_ is {IncludesAll: false}) {
-      await LoadInstanceProfile();
+      await LoadProfileInstance();
     }
     else {
-      await LoadProfile();
+      await LoadProfile(false);
     }
   }
-  
+
   private void UncheckMenuItems(MenuItem menu, MenuItem excludedItem) {
     foreach (var item in menu.Items) {
       if (item is MenuItem menuItem && menuItem != excludedItem) {
@@ -1373,8 +1385,16 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private async Task LoadInstanceProfile() {
-    var instanceProfile = Session.ProfileData.ComputeProfile(Session.ProfileData, instanceFilter_, false);
+  public async Task SwitchProfileInstanceAsync(ProfileSampleFilter instanceFilter) {
+    instanceFilter_ = instanceFilter;
+    await LoadProfileInstance();
+  }
+
+  private async Task LoadProfileInstance() {
+    UpdateProfileFilterUI();
+
+    var instanceProfile = await Task.Run(
+      () => Session.ProfileData.ComputeProfile(Session.ProfileData, instanceFilter_, false));
     var funcProfile = instanceProfile.GetFunctionProfile(Section.ParentFunction);
     var metadataTag = Function.GetTag<AssemblyMetadataTag>();
 
@@ -1383,6 +1403,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     await MarkFunctionProfile(funcProfile);
+  }
+
+  private void UpdateProfileFilterUI() {
+    NotifyPropertyChanged(nameof(HasProfileInstanceFilter));
+    NotifyPropertyChanged(nameof(HasProfileThreadFilter));
   }
 
   private async Task MarkFunctionProfile(FunctionProfileData funcProfile) {
@@ -2387,7 +2412,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {
     await HandleInstanceMenuItemChanged(sender);
   }
-  
+
   private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
     await HandleThreadMenuItemChanged(sender);
   }

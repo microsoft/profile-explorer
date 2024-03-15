@@ -342,11 +342,6 @@ public sealed class ProfileCallTree {
 
       if (countWeight) {
         weight += node.Weight;
-
-        foreach (var pair in node.ThreadWeights) {
-          threadsMap.AccumulateValue(pair.Key, pair.Value.Weight, TimeSpan.Zero);
-        }
-
         handledNodes.Add(node);
       }
 
