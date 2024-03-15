@@ -7,10 +7,39 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
   public SampleTimeRangeInfo TimeRange { get; set; }
   public List<int> ThreadIds { get; set; }
   public List<ProfileCallTreeNode> FunctionInstances { get; set; }
+  
+  public bool HasThreadFilter => ThreadIds is {Count: > 0};
+  public bool HasInstanceFilter => FunctionInstances is {Count: > 0};
   public bool IncludesAll => TimeRange == null &&
-                             (FunctionInstances == null || FunctionInstances.Count == 0) &&
-                             (ThreadIds == null || ThreadIds.Count == 0);
-
+                             !HasThreadFilter &&
+                             !HasInstanceFilter;
+  
+  public void AddInstance(ProfileCallTreeNode instance) {
+    FunctionInstances ??= new List<ProfileCallTreeNode>();
+    FunctionInstances.Add(instance);
+  }
+  
+  public void RemoveInstance(ProfileCallTreeNode instance) {
+    FunctionInstances?.Remove(instance);
+  }
+  
+  public void ClearInstances() {
+    FunctionInstances?.Clear();
+  }
+  
+  public void AddThread(int threadId) {
+    ThreadIds ??= new List<int>();
+    ThreadIds.Add(threadId);
+  }
+  
+  public void RemoveThread(int threadId) {
+    ThreadIds?.Remove(threadId);
+  }
+  
+  public void ClearThreads() {
+    ThreadIds?.Clear();
+  }
+  
   public static bool operator ==(ProfileSampleFilter left, ProfileSampleFilter right) {
     return Equals(left, right);
   }

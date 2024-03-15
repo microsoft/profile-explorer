@@ -665,6 +665,36 @@
                     <Separator/>
                   </MenuItem>
                 </Menu>
+                <Menu Margin="2,0,0,0" VerticalAlignment="Center">
+                  <MenuItem
+                    x:Name="ThreadsMenu"
+                    Margin="0,0,0,0"
+                    Padding="0,0,0,0"
+                    StaysOpenOnClick="True"
+                    OverridesDefaultStyle="True">
+                    <MenuItem.Header>
+                      <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource FilterIcon}" Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock
+                          Margin="2,0,0,0"
+                          VerticalAlignment="Bottom"
+                          Text="Threads" />
+                        <Path
+                          Margin="4,2,0,0"
+                          VerticalAlignment="Center"
+                          Data="M 0 0 L 3 3 L 6 0 Z"
+                          Fill="Black" />
+                      </StackPanel>
+                    </MenuItem.Header>
+                    <MenuItem
+                      Click="InstanceMenuItem_OnClick"
+                      Header="All Threads"
+                      IsCheckable="True"
+                      IsChecked="{Binding RemoveEmptyColumns}"
+                      Style="{DynamicResource SubMenuItemHeaderStyle}"/>
+                    <Separator/>
+                  </MenuItem>
+                </Menu>
                 <Separator/>
                 <Menu Margin="2,0,0,0" VerticalAlignment="Center">
                   <MenuItem

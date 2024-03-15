@@ -40,7 +40,7 @@ public class TimelineSettings : SettingsBase {
     // between different sessions loading the same trace.
     uint colorIndex = 0;
 
-    if (threadInfo != null &&threadInfo.HasName) {
+    if (threadInfo != null && threadInfo.HasName) {
       colorIndex = (uint)threadInfo.Name.GetStableHashCode();
     }
     else {

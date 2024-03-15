@@ -125,6 +125,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private double columnsListItemHeight_;
   private ProfileDocumentMarker profileMarker_;
   private bool suspendColumnVisibilityHandler_;
+  private ProfileSampleFilter instanceFilter_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -973,6 +974,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     await MarkFunctionProfile(funcProfile);
     CreateInstancesMenu(funcProfile);
+    CreateThreadsMenu(funcProfile);
 
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
       JumpToHottestProfiledElement();
@@ -1015,7 +1017,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileDocumentMarker.UpdateColumnStyle(column, TextView.ProfileColumnData, Function, TextView,
                                             settings_.ProfileMarkerSettings,
                                             settings_.ColumnSettings);
-    //await UpdateProfilingColumns();
   }
 
   private void CreateProfileBlockMenu(FunctionProfileData funcProfile,
@@ -1128,7 +1129,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private void CreateInstancesMenu(FunctionProfileData funcProfile) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(InstancesMenu);
     var profileItems = new List<ProfileMenuItem>();
-    InstancesMenu.Items.Clear();
 
     var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
     var markerSettings = settings_.ProfileMarkerSettings;
@@ -1146,12 +1146,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         break;
       }
 
-      string prefixText = GenerateInstancePreviewText(node, maxCallers, 80, Session);
+      var (title, tooltip) = 
+        GenerateInstancePreviewText(node, maxCallers, 50, 30, 
+                                    1000, 50, Session);
       string text = $"({markerSettings.FormatWeightValue(null, node.Weight)})";
 
       var value = new ProfileMenuItem(text, node.Weight.Ticks, weightPercentage) {
-        PrefixText = prefixText,
-        //ToolTip = $"Line {element.TextLocation.Line + 1}",
+        PrefixText = title,
+        ToolTip = tooltip,
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
         PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
@@ -1160,6 +1162,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       var item = new MenuItem {
         Header = value,
         IsCheckable = true,
+        StaysOpenOnClick = true,
         Tag = node,
         HeaderTemplate = valueTemplate,
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
@@ -1170,7 +1173,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       profileItems.Add(value);
 
       // Make sure percentage rects are aligned.
-      double width = Utils.MeasureString(prefixText, settings_.FontName, settings_.FontSize).Width;
+      double width = Utils.MeasureString(title, settings_.FontName, settings_.FontSize).Width;
       maxWidth = Math.Max(width, maxWidth);
     }
 
@@ -1178,21 +1181,190 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       value.MinTextWidth = maxWidth;
     }
 
+    InstancesMenu.Items.Clear();
     DocumentUtils.RestoreDefaultMenuItems(InstancesMenu, defaultItems);
   }
+  
+  private void CreateThreadsMenu(FunctionProfileData funcProfile) {
+    var defaultItems = DocumentUtils.SaveDefaultMenuItems(ThreadsMenu);
+    var profileItems = new List<ProfileMenuItem>();
 
-  private async Task HandleInstanceMenuItemSelected(object sender) {
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var markerSettings = settings_.ProfileMarkerSettings;
+    var timelineSettings = App.Settings.TimelineSettings;
+    int order = 0;
+    double maxWidth = 0;
+
+    var node = Session.ProfileData.CallTree.GetCombinedCallTreeNode(Section.ParentFunction); 
+
+    foreach (var thread in node.ThreadWeights) {
+      double weightPercentage = funcProfile.ScaleWeight(thread.Value.Weight);
+
+      
+      var threadInfo = Session.ProfileData.FindThread(thread.Key);
+      var backColor = timelineSettings.GetThreadBackgroundColors(threadInfo, thread.Key).Margin;
+
+      string text = $"({markerSettings.FormatWeightValue(null, thread.Value.Weight)})";
+      string tooltip = threadInfo is {HasName: true} ? threadInfo.Name : null;
+      string title = !string.IsNullOrEmpty(tooltip) ? $"{thread.Key} ({tooltip})" : $"{thread.Key}";
+
+      var value = new ProfileMenuItem(text, node.Weight.Ticks, weightPercentage) {
+        PrefixText = title,
+        ToolTip = tooltip,
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
+      var item = new MenuItem {
+        Header = value,
+        IsCheckable = true,
+        StaysOpenOnClick = true,
+        Tag = thread,
+        Background = backColor,
+        HeaderTemplate = valueTemplate,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+      };
+
+      item.Click += ThreadMenuItem_OnClick;
+      defaultItems.Add(item);
+      profileItems.Add(value);
+
+      // Make sure percentage rects are aligned.
+      double width = Utils.MeasureString(title, settings_.FontName, settings_.FontSize).Width;
+      maxWidth = Math.Max(width, maxWidth);
+    }
+
+    foreach (var value in profileItems) {
+      value.MinTextWidth = maxWidth;
+    }
+
+    ThreadsMenu.Items.Clear();
+    DocumentUtils.RestoreDefaultMenuItems(ThreadsMenu, defaultItems);
+  }
+  
+  private static int CommonParentCallerIndex(ProfileCallTreeNode a, ProfileCallTreeNode b) {
+    int index = 0;
+
+    do {
+      index++;
+      a = a.Caller;
+      b = b.Caller;
+    } while (a != b && a != null && b != null);
+
+    return index;
+  }
+
+  private static (string, string) 
+    GenerateInstancePreviewText(ProfileCallTreeNode node, int maxCallers,
+                                int maxLength, int maxSingleLength,
+                                int maxCompleteLength, int maxCompleteLineLength, ISession session) {
+    const string Separator = " \ud83e\udc70 "; // Arrow character.
+    var sb = new StringBuilder();
+    var completeSb = new StringBuilder();
+    var nameProvider = session.CompilerInfo.NameProvider;
+    int remaining = maxLength;
+    int completeRemaining = maxCompleteLength;
+    int completeLineRemaining = maxCompleteLineLength;
+    int index = 0;
+    node = node.Caller;
+
+    while (node != null) {
+      // Build the shorter title stack trace.
+      if (index < maxCallers && remaining > 0) {
+        int maxNameLength = Math.Min(remaining, maxSingleLength);
+        var name = node.FormatFunctionName(nameProvider.FormatFunctionName, maxNameLength);
+        remaining -= name.Length;
+
+        if (index == 0) {
+          sb.Append(name);
+        }
+        else {
+          sb.Append($"{Separator}{name}");
+        }
+      }
+
+      // Build the longer tooltip stack trace.
+      if (completeRemaining > 0) {
+        int maxNameLength = Math.Min(completeRemaining, maxSingleLength);
+        var name = node.FormatFunctionName(nameProvider.FormatFunctionName, maxNameLength);
+
+        if (index == 0) {
+          completeSb.Append(name);
+        }
+        else {
+          completeSb.Append($"{Separator}{name}");
+        }
+
+        completeRemaining -= name.Length;
+        completeLineRemaining -= name.Length;
+
+        if(completeLineRemaining < 0) {
+          completeSb.Append("\n");
+          completeLineRemaining = maxCompleteLineLength;
+        }
+      }
+      
+      node = node.Caller;
+      index++;
+    }
+
+    return (sb.ToString(), completeSb.ToString());
+  }
+
+  private async Task HandleInstanceMenuItemChanged(object sender) {
     var menuItem = (MenuItem)sender;
-    UncheckMenuItems(InstancesMenu, menuItem);
 
     if (menuItem.Tag is ProfileCallTreeNode node) {
-      await LoadInstanceProfile(node);
+      instanceFilter_ ??= new ProfileSampleFilter();
+
+      if (menuItem.IsChecked) {
+        instanceFilter_.AddInstance(node);
+      }
+      else {
+        instanceFilter_.RemoveInstance(node);
+      }
+
+      if (!instanceFilter_.HasInstanceFilter) {
+        UncheckMenuItems(InstancesMenu, menuItem); 
+      }
+    }
+     
+    if (instanceFilter_ is {IncludesAll: false}) {
+      await LoadInstanceProfile();
     }
     else {
-     await LoadProfile();
+      await LoadProfile();
     }
   }
 
+  
+  private async Task HandleThreadMenuItemChanged(object sender) {
+    var menuItem = (MenuItem)sender;
+
+    if (menuItem.Tag is int threadId) {
+      instanceFilter_ ??= new ProfileSampleFilter();
+
+      if (menuItem.IsChecked) {
+        instanceFilter_.AddThread(threadId);
+      }
+      else {
+        instanceFilter_.RemoveThread(threadId);
+      }
+
+      if (!instanceFilter_.HasThreadFilter) {
+        UncheckMenuItems(ThreadsMenu, menuItem); 
+      }
+    }
+    
+    if (instanceFilter_ is {IncludesAll: false}) {
+      await LoadInstanceProfile();
+    }
+    else {
+      await LoadProfile();
+    }
+  }
+  
   private void UncheckMenuItems(MenuItem menu, MenuItem excludedItem) {
     foreach (var item in menu.Items) {
       if (item is MenuItem menuItem && menuItem != excludedItem) {
@@ -1201,12 +1373,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private async Task LoadInstanceProfile(ProfileCallTreeNode instanceNode) {
-    var filter = new ProfileSampleFilter() {
-      FunctionInstance = instanceNode
-    };
-
-    var instanceProfile = Session.ProfileData.ComputeProfile(Session.ProfileData, filter, false);
+  private async Task LoadInstanceProfile() {
+    var instanceProfile = Session.ProfileData.ComputeProfile(Session.ProfileData, instanceFilter_, false);
     var funcProfile = instanceProfile.GetFunctionProfile(Section.ParentFunction);
     var metadataTag = Function.GetTag<AssemblyMetadataTag>();
 
@@ -1236,44 +1404,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     // Show optional columns with timing, counters, etc.
     // First remove any previous columns.
     await UpdateProfilingColumns();
-  }
-
-  private static int CommonParentCallerIndex(ProfileCallTreeNode a, ProfileCallTreeNode b) {
-    int index = 0;
-
-    do {
-      index++;
-      a = a.Caller;
-      b = b.Caller;
-    } while (a != b && a != null && b != null);
-
-    return index;
-  }
-
-  private static string GenerateInstancePreviewText(ProfileCallTreeNode node, int maxCallers, int maxLength, ISession session) {
-    const string Separator = " \ud83e\udc70 ";
-    var sb = new StringBuilder();
-    var nameProvider = session.CompilerInfo.NameProvider;
-    int remaining = maxLength;
-    int index = 0;
-    node = node.Caller;
-
-    while (node != null && index < maxCallers && remaining > 0) {
-      var name = node.FormatFunctionName(nameProvider.FormatFunctionName, remaining);
-
-      if (index == 0) {
-        sb.Append(name);
-      }
-      else {
-        sb.Append($"{Separator}{name}");
-      }
-
-      node = node.Caller;
-      remaining -= name.Length;
-      index++;
-    }
-
-    return sb.ToString();
   }
 
   private async Task HideProfile() {
@@ -2255,7 +2385,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    await HandleInstanceMenuItemSelected(sender);
+    await HandleInstanceMenuItemChanged(sender);
+  }
+  
+  private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    await HandleThreadMenuItemChanged(sender);
   }
 }
 
