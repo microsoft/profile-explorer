@@ -129,6 +129,18 @@ public sealed partial class ETWEventProcessor : IDisposable {
       profile.AddProcess(proc);
     };
 
+    // Traces with circular buffers don't have ProcessStart events,
+    // extract this info from the ProcessDCStop events instead.
+    source_.Kernel.ProcessDCStop += data => {
+      var proc = profile.GetOrCreateProcess(data.ProcessID);
+      proc.ProcessId = data.ProcessID;
+      proc.ParentId = data.ParentID;
+      // Process name is empty, extract it from the image name.
+      proc.Name = Utils.TryGetFileNameWithoutExtension(data.ImageFileName);
+      proc.ImageFileName = data.ImageFileName;
+      proc.CommandLine = data.CommandLine;
+    };
+
     source_.Kernel.PerfInfoSample += data => {
       if (cancelableTask.IsCanceled) {
         source_.StopProcessing();
@@ -239,6 +251,27 @@ public sealed partial class ETWEventProcessor : IDisposable {
       profile.AddProcess(proc);
 #if DEBUG
       Trace.WriteLine($"ProcessStartGroup: {proc}");
+#endif
+      // If parent is one of the accepted processes, accept the child too.
+      if (handleChildProcesses_ && IsAcceptedProcess(data.ParentID)) {
+        //Trace.WriteLine($"=> Accept child {data.ProcessID} of {data.ParentID}");
+        childAcceptedProcessIds_.Add(data.ProcessID);
+      }
+    };
+
+    // Traces with circular buffers don't have ProcessStart events,
+    // extract this info from the ProcessDCStop events instead.
+    source_.Kernel.ProcessDCStop += data => {
+      var proc = profile.GetOrCreateProcess(data.ProcessID);
+      proc.ProcessId = data.ProcessID;
+      proc.ParentId = data.ParentID;
+      // Process name is empty, extract it from the image name.
+      proc.Name = Utils.TryGetFileNameWithoutExtension(data.ImageFileName);
+      proc.ImageFileName = data.ImageFileName;
+      proc.CommandLine = data.CommandLine;
+
+#if DEBUG
+      Trace.WriteLine($"ProcessDCStop: {proc}");
 #endif
       // If parent is one of the accepted processes, accept the child too.
       if (handleChildProcesses_ && IsAcceptedProcess(data.ParentID)) {
