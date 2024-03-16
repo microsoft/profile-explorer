@@ -260,7 +260,7 @@ public class RawProfileData : IDisposable {
   }
 
   public ProfileProcess GetOrCreateProcess(int id) {
-    return processes_.GetOrAddValue(id);
+    return processes_.GetOrAddValue(id, () => new ProfileProcess(id));
   }
 
   public void AddProcess(ProfileProcess process) {
