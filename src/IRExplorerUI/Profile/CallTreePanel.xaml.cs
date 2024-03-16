@@ -799,7 +799,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private async void OpenFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (CallTreeList.SelectedItem is TreeNode node) {
       var childInfo = node.Tag as CallTreeListItem;
-      await OpenFunction(childInfo, OpenSectionKind.ReplaceCurrent);
+      var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+      await OpenFunction(childInfo, mode);
     }
   }
 

@@ -1336,10 +1336,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       else {
         instanceFilter_.RemoveInstance(node);
       }
-
-      if (!instanceFilter_.HasInstanceFilter) {
-        UncheckMenuItems(InstancesMenu, menuItem);
-      }
+    }
+    else {
+      instanceFilter_.ClearInstances();
+      UncheckMenuItems(InstancesMenu, menuItem);
     }
 
     if (instanceFilter_ is {IncludesAll: false}) {
@@ -1363,10 +1363,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       else {
         instanceFilter_.RemoveThread(threadId);
       }
-
-      if (!instanceFilter_.HasThreadFilter) {
-        UncheckMenuItems(ThreadsMenu, menuItem);
-      }
+    }
+    else {
+      instanceFilter_.ClearThreads();
+      UncheckMenuItems(ThreadsMenu, menuItem);
     }
 
     if (instanceFilter_ is {IncludesAll: false}) {

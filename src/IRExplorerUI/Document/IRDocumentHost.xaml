@@ -660,7 +660,8 @@
                     <MenuItem
                       Click="InstanceMenuItem_OnClick"
                       Header="All Instances"
-                      IsCheckable="True"
+                      IsCheckable="False"
+                      StaysOpenOnClick="True"
                       IsChecked="{Binding RemoveEmptyColumns}"
                       Style="{DynamicResource SubMenuItemHeaderStyle}"/>
                     <Separator/>
@@ -672,7 +673,6 @@
                     x:Name="ThreadsMenu"
                     Margin="0,0,0,0"
                     Padding="0,0,0,0"
-                    StaysOpenOnClick="True"
                     OverridesDefaultStyle="True">
                     <MenuItem.Header>
                       <StackPanel Orientation="Horizontal">
@@ -691,7 +691,8 @@
                     <MenuItem
                       Click="ThreadMenuItem_OnClick"
                       Header="All Threads"
-                      IsCheckable="True"
+                      IsCheckable="False"
+                      StaysOpenOnClick="True"
                       IsChecked="{Binding RemoveEmptyColumns}"
                       Style="{DynamicResource SubMenuItemHeaderStyle}"/>
                     <Separator/>

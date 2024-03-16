@@ -30,7 +30,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   private ProfileCallTreeNodeEx nodeEx_;
 
   public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,
-                           Point position, UIElement referenceElement, 
+                           Point position, UIElement referenceElement,
                            ISession session, bool canExpand = true) {
     InitializeComponent();
     Initialize(position, referenceElement);
@@ -56,7 +56,8 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     };
 
     FunctionListView.NodeDoubleClick += async (sender, treeNode) => {
-      await Session.OpenProfileFunction(treeNode, OpenSectionKind.NewTab);
+      var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+      await Session.OpenProfileFunction(treeNode, mode);
     };
   }
 

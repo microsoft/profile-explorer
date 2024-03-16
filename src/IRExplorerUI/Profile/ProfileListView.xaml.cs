@@ -209,10 +209,11 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
   });
   public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
-    await OpenFunction(OpenSectionKind.ReplaceCurrent);
+    var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+    await OpenFunction(mode);
   });
   public RelayCommand<object> OpenFunctionInNewTabCommand => new RelayCommand<object>(async obj => {
-    await OpenFunction(OpenSectionKind.NewTab);
+    await OpenFunction(OpenSectionKind.NewTabDockRight);
   });
 
   private async Task OpenFunction(OpenSectionKind openMode) {
