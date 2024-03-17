@@ -19,8 +19,8 @@ using IRExplorerUI.Utilities;
 namespace IRExplorerUI.Profile;
 
 public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider, INotifyPropertyChanged {
-  public const double ZoomAmount = 500;
-  public const double ScrollWheelZoomAmount = 300;
+  private const double ZoomAmount = 500;
+  private const double ScrollWheelZoomAmount = 300;
   private const double TimePerFrame = 1000.0 / 60; // ~16.6ms per frame at 60Hz.
   private const double FastPanOffset = 1000;
   private const double DefaultPanOffset = 100;
@@ -122,6 +122,22 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function,
                                                      $"Function {GraphViewer.SelectedNode.FunctionName}",
                                                      GraphViewer, Session);
+    }
+  });
+
+  public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
+    if (GraphViewer.SelectedNode is {HasFunction: true}) {
+      var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
+      var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+      await Session.OpenProfileFunction(GraphViewer.SelectedNode.CallTreeNode, mode, filter);
+    }
+  });
+
+  public RelayCommand<object> OpenInstanceInNewTabCommand => new RelayCommand<object>(async obj => {
+    if (GraphViewer.SelectedNode is {HasFunction: true}) {
+      var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
+      await Session.OpenProfileFunction(GraphViewer.SelectedNode.CallTreeNode,
+                                        OpenSectionKind.NewTabDockRight, filter);
     }
   });
 
@@ -593,8 +609,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private async Task OpenFunction(ProfileCallTreeNode node) {
     if (node != null && node.Function.HasSections) {
       var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
-      var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
-      await Session.SwitchDocumentSectionAsync(args);
+      await Session.OpenProfileFunction(node, openMode);
     }
   }
 
@@ -1049,13 +1064,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   private async Task OpenFunction(FlameGraphNode node, OpenSectionKind openMode) {
     if (node is {HasFunction: true}) {
-      var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
-      await Session.SwitchDocumentSectionAsync(args);
+      await Session.OpenProfileFunction(node.CallTreeNode, openMode);
     }
   }
 
   private async void OpenFunctionInNewTab(object sender, ExecutedRoutedEventArgs e) {
-    await OpenFunction(GraphViewer.SelectedNode, OpenSectionKind.NewTab);
+    await OpenFunction(GraphViewer.SelectedNode, OpenSectionKind.NewTabDockRight);
   }
 
   private async void ChangeRootNodeExecuted(object sender, ExecutedRoutedEventArgs e) {
