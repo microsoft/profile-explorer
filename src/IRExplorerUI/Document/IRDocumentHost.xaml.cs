@@ -1232,7 +1232,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         Header = value,
         IsCheckable = true,
         StaysOpenOnClick = true,
-        Tag = thread,
+        Tag = thread.Key,
         Background = backColor,
         HeaderTemplate = valueTemplate,
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
@@ -1387,7 +1387,24 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   public async Task SwitchProfileInstanceAsync(ProfileSampleFilter instanceFilter) {
     instanceFilter_ = instanceFilter;
+    SyncInstancesMenuWithFilter();
     await LoadProfileInstance();
+  }
+
+  private void SyncInstancesMenuWithFilter() {
+    foreach (var item in InstancesMenu.Items) {
+      if(item is MenuItem menuItem  && menuItem.Tag is ProfileCallTreeNode node) {
+        menuItem.IsChecked = instanceFilter_.IncludesInstance(node);
+      }
+    }
+  }
+  
+  private void SyncThreadsMenuWithFilter() {
+    foreach (var item in ThreadsMenu.Items) {
+      if (item is MenuItem menuItem && menuItem.Tag is int threadId) {
+        menuItem.IsChecked = instanceFilter_.IncludesThread(threadId);
+      }
+    }
   }
 
   private async Task LoadProfileInstance() {

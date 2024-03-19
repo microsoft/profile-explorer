@@ -32,6 +32,10 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
     return this;
   }
 
+  public bool IncludesInstance(ProfileCallTreeNode node) {
+    return HasInstanceFilter && FunctionInstances.Contains(node);
+  }
+
   public void RemoveInstance(ProfileCallTreeNode instance) {
     FunctionInstances?.Remove(instance);
   }
@@ -44,6 +48,10 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
     ThreadIds ??= new List<int>();
     ThreadIds.Add(threadId);
     return this;
+  }
+
+  public bool IncludesThread(int threadId) {
+    return HasThreadFilter && ThreadIds.Contains(threadId);
   }
 
   public void RemoveThread(int threadId) {

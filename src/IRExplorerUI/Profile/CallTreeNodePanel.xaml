@@ -27,9 +27,9 @@
                 HorizontalAlignment="Stretch">
                 <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
                     <TextBlock
-                        Width="70"
+                        Width="72"
                         VerticalAlignment="Center"
-                        Text="Total time"
+                        Text="Total Time"
                         ToolTip="Inclusive (total) time for this function instance" />
 
                     <ContentControl
@@ -43,8 +43,8 @@
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock
-                        Width="70"
-                        Text="Self time"
+                        Width="72"
+                        Text="Self Time"
                         ToolTip="Exclusive (self) time for this function instance" />
                     <ContentControl
                         Width="180"
@@ -127,12 +127,13 @@
                             x:Name="InstancesExpander"
                             Margin="0,4,0,4"
                             HorizontalAlignment="Stretch"
-                            Header="Instances Statistics"
-                            IsExpanded="{Binding IsInstancesExpanded}">
+                            Header="Instances"
+                            IsExpanded="{Binding IsInstancesExpanded}"
+                            ToolTip="Function instances statistics">
                             <StackPanel Orientation="Vertical">
                                 <StackPanel Margin="4,4,0,0" Orientation="Horizontal">
                                     <TextBlock
-                                        Width="70"
+                                        Width="72"
                                         Text="Number"
                                         ToolTip="Number of unique instances of the selected function" />
                                     <TextBlock
@@ -142,7 +143,7 @@
                                 </StackPanel>
 
                                 <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
-                                    <TextBlock Width="70" Text="Total time" />
+                                    <TextBlock Width="72" Text="Total Time" />
                                     <ContentControl
                                         Width="200"
                                         Margin="8,0,0,0"
@@ -156,7 +157,7 @@
                                     Margin="4,2,0,0"
                                     Orientation="Horizontal"
                                     Visibility="{Binding ShowInstanceNavigation, Converter={StaticResource BoolToVisibilityConverter}}">
-                                    <TextBlock Width="70" Text="Average time" />
+                                    <TextBlock Width="72" Text="Average Time" />
                                     <ContentControl
                                         Width="200"
                                         Margin="8,0,0,0"
@@ -170,7 +171,7 @@
                                     Margin="4,2,0,0"
                                     Orientation="Horizontal"
                                     Visibility="{Binding ShowInstanceNavigation, Converter={StaticResource BoolToVisibilityConverter}}">
-                                    <TextBlock Width="70" Text="Median time" />
+                                    <TextBlock Width="72" Text="Median Time" />
                                     <ContentControl
                                         Width="200"
                                         Margin="8,0,0,0"
@@ -188,7 +189,8 @@
                             HorizontalAlignment="Stretch"
                             Expanded="HistogramHost_Expanded"
                             Header="Histogram"
-                            IsExpanded="{Binding IsHistogramExpanded}">
+                            IsExpanded="{Binding IsHistogramExpanded}"
+                            ToolTip="Histogram of all function instances">
                             <Border
                                 Height="150"
                                 Margin="0,4,0,0"
@@ -266,101 +268,177 @@
                             </Border>
                         </Expander>
 
-                      <Expander
-                        x:Name="ThreadsExpander"
-                        Margin="0,0,0,8"
-                        HorizontalAlignment="Stretch"
-                        Header="Threads"
-                        MaxHeight="300"
-                        IsExpanded="{Binding IsThreadsListExpanded}">
-                        <ItemsControl x:Name="ThreadList" Margin="4,8,4,4">
-                          <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                              <StackPanel x:Name="ThreadItemHost"
-                                Orientation="Horizontal"
-                                          ToolTip="{Binding ToolTip}"
-                                          Tag="{Binding ElementName=Root}"
-                                          MouseDown="ThreadListItem_MouseDown">
-                                <Border x:Name="ThreadTitleBorder"
-                                  Background="{Binding Background}"
-                                        Margin="0,0,8,0"
-                                        BorderBrush="DarkGray"
-                                        BorderThickness="0.5">
-                                <TextBlock Text="{Binding Title}"
-                                           Padding="4,0,0,0"
-                                           Width="70"
-                                           FontWeight="Medium"
-                                           VerticalAlignment="Center"></TextBlock>
-                                  </Border>
-                                <ContentControl
-                                  Width="200"
-                                VerticalAlignment="Center"
-                                Content="{Binding}"
-                                  ToolTip="{Binding WeightToolTip}"
-                                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"/>
-                                <StackPanel.ContextMenu>
-                                  <ContextMenu DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}" Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
-          <MenuItem
-            Command="{Binding DataContext.FilterToThreadCommand}"
-            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
-            Header="Filter to Thread"
-            ToolTip="Display activity from only this thread">
-            <MenuItem.Icon>
-              <Image
-                Height="16"
-                Source="{StaticResource FilterIcon}"
-                Width="16" />
-            </MenuItem.Icon>
-          </MenuItem>
-          <MenuItem
-            Command="{Binding DataContext.ExcludeThreadCommand}"
-            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
-            Header="Exclude Thread">
-          </MenuItem>
-          <Separator />
+                        <Expander
+                            x:Name="ThreadsExpander"
+                            MaxHeight="300"
+                            Margin="0,0,0,8"
+                            HorizontalAlignment="Stretch"
+                            Header="Threads"
+                            IsExpanded="{Binding IsThreadsListExpanded}"
+                            ToolTip="Threads on which the selected instance executed">
+                            <ItemsControl x:Name="ThreadList" Margin="4,8,4,4">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel
+                                            x:Name="ThreadItemHost"
+                                            Height="20"
+                                            MouseDown="ThreadListItem_MouseDown"
+                                            Orientation="Horizontal"
+                                            Tag="{Binding ElementName=Root}"
+                                            ToolTip="{Binding ToolTip}">
+                                            <Border
+                                                x:Name="ThreadTitleBorder"
+                                                Width="72"
+                                                Margin="0,0,8,0"
+                                                Background="{Binding Background}"
+                                                BorderBrush="DarkGray"
+                                                BorderThickness="0.5">
+                                                <Grid>
+                                                    <TextBlock
+                                                        Padding="4,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        FontWeight="Medium"
+                                                        Text="{Binding Title}" />
+                                                    <Button
+                                                        Width="16"
+                                                        Margin="0,0,2,0"
+                                                        HorizontalAlignment="Right"
+                                                        Background="{Binding Background}"
+                                                        BorderBrush="Transparent"
+                                                        Click="ThreadContextMenuButton_Click"
+                                                        ToolTip="Show Thread Actions">
+                                                        <Button.Content>
+                                                            <Image
+                                                                Width="16"
+                                                                Height="16"
+                                                                Source="{StaticResource BlockIcon}" />
+                                                        </Button.Content>
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsEnabled" Value="False">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                            <ContentControl
+                                                Width="200"
+                                                VerticalAlignment="Center"
+                                                Content="{Binding}"
+                                                ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
+                                                ToolTip="{Binding WeightToolTip}" />
+                                            <StackPanel.ContextMenu>
+                                                <ContextMenu DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}" Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
+                                                    <MenuItem
+                                                        Command="{Binding PreviewFunctionCommand}"
+                                                        CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                                                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                        Header="Preview Thread Instance"
+                                                        InputGestureText="Alt+Return"
+                                                        IsEnabled="False"
+                                                        ToolTip="Show a preview popup of the function ASM or source code">
+                                                        <MenuItem.Icon>
+                                                            <Image
+                                                                Width="16"
+                                                                Height="16"
+                                                                Source="{StaticResource PeekDefinitionIcon}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem
+                                                        Command="{Binding OpenFunctionCommand}"
+                                                        CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                                                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                        Header="Open Thread Instance"
+                                                        InputGestureText="Ctrl+Return"
+                                                        ToolTip="Open the function assembly view">
+                                                        <MenuItem.Icon>
+                                                            <Image
+                                                                Width="16"
+                                                                Height="16"
+                                                                Source="{StaticResource LayoutOpenIcon}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem
+                                                        Command="{Binding OpenFunctionInNewTabCommand}"
+                                                        CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                                                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                        Header="Open Thread Instance in New Tab"
+                                                        InputGestureText="Ctrl+Shift+Return"
+                                                        ToolTip="Open the function assembly view in a new tab">
+                                                        <MenuItem.Icon>
+                                                            <Image
+                                                                Width="16"
+                                                                Height="16"
+                                                                Source="{StaticResource LayoutOpenNewIcon}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <Separator />
+                                                    <MenuItem
+                                                        Command="{Binding DataContext.FilterToThreadCommand}"
+                                                        CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                                                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                        Header="Filter to Thread"
+                                                        ToolTip="Display activity from only this thread">
+                                                        <MenuItem.Icon>
+                                                            <Image
+                                                                Width="16"
+                                                                Height="16"
+                                                                Source="{StaticResource FilterIcon}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem
+                                                        Command="{Binding DataContext.ExcludeThreadCommand}"
+                                                        CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                                                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                        Header="Exclude Thread" />
+                                                    <Separator />
 
-          <MenuItem
-            Command="{Binding DataContext.FilterToSameNameThreadCommand}"
-            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
-            Header="Filter to Same Name Threads"
-            ToolTip="Display activity from only threads with the same name" />
-          <MenuItem
-            Command="{Binding DataContext.ExcludeSameNameThreadCommand}"
-            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
-            Header="Exclude Same Name Threads" />
-        </ContextMenu>
-                                </StackPanel.ContextMenu>
-                              </StackPanel>
+                                                    <MenuItem
+                                                        Command="{Binding DataContext.FilterToSameNameThreadCommand}"
+                                                        CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                                                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                        Header="Filter to Same Name Threads"
+                                                        ToolTip="Display activity from only threads with the same name" />
+                                                    <MenuItem
+                                                        Command="{Binding DataContext.ExcludeSameNameThreadCommand}"
+                                                        CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                                                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                        Header="Exclude Same Name Threads" />
+                                                </ContextMenu>
+                                            </StackPanel.ContextMenu>
+                                        </StackPanel>
 
-                              <DataTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                  <Setter TargetName="ThreadTitleBorder" Property="BorderBrush" Value="Black" />
-                                  <Setter TargetName="ThreadItemHost" Property="Background" Value="#D0E3F1" />
-                                </Trigger>
-                              </DataTemplate.Triggers>
-                            </DataTemplate>
-                          </ItemsControl.ItemTemplate>
-                          <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                              <StackPanel Orientation="Vertical" />
-                            </ItemsPanelTemplate>
-                          </ItemsControl.ItemsPanel>
+                                        <DataTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ThreadTitleBorder" Property="BorderBrush" Value="Black" />
+                                                <Setter TargetName="ThreadItemHost" Property="Background" Value="#D0E3F1" />
+                                            </Trigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Vertical" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
 
-                          <ItemsControl.Template>
-                          <ControlTemplate>
-                            <ScrollViewer x:Name="ScrollViewer" Padding="{TemplateBinding Padding}"
-                                          HorizontalScrollBarVisibility="Disabled"
-                                          VerticalScrollBarVisibility="Auto">
-                              <ItemsPresenter />
-                            </ScrollViewer>
-                          </ControlTemplate>
-                          </ItemsControl.Template>
-                        </ItemsControl>
-                      </Expander>
+                                <ItemsControl.Template>
+                                    <ControlTemplate>
+                                        <ScrollViewer
+                                            x:Name="ScrollViewer"
+                                            Padding="{TemplateBinding Padding}"
+                                            HorizontalScrollBarVisibility="Disabled"
+                                            VerticalScrollBarVisibility="Auto">
+                                            <ItemsPresenter />
+                                        </ScrollViewer>
+                                    </ControlTemplate>
+                                </ItemsControl.Template>
+                            </ItemsControl>
+                        </Expander>
 
                         <Separator />
                         <TextBlock
@@ -394,12 +472,13 @@
                                 Margin="4,4,6,0"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Center"
-                                Text="Function name" />
+                                Text="Function" />
                             <ContentPresenter
                                 Margin="4,4,6,0"
                                 VerticalAlignment="Center"
                                 Content="{Binding CallTreeNode}"
-                                ContentTemplate="{StaticResource ExecutionContextTemplate}" />
+                                ContentTemplate="{StaticResource ExecutionContextTemplate}"
+                                ToolTip="Function execution context" />
                         </StackPanel>
                         <Canvas
                             x:Name="FunctionCanvas"
@@ -457,34 +536,34 @@
                 Header="Modules"
                 Style="{StaticResource TabControlStyle}"
                 ToolTip="Exclusive (self) time for modules under this instance">
-              <Grid>
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="3*" />
-                  <RowDefinition Height="3" />
-                  <RowDefinition Height="2*" />
-                </Grid.RowDefinitions>
-                <profile:ProfileListView
-                    x:Name="ModuleList"
-                    Grid.Row="0"
-                    ExclusiveTimeColumnTitle="Time"
-                    NameColumnTitle="Module"
-                    MinHeight="100"
-                    ShowTimeNameRow="True" />
-                <GridSplitter
-                  Grid.Row="1"
-                  HorizontalAlignment="Stretch"
-                  VerticalAlignment="Stretch"
-                  Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                  ResizeBehavior="PreviousAndNext" />
-                <profile:ProfileListView
-                  x:Name="ModuleFunctionList"
-                  Grid.Row="2"
-                  MinHeight="100"
-                  ExclusiveTimeColumnTitle="Time"
-                  NameColumnTitle="Module Function"
-                  ShowContextColumn="True"
-                  ShowExclusiveTimeNameRow="True"/>
-              </Grid>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="3*" />
+                        <RowDefinition Height="3" />
+                        <RowDefinition Height="2*" />
+                    </Grid.RowDefinitions>
+                    <profile:ProfileListView
+                        x:Name="ModuleList"
+                        Grid.Row="0"
+                        MinHeight="100"
+                        ExclusiveTimeColumnTitle="Time"
+                        NameColumnTitle="Module"
+                        ShowTimeNameRow="True" />
+                    <GridSplitter
+                        Grid.Row="1"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        ResizeBehavior="PreviousAndNext" />
+                    <profile:ProfileListView
+                        x:Name="ModuleFunctionList"
+                        Grid.Row="2"
+                        MinHeight="100"
+                        ExclusiveTimeColumnTitle="Time"
+                        NameColumnTitle="Module Function"
+                        ShowContextColumn="True"
+                        ShowExclusiveTimeNameRow="True" />
+                </Grid>
             </TabItem>
 
             <TabItem

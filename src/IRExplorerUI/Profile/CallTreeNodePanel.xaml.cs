@@ -14,6 +14,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using IRExplorerUI.Controls;
 using IRExplorerUI.Utilities;
 using Microsoft.Extensions.Primitives;
 using OxyPlot;
@@ -581,46 +582,63 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   }
 
   private async Task ApplyThreadFilterAction(ThreadListViewItem threadItem, ThreadActivityAction action) {
-    var timelinePanel = Session.FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
-
-    if (timelinePanel != null && threadItem != null) {
+    if (Session.FindPanel(ToolPanelKind.Timeline) is TimelinePanel timelinePanel && threadItem != null) {
       await timelinePanel.ApplyThreadFilterAction(threadItem.ThreadId, action);
     }
   }
 
   public RelayCommand<object> ExcludeThreadCommand =>
     new RelayCommand<object>(async obj => {
-      var threadItem = ((FrameworkElement)obj).DataContext as ThreadListViewItem;
-
-      if (threadItem != null) {
+      if (((FrameworkElement)obj).DataContext is ThreadListViewItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeThread);
       }
     });
 
   public RelayCommand<object> ExcludeSameNameThreadCommand =>
     new RelayCommand<object>(async obj => {
-      var threadItem = ((FrameworkElement)obj).DataContext as ThreadListViewItem;
-
-      if (threadItem != null) {
+      if (((FrameworkElement)obj).DataContext is ThreadListViewItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeSameNameThread);
       }
     });
 
   public RelayCommand<object> FilterToThreadCommand =>
     new RelayCommand<object>(async obj => {
-      var threadItem = ((FrameworkElement)obj).DataContext as ThreadListViewItem;
-
-      if (threadItem != null) {
+      if (((FrameworkElement)obj).DataContext is ThreadListViewItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToThread);
       }
     });
 
   public RelayCommand<object> FilterToSameNameThreadCommand =>
     new RelayCommand<object>(async obj => {
-      var threadItem = ((FrameworkElement)obj).DataContext as ThreadListViewItem;
-
-      if (threadItem != null) {
+      if (((FrameworkElement)obj).DataContext is ThreadListViewItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToSameNameThread);
       }
     });
+
+  private void ThreadContextMenuButton_Click(object sender, RoutedEventArgs e) {
+    Utils.ShowContextMenu(sender as FrameworkElement, this);
+  }
+
+  public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
+    //if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
+    //  await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function,
+    //                                                 $"Function {item.FunctionName}",
+    //                                                 ItemList, session_);
+    //}
+  });
+  public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
+    var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+    await OpenFunction(obj, mode);
+  });
+  public RelayCommand<object> OpenFunctionInNewTabCommand => new RelayCommand<object>(async obj => {
+    await OpenFunction(obj, OpenSectionKind.NewTabDockRight);
+  });
+
+  private async Task OpenFunction(object obj, OpenSectionKind openMode) {
+    if (((FrameworkElement)obj).DataContext is ThreadListViewItem threadItem &&
+        instancesNode_.CallTreeNode != null) {
+      var filter = new ProfileSampleFilter(threadItem.ThreadId);
+      await Session.OpenProfileFunction(instancesNode_.CallTreeNode, openMode, filter);
+    }
+  }
 }
