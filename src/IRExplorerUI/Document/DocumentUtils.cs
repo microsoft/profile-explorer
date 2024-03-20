@@ -4,14 +4,19 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
+using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
+using IRExplorerUI.Profile;
+using IRExplorerUI.Profile.Document;
 
 namespace IRExplorerUI.Document;
 
@@ -257,5 +262,248 @@ public static class DocumentUtils {
     var pair2 = textView.ProfileProcessingResult.CounterElements.
       Find(e => e.Item1.TextLocation.Line == line - 1);
     return pair2.Item1;
+  }
+
+  public static void CreateInstancesMenu(MenuItem menu, IRTextSection section,
+                                         FunctionProfileData funcProfile,
+                                         RoutedEventHandler menuClickHandler,
+                                         TextViewSettingsBase settings, ISession session) {
+    var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
+    var profileItems = new List<ProfileMenuItem>();
+
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var markerSettings = settings.ProfileMarkerSettings;
+    int order = 0;
+    double maxWidth = 0;
+
+    var nodes = session.ProfileData.CallTree.GetSortedCallTreeNodes(section.ParentFunction);
+    int maxCallers = nodes.Count >= 2 ? CommonParentCallerIndex(nodes[0], nodes[1]) : Int32.MaxValue;
+
+    foreach (var node in nodes) {
+      double weightPercentage = funcProfile.ScaleWeight(node.Weight);
+
+      if (!markerSettings.IsVisibleValue(order++, weightPercentage) ||
+          !node.HasCallers) {
+        break;
+      }
+
+      var (title, tooltip) = GenerateInstancePreviewText(node, maxCallers, 50, 30,
+                                                         1000, 50, session);
+      string text = $"({markerSettings.FormatWeightValue(null, node.Weight)})";
+
+      var value = new ProfileMenuItem(text, node.Weight.Ticks, weightPercentage) {
+        PrefixText = title,
+        ToolTip = tooltip,
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
+      var item = new MenuItem {
+        Header = value,
+        IsCheckable = true,
+        StaysOpenOnClick = true,
+        Tag = node,
+        HeaderTemplate = valueTemplate,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+      };
+
+      item.Click += menuClickHandler;
+      defaultItems.Add(item);
+      profileItems.Add(value);
+
+      // Make sure percentage rects are aligned.
+      double width = Utils.MeasureString(title, settings.FontName, settings.FontSize).Width;
+      maxWidth = Math.Max(width, maxWidth);
+    }
+
+    foreach (var value in profileItems) {
+      value.MinTextWidth = maxWidth;
+    }
+
+    menu.Items.Clear();
+    DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
+  }
+
+  public static void CreateThreadsMenu(MenuItem menu, IRTextSection section,
+                                       FunctionProfileData funcProfile,
+                                       RoutedEventHandler menuClickHandler,
+                                       TextViewSettingsBase settings, ISession session) {
+    var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
+    var profileItems = new List<ProfileMenuItem>();
+
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var markerSettings = settings.ProfileMarkerSettings;
+    var timelineSettings = App.Settings.TimelineSettings;
+    int order = 0;
+    double maxWidth = 0;
+
+    var node = session.ProfileData.CallTree.GetCombinedCallTreeNode(section.ParentFunction);
+
+    foreach (var thread in node.SortedByWeightPerThreadWeights) {
+      double weightPercentage = funcProfile.ScaleWeight(thread.Values.Weight);
+
+
+      var threadInfo = session.ProfileData.FindThread(thread.ThreadId);
+      var backColor = timelineSettings.GetThreadBackgroundColors(threadInfo, thread.ThreadId).Margin;
+
+      string text = $"({markerSettings.FormatWeightValue(null, thread.Values.Weight)})";
+      string tooltip = threadInfo is {HasName: true} ? threadInfo.Name : null;
+      string title = !string.IsNullOrEmpty(tooltip) ? $"{thread.ThreadId} ({tooltip})" : $"{thread.ThreadId}";
+
+      var value = new ProfileMenuItem(text, node.Weight.Ticks, weightPercentage) {
+        PrefixText = title,
+        ToolTip = tooltip,
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
+      var item = new MenuItem {
+        Header = value,
+        IsCheckable = true,
+        StaysOpenOnClick = true,
+        Tag = thread.ThreadId,
+        Background = backColor,
+        HeaderTemplate = valueTemplate,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+      };
+
+      item.Click += menuClickHandler;
+      defaultItems.Add(item);
+      profileItems.Add(value);
+
+      // Make sure percentage rects are aligned.
+      double width = Utils.MeasureString(title, settings.FontName, settings.FontSize).Width;
+      maxWidth = Math.Max(width, maxWidth);
+    }
+
+    foreach (var value in profileItems) {
+      value.MinTextWidth = maxWidth;
+    }
+
+    menu.Items.Clear();
+    DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
+  }
+
+  private static int CommonParentCallerIndex(ProfileCallTreeNode a, ProfileCallTreeNode b) {
+    int index = 0;
+
+    do {
+      index++;
+      a = a.Caller;
+      b = b.Caller;
+    } while (a != b && a != null && b != null);
+
+    return index;
+  }
+
+  private static (string, string)
+    GenerateInstancePreviewText(ProfileCallTreeNode node, int maxCallers,
+                                int maxLength, int maxSingleLength,
+                                int maxCompleteLength, int maxCompleteLineLength, ISession session) {
+    const string Separator = " \ud83e\udc70 "; // Arrow character.
+    var sb = new StringBuilder();
+    var completeSb = new StringBuilder();
+    var nameProvider = session.CompilerInfo.NameProvider;
+    int remaining = maxLength;
+    int completeRemaining = maxCompleteLength;
+    int completeLineRemaining = maxCompleteLineLength;
+    int index = 0;
+    node = node.Caller;
+
+    while (node != null) {
+      // Build the shorter title stack trace.
+      if (index < maxCallers && remaining > 0) {
+        int maxNameLength = Math.Min(remaining, maxSingleLength);
+        var name = node.FormatFunctionName(nameProvider.FormatFunctionName, maxNameLength);
+        remaining -= name.Length;
+
+        if (index == 0) {
+          sb.Append(name);
+        }
+        else {
+          sb.Append($"{Separator}{name}");
+        }
+      }
+
+      // Build the longer tooltip stack trace.
+      if (completeRemaining > 0) {
+        int maxNameLength = Math.Min(completeRemaining, maxSingleLength);
+        var name = node.FormatFunctionName(nameProvider.FormatFunctionName, maxNameLength);
+
+        if (index == 0) {
+          completeSb.Append(name);
+        }
+        else {
+          completeSb.Append($"{Separator}{name}");
+        }
+
+        completeRemaining -= name.Length;
+        completeLineRemaining -= name.Length;
+
+        if(completeLineRemaining < 0) {
+          completeSb.Append("\n");
+          completeLineRemaining = maxCompleteLineLength;
+        }
+      }
+
+      node = node.Caller;
+      index++;
+    }
+
+    return (sb.ToString(), completeSb.ToString());
+  }
+
+  public static async Task HandleInstanceMenuItemChanged(MenuItem menuItem, MenuItem menu,
+                                                         ProfileSampleFilter instanceFilter) {
+    if (menuItem.Tag is ProfileCallTreeNode node) {
+      instanceFilter ??= new ProfileSampleFilter();
+
+      if (menuItem.IsChecked) {
+        instanceFilter.AddInstance(node);
+      }
+      else {
+        instanceFilter.RemoveInstance(node);
+      }
+    }
+    else {
+      instanceFilter.ClearInstances();
+      UncheckMenuItems(menu, menuItem);
+    }
+  }
+
+  public static async Task HandleThreadMenuItemChanged(MenuItem menuItem, MenuItem menu,
+                                                       ProfileSampleFilter instanceFilter) {
+    if (menuItem.Tag is int threadId) {
+      instanceFilter ??= new ProfileSampleFilter();
+
+      if (menuItem.IsChecked) {
+        instanceFilter.AddThread(threadId);
+      }
+      else {
+        instanceFilter.RemoveThread(threadId);
+      }
+    }
+    else {
+      instanceFilter.ClearThreads();
+      UncheckMenuItems(menu, menuItem);
+    }
+  }
+
+  private static void UncheckMenuItems(MenuItem menu, MenuItem excludedItem) {
+    foreach (var item in menu.Items) {
+      if (item is MenuItem menuItem && menuItem != excludedItem) {
+        menuItem.IsChecked = false;
+      }
+    }
+  }
+
+  public static void SyncThreadsMenuWithFilter(MenuItem menu, ProfileSampleFilter instanceFilter) {
+    foreach (var item in menu.Items) {
+      if (item is MenuItem menuItem && menuItem.Tag is int threadId) {
+        menuItem.IsChecked = instanceFilter.IncludesThread(threadId);
+      }
+    }
   }
 }
