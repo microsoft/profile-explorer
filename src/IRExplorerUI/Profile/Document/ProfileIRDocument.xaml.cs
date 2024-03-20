@@ -282,13 +282,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
-                                         IRTextSection section,
-                                         IDebugInfoProvider debugInfo) {
+                                         IRTextSection section) {
     try {
       isSourceFileDocument_ = true;
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
       SetSourceText(text, sourceInfo.FilePath);
-      await AnnotateSourceFileProfile(section, debugInfo);
+      await AnnotateSourceFileProfile(section);
 
       //? TODO: Is panel is not visible, scroll doesn't do anything,
       //? should be executed again when panel is activated
@@ -311,22 +310,26 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     SetSourceText(text, "");
   }
 
-  private async Task AnnotateSourceFileProfile(IRTextSection section,
-                                               IDebugInfoProvider debugInfo) {
+  private async Task AnnotateSourceFileProfile(IRTextSection section) {
     var funcProfile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
 
     if (funcProfile == null) {
       return;
     }
 
-    //? TODO: Check if it's still the case
-    //? Accessing the PDB (DIA) from another thread fails.
-    //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
-    profileMarker_ =
-      new ProfileDocumentMarker(funcProfile, Session.ProfileData,
-      settings_.ProfileMarkerSettings, settings_.ColumnSettings,
-      Session.CompilerInfo);
-    var processingResult = profileMarker_.PrepareSourceLineProfile(funcProfile, TextView, debugInfo);
+    profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
+                                               settings_.ProfileMarkerSettings,
+                                               settings_.ColumnSettings,
+                                               Session.CompilerInfo);
+    // Accumulate the instruction weight for each source line.
+    sourceLineProfileResult_ = await Task.Run(async () => {
+      var debugInfo = await Session.GetDebugInfoProvider(section.ParentFunction);
+      return funcProfile.ProcessSourceLines(debugInfo, Session.CompilerInfo.IR);
+    });
+
+    // Create a dummy FunctionIR that has fake tuples representing each
+    // source line, with the profiling data attached to the tuples.
+    var processingResult = profileMarker_.PrepareSourceLineProfile(funcProfile, TextView, sourceLineProfileResult_);
 
     if (processingResult == null) {
       return;
@@ -353,7 +356,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     TextView.ResumeUpdate();
-    sourceLineProfileResult_ = processingResult.SourceLineResult;
     await UpdateProfilingColumns();
 
     if (TextView.ProfileProcessingResult != null) {

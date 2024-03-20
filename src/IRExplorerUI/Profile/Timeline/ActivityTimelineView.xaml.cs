@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -90,5 +91,9 @@ public partial class ActivityTimelineView : UserControl, INotifyPropertyChanged 
         e.ClickCount >= 2) {
       ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.FilterToThread);
     }
+  }
+
+  private void ThreadContextMenuButton_Click(object sender, RoutedEventArgs e) {
+    Utils.ShowContextMenu(sender as FrameworkElement, this);
   }
 }

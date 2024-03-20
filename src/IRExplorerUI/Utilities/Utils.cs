@@ -743,14 +743,17 @@ static class Utils {
     return null;
   }
 
-  public static void ShowContextMenu(FrameworkElement element, object dataContext) {
+  public static bool ShowContextMenu(FrameworkElement element, object dataContext) {
     var host = Utils.FindContextMenuParent(element);
 
     if (host != null) {
       host.ContextMenu.DataContext = dataContext;
       host.ContextMenu.PlacementTarget = element;
       host.ContextMenu.IsOpen = true;
+      return true;
     }
+
+    return false;
   }
 
   public static Point CoordinatesToScreen(Point point, UIElement control) {

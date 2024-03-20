@@ -299,30 +299,19 @@
                                                         VerticalAlignment="Center"
                                                         FontWeight="Medium"
                                                         Text="{Binding Title}" />
-                                                    <Button
+                                                    <Grid
+                                                      Width="18"
+                                                      Height="18"
+                                                      PreviewMouseLeftButtonDown="ThreadContextMenuButton_Click"
+                                                      VerticalAlignment="Top"
+                                                      HorizontalAlignment="Right"
+                                                      ToolTip="Show Thread Actions">
+                                                      <Image
                                                         Width="16"
-                                                        Margin="0,0,2,0"
-                                                        HorizontalAlignment="Right"
-                                                        Background="{Binding Background}"
-                                                        BorderBrush="Transparent"
-                                                        Click="ThreadContextMenuButton_Click"
-                                                        ToolTip="Show Thread Actions">
-                                                        <Button.Content>
-                                                            <Image
-                                                                Width="16"
-                                                                Height="16"
-                                                                Source="{StaticResource BlockIcon}" />
-                                                        </Button.Content>
-                                                        <Button.Style>
-                                                            <Style TargetType="Button">
-                                                                <Style.Triggers>
-                                                                    <Trigger Property="IsEnabled" Value="False">
-                                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                                    </Trigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Button.Style>
-                                                    </Button>
+                                                        Height="16"
+                                                        Style="{StaticResource DisabledImageStyle}" 
+                                                        Source="{StaticResource BlockIcon}" />
+                                                    </Grid>
                                                 </Grid>
                                             </Border>
                                             <ContentControl

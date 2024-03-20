@@ -496,6 +496,7 @@
                                         x:Name="ProfileElementsMenu"
                                         Margin="0,0,0,0"
                                         Padding="0,0,0,0"
+                                        ToolTip="View sorted list of hottest lines"
                                         OverridesDefaultStyle="True">
                                         <MenuItem.Header>
                                             <StackPanel Orientation="Horizontal">
@@ -541,6 +542,7 @@
                                         x:Name="ProfileBlocksMenu"
                                         Margin="0,0,0,0"
                                         Padding="0,0,0,0"
+                                        ToolTip="View sorted list of hottest blocks"
                                         OverridesDefaultStyle="True">
                                         <MenuItem.Header>
                                             <StackPanel Orientation="Horizontal">
@@ -636,7 +638,9 @@
                                 </Menu>
 
                                 <Separator />
-                                <Menu Margin="2,0,0,0" VerticalAlignment="Center">
+                                <Menu Margin="2,0,0,0" VerticalAlignment="Center"
+                ToolTip="Select function instances to display"
+                                      >
                                     <MenuItem
                                         x:Name="InstancesMenu"
                                         Margin="0,0,0,0"
@@ -671,6 +675,7 @@
                                         x:Name="ThreadsMenu"
                                         Margin="0,0,0,0"
                                         Padding="0,0,0,0"
+                                        ToolTip="Select threads the function ran on to display"
                                         Background="{Binding Path=HasProfileThreadFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
                                         OverridesDefaultStyle="True">
                                         <MenuItem.Header>
@@ -696,7 +701,8 @@
                                     </MenuItem>
                                 </Menu>
                                 <Separator />
-                                <Menu Margin="2,0,0,0" VerticalAlignment="Center">
+                                <Menu Margin="2,0,0,0" VerticalAlignment="Center"
+                                      ToolTip="Configure displayed profiling columns">
                                     <MenuItem
                                         x:Name="ProfileViewMenu"
                                         Margin="0,0,0,0"
