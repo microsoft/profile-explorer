@@ -765,7 +765,8 @@ public partial class MainWindow : Window, ISession {
 
   private string GetDocumentDescription(IRDocumentHost document, IRTextSection section) {
     var docInfo = sessionState_.FindLoadedDocument(section);
-    return $"{section.ParentFunction.Name.Trim()} ({section.ParentFunction.ParentSummary.ModuleName})";
+    string funcName = compilerInfo_.NameProvider.GetFunctionName(section.ParentFunction);
+    return $"{section.ParentFunction.ParentSummary.ModuleName}!{funcName}";
   }
 
   private async void MenuItem_Click_1(object sender, RoutedEventArgs e) {

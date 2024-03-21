@@ -72,44 +72,45 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="Instance">
-                      <MenuItem
-                        Command="{Binding PreviewFunctionCommand}"
-                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                        Header="Preview Function Instance"
-                        InputGestureText="Alt+Return"
-                        ToolTip="Show a preview popup of the function ASM or source code">
-                        <MenuItem.Icon>
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Source="{StaticResource PeekDefinitionIcon}" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem
-                        Command="{Binding OpenInstanceCommand}"
-                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                        Header="Open Function Instance"
-                        ToolTip="Open the function assembly view for only this instance of the function">
-                        <MenuItem.Icon>
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Source="{StaticResource LayoutOpenIcon}" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem
-                        Command="local:CallTreeCommand.OpenFunctionInNewTab"
-                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                        Header="Open Function Instance in New Tab"
-                        InputGestureText="Ctrl+Shift+Return"
-                        ToolTip="Open the function assembly view in a new tab">
-                        <MenuItem.Icon>
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Source="{StaticResource LayoutOpenNewIcon}" />
-                        </MenuItem.Icon>
-                    </MenuItem>
+                        <MenuItem
+                            Command="{Binding PreviewFunctionCommand}"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Preview Function Instance"
+                            InputGestureText="Alt+Return"
+                            IsEnabled="False"
+                            ToolTip="Show a preview popup of the function ASM or source code">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource PeekDefinitionIcon}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem
+                            Command="{Binding OpenInstanceCommand}"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Open Function Instance"
+                            ToolTip="Open the function assembly view for only this instance of the function">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource LayoutOpenIcon}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem
+                            Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Open Function Instance in New Tab"
+                            InputGestureText="Ctrl+Shift+Return"
+                            ToolTip="Open the function assembly view in a new tab">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource LayoutOpenNewIcon}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </MenuItem>
                     <Separator />
 
@@ -142,32 +143,30 @@
                     <Separator />
 
                     <MenuItem
-                      Command="{Binding CopyDemangledFunctionNameCommand}"
-                      CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      Header="Copy Function Name"
-                      InputGestureText="Ctrl+C"
-                      ToolTip="Copy the function name to the clipboard">
-                      <MenuItem.Icon>
-                        <Image
-                          Width="16"
-                          Height="16"
-                          Source="{StaticResource ClipboardIcon}" />
-                      </MenuItem.Icon>
+                        Command="{Binding CopyDemangledFunctionNameCommand}"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Copy Function Name"
+                        InputGestureText="Ctrl+C"
+                        ToolTip="Copy the function name to the clipboard">
+                        <MenuItem.Icon>
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource ClipboardIcon}" />
+                        </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem
                         Command="{Binding CopyFunctionNameCommand}"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Copy Mangled Function Name"
                         InputGestureText="Ctrl+Shift+C"
-                        ToolTip="Copy the mangled function name to the clipboard (C++)">
-                    </MenuItem>
+                        ToolTip="Copy the mangled function name to the clipboard (C++)" />
                     <MenuItem
-                      Command="{Binding CopyFunctionDetailsCommand}"
-                      CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      Header="Copy Function Details"
-                      InputGestureText="Ctrl+Alt+C"
-                      ToolTip="Copy the function name and additional information as an HTML table">
-                    </MenuItem>
+                        Command="{Binding CopyFunctionDetailsCommand}"
+                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                        Header="Copy Function Details"
+                        InputGestureText="Ctrl+Alt+C"
+                        ToolTip="Copy the function name and additional information as an HTML table" />
                     <Separator />
 
                     <MenuItem Header="Mark Module" ToolTip="Mark all functions belonging to this module">
@@ -264,9 +263,21 @@
     </irExplorerUi:ScrollViewerClickable>
 
     <UserControl.InputBindings>
-      <KeyBinding Command="{Binding PreviewFunctionCommand}" Key="Return" Modifiers="Alt" />
-      <KeyBinding Command="{Binding CopyFunctionNameCommand}" Key="C" Modifiers="Control+Shift" />
-      <KeyBinding Command="{Binding CopyDemangledFunctionNameCommand}" Key="C" Modifiers="Control" />
-      <KeyBinding Command="{Binding CopyFunctionDetailsCommand}" Key="C" Modifiers="Control+Alt" />
+        <KeyBinding
+            Key="Return"
+            Command="{Binding PreviewFunctionCommand}"
+            Modifiers="Alt" />
+        <KeyBinding
+            Key="C"
+            Command="{Binding CopyFunctionNameCommand}"
+            Modifiers="Control+Shift" />
+        <KeyBinding
+            Key="C"
+            Command="{Binding CopyDemangledFunctionNameCommand}"
+            Modifiers="Control" />
+        <KeyBinding
+            Key="C"
+            Command="{Binding CopyFunctionDetailsCommand}"
+            Modifiers="Control+Alt" />
     </UserControl.InputBindings>
 </UserControl>

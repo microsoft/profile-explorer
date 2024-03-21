@@ -89,6 +89,7 @@
             <Menu Margin="2,0,0,0" VerticalAlignment="Center">
               <MenuItem
                 x:Name="ProfileElementsMenu"
+                ToolTip="View sorted list of hottest lines"
                 Margin="0,0,0,0"
                 Padding="0,0,0,0"
                 OverridesDefaultStyle="True">
@@ -200,6 +201,7 @@
                 x:Name="ProfileViewMenu"
                 Margin="0,0,0,0"
                 Padding="0,0,0,0"
+                ToolTip="Configure displayed profiling columns"
                 OverridesDefaultStyle="True">
                 <MenuItem.Header>
                   <StackPanel Orientation="Horizontal">

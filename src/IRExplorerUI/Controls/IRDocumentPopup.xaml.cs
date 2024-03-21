@@ -296,7 +296,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       var (sourceInfo, debugInfo) = await Session.CompilerInfo.SourceFileFinder.FindLocalSourceFile(function);
 
       if (!sourceInfo.IsUnknown) {
-        await ProfileTextView.LoadSourceFile(sourceInfo, parsedSection_.Section, debugInfo);
+        await ProfileTextView.LoadSourceFile(sourceInfo, parsedSection_.Section);
       }
       else {
         var failureText = $"Could not find debug info for function:\n{function.Name}";

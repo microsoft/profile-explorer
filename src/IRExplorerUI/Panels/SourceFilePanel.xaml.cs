@@ -122,9 +122,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
     if (path != null) {
       var sourceInfo = new SourceFileDebugInfo(path, path);
-      var debugInfo = await Session.GetDebugInfoProvider(section_.ParentFunction);
 
-      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_, debugInfo)) {
+      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_)) {
         HandleLoadedSourceFile(sourceInfo, section_.ParentFunction);
       }
     }
@@ -257,7 +256,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var (sourceInfo, debugInfo) = await sourceFileFinder_.FindLocalSourceFile(function);
 
     if (!sourceInfo.IsUnknown) {
-      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_, debugInfo)) {
+      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_)) {
         HandleLoadedSourceFile(sourceInfo, function);
         return true;
       }

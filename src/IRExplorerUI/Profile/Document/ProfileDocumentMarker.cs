@@ -204,8 +204,7 @@ public class ProfileDocumentMarker {
     Dictionary<int, IRElement> LineToElementMap);
 
   public SourceLineProfileResult
-    PrepareSourceLineProfile(FunctionProfileData profile, MarkedDocument document, IDebugInfoProvider debugInfo) {
-    var result = profile.ProcessSourceLines(debugInfo, irInfo_.IR);
+    PrepareSourceLineProfile(FunctionProfileData profile, MarkedDocument document, SourceLineProcessingResult result) {
     var sourceLineWeights = result.SourceLineWeightList;
 
     if (sourceLineWeights.Count == 0) {

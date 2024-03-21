@@ -215,6 +215,21 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   });
 
+  public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
+    if (CallTreeList.SelectedItem is TreeNode node) {
+      var childInfo = node.Tag as CallTreeListItem;
+      var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+      await OpenFunctionInstance(childInfo, mode);
+    }
+  });
+
+  public RelayCommand<object> OpenInstanceInNewTabCommand => new RelayCommand<object>(async obj => {
+    if (CallTreeList.SelectedItem is TreeNode node) {
+      var childInfo = node.Tag as CallTreeListItem;
+      await OpenFunctionInstance(childInfo, OpenSectionKind.NewTabDockRight);
+    }
+  });
+
   public ProfileCallTree CallTree {
     get => callTree_;
     set {
@@ -818,6 +833,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private async Task OpenFunction(CallTreeListItem childInfo, OpenSectionKind openMode) {
     if (childInfo.HasCallTreeNode) {
       await Session.OpenProfileFunction(childInfo.CallTreeNode, openMode);
+    }
+  }
+
+  private async Task OpenFunctionInstance(CallTreeListItem childInfo, OpenSectionKind openMode) {
+    if (childInfo.HasCallTreeNode) {
+      var filter = new ProfileSampleFilter(childInfo.CallTreeNode);
+      await Session.OpenProfileFunction(childInfo.CallTreeNode, openMode, filter);
     }
   }
 

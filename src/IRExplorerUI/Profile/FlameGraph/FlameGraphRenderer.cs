@@ -39,6 +39,9 @@ public class FlameGraphRenderer {
   private QuadTree<FlameGraphNode> nodesQuadTree_;
   private QuadTree<FlameGraphGroupNode> dummyNodesQuadTree_;
   private Dictionary<HighlightingStyle, HighlightingStyle> dummyNodeStyles_;
+  private GuidelineSet cachedTextGuidelines_;
+  private GuidelineSet cachedNodeGuidelines_;
+  private GuidelineSet cachedDummyNodeGuidelines_;
   private SolidColorBrush nodeTextBrush_;
   private SolidColorBrush nodeModuleBrush_;
   private SolidColorBrush nodeWeightBrush_;
@@ -224,7 +227,12 @@ public class FlameGraphRenderer {
       return;
     }
 
+    if (cachedNodeGuidelines_ == null) {
+      cachedNodeGuidelines_ = CreateGuidelineSet(bounds, 0.5f);
+    }
+
     if (issueDraw) {
+      dc.PushGuidelineSet(cachedNodeGuidelines_);
       dc.DrawRectangle(node.Style.BackColor, node.Style.Border, bounds);
     }
 
@@ -371,6 +379,10 @@ public class FlameGraphRenderer {
       maxWidth -= textSize.Width + margin;
       offsetX += textSize.Width + margin;
       index++;
+    }
+
+    if (issueDraw) {
+      dc.Pop(); // PushGuidelineSet
     }
   }
 
@@ -546,8 +558,15 @@ public class FlameGraphRenderer {
   private void DrawDummyNode(FlameGraphGroupNode node, DrawingContext graphDC) {
     var scaledBounds = new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top,
                                 node.Bounds.Width * maxWidth_, node.Bounds.Height);
+
+    if (cachedDummyNodeGuidelines_ == null) {
+      cachedDummyNodeGuidelines_ = CreateGuidelineSet(scaledBounds, 0.5f);
+    }
+
+    graphDC.PushGuidelineSet(cachedDummyNodeGuidelines_);
     graphDC.DrawRectangle(node.Style.BackColor, node.Style.Border, scaledBounds);
     graphDC.DrawRectangle(CreatePlaceholderTiledBrush(8), null, scaledBounds);
+    graphDC.Pop();
   }
 
   private void DrawCenteredText(string text, double x, double y, DrawingContext dc) {
@@ -767,10 +786,17 @@ public class FlameGraphRenderer {
                         Size textSize, DrawingContext dc) {
     double x = offsetX;
     double y = bounds.Height / 2 + textSize.Height / 4 + offsetY;
-    
+
+    if (cachedTextGuidelines_ == null) {
+      var rect = glyphs.ComputeAlignmentBox();
+      cachedTextGuidelines_ = CreateGuidelineSet(rect, 1.0f);
+    }
+
     dc.PushTransform(new TranslateTransform(x, y));
+    dc.PushGuidelineSet(cachedTextGuidelines_);
     dc.DrawGlyphRun(textColor, glyphs);
     dc.Pop();
+    dc.Pop(); // PushGuidelineSet
   }
 
   private (string Text, GlyphRun glyphs, bool Trimmed, Size TextSize)
@@ -821,5 +847,14 @@ public class FlameGraphRenderer {
 
     return (text, glyphInfo.Glyphs, trimmed,
       new Size(glyphInfo.TextWidth, glyphInfo.TextHeight));
+  }
+
+  private GuidelineSet CreateGuidelineSet(Rect rect, double penWidth) {
+    var guidelines = new GuidelineSet();
+    guidelines.GuidelinesX.Add(rect.Left + penWidth);
+    guidelines.GuidelinesX.Add(rect.Right + penWidth);
+    guidelines.GuidelinesY.Add(rect.Top + penWidth);
+    guidelines.GuidelinesY.Add(rect.Bottom + penWidth);
+    return guidelines;
   }
 }

@@ -700,6 +700,62 @@ static class Utils {
     return foundChild;
   }
 
+  public static T FindParent<T>(DependencyObject child, string parentName)
+    where T : DependencyObject {
+    if (child == null) {
+      return null;
+    }
+
+    T foundParent = null;
+    var currentParent = VisualTreeHelper.GetParent(child);
+
+    do {
+      var element = currentParent as FrameworkElement;
+
+      if (element?.Name == parentName && element is T) {
+        foundParent = (T)currentParent;
+        break;
+      }
+
+      currentParent = VisualTreeHelper.GetParent(currentParent);
+    } while (currentParent != null);
+
+    return foundParent;
+  }
+
+  public static FrameworkElement FindContextMenuParent(DependencyObject child) {
+    if (child == null) {
+      return null;
+    }
+
+    var currentParent = VisualTreeHelper.GetParent(child);
+
+    do {
+      var element = currentParent as FrameworkElement;
+
+      if (element?.ContextMenu != null) {
+        return element;
+      }
+
+      currentParent = VisualTreeHelper.GetParent(currentParent);
+    } while (currentParent != null);
+
+    return null;
+  }
+
+  public static bool ShowContextMenu(FrameworkElement element, object dataContext) {
+    var host = Utils.FindContextMenuParent(element);
+
+    if (host != null) {
+      host.ContextMenu.DataContext = dataContext;
+      host.ContextMenu.PlacementTarget = element;
+      host.ContextMenu.IsOpen = true;
+      return true;
+    }
+
+    return false;
+  }
+
   public static Point CoordinatesToScreen(Point point, UIElement control) {
     var source = PresentationSource.FromVisual(control);
 

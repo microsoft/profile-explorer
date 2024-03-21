@@ -178,7 +178,7 @@
                     <CheckBox
                         x:Name="ModuleCheckBox"
                         Margin="0,2,0,2"
-                        Content="Mark functions based on module"
+                        Content="Mark functions based on module name"
                         IsChecked="{Binding UseModuleColors, Mode=TwoWay}"
                         ToolTip="Use a different color for specified modules" />
                     <Grid Margin="0,0,0,0" IsEnabled="{Binding ElementName=ModuleCheckBox, Path=IsChecked}">
@@ -561,15 +561,15 @@
                         IsChecked="{Binding ExpandHistogram, Mode=TwoWay}"
                         ToolTip="Histogram section expanded by default" />
                     <CheckBox
-                      Margin="0,2,0,2"
-                      Content="Auto-expand Threads section"
-                      IsChecked="{Binding ExpandThreads, Mode=TwoWay}"
-                      ToolTip="Threads list section expanded by default" />
+                        Margin="0,2,0,2"
+                        Content="Auto-expand Threads section"
+                        IsChecked="{Binding ExpandThreads, Mode=TwoWay}"
+                        ToolTip="Threads list section expanded by default" />
                     <CheckBox
-                      Margin="0,2,0,2"
-                      Content="Alternate list view background color"
-                      IsChecked="{Binding AlternateListRows, Mode=TwoWay}"
-                      ToolTip="Alternate the background color of the function/module list view items" />
+                        Margin="0,2,0,2"
+                        Content="Alternate list view background color"
+                        IsChecked="{Binding AlternateListRows, Mode=TwoWay}"
+                        ToolTip="Alternate the background color of the function/module list view items" />
                     <Separator Margin="0,4,0,4" />
 
                     <TextBlock FontWeight="Medium" Text="Function List" />
