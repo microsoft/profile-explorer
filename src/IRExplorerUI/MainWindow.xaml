@@ -1011,12 +1011,12 @@
                 </avalonDock:LayoutAnchorable>
 
                 <avalonDock:LayoutAnchorable
-                  x:Name="IRInfoPanelHost"
+                  x:Name="DeveloperPanelHost"
                   Title="Developer"
                   ContentId="Developer"
                   IsActiveChanged="LayoutAnchorable_IsActiveChanged"
                   IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                  <local:IRInfoPanel x:Name="IRInfoPanel" />
+                  <local:DeveloperPanel x:Name="DeveloperPanel" />
                 </avalonDock:LayoutAnchorable>
 
               </avalonDock:LayoutAnchorablePane>

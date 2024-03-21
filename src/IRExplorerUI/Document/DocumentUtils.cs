@@ -143,13 +143,15 @@ public static class DocumentUtils {
     var irInfo = session.CompilerInfo.IR;
     IReachableReferenceFilter filter = null;
 
-    if (settings.FilterSourceDefinitions ||
-        settings.FilterDestinationUses) {
-      filter = irInfo.CreateReferenceFilter(function);
+    if (settings != null) {
+      if (settings.FilterSourceDefinitions ||
+          settings.FilterDestinationUses) {
+        filter = irInfo.CreateReferenceFilter(function);
 
-      if (filter != null) {
-        filter.FilterUses = settings.FilterDestinationUses;
-        filter.FilterDefinitions = settings.FilterSourceDefinitions;
+        if (filter != null) {
+          filter.FilterUses = settings.FilterDestinationUses;
+          filter.FilterDefinitions = settings.FilterSourceDefinitions;
+        }
       }
     }
 

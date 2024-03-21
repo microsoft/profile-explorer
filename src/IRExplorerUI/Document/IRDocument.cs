@@ -187,7 +187,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private HashSet<IRElement> selectedElements_;
   private ElementHighlighter selectedHighlighter_;
   private HighlightingStyle selectedStyle_;
-  private DocumentSettings settings_;
+  private TextViewSettingsBase settings_;
   private PairHighlightingStyle ssaDefinitionStyle_;
   private PairHighlightingStyle ssaUserStyle_;
   private PairHighlightingStyle iteratedUserStyle_;
@@ -248,7 +248,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public bool DuringSectionLoading => duringSectionLoading_;
   public bool IsLoaded => Function != null;
 
-  public DocumentSettings Settings {
+  public TextViewSettingsBase Settings {
     get => settings_;
     private set {
       settings_ = value;
@@ -269,7 +269,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     return line;
   }
 
-  public void Initialize(DocumentSettings settings, ISession session) {
+  public void Initialize(TextViewSettingsBase settings, ISession session) {
     Session = session;
     Settings = settings;
   }
@@ -996,7 +996,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void SetupBlockFolding() {
-    if (!settings_.ShowBlockFolding) {
+    if (settings_ is not DocumentSettings docSettings) {
+      return;
+    }
+
+    if (!docSettings.ShowBlockFolding) {
       UninstallBlockFolding();
       return;
     }
@@ -1434,8 +1438,20 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void SetupStyles() {
-    var borderPen = ColorPens.GetBoldPen(settings_.BorderColor);
-    var lightBorderPen = ColorPens.GetTransparentPen(settings_.BorderColor, 150);
+    if (settings_ is not DocumentSettings docSettings) {
+      // Selection styles are also used in non-IR documents,
+      // make sure they are not null and have reasonable defaults.
+      selectedStyle_ ??= new HighlightingStyle();
+      selectedStyle_.BackColor = settings_.BackgroundColor.AsBrush();
+      selectedStyle_.Border = settings_.CurrentLineBorderColor.AsPen();
+      selectedBlockStyle_ ??= new HighlightingStyle();
+      selectedBlockStyle_.BackColor = settings_.BackgroundColor.AsBrush();
+      selectedBlockStyle_.Border = settings_.CurrentLineBorderColor.AsPen();
+      return;
+    }
+
+    var borderPen = ColorPens.GetBoldPen(docSettings.BorderColor);
+    var lightBorderPen = ColorPens.GetTransparentPen(docSettings.BorderColor, 150);
     selectedStyle_ ??= new HighlightingStyle();
     selectedStyle_.BackColor = ColorBrushes.GetBrush(settings_.SelectedValueColor);
     selectedStyle_.Border = borderPen;
@@ -1448,28 +1464,28 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     ssaUserStyle_ ??= new PairHighlightingStyle();
     ssaUserStyle_.ParentStyle.BackColor =
       ColorBrushes.GetBrush(
-        ColorUtils.AdjustLight(settings_.UseValueColor, ParentStyleLightAdjustment));
+        ColorUtils.AdjustLight(docSettings.UseValueColor, ParentStyleLightAdjustment));
 
-    ssaUserStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(settings_.UseValueColor);
+    ssaUserStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(docSettings.UseValueColor);
     ssaUserStyle_.ChildStyle.Border = borderPen;
 
     iteratedUserStyle_ ??= new PairHighlightingStyle();
-    iteratedUserStyle_.ParentStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.UseValueColor, 0);
-    iteratedUserStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.UseValueColor, 50);
+    iteratedUserStyle_.ParentStyle.BackColor = ColorBrushes.GetTransparentBrush(docSettings.UseValueColor, 0);
+    iteratedUserStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(docSettings.UseValueColor, 50);
     iteratedUserStyle_.ChildStyle.Border = lightBorderPen;
 
     ssaDefinitionStyle_ ??= new PairHighlightingStyle();
     ssaDefinitionStyle_.ParentStyle.BackColor = ColorBrushes.GetBrush(
-      ColorUtils.AdjustLight(settings_.DefinitionValueColor, ParentStyleLightAdjustment));
+      ColorUtils.AdjustLight(docSettings.DefinitionValueColor, ParentStyleLightAdjustment));
 
-    ssaDefinitionStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(settings_.DefinitionValueColor);
+    ssaDefinitionStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(docSettings.DefinitionValueColor);
     ssaDefinitionStyle_.ChildStyle.Border = borderPen;
 
     iteratedDefinitionStyle_ ??= new PairHighlightingStyle();
     iteratedDefinitionStyle_.ParentStyle.BackColor =
-      ColorBrushes.GetTransparentBrush(settings_.DefinitionValueColor, 0);
+      ColorBrushes.GetTransparentBrush(docSettings.DefinitionValueColor, 0);
     iteratedDefinitionStyle_.ChildStyle.BackColor =
-      ColorBrushes.GetTransparentBrush(settings_.DefinitionValueColor, 50);
+      ColorBrushes.GetTransparentBrush(docSettings.DefinitionValueColor, 50);
     iteratedDefinitionStyle_.ChildStyle.Border = lightBorderPen;
   }
 
@@ -2082,7 +2098,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private ReferenceFinder CreateReferenceFinder() {
-    return DocumentUtils.CreateReferenceFinder(Function, Session, settings_);
+    return DocumentUtils.CreateReferenceFinder(Function, Session,
+                                               settings_ as DocumentSettings);
   }
 
   private bool GoToElementDefinition(IRElement element, bool skipCopies = false) {
@@ -2194,7 +2211,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return true;
     }
 
-    if (!settings_.HighlightInstructionOperands) {
+    if (settings_ is not DocumentSettings docSettings) {
+      return false;
+    }
+
+    if (!docSettings.HighlightInstructionOperands) {
       return false;
     }
 
@@ -2212,7 +2233,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       }
     }
 
-    if (settings_.HighlightDestinationUses) {
+    if (docSettings.HighlightDestinationUses) {
       foreach (var destOp in instr.Destinations) {
         HandleOperandElement(destOp, highlighter, markExpression, false, action);
       }
@@ -2224,6 +2245,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private bool HandleOperandElement(OperandIR op, ElementHighlighter highlighter,
                                     bool markExpression, bool markReferences,
                                     HighlightingEventAction action) {
+    if (settings_ is not DocumentSettings docSettings) {
+      return false;
+    }
+
     if (op.Role == OperandRole.Source) {
       if (markExpression) {
         // Mark an entire SSA def-use expression DAG.
@@ -2234,7 +2259,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       // Further handling of sources is done below.
     }
     else if ((op.Role == OperandRole.Destination || op.Role == OperandRole.Parameter) &&
-             settings_.HighlightDestinationUses) {
+             docSettings.HighlightDestinationUses) {
       // First look for an SSA definition and its uses,
       // if not found highlight every load of the same symbol.
       var refFinder = CreateReferenceFinder();
@@ -2269,7 +2294,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       }
     }
 
-    if (settings_.HighlightSourceDefinition) {
+    if (docSettings.HighlightSourceDefinition) {
       if (op.IsLabelAddress) {
         return HighlightBlockLabel(op, highlighter, ssaUserStyle_, action);
       }
@@ -2599,13 +2624,17 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private async void IRDocument_PreviewMouseHover(object sender, MouseEventArgs e) {
+    if (settings_ is not DocumentSettings docSettings) {
+      return;
+    }
+
     if (ignoreNextHoverEvent_) {
       ignoreNextHoverEvent_ = false;
       return;
     }
 
-    bool highlightElement = settings_.ShowInfoOnHover &&
-                            (!settings_.ShowInfoOnHoverWithModifier || Utils.IsKeyboardModifierActive());
+    bool highlightElement = docSettings.ShowInfoOnHover &&
+                            (!docSettings.ShowInfoOnHoverWithModifier || Utils.IsKeyboardModifierActive());
 
     if (!highlightElement) {
       return;
@@ -3086,7 +3115,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     int lines = Document.LineCount;
     double dotSize = Math.Max(2, availableHeight / lines);
     double dotWidth = width / 3;
-    double markerDotSize = Math.Max(8, availableHeight / lines);
     availableHeight -= dotSize;
 
     PopulateMarkerBarForHighlighter(markedHighlighter_, startY, width, availableHeight, dotSize);
@@ -3670,8 +3698,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       }
     }
 
+    if (settings_ is not DocumentSettings docSettings) {
+      return;
+    }
 
-    if (settings_.HighlightCurrentLine) {
+    if (docSettings.HighlightCurrentLine) {
       lineHighlighter_ = new CurrentLineHighlighter(this, settings_.CurrentLineBorderColor);
       TextArea.TextView.BackgroundRenderers.Add(lineHighlighter_);
     }
@@ -3746,12 +3777,16 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private async Task<bool> ShowDefinitionPreview(IRElement element, bool alwaysShow = false) {
+    if (settings_ is not DocumentSettings docSettings) {
+      return false;
+    }
+
     IRElement target = null;
     bool isCallTarget = false;
     bool show = false;
 
     if (!alwaysShow) {
-      if (!settings_.ShowPreviewPopup) {
+      if (!docSettings.ShowPreviewPopup) {
         HidePreviewPopup();
         return false;
       }

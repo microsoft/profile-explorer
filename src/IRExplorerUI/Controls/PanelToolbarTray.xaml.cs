@@ -150,48 +150,15 @@ public partial class PanelToolbarTray : ToolBarTray {
     DuplicateClicked?.Invoke(this, new DuplicateEventArgs {Kind = DuplicatePanelKind.Floating});
   }
 
-  private void MenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
-    if (BindMenuOpen != null) {
-      var args = new BindMenuItemsArgs();
-      BindMenuOpen(this, args);
-
-      foreach (object item in BindMenu.Items) {
-        ((MenuItem)item).Click -= BindMenuItem_Click;
-      }
-
-      BindMenu.Items.Clear();
-
-      foreach (var item in args.MenuItems) {
-        var menuItem = new MenuItem {
-          Header = item.Header,
-          ToolTip = item.ToolTip,
-          Tag = item,
-          IsCheckable = true,
-          IsChecked = item.IsChecked
-        };
-
-        menuItem.Click += BindMenuItem_Click;
-        BindMenu.Items.Add(menuItem);
-      }
-    }
-  }
-
-  private void BindMenuItem_Click(object sender, RoutedEventArgs e) {
-    if (BindMenuItemSelected != null) {
-      var menuItem = sender as MenuItem;
-      BindMenuItemSelected(this, menuItem.Tag as BindMenuItem);
-    }
-  }
-
   private void SettingsButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
     // This is a workaround for the way clicks on the options icon are handled by WPF
     // when the popup panel is active. The user most likely wants to close the popup
     // by clicking again on the icon, but instead the popup closes and immediately opens again.
     //
     // - When the button is clicked, it Opens the popup.
-    // - When the button is clicked again, the button raises the MouseDown event 
+    // - When the button is clicked again, the button raises the MouseDown event
     //   and the Popup closes on that event.
-    // - Afterwards the Clicked event is raised, but since the Popup is already closed, 
+    // - Afterwards the Clicked event is raised, but since the Popup is already closed,
     //   it will open it again, thus causing for the Popup to be closed & opened immediately.
     //
     // The MouseLeftButtonDown is not triggered when the popup is active.

@@ -148,7 +148,7 @@ public partial class MainWindow : Window, ISession {
     RegisterPanel(DominatorTreePanel, DominatorTreePanelHost);
     RegisterPanel(PostDominatorTreePanel, PostDominatorTreePanelHost);
     RegisterPanel(DefinitionPanel, DefinitionPanelHost);
-    RegisterPanel(IRInfoPanel, IRInfoPanelHost);
+    RegisterPanel(DeveloperPanel, DeveloperPanelHost);
     RegisterPanel(SourceFilePanel, SourceFilePanelHost);
     RegisterPanel(BookmarksPanel, BookmarksPanelHost);
     RegisterPanel(ReferencesPanel, ReferencesPanelHost);
@@ -1123,9 +1123,9 @@ public partial class MainWindow : Window, ISession {
               break;
             }
             case ToolPanelKind.Developer: {
-              IRInfoPanel = (IRInfoPanel)panel;
-              IRInfoPanelHost = (LayoutAnchorable)args.Model;
-              RegisterPanel(IRInfoPanel, IRInfoPanelHost);
+              DeveloperPanel = (DeveloperPanel)panel;
+              DeveloperPanelHost = (LayoutAnchorable)args.Model;
+              RegisterPanel(DeveloperPanel, DeveloperPanelHost);
               break;
             }
             case ToolPanelKind.Notes: {
@@ -1381,7 +1381,7 @@ public partial class MainWindow : Window, ISession {
         return ScriptingPanelHost;
       }
       case ToolPanelKind.Developer: {
-        return IRInfoPanelHost;
+        return DeveloperPanelHost;
       }
       case ToolPanelKind.FlowGraph: {
         return FlowGraphPanelHost;

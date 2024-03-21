@@ -27,6 +27,7 @@
         <ToggleButton
             x:Name="PinButton"
             Height="20"
+            Width="20"
             Padding="0"
             Checked="PinButton_Checked"
             Focusable="False"
@@ -51,8 +52,7 @@
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 Focusable="False"
-                OverridesDefaultStyle="True"
-                SubmenuOpened="MenuItem_SubmenuOpened">
+                OverridesDefaultStyle="True">
                 <MenuItem.Icon>
                     <Image
                         Width="16"
@@ -101,23 +101,13 @@
                             Source="{StaticResource OpenExternalIcon}" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <Separator />
-
-                <MenuItem x:Name="BindMenu" Header="Bind to Section">
-                    <MenuItem.Icon>
-                        <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource LockIcon}" />
-                    </MenuItem.Icon>
-                </MenuItem>
             </MenuItem>
         </Menu>
 
         <Button
             x:Name="HelpButton"
             Width="20"
-            Height="18"
+            Height="20"
             Padding="0"
             HorizontalAlignment="Stretch"
             VerticalContentAlignment="Stretch"
@@ -139,6 +129,7 @@
         <Button
             x:Name="SettingsButton"
             Height="20"
+            Width="20"
             Padding="0"
             Click="SettingsButton_Click"
             Focusable="False"
