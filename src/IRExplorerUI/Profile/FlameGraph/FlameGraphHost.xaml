@@ -73,11 +73,9 @@
                     </MenuItem>
                     <MenuItem Header="Instance">
                         <MenuItem
-                            Command="{Binding PreviewFunctionCommand}"
+                            Command="{Binding PreviewFunctionInstanceCommand}"
                             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                             Header="Preview Function Instance"
-                            InputGestureText="Alt+Return"
-                            IsEnabled="False"
                             ToolTip="Show a preview popup of the function ASM or source code">
                             <MenuItem.Icon>
                                 <Image
@@ -99,10 +97,9 @@
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem
-                            Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                            Command="{Binding OpenInstanceInNewTabCommand}"
                             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                             Header="Open Function Instance in New Tab"
-                            InputGestureText="Ctrl+Shift+Return"
                             ToolTip="Open the function assembly view in a new tab">
                             <MenuItem.Icon>
                                 <Image

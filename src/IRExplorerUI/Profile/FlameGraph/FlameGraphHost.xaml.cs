@@ -124,7 +124,14 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                                                      GraphViewer, Session);
     }
   });
-
+  public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
+    if (GraphViewer.SelectedNode is {HasFunction: true}) {
+      var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
+      await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function,
+                                                     $"Function {GraphViewer.SelectedNode.FunctionName}",
+                                                     GraphViewer, Session, filter);
+    }
+  });
   public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);

@@ -125,7 +125,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private double columnsListItemHeight_;
   private ProfileDocumentMarker profileMarker_;
   private bool suspendColumnVisibilityHandler_;
-  private ProfileSampleFilter instanceFilter_;
+  private ProfileSampleFilter profileFilter_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -151,7 +151,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     loadTask_ = new CancelableTaskInstance(true, Session.SessionState.RegisterCancelableTask,
                                            Session.SessionState.UnregisterCancelableTask);
     activeQueryPanels_ = new List<QueryPanel>();
-    instanceFilter_ = new ProfileSampleFilter();
+    profileFilter_ = new ProfileSampleFilter();
   }
 
   private void SetupEvents() {
@@ -313,11 +313,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public bool HasProfileInstanceFilter {
-    get => instanceFilter_ is {HasInstanceFilter:true};
+    get => profileFilter_ is {HasInstanceFilter:true};
   }
 
   public bool HasProfileThreadFilter {
-    get => instanceFilter_ is {HasThreadFilter:true};
+    get => profileFilter_ is {HasThreadFilter:true};
   }
 
   public void NotifyPropertyChanged(string propertyName) {
@@ -410,7 +410,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public void LoadSectionMinimal(ParsedIRTextSection parsedSection) {
-    TextView.EarlyLoadSectionSetup(parsedSection);
+    TextView.PreloadSection(parsedSection);
   }
 
   public async Task LoadSection(ParsedIRTextSection parsedSection) {
@@ -1164,25 +1164,17 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public async Task SwitchProfileInstanceAsync(ProfileSampleFilter instanceFilter) {
-    instanceFilter_ = instanceFilter;
-    SyncInstancesMenuWithFilter(InstancesMenu, instanceFilter);
+    profileFilter_ = instanceFilter;
+    DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, instanceFilter);
     DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, instanceFilter);
     await LoadProfileInstance();
-  }
-
-  private static void SyncInstancesMenuWithFilter(MenuItem menu, ProfileSampleFilter instanceFilter) {
-    foreach (var item in menu.Items) {
-      if(item is MenuItem menuItem  && menuItem.Tag is ProfileCallTreeNode node) {
-        menuItem.IsChecked = instanceFilter.IncludesInstance(node);
-      }
-    }
   }
 
   private async Task LoadProfileInstance() {
     UpdateProfileFilterUI();
 
     var instanceProfile = await Task.Run(
-      () => Session.ProfileData.ComputeProfile(Session.ProfileData, instanceFilter_, false));
+      () => Session.ProfileData.ComputeProfile(Session.ProfileData, profileFilter_, false));
     var funcProfile = instanceProfile.GetFunctionProfile(Section.ParentFunction);
 
     if (funcProfile == null) {
@@ -2204,13 +2196,19 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    await DocumentUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, instanceFilter_);
-    await ApplyInstanceFilter(instanceFilter_);
+    await DocumentUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, profileFilter_);
+    await ApplyInstanceFilter(profileFilter_);
   }
 
   private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    await DocumentUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, instanceFilter_);
-    await ApplyInstanceFilter(instanceFilter_);
+    await DocumentUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);
+    await ApplyInstanceFilter(profileFilter_);
+  }
+
+  private async void OpenPopupButton_Click(object sender, RoutedEventArgs e) {
+    await IRDocumentPopupInstance.ShowPreviewPopup(Section.ParentFunction,
+                                                   $"Function {Section.FormatFunctionName(Session)}",
+                                                   this, Session, profileFilter_);
   }
 }
 

@@ -193,7 +193,7 @@
                 </MenuItem>
               </MenuItem>
             </Menu>
-            <Separator Visibility="{Binding IsPreviewDocument, Converter={StaticResource InvertedBoolToVisibilityConverter}}"/>
+            <Separator />
             <Menu Margin="2,0,0,0" VerticalAlignment="Center"
 ToolTip="Select function instances to display"
                       >

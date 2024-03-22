@@ -221,6 +221,28 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       await Session.OpenProfileFunction(item.CallTreeNode, openMode);
     }
   }
+  public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
+    if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
+      var filter = new ProfileSampleFilter(item.CallTreeNode);
+      await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function,
+                                                     $"Function {item.FunctionName}",
+                                                     ItemList, session_, filter);
+    }
+  });
+  public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
+    var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+    await OpenFunction(mode);
+  });
+  public RelayCommand<object> OpenInstanceInNewTabCommand => new RelayCommand<object>(async obj => {
+    await OpenFunctionInstance(OpenSectionKind.NewTabDockRight);
+  });
+
+  private async Task OpenFunctionInstance(OpenSectionKind openMode) {
+    if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
+      var filter = new ProfileSampleFilter(item.CallTreeNode);
+      await Session.OpenProfileFunction(item.CallTreeNode, openMode, filter);
+    }
+  }
 
   public RelayCommand<object> SelectFunctionSummaryCommand => new RelayCommand<object>(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.Section);

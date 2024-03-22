@@ -136,7 +136,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private List<(IRElement, TimeSpan)> profileElements_;
   private int profileElementIndex_;
   private SourceLineProcessingResult sourceLineProfileResult_;
-  private IRDocumentColumnData sourceColumnData_;
   private bool columnsVisible_;
   private bool ignoreNextCaretEvent_;
   private bool disableCaretEvent_;
@@ -148,7 +147,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private bool isPreviewDocument_;
   private bool isSourceFileDocument_;
   private bool suspendColumnVisibilityHandler_;
-  private ProfileSampleFilter instanceFilter_;
+  private ProfileSampleFilter profileFilter_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -157,7 +156,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ShowPerformanceCounterColumns = true;
     ShowPerformanceMetricColumns = true;
     DataContext = this;
-    instanceFilter_ = new ProfileSampleFilter();
+    profileFilter_ = new ProfileSampleFilter();
   }
 
   private void SetupEvents() {
@@ -170,48 +169,15 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
   }
 
-  private void ProfileColumns_RowSelected(object sender, int line) {
-    TextView.SelectLine(line + 1);
-  }
-
-  private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
-    // For source files, compute the sum of the selected lines time.
-    if(sourceLineProfileResult_ == null) {
-      return;
-    }
-
-    int startLine = TextView.TextArea.Selection.StartPosition.Line;
-    int endLine = TextView.TextArea.Selection.EndPosition.Line;
-    var weightSum = TimeSpan.Zero;
-
-    for(int i = startLine; i<= endLine; i++) {
-      if(sourceLineProfileResult_.SourceLineWeight.TryGetValue(i, out var weight)) {
-        weightSum += weight;
-      }
-    }
-
-    if(weightSum == TimeSpan.Zero) {
-      Session.SetApplicationStatus("");
-      return;
-    }
-
-    var funcProfile = Session.ProfileData.GetFunctionProfile(TextView.Section.ParentFunction);
-    double weightPercentage = funcProfile.ScaleWeight(weightSum);
-    string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
-    Session.SetApplicationStatus(text, "Sum of time for the selected lines");
-  }
-
-  private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
-    ProfileColumns.HandleTextRegionUnfolded(e);
-  }
-
-  private void TextViewOnTextRegionFolded(object sender, FoldingSection e) {
-    ProfileColumns.HandleTextRegionFolded(e);
-  }
-
   public event PropertyChangedEventHandler PropertyChanged;
   public ISession Session { get; set; }
   public IRDocument AssociatedDocument { get; set; }
+  public IRTextSection Section => TextView.Section;
+
+  public ProfileSampleFilter ProfileFilter {
+    get => profileFilter_;
+    set => profileFilter_ = value;
+  }
 
   public bool HasProfileInfo {
     get => hasProfileInfo_;
@@ -253,11 +219,19 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     return true;
   }
 
-  public async Task<bool> LoadSection(ParsedIRTextSection parsedSection) {
+  public async Task<bool> LoadSection(ParsedIRTextSection parsedSection,
+                                      ProfileSampleFilter profileFilter = null) {
     isSourceFileDocument_ = false;
-    TextView.EarlyLoadSectionSetup(parsedSection);
     await TextView.LoadSection(parsedSection);
-    await LoadAssemblyProfile(parsedSection);
+
+    if (profileFilter != null) {
+      profileFilter_ = profileFilter;
+      await LoadAssemblyProfileInstance(parsedSection);
+    }
+    else {
+      await LoadAssemblyProfile(parsedSection);
+    }
+
     return true;
   }
 
@@ -286,7 +260,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private async Task LoadAssemblyProfileInstance(ParsedIRTextSection parsedSection) {
     UpdateProfileFilterUI();
     var instanceProfile = await Task.Run(
-      () => Session.ProfileData.ComputeProfile(Session.ProfileData, instanceFilter_, false));
+      () => Session.ProfileData.ComputeProfile(Session.ProfileData, profileFilter_, false));
     var funcProfile = instanceProfile.GetFunctionProfile(parsedSection.Section.ParentFunction);
 
     if (funcProfile == null) {
@@ -299,7 +273,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private async Task LoadSourceFileProfileInstance(IRTextSection section) {
     UpdateProfileFilterUI();
     var instanceProfile = await Task.Run(
-      () => Session.ProfileData.ComputeProfile(Session.ProfileData, instanceFilter_, false));
+      () => Session.ProfileData.ComputeProfile(Session.ProfileData, profileFilter_, false));
     var funcProfile = instanceProfile.GetFunctionProfile(section.ParentFunction);
 
     if (funcProfile == null) {
@@ -331,16 +305,17 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
 
   public bool HasProfileInstanceFilter {
-    get => instanceFilter_ is {HasInstanceFilter:true};
+    get => profileFilter_ is {HasInstanceFilter:true};
   }
 
   public bool HasProfileThreadFilter {
-    get => instanceFilter_ is {HasThreadFilter:true};
+    get => profileFilter_ is {HasThreadFilter:true};
   }
 
 
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
-                                         IRTextSection section) {
+                                         IRTextSection section,
+                                         ProfileSampleFilter profileFilter = null) {
     try {
       isSourceFileDocument_ = true;
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
@@ -356,7 +331,13 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         SelectLine(firstSourceLineIndex);
       }
 
-      await LoadSourceFileProfile(section);
+      if (profileFilter != null) {
+        profileFilter_ = profileFilter;
+        await LoadSourceFileProfileInstance(section);
+      }
+      else {
+        await LoadSourceFileProfile(section);
+      }
       return true;
     }
     catch (Exception ex) {
@@ -404,14 +385,14 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                                settings_.ColumnSettings,
                                                Session.CompilerInfo);
     // Accumulate the instruction weight for each source line.
-    sourceLineProfileResult_ = await Task.Run(async () => {
+    var sourceLineProfileResult = await Task.Run(async () => {
       var debugInfo = await Session.GetDebugInfoProvider(section.ParentFunction);
       return funcProfile.ProcessSourceLines(debugInfo, Session.CompilerInfo.IR);
     });
 
     // Create a dummy FunctionIR that has fake tuples representing each
     // source line, with the profiling data attached to the tuples.
-    var processingResult = profileMarker_.PrepareSourceLineProfile(funcProfile, TextView, sourceLineProfileResult_);
+    var processingResult = profileMarker_.PrepareSourceLineProfile(funcProfile, TextView, sourceLineProfileResult);
 
     if (processingResult == null) {
       return false;
@@ -422,7 +403,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, processingResult.Function);
-    TextView.EarlyLoadSectionSetup(dummyParsedSection);
     await TextView.LoadSection(dummyParsedSection);
 
     TextView.SuspendUpdate();
@@ -442,9 +422,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
       JumpToHottestProfiledElement();
     }
-    
+
     UpdateProfileFilterUI();
     await UpdateProfilingColumns();
+    sourceLineProfileResult_ = sourceLineProfileResult;
     return true;
   }
 
@@ -471,17 +452,17 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public async Task UpdateProfilingColumns() {
-    sourceColumnData_ = TextView.ProfileColumnData;
-    ColumnsVisible = sourceColumnData_ is {HasData: true};
+    var sourceColumnData = TextView.ProfileColumnData;
+    ColumnsVisible = sourceColumnData is {HasData: true};
 
     if (ColumnsVisible) {
       if (UseCompactProfilingColumns) {
         // Use compact mode that shows only the time column.
-        if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TimeColumnDefinition) is var timeColumn) {
+        if (sourceColumnData.GetColumn(ProfileDocumentMarker.TimeColumnDefinition) is var timeColumn) {
           timeColumn.Style.ShowIcon = OptionalColumnStyle.PartVisibility.Never;
         }
 
-        if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timePercColumn) {
+        if (sourceColumnData.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timePercColumn) {
           timePercColumn.IsVisible = false;
         }
       }
@@ -489,7 +470,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       // Hide perf counter columns.
       if (!ShowPerformanceCounterColumns ||
           !ShowPerformanceMetricColumns) {
-        foreach (var column in sourceColumnData_.Columns) {
+        foreach (var column in sourceColumnData.Columns) {
           if ((!ShowPerformanceCounterColumns && column.IsPerformanceCounter) ||
               (!ShowPerformanceMetricColumns && column.IsPerformanceMetric)) {
             column.IsVisible = false;
@@ -501,8 +482,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       ProfileColumns.Settings = settings_;
       ProfileColumns.ColumnSettings = settings_.ColumnSettings;
 
-      profileMarker_.UpdateColumnStyles(sourceColumnData_, TextView.Function, TextView);
-      await ProfileColumns.Display(sourceColumnData_, TextView);
+      profileMarker_.UpdateColumnStyles(sourceColumnData, TextView.Function, TextView);
+      await ProfileColumns.Display(sourceColumnData, TextView);
 
       profileElements_ = TextView.ProfileProcessingResult.SampledElements;
       UpdateHighlighting();
@@ -511,7 +492,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       // While doing that, disable handling the MenuItem Checked event,
       // it gets triggered when the MenuItems are temporarily removed.
       suspendColumnVisibilityHandler_ = true;
-      ProfileColumns.BuildColumnsVisibilityMenu(sourceColumnData_, ProfileViewMenu, async () => {
+      ProfileColumns.BuildColumnsVisibilityMenu(sourceColumnData, ProfileViewMenu, async () => {
         await UpdateProfilingColumns();
       });
       suspendColumnVisibilityHandler_ = false;
@@ -748,7 +729,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     sourceText_ = null;
     profileElements_ = null;
     sourceLineProfileResult_ = null;
-    sourceColumnData_ = null;
+    profileFilter_ = null;
   }
 
   private void TextViewOnScrollOffsetChanged(object? sender, EventArgs e) {
@@ -848,12 +829,59 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    await DocumentUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, instanceFilter_);
-    await ApplyInstanceFilter(instanceFilter_);
+    await DocumentUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, profileFilter_);
+    await ApplyInstanceFilter(profileFilter_);
   }
 
   private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    await DocumentUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, instanceFilter_);
-    await ApplyInstanceFilter(instanceFilter_);
+    await DocumentUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);
+    await ApplyInstanceFilter(profileFilter_);
+  }
+
+
+  private void ProfileColumns_RowSelected(object sender, int line) {
+    TextView.SelectLine(line + 1);
+  }
+
+  private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
+    // For source files, compute the sum of the selected lines time.
+    if(sourceLineProfileResult_ == null) {
+      return;
+    }
+
+    int startLine = TextView.TextArea.Selection.StartPosition.Line;
+    int endLine = TextView.TextArea.Selection.EndPosition.Line;
+    var weightSum = TimeSpan.Zero;
+
+    for(int i = startLine; i<= endLine; i++) {
+      if(sourceLineProfileResult_.SourceLineWeight.TryGetValue(i, out var weight)) {
+        weightSum += weight;
+      }
+    }
+
+    if(weightSum == TimeSpan.Zero) {
+      Session.SetApplicationStatus("");
+      return;
+    }
+
+    var funcProfile = Session.ProfileData.GetFunctionProfile(TextView.Section.ParentFunction);
+    double weightPercentage = funcProfile.ScaleWeight(weightSum);
+    string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+    Session.SetApplicationStatus(text, "Sum of time for the selected lines");
+  }
+
+  private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
+    ProfileColumns.HandleTextRegionUnfolded(e);
+  }
+
+  private void TextViewOnTextRegionFolded(object sender, FoldingSection e) {
+    ProfileColumns.HandleTextRegionFolded(e);
+  }
+
+  public async Task SwitchProfileInstanceAsync(ProfileSampleFilter instanceFilter) {
+    profileFilter_ = instanceFilter;
+    DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, instanceFilter);
+    DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, instanceFilter);
+    await ApplyInstanceFilter(instanceFilter);
   }
 }

@@ -371,6 +371,44 @@
                 Source="{StaticResource LayoutOpenNewIcon}" />
             </MenuItem.Icon>
           </MenuItem>
+          <MenuItem Header="Instance">
+                        <MenuItem
+                            Command="{Binding PreviewFunctionInstanceCommand}"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Preview Function Instance"
+                            ToolTip="Show a preview popup of the function ASM or source code">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource PeekDefinitionIcon}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem
+                            Command="{Binding OpenInstanceCommand}"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Open Function Instance"
+                            ToolTip="Open the function assembly view for only this instance of the function">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource LayoutOpenIcon}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem
+                            Command="{Binding OpenInstanceInNewTabCommand}"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Open Function Instance in New Tab"
+                            ToolTip="Open the function assembly view in a new tab">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource LayoutOpenNewIcon}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                    </MenuItem>
           <Separator />
 
           <MenuItem

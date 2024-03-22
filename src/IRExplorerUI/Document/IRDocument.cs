@@ -629,7 +629,12 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public async Task LoadSection(ParsedIRTextSection parsedSection) {
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Load section {parsedSection}");
-    SetCaretAtOffset(0);
+
+    // If the section loading is not done in two stages,
+    // run the first stage now to initialize the text view.
+    if (!duringSectionLoading_) {
+      PreloadSection(parsedSection);
+    }
 
     await ComputeElementListsAsync();
     await LateLoadSectionSetup(parsedSection);
@@ -929,17 +934,19 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     RaiseBookmarkAddedEvent(bookmark);
   }
 
-  public void EarlyLoadSectionSetup(ParsedIRTextSection parsedSection) {
+  public void PreloadSection(ParsedIRTextSection parsedSection) {
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Start setup for {parsedSection}");
     duringSectionLoading_ = true;
     Section = parsedSection.Section;
     Function = parsedSection.Function;
     ignoreNextCaretEvent_ = true;
     ClearSelectedElements();
-
     ResetRenderers();
+
+    // Replace the text in the view.
     Text = parsedSection.Text.ToString();
-    SectionText = parsedSection.Text;
+    SectionText = parsedSection.Text; // Cache raw text.
+    SetCaretAtOffset(0);
   }
 
   public IRElement GetElementAt(Point position) {

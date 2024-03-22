@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
+using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Profile;
 
@@ -237,6 +238,14 @@ static class ExtensionMethods {
   public static string FormatModuleName(this ProfileCallTreeNode node, FunctionNameFormatter nameFormatter,
                                         int maxLength = int.MaxValue) {
     return FormatName(node.ModuleName, nameFormatter, maxLength);
+  }
+
+  public static string FormatFunctionName(this IRTextFunction func, ISession session, int maxLength = int.MaxValue) {
+    return FormatName(func.Name, session.CompilerInfo.NameProvider.FormatFunctionName, maxLength);
+  }
+
+  public static string FormatFunctionName(this IRTextSection section, ISession session, int maxLength = int.MaxValue) {
+    return FormatName(section.ParentFunction.Name, session.CompilerInfo.NameProvider.FormatFunctionName, maxLength);
   }
 
   private static ItemContainer GetContainerAtPoint<ItemContainer>(this ItemsControl control, Point p)

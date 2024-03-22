@@ -435,7 +435,6 @@
 
                         <Separator />
 
-
                         <ToggleButton
                             Width="20"
                             Height="20"
@@ -445,6 +444,15 @@
                             ToolTip="Show associated pass output in this document">
                             <Image Source="{StaticResource ListIcon}" />
                         </ToggleButton>
+                        <Button
+                          Width="20"
+                          Height="20"
+                          Margin="0,0,2,0"
+                          Padding="0,0,0,0"
+                          Click="OpenPopupButton_Click"
+                          ToolTip="Open the document in a new popup window">
+                          <Image Source="{StaticResource OpenExternalIcon}" />
+                        </Button>
 
                         <ToggleButton
                             x:Name="SearchButton"
@@ -905,30 +913,6 @@
                                             Width="16"
                                             Height="16"
                                             Source="{StaticResource RemoveIcon}" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem
-                                    Command="local:DocumentCommand.PreviousBookmark"
-                                    CommandTarget="{Binding ElementName=TextView}"
-                                    Header="Previous Bookmark"
-                                    InputGestureText="Shift+F2">
-                                    <MenuItem.Icon>
-                                        <Image
-                                            Width="16"
-                                            Height="16"
-                                            Source="{StaticResource UpArrowIcon}" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem
-                                    Command="local:DocumentCommand.NextBookmark"
-                                    CommandTarget="{Binding ElementName=TextView}"
-                                    Header="Next Bookmark"
-                                    InputGestureText="F2">
-                                    <MenuItem.Icon>
-                                        <Image
-                                            Width="16"
-                                            Height="16"
-                                            Source="{StaticResource DownArrowIcon}" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <Separator />

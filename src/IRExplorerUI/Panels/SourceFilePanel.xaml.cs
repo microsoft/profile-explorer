@@ -22,6 +22,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
@@ -40,16 +41,12 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private IRTextFunction sourceFileFunc_;
   private string sourceFilePath_;
   private IRExplorerCore.IR.StackFrame currentInlinee_;
-
-  //? TODO: Remember exclusions between sessions
-  private HashSet<string> disabledSourceMappings_;
   private OptionsPanelHostWindow optionsPanelWindow_;
   private SourceFileSettings settings_;
 
   public SourceFilePanel() {
     InitializeComponent();
     DataContext = this;
-    disabledSourceMappings_ = new HashSet<string>();
   }
 
   public override ISession Session {
@@ -371,5 +368,12 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   private void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
     //ProfileTextView.CopySelectionDetails();
+  }
+
+  private async void OpenPopupButton_Click(object sender, RoutedEventArgs e) {
+    await IRDocumentPopupInstance.ShowPreviewPopup(ProfileTextView.Section.ParentFunction,
+                                                   $"Function {ProfileTextView.Section.FormatFunctionName(Session)}",
+                                                   this, Session, ProfileTextView.ProfileFilter, true);
+
   }
 }

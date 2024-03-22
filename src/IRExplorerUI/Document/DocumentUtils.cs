@@ -569,4 +569,12 @@ public static class DocumentUtils {
     var exclusiveWeightText = $"{exclusiveWeightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, funcProfile.ExclusiveWeight)})";
     return $"\nTotal time: {weightText}\nSelf time: {exclusiveWeightText}";
   }
+
+  public static void SyncInstancesMenuWithFilter(MenuItem menu, ProfileSampleFilter instanceFilter) {
+    foreach (var item in menu.Items) {
+      if(item is MenuItem menuItem  && menuItem.Tag is ProfileCallTreeNode node) {
+        menuItem.IsChecked = instanceFilter.IncludesInstance(node);
+      }
+    }
+  }
 }
