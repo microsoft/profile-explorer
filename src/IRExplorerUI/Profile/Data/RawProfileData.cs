@@ -260,7 +260,7 @@ public class RawProfileData : IDisposable {
   }
 
   public ProfileProcess GetOrCreateProcess(int id) {
-    return processes_.GetOrAddValue(id);
+    return processes_.GetOrAddValue(id, () => new ProfileProcess(id));
   }
 
   public void AddProcess(ProfileProcess process) {
@@ -707,8 +707,8 @@ public class ProcessSummaryBuilder {
     durationRef.Last = sample.Time;
   }
 
-  public void AddSample(TimeSpan sampleWeight, TimeSpan sampleTime, ProfileContext context) {
-    var process = profile_.GetOrCreateProcess(context.ProcessId);
+  public void AddSample(TimeSpan sampleWeight, TimeSpan sampleTime, int processId) {
+    var process = profile_.GetOrCreateProcess(processId);
     processSamples_.AccumulateValue(process, sampleWeight);
     totalWeight_ += sampleWeight;
 

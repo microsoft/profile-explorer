@@ -474,7 +474,7 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
     CommandLine = commandLine;
   }
 
-  public ProfileProcess(int processId, string imageFileName) : this() {
+  public ProfileProcess(int processId, string imageFileName = null) : this() {
     ProcessId = processId;
     ImageFileName = imageFileName;
   }
