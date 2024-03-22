@@ -19,6 +19,7 @@ using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
 using IRExplorerCore;
 using IRExplorerCore.IR;
+using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
 using Microsoft.Extensions.Primitives;
@@ -147,6 +148,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private bool isPreviewDocument_;
   private bool isSourceFileDocument_;
   private bool suspendColumnVisibilityHandler_;
+  private ProfileSampleFilter instanceFilter_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -155,6 +157,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ShowPerformanceCounterColumns = true;
     ShowPerformanceMetricColumns = true;
     DataContext = this;
+    instanceFilter_ = new ProfileSampleFilter();
   }
 
   private void SetupEvents() {
@@ -255,31 +258,87 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.Initialize(App.Settings.DocumentSettings, Session);
     TextView.EarlyLoadSectionSetup(parsedSection);
     await TextView.LoadSection(parsedSection);
-
-    var debugInfo = await Session.GetDebugInfoProvider(parsedSection.Section.ParentFunction);
-    await AnnotateAssemblyProfile(parsedSection, debugInfo);
+    await LoadAssemblyProfile(parsedSection);
     return true;
   }
 
-  private async Task AnnotateAssemblyProfile(ParsedIRTextSection parsedSection,
-                                             IDebugInfoProvider debugInfo) {
+  private async Task LoadAssemblyProfile(ParsedIRTextSection parsedSection,
+                                         bool reloadFilterMenus = true) {
     var funcProfile = Session.ProfileData?.GetFunctionProfile(parsedSection.Section.ParentFunction);
 
     if (funcProfile == null) {
       return;
     }
 
-    profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
-                                               settings_.ProfileMarkerSettings,
-                                               settings_.ColumnSettings, Session.CompilerInfo);
-    await profileMarker_.Mark(TextView, parsedSection.Function,
-                              parsedSection.Section.ParentFunction);
-    await UpdateProfilingColumns();
+    await MarkAssemblyProfile(parsedSection, funcProfile);
+
+    if (reloadFilterMenus) {
+      DocumentUtils.CreateInstancesMenu(InstancesMenu, parsedSection.Section, funcProfile,
+                                        InstanceMenuItem_OnClick, settings_, Session);
+      DocumentUtils.CreateThreadsMenu(ThreadsMenu, parsedSection.Section, funcProfile,
+                                      ThreadMenuItem_OnClick, settings_, Session);
+    }
 
     if (TextView.ProfileProcessingResult != null) {
       CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, true);
     }
   }
+
+  private async Task LoadAssemblyProfileInstance(ParsedIRTextSection parsedSection) {
+    UpdateProfileFilterUI();
+    var instanceProfile = await Task.Run(
+      () => Session.ProfileData.ComputeProfile(Session.ProfileData, instanceFilter_, false));
+    var funcProfile = instanceProfile.GetFunctionProfile(parsedSection.Section.ParentFunction);
+
+    if (funcProfile == null) {
+      return;
+    }
+
+    await MarkAssemblyProfile(parsedSection, funcProfile);
+  }
+
+  private async Task LoadSourceFileProfileInstance(IRTextSection section) {
+    UpdateProfileFilterUI();
+    var instanceProfile = await Task.Run(
+      () => Session.ProfileData.ComputeProfile(Session.ProfileData, instanceFilter_, false));
+    var funcProfile = instanceProfile.GetFunctionProfile(section.ParentFunction);
+
+    if (funcProfile == null) {
+      return;
+    }
+
+    await MarkSourceFileProfile(section, funcProfile);
+  }
+
+  private async Task MarkAssemblyProfile(ParsedIRTextSection parsedSection, FunctionProfileData funcProfile) {
+    profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
+                                               settings_.ProfileMarkerSettings,
+                                               settings_.ColumnSettings, Session.CompilerInfo);
+    await profileMarker_.Mark(TextView, parsedSection.Function,
+                              parsedSection.Section.ParentFunction);
+
+    if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
+      JumpToHottestProfiledElement();
+    }
+
+    UpdateProfileFilterUI();
+    await UpdateProfilingColumns();
+  }
+
+  private void UpdateProfileFilterUI() {
+    OnPropertyChanged(nameof(HasProfileInstanceFilter));
+    OnPropertyChanged(nameof(HasProfileThreadFilter));
+  }
+
+
+  public bool HasProfileInstanceFilter {
+    get => instanceFilter_ is {HasInstanceFilter:true};
+  }
+
+  public bool HasProfileThreadFilter {
+    get => instanceFilter_ is {HasThreadFilter:true};
+  }
+
 
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
                                          IRTextSection section) {
@@ -287,11 +346,18 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       isSourceFileDocument_ = true;
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
       SetSourceText(text, sourceInfo.FilePath);
-      await AnnotateSourceFileProfile(section);
 
       //? TODO: Is panel is not visible, scroll doesn't do anything,
       //? should be executed again when panel is activated
-      TextView.ScrollToLine(sourceInfo.StartLine);
+
+      var (firstSourceLineIndex, lastSourceLineIndex) =
+        await DocumentUtils.FindFunctionSourceLineRange(section.ParentFunction, Session);
+
+      if (firstSourceLineIndex != 0) {
+        SelectLine(firstSourceLineIndex);
+      }
+
+      await LoadSourceFileProfile(section);
       return true;
     }
     catch (Exception ex) {
@@ -310,13 +376,30 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     SetSourceText(text, "");
   }
 
-  private async Task AnnotateSourceFileProfile(IRTextSection section) {
+  private async Task LoadSourceFileProfile(IRTextSection section, bool reloadFilterMenus = true) {
     var funcProfile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
 
     if (funcProfile == null) {
       return;
     }
 
+    if (!(await MarkSourceFileProfile(section, funcProfile))) {
+      return;
+    }
+
+    if (reloadFilterMenus) {
+      DocumentUtils.CreateInstancesMenu(InstancesMenu, section, funcProfile,
+                                        InstanceMenuItem_OnClick, settings_, Session);
+      DocumentUtils.CreateThreadsMenu(ThreadsMenu, section, funcProfile,
+                                      ThreadMenuItem_OnClick, settings_, Session);
+    }
+
+    if (TextView.ProfileProcessingResult != null) {
+      CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, false);
+    }
+  }
+
+  private async Task<bool> MarkSourceFileProfile(IRTextSection section, FunctionProfileData funcProfile) {
     profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
                                                settings_.ProfileMarkerSettings,
                                                settings_.ColumnSettings,
@@ -332,7 +415,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var processingResult = profileMarker_.PrepareSourceLineProfile(funcProfile, TextView, sourceLineProfileResult_);
 
     if (processingResult == null) {
-      return;
+      return false;
     }
 
     if (TextView.IsLoaded) {
@@ -356,11 +439,36 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     TextView.ResumeUpdate();
-    await UpdateProfilingColumns();
 
-    if (TextView.ProfileProcessingResult != null) {
-      CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, false);
+    if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
+      JumpToHottestProfiledElement();
     }
+    
+    UpdateProfileFilterUI();
+    await UpdateProfilingColumns();
+    return true;
+  }
+
+  private async Task ApplyInstanceFilter(ProfileSampleFilter instanceFilter) {
+      if (isSourceFileDocument_) {
+        if (instanceFilter is {IncludesAll: false}) {
+          await LoadSourceFileProfileInstance(TextView.Section);
+        }
+        else {
+          await LoadSourceFileProfile(TextView.Section, false);
+        }
+      }
+      else {
+        var parsedSection = new ParsedIRTextSection(TextView.Section,
+                                                    TextView.SectionText,
+                                                    TextView.Function);
+        if (instanceFilter is {IncludesAll: false}) {
+          await LoadAssemblyProfileInstance(parsedSection);
+        }
+        else {
+          await LoadAssemblyProfile(parsedSection, false);
+        }
+      }
   }
 
   public async Task UpdateProfilingColumns() {
@@ -737,5 +845,15 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     else {
       await DocumentExporting.CopySelectedLinesAsHtml(TextView);
     }
+  }
+
+  private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    await DocumentUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, instanceFilter_);
+    await ApplyInstanceFilter(instanceFilter_);
+  }
+
+  private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    await DocumentUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, instanceFilter_);
+    await ApplyInstanceFilter(instanceFilter_);
   }
 }

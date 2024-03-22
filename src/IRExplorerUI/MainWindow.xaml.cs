@@ -748,7 +748,8 @@ public partial class MainWindow : Window, ISession {
   }
 
   private string GetDocumentTitle(IRDocumentHost document, IRTextSection section) {
-    string title = compilerInfo_.NameProvider.GetSectionName(section);
+    bool includeNumber = ProfileData == null || section.ParentFunction.SectionCount > 1;
+    string title = compilerInfo_.NameProvider.GetSectionName(section, includeNumber);
 
     if (sessionState_.SectionDiffState.IsEnabled) {
       if (sessionState_.SectionDiffState.LeftDocument == document) {
@@ -760,13 +761,32 @@ public partial class MainWindow : Window, ISession {
       }
     }
 
+    if (!string.IsNullOrEmpty(document.TitlePrefix)) {
+      title = $"{document.TitlePrefix}{title}";
+    }
+
+    if (!string.IsNullOrEmpty(document.TitleSuffix)) {
+      title = $"{title}{document.TitleSuffix}";
+    }
+
     return title;
   }
 
   private string GetDocumentDescription(IRDocumentHost document, IRTextSection section) {
     var docInfo = sessionState_.FindLoadedDocument(section);
     string funcName = compilerInfo_.NameProvider.GetFunctionName(section.ParentFunction);
-    return $"{section.ParentFunction.ParentSummary.ModuleName}!{funcName}";
+    string text = $"Module: {section.ParentFunction.ParentSummary.ModuleName}\nFunction: {funcName}";
+
+
+    if (!string.IsNullOrEmpty(document.DescriptionPrefix)) {
+      text = $"{document.DescriptionPrefix}{text}";
+    }
+
+    if (!string.IsNullOrEmpty(document.DescriptionSuffix)) {
+      text = $"{text}{document.DescriptionSuffix}";
+    }
+
+    return text;
   }
 
   private async void MenuItem_Click_1(object sender, RoutedEventArgs e) {

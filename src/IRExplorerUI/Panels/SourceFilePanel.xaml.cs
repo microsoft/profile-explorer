@@ -177,9 +177,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       return;
     }
 
-    if (await LoadSourceFileForFunction(section_.ParentFunction, true)) {
-      await JumpToFunctionStart();
-    }
+    await LoadSourceFileForFunction(section_.ParentFunction, true);
   }
 
   private void SourceFile_CopyPath(object sender, RoutedEventArgs e) {
@@ -227,24 +225,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public async Task LoadSourceFile(IRTextSection section) {
     section_ = section;
-
-    if (await LoadSourceFileForFunction(section_.ParentFunction)) {
-      await JumpToFunctionStart();
-    }
-  }
-
-  private async Task JumpToFunctionStart() {
-    if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
-      ProfileTextView.JumpToHottestProfiledElement(true);
-    }
-    else {
-      var (firstSourceLineIndex, lastSourceLineIndex) =
-        await DocumentExporting.FindFunctionSourceLineRange(section_.ParentFunction, Session);
-
-      if (firstSourceLineIndex != 0) {
-        ProfileTextView.SelectLine(firstSourceLineIndex);
-      }
-    }
+    await LoadSourceFileForFunction(section_.ParentFunction);
   }
 
   public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {

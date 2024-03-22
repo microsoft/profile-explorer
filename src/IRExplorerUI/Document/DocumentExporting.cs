@@ -88,7 +88,7 @@ public static class DocumentExporting {
   public static async Task<bool> ExportSourceAsExcelFile(IRDocument textView, string filePath) {
     var function = textView.Section.ParentFunction;
     var (firstSourceLineIndex, lastSourceLineIndex) =
-      await FindFunctionSourceLineRange(function, textView.Session);
+      await DocumentUtils.FindFunctionSourceLineRange(function, textView.Session);
 
     if (firstSourceLineIndex == 0) {
       return false;
@@ -195,7 +195,7 @@ public static class DocumentExporting {
 
     var function = textView.Section.ParentFunction;
     var (firstSourceLineIndex, lastSourceLineIndex) =
-      await FindFunctionSourceLineRange(function, textView.Session);
+      await DocumentUtils.FindFunctionSourceLineRange(function, textView.Session);
 
     var columnData = textView.ProfileColumnData;
     bool filterByLine = startLine != -1 && endLine != -1;
@@ -290,7 +290,7 @@ public static class DocumentExporting {
 
     var function = textView.Section.ParentFunction;
     var (firstSourceLineIndex, lastSourceLineIndex) =
-      await FindFunctionSourceLineRange(function, textView.Session);
+      await DocumentUtils.FindFunctionSourceLineRange(function, textView.Session);
 
     var columnData = textView.ProfileColumnData;
     int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
@@ -349,25 +349,6 @@ public static class DocumentExporting {
     }
 
     return sb.ToString();
-  }
-
-  public static async Task<(int, int)> FindFunctionSourceLineRange(IRTextFunction function, ISession session) {
-    var debugInfo = await session.GetDebugInfoProvider(function);
-    var funcProfile = session.ProfileData?.GetFunctionProfile(function);
-
-    if (debugInfo == null || funcProfile == null) {
-      return (0, 0);
-    }
-
-    int firstSourceLineIndex = 0;
-    int lastSourceLineIndex = 0;
-
-    if (debugInfo.PopulateSourceLines(funcProfile.FunctionDebugInfo)) {
-      firstSourceLineIndex = funcProfile.FunctionDebugInfo.FirstSourceLine.Line;
-      lastSourceLineIndex = funcProfile.FunctionDebugInfo.LastSourceLine.Line;
-    }
-
-    return (firstSourceLineIndex, lastSourceLineIndex);
   }
 
   public static async Task<bool> ExportFunctionAsMarkdownFile(IRDocument textView, string filePath) {

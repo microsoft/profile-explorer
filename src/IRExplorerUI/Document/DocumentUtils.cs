@@ -287,8 +287,7 @@ public static class DocumentUtils {
         break;
       }
 
-      var (title, tooltip) = GenerateInstancePreviewText(node, maxCallers, 50, 30,
-                                                         1000, 50, session);
+      var (title, tooltip) = GenerateInstancePreviewText(node, session, maxCallers);
       string text = $"({markerSettings.FormatWeightValue(null, node.Weight)})";
 
       var value = new ProfileMenuItem(text, node.Weight.Ticks, weightPercentage) {
@@ -398,7 +397,11 @@ public static class DocumentUtils {
     return index;
   }
 
-  private static (string, string)
+  public static (string Short, string Long)
+    GenerateInstancePreviewText(ProfileCallTreeNode node, ISession session, int maxCallers = int.MaxValue) {
+    return GenerateInstancePreviewText(node, maxCallers, 50, 30, 1000, 50, session);
+  }
+  private static (string Short, string Long)
     GenerateInstancePreviewText(ProfileCallTreeNode node, int maxCallers,
                                 int maxLength, int maxSingleLength,
                                 int maxCompleteLength, int maxCompleteLineLength, ISession session) {
@@ -505,5 +508,63 @@ public static class DocumentUtils {
         menuItem.IsChecked = instanceFilter.IncludesThread(threadId);
       }
     }
+  }
+
+  public static async Task<(int, int)> FindFunctionSourceLineRange(IRTextFunction function, ISession session) {
+    var debugInfo = await session.GetDebugInfoProvider(function);
+    var funcProfile = session.ProfileData?.GetFunctionProfile(function);
+
+    if (debugInfo == null || funcProfile == null) {
+      return (0, 0);
+    }
+
+    int firstSourceLineIndex = 0;
+    int lastSourceLineIndex = 0;
+
+    if (debugInfo.PopulateSourceLines(funcProfile.FunctionDebugInfo)) {
+      firstSourceLineIndex = funcProfile.FunctionDebugInfo.FirstSourceLine.Line;
+      lastSourceLineIndex = funcProfile.FunctionDebugInfo.LastSourceLine.Line;
+    }
+
+    return (firstSourceLineIndex, lastSourceLineIndex);
+  }
+
+  public static string GenerateProfileFilterDescription(ProfileSampleFilter instanceFilter, ISession session) {
+    var sb = new StringBuilder();
+
+    if (instanceFilter.HasInstanceFilter) {
+      sb.AppendLine("\n\nInstances included:");
+
+      foreach (var node in instanceFilter.FunctionInstances) {
+        sb.AppendLine($" - {DocumentUtils.GenerateInstancePreviewText(node, session).Short}");
+      }
+    }
+
+    if (instanceFilter.HasThreadFilter) {
+      sb.AppendLine("\nThreads included:");
+
+      foreach (var threadId in instanceFilter.ThreadIds) {
+        var threadInfo = session.ProfileData.FindThread(threadId);
+        string threadName = threadInfo is {HasName: true} ? threadInfo.Name : null;
+
+        if (!string.IsNullOrEmpty(threadName)) {
+          sb.AppendLine($" - {threadId} ({threadName})");
+        }
+        else {
+          sb.AppendLine($" - {threadId}");
+        }
+      }
+    }
+
+    return sb.ToString();
+  }
+
+  public static string GenerateProfileFunctionDescription(FunctionProfileData funcProfile,
+                                                          ProfileDocumentMarkerSettings settings,ISession session) {
+    var weightPerc = session.ProfileData.ScaleFunctionWeight(funcProfile.Weight);
+    var exclusiveWeightPerc = session.ProfileData.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
+    var weightText = $"{weightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, funcProfile.Weight)})";
+    var exclusiveWeightText = $"{exclusiveWeightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, funcProfile.ExclusiveWeight)})";
+    return $"\nTotal time: {weightText}\nSelf time: {exclusiveWeightText}";
   }
 }

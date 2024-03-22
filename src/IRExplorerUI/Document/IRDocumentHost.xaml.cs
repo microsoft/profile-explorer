@@ -209,6 +209,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   public event EventHandler<bool> PassOutputVisibilityChanged;
   public event PropertyChangedEventHandler PropertyChanged;
 
+  public string TitlePrefix { get; set; }
+  public string TitleSuffix { get; set; }
+
+  public string DescriptionPrefix { get; set; }
+  public string DescriptionSuffix { get; set; }
+
   public double ColumnsListItemHeight {
     get => columnsListItemHeight_;
     set {
@@ -976,9 +982,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     UpdateProfileFilterUI();
     var funcProfile = Session.ProfileData.GetFunctionProfile(Section.ParentFunction);
-    var metadataTag = Function.GetTag<AssemblyMetadataTag>();
 
-    if (funcProfile == null || metadataTag == null) {
+    if (funcProfile == null) {
       return false;
     }
 
@@ -1143,11 +1148,19 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async Task ApplyInstanceFilter(ProfileSampleFilter instanceFilter) {
     if (instanceFilter is {IncludesAll: false}) {
+      TitlePrefix = "Instance: ";
       await LoadProfileInstance();
+
+      //? TODO: Pass filter
+      await Session.OpenProfileSourceFile(Section.ParentFunction);
     }
     else {
+      TitlePrefix = "";
       await LoadProfile(false);
     }
+
+    DescriptionSuffix += DocumentUtils.GenerateProfileFilterDescription(instanceFilter, Session);
+    Session.UpdateDocumentTitles();
   }
 
   public async Task SwitchProfileInstanceAsync(ProfileSampleFilter instanceFilter) {
@@ -1171,9 +1184,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     var instanceProfile = await Task.Run(
       () => Session.ProfileData.ComputeProfile(Session.ProfileData, instanceFilter_, false));
     var funcProfile = instanceProfile.GetFunctionProfile(Section.ParentFunction);
-    var metadataTag = Function.GetTag<AssemblyMetadataTag>();
 
-    if (funcProfile == null || metadataTag == null) {
+    if (funcProfile == null) {
       return;
     }
 
@@ -1198,12 +1210,19 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
     CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
+    UpdateDocumentTitle(funcProfile);
     profileElements_ = TextView.ProfileProcessingResult.SampledElements;
     ProfileVisible = true;
 
     // Show optional columns with timing, counters, etc.
     // First remove any previous columns.
     await UpdateProfilingColumns();
+  }
+
+  private void UpdateDocumentTitle(FunctionProfileData funcProfile) {
+    // Update document tooltip.
+    DescriptionSuffix = DocumentUtils.GenerateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session);
+    Session.UpdateDocumentTitles();
   }
 
   private async Task HideProfile() {

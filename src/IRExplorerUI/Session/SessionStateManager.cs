@@ -136,7 +136,8 @@ public class DocumentHostInfo {
   }
 
   public IRDocumentHost DocumentHost { get; set; }
-  public IRDocument DocumentView => DocumentHost.TextView;
+  public IRDocument Document => DocumentHost.TextView;
+  public IRTextSection Section => Document.Section;
   public LayoutDocument Host { get; set; }
   public LayoutDocumentPane HostParent { get; set; }
   public bool IsActiveDocument { get; set; }
@@ -289,7 +290,7 @@ public class SessionStateManager : IDisposable {
       return;
     }
 
-    //? TODO: By not serializing the panel state object, 
+    //? TODO: By not serializing the panel state object,
     //? references to object in a FunctionIR could be kept around
     //? after the section is unloaded, increasing memory usage more and more
     //? when switching sections
@@ -364,7 +365,7 @@ public class SessionStateManager : IDisposable {
         state.MainDocumentId = docState.Id;
       }
 
-      // For two-document diff mode, save the document IDs 
+      // For two-document diff mode, save the document IDs
       // so they are restored properly later.
       if (IsInTwoDocumentsDiffMode) {
         if (docInfo == DiffDocument) {

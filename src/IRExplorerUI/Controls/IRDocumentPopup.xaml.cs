@@ -102,10 +102,6 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     ShowModeButtons = true;
     ShowAssembly = !settings_.ShowSourcePreviewPopup;
     await SwitchAssemblySourceMode();
-
-    if (settings_.JumpToHottestElement) {
-      ProfileTextView.JumpToHottestProfiledElement();
-    }
   }
 
   public static async Task<IRDocumentPopup> CreateNew(IRDocument document, IRElement previewedElement,

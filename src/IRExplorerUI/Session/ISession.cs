@@ -130,4 +130,5 @@ public interface ISession {
   void SetApplicationStatus(string text, string tooltip = "");
   void SetApplicationProgress(bool visible, double percentage, string title = null);
   void UpdatePanelTitles();
+  void UpdateDocumentTitles();
 }

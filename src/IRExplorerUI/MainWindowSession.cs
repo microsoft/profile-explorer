@@ -1227,8 +1227,15 @@ public partial class MainWindow : Window, ISession {
     return delayedAction;
   }
 
-  private async Task UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentHost document,
-                                                DelayedAction delayedAction = null) {
+  public void UpdateDocumentTitles() {
+    foreach (var docHostPair in sessionState_.DocumentHosts) {
+      docHostPair.Host.Title = GetDocumentTitle(docHostPair.DocumentHost, docHostPair.Section);
+      docHostPair.Host.ToolTip = GetDocumentDescription(docHostPair.DocumentHost, docHostPair.Section);
+    }
+  }
+
+private async Task UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentHost document,
+                                              DelayedAction delayedAction = null) {
     var docHostPair = FindDocumentHostPair(document);
 
     //? TODO: Can happen if the loading is slow (debug mode?)
