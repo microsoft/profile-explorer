@@ -94,20 +94,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
     // Default 1ms sampling interval.
     UpdateSamplingInterval(SampleReportingInterval);
 
-    source_.Kernel.PerfInfoCollectionStart += data => { // We don't recieve this event... why is it here?
-      if (data.SampleSource == 0) {
-        UpdateSamplingInterval(data.NewInterval);
-        samplingIntervalSet_ = true;
-      }
-    };
-
-    source_.Kernel.PerfInfoSetInterval += data => {
-      if (data.SampleSource == 0 && !samplingIntervalSet_) {
-        UpdateSamplingInterval(data.OldInterval);
-        samplingIntervalSet_ = true;
-      }
-    };
-
     // Use a dummy process summary to collect all the process info.
     var profile = new RawProfileData(tracePath_);
     var summaryBuilder = new ProcessSummaryBuilder(profile);
@@ -122,42 +108,52 @@ public sealed partial class ETWEventProcessor : IDisposable {
       profile.TraceInfo.ProfileStartTime = DateTime.Now;
     }
 
-    source_.Kernel.ProcessStartGroup += data => {
-      var proc = new ProfileProcess(data.ProcessID, data.ParentID,
-                                    data.ProcessName, data.ImageFileName,
-                                    data.CommandLine);
-      profile.AddProcess(proc);
+    ThreadPool.QueueUserWorkItem(state => {
+      progressCallback(new ProcessListProgress());
+    });
+
+    // Enable building of a thead ID -> process ID table
+    // that is used for circular traces to get the event process ID
+    // when it is not set in the trace (-1).
+    var kernel = new KernelTraceEventParser(source_, KernelTraceEventParser.
+                                              ParserTrackingOptions.ThreadToProcess);
+    source_.Process(); // Handles ThreadDCStop to build mapping.
+
+    ProfileProcess HandleProcessEvent(ProcessTraceData data) {
+      var profileProcess = profile.GetOrCreateProcess(data.ProcessID);
+      profileProcess.ProcessId = data.ProcessID;
+      profileProcess.ParentId = data.ParentID;
+      // Process name is empty, extract it from the image name.
+      profileProcess.Name = Utils.TryGetFileNameWithoutExtension(data.ImageFileName);
+      profileProcess.ImageFileName = data.ImageFileName;
+      profileProcess.CommandLine = data.CommandLine;
+      return profileProcess;
+    }
+
+    kernel.ProcessStartGroup += data => {
+      HandleProcessEvent(data);
     };
 
     // Traces with circular buffers don't have ProcessStart events,
     // extract this info from the ProcessDCStop events instead.
-    source_.Kernel.ProcessDCStop += data => {
-      var proc = profile.GetOrCreateProcess(data.ProcessID);
-      proc.ProcessId = data.ProcessID;
-      proc.ParentId = data.ParentID;
-      // Process name is empty, extract it from the image name.
-      proc.Name = Utils.TryGetFileNameWithoutExtension(data.ImageFileName);
-      proc.ImageFileName = data.ImageFileName;
-      proc.CommandLine = data.CommandLine;
+    kernel.ProcessEndGroup += data => {
+      HandleProcessEvent(data);
     };
 
-    source_.Kernel.PerfInfoSample += data => {
+    kernel.PerfInfoSample += data => {
       if (cancelableTask.IsCanceled) {
         source_.StopProcessing();
       }
 
+      // The thread ID -> process ID mapping is used internally.
       if (data.ProcessID < 0) {
         return;
       }
 
-      var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
-      int contextId = profile.AddContext(context);
-
       sampleId++;
       var sampleWeight = TimeSpan.FromMilliseconds(samplingIntervalMS_);
       var sampleTime = TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec);
-      summaryBuilder.AddSample(sampleWeight, sampleTime, context);
-      profile.ReturnContext(contextId);
+      summaryBuilder.AddSample(sampleWeight, sampleTime, data.ProcessID);
 
       // Rebuild process list and update UI from time to time.
       if (sampleId - lastReportedSample >= SampleReportingInterval) {
@@ -187,7 +183,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
     };
 
-    // Go over events and accumulate samples to build the process summary.
+    // Go again over events and accumulate samples to build the process summary.
     source_.Process();
     profile.Dispose();
     return summaryBuilder.MakeSummaries();
@@ -211,6 +207,14 @@ public sealed partial class ETWEventProcessor : IDisposable {
     var kernelStackKeyToPendingSamples = new Dictionary<ulong, List<int>>();
     var userStackKeyToPendingSamples = new Dictionary<ulong, List<int>>();
     var profile = new RawProfileData(tracePath_, handleDotNetEvents_);
+
+    // Enable building of a thead ID -> process ID table
+    // that is used for circular traces to get the event process ID
+    // when it is not set in the trace (-1).
+    var kernel = new KernelTraceEventParser(source_, KernelTraceEventParser.
+                                              ParserTrackingOptions.ThreadToProcess);
+    UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
+    source_.Process(); // Handles ThreadDCStop to build mapping.
 
     // For ETL file, the image timestamp (needed to find a binary on a symbol server)
     // can show up in the ImageID event instead the usual Kernel.ImageGroup.
@@ -242,7 +246,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
     };
 
     // Start of main ETW event handlers.
-    source_.Kernel.ProcessStartGroup += data => {
+    kernel.ProcessStartGroup += data => {
       var proc = new ProfileProcess(data.ProcessID, data.ParentID,
                                     data.ProcessName, data.ImageFileName,
                                     data.CommandLine);
@@ -259,7 +263,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
     // Traces with circular buffers don't have ProcessStart events,
     // extract this info from the ProcessDCStop events instead.
-    source_.Kernel.ProcessDCStop += data => {
+    kernel.ProcessGroup += data => {
       var proc = profile.GetOrCreateProcess(data.ProcessID);
       proc.ProcessId = data.ProcessID;
       proc.ParentId = data.ParentID;
@@ -269,7 +273,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       proc.CommandLine = data.CommandLine;
 
 #if DEBUG
-      Trace.WriteLine($"ProcessDCStop: {proc}");
+      Trace.WriteLine($"ProcessGroup {data.Opcode}: {proc}");
 #endif
       // If parent is one of the accepted processes, accept the child too.
       if (handleChildProcesses_ && IsAcceptedProcess(data.ParentID)) {
@@ -278,7 +282,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
     };
 
-    source_.Kernel.ImageGroup += data => {
+    kernel.ImageGroup += data => {
       string originalName = null;
       int timeStamp = data.TimeDateStamp;
       bool sawImageId = false;
@@ -317,7 +321,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
     };
 
-    source_.Kernel.ThreadStartGroup += data => {
+    kernel.ThreadStartGroup += data => {
       if (cancelableTask != null && cancelableTask.IsCanceled) {
         source_.StopProcessing();
       }
@@ -326,7 +330,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       profile.AddThreadToProcess(data.ProcessID, thread);
     };
 
-    source_.Kernel.ThreadSetName += data => {
+    kernel.ThreadSetName += data => {
       if (IsAcceptedProcess(data.ProcessID)) {
         var proc = profile.GetOrCreateProcess(data.ProcessID);
         var thread = proc.FindThread(data.ThreadID, profile);
@@ -337,13 +341,13 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
     };
 
-    source_.Kernel.EventTraceHeader += data => {
+    kernel.EventTraceHeader += data => {
       profile.TraceInfo.CpuSpeed = data.CPUSpeed;
       profile.TraceInfo.ProfileStartTime = data.StartTime;
       profile.TraceInfo.ProfileEndTime = data.EndTime;
     };
 
-    source_.Kernel.SystemConfigCPU += data => {
+    kernel.SystemConfigCPU += data => {
       profile.TraceInfo.PointerSize = data.PointerSize;
       profile.TraceInfo.CpuCount = data.NumberOfProcessors;
       profile.TraceInfo.ComputerName = data.ComputerName;
@@ -351,7 +355,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       profile.TraceInfo.MemorySize = data.MemSize;
     };
 
-    source_.Kernel.StackWalkStack += data => {
+    kernel.StackWalkStack += data => {
       if (!IsAcceptedProcess(data.ProcessID)) {
         return; // Ignore events from other processes.
       }
@@ -449,7 +453,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       profile.ReturnContext(contextId);
     };
 
-    source_.Kernel.StackWalkStackKeyKernel += data => {
+    kernel.StackWalkStackKeyKernel += data => {
       if (!IsAcceptedProcess(data.ProcessID)) {
         return; // Ignore events from other processes.
       }
@@ -481,7 +485,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       profile.ReturnContext(contextId);
     };
 
-    source_.Kernel.StackWalkStackKeyUser += delegate(StackWalkRefTraceData data) {
+    kernel.StackWalkStackKeyUser += delegate(StackWalkRefTraceData data) {
       if (!IsAcceptedProcess(data.ProcessID)) {
         return; // Ignore events from other processes.
       }
@@ -513,7 +517,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       profile.ReturnContext(contextId);
     };
 
-    source_.Kernel.AddCallbackForEvents(delegate(StackWalkDefTraceData data) {
+    kernel.AddCallbackForEvents(delegate(StackWalkDefTraceData data) {
       if (data.FrameCount == 0 ||
           userStackKeyToPendingSamples.Count == 0 && kernelStackKeyToPendingSamples.Count == 0) {
         return; // Ignore data that won't fulfill any pending samples
@@ -608,13 +612,13 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
     }
 
-    source_.Kernel.PerfInfoCollectionStart +=
+    kernel.PerfInfoCollectionStart +=
       data => HandlePerfInfoCollection(
         data, profile); // I haven't really seen us recieve this event - was it just a mistake?
 
-    source_.Kernel.PerfInfoCollectionEnd += data => HandlePerfInfoCollection(data, profile);
+    kernel.PerfInfoCollectionEnd += data => HandlePerfInfoCollection(data, profile);
 
-    source_.Kernel.PerfInfoSetInterval += data => {
+    kernel.PerfInfoSetInterval += data => {
       if (data.SampleSource == 0 && !samplingIntervalSet_) {
         UpdateSamplingInterval(data.OldInterval);
         profile.TraceInfo.SamplingInterval = TimeSpan.FromMilliseconds(samplingIntervalMS_);
@@ -622,7 +626,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
     };
 
-    source_.Kernel.PerfInfoSample += data => {
+    kernel.PerfInfoSample += data => {
       if (!IsAcceptedProcess(data.ProcessID)) {
         return; // Ignore events from other processes.
       }
@@ -679,7 +683,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
     };
 
-    //    source_.Kernel.ThreadCSwitch += data => {
+    //    kernel.ThreadCSwitch += data => {
     //        if (!(IsAcceptedProcess(data.OldProcessID) || IsAcceptedProcess(data.NewProcessID))) {
     //            return; // Ignore events from other processes.
     //        }
@@ -702,20 +706,20 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
     ////FileIOCreate: < Event MSec = "7331.6505" PID = "10344" PName = "threads" TID = "10392" EventName = "FileIO/Create" IrpPtr = "0xFFFFD58C43FBDB48" FileObject = "0xFFFFD58C608455D0" CreateOptions = "FILE_ATTRIBUTE_ARCHIVE, FILE_ATTRIBUTE_DEVICE" CreateDisposition = "OPEN_EXISTING" FileAttributes = "Normal" ShareAccess = "ReadWrite" FileName = "C:\test\results.log" />
     ////FileIORead: < Event MSec = "7332.1418" PID = "10344" PName = "threads" TID = "10392" EventName = "FileIO/Read" FileName = "C:\test\results.log" Offset = "53,248" IrpPtr = "0xFFFFD58C43FBDB48" FileObject = "0xFFFFD58C608455D0" FileKey = "0xFFFF8C891339EB10" IoSize = "4,096" IoFlags = "0" />
-    //                                                                                                                                                                                                                                                                                            source_.Kernel.FileIOCreate += data => {
+    //                                                                                                                                                                                                                                                                                            kernel.FileIOCreate += data => {
     //        if (!IsAcceptedProcess(data.ProcessID)) {
     //            return; // Ignore events from other processes.
     //        }
     //        Trace.WriteLine($"FileIOCreate: {data}\n");
     //    };
 
-    //    source_.Kernel.FileIOClose += data => {
+    //    kernel.FileIOClose += data => {
     //        if (!IsAcceptedProcess(data.ProcessID)) {
     //            return; // Ignore events from other processes.
     //        }
     //        Trace.WriteLine($"FileIOClose: {data}\n");
     //    };
-    //    source_.Kernel.FileIORead += data => {
+    //    kernel.FileIORead += data => {
     //        if (!IsAcceptedProcess(data.ProcessID)) {
     //            return; // Ignore events from other processes.
     //        }
@@ -726,21 +730,21 @@ public sealed partial class ETWEventProcessor : IDisposable {
     //        //    1, (short)(1));
     //        //profile.AddPerformanceCounterEvent(counterEvent);
     //    };
-    //    source_.Kernel.FileIOName+= data => {
+    //    kernel.FileIOName+= data => {
     //        if (!IsAcceptedProcess(data.ProcessID)) {
     //            return; // Ignore events from other processes.
     //        }
     //        Trace.WriteLine($"FileIOName: {data}\n");
     //    };
 
-    //    source_.Kernel.DiskIOReadInit += data => {
+    //    kernel.DiskIOReadInit += data => {
     //        if (!IsAcceptedProcess(data.ProcessID)) {
     //            return; // Ignore events from other processes.
     //        }
     //        Trace.WriteLine($"DiskIOReadInit: {data}\n");
     //    };
 
-    //    source_.Kernel.DiskIORead += data => {
+    //    kernel.DiskIORead += data => {
     //        if (!IsAcceptedProcess(data.ProcessID)) {
     //            return; // Ignore events from other processes.
     //        }
@@ -756,7 +760,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
     if (providerOptions_.IncludePerformanceCounters) {
       Trace.WriteLine("Collecting PMC events");
 
-      source_.Kernel.PerfInfoPMCSample += data => {
+      kernel.PerfInfoPMCSample += data => {
         if (!IsAcceptedProcess(data.ProcessID)) {
           return; // Ignore events from other processes.
         }
