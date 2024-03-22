@@ -255,7 +255,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public async Task<bool> LoadSection(ParsedIRTextSection parsedSection) {
     isSourceFileDocument_ = false;
-    TextView.Initialize(App.Settings.DocumentSettings, Session);
     TextView.EarlyLoadSectionSetup(parsedSection);
     await TextView.LoadSection(parsedSection);
     await LoadAssemblyProfile(parsedSection);
@@ -781,6 +780,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public void Initialize(TextViewSettingsBase settings) {
     settings_ = settings;
     ProfileViewMenu.DataContext = settings_.ColumnSettings;
+    TextView.Initialize(settings, Session);
     TextView.FontFamily = new FontFamily(settings_.FontName);
 
     if (UseSmallerFontSize) {

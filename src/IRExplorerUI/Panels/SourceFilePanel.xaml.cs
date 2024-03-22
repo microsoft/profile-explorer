@@ -66,26 +66,18 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     set {
       settings_ = value;
       sourceFileFinder_ = Session.CompilerInfo.SourceFileFinder;
-      ProfileTextView.TextView.Initialize(App.Settings.DocumentSettings, Session);
 
-      if (!settings_.SyncWithDocument) {
-        // Override font and colors.
-        ProfileTextView.TextView.FontFamily = new FontFamily(settings_.FontName);
-        ProfileTextView.TextView.FontSize = settings_.FontSize;
-        ProfileTextView.TextView.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
-        ProfileTextView.TextView.Foreground = ColorBrushes.GetBrush(settings_.TextColor);
-        ProfileTextView.Initialize(settings_);
-      }
-      else {
+      if (settings_.SyncWithDocument) {
         // Patch the settings with the document settings.
-        //? TODO: Ideally IRDocument would also accept TextViewSettingsBase,
-        //? and activate extra features only for DocumentSettings.
         var clone = settings_.Clone();
         clone.FontName = App.Settings.DocumentSettings.FontName;
         clone.FontSize = App.Settings.DocumentSettings.FontSize;
         clone.BackgroundColor = App.Settings.DocumentSettings.BackgroundColor;
         clone.TextColor = App.Settings.DocumentSettings.TextColor;
         ProfileTextView.Initialize(clone);
+      }
+      else {
+        ProfileTextView.TextView.Initialize(settings_, Session);
       }
     }
   }

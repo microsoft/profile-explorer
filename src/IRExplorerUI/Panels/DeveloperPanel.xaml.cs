@@ -16,11 +16,11 @@ using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI;
 
-public partial class IRInfoPanel : ToolPanelControl {
+public partial class DeveloperPanel : ToolPanelControl {
   private DispatcherTimer logFileTimer_;
   private string previousLogFileText_;
 
-  public IRInfoPanel() {
+  public DeveloperPanel() {
     InitializeComponent();
   }
 
