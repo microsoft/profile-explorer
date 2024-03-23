@@ -13,7 +13,6 @@ public class DocumentSettings : TextViewSettingsBase {
     Reset();
   }
 
-  [ProtoMember(2)] public bool HighlightCurrentLine { get; set; }
   [ProtoMember(3)] public bool ShowBlockFolding { get; set; }
   [ProtoMember(4)] public bool HighlightSourceDefinition { get; set; }
   [ProtoMember(5)] public bool HighlightDestinationUses { get; set; }
@@ -34,7 +33,6 @@ public class DocumentSettings : TextViewSettingsBase {
   public override void Reset() {
     base.Reset();
     InitializeReferenceMembers();
-    HighlightCurrentLine = true;
     ShowBlockFolding = true;
     HighlightSourceDefinition = true;
     HighlightDestinationUses = true;
@@ -64,7 +62,6 @@ public class DocumentSettings : TextViewSettingsBase {
   public override bool Equals(object obj) {
     return obj is DocumentSettings settings &&
            base.Equals(settings) &&
-           HighlightCurrentLine == settings.HighlightCurrentLine &&
            ShowBlockFolding == settings.ShowBlockFolding &&
            HighlightSourceDefinition == settings.HighlightSourceDefinition &&
            HighlightDestinationUses == settings.HighlightDestinationUses &&

@@ -59,6 +59,10 @@
               ShowButtonSpinner="True"
               Value="{Binding Path=FontSize, Mode=TwoWay}" />
           </StackPanel>
+          <CheckBox
+            Margin="0,4,0,2"
+            Content="Highlight current text line"
+            IsChecked="{Binding Path=HighlightCurrentLine, Mode=TwoWay}" />
 
           <Separator Margin="0,4,0,4" />
           <DockPanel IsEnabled="{Binding ElementName=SyncWithDocumentCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}">
@@ -105,6 +109,7 @@
                 VerticalAlignment="Center"
                 Text="Background color" />
             </Grid>
+            
             <Grid Margin="0,2,0,0">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="70" />
@@ -126,7 +131,27 @@
                 VerticalAlignment="Center"
                 Text="Default text color" />
             </Grid>
-
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=CurrentLineBorderColor, Mode=TwoWay}"
+                ShowDropDownButton="True"
+                UsingAlphaChannel="False" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Current line border color" />
+            </Grid>
             <Grid Margin="0,2,0,0">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="70" />

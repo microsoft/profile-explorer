@@ -198,6 +198,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private int currentExprStyleIndex_;
   private int currentExprLevel_;
   private Remark selectedRemark_;
+  private bool selectingText_;
 
   public IRDocument() {
     // Setup element tracking data structures.
@@ -846,7 +847,13 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public void SelectElement(IRElement element, bool raiseEvent = true, bool fromUICommand = false,
                             int textOffset = -1) {
-    if (Function == null) { // For source code documents.
+    if (settings_ is not DocumentSettings) { // For source code documents.
+      return;
+    }
+
+    // During a text selection, don't select more
+    // than the first clicked element.
+    if (selectingText_) {
       return;
     }
 
@@ -2708,6 +2715,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private void IRDocument_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
     HidePreviewPopup();
+    selectingText_ = false;
 
     if (ignoreNextScrollEvent_) {
       ignoreNextScrollEvent_ = false;
@@ -2731,7 +2739,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private void IRDocument_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
     Focus();
-    Keyboard.Focus(this);
     HideTemporaryUI();
   }
 
@@ -3486,7 +3493,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return;
     }
 
-    TextArea.SelectionChanged += TextAreaOnSelectionChanged;
     MouseDown += IRDocument_MouseDown;
     PreviewMouseLeftButtonDown += IRDocument_PreviewMouseLeftButtonDown;
     PreviewMouseRightButtonDown += IRDocument_PreviewMouseRightButtonDown;
@@ -3510,53 +3516,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     HideTemporaryUI();
     overlayRenderer_.MouseLeave();
   }
-
-  //? TODO: Profile hanling should be moved out of IRDocument,
-  //? handled up when a TextSelection event is fired.
-  private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
-    if (Function == null || Session.ProfileData == null) {
-      return;
-    }
-
-    // Compute the weight sum of the selected range of instructions
-    // and display it in the main status bar.
-    var funcProfile = Session.ProfileData.GetFunctionProfile(Section.ParentFunction);
-    var metadataTag = Function.GetTag<AssemblyMetadataTag>();
-    bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
-
-    if (funcProfile == null || !hasInstrOffsetMetadata) {
-      return;
-    }
-
-    var weightSum = TimeSpan.Zero;
-    int startLine = TextArea.Selection.StartPosition.Line;
-    int endLine = TextArea.Selection.EndPosition.Line;
-
-    if (startLine > endLine) {
-      // Happens when selecting bottom-up.
-      (startLine, endLine) = (endLine, startLine);
-    }
-
-    foreach (var tuple in tupleElements_) {
-      if (tuple.TextLocation.Line >= startLine &&
-          tuple.TextLocation.Line <= endLine) {
-        if (metadataTag.ElementToOffsetMap.TryGetValue(tuple, out long offset) &&
-            funcProfile.InstructionWeight.TryGetValue(offset, out var weight)) {
-          weightSum += weight;
-        }
-      }
-    }
-
-    if(weightSum == TimeSpan.Zero) {
-      Session.SetApplicationStatus("");
-      return;
-    }
-
-    double weightPercentage = funcProfile.ScaleWeight(weightSum);
-    string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
-    Session.SetApplicationStatus(text, "Sum of time for the selected instructions");
-  }
-
+  
   private void IRDocument_GiveFeedback(object sender, GiveFeedbackEventArgs e) {
     e.UseDefaultCursors = false;
     Mouse.OverrideCursor = Cursors.Arrow;
@@ -3705,11 +3665,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       }
     }
 
-    if (settings_ is not DocumentSettings docSettings) {
-      return;
-    }
-
-    if (docSettings.HighlightCurrentLine) {
+    if (settings_.HighlightCurrentLine) {
       lineHighlighter_ = new CurrentLineHighlighter(this, settings_.CurrentLineBorderColor);
       TextArea.TextView.BackgroundRenderers.Add(lineHighlighter_);
     }
@@ -3978,7 +3934,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
 
     Focus();
-    Keyboard.Focus(this);
     HideTemporaryUI();
 
     // Check if there is any overlay being clicked
@@ -3990,6 +3945,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     var element = FindPointedElement(position, out int textOffset);
     SelectElement(element, true, true, textOffset);
+    selectingText_ = true;
 
     //? TODO: This would prevent selection of text from working,
     //? but allowing it also sometimes selects a letter of the element...

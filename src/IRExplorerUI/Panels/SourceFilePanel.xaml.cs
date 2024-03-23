@@ -314,7 +314,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       //  ResetInlinee();
       //}
 
-      if (await LoadSourceFileForFunction(section_.ParentFunction)) {
+      if (await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter)) {
         ProfileTextView.SelectLine(tag.Line);
       }
     }

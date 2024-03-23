@@ -22,6 +22,7 @@ public class TextViewSettingsBase : SettingsBase {
   [ProtoMember(10)] public bool ShowBlockSeparatorLine { get; set; }
   [ProtoMember(11)] public Color BlockSeparatorColor { get; set; }
   [ProtoMember(12)] public Color CurrentLineBorderColor { get; set; }
+  [ProtoMember(13)] public bool HighlightCurrentLine { get; set; }
 
   public TextViewSettingsBase() {
     Reset();
@@ -38,6 +39,7 @@ public class TextViewSettingsBase : SettingsBase {
     SelectedValueColor = Utils.ColorFromString("#C5DEEA");
     BlockSeparatorColor = Colors.Silver;
     CurrentLineBorderColor = Colors.DimGray;
+    HighlightCurrentLine = true;
     ShowBlockSeparatorLine = true;
     ProfileMarkerSettings.Reset();
     ColumnSettings.Reset();
@@ -66,6 +68,7 @@ public class TextViewSettingsBase : SettingsBase {
            MarginBackgroundColor == settings.MarginBackgroundColor &&
            TextColor == settings.TextColor &&
            SelectedValueColor == settings.SelectedValueColor &&
+           HighlightCurrentLine == settings.HighlightCurrentLine &&
            ShowBlockSeparatorLine == settings.ShowBlockSeparatorLine &&
            BlockSeparatorColor == settings.BlockSeparatorColor &&
            CurrentLineBorderColor == settings.CurrentLineBorderColor &&
@@ -82,6 +85,7 @@ public class TextViewSettingsBase : SettingsBase {
               $"TextColor:{TextColor}\n" +
               $"SelectedValueColor:{SelectedValueColor}\n" +
               $"ShowBlockSeparatorLine:{ShowBlockSeparatorLine}\n" +
+              $"HighlightCurrentLine:{HighlightCurrentLine}\n" +
               $"BlockSeparatorColor:{BlockSeparatorColor}\n" +
               $"CurrentLineBorderColor:{CurrentLineBorderColor}\n" +
               $"ProfileMarkerSettings:{ProfileMarkerSettings}\n" +

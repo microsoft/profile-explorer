@@ -126,6 +126,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private ProfileDocumentMarker profileMarker_;
   private bool suspendColumnVisibilityHandler_;
   private ProfileSampleFilter profileFilter_;
+  private FunctionProfileData funcProfile_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -170,6 +171,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.GotKeyboardFocus += TextView_GotKeyboardFocus;
     TextView.CaretChanged += TextViewOnCaretChanged;
     TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
+    TextView.TextArea.SelectionChanged += TextAreaOnSelectionChanged;
     TextView.TextRegionFolded += TextViewOnTextRegionFolded;
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
 
@@ -569,7 +571,50 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     SyncColumnsVerticalScrollOffset(offset);
     VerticalScrollChanged?.Invoke(this, (offset, changeAmount));
   }
+  
+  private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
+    if (funcProfile_ == null) {
+      return;
+    }
 
+    // Compute the weight sum of the selected range of instructions
+    // and display it in the main status bar.
+    var metadataTag = Function.GetTag<AssemblyMetadataTag>();
+    bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+
+    if (!hasInstrOffsetMetadata) {
+      return;
+    }
+
+    var weightSum = TimeSpan.Zero;
+    int startLine = TextView.TextArea.Selection.StartPosition.Line;
+    int endLine = TextView.TextArea.Selection.EndPosition.Line;
+
+    if (startLine > endLine) {
+      // Happens when selecting bottom-up.
+      (startLine, endLine) = (endLine, startLine);
+    }
+
+    foreach (var tuple in Function.AllTuples) {
+      if (tuple.TextLocation.Line >= startLine &&
+          tuple.TextLocation.Line <= endLine) {
+        if (metadataTag.ElementToOffsetMap.TryGetValue(tuple, out long offset) &&
+            funcProfile_.InstructionWeight.TryGetValue(offset, out var weight)) {
+          weightSum += weight;
+        }
+      }
+    }
+
+    if(weightSum == TimeSpan.Zero) {
+      Session.SetApplicationStatus("");
+      return;
+    }
+
+    double weightPercentage = funcProfile_.ScaleWeight(weightSum);
+    string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+    Session.SetApplicationStatus(text, "Sum of time for the selected instructions");
+  }
+  
   private void SyncColumnsVerticalScrollOffset(double offset) {
     // Sync scrolling with the optional columns.
     if (columnsVisible_) {
@@ -981,6 +1026,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     UpdateProfileFilterUI();
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var funcProfile = Session.ProfileData.GetFunctionProfile(Section.ParentFunction);
 
     if (funcProfile == null) {
@@ -1146,8 +1192,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private async Task ApplyInstanceFilter(ProfileSampleFilter instanceFilter) {
-    if (instanceFilter is {IncludesAll: false}) {
+  private async Task ApplyProfileFilter() {
+    if (profileFilter_ is {IncludesAll: false}) {
       await LoadProfileInstance();
     }
     else {
@@ -1155,10 +1201,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     // Apply the same filter in the source file panel.
-    await Session.OpenProfileSourceFile(Section.ParentFunction, instanceFilter);
+    await Session.OpenProfileSourceFile(Section.ParentFunction, profileFilter_);
     
-    TitlePrefix = DocumentUtils.GenerateProfileFilterTitle(instanceFilter, session_);
-    DescriptionSuffix += DocumentUtils.GenerateProfileFilterDescription(instanceFilter, Session);
+    TitlePrefix = DocumentUtils.GenerateProfileFilterTitle(profileFilter_, session_);
+    DescriptionSuffix += DocumentUtils.GenerateProfileFilterDescription(profileFilter_, Session);
     Session.UpdateDocumentTitles();
   }
 
@@ -1172,6 +1218,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async Task LoadProfileInstance() {
     UpdateProfileFilterUI();
 
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var instanceProfile = await Task.Run(
       () => Session.ProfileData.ComputeProfile(Session.ProfileData, profileFilter_, false));
     var funcProfile = instanceProfile.GetFunctionProfile(Section.ParentFunction);
@@ -1198,11 +1245,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     // Redraw the flow graphs, may have loaded before the marker set the node tags.
     Session.RedrawPanels();
 
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
     CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
     UpdateDocumentTitle(funcProfile);
     profileElements_ = TextView.ProfileProcessingResult.SampledElements;
+    funcProfile_ = funcProfile;
     ProfileVisible = true;
 
     // Show optional columns with timing, counters, etc.
@@ -1238,8 +1285,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async Task<List<Remark>> FindRemarks(CancelableTask cancelableTask) {
-    var remarkProvider = Session.CompilerInfo.RemarkProvider;
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    var remarkProvider = Session.CompilerInfo.RemarkProvider;
 
     return await Task.Run(() => {
       var sections = remarkProvider.GetSectionList(Section, remarkSettings_.SectionHistoryDepth,
@@ -2196,12 +2243,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {
     await DocumentUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, profileFilter_);
-    await ApplyInstanceFilter(profileFilter_);
+    await ApplyProfileFilter();
   }
 
   private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
     await DocumentUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);
-    await ApplyInstanceFilter(profileFilter_);
+    await ApplyProfileFilter();
   }
 
   private async void OpenPopupButton_Click(object sender, RoutedEventArgs e) {
