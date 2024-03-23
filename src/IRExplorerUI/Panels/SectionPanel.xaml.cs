@@ -798,8 +798,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (obj is IRTextFunctionEx funcEx) {
-      await IRDocumentPopupInstance.ShowPreviewPopup(funcEx.Function,
-                                                     $"Function {funcEx.Name}",
+      await IRDocumentPopupInstance.ShowPreviewPopup(funcEx.Function, "", 
                                                      FunctionList, Session);
     }
   });

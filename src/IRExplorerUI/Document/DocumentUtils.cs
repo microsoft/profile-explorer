@@ -531,11 +531,23 @@ public static class DocumentUtils {
     return (firstSourceLineIndex, lastSourceLineIndex);
   }
 
+  public static string GenerateProfileFilterTitle(ProfileSampleFilter instanceFilter, ISession session) {
+    if (instanceFilter == null) {
+      return "";
+    }
+    
+    return !instanceFilter.IncludesAll ? "Instance: " : "";
+  }
+
   public static string GenerateProfileFilterDescription(ProfileSampleFilter instanceFilter, ISession session) {
-    var sb = new StringBuilder();
+    if (instanceFilter == null) {
+      return "";
+    }
+    
+    var sb = new StringBuilder("\n");
 
     if (instanceFilter.HasInstanceFilter) {
-      sb.AppendLine("\n\nInstances included:");
+      sb.AppendLine("\nInstances included:");
 
       foreach (var node in instanceFilter.FunctionInstances) {
         sb.AppendLine($" - {DocumentUtils.GenerateInstancePreviewText(node, session).Short}");
@@ -567,7 +579,7 @@ public static class DocumentUtils {
     var exclusiveWeightPerc = session.ProfileData.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
     var weightText = $"{weightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, funcProfile.Weight)})";
     var exclusiveWeightText = $"{exclusiveWeightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, funcProfile.ExclusiveWeight)})";
-    return $"\nTotal time: {weightText}\nSelf time: {exclusiveWeightText}";
+    return $"Total time: {weightText}\nSelf time: {exclusiveWeightText}";
   }
 
   public static void SyncInstancesMenuWithFilter(MenuItem menu, ProfileSampleFilter instanceFilter) {

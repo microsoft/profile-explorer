@@ -188,8 +188,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       var item = (ProfileListViewItem)hoveredItem.DataContext;
 
       if (item.CallTreeNode != null) {
-        return PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList,
-                                            $"Function {item.FunctionName}");
+        return PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList);
       }
 
       return null;
@@ -203,8 +202,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
-      await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function,
-                                                     $"Function {item.FunctionName}",
+      await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function, "",
                                                      ItemList, session_);
     }
   });
@@ -224,8 +222,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
       var filter = new ProfileSampleFilter(item.CallTreeNode);
-      await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function,
-                                                     $"Function {item.FunctionName}",
+      await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function, "",
                                                      ItemList, session_, filter);
     }
   });

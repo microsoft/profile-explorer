@@ -1148,17 +1148,16 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async Task ApplyInstanceFilter(ProfileSampleFilter instanceFilter) {
     if (instanceFilter is {IncludesAll: false}) {
-      TitlePrefix = "Instance: ";
       await LoadProfileInstance();
 
       //? TODO: Pass filter
-      await Session.OpenProfileSourceFile(Section.ParentFunction);
+      //? await Session.OpenProfileSourceFile(Section.ParentFunction);
     }
     else {
-      TitlePrefix = "";
       await LoadProfile(false);
     }
 
+    TitlePrefix = DocumentUtils.GenerateProfileFilterTitle(instanceFilter, session_);
     DescriptionSuffix += DocumentUtils.GenerateProfileFilterDescription(instanceFilter, Session);
     Session.UpdateDocumentTitles();
   }
@@ -1213,7 +1212,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private void UpdateDocumentTitle(FunctionProfileData funcProfile) {
     // Update document tooltip.
-    DescriptionSuffix = DocumentUtils.GenerateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session);
+    DescriptionSuffix = "\n" + DocumentUtils.GenerateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session);
     Session.UpdateDocumentTitles();
   }
 
@@ -2206,8 +2205,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void OpenPopupButton_Click(object sender, RoutedEventArgs e) {
-    await IRDocumentPopupInstance.ShowPreviewPopup(Section.ParentFunction,
-                                                   $"Function {Section.FormatFunctionName(Session)}",
+    await IRDocumentPopupInstance.ShowPreviewPopup(Section.ParentFunction, "",
                                                    this, Session, profileFilter_);
   }
 }

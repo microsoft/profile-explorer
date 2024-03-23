@@ -55,10 +55,12 @@
         <ToggleButton Content="ASM" Height="18" VerticalAlignment="Center"
                       IsChecked="{Binding ShowAssembly}"
                       Click="ModeToggleButton_Click"
+                      ToolTip="Show function assembly"
                       Background="{x:Null}" Padding="2,0,2,0" />
         <ToggleButton Content="Source" Height="18" VerticalAlignment="Center"
                       IsChecked="{Binding ShowSourceFile}"
                       Click="ModeToggleButton_Click"
+                      ToolTip="Show function source code"
                       Background="{x:Null}" Margin="-1,0,0,0" Padding="2,0,2,0" />
         </StackPanel>
         <Button

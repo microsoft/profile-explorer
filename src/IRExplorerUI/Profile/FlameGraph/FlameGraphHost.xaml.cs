@@ -119,16 +119,14 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   });
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
-      await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function,
-                                                     $"Function {GraphViewer.SelectedNode.FunctionName}",
+      await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function, "",
                                                      GraphViewer, Session);
     }
   });
   public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
-      await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function,
-                                                     $"Function {GraphViewer.SelectedNode.FunctionName}",
+      await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function, "",
                                                      GraphViewer, Session, filter);
     }
   });

@@ -371,8 +371,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private async void OpenPopupButton_Click(object sender, RoutedEventArgs e) {
-    await IRDocumentPopupInstance.ShowPreviewPopup(ProfileTextView.Section.ParentFunction,
-                                                   $"Function {ProfileTextView.Section.FormatFunctionName(Session)}",
+    await IRDocumentPopupInstance.ShowPreviewPopup(ProfileTextView.Section.ParentFunction, "",
                                                    this, Session, ProfileTextView.ProfileFilter, true);
 
   }

@@ -169,14 +169,24 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
   }
 
+  
+  public event EventHandler<string> TitlePrefixChanged;
+  public event EventHandler<string> TitleSuffixChanged;
+  public event EventHandler<string> DescriptionPrefixChanged;
+  public event EventHandler<string> DescriptionSuffixChanged;
   public event PropertyChangedEventHandler PropertyChanged;
+  
   public ISession Session { get; set; }
   public IRDocument AssociatedDocument { get; set; }
   public IRTextSection Section => TextView.Section;
 
   public ProfileSampleFilter ProfileFilter {
     get => profileFilter_;
-    set => profileFilter_ = value;
+    set {
+      profileFilter_ = value;
+      DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, value);
+      DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, value);
+    }
   }
 
   public bool HasProfileInfo {
@@ -225,7 +235,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     await TextView.LoadSection(parsedSection);
 
     if (profileFilter != null) {
-      profileFilter_ = profileFilter;
+      ProfileFilter = profileFilter;
       await LoadAssemblyProfileInstance(parsedSection);
     }
     else {
@@ -291,10 +301,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                               parsedSection.Section.ParentFunction);
 
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
-      JumpToHottestProfiledElement();
+      JumpToHottestProfiledElement(true);
     }
 
     UpdateProfileFilterUI();
+    UpdateProfileDescription(funcProfile);
     await UpdateProfilingColumns();
   }
 
@@ -303,6 +314,14 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     OnPropertyChanged(nameof(HasProfileThreadFilter));
   }
 
+  private void UpdateProfileDescription(FunctionProfileData funcProfile) {
+    DescriptionPrefixChanged?.Invoke(this, DocumentUtils.
+      GenerateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session));
+    TitlePrefixChanged?.Invoke(this, DocumentUtils.
+      GenerateProfileFilterTitle(profileFilter_, Session));
+    DescriptionSuffixChanged?.Invoke(this, DocumentUtils.
+      GenerateProfileFilterDescription(profileFilter_, Session));
+  }
 
   public bool HasProfileInstanceFilter {
     get => profileFilter_ is {HasInstanceFilter:true};
@@ -332,7 +351,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       }
 
       if (profileFilter != null) {
-        profileFilter_ = profileFilter;
+        ProfileFilter = profileFilter;
         await LoadSourceFileProfileInstance(section);
       }
       else {
@@ -420,10 +439,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.ResumeUpdate();
 
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
-      JumpToHottestProfiledElement();
+      JumpToHottestProfiledElement(true);
     }
 
     UpdateProfileFilterUI();
+    UpdateProfileDescription(funcProfile);
     await UpdateProfilingColumns();
     sourceLineProfileResult_ = sourceLineProfileResult;
     return true;
@@ -448,7 +468,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         else {
           await LoadAssemblyProfile(parsedSection, false);
         }
-      }
+      } 
   }
 
   public async Task UpdateProfilingColumns() {
@@ -729,7 +749,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     sourceText_ = null;
     profileElements_ = null;
     sourceLineProfileResult_ = null;
-    profileFilter_ = null;
+    ProfileFilter = new ProfileSampleFilter();
   }
 
   private void TextViewOnScrollOffsetChanged(object? sender, EventArgs e) {
@@ -879,7 +899,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public async Task SwitchProfileInstanceAsync(ProfileSampleFilter instanceFilter) {
-    profileFilter_ = instanceFilter;
+    ProfileFilter = instanceFilter;
     DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, instanceFilter);
     DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, instanceFilter);
     await ApplyInstanceFilter(instanceFilter);

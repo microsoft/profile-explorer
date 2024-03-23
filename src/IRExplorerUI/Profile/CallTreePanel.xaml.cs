@@ -209,16 +209,14 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   });
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem childInfo) {
-      await IRDocumentPopupInstance.ShowPreviewPopup(childInfo.Function,
-                                                     $"Function {childInfo.FunctionName}",
+      await IRDocumentPopupInstance.ShowPreviewPopup(childInfo.Function, "",
                                                      CallTreeList, Session);
     }
   });
   public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem childInfo) {
       var filter = new ProfileSampleFilter(childInfo.CallTreeNode);
-      await IRDocumentPopupInstance.ShowPreviewPopup(childInfo.Function,
-                                                     $"Function {childInfo.FunctionName}",
+      await IRDocumentPopupInstance.ShowPreviewPopup(childInfo.Function, "",
                                                      CallTreeList, Session, filter);
     }
   });

@@ -777,7 +777,6 @@ public partial class MainWindow : Window, ISession {
     string funcName = compilerInfo_.NameProvider.GetFunctionName(section.ParentFunction);
     string text = $"Module: {section.ParentFunction.ParentSummary.ModuleName}\nFunction: {funcName}";
 
-
     if (!string.IsNullOrEmpty(document.DescriptionPrefix)) {
       text = $"{document.DescriptionPrefix}{text}";
     }

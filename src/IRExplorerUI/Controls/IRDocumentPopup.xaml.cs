@@ -38,17 +38,37 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   public IRDocumentPopup(Point position, UIElement owner, ISession session, PreviewPopupSettings settings) {
     Debug.Assert(settings != null);
     InitializeComponent();
+    SetupEvents();
 
     settings_ = settings;
     double width = Math.Max(settings.PopupWidth, MinWidth);
     double height = Math.Max(settings.PopupHeight, MinHeight);
     Initialize(position, width, height, owner);
-
-    ProfileTextView.PreviewMouseWheel += ProfileTextViewOnMouseWheel;
+    
     PanelResizeGrip.ResizedControl = this;
     Session = session;
     owner_ = owner;
     DataContext = this;
+  }
+
+  private void SetupEvents() {
+    ProfileTextView.PreviewMouseWheel += ProfileTextViewOnMouseWheel;
+    ProfileTextView.TitlePrefixChanged += (sender, s) => {
+      TitlePrefix = s;
+      UpdatePopupTitle();
+    };
+    ProfileTextView.TitleSuffixChanged += (sender, s) => {
+      TitleSuffix = s;
+      UpdatePopupTitle();
+    };
+    ProfileTextView.DescriptionPrefixChanged += (sender, s) => {
+      DescriptionPrefix = s;
+      UpdatePopupTitle();
+    };
+    ProfileTextView.DescriptionSuffixChanged += (sender, s) => {
+      DescriptionSuffix = s;
+      UpdatePopupTitle();
+    };
   }
 
   protected override void SetPanelAccentColor(Color color) {
@@ -76,6 +96,11 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     get => panelToolTip_;
     set => SetField(ref panelToolTip_, value);
   }
+
+  public string TitlePrefix { get; set; }
+  public string TitleSuffix { get; set; }
+  public string DescriptionPrefix { get; set; }
+  public string DescriptionSuffix { get; set; }
 
   public bool ShowAssembly {
     get => !showSourceFile_;
@@ -136,7 +161,8 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       settings.PopupWidth = popup.Width;
       settings.PopupHeight = popup.Height;
     };
-
+    
+    popup.UpdatePopupTitle();
     popup.CaptureMouseWheel();
   }
 
@@ -155,22 +181,51 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private static IRDocumentPopup CreatePopup(IRTextSection section, IRElement previewedElement,
-                                             Point position,
-                                             UIElement owner, ISession session, PreviewPopupSettings settings,
-                                             string titlePrefix) {
+                                             Point position, UIElement owner, ISession session,
+                                             PreviewPopupSettings settings, string titlePrefix) {
     var popup = new IRDocumentPopup(position, owner, session, settings);
-
-    if (previewedElement != null) {
-      string elementText = Utils.MakeElementDescription(previewedElement);
-      popup.PanelTitle = !string.IsNullOrEmpty(titlePrefix) ? $"{titlePrefix}{elementText}" : elementText;
-    }
-    else {
-      popup.PanelTitle = titlePrefix;
-    }
-
-    popup.PanelToolTip = popup.Session.CompilerInfo.NameProvider.GetSectionName(section);
     popup.PreviewedElement = previewedElement;
+    popup.TitlePrefix = titlePrefix;
+    SetupNewPopup(popup, settings);
     return popup;
+  }
+  
+  private void UpdatePopupTitle() {
+    var title = GetFunctionName();
+    
+    if (PreviewedElement != null) {
+      string elementText = Utils.MakeElementDescription(PreviewedElement);
+      title = $"{title}: {elementText}";
+    }
+
+    if (!string.IsNullOrEmpty(TitlePrefix)) {
+      title = $"{TitlePrefix}{title}";
+    }
+
+    if (!string.IsNullOrEmpty(TitleSuffix)) {
+      title = $"{title}{TitleSuffix}";
+    }
+
+    var tooltip = "";
+    
+    if (!string.IsNullOrEmpty(DescriptionPrefix)) {
+      tooltip = $"{DescriptionPrefix}{tooltip}";
+    }
+
+    if (!string.IsNullOrEmpty(DescriptionSuffix)) {
+      tooltip = $"{tooltip}{DescriptionSuffix}";
+    }
+    
+    PanelTitle = title;
+    PanelToolTip = tooltip;
+  }
+
+  private string GetFunctionName() {
+    if (parsedSection_ != null) {
+      return parsedSection_.Section.ParentFunction.FormatFunctionName(session, 80);
+    }
+
+    return "";
   }
 
   private async Task InitializeFromDocument(IRDocument document, string text = null) {
