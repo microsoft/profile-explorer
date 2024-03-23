@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Shell;
 using System.Xml;
+using IRExplorerCore.SourceParser;
 using IRExplorerUI.Settings;
 
 namespace IRExplorerUI;
@@ -604,6 +605,11 @@ public partial class App : Application {
       Settings = new ApplicationSettings();
       IsFirstRun = true;
     }
+
+
+    SourceCodeParser parser = new();
+    var text = File.ReadAllText(@"C:\work\bench\bench\bench.cpp");
+    parser.Parse(text);
   }
 
   private static void FixPopupPlacement() {

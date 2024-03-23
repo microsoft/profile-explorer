@@ -36,4 +36,8 @@
 		<PackageReference Include="System.Runtime" Version="4.3.1"/>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\external\csharp-tree-sitter\csharp-tree-sitter.csproj" />
+	</ItemGroup>
+
 </Project>

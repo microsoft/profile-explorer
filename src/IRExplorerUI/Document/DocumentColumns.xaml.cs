@@ -10,8 +10,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Folding;
+using IRExplorerCore.IR;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Profile;
 
@@ -29,16 +31,20 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private int rowFilterIndex_;
   private MarkedDocument associatedDocument_;
   private OptionsPanelHostWindow optionsPanelWindow_;
+  private Dictionary<IRElement, ElementRowValue> profileDataRowsMap_;
 
   public DocumentColumns() {
     InitializeComponent();
     profileColumnHeaders_ = new List<(GridViewColumnHeader Header, GridViewColumn Column)>();
     profileDataRows_ = new List<ElementRowValue>();
     foldedTextRegions_ = new List<FoldingSection>();
+    profileDataRowsMap_ = new Dictionary<IRElement, ElementRowValue>();
   }
 
   public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
   public event EventHandler<int> RowSelected;
+  public event EventHandler<ElementRowValue> RowHoverStart;
+  public event EventHandler<ElementRowValue> RowHoverStop;
   public event PropertyChangedEventHandler PropertyChanged;
   public event EventHandler<OptionalColumn> ColumnSettingsChanged;
 
@@ -217,6 +223,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
             SetValueBorder(rowValues);
             profileDataRows_.Add(rowValues);
+            profileDataRowsMap_[tuple] = rowValues;
           }
           else {
             // No data at all, use an empty row.
@@ -262,6 +269,10 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     UpdateColumnWidths();
     ColumnsList.ItemsSource = profileRowCollection_;
     UpdateColumnsList();
+  }
+
+  public ElementRowValue GetRowValue(IRElement element) {
+    return profileDataRowsMap_.GetValueOrDefault(element);
   }
 
   private void ColumnSettingsClickHandler(object sender, RoutedEventArgs e) {
@@ -501,6 +512,18 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private void ColumnsList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
     if(ColumnsList.SelectedItem != null) {
       RowSelected?.Invoke(this, ColumnsList.SelectedIndex);
+    }
+  }
+
+  private void ListViewItem_MouseEnter(object sender, MouseEventArgs e) {
+    if (sender is ListViewItem {DataContext: ElementRowValue row}) {
+      RowHoverStart?.Invoke(this, row);
+    }
+  }
+
+  private void ListViewItem_MouseLeave(object sender, MouseEventArgs e) {
+    if (sender is ListViewItem {DataContext: ElementRowValue row}) {
+      RowHoverStop?.Invoke(this, row);
     }
   }
 }

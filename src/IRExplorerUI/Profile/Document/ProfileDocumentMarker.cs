@@ -18,6 +18,7 @@ using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
+using IRExplorerUI.Profile.Document;
 using TextLocation = IRExplorerCore.TextLocation;
 
 namespace IRExplorerUI.Profile;
@@ -40,7 +41,8 @@ public interface MarkedDocument {
 
   public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
                                                        double width, double height,
-                                                       string label = null, string tooltip = null);
+                                                       string label = null, string tooltip = null,
+                                                       bool prepend = false);
   public void RemoveElementOverlays(IRElement element, object onlyWithTag = null);
 }
 
@@ -171,13 +173,13 @@ public class ProfileDocumentMarker {
       columnData = await MarkProfiledElements(result, function, document);
       document.ProfileProcessingResult = result;
       document.ProfileColumnData = columnData;
-      
-      
+
+
       // Remove any overlays from a previous marking.
       foreach (var block in function.Blocks) {
         document.RemoveElementOverlays(block, ProfileOverlayTag);
       }
-      
+
       foreach(var tuple in function.AllTuples) {
         document.RemoveElementOverlays(tuple, ProfileOverlayTag);
       }
@@ -240,21 +242,16 @@ public class ProfileDocumentMarker {
     // For each source line, accumulate the weight of all instructions
     // mapped to that line, for both samples and performance counters.
     for (int lineNumber = result.FirstLineIndex; lineNumber <= result.LastLineIndex; lineNumber++) {
-      TupleIR dummyTuple = null;
+      var documentLine = document.GetLineByNumber(lineNumber);
+      var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
+      var  dummyTuple = MakeDummyTuple(location, documentLine);
+      lineToElementMap[lineNumber] = dummyTuple;
 
       if (result.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
-        var documentLine = document.GetLineByNumber(lineNumber);
-        var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
-        dummyTuple = MakeDummyTuple(location, documentLine);
         processingResult.SampledElements.Add((dummyTuple, lineWeight));
-        lineToElementMap[lineNumber] = dummyTuple;
       }
 
       if (result.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
-        var documentLine = document.GetLineByNumber(lineNumber);
-        var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
-        dummyTuple ??= MakeDummyTuple(location, documentLine);
-        lineToElementMap[lineNumber] = dummyTuple;
         processingResult.CounterElements.Add((dummyTuple, counters));
       }
     }
@@ -289,22 +286,28 @@ public class ProfileDocumentMarker {
 
       int order = value.ValueOrder;
       double percentage = value.ValuePercentage;
-      var color = settings.PickBackColor(column, order, percentage);
 
-      if (column.IsMainColumn && percentage >= settings.ElementWeightCutoff) {
-        elementColorPairs.Add(new ValueTuple<IRElement, Brush>(tuple, color));
-      }
+      if (value.CanShowBackgroundColor) {
+        var color = settings.PickBackColor(column, order, percentage);
 
-      // Don't override initial back color if no color is picked,
-      // mostly done for perf metrics column which have an initial back color.
-      if (!color.IsTransparent()) {
-        value.BackColor = color;
+        if (column.IsMainColumn && percentage >= settings.ElementWeightCutoff) {
+          elementColorPairs.Add(new ValueTuple<IRElement, Brush>(tuple, color));
+        }
+
+        // Don't override initial back color if no color is picked,
+        // mostly done for perf metrics column which have an initial back color.
+        if (!color.IsTransparent()) {
+          value.BackColor = color;
+        }
       }
 
       value.TextColor = settings.PickTextColor(column, order, percentage);
       value.TextWeight = settings.PickTextWeight(column, order, percentage);
 
-      value.Icon = settings.PickIcon(column, value.ValueOrder, value.ValuePercentage).Icon;
+      if (value.CanShowIcon) {
+        value.Icon = settings.PickIcon(column, value.ValueOrder, value.ValuePercentage).Icon;
+      }
+
       value.ShowPercentageBar = value.CanShowPercentageBar && // Disabled per value
                                 settings.ShowPercentageBar(column, value.ValueOrder, value.ValuePercentage);
       value.PercentageBarBackColor = settings.PickPercentageBarColor(column);
@@ -531,14 +534,7 @@ public class ProfileDocumentMarker {
       overlay.AlignmentX = HorizontalAlignment.Left;
       overlay.MarginX = -1;
       overlay.Padding = 2;
-
-      if (markOnFlowGraph) {
-        overlay.TextColor = settings_.HotBlockOverlayTextColor.AsBrush();
-        overlay.TextWeight = FontWeights.Bold;
-      }
-      else {
-        overlay.TextColor = settings_.BlockOverlayTextColor.AsBrush();
-      }
+      (overlay.TextColor, overlay.TextWeight) = settings_.PickBlockOverlayStyle(i, weightPercentage);
 
       // Mark the block itself with a color.
       document.MarkBlock(block, color, markOnFlowGraph);

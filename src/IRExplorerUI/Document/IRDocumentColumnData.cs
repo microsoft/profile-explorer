@@ -201,6 +201,8 @@ public sealed class ElementColumnValue : BindableObject {
   private FontFamily textFont_;
   private bool canShowPercentageBar_;
   private double percentageBarMaxWidth_;
+  private bool canShowBackgroundColor_;
+  private bool canShowIcon_;
 
   public ElementColumnValue(string text, long value = 0, double valueValuePercentage = 0.0,
                             int valueOrder = int.MaxValue, string tooltip = null) {
@@ -212,6 +214,8 @@ public sealed class ElementColumnValue : BindableObject {
     TextColor = Brushes.Black;
     ToolTip = tooltip;
     CanShowPercentageBar = true;
+    CanShowBackgroundColor = true;
+    CanShowIcon = true;
   }
 
   public IRElement Element { get; set; }
@@ -252,6 +256,16 @@ public sealed class ElementColumnValue : BindableObject {
   public Brush BackColor {
     get => backColor_;
     set => SetAndNotify(ref backColor_, value);
+  }
+
+  public bool CanShowBackgroundColor {
+    get => canShowBackgroundColor_;
+    set => SetAndNotify(ref canShowBackgroundColor_, value);
+  }
+
+  public bool CanShowIcon {
+    get => canShowIcon_;
+    set => SetAndNotify(ref canShowIcon_, value);
   }
 
   public ImageSource Icon {
@@ -342,6 +356,8 @@ public sealed class ElementRowValue : BindableObject {
     get => borderBrush_;
     set => SetAndNotify(ref borderBrush_, value);
   }
+
+  public object Tag { get; set; }
 
   public ElementColumnValue this[OptionalColumn column] => ColumnValues.GetValueOrNull(column);
 

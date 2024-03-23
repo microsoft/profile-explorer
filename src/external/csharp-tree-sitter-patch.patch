@@ -1,0 +1,76 @@
+diff --git forkSrcPrefix/tree-sitter/Makefile forkDstPrefix/tree-sitter/Makefile
+index 106b978079740a3ea270c2bd6b9f1dcde0cc55f7..d826bb66cbf5d6c8c9d54d0db1d4f05cf2c7a582 100644
+--- forkSrcPrefix/tree-sitter/Makefile
++++ forkDstPrefix/tree-sitter/Makefile
+@@ -3,14 +3,16 @@
+ #	Tree-Sitter Base and Common Language Parsers
+ #
+ 
+-CFLAGS=/nologo /FC /Od /Z7 /Gy /diagnostics:column /Itree-sitter/lib/include
+-LFLAGS=/def:$(@B).def /incremental:no /debug
++CFLAGS=/nologo /FC /O2 /Ob3  /Zc:inline /Gm- /Oi /Z7 /Gy /diagnostics:column /Itree-sitter/lib/include
++LFLAGS=/def:$(@B).def /incremental:no /debug /OPT:REF /OPT:ICF /LTCG
+ 
+-BIN=..\src\bin\debug\net7.0
++BIN=..\src\bin\release\net7.0
+ 
+ DLLS=\
+ 	$(BIN)/tree-sitter.dll \
+ 	$(BIN)/tree-sitter-cpp.dll \
++	$(BIN)/tree-sitter-c-sharp.dll \
++	$(BIN)/tree-sitter-rust.dll \
+ 
+ all: dirs $(DLLS)
+ 
+@@ -58,6 +60,33 @@ $(BIN)/tree-sitter-cpp-scanner.obj: tree-sitter-cpp/src/scanner.c
+ $(BIN)/tree-sitter-cpp.dll: $(BIN)/tree-sitter-cpp-parser.obj $(BIN)/tree-sitter-cpp-scanner.obj
+ 	cl /LD $(CFLAGS) /Fe:$@ $** /link $(LFLAGS)
+ 
++########
++#
++#   C#
++#
++$(BIN)/tree-sitter-c-sharp-parser.obj: tree-sitter-c-sharp/src/parser.c
++	cl $(CFLAGS) /Fo:$@ /Itree-sitter-c-sharp/src/include /c $**
++
++$(BIN)/tree-sitter-c-sharp-scanner.obj: tree-sitter-c-sharp/src/scanner.c
++	cl $(CFLAGS) /Fo:$@ /Itree-sitter-c-sharp/src/include /c $**
++
++$(BIN)/tree-sitter-c-sharp.dll: $(BIN)/tree-sitter-c-sharp-parser.obj $(BIN)/tree-sitter-c-sharp-scanner.obj
++	cl /LD $(CFLAGS) /Fe:$@ $** /link $(LFLAGS)
++
++########
++#
++#   Rust
++#
++$(BIN)/tree-sitter-rust-parser.obj: tree-sitter-rust/src/parser.c
++	cl $(CFLAGS) /Fo:$@ /Itree-sitter-rust/src/include /c $**
++
++$(BIN)/tree-sitter-rust-scanner.obj: tree-sitter-rust/src/scanner.c
++	cl $(CFLAGS) /Fo:$@ /Itree-sitter-rust/src/include /c $**
++
++$(BIN)/tree-sitter-rust.dll: $(BIN)/tree-sitter-rust-parser.obj $(BIN)/tree-sitter-rust-scanner.obj
++	cl /LD $(CFLAGS) /Fe:$@ $** /link $(LFLAGS)
++
++
+ ########
+ #
+ #	Clean
+diff --git forkSrcPrefix/tree-sitter/tree-sitter-c-sharp.def forkDstPrefix/tree-sitter/tree-sitter-c-sharp.def
+new file mode 100644
+index 0000000000000000000000000000000000000000..09e7880e9618550ba1e7875eb57b6848ef5db8a2
+--- /dev/null
++++ forkDstPrefix/tree-sitter/tree-sitter-c-sharp.def
+@@ -0,0 +1,3 @@
++LIBRARY TREE-SITTER-C-SHARP
++EXPORTS
++        tree_sitter_c_sharp
+diff --git forkSrcPrefix/tree-sitter/tree-sitter-rust.def forkDstPrefix/tree-sitter/tree-sitter-rust.def
+new file mode 100644
+index 0000000000000000000000000000000000000000..fb858b1725d2f8f567757ca5bc36ba8a0691af16
+--- /dev/null
++++ forkDstPrefix/tree-sitter/tree-sitter-rust.def
+@@ -0,0 +1,3 @@
++LIBRARY TREE-SITTER-RUST
++EXPORTS
++        tree_sitter_rust

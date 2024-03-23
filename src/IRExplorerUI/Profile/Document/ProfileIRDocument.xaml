@@ -131,7 +131,31 @@
               <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
             </Button>
             <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
-
+            <Menu Margin="2,0,0,0" VerticalAlignment="Center"
+                  ToolTip="Select function instances to display"
+            >
+              <MenuItem
+                x:Name="OutlineMenu"
+                Margin="0,0,0,0"
+                Padding="0,0,0,0"
+                Background="{Binding Path=HasProfileInstanceFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                OverridesDefaultStyle="True">
+                <MenuItem.Header>
+                  <StackPanel Orientation="Horizontal">
+                    <Image Source="{StaticResource TreeIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    <TextBlock
+                      Margin="2,0,0,0"
+                      VerticalAlignment="Bottom"
+                      Text="Outline" />
+                    <Path
+                      Margin="4,2,2,0"
+                      VerticalAlignment="Center"
+                      Data="M 0 0 L 3 3 L 6 0 Z"
+                      Fill="Black" />
+                  </StackPanel>
+                </MenuItem.Header>
+              </MenuItem>
+            </Menu>
                <Menu
               Margin="0,0,0,0"
               VerticalAlignment="Center"

@@ -164,6 +164,16 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     return PickBackColorForOrder(null, order, percentage, inverted);
   }
 
+  public (Brush, FontWeight) PickBlockOverlayStyle(int order, double percentage) {
+    return IsSignificantValue(order, percentage)
+      ? (HotBlockOverlayTextColor.AsBrush(), FontWeights.Bold)
+      : (BlockOverlayTextColor.AsBrush(), FontWeights.Normal);
+  }
+
+  public (Brush, FontWeight) PickBlockOverlayStyle(double percentage) {
+    return PickBlockOverlayStyle(int.MaxValue, percentage);
+  }
+
   public Brush PickTextColor(OptionalColumn column, int order, double percentage) {
     return !column.Style.TextColor.IsTransparent() ?
       ColorBrushes.GetBrush(column.Style.TextColor) : ColumnTextColor.AsBrush();
