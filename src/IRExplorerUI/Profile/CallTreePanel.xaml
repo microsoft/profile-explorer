@@ -376,6 +376,7 @@
                             Command="{Binding PreviewFunctionInstanceCommand}"
                             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                             Header="Preview Function Instance"
+                            InputGestureText="Alt+Shift+Return"
                             ToolTip="Show a preview popup of the function ASM or source code">
                             <MenuItem.Icon>
                                 <Image
@@ -567,6 +568,7 @@
       Command="local:CallTreeCommand.CollapseNodes"
       Modifiers="Ctrl" />
     <KeyBinding Command="{Binding PreviewFunctionCommand}" Key="Return" Modifiers="Alt" />
+    <KeyBinding Command="{Binding PreviewFunctionInstanceCommand}" Key="Return" Modifiers="Alt+Shift" />
     <KeyBinding Command="{Binding CopyFunctionNameCommand}" Key="C" Modifiers="Control+Shift" />
     <KeyBinding Command="{Binding CopyDemangledFunctionNameCommand}" Key="C" Modifiers="Control" />
     <KeyBinding Command="{Binding CopyFunctionDetailsCommand}" Key="C" Modifiers="Control+Alt" />

@@ -183,7 +183,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public ProfileSampleFilter ProfileFilter {
     get => profileFilter_;
     set {
-      profileFilter_ = value;
+      profileFilter_ = value.Clone(); // Clone to detect changes later.
       DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, value);
       DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, value);
     }
@@ -234,7 +234,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     isSourceFileDocument_ = false;
     await TextView.LoadSection(parsedSection);
 
-    if (profileFilter != null) {
+    if (profileFilter is {IncludesAll:false}) {
       ProfileFilter = profileFilter;
       await LoadAssemblyProfileInstance(parsedSection);
     }
@@ -350,7 +350,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         SelectLine(firstSourceLineIndex);
       }
 
-      if (profileFilter != null) {
+      if (profileFilter is {IncludesAll:false}) {
         ProfileFilter = profileFilter;
         await LoadSourceFileProfileInstance(section);
       }

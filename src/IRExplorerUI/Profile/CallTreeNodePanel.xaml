@@ -327,8 +327,6 @@
                                                         CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
                                                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                         Header="Preview Thread Instance"
-                                                        InputGestureText="Alt+Return"
-                                                        IsEnabled="False"
                                                         ToolTip="Show a preview popup of the function ASM or source code">
                                                         <MenuItem.Icon>
                                                             <Image
@@ -342,7 +340,6 @@
                                                         CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
                                                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                         Header="Open Thread Instance"
-                                                        InputGestureText="Ctrl+Return"
                                                         ToolTip="Open the function assembly view">
                                                         <MenuItem.Icon>
                                                             <Image
@@ -356,7 +353,6 @@
                                                         CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
                                                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                         Header="Open Thread Instance in New Tab"
-                                                        InputGestureText="Ctrl+Shift+Return"
                                                         ToolTip="Open the function assembly view in a new tab">
                                                         <MenuItem.Icon>
                                                             <Image

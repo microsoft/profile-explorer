@@ -1149,14 +1149,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async Task ApplyInstanceFilter(ProfileSampleFilter instanceFilter) {
     if (instanceFilter is {IncludesAll: false}) {
       await LoadProfileInstance();
-
-      //? TODO: Pass filter
-      //? await Session.OpenProfileSourceFile(Section.ParentFunction);
     }
     else {
       await LoadProfile(false);
     }
 
+    // Apply the same filter in the source file panel.
+    await Session.OpenProfileSourceFile(Section.ParentFunction, instanceFilter);
+    
     TitlePrefix = DocumentUtils.GenerateProfileFilterTitle(instanceFilter, session_);
     DescriptionSuffix += DocumentUtils.GenerateProfileFilterDescription(instanceFilter, Session);
     Session.UpdateDocumentTitles();

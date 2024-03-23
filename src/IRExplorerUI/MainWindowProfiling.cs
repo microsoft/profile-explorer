@@ -157,18 +157,18 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
-  public async Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node) {
+  public async Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node, ProfileSampleFilter profileFilter = null) {
     if (node.Function == null) {
       return false;
     }
 
-    return await OpenProfileSourceFile(node.Function);
+    return await OpenProfileSourceFile(node.Function, profileFilter);
   }
 
-  public async Task<bool> OpenProfileSourceFile(IRTextFunction function) {
+  public async Task<bool> OpenProfileSourceFile(IRTextFunction function, ProfileSampleFilter profileFilter = null) {
     if (FindPanel(ToolPanelKind.Source) is SourceFilePanel panel) {
       if (function.HasSections) {
-        await panel.LoadSourceFile(function.Sections[0]);
+        await panel.LoadSourceFile(function.Sections[0], profileFilter);
       }
     }
 

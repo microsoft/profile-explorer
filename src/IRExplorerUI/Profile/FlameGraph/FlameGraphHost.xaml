@@ -76,6 +76,7 @@
                             Command="{Binding PreviewFunctionInstanceCommand}"
                             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                             Header="Preview Function Instance"
+                            InputGestureText="Alt+Shift+Return"
                             ToolTip="Show a preview popup of the function ASM or source code">
                             <MenuItem.Icon>
                                 <Image
@@ -264,6 +265,10 @@
             Key="Return"
             Command="{Binding PreviewFunctionCommand}"
             Modifiers="Alt" />
+        <KeyBinding
+          Key="Return"
+          Command="{Binding PreviewFunctionInstanceCommand}"
+          Modifiers="Alt+Shift" />
         <KeyBinding
             Key="C"
             Command="{Binding CopyFunctionNameCommand}"

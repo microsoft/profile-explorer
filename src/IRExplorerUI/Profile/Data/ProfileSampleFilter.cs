@@ -62,6 +62,14 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
     ThreadIds?.Clear();
   }
 
+  public ProfileSampleFilter Clone() {
+    var clone = new ProfileSampleFilter();
+    clone.TimeRange = TimeRange;
+    clone.ThreadIds = ThreadIds.CloneList();
+    clone.FunctionInstances = FunctionInstances.CloneList();
+    return clone;
+  }
+  
   public static bool operator ==(ProfileSampleFilter left, ProfileSampleFilter right) {
     return Equals(left, right);
   }
@@ -93,6 +101,8 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
       return false;
     if (ReferenceEquals(this, other))
       return true;
-    return Equals(TimeRange, other.TimeRange) && Equals(ThreadIds, other.ThreadIds);
+    return Equals(TimeRange, other.TimeRange) &&
+           ThreadIds.AreEqual(other.ThreadIds) &&
+           FunctionInstances.AreEqual(other.FunctionInstances);
   }
 }

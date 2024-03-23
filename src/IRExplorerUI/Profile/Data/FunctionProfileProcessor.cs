@@ -19,7 +19,7 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
   private FunctionProfileProcessor(ProfileSampleFilter filter) {
     filter_ = filter;
 
-    if (filter_ != null && filter_.FunctionInstances != null) {
+    if (filter_ != null && filter_.FunctionInstances is {Count:> 0}) {
       // Compute once the list of functions on the path
       // from call tree root to the function instance node.
       filterStackFuncts_ = new List<List<IRTextFunction>>();

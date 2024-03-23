@@ -620,11 +620,12 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   }
 
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
-    //if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
-    //  await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function,
-    //                                                 $"Function {item.FunctionName}",
-    //                                                 ItemList, session_);
-    //}
+    if (((FrameworkElement)obj).DataContext is ThreadListViewItem threadItem &&
+        instancesNode_.CallTreeNode != null) {
+      var filter = new ProfileSampleFilter(threadItem.ThreadId);
+      await IRDocumentPopupInstance.ShowPreviewPopup(instancesNode_.CallTreeNode.Function, "",
+                                                     ThreadsExpander, Session, filter);
+    }
   });
   public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
     var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;

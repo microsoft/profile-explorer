@@ -10,15 +10,31 @@ namespace IRExplorerUI;
 
 public static class CollectionExtensionMethods {
   public static List<T> CloneList<T>(this List<T> list) {
+    if (list == null) {
+      return null;
+    }
+    
     return list.ConvertAll(item => item);
   }
 
   public static bool AreEqual<T>(this List<T> list, List<T> other) {
+    if (list == other) {
+      return true;
+    }
+    else if (list == null || other == null ||
+             list.Count != other.Count) {
+      return false;
+    }
+    
     return list.SequenceEqual(other);
   }
 
   public static Dictionary<TKey, TValue> CloneDictionary<TKey, TValue>(
     this Dictionary<TKey, TValue> dict) {
+    if (dict == null) {
+      return null;
+    }
+    
     var newDict = new Dictionary<TKey, TValue>(dict.Count);
 
     foreach (var item in dict) {
@@ -29,6 +45,10 @@ public static class CollectionExtensionMethods {
   }
 
   public static HashSet<T> CloneHashSet<T>(this HashSet<T> hashSet) {
+    if (hashSet == null) {
+      return null;
+    }
+    
     var newHashSet = new HashSet<T>(hashSet.Count);
 
     foreach (var item in hashSet) {

@@ -166,7 +166,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       return;
     }
 
-    await LoadSourceFileForFunction(section_.ParentFunction, true);
+    sourceFileLoaded_ = false; // Force a reload.
+    await LoadSourceFileForFunction(section_.ParentFunction, null);
   }
 
   private void SourceFile_CopyPath(object sender, RoutedEventArgs e) {
@@ -212,9 +213,9 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   public override ToolPanelKind PanelKind => ToolPanelKind.Source;
   public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
 
-  public async Task LoadSourceFile(IRTextSection section) {
+  public async Task LoadSourceFile(IRTextSection section, ProfileSampleFilter profileFilter = null) {
     section_ = section;
-    await LoadSourceFileForFunction(section_.ParentFunction);
+    await LoadSourceFileForFunction(section_.ParentFunction, profileFilter);
   }
 
   public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
@@ -223,9 +224,9 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     await LoadSourceFile(section);
   }
 
-  private async Task<bool> LoadSourceFileForFunction(IRTextFunction function, bool force = false) {
-    if (!force && sourceFileLoaded_ && sourceFileFunc_ == function) {
-      return true; // Right file already loaded.
+  private async Task<bool> LoadSourceFileForFunction(IRTextFunction function, ProfileSampleFilter profileFilter = null) {
+    if (!ShouldReloadFunction(function, profileFilter)) {
+      return true;
     }
 
     // Get the associated source file from the debug info if available,
@@ -234,7 +235,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var (sourceInfo, debugInfo) = await sourceFileFinder_.FindLocalSourceFile(function);
 
     if (!sourceInfo.IsUnknown) {
-      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_)) {
+      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter)) {
         HandleLoadedSourceFile(sourceInfo, function);
         return true;
       }
@@ -247,6 +248,23 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
     HandleMissingSourceFile(failureText);
     return false;
+  }
+
+  private bool ShouldReloadFunction(IRTextFunction function, ProfileSampleFilter profileFilter) {
+    if (!sourceFileLoaded_) {
+      return true;
+    }
+
+    if (sourceFileFunc_ != function) {
+      return true;
+    }
+
+    if (profileFilter != null) {
+      return !profileFilter.Equals(ProfileTextView.ProfileFilter);
+    }
+    else {
+      return ProfileTextView.ProfileFilter != null;
+    }
   }
 
   private void HandleLoadedSourceFile(SourceFileDebugInfo sourceInfo, IRTextFunction function) {
