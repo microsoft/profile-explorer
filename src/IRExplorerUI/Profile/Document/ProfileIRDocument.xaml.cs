@@ -171,13 +171,13 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
   }
 
-  
+
   public event EventHandler<string> TitlePrefixChanged;
   public event EventHandler<string> TitleSuffixChanged;
   public event EventHandler<string> DescriptionPrefixChanged;
   public event EventHandler<string> DescriptionSuffixChanged;
   public event PropertyChangedEventHandler PropertyChanged;
-  
+
   public ISession Session { get; set; }
   public IRDocument AssociatedDocument { get; set; }
   public IRTextSection Section => TextView.Section;
@@ -185,13 +185,16 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public ProfileSampleFilter ProfileFilter {
     get => profileFilter_;
     set {
-      profileFilter_ = value?.Clone(); // Clone to detect changes later.
-      UpdateProfileFilterUI();
-      
-      if (profileFilter_ != null) {
-        DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, value);
-        DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, value);
+      if (value == null) {
+        profileFilter_ = new ProfileSampleFilter();
       }
+      else {
+        profileFilter_ = value.Clone(); // Clone to detect changes later.
+      }
+
+      UpdateProfileFilterUI();
+      DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, value);
+      DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, value);
     }
   }
 
@@ -242,7 +245,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     // Apply profile filter if needed.
     ProfileFilter = profileFilter;
-    
+
     if (profileFilter is {IncludesAll:false}) {
       await LoadAssemblyProfileInstance(parsedSection);
     }
@@ -369,7 +372,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       else {
         await LoadSourceFileProfile(section);
       }
-      
+
       return true;
     }
     catch (Exception ex) {
@@ -463,9 +466,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     return true;
   }
 
-  private async Task ApplyInstanceFilter(ProfileSampleFilter instanceFilter) {
+  private async Task ApplyProfileFilter() {
       if (isSourceFileDocument_) {
-        if (instanceFilter is {IncludesAll: false}) {
+        if (profileFilter_ is {IncludesAll: false}) {
           await LoadSourceFileProfileInstance(TextView.Section);
         }
         else {
@@ -476,13 +479,13 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         var parsedSection = new ParsedIRTextSection(TextView.Section,
                                                     TextView.SectionText,
                                                     TextView.Function);
-        if (instanceFilter is {IncludesAll: false}) {
+        if (profileFilter_ is {IncludesAll: false}) {
           await LoadAssemblyProfileInstance(parsedSection);
         }
         else {
           await LoadAssemblyProfile(parsedSection, false);
         }
-      } 
+      }
   }
 
   public async Task UpdateProfilingColumns() {
@@ -857,13 +860,13 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    await DocumentUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, profileFilter_);
-    await ApplyInstanceFilter(profileFilter_);
+    DocumentUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, profileFilter_);
+    await ApplyProfileFilter();
   }
 
   private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    await DocumentUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);
-    await ApplyInstanceFilter(profileFilter_);
+    DocumentUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);
+    await ApplyProfileFilter();
   }
 
 
@@ -908,8 +911,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public async Task SwitchProfileInstanceAsync(ProfileSampleFilter instanceFilter) {
     ProfileFilter = instanceFilter;
-    DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, instanceFilter);
-    DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, instanceFilter);
-    await ApplyInstanceFilter(instanceFilter);
+    await ApplyProfileFilter();
   }
 }

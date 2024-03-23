@@ -571,7 +571,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     SyncColumnsVerticalScrollOffset(offset);
     VerticalScrollChanged?.Invoke(this, (offset, changeAmount));
   }
-  
+
   private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
     if (funcProfile_ == null) {
       return;
@@ -614,7 +614,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
     Session.SetApplicationStatus(text, "Sum of time for the selected instructions");
   }
-  
+
   private void SyncColumnsVerticalScrollOffset(double offset) {
     // Sync scrolling with the optional columns.
     if (columnsVisible_) {
@@ -1202,7 +1202,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     // Apply the same filter in the source file panel.
     await Session.OpenProfileSourceFile(Section.ParentFunction, profileFilter_);
-    
+
     TitlePrefix = DocumentUtils.GenerateProfileFilterTitle(profileFilter_, session_);
     DescriptionSuffix += DocumentUtils.GenerateProfileFilterDescription(profileFilter_, Session);
     Session.UpdateDocumentTitles();
@@ -2242,12 +2242,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    await DocumentUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, profileFilter_);
+    DocumentUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, profileFilter_);
     await ApplyProfileFilter();
   }
 
   private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    await DocumentUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);
+    DocumentUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);
     await ApplyProfileFilter();
   }
 

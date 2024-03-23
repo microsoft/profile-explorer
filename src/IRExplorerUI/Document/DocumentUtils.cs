@@ -460,8 +460,8 @@ public static class DocumentUtils {
     return (sb.ToString(), completeSb.ToString());
   }
 
-  public static async Task HandleInstanceMenuItemChanged(MenuItem menuItem, MenuItem menu,
-                                                         ProfileSampleFilter instanceFilter) {
+  public static void HandleInstanceMenuItemChanged(MenuItem menuItem, MenuItem menu,
+                                                   ProfileSampleFilter instanceFilter) {
     if (menuItem.Tag is ProfileCallTreeNode node) {
       instanceFilter ??= new ProfileSampleFilter();
 
@@ -478,8 +478,8 @@ public static class DocumentUtils {
     }
   }
 
-  public static async Task HandleThreadMenuItemChanged(MenuItem menuItem, MenuItem menu,
-                                                       ProfileSampleFilter instanceFilter) {
+  public static void HandleThreadMenuItemChanged(MenuItem menuItem, MenuItem menu,
+                                                 ProfileSampleFilter instanceFilter) {
     if (menuItem.Tag is int threadId) {
       instanceFilter ??= new ProfileSampleFilter();
 
@@ -507,7 +507,7 @@ public static class DocumentUtils {
   public static void SyncThreadsMenuWithFilter(MenuItem menu, ProfileSampleFilter instanceFilter) {
     foreach (var item in menu.Items) {
       if (item is MenuItem menuItem && menuItem.Tag is int threadId) {
-        menuItem.IsChecked = instanceFilter.IncludesThread(threadId);
+        menuItem.IsChecked = instanceFilter != null && instanceFilter.IncludesThread(threadId);
       }
     }
   }
@@ -535,7 +535,7 @@ public static class DocumentUtils {
     if (instanceFilter == null) {
       return "";
     }
-    
+
     return !instanceFilter.IncludesAll ? "Instance: " : "";
   }
 
@@ -543,7 +543,7 @@ public static class DocumentUtils {
     if (instanceFilter == null) {
       return "";
     }
-    
+
     var sb = new StringBuilder("\n");
 
     if (instanceFilter.HasInstanceFilter) {
@@ -585,7 +585,7 @@ public static class DocumentUtils {
   public static void SyncInstancesMenuWithFilter(MenuItem menu, ProfileSampleFilter instanceFilter) {
     foreach (var item in menu.Items) {
       if(item is MenuItem menuItem  && menuItem.Tag is ProfileCallTreeNode node) {
-        menuItem.IsChecked = instanceFilter.IncludesInstance(node);
+        menuItem.IsChecked =  instanceFilter != null && instanceFilter.IncludesInstance(node);
       }
     }
   }
