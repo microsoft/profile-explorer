@@ -136,6 +136,7 @@
                         <Button
                             Command="local:DocumentHostCommand.ShowSectionList"
                             CommandTarget="{Binding ElementName=TextView}"
+                            Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
                             ToolTip="Switch to section (Alt+S)">
                             <Image
                                 Width="16"
@@ -145,6 +146,7 @@
                         <Button
                             Command="local:DocumentHostCommand.PreviousSection"
                             CommandTarget="{Binding ElementName=TextView}"
+                            Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
                             ToolTip="Switch to previous section (Ctrl+P)">
                             <Image
                                 Width="16"
@@ -154,13 +156,14 @@
                         <Button
                             Command="local:DocumentHostCommand.NextSection"
                             CommandTarget="{Binding ElementName=TextView}"
+                            Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
                             ToolTip="Switch to next section (Ctrl+N)">
                             <Image
                                 Width="16"
                                 Height="16"
                                 Source="{StaticResource RightArrowIcon}" />
                         </Button>
-                        <Separator />
+                        <Separator Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}"/>
 
                         <TextBlock
                             Margin="4,0,0,0"
@@ -573,7 +576,6 @@
                                         x:Name="InlineesMenu"
                                         Margin="0,0,0,0"
                                         Padding="0,0,0,0"
-                                        Background="{Binding Path=HasProfileInstanceFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
                                         OverridesDefaultStyle="True">
                                         <MenuItem.Header>
                                             <StackPanel Orientation="Horizontal">
@@ -611,70 +613,6 @@
                                 </Button>
                                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
 
-                                <Menu
-                                    Margin="0,0,0,0"
-                                    VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                                    Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                                    <MenuItem
-                                        Padding="0,0,0,0"
-                                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                                        BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                                        OverridesDefaultStyle="True"
-                                        ToolTip="Export function list">
-                                        <MenuItem.Header>
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock
-                                                    Margin="2,0,0,0"
-                                                    VerticalAlignment="Bottom"
-                                                    Text="Export" />
-                                                <Path
-                                                    Margin="4,2,2,0"
-                                                    VerticalAlignment="Center"
-                                                    Data="M 0 0 L 3 3 L 6 0 Z"
-                                                    Fill="Black" />
-                                            </StackPanel>
-                                        </MenuItem.Header>
-                                        <MenuItem
-                                            Command="local:DocumentHostCommand.ExportFunctionProfile"
-                                            CommandTarget="{Binding ElementName=TextView}"
-                                            Header="Export as Excel worksheet"
-                                            ToolTip="Save the list of functions and additional columns as an Excel worksheet">
-                                            <MenuItem.Icon>
-                                                <Image
-                                                    Width="16"
-                                                    Height="16"
-                                                    Source="{StaticResource ExcelIcon}" />
-                                            </MenuItem.Icon>
-                                        </MenuItem>
-                                        <MenuItem
-                                            Command="local:DocumentHostCommand.ExportFunctionProfileHTML"
-                                            CommandTarget="{Binding ElementName=TextView}"
-                                            Header="Export as HTML page"
-                                            ToolTip="Save the list of functions and additional columns as an HTML page">
-                                            <MenuItem.Icon>
-                                                <Image
-                                                    Width="16"
-                                                    Height="16"
-                                                    Source="{StaticResource SourceIcon}" />
-                                            </MenuItem.Icon>
-                                        </MenuItem>
-                                        <MenuItem
-                                            Command="local:DocumentHostCommand.ExportFunctionProfileMarkdown"
-                                            CommandTarget="{Binding ElementName=TextView}"
-                                            Header="Export as Markdown file"
-                                            ToolTip="Save the list of functions and additional columns as a Markdown file">
-                                            <MenuItem.Icon>
-                                                <Image
-                                                    Width="16"
-                                                    Height="16"
-                                                    Source="{StaticResource DocumentIcon}" />
-                                            </MenuItem.Icon>
-                                        </MenuItem>
-                                    </MenuItem>
-                                </Menu>
-
-                                <Separator />
                                 <Menu Margin="2,0,0,0" VerticalAlignment="Center"
                 ToolTip="Select function instances to display"
                                       >
@@ -738,6 +676,68 @@
                                     </MenuItem>
                                 </Menu>
                                 <Separator />
+                                 <Menu
+                                    Margin="0,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                    Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <MenuItem
+                                        Padding="0,0,0,0"
+                                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                        BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                        OverridesDefaultStyle="True"
+                                        ToolTip="Export function list">
+                                        <MenuItem.Header>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock
+                                                    Margin="2,0,0,0"
+                                                    VerticalAlignment="Bottom"
+                                                    Text="Export" />
+                                                <Path
+                                                    Margin="4,2,2,0"
+                                                    VerticalAlignment="Center"
+                                                    Data="M 0 0 L 3 3 L 6 0 Z"
+                                                    Fill="Black" />
+                                            </StackPanel>
+                                        </MenuItem.Header>
+                                        <MenuItem
+                                            Command="local:DocumentHostCommand.ExportFunctionProfile"
+                                            CommandTarget="{Binding ElementName=TextView}"
+                                            Header="Export as Excel worksheet"
+                                            ToolTip="Save the list of functions and additional columns as an Excel worksheet">
+                                            <MenuItem.Icon>
+                                                <Image
+                                                    Width="16"
+                                                    Height="16"
+                                                    Source="{StaticResource ExcelIcon}" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem
+                                            Command="local:DocumentHostCommand.ExportFunctionProfileHTML"
+                                            CommandTarget="{Binding ElementName=TextView}"
+                                            Header="Export as HTML page"
+                                            ToolTip="Save the list of functions and additional columns as an HTML page">
+                                            <MenuItem.Icon>
+                                                <Image
+                                                    Width="16"
+                                                    Height="16"
+                                                    Source="{StaticResource SourceIcon}" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem
+                                            Command="local:DocumentHostCommand.ExportFunctionProfileMarkdown"
+                                            CommandTarget="{Binding ElementName=TextView}"
+                                            Header="Export as Markdown file"
+                                            ToolTip="Save the list of functions and additional columns as a Markdown file">
+                                            <MenuItem.Icon>
+                                                <Image
+                                                    Width="16"
+                                                    Height="16"
+                                                    Source="{StaticResource DocumentIcon}" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </MenuItem>
+                                </Menu>
                                 <Menu Margin="2,0,0,0" VerticalAlignment="Center"
                                       ToolTip="Configure displayed profiling columns">
                                     <MenuItem

@@ -40,11 +40,13 @@
         VerticalAlignment="Top"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
         BorderThickness="0,0,1,0">
-        <Grid>
+        <Grid x:Name="Margin"
+              Background="{Binding MarginBackColor}"
+              MouseDown="Margin_MouseDown">
           <CheckBox
           Width="14"
           Height="14"
-          Margin="4,2,0,0"
+          Margin="4,1,0,0"
           Padding="0"
           HorizontalAlignment="Left"
           VerticalAlignment="Top"
@@ -54,7 +56,7 @@
           <Grid
             Width="18"
             Height="18"
-            Margin="20,0,0,0"
+            Margin="20,-1,0,0"
             VerticalAlignment="Top"
             HorizontalAlignment="Left"
             PreviewMouseLeftButtonDown="ThreadContextMenuButton_Click"
@@ -81,7 +83,7 @@
             ToolTip="Thread weight" />
           <TextBlock
             MaxWidth="130"
-            Margin="4,12,0,0"
+            Margin="4,13,0,0"
             HorizontalAlignment="Left"
             FontSize="10"
             Text="{Binding ThreadName, ElementName=ActivityHost, Converter={StaticResource PercentageConverter}}"

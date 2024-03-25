@@ -408,7 +408,7 @@ public static class DocumentUtils {
 
       var title = node.InlineeFrame.Function.FormatFunctionName(session, 80);
       string text = $"({markerSettings.FormatWeightValue(null, node.ExclusiveWeight)})";
-      string tooltip = $"{Utils.TryGetFileName(node.InlineeFrame.FilePath)}:{node.InlineeFrame.Line}";
+      string tooltip = $"File {Utils.TryGetFileName(node.InlineeFrame.FilePath)}:{node.InlineeFrame.Line}\n";
       tooltip += GenerateInlineeFunctionDescription(node, settings.ProfileMarkerSettings, session);
       
       var value = new ProfileMenuItem(text, node.ExclusiveWeight.Ticks, weightPercentage) {
