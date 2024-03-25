@@ -274,13 +274,13 @@ public sealed class ProfileCallTree {
       //funcLock_.ExitReadLock();
     }
 
-    return null;
+    return new();
   }
 
   public List<ProfileCallTreeNode> GetSortedCallTreeNodes(IRTextFunction function) {
     var nodeList = GetCallTreeNodes(function);
 
-    if (nodeList == null) {
+    if (nodeList.Count < 2) {
       return nodeList;
     }
 

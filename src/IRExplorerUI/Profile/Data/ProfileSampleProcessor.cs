@@ -47,7 +47,7 @@ public abstract class ProfileSampleProcessor {
       // by going through the thread sample ranges.
       var ranges = profile.ThreadSampleRanges.Ranges[-1];
 
-      if (filter.ThreadIds != null && filter.ThreadIds.Count == 1) {
+      if (filter.HasThreadFilter && filter.ThreadIds.Count == 1) {
         ranges = profile.ThreadSampleRanges.Ranges[filter.ThreadIds[0]];
         // Trace.WriteLine($"Filter single thread with {ranges.Count} ranges");
       }
@@ -68,6 +68,8 @@ public abstract class ProfileSampleProcessor {
         }
 
         // Walk each sample in the range and update the function profile.
+        bool hasThreadFilter = filter.HasThreadFilter;
+        
         for (int k = startRangeIndex; k <= endRangeIndex; k++) {
           var range = ranges[k];
           int startIndex = Math.Max(start, range.StartIndex);
@@ -76,7 +78,7 @@ public abstract class ProfileSampleProcessor {
           for (int i = startIndex; i < endIndex; i++) {
             var (sample, stack) = profile.Samples[i];
 
-            if (filter.ThreadIds != null &&
+            if (hasThreadFilter &&
                 !filter.ThreadIds.Contains(stack.Context.ThreadId)) {
               continue;
             }

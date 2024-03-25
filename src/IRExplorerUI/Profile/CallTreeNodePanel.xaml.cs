@@ -48,13 +48,13 @@ public class ProfileCallTreeNodeEx : BindableObject {
   public TimeSpan ExclusiveWeight => CallTreeNode.ExclusiveWeight;
 }
 
-public class ThreadListViewItem {
+public class ThreadListItem {
   public int ThreadId { get; set; }
   public string Title { get; set; }
   public string ToolTip { get; set; }
   public string WeightToolTip { get; set; }
-  public virtual TimeSpan Weight { get; set; }
-  public virtual TimeSpan ExclusiveWeight { get; set; }
+  public TimeSpan Weight { get; set; }
+  public TimeSpan ExclusiveWeight { get; set; }
   public double Percentage { get; set; }
   public double ExclusivePercentage { get; set; }
   public Brush Background { get; set; }
@@ -314,7 +314,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
   private void SetupThreadList(ProfileCallTreeNode node) {
     var threadList = node.SortedByWeightPerThreadWeights;
-    var itemsList = new List<ThreadListViewItem>();
+    var itemsList = new List<ThreadListItem>();
 
     foreach (var item in threadList) {;
       var threadInfo = Session.ProfileData.FindThread(item.ThreadId);
@@ -327,7 +327,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       double selfThreadPercentage = node.ExclusiveWeight.Ticks > 0 ?
         (double)item.Values.ExclusiveWeight.Ticks / node.ExclusiveWeight.Ticks : 0;
 
-      itemsList.Add(new ThreadListViewItem() {
+      itemsList.Add(new ThreadListItem() {
         ThreadId = item.ThreadId,
         Title = $"{item.ThreadId}",
         ToolTip = threadInfo != null ? threadInfo.Name : null,
@@ -576,12 +576,12 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   private async void ThreadListItem_MouseDown(object sender, MouseButtonEventArgs e) {
     if (e.LeftButton == MouseButtonState.Pressed &&
         e.ClickCount >= 2) {
-      var threadItem = ((FrameworkElement)sender).DataContext as ThreadListViewItem;
+      var threadItem = ((FrameworkElement)sender).DataContext as ThreadListItem;
       await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToThread);
     }
   }
 
-  private async Task ApplyThreadFilterAction(ThreadListViewItem threadItem, ThreadActivityAction action) {
+  private async Task ApplyThreadFilterAction(ThreadListItem threadItem, ThreadActivityAction action) {
     if (Session.FindPanel(ToolPanelKind.Timeline) is TimelinePanel timelinePanel && threadItem != null) {
       await timelinePanel.ApplyThreadFilterAction(threadItem.ThreadId, action);
     }
@@ -589,28 +589,28 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
   public RelayCommand<object> ExcludeThreadCommand =>
     new RelayCommand<object>(async obj => {
-      if (((FrameworkElement)obj).DataContext is ThreadListViewItem threadItem) {
+      if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeThread);
       }
     });
 
   public RelayCommand<object> ExcludeSameNameThreadCommand =>
     new RelayCommand<object>(async obj => {
-      if (((FrameworkElement)obj).DataContext is ThreadListViewItem threadItem) {
+      if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeSameNameThread);
       }
     });
 
   public RelayCommand<object> FilterToThreadCommand =>
     new RelayCommand<object>(async obj => {
-      if (((FrameworkElement)obj).DataContext is ThreadListViewItem threadItem) {
+      if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToThread);
       }
     });
 
   public RelayCommand<object> FilterToSameNameThreadCommand =>
     new RelayCommand<object>(async obj => {
-      if (((FrameworkElement)obj).DataContext is ThreadListViewItem threadItem) {
+      if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToSameNameThread);
       }
     });
@@ -620,7 +620,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   }
 
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
-    if (((FrameworkElement)obj).DataContext is ThreadListViewItem threadItem &&
+    if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem &&
         instancesNode_.CallTreeNode != null) {
       var filter = new ProfileSampleFilter(threadItem.ThreadId);
       await IRDocumentPopupInstance.ShowPreviewPopup(instancesNode_.CallTreeNode.Function, "",
@@ -636,7 +636,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   });
 
   private async Task OpenFunction(object obj, OpenSectionKind openMode) {
-    if (((FrameworkElement)obj).DataContext is ThreadListViewItem threadItem &&
+    if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem &&
         instancesNode_.CallTreeNode != null) {
       var filter = new ProfileSampleFilter(threadItem.ThreadId);
       await Session.OpenProfileFunction(instancesNode_.CallTreeNode, openMode, filter);

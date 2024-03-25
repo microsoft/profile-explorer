@@ -328,7 +328,7 @@ public partial class MainWindow : Window, ISession {
 
     var funcNodes = ProfileData.CallTree.GetSortedCallTreeNodes(function);
 
-    if (funcNodes.Count > 0) {
+    if (funcNodes is {Count: > 0}) {
       await ProfileFunctionSelected(funcNodes[0], sourcePanelKind);
     }
 

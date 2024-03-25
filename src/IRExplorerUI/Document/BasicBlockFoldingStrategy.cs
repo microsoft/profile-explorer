@@ -47,8 +47,6 @@ public sealed class BasicBlockFoldingStrategy : IBlockFoldingStrategy {
       int offset = block.TextLocation.Offset;
       int foldingLength = offset - lastOffset;
 
-      Trace.WriteLine($"Fold B{block.Number}, offset {offset}, length {foldingLength}");
-
       if (lastBlock != null && foldingLength > 1) {
         //? TODO: This seems to be a bug with diff mode
         int endOffset = Math.Min(offset, textLength - 1);
