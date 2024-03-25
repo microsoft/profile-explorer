@@ -247,7 +247,11 @@ static class ExtensionMethods {
   public static string FormatFunctionName(this IRTextSection section, ISession session, int maxLength = int.MaxValue) {
     return FormatName(section.ParentFunction.Name, session.CompilerInfo.NameProvider.FormatFunctionName, maxLength);
   }
-
+  
+  public static string FormatFunctionName(this string name, ISession session, int maxLength = int.MaxValue) {
+    return FormatName(name, session.CompilerInfo.NameProvider.FormatFunctionName, maxLength);
+  }
+  
   private static ItemContainer GetContainerAtPoint<ItemContainer>(this ItemsControl control, Point p)
     where ItemContainer : DependencyObject {
     var result = VisualTreeHelper.HitTest(control, p);

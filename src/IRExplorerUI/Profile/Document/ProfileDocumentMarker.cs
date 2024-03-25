@@ -44,6 +44,21 @@ public interface MarkedDocument {
   public void RemoveElementOverlays(IRElement element, object onlyWithTag = null);
 }
 
+public class InlineeListItem {
+  public InlineeListItem(IRExplorerCore.IR.StackFrame frame) {
+    InlineeFrame = frame;
+    Elements = new List<IRElement>();
+  }
+  
+  public IRExplorerCore.IR.StackFrame InlineeFrame { get; set; }
+  public ProfileCallTreeNode CallTreeNode { get; set; }
+  public TimeSpan Weight { get; set; }
+  public TimeSpan ExclusiveWeight { get; set; }
+  public double Percentage { get; set; }
+  public double ExclusivePercentage { get; set; }
+  public List<IRElement> Elements { get; }
+}
+
 public class ProfileDocumentMarker {
   private static readonly string ProfileOverlayTag = "ProfileTag";
 
@@ -172,7 +187,6 @@ public class ProfileDocumentMarker {
       document.ProfileProcessingResult = result;
       document.ProfileColumnData = columnData;
       
-      
       // Remove any overlays from a previous marking.
       foreach (var block in function.Blocks) {
         document.RemoveElementOverlays(block, ProfileOverlayTag);
@@ -265,6 +279,44 @@ public class ProfileDocumentMarker {
     return new SourceLineProfileResult(processingResult, result, dummyFunc, lineToElementMap);
   }
 
+  public List<InlineeListItem> GenerateInlineeList(FunctionIR function, IRTextFunction textFunction,
+                                                   FunctionProcessingResult result) {
+    var inlineeMap = new Dictionary<string, InlineeListItem>();
+    
+    foreach (var pair in result.SampledElements) {
+      var element = pair.Item1;
+      
+      if (!element.TryGetTag(out SourceLocationTag sourceTag) ||
+          !sourceTag.HasInlinees) {
+        continue;
+      }
+
+      for (int i = 0; i < sourceTag.Inlinees.Count; i++) {
+        var inlinee = sourceTag.Inlinees[i];
+
+        if (string.IsNullOrEmpty(inlinee.Function)) {
+          continue;
+        }
+
+        if (!inlineeMap.TryGetValue(inlinee.Function, out var inlineeItem)) {
+          inlineeItem = new InlineeListItem(inlinee);
+          inlineeMap[inlinee.Function] = inlineeItem;
+        }
+
+        inlineeItem.Weight += pair.Item2;
+        inlineeItem.Elements.Add(element);
+
+        if (i == sourceTag.Inlinees.Count - 1) {
+          inlineeItem.ExclusiveWeight += pair.Item2;
+        }
+      }
+    }
+    
+    var inlineeList = inlineeMap.ToValueList();
+    inlineeList.Sort((a, b) => b.ExclusiveWeight.CompareTo(a.ExclusiveWeight));
+    return inlineeList;
+  }
+  
   public static void UpdateColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
                                FunctionIR function, MarkedDocument document,
                                ProfileDocumentMarkerSettings settings,

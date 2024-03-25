@@ -386,6 +386,63 @@ public static class DocumentUtils {
     menu.Items.Clear();
     DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
   }
+  
+  public static void CreateInlineesMenu(MenuItem menu, IRTextSection section,
+                                        List<InlineeListItem> inlineeList,
+                                        FunctionProfileData funcProfile,
+                                        RoutedEventHandler menuClickHandler,
+                                        TextViewSettingsBase settings, ISession session) {
+    var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
+    var profileItems = new List<ProfileMenuItem>();
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var markerSettings = settings.ProfileMarkerSettings;
+    int order = 0;
+    double maxWidth = 0;
+
+    foreach (var node in inlineeList) {
+      double weightPercentage = funcProfile.ScaleWeight(node.ExclusiveWeight);
+
+      // if (!markerSettings.IsVisibleValue(order++, weightPercentage)) {
+      //   break;
+      // }
+
+      var title = node.InlineeFrame.Function.FormatFunctionName(session, 80);
+      string text = $"({markerSettings.FormatWeightValue(null, node.ExclusiveWeight)})";
+      //? tooltip = total weight
+
+      var value = new ProfileMenuItem(text, node.ExclusiveWeight.Ticks, weightPercentage) {
+        PrefixText = title,
+        ToolTip = node.InlineeFrame.FilePath,
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
+      var item = new MenuItem {
+        Header = value,
+        IsCheckable = true,
+        StaysOpenOnClick = true,
+        Tag = node,
+        HeaderTemplate = valueTemplate,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+      };
+
+      item.Click += menuClickHandler;
+      defaultItems.Add(item);
+      profileItems.Add(value);
+
+      // Make sure percentage rects are aligned.
+      double width = Utils.MeasureString(title, settings.FontName, settings.FontSize).Width;
+      maxWidth = Math.Max(width, maxWidth);
+    }
+
+    foreach (var value in profileItems) {
+      value.MinTextWidth = maxWidth;
+    }
+
+    menu.Items.Clear();
+    DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
+  }
 
   private static int CommonParentCallerIndex(ProfileCallTreeNode a, ProfileCallTreeNode b) {
     int index = 0;

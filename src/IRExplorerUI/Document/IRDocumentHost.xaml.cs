@@ -1245,6 +1245,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     // Redraw the flow graphs, may have loaded before the marker set the node tags.
     Session.RedrawPanels();
 
+    var inlineeList = profileMarker_.GenerateInlineeList(Function, Section.ParentFunction,
+                                                         TextView.ProfileProcessingResult);
+    DocumentUtils.CreateInlineesMenu(InlineesMenu, Section, inlineeList, 
+      funcProfile, InlineeMenuItem_OnClick, settings_, Session);
+    
     CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
     CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
     UpdateDocumentTitle(funcProfile);
@@ -2249,6 +2254,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
     DocumentUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);
     await ApplyProfileFilter();
+  }
+
+  private async void InlineeMenuItem_OnClick(object sender, RoutedEventArgs e) {
+
   }
 
   private async void OpenPopupButton_Click(object sender, RoutedEventArgs e) {
