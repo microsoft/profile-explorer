@@ -402,17 +402,18 @@ public static class DocumentUtils {
     foreach (var node in inlineeList) {
       double weightPercentage = funcProfile.ScaleWeight(node.ExclusiveWeight);
 
-      // if (!markerSettings.IsVisibleValue(order++, weightPercentage)) {
-      //   break;
-      // }
+      if (!markerSettings.IsVisibleValue(order++, weightPercentage)) {
+        break;
+      }
 
       var title = node.InlineeFrame.Function.FormatFunctionName(session, 80);
       string text = $"({markerSettings.FormatWeightValue(null, node.ExclusiveWeight)})";
-      //? tooltip = total weight
-
+      string tooltip = $"{Utils.TryGetFileName(node.InlineeFrame.FilePath)}:{node.InlineeFrame.Line}";
+      tooltip += GenerateInlineeFunctionDescription(node, settings.ProfileMarkerSettings, session);
+      
       var value = new ProfileMenuItem(text, node.ExclusiveWeight.Ticks, weightPercentage) {
         PrefixText = title,
-        ToolTip = node.InlineeFrame.FilePath,
+        ToolTip = tooltip,
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
         PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
@@ -420,8 +421,6 @@ public static class DocumentUtils {
 
       var item = new MenuItem {
         Header = value,
-        IsCheckable = true,
-        StaysOpenOnClick = true,
         Tag = node,
         HeaderTemplate = valueTemplate,
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
@@ -632,13 +631,25 @@ public static class DocumentUtils {
 
   public static string GenerateProfileFunctionDescription(FunctionProfileData funcProfile,
                                                           ProfileDocumentMarkerSettings settings,ISession session) {
-    var weightPerc = session.ProfileData.ScaleFunctionWeight(funcProfile.Weight);
-    var exclusiveWeightPerc = session.ProfileData.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
-    var weightText = $"{weightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, funcProfile.Weight)})";
-    var exclusiveWeightText = $"{exclusiveWeightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, funcProfile.ExclusiveWeight)})";
-    return $"Total time: {weightText}\nSelf time: {exclusiveWeightText}";
+    return GenerateProfileDescription(funcProfile.Weight, funcProfile.ExclusiveWeight,
+                                      settings, session);
   }
 
+  public static string GenerateInlineeFunctionDescription(InlineeListItem inlinee,
+                                                          ProfileDocumentMarkerSettings settings,ISession session) {
+    return GenerateProfileDescription(inlinee.Weight, inlinee.ExclusiveWeight,
+                                      settings, session);
+  }
+  
+  public static string GenerateProfileDescription(TimeSpan weight, TimeSpan exclusiveWeight,
+                                                  ProfileDocumentMarkerSettings settings,ISession session) {
+    var weightPerc = session.ProfileData.ScaleFunctionWeight(weight);
+    var exclusiveWeightPerc = session.ProfileData.ScaleFunctionWeight(exclusiveWeight);
+    var weightText = $"{weightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, weight)})";
+    var exclusiveWeightText = $"{exclusiveWeightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, exclusiveWeight)})";
+    return $"Total time: {weightText}\nSelf time: {exclusiveWeightText}";
+  }
+  
   public static void SyncInstancesMenuWithFilter(MenuItem menu, ProfileSampleFilter instanceFilter) {
     foreach (var item in menu.Items) {
       if(item is MenuItem menuItem  && menuItem.Tag is ProfileCallTreeNode node) {

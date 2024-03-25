@@ -554,7 +554,9 @@
                                         OverridesDefaultStyle="True">
                                         <MenuItem.Header>
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock VerticalAlignment="Bottom" Text="Blocks" />
+                                              <Image Source="{StaticResource BlockIcon}" Style="{StaticResource DisabledImageStyle}" />
+                                              <TextBlock Margin="2,0,0,0"
+                                                         VerticalAlignment="Bottom" Text="Blocks" />
                                                 <Path
                                                     Margin="4,2,0,0"
                                                     VerticalAlignment="Center"

@@ -675,6 +675,15 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     UpdateHighlighting();
   }
 
+  public void SelectElements(IEnumerable<IRElement> elements) {
+    var group = new HighlightedElementGroup(selectedStyle_);
+    group.AddRange(elements);
+
+    ClearTemporaryHighlighting();
+    selectedHighlighter_.Add(group);
+    UpdateHighlighting();
+  }
+  
   public void MarkElement(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
     if (raiseEvent) {
       Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element.Id}");

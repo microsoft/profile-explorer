@@ -127,6 +127,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private bool suspendColumnVisibilityHandler_;
   private ProfileSampleFilter profileFilter_;
   private FunctionProfileData funcProfile_;
+  private bool ignoreNextRowSelectedEvent_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -186,6 +187,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void ProfileColumns_RowSelected(object sender, int line) {
+    if (ignoreNextRowSelectedEvent_) {
+      ignoreNextRowSelectedEvent_ = false;
+      return;
+    }
+    
     TextView.SelectLine(line + 1);
   }
 
@@ -554,6 +560,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private void TextViewOnCaretChanged(object? sender, int offset) {
     if (columnsVisible_) {
+      ignoreNextRowSelectedEvent_ = true;
       var line = TextView.Document.GetLineByOffset(offset);
       ProfileColumns.SelectRow(line.LineNumber - 1);
     }
@@ -1248,7 +1255,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     var inlineeList = profileMarker_.GenerateInlineeList(Function, Section.ParentFunction,
                                                          TextView.ProfileProcessingResult);
     DocumentUtils.CreateInlineesMenu(InlineesMenu, Section, inlineeList, 
-      funcProfile, InlineeMenuItem_OnClick, settings_, Session);
+                                     funcProfile, InlineeMenuItem_OnClick, settings_, Session);
     
     CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
     CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
@@ -2257,7 +2264,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void InlineeMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var inlinee = ((MenuItem)sender)?.Tag as InlineeListItem;
 
+    if (inlinee != null && inlinee.Elements is {Count:>0}) {
+      TextView.SelectElements(inlinee.Elements);
+      TextView.BringElementIntoView(inlinee.Elements[0]);
+    }
   }
 
   private async void OpenPopupButton_Click(object sender, RoutedEventArgs e) {
