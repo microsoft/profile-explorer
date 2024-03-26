@@ -198,13 +198,13 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           return false;
         }
 
-        // Start early load of all modules that are used by the binary
-        // to reduce the wait time when resolving the stack frame functions.
+        // Start main processing part, resolving stack frames,
+        // mapping IPs/RVAs to functions using the debug info.
         UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing, 0, rawProfile.Samples.Count);
 
         var sw = Stopwatch.StartNew();
 
-        // Split sample processing in multiple chunk, each done by another thread.
+        // Split sample processing in multiple chunks, each done by another thread.
         int chunks = Math.Min(24, Environment.ProcessorCount * 3 / 4);
 #if DEBUG
         chunks = 1;
@@ -235,6 +235,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
         await Task.WhenAll(tasks.ToArray());
+        Trace.WriteLine($"Done processing samples in {sw.Elapsed}");
+        // Trace.Flush();
+        // Environment.Exit(0);
 
         // Collect samples from tasks.
         var samples = new List<(ProfileSample, ResolvedProfileStack)>[tasks.Count];
@@ -264,12 +267,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           profileData_.Samples = [];
         }
 
+        // Create the per-function profile and call tree.
+        UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing, 0, rawProfile.Samples.Count);
         var sw2 = Stopwatch.StartNew();
         profileData_.ComputeThreadSampleRanges();
         profileData_.FilterFunctionProfile(new ProfileSampleFilter());
 
         Trace.WriteLine($"Done compute func profile/call tree in {sw2.Elapsed}");
-        Trace.WriteLine($"Done processing samples in {sw.Elapsed}");
+        Trace.WriteLine($"Done processing trace in {sw.Elapsed}");
 
         if (rawProfile.PerformanceCountersEvents.Count > 0) {
           // Process performance counters.
@@ -506,6 +511,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     CollectTopModules(RawProfileData rawProfile, ProfileProcess mainProcess) {
     var moduleMap = new Dictionary<ProfileImage, int>();
     int pointerSize = rawProfile.TraceInfo.PointerSize;
+    int index = 0;
     var sw = Stopwatch.StartNew();
 
     foreach (var sample in rawProfile.Samples) {
@@ -534,6 +540,13 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         if (frameImage != null) {
           moduleMap.AccumulateValue(frameImage, 1);
         }
+      }
+
+      // Stop collecting after a couple seconds, it's good enough
+      // for an approximated set of used modules.
+      if ((++index & PROGRESS_UPDATE_INTERVAL - 1) == 0 &&
+          sw.ElapsedMilliseconds > 2000) {
+        break;
       }
     }
 

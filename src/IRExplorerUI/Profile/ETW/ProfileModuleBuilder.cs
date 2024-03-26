@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -14,7 +15,8 @@ namespace IRExplorerUI.Profile;
 public sealed class ProfileModuleBuilder {
   private ISession session_;
   private BinaryFileDescriptor binaryInfo_;
-  private Dictionary<long, (IRTextFunction, FunctionDebugInfo)> functionMap_;
+
+  private ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)> functionMap_;
   private ProfileDataReport report_;
   private ReaderWriterLockSlim lock_;
   private SymbolFileSourceSettings symbolSettings_;
@@ -22,7 +24,7 @@ public sealed class ProfileModuleBuilder {
   public ProfileModuleBuilder(ProfileDataReport report, ISession session) {
     report_ = report;
     session_ = session;
-    functionMap_ = new Dictionary<long, (IRTextFunction, FunctionDebugInfo)>();
+    functionMap_ = new ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)>();
     lock_ = new ReaderWriterLockSlim();
   }
 
@@ -122,47 +124,49 @@ public sealed class ProfileModuleBuilder {
 
   public (IRTextFunction Function, FunctionDebugInfo DebugInfo)
     GetOrCreateFunction(long funcAddress) {
+    // Try to get it form the concurrent dictionary.
+    //? TODO: Ideally a range tree would be used to capture all
+    //? the RVAs of a function, which would avoid multiple queries
+    //? of the debug info under the write lock.
+    if (functionMap_.TryGetValue(funcAddress, out var pair)) {
+      return pair;
+    }
+
     try {
-      lock_.EnterUpgradeableReadLock();
+      lock_.EnterWriteLock();
 
-      if (functionMap_.TryGetValue(funcAddress, out var pair)) {
+      // Check again under the write lock.
+      if (functionMap_.TryGetValue(funcAddress, out pair)) {
         return pair;
       }
 
-      try {
-        lock_.EnterWriteLock();
+      FunctionDebugInfo debugInfo = null;
 
-        if (functionMap_.TryGetValue(funcAddress, out pair)) {
-          return pair;
-        }
-
-        FunctionDebugInfo debugInfo = null;
-
-        if (HasDebugInfo) {
-          debugInfo = DebugInfo.FindFunctionByRVA(funcAddress);
-        }
-
-        if (debugInfo == null) {
-          string placeholderName = $"{funcAddress:X}";
-          debugInfo = new FunctionDebugInfo(placeholderName, funcAddress, 0);
-        }
-
-        var func = ModuleDocument.AddDummyFunction(debugInfo.Name);
-
-        if (ModuleDocument.Loader is DisassemblerSectionLoader disassemblerSectionLoader) {
-          disassemblerSectionLoader.RegisterFunction(func, debugInfo);
-        }
-
-        pair = (func, debugInfo);
-        functionMap_[funcAddress] = pair;
-        return pair;
+      if (HasDebugInfo) {
+        // Search for the function at this RVA.
+        debugInfo = DebugInfo.FindFunctionByRVA(funcAddress);
       }
-      finally {
-        lock_.ExitWriteLock();
+
+      if (debugInfo == null) {
+        // Create a dummy debug entry for the missing function.
+        string placeholderName = $"{funcAddress:X}";
+        debugInfo = new FunctionDebugInfo(placeholderName, funcAddress, 0);
       }
+
+      // Add the new function to the module and disassembler.
+      var func = ModuleDocument.AddDummyFunction(debugInfo.Name);
+
+      if (ModuleDocument.Loader is DisassemblerSectionLoader disassemblerSectionLoader) {
+        disassemblerSectionLoader.RegisterFunction(func, debugInfo);
+      }
+
+      // Cache RVA -> function mapping.
+      pair = (func, debugInfo);
+      functionMap_[funcAddress] = pair;
+      return pair;
     }
     finally {
-        lock_.ExitUpgradeableReadLock();
+      lock_.ExitWriteLock();
     }
   }
 
