@@ -1252,15 +1252,17 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     // Redraw the flow graphs, may have loaded before the marker set the node tags.
     Session.RedrawPanels();
 
-    var inlineeList = profileMarker_.GenerateInlineeList(Function, Section.ParentFunction,
-                                                         TextView.ProfileProcessingResult);
-    DocumentUtils.CreateInlineesMenu(InlineesMenu, Section, inlineeList, 
-                                     funcProfile, InlineeMenuItem_OnClick, settings_, Session);
-    
-    CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
-    CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
+    if (TextView.ProfileProcessingResult != null) {
+      var inlineeList = profileMarker_.GenerateInlineeList(Function, Section.ParentFunction,
+                                                           TextView.ProfileProcessingResult);
+      DocumentUtils.CreateInlineesMenu(InlineesMenu, Section, inlineeList,
+                                       funcProfile, InlineeMenuItem_OnClick, settings_, Session);
+      CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
+      CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
+    }
+
     UpdateDocumentTitle(funcProfile);
-    profileElements_ = TextView.ProfileProcessingResult.SampledElements;
+    profileElements_ = TextView.ProfileProcessingResult?.SampledElements;
     funcProfile_ = funcProfile;
     ProfileVisible = true;
 

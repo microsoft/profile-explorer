@@ -495,11 +495,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private void UpdateProgress(ProfileLoadProgressHandler callback, ProfileLoadStage stage,
                               int total, int current, string optional = null) {
     if (callback != null) {
-      ThreadPool.QueueUserWorkItem(state => {
-        callback(new ProfileLoadProgress(stage) {
-          Total = total, Current = current,
-          Optional = optional
-        });
+      callback(new ProfileLoadProgress(stage) {
+        Total = total, Current = current,
+        Optional = optional
       });
     }
   }

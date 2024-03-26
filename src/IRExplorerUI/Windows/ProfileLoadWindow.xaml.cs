@@ -16,6 +16,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+using DocumentFormat.OpenXml.Presentation;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
@@ -46,6 +47,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private string binaryFilePath_;
   private bool showOnlyManagedProcesses_;
   private bool showLoadingProgress_;
+  double lastProgressPercentage_ = 0;
 
   public ProfileLoadWindow(ISession session, bool recordMode,
                            RecordingSession loadedSession = null) {
@@ -442,11 +444,27 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void ProfileLoadProgressCallback(ProfileLoadProgress progressInfo) {
-    Dispatcher.Invoke((Action)(() => {
-      if (progressInfo == null) {
+    if (progressInfo == null) {
+      return;
+    }
+
+    // Update progress in UI only if there is any visible change, calling though
+    // the Dispatcher is slow and slows down the trace reading by a lot otherwise.
+    double percentage = 0;
+
+    if (progressInfo.Total != 0) {
+      percentage = Math.Min(1.0, progressInfo.Current / (double)progressInfo.Total);
+      double diff = percentage - lastProgressPercentage_;
+
+      if (diff > 0.01 || diff < 0) {
+        lastProgressPercentage_ = percentage;
+      }
+      else {
         return;
       }
+    }
 
+    Dispatcher.Invoke(() => {
       // With multi-threaded processing, current value is not always increasing...
       if (progressInfo.Stage == ProfileLoadStage.TraceProcessing) {
         progressInfo.Current = Math.Max(progressInfo.Current, (int)LoadProgressBar.Value);
@@ -469,17 +487,36 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       };
 
       if (progressInfo.Total != 0) {
-        double percentage = Math.Min(1.0, progressInfo.Current / (double)progressInfo.Total);
         ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
         LoadProgressBar.IsIndeterminate = false;
       }
       else {
         LoadProgressBar.IsIndeterminate = true;
       }
-    }));
+    });
   }
 
   private void ProcessListProgressCallback(ProcessListProgress progressInfo) {
+    if (progressInfo == null) {
+      return;
+    }
+
+    // Update progress in UI only if there is any visible change, calling though
+    // the Dispatcher is slow and slows down the trace reading by a lot otherwise.
+    double percentage = 0;
+
+    if (progressInfo.Total != 0) {
+      percentage = Math.Min(1.0, progressInfo.Current / (double)progressInfo.Total);
+      double diff = percentage - lastProgressPercentage_;
+
+      if (diff > 0.01 || diff < 0) {
+        lastProgressPercentage_ = percentage;
+      }
+      else {
+        return;
+      }
+    }
+
     Dispatcher.Invoke(() => {
       if (progressInfo == null) {
         return;
@@ -489,7 +526,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       LoadProgressBar.Value = progressInfo.Current;
 
       if (progressInfo.Total != 0) {
-        double percentage = progressInfo.Current / (double)progressInfo.Total;
         ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
         LoadProgressLabel.Text = "Building process list";
         LoadProgressBar.IsIndeterminate = false;
@@ -501,7 +537,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       if (progressInfo.Processes != null) {
         DisplayProcessList(progressInfo.Processes, selectedProcSummary_);
       }
-    });
+    }, DispatcherPriority.Render);
   }
 
   private async void CancelButton_Click(object sender, RoutedEventArgs e) {

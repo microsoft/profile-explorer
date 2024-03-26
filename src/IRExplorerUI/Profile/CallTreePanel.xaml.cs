@@ -144,6 +144,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private bool showSearchSection_;
   private string searchResultText_;
   private OptionsPanelHostWindow optionsPanelWindow_;
+  private CancelableTaskInstance loadTask_;
 
   public CallTreePanel() {
     InitializeComponent();
@@ -153,6 +154,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     searchTask_ = new CancelableTaskInstance(false);
     callTreeNodeToNodeExMap_ = new Dictionary<ProfileCallTreeNode, CallTreeListItem>();
     stateStack_ = new Stack<IRTextFunction>();
+    loadTask_ = new CancelableTaskInstance();
     DataContext = this;
     SetupEvents();
   }
@@ -316,6 +318,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   public async Task DisplayProfileCallerCalleeTree(IRTextFunction function) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     function_ = function;
     CallTree = Session.ProfileData.CallTree;
     ignoreNextSelectionEvent_ = true; // Prevent deselection even to be triggered.
