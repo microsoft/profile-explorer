@@ -33,6 +33,11 @@ public class SourceFileFinder {
   }
 
   public async Task<(SourceFileDebugInfo, IDebugInfoProvider)>
+    FindLocalSourceFile(SourceFileDebugInfo sourceInfo) {
+    return FindLocalSourceFile(sourceInfo, null, null);
+  }
+
+  public async Task<(SourceFileDebugInfo, IDebugInfoProvider)>
     FindLocalSourceFile(IRTextFunction function, FrameworkElement owner = null) {
     return await Task.Run(async () => {
       var debugInfo = await session_.GetDebugInfoProvider(function);
@@ -55,34 +60,40 @@ public class SourceFileFinder {
       }
 
       if (sourceInfo.HasFilePath) {
-        // Check if the file can be found. If it's from another machine,
-        // a mapping is done after the user is asked to pick the new location of the file.
-        if (File.Exists(sourceInfo.FilePath)) {
-          return (sourceInfo, debugInfo);
-        }
-        else if (!IsDisabledSourceFilePath(sourceInfo.FilePath)) {
-          var filePath = sourceFileMapper_.Map(sourceInfo.FilePath, () =>
-                                                 Utils.ShowOpenFileDialog(
-                                                   $"Source File|{Utils.TryGetFileName(sourceInfo.OriginalFilePath)}",
-                                                   null, $"Open {sourceInfo.OriginalFilePath}"));
-
-          if (!string.IsNullOrEmpty(filePath)) {
-            sourceInfo.FilePath = filePath;
-          }
-          else if (Utils.ShowYesNoMessageBox("Continue asking for the location of this source file?", owner) ==
-                   MessageBoxResult.No) {
-            if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
-              disabledSourceMappings_.Add(sourceInfo.FilePath);
-            }
-          }
-
-          SaveSettings();
-          return (sourceInfo, debugInfo);
-        }
+        return FindLocalSourceFile(sourceInfo, debugInfo, owner);
       }
 
       return (SourceFileDebugInfo.Unknown, null);
     });
+  }
+
+  private (SourceFileDebugInfo, IDebugInfoProvider)
+    FindLocalSourceFile(SourceFileDebugInfo sourceInfo, IDebugInfoProvider debugInfo, FrameworkElement owner) {
+    // Check if the file can be found. If it's from another machine,
+    // a mapping is done after the user is asked to pick the new location of the file.
+    if (File.Exists(sourceInfo.FilePath)) {
+      return (sourceInfo, debugInfo);
+    }
+    else if (!IsDisabledSourceFilePath(sourceInfo.FilePath)) {
+      var filePath = sourceFileMapper_.Map(sourceInfo.FilePath, () =>
+                                             Utils.ShowOpenFileDialog(
+                                               $"Source File|{Utils.TryGetFileName(sourceInfo.OriginalFilePath)}",
+                                               null, $"Open {sourceInfo.OriginalFilePath}"));
+      if (!string.IsNullOrEmpty(filePath)) {
+        sourceInfo.FilePath = filePath;
+      }
+      else if (Utils.ShowYesNoMessageBox("Continue asking for the location of this source file?", owner) ==
+               MessageBoxResult.No) {
+        if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
+          disabledSourceMappings_.Add(sourceInfo.FilePath);
+        }
+      }
+
+      SaveSettings();
+      return (sourceInfo, debugInfo);
+    }
+
+    return  (SourceFileDebugInfo.Unknown, null);
   }
 
   private bool IsDisabledSourceFilePath(string filePath) {

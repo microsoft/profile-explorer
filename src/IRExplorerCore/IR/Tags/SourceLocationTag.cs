@@ -23,6 +23,14 @@ public sealed class SourceLocationTag : ITag {
   public string Name => "Source location";
   public TaggedObject Owner { get; set; }
 
+  public List<StackFrame> InlineesReversed {
+    get {
+      var clone = new List<StackFrame>(Inlinees);
+      clone.Reverse();
+      return clone;
+    }
+  }
+
   public void AddInlinee(string function, string filePath, int line, int column) {
     Inlinees ??= new List<StackFrame>();
     Inlinees.Add(new StackFrame(function, filePath, line, column));

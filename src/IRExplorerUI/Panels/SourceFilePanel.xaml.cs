@@ -74,7 +74,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
         ProfileTextView.Initialize(clone);
       }
       else {
-        ProfileTextView.TextView.Initialize(settings_, Session);
+        ProfileTextView.Initialize(settings_);
       }
     }
   }
@@ -250,6 +250,33 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     return false;
   }
 
+  private async Task<bool> LoadSourceFileForInlinee(IRExplorerCore.IR.StackFrame inlinee, ProfileSampleFilter profileFilter = null) {
+    // if (!ShouldReloadFunction(function, profileFilter)) {
+    //   return true;
+    // }
+
+    // Get the associated source file from the debug info if available,
+    // since it also includes the start line number.
+    string failureText = null;
+    var inlineeSourceInfo = new SourceFileDebugInfo(inlinee.FilePath, inlinee.FilePath);
+    var (sourceInfo, debugInfo) = await sourceFileFinder_.FindLocalSourceFile(inlineeSourceInfo);
+
+    if (!sourceInfo.IsUnknown) {
+      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter)) {
+        HandleLoadedSourceFile(sourceInfo, null);
+        return true;
+      }
+
+      failureText = $"Could not find local copy of source file:\n{inlinee.FilePath}";
+    }
+    else {
+      failureText = $"Could not find debug info for function:\n{inlinee.Function}";
+    }
+
+    await HandleMissingSourceFile(failureText);
+    return false;
+  }
+
   private bool ShouldReloadFunction(IRTextFunction function, ProfileSampleFilter profileFilter) {
     if (!sourceFileLoaded_) {
       return true;
@@ -305,14 +332,14 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var tag = instr?.GetTag<SourceLocationTag>();
 
     if (tag != null) {
-      //if (tag.HasInlinees) {
-      //  if (await LoadInlineeSourceFile(tag)) {
-      //    return;
-      //  }
-      //}
-      //else {
-      //  ResetInlinee();
-      //}
+      if (tag.HasInlinees) {
+        if (await LoadInlineeSourceFile(tag)) {
+          return;
+        }
+      }
+      else {
+        ResetInlinee();
+      }
 
       if (await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter)) {
         ProfileTextView.SelectLine(tag.Line);
@@ -322,8 +349,9 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   private async Task<bool> LoadInlineeSourceFile(SourceLocationTag tag) {
     var last = tag.Inlinees[0];
-    InlineeCombobox.ItemsSource = new ListCollectionView(tag.Inlinees);
+    InlineeCombobox.ItemsSource = new ListCollectionView(tag.InlineesReversed);
     InlineeCombobox.SelectedItem = last;
+    //return true;
     return await LoadInlineeSourceFile(last);
   }
 
@@ -341,18 +369,18 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
 
     // Try to load the profile info of the inlinee.
-    var summary = section_.ParentFunction.ParentSummary;
+    // var summary = section_.ParentFunction.ParentSummary;
+    //
+    // var inlineeFunc = summary.FindFunction(funcName => {
+    //   if (funcName == inlinee.Function) {
+    //     return true;
+    //   }
+    //
+    //   string demangledName = PDBDebugInfoProvider.DemangleFunctionName(funcName);
+    //   return demangledName == inlinee.Function;
+    // });
 
-    var inlineeFunc = summary.FindFunction(funcName => {
-      string demangledName = PDBDebugInfoProvider.DemangleFunctionName(funcName);
-      return demangledName == inlinee.Function;
-    });
-
-    bool fileLoaded = false;
-
-    if (inlineeFunc != null) {
-      fileLoaded = await LoadSourceFileForFunction(inlineeFunc);
-    }
+    bool fileLoaded = await LoadSourceFileForInlinee(inlinee);
 
     //? TODO: The func ASM is not needed, profile is created by mapping ASM lines in main func
     //? to corresponding lines in the selected inlinee
@@ -389,6 +417,10 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private async void OpenPopupButton_Click(object sender, RoutedEventArgs e) {
+    if (ProfileTextView.Section == null) {
+      return; //? TODO: Button should rather be disabled
+    }
+
     await IRDocumentPopupInstance.ShowPreviewPopup(ProfileTextView.Section.ParentFunction, "",
                                                    this, Session, ProfileTextView.ProfileFilter, true);
 

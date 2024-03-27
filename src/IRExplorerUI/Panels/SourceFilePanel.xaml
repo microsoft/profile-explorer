@@ -111,7 +111,6 @@
                         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         DisplayMemberPath="Function"
-                        IsEnabled="False"
                         Loaded="ComboBox_Loaded"
                         SelectedValue="Function"
                         SelectionChanged="InlineeCombobox_SelectionChanged"

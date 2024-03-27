@@ -2282,6 +2282,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void OpenPopupButton_Click(object sender, RoutedEventArgs e) {
+    if (Section == null) {
+      return; //? TODO: Button should rather be disabled
+    }
+
     await IRDocumentPopupInstance.ShowPreviewPopup(Section.ParentFunction, "",
                                                    this, Session, profileFilter_);
   }
