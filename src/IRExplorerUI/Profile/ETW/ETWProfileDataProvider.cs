@@ -19,10 +19,14 @@ namespace IRExplorerUI.Profile;
 public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private const int IMAGE_LOCK_COUNT = 64;
   private const int PROGRESS_UPDATE_INTERVAL = 32768; // Progress UI update after pow2 N samples.
+
+  // Per-thread caching of the previously handled image
+  // and module builder, with hotspots many samples have the same.
   [ThreadStatic]
   private static ProfileImage prevImage_;
   [ThreadStatic]
   private static ProfileModuleBuilder prevProfileModuleBuilder_;
+
   private ProfileDataProviderOptions options_;
   private ProfileDataReport report_;
   private ISession session_;

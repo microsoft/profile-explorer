@@ -186,6 +186,12 @@ public static class DocumentUtils {
     defaultItems.ForEach(item => menu.Items.Add(item));
   }
 
+  public static void RemoveNonDefaultMenuItems(MenuItem menu) {
+    var items = SaveDefaultMenuItems(menu);
+    menu.Items.Clear();
+    RestoreDefaultMenuItems(menu, items);
+  }
+
   public static string GenerateElementPreviewText(IRElement element, ReadOnlyMemory<char> documentText,
     int maxLength = 0) {
     var instr = element.ParentInstruction;
@@ -386,7 +392,7 @@ public static class DocumentUtils {
     menu.Items.Clear();
     DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
   }
-  
+
   public static void CreateInlineesMenu(MenuItem menu, IRTextSection section,
                                         List<InlineeListItem> inlineeList,
                                         FunctionProfileData funcProfile,
@@ -409,8 +415,8 @@ public static class DocumentUtils {
       var title = node.InlineeFrame.Function.FormatFunctionName(session, 80);
       string text = $"({markerSettings.FormatWeightValue(null, node.ExclusiveWeight)})";
       string tooltip = $"File {Utils.TryGetFileName(node.InlineeFrame.FilePath)}:{node.InlineeFrame.Line}\n";
-      tooltip += GenerateInlineeFunctionDescription(node, settings.ProfileMarkerSettings, session);
-      
+      tooltip += GenerateInlineeFunctionDescription(node, funcProfile, settings.ProfileMarkerSettings, session);
+
       var value = new ProfileMenuItem(text, node.ExclusiveWeight.Ticks, weightPercentage) {
         PrefixText = title,
         ToolTip = tooltip,
@@ -433,6 +439,14 @@ public static class DocumentUtils {
       // Make sure percentage rects are aligned.
       double width = Utils.MeasureString(title, settings.FontName, settings.FontSize).Width;
       maxWidth = Math.Max(width, maxWidth);
+    }
+
+    if (profileItems.Count == 0) {
+      defaultItems.Add(new MenuItem() {
+        Header = "No significant inlined functions",
+        IsHitTestVisible = false,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+      });
     }
 
     foreach (var value in profileItems) {
@@ -632,24 +646,26 @@ public static class DocumentUtils {
   public static string GenerateProfileFunctionDescription(FunctionProfileData funcProfile,
                                                           ProfileDocumentMarkerSettings settings,ISession session) {
     return GenerateProfileDescription(funcProfile.Weight, funcProfile.ExclusiveWeight,
-                                      settings, session);
+                                      settings, session.ProfileData.ScaleFunctionWeight);
   }
 
   public static string GenerateInlineeFunctionDescription(InlineeListItem inlinee,
+                                                          FunctionProfileData funcProfile,
                                                           ProfileDocumentMarkerSettings settings,ISession session) {
     return GenerateProfileDescription(inlinee.Weight, inlinee.ExclusiveWeight,
-                                      settings, session);
+                                      settings, funcProfile.ScaleWeight);
   }
-  
+
   public static string GenerateProfileDescription(TimeSpan weight, TimeSpan exclusiveWeight,
-                                                  ProfileDocumentMarkerSettings settings,ISession session) {
-    var weightPerc = session.ProfileData.ScaleFunctionWeight(weight);
-    var exclusiveWeightPerc = session.ProfileData.ScaleFunctionWeight(exclusiveWeight);
+                                                  ProfileDocumentMarkerSettings settings,
+                                                  Func<TimeSpan, double> weightFunc) {
+    var weightPerc = weightFunc(weight);
+    var exclusiveWeightPerc = weightFunc(exclusiveWeight);
     var weightText = $"{weightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, weight)})";
     var exclusiveWeightText = $"{exclusiveWeightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, exclusiveWeight)})";
     return $"Total time: {weightText}\nSelf time: {exclusiveWeightText}";
   }
-  
+
   public static void SyncInstancesMenuWithFilter(MenuItem menu, ProfileSampleFilter instanceFilter) {
     foreach (var item in menu.Items) {
       if(item is MenuItem menuItem  && menuItem.Tag is ProfileCallTreeNode node) {

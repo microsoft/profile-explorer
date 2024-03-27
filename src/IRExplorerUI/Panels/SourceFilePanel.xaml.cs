@@ -246,7 +246,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       failureText = $"Could not find debug info for function:\n{function.Name}";
     }
 
-    HandleMissingSourceFile(failureText);
+    await HandleMissingSourceFile(failureText);
     return false;
   }
 
@@ -274,8 +274,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     sourceFilePath_ = sourceInfo.FilePath;
   }
 
-  private void HandleMissingSourceFile(string failureText) {
-    ProfileTextView.HandleMissingSourceFile(failureText);
+  private async Task HandleMissingSourceFile(string failureText) {
+    await ProfileTextView.HandleMissingSourceFile(failureText);
     SetPanelName("");
     sourceFileLoaded_ = false;
     sourceFileFunc_ = null;

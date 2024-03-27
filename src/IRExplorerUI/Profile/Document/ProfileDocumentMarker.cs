@@ -49,7 +49,7 @@ public class InlineeListItem {
     InlineeFrame = frame;
     Elements = new List<IRElement>();
   }
-  
+
   public IRExplorerCore.IR.StackFrame InlineeFrame { get; set; }
   public ProfileCallTreeNode CallTreeNode { get; set; }
   public TimeSpan Weight { get; set; }
@@ -186,12 +186,12 @@ public class ProfileDocumentMarker {
       columnData = await MarkProfiledElements(result, function, document);
       document.ProfileProcessingResult = result;
       document.ProfileColumnData = columnData;
-      
+
       // Remove any overlays from a previous marking.
       foreach (var block in function.Blocks) {
         document.RemoveElementOverlays(block, ProfileOverlayTag);
       }
-      
+
       foreach(var tuple in function.AllTuples) {
         document.RemoveElementOverlays(tuple, ProfileOverlayTag);
       }
@@ -282,10 +282,10 @@ public class ProfileDocumentMarker {
   public List<InlineeListItem> GenerateInlineeList(FunctionIR function, IRTextFunction textFunction,
                                                    FunctionProcessingResult result) {
     var inlineeMap = new Dictionary<string, InlineeListItem>();
-    
+
     foreach (var pair in result.SampledElements) {
       var element = pair.Item1;
-      
+
       if (!element.TryGetTag(out SourceLocationTag sourceTag) ||
           !sourceTag.HasInlinees) {
         continue;
@@ -306,17 +306,17 @@ public class ProfileDocumentMarker {
         inlineeItem.Weight += pair.Item2;
         inlineeItem.Elements.Add(element);
 
-        if (i == sourceTag.Inlinees.Count - 1) {
+        if (i == 0) {
           inlineeItem.ExclusiveWeight += pair.Item2;
         }
       }
     }
-    
+
     var inlineeList = inlineeMap.ToValueList();
     inlineeList.Sort((a, b) => b.ExclusiveWeight.CompareTo(a.ExclusiveWeight));
     return inlineeList;
   }
-  
+
   public static void UpdateColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
                                FunctionIR function, MarkedDocument document,
                                ProfileDocumentMarkerSettings settings,

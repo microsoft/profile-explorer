@@ -191,7 +191,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       ignoreNextRowSelectedEvent_ = false;
       return;
     }
-    
+
     TextView.SelectLine(line + 1);
   }
 
@@ -441,11 +441,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       await PassOutput.SwitchSection(parsedSection.Section, TextView);
     }
 
-    if (!await LoadProfile()) {
+    await ReloadRemarks();
+
+    if (parsedSection.LoadFailed || !await LoadProfile()) {
       await HideProfile();
     }
 
-    await ReloadRemarks();
     TextView.ScrollToHorizontalOffset(horizontalOffset);
     TextView.ScrollToVerticalOffset(verticalOffset);
     duringSectionSwitching_ = false;
@@ -1280,7 +1281,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async Task HideProfile() {
     ProfileVisible = false;
     ColumnsVisible = false;
-    ProfileBlocksMenu.Items.Clear();
+    DocumentUtils.RemoveNonDefaultMenuItems(ProfileBlocksMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(ProfileElementsMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(InstancesMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(ThreadsMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(InlineesMenu);
   }
 
   private async Task ReloadRemarks() {
@@ -2269,6 +2274,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     var inlinee = ((MenuItem)sender)?.Tag as InlineeListItem;
 
     if (inlinee != null && inlinee.Elements is {Count:>0}) {
+      // Ensure elements are sorted to bring first one into view.
+      inlinee.Elements.Sort((a, b) => a.TextLocation.CompareTo(b.TextLocation));
       TextView.SelectElements(inlinee.Elements);
       TextView.BringElementIntoView(inlinee.Elements[0]);
     }

@@ -59,7 +59,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     var debugInfo = await GetOrCreateDebugInfoProvider(section.ParentFunction);
 
     if (debugInfo != null) {
-      debugInfo.AnnotateSourceLocations(function, section.ParentFunction);
+      await Task.Run(() => debugInfo.AnnotateSourceLocations(function, section.ParentFunction));
     }
 
     return true;

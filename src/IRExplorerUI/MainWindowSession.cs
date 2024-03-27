@@ -214,7 +214,9 @@ public partial class MainWindow : Window, ISession {
 
       string placeholderText = "Could not find function code";
       var dummyFunc = new FunctionIR(section.ParentFunction.Name);
-      return new ParsedIRTextSection(section, placeholderText.AsMemory(), dummyFunc);
+      return new ParsedIRTextSection(section, placeholderText.AsMemory(), dummyFunc) {
+        LoadFailed = true
+      };
     });
   }
 

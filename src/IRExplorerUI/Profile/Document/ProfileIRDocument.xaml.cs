@@ -245,24 +245,46 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     // Apply profile filter if needed.
     ProfileFilter = profileFilter;
+    bool success = true;
 
-    if (profileFilter is {IncludesAll:false}) {
-      await LoadAssemblyProfileInstance(parsedSection);
+    if (!parsedSection.LoadFailed) {
+      if (profileFilter is {IncludesAll: false}) {
+        success = await LoadAssemblyProfileInstance(parsedSection);
+      }
+      else {
+        success = await LoadAssemblyProfile(parsedSection);
+      }
     }
     else {
-      await LoadAssemblyProfile(parsedSection);
+      success = false;
+    }
+
+    if (!success) {
+      await HideProfile();
+      return false;
     }
 
     return true;
   }
 
-  private async Task LoadAssemblyProfile(ParsedIRTextSection parsedSection,
+
+  private async Task HideProfile() {
+    HasProfileInfo = false;
+    ColumnsVisible = false;
+    DocumentUtils.RemoveNonDefaultMenuItems(ProfileElementsMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(InstancesMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(ThreadsMenu);
+    //? TODO: DocumentUtils.RemoveNonDefaultMenuItems(InlineesMenu);
+  }
+
+
+  private async Task<bool> LoadAssemblyProfile(ParsedIRTextSection parsedSection,
                                          bool reloadFilterMenus = true) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var funcProfile = Session.ProfileData?.GetFunctionProfile(parsedSection.Section.ParentFunction);
 
     if (funcProfile == null) {
-      return;
+      return false;
     }
 
     await MarkAssemblyProfile(parsedSection, funcProfile);
@@ -277,9 +299,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (TextView.ProfileProcessingResult != null) {
       CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, true);
     }
+
+    return true;
   }
 
-  private async Task LoadAssemblyProfileInstance(ParsedIRTextSection parsedSection) {
+  private async Task<bool> LoadAssemblyProfileInstance(ParsedIRTextSection parsedSection) {
     UpdateProfileFilterUI();
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var instanceProfile = await Task.Run(
@@ -287,13 +311,14 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var funcProfile = instanceProfile.GetFunctionProfile(parsedSection.Section.ParentFunction);
 
     if (funcProfile == null) {
-      return;
+      return false;
     }
 
     await MarkAssemblyProfile(parsedSection, funcProfile);
+    return true;
   }
 
-  private async Task LoadSourceFileProfileInstance(IRTextSection section) {
+  private async Task<bool> LoadSourceFileProfileInstance(IRTextSection section) {
     UpdateProfileFilterUI();
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var instanceProfile = await Task.Run(
@@ -301,10 +326,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var funcProfile = instanceProfile.GetFunctionProfile(section.ParentFunction);
 
     if (funcProfile == null) {
-      return;
+      return false;
     }
 
     await MarkSourceFileProfile(section, funcProfile);
+    return true;
   }
 
   private async Task MarkAssemblyProfile(ParsedIRTextSection parsedSection, FunctionProfileData funcProfile) {
@@ -365,12 +391,18 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
       // Apply profile filter if needed.
       ProfileFilter = profileFilter;
+      bool success = true;
 
       if (profileFilter is {IncludesAll:false}) {
-        await LoadSourceFileProfileInstance(section);
+        success = await LoadSourceFileProfileInstance(section);
       }
       else {
-        await LoadSourceFileProfile(section);
+        success = await LoadSourceFileProfile(section);
+      }
+
+      if (!success) {
+        await HideProfile();
+        return false;
       }
 
       return true;
@@ -381,7 +413,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
   }
 
-  public void HandleMissingSourceFile(string failureText) {
+  public async Task HandleMissingSourceFile(string failureText) {
     string text = "Failed to load source file.";
 
     if (!string.IsNullOrEmpty(failureText)) {
@@ -389,18 +421,19 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     SetSourceText(text, "");
+    await HideProfile();
   }
 
-  private async Task LoadSourceFileProfile(IRTextSection section, bool reloadFilterMenus = true) {
+  private async Task<bool> LoadSourceFileProfile(IRTextSection section, bool reloadFilterMenus = true) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var funcProfile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
 
     if (funcProfile == null) {
-      return;
+      return false;
     }
 
     if (!(await MarkSourceFileProfile(section, funcProfile))) {
-      return;
+      return false;
     }
 
     if (reloadFilterMenus) {
@@ -413,6 +446,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (TextView.ProfileProcessingResult != null) {
       CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, false);
     }
+
+    return true;
   }
 
   private async Task<bool> MarkSourceFileProfile(IRTextSection section, FunctionProfileData funcProfile) {
@@ -434,6 +469,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       return false;
     }
 
+    // Clear markers when switching between ASM/source modes.
     if (TextView.IsLoaded) {
       TextView.ClearInstructionMarkers();
     }
@@ -453,6 +489,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                    section.ParentFunction, processingResult);
     }
 
+    sourceLineProfileResult_ = sourceLineProfileResult;
     TextView.ResumeUpdate();
 
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
@@ -462,7 +499,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     UpdateProfileFilterUI();
     UpdateProfileDescription(funcProfile);
     await UpdateProfilingColumns();
-    sourceLineProfileResult_ = sourceLineProfileResult;
     return true;
   }
 
