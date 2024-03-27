@@ -17,7 +17,6 @@ public interface IDebugInfoProvider : IDisposable {
   bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null);
   bool LoadDebugInfo(DebugFileSearchResult debugFile, IDebugInfoProvider other = null);
   void Unload();
-  bool CanUseInstance();
   bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc);
   bool AnnotateSourceLocations(FunctionIR function, string functionName);
   IEnumerable<FunctionDebugInfo> EnumerateFunctions();

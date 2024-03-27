@@ -151,10 +151,6 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
   public void Unload() {
   }
 
-  public bool CanUseInstance() {
-    return true;
-  }
-
   public bool LoadDebugInfo(DebugFileSearchResult debugFile,  IDebugInfoProvider other = null) {
     return true;
   }

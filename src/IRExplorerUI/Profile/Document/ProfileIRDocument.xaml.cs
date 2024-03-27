@@ -380,15 +380,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
       SetSourceText(text, sourceInfo.FilePath);
 
-      //? TODO: Is panel is not visible, scroll doesn't do anything,
-      //? should be executed again when panel is activated
-      var (firstSourceLineIndex, lastSourceLineIndex) =
-        await DocumentUtils.FindFunctionSourceLineRange(section.ParentFunction, Session);
-
-      if (firstSourceLineIndex != 0) {
-        SelectLine(firstSourceLineIndex);
-      }
-
       // Apply profile filter if needed.
       ProfileFilter = profileFilter;
       bool success = true;
@@ -403,6 +394,17 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       if (!success) {
         await HideProfile();
         return false;
+      }
+
+      //? TODO: Is panel is not visible, scroll doesn't do anything,
+      //? should be executed again when panel is activated.
+      if (!settings_.ProfileMarkerSettings.JumpToHottestElement) {
+        var (firstSourceLineIndex, lastSourceLineIndex) =
+          await DocumentUtils.FindFunctionSourceLineRange(section.ParentFunction, Session);
+
+        if (firstSourceLineIndex != 0) {
+          SelectLine(firstSourceLineIndex);
+        }
       }
 
       return true;

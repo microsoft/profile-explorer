@@ -445,6 +445,7 @@ public static class DocumentUtils {
       defaultItems.Add(new MenuItem() {
         Header = "No significant inlined functions",
         IsHitTestVisible = false,
+        Tag = true, // Give it a tag so it can be removed later.
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       });
     }

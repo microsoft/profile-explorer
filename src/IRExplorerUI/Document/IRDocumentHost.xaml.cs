@@ -2273,11 +2273,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async void InlineeMenuItem_OnClick(object sender, RoutedEventArgs e) {
     var inlinee = ((MenuItem)sender)?.Tag as InlineeListItem;
 
-    if (inlinee != null && inlinee.Elements is {Count:>0}) {
-      // Ensure elements are sorted to bring first one into view.
-      inlinee.Elements.Sort((a, b) => a.TextLocation.CompareTo(b.TextLocation));
-      TextView.SelectElements(inlinee.Elements);
-      TextView.BringElementIntoView(inlinee.Elements[0]);
+    if (inlinee != null && inlinee.ElementWeights is {Count:>0}) {
+      // Sort by weight and bring the hottest element into view.
+      var elements = inlinee.SortedElements;
+      TextView.SelectElements(elements);
+      TextView.BringElementIntoView(elements[0]);
     }
   }
 

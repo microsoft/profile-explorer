@@ -70,14 +70,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
 
     lock (loadedDoc) {
       if (loadedDoc.DebugInfo != null) {
-        if (loadedDoc.DebugInfo.CanUseInstance()) {
-          // Used for managed binaries, where the debug info is constructed during profiling.
-          return loadedDoc.DebugInfo;
-        }
-        else {
-          loadedDoc.DebugInfo.Dispose();
-          loadedDoc.DebugInfo = null;
-        }
+        return loadedDoc.DebugInfo;
       }
     }
 
@@ -128,8 +121,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     }
 
     lock (this) {
-      if (loadedDebugInfo_.TryGetValue(debugFile, out var provider) &&
-          provider.CanUseInstance()) {
+      if (loadedDebugInfo_.TryGetValue(debugFile, out var provider)) {
         return provider;
       }
 

@@ -244,15 +244,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
   }
 
-  public bool CanUseInstance() {
-#if DEBUG
-    if (creationThreadId_ != Thread.CurrentThread.ManagedThreadId) {
-      Trace.WriteLine($"Cross-thread PDB access: {creationThreadId_} != {Thread.CurrentThread.ManagedThreadId}");
-    }
-#endif
-    return creationThreadId_ == Thread.CurrentThread.ManagedThreadId;
-  }
-
   public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {
     return AnnotateSourceLocations(function, textFunc.Name);
   }
@@ -561,6 +552,9 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
               inlineeFileName = inlineeLineNumber.sourceFile.fileName;
             }
             catch {
+              // If the file name is not set, it means it's the same file
+              // as the function into which the inlining happened.
+              inlineeFileName = locationTag.FilePath;
             }
 
             locationTag.AddInlinee(inlineFrame.name, inlineeFileName,

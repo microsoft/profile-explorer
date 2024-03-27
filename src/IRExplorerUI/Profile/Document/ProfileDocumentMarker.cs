@@ -47,7 +47,7 @@ public interface MarkedDocument {
 public class InlineeListItem {
   public InlineeListItem(IRExplorerCore.IR.StackFrame frame) {
     InlineeFrame = frame;
-    Elements = new List<IRElement>();
+    ElementWeights = new List<(IRElement Element, TimeSpan Weight)>();
   }
 
   public IRExplorerCore.IR.StackFrame InlineeFrame { get; set; }
@@ -56,7 +56,14 @@ public class InlineeListItem {
   public TimeSpan ExclusiveWeight { get; set; }
   public double Percentage { get; set; }
   public double ExclusivePercentage { get; set; }
-  public List<IRElement> Elements { get; }
+  public List<(IRElement Element, TimeSpan Weight)> ElementWeights { get; }
+
+  public List<IRElement> SortedElements {
+    get {
+      ElementWeights.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+      return ElementWeights.ConvertAll(item => item.Element);
+    }
+  }
 }
 
 public class ProfileDocumentMarker {
@@ -227,7 +234,7 @@ public class ProfileDocumentMarker {
 
     // Check for cases where instead of the source code smth. like
     // a source server authentication failure response is displayed.
-    if (result.FirstLineIndex > document.LineCount ||
+    if (result.FirstLineIndex > document.LineCount &&
         result.LastLineIndex > document.LineCount) {
       return null;
     }
@@ -253,7 +260,9 @@ public class ProfileDocumentMarker {
 
     // For each source line, accumulate the weight of all instructions
     // mapped to that line, for both samples and performance counters.
-    for (int lineNumber = result.FirstLineIndex; lineNumber <= result.LastLineIndex; lineNumber++) {
+    int lastLine = Math.Min(result.LastLineIndex, document.LineCount);
+
+    for (int lineNumber = result.FirstLineIndex; lineNumber <= lastLine; lineNumber++) {
       TupleIR dummyTuple = null;
 
       if (result.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
@@ -304,7 +313,7 @@ public class ProfileDocumentMarker {
         }
 
         inlineeItem.Weight += pair.Item2;
-        inlineeItem.Elements.Add(element);
+        inlineeItem.ElementWeights.Add((element, pair.Item2));
 
         if (i == 0) {
           inlineeItem.ExclusiveWeight += pair.Item2;
