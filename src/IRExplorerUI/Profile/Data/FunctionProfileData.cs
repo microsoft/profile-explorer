@@ -104,7 +104,7 @@ public class FunctionProfileData {
 
   public SourceLineProcessingResult ProcessSourceLines(IDebugInfoProvider debugInfo,
                                                        ICompilerIRInfo ir,
-                                                       IRExplorerCore.IR.StackFrame inlinee = null) {
+                                                       SourceStackFrame inlinee = null) {
     var result = new SourceLineProcessingResult();
     int firstLine = int.MaxValue;
     int lastLine = int.MinValue;

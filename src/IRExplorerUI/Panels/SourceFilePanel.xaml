@@ -87,49 +87,49 @@
                         </MenuItem>
                     </Menu>
 
-                    <Separator/>
+                    <Separator />
 
                     <ToggleButton
-                      Height="20"
-                      Padding="0,0,2,0"
-                      IsChecked="{Binding Path=Settings.SyncLineWithDocument, Mode=TwoWay}"
-                      ToolTip="Sync selected line with associated document">
-                      <StackPanel Orientation="Horizontal">
-                        <Image
-                          Width="16"
-                          Height="16"
-                          Margin="0,1,0,0"
-                          Source="{StaticResource SwitchIcon}"
-                          Style="{StaticResource DisabledImageStyle}" />
-                        <TextBlock Text="Sync" />
-                      </StackPanel>
+                        Height="20"
+                        Padding="0,0,2,0"
+                        IsChecked="{Binding Path=Settings.SyncLineWithDocument, Mode=TwoWay}"
+                        ToolTip="Sync selected line with associated document">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource SwitchIcon}"
+                                Style="{StaticResource DisabledImageStyle}" />
+                            <TextBlock Text="Sync" />
+                        </StackPanel>
                     </ToggleButton>
                     <ToggleButton
-                      Height="20"
-                      Margin="2,0,4,0"
-                      Padding="0,0,2,0"
-                      IsChecked="{Binding Path=Settings.SyncInlineeWithDocument, Mode=TwoWay}"
-                      ToolTip="Display inlinees for selected instruction in document">
-                      <StackPanel Orientation="Horizontal">
-                        <Image
-                          Width="16"
-                          Height="16"
-                          Margin="0,1,0,0"
-                          Source="{StaticResource TreeIcon}"
-                          Style="{StaticResource DisabledImageStyle}" />
-                        <TextBlock Text="Inlinees" />
-                      </StackPanel>
+                        Height="20"
+                        Margin="2,0,4,0"
+                        Padding="0,0,2,0"
+                        IsChecked="{Binding Path=Settings.SyncInlineeWithDocument, Mode=TwoWay}"
+                        ToolTip="Display inlinees for selected instruction in document">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource TreeIcon}"
+                                Style="{StaticResource DisabledImageStyle}" />
+                            <TextBlock Text="Inlinees" />
+                        </StackPanel>
                     </ToggleButton>
                     <ComboBox
                         Name="InlineeComboBox"
-                        Width="150"
+                        Width="200"
                         MinWidth="100"
                         MaxWidth="200"
                         DisplayMemberPath="Function"
+                        IsEnabled="{Binding HasInlinees}"
                         Loaded="InlineeComboBox_Loaded"
                         SelectedValue="Function"
                         SelectionChanged="InlineeCombobox_SelectionChanged"
-                        IsEnabled="{Binding HasInlinees}"
                         ToolTip="Inlined functions in call tree order" />
                     <Button
                         Click="InlineUpButton_Click"
@@ -151,13 +151,13 @@
                         Visibility="Collapsed" />
                     <Separator />
                     <Button
-                      Width="20"
-                      Height="20"
-                      Margin="0,0,2,0"
-                      Padding="0,0,0,0"
-                      Click="OpenPopupButton_Click"
-                      ToolTip="Open the source file document in a new popup window">
-                      <Image Source="{StaticResource OpenExternalIcon}" />
+                        Width="20"
+                        Height="20"
+                        Margin="0,0,2,0"
+                        Padding="0,0,0,0"
+                        Click="OpenPopupButton_Click"
+                        ToolTip="Open the source file document in a new popup window">
+                        <Image Source="{StaticResource OpenExternalIcon}" />
                     </Button>
                 </ToolBar>
             </ToolBarTray>

@@ -30,7 +30,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private bool sourceFileLoaded_;
   private IRTextFunction sourceFileFunc_;
   private string sourceFilePath_;
-  private IRExplorerCore.IR.StackFrame currentInlinee_;
+  private SourceStackFrame currentInlinee_;
   private OptionsPanelHostWindow optionsPanelWindow_;
   private SourceFileSettings settings_;
   private bool disableInlineeComboboxEvents_;
@@ -125,7 +125,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private async void InlineeCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
     if (InlineeComboBox.SelectedItem != null &&
         !disableInlineeComboboxEvents_) {
-      var inlinee = (IRExplorerCore.IR.StackFrame)InlineeComboBox.SelectedItem;
+      var inlinee = (SourceStackFrame)InlineeComboBox.SelectedItem;
 
       if (InlineeComboBox.SelectedIndex > 0) {
         await LoadInlineeSourceFile(inlinee);
@@ -250,10 +250,10 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     return false;
   }
 
-  private async Task<bool> LoadSourceFileForInlinee(IRExplorerCore.IR.StackFrame inlinee, ProfileSampleFilter profileFilter = null) {
-    // if (!ShouldReloadFunction(function, profileFilter)) {
-    //   return true;
-    // }
+  private async Task<bool> LoadSourceFileForInlinee(SourceStackFrame inlinee, ProfileSampleFilter profileFilter = null) {
+    if (!ShouldReloadInlinee(inlinee, profileFilter)) {
+      return true;
+    }
 
     // Get the associated source file from the debug info if available,
     // since it also includes the start line number.
@@ -286,15 +286,32 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       return true;
     }
 
+    return HasProfileFilterChange(profileFilter);
+  }
+
+  private bool ShouldReloadInlinee(SourceStackFrame inlinee, ProfileSampleFilter profileFilter) {
+    if (!sourceFileLoaded_ || currentInlinee_ == null) {
+      return true;
+    }
+
+    if (!currentInlinee_.HasSameFunction(inlinee)) {
+      return true;
+    }
+
+    return HasProfileFilterChange(profileFilter);
+  }
+
+  private bool HasProfileFilterChange(ProfileSampleFilter profileFilter) {
     if (profileFilter != null) {
       return !profileFilter.Equals(ProfileTextView.ProfileFilter);
     }
     else {
+      // Filter is being removed.
       return ProfileTextView.ProfileFilter != null;
     }
   }
 
-  private void HandleLoadedSourceFile(SourceFileDebugInfo sourceInfo, IRTextFunction function) {
+    private void HandleLoadedSourceFile(SourceFileDebugInfo sourceInfo, IRTextFunction function) {
     SetPanelName(sourceInfo.OriginalFilePath);
     sourceFileLoaded_ = true;
     sourceFileFunc_ = function;
@@ -355,7 +372,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var inlinees = tag.InlineesReversed;
 
     // Add an entry that means "no inlinee" in the front.
-    inlinees.Insert(0, new IRExplorerCore.IR.StackFrame("---", "", 0,0));
+    inlinees.Insert(0, new SourceStackFrame("No Inlinee", "", 0,0));
     InlineeComboBox.ItemsSource = new ListCollectionView(inlinees);
     OnPropertyChanged(nameof(HasInlinees));
 
@@ -371,7 +388,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     OnPropertyChanged(nameof(HasInlinees));
   }
 
-  public async Task<bool> LoadInlineeSourceFile(IRExplorerCore.IR.StackFrame inlinee) {
+  public async Task<bool> LoadInlineeSourceFile(SourceStackFrame inlinee) {
     if (inlinee == currentInlinee_) {
       return true;
     }

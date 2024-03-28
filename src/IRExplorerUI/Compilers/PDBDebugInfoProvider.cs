@@ -573,7 +573,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return true;
   }
 
-  private IEnumerable<IRExplorerCore.IR.StackFrame>
+  private IEnumerable<SourceStackFrame>
     EnumerateInlinees(IDiaSymbol funcSymbol, uint instrRVA) {
     funcSymbol.findInlineFramesByRVA(instrRVA, out var inlineeFrameEnum);
 
@@ -597,7 +597,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
           //? TODO: Any way to detect this and avoid throwing?
         }
 
-        yield return new IRExplorerCore.IR.StackFrame(
+        yield return new SourceStackFrame(
           inlineFrame.name, inlineeFileName,
           (int)inlineeLineNumber.lineNumber,
           (int)inlineeLineNumber.columnNumber);

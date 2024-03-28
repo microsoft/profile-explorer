@@ -405,6 +405,32 @@ public static class DocumentUtils {
     int order = 0;
     double maxWidth = 0;
 
+    // Compute time spent in non-inlinee parts.
+    TimeSpan inlineeWeightSum = TimeSpan.Zero;
+
+    foreach (var node in inlineeList) {
+      inlineeWeightSum += node.ExclusiveWeight;
+    }
+
+    var nonInlineeWeight = funcProfile.Weight - inlineeWeightSum;
+    double nonInlineeWeightPercentage = funcProfile.ScaleWeight(nonInlineeWeight);
+    string nonInlineeText = $"({markerSettings.FormatWeightValue(null, nonInlineeWeight)})";
+
+    var nonInlineeValue = new ProfileMenuItem(nonInlineeText, nonInlineeWeight.Ticks, nonInlineeWeightPercentage) {
+      PrefixText = "Non-Inlinee Code",
+      ToolTip = "Time for code not originating from an inlined function",
+      ShowPercentageBar = markerSettings.ShowPercentageBar(nonInlineeWeightPercentage),
+      TextWeight = markerSettings.PickTextWeight(nonInlineeWeightPercentage),
+      PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+    };
+    profileItems.Add(nonInlineeValue);
+
+    if (defaultItems.Count > 0 &&
+      defaultItems[0] is MenuItem nonInlineeItem) {
+      nonInlineeItem.Header = nonInlineeValue;
+      nonInlineeItem.HeaderTemplate = valueTemplate;
+    }
+
     foreach (var node in inlineeList) {
       double weightPercentage = funcProfile.ScaleWeight(node.ExclusiveWeight);
 

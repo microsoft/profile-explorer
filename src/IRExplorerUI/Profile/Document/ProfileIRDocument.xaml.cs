@@ -149,7 +149,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private bool suspendColumnVisibilityHandler_;
   private ProfileSampleFilter profileFilter_;
   private CancelableTaskInstance loadTask_;
-  private IRExplorerCore.IR.StackFrame inlinee_;
+  private SourceStackFrame inlinee_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -384,7 +384,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
                                          IRTextSection section,
                                          ProfileSampleFilter profileFilter = null,
-                                         IRExplorerCore.IR.StackFrame inlinee = null) {
+                                         SourceStackFrame inlinee = null) {
     try {
       isSourceFileDocument_ = true;
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);

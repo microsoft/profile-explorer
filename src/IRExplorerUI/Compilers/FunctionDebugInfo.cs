@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using IRExplorerCore.IR;
 using ProtoBuf;
 
 namespace IRExplorerUI.Compilers;
@@ -58,7 +59,7 @@ public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
   public int Column { get; set; }
   [ProtoMember(5)]
   public string FilePath { get; private set; } //? Move to FunctionDebugInfo, add OriginalFilePath for SourceLink
-  public List<IRExplorerCore.IR.StackFrame> Inlinees { get; set; }
+  public List<SourceStackFrame> Inlinees { get; set; }
 
   public static readonly SourceLineDebugInfo Unknown = new SourceLineDebugInfo(-1, -1);
   public bool IsUnknown => Line == -1;
@@ -71,16 +72,16 @@ public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
     FilePath = filePath != null ? string.Intern(filePath) : null;
   }
 
-  public void AddInlinee(IRExplorerCore.IR.StackFrame inlinee) {
-    Inlinees ??= new List<IRExplorerCore.IR.StackFrame>();
+  public void AddInlinee(SourceStackFrame inlinee) {
+    Inlinees ??= new List<SourceStackFrame>();
     Inlinees.Add(inlinee);
   }
 
-  public bool HasInlinee(IRExplorerCore.IR.StackFrame inlinee) {
+  public bool HasInlinee(SourceStackFrame inlinee) {
     return Inlinees != null && Inlinees.Contains(inlinee);
   }
 
-  public IRExplorerCore.IR.StackFrame FindSameFunctionInlinee(IRExplorerCore.IR.StackFrame inlinee) {
+  public SourceStackFrame FindSameFunctionInlinee(SourceStackFrame inlinee) {
     return Inlinees?.Find(item => item.HasSameFunction(inlinee));
   }
 

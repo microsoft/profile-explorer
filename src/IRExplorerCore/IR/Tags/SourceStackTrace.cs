@@ -7,8 +7,8 @@ using System.Text;
 
 namespace IRExplorerCore.IR;
 
-public sealed class StackFrame : IEquatable<StackFrame> {
-  public StackFrame(string function, string filePath, int line, int column) {
+public sealed class SourceStackFrame : IEquatable<SourceStackFrame> {
+  public SourceStackFrame(string function, string filePath, int line, int column) {
     Function = function;
     FilePath = filePath;
     Line = line;
@@ -20,23 +20,23 @@ public sealed class StackFrame : IEquatable<StackFrame> {
   public int Line { get; set; }
   public int Column { get; set; }
 
-  public static bool operator ==(StackFrame left, StackFrame right) {
+  public static bool operator ==(SourceStackFrame left, SourceStackFrame right) {
     return Equals(left, right);
   }
 
-  public static bool operator !=(StackFrame left, StackFrame right) {
+  public static bool operator !=(SourceStackFrame left, SourceStackFrame right) {
     return !Equals(left, right);
   }
 
   public override bool Equals(object obj) {
-    return ReferenceEquals(this, obj) || obj is StackFrame other && Equals(other);
+    return ReferenceEquals(this, obj) || obj is SourceStackFrame other && Equals(other);
   }
 
   public override int GetHashCode() {
     return HashCode.Combine(Function, FilePath, Line, Column);
   }
 
-  public bool Equals(StackFrame other) {
+  public bool Equals(SourceStackFrame other) {
     if (ReferenceEquals(null, other))
       return false;
     if (ReferenceEquals(this, other))
@@ -46,31 +46,31 @@ public sealed class StackFrame : IEquatable<StackFrame> {
            FilePath.Equals(other.FilePath, StringComparison.OrdinalIgnoreCase);
   }
 
-  public bool HasSameFunction(StackFrame inlinee) {
+  public bool HasSameFunction(SourceStackFrame inlinee) {
     return Function.Equals(inlinee.Function, StringComparison.OrdinalIgnoreCase) &&
            FilePath.Equals(inlinee.FilePath, StringComparison.OrdinalIgnoreCase);
   }
 }
 
-public sealed class StackTrace {
-  public StackTrace() {
-    Frames = new List<StackFrame>();
+public sealed class SourceStackTrace {
+  public SourceStackTrace() {
+    Frames = new List<SourceStackFrame>();
   }
 
-  public StackTrace(IEnumerable<StackFrame> frames) : this() {
+  public SourceStackTrace(IEnumerable<SourceStackFrame> frames) : this() {
     AddFrames(frames);
   }
 
-  public List<StackFrame> Frames { get; set; }
+  public List<SourceStackFrame> Frames { get; set; }
   public byte[] Signature { get; set; }
 
-  public void AddFrames(IEnumerable<StackFrame> frames) {
+  public void AddFrames(IEnumerable<SourceStackFrame> frames) {
     Frames.AddRange(frames);
     UpdateSignature();
   }
 
   public override bool Equals(object obj) {
-    return obj is StackTrace trace &&
+    return obj is SourceStackTrace trace &&
            EqualityComparer<byte[]>.Default.Equals(Signature, trace.Signature);
   }
 

@@ -136,8 +136,8 @@
                         <Button
                             Command="local:DocumentHostCommand.ShowSectionList"
                             CommandTarget="{Binding ElementName=TextView}"
-                            Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
-                            ToolTip="Switch to section (Alt+S)">
+                            ToolTip="Switch to section (Alt+S)"
+                            Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                             <Image
                                 Width="16"
                                 Height="16"
@@ -146,8 +146,8 @@
                         <Button
                             Command="local:DocumentHostCommand.PreviousSection"
                             CommandTarget="{Binding ElementName=TextView}"
-                            Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
-                            ToolTip="Switch to previous section (Ctrl+P)">
+                            ToolTip="Switch to previous section (Ctrl+P)"
+                            Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                             <Image
                                 Width="16"
                                 Height="16"
@@ -156,14 +156,14 @@
                         <Button
                             Command="local:DocumentHostCommand.NextSection"
                             CommandTarget="{Binding ElementName=TextView}"
-                            Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
-                            ToolTip="Switch to next section (Ctrl+N)">
+                            ToolTip="Switch to next section (Ctrl+N)"
+                            Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                             <Image
                                 Width="16"
                                 Height="16"
                                 Source="{StaticResource RightArrowIcon}" />
                         </Button>
-                        <Separator Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}"/>
+                        <Separator Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
                         <TextBlock
                             Margin="4,0,0,0"
@@ -448,13 +448,13 @@
                             <Image Source="{StaticResource ListIcon}" />
                         </ToggleButton>
                         <Button
-                          Width="20"
-                          Height="20"
-                          Margin="0,0,2,0"
-                          Padding="0,0,0,0"
-                          Click="OpenPopupButton_Click"
-                          ToolTip="Open the document in a new popup window">
-                          <Image Source="{StaticResource OpenExternalIcon}" />
+                            Width="20"
+                            Height="20"
+                            Margin="0,0,2,0"
+                            Padding="0,0,0,0"
+                            Click="OpenPopupButton_Click"
+                            ToolTip="Open the document in a new popup window">
+                            <Image Source="{StaticResource OpenExternalIcon}" />
                         </Button>
 
                         <ToggleButton
@@ -507,8 +507,8 @@
                                         x:Name="ProfileElementsMenu"
                                         Margin="0,0,0,0"
                                         Padding="0,0,0,0"
-                                        ToolTip="View sorted list of hottest lines"
-                                        OverridesDefaultStyle="True">
+                                        OverridesDefaultStyle="True"
+                                        ToolTip="View sorted list of hottest lines">
                                         <MenuItem.Header>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock VerticalAlignment="Bottom" Text="Profile" />
@@ -553,13 +553,15 @@
                                         x:Name="ProfileBlocksMenu"
                                         Margin="0,0,0,0"
                                         Padding="0,0,0,0"
-                                        ToolTip="View sorted list of hottest blocks"
-                                        OverridesDefaultStyle="True">
+                                        OverridesDefaultStyle="True"
+                                        ToolTip="View sorted list of hottest blocks">
                                         <MenuItem.Header>
                                             <StackPanel Orientation="Horizontal">
-                                              <Image Source="{StaticResource BlockIcon}" Style="{StaticResource DisabledImageStyle}" />
-                                              <TextBlock Margin="2,0,0,0"
-                                                         VerticalAlignment="Bottom" Text="Blocks" />
+                                                <Image Source="{StaticResource BlockIcon}" Style="{StaticResource DisabledImageStyle}" />
+                                                <TextBlock
+                                                    Margin="2,0,0,0"
+                                                    VerticalAlignment="Bottom"
+                                                    Text="Blocks" />
                                                 <Path
                                                     Margin="4,2,0,0"
                                                     VerticalAlignment="Center"
@@ -569,9 +571,10 @@
                                         </MenuItem.Header>
                                     </MenuItem>
                                 </Menu>
-                                <Menu Margin="2,0,0,0" VerticalAlignment="Center"
-                ToolTip="View sorted list of inlined functions"
-                                      >
+                                <Menu
+                                    Margin="2,0,0,0"
+                                    VerticalAlignment="Center"
+                                    ToolTip="View sorted list of inlined functions">
                                     <MenuItem
                                         x:Name="InlineesMenu"
                                         Margin="0,0,0,0"
@@ -591,31 +594,38 @@
                                                     Fill="Black" />
                                             </StackPanel>
                                         </MenuItem.Header>
+                                        <MenuItem
+                                            Header="Non-Inlinee"
+                                            IsCheckable="False"
+                                            Style="{DynamicResource SubMenuItemHeaderStyle}"
+                                            ToolTip="Time for parts not originating from inlined functions" />
+                                        <Separator />
                                     </MenuItem>
                                 </Menu>
 
                                 <Button
-                                  Visibility="Collapsed"
                                     Margin="2,0,0,0"
                                     Padding="0"
                                     Command="local:DocumentHostCommand.JumpToPreviousProfiledBlock"
                                     CommandTarget="{Binding ElementName=TextView}"
-                                    ToolTip="Jump to the previous hottest block (Shift+F2)">
+                                    ToolTip="Jump to the previous hottest block (Shift+F2)"
+                                    Visibility="Collapsed">
                                     <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
                                 </Button>
                                 <Button
-                                  Visibility="Collapsed"
                                     Padding="0"
                                     Command="local:DocumentHostCommand.JumpToNextProfiledBlock"
                                     CommandTarget="{Binding ElementName=TextView}"
-                                    ToolTip="Jump to next hottest block (Shift+F2)">
+                                    ToolTip="Jump to next hottest block (Shift+F2)"
+                                    Visibility="Collapsed">
                                     <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
                                 </Button>
                                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
 
-                                <Menu Margin="2,0,0,0" VerticalAlignment="Center"
-                ToolTip="Select function instances to display"
-                                      >
+                                <Menu
+                                    Margin="2,0,0,0"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Select function instances to display">
                                     <MenuItem
                                         x:Name="InstancesMenu"
                                         Margin="0,0,0,0"
@@ -650,9 +660,9 @@
                                         x:Name="ThreadsMenu"
                                         Margin="0,0,0,0"
                                         Padding="0,0,0,0"
-                                        ToolTip="Select threads the function ran on to display"
                                         Background="{Binding Path=HasProfileThreadFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
-                                        OverridesDefaultStyle="True">
+                                        OverridesDefaultStyle="True"
+                                        ToolTip="Select threads the function ran on to display">
                                         <MenuItem.Header>
                                             <StackPanel Orientation="Horizontal">
                                                 <Image Source="{StaticResource FilterIcon}" Style="{StaticResource DisabledImageStyle}" />
@@ -676,7 +686,7 @@
                                     </MenuItem>
                                 </Menu>
                                 <Separator />
-                                 <Menu
+                                <Menu
                                     Margin="0,0,0,0"
                                     VerticalAlignment="Center"
                                     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
@@ -738,8 +748,10 @@
                                         </MenuItem>
                                     </MenuItem>
                                 </Menu>
-                                <Menu Margin="2,0,0,0" VerticalAlignment="Center"
-                                      ToolTip="Configure displayed profiling columns">
+                                <Menu
+                                    Margin="2,0,0,0"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Configure displayed profiling columns">
                                     <MenuItem
                                         x:Name="ProfileViewMenu"
                                         Margin="0,0,0,0"

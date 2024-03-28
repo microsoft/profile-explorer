@@ -523,7 +523,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     HighlightSingleElement(element, GetHighlighter(type));
   }
 
-  public void SelectElementsOnSourceLine(int lineNumber, IRExplorerCore.IR.StackFrame inlinee = null) {
+  public void SelectElementsOnSourceLine(int lineNumber, SourceStackFrame inlinee = null) {
     ClearTemporaryHighlighting();
     MarkElementsOnSourceLine(selectedHighlighter_, lineNumber, Colors.Transparent,
                              false, true, inlinee);
@@ -1604,7 +1604,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void MarkElementsOnSourceLine(ElementHighlighter highlighter, int lineNumber, Color selectedColor,
-                                        bool raiseEvent, bool bringIntoView, IRExplorerCore.IR.StackFrame inlinee) {
+                                        bool raiseEvent, bool bringIntoView, SourceStackFrame inlinee) {
     var style = highlighter == selectedHighlighter_ ? selectedStyle_ : new HighlightingStyle(selectedColor);
     var group = new HighlightedElementGroup(style);
     IRElement firstTuple = null;

@@ -45,12 +45,12 @@ public interface MarkedDocument {
 }
 
 public class InlineeListItem {
-  public InlineeListItem(IRExplorerCore.IR.StackFrame frame) {
+  public InlineeListItem(SourceStackFrame frame) {
     InlineeFrame = frame;
     ElementWeights = new List<(IRElement Element, TimeSpan Weight)>();
   }
 
-  public IRExplorerCore.IR.StackFrame InlineeFrame { get; set; }
+  public SourceStackFrame InlineeFrame { get; set; }
   public ProfileCallTreeNode CallTreeNode { get; set; }
   public TimeSpan Weight { get; set; }
   public TimeSpan ExclusiveWeight { get; set; }
