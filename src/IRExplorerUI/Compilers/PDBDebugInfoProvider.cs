@@ -465,7 +465,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         var sourceFile = lineNumber.sourceFile;
         var sourceLine = new SourceLineDebugInfo((int)lineNumber.addressOffset,
                                                  (int)lineNumber.lineNumber,
-                                                 (int)lineNumber.columnNumber);
+                                                 (int)lineNumber.columnNumber,
+                                                 sourceFile.fileName);
 
         if (includeInlinees) {
           var funcSymbol = FindFunctionSymbolByRVA(rva);

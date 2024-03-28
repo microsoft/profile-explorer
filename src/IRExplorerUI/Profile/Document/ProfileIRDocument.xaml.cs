@@ -194,8 +194,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       }
 
       UpdateProfileFilterUI();
-      DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, value);
-      DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, value);
+      DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, profileFilter_);
+      DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, profileFilter_);
     }
   }
 
@@ -275,12 +275,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     DocumentUtils.RemoveNonDefaultMenuItems(ProfileElementsMenu);
     DocumentUtils.RemoveNonDefaultMenuItems(InstancesMenu);
     DocumentUtils.RemoveNonDefaultMenuItems(ThreadsMenu);
-    //? TODO: DocumentUtils.RemoveNonDefaultMenuItems(InlineesMenu);
   }
 
 
   private async Task<bool> LoadAssemblyProfile(ParsedIRTextSection parsedSection,
-                                         bool reloadFilterMenus = true) {
+                                               bool reloadFilterMenus = true) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var funcProfile = Session.ProfileData?.GetFunctionProfile(parsedSection.Section.ParentFunction);
 
@@ -291,10 +290,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     await MarkAssemblyProfile(parsedSection, funcProfile);
 
     if (reloadFilterMenus) {
-      DocumentUtils.CreateInstancesMenu(InstancesMenu, parsedSection.Section, funcProfile,
-                                        InstanceMenuItem_OnClick, settings_, Session);
-      DocumentUtils.CreateThreadsMenu(ThreadsMenu, parsedSection.Section, funcProfile,
-                                      ThreadMenuItem_OnClick, settings_, Session);
+      CreateProfileFilterMenus(parsedSection.Section, funcProfile);
     }
 
     if (TextView.ProfileProcessingResult != null) {
@@ -304,7 +300,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     return true;
   }
 
-  private async Task<bool> LoadAssemblyProfileInstance(ParsedIRTextSection parsedSection) {
+  private async Task<bool> LoadAssemblyProfileInstance(ParsedIRTextSection parsedSection,
+                                                       bool reloadFilterMenus = true) {
     UpdateProfileFilterUI();
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var instanceProfile = await Task.Run(
@@ -316,10 +313,16 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     await MarkAssemblyProfile(parsedSection, funcProfile);
+
+    if (reloadFilterMenus) {
+      CreateProfileFilterMenus(parsedSection.Section, funcProfile);
+    }
+
     return true;
   }
 
-  private async Task<bool> LoadSourceFileProfileInstance(IRTextSection section) {
+  private async Task<bool> LoadSourceFileProfileInstance(IRTextSection section,
+                                                         bool reloadFilterMenus = true) {
     UpdateProfileFilterUI();
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var instanceProfile = await Task.Run(
@@ -331,6 +334,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     await MarkSourceFileProfile(section, funcProfile);
+
+    if (reloadFilterMenus) {
+      CreateProfileFilterMenus(section, funcProfile);
+    }
+
     return true;
   }
 
@@ -442,10 +450,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     if (reloadFilterMenus) {
-      DocumentUtils.CreateInstancesMenu(InstancesMenu, section, funcProfile,
-                                        InstanceMenuItem_OnClick, settings_, Session);
-      DocumentUtils.CreateThreadsMenu(ThreadsMenu, section, funcProfile,
-                                      ThreadMenuItem_OnClick, settings_, Session);
+      CreateProfileFilterMenus(section, funcProfile);
     }
 
     if (TextView.ProfileProcessingResult != null) {
@@ -453,6 +458,15 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     return true;
+  }
+
+  private void CreateProfileFilterMenus(IRTextSection section, FunctionProfileData funcProfile) {
+    DocumentUtils.CreateInstancesMenu(InstancesMenu, section, funcProfile,
+                                      InstanceMenuItem_OnClick, settings_, Session);
+    DocumentUtils.CreateThreadsMenu(ThreadsMenu, section, funcProfile,
+                                    ThreadMenuItem_OnClick, settings_, Session);
+    DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, profileFilter_);
+    DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, profileFilter_);
   }
 
   private async Task<bool> MarkSourceFileProfile(IRTextSection section, FunctionProfileData funcProfile) {
@@ -511,7 +525,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private async Task ApplyProfileFilter() {
       if (isSourceFileDocument_) {
         if (profileFilter_ is {IncludesAll: false}) {
-          await LoadSourceFileProfileInstance(TextView.Section);
+          await LoadSourceFileProfileInstance(TextView.Section, false);
         }
         else {
           await LoadSourceFileProfile(TextView.Section, false);
@@ -522,7 +536,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                                     TextView.SectionText,
                                                     TextView.Function);
         if (profileFilter_ is {IncludesAll: false}) {
-          await LoadAssemblyProfileInstance(parsedSection);
+          await LoadAssemblyProfileInstance(parsedSection, false);
         }
         else {
           await LoadAssemblyProfile(parsedSection, false);

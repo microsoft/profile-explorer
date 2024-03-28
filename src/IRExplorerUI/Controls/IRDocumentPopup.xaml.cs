@@ -44,7 +44,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     double width = Math.Max(settings.PopupWidth, MinWidth);
     double height = Math.Max(settings.PopupHeight, MinHeight);
     Initialize(position, width, height, owner);
-    
+
     PanelResizeGrip.ResizedControl = this;
     Session = session;
     owner_ = owner;
@@ -161,7 +161,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       settings.PopupWidth = popup.Width;
       settings.PopupHeight = popup.Height;
     };
-    
+
     popup.UpdatePopupTitle();
     popup.CaptureMouseWheel();
   }
@@ -176,7 +176,6 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     ProfileTextView.ShowPerformanceMetricColumns = settings_.ShowPerformanceMetricColumns;
     ProfileTextView.ProfileFilter = filter;
     ProfileTextView.Initialize(App.Settings.DocumentSettings);
-    await ProfileTextView.LoadSection(parsedSection);
     await SetupInitialMode(parsedSection, showSourceCode);
   }
 
@@ -189,10 +188,10 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     SetupNewPopup(popup, settings);
     return popup;
   }
-  
+
   private void UpdatePopupTitle() {
     var title = GetFunctionName();
-    
+
     if (PreviewedElement != null) {
       string elementText = Utils.MakeElementDescription(PreviewedElement);
       title = $"{title}: {elementText}";
@@ -207,7 +206,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     }
 
     var tooltip = "";
-    
+
     if (!string.IsNullOrEmpty(DescriptionPrefix)) {
       tooltip = $"{DescriptionPrefix}{tooltip}";
     }
@@ -215,7 +214,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     if (!string.IsNullOrEmpty(DescriptionSuffix)) {
       tooltip = $"{tooltip}{DescriptionSuffix}";
     }
-    
+
     PanelTitle = title;
     PanelToolTip = tooltip;
   }
@@ -345,6 +344,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private async Task SwitchAssemblySourceMode() {
+    // Save current profile filter to restore after switch.
     var filter = ProfileTextView.ProfileFilter;
     ProfileTextView.Reset();
 
@@ -358,7 +358,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       }
       else {
         var failureText = $"Could not find debug info for function:\n{function.Name}";
-        ProfileTextView.HandleMissingSourceFile(failureText);
+        await ProfileTextView.HandleMissingSourceFile(failureText);
       }
     }
     else {
