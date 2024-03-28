@@ -133,7 +133,7 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
     return SourceFileDebugInfo.Unknown;
   }
 
-  public SourceLineDebugInfo FindSourceLineByRVA(long rva) {
+  public SourceLineDebugInfo FindSourceLineByRVA(long rva, bool includeInlinees) {
     var funcInfo = FindFunctionByRVA(rva);
 
     if (EnsureHasSourceLines(funcInfo)) {

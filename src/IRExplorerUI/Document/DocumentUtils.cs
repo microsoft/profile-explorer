@@ -584,7 +584,7 @@ public static class DocumentUtils {
   }
 
   public static async Task<(int, int)> FindFunctionSourceLineRange(IRTextFunction function, ISession session) {
-    var debugInfo = await session.GetDebugInfoProvider(function);
+    var debugInfo = await session.GetDebugInfoProvider(function).ConfigureAwait(false);
     var funcProfile = session.ProfileData?.GetFunctionProfile(function);
 
     if (debugInfo == null || funcProfile == null) {

@@ -40,7 +40,7 @@ public class SourceFileFinder {
   public async Task<(SourceFileDebugInfo, IDebugInfoProvider)>
     FindLocalSourceFile(IRTextFunction function, FrameworkElement owner = null) {
     return await Task.Run(async () => {
-      var debugInfo = await session_.GetDebugInfoProvider(function);
+      var debugInfo = await session_.GetDebugInfoProvider(function).ConfigureAwait(false);
 
       if (debugInfo == null) {
         return (SourceFileDebugInfo.Unknown, null);

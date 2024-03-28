@@ -103,7 +103,8 @@ public class FunctionProfileData {
   }
 
   public SourceLineProcessingResult ProcessSourceLines(IDebugInfoProvider debugInfo,
-                                                       ICompilerIRInfo ir) {
+                                                       ICompilerIRInfo ir,
+                                                       IRExplorerCore.IR.StackFrame inlinee = null) {
     var result = new SourceLineProcessingResult();
     int firstLine = int.MaxValue;
     int lastLine = int.MinValue;
@@ -111,21 +112,54 @@ public class FunctionProfileData {
 
     foreach (var pair in InstructionWeight) {
       long rva = pair.Key + FunctionDebugInfo.RVA - offsetData.InitialMultiplier;
-      var lineInfo = debugInfo.FindSourceLineByRVA(rva);
+      var lineInfo = debugInfo.FindSourceLineByRVA(rva, inlinee != null);
+
 
       if (!lineInfo.IsUnknown) {
-        result.SourceLineWeight.AccumulateValue(lineInfo.Line, pair.Value);
-        firstLine = Math.Min(lineInfo.Line, firstLine);
-        lastLine = Math.Max(lineInfo.Line, lastLine);
+        int line = lineInfo.Line;
+
+        if (inlinee != null) {
+          // Map the instruction back to the function that got inlined
+          // at the call site, if filtering by an inlinee is used.
+          var matchingInlinee = lineInfo.FindSameFunctionInlinee(inlinee);
+
+          if(matchingInlinee != null) {
+            line = matchingInlinee.Line;
+          }
+          else {
+            continue; // Don't count the instr. if not part of the inlinee.
+          }
+        }
+
+        result.SourceLineWeight.AccumulateValue(line, pair.Value);
+        firstLine = Math.Min(line, firstLine);
+        lastLine = Math.Max(line, lastLine);
       }
     }
 
     foreach (var pair in InstructionCounters) {
       long rva = pair.Key + FunctionDebugInfo.RVA;
-      var lineInfo = debugInfo.FindSourceLineByRVA(rva);
+      var lineInfo = debugInfo.FindSourceLineByRVA(rva, inlinee != null);
 
       if (!lineInfo.IsUnknown) {
-        result.SourceLineCounters.AccumulateValue(lineInfo.Line, pair.Value);
+        int line = lineInfo.Line;
+
+        if (inlinee != null) {
+          // Map the instruction back to the function that got inlined
+          // at the call site, if filtering by an inlinee is used.
+          var matchingInlinee = lineInfo.FindSameFunctionInlinee(inlinee);
+
+          if(matchingInlinee != null) {
+            line = matchingInlinee.Line;
+          }
+          else {
+            continue; // Don't count the instr. if not part of the inlinee.
+          }
+        }
+
+        result.SourceLineCounters.AccumulateValue(line, pair.Value);
+        firstLine = Math.Min(line, firstLine);
+        lastLine = Math.Max(line, lastLine);
       }
 
       result.FunctionCountersValue.Add(pair.Value);

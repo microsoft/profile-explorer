@@ -16,13 +16,18 @@ public class SourceFileSettings : TextViewSettingsBase {
   [ProtoMember(1)]
   public SourceFileFinderSettings FinderSettings { get; set; }
   [ProtoMember(2)]
-  public bool SyncWithDocument { get; set; }
+  public bool SyncStyleWithDocument { get; set; }
+  [ProtoMember(3)]
+  public bool SyncLineWithDocument { get; set; }
+  [ProtoMember(4)]
+  public bool SyncInlineeWithDocument { get; set; }
 
   public override void Reset() {
     base.Reset();
     InitializeReferenceMembers();
     ProfileMarkerSettings.JumpToHottestElement = true;
-    SyncWithDocument = true;
+    SyncStyleWithDocument = true;
+    SyncLineWithDocument = true;
     FinderSettings.Reset();
   }
 
@@ -39,7 +44,9 @@ public class SourceFileSettings : TextViewSettingsBase {
   public override bool Equals(object obj) {
     return obj is SourceFileSettings settings &&
            base.Equals(settings) &&
-           SyncWithDocument == settings.SyncWithDocument &&
+           SyncStyleWithDocument == settings.SyncStyleWithDocument &&
+           SyncLineWithDocument == settings.SyncLineWithDocument &&
+           SyncInlineeWithDocument == settings.SyncInlineeWithDocument &&
            FinderSettings.Equals(settings.FinderSettings);
   }
 }

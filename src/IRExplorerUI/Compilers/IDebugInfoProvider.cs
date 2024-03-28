@@ -27,7 +27,7 @@ public interface IDebugInfoProvider : IDisposable {
   SourceFileDebugInfo FindFunctionSourceFilePath(IRTextFunction textFunc);
   SourceFileDebugInfo FindFunctionSourceFilePath(string functionName);
   SourceFileDebugInfo FindSourceFilePathByRVA(long rva);
-  SourceLineDebugInfo FindSourceLineByRVA(long rva);
+  SourceLineDebugInfo FindSourceLineByRVA(long rva, bool includeInlinees = false);
 }
 
 [ProtoContract(SkipConstructor = true)]

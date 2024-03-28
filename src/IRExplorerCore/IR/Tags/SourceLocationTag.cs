@@ -36,6 +36,11 @@ public sealed class SourceLocationTag : ITag {
     Inlinees.Add(new StackFrame(function, filePath, line, column));
   }
 
+  public void AddInlinee(StackFrame inlinee) {
+    Inlinees ??= new List<StackFrame>();
+    Inlinees.Add(inlinee);
+  }
+
   public void Reset() {
     Inlinees = null;
     Line = 0;

@@ -41,8 +41,14 @@ public sealed class StackFrame : IEquatable<StackFrame> {
       return false;
     if (ReferenceEquals(this, other))
       return true;
-    return Function == other.Function && FilePath == other.FilePath &&
-           Line == other.Line && Column == other.Column;
+    return Line == other.Line && Column == other.Column &&
+           Function.Equals(other.Function, StringComparison.OrdinalIgnoreCase) &&
+           FilePath.Equals(other.FilePath, StringComparison.OrdinalIgnoreCase);
+  }
+
+  public bool HasSameFunction(StackFrame inlinee) {
+    return Function.Equals(inlinee.Function, StringComparison.OrdinalIgnoreCase) &&
+           FilePath.Equals(inlinee.FilePath, StringComparison.OrdinalIgnoreCase);
   }
 }
 

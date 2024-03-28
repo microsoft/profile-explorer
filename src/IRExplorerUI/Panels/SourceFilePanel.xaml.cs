@@ -12,13 +12,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Threading;
-using ClosedXML.Excel;
-using ICSharpCode.AvalonEdit;
-using ICSharpCode.AvalonEdit.Document;
-using ICSharpCode.AvalonEdit.Highlighting;
-using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
@@ -27,9 +20,6 @@ using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Profile;
-using IRExplorerUI.Profile.Document;
-using Microsoft.Win32;
-using TextLocation = IRExplorerCore.TextLocation;
 
 namespace IRExplorerUI;
 
@@ -43,11 +33,16 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private IRExplorerCore.IR.StackFrame currentInlinee_;
   private OptionsPanelHostWindow optionsPanelWindow_;
   private SourceFileSettings settings_;
+  private bool disableInlineeComboboxEvents_;
 
   public SourceFilePanel() {
     InitializeComponent();
     DataContext = this;
   }
+
+  public override ToolPanelKind PanelKind => ToolPanelKind.Source;
+  public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
+  public bool HasInlinees => InlineeComboBox.Items.Count > 0;
 
   public override ISession Session {
     get => base.Session;
@@ -63,8 +58,9 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     set {
       settings_ = value;
       sourceFileFinder_ = Session.CompilerInfo.SourceFileFinder;
+      OnPropertyChanged();
 
-      if (settings_.SyncWithDocument) {
+      if (settings_.SyncStyleWithDocument) {
         // Patch the settings with the document settings.
         var clone = settings_.Clone();
         clone.FontName = App.Settings.DocumentSettings.FontName;
@@ -85,7 +81,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
   }
 
-  private void ComboBox_Loaded(object sender, RoutedEventArgs e) {
+  private void InlineeComboBox_Loaded(object sender, RoutedEventArgs e) {
     if (sender is ComboBox control) {
       Utils.PatchComboBoxStyle(control);
     }
@@ -127,23 +123,31 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private async void InlineeCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-    if (e.AddedItems.Count == 1) {
-      var inlinee = (IRExplorerCore.IR.StackFrame)e.AddedItems[0];
-      await LoadInlineeSourceFile(inlinee);
+    if (InlineeComboBox.SelectedItem != null &&
+        !disableInlineeComboboxEvents_) {
+      var inlinee = (IRExplorerCore.IR.StackFrame)InlineeComboBox.SelectedItem;
+
+      if (InlineeComboBox.SelectedIndex > 0) {
+        await LoadInlineeSourceFile(inlinee);
+      }
+      else {
+        // First item means "no inlinee".
+        await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter);
+      }
     }
   }
 
-  private void Button_Click_1(object sender, RoutedEventArgs e) {
-    if (InlineeCombobox.ItemsSource != null &&
-        InlineeCombobox.SelectedIndex > 0) {
-      InlineeCombobox.SelectedIndex--;
+  private void InlineUpButton_Click(object sender, RoutedEventArgs e) {
+    if (InlineeComboBox.ItemsSource != null &&
+        InlineeComboBox.SelectedIndex > 0) {
+      InlineeComboBox.SelectedIndex--;
     }
   }
 
-  private void Button_Click_2(object sender, RoutedEventArgs e) {
-    if (InlineeCombobox.ItemsSource != null &&
-        InlineeCombobox.SelectedIndex < ((ListCollectionView)InlineeCombobox.ItemsSource).Count - 1) {
-      InlineeCombobox.SelectedIndex++;
+  private void InlineDownButton_Click(object sender, RoutedEventArgs e) {
+    if (InlineeComboBox.ItemsSource != null &&
+        InlineeComboBox.SelectedIndex < ((ListCollectionView)InlineeComboBox.ItemsSource).Count - 1) {
+      InlineeComboBox.SelectedIndex++;
     }
   }
 
@@ -208,10 +212,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       },
       () => optionsPanelWindow_ = null);
   }
-        #region IToolPanel
-
-  public override ToolPanelKind PanelKind => ToolPanelKind.Source;
-  public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
 
   public async Task LoadSourceFile(IRTextSection section, ProfileSampleFilter profileFilter = null) {
     section_ = section;
@@ -262,7 +262,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var (sourceInfo, debugInfo) = await sourceFileFinder_.FindLocalSourceFile(inlineeSourceInfo);
 
     if (!sourceInfo.IsUnknown) {
-      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter)) {
+      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter, inlinee)) {
         HandleLoadedSourceFile(sourceInfo, null);
         return true;
       }
@@ -332,7 +332,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var tag = instr?.GetTag<SourceLocationTag>();
 
     if (tag != null) {
-      if (tag.HasInlinees) {
+      if (tag.HasInlinees && settings_.SyncInlineeWithDocument) {
+        // Display deepest inlinee instead.
         if (await LoadInlineeSourceFile(tag)) {
           return;
         }
@@ -342,48 +343,41 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       }
 
       if (await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter)) {
-        ProfileTextView.SelectLine(tag.Line);
+        if (settings_.SyncLineWithDocument) {
+          ProfileTextView.SelectLine(tag.Line);
+        }
       }
     }
   }
 
   private async Task<bool> LoadInlineeSourceFile(SourceLocationTag tag) {
-    var last = tag.Inlinees[0];
-    InlineeCombobox.ItemsSource = new ListCollectionView(tag.InlineesReversed);
-    InlineeCombobox.SelectedItem = last;
-    //return true;
-    return await LoadInlineeSourceFile(last);
+    disableInlineeComboboxEvents_ = true;
+    var inlinees = tag.InlineesReversed;
+
+    // Add an entry that means "no inlinee" in the front.
+    inlinees.Insert(0, new IRExplorerCore.IR.StackFrame("---", "", 0,0));
+    InlineeComboBox.ItemsSource = new ListCollectionView(inlinees);
+    OnPropertyChanged(nameof(HasInlinees));
+
+    var selectedInlinee = inlinees[^1];
+    InlineeComboBox.SelectedItem = selectedInlinee;
+    disableInlineeComboboxEvents_ = false;
+    return await LoadInlineeSourceFile(selectedInlinee);
   }
 
   private void ResetInlinee() {
-    InlineeCombobox.ItemsSource = null;
+    InlineeComboBox.ItemsSource = null;
     currentInlinee_ = null;
+    OnPropertyChanged(nameof(HasInlinees));
   }
-
-  //? TODO: Select source line must go through inlinee mapping to select proper asm
-  //     all instrs that have the line on the inlinee list for this func
 
   public async Task<bool> LoadInlineeSourceFile(IRExplorerCore.IR.StackFrame inlinee) {
     if (inlinee == currentInlinee_) {
       return true;
     }
 
-    // Try to load the profile info of the inlinee.
-    // var summary = section_.ParentFunction.ParentSummary;
-    //
-    // var inlineeFunc = summary.FindFunction(funcName => {
-    //   if (funcName == inlinee.Function) {
-    //     return true;
-    //   }
-    //
-    //   string demangledName = PDBDebugInfoProvider.DemangleFunctionName(funcName);
-    //   return demangledName == inlinee.Function;
-    // });
-
     bool fileLoaded = await LoadSourceFileForInlinee(inlinee);
 
-    //? TODO: The func ASM is not needed, profile is created by mapping ASM lines in main func
-    //? to corresponding lines in the selected inlinee
     if (fileLoaded) {
       ProfileTextView.SelectLine(inlinee.Line);
     }
@@ -401,8 +395,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
     await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
-
-        #endregion
 
   private void PanelToolbarTray_OnSettingsClicked(object sender, EventArgs e) {
     ShowOptionsPanel();

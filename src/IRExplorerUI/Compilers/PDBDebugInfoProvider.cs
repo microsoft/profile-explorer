@@ -293,8 +293,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return FindFunctionSourceFilePathImpl(lineInfo, sourceFile, funcSymbol.relativeVirtualAddress);
   }
 
-  public SourceLineDebugInfo FindSourceLineByRVA(long rva) {
-    return FindSourceLineByRVAImpl(rva).Item1;
+  public SourceLineDebugInfo FindSourceLineByRVA(long rva, bool includeInlinees) {
+    return FindSourceLineByRVAImpl(rva, includeInlinees).Item1;
   }
 
   public FunctionDebugInfo FindFunctionByRVA(long rva) {
@@ -446,7 +446,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
            pdbChecksum.SequenceEqual(fileChecksum);
   }
 
-  private (SourceLineDebugInfo, IDiaSourceFile) FindSourceLineByRVAImpl(long rva) {
+  private (SourceLineDebugInfo, IDiaSourceFile)
+    FindSourceLineByRVAImpl(long rva, bool includeInlinees = false) {
     if (!EnsureLoaded()) {
       return (SourceLineDebugInfo.Unknown, null);
     }
@@ -462,8 +463,27 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         }
 
         var sourceFile = lineNumber.sourceFile;
-        return (new SourceLineDebugInfo((int)lineNumber.addressOffset, (int)lineNumber.lineNumber,
-                                        (int)lineNumber.columnNumber, sourceFile.fileName), sourceFile);
+        var sourceLine = new SourceLineDebugInfo((int)lineNumber.addressOffset,
+                                                 (int)lineNumber.lineNumber,
+                                                 (int)lineNumber.columnNumber);
+
+        if (includeInlinees) {
+          var funcSymbol = FindFunctionSymbolByRVA(rva);
+
+          if (funcSymbol != null) {
+            // Enumerate the functions that got inlined at this call site.
+            foreach (var inlinee in EnumerateInlinees(funcSymbol, (uint)rva)) {
+              if (string.IsNullOrEmpty(inlinee.FilePath)) {
+                // If the file name is not set, it means it's the same file
+                // as the function into which the inlining happened.
+                inlinee.FilePath = sourceFile.fileName;
+              }
+
+              sourceLine.AddInlinee(inlinee);
+            }
+          }
+        }
+        return (sourceLine, sourceFile);
       }
     }
     catch (Exception ex) {
@@ -533,34 +553,14 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         }
 
         // Enumerate the functions that got inlined at this call site.
-        funcSymbol.findInlineFramesByRVA(instrRVA, out var inlineeFrameEnum);
-
-        foreach (IDiaSymbol inlineFrame in inlineeFrameEnum) {
-          inlineFrame.findInlineeLinesByRVA(instrRVA, 0, out var inlineeLineEnum);
-
-          while (true) {
-            inlineeLineEnum.Next(1, out var inlineeLineNumber, out uint inlineeRetrieved);
-
-            if (inlineeRetrieved == 0) {
-              break;
-            }
-
-            // Getting the source file of the inlinee often fails, ignore it.
-            string inlineeFileName = "";
-
-            try {
-              inlineeFileName = inlineeLineNumber.sourceFile.fileName;
-            }
-            catch {
-              // If the file name is not set, it means it's the same file
-              // as the function into which the inlining happened.
-              inlineeFileName = locationTag.FilePath;
-            }
-
-            locationTag.AddInlinee(inlineFrame.name, inlineeFileName,
-                                   (int)inlineeLineNumber.lineNumber,
-                                   (int)inlineeLineNumber.columnNumber);
+        foreach (var inlinee in EnumerateInlinees(funcSymbol, instrRVA)) {
+          if (string.IsNullOrEmpty(inlinee.FilePath)) {
+            // If the file name is not set, it means it's the same file
+            // as the function into which the inlining happened.
+            inlinee.FilePath = locationTag.FilePath;
           }
+
+          locationTag.AddInlinee(inlinee);
         }
       }
     }
@@ -570,6 +570,38 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     return true;
+  }
+
+  private IEnumerable<IRExplorerCore.IR.StackFrame>
+    EnumerateInlinees(IDiaSymbol funcSymbol, uint instrRVA) {
+    funcSymbol.findInlineFramesByRVA(instrRVA, out var inlineeFrameEnum);
+
+    foreach (IDiaSymbol inlineFrame in inlineeFrameEnum) {
+      inlineFrame.findInlineeLinesByRVA(instrRVA, 0, out var inlineeLineEnum);
+
+      while (true) {
+        inlineeLineEnum.Next(1, out var inlineeLineNumber, out uint inlineeRetrieved);
+
+        if (inlineeRetrieved == 0) {
+          break;
+        }
+
+        // Getting the source file of the inlinee often fails, ignore it.
+        string inlineeFileName = null;
+
+        try {
+          inlineeFileName = inlineeLineNumber.sourceFile.fileName;
+        }
+        catch {
+          //? TODO: Any way to detect this and avoid throwing?
+        }
+
+        yield return new IRExplorerCore.IR.StackFrame(
+          inlineFrame.name, inlineeFileName,
+          (int)inlineeLineNumber.lineNumber,
+          (int)inlineeLineNumber.columnNumber);
+      }
+    }
   }
 
   public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
@@ -651,6 +683,32 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     return FindFunctionSymbolImpl(SymTagEnum.SymTagPublicSymbol, functionName, demangledName, queryDemangledName);
+  }
+
+  public IDiaSymbol FindFunctionSymbolByRVA(long rva) {
+    if (!EnsureLoaded()) {
+      return null;
+    }
+
+    try {
+      session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
+
+      if (funcSym != null) {
+        return funcSym;
+      }
+
+      // Do another lookup as a public symbol.
+      session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var funcSym2);
+
+      if (funcSym2 != null) {
+        return funcSym2;
+      }
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to find function symbol for RVA {rva}: {ex.Message}");
+    }
+
+    return null;
   }
 
   private IDiaSymbol FindFunctionSymbolImpl(SymTagEnum symbolType, string functionName, string demangledName,

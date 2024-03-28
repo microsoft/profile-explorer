@@ -225,7 +225,8 @@ public class ProfileDocumentMarker {
     Dictionary<int, IRElement> LineToElementMap);
 
   public SourceLineProfileResult
-    PrepareSourceLineProfile(FunctionProfileData profile, MarkedDocument document, SourceLineProcessingResult result) {
+    PrepareSourceLineProfile(FunctionProfileData profile, MarkedDocument document,
+                             SourceLineProcessingResult result) {
     var sourceLineWeights = result.SourceLineWeightList;
 
     if (sourceLineWeights.Count == 0) {

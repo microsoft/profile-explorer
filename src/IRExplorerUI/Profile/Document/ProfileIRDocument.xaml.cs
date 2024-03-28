@@ -149,6 +149,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private bool suspendColumnVisibilityHandler_;
   private ProfileSampleFilter profileFilter_;
   private CancelableTaskInstance loadTask_;
+  private IRExplorerCore.IR.StackFrame inlinee_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -374,7 +375,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
                                          IRTextSection section,
-                                         ProfileSampleFilter profileFilter = null) {
+                                         ProfileSampleFilter profileFilter = null,
+                                         IRExplorerCore.IR.StackFrame inlinee = null) {
     try {
       isSourceFileDocument_ = true;
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
@@ -382,6 +384,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
       // Apply profile filter if needed.
       ProfileFilter = profileFilter;
+      inlinee_ = inlinee;
       bool success = true;
 
       if (profileFilter is {IncludesAll:false}) {
@@ -459,13 +462,14 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                                Session.CompilerInfo);
     // Accumulate the instruction weight for each source line.
     var sourceLineProfileResult = await Task.Run(async () => {
-      var debugInfo = await Session.GetDebugInfoProvider(section.ParentFunction);
-      return funcProfile.ProcessSourceLines(debugInfo, Session.CompilerInfo.IR);
+      var debugInfo = await Session.GetDebugInfoProvider(section.ParentFunction).ConfigureAwait(false);
+      return funcProfile.ProcessSourceLines(debugInfo, Session.CompilerInfo.IR, inlinee_);
     });
 
     // Create a dummy FunctionIR that has fake tuples representing each
     // source line, with the profiling data attached to the tuples.
-    var processingResult = profileMarker_.PrepareSourceLineProfile(funcProfile, TextView, sourceLineProfileResult);
+    var processingResult = profileMarker_.PrepareSourceLineProfile(funcProfile, TextView,
+                                                                   sourceLineProfileResult);
 
     if (processingResult == null) {
       return false;
@@ -798,6 +802,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     sourceText_ = null;
     profileElements_ = null;
     sourceLineProfileResult_ = null;
+    inlinee_ = null;
     ProfileFilter = new ProfileSampleFilter();
   }
 

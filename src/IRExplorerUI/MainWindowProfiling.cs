@@ -583,6 +583,6 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function) {
-    return await CompilerInfo.GetOrCreateDebugInfoProvider(function);
+    return await CompilerInfo.GetOrCreateDebugInfoProvider(function).ConfigureAwait(false);
   }
 }

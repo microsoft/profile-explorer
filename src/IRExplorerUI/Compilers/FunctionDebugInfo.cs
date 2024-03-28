@@ -58,6 +58,8 @@ public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
   public int Column { get; set; }
   [ProtoMember(5)]
   public string FilePath { get; private set; } //? Move to FunctionDebugInfo, add OriginalFilePath for SourceLink
+  public List<IRExplorerCore.IR.StackFrame> Inlinees { get; set; }
+
   public static readonly SourceLineDebugInfo Unknown = new SourceLineDebugInfo(-1, -1);
   public bool IsUnknown => Line == -1;
 
@@ -67,6 +69,19 @@ public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
     Line = line;
     Column = column;
     FilePath = filePath != null ? string.Intern(filePath) : null;
+  }
+
+  public void AddInlinee(IRExplorerCore.IR.StackFrame inlinee) {
+    Inlinees ??= new List<IRExplorerCore.IR.StackFrame>();
+    Inlinees.Add(inlinee);
+  }
+
+  public bool HasInlinee(IRExplorerCore.IR.StackFrame inlinee) {
+    return Inlinees != null && Inlinees.Contains(inlinee);
+  }
+
+  public IRExplorerCore.IR.StackFrame FindSameFunctionInlinee(IRExplorerCore.IR.StackFrame inlinee) {
+    return Inlinees?.Find(item => item.HasSameFunction(inlinee));
   }
 
   public bool Equals(SourceLineDebugInfo other) {
