@@ -980,10 +980,15 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.JumpToSearchResult(searchResult_.Results[e.CurrentResult], Colors.LightSkyBlue);
   }
 
-  private void IRDocumentHost_PreviewKeyDown(object sender, KeyEventArgs e) {
+  private async void IRDocumentHost_PreviewKeyDown(object sender, KeyEventArgs e) {
     if (e.Key == Key.Escape) {
       CloseSectionPanel();
       HideSearchPanel();
+      e.Handled = true;
+    }
+    else if (e.Key == Key.C && Utils.IsControlModifierActive()) {
+      // Override Ctrl+C to copy instruction details instead of just text.
+      await DocumentExporting.CopySelectedLinesAsHtml(TextView);
       e.Handled = true;
     }
   }

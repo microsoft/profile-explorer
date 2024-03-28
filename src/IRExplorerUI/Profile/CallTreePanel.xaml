@@ -441,14 +441,13 @@
             </MenuItem.Icon>
           </MenuItem>
           <Separator />
-
           <MenuItem
-            Command="{Binding CopyDemangledFunctionNameCommand}"
+            Command="{Binding CopyFunctionDetailsCommand}"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTreeList}"
-            Header="Copy Function Name"
+            Header="Copy Function Details"
             InputGestureText="Ctrl+C"
-            ToolTip="Copy the function name to the clipboard">
+            ToolTip="Copy the function name and additional information as an HTML table">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -456,22 +455,22 @@
                 Source="{StaticResource ClipboardIcon}" />
             </MenuItem.Icon>
           </MenuItem>
+          <MenuItem
+            Command="{Binding CopyDemangledFunctionNameCommand}"
+            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
+            Header="Copy Function Name"
+            InputGestureText="Ctrl+Shift+C"
+            ToolTip="Copy the function name to the clipboard">
+          </MenuItem>
 
           <MenuItem
             Command="{Binding CopyFunctionNameCommand}"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Copy Mangled Function Name"
-            InputGestureText="Ctrl+Shift+C"
-            ToolTip="Copy the mangled function name to the clipboard (C++)">
-          </MenuItem>
-          <MenuItem
-            Command="{Binding CopyFunctionDetailsCommand}"
-            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-            CommandTarget="{Binding ElementName=CallTreeList}"
-            Header="Copy Function Details"
             InputGestureText="Ctrl+Alt+C"
-            ToolTip="Copy the function name and additional information as an HTML table">
+            ToolTip="Copy the mangled function name to the clipboard (C++)">
           </MenuItem>
           <Separator />
 
@@ -569,8 +568,8 @@
       Modifiers="Ctrl" />
     <KeyBinding Command="{Binding PreviewFunctionCommand}" Key="Return" Modifiers="Alt" />
     <KeyBinding Command="{Binding PreviewFunctionInstanceCommand}" Key="Return" Modifiers="Alt+Shift" />
-    <KeyBinding Command="{Binding CopyFunctionNameCommand}" Key="C" Modifiers="Control+Shift" />
-    <KeyBinding Command="{Binding CopyDemangledFunctionNameCommand}" Key="C" Modifiers="Control" />
-    <KeyBinding Command="{Binding CopyFunctionDetailsCommand}" Key="C" Modifiers="Control+Alt" />
+    <KeyBinding Command="{Binding CopyFunctionNameCommand}" Key="C" Modifiers="Control+Alt" />
+    <KeyBinding Command="{Binding CopyDemangledFunctionNameCommand}" Key="C" Modifiers="Control+Shift" />
+    <KeyBinding Command="{Binding CopyFunctionDetailsCommand}" Key="C" Modifiers="Control" />
   </irExplorerUi:ToolPanelControl.InputBindings>
 </irExplorerUi:ToolPanelControl>

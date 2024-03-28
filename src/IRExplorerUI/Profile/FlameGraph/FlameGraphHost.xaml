@@ -139,33 +139,34 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
+                    <MenuItem
+                      Command="{Binding CopyFunctionDetailsCommand}"
+                      CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Header="Copy Function Details"
+                      InputGestureText="Ctrl+C"
+                      ToolTip="Copy the function name and additional information as an HTML table">
+                      <MenuItem.Icon>
+                        <Image
+                          Width="16"
+                          Height="16"
+                          Source="{StaticResource ClipboardIcon}" />
+                      </MenuItem.Icon>
+                      </MenuItem>
 
                     <MenuItem
                         Command="{Binding CopyDemangledFunctionNameCommand}"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Copy Function Name"
-                        InputGestureText="Ctrl+C"
+                        InputGestureText="Ctrl+Shift+C"
                         ToolTip="Copy the function name to the clipboard">
-                        <MenuItem.Icon>
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Source="{StaticResource ClipboardIcon}" />
-                        </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem
                         Command="{Binding CopyFunctionNameCommand}"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Copy Mangled Function Name"
-                        InputGestureText="Ctrl+Shift+C"
-                        ToolTip="Copy the mangled function name to the clipboard (C++)" />
-                    <MenuItem
-                        Command="{Binding CopyFunctionDetailsCommand}"
-                        CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                        Header="Copy Function Details"
                         InputGestureText="Ctrl+Alt+C"
-                        ToolTip="Copy the function name and additional information as an HTML table" />
-                    <Separator />
+                        ToolTip="Copy the mangled function name to the clipboard (C++)" />
+                     <Separator />
 
                     <MenuItem Header="Mark Module" ToolTip="Mark all functions belonging to this module">
                         <MenuItem.Icon>
@@ -272,14 +273,14 @@
         <KeyBinding
             Key="C"
             Command="{Binding CopyFunctionNameCommand}"
-            Modifiers="Control+Shift" />
+            Modifiers="Control+Alt" />
         <KeyBinding
             Key="C"
             Command="{Binding CopyDemangledFunctionNameCommand}"
-            Modifiers="Control" />
+            Modifiers="Control+Shift" />
         <KeyBinding
             Key="C"
             Command="{Binding CopyFunctionDetailsCommand}"
-            Modifiers="Control+Alt" />
+            Modifiers="Control" />
     </UserControl.InputBindings>
 </UserControl>

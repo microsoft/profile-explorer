@@ -495,19 +495,19 @@
               Command="local:Command.CopyDemangledFunctionName"
               CommandParameter="{Binding ElementName=FunctionList, Path=SelectedItem}"
               CommandTarget="{Binding ElementName=FunctionList}"
-              Modifiers="Control" />
+              Modifiers="Control+Shift" />
             <KeyBinding
               Key="C"
               Command="local:Command.CopyFunctionName"
               CommandParameter="{Binding ElementName=FunctionList, Path=SelectedItem}"
               CommandTarget="{Binding ElementName=FunctionList}"
-              Modifiers="Control+Shift" />
+              Modifiers="Control+Alt" />
             <KeyBinding
               Key="C"
               Command="local:Command.CopyFunctionDetails"
               CommandParameter="{Binding ElementName=FunctionList, Path=SelectedItem}"
               CommandTarget="{Binding ElementName=FunctionList}"
-              Modifiers="Control+Alt" />
+              Modifiers="Control" />
             <KeyBinding
               Key="Return"
               Command="{Binding PreviewFunctionCommand}"
@@ -752,14 +752,13 @@
                 </MenuItem.Icon>
               </MenuItem>
               <Separator />
-
               <MenuItem
-                Command="local:Command.CopyDemangledFunctionName"
+                Command="local:Command.CopyFunctionDetails"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Copy Function Name"
+                Header="Copy Function Details"
                 InputGestureText="Ctrl+C"
-                ToolTip="Copy the function name to the clipboard">
+                ToolTip="Copy the function name and additional information as an HTML table">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -767,22 +766,24 @@
                     Source="{StaticResource ClipboardIcon}" />
                 </MenuItem.Icon>
                 </MenuItem>
+
+              <MenuItem
+                Command="local:Command.CopyDemangledFunctionName"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding ElementName=FunctionList}"
+                Header="Copy Function Name"
+                InputGestureText="Ctrl+Shift+C"
+                ToolTip="Copy the function name to the clipboard">
+                </MenuItem>
               <MenuItem
                 Command="local:Command.CopyFunctionName"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Copy Mangled Function Name"
-                InputGestureText="Ctrl+Shift+C"
+                InputGestureText="Ctrl+Alt+C"
                 ToolTip="Copy the mangled function name to the clipboard (C++)">
               </MenuItem>
 
-              <MenuItem
-                Command="local:Command.CopyFunctionDetails"
-                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Copy Function Details"
-                InputGestureText="Ctrl+Alt+C"
-                ToolTip="Copy the function name and additional information as an HTML table" />
               <Separator />
 
               <MenuItem

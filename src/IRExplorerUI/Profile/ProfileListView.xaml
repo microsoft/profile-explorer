@@ -268,13 +268,12 @@
                         </MenuItem>
                     </MenuItem>
         <Separator />
-
         <MenuItem
-          Command="{Binding CopyDemangledFunctionNameCommand}"
+          Command="{Binding CopyFunctionDetailsCommand}"
           CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-          Header="Copy Function Name"
+          Header="Copy Function Details"
           InputGestureText="Ctrl+C"
-          ToolTip="Copy the function name to the clipboard">
+          ToolTip="Copy the function name and additional information as an HTML table">
           <MenuItem.Icon>
             <Image
               Width="16"
@@ -283,18 +282,18 @@
           </MenuItem.Icon>
         </MenuItem>
         <MenuItem
+          Command="{Binding CopyDemangledFunctionNameCommand}"
+          CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+          Header="Copy Function Name"
+          InputGestureText="Ctrl+Shift+C"
+          ToolTip="Copy the function name to the clipboard">
+        </MenuItem>
+        <MenuItem
             Command="{Binding CopyFunctionNameCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Copy Mangled Function Name"
-            InputGestureText="Ctrl+Shift+C"
+            InputGestureText="Ctrl+Alt+C"
             ToolTip="Copy the mangled function name to the clipboard (C++)">
-        </MenuItem>
-        <MenuItem
-          Command="{Binding CopyFunctionDetailsCommand}"
-          CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-          Header="Copy Function Details"
-          InputGestureText="Ctrl+Al-t+C"
-          ToolTip="Copy the function name and additional information as an HTML table">
         </MenuItem>
         <Separator />
 
@@ -356,9 +355,9 @@
                 Modifiers="Control+Shift" />
     <KeyBinding Command="{Binding PreviewFunctionCommand}" Key="Return" Modifiers="Alt" />
     <KeyBinding Command="{Binding PreviewFunctionInstanceCommand}" Key="Return" Modifiers="Alt+Shift" />
-    <KeyBinding Command="{Binding CopyFunctionNameCommand}" Key="C" Modifiers="Control+Shift" />
-    <KeyBinding Command="{Binding CopyDemangledFunctionNameCommand}" Key="C" Modifiers="Control" />
-    <KeyBinding Command="{Binding CopyFunctionDetailsCommand}" Key="C" Modifiers="Control+Alt" />
+    <KeyBinding Command="{Binding CopyFunctionNameCommand}" Key="C" Modifiers="Control+Alt" />
+    <KeyBinding Command="{Binding CopyDemangledFunctionNameCommand}" Key="C" Modifiers="Control+Shift" />
+    <KeyBinding Command="{Binding CopyFunctionDetailsCommand}" Key="C" Modifiers="Control" />
     <KeyBinding
       Key="F"
       Command="{Binding ToggleSearchCommand}"
