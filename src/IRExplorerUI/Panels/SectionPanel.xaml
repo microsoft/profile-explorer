@@ -558,7 +558,10 @@
                 </GridViewColumn.HeaderContainerStyle>
               </GridViewColumn>
 
-              <GridViewColumn Width="{Binding SelfTimeColumnWidth}" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible}">
+              <GridViewColumn
+                x:Name="OptionalDataColumn"
+                Width="{Binding SelfTimeColumnWidth}"
+                local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible}">
                 <GridViewColumnHeader x:Name="OptionalColumnHeader" Content="{Binding OptionalDataColumnName}" />
 
                 <GridViewColumn.HeaderContainerStyle>
@@ -587,7 +590,10 @@
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
 
-              <GridViewColumn Width="{Binding TotalTimeColumnWidth}" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible2}">
+              <GridViewColumn
+                x:Name="OptionalDataColumn2"
+                Width="{Binding TotalTimeColumnWidth}"
+                local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible2}">
                 <GridViewColumnHeader x:Name="OptionalColumnHeader2" Content="{Binding OptionalDataColumnName2}" />
 
                 <GridViewColumn.HeaderContainerStyle>
@@ -609,7 +615,8 @@
                       <ContentControl
                         HorizontalAlignment="Stretch"
                         Content="{Binding}"
-                        ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
+                        ContentTemplate="{StaticResource ProfilePercentageTemplate}"
+                        Visibility="{Binding Settings.AppendTimeToTotalColumn, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:SectionPanel}}, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </Grid>
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
@@ -746,9 +753,9 @@
                 ToolTip="Show a preview popup of the function ASM or source code">
                 <MenuItem.Icon>
                   <Image
+                    Width="16"
                     Height="16"
-                    Source="{StaticResource PeekDefinitionIcon}"
-                    Width="16" />
+                    Source="{StaticResource PeekDefinitionIcon}" />
                 </MenuItem.Icon>
               </MenuItem>
               <Separator />
@@ -765,7 +772,7 @@
                     Height="16"
                     Source="{StaticResource ClipboardIcon}" />
                 </MenuItem.Icon>
-                </MenuItem>
+              </MenuItem>
 
               <MenuItem
                 Command="local:Command.CopyDemangledFunctionName"
@@ -773,16 +780,14 @@
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Copy Function Name"
                 InputGestureText="Ctrl+Shift+C"
-                ToolTip="Copy the function name to the clipboard">
-                </MenuItem>
+                ToolTip="Copy the function name to the clipboard" />
               <MenuItem
                 Command="local:Command.CopyFunctionName"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Copy Mangled Function Name"
                 InputGestureText="Ctrl+Alt+C"
-                ToolTip="Copy the mangled function name to the clipboard (C++)">
-              </MenuItem>
+                ToolTip="Copy the mangled function name to the clipboard (C++)" />
 
               <Separator />
 

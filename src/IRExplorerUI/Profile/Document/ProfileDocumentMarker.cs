@@ -610,6 +610,8 @@ public class ProfileDocumentMarker {
                                             ((SolidColorBrush)color).Color));
       }
     }
+    
+    document.ResumeUpdate();
   }
 
   private async Task<IRDocumentColumnData>

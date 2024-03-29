@@ -25,18 +25,27 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
       filterStackFuncts_ = new List<List<IRTextFunction>>();
       
       foreach(var instance in  filter_.FunctionInstances) {
-        var node = instance;
-        var stackFuncts = new List<IRTextFunction>();
-
-        while (node != null) {
-          stackFuncts.Add(node.Function);
-          node = node.Caller;
+        if (instance is ProfileCallTreeGroupNode groupNode) {
+          foreach(var node in groupNode.Nodes) {
+            AddInstanceFilter(node);
+          }
+        } else {
+          AddInstanceFilter(instance);
         }
-
-        stackFuncts.Reverse();
-        filterStackFuncts_.Add(stackFuncts);
       }
     }
+  }
+
+  private void AddInstanceFilter(ProfileCallTreeNode node) {
+    var stackFuncts = new List<IRTextFunction>();
+
+    while (node != null) {
+      stackFuncts.Add(node.Function);
+      node = node.Caller;
+    }
+
+    stackFuncts.Reverse();
+    filterStackFuncts_.Add(stackFuncts);
   }
 
   public ProfileData Profile { get; } = new ProfileData();

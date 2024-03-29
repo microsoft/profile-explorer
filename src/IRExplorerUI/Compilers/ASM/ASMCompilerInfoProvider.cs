@@ -229,6 +229,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     var options = App.Settings.DocumentSettings.ProfileMarkerSettings;
     var blockPen = ColorPens.GetPen(options.BlockOverlayBorderColor,
                                     options.BlockOverlayBorderThickness);
+    document.SuspendUpdate();
 
     foreach (var block in function.Blocks) {
       if (block.Tuples.Count <= 0) {
@@ -256,6 +257,8 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
       overlay.ShowBorderOnMouseOverOnly = false;
       overlay.UseLabelBackground = true;
     }
+    
+    document.ResumeUpdate();
   }
 
   public Task ReloadSettings() {

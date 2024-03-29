@@ -93,7 +93,21 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
   }
 
   public override string ToString() {
-    return $"TimeRange: {TimeRange}, FunctionInstance: {FunctionInstances}, ThreadIds: {ThreadIds}";
+    var text = $"TimeRange: {TimeRange}, HasInstanceFilter: {HasInstanceFilter}, HasThreadFilter: {HasThreadFilter}";
+
+    if (HasInstanceFilter) {
+      foreach (var item in FunctionInstances) {
+        text += $"\n - instance: {item.FunctionName}";
+      }
+    }
+    
+    if (HasThreadFilter) {
+      foreach (var item in ThreadIds) {
+        text += $"\n - thread: {item}";
+      }
+    }
+
+    return text;
   }
 
   public bool Equals(ProfileSampleFilter other) {

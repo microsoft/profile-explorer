@@ -26,7 +26,7 @@ namespace IRExplorerUI;
 public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged {
   private SourceFileFinder sourceFileFinder_;
   private IRTextSection section_;
-  private IRElement element_;
+  private IRElement syncedElement_;
   private bool sourceFileLoaded_;
   private IRTextFunction sourceFileFunc_;
   private string sourceFilePath_;
@@ -34,10 +34,20 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private OptionsPanelHostWindow optionsPanelWindow_;
   private SourceFileSettings settings_;
   private bool disableInlineeComboboxEvents_;
+  private IRDocument associatedDocument_;
 
   public SourceFilePanel() {
     InitializeComponent();
     DataContext = this;
+    SetupEvents();
+  }
+
+  private void SetupEvents() {
+    ProfileTextView.LineSelected += (s, line) => {
+      if (settings_.SyncLineWithDocument) {
+        associatedDocument_?.SelectElementsOnSourceLine(line, currentInlinee_);
+      }
+    };
   }
 
   public override ToolPanelKind PanelKind => ToolPanelKind.Source;
@@ -220,7 +230,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     base.OnDocumentSectionLoaded(section, document);
-    ProfileTextView.AssociatedDocument = document;
+    associatedDocument_ = document;
     await LoadSourceFile(section);
   }
 
@@ -336,6 +346,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     sourceFileLoaded_ = false;
     sourceFileFunc_ = null;
     currentInlinee_ = null;
+    associatedDocument_ = null;
   }
 
   public override async void OnElementSelected(IRElementEventArgs e) {
@@ -344,13 +355,16 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
 
     //Trace.WriteLine($"Selected element: {element_}");
-    element_ = e.Element;
-    var instr = element_.ParentInstruction;
+    syncedElement_ = e.Element;
+    var instr = syncedElement_.ParentInstruction;
     var tag = instr?.GetTag<SourceLocationTag>();
 
     if (tag != null) {
-      if (tag.HasInlinees && settings_.SyncInlineeWithDocument) {
-        // Display deepest inlinee instead.
+      if (tag.HasInlinees &&
+          settings_.SyncLineWithDocument &&
+          settings_.SyncInlineeWithDocument) {
+        // Display deepest inlinee instead, if that fails
+        // then it falls back to loading the function's source below.
         if (await LoadInlineeSourceFile(tag)) {
           return;
         }

@@ -934,8 +934,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   //? TODO: Remember column width, order
-  public double SelfTimeColumnWidth => settings_ is {AppendTimeToSelfColumn: true} ? 150 : 60;
-  public double TotalTimeColumnWidth => settings_ is { AppendTimeToTotalColumn: true } ? 150 : 60;
+  public double SelfTimeColumnWidth => settings_ is {AppendTimeToSelfColumn: true} ? 140 : 60;
+  public double TotalTimeColumnWidth => settings_ is { AppendTimeToTotalColumn: true } ? 140 : 60;
 
   public IRTextSummary Summary {
     get => summary_;
@@ -943,7 +943,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       if (value != summary_) {
         summary_ = value;
         sectionExtensionComputed_ = false;
-        //SetupFunctionList();
       }
     }
   }
@@ -953,7 +952,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     set {
       if (value != otherSummary_) {
         otherSummary_ = value;
-        //SetupFunctionList(false);
       }
     }
   }
@@ -1248,7 +1246,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     await SetupFunctionListUI(functionsEx);
 
     // Attach additional data to the UI.
-    await LoadFunctionProfileInfo(functionsEx);
+    await LoadFunctionProfile(functionsEx);
 
     if (analyzeFunctions) {
       await RunFunctionAnalysis(functionsEx);
@@ -1503,14 +1501,12 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private void SetDemangledFunctionNames(List<IRTextFunctionEx> functions) {
-    var nameProvider = Session.CompilerInfo.NameProvider;
-
-    if (!nameProvider.IsDemanglingEnabled) {
+    if (!Session.CompilerInfo.NameProvider.IsDemanglingSupported ||
+        !Session.CompilerInfo.NameProvider.IsDemanglingEnabled) {
       AlternateNameColumnVisible = false;
 
       // Clear the cached names.
       foreach (var funcEx in functions) {
-        string funcName = funcEx.Function.Name;
         funcEx.Name = null;
       }
 
@@ -1522,10 +1518,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       funcEx.AlternateName = funcEx.Function.Name;
     }
 
-    AlternateNameColumnVisible = true;
+    AlternateNameColumnVisible = settings_.ShowMangleNamesColumn;
   }
 
-  private async Task LoadFunctionProfileInfo(List<IRTextFunctionEx> functions) {
+  private async Task LoadFunctionProfile(List<IRTextFunctionEx> functions) {
     var profile = Session.ProfileData;
 
     if (profile == null) {
@@ -1574,9 +1570,40 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     OptionalDataColumnVisible2 = true;
     OptionalDataColumnName2 = "Time (total)";
     var markerOptions = App.Settings.DocumentSettings.ProfileMarkerSettings;
-    bool counterColumnsAdded = false;
+    bool hasPerfCounters = false;
 
-    //? TODO: Can be expensive, multithread and async
+    // Add the profile info and column data to each function. 
+    hasPerfCounters = await Task.Run(() => 
+      PrepareFunctionProfile(functions, profile, markerOptions));
+    
+    if (hasPerfCounters) {
+      // Wait for all other columns to be added to the UI first
+      // before adding the counter columns, which are relative to other
+      // columns, such as the mangled name.
+      Dispatcher.BeginInvoke(() => {
+        AddCountersFunctionListColumns(false);
+      }, DispatcherPriority.ContextIdle);
+    }
+    
+    functionValueSorter_.SortByField(FunctionFieldKind.Optional);
+    ProfileControlsVisible = true;
+    ModuleControlsVisible = true;
+    IsFunctionListVisible = false;
+    IsFunctionListVisible = true;
+    SectionCountColumnVisible = false;
+    ShowSections = false;
+    UseProfileCallTree = true;
+    
+    // Update column visibility and state.
+    GridViewColumnVisibility.UpdateListView(FunctionList);
+    Utils.ScrollToFirstListViewItem(FunctionList);
+    SetupStackFunctionHoverPreview();
+  }
+
+  private static bool PrepareFunctionProfile(List<IRTextFunctionEx> functions, ProfileData profile,
+                                             ProfileDocumentMarkerSettings markerOptions) {
+    bool hasPerfCounters = false;
+    
     foreach (var funcEx in functions) {
       var funcProfile = profile.GetFunctionProfile(funcEx.Function);
 
@@ -1592,6 +1619,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         funcEx.BackColor2 = markerOptions.PickBrushForPercentage(percentage);
 
         if (funcProfile.HasPerformanceCounters) {
+          hasPerfCounters = true;
           var counters = funcProfile.ComputeFunctionTotalCounters();
           funcEx.Counters = new PerformanceCounterSetEx(counters.Count);
 
@@ -1616,17 +1644,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
               funcEx.Counters.Add(counterEx);
             }
           }
-
-          if (!counterColumnsAdded) {
-            counterColumnsAdded = true;
-
-            // Wait for all other columns to be added to the UI first
-            // before adding the counter columns, which are relative to other
-            // columns, such as the mangled name.
-            Dispatcher.BeginInvoke(() => {
-              AddCountersFunctionListColumns(false);
-            }, DispatcherPriority.ContextIdle);
-          }
         }
       }
       else {
@@ -1635,18 +1652,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       }
     }
 
-    functionValueSorter_.SortByField(FunctionFieldKind.Optional);
-    ProfileControlsVisible = true;
-    ModuleControlsVisible = true;
-    IsFunctionListVisible = false;
-    IsFunctionListVisible = true;
-    SectionCountColumnVisible = false;
-    ShowSections = false;
-
-    UseProfileCallTree = true;
-    GridViewColumnVisibility.UpdateListView(FunctionList);
-    Utils.ScrollToFirstListViewItem(FunctionList);
-    SetupStackFunctionHoverPreview();
+    return hasPerfCounters;
   }
 
   private void SetupStackFunctionHoverPreview() {
@@ -2532,19 +2538,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
 
     return stats;
-  }
-
-  private void AutoResizeColumns(ListView listView, int skipCount) {
-    int index = 0;
-
-    foreach (var column in ((GridView)listView.View).Columns) {
-      if (index >= skipCount) {
-        column.Width = 0;
-        column.Width = double.NaN;
-      }
-
-      index++;
-    }
   }
 
   private void ModuleDoubleClick(object sender, MouseButtonEventArgs e) {

@@ -145,7 +145,8 @@
         HorizontalAlignment="Left"
         VerticalAlignment="Center"
         FontWeight="Medium"
-        Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}">
+        Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}"
+        ToolTip="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}">
         <TextBlock.Style>
           <Style TargetType="{x:Type TextBlock}">
             <Style.Triggers>
@@ -182,11 +183,12 @@
           </Border>
 
           <TextBlock
-            Margin="4,0,0,0"
+            Margin="4,0,2,0"
             HorizontalAlignment="Left"
             VerticalAlignment="Center"
             Text="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}"
-            TextTrimming="CharacterEllipsis" />
+            TextTrimming="CharacterEllipsis"
+            ToolTip="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}" />
         </Grid>
       </Border>
     </Grid>
@@ -199,7 +201,8 @@
         HorizontalAlignment="Left"
         VerticalAlignment="Center"
         FontWeight="Medium"
-        Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}" />
+        Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}"
+        ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}" />
       <Border
         Height="16"
         Margin="50,0,0,1"
@@ -224,11 +227,12 @@
           </Border>
 
           <TextBlock
-            Margin="4,0,0,0"
+            Margin="4,0,2,0"
             HorizontalAlignment="Left"
             VerticalAlignment="Center"
             Text="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
-            TextTrimming="CharacterEllipsis" />
+            TextTrimming="CharacterEllipsis"
+            ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}" />
         </Grid>
       </Border>
     </Grid>

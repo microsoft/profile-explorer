@@ -724,7 +724,6 @@ public partial class MainWindow : Window, ISession {
     await ExitDocumentDiffState(true);
     sessionState_.DocumentChanged -= DocumentState_DocumentChangedEvent;
     sessionState_.EndSession();
-    sessionState_ = null;
 
     FunctionAnalysisCache.ResetCache();
     DiffModeButton.IsEnabled = false;

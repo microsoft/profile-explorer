@@ -2294,7 +2294,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       // Sort by weight and bring the hottest element into view.
       var elements = inlinee.SortedElements;
       TextView.SelectElements(elements);
-      TextView.BringElementIntoView(elements[0]);
+      TextView.SelectElement(elements[0]);
     }
   }
 

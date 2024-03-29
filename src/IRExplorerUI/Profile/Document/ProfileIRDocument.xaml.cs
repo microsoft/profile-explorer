@@ -179,10 +179,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public event EventHandler<string> TitleSuffixChanged;
   public event EventHandler<string> DescriptionPrefixChanged;
   public event EventHandler<string> DescriptionSuffixChanged;
+  public event EventHandler<int> LineSelected;
   public event PropertyChangedEventHandler PropertyChanged;
 
   public ISession Session { get; set; }
-  public IRDocument AssociatedDocument { get; set; }
   public IRTextSection Section => TextView.Section;
 
   public ProfileSampleFilter ProfileFilter {
@@ -417,6 +417,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       // Apply profile filter if needed.
       ProfileFilter = profileFilter;
       inlinee_ = inlinee;
+      ignoreNextCaretEvent_ = true;
       bool success = true;
 
       if (profileFilter is {IncludesAll:false}) {
@@ -824,8 +825,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private void HighlightElementsOnSelectedLine() {
     var line = TextView.Document.GetLineByOffset(TextView.CaretOffset);
 
-    if (line != null && AssociatedDocument != null) {
-      AssociatedDocument.SelectElementsOnSourceLine(line.LineNumber, null);
+    if (line != null) {
+      LineSelected?.Invoke(this, line.LineNumber);
     }
   }
 

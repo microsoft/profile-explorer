@@ -15,7 +15,7 @@ public class OptionalColumnSettings : SettingsBase {
   [ProtoMember(1)]
   private Dictionary<string, OptionalColumnStyle> columnStyles_;
   [ProtoMember(2)]
-  private Dictionary<string, OptionalColumnState> columnStates_;
+  private Dictionary<string, ColumnState> columnStates_;
   [ProtoMember(3)]  public bool RemoveEmptyColumns { get; set; }
   [ProtoMember(4)]  public bool ShowPerformanceCounterColumns { get; set; }
   [ProtoMember(5)]  public bool ShowPerformanceMetricColumns { get; set; }
@@ -27,7 +27,7 @@ public class OptionalColumnSettings : SettingsBase {
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     columnStyles_ ??= new Dictionary<string, OptionalColumnStyle>();
-    columnStates_ ??= new Dictionary<string, OptionalColumnState>();
+    columnStates_ ??= new Dictionary<string, ColumnState>();
   }
 
   public static OptionalColumnStyle DefaultTimePercentageColumnStyle =>
@@ -83,9 +83,9 @@ public class OptionalColumnSettings : SettingsBase {
     columnStyles_[column.ColumnName] = style;
   }
 
-  private OptionalColumnState GetOrCreateColumnState(OptionalColumn column) {
+  private ColumnState GetOrCreateColumnState(OptionalColumn column) {
     if(!columnStates_.TryGetValue(column.ColumnName, out var state)) {
-      state = new OptionalColumnState();
+      state = new ColumnState();
       columnStates_[column.ColumnName] = state;
       NumberColumnStates();
     }
@@ -164,42 +164,6 @@ public class OptionalColumnSettings : SettingsBase {
            $"columnStyles_: {columnStyles_}\n" +
            $"columnStates_: {columnStates_}";
   
-  }
-}
-
-[ProtoContract(SkipConstructor = true)]
-public class OptionalColumnState : SettingsBase {
-  [ProtoMember(1)]
-  public bool IsVisible { get; set; }
-  [ProtoMember(2)]
-  public int Width { get; set; }
-  [ProtoMember(3)]
-  public int Order { get; set; }
-
-  public OptionalColumnState() {
-    Reset();
-  }
-
-  public override void Reset() {
-    IsVisible = true;
-    Order = int.MaxValue;
-    Width = 50;
-  }
-
-  public OptionalColumnState Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<OptionalColumnState>(serialized);
-  }
-
-  public override bool Equals(object obj) {
-    return obj is OptionalColumnState other &&
-           IsVisible == other.IsVisible &&
-           Width == other.Width &&
-           Order == other.Order;
-  }
-
-  public override string ToString() {
-    return $"IsVisible: {IsVisible}, Width: {Width}, Order: {Order}";
   }
 }
 

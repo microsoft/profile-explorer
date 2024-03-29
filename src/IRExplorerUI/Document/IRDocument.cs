@@ -524,6 +524,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   public void SelectElementsOnSourceLine(int lineNumber, SourceStackFrame inlinee = null) {
+    //? TODO: Select element that maps to source line in inlinee
+    if (inlinee != null) {
+      return;
+    }
+    
     ClearTemporaryHighlighting();
     MarkElementsOnSourceLine(selectedHighlighter_, lineNumber, Colors.Transparent,
                              false, true, inlinee);
