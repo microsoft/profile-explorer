@@ -89,10 +89,10 @@
             <Menu Margin="2,0,0,0" VerticalAlignment="Center">
               <MenuItem
                 x:Name="ProfileElementsMenu"
-                ToolTip="View sorted list of hottest lines"
                 Margin="0,0,0,0"
                 Padding="0,0,0,0"
-                OverridesDefaultStyle="True">
+                OverridesDefaultStyle="True"
+                ToolTip="View sorted list of hottest lines">
                 <MenuItem.Header>
                   <StackPanel Orientation="Horizontal">
                     <TextBlock VerticalAlignment="Bottom" Text="Profile" />
@@ -124,16 +124,114 @@
               <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
             </Button>
             <Button
+              Margin="0,0,2,0"
               Padding="0"
               Command="irExplorerUi:DocumentHostCommand.JumpToNextProfiledElement"
               CommandTarget="{Binding ElementName=TextView}"
               ToolTip="Jump to next hotter line (Shift+F2)">
               <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
             </Button>
-            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
+            <Separator Visibility="{Binding IsSourceFileDocument, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
-               <Menu
-              Margin="0,0,0,0"
+            <Menu
+              Margin="2,0,0,0"
+              VerticalAlignment="Center"
+              ToolTip="View sorted list of inlined functions"
+              Visibility="{Binding IsSourceFileDocument, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+              <MenuItem
+                x:Name="InlineesMenu"
+                Margin="0,0,0,0"
+                Padding="0,0,0,0"
+                OverridesDefaultStyle="True">
+                <MenuItem.Header>
+                  <StackPanel Orientation="Horizontal">
+                    <Image Source="{StaticResource TreeIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    <TextBlock
+                      Margin="2,0,0,0"
+                      VerticalAlignment="Bottom"
+                      Text="Inlinees" />
+                    <Path
+                      Margin="4,2,2,0"
+                      VerticalAlignment="Center"
+                      Data="M 0 0 L 3 3 L 6 0 Z"
+                      Fill="Black" />
+                  </StackPanel>
+                </MenuItem.Header>
+                <MenuItem
+                  Header="Non-Inlinee"
+                  IsCheckable="False"
+                  Style="{DynamicResource SubMenuItemHeaderStyle}"
+                  ToolTip="Time for parts not originating from inlined functions" />
+                <Separator />
+              </MenuItem>
+            </Menu>
+            <Separator />
+            <Menu
+              Margin="2,0,0,0"
+              VerticalAlignment="Center"
+              ToolTip="Select function instances to display">
+              <MenuItem
+                x:Name="InstancesMenu"
+                Margin="0,0,0,0"
+                Padding="0,0,0,0"
+                Background="{Binding Path=HasProfileInstanceFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                OverridesDefaultStyle="True">
+                <MenuItem.Header>
+                  <StackPanel Orientation="Horizontal">
+                    <Image Source="{StaticResource TasklistIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    <TextBlock
+                      Margin="2,0,0,0"
+                      VerticalAlignment="Bottom"
+                      Text="Instances" />
+                    <Path
+                      Margin="4,2,2,0"
+                      VerticalAlignment="Center"
+                      Data="M 0 0 L 3 3 L 6 0 Z"
+                      Fill="Black" />
+                  </StackPanel>
+                </MenuItem.Header>
+                <MenuItem
+                  Click="InstanceMenuItem_OnClick"
+                  Header="All Instances"
+                  IsCheckable="False"
+                  IsChecked="{Binding RemoveEmptyColumns}"
+                  Style="{DynamicResource SubMenuItemHeaderStyle}" />
+                <Separator />
+              </MenuItem>
+            </Menu>
+            <Menu Margin="2,0,0,0" VerticalAlignment="Center">
+              <MenuItem
+                x:Name="ThreadsMenu"
+                Margin="0,0,0,0"
+                Padding="0,0,0,0"
+                Background="{Binding Path=HasProfileThreadFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                OverridesDefaultStyle="True"
+                ToolTip="Select threads the function ran on to display">
+                <MenuItem.Header>
+                  <StackPanel Orientation="Horizontal">
+                    <Image Source="{StaticResource FilterIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    <TextBlock
+                      Margin="2,0,0,0"
+                      VerticalAlignment="Bottom"
+                      Text="Threads" />
+                    <Path
+                      Margin="4,2,2,0"
+                      VerticalAlignment="Center"
+                      Data="M 0 0 L 3 3 L 6 0 Z"
+                      Fill="Black" />
+                  </StackPanel>
+                </MenuItem.Header>
+                <MenuItem
+                  Click="ThreadMenuItem_OnClick"
+                  Header="All Threads"
+                  IsCheckable="False"
+                  Style="{DynamicResource SubMenuItemHeaderStyle}" />
+                <Separator />
+              </MenuItem>
+            </Menu>
+            <Separator />
+            <Menu
+              Margin="2,0,2,0"
               VerticalAlignment="Center"
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
               <MenuItem
@@ -193,77 +291,16 @@
                 </MenuItem>
               </MenuItem>
             </Menu>
-            <Separator />
-            <Menu Margin="2,0,0,0" VerticalAlignment="Center"
-ToolTip="Select function instances to display"
-                      >
-              <MenuItem
-                        x:Name="InstancesMenu"
-                        Margin="0,0,0,0"
-                        Padding="0,0,0,0"
-                        Background="{Binding Path=HasProfileInstanceFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
-                        OverridesDefaultStyle="True">
-                <MenuItem.Header>
-                  <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource TasklistIcon}" Style="{StaticResource DisabledImageStyle}" />
-                    <TextBlock
-                                    Margin="2,0,0,0"
-                                    VerticalAlignment="Bottom"
-                                    Text="Instances" />
-                    <Path
-                                    Margin="4,2,2,0"
-                                    VerticalAlignment="Center"
-                                    Data="M 0 0 L 3 3 L 6 0 Z"
-                                    Fill="Black" />
-                  </StackPanel>
-                </MenuItem.Header>
-                <MenuItem
-                            Click="InstanceMenuItem_OnClick"
-                            Header="All Instances"
-                            IsCheckable="False"
-                            IsChecked="{Binding RemoveEmptyColumns}"
-                            Style="{DynamicResource SubMenuItemHeaderStyle}" />
-                <Separator />
-              </MenuItem>
-            </Menu>
-            <Menu Margin="2,0,0,0" VerticalAlignment="Center">
-              <MenuItem
-                        x:Name="ThreadsMenu"
-                        Margin="0,0,0,0"
-                        Padding="0,0,0,0"
-                        ToolTip="Select threads the function ran on to display"
-                        Background="{Binding Path=HasProfileThreadFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
-                        OverridesDefaultStyle="True">
-                <MenuItem.Header>
-                  <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource FilterIcon}" Style="{StaticResource DisabledImageStyle}" />
-                    <TextBlock
-                                    Margin="2,0,0,0"
-                                    VerticalAlignment="Bottom"
-                                    Text="Threads" />
-                    <Path
-                                    Margin="4,2,2,0"
-                                    VerticalAlignment="Center"
-                                    Data="M 0 0 L 3 3 L 6 0 Z"
-                                    Fill="Black" />
-                  </StackPanel>
-                </MenuItem.Header>
-                <MenuItem
-                            Click="ThreadMenuItem_OnClick"
-                            Header="All Threads"
-                            IsCheckable="False"
-                            Style="{DynamicResource SubMenuItemHeaderStyle}" />
-                <Separator />
-              </MenuItem>
-            </Menu>
-            <Menu Margin="2,0,0,0" VerticalAlignment="Center"
-                  Visibility="{Binding IsPreviewDocument, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+            <Menu
+              Margin="2,0,0,0"
+              VerticalAlignment="Center"
+              Visibility="{Binding IsPreviewDocument, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
               <MenuItem
                 x:Name="ProfileViewMenu"
                 Margin="0,0,0,0"
                 Padding="0,0,0,0"
-                ToolTip="Configure displayed profiling columns"
-                OverridesDefaultStyle="True">
+                OverridesDefaultStyle="True"
+                ToolTip="Configure displayed profiling columns">
                 <MenuItem.Header>
                   <StackPanel Orientation="Horizontal">
                     <Image Source="{StaticResource EyeIcon}" Style="{StaticResource DisabledImageStyle}" />
@@ -299,12 +336,12 @@ ToolTip="Select function instances to display"
                   IsChecked="{Binding RemoveEmptyColumns}"
                   Style="{DynamicResource SubMenuItemHeaderStyle}"
                   Unchecked="ViewMenuItem_OnCheckedChanged" />
-                <Separator/>
+                <Separator />
                 <MenuItem
                   Checked="ViewMenuItem_OnCheckedChanged"
                   Header="Columns"
                   IsHitTestVisible="False"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}"/>
+                  Style="{DynamicResource SubMenuItemHeaderStyle}" />
               </MenuItem>
             </Menu>
           </ToolBar>
@@ -337,7 +374,7 @@ ToolTip="Select function instances to display"
             </MenuItem>
           </ContextMenu>
         </irExplorerUi:IRDocument.ContextMenu>
-        </irExplorerUi:IRDocument>
+      </irExplorerUi:IRDocument>
     </DockPanel>
 
     <GridSplitter

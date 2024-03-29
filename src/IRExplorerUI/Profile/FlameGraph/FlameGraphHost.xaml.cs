@@ -790,7 +790,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     draggingStart_ = e.GetPosition(GraphHost);
     draggingViewStart_ = new Point(GraphHost.HorizontalOffset, GraphHost.VerticalOffset);
     Cursor = Cursors.SizeAll;
-    CaptureMouse();
   }
 
   private bool IsMouseOutsideViewport(MouseButtonEventArgs e) {
@@ -935,7 +934,8 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     if (!(Utils.IsKeyboardModifierActive() ||
-          e.LeftButton == MouseButtonState.Pressed)) {
+          e.LeftButton == MouseButtonState.Pressed ||
+          e.RightButton == MouseButtonState.Pressed)) {
       // Zoom when Ctrl/Alt/Shift or left mouse button are pressed.
       return;
     }

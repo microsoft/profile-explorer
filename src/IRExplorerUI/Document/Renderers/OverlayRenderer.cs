@@ -436,10 +436,16 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
 
     tooltipOverlay_ = elementOverlay;
     hoverTooltip_ ??= new ToolTip();
-    hoverTooltip_.Placement = PlacementMode.Mouse;
-    hoverTooltip_.Content = elementOverlay.ToolTip;
-    hoverTooltip_.FontFamily = new FontFamily("Consolas");
-    hoverTooltip_.IsOpen = true;
+
+    // Showing the tooltip from the Dispatcher somehow prevents
+    // it from temporarily showing in the top-left screen corner
+    // with an annoying flicker...
+    Dispatcher.BeginInvoke(() => {
+      hoverTooltip_.Placement = PlacementMode.Mouse;
+      hoverTooltip_.PlacementTarget = textView_;
+      hoverTooltip_.Content = elementOverlay.ToolTip;
+      hoverTooltip_.IsOpen = true;
+    });
   }
 
   private void HideTooltip() {

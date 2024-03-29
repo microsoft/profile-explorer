@@ -289,8 +289,7 @@ public class ProfileDocumentMarker {
     return new SourceLineProfileResult(processingResult, result, dummyFunc, lineToElementMap);
   }
 
-  public List<InlineeListItem> GenerateInlineeList(FunctionIR function, IRTextFunction textFunction,
-                                                   FunctionProcessingResult result) {
+  public List<InlineeListItem> GenerateInlineeList(FunctionProcessingResult result) {
     var inlineeMap = new Dictionary<string, InlineeListItem>();
 
     foreach (var pair in result.SampledElements) {

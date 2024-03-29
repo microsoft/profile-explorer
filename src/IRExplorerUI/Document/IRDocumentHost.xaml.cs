@@ -1268,8 +1268,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     Session.RedrawPanels();
 
     if (TextView.ProfileProcessingResult != null) {
-      var inlineeList = profileMarker_.GenerateInlineeList(Function, Section.ParentFunction,
-                                                           TextView.ProfileProcessingResult);
+      var inlineeList = profileMarker_.GenerateInlineeList(TextView.ProfileProcessingResult);
       DocumentUtils.CreateInlineesMenu(InlineesMenu, Section, inlineeList,
                                        funcProfile, InlineeMenuItem_OnClick, settings_, Session);
       CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
@@ -1295,6 +1294,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async Task HideProfile() {
     ProfileVisible = false;
     ColumnsVisible = false;
+    ResetProfilingMenus();
+  }
+
+  private void ResetProfilingMenus() {
     DocumentUtils.RemoveNonDefaultMenuItems(ProfileBlocksMenu);
     DocumentUtils.RemoveNonDefaultMenuItems(ProfileElementsMenu);
     DocumentUtils.RemoveNonDefaultMenuItems(InstancesMenu);

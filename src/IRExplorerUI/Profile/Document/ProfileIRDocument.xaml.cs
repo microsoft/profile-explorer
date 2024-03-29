@@ -151,7 +151,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private ProfileSampleFilter profileFilter_;
   private CancelableTaskInstance loadTask_;
   private SourceStackFrame inlinee_;
-
+  private bool ignoreNextRowSelectedEvent_;
+  
   public ProfileIRDocument() {
     InitializeComponent();
     UpdateDocumentStyle();
@@ -223,7 +224,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     get => isPreviewDocument_;
     set => SetField(ref isPreviewDocument_, value);
   }
-
+  
+  public bool IsSourceFileDocument {
+    get => isSourceFileDocument_;
+    set => SetField(ref isSourceFileDocument_, value);
+  }
+  
   public Brush SelectedLineBrush {
     get => selectedLineBrush_;
     set => SetField(ref selectedLineBrush_, value);
@@ -243,7 +249,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public async Task<bool> LoadSection(ParsedIRTextSection parsedSection,
                                       ProfileSampleFilter profileFilter = null) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    isSourceFileDocument_ = false;
+    IsSourceFileDocument = false;
     await TextView.LoadSection(parsedSection);
 
     // Apply profile filter if needed.
@@ -274,11 +280,15 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private async Task HideProfile() {
     HasProfileInfo = false;
     ColumnsVisible = false;
+    ResetProfilingMenus();
+  }
+
+  private void ResetProfilingMenus() {
     DocumentUtils.RemoveNonDefaultMenuItems(ProfileElementsMenu);
     DocumentUtils.RemoveNonDefaultMenuItems(InstancesMenu);
     DocumentUtils.RemoveNonDefaultMenuItems(ThreadsMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(InlineesMenu);
   }
-
 
   private async Task<bool> LoadAssemblyProfile(ParsedIRTextSection parsedSection,
                                                bool reloadFilterMenus = true) {
@@ -289,16 +299,25 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     await MarkAssemblyProfile(parsedSection, funcProfile);
+    CreateProfileElementMenus(funcProfile);
 
     if (reloadFilterMenus) {
       CreateProfileFilterMenus(parsedSection.Section, funcProfile);
     }
-
-    if (TextView.ProfileProcessingResult != null) {
-      CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, true);
-    }
-
+    
     return true;
+  }
+
+  private void CreateProfileElementMenus(FunctionProfileData funcProfile) {
+    if (TextView.ProfileProcessingResult != null) {
+      if (!isSourceFileDocument_) {
+        var inlineeList = profileMarker_.GenerateInlineeList(TextView.ProfileProcessingResult);
+        DocumentUtils.CreateInlineesMenu(InlineesMenu, Section, inlineeList,
+          funcProfile, InlineeMenuItem_OnClick, settings_, Session);
+      }
+
+      CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
+    }
   }
 
   private async Task<bool> LoadAssemblyProfileInstance(ParsedIRTextSection parsedSection,
@@ -312,6 +331,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     await MarkAssemblyProfile(parsedSection, funcProfile);
+    CreateProfileElementMenus(funcProfile);
 
     if (reloadFilterMenus) {
       CreateProfileFilterMenus(parsedSection.Section, funcProfile);
@@ -338,7 +358,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       return false;
     }
 
-    await MarkSourceFileProfile(section, funcProfile);
+    if(!(await MarkSourceFileProfile(section, funcProfile))) {
+      return false;
+    }
+    
+    CreateProfileElementMenus(funcProfile);
 
     if (reloadFilterMenus) {
       CreateProfileFilterMenus(section, funcProfile);
@@ -386,7 +410,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                          SourceStackFrame inlinee = null) {
     try {
       using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-      isSourceFileDocument_ = true;
+      IsSourceFileDocument = true;
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
       SetSourceText(text, sourceInfo.FilePath);
 
@@ -447,13 +471,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (!(await MarkSourceFileProfile(section, funcProfile))) {
       return false;
     }
+    
+    CreateProfileElementMenus(funcProfile);
 
     if (reloadFilterMenus) {
       CreateProfileFilterMenus(section, funcProfile);
-    }
-
-    if (TextView.ProfileProcessingResult != null) {
-      CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, false);
     }
 
     return true;
@@ -600,8 +622,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void CreateProfileElementMenu(FunctionProfileData funcProfile,
-                                        FunctionProcessingResult result,
-                                        bool isAssemblyView) {
+                                        FunctionProcessingResult result) {
     var list = new List<ProfileMenuItem>(result.SampledElements.Count);
     double maxWidth = 0;
 
@@ -620,12 +641,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       string text = $"({markerSettings.FormatWeightValue(null, weight)})";
       string prefixText;
 
-      if (isAssemblyView) {
-        prefixText = DocumentUtils.GenerateElementPreviewText(element, TextView.SectionText, 50);
-      }
-      else {
+      if (isSourceFileDocument_) {
         prefixText = element.GetText(TextView.SectionText).ToString();
         prefixText = prefixText.Trim().TrimToLength(50);
+      }
+      else {
+        prefixText = DocumentUtils.GenerateElementPreviewText(element, TextView.SectionText, 50);
       }
 
       var value = new ProfileMenuItem(text, weight.Ticks, weightPercentage) {
@@ -783,6 +804,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private void Caret_PositionChanged(object sender, EventArgs e) {
     if (columnsVisible_) {
+      ignoreNextRowSelectedEvent_ = true;
       var line = TextView.Document.GetLineByOffset(TextView.TextArea.Caret.Offset);
       ProfileColumns.SelectRow(line.LineNumber - 1);
     }
@@ -813,6 +835,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public void Reset() {
+    ResetProfilingMenus();
     TextView.UnloadDocument();
     ProfileColumns.Reset();
     sourceText_ = null;
@@ -930,6 +953,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
 
   private void ProfileColumns_RowSelected(object sender, int line) {
+    if (ignoreNextRowSelectedEvent_) {
+      ignoreNextRowSelectedEvent_ = false;
+      return;
+    }
+    
     TextView.SelectLine(line + 1);
   }
 
@@ -971,5 +999,16 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public async Task SwitchProfileInstanceAsync(ProfileSampleFilter instanceFilter) {
     ProfileFilter = instanceFilter;
     await ApplyProfileFilter();
+  }
+  
+  private async void InlineeMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var inlinee = ((MenuItem)sender)?.Tag as InlineeListItem;
+
+    if (inlinee != null && inlinee.ElementWeights is {Count:>0}) {
+      // Sort by weight and bring the hottest element into view.
+      var elements = inlinee.SortedElements;
+      TextView.SelectElements(elements);
+      TextView.BringElementIntoView(elements[0]);
+    }
   }
 }
