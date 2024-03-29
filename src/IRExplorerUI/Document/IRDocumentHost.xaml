@@ -882,12 +882,6 @@
                                     CommandTarget="{Binding ElementName=TextView}"
                                     Header="Search Symbol in All Sections"
                                     InputGestureText="Ctrl+Shift+F">
-                                    <MenuItem.Icon>
-                                        <Image
-                                            Width="16"
-                                            Height="16"
-                                            Source="{StaticResource SearchIcon}" />
-                                    </MenuItem.Icon>
                                 </MenuItem>
                                 <Separator />
 

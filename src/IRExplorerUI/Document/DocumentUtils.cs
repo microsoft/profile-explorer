@@ -467,7 +467,9 @@ public static class DocumentUtils {
       maxWidth = Math.Max(width, maxWidth);
     }
 
-    if (profileItems.Count == 0) {
+    // If no items were added (besides "Non-Inlinee Code"),
+    // add an entry about there being no significant inlinees.
+    if (profileItems.Count == 1) {
       defaultItems.Add(new MenuItem() {
         Header = "No significant inlined functions",
         IsHitTestVisible = false,

@@ -176,26 +176,26 @@ dotnet_naming_rule.non_field_members_should_be_pascal_case.style = pascal_case
 
 dotnet_naming_symbols.interface.applicable_kinds = interface
 dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
-dotnet_naming_symbols.interface.required_modifiers =
+dotnet_naming_symbols.interface.required_modifiers = 
 
 dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
 dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
-dotnet_naming_symbols.types.required_modifiers =
+dotnet_naming_symbols.types.required_modifiers = 
 
 dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, method
 dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
-dotnet_naming_symbols.non_field_members.required_modifiers =
+dotnet_naming_symbols.non_field_members.required_modifiers = 
 
 # Naming styles
 
-dotnet_naming_style.pascal_case.required_prefix =
-dotnet_naming_style.pascal_case.required_suffix =
-dotnet_naming_style.pascal_case.word_separator =
+dotnet_naming_style.pascal_case.required_prefix = 
+dotnet_naming_style.pascal_case.required_suffix = 
+dotnet_naming_style.pascal_case.word_separator = 
 dotnet_naming_style.pascal_case.capitalization = pascal_case
 
 dotnet_naming_style.begins_with_i.required_prefix = I
-dotnet_naming_style.begins_with_i.required_suffix =
-dotnet_naming_style.begins_with_i.word_separator =
+dotnet_naming_style.begins_with_i.required_suffix = 
+dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
 # Microsoft .NET properties
@@ -342,6 +342,7 @@ resharper_braces_for_foreach = required_for_multiline
 resharper_braces_for_ifelse = not_required
 resharper_braces_for_while = required_for_multiline
 resharper_braces_redundant = false
+resharper_csharp_align_multiline_argument = false
 resharper_csharp_blank_lines_around_field = 0
 resharper_csharp_blank_lines_around_invocable = 1
 resharper_csharp_blank_lines_around_region = 0
@@ -358,7 +359,9 @@ resharper_default_value_when_type_not_evident = default_expression
 resharper_for_simple_types = use_var
 resharper_indent_pars = outside
 resharper_indent_preprocessor_region = do_not_change
-resharper_instance_members_qualify_declared_in =
+resharper_instance_members_qualify_declared_in = 
+resharper_int_align_switch_expressions = true
+resharper_int_align_switch_sections = true
 resharper_keep_existing_attribute_arrangement = true
 resharper_keep_existing_enum_arrangement = false
 resharper_max_enum_members_on_line = 1

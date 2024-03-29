@@ -368,6 +368,11 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private async Task<bool> LoadInlineeSourceFile(SourceLocationTag tag) {
+    var selectedInlinee = PopulateInlineePicker(tag);
+    return await LoadInlineeSourceFile(selectedInlinee);
+  }
+
+  private SourceStackFrame PopulateInlineePicker(SourceLocationTag tag) {
     disableInlineeComboboxEvents_ = true;
     var inlinees = tag.InlineesReversed;
 
@@ -379,7 +384,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var selectedInlinee = inlinees[^1];
     InlineeComboBox.SelectedItem = selectedInlinee;
     disableInlineeComboboxEvents_ = false;
-    return await LoadInlineeSourceFile(selectedInlinee);
+    return selectedInlinee;
   }
 
   private void ResetInlinee() {

@@ -338,6 +338,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public async Task ReloadSettings(bool hasProfilingChanges = true) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, true);
     TextView.Initialize(settings_, session_);
 
@@ -422,6 +423,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public async Task LoadSection(ParsedIRTextSection parsedSection) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     duringSectionSwitching_ = true;
     object data = Session.LoadDocumentState(parsedSection.Section);
     double horizontalOffset = 0;
@@ -1206,6 +1208,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async Task ApplyProfileFilter() {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
     if (profileFilter_ is {IncludesAll: false}) {
       await LoadProfileInstance();
     }
@@ -1230,10 +1234,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async Task LoadProfileInstance() {
     UpdateProfileFilterUI();
-
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    var instanceProfile = await Task.Run(
-      () => Session.ProfileData.ComputeProfile(Session.ProfileData, profileFilter_, false));
+    var instanceProfile = await ComputeInstanceProfile();
     var funcProfile = instanceProfile.GetFunctionProfile(Section.ParentFunction);
 
     if (funcProfile == null) {
@@ -1241,6 +1242,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     await MarkFunctionProfile(funcProfile);
+  }
+
+  private async Task<ProfileData> ComputeInstanceProfile() {
+    return await LongRunningAction.Start(
+      async () => await Task.Run(() => Session.ProfileData.
+        ComputeProfile(Session.ProfileData, profileFilter_, false)),
+      TimeSpan.FromMilliseconds(500),
+      "Filtering function instance", this, Session);
   }
 
   private void UpdateProfileFilterUI() {

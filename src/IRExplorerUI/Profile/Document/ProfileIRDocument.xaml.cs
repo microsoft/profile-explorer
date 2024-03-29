@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Windows;
@@ -241,6 +242,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public async Task<bool> LoadSection(ParsedIRTextSection parsedSection,
                                       ProfileSampleFilter profileFilter = null) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     isSourceFileDocument_ = false;
     await TextView.LoadSection(parsedSection);
 
@@ -280,7 +282,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private async Task<bool> LoadAssemblyProfile(ParsedIRTextSection parsedSection,
                                                bool reloadFilterMenus = true) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var funcProfile = Session.ProfileData?.GetFunctionProfile(parsedSection.Section.ParentFunction);
 
     if (funcProfile == null) {
@@ -303,9 +304,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private async Task<bool> LoadAssemblyProfileInstance(ParsedIRTextSection parsedSection,
                                                        bool reloadFilterMenus = true) {
     UpdateProfileFilterUI();
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    var instanceProfile = await Task.Run(
-      () => Session.ProfileData.ComputeProfile(Session.ProfileData, profileFilter_, false));
+    var instanceProfile = await ComputeInstanceProfile();
     var funcProfile = instanceProfile.GetFunctionProfile(parsedSection.Section.ParentFunction);
 
     if (funcProfile == null) {
@@ -321,12 +320,18 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     return true;
   }
 
+  private async Task<ProfileData> ComputeInstanceProfile() {
+    return await LongRunningAction.Start(
+      async () => await Task.Run(() => Session.ProfileData.
+        ComputeProfile(Session.ProfileData, profileFilter_, false)),
+      TimeSpan.FromMilliseconds(500),
+      "Filtering function instance", this, Session);
+  }
+
   private async Task<bool> LoadSourceFileProfileInstance(IRTextSection section,
                                                          bool reloadFilterMenus = true) {
     UpdateProfileFilterUI();
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    var instanceProfile = await Task.Run(
-      () => Session.ProfileData.ComputeProfile(Session.ProfileData, profileFilter_, false));
+    var instanceProfile = await ComputeInstanceProfile();
     var funcProfile = instanceProfile.GetFunctionProfile(section.ParentFunction);
 
     if (funcProfile == null) {
@@ -372,20 +377,15 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       GenerateProfileFilterDescription(profileFilter_, Session));
   }
 
-  public bool HasProfileInstanceFilter {
-    get => profileFilter_ is {HasInstanceFilter:true};
-  }
-
-  public bool HasProfileThreadFilter {
-    get => profileFilter_ is {HasThreadFilter:true};
-  }
-
+  public bool HasProfileInstanceFilter => profileFilter_ is {HasInstanceFilter:true};
+  public bool HasProfileThreadFilter => profileFilter_ is {HasThreadFilter:true};
 
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
                                          IRTextSection section,
                                          ProfileSampleFilter profileFilter = null,
                                          SourceStackFrame inlinee = null) {
     try {
+      using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
       isSourceFileDocument_ = true;
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
       SetSourceText(text, sourceInfo.FilePath);
@@ -438,7 +438,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async Task<bool> LoadSourceFileProfile(IRTextSection section, bool reloadFilterMenus = true) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var funcProfile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
 
     if (funcProfile == null) {
@@ -523,25 +522,28 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async Task ApplyProfileFilter() {
-      if (isSourceFileDocument_) {
-        if (profileFilter_ is {IncludesAll: false}) {
-          await LoadSourceFileProfileInstance(TextView.Section, false);
-        }
-        else {
-          await LoadSourceFileProfile(TextView.Section, false);
-        }
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
+    if (isSourceFileDocument_) {
+      if (profileFilter_ is {IncludesAll: false}) {
+        await LoadSourceFileProfileInstance(TextView.Section, false);
       }
       else {
-        var parsedSection = new ParsedIRTextSection(TextView.Section,
-                                                    TextView.SectionText,
-                                                    TextView.Function);
-        if (profileFilter_ is {IncludesAll: false}) {
-          await LoadAssemblyProfileInstance(parsedSection, false);
-        }
-        else {
-          await LoadAssemblyProfile(parsedSection, false);
-        }
+        await LoadSourceFileProfile(TextView.Section, false);
       }
+    }
+    else {
+      var parsedSection = new ParsedIRTextSection(TextView.Section,
+        TextView.SectionText,
+        TextView.Function);
+
+      if (profileFilter_ is {IncludesAll: false}) {
+        await LoadAssemblyProfileInstance(parsedSection, false);
+      }
+      else {
+        await LoadAssemblyProfile(parsedSection, false);
+      }
+    }
   }
 
   public async Task UpdateProfilingColumns() {

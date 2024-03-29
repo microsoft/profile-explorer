@@ -157,7 +157,8 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   }
 
   public bool IsVisibleValue(int order, double percentage) {
-    return order < TopOrderCutoff || percentage >= ElementWeightCutoff;
+    return (order < TopOrderCutoff && percentage > double.Epsilon) ||
+           percentage >= ElementWeightCutoff;
   }
 
   public Brush PickBackColorForOrder(int order, double percentage, bool inverted) {

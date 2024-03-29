@@ -3,12 +3,14 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace IRExplorerUI;
 
 public class DelayedAction {
   public static TimeSpan DefaultDelay = TimeSpan.FromMilliseconds(500);
   private bool canceled_;
+  private bool timedOut_;
 
   public static DelayedAction StartNew(Action action) {
     return StartNew(DefaultDelay, action);
@@ -22,14 +24,18 @@ public class DelayedAction {
 
   public async Task Start(TimeSpan delay, Action action) {
     canceled_ = false;
+    timedOut_ = false;
+
     await Task.Delay(delay);
 
     if (!canceled_) {
+      timedOut_ = true;
       action();
     }
   }
 
-  public void Cancel() {
+  public bool Cancel() {
     canceled_ = true;
+    return timedOut_;
   }
 }
