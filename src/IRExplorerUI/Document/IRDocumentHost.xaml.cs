@@ -80,6 +80,41 @@ public class IRDocumentHostState {
   public bool HasAnnotations => DocumentState.HasAnnotations;
 }
 
+public class ProfileFunctionState {
+  public ProfileFunctionState(IRTextSection section, FunctionIR function,
+                              ReadOnlyMemory<char> text,
+                              ProfileSampleFilter profileFilter) {
+    Section = section;
+    Function = function;
+    Text = text;
+    ProfileFilter = profileFilter;
+  }
+
+  public IRTextSection Section { get; set; }
+  public FunctionIR Function { get; set;}
+  public ReadOnlyMemory<char> Text { get; set; }
+  public ProfileSampleFilter ProfileFilter { get; set;}
+  public TimeSpan Weight { get; set; }
+  
+  protected bool Equals(ProfileFunctionState other) {
+    return Equals(Section, other.Section);
+  }
+
+  public override bool Equals(object obj) {
+    if (ReferenceEquals(null, obj))
+      return false;
+    if (ReferenceEquals(this, obj))
+      return true;
+    if (obj.GetType() != this.GetType())
+      return false;
+    return Equals((ProfileFunctionState)obj);
+  }
+
+  public override int GetHashCode() {
+    return (Section != null ? Section.GetHashCode() : 0);
+  }
+}
+
 public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private const double ActionPanelInitialOpacity = 0.5;
   private const int ActionPanelHeight = 20;
@@ -128,6 +163,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private ProfileSampleFilter profileFilter_;
   private FunctionProfileData funcProfile_;
   private bool ignoreNextRowSelectedEvent_;
+  private Stack<ProfileFunctionState> prevFunctionsStack_;
+  private bool ignoreNextSaveFunctionState_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -154,6 +191,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
                                            Session.SessionState.UnregisterCancelableTask);
     activeQueryPanels_ = new List<QueryPanel>();
     profileFilter_ = new ProfileSampleFilter();
+    prevFunctionsStack_ = new Stack<ProfileFunctionState>();
   }
 
   private void SetupEvents() {
@@ -175,6 +213,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.TextArea.SelectionChanged += TextAreaOnSelectionChanged;
     TextView.TextRegionFolded += TextViewOnTextRegionFolded;
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
+    TextView.FunctionCallOpen += TextViewOnFunctionCallOpen;
 
     SectionPanel.OpenSection += SectionPanel_OpenSection;
     SearchPanel.SearchChanged += SearchPanel_SearchChanged;
@@ -184,6 +223,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
     ProfileColumns.RowSelected += ProfileColumns_RowSelected;
     Unloaded += IRDocumentHost_Unloaded;
+  }
+
+  private async void TextViewOnFunctionCallOpen(object sender, IRTextSection targetSection) {
+    await Session.OpenDocumentSectionAsync(new OpenSectionEventArgs(targetSection,
+      OpenSectionKind.ReplaceCurrent, this));
   }
 
   private void ProfileColumns_RowSelected(object sender, int line) {
@@ -418,7 +462,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.JumpToSearchResult(result, Colors.LightSkyBlue);
   }
 
-  public void LoadSectionMinimal(ParsedIRTextSection parsedSection) {
+  public async Task LoadSectionMinimal(ParsedIRTextSection parsedSection) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
+    // Save state of currently loaded function for going back.
+    if (TextView.IsLoaded) {
+      SaveCurrentFunctionState(parsedSection.Section);
+    }
+    
     TextView.PreloadSection(parsedSection);
   }
 
@@ -452,6 +503,72 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.ScrollToHorizontalOffset(horizontalOffset);
     TextView.ScrollToVerticalOffset(verticalOffset);
     duringSectionSwitching_ = false;
+  }
+
+  
+  private void SaveCurrentFunctionState(IRTextSection newSection) {
+    if (ignoreNextSaveFunctionState_) {
+      // Don't add to the history the function
+      // from which the going back action was started.
+      ignoreNextSaveFunctionState_ = false;
+    }
+    else {
+      var state = new ProfileFunctionState(TextView.Section, TextView.Function,
+        TextView.SectionText, profileFilter_);
+
+      if (funcProfile_ != null) {
+        state.Weight = funcProfile_.Weight;
+      }
+
+      // Don't duplicate the state.
+      if ((prevFunctionsStack_.Count == 0 && !TextView.Section.Equals(newSection)) ||
+          (prevFunctionsStack_.Count > 0 && !prevFunctionsStack_.Peek().Equals(state))) {
+        prevFunctionsStack_.Push(state);
+        UpdateBackMenu();
+      }
+    }
+  }
+
+  private void UpdateBackMenu() {
+    DocumentUtils.CreateBackMenu(BackMenu, prevFunctionsStack_,
+      BackMenuItem_OnClick,
+      settings_, session_);
+  }
+
+  private async void BackMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var state = ((MenuItem)sender)?.Tag as ProfileFunctionState;
+
+    if (state != null) {
+      while (prevFunctionsStack_.Peek() != state) {
+        prevFunctionsStack_.Pop();
+      }
+
+      prevFunctionsStack_.Pop();
+      UpdateBackMenu();
+      await LoadPreviousSectionState(state);
+    }
+  }
+
+  private async Task LoadPreviousSection() {
+    if (prevFunctionsStack_.Count == 0) {
+      return;
+    }
+
+    var state = prevFunctionsStack_.Pop();
+    UpdateBackMenu();
+    
+    Trace.WriteLine($"<< Restore section {state.Section.ParentFunction.Name}");
+    await LoadPreviousSectionState(state);
+  }
+
+  private async Task LoadPreviousSectionState(ProfileFunctionState state) {
+    var prevLoadedSection = new ParsedIRTextSection(state.Section, state.Text, state.Function);
+    ignoreNextSaveFunctionState_ = true;
+    await session_.OpenDocumentSectionAsync(new OpenSectionEventArgs(state.Section, OpenSectionKind.ReplaceCurrent, this));
+
+    if (state.ProfileFilter is {IncludesAll: false}) {
+      await SwitchProfileInstanceAsync(state.ProfileFilter);
+    }
   }
 
   //? TODO: Create a new class to do the remark finding/filtering work
@@ -2293,8 +2410,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     if (inlinee != null && inlinee.ElementWeights is {Count:>0}) {
       // Sort by weight and bring the hottest element into view.
       var elements = inlinee.SortedElements;
+      TextView.SetCaretAtElement(elements[0]);
       TextView.SelectElements(elements);
-      TextView.SelectElement(elements[0]);
     }
   }
 
@@ -2305,6 +2422,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     await IRDocumentPopupInstance.ShowPreviewPopup(Section.ParentFunction, "",
                                                    this, Session, profileFilter_);
+  }
+
+  private async void BackButton_Click(object sender, RoutedEventArgs e) {
+    await LoadPreviousSection();
   }
 }
 

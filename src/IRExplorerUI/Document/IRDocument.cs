@@ -237,6 +237,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public event EventHandler<int> CaretChanged;
   public event EventHandler<FoldingSection> TextRegionFolded;
   public event EventHandler<FoldingSection> TextRegionUnfolded;
+  public event EventHandler<IRTextSection> FunctionCallOpen;
 
   public event PropertyChangedEventHandler PropertyChanged;
   public List<BlockIR> Blocks => Function.Blocks;
@@ -524,11 +525,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   public void SelectElementsOnSourceLine(int lineNumber, SourceStackFrame inlinee = null) {
-    //? TODO: Select element that maps to source line in inlinee
-    if (inlinee != null) {
-      return;
-    }
-    
     ClearTemporaryHighlighting();
     MarkElementsOnSourceLine(selectedHighlighter_, lineNumber, Colors.Transparent,
                              false, true, inlinee);
@@ -688,7 +684,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     selectedHighlighter_.Add(group);
     UpdateHighlighting();
   }
-  
+
   public void MarkElement(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
     if (raiseEvent) {
       Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element.Id}");
@@ -2639,7 +2635,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     RaiseElementHighlightingEvent(op, useGroup, highlighter.Type, action);
   }
 
-  private void IRDocument_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e) {
+  private async void IRDocument_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e) {
     // If Ctrl is pressed, instead of go to definition
     // the action is a text search, which is handled by the host.
     if (Utils.IsControlModifierActive()) {
@@ -2648,6 +2644,19 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     var position = e.GetPosition(TextArea.TextView);
     var element = FindPointedElement(position, out _);
+
+    // For call function names, notify owner in case it wants
+    // to switch the view to the called function.
+    if (IsCallTargetElement(element)) {
+      var targetSection = FindCallTargetSection(element);
+
+      if (targetSection != null && FunctionCallOpen != null) {
+        FunctionCallOpen.Invoke(this, targetSection);
+        e.Handled = true;
+        return;
+      }
+    }
+    
     e.Handled = GoToElementDefinition(element, Utils.IsAltModifierActive());
   }
 
@@ -3530,7 +3539,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     HideTemporaryUI();
     overlayRenderer_.MouseLeave();
   }
-  
+
   private void IRDocument_GiveFeedback(object sender, GiveFeedbackEventArgs e) {
     e.UseDefaultCursors = false;
     Mouse.OverrideCursor = Cursors.Arrow;
@@ -3795,6 +3804,15 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return true;
     }
 
+    return false;
+  }
+
+  private bool IsCallTargetElement(IRElement element) {
+    if (element is OperandIR op && 
+        op.ParentInstruction != null) {
+      return op.Equals(Session.CompilerInfo.IR.GetCallTarget(op.ParentInstruction));
+    }
+    
     return false;
   }
 

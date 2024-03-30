@@ -270,7 +270,7 @@
 
                         <Expander
                             x:Name="ThreadsExpander"
-                            MaxHeight="300"
+                            MaxHeight="250"
                             Margin="0,0,0,8"
                             HorizontalAlignment="Stretch"
                             Header="Threads"
@@ -309,7 +309,7 @@
                                                       <Image
                                                         Width="16"
                                                         Height="16"
-                                                        Style="{StaticResource DisabledImageStyle}" 
+                                                        Style="{StaticResource DisabledImageStyle}"
                                                         Source="{StaticResource BlockIcon}" />
                                                     </Grid>
                                                 </Grid>
