@@ -100,6 +100,15 @@ public struct TinyList<T> : IList<T> {
   public bool Contains(T item) {
     return IndexOf(item) != -1;
   }
+  
+  public bool Contains(Func<T, bool> comparer) {
+    return IndexOf(comparer) != -1;
+  }
+  
+  public T Find(Func<T, bool> comparer) {
+    int index = IndexOf(comparer);
+    return index != -1 ? this[index] : default(T);
+  }
 
   public void CopyTo(T[] array, int arrayIndex) {
     throw new NotImplementedException();
@@ -127,6 +136,29 @@ public struct TinyList<T> : IList<T> {
 
       for (int i = 0; i < count_; i++) {
         if (EqualityComparer<T>.Default.Equals(array[i], item)) {
+          return i;
+        }
+      }
+    }
+
+    return -1;
+  }
+  
+  public int IndexOf(Func<T, bool> comparer) {
+    if (count_ == 0) {
+      return -1;
+    }
+
+    if (count_ == 1) {
+      if (comparer((T)value_)) {
+        return 0;
+      }
+    }
+    else {
+      var array = (T[])value_;
+
+      for (int i = 0; i < count_; i++) {
+        if (comparer(array[i])) {
           return i;
         }
       }

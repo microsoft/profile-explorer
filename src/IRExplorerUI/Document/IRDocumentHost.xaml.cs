@@ -67,6 +67,8 @@ public static class DocumentHostCommand {
     new RoutedUICommand("Untitled", "ExportFunctionProfileMarkdown", typeof(IRDocumentHost));
   public static readonly RoutedUICommand CopySelectedLinesAsHTML =
     new RoutedUICommand("Untitled", "CopySelectedLinesAsHTML", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand CopySelectedText =
+    new RoutedUICommand("Untitled", "CopySelectedText", typeof(IRDocumentHost));
 }
 
 [ProtoContract]
@@ -226,8 +228,29 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void TextViewOnFunctionCallOpen(object sender, IRTextSection targetSection) {
-    await Session.OpenDocumentSectionAsync(new OpenSectionEventArgs(targetSection,
-      OpenSectionKind.ReplaceCurrent, this));
+    var targetFunc = targetSection.ParentFunction;
+    ProfileSampleFilter targetFilter = null;
+    
+    if (profileFilter_ is {IncludesAll: false}) {
+      targetFilter = profileFilter_.Clone();
+
+      if (profileFilter_.HasInstanceFilter) {
+        targetFilter.ClearInstances();
+
+        foreach (var instance in profileFilter_.FunctionInstances) {
+          // Try to add the instance node that is a child 
+          // of the current instance in the profile filter.
+          var targetInstance = instance.FindChild(targetFunc);
+
+          if (targetInstance != null) {
+            targetFilter.AddInstance(targetInstance);
+          }
+        }
+      }
+    }
+    
+    await Session.OpenProfileFunction(targetFunc, OpenSectionKind.ReplaceCurrent,
+                                      targetFilter, this);
   }
 
   private void ProfileColumns_RowSelected(object sender, int line) {
@@ -270,7 +293,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   public double ColumnsListItemHeight {
     get => columnsListItemHeight_;
     set {
-      if (columnsListItemHeight_ != value) {
+      if (Math.Abs(columnsListItemHeight_ - value) > double.Epsilon) {
         columnsListItemHeight_ = value;
         NotifyPropertyChanged(nameof(ColumnsListItemHeight));
       }
@@ -363,6 +386,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       }
     }
   }
+
+  public bool HasPreviousFunctions => prevFunctionsStack_.Count > 0;
+
 
   public bool HasProfileInstanceFilter {
     get => profileFilter_ is {HasInstanceFilter:true};
@@ -530,6 +556,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void UpdateBackMenu() {
+    NotifyPropertyChanged(nameof(HasPreviousFunctions));
     DocumentUtils.CreateBackMenu(BackMenu, prevFunctionsStack_,
       BackMenuItem_OnClick,
       settings_, session_);
@@ -762,6 +789,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
     await HideRemarkPanel();
 
+    if (e.ChangedButton == MouseButton.XButton1) {
+      e.Handled = true;
+      await LoadPreviousSection();
+      return;
+    }
+    
     var point = e.GetPosition(TextView.TextArea.TextView);
     var element = TextView.GetElementAt(point);
 
@@ -1106,9 +1139,16 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       e.Handled = true;
     }
     else if (e.Key == Key.C && Utils.IsControlModifierActive()) {
-      // Override Ctrl+C to copy instruction details instead of just text.
-      await DocumentExporting.CopySelectedLinesAsHtml(TextView);
-      e.Handled = true;
+      // Override Ctrl+C to copy instruction details instead of just text,
+      // but not if Shift/Alt key is also pressed, copy plain text then.
+      if (!Utils.IsAltModifierActive() &&
+          !Utils.IsShiftModifierActive()) {
+        await DocumentExporting.CopySelectedLinesAsHtml(TextView);
+        e.Handled = true;
+      }
+    }
+    else if (e.Key == Key.Back) {
+      await LoadPreviousSection();
     }
   }
 
@@ -1569,7 +1609,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     hoverPoint_ = e.GetPosition(TextView.TextArea.TextView);
     TextView.SelectElementAt(hoverPoint_);
   }
-
+  
   private void MenuItem_Click(object sender, RoutedEventArgs e) {
     TextView.ClearMarkedElementAt(hoverPoint_);
   }
@@ -1702,7 +1742,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void SearchSymbolImpl(bool searchAllSections) {
-    var element = TextView.TryGetSelectedElement();
+    var element = TextView.GetSelectedElement();
 
     if (element == null || !element.HasName) {
       return;
@@ -2374,6 +2414,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
     await DocumentExporting.CopySelectedLinesAsHtml(TextView);
+  }
+  
+  private async void CopySelectedTextExecuted(object sender, ExecutedRoutedEventArgs e) {
+    TextView.Copy();
   }
 
   private class DummyQuery : IElementQuery {

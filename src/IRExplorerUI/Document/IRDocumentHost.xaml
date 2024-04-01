@@ -24,6 +24,7 @@
     <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfile" Executed="ExportFunctionProfileExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportFunctionProfileHtmlExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.CopySelectedLinesAsHTML" Executed="CopySelectedLinesAsHtmlExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.CopySelectedText" Executed="CopySelectedTextExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileMarkdown" Executed="ExportFunctionProfileMarkdownExecuted" />
 
     <CommandBinding
@@ -137,6 +138,7 @@
               Margin="2,0,0,0"
               Click="BackButton_Click"
               CommandTarget="{Binding ElementName=GraphHost}"
+              IsEnabled="{Binding HasPreviousFunctions}"
               ToolTip="Go back to previous function (Backspace/Mouse Back)">
               <StackPanel Orientation="Horizontal">
                 <Image Source="{StaticResource DockLeftIcon}" Style="{StaticResource DisabledImageStyle}" />
@@ -147,7 +149,8 @@
               Width="10"
               Height="20"
               VerticalAlignment="Center"
-              ToolTip="View sorted list of inlined functions">
+              IsEnabled="{Binding HasPreviousFunctions}"
+              ToolTip="View list of functions to go back to">
               <MenuItem
                 x:Name="BackMenu"
                 Width="10"
@@ -155,19 +158,21 @@
                 Margin="0,0,0,0"
                 Padding="0,2,0,0"
                 OverridesDefaultStyle="True">
-                <MenuItem.Header>
-                  <Path
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Data="M 0 0 L 4 4 L 8 0 Z"
-                    Fill="Black" />
-                </MenuItem.Header>
-                <MenuItem
-                  Header="Non-Inlinee"
-                  IsCheckable="False"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}"
-                  ToolTip="Time for parts not originating from inlined functions" />
-                <Separator />
+                <MenuItem.HeaderTemplate>
+                  <DataTemplate>
+                    <Path
+                      x:Name="Foo"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      Data="M 0 0 L 4 4 L 8 0 Z"
+                      Fill="Black" />
+                    <DataTemplate.Triggers>
+                      <DataTrigger Binding="{Binding DataContext.HasPreviousFunctions, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ToolBar}}}" Value="False">
+                        <Setter TargetName="Foo" Property="Fill" Value="Gray" />
+                      </DataTrigger>
+                    </DataTemplate.Triggers>
+                  </DataTemplate>
+                </MenuItem.HeaderTemplate>
               </MenuItem>
             </Menu>
             <Separator />
@@ -896,7 +901,8 @@
                   Command="local:DocumentHostCommand.CopySelectedLinesAsHTML"
                   CommandTarget="{Binding ElementName=TextView}"
                   Header="Copy Selection Details"
-                  InputGestureText="Ctrl+Alt+C">
+                  InputGestureText="Ctrl+C"
+                  ToolTip="Copy the selected text and additional profiling columns as a HTML table">
                   <MenuItem.Icon>
                     <Image
                       Width="16"
@@ -904,7 +910,13 @@
                       Source="{StaticResource ClipboardIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
-
+                <MenuItem
+                  Command="local:DocumentHostCommand.CopySelectedText"
+                  CommandTarget="{Binding ElementName=TextView}"
+                  Header="Copy Text"
+                  InputGestureText="Ctrl+Shift+C"
+                  ToolTip="Copy the selected text only" />
+                <Separator />
                 <MenuItem
                   Command="local:DocumentHostCommand.SearchSymbol"
                   CommandTarget="{Binding ElementName=TextView}"
@@ -1220,8 +1232,8 @@
       CommandTarget="{Binding ElementName=SearchPanel}" />
     <KeyBinding
       Key="C"
-      Command="local:DocumentHostCommand.CopySelectedLinesAsHTML"
+      Command="local:DocumentHostCommand.CopySelectedText"
       CommandTarget="{Binding ElementName=TextView}"
-      Modifiers="Ctrl+Alt" />
+      Modifiers="Ctrl+Shift" />
   </UserControl.InputBindings>
 </UserControl>
