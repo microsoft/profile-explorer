@@ -501,7 +501,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
       if (!success) {
         await HideProfile();
-        return false;
+        return true; // Only profile part failed, keep text.
       }
 
       //? TODO: Is panel is not visible, scroll doesn't do anything,
@@ -916,7 +916,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     sourceLineProfileResult_ = null;
     inlinee_ = null;
     ProfileFilter = new ProfileSampleFilter();
-    historyManager_ = new ProfileHistoryManager();
+    historyManager_.Reset();
   }
 
   private void TextViewOnScrollOffsetChanged(object? sender, EventArgs e) {

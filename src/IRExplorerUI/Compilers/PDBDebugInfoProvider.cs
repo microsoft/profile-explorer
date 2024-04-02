@@ -303,17 +303,10 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     try {
-      session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
+      var symbol = FindFunctionSymbolByRVA(rva);
 
-      if (funcSym != null) {
-        return new FunctionDebugInfo(funcSym.name, funcSym.relativeVirtualAddress, (long)funcSym.length);
-      }
-
-      // Do another lookup as a public symbol.
-      session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var funcSym2);
-
-      if (funcSym2 != null) {
-        return new FunctionDebugInfo(funcSym2.name, funcSym2.relativeVirtualAddress, (long)funcSym2.length);
+      if(symbol != null) {
+        return new FunctionDebugInfo(symbol.name, symbol.relativeVirtualAddress, (long)symbol.length);
       }
     }
     catch (Exception ex) {
@@ -686,23 +679,25 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return FindFunctionSymbolImpl(SymTagEnum.SymTagPublicSymbol, functionName, demangledName, queryDemangledName);
   }
 
-  public IDiaSymbol FindFunctionSymbolByRVA(long rva) {
+  private IDiaSymbol FindFunctionSymbolByRVA(long rva) {
     if (!EnsureLoaded()) {
       return null;
     }
 
     try {
+      // Lookup in the public symbols first because
+      // they have the mangled (decorated) C++ names, while
+      // the instance of the sym in the private symbol list doesn't.
+      session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var pubSym);
+
+      if (pubSym != null) {
+        return pubSym;
+      }
+
       session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
 
       if (funcSym != null) {
         return funcSym;
-      }
-
-      // Do another lookup as a public symbol.
-      session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var funcSym2);
-
-      if (funcSym2 != null) {
-        return funcSym2;
       }
     }
     catch (Exception ex) {

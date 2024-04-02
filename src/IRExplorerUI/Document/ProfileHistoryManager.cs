@@ -100,6 +100,12 @@ public class ProfileHistoryManager {
   public void ClearNextStates() {
     nextFunctionsStack_.Clear();
   }
+
+  public void Reset() {
+    prevFunctionsStack_.Clear();
+    nextFunctionsStack_.Clear();
+    ignoreNextSaveFunctionState_ = false;
+  }
 }
 
 public class ProfileFunctionState {
