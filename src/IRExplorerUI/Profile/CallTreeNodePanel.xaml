@@ -270,7 +270,7 @@
 
                         <Expander
                             x:Name="ThreadsExpander"
-                            MaxHeight="300"
+                            MaxHeight="250"
                             Margin="0,0,0,8"
                             HorizontalAlignment="Stretch"
                             Header="Threads"
@@ -309,7 +309,7 @@
                                                       <Image
                                                         Width="16"
                                                         Height="16"
-                                                        Style="{StaticResource DisabledImageStyle}" 
+                                                        Style="{StaticResource DisabledImageStyle}"
                                                         Source="{StaticResource BlockIcon}" />
                                                     </Grid>
                                                 </Grid>
@@ -426,10 +426,26 @@
                         </Expander>
 
                         <Separator />
-                        <TextBlock
-                            Margin="4,4,0,0"
+                        <Grid>
+                          <TextBlock
+                            Margin="4,4,0,2"
                             HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
                             Text="Module" />
+                          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                      Margin="0,0,4,0">
+                        <Button
+                          x:Name="ReloadSyntaxStyleButton"
+                          Width="18"
+                          Height="18"
+                          BorderThickness="0"
+                          HorizontalAlignment="Right"
+                          VerticalAlignment="Center"
+                          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                          <Image Source="{StaticResource ClipboardIcon}" Width="16" Height="16"/>
+                        </Button>
+                        </StackPanel>
+                          </Grid>
                         <Canvas
                             x:Name="ModuleCanvas"
                             Height="{Binding ElementName=ModuleTextBlock, Path=ActualHeight}"
@@ -451,20 +467,33 @@
                                 TextWrapping="Wrap" />
                         </Canvas>
 
-
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock
-                                Margin="4,4,6,0"
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Center"
-                                Text="Function" />
-                            <ContentPresenter
-                                Margin="4,4,6,0"
-                                VerticalAlignment="Center"
-                                Content="{Binding CallTreeNode}"
-                                ContentTemplate="{StaticResource ExecutionContextTemplate}"
-                                ToolTip="Function execution context" />
+                        <Grid>
+                          <TextBlock
+                            Margin="4,4,8,2"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Text="Function" />
+                          <ContentPresenter
+                            Margin="60,4,6,0"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Content="{Binding CallTreeNode}"
+                            ContentTemplate="{StaticResource ExecutionContextTemplate}"
+                            ToolTip="Function execution context" />
+                          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                      Margin="0,0,4,0">
+                            <Button
+                              Width="18"
+                              Height="18"
+                              Margin="4,0,0,0"
+                              BorderThickness="0"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Center"
+                              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                              <Image Source="{StaticResource ClipboardIcon}" Width="16" Height="16"/>
+                            </Button>
                         </StackPanel>
+                          </Grid>
                         <Canvas
                             x:Name="FunctionCanvas"
                             Height="{Binding ElementName=FunctionTextBlock, Path=ActualHeight}"

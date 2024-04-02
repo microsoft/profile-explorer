@@ -2293,8 +2293,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     if (inlinee != null && inlinee.ElementWeights is {Count:>0}) {
       // Sort by weight and bring the hottest element into view.
       var elements = inlinee.SortedElements;
+      TextView.SetCaretAtElement(elements[0]);
       TextView.SelectElements(elements);
-      TextView.SelectElement(elements[0]);
     }
   }
 

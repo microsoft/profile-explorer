@@ -524,11 +524,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   public void SelectElementsOnSourceLine(int lineNumber, SourceStackFrame inlinee = null) {
-    //? TODO: Select element that maps to source line in inlinee
-    if (inlinee != null) {
-      return;
-    }
-    
     ClearTemporaryHighlighting();
     MarkElementsOnSourceLine(selectedHighlighter_, lineNumber, Colors.Transparent,
                              false, true, inlinee);
@@ -688,7 +683,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     selectedHighlighter_.Add(group);
     UpdateHighlighting();
   }
-  
+
   public void MarkElement(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
     if (raiseEvent) {
       Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element.Id}");
@@ -3530,7 +3525,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     HideTemporaryUI();
     overlayRenderer_.MouseLeave();
   }
-  
+
   private void IRDocument_GiveFeedback(object sender, GiveFeedbackEventArgs e) {
     e.UseDefaultCursors = false;
     Mouse.OverrideCursor = Cursors.Arrow;
