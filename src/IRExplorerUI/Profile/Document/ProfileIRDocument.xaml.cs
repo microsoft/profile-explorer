@@ -152,7 +152,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private CancelableTaskInstance loadTask_;
   private SourceStackFrame inlinee_;
   private bool ignoreNextRowSelectedEvent_;
-  
+  private ProfileHistoryManager historyManager_;
+
   public ProfileIRDocument() {
     InitializeComponent();
     UpdateDocumentStyle();
@@ -162,6 +163,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     DataContext = this;
     loadTask_ = new CancelableTaskInstance();
     profileFilter_ = new ProfileSampleFilter();
+    historyManager_ = new ProfileHistoryManager(() =>
+      new ProfileFunctionState(TextView.Section, TextView.Function,
+      TextView.SectionText, profileFilter_), () => { });
   }
 
   private void SetupEvents() {
@@ -172,13 +176,75 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ProfileColumns.RowSelected += ProfileColumns_RowSelected;
     TextView.TextRegionFolded += TextViewOnTextRegionFolded;
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
+    TextView.PreviewMouseDown += TextView_PreviewMouseDown;
+    this.PreviewKeyDown += TextView_PreviewKeyDown;
+    TextView.FunctionCallOpen += TextViewOnFunctionCallOpen;
   }
 
+  private async void TextView_PreviewKeyDown(object sender, KeyEventArgs e) {
+    if (e.Key == Key.Back) {
+      if (Utils.IsKeyboardModifierActive()) {
+        await LoadNextSection();
+      }
+      else {
+        await LoadPreviousSection();
+      }
+    }
+  }
+
+  private async void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
+    // Handle the back/forward mouse buttons
+    // to navigate through the function history.
+    if (e.ChangedButton == MouseButton.XButton1) {
+      e.Handled = true;
+      await LoadPreviousSection();
+    }
+    else if (e.ChangedButton == MouseButton.XButton2) {
+      e.Handled = true;
+      await LoadNextSection();
+    }
+  }
+
+  private async Task LoadPreviousSection() {
+    var state = historyManager_.PopPreviousState();
+
+    if (state != null) {
+      await LoadPreviousSectionState(state);
+    }
+  }
+
+  private async Task LoadNextSection() {
+    var state = historyManager_.PopNextState();
+
+    if (state != null) {
+      await LoadPreviousSectionState(state);
+    }
+  }
+
+  private async Task LoadPreviousSectionState(ProfileFunctionState state) {
+    await LoadSection(state.ParsedSection, state.ProfileFilter);
+  }
+  private async void TextViewOnFunctionCallOpen(object sender, IRTextSection targetSection) {
+    var targetFunc = targetSection.ParentFunction;
+    ProfileSampleFilter targetFilter = null;
+
+    if (profileFilter_ is {IncludesAll: false}) {
+      targetFilter = profileFilter_.CloneForCallTarget(targetFunc);
+    }
+
+    historyManager_.ClearNextStates(); // Reset forward history.
+    var parsedSection = await Session.LoadAndParseSection(targetFunc.Sections[0]);
+
+    if (parsedSection != null) {
+      await LoadSection(parsedSection, targetFilter);
+    }
+  }
 
   public event EventHandler<string> TitlePrefixChanged;
   public event EventHandler<string> TitleSuffixChanged;
   public event EventHandler<string> DescriptionPrefixChanged;
   public event EventHandler<string> DescriptionSuffixChanged;
+  public event EventHandler<ParsedIRTextSection> LoadedFunctionChanged;
   public event EventHandler<int> LineSelected;
   public event PropertyChangedEventHandler PropertyChanged;
 
@@ -224,12 +290,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     get => isPreviewDocument_;
     set => SetField(ref isPreviewDocument_, value);
   }
-  
+
   public bool IsSourceFileDocument {
     get => isSourceFileDocument_;
     set => SetField(ref isSourceFileDocument_, value);
   }
-  
+
   public Brush SelectedLineBrush {
     get => selectedLineBrush_;
     set => SetField(ref selectedLineBrush_, value);
@@ -250,6 +316,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                       ProfileSampleFilter profileFilter = null) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     IsSourceFileDocument = false;
+
+    if (TextView.IsLoaded) {
+      historyManager_.SaveCurrentState();
+    }
+
     await TextView.LoadSection(parsedSection);
 
     // Apply profile filter if needed.
@@ -273,6 +344,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       return false;
     }
 
+    LoadedFunctionChanged?.Invoke(this, parsedSection);
     return true;
   }
 
@@ -304,7 +376,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (reloadFilterMenus) {
       CreateProfileFilterMenus(parsedSection.Section, funcProfile);
     }
-    
+
     return true;
   }
 
@@ -361,7 +433,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if(!(await MarkSourceFileProfile(section, funcProfile))) {
       return false;
     }
-    
+
     CreateProfileElementMenus(funcProfile);
 
     if (reloadFilterMenus) {
@@ -429,7 +501,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
       if (!success) {
         await HideProfile();
-        return false;
+        return true; // Only profile part failed, keep text.
       }
 
       //? TODO: Is panel is not visible, scroll doesn't do anything,
@@ -472,7 +544,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (!(await MarkSourceFileProfile(section, funcProfile))) {
       return false;
     }
-    
+
     CreateProfileElementMenus(funcProfile);
 
     if (reloadFilterMenus) {
@@ -844,6 +916,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     sourceLineProfileResult_ = null;
     inlinee_ = null;
     ProfileFilter = new ProfileSampleFilter();
+    historyManager_.Reset();
   }
 
   private void TextViewOnScrollOffsetChanged(object? sender, EventArgs e) {
@@ -958,7 +1031,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       ignoreNextRowSelectedEvent_ = false;
       return;
     }
-    
+
     TextView.SelectLine(line + 1);
   }
 
@@ -1001,7 +1074,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ProfileFilter = instanceFilter;
     await ApplyProfileFilter();
   }
-  
+
   private async void InlineeMenuItem_OnClick(object sender, RoutedEventArgs e) {
     var inlinee = ((MenuItem)sender)?.Tag as InlineeListItem;
 

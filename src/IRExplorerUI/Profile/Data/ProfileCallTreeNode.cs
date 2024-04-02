@@ -29,6 +29,10 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   [ProtoMember(8)]
   public ProfileCallTreeNodeKind Kind { get; set; }
   public object Tag { get; set; }
+  
+  //? TODO: Replace Threads dict and CallSites with a TinyDictionary-like data struct
+  //? like TinyList, also consider DictionarySlim instead of Dictionary from
+  //? https://github.com/dotnet/corefxlab/blob/archive/src/Microsoft.Experimental.Collections/Microsoft/Collections/Extensions/DictionarySlim
   public Dictionary<int, (TimeSpan Weight, TimeSpan ExclusiveWeight)> ThreadWeights { get; set; }
 
   public TimeSpan Weight {
@@ -128,6 +132,14 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     return GetOrCreateChildNode(functionDebugInfo, function);
   }
 
+  public bool HasChild(ProfileCallTreeNode node) {
+    return children_.Contains(node);
+  }
+
+  public ProfileCallTreeNode FindChild(IRTextFunction function) {
+    return children_.Find(node => node.Function == function);
+  }
+  
   internal void SetChildrenNoLock(List<ProfileCallTreeNode> children) {
     // Used by ProfileCallTree.Deserialize.
     children_ = new TinyList<ProfileCallTreeNode>(children);

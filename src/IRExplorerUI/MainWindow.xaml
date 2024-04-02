@@ -451,7 +451,7 @@
                   Source="{StaticResource SummaryIcon}" />
               </MenuItem.Icon>
             </MenuItem>
-              <MenuItem
+            <MenuItem
               Click="ShowPanelMenuClicked"
               Header="Timeline Panel"
               Tag="Timeline">
@@ -520,9 +520,7 @@
             </MenuItem>
             <Separator />
 
-            <MenuItem
-              Click="MenuItem_Click_6"
-              Header="Settings">
+            <MenuItem Click="MenuItem_Click_6" Header="Settings">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -583,8 +581,7 @@
             Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
             BorderThickness="1,0,1,0">
-            <StackPanel Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                        Orientation="Horizontal">
+            <StackPanel Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Orientation="Horizontal">
               <ToggleButton
                 x:Name="DiffModeButton"
                 Padding="2,1,2,1"
@@ -834,6 +831,16 @@
       AllowMixedOrientation="True"
       AutomationProperties.AutomationId="AutoDockManager"
       Theme="{Binding ElementName=ThemeCombobox, Path=SelectedItem.Tag}">
+      <!-- <avalonDock:DockingManager.AnchorableContextMenu> -->
+      <!--   <ContextMenu> -->
+      <!--     <MenuItem Header="AnchorableContextMenu" /> -->
+      <!--   </ContextMenu> -->
+      <!-- </avalonDock:DockingManager.AnchorableContextMenu> -->
+      <!-- <avalonDock:DockingManager.DocumentContextMenu> -->
+      <!--   <ContextMenu> -->
+      <!--     <MenuItem Header="DocContextMenu" /> -->
+      <!--   </ContextMenu> -->
+      <!-- </avalonDock:DockingManager.DocumentContextMenu> -->
 
       <!--<avalonDock:DockingManager.Resources>
                 <DataTemplate x:Key="DockingWindowTitleDataTemplate" DataType="{x:Type avalonDock:LayoutContent}">
@@ -939,21 +946,21 @@
                   <panels:HelpPanel x:Name="HelpPanel" />
                 </avalonDock:LayoutAnchorable>
 
-                <!-- <avalonDock:LayoutAnchorable -->
-                <!--     Title="Loop Graph" -->
-                <!--     ContentId="LoopGraph" -->
-                <!--     IsActiveChanged="LayoutAnchorable_IsActiveChanged" -->
-                <!--     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged"> -->
+                <!--  <avalonDock:LayoutAnchorable  -->
+                <!--  Title="Loop Graph"  -->
+                <!--  ContentId="LoopGraph"  -->
+                <!--  IsActiveChanged="LayoutAnchorable_IsActiveChanged"  -->
+                <!--  IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">  -->
                 <!--     <Grid> -->
                 <!--         <Button Content="Placeholder" /> -->
                 <!--     </Grid> -->
                 <!-- </avalonDock:LayoutAnchorable> -->
-                <!-- -->
-                <!-- <avalonDock:LayoutAnchorable -->
-                <!--     Title="Control Dependence Graph" -->
-                <!--     ContentId="ControlDependenceGraph" -->
-                <!--     IsActiveChanged="LayoutAnchorable_IsActiveChanged" -->
-                <!--     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged"> -->
+                <!--    -->
+                <!--  <avalonDock:LayoutAnchorable  -->
+                <!--  Title="Control Dependence Graph"  -->
+                <!--  ContentId="ControlDependenceGraph"  -->
+                <!--  IsActiveChanged="LayoutAnchorable_IsActiveChanged"  -->
+                <!--  IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">  -->
                 <!--     <Grid> -->
                 <!--         <Button Content="Placeholder" /> -->
                 <!--     </Grid> -->

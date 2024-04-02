@@ -128,17 +128,19 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode,
-                                              ProfileSampleFilter instanceFilter = null) {
+                                              ProfileSampleFilter instanceFilter = null,
+                                              IRDocumentHost targetDocument = null) {
     if (node.Function == null) {
       return false;
     }
 
-    return await OpenProfileFunction(node.Function, openMode, instanceFilter);
+    return await OpenProfileFunction(node.Function, openMode, instanceFilter, targetDocument);
   }
 
   public async Task<bool> OpenProfileFunction(IRTextFunction function, OpenSectionKind openMode,
-                                              ProfileSampleFilter instanceFilter = null) {
-    var args = new OpenSectionEventArgs(function.Sections[0], openMode);
+                                              ProfileSampleFilter instanceFilter = null,
+                                              IRDocumentHost targetDocument = null) {
+    var args = new OpenSectionEventArgs(function.Sections[0], openMode, targetDocument);
     var docHost = await SwitchDocumentSectionAsync(args);
 
     if (instanceFilter != null) {

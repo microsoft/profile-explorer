@@ -575,6 +575,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   private async void OnMouseDown(object sender, MouseButtonEventArgs e) {
     if (e.ChangedButton == MouseButton.XButton1) {
+      e.Handled = true;
       await RestorePreviousState();
     }
   }

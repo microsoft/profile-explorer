@@ -1076,7 +1076,7 @@ public partial class MainWindow : Window, ISession {
 
     if (result != null) {
       // Update UI to reflect new section before starting long-running tasks.
-      document.LoadSectionMinimal(result);
+      await document.LoadSectionMinimal(result);
       NotifyPanelsOfSectionLoad(section, document, true);
       SetupDocumentEvents(document);
       await UpdateUIAfterSectionSwitch(section, document);

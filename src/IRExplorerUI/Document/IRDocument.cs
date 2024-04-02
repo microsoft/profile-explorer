@@ -237,6 +237,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public event EventHandler<int> CaretChanged;
   public event EventHandler<FoldingSection> TextRegionFolded;
   public event EventHandler<FoldingSection> TextRegionUnfolded;
+  public event EventHandler<IRTextSection> FunctionCallOpen;
 
   public event PropertyChangedEventHandler PropertyChanged;
   public List<BlockIR> Blocks => Function.Blocks;
@@ -970,10 +971,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     return offset != -1 ? FindElementAtOffset(offset) : null;
   }
 
-  public IRElement TryGetSelectedElement() {
-    return selectedElements_.Count > 0 ? GetSelectedElement() : null;
-  }
-
   public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
     StartDiffSegmentAdding();
     Function = diffResult.DiffFunction;
@@ -1314,6 +1311,12 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     switch (e.Key) {
       case Key.Return: {
+        if (GetSelectedElement() is var element && 
+            TryOpenFunctionCallTarget(element)) {
+          e.Handled = true;
+          return;
+        }
+
         if (Utils.IsShiftModifierActive()) {
           PreviewDefinitionExecuted(this, null);
         }
@@ -1809,8 +1812,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void ClearMarkerExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      ClearMarkedElement(GetSelectedElement());
+    if (GetSelectedElement() is var element) {
+      ClearMarkedElement(element);
     }
   }
 
@@ -2045,7 +2048,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     };
   }
 
-  private IRElement GetSelectedElement() {
+  public IRElement GetSelectedElement() {
+    if (selectedElements_.Count == 0) {
+      return null;
+    }
+    
     var selectedEnum = selectedElements_.GetEnumerator();
     selectedEnum.MoveNext();
     return selectedEnum.Current;
@@ -2079,23 +2086,20 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void GoToDefinitionExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      var element = GetSelectedElement();
+    if (GetSelectedElement() is var element) {
       GoToElementDefinition(element);
       MirrorAction(DocumentActionKind.GoToDefinition, element);
     }
   }
 
   private async void PreviewDefinitionExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      var element = GetSelectedElement();
+    if (GetSelectedElement() is var element) {
       await ShowDefinitionPreview(element, true);
     }
   }
 
   private void GoToDefinitionSkipCopiesExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      var element = GetSelectedElement();
+    if (GetSelectedElement() is var element) {
       GoToElementDefinition(element, true);
       MirrorAction(DocumentActionKind.GoToDefinition, element);
     }
@@ -2634,7 +2638,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     RaiseElementHighlightingEvent(op, useGroup, highlighter.Type, action);
   }
 
-  private void IRDocument_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e) {
+  private async void IRDocument_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e) {
     // If Ctrl is pressed, instead of go to definition
     // the action is a text search, which is handled by the host.
     if (Utils.IsControlModifierActive()) {
@@ -2643,7 +2647,28 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     var position = e.GetPosition(TextArea.TextView);
     var element = FindPointedElement(position, out _);
+
+    if (TryOpenFunctionCallTarget(element)) {
+      e.Handled = true;
+      return;
+    }
+
     e.Handled = GoToElementDefinition(element, Utils.IsAltModifierActive());
+  }
+
+  private bool TryOpenFunctionCallTarget(IRElement element) {
+    // For call function names, notify owner in case it wants
+    // to switch the view to the called function.
+    if (IsCallTargetElement(element)) {
+      var targetSection = FindCallTargetSection(element);
+
+      if (targetSection != null && FunctionCallOpen != null) {
+        FunctionCallOpen.Invoke(this, targetSection);
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private async void IRDocument_PreviewMouseHover(object sender, MouseEventArgs e) {
@@ -2905,8 +2930,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void MarkBlockExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      var element = GetSelectedElement().ParentBlock;
+    if (GetSelectedElement() is var element) {
+      element = element.ParentBlock;
       var style = GetMarkerStyleForCommand(e);
       MarkBlock(element, style);
       MirrorAction(DocumentActionKind.MarkBlock, element, style);
@@ -2943,8 +2968,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void MarkExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      var element = GetSelectedElement();
+    if (GetSelectedElement() is var element) {
       var style = GetPairMarkerStyleForCommand(e);
       MarkElement(element, style);
       MirrorAction(DocumentActionKind.MarkElement, element, style);
@@ -2952,9 +2976,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void MarkIconExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      var element = GetSelectedElement();
-
+    if (GetSelectedElement() is var element) {
       if (e != null && e.Parameter is SelectedIconEventArgs iconArgs) {
         var icon = IconDrawing.FromIconResource(iconArgs.SelectedIconName);
         var overlay = AddIconElementOverlay(element, icon, DefaultLineHeight, DefaultLineHeight);
@@ -3790,6 +3812,15 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return true;
     }
 
+    return false;
+  }
+
+  private bool IsCallTargetElement(IRElement element) {
+    if (element is OperandIR op && 
+        op.ParentInstruction != null) {
+      return op.Equals(Session.CompilerInfo.IR.GetCallTarget(op.ParentInstruction));
+    }
+    
     return false;
   }
 

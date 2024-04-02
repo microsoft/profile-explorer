@@ -276,7 +276,7 @@ public static class DocumentUtils {
                                          FunctionProfileData funcProfile,
                                          RoutedEventHandler menuClickHandler,
                                          TextViewSettingsBase settings, ISession session) {
-    var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
+    var defaultItems = SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
 
     var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
@@ -329,14 +329,67 @@ public static class DocumentUtils {
     }
 
     menu.Items.Clear();
-    DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
+    RestoreDefaultMenuItems(menu, defaultItems);
   }
 
+  public static void CreateBackMenu(MenuItem menu, Stack<ProfileFunctionState> states,
+                                         RoutedEventHandler menuClickHandler,
+                                         TextViewSettingsBase settings, ISession session) {
+    var defaultItems = SaveDefaultMenuItems(menu);
+    var profileItems = new List<ProfileMenuItem>();
+
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var markerSettings = settings.ProfileMarkerSettings;
+    var profile = session.ProfileData;
+    int order = 0;
+    double maxWidth = 0;
+
+    
+    foreach (var state in states) {
+      double weightPercentage = profile.ScaleFunctionWeight(state.Weight);
+
+      var title = state.Section.ParentFunction.Name.FormatFunctionName(session, 80);
+      string text = $"({markerSettings.FormatWeightValue(null, state.Weight)})";
+
+      var value = new ProfileMenuItem(text, state.Weight.Ticks, weightPercentage) {
+        PrefixText = title,
+        ToolTip = "",
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
+      var item = new MenuItem {
+        Header = value,
+        IsCheckable = true,
+        StaysOpenOnClick = true,
+        Tag = state,
+        HeaderTemplate = valueTemplate,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+      };
+
+      item.Click += menuClickHandler;
+      defaultItems.Add(item);
+      profileItems.Add(value);
+
+      // Make sure percentage rects are aligned.
+      double width = Utils.MeasureString(title, settings.FontName, settings.FontSize).Width;
+      maxWidth = Math.Max(width, maxWidth);
+    }
+
+    foreach (var value in profileItems) {
+      value.MinTextWidth = maxWidth;
+    }
+
+    menu.Items.Clear();
+    RestoreDefaultMenuItems(menu, defaultItems);
+  }
+  
   public static void CreateThreadsMenu(MenuItem menu, IRTextSection section,
                                        FunctionProfileData funcProfile,
                                        RoutedEventHandler menuClickHandler,
                                        TextViewSettingsBase settings, ISession session) {
-    var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
+    var defaultItems = SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
 
     var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
@@ -390,7 +443,7 @@ public static class DocumentUtils {
     }
 
     menu.Items.Clear();
-    DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
+    RestoreDefaultMenuItems(menu, defaultItems);
   }
 
   public static void CreateInlineesMenu(MenuItem menu, IRTextSection section,
@@ -398,7 +451,7 @@ public static class DocumentUtils {
                                         FunctionProfileData funcProfile,
                                         RoutedEventHandler menuClickHandler,
                                         TextViewSettingsBase settings, ISession session) {
-    var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
+    var defaultItems = SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
     var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
     var markerSettings = settings.ProfileMarkerSettings;
@@ -483,7 +536,7 @@ public static class DocumentUtils {
     }
 
     menu.Items.Clear();
-    DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
+    RestoreDefaultMenuItems(menu, defaultItems);
   }
 
   private static int CommonParentCallerIndex(ProfileCallTreeNode a, ProfileCallTreeNode b) {

@@ -69,6 +69,10 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       DescriptionSuffix = s;
       UpdatePopupTitle();
     };
+    ProfileTextView.LoadedFunctionChanged += (sender, s) => {
+      parsedSection_ = s;
+      UpdatePopupTitle();
+    };
   }
 
   protected override void SetPanelAccentColor(Color color) {

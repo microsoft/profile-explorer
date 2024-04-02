@@ -67,6 +67,8 @@ public static class DocumentHostCommand {
     new RoutedUICommand("Untitled", "ExportFunctionProfileMarkdown", typeof(IRDocumentHost));
   public static readonly RoutedUICommand CopySelectedLinesAsHTML =
     new RoutedUICommand("Untitled", "CopySelectedLinesAsHTML", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand CopySelectedText =
+    new RoutedUICommand("Untitled", "CopySelectedText", typeof(IRDocumentHost));
 }
 
 [ProtoContract]
@@ -128,6 +130,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private ProfileSampleFilter profileFilter_;
   private FunctionProfileData funcProfile_;
   private bool ignoreNextRowSelectedEvent_;
+  private bool ignoreNextSaveFunctionState_;
+  private ProfileHistoryManager historyManager_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -154,6 +158,18 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
                                            Session.SessionState.UnregisterCancelableTask);
     activeQueryPanels_ = new List<QueryPanel>();
     profileFilter_ = new ProfileSampleFilter();
+    historyManager_ = new ProfileHistoryManager(() => {
+      var state = new ProfileFunctionState(TextView.Section, TextView.Function,
+        TextView.SectionText, profileFilter_);
+
+      if (funcProfile_ != null) {
+        state.Weight = funcProfile_.Weight;
+      }
+
+      return state;
+    }, () => {
+      UpdateHistoryMenu();
+    });
   }
 
   private void SetupEvents() {
@@ -175,6 +191,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.TextArea.SelectionChanged += TextAreaOnSelectionChanged;
     TextView.TextRegionFolded += TextViewOnTextRegionFolded;
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
+    TextView.FunctionCallOpen += TextViewOnFunctionCallOpen;
 
     SectionPanel.OpenSection += SectionPanel_OpenSection;
     SearchPanel.SearchChanged += SearchPanel_SearchChanged;
@@ -182,11 +199,24 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
     SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
-    ProfileColumns.RowSelected += ProfileColumns_RowSelected;
+    ProfileColumns.RowSelected += ProfileColumn_RowSelected;
     Unloaded += IRDocumentHost_Unloaded;
   }
 
-  private void ProfileColumns_RowSelected(object sender, int line) {
+  private async void TextViewOnFunctionCallOpen(object sender, IRTextSection targetSection) {
+    var targetFunc = targetSection.ParentFunction;
+    ProfileSampleFilter targetFilter = null;
+
+    if (profileFilter_ is {IncludesAll: false}) {
+      targetFilter = profileFilter_.CloneForCallTarget(targetFunc);
+    }
+
+    historyManager_.ClearNextStates(); // Reset forward history.
+    await Session.OpenProfileFunction(targetFunc, OpenSectionKind.ReplaceCurrent,
+                                      targetFilter, this);
+  }
+
+  private void ProfileColumn_RowSelected(object sender, int line) {
     if (ignoreNextRowSelectedEvent_) {
       ignoreNextRowSelectedEvent_ = false;
       return;
@@ -226,7 +256,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   public double ColumnsListItemHeight {
     get => columnsListItemHeight_;
     set {
-      if (columnsListItemHeight_ != value) {
+      if (Math.Abs(columnsListItemHeight_ - value) > double.Epsilon) {
         columnsListItemHeight_ = value;
         NotifyPropertyChanged(nameof(ColumnsListItemHeight));
       }
@@ -319,6 +349,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       }
     }
   }
+
+  public bool HasPreviousFunctions => historyManager_.HasPreviousStates;
+  public bool HasNextFunctions => historyManager_.HasNextStates;
 
   public bool HasProfileInstanceFilter {
     get => profileFilter_ is {HasInstanceFilter:true};
@@ -418,7 +451,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.JumpToSearchResult(result, Colors.LightSkyBlue);
   }
 
-  public void LoadSectionMinimal(ParsedIRTextSection parsedSection) {
+  public async Task LoadSectionMinimal(ParsedIRTextSection parsedSection) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
+    // Save state of currently loaded function for going back.
+    if (TextView.IsLoaded) {
+      historyManager_.SaveCurrentState();
+    }
+
     TextView.PreloadSection(parsedSection);
   }
 
@@ -452,6 +492,47 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.ScrollToHorizontalOffset(horizontalOffset);
     TextView.ScrollToVerticalOffset(verticalOffset);
     duringSectionSwitching_ = false;
+  }
+
+  private void UpdateHistoryMenu() {
+    NotifyPropertyChanged(nameof(HasPreviousFunctions));
+    NotifyPropertyChanged(nameof(HasNextFunctions));
+    DocumentUtils.CreateBackMenu(BackMenu, historyManager_.PreviousFunctions,
+      BackMenuItem_OnClick,
+      settings_, session_);
+  }
+
+  private async void BackMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var state = ((MenuItem)sender)?.Tag as ProfileFunctionState;
+
+    if (state != null) {
+      historyManager_.RevertToState(state);
+      await LoadPreviousSectionState(state);
+    }
+  }
+
+  private async Task LoadPreviousSection() {
+    var state = historyManager_.PopPreviousState();
+
+    if (state != null) {
+      await LoadPreviousSectionState(state);
+    }
+  }
+
+  private async Task LoadNextSection() {
+    var state = historyManager_.PopNextState();
+
+    if (historyManager_ != null) {
+      await LoadPreviousSectionState(state);
+    }
+  }
+
+  private async Task LoadPreviousSectionState(ProfileFunctionState state) {
+    await session_.OpenDocumentSectionAsync(new OpenSectionEventArgs(state.Section, OpenSectionKind.ReplaceCurrent, this));
+
+    if (state.ProfileFilter is {IncludesAll: false}) {
+      await SwitchProfileInstanceAsync(state.ProfileFilter);
+    }
   }
 
   //? TODO: Create a new class to do the remark finding/filtering work
@@ -644,6 +725,19 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
     await HideRemarkPanel();
+
+    // Handle the back/forward mouse buttons
+    // to navigate through the function history.
+    if (e.ChangedButton == MouseButton.XButton1) {
+      e.Handled = true;
+      await LoadPreviousSection();
+      return;
+    }
+    else if (e.ChangedButton == MouseButton.XButton2) {
+      e.Handled = true;
+      await LoadNextSection();
+      return;
+    }
 
     var point = e.GetPosition(TextView.TextArea.TextView);
     var element = TextView.GetElementAt(point);
@@ -989,9 +1083,21 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       e.Handled = true;
     }
     else if (e.Key == Key.C && Utils.IsControlModifierActive()) {
-      // Override Ctrl+C to copy instruction details instead of just text.
-      await DocumentExporting.CopySelectedLinesAsHtml(TextView);
-      e.Handled = true;
+      // Override Ctrl+C to copy instruction details instead of just text,
+      // but not if Shift/Alt key is also pressed, copy plain text then.
+      if (!Utils.IsAltModifierActive() &&
+          !Utils.IsShiftModifierActive()) {
+        await DocumentExporting.CopySelectedLinesAsHtml(TextView);
+        e.Handled = true;
+      }
+    }
+    else if (e.Key == Key.Back) {
+      if (Utils.IsKeyboardModifierActive()) {
+        await LoadNextSection();
+      }
+      else {
+        await LoadPreviousSection();
+      }
     }
   }
 
@@ -1585,7 +1691,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void SearchSymbolImpl(bool searchAllSections) {
-    var element = TextView.TryGetSelectedElement();
+    var element = TextView.GetSelectedElement();
 
     if (element == null || !element.HasName) {
       return;
@@ -2259,6 +2365,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     await DocumentExporting.CopySelectedLinesAsHtml(TextView);
   }
 
+  private async void CopySelectedTextExecuted(object sender, ExecutedRoutedEventArgs e) {
+    TextView.Copy();
+  }
+
   private class DummyQuery : IElementQuery {
     public ISession Session { get; }
 
@@ -2305,6 +2415,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     await IRDocumentPopupInstance.ShowPreviewPopup(Section.ParentFunction, "",
                                                    this, Session, profileFilter_);
+  }
+
+  private async void BackButton_Click(object sender, RoutedEventArgs e) {
+    await LoadPreviousSection();
+  }
+
+  private async void NextButton_Click(object sender, RoutedEventArgs e) {
+    await LoadNextSection();
   }
 }
 
