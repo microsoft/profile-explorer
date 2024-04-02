@@ -117,6 +117,8 @@ public class ProfileFunctionState {
   public ReadOnlyMemory<char> Text { get; set; }
   public ProfileSampleFilter ProfileFilter { get; set;}
   public TimeSpan Weight { get; set; }
+  public ParsedIRTextSection ParsedSection =>
+    new ParsedIRTextSection(Section, Text, Function);
 
   protected bool Equals(ProfileFunctionState other) {
     return Equals(Section, other.Section);

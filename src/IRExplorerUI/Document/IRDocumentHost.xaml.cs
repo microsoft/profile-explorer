@@ -199,7 +199,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
     SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
-    ProfileColumns.RowSelected += ProfileColumns_RowSelected;
+    ProfileColumns.RowSelected += ProfileColumn_RowSelected;
     Unloaded += IRDocumentHost_Unloaded;
   }
 
@@ -208,29 +208,15 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileSampleFilter targetFilter = null;
 
     if (profileFilter_ is {IncludesAll: false}) {
-      targetFilter = profileFilter_.Clone();
-
-      if (profileFilter_.HasInstanceFilter) {
-        targetFilter.ClearInstances();
-
-        foreach (var instance in profileFilter_.FunctionInstances) {
-          // Try to add the instance node that is a child
-          // of the current instance in the profile filter.
-          var targetInstance = instance.FindChild(targetFunc);
-
-          if (targetInstance != null) {
-            targetFilter.AddInstance(targetInstance);
-          }
-        }
-      }
+      targetFilter = profileFilter_.CloneForCallTarget(targetFunc);
     }
 
-    historyManager_.ClearNextStates(); // Reset forwared history.
+    historyManager_.ClearNextStates(); // Reset forward history.
     await Session.OpenProfileFunction(targetFunc, OpenSectionKind.ReplaceCurrent,
                                       targetFilter, this);
   }
 
-  private void ProfileColumns_RowSelected(object sender, int line) {
+  private void ProfileColumn_RowSelected(object sender, int line) {
     if (ignoreNextRowSelectedEvent_) {
       ignoreNextRowSelectedEvent_ = false;
       return;
@@ -542,7 +528,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async Task LoadPreviousSectionState(ProfileFunctionState state) {
-    var prevLoadedSection = new ParsedIRTextSection(state.Section, state.Text, state.Function);
     await session_.OpenDocumentSectionAsync(new OpenSectionEventArgs(state.Section, OpenSectionKind.ReplaceCurrent, this));
 
     if (state.ProfileFilter is {IncludesAll: false}) {

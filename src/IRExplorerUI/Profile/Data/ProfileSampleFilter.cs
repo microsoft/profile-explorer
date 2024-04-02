@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using IRExplorerCore;
 
 namespace IRExplorerUI.Profile;
 
@@ -69,7 +70,28 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
     clone.FunctionInstances = FunctionInstances.CloneList();
     return clone;
   }
-  
+
+
+  public ProfileSampleFilter CloneForCallTarget(IRTextFunction targetFunc) {
+    var targetFilter = Clone();
+
+    if (HasInstanceFilter) {
+      targetFilter.ClearInstances();
+
+      foreach (var instance in FunctionInstances) {
+        // Try to add the instance node that is a child
+        // of the current instance in the profile filter.
+        var targetInstance = instance.FindChild(targetFunc);
+
+        if (targetInstance != null) {
+          targetFilter.AddInstance(targetInstance);
+        }
+      }
+    }
+
+    return targetFilter;
+  }
+
   public static bool operator ==(ProfileSampleFilter left, ProfileSampleFilter right) {
     return Equals(left, right);
   }
@@ -100,7 +122,7 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
         text += $"\n - instance: {item.FunctionName}";
       }
     }
-    
+
     if (HasThreadFilter) {
       foreach (var item in ThreadIds) {
         text += $"\n - thread: {item}";
