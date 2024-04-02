@@ -139,7 +139,7 @@
               Click="BackButton_Click"
               CommandTarget="{Binding ElementName=GraphHost}"
               IsEnabled="{Binding HasPreviousFunctions}"
-              ToolTip="Go back to previous function (Backspace/Mouse Back)">
+              ToolTip="Go back to previous function (Backspace/Mouse Back button)">
               <StackPanel Orientation="Horizontal">
                 <Image Source="{StaticResource DockLeftIcon}" Style="{StaticResource DisabledImageStyle}" />
                 <TextBlock Margin="4,0,0,0" Text="Back" />
@@ -153,7 +153,7 @@
               ToolTip="View list of functions to go back to">
               <MenuItem
                 x:Name="BackMenu"
-                Width="10"
+                Width="8"
                 Height="20"
                 Margin="0,0,0,0"
                 Padding="0,2,0,0"
@@ -175,6 +175,16 @@
                 </MenuItem.HeaderTemplate>
               </MenuItem>
             </Menu>
+            <Button
+              Margin="2,0,0,0"
+              Click="NextButton_Click"
+              CommandTarget="{Binding ElementName=GraphHost}"
+              IsEnabled="{Binding HasNextFunctions}"
+              ToolTip="Go back to next function (Shift+Backspace/Mouse Forward button)">
+              <StackPanel Orientation="Horizontal">
+                <Image Source="{StaticResource DockRightIcon}" Style="{StaticResource DisabledImageStyle}" />
+              </StackPanel>
+            </Button>
             <Separator />
 
             <Button

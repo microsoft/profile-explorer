@@ -82,41 +82,6 @@ public class IRDocumentHostState {
   public bool HasAnnotations => DocumentState.HasAnnotations;
 }
 
-public class ProfileFunctionState {
-  public ProfileFunctionState(IRTextSection section, FunctionIR function,
-                              ReadOnlyMemory<char> text,
-                              ProfileSampleFilter profileFilter) {
-    Section = section;
-    Function = function;
-    Text = text;
-    ProfileFilter = profileFilter;
-  }
-
-  public IRTextSection Section { get; set; }
-  public FunctionIR Function { get; set;}
-  public ReadOnlyMemory<char> Text { get; set; }
-  public ProfileSampleFilter ProfileFilter { get; set;}
-  public TimeSpan Weight { get; set; }
-  
-  protected bool Equals(ProfileFunctionState other) {
-    return Equals(Section, other.Section);
-  }
-
-  public override bool Equals(object obj) {
-    if (ReferenceEquals(null, obj))
-      return false;
-    if (ReferenceEquals(this, obj))
-      return true;
-    if (obj.GetType() != this.GetType())
-      return false;
-    return Equals((ProfileFunctionState)obj);
-  }
-
-  public override int GetHashCode() {
-    return (Section != null ? Section.GetHashCode() : 0);
-  }
-}
-
 public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private const double ActionPanelInitialOpacity = 0.5;
   private const int ActionPanelHeight = 20;
@@ -165,8 +130,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private ProfileSampleFilter profileFilter_;
   private FunctionProfileData funcProfile_;
   private bool ignoreNextRowSelectedEvent_;
-  private Stack<ProfileFunctionState> prevFunctionsStack_;
   private bool ignoreNextSaveFunctionState_;
+  private ProfileHistoryManager historyManager_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -193,7 +158,18 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
                                            Session.SessionState.UnregisterCancelableTask);
     activeQueryPanels_ = new List<QueryPanel>();
     profileFilter_ = new ProfileSampleFilter();
-    prevFunctionsStack_ = new Stack<ProfileFunctionState>();
+    historyManager_ = new ProfileHistoryManager(() => {
+      var state = new ProfileFunctionState(TextView.Section, TextView.Function,
+        TextView.SectionText, profileFilter_);
+
+      if (funcProfile_ != null) {
+        state.Weight = funcProfile_.Weight;
+      }
+
+      return state;
+    }, () => {
+      UpdateHistoryMenu();
+    });
   }
 
   private void SetupEvents() {
@@ -230,7 +206,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async void TextViewOnFunctionCallOpen(object sender, IRTextSection targetSection) {
     var targetFunc = targetSection.ParentFunction;
     ProfileSampleFilter targetFilter = null;
-    
+
     if (profileFilter_ is {IncludesAll: false}) {
       targetFilter = profileFilter_.Clone();
 
@@ -238,7 +214,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         targetFilter.ClearInstances();
 
         foreach (var instance in profileFilter_.FunctionInstances) {
-          // Try to add the instance node that is a child 
+          // Try to add the instance node that is a child
           // of the current instance in the profile filter.
           var targetInstance = instance.FindChild(targetFunc);
 
@@ -248,7 +224,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         }
       }
     }
-    
+
+    historyManager_.ClearNextStates(); // Reset forwared history.
     await Session.OpenProfileFunction(targetFunc, OpenSectionKind.ReplaceCurrent,
                                       targetFilter, this);
   }
@@ -387,8 +364,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  public bool HasPreviousFunctions => prevFunctionsStack_.Count > 0;
-
+  public bool HasPreviousFunctions => historyManager_.HasPreviousStates;
+  public bool HasNextFunctions => historyManager_.HasNextStates;
 
   public bool HasProfileInstanceFilter {
     get => profileFilter_ is {HasInstanceFilter:true};
@@ -493,9 +470,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     // Save state of currently loaded function for going back.
     if (TextView.IsLoaded) {
-      SaveCurrentFunctionState(parsedSection.Section);
+      historyManager_.SaveCurrentState();
     }
-    
+
     TextView.PreloadSection(parsedSection);
   }
 
@@ -531,33 +508,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     duringSectionSwitching_ = false;
   }
 
-  
-  private void SaveCurrentFunctionState(IRTextSection newSection) {
-    if (ignoreNextSaveFunctionState_) {
-      // Don't add to the history the function
-      // from which the going back action was started.
-      ignoreNextSaveFunctionState_ = false;
-    }
-    else {
-      var state = new ProfileFunctionState(TextView.Section, TextView.Function,
-        TextView.SectionText, profileFilter_);
-
-      if (funcProfile_ != null) {
-        state.Weight = funcProfile_.Weight;
-      }
-
-      // Don't duplicate the state.
-      if ((prevFunctionsStack_.Count == 0 && !TextView.Section.Equals(newSection)) ||
-          (prevFunctionsStack_.Count > 0 && !prevFunctionsStack_.Peek().Equals(state))) {
-        prevFunctionsStack_.Push(state);
-        UpdateBackMenu();
-      }
-    }
-  }
-
-  private void UpdateBackMenu() {
+  private void UpdateHistoryMenu() {
     NotifyPropertyChanged(nameof(HasPreviousFunctions));
-    DocumentUtils.CreateBackMenu(BackMenu, prevFunctionsStack_,
+    NotifyPropertyChanged(nameof(HasNextFunctions));
+    DocumentUtils.CreateBackMenu(BackMenu, historyManager_.PreviousFunctions,
       BackMenuItem_OnClick,
       settings_, session_);
   }
@@ -566,31 +520,29 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     var state = ((MenuItem)sender)?.Tag as ProfileFunctionState;
 
     if (state != null) {
-      while (prevFunctionsStack_.Peek() != state) {
-        prevFunctionsStack_.Pop();
-      }
-
-      prevFunctionsStack_.Pop();
-      UpdateBackMenu();
+      historyManager_.RevertToState(state);
       await LoadPreviousSectionState(state);
     }
   }
 
   private async Task LoadPreviousSection() {
-    if (prevFunctionsStack_.Count == 0) {
-      return;
-    }
+    var state = historyManager_.PopPreviousState();
 
-    var state = prevFunctionsStack_.Pop();
-    UpdateBackMenu();
-    
-    Trace.WriteLine($"<< Restore section {state.Section.ParentFunction.Name}");
-    await LoadPreviousSectionState(state);
+    if (state != null) {
+      await LoadPreviousSectionState(state);
+    }
+  }
+
+  private async Task LoadNextSection() {
+    var state = historyManager_.PopNextState();
+
+    if (historyManager_ != null) {
+      await LoadPreviousSectionState(state);
+    }
   }
 
   private async Task LoadPreviousSectionState(ProfileFunctionState state) {
     var prevLoadedSection = new ParsedIRTextSection(state.Section, state.Text, state.Function);
-    ignoreNextSaveFunctionState_ = true;
     await session_.OpenDocumentSectionAsync(new OpenSectionEventArgs(state.Section, OpenSectionKind.ReplaceCurrent, this));
 
     if (state.ProfileFilter is {IncludesAll: false}) {
@@ -789,12 +741,19 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
     await HideRemarkPanel();
 
+    // Handle the back/forward mouse buttons
+    // to navigate through the function history.
     if (e.ChangedButton == MouseButton.XButton1) {
       e.Handled = true;
       await LoadPreviousSection();
       return;
     }
-    
+    else if (e.ChangedButton == MouseButton.XButton2) {
+      e.Handled = true;
+      await LoadNextSection();
+      return;
+    }
+
     var point = e.GetPosition(TextView.TextArea.TextView);
     var element = TextView.GetElementAt(point);
 
@@ -1148,7 +1107,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       }
     }
     else if (e.Key == Key.Back) {
-      await LoadPreviousSection();
+      if (Utils.IsKeyboardModifierActive()) {
+        await LoadNextSection();
+      }
+      else {
+        await LoadPreviousSection();
+      }
     }
   }
 
@@ -1609,7 +1573,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     hoverPoint_ = e.GetPosition(TextView.TextArea.TextView);
     TextView.SelectElementAt(hoverPoint_);
   }
-  
+
   private void MenuItem_Click(object sender, RoutedEventArgs e) {
     TextView.ClearMarkedElementAt(hoverPoint_);
   }
@@ -2415,7 +2379,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
     await DocumentExporting.CopySelectedLinesAsHtml(TextView);
   }
-  
+
   private async void CopySelectedTextExecuted(object sender, ExecutedRoutedEventArgs e) {
     TextView.Copy();
   }
@@ -2470,6 +2434,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async void BackButton_Click(object sender, RoutedEventArgs e) {
     await LoadPreviousSection();
+  }
+
+  private async void NextButton_Click(object sender, RoutedEventArgs e) {
+    await LoadNextSection();
   }
 }
 
