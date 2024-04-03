@@ -471,101 +471,20 @@ public partial class MainWindow : Window, ISession {
 
   private Dictionary<int, List<SampleIndex>>
     FindFunctionSamples(ProfileCallTreeNode node, ProfileData profile) {
-    // Compute the list of samples associated with the function,
-    // for each thread it was executed on.
-    var sw = Stopwatch.StartNew();
-    var allThreadsList = new List<SampleIndex>();
-    var threadListMap = new Dictionary<int, List<SampleIndex>>();
-    threadListMap[-1] = allThreadsList;
-
-    if (node.Function == null) {
-      return threadListMap;
-    }
-
-    int sampleStartIndex = 0;
-    int sampleEndIndex = profile.Samples.Count;
-    var funcProfile = profile.GetFunctionProfile(node.Function);
-
-    if (funcProfile != null && funcProfile.SampleStartIndex != int.MaxValue) {
-      sampleStartIndex = funcProfile.SampleStartIndex;
-      sampleEndIndex = funcProfile.SampleEndIndex;
-    }
-
-    //? TODO: Abstract parallel run chunks to take action per sample
-    for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
-      var (sample, stack) = profile.Samples[i];
-
-      var currentNode = node;
-      bool match = false;
-
-      for (int k = 0; k < stack.StackFrames.Count; k++) {
-        var stackFrame = stack.StackFrames[k];
-
-        if (stackFrame.IsUnknown) {
-          continue;
-        }
-
-        if (currentNode == null || currentNode.IsGroup) {
-          // Mismatch along the call path leading to the function.
-          match = false;
-          break;
-        }
-
-        if (stackFrame.FrameDetails.Function.Equals(currentNode.Function)) {
-          // Continue checking if the callers show up on the stack trace
-          // to make the search context-sensitive.
-          match = true;
-          currentNode = currentNode.Caller;
-        }
-        else if (match) {
-          // Mismatch along the call path leading to the function.
-          match = false;
-          break;
-        }
-      }
-
-      if (match) {
-        var threadList = threadListMap.GetOrAddValue(stack.Context.ThreadId);
-        threadList.Add(new SampleIndex(i, sample.Time));
-        allThreadsList.Add(new SampleIndex(i, sample.Time));
-      }
-    }
-
-    Trace.WriteLine($"FindSamples took: {sw.ElapsedMilliseconds} for {allThreadsList.Count} samples");
-    return threadListMap;
+    return FunctionSamplesProcessor.Compute(node, profile, new ProfileSampleFilter());
   }
 
   private HashSet<IRTextFunction> FindFunctionsForSamples(int sampleStartIndex, int sampleEndIndex, int threadId,
                                                           ProfileData profile) {
-    // Compute the list of functions covered by the samples
-    // on the specified thread or all threads.
-    var funcSet = new HashSet<IRTextFunction>();
+    var filter = new ProfileSampleFilter();
+    filter.TimeRange = new SampleTimeRangeInfo(TimeSpan.Zero, TimeSpan.Zero,
+      sampleStartIndex, sampleEndIndex, threadId);
 
-    //? TODO: If an event fires during the call tree/sample filtering,
-    //? either ignore it or better run it after the filtering is done
-    if (ProfileData.CallTree == null) {
-      return funcSet;
+    if (threadId != -1) {
+      filter.AddThread(threadId);
     }
 
-    //? TODO: Abstract parallel run chunks to take action per sample (ComputeFunctionProfile)
-    //? Look at SearchAsync in SectionTextSearcher.cs for an example
-    //? ConcurrentExclusiveSchedulerPair from DocSectionLoader is not the right solution
-    //? + AreSectionsDifferentImpl
-    for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
-      var (sample, stack) = profile.Samples[i];
-
-      if (threadId != -1 && stack.Context.ThreadId != threadId) {
-        continue;
-      }
-
-      foreach (var stackFrame in stack.StackFrames) {
-        if (!stackFrame.IsUnknown) {
-          funcSet.Add(stackFrame.FrameDetails.Function);
-        }
-      }
-    }
-
-    return funcSet;
+    return FunctionsForSamplesProcessor.Compute(filter, profile);
   }
 
   private List<ProfileCallTreeNode> FindCallTreeNodesForSamples(HashSet<IRTextFunction> funcs, ProfileData profile) {

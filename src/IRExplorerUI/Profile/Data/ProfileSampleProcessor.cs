@@ -52,8 +52,9 @@ public abstract class ProfileSampleProcessor {
         // Trace.WriteLine($"Filter single thread with {ranges.Count} ranges");
       }
 
+      int kCopy = k; // Pass value copy.
       tasks.Add(taskFactory.StartNew(() => {
-        object chunkData = InitializeChunk(k);
+        object chunkData = InitializeChunk(kCopy);
 
         // Find the ranges of samples that overlap with the filter time range.
         int startRangeIndex = 0;
@@ -69,7 +70,7 @@ public abstract class ProfileSampleProcessor {
 
         // Walk each sample in the range and update the function profile.
         bool hasThreadFilter = filter.HasThreadFilter;
-        
+
         for (int k = startRangeIndex; k <= endRangeIndex; k++) {
           var range = ranges[k];
           int startIndex = Math.Max(start, range.StartIndex);
@@ -87,7 +88,7 @@ public abstract class ProfileSampleProcessor {
           }
         }
 
-        CompleteChunk(k, chunkData);
+        CompleteChunk(kCopy, chunkData);
       }));
     }
 

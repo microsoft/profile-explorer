@@ -270,7 +270,7 @@
 
                         <Expander
                             x:Name="ThreadsExpander"
-                            MaxHeight="250"
+                            MaxHeight="200"
                             Margin="0,0,0,8"
                             HorizontalAlignment="Stretch"
                             Header="Threads"
