@@ -139,7 +139,6 @@
                     VerticalAlignment="Center"
                     Text="Percentage bar color" />
             </Grid>
-            <TextBlock Text="TODO: Color palette settings" />
         </StackPanel>
     </Grid>
 </local:OptionsPanelBase>

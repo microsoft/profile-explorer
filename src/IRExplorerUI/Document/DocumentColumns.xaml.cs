@@ -307,6 +307,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         Tag = column,
         IsCheckable = true,
         IsChecked = column.IsVisible,
+        StaysOpenOnClick = true,
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };
 

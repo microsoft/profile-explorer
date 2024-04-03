@@ -64,7 +64,7 @@
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               OverridesDefaultStyle="True"
-              ToolTip="Source file operations">
+              ToolTip="Source file actions">
               <MenuItem.Header>
                 <StackPanel Orientation="Horizontal">
                   <Image
@@ -82,8 +82,10 @@
                     Fill="Black" />
                 </StackPanel>
               </MenuItem.Header>
-              <MenuItem Click="SourceFile_CopyPath" Header="Copy source file path" />
-              <MenuItem Click="SourceFile_Open" Header="Open source file" />
+              <MenuItem Click="SourceFile_CopyPath" Header="Copy source file path"
+                        ToolTip="Copy the file path of the current source file" />
+              <MenuItem Click="SourceFile_Open" Header="Open source file"
+                        ToolTip="Open the current source file in the default editor"/>
             </MenuItem>
           </Menu>
 
@@ -109,6 +111,7 @@
             Margin="2,0,4,0"
             Padding="0,0,2,0"
             IsChecked="{Binding Path=Settings.SyncInlineeWithDocument, Mode=TwoWay}"
+            Click="InlineeButton_OnClick"
             ToolTip="Display and sync inlinees for selected instruction in document">
             <StackPanel Orientation="Horizontal">
               <Image
@@ -143,6 +146,8 @@
             ToolTip="Switch to inlinee called function (go down the call tree)">
             <Image Source="{StaticResource DownArrowIcon}" Style="{StaticResource DisabledImageStyle}" />
           </Button>
+          <TextBlock Text="{Binding InlineeText}" Margin="4,0,4,0" VerticalAlignment="Center"
+                     Visibility="{Binding HasInlinees, Converter={StaticResource BoolToVisibilityConverter}}"></TextBlock>
           <TextBlock
             Margin="4,0,0,0"
             VerticalAlignment="Center"

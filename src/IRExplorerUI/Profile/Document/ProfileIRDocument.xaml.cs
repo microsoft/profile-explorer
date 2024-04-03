@@ -190,6 +190,15 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         await LoadPreviousSection();
       }
     }
+    else if (e.Key == Key.C && Utils.IsControlModifierActive()) {
+      // Override Ctrl+C to copy instruction details instead of just text,
+      // but not if Shift/Alt key is also pressed, copy plain text then.
+      if (!Utils.IsAltModifierActive() &&
+          !Utils.IsShiftModifierActive()) {
+        await CopySelectedLinesAsHtml();
+        e.Handled = true;
+      }
+    }
   }
 
   private async void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
@@ -508,7 +517,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       //? should be executed again when panel is activated.
       if (!settings_.ProfileMarkerSettings.JumpToHottestElement) {
         var (firstSourceLineIndex, lastSourceLineIndex) =
-          await DocumentUtils.FindFunctionSourceLineRange(section.ParentFunction, Session);
+          await DocumentUtils.FindFunctionSourceLineRange(section.ParentFunction, TextView);
 
         if (firstSourceLineIndex != 0) {
           SelectLine(firstSourceLineIndex);
@@ -1007,6 +1016,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await CopySelectedLinesAsHtml();
+  }
+
+  public async Task CopySelectedLinesAsHtml() {
     if (isSourceFileDocument_) {
       await DocumentExporting.CopySelectedSourceLinesAsHtml(TextView);
     }
@@ -1084,5 +1097,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       TextView.SelectElements(elements);
       TextView.BringElementIntoView(elements[0]);
     }
+  }
+
+  private void CopySelectedTextExecuted(object sender, ExecutedRoutedEventArgs e) {
+    TextView.Copy();
   }
 }

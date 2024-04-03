@@ -88,7 +88,7 @@ public static class DocumentExporting {
   public static async Task<bool> ExportSourceAsExcelFile(IRDocument textView, string filePath) {
     var function = textView.Section.ParentFunction;
     var (firstSourceLineIndex, lastSourceLineIndex) =
-      await DocumentUtils.FindFunctionSourceLineRange(function, textView.Session);
+      await DocumentUtils.FindFunctionSourceLineRange(function, textView);
 
     if (firstSourceLineIndex == 0) {
       return false;
@@ -157,17 +157,17 @@ public static class DocumentExporting {
       Trace.WriteLine("ExportFunctionAsHtmlFile");
       var doc = new HtmlDocument();
       string TitleStyle =
-        @"text-align:left;font-family:Arial, sans-serif;font-weight:bold";
+        @"text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:16px;margin-top:0em";
 
       var p = doc.CreateElement("p");
       var function = textView.Section.ParentFunction;
-      var funcName = textView.Session.CompilerInfo.NameProvider.FormatFunctionName(function);
+      var funcName = function.FormatFunctionName(textView.Session);
       p.InnerHtml = $"Function: {HttpUtility.HtmlEncode(funcName)}";
       p.SetAttributeValue("style", TitleStyle);
       doc.DocumentNode.AppendChild(p);
 
       p = doc.CreateElement("p");
-      p.InnerHtml = $"Module: {HttpUtility.HtmlEncode(function.ParentSummary.ModuleName)}";
+      p.InnerHtml = $"Module: {HttpUtility.HtmlEncode(function.ModuleName)}";
       p.SetAttributeValue("style", TitleStyle);
       doc.DocumentNode.AppendChild(p);
 
@@ -195,7 +195,7 @@ public static class DocumentExporting {
 
     var function = textView.Section.ParentFunction;
     var (firstSourceLineIndex, lastSourceLineIndex) =
-      await DocumentUtils.FindFunctionSourceLineRange(function, textView.Session);
+      await DocumentUtils.FindFunctionSourceLineRange(function, textView);
 
     var columnData = textView.ProfileColumnData;
     bool filterByLine = startLine != -1 && endLine != -1;
@@ -230,14 +230,14 @@ public static class DocumentExporting {
     table.AppendChild(thead);
 
     for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
-      var line = textView.Document.GetLineByNumber(i);
-      string text = textView.Document.GetText(line.Offset, line.Length);
-      var tuple = columnData != null ? DocumentUtils.FindTupleOnSourceLine(i, textView) : null;
-
       // Filter out instructions not in line range if requested.
       if (filterByLine && (i < startLine || i > endLine)) {
         continue;
       }
+
+      var line = textView.Document.GetLineByNumber(i);
+      string text = textView.Document.GetText(line.Offset, line.Length);
+      var tuple = columnData != null ? DocumentUtils.FindTupleOnSourceLine(i, textView) : null;
 
       tr = doc.CreateElement("tr");
       var td = doc.CreateElement("td");
@@ -290,7 +290,7 @@ public static class DocumentExporting {
 
     var function = textView.Section.ParentFunction;
     var (firstSourceLineIndex, lastSourceLineIndex) =
-      await DocumentUtils.FindFunctionSourceLineRange(function, textView.Session);
+      await DocumentUtils.FindFunctionSourceLineRange(function, textView);
 
     var columnData = textView.ProfileColumnData;
     int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
@@ -307,14 +307,14 @@ public static class DocumentExporting {
     sb.AppendLine(separator);
 
     for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
-      var line = textView.Document.GetLineByNumber(i);
-      string text = textView.Document.GetText(line.Offset, line.Length);
-      var tuple = columnData != null ? DocumentUtils.FindTupleOnSourceLine(i, textView) : null;
-
       // Filter out instructions not in line range if requested.
       if (filterByLine && (i < startLine || i > endLine)) {
         continue;
       }
+
+      var line = textView.Document.GetLineByNumber(i);
+      string text = textView.Document.GetText(line.Offset, line.Length);
+      var tuple = columnData != null ? DocumentUtils.FindTupleOnSourceLine(i, textView) : null;
 
       sb.Append($"| {PreprocessHtmlIndentation(text)} | {i} |");
 
@@ -368,16 +368,17 @@ public static class DocumentExporting {
       Trace.WriteLine("ExportFunctionAsHtmlFile");
       var doc = new HtmlDocument();
       string TitleStyle =
-        @"text-align:left;font-family:Arial, sans-serif;font-weight:bold";
+        @"text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:16px;margin-top:0em";
 
       var p = doc.CreateElement("p");
-      var funcName = textView.Session.CompilerInfo.NameProvider.FormatFunctionName(textView.Section.ParentFunction);
+      var funcName = textView.Section.FormatFunctionName(textView.Session);
+
       p.InnerHtml = $"Function: {HttpUtility.HtmlEncode(funcName)}";
       p.SetAttributeValue("style", TitleStyle);
       doc.DocumentNode.AppendChild(p);
 
       p = doc.CreateElement("p");
-      p.InnerHtml = $"Module: {HttpUtility.HtmlEncode(textView.Section.ParentFunction.ParentSummary.ModuleName)}";
+      p.InnerHtml = $"Module: {HttpUtility.HtmlEncode(textView.Section.ModuleName)}";
       p.SetAttributeValue("style", TitleStyle);
       doc.DocumentNode.AppendChild(p);
 
@@ -677,8 +678,8 @@ public static class DocumentExporting {
   }
 
   public static async Task CopySelectedSourceLinesAsHtml(IRDocument textView) {
-    int startLine = textView.TextArea.Selection.StartPosition.Line - 1;
-    int endLine = textView.TextArea.Selection.EndPosition.Line - 1;
+    int startLine = textView.TextArea.Selection.StartPosition.Line;
+    int endLine = textView.TextArea.Selection.EndPosition.Line;
 
     if (startLine > endLine) {
       // Happens when selecting bottom-up.

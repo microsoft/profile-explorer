@@ -35,6 +35,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private SourceFileSettings settings_;
   private bool disableInlineeComboboxEvents_;
   private IRDocument associatedDocument_;
+  private string inlineeText_;
 
   public SourceFilePanel() {
     InitializeComponent();
@@ -82,6 +83,14 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       else {
         ProfileTextView.Initialize(settings_);
       }
+    }
+  }
+
+  public string InlineeText {
+    get => inlineeText_;
+    set {
+      inlineeText_ = value;
+      OnPropertyChanged();
     }
   }
 
@@ -151,6 +160,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     if (InlineeComboBox.ItemsSource != null &&
         InlineeComboBox.SelectedIndex > 0) {
       InlineeComboBox.SelectedIndex--;
+      UpdateInlineeText();
     }
   }
 
@@ -158,7 +168,13 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     if (InlineeComboBox.ItemsSource != null &&
         InlineeComboBox.SelectedIndex < ((ListCollectionView)InlineeComboBox.ItemsSource).Count - 1) {
       InlineeComboBox.SelectedIndex++;
+      UpdateInlineeText();
     }
+  }
+
+  private void UpdateInlineeText() {
+    var total = ((ListCollectionView)InlineeComboBox.ItemsSource).Count;
+    InlineeText = $"{InlineeComboBox.SelectedIndex + 1}/{total}";
   }
 
   private async void ResetButton_Click(object sender, RoutedEventArgs e) {
@@ -398,6 +414,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var selectedInlinee = inlinees[^1];
     InlineeComboBox.SelectedItem = selectedInlinee;
     disableInlineeComboboxEvents_ = false;
+    UpdateInlineeText();
     return selectedInlinee;
   }
 
@@ -440,8 +457,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     Settings = App.Settings.SourceFileSettings;
   }
 
-  private void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
-    //ProfileTextView.CopySelectionDetails();
+  private async void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await ProfileTextView.CopySelectedLinesAsHtml();
   }
 
   private async void OpenPopupButton_Click(object sender, RoutedEventArgs e) {
@@ -452,5 +469,12 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     await IRDocumentPopupInstance.ShowPreviewPopup(ProfileTextView.Section.ParentFunction, "",
                                                    this, Session, ProfileTextView.ProfileFilter, true);
 
+  }
+
+  private async void InlineeButton_OnClick(object sender, RoutedEventArgs e) {
+    // Load main function if inlinee syncing gets disabled.
+    if (!settings_.SyncInlineeWithDocument) {
+      await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter);
+    }
   }
 }

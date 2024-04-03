@@ -168,10 +168,12 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> OpenProfileSourceFile(IRTextFunction function, ProfileSampleFilter profileFilter = null) {
-    if (FindPanel(ToolPanelKind.Source) is SourceFilePanel panel) {
-      if (function.HasSections) {
-        await panel.LoadSourceFile(function.Sections[0], profileFilter);
-      }
+    if (FindPanel(ToolPanelKind.Source) is not SourceFilePanel panel) {
+      panel = await ShowPanel(ToolPanelKind.Source) as SourceFilePanel;
+    }
+
+    if (panel != null && function.HasSections) {
+      await panel.LoadSourceFile(function.Sections[0], profileFilter);
     }
 
     return true;
@@ -182,18 +184,29 @@ public partial class MainWindow : Window, ISession {
 
     switch (panelKind) {
       case ToolPanelKind.CallTree: {
-        var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
+        if (FindAndActivatePanel(ToolPanelKind.CallTree) is not CallTreePanel panel) {
+          panel = await ShowPanel(ToolPanelKind.CallTree) as CallTreePanel;
+        }
+
         panel?.SelectFunction(node);
         break;
       }
       case ToolPanelKind.FlameGraph: {
-        var panel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+        if (FindAndActivatePanel(ToolPanelKind.FlameGraph) is not FlameGraphPanel panel) {
+          panel = await ShowPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+        }
+
         panel?.SelectFunction(node);
         break;
       }
       case ToolPanelKind.Timeline: {
-        var panel = FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
-        await SelectFunctionSamples(node, panel);
+        if (FindAndActivatePanel(ToolPanelKind.Timeline) is not TimelinePanel panel) {
+          panel = await ShowPanel(ToolPanelKind.Timeline) as TimelinePanel;
+        }
+
+        if (panel != null) {
+          await SelectFunctionSamples(node, panel);
+        }
         break;
       }
       case ToolPanelKind.Source: {
@@ -201,6 +214,10 @@ public partial class MainWindow : Window, ISession {
         break;
       }
       case ToolPanelKind.Section: {
+        if (FindAndActivatePanel(ToolPanelKind.Section) is not SectionPanel panel) {
+          await ShowPanel(ToolPanelKind.Section);
+        }
+
         await SwitchActiveProfileFunction(node);
         break;
       }
@@ -217,28 +234,35 @@ public partial class MainWindow : Window, ISession {
 
     switch (panelKind) {
       case ToolPanelKind.CallTree: {
-        if (FindAndActivatePanel(ToolPanelKind.CallTree) is CallTreePanel panel) {
-          panel.SelectFunction(func);
+        if (FindAndActivatePanel(ToolPanelKind.CallTree) is not CallTreePanel panel) {
+          panel = await ShowPanel(ToolPanelKind.CallTree) as CallTreePanel;
         }
 
+        panel?.SelectFunction(func);
         break;
       }
       case ToolPanelKind.FlameGraph: {
-        if (FindAndActivatePanel(ToolPanelKind.FlameGraph) is FlameGraphPanel panel) {
-          await panel.SelectFunction(func);
+        if (FindAndActivatePanel(ToolPanelKind.FlameGraph) is not FlameGraphPanel panel) {
+          panel = await ShowPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
         }
 
+        if (panel != null) {
+          await panel.SelectFunction(func);
+        }
         break;
       }
       case ToolPanelKind.Timeline: {
-        if (FindAndActivatePanel(ToolPanelKind.Timeline) is TimelinePanel panel) {
+        if (FindAndActivatePanel(ToolPanelKind.Timeline) is not TimelinePanel panel) {
+          panel = await ShowPanel(ToolPanelKind.Timeline) as TimelinePanel;
+        }
+
+        if (panel != null) {
           var nodeList = ProfileData.CallTree.GetSortedCallTreeNodes(func);
 
           if (nodeList is {Count: > 0}) {
             await SelectFunctionSamples(nodeList[0], panel);
           }
         }
-
         break;
       }
       default: {

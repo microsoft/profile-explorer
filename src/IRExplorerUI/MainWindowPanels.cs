@@ -1336,7 +1336,7 @@ public partial class MainWindow : Window, ISession {
     await ShowPanel(panelKind);
   }
 
-  public async Task ShowPanel(ToolPanelKind panelKind) {
+  public async Task<IToolPanel> ShowPanel(ToolPanelKind panelKind) {
     // Panel hosts must be found at runtime because of deserialization.
     RegisterDefaultToolPanels(false);
     var panelHost = FindPanelHostForKind(panelKind);
@@ -1349,6 +1349,8 @@ public partial class MainWindow : Window, ISession {
       panelHost.Show();
       panelHost.IsActive = true;
     }
+
+    return FindPanel(panelKind);
   }
 
   private LayoutAnchorable FindPanelHostForKind(ToolPanelKind panelKind) {

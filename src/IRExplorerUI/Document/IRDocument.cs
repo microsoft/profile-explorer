@@ -1311,7 +1311,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     switch (e.Key) {
       case Key.Return: {
-        if (GetSelectedElement() is var element && 
+        if (GetSelectedElement() is var element &&
             TryOpenFunctionCallTarget(element)) {
           e.Handled = true;
           return;
@@ -2052,7 +2052,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     if (selectedElements_.Count == 0) {
       return null;
     }
-    
+
     var selectedEnum = selectedElements_.GetEnumerator();
     selectedEnum.MoveNext();
     return selectedEnum.Current;
@@ -3816,11 +3816,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private bool IsCallTargetElement(IRElement element) {
-    if (element is OperandIR op && 
+    if (element is OperandIR op &&
         op.ParentInstruction != null) {
       return op.Equals(Session.CompilerInfo.IR.GetCallTarget(op.ParentInstruction));
     }
-    
+
     return false;
   }
 
@@ -3924,7 +3924,12 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return null;
     }
 
-    var targetFunc = Section.ParentFunction.ParentSummary.FindFunction(element.Name);
+    // Function names in the summary are mangled, while the document
+    // has them demangled, run the demangler while searching for the target.
+    var nameProvider = Session.CompilerInfo.NameProvider;
+    var searchedName = element.Name;
+    var targetFunc = Section.ParentFunction.ParentSummary.FindFunction(name =>
+      nameProvider.FormatFunctionName(name).Equals(searchedName, StringComparison.Ordinal));
 
     if (targetFunc == null) {
       return null;

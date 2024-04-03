@@ -2365,7 +2365,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     await DocumentExporting.CopySelectedLinesAsHtml(TextView);
   }
 
-  private async void CopySelectedTextExecuted(object sender, ExecutedRoutedEventArgs e) {
+  private void CopySelectedTextExecuted(object sender, ExecutedRoutedEventArgs e) {
     TextView.Copy();
   }
 

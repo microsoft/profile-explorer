@@ -59,7 +59,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   public virtual bool HasCallers => caller_ != null;
   public bool HasCallSites => CallSites != null && CallSites.Count > 0;
   public string FunctionName => Function.Name;
-  public string ModuleName => Function.ParentSummary.ModuleName;
+  public string ModuleName => Function.ModuleName;
 
   public double ScaleWeight(TimeSpan relativeWeigth) {
     return relativeWeigth.Ticks / (double)Weight.Ticks;

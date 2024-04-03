@@ -135,8 +135,7 @@ public partial class HelpPanel : ToolPanelControl {
   }
 
   public static async Task DisplayPanelHelp(ToolPanelKind kind, ISession session) {
-    await session.ShowPanel(ToolPanelKind.Help);
-    var panel = session.FindPanel(ToolPanelKind.Help) as HelpPanel;
+    var panel = await session.ShowPanel(ToolPanelKind.Help) as HelpPanel;
 
     if (panel != null) {
       await panel.LoadPanelHelp(kind);

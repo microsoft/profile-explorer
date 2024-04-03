@@ -111,7 +111,7 @@
           <Button
             Command="irExplorerUi:GraphCommand.GraphResetWidth"
             CommandTarget="{Binding ElementName=ActivityView}"
-            ToolTip="Zoom the graph view to 100% (Ctrl+R)">
+            ToolTip="Zoom the timeline view to 100% (Ctrl+R)">
             <StackPanel Orientation="Horizontal">
               <Image Source="{StaticResource ResetWidthIcon}"
                      Style="{StaticResource DisabledImageStyle}" />
@@ -180,6 +180,7 @@
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Header="Markers"
+              ToolTip="Show the list of marked time ranges"
               OverridesDefaultStyle="True"
               SubmenuOpened="MarkersMenuItem_SubmenuOpened">
               <MenuItem.Icon>

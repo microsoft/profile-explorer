@@ -775,7 +775,7 @@ public partial class MainWindow : Window, ISession {
   private string GetDocumentDescription(IRDocumentHost document, IRTextSection section) {
     var docInfo = sessionState_.FindLoadedDocument(section);
     string funcName = compilerInfo_.NameProvider.GetFunctionName(section.ParentFunction);
-    string text = $"Module: {section.ParentFunction.ParentSummary.ModuleName}\nFunction: {funcName}";
+    string text = $"Module: {section.ModuleName}\nFunction: {funcName}";
 
     if (!string.IsNullOrEmpty(document.DescriptionPrefix)) {
       text = $"{document.DescriptionPrefix}{text}";

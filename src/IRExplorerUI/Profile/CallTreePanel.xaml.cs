@@ -226,7 +226,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node) {
       var childInfo = node.Tag as CallTreeListItem;
-      var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+      var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await OpenFunctionInstance(childInfo, mode);
     }
   });
@@ -279,6 +279,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
   }
+
+  public bool HasPreviousState => stateStack_.Count > 0;
 
   private static void SortCallTreeNodes(CallTreeListItem node) {
     // Sort children in descending order,
@@ -336,6 +338,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     callTreeEx_ = null;
     callTreeNodeToNodeExMap_.Clear();
     stateStack_.Clear();
+    OnPropertyChanged(nameof(HasPreviousState));
   }
 
   public void SelectFunction(IRTextFunction function) {
@@ -402,7 +405,17 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private void SetupEvents() {
     CallTreeList.NodeExpanded += CallTreeOnNodeExpanded;
+    PreviewMouseDown   += OnPreviewMouseDown;
     SetupPreviewPopup();
+  }
+
+  private async void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) {
+    if (IsCallerCalleePanel &&
+      e.ChangedButton == MouseButton.XButton1) {
+      e.Handled = true;
+      await RestorePreviousState();
+      return;
+    }
   }
 
   private void SetupPreviewPopup() {
@@ -416,40 +429,40 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     nodeHoverPreview_ = new PopupHoverPreview(CallTreeList,
-                                            TimeSpan.FromMilliseconds(settings_.NodePopupDuration),
-                                               (mousePoint, previewPoint) => {
-                                                 var element =
-                                                   (UIElement)CallTreeList.GetObjectAtPoint<ListViewItem>(
-                                                     mousePoint);
+      TimeSpan.FromMilliseconds(settings_.NodePopupDuration),
+      (mousePoint, previewPoint) => {
+        var element =
+          (UIElement)CallTreeList.GetObjectAtPoint<ListViewItem>(
+            mousePoint);
 
-                                                 if (element is not TreeListItem treeItem) {
-                                                   return null;
-                                                 }
+        if (element is not TreeListItem treeItem) {
+          return null;
+        }
 
-                                                 var funcNode = treeItem.Node?.Tag as CallTreeListItem;
-                                                 var callNode = funcNode?.CallTreeNode;
+        var funcNode = treeItem.Node?.Tag as CallTreeListItem;
+        var callNode = funcNode?.CallTreeNode;
 
-                                                 if (callNode != null && callNode.Function != null) {
-                                                   // If popup already opened for this node reuse the instance.
-                                                   if (nodeHoverPreview_.PreviewPopup is CallTreeNodePopup
-                                                     popup) {
-                                                     popup.UpdatePosition(previewPoint, CallTreeList);
-                                                     popup.UpdateNode(callNode);
-                                                     return popup;
-                                                   }
+        if (callNode != null && callNode.Function != null) {
+          // If popup already opened for this node reuse the instance.
+          if (nodeHoverPreview_.PreviewPopup is CallTreeNodePopup
+            popup) {
+            popup.UpdatePosition(previewPoint, CallTreeList);
+            popup.UpdateNode(callNode);
+            return popup;
+          }
 
-                                                   return new CallTreeNodePopup(
-                                                     callNode, this, previewPoint, CallTreeList, Session);
-                                                 }
+          return new CallTreeNodePopup(
+            callNode, this, previewPoint, CallTreeList, Session);
+        }
 
-                                                 return null;
-                                               },
-                                               (mousePoint, popup) => true,
-                                               popup => {
-                                                 if (popup.IsDetached) {
-                                                   Session.RegisterDetachedPanel(popup);
-                                                 }
-                                               });
+        return null;
+      },
+      (mousePoint, popup) => true,
+      popup => {
+        if (popup.IsDetached) {
+          Session.RegisterDetachedPanel(popup);
+        }
+      });
   }
 
   private void CallTreeOnNodeExpanded(object sender, TreeNode node) {
@@ -747,11 +760,15 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     if (childInfo != null) {
       if (Utils.IsControlModifierActive()) {
-        var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+        var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
         await OpenFunction(childInfo, openMode);
       }
       else {
         await SwitchFunction(childInfo);
+
+        if (IsCallerCalleePanel) {
+          await DisplayProfileCallerCalleeTree(childInfo.Function);
+        }
       }
     }
   }
@@ -763,13 +780,9 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void UnmarkAllFunctions() {
-    Trace.WriteLine($"=> start unmark: {Environment.TickCount}");
-
     foreach (var funcEx in callTreeNodeToNodeExMap_.Values) {
       funcEx.IsMarked = false;
     }
-
-    Trace.WriteLine($"=> done unmark: {Environment.TickCount}");
   }
 
   private void ExpandHottestFunctionPath(TreeNode node) {
@@ -803,7 +816,12 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private void ExpandHottestCallPathExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (CallTreeList.SelectedItem is TreeNode node) {
+      // Expand hotteest path starting with the node.
       ExpandHottestFunctionPath(node);
+    }
+    else {
+      // Expand hotteest path in the tree.
+      ExpandHottestFunctionPath();
     }
   }
 
@@ -823,7 +841,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private async void OpenFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (CallTreeList.SelectedItem is TreeNode node) {
       var childInfo = node.Tag as CallTreeListItem;
-      var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+      var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await OpenFunction(childInfo, mode);
     }
   }
@@ -856,6 +874,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     if (childInfo.HasCallTreeNode) {
       if (function_ != null) {
         stateStack_.Push(function_);
+        OnPropertyChanged(nameof(HasPreviousState));
       }
 
       await Session.SwitchActiveProfileFunction(childInfo.CallTreeNode);
@@ -953,6 +972,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private async Task RestorePreviousState() {
     if (stateStack_.TryPop(out var prevFunc)) {
       await Session.SwitchActiveFunction(prevFunc);
+      OnPropertyChanged(nameof(HasPreviousState));
     }
   }
 

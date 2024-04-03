@@ -435,14 +435,18 @@
                           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                                       Margin="0,0,4,0">
                         <Button
-                          x:Name="ReloadSyntaxStyleButton"
-                          Width="18"
-                          Height="18"
+                          x:Name="CopyModuleButton"
+                          Width="20"
+                          Height="20"
                           BorderThickness="0"
                           HorizontalAlignment="Right"
                           VerticalAlignment="Center"
+                          Click="CopyModuleButton_OnClick"
+                          ToolTip="Copy module name to clipboard"
                           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-                          <Image Source="{StaticResource ClipboardIcon}" Width="16" Height="16"/>
+                          <Image Source="{StaticResource ClipboardIcon}"
+                                 Style="{StaticResource DisabledImageStyle}"
+                                 Width="16" Height="16"/>
                         </Button>
                         </StackPanel>
                           </Grid>
@@ -483,14 +487,49 @@
                           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                                       Margin="0,0,4,0">
                             <Button
-                              Width="18"
-                              Height="18"
-                              Margin="4,0,0,0"
+                              x:Name="PreviewButton"
+                              Width="20"
+                              Height="20"
+                              Margin="2,0,0,0"
                               BorderThickness="0"
                               HorizontalAlignment="Right"
                               VerticalAlignment="Center"
+                              Click="PreviewButton_OnClick"
+                              ToolTip="Show a preview popup of the function ASM or source code"
                               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-                              <Image Source="{StaticResource ClipboardIcon}" Width="16" Height="16"/>
+                              <Image Source="{StaticResource PeekDefinitionIcon}"
+                                     Style="{StaticResource DisabledImageStyle}"
+                                     Width="16" Height="17"/>
+                            </Button>
+                            <Button
+                              x:Name="OpenButton"
+                              Width="20"
+                              Height="20"
+                              Margin="2,0,0,0"
+                              BorderThickness="0"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Center"
+                              Click="OpenButton_OnClick"
+                              ToolTip="Open the function assembly view in a new tab"
+                              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                              <Image Source="{StaticResource LayoutOpenNewIcon}"
+                                     Style="{StaticResource DisabledImageStyle}"
+                                     Width="16" Height="16"/>
+                            </Button>
+                            <Button
+                              x:Name="CopyFUnctionButton"
+                              Width="20"
+                              Height="20"
+                              Margin="2,0,0,0"
+                              BorderThickness="0"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Center"
+                              Click="CopyFUnctionButton_OnClick"
+                              ToolTip="Copy function name to clipboard"
+                              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                              <Image Source="{StaticResource ClipboardIcon}"
+                                     Style="{StaticResource DisabledImageStyle}"
+                                     Width="16" Height="16"/>
                             </Button>
                         </StackPanel>
                           </Grid>

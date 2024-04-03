@@ -599,11 +599,11 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   }
 
   public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
-    if (funcInfo.HasSourceLines) {
-      return true; // Already populated.
-    }
-
     lock (funcInfo) {
+      if (funcInfo.HasSourceLines) {
+        return true; // Already populated.
+      }
+
       try {
         session_.findLinesByRVA((uint)funcInfo.StartRVA, (uint)funcInfo.Size, out var lineEnum);
 

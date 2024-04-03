@@ -23,6 +23,7 @@ public class IRTextSection : IEquatable<IRTextSection> {
   public string Name { get; set; }
   public int BlockCount { get; set; }
   public IRTextFunction ParentFunction { get; set; }
+  public string ModuleName => ParentFunction?.ParentSummary?.ModuleName;
   public int LineCount => Output.LineCount;
   public IRPassOutput Output { get; set; }
   public IRPassOutput OutputAfter { get; set; }

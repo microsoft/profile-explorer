@@ -186,7 +186,7 @@
                         Command="local:CallTreeCommand.MarkInstance"
                         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                         Header="Mark Instance"
-                        ToolTip="Mark all instances of the function">
+                        ToolTip="Mark this instance of the function">
                         <MenuItem>
                             <MenuItem.Header>
                                 <irExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkFunctionCommand}" />

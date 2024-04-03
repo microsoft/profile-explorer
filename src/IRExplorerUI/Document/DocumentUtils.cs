@@ -17,6 +17,7 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Profile.Document;
+using Dia2Lib;
 
 namespace IRExplorerUI.Document;
 
@@ -344,7 +345,7 @@ public static class DocumentUtils {
     int order = 0;
     double maxWidth = 0;
 
-    
+
     foreach (var state in states) {
       double weightPercentage = profile.ScaleFunctionWeight(state.Weight);
 
@@ -384,7 +385,7 @@ public static class DocumentUtils {
     menu.Items.Clear();
     RestoreDefaultMenuItems(menu, defaultItems);
   }
-  
+
   public static void CreateThreadsMenu(MenuItem menu, IRTextSection section,
                                        FunctionProfileData funcProfile,
                                        RoutedEventHandler menuClickHandler,
@@ -664,23 +665,33 @@ public static class DocumentUtils {
     }
   }
 
-  public static async Task<(int, int)> FindFunctionSourceLineRange(IRTextFunction function, ISession session) {
-    var debugInfo = await session.GetDebugInfoProvider(function).ConfigureAwait(false);
-    var funcProfile = session.ProfileData?.GetFunctionProfile(function);
+  public static async Task<(int, int)>
+    FindFunctionSourceLineRange(IRTextFunction function, IRDocument textView) {
+    int lineCount = textView.Document.LineCount;
+    var session = textView.Session;
 
-    if (debugInfo == null || funcProfile == null) {
-      return (0, 0);
-    }
+    return await Task.Run(async () => {
+      var debugInfo = await session.GetDebugInfoProvider(function).ConfigureAwait(false);
+      var funcProfile = session.ProfileData?.GetFunctionProfile(function);
 
-    int firstSourceLineIndex = 0;
-    int lastSourceLineIndex = 0;
+      if (debugInfo == null || funcProfile == null) {
+        return (0, 0);
+      }
 
-    if (debugInfo.PopulateSourceLines(funcProfile.FunctionDebugInfo)) {
-      firstSourceLineIndex = funcProfile.FunctionDebugInfo.FirstSourceLine.Line;
-      lastSourceLineIndex = funcProfile.FunctionDebugInfo.LastSourceLine.Line;
-    }
+      int firstSourceLineIndex = 0;
+      int lastSourceLineIndex = 0;
 
-    return (firstSourceLineIndex, lastSourceLineIndex);
+      if (debugInfo.PopulateSourceLines(funcProfile.FunctionDebugInfo)) {
+        firstSourceLineIndex = funcProfile.FunctionDebugInfo.FirstSourceLine.Line;
+        lastSourceLineIndex = funcProfile.FunctionDebugInfo.LastSourceLine.Line;
+      }
+
+      // Ensure source lines are within document bounds
+      // just in case values are not right.
+      firstSourceLineIndex = Math.Clamp(firstSourceLineIndex, 1, lineCount);
+      lastSourceLineIndex = Math.Clamp(lastSourceLineIndex, 1, lineCount);
+      return (firstSourceLineIndex, lastSourceLineIndex);
+    });
   }
 
   public static string GenerateProfileFilterTitle(ProfileSampleFilter instanceFilter, ISession session) {

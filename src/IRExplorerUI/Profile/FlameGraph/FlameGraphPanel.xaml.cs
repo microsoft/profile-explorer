@@ -354,7 +354,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private async Task OpenFunction(ProfileCallTreeNode node) {
     if (node != null && node.Function.HasSections) {
-      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await Session.OpenProfileFunction(node, openMode);
     }
   }

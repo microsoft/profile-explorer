@@ -19,6 +19,7 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
   public int Number { get; set; }
   public string Name { get; }
   public IRTextSummary ParentSummary { get; set; }
+  public string ModuleName => ParentSummary?.ModuleName;
 
   public int MaxBlockCount {
     get {
@@ -101,7 +102,7 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
     }
 
     if (ParentSummary != null && other.ParentSummary != null) {
-      return ParentSummary.ModuleName.Equals(other.ParentSummary.ModuleName, StringComparison.Ordinal);
+      return ModuleName.Equals(other.ModuleName, StringComparison.Ordinal);
     }
 
     return ParentSummary == null && other.ParentSummary == null;

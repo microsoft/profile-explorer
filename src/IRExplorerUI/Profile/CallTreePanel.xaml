@@ -49,8 +49,10 @@
           <Button
             Margin="4,0,0,0"
             Command="local:CallTreeCommand.GoBack"
-            CommandTarget="{Binding ElementName=GraphHost}"
-            ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
+            CommandTarget="{Binding ElementName=CallTreeList}"
+            IsEnabled="{Binding HasPreviousState}"
+            ToolTip="Go back to the previous function (Backspace/Mouse Back button)"
+            Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
               <Image Source="{StaticResource DockLeftIcon}" Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Back" />
@@ -59,8 +61,9 @@
 
           <Button
             Command="local:CallTreeCommand.CollapseNodes"
-            CommandTarget="{Binding ElementName=GraphHost}"
-            ToolTip="Reset call tree to initial state (Ctrl+R)">
+            CommandTarget="{Binding ElementName=CallTreeList}"
+            ToolTip="Reset call tree to initial state (Ctrl+R)"
+            Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
               <Image Source="{StaticResource ResetWidthIcon}" Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Reset" />
@@ -68,10 +71,15 @@
           </Button>
           <Separator />
 
-          <Button ToolTip="Expand hottest call path" Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+          <Button
+            Command="local:CallTreeCommand.ExpandHottestCallPath"
+            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+            CommandTarget="{Binding ElementName=CallTreeList}"
+            ToolTip="Expand hottest call path"
+            Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <Image Source="{StaticResource HotFlameIcon}" />
           </Button>
-          <Separator />
+          <Separator Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}"/>
 
           <ToggleButton
             Height="20"

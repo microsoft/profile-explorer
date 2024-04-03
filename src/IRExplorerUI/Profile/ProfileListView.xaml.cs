@@ -207,7 +207,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
   });
   public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
-    var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
     await OpenFunction(mode);
   });
   public RelayCommand<object> OpenFunctionInNewTabCommand => new RelayCommand<object>(async obj => {
@@ -227,7 +227,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
   });
   public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
-    var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
     await OpenFunction(mode);
   });
   public RelayCommand<object> OpenInstanceInNewTabCommand => new RelayCommand<object>(async obj => {

@@ -133,7 +133,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
-      var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+      var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await Session.OpenProfileFunction(GraphViewer.SelectedNode.CallTreeNode, mode, filter);
     }
   });
@@ -614,7 +614,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   private async Task OpenFunction(ProfileCallTreeNode node) {
     if (node != null && node.Function.HasSections) {
-      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await Session.OpenProfileFunction(node, openMode);
     }
   }

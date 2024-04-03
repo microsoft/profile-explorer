@@ -218,9 +218,9 @@ public class ProfileCallTreeNodeKindConverter : IValueConverter {
       }
 
       return kind switch {
-        ProfileCallTreeNodeKind.NativeUser => "User mode",
-        ProfileCallTreeNodeKind.NativeKernel => "Kernel mode",
-        ProfileCallTreeNodeKind.Managed => "Managed",
+        ProfileCallTreeNodeKind.NativeUser => "User mode execution context",
+        ProfileCallTreeNodeKind.NativeKernel => "Kernel mode execution context",
+        ProfileCallTreeNodeKind.Managed => "Managed (.NET) execution context",
         _ => ""
       };
     }

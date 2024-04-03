@@ -628,7 +628,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     }
   });
   public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
-    var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
     await OpenFunction(obj, mode);
   });
   public RelayCommand<object> OpenFunctionInNewTabCommand => new RelayCommand<object>(async obj => {
@@ -641,5 +641,22 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       var filter = new ProfileSampleFilter(threadItem.ThreadId);
       await Session.OpenProfileFunction(instancesNode_.CallTreeNode, openMode, filter);
     }
+  }
+
+  private void CopyModuleButton_OnClick(object sender, RoutedEventArgs e) {
+    Clipboard.SetText(instancesNode_.ModuleName);
+  }
+
+  private void CopyFUnctionButton_OnClick(object sender, RoutedEventArgs e) {
+    Clipboard.SetText(instancesNode_.FunctionName);
+  }
+
+  private async void PreviewButton_OnClick(object sender, RoutedEventArgs e) {
+    await IRDocumentPopupInstance.ShowPreviewPopup(instancesNode_.CallTreeNode.Function, "",
+                                                   ThreadsExpander, Session);
+  }
+
+  private async void OpenButton_OnClick(object sender, RoutedEventArgs e) {
+    await Session.OpenProfileFunction(instancesNode_.CallTreeNode, OpenSectionKind.NewTabDockRight);
   }
 }

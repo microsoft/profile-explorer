@@ -364,7 +364,7 @@ public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
 
   public int Index { get; set; }
   public IRTextFunction Function { get; set; }
-  public string ModuleName => Function.ParentSummary.ModuleName;
+  public string ModuleName => Function.ModuleName;
   public TimeSpan Weight { get; set; }
   public TimeSpan ExclusiveWeight { get; set; }
   public string AlternateName { get; set; }
@@ -1572,10 +1572,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     var markerOptions = App.Settings.DocumentSettings.ProfileMarkerSettings;
     bool hasPerfCounters = false;
 
-    // Add the profile info and column data to each function. 
-    hasPerfCounters = await Task.Run(() => 
+    // Add the profile info and column data to each function.
+    hasPerfCounters = await Task.Run(() =>
       PrepareFunctionProfile(functions, profile, markerOptions));
-    
+
     if (hasPerfCounters) {
       // Wait for all other columns to be added to the UI first
       // before adding the counter columns, which are relative to other
@@ -1584,7 +1584,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         AddCountersFunctionListColumns(false);
       }, DispatcherPriority.ContextIdle);
     }
-    
+
     functionValueSorter_.SortByField(FunctionFieldKind.Optional);
     ProfileControlsVisible = true;
     ModuleControlsVisible = true;
@@ -1593,7 +1593,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     SectionCountColumnVisible = false;
     ShowSections = false;
     UseProfileCallTree = true;
-    
+
     // Update column visibility and state.
     GridViewColumnVisibility.UpdateListView(FunctionList);
     Utils.ScrollToFirstListViewItem(FunctionList);
@@ -1603,7 +1603,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private static bool PrepareFunctionProfile(List<IRTextFunctionEx> functions, ProfileData profile,
                                              ProfileDocumentMarkerSettings markerOptions) {
     bool hasPerfCounters = false;
-    
+
     foreach (var funcEx in functions) {
       var funcProfile = profile.GetFunctionProfile(funcEx.Function);
 
@@ -3041,7 +3041,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     FunctionList.ScrollIntoView(FunctionList.SelectedItem);
     RefreshSectionList();
 
-    if (handleProfiling && profileControlsVisible_ && Session.ProfileData != null) {
+    if (handleProfiling && profileControlsVisible_) {
       var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
       if (funcProfile != null) {
