@@ -27,6 +27,7 @@ using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Compilers.LLVM;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Document;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Scripting;
 using IRExplorerUI.Settings;
@@ -775,6 +776,7 @@ public partial class MainWindow : Window, ISession {
   private string GetDocumentDescription(IRDocumentHost document, IRTextSection section) {
     var docInfo = sessionState_.FindLoadedDocument(section);
     string funcName = compilerInfo_.NameProvider.GetFunctionName(section.ParentFunction);
+    funcName = DocumentUtils.FormatLongFunctionName(funcName);
     string text = $"Module: {section.ModuleName}\nFunction: {funcName}";
 
     if (!string.IsNullOrEmpty(document.DescriptionPrefix)) {

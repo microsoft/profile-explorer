@@ -62,11 +62,11 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       UpdatePopupTitle();
     };
     ProfileTextView.DescriptionPrefixChanged += (sender, s) => {
-      DescriptionPrefix = s;
+      DescriptionPrefix = !string.IsNullOrEmpty(s) ? s + "\n\n" : "";
       UpdatePopupTitle();
     };
     ProfileTextView.DescriptionSuffixChanged += (sender, s) => {
-      DescriptionSuffix = s;
+      DescriptionSuffix = !string.IsNullOrEmpty(s) ? "\n\n" + s : "";
       UpdatePopupTitle();
     };
     ProfileTextView.LoadedFunctionChanged += (sender, s) => {
@@ -209,7 +209,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       title = $"{title}{TitleSuffix}";
     }
 
-    var tooltip = "";
+    var tooltip = GetTooltipFunctionName();
 
     if (!string.IsNullOrEmpty(DescriptionPrefix)) {
       tooltip = $"{DescriptionPrefix}{tooltip}";
@@ -226,6 +226,15 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private string GetFunctionName() {
     if (parsedSection_ != null) {
       return parsedSection_.Section.ParentFunction.FormatFunctionName(session, 80);
+    }
+
+    return "";
+  }
+
+  private string GetTooltipFunctionName() {
+    if (parsedSection_ != null) {
+      var funName = parsedSection_.Section.ParentFunction.FormatFunctionName(session);
+      return $"Module: {parsedSection_.Section.ModuleName}\nFunction: {DocumentUtils.FormatLongFunctionName(funName)}";
     }
 
     return "";

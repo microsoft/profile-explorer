@@ -610,7 +610,7 @@ public static class DocumentUtils {
       index++;
     }
 
-    return (sb.ToString(), completeSb.ToString());
+    return (sb.ToString().Trim(), completeSb.ToString().Trim());
   }
 
   public static void HandleInstanceMenuItemChanged(MenuItem menuItem, MenuItem menu,
@@ -733,7 +733,7 @@ public static class DocumentUtils {
       }
     }
 
-    return sb.ToString();
+    return sb.ToString().Trim();
   }
 
   public static string GenerateProfileFunctionDescription(FunctionProfileData funcProfile,
@@ -765,5 +765,75 @@ public static class DocumentUtils {
         menuItem.IsChecked =  instanceFilter != null && instanceFilter.IncludesInstance(node);
       }
     }
+  }
+
+  public static string FormatLongFunctionName(string name) {
+    return FormatLongFunctionName(name, 100, 10, 800);
+  }
+
+  public static string FormatLongFunctionName(string name, int maxLineLength,
+                                              int maxSplitPointAdjustment,
+                                              int maxLength) {
+    if (name.Length <= maxLineLength) {
+      return name;
+    }
+
+    // If name is really long cut out from the middle part
+    // to make it fit into the maxLength.
+    if (name.Length > maxLength) {
+      int diff = name.Length - maxLength;
+      int middle = name.Length / 2;
+      name = name.Substring(0, middle - diff / 2) + " ... " +
+             name.Substring(middle + diff / 2, middle - diff / 2);
+    }
+
+    // Try to split the name each maxLineLength letters.
+    // If the split point happens to be inside a identifier,
+    // look left or right for a template separator like < > : ,
+    // to pick as a splitting point since it looks better than
+    // cutting a class/function name.
+    var sb = new StringBuilder();
+
+    for (var i = 0; i < name.Length; i++) {
+      int splitPoint = i + Math.Min(maxLineLength, name.Length - i);
+
+      if (name.Length - splitPoint < maxSplitPointAdjustment) {
+        // Split point is close to the name end, don't split anymore.
+        return sb.ToString().Trim() + name.Substring(i, name.Length - i);
+      }
+
+      bool foundNew = false;
+
+      // Look for a separator cahr on the right.
+      for (int k = splitPoint + 1, distance = 0;
+           k < name.Length && distance < maxSplitPointAdjustment;
+           k++, distance++) {
+        if (!char.IsLetterOrDigit(name[k])) {
+          // Found a separator char as a splitting point.
+          splitPoint = k;
+          foundNew = true;
+          break;
+        }
+      }
+
+      if (!foundNew && splitPoint < name.Length - 1) {
+        // Look for a separator char on the left.
+        for (int k = splitPoint - 1, distance = 0;
+             k > i && distance < maxSplitPointAdjustment;
+             k--, distance++) {
+          if (!char.IsLetterOrDigit(name[k])) {
+            // Found a separator char as a splitting point.
+            splitPoint = k;
+            break;
+          }
+        }
+      }
+
+      int length = splitPoint - i;
+      sb.AppendLine(name.Substring(i, length));
+      i += length - 1;
+    }
+
+    return sb.ToString().Trim();
   }
 }

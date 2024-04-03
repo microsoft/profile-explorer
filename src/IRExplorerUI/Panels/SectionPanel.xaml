@@ -530,7 +530,7 @@
                     <TextBlock
                       FontWeight="Medium"
                       Text="{Binding Name}"
-                      ToolTip="{Binding Name}" />
+                      ToolTip="{Binding ToolTip}" />
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>

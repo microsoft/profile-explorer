@@ -24,6 +24,7 @@ using HtmlAgilityPack;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Profile;
@@ -362,6 +363,7 @@ public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
     set => functionName_ = value;
   }
 
+  public string ToolTip => DocumentUtils.FormatLongFunctionName(Name);
   public int Index { get; set; }
   public IRTextFunction Function { get; set; }
   public string ModuleName => Function.ModuleName;

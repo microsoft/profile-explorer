@@ -1327,7 +1327,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     await Session.OpenProfileSourceFile(Section.ParentFunction, profileFilter_);
 
     TitlePrefix = DocumentUtils.GenerateProfileFilterTitle(profileFilter_, session_);
-    DescriptionSuffix += DocumentUtils.GenerateProfileFilterDescription(profileFilter_, Session);
+    DescriptionSuffix = DocumentUtils.GenerateProfileFilterDescription(profileFilter_, Session);
     Session.UpdateDocumentTitles();
   }
 
@@ -1393,7 +1393,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private void UpdateDocumentTitle(FunctionProfileData funcProfile) {
     // Update document tooltip.
-    DescriptionSuffix = "\n" + DocumentUtils.GenerateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session);
+    DescriptionPrefix =
+      DocumentUtils.GenerateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session) + "\n\n";
     Session.UpdateDocumentTitles();
   }
 
