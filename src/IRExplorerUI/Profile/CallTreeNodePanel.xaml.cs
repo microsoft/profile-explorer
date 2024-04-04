@@ -14,6 +14,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using IRExplorerCore;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Utilities;
 using Microsoft.Extensions.Primitives;
@@ -267,21 +268,60 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
   private async Task SetupInstanceInfo(ProfileCallTreeNode node) {
     var callTree = Session.ProfileData.CallTree;
-    instanceNodes_ = callTree.GetSortedCallTreeNodes(node.Function);
+    var groupNode = node as ProfileCallTreeGroupNode;
 
-    //? TODO: Should rather be an assert.
-    if (instanceNodes_ == null || instanceNodes_.Count == 0) {
+    // Collect all instances associated with the node's function.
+    if (groupNode != null) {
+      instanceNodes_ = await Task.Run(() => {
+        // For a node group, combine the instances for each node.
+        var instanceNodes = new List<ProfileCallTreeNode>();
+        var handledFuncts = new HashSet<IRTextFunction>();
+
+        foreach (var n in groupNode.Nodes) {
+          if (handledFuncts.Add(n.Function)) {
+            instanceNodes.AddRange(callTree.GetSortedCallTreeNodes(n.Function));
+          }
+        }
+
+        return instanceNodes;
+      });
+    }
+    else {
+      instanceNodes_ = callTree.GetSortedCallTreeNodes(node.Function);
+    }
+
+    if (instanceNodes_.Count == 0) {
       ShowInstanceNavigation = false;
       return;
     }
 
-    var combinedNode = await Task.Run(() => callTree.GetCombinedCallTreeNode(node.Function));
+    ProfileCallTreeNode combinedNode = null;
+
+    if (groupNode != null) {
+      combinedNode = await Task.Run(() => {
+        // For a node group, combine the instances for each node.
+        var instanceNodes = new List<ProfileCallTreeNode>();
+        var handledFuncts = new HashSet<IRTextFunction>();
+        
+        foreach (var n in groupNode.Nodes) {
+          if (handledFuncts.Add(n.Function)) {
+            instanceNodes.Add(callTree.GetCombinedCallTreeNode(n.Function));
+          }
+        }
+
+        return ProfileCallTree.CombinedCallTreeNodes(instanceNodes);
+      });
+    }
+    else {
+      combinedNode = await Task.Run(() => callTree.GetCombinedCallTreeNode(node.Function));
+    }
+
     InstancesNode = SetupNodeExtension(combinedNode, Session);
     FunctionInstancesCount = instanceNodes_.Count;
 
     // Show all instances.
     InstancesList.ShowFunctions(instanceNodes_);
-    ShowInstanceNavigation = instanceNodes_.Count > 1;
+    ShowInstanceNavigation = instanceNodes_.Count > 1 && groupNode == null;
 
     nodeInstanceIndex_ = instanceNodes_.FindIndex(instanceNode => instanceNode == node);
     CurrentInstanceIndex = nodeInstanceIndex_ + 1;
@@ -510,16 +550,56 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     }
 
     var nameProvider = session.CompilerInfo.NameProvider;
+    var moduleMap = new Dictionary<string, int>();
+    var functionMap = new Dictionary<string, int>();
+    var fullFunctionMap = new Dictionary<string, int>();
+    string moduleNames = null;
+    string functionNames = null;
+    string fullFunctionNames = null;
+
+    if (node is ProfileCallTreeGroupNode groupNode) {
+      foreach (var n in groupNode.Nodes) {
+        moduleMap.AccumulateValue(n.FormatModuleName(nameProvider.FormatFunctionName, MaxModuleNameLength), 1);
+        functionMap.AccumulateValue(n.FormatFunctionName(nameProvider.FormatFunctionName, MaxFunctionNameLength), 1);
+        fullFunctionMap.AccumulateValue(n.FormatFunctionName(nameProvider.FormatFunctionName), 1);
+      }
+
+      moduleNames = GenerateNameListText(moduleMap, "\n");
+      functionNames = GenerateNameListText(functionMap, "\n");
+      fullFunctionNames = GenerateNameListText(fullFunctionMap, "\n");
+    }
+    else {
+      moduleNames = node.FormatModuleName(nameProvider.FormatFunctionName, MaxModuleNameLength);
+      functionNames = node.FormatFunctionName(nameProvider.FormatFunctionName, MaxFunctionNameLength);
+      fullFunctionNames = node.FormatFunctionName(nameProvider.FormatFunctionName);
+    }
+    
     var nodeEx = new ProfileCallTreeNodeEx(node) {
-      FullFunctionName = node.FormatFunctionName(nameProvider.FormatFunctionName),
-      FunctionName =
-        node.FormatFunctionName(nameProvider.FormatFunctionName, MaxFunctionNameLength),
-      ModuleName = node.FormatModuleName(nameProvider.FormatFunctionName, MaxModuleNameLength),
+      FullFunctionName = fullFunctionNames,
+      FunctionName = functionNames,
+      ModuleName = moduleNames,
       Percentage = session.ProfileData.ScaleFunctionWeight(node.Weight),
       ExclusivePercentage = session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight)
     };
 
     return nodeEx;
+  }
+
+  private static string GenerateNameListText(Dictionary<string, int> nameMap, string separator) {
+    var nameList = nameMap.ToList();
+    nameList.Sort((a, b) => String.Compare(a.Item1, b.Item1, StringComparison.Ordinal));
+    var sb = new StringBuilder();
+
+    foreach (var pair in nameList) {
+      if (pair.Item2 > 1) {
+        sb.Append($"{pair.Item2} x {pair.Item1}{separator}");
+      }
+      else {
+        sb.Append($"{pair.Item1}{separator}");
+      }
+    }
+
+    return sb.ToString().Trim();
   }
 
   private async void PreviousInstanceButton_Click(object sender, RoutedEventArgs e) {

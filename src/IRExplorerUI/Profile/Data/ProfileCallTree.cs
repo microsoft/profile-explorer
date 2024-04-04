@@ -294,7 +294,15 @@ public sealed class ProfileCallTree {
 
   public ProfileCallTreeNode GetCombinedCallTreeNode(IRTextFunction function, ProfileCallTreeNode parentNode = null) {
     var nodes = GetSortedCallTreeNodes(function);
+    return CombinedCallTreeNodesImpl(nodes, parentNode);
+  }
 
+  public static ProfileCallTreeNode CombinedCallTreeNodes(List<ProfileCallTreeNode> nodes) {
+    return CombinedCallTreeNodesImpl(nodes);
+  }
+
+  private static ProfileCallTreeNode CombinedCallTreeNodesImpl(List<ProfileCallTreeNode> nodes,
+                                                               ProfileCallTreeNode parentNode = null) {
     if (nodes == null) {
       return null;
     }
@@ -328,16 +336,19 @@ public sealed class ProfileCallTree {
       // If the node is being called by another
       // instance recursively which has its total time counted,
       // don't count the total time of this instance.
-      var callerNode = node.Caller;
       bool countWeight = true;
 
-      while (callerNode != null) {
-        if (handledNodes.Contains(callerNode)) {
-          countWeight = false;
-          break;
-        }
+      if (!node.IsGroup) {
+        var callerNode = node.Caller;
 
-        callerNode = callerNode.Caller;
+        while (callerNode != null) {
+          if (handledNodes.Contains(callerNode)) {
+            countWeight = false;
+            break;
+          }
+
+          callerNode = callerNode.Caller;
+        }
       }
 
       if (countWeight) {
@@ -350,8 +361,8 @@ public sealed class ProfileCallTree {
       // Sum up per-thread weights.
       foreach (var pair in node.ThreadWeights) {
         threadsMap.AccumulateValue(pair.Key,
-                                   countWeight ? pair.Value.Weight : TimeSpan.Zero,
-                                   pair.Value.ExclusiveWeight);
+          countWeight ? pair.Value.Weight : TimeSpan.Zero,
+          pair.Value.ExclusiveWeight);
       }
 
       kind = node.Kind;
@@ -370,14 +381,25 @@ public sealed class ProfileCallTree {
       }
 
       if (node.HasCallers) {
-        if (!callersSet.TryGetValue(node.Caller, out var existingNode)) {
-          existingNode = new ProfileCallTreeNode(node.Caller.FunctionDebugInfo, node.Caller.Function);
-          existingNode.Id = node.Caller.Id;
-          callersSet.Add(existingNode);
-        }
+        void HandleCaller(ProfileCallTreeNode caller) {
+          if (!callersSet.TryGetValue(caller, out var existingNode)) {
+            existingNode = new ProfileCallTreeNode(caller.FunctionDebugInfo, caller.Function);
+            existingNode.Id = caller.Id;
+            callersSet.Add(existingNode);
+          }
 
-        existingNode.AccumulateWeight(node.Caller.Weight);
-        existingNode.AccumulateExclusiveWeight(node.Caller.ExclusiveWeight);
+          existingNode.AccumulateWeight(caller.Weight);
+          existingNode.AccumulateExclusiveWeight(caller.ExclusiveWeight);
+        }
+        
+        if (node is ProfileCallTreeGroupNode groupNode) {
+          foreach (var caller in groupNode.Callers) {
+            HandleCaller(caller);
+          }
+        }
+        else {
+          HandleCaller(node.Caller);
+        }
       }
 
       if (node.HasCallSites) {
@@ -395,8 +417,8 @@ public sealed class ProfileCallTree {
     }
 
     return new ProfileCallTreeGroupNode(nodes[0].FunctionDebugInfo, nodes[0].Function, nodes,
-                                        childrenSet.ToList(), callersSet.ToList(),
-                                        callSiteMap, threadsMap) {
+      childrenSet.ToList(), callersSet.ToList(),
+      callSiteMap, threadsMap) {
       Weight = weight, ExclusiveWeight = excWeight,
       Kind = kind
     };
@@ -425,6 +447,12 @@ public sealed class ProfileCallTree {
   public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
     var list = new List<ProfileCallTreeNode>();
 
+    // For multiple node groups there is no proper backtrace.
+    if (node is ProfileCallTreeGroupNode groupNode &&
+        groupNode.Nodes.Count > 1) {
+      return list;
+    }
+    
     while (node.HasCallers) {
       list.Add(node.Callers[0]);
       node = node.Callers[0];
@@ -435,7 +463,16 @@ public sealed class ProfileCallTree {
 
   public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node, bool combineInstances = true) {
     var funcMap = new Dictionary<IRTextFunction, ProfileCallTreeNode>();
-    CollectFunctions(node, funcMap, combineInstances);
+
+    if (node is ProfileCallTreeGroupNode groupNode) {
+      foreach (var n in groupNode.Nodes) {
+        CollectFunctions(n, funcMap, combineInstances);
+      }
+    }
+    else {
+      CollectFunctions(node, funcMap, combineInstances);
+    }
+
     var funcList = new List<ProfileCallTreeNode>(funcMap.Count);
 
     foreach (var func in funcMap.Values) {
@@ -472,7 +509,16 @@ public sealed class ProfileCallTree {
 
   public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
     var moduleMap = new Dictionary<string, ModuleProfileInfo>();
-    CollectModules(node, moduleMap);
+
+    if (node is ProfileCallTreeGroupNode groupNode) {
+      foreach (var n in groupNode.Nodes) {
+        CollectModules(n, moduleMap);
+      }
+    }
+    else {
+      CollectModules(node, moduleMap);
+    }
+
     var moduleList = new List<ModuleProfileInfo>(moduleMap.Count);
 
     foreach (var module in moduleMap.Values) {

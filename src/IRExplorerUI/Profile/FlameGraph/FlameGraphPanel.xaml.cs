@@ -252,8 +252,20 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     set => SetField(ref rootNode_, value);
   }
 
+  private async Task UpdateNodeDetailsPanel() {
+    var selectedNodes = GraphHost.SelectedNodes.ConvertAll(node => node.CallTreeNode);
+
+    if (selectedNodes.Count == 0) {
+      NodeDetailsPanel.Reset();
+    }
+    else {
+      var combinedNode = await Task.Run(() => ProfileCallTree.CombinedCallTreeNodes(selectedNodes));
+      await NodeDetailsPanel.ShowWithDetailsAsync(combinedNode);
+    }
+  }
+
   private async void GraphHost_NodesDeselected(object sender, EventArgs e) {
-    NodeDetailsPanel.Reset();
+    await UpdateNodeDetailsPanel();
 
     if (settings_.SyncSelection) {
       await Session.ProfileFunctionDeselected();
@@ -266,7 +278,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private async void GraphHost_NodeSelected(object sender, FlameGraphNode node) {
     if (node.HasFunction) {
-      await NodeDetailsPanel.ShowWithDetailsAsync(node.CallTreeNode);
+      await UpdateNodeDetailsPanel();
 
       if (settings_.SyncSourceFile) {
         // Load the source file and scroll to the hottest line.
