@@ -32,7 +32,7 @@ public class SearchableProfileItem : BindableObject {
 
       functionName_ = GetFunctionName();
 
-      if (funcNameFormatter_ != null) {
+      if (funcNameFormatter_ != null && functionName_ != null) {
         functionName_ = funcNameFormatter_(functionName_);
       }
 

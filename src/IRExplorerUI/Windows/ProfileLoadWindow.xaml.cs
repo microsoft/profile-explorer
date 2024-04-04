@@ -1016,9 +1016,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     // Wait for the UI to update
     Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle , () => {
-      // Get the ListViewItem for the new item
-      var newItem = symbolSettings_.SymbolPaths.Last();
-      Utils.FocusTextBoxListViewItem(newItem, SymbolPathsList);
+      Utils.SelectEditableListViewItem(SymbolPathsList, symbolSettings_.SymbolPaths.Count - 1);
     });
   }
 

@@ -93,12 +93,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       SearchableProfileItem.CopyFunctionListAsHtml(funcList);
     }
   });
-  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkInstanceCommand => new RelayCommand<object>(async obj => {
     if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
       GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
     }
   });
-  public RelayCommand<object> MarkAllFunctionsCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkAllInstancesCommand => new RelayCommand<object>(async obj => {
     if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
       MarkFunctionInstances(GraphViewer.SelectedNode.Function, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
     }
@@ -106,6 +106,13 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
     if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is { HasFunction: true }) {
       settings_.AddModuleColor(GraphViewer.SelectedNode.ModuleName, e.SelectedColor);
+      settings_.UseModuleColors = true;
+      SettingsUpdated(settings_);
+    }
+  });
+  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+    if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is { HasFunction: true }) {
+      settings_.AddFunctionColor(GraphViewer.SelectedNode.FunctionName, e.SelectedColor);
       settings_.UseModuleColors = true;
       SettingsUpdated(settings_);
     }

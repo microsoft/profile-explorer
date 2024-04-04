@@ -152,8 +152,14 @@ public class FlameGraphRenderer {
     int colorIndex = node.Depth % palette.Count;
     var backColor = palette.PickBrush(palette.Count - colorIndex - 1);
 
-    // Override color based on module name.
-    if (!string.IsNullOrEmpty(node.ModuleName)) {
+    // Override color based on function name or module name,
+    // with function name marking having priority.
+    if (!string.IsNullOrEmpty(node.FunctionName) &&
+        settings_.UseFunctionColors &&
+        settings_.GetFunctionColor(node.FunctionName, out var functionColor)) {
+      backColor = functionColor.AsBrush();
+    }
+    else if (!string.IsNullOrEmpty(node.ModuleName)) {
       if (settings_.UseModuleColors &&
           settings_.GetModuleColor(node.ModuleName, out var moduleColor)) {
         backColor = moduleColor.AsBrush();
@@ -164,7 +170,7 @@ public class FlameGraphRenderer {
         backColor = ColorUtils.GenerateLightPastelBrush(hash);
       }
     }
-
+    
     return new HighlightingStyle(backColor, defaultBorder_);
   }
 

@@ -13,13 +13,13 @@ namespace IRExplorerUI;
 [ProtoContract(SkipConstructor = true)]
 public class FlameGraphSettings : SettingsBase {
   [ProtoContract(SkipConstructor = true)]
-  public class ModuleStyle(string name, Color color) {
+  public class NodeMarkingStyle(string name, Color color) {
     [ProtoMember(1)]
     public string Name { get; set; } = name;
     [ProtoMember(2)]
     public Color Color { get; set; } = color;
 
-    protected bool Equals(ModuleStyle other) {
+    protected bool Equals(NodeMarkingStyle other) {
       return Name == other.Name && Color.Equals(other.Color);
     }
 
@@ -30,7 +30,7 @@ public class FlameGraphSettings : SettingsBase {
         return true;
       if (obj.GetType() != this.GetType())
         return false;
-      return Equals((ModuleStyle)obj);
+      return Equals((NodeMarkingStyle)obj);
     }
   }
 
@@ -93,13 +93,25 @@ public class FlameGraphSettings : SettingsBase {
   [ProtoMember(26)]
   public bool UseModuleColors { get; set; }
   [ProtoMember(27)]
-  public List<ModuleStyle> ModuleColors { get; set; }
+  public List<NodeMarkingStyle> ModuleColors { get; set; }
+  [ProtoMember(28)]
+  public bool UseFunctionColors { get; set; }
+  [ProtoMember(29)]
+  public List<NodeMarkingStyle> FunctionColors { get; set; }
 
   public bool GetModuleColor(string name, out Color color) {
-    foreach (var pair in ModuleColors) {
-      if (name.Length > 0 && // Initial new module name is empty, ignore.
+    return GetMarkingColor(name, ModuleColors, out color);
+  }
+  
+  public bool GetFunctionColor(string name, out Color color) {
+    return GetMarkingColor(name, FunctionColors, out color);
+  }
+
+  private bool GetMarkingColor(string name, List<NodeMarkingStyle> markingColors, out Color color) {
+    foreach (var pair in markingColors) {
+      if (name.Length > 0 && pair.Name.Length > 0 && // Initial new name is empty, ignore.
           name.Contains(pair.Name, StringComparison.OrdinalIgnoreCase)) {
-        color =  pair.Color;
+        color = pair.Color;
         return true;
       }
     }
@@ -109,15 +121,24 @@ public class FlameGraphSettings : SettingsBase {
   }
 
   public void AddModuleColor(string moduleName, Color color) {
-    foreach (var pair in ModuleColors) {
+    AddMarkingColor(moduleName, color, ModuleColors);
+  }
+  
+  public void AddFunctionColor(string functionName, Color color) {
+    AddMarkingColor(functionName, color, FunctionColors);
+  }
+  
+  private void AddMarkingColor(string name, Color color, List<NodeMarkingStyle> markingColors) {
+    foreach (var pair in markingColors) {
       if (pair.Name.Length > 0 &&
-          pair.Name.Equals(moduleName, StringComparison.OrdinalIgnoreCase)) {
+          pair.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) {
         pair.Color = color;
+        
         return;
       }
     }
 
-    ModuleColors.Add(new ModuleStyle(moduleName, color));
+    markingColors.Add(new NodeMarkingStyle(name, color));
   }
 
   public override void Reset() {
@@ -149,7 +170,8 @@ public class FlameGraphSettings : SettingsBase {
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
-    ModuleColors ??= new List<ModuleStyle>();
+    ModuleColors ??= new List<NodeMarkingStyle>();
+    FunctionColors ??= new List<NodeMarkingStyle>();
   }
 
   public FlameGraphSettings Clone() {
@@ -185,7 +207,9 @@ public class FlameGraphSettings : SettingsBase {
            SearchedNodeColor == settings.SearchedNodeColor &&
            UseAutoModuleColors == settings.UseAutoModuleColors &&
            UseModuleColors == settings.UseModuleColors &&
-           ModuleColors.AreEqual(settings.ModuleColors);
+           ModuleColors.AreEqual(settings.ModuleColors) &&
+           UseFunctionColors == settings.UseFunctionColors &&
+           FunctionColors.AreEqual(settings.FunctionColors);
   }
 
   public override string ToString() {
@@ -215,6 +239,8 @@ public class FlameGraphSettings : SettingsBase {
            $"SearchedNodeColor: {SearchedNodeColor}\n" +
            $"UseAutoModuleColors: {UseAutoModuleColors}\n" +
            $"UseModuleColors: {UseModuleColors}\n" +
-           $"ModuleColors: {ModuleColors}";
+           $"ModuleColors: {ModuleColors}\n" +
+           $"UseFunctionColors: {UseFunctionColors}\n" +
+           $"FunctionColors: {FunctionColors}";
   }
 }

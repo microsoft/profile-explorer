@@ -502,6 +502,13 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     settings_.ModuleColors.Clear();
     ReloadSettings();
   }
+  
+  
+  private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
+    settings_.FunctionColors.Clear();
+    ReloadSettings();
+  }
+
 
   private void ReloadSettings() {
     GraphHost.SettingsUpdated(settings_);
@@ -520,12 +527,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       var item = new MenuItem {
         Header = moduleStyle.Name,
         ToolTip = "Click to remove module marking",
-        Icon = CreateModuleMenuIcon(moduleStyle),
+        Icon = CreateMarkedMenuIcon(moduleStyle),
         Tag = moduleStyle
       };
 
       item.Click += (o, args) => {
-        settings_.ModuleColors.Remove(item.Tag as FlameGraphSettings.ModuleStyle);
+        settings_.ModuleColors.Remove(item.Tag as FlameGraphSettings.NodeMarkingStyle);
         ReloadSettings();
       };
 
@@ -537,11 +544,40 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     DocumentUtils.RestoreDefaultMenuItems(ModuleMenu, defaultItems);
   }
 
-  private Image CreateModuleMenuIcon(FlameGraphSettings.ModuleStyle moduleStyle) {
+  
+  private void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    var defaultItems = DocumentUtils.SaveDefaultMenuItems(FunctionMenu);
+    var separatorIndex = defaultItems.FindIndex(item => item is Separator);
+
+    // Insert module markers after separator.
+    foreach (var funcStyle in settings_.FunctionColors) {
+      var item = new MenuItem {
+        Header = funcStyle.Name,
+        ToolTip = "Click to remove function marking",
+        Icon = CreateMarkedMenuIcon(funcStyle),
+        Tag = funcStyle
+      };
+
+      item.Click += (o, args) => {
+        settings_.FunctionColors.Remove(item.Tag as FlameGraphSettings.NodeMarkingStyle);
+        ReloadSettings();
+      };
+
+      defaultItems.Insert(separatorIndex + 1, item);
+    }
+
+    // Populate the menu.
+    FunctionMenu.Items.Clear();
+    DocumentUtils.RestoreDefaultMenuItems(FunctionMenu, defaultItems);
+  }
+
+  
+  private Image CreateMarkedMenuIcon(FlameGraphSettings.NodeMarkingStyle nodeMarkingStyle) {
+    // Make a small square image with the marking background color.
     var visual = new DrawingVisual();
 
     using (var dc = visual.RenderOpen()) {
-      dc.DrawRectangle(moduleStyle.Color.AsBrush(), ColorPens.GetPen(Colors.Black), new Rect(0, 0, 16, 16));
+      dc.DrawRectangle(nodeMarkingStyle.Color.AsBrush(), ColorPens.GetPen(Colors.Black), new Rect(0, 0, 16, 16));
     }
 
     var targetBitmap = new RenderTargetBitmap(16, 16, 96, 96, PixelFormats.Default);

@@ -1163,8 +1163,7 @@ static class Utils {
     listView.SelectedItem = null;
     listView.SelectedIndex = index;
     listView.UpdateLayout(); // Force the ListView to generate the containers.
-    var item =
-      listView.ItemContainerGenerator.ContainerFromIndex(index) as ListViewItem;
+    var item = listView.ItemContainerGenerator.ContainerFromIndex(index) as ListViewItem;
 
     if (item != null) {
       var textBox = FindChild<TextBox>(item);
@@ -1197,20 +1196,6 @@ static class Utils {
     if (listViewItem != null) {
       listView.SelectedItem = null;
       listViewItem.IsSelected = true;
-    }
-  }
-
-  public static void FocusTextBoxListViewItem(object item, ListView listView) {
-    var listViewItem = (ListViewItem)listView.ItemContainerGenerator.ContainerFromItem(item);
-
-    if (listViewItem != null) {
-      // Find the TextBox within the ListViewItem
-      var textBox = Utils.FindChild<TextBox>(listViewItem);
-
-      if (textBox != null) {
-        // Set keyboard focus to the TextBox
-        textBox.Focus();
-      }
     }
   }
 

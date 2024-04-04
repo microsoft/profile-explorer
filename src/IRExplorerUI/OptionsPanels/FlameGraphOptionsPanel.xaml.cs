@@ -39,16 +39,23 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     base.Initialize(parent, settings, session);
     settings_ = (FlameGraphSettings)Settings;
     ReloadModuleList();
+    ReloadFunctionList();
   }
 
   public override void OnSettingsChanged(object newSettings) {
     settings_ = (FlameGraphSettings)newSettings;
     ReloadModuleList();
+    ReloadFunctionList();
   }
 
   private void ReloadModuleList() {
-    var list = new ObservableCollectionRefresh<FlameGraphSettings.ModuleStyle>(settings_.ModuleColors);
+    var list = new ObservableCollectionRefresh<FlameGraphSettings.NodeMarkingStyle>(settings_.ModuleColors);
     ModuleList.ItemsSource = list;
+  }
+  
+  private void ReloadFunctionList() {
+    var list = new ObservableCollectionRefresh<FlameGraphSettings.NodeMarkingStyle>(settings_.FunctionColors);
+    FunctionList.ItemsSource = list;
   }
 
   protected override void ReloadSettings() {
@@ -121,7 +128,7 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   }
 
   private void ModuleRemove_Click(object sender, RoutedEventArgs e) {
-    if (ModuleList.SelectedItem is FlameGraphSettings.ModuleStyle pair) {
+    if (ModuleList.SelectedItem is FlameGraphSettings.NodeMarkingStyle pair) {
       settings_.ModuleColors.Remove((pair));
       ReloadModuleList();
       NotifySettingsChanged();
@@ -129,13 +136,12 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   }
 
   private void ModuleAdd_Click(object sender, RoutedEventArgs e) {
-    settings_.ModuleColors.Add(new FlameGraphSettings.ModuleStyle("", Colors.White));
+    settings_.ModuleColors.Add(new FlameGraphSettings.NodeMarkingStyle("", Colors.White));
     ReloadModuleList();
     NotifySettingsChanged();
 
     Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => {
-      var newItem = settings_.ModuleColors.Last();
-      Utils.FocusTextBoxListViewItem(newItem, ModuleList);
+      Utils.SelectEditableListViewItem(ModuleList, settings_.ModuleColors.Count - 1);
     });
   }
 
@@ -145,5 +151,31 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
       ReloadModuleList();
       NotifySettingsChanged();
     }
+  }
+
+  private void ClearFunction_Click(object sender, RoutedEventArgs e) {
+    if (Utils.ShowYesNoMessageBox("Do you want to clear the list?", this) == MessageBoxResult.Yes) {
+      settings_.FunctionColors.Clear();
+      ReloadFunctionList();
+      NotifySettingsChanged();
+    }
+  }
+
+  private void FunctionRemove_Click(object sender, RoutedEventArgs e) {
+    if (FunctionList.SelectedItem is FlameGraphSettings.NodeMarkingStyle pair) {
+      settings_.FunctionColors.Remove((pair));
+      ReloadFunctionList();
+      NotifySettingsChanged();
+    }
+  }
+
+  private void FunctionAdd_Click(object sender, RoutedEventArgs e) {
+    settings_.FunctionColors.Add(new FlameGraphSettings.NodeMarkingStyle("", Colors.White));
+    ReloadFunctionList();
+    NotifySettingsChanged();
+
+    Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => {
+      Utils.SelectEditableListViewItem(FunctionList, settings_.FunctionColors.Count - 1);
+    });
   }
 }
