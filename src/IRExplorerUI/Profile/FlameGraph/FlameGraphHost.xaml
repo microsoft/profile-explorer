@@ -37,6 +37,7 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Preview Function"
             InputGestureText="Alt+Return"
+            IsEnabled="{Binding EnableSingleNodeActions}"
             ToolTip="Show a preview popup of the function ASM or source code">
             <MenuItem.Icon>
               <Image
@@ -50,6 +51,7 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function"
             InputGestureText="Ctrl+Return"
+            IsEnabled="{Binding EnableSingleNodeActions}"
             ToolTip="Open the function assembly view">
             <MenuItem.Icon>
               <Image
@@ -63,6 +65,7 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function in New Tab"
             InputGestureText="Ctrl+Shift+Return"
+            IsEnabled="{Binding EnableSingleNodeActions}"
             ToolTip="Open the function assembly view in a new tab">
             <MenuItem.Icon>
               <Image
@@ -71,12 +74,13 @@
                 Source="{StaticResource LayoutOpenNewIcon}" />
             </MenuItem.Icon>
           </MenuItem>
-          <MenuItem Header="Instance">
+          <MenuItem Header="Instance" IsEnabled="{Binding EnableSingleNodeActions}">
             <MenuItem
               Command="{Binding PreviewFunctionInstanceCommand}"
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
               Header="Preview Function Instance"
               InputGestureText="Alt+Shift+Return"
+              IsEnabled="{Binding EnableSingleNodeActions}"
               ToolTip="Show a preview popup of the function ASM or source code">
               <MenuItem.Icon>
                 <Image
@@ -89,6 +93,7 @@
               Command="{Binding OpenInstanceCommand}"
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
               Header="Open Function Instance"
+              IsEnabled="{Binding EnableSingleNodeActions}"
               ToolTip="Open the function assembly view for only this instance of the function">
               <MenuItem.Icon>
                 <Image
@@ -101,6 +106,7 @@
               Command="{Binding OpenInstanceInNewTabCommand}"
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
               Header="Open Function Instance in New Tab"
+              IsEnabled="{Binding EnableSingleNodeActions}"
               ToolTip="Open the function assembly view in a new tab">
               <MenuItem.Icon>
                 <Image
@@ -117,6 +123,7 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Focus on Function"
             InputGestureText="Return, Double-click"
+            IsEnabled="{Binding EnableSingleNodeActions}"
             ToolTip="Enlarge the function in the view">
             <MenuItem.Icon>
               <Image
@@ -130,6 +137,7 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Set Function as Root"
             InputGestureText="Alt+Double-click"
+            IsEnabled="{Binding EnableSingleNodeActions}"
             ToolTip="Restrict the view to the function and its callees">
             <MenuItem.Icon>
               <Image
@@ -230,6 +238,7 @@
             Command="local:CallTreeCommand.SelectFunction"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Summary"
+            IsEnabled="{Binding EnableSingleNodeActions}"
             ToolTip="Select the function in the Summary panel">
             <MenuItem.Icon>
               <Image
@@ -242,6 +251,7 @@
             Command="{Binding SelectFunctionCallTreeCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Call Tree"
+            IsEnabled="{Binding EnableSingleNodeActions}"
             ToolTip="Select the function instance in the Call Tree panel">
             <MenuItem.Icon>
               <Image
@@ -254,6 +264,7 @@
             Command="{Binding SelectFunctionTimelineCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Timeline"
+            IsEnabled="{Binding EnableSingleNodeActions}"
             ToolTip="Select the function instance in the Timeline panel">
             <MenuItem.Icon>
               <Image
@@ -262,7 +273,10 @@
                 Source="{StaticResource TimelineIcon}" />
             </MenuItem.Icon>
           </MenuItem>
-          <MenuItem Header="Mark in Timeline" ToolTip="Mark the function instance in the Timeline panel">
+          <MenuItem
+            Header="Mark in Timeline"
+            IsEnabled="{Binding EnableSingleNodeActions}"
+            ToolTip="Mark the function instance in the Timeline panel">
             <MenuItem>
               <MenuItem.Header>
                 <irExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkTimelineCommand}" />

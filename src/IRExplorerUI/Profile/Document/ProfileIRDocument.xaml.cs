@@ -725,7 +725,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
       if (isSourceFileDocument_) {
         prefixText = element.GetText(TextView.SectionText).ToString();
-        prefixText = prefixText.Trim().TrimToLength(50);
+        prefixText = prefixText.Trim().TrimToLength(80);
       }
       else {
         prefixText = DocumentUtils.GenerateElementPreviewText(element, TextView.SectionText, 50);

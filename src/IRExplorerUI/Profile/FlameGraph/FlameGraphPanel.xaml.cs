@@ -552,7 +552,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     // Insert module markers after separator.
     foreach (var funcStyle in settings_.FunctionColors) {
       var item = new MenuItem {
-        Header = funcStyle.Name,
+        Header = funcStyle.Name.TrimToLength(80),
         ToolTip = "Click to remove function marking",
         Icon = CreateMarkedMenuIcon(funcStyle),
         Tag = funcStyle

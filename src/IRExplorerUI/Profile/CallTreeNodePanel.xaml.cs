@@ -78,6 +78,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   private bool showInstanceNavigation_;
   private bool useSelfTimeHistogram_;
   private CallTreeNodeSettings settings_;
+  private bool enableSingleNodeActions_;
 
   public CallTreeNodePanel() {
     InitializeComponent();
@@ -207,6 +208,11 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     }
   }
 
+  public bool EnableSingleNodeActions {
+    get => enableSingleNodeActions_;
+    set => SetField(ref enableSingleNodeActions_, value);
+  }
+
   public void Show(ProfileCallTreeNodeEx nodeEx) {
     CallTreeNode = nodeEx;
   }
@@ -322,6 +328,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     // Show all instances.
     InstancesList.ShowFunctions(instanceNodes_);
     ShowInstanceNavigation = instanceNodes_.Count > 1 && groupNode == null;
+    EnableSingleNodeActions = groupNode == null;
 
     nodeInstanceIndex_ = instanceNodes_.FindIndex(instanceNode => instanceNode == node);
     CurrentInstanceIndex = nodeInstanceIndex_ + 1;
@@ -728,7 +735,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   }
 
   private void CopyFUnctionButton_OnClick(object sender, RoutedEventArgs e) {
-    Clipboard.SetText(instancesNode_.FunctionName);
+    Clipboard.SetText(instancesNode_.FullFunctionName);
   }
 
   private async void PreviewButton_OnClick(object sender, RoutedEventArgs e) {

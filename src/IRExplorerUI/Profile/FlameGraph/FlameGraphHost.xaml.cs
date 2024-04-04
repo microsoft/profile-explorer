@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
@@ -45,6 +46,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private DoubleAnimation widthAnimation_;
   private DoubleAnimation zoomAnimation_;
   private double zoomPointX_;
+  private bool enableSingleNodeActions_;
 
   public FlameGraphHost() {
     InitializeComponent();
@@ -58,6 +60,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   public new bool IsInitialized => GraphViewer.IsInitialized;
   public ISession Session { get; set; }
   public List<FlameGraphNode> SelectedNodes => GraphViewer.SelectedNodes;
+
+  public bool EnableSingleNodeActions {
+    get => enableSingleNodeActions_;
+    set => SetField(ref enableSingleNodeActions_, value);
+  }
+  
   public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.CallTree);
   });
@@ -68,17 +76,34 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     await SelectFunctionInPanel(ToolPanelKind.Source);
   });
   public RelayCommand<object> CopyFunctionNameCommand => new RelayCommand<object>(async obj => {
-    if (GraphViewer.SelectedNode is {HasFunction: true}) {
-      string text = Session.CompilerInfo.NameProvider.GetFunctionName(GraphViewer.SelectedNode.Function);
-      Clipboard.SetText(text);
+    string text = "";
+
+    foreach (var node in SelectedNodes) {
+      if (!string.IsNullOrEmpty(text)) {
+        text += Environment.NewLine;
+      }
+
+      if (node.HasFunction) {
+        text += Session.CompilerInfo.NameProvider.GetFunctionName(node.Function);
+      }
     }
+    
+    Clipboard.SetText(text);
   });
   public RelayCommand<object> CopyDemangledFunctionNameCommand => new RelayCommand<object>(async obj => {
-    if (GraphViewer.SelectedNode is {HasFunction: true}) {
-      var options = FunctionNameDemanglingOptions.Default;
-      string text = Session.CompilerInfo.NameProvider.DemangleFunctionName(GraphViewer.SelectedNode.Function, options);
-      Clipboard.SetText(text);
+    string text = "";
+
+    foreach (var node in SelectedNodes) {
+      if (!string.IsNullOrEmpty(text)) {
+        text += Environment.NewLine;
+      }
+
+      if (node.HasFunction) {
+        text += Session.CompilerInfo.NameProvider.FormatFunctionName(node.Function);
+      }
     }
+
+    Clipboard.SetText(text);
   });
   public RelayCommand<object> CopyFunctionDetailsCommand => new RelayCommand<object>(async obj => {
     if (SelectedNodes.Count > 0) {
@@ -93,30 +118,35 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       SearchableProfileItem.CopyFunctionListAsHtml(funcList);
     }
   });
+
+  private void MarkSelectedNodes(object obj, Action<FlameGraphNode, Color> action) {
+    if (obj is SelectedColorEventArgs e) {
+      foreach (var node in SelectedNodes) {
+        if (node.HasFunction) {
+          action(node, e.SelectedColor);
+        }
+      }
+    }
+  }
+  
   public RelayCommand<object> MarkInstanceCommand => new RelayCommand<object>(async obj => {
-    if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
-      GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
-    }
+    MarkSelectedNodes(obj, (node, color) => GraphViewer.MarkNode(node, GraphViewer.MarkedColoredNodeStyle(color)));
   });
+  
   public RelayCommand<object> MarkAllInstancesCommand => new RelayCommand<object>(async obj => {
-    if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
-      MarkFunctionInstances(GraphViewer.SelectedNode.Function, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
-    }
+    MarkSelectedNodes(obj, (node, color) => MarkFunctionInstances(node.Function, GraphViewer.MarkedColoredNodeStyle(color)));
   });
   public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
-    if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is { HasFunction: true }) {
-      settings_.AddModuleColor(GraphViewer.SelectedNode.ModuleName, e.SelectedColor);
-      settings_.UseModuleColors = true;
-      SettingsUpdated(settings_);
-    }
+    MarkSelectedNodes(obj, (node, color) => settings_.AddModuleColor(node.ModuleName, color));
+    settings_.UseModuleColors = true;
+    SettingsUpdated(settings_);
   });
   public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
-    if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is { HasFunction: true }) {
-      settings_.AddFunctionColor(GraphViewer.SelectedNode.FunctionName, e.SelectedColor);
-      settings_.UseModuleColors = true;
-      SettingsUpdated(settings_);
-    }
+    MarkSelectedNodes(obj, (node, color) => settings_.AddFunctionColor(node.FunctionName, color));
+    settings_.UseModuleColors = true;
+    SettingsUpdated(settings_);
   });
+  
   public RelayCommand<object> MarkTimelineCommand => new RelayCommand<object>(async obj => {
     if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
       GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
@@ -783,10 +813,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     if (pointedNode == null) {
       GraphViewer.ClearSelection(); // Click outside graph is captured here.
       NodesDeselected?.Invoke(this, EventArgs.Empty);
+      EnableSingleNodeActions = SelectedNodes.Count < 2;
       return false;
     }
     else {
       NodeSelected?.Invoke(this, pointedNode);
+      EnableSingleNodeActions = SelectedNodes.Count < 2;
       return true;
     }
   }
