@@ -363,6 +363,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     sourceFileFunc_ = null;
     currentInlinee_ = null;
     associatedDocument_ = null;
+    InlineeComboBox.ItemsSource = null;
+    OnPropertyChanged(nameof(HasInlinees));
   }
 
   public override async void OnElementSelected(IRElementEventArgs e) {

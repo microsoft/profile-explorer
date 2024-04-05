@@ -405,6 +405,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       selectedElement_ = null;
       remarkElement_ = null;
       selectedBlock_ = null;
+      profileFilter_ = new ProfileSampleFilter();
+      TitlePrefix = TitleSuffix = null;
+      DescriptionPrefix = DescriptionSuffix = null;
       PassOutputVisible = false;
       BlockSelector.SelectedItem = null;
       BlockSelector.ItemsSource = null;
@@ -1327,7 +1330,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     await Session.OpenProfileSourceFile(Section.ParentFunction, profileFilter_);
 
     TitlePrefix = DocumentUtils.GenerateProfileFilterTitle(profileFilter_, session_);
-    DescriptionSuffix = DocumentUtils.GenerateProfileFilterDescription(profileFilter_, Session);
+    DescriptionSuffix = "\n\n" + DocumentUtils.GenerateProfileFilterDescription(profileFilter_, Session);
     Session.UpdateDocumentTitles();
   }
 

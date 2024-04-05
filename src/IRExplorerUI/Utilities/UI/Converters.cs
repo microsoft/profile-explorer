@@ -471,6 +471,21 @@ class AlternateRowConverter : IValueConverter {
   }
 }
 
+public class FunctionNameConverter : IValueConverter {
+  public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    if (string.IsNullOrEmpty(value as string)) {
+      return null;
+    }
+
+    return ((string)value).TrimToLength(80);
+  }
+
+  public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    return null;
+  }
+
+
+}
 public class LongFunctionNameConverter : IValueConverter {
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
     if (string.IsNullOrEmpty(value as string)) {

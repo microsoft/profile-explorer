@@ -787,7 +787,7 @@ public partial class MainWindow : Window, ISession {
       text = $"{text}{document.DescriptionSuffix}";
     }
 
-    return text;
+    return text.Trim();
   }
 
   private async void MenuItem_Click_1(object sender, RoutedEventArgs e) {
