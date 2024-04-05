@@ -19,6 +19,8 @@ using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
+using IRExplorerUI.Profile.Document;
+using Style = System.Windows.Style;
 
 namespace IRExplorerUI.Profile;
 
@@ -108,6 +110,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       }
     }
   }
+
+  public bool HasEnabledMarkedFunctions => settings_.UseFunctionColors && settings_.FunctionColors.Count > 0;
+  public bool HasEnabledMarkedModules => settings_.UseModuleColors && settings_.ModuleColors.Count > 0;
 
   public override async void OnShowPanel() {
     base.OnShowPanel();
@@ -458,6 +463,11 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     ((TextBox)e.Parameter).Text = string.Empty;
   }
 
+  private void FocusSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
+    FunctionFilter.Focus();
+    FunctionFilter.SelectAll();
+  }
+
   private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
     await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
@@ -502,16 +512,16 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     settings_.ModuleColors.Clear();
     ReloadSettings();
   }
-  
-  
+
   private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
     settings_.FunctionColors.Clear();
     ReloadSettings();
   }
 
-
   private void ReloadSettings() {
     GraphHost.SettingsUpdated(settings_);
+    OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
+    OnPropertyChanged(nameof(HasEnabledMarkedModules));
   }
 
   public override async Task OnReloadSettings() {
@@ -520,15 +530,49 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(ModuleMenu);
+    var profileItems = new List<ProfileMenuItem>();
+    var settings = App.Settings.DocumentSettings;
     var separatorIndex = defaultItems.FindIndex(item => item is Separator);
+    var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    double maxWidth = 0;
+
+    // Sort modules by weight in decreasing order.
+    var sortedModules = new List<(FlameGraphSettings.NodeMarkingStyle Module, TimeSpan Weight)>();
+
+    foreach (var moduleStyle in settings_.ModuleColors) {
+      var moduleWeight = Session.ProfileData.FindModulesWeight(name =>
+        moduleStyle.NameMatches(name));
+      sortedModules.Add((moduleStyle, moduleWeight));
+    }
+
+    sortedModules.Sort((a, b) => a.Weight.CompareTo(b.Weight));
 
     // Insert module markers after separator.
-    foreach (var moduleStyle in settings_.ModuleColors) {
+    foreach (var pair in sortedModules) {
+      double weightPercentage = Session.ProfileData.ScaleModuleWeight(pair.Weight);
+      string text = $"({markerSettings.FormatWeightValue(null, pair.Weight)})";
+      string tooltip = "Click to remove module marking";
+      string title = pair.Module.Name;
+
+      if (pair.Module.IsRegex) {
+        title += " (Regex)";
+      }
+
+      var value = new ProfileMenuItem(text, pair.Weight.Ticks, weightPercentage) {
+        PrefixText = title,
+        ToolTip = tooltip,
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
       var item = new MenuItem {
-        Header = moduleStyle.Name,
-        ToolTip = "Click to remove module marking",
-        Icon = CreateMarkedMenuIcon(moduleStyle),
-        Tag = moduleStyle
+        Header = value,
+        Tag = pair.Module,
+        Icon = CreateMarkedMenuIcon(pair.Module),
+        HeaderTemplate = valueTemplate,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };
 
       item.Click += (o, args) => {
@@ -537,6 +581,15 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       };
 
       defaultItems.Insert(separatorIndex + 1, item);
+      profileItems.Add(value);
+
+      // Make sure percentage rects are aligned.
+      double width = Utils.MeasureString(title, settings.FontName, settings.FontSize).Width;
+      maxWidth = Math.Max(width, maxWidth);
+    }
+
+    foreach (var value in profileItems) {
+      value.MinTextWidth = maxWidth;
     }
 
     // Populate the module menu.
@@ -544,18 +597,73 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     DocumentUtils.RestoreDefaultMenuItems(ModuleMenu, defaultItems);
   }
 
-  
+
   private void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(FunctionMenu);
+    var profileItems = new List<ProfileMenuItem>();
     var separatorIndex = defaultItems.FindIndex(item => item is Separator);
+    var settings = App.Settings.DocumentSettings;
+    var nameProvider = Session.CompilerInfo.NameProvider;
+    var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    double maxWidth = 0;
 
-    // Insert module markers after separator.
+
+    // Sort functions by weight in decreasing order.
+    var sortedFuncts = new List<(FlameGraphSettings.NodeMarkingStyle Function, TimeSpan Weight)>();
+
     foreach (var funcStyle in settings_.FunctionColors) {
+      // Find all functions matching the marked name. There can be multiple
+      // since the same func. name may be used in multiple modules,
+      // and also because the name matching may use Regex.
+      var weight = TimeSpan.Zero;
+
+      foreach (var loadedDoc in Session.SessionState.Documents) {
+        if (loadedDoc.Summary == null) {
+          continue;
+        }
+
+        var funcList = loadedDoc.Summary.FindFunctions(name =>
+          funcStyle.NameMatches(nameProvider.FormatFunctionName(name)));
+
+        foreach (var func in funcList) {
+          var funcProfile = Session.ProfileData.GetFunctionProfile(func);
+
+          if (funcProfile != null) {
+            weight += funcProfile.Weight;
+          }
+        }
+      }
+
+      sortedFuncts.Add((funcStyle, weight));
+    }
+
+    sortedFuncts.Sort((a, b) => a.Weight.CompareTo(b.Weight));
+
+    foreach (var pair in sortedFuncts) {
+      double weightPercentage = Session.ProfileData.ScaleFunctionWeight(pair.Weight);
+      string text = $"({markerSettings.FormatWeightValue(null, pair.Weight)})";
+      string tooltip = "Click to remove function marking";
+      string title = pair.Function.Name.TrimToLength(80);
+
+      if (pair.Function.IsRegex) {
+        title += " (Regex)";
+      }
+
+      var value = new ProfileMenuItem(text, pair.Weight.Ticks, weightPercentage) {
+        PrefixText = title,
+        ToolTip = tooltip,
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
       var item = new MenuItem {
-        Header = funcStyle.Name.TrimToLength(80),
-        ToolTip = "Click to remove function marking",
-        Icon = CreateMarkedMenuIcon(funcStyle),
-        Tag = funcStyle
+        Header = value,
+        Tag = pair.Function,
+        Icon = CreateMarkedMenuIcon(pair.Function),
+        HeaderTemplate = valueTemplate,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };
 
       item.Click += (o, args) => {
@@ -564,6 +672,15 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       };
 
       defaultItems.Insert(separatorIndex + 1, item);
+      profileItems.Add(value);
+
+      // Make sure percentage rects are aligned.
+      double width = Utils.MeasureString(title, settings.FontName, settings.FontSize).Width;
+      maxWidth = Math.Max(width, maxWidth);
+    }
+
+    foreach (var value in profileItems) {
+      value.MinTextWidth = maxWidth;
     }
 
     // Populate the menu.
@@ -571,7 +688,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     DocumentUtils.RestoreDefaultMenuItems(FunctionMenu, defaultItems);
   }
 
-  
   private Image CreateMarkedMenuIcon(FlameGraphSettings.NodeMarkingStyle nodeMarkingStyle) {
     // Make a small square image with the marking background color.
     var visual = new DrawingVisual();

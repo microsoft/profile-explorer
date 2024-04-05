@@ -13,14 +13,46 @@ namespace IRExplorerUI;
 [ProtoContract(SkipConstructor = true)]
 public class FlameGraphSettings : SettingsBase {
   [ProtoContract(SkipConstructor = true)]
-  public class NodeMarkingStyle(string name, Color color) {
+  public class NodeMarkingStyle {
+    private TextSearcher searcher_;
+    private string name_;
+
     [ProtoMember(1)]
-    public string Name { get; set; } = name;
+    public string Name {
+      get => name_;
+      set {
+        name_ = value;
+        searcher_ = new TextSearcher(); // Caches precompiled Regex.
+      }
+    }
+
     [ProtoMember(2)]
-    public Color Color { get; set; } = color;
+    public Color Color { get; set; }
+    [ProtoMember(3)]
+    public bool IsRegex { get; set; }
+
+    public NodeMarkingStyle(string name, Color color) {
+      Name = name;
+      Color = color;
+    }
+
+    public bool NameMatches(string candidate) {
+      if (candidate.Length <= 0 || Name.Length <= 0) {
+        return false;
+      }
+
+      if (IsRegex) {
+        return searcher_.Includes(candidate, Name, TextSearchKind.Regex);
+      }
+      else {
+        return searcher_.Includes(candidate, Name, TextSearchKind.CaseInsensitive);
+      }
+    }
 
     protected bool Equals(NodeMarkingStyle other) {
-      return Name == other.Name && Color.Equals(other.Color);
+      return Name == other.Name &&
+             IsRegex == other.IsRegex &&
+             Color.Equals(other.Color);
     }
 
     public override bool Equals(object obj) {
@@ -102,15 +134,14 @@ public class FlameGraphSettings : SettingsBase {
   public bool GetModuleColor(string name, out Color color) {
     return GetMarkingColor(name, ModuleColors, out color);
   }
-  
+
   public bool GetFunctionColor(string name, out Color color) {
     return GetMarkingColor(name, FunctionColors, out color);
   }
 
   private bool GetMarkingColor(string name, List<NodeMarkingStyle> markingColors, out Color color) {
     foreach (var pair in markingColors) {
-      if (name.Length > 0 && pair.Name.Length > 0 && // Initial new name is empty, ignore.
-          name.Contains(pair.Name, StringComparison.OrdinalIgnoreCase)) {
+      if (pair.NameMatches(name)) {
         color = pair.Color;
         return true;
       }
@@ -123,17 +154,17 @@ public class FlameGraphSettings : SettingsBase {
   public void AddModuleColor(string moduleName, Color color) {
     AddMarkingColor(moduleName, color, ModuleColors);
   }
-  
+
   public void AddFunctionColor(string functionName, Color color) {
     AddMarkingColor(functionName, color, FunctionColors);
   }
-  
+
   private void AddMarkingColor(string name, Color color, List<NodeMarkingStyle> markingColors) {
     foreach (var pair in markingColors) {
       if (pair.Name.Length > 0 &&
           pair.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) {
         pair.Color = color;
-        
+
         return;
       }
     }

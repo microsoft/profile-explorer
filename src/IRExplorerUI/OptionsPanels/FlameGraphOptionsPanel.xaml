@@ -9,7 +9,7 @@
   xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2"
   xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
   d:DesignHeight="750"
-  d:DesignWidth="350"
+  d:DesignWidth="400"
   mc:Ignorable="d">
   <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <TabControl Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderThickness="0">
@@ -440,6 +440,7 @@
                   <GridViewColumn Width="150" Header="Module name">
                     <GridViewColumn.HeaderContainerStyle>
                       <Style TargetType="{x:Type GridViewColumnHeader}">
+                        <Setter Property="ToolTip" Value="Module name substring or Regex pattern"/>
                         <Setter Property="HorizontalContentAlignment" Value="Left" />
                       </Style>
                     </GridViewColumn.HeaderContainerStyle>
@@ -477,12 +478,28 @@
                       </DataTemplate>
                     </GridViewColumn.CellTemplate>
                   </GridViewColumn>
+                  <GridViewColumn Width="35" Header="Regex">
+                    <GridViewColumn.HeaderContainerStyle>
+                      <Style TargetType="{x:Type GridViewColumnHeader}">
+                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                      </Style>
+                    </GridViewColumn.HeaderContainerStyle>
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <CheckBox
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          IsChecked="{Binding Path=IsRegex, Mode=TwoWay}"/>
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
                 </GridView>
               </ListView.View>
               <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                   <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                   <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                  <Setter Property="VerticalContentAlignment" Value="Center" />
                 </Style>
               </ListView.ItemContainerStyle>
             </ListView>
@@ -577,6 +594,7 @@
                   <GridViewColumn Width="150" Header="Function name">
                     <GridViewColumn.HeaderContainerStyle>
                       <Style TargetType="{x:Type GridViewColumnHeader}">
+                        <Setter Property="ToolTip" Value="Function name substring or Regex pattern"/>
                         <Setter Property="HorizontalContentAlignment" Value="Left" />
                       </Style>
                     </GridViewColumn.HeaderContainerStyle>
@@ -614,12 +632,28 @@
                       </DataTemplate>
                     </GridViewColumn.CellTemplate>
                   </GridViewColumn>
+                  <GridViewColumn Width="35" Header="Regex">
+                    <GridViewColumn.HeaderContainerStyle>
+                      <Style TargetType="{x:Type GridViewColumnHeader}">
+                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                      </Style>
+                    </GridViewColumn.HeaderContainerStyle>
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <CheckBox
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          IsChecked="{Binding Path=IsRegex, Mode=TwoWay}"/>
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
                 </GridView>
               </ListView.View>
               <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                   <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                   <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                  <Setter Property="VerticalContentAlignment" Value="Center" />
                 </Style>
               </ListView.ItemContainerStyle>
             </ListView>

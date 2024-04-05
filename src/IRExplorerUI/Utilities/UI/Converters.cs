@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Utilities;
@@ -463,6 +464,20 @@ class ExclusivePercentageConverter : IValueConverter {
 class AlternateRowConverter : IValueConverter {
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
     return (bool)value ? 2 : 1;
+  }
+
+  public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    return null;
+  }
+}
+
+public class LongFunctionNameConverter : IValueConverter {
+  public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    if (string.IsNullOrEmpty(value as string)) {
+      return null;
+    }
+
+    return DocumentUtils.FormatLongFunctionName((string)value);
   }
 
   public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {

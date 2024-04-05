@@ -30,4 +30,5 @@
   <utils:ProfileCallTreeNodeKindConverter x:Key="CallTreeNodeKindConverter" />
   <utils:ColorPaletteConverter x:Key="ColorPaletteConverter" />
   <utils:AlternateRowConverter x:Key="AlternateRowConverter" />
+  <utils:LongFunctionNameConverter x:Key="LongFunctionNameConverter"/>
 </ResourceDictionary>
