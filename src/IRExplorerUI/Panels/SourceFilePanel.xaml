@@ -120,7 +120,7 @@
                 Margin="0,1,0,0"
                 Source="{StaticResource TreeIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Text="Inlinees" />
+              <TextBlock Text="Inlinees" ToolTip="Functions inlined into the displayed function"/>
             </StackPanel>
           </ToggleButton>
           <ComboBox
@@ -128,12 +128,18 @@
             Width="200"
             MinWidth="100"
             MaxWidth="200"
-            DisplayMemberPath="Function"
             IsEnabled="{Binding HasInlinees}"
             Loaded="InlineeComboBox_Loaded"
             SelectedValue="Function"
             SelectionChanged="InlineeCombobox_SelectionChanged"
-            ToolTip="Inlined functions in call tree order" />
+            ToolTip="Inlined functions in calling order">
+            <ComboBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Path=Function, Converter={StaticResource FunctionNameConverter}}"
+                ToolTip="{Binding Path=Function, Converter={StaticResource LongFunctionNameConverter}}"/>
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
           <Button
             Click="InlineUpButton_Click"
             IsEnabled="{Binding HasInlinees}"

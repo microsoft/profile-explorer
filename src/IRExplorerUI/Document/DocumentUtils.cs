@@ -768,7 +768,7 @@ public static class DocumentUtils {
   }
 
   public static string FormatLongFunctionName(string name) {
-    return FormatLongFunctionName(name, 100, 10, 800);
+    return FormatLongFunctionName(name, 80, 10, 1000);
   }
 
   public static string FormatLongFunctionName(string name, int maxLineLength,

@@ -175,7 +175,7 @@
             ToolTip="Copy the mangled function name to the clipboard (C++)" />
           <Separator />
 
-          <MenuItem Header="Mark Module" ToolTip="Mark all functions belonging to this module">
+          <MenuItem Header="Mark Module" ToolTip="Mark all functions belonging to this module (saved)">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -189,7 +189,7 @@
 
             </MenuItem>
           </MenuItem>
-          <MenuItem Header="Mark Function" ToolTip="Mark all functions with the same name">
+          <MenuItem Header="Mark Function" ToolTip="Mark all functions with the same name (saved)">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -207,7 +207,7 @@
             Command="local:CallTreeCommand.MarkInstance"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Mark Instance"
-            ToolTip="Mark this instance of the function">
+            ToolTip="Mark this instance of the function (temporary)">
             <MenuItem>
               <MenuItem.Header>
                 <irExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkInstanceCommand}" />
@@ -219,7 +219,7 @@
             Command="local:CallTreeCommand.MarkAllInstances"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Mark All Instances"
-            ToolTip="Mark all instances of the function">
+            ToolTip="Mark all instances of the function (temporary)">
             <MenuItem>
               <MenuItem.Header>
                 <irExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkAllInstancesCommand}" />
@@ -231,7 +231,7 @@
             Command="local:CallTreeCommand.ClearMarkedNodes"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Clear Marked Functions"
-            ToolTip="Clear all marked functions" />
+            ToolTip="Clear all temporarily marked functions" />
           <Separator />
 
           <MenuItem

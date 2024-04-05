@@ -18,9 +18,7 @@ namespace IRExplorerUI.OptionsPanels;
 public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   private FlameGraphSettings settings_;
   public override double DefaultHeight => 450;
-  public const double MinimumHeight = 200;
-  public const double DefaultWidth = 350;
-  public const double MinimumWidth = 350;
+  public override double DefaultWidth => 400;
 
   public FlameGraphOptionsPanel() {
     InitializeComponent();
@@ -52,7 +50,7 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     var list = new ObservableCollectionRefresh<FlameGraphSettings.NodeMarkingStyle>(settings_.ModuleColors);
     ModuleList.ItemsSource = list;
   }
-  
+
   private void ReloadFunctionList() {
     var list = new ObservableCollectionRefresh<FlameGraphSettings.NodeMarkingStyle>(settings_.FunctionColors);
     FunctionList.ItemsSource = list;

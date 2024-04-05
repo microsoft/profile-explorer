@@ -16,6 +16,7 @@
     <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult" Executed="PreviousSearchResultExecuted" />
     <CommandBinding Command="local:CallTreeCommand.NextSearchResult" Executed="NextSearchResultExecuted" />
     <CommandBinding Command="local:CallTreeCommand.ClearSearch" Executed="ClearSearchExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.FocusSearch" Executed="FocusSearchExecuted" />
   </irExplorerUi:ToolPanelControl.CommandBindings>
 
   <irExplorerUi:ToolPanelControl.InputBindings>
@@ -29,6 +30,10 @@
       Command="local:CallTreeCommand.PreviousSearchResult"
       Modifiers="Shift" />
     <KeyBinding Key="F3" Command="local:CallTreeCommand.NextSearchResult" />
+    <KeyBinding
+      Key="F"
+      Command="local:CallTreeCommand.FocusSearch"
+      Modifiers="Ctrl" />
   </irExplorerUi:ToolPanelControl.InputBindings>
 
   <irExplorerUi:ToolPanelControl.Resources>
@@ -106,7 +111,7 @@
           <Button
             Command="irExplorerUi:GraphCommand.GraphResetWidth"
             CommandTarget="{Binding ElementName=GraphHost}"
-            ToolTip="Zoom the graph view to 100% (Ctrl+R)">
+            ToolTip="Zoom the graph view to 100% (Ctrl+0)">
             <StackPanel Orientation="Horizontal">
               <Image Source="{StaticResource ResetWidthIcon}" Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Reset" />
@@ -182,6 +187,7 @@
               Margin="0,0,0,0"
               Padding="0,0,0,0"
               OverridesDefaultStyle="True"
+              Background="{Binding Path=HasEnabledMarkedModules, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
               SubmenuOpened="ModuleMenu_OnSubmenuOpened">
               <MenuItem.Header>
                 <StackPanel Orientation="Horizontal">
@@ -228,6 +234,7 @@
               x:Name="FunctionMenu"
               Padding="0,0,0,0"
               OverridesDefaultStyle="True"
+              Background="{Binding Path=HasEnabledMarkedFunctions, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
               SubmenuOpened="FunctionMenu_OnSubmenuOpened">
               <MenuItem.Header>
                 <StackPanel Orientation="Horizontal">
@@ -290,9 +297,9 @@
             VerticalAlignment="Center"
             FontWeight="Medium"
             Foreground="Indigo"
-            Text="{Binding RootNode.FunctionName, Converter={StaticResource MillisecondTimeConverter}}"
+            Text="{Binding RootNode.FunctionName}"
             TextTrimming="CharacterEllipsis"
-            ToolTip="{Binding RootNode.FunctionName, Converter={StaticResource MillisecondTimeConverter}}"
+            ToolTip="{Binding RootNode.FunctionName, Converter={StaticResource LongFunctionNameConverter}}"
             Visibility="{Binding HasRootNode, Converter={StaticResource BoolToVisibilityConverter}}" />
           <Button
             x:Name="RootNodeResetButton"

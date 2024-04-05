@@ -334,6 +334,28 @@ public partial class ProfileData {
     return null;
   }
 
+  public List<int> FindModuleIds(Func<string, bool> matchCheck) {
+    var ids = new List<int>();
+    foreach (var module in Modules) {
+      if (matchCheck( module.Value.ModuleName)) {
+        ids.Add(module.Key);
+      }
+    }
+
+    return ids;
+  }
+
+  public TimeSpan FindModulesWeight(Func<string, bool> matchCheck) {
+    var ids = FindModuleIds(matchCheck);
+    var weight = TimeSpan.Zero;
+
+    foreach (var id in ids) {
+      weight += ModuleWeights.GetValueOrDefault(id);
+    }
+
+    return weight;
+  }
+
   public ProcessingResult FilterFunctionProfile(ProfileSampleFilter filter) {
     //? TODO: Split ProfileData into a part that has the samples and other info that doesn't change,
     //? while the rest is more like a processing result similar to FuncProfileData

@@ -34,6 +34,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private ISession session;
   private ParsedIRTextSection parsedSection_;
   private PreviewPopupSettings settings_;
+  private bool showHistoryButtons_;
 
   public IRDocumentPopup(Point position, UIElement owner, ISession session, PreviewPopupSettings settings) {
     Debug.Assert(settings != null);
@@ -73,6 +74,12 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       parsedSection_ = s;
       UpdatePopupTitle();
     };
+    ProfileTextView.FunctionHistoryChanged += (sender, args) => {
+      ShowHistoryButtons = ProfileTextView.HasPreviousFunctions ||
+                           ProfileTextView.HasNextFunctions;
+      OnPropertyChanged(nameof(HasNextFunctions));
+      OnPropertyChanged(nameof(HasPreviousFunctions));
+    };
   }
 
   protected override void SetPanelAccentColor(Color color) {
@@ -105,6 +112,16 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   public string TitleSuffix { get; set; }
   public string DescriptionPrefix { get; set; }
   public string DescriptionSuffix { get; set; }
+
+  public bool ShowHistoryButtons {
+    get => showHistoryButtons_;
+    set {
+      SetField(ref showHistoryButtons_, value);
+    }
+  }
+
+  public bool HasPreviousFunctions => ProfileTextView.HasPreviousFunctions;
+  public bool HasNextFunctions => ProfileTextView.HasNextFunctions;
 
   public bool ShowAssembly {
     get => !showSourceFile_;
@@ -368,6 +385,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
       if (!sourceInfo.IsUnknown) {
         await ProfileTextView.LoadSourceFile(sourceInfo, parsedSection_.Section, filter);
+        await ProfileTextView.LoadSourceFile(sourceInfo, parsedSection_.Section, filter);
       }
       else {
         var failureText = $"Could not find debug info for function:\n{function.Name}";
@@ -379,6 +397,14 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       ProfileTextView.Initialize(App.Settings.DocumentSettings);
       await ProfileTextView.LoadSection(parsedSection_, filter);
     }
+  }
+
+  private async void NextButton_Click(object sender, RoutedEventArgs e) {
+    await ProfileTextView.LoadNextSection();
+  }
+
+  private async void BackButton_Click(object sender, RoutedEventArgs e) {
+    await ProfileTextView.LoadPreviousSection();
   }
 }
 

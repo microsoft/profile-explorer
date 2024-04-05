@@ -36,6 +36,8 @@ public struct TextSearchResult {
 }
 
 public class TextSearcher {
+  private Regex cachedRegex_;
+
   public static bool IsWholeWord(ReadOnlySpan<char> matchedText, ReadOnlySpan<char> text, int startOffset) {
     if (startOffset > 0) {
       if (IsWordLetter(text[startOffset - 1])) {
@@ -119,6 +121,16 @@ public class TextSearcher {
   public static bool Contains(string text, string searchedText,
                               TextSearchKind searchKind = TextSearchKind.Default) {
     return Contains(text.AsMemory(), searchedText.AsMemory(), searchKind);
+  }
+
+  public bool Includes(string text, string searchedText,
+                       TextSearchKind searchKind = TextSearchKind.Default) {
+    if (searchKind.HasFlag(TextSearchKind.Regex)) {
+      cachedRegex_ ??= CreateRegex(searchedText, searchKind);
+    }
+
+    (int offset, _) = IndexOf(text.AsMemory(), searchedText.AsMemory(), 0, searchKind, cachedRegex_);
+    return offset != -1;
   }
 
   public static List<TextSearchResult> AllIndexesOf(ReadOnlyMemory<char> text, string searchedText,
