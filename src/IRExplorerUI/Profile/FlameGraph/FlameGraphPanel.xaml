@@ -226,7 +226,6 @@
             ToolTip="Color functions based on the module name">
             <MenuItem
               x:Name="FunctionMenu"
-              Margin="0,0,0,0"
               Padding="0,0,0,0"
               OverridesDefaultStyle="True"
               SubmenuOpened="FunctionMenu_OnSubmenuOpened">

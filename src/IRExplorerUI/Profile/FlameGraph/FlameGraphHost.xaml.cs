@@ -65,7 +65,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     get => enableSingleNodeActions_;
     set => SetField(ref enableSingleNodeActions_, value);
   }
-  
+
   public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.CallTree);
   });
@@ -87,7 +87,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         text += Session.CompilerInfo.NameProvider.GetFunctionName(node.Function);
       }
     }
-    
+
     Clipboard.SetText(text);
   });
   public RelayCommand<object> CopyDemangledFunctionNameCommand => new RelayCommand<object>(async obj => {
@@ -128,11 +128,11 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       }
     }
   }
-  
+
   public RelayCommand<object> MarkInstanceCommand => new RelayCommand<object>(async obj => {
     MarkSelectedNodes(obj, (node, color) => GraphViewer.MarkNode(node, GraphViewer.MarkedColoredNodeStyle(color)));
   });
-  
+
   public RelayCommand<object> MarkAllInstancesCommand => new RelayCommand<object>(async obj => {
     MarkSelectedNodes(obj, (node, color) => MarkFunctionInstances(node.Function, GraphViewer.MarkedColoredNodeStyle(color)));
   });
@@ -143,10 +143,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   });
   public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
     MarkSelectedNodes(obj, (node, color) => settings_.AddFunctionColor(node.FunctionName, color));
-    settings_.UseModuleColors = true;
+    settings_.UseFunctionColors = true;
     SettingsUpdated(settings_);
   });
-  
+
   public RelayCommand<object> MarkTimelineCommand => new RelayCommand<object>(async obj => {
     if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
       GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
