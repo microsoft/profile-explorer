@@ -165,7 +165,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     profileFilter_ = new ProfileSampleFilter();
     historyManager_ = new ProfileHistoryManager(() =>
       new ProfileFunctionState(TextView.Section, TextView.Function,
-      TextView.SectionText, profileFilter_), () => { });
+      TextView.SectionText, profileFilter_), () => {
+      FunctionHistoryChanged?.Invoke(this, EventArgs.Empty);
+    });
   }
 
   private void SetupEvents() {
@@ -177,7 +179,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.TextRegionFolded += TextViewOnTextRegionFolded;
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
     TextView.PreviewMouseDown += TextView_PreviewMouseDown;
-    this.PreviewKeyDown += TextView_PreviewKeyDown;
+    PreviewKeyDown += TextView_PreviewKeyDown;
     TextView.FunctionCallOpen += TextViewOnFunctionCallOpen;
   }
 
@@ -214,7 +216,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private async Task LoadPreviousSection() {
+  public async Task LoadPreviousSection() {
     var state = historyManager_.PopPreviousState();
 
     if (state != null) {
@@ -222,7 +224,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private async Task LoadNextSection() {
+  public async Task LoadNextSection() {
     var state = historyManager_.PopNextState();
 
     if (state != null) {
@@ -255,6 +257,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public event EventHandler<string> DescriptionSuffixChanged;
   public event EventHandler<ParsedIRTextSection> LoadedFunctionChanged;
   public event EventHandler<int> LineSelected;
+  public event EventHandler FunctionHistoryChanged;
   public event PropertyChangedEventHandler PropertyChanged;
 
   public ISession Session { get; set; }
@@ -309,6 +312,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     get => selectedLineBrush_;
     set => SetField(ref selectedLineBrush_, value);
   }
+
+  public bool HasPreviousFunctions => historyManager_.HasPreviousStates;
+  public bool HasNextFunctions => historyManager_.HasNextStates;
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
