@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -406,6 +407,7 @@ public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
 }
 
 public class ModuleEx {
+  public bool IsAllEntry { get; set; }
   public string Name { get; set; }
   public Brush BackColor { get; set; }
   public double ExclusivePercentage { get; set; }
@@ -1205,6 +1207,14 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
            moduleSummaries_.Contains(summary);
   }
 
+  public IRTextSummary FindModuleSummary(string name) {
+    if (summary_.ModuleName == name) {
+      return summary_;
+    }
+
+    return moduleSummaries_.Find(item => item.ModuleName == name);
+  }
+
   public void RegisterSectionListScrollEvent() {
     if (sectionsScrollViewer_ != null) {
       return;
@@ -1557,15 +1567,18 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
     // Add one entry to represent all modules.
     double allWeightPercentage = profile.ScaleFunctionWeight(profile.ProfileWeight);
-    modulesEx.Add(new ModuleEx {
+    var allModules = new ModuleEx {
       Name = "All",
+      IsAllEntry = true,
       ExclusivePercentage = allWeightPercentage,
       ExclusiveWeight = profile.ProfileWeight
-    });
+    };
+    modulesEx.Add(allModules);
 
     var modulesFilter = new ListCollectionView(modulesEx);
     ModulesList.ItemsSource = modulesFilter;
     moduleValueSorter_.SortByField(ModuleFieldKind.Name);
+    ModulesList.SelectedItem = allModules;
 
     OptionalDataColumnVisible = true;
     OptionalDataColumnName = "Time (self)";
@@ -2546,16 +2559,37 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     SwitchModule(sender);
   }
 
+  private void ModulesList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
+    if (ModulesList.SelectedItem is ModuleEx moduleEx) {
+      SelectModule(moduleEx);
+    }
+  }
+
+  private void SelectModule(ModuleEx moduleEx) {
+    if (moduleEx != null) {
+      ClearMarkedFunctions();
+
+      if (!moduleEx.IsAllEntry) {
+        var summary = FindModuleSummary(moduleEx.Name);
+
+        if (summary != null) {
+          MarkFunctions(summary.Functions);
+        }
+      }
+    }
+  }
+
   private void SwitchModule(object sender) {
     var moduleEx = ((ListViewItem)sender).Content as ModuleEx;
 
     if (moduleEx != null) {
       ApplyModuleFilter(moduleEx);
+      ClearMarkedFunctions();
     }
   }
 
   private void ApplyModuleFilter(ModuleEx moduleEx) {
-    if (moduleEx.Name == "All") {
+    if (moduleEx.IsAllEntry) {
       activeModuleFilter_ = null;
     }
     else {

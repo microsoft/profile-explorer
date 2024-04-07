@@ -66,7 +66,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     get => settings_;
     set {
       settings_ = value;
-      GraphHost.SettingsUpdated(value);
+      ReloadSettings();
       OnPropertyChanged();
     }
   }
@@ -228,6 +228,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     GraphHost.NodesDeselected += GraphHost_NodesDeselected;
     GraphHost.RootNodeChanged += GraphHostOnRootNodeChanged;
     GraphHost.RootNodeCleared += GraphHostOnRootNodeCleared;
+    GraphHost.MarkingChanged += (sender, args) => UpdateMarkingUI();
 
     // Setup events for the node details view.
     NodeDetailsPanel.NodeInstanceChanged += NodeDetailsPanel_NodeInstanceChanged;
@@ -520,6 +521,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private void ReloadSettings() {
     GraphHost.SettingsUpdated(settings_);
+    UpdateMarkingUI();
+  }
+
+  private void UpdateMarkingUI() {
     OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
     OnPropertyChanged(nameof(HasEnabledMarkedModules));
   }

@@ -56,6 +56,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
   private double positionLineX_;
   private bool startedSelection_;
   private bool hasSelection_;
+  private bool hasAllSelection_;
   private TimeSpan selectionStartTime_;
   private TimeSpan selectionEndTime_;
   private TimeSpan filterStartTime_;
@@ -142,6 +143,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
       }
     }
   }
+
+  public bool HasAllTimeSelected => hasSelection_ && hasAllSelection_;
 
   public int MaxCpuUsage {
     get {
@@ -272,12 +275,14 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     selectionEndTime_ = range.EndTime - startTime_;
     hasSelection_ = true;
     startedSelection_ = false;
+    hasAllSelection_ = false;
     UpdateSelectionState();
   }
 
   public void ClearSelectedTimeRange() {
     if (hasSelection_) {
       hasSelection_ = false;
+      hasAllSelection_ = false;
       startedSelection_ = false;
       UpdateSelectionState();
     }
@@ -458,14 +463,12 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     var time = PositionToTime(e.GetPosition(this).X);
 
     if (hasSelection_) {
-      if (time >= selectionStartTime_ && time <= selectionEndTime_) {
-        if (e.ClickCount > 1) { // Check for double-click.
-          ApplyTimeRangeFilter();
-        }
-
+      if (e.ClickCount > 1) { // Check for double-click.
+        ApplyTimeRangeFilter();
         return;
       }
 
+      // Deselect even if click inside existing selection.
       hasSelection_ = false;
       UpdateSelectionState();
     }
@@ -480,6 +483,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     ClearedTimePoint?.Invoke(this, EventArgs.Empty);
     startedSelection_ = true;
+    hasAllSelection_ = false;
     selectionStartTime_ = time;
     selectionEndTime_ = selectionStartTime_;
     e.Handled = true;
@@ -528,6 +532,12 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
     e.Handled = true;
+  }
+
+  public void SelectAllTime() {
+    SelectTimeRange(new SampleTimeRangeInfo(startTime_, endTime_, 0, 0, 0));
+    hasAllSelection_ = true;
+    SelectedTimeRange?.Invoke(this, GetSelectedTimeRange());
   }
 
   private void ActivityView_MouseLeave(object sender, MouseEventArgs e) {
@@ -809,19 +819,19 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     foreach (var markedSamples in markedSamples_) {
       int index = markedSamples.Samples.BinarySearch(querySample,
-                                                     Comparer<SampleIndex>.Create((a, b) => {
-                                                       var timeDiff = a.Time - startTime_ - b.Time;
+        Comparer<SampleIndex>.Create((a, b) => {
+          var timeDiff = a.Time - startTime_ - b.Time;
 
-                                                       if (timeDiff > closeTimeDiff) {
-                                                         return 1;
-                                                       }
+          if (timeDiff > closeTimeDiff) {
+            return 1;
+          }
 
-                                                       if (timeDiff < -closeTimeDiff) {
-                                                         return -1;
-                                                       }
+          if (timeDiff < -closeTimeDiff) {
+            return -1;
+          }
 
-                                                       return 0;
-                                                     }));
+          return 0;
+        }));
 
       if (index >= 0) {
         return markedSamples;

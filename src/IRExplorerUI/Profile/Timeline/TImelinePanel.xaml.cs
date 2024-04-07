@@ -351,9 +351,12 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         changed = UpdateThreadFilter(view, true);
 
         foreach (var otherView in threadActivityViews_) {
-          if (otherView != view &&
-              UpdateThreadFilter(otherView, false)) {
-            changed = true;
+          if (otherView != view) {
+            otherView.ActivityHost.ClearSelectedTimeRange();
+
+            if (UpdateThreadFilter(otherView, false)) {
+              changed = true;
+            }
           }
         }
 
@@ -378,6 +381,22 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
         break;
       }
+      case ThreadActivityAction.SelectThread: {
+        // Select the entire thread and deselect range in other ones.
+        bool wasSelected = view.ActivityHost.HasAllTimeSelected;
+
+        foreach (var otherView in threadActivityViews_) {
+          otherView.ActivityHost.ClearSelectedTimeRange();
+        }
+
+        // Click if already selected deselects.
+        if (!wasSelected) {
+          view.ActivityHost.SelectAllTime();
+        }
+
+        break;
+      }
+      default: throw new NotImplementedException();
     }
 
     changingThreadFiltering_ = false;

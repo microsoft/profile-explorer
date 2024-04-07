@@ -140,11 +140,13 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     MarkSelectedNodes(obj, (node, color) => settings_.AddModuleColor(node.ModuleName, color));
     settings_.UseModuleColors = true;
     SettingsUpdated(settings_);
+    MarkingChanged?.Invoke(this, EventArgs.Empty);
   });
   public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
     MarkSelectedNodes(obj, (node, color) => settings_.AddFunctionColor(node.FunctionName, color));
     settings_.UseFunctionColors = true;
     SettingsUpdated(settings_);
+    MarkingChanged?.Invoke(this, EventArgs.Empty);
   });
 
   public RelayCommand<object> MarkTimelineCommand => new RelayCommand<object>(async obj => {
@@ -213,6 +215,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler MarkingChanged;
 
   private enum FlameGraphStateKind {
     Default,

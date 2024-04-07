@@ -64,7 +64,7 @@
             <Image
                 Width="16"
                 Height="16"
-                Style="{StaticResource DisabledImageStyle}" 
+                Style="{StaticResource DisabledImageStyle}"
                 Source="{StaticResource BlockIcon}" />
           </Grid>
           <TextBlock
