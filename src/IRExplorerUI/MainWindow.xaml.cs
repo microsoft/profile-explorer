@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -200,6 +201,35 @@ public partial class MainWindow : Window, ISession {
   protected override void OnSourceInitialized(EventArgs e) {
     base.OnSourceInitialized(e);
     WindowPlacement.SetPlacement(this, App.Settings.MainWindowPlacement);
+
+    // Handle touchpad horizontal scroll event, which is not supported
+    // in WPF by default. This sends the event to any ScrollViewer.
+    var source = PresentationSource.FromVisual(this);
+    ((HwndSource) source)?.AddHook(Hook);
+  }
+
+  private IntPtr Hook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) {
+    switch (msg) {
+      case NativeMethods.WM_MOUSEHWHEEL:
+        int tilt = (short)NativeMethods.HIWORD(wParam);
+        OnMouseTilt(tilt);
+        return (IntPtr)1;
+    }
+
+    return IntPtr.Zero;
+  }
+
+  private void OnMouseTilt(int tilt) {
+    UIElement element = Mouse.DirectlyOver as UIElement;
+
+    if (element == null) return;
+
+    ScrollViewer scrollViewer = element is ScrollViewer viewer ?
+      viewer : Utils.FindParent<ScrollViewer>(element);
+
+    if (scrollViewer != null) {
+      scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset + tilt);
+    }
   }
 
   private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e) {

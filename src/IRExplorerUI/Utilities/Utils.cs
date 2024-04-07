@@ -701,7 +701,7 @@ static class Utils {
     return foundChild;
   }
 
-  public static T FindParent<T>(DependencyObject child, string parentName)
+  public static T FindParent<T>(DependencyObject child, string parentName = null)
     where T : DependencyObject {
     if (child == null) {
       return null;
@@ -713,7 +713,7 @@ static class Utils {
     do {
       var element = currentParent as FrameworkElement;
 
-      if (element?.Name == parentName && element is T) {
+      if (element is T && (parentName == null || element?.Name == parentName)) {
         foundParent = (T)currentParent;
         break;
       }
