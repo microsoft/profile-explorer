@@ -28,12 +28,29 @@ public class ColorPalette {
     }
   }
 
+  public ColorPalette(IEnumerable<string> colors, string name = "", string description = "") {
+    Name = name;
+    Description = description;
+    Colors = new List<Color>();
+    Brushes = new List<Brush>();
+
+    foreach (var color in colors) {
+      Colors.Add(Utils.ColorFromString(color));
+    }
+
+    foreach (var color in Colors) {
+      Brushes.Add(color.AsBrush());
+    }
+  }
+
   public static List<ColorPalette> BuiltinPalettes {
     get {
       var list = new List<ColorPalette> {
         Profile,
         ProfileManaged,
         ProfileKernel,
+        LightPastels,
+        Pastels,
       };
 
       for (int i = 0; i < ColorUtils.LightPastelColors.Length; i++) {
@@ -47,10 +64,31 @@ public class ColorPalette {
     }
   }
 
+  public static List<ColorPalette> GradientBuiltinPalettes =>
+    new List<ColorPalette> {
+      LightPastels,
+      Pastels,
+      LightPastels2,
+      LightPastels3,
+      LightPastels4,
+      LightPastels5,
+      Pastels2,
+      Profile,
+      ProfileManaged,
+      ProfileKernel,
+    };
+
+  public static List<ColorPalette>[] BuiltinPaletteSets = new List<ColorPalette>[] {
+    BuiltinPalettes,
+    GradientBuiltinPalettes
+  };
+
   public static ColorPalette GetPalette(string name) {
-    foreach (var palette in BuiltinPalettes) {
-      if (palette.Name == name) {
-        return palette;
+    foreach (var set in BuiltinPaletteSets) {
+      foreach (var palette in set) {
+        if (palette.Name == name) {
+          return palette;
+        }
       }
     }
 
@@ -59,40 +97,74 @@ public class ColorPalette {
 
   public static ColorPalette Profile =>
     new ColorPalette(new[] {
-      Utils.ColorFromString("#FFF4F1E8"),
-      Utils.ColorFromString("#FFFCF2D6"),
-      Utils.ColorFromString("#FFFCEED6"),
-      Utils.ColorFromString("#FFFCEAD6"),
-      Utils.ColorFromString("#FFFCE6D6"),
-      Utils.ColorFromString("#FFFCE2D6"),
-      Utils.ColorFromString("#FFFCDED6"),
-      Utils.ColorFromString("#FFFCDAD7"),
-      Utils.ColorFromString("#FFFCD7D7")
+      "#FFF4F1E8",
+      "#FFFCF2D6",
+      "#FFFCEED6",
+      "#FFFCEAD6",
+      "#FFFCE6D6",
+      "#FFFCE2D6",
+      "#FFFCDED6",
+      "#FFFCDAD7",
+      "#FFFCD7D7"
     }, "Profile");
   public static ColorPalette ProfileManaged =>
     new ColorPalette(new[] {
-      Utils.ColorFromString("#FFCCDAF2"),
-      Utils.ColorFromString("#FFD4DAEE"),
-      Utils.ColorFromString("#FFDCDAEC"),
-      Utils.ColorFromString("#FFE3DBEA"),
-      Utils.ColorFromString("#FFE9DBE8"),
-      Utils.ColorFromString("#FFEEDCE8"),
-      Utils.ColorFromString("#FFF4DEE7"),
-      Utils.ColorFromString("#FFF7E0E7")
+      "#FFCCDAF2",
+      "#FFD4DAEE",
+      "#FFDCDAEC",
+      "#FFE3DBEA",
+      "#FFE9DBE8",
+      "#FFEEDCE8",
+      "#FFF4DEE7",
+      "#FFF7E0E7"
     }, "ProfileManaged");
   public static ColorPalette ProfileKernel =>
     new ColorPalette(new[] {
-      Utils.ColorFromString("#FFCFF7FB"),
-      Utils.ColorFromString("#FFD0F1FB"),
-      Utils.ColorFromString("#FFD0ECFB"),
-      Utils.ColorFromString("#FFD0E7FB"),
-      Utils.ColorFromString("#FFD1E2FB"),
-      Utils.ColorFromString("#FFD1DDFB"),
-      Utils.ColorFromString("#FFD1D8FB"),
-      Utils.ColorFromString("#FFD2D3FB")
+      "#FFCFF7FB",
+      "#FFD0F1FB",
+      "#FFD0ECFB",
+      "#FFD0E7FB",
+      "#FFD1E2FB",
+      "#FFD1DDFB",
+      "#FFD1D8FB",
+      "#FFD2D3FB"
     }, "ProfileKernel");
+  public static ColorPalette Pastels =>
+    new ColorPalette(ColorUtils.PastelColors, "Pastels");
+  public static ColorPalette Pastels2 =>
+    new ColorPalette(new[] {
+      "#E2E2DF","#D2D2CF","#E2CFC4","#F7D9C4",
+      "#FAEDCB","#C9E4DE","#C6DEF1","#DBCDF0",
+      "#F2C6DE","#F9C6C9"
+    }, "Pastels2");
+  public static ColorPalette LightPastels =>
+    new ColorPalette(ColorUtils.LightPastelColors, "LightPastels");
+  public static ColorPalette LightPastels2 =>
+    new ColorPalette(new[] {
+      "#F0D7DF", "#F9E0E2", "#F8EAEC", "#F7DDD9",
+      "#F7E6DA", "#E3E9DD", "#C4DBD9", "#D4E5E3",
+      "#CAE0E4", "#C8C7D6"
+    }, "LightPastels2");
+  public static ColorPalette LightPastels3 =>
+    new ColorPalette(new[] {
+      "#EAE4E9","#FFF1E6","#FDE2E4","#FAD2E1",
+      "#E2ECE9","#BEE1E6","#F0EFEB","#DFE7FD",
+    }, "LightPastels3");
+  public static ColorPalette LightPastels4 =>
+    new ColorPalette(new[] {
+      "#EDDCD2","#FFF1E6","#FDE2E4","#FAD2E1",
+      "#C5DEDD","#DBE7E4","#F0EFEB","#D6E2E9",
+      "#BCD4E6","#99C1DE"
+    }, "LightPastels4");
+  public static ColorPalette LightPastels5 =>
+    new ColorPalette(new[] {
+      "#FEC5BB","#FCD5CE","#FAE1DD","#F8EDEB",
+      "#E8E8E4","#D8E2DC","#ECE4DB","#FFE5D9",
+      "#FFD7BA","#FEC89A"
+    }, "LightPastels5");
   public static ColorPalette DarkHue => MakeHue(0.9f, 0.2f, 10);
   public static ColorPalette LightHue => MakeHue(0.9f, 0.5f, 10);
+
   [ProtoMember(1)]
   public string Name { get; set; }
   [ProtoMember(2)]

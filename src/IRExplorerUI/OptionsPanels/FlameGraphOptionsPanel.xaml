@@ -108,22 +108,46 @@
             Content="Use compact mode"
             IsChecked="{Binding UseCompactMode, Mode=TwoWay}" />
           <CheckBox
-            x:Name="KernelCheckBox"
+            x:Name="ModuleColorsCheckBox"
             Margin="0,2,0,2"
-            Content="Use different color palette for kernel code"
-            IsChecked="{Binding UseKernelColorPalette, Mode=TwoWay}" />
-          <CheckBox
-            x:Name="ManagedCheckBox"
-            Margin="0,2,0,2"
-            Content="Use different color palette for managed (.NET) code"
-            IsChecked="{Binding UseManagedColorPalette, Mode=TwoWay}" />
+            Content="Pick function color based on module"
+            IsChecked="{Binding UseAutoModuleColors, Mode=TwoWay}"
+            ToolTip="Automatically pick a function color based on the module name" />
+          <StackPanel Orientation="Horizontal" Margin="0,2,0,0"
+                      IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked}">
+            <controls:ColorPaletteSelector
+              x:Name="ModulePaletteSelector"
+              Width="120"
+              Height="20"
+              HorizontalAlignment="Left"
+              PreviewWidth="200"
+              SelectedPalette="{Binding ModulesColorPalette, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
+            <TextBlock
+              Margin="8,0,0,0"
+              VerticalAlignment="Center"
+              Text="Module color palette" />
+          </StackPanel>
 
           <Separator Margin="0,4,0,4" />
           <TextBlock
             Margin="0,0,0,4"
             FontWeight="Medium"
             Text="Color Palettes" />
-          <StackPanel Orientation="Horizontal">
+          <CheckBox
+            x:Name="KernelCheckBox"
+            Margin="0,4,0,2"
+            IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}"
+            Content="Use different color palette for kernel code"
+            IsChecked="{Binding UseKernelColorPalette, Mode=TwoWay}" />
+          <CheckBox
+            x:Name="ManagedCheckBox"
+            Margin="0,2,0,2"
+            IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}"
+            Content="Use different color palette for managed (.NET) code"
+            IsChecked="{Binding UseManagedColorPalette, Mode=TwoWay}" />
+          <StackPanel Orientation="Horizontal"
+                      Margin="0,4,0,0"
+                      IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}">
             <controls:ColorPaletteSelector
               x:Name="DefaultPaletteSelector"
               Width="120"
@@ -402,11 +426,6 @@
         Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <TextBlock FontWeight="Medium" Text="Module marking" />
-          <CheckBox
-            Margin="0,4,0,2"
-            Content="Pick function color based on module"
-            IsChecked="{Binding UseAutoModuleColors, Mode=TwoWay}"
-            ToolTip="Automatically pick a function color based on the module name" />
           <CheckBox
             x:Name="ModuleCheckBox"
             Margin="0,2,0,2"

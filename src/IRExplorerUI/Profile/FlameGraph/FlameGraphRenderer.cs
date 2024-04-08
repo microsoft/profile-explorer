@@ -30,7 +30,6 @@ public class FlameGraphRenderer {
   private Typeface font_;
   private Typeface nameFont_;
   private double fontSize_;
-  private Dictionary<ProfileCallTreeNodeKind, ColorPalette> palettes_;
   private Pen defaultBorder_;
   private Brush placeholderTileBrush_;
   private DrawingVisual graphVisual_;
@@ -61,17 +60,7 @@ public class FlameGraphRenderer {
   }
 
   private void ReloadSettings() {
-    palettes_ = new Dictionary<ProfileCallTreeNodeKind, ColorPalette> {
-      [ProfileCallTreeNodeKind.Unset] = ColorPalette.GetPalette(settings_.DefaultColorPalette),
-      [ProfileCallTreeNodeKind.NativeUser] = ColorPalette.GetPalette(settings_.DefaultColorPalette),
-      [ProfileCallTreeNodeKind.NativeKernel] = settings_.UseKernelColorPalette ?
-        ColorPalette.GetPalette(settings_.KernelColorPalette) :
-        ColorPalette.GetPalette(settings_.DefaultColorPalette),
-      [ProfileCallTreeNodeKind.Managed] = settings_.UseManagedColorPalette ?
-        ColorPalette.GetPalette(settings_.ManagedColorPalette) :
-        ColorPalette.GetPalette(settings_.DefaultColorPalette)
-    };
-
+    settings_.CachePalettes();
     defaultBorder_ = ColorPens.GetPen(settings_.NodeBorderColor, 0.5);
     font_ = new Typeface("Segoe UI"); //? TODO: Option
     nameFont_ = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Medium,
@@ -148,9 +137,7 @@ public class FlameGraphRenderer {
   }
 
   public HighlightingStyle GetNodeStyle(FlameGraphNode node) {
-    var palette = node.HasFunction ? palettes_[node.CallTreeNode.Kind] : palettes_[ProfileCallTreeNodeKind.Unset];
-    int colorIndex = node.Depth % palette.Count;
-    var backColor = palette.PickBrush(palette.Count - colorIndex - 1);
+    var backColor = settings_.GetNodeDefaultBrush(node);
 
     // Override color based on function name or module name,
     // with function name marking having priority.
@@ -166,11 +153,10 @@ public class FlameGraphRenderer {
       }
       else if (settings_.UseAutoModuleColors) {
         // Use a color based on the module name.
-        uint hash = (uint)node.ModuleName.GetStableHashCode();
-        backColor = ColorUtils.GenerateLightPastelBrush(hash);
+        backColor = settings_.GetAutoModuleBrush(node.ModuleName);
       }
     }
-    
+
     return new HighlightingStyle(backColor, defaultBorder_);
   }
 

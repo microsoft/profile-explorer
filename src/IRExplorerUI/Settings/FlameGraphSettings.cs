@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Media;
+using IRExplorerUI.Profile;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -67,6 +68,8 @@ public class FlameGraphSettings : SettingsBase {
   }
 
   public static readonly int DefaultNodePopupDuration = (int)HoverPreview.HoverDuration.TotalMilliseconds;
+  private Dictionary<ProfileCallTreeNodeKind, ColorPalette> palettes_;
+  private ColorPalette modulesPalette_;
 
   public FlameGraphSettings() {
     Reset();
@@ -130,9 +133,39 @@ public class FlameGraphSettings : SettingsBase {
   public bool UseFunctionColors { get; set; }
   [ProtoMember(29)]
   public List<NodeMarkingStyle> FunctionColors { get; set; }
+  [ProtoMember(30)]
+  public string ModulesColorPalette { get; set; }
 
   public bool GetModuleColor(string name, out Color color) {
     return GetMarkingColor(name, ModuleColors, out color);
+  }
+
+  public bool GetModuleBrush(string name, out Brush brush) {
+    if (GetMarkingColor(name, ModuleColors, out var color)) {
+      brush = ColorBrushes.GetBrush(color);
+      return true;
+    }
+
+    brush = Brushes.Transparent;
+    return false;
+  }
+
+  public Brush GetAutoModuleBrush(string name) {
+    CachePalettes();
+
+    if (modulesPalette_ != null) {
+      int hash = name.GetStableHashCode();
+      return modulesPalette_.PickBrush(hash % modulesPalette_.Count);
+    }
+
+    return Brushes.Transparent;
+  }
+
+  public Brush GetNodeDefaultBrush(FlameGraphNode node) {
+    CachePalettes();
+    var palette = node.HasFunction ? palettes_[node.CallTreeNode.Kind] : palettes_[ProfileCallTreeNodeKind.Unset];
+    int colorIndex = node.Depth % palette.Count;
+    return palette.PickBrush(palette.Count - colorIndex - 1);
   }
 
   public bool GetFunctionColor(string name, out Color color) {
@@ -187,6 +220,7 @@ public class FlameGraphSettings : SettingsBase {
     DefaultColorPalette = ColorPalette.Profile.Name;
     KernelColorPalette = ColorPalette.ProfileKernel.Name;
     ManagedColorPalette = ColorPalette.ProfileManaged.Name;
+    ModulesColorPalette = ColorPalette.LightPastels.Name;
     SearchResultMarkingColor = Colors.Khaki;
     NodeTextColor = Colors.DarkBlue;
     NodeBorderColor = Colors.Black;
@@ -210,6 +244,25 @@ public class FlameGraphSettings : SettingsBase {
     return StateSerializer.Deserialize<FlameGraphSettings>(serialized);
   }
 
+  public void CachePalettes() {
+    if (palettes_ == null) {
+      palettes_ = new Dictionary<ProfileCallTreeNodeKind, ColorPalette> {
+        [ProfileCallTreeNodeKind.Unset] = ColorPalette.GetPalette(DefaultColorPalette),
+        [ProfileCallTreeNodeKind.NativeUser] = ColorPalette.GetPalette(DefaultColorPalette),
+        [ProfileCallTreeNodeKind.NativeKernel] = UseKernelColorPalette ?
+          ColorPalette.GetPalette(KernelColorPalette) :
+          ColorPalette.GetPalette(DefaultColorPalette),
+        [ProfileCallTreeNodeKind.Managed] = UseManagedColorPalette ?
+          ColorPalette.GetPalette(ManagedColorPalette) :
+          ColorPalette.GetPalette(DefaultColorPalette)
+      };
+    }
+
+    if (modulesPalette_ == null && UseAutoModuleColors) {
+      modulesPalette_ = ColorPalette.GetPalette(ModulesColorPalette);
+    }
+  }
+
   public override bool Equals(object obj) {
     return obj is FlameGraphSettings settings &&
            PrependModuleToFunction == settings.PrependModuleToFunction &&
@@ -224,6 +277,7 @@ public class FlameGraphSettings : SettingsBase {
            DefaultColorPalette == settings.DefaultColorPalette &&
            KernelColorPalette == settings.KernelColorPalette &&
            ManagedColorPalette == settings.ManagedColorPalette &&
+           ModulesColorPalette == settings.ModulesColorPalette &&
            UseKernelColorPalette == settings.UseKernelColorPalette &&
            UseManagedColorPalette == settings.UseManagedColorPalette &&
            SelectedNodeColor == settings.SelectedNodeColor &&
@@ -256,6 +310,7 @@ public class FlameGraphSettings : SettingsBase {
            $"DefaultColorPalette: {DefaultColorPalette}\n" +
            $"KernelColorPalette: {KernelColorPalette}\n" +
            $"ManagedColorPalette: {ManagedColorPalette}\n" +
+           $"ModulesColorPalette: {ModulesColorPalette}\n" +
            $"UseKernelColorPalette: {UseKernelColorPalette}\n" +
            $"UseManagedColorPalette: {UseManagedColorPalette}\n" +
            $"SelectedNodeColor: {SelectedNodeColor}\n" +

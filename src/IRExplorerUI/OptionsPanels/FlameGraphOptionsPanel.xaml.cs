@@ -25,6 +25,7 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     DefaultPaletteSelector.PalettesSource = ColorPalette.BuiltinPalettes;
     KernelPaletteSelector.PalettesSource = ColorPalette.BuiltinPalettes;
     ManagedPaletteSelector.PalettesSource = ColorPalette.BuiltinPalettes;
+    ModulePaletteSelector.PalettesSource = ColorPalette.GradientBuiltinPalettes;
 
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
     PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
