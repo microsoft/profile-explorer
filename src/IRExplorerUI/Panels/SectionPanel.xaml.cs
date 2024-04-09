@@ -792,6 +792,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
   public event PropertyChangedEventHandler PropertyChanged;
 
+  public bool HasEnabledMarkedFunctions => MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
+  public bool HasEnabledMarkedModules => MarkingSettings.UseModuleColors && MarkingSettings.ModuleColors.Count > 0;
+  public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
+
   //? TODO: Replace all other commands with RelayCommand.
   public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
     await SelectFunctionInPanel(obj, ToolPanelKind.CallTree);
@@ -1272,11 +1276,14 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   public void UpdateMarkedFunctions() {
     if (functions_ != null) {
       UpdateMarkedFunctions(functions_);
+      OnPropertyChanged(nameof(HasEnabledMarkedModules));
+      OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
+      Session.FunctionMarkingChanged(ToolPanelKind.Section);
     }
   }
 
   private void UpdateMarkedFunctions(List<IRTextFunctionEx> functionsEx, bool initial = false) {
-    var fgSettings = App.Settings.FlameGraphSettings;
+    var fgSettings = App.Settings.MarkingSettings;
 
     if (!initial) {
       foreach (var f in functionsEx) {
@@ -3387,4 +3394,64 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     ShowModules = false;
     ShowSections = false;
   }
+  
+  private void ToggleButton_Click(object sender, RoutedEventArgs e) {
+    // Force an update for toolbar buttons.
+    UpdateMarkedFunctions();
+  }
+
+  private void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
+    MarkingSettings.ModuleColors.Clear();
+    UpdateMarkedFunctions();
+  }
+
+  private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
+    MarkingSettings.FunctionColors.Clear();
+    UpdateMarkedFunctions();
+  }
+
+  private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    DocumentUtils.CreateMarkedModulesMenu(ModuleMenu, ModuleMenuItem_OnClick,
+      MarkingSettings, Session);
+  }
+
+  private async void ModuleMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var style = ((MenuItem)sender)?.Tag as FunctionMarkingStyle;
+    MarkingSettings.ModuleColors.Remove(style);
+    UpdateMarkedFunctions();
+  }
+
+  private void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    DocumentUtils.CreateMarkedFunctionsMenu(FunctionMenu, FunctionMenuItem_OnClick,
+      MarkingSettings, Session);
+  }
+  
+  private async void FunctionMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var style = ((MenuItem)sender)?.Tag as FunctionMarkingStyle;
+    MarkingSettings.FunctionColors.Remove(style);
+    UpdateMarkedFunctions();
+  }
+  
+  public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) => markingSettings.AddModuleColor(node.ModuleName, color));
+    markingSettings.UseModuleColors = true;
+    UpdateMarkedFunctions();
+
+  });
+  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) => markingSettings.AddFunctionColor(node.Name, color));
+    markingSettings.UseFunctionColors = true;
+    UpdateMarkedFunctions();
+  });
+  
+  private void MarkSelectedNodes(object obj, Action<IRTextFunction, Color> action) {
+    if (obj is SelectedColorEventArgs e) {
+      foreach (IRTextFunctionEx funcEx in FunctionList.SelectedItems) {
+        action(funcEx.Function, e.SelectedColor);
+      }
+    }
+  }
+
 }

@@ -55,7 +55,7 @@ public class OptionsPanelBase : UserControl, IOptionsPanel, INotifyPropertyChang
   public virtual void OnSettingsChanged(object newSettings) {
   }
 
-  protected virtual void ReloadSettings() {
+  public virtual void ReloadSettings() {
     var temp = Settings;
     Settings = null;
     Settings = temp;

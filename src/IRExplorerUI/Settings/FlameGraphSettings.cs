@@ -13,68 +13,6 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class FlameGraphSettings : SettingsBase {
-  [ProtoContract(SkipConstructor = true)]
-  public class NodeMarkingStyle {
-    private TextSearcher searcher_;
-    private string name_;
-
-    [ProtoMember(1)]
-    public bool IsEnabled { get; set; }
-    [ProtoMember(2)]
-    public string Title { get; set; }
-    
-    [ProtoMember(3)]
-    public string Name {
-      get => name_;
-      set {
-        name_ = value;
-        searcher_ = new TextSearcher(); // Caches precompiled Regex.
-      }
-    }
-
-    [ProtoMember(4)]
-    public Color Color { get; set; }
-    [ProtoMember(5)]
-    public bool IsRegex { get; set; }
-
-    public NodeMarkingStyle(string name, Color color) {
-      Name = name;
-      Color = color;
-      IsEnabled = true;
-    }
-
-    public bool NameMatches(string candidate) {
-      if (!IsEnabled || candidate.Length <= 0 || Name.Length <= 0) {
-        return false;
-      }
-
-      if (IsRegex) {
-        return searcher_.Includes(candidate, Name, TextSearchKind.Regex);
-      }
-      else {
-        return searcher_.Includes(candidate, Name, TextSearchKind.CaseInsensitive);
-      }
-    }
-
-    protected bool Equals(NodeMarkingStyle other) {
-      return Name == other.Name &&
-             IsEnabled == other.IsEnabled &&
-             Title == other.Title &&
-             IsRegex == other.IsRegex &&
-             Color.Equals(other.Color);
-    }
-
-    public override bool Equals(object obj) {
-      if (ReferenceEquals(null, obj))
-        return false;
-      if (ReferenceEquals(this, obj))
-        return true;
-      if (obj.GetType() != this.GetType())
-        return false;
-      return Equals((NodeMarkingStyle)obj);
-    }
-  }
-
   public static readonly int DefaultNodePopupDuration = (int)HoverPreview.HoverDuration.TotalMilliseconds;
   private Dictionary<ProfileCallTreeNodeKind, ColorPalette> palettes_;
   private ColorPalette modulesPalette_;
@@ -131,43 +69,6 @@ public class FlameGraphSettings : SettingsBase {
   public Color NodePercentageColor { get; set; }
   [ProtoMember(24)]
   public Color SearchedNodeColor { get; set; }
-  [ProtoMember(25)]
-  public bool UseAutoModuleColors { get; set; }
-  [ProtoMember(26)]
-  public bool UseModuleColors { get; set; }
-  [ProtoMember(27)]
-  public List<NodeMarkingStyle> ModuleColors { get; set; }
-  [ProtoMember(28)]
-  public bool UseFunctionColors { get; set; }
-  [ProtoMember(29)]
-  public List<NodeMarkingStyle> FunctionColors { get; set; }
-  [ProtoMember(30)]
-  public string ModulesColorPalette { get; set; }
-
-  public bool GetModuleColor(string name, out Color color) {
-    return GetMarkingColor(name, ModuleColors, out color);
-  }
-
-  public bool GetModuleBrush(string name, out Brush brush) {
-    if (GetMarkingColor(name, ModuleColors, out var color)) {
-      brush = ColorBrushes.GetBrush(color);
-      return true;
-    }
-
-    brush = Brushes.Transparent;
-    return false;
-  }
-
-  public Brush GetAutoModuleBrush(string name) {
-    CachePalettes();
-
-    if (modulesPalette_ != null) {
-      int hash = name.GetStableHashCode();
-      return modulesPalette_.PickBrush(hash % modulesPalette_.Count);
-    }
-
-    return Brushes.Transparent;
-  }
 
   public Brush GetNodeDefaultBrush(FlameGraphNode node) {
     CachePalettes();
@@ -176,45 +77,7 @@ public class FlameGraphSettings : SettingsBase {
     return palette.PickBrush(palette.Count - colorIndex - 1);
   }
 
-  public bool GetFunctionColor(string name, out Color color) {
-    return GetMarkingColor(name, FunctionColors, out color);
-  }
-
-  private bool GetMarkingColor(string name, List<NodeMarkingStyle> markingColors, out Color color) {
-    foreach (var pair in markingColors) {
-      if (pair.NameMatches(name)) {
-        color = pair.Color;
-        return true;
-      }
-    }
-
-    color = default(Color);
-    return false;
-  }
-
-  public void AddModuleColor(string moduleName, Color color) {
-    AddMarkingColor(moduleName, color, ModuleColors);
-  }
-
-  public void AddFunctionColor(string functionName, Color color) {
-    AddMarkingColor(functionName, color, FunctionColors);
-  }
-
-  private void AddMarkingColor(string name, Color color, List<NodeMarkingStyle> markingColors) {
-    foreach (var pair in markingColors) {
-      if (pair.Name.Length > 0 &&
-          pair.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) {
-        pair.Color = color;
-
-        return;
-      }
-    }
-
-    markingColors.Add(new NodeMarkingStyle(name, color));
-  }
-
   public override void Reset() {
-    InitializeReferenceMembers();
     PrependModuleToFunction = true;
     SyncSelection = true;
     SyncSourceFile = false;
@@ -228,7 +91,6 @@ public class FlameGraphSettings : SettingsBase {
     DefaultColorPalette = ColorPalette.Profile.Name;
     KernelColorPalette = ColorPalette.ProfileKernel.Name;
     ManagedColorPalette = ColorPalette.ProfileManaged.Name;
-    ModulesColorPalette = ColorPalette.LightPastels.Name;
     SearchResultMarkingColor = Colors.Khaki;
     NodeTextColor = Colors.DarkBlue;
     NodeBorderColor = Colors.Black;
@@ -239,12 +101,6 @@ public class FlameGraphSettings : SettingsBase {
     SelectedNodeBorderColor = Colors.Black;
     SearchedNodeColor = Utils.ColorFromString("#c3ebbc");
     SearchedNodeBorderColor = Colors.Black;
-  }
-
-  [ProtoAfterDeserialization]
-  private void InitializeReferenceMembers() {
-    ModuleColors ??= new List<NodeMarkingStyle>();
-    FunctionColors ??= new List<NodeMarkingStyle>();
   }
 
   public FlameGraphSettings Clone() {
@@ -265,10 +121,6 @@ public class FlameGraphSettings : SettingsBase {
           ColorPalette.GetPalette(DefaultColorPalette)
       };
     }
-
-    if (modulesPalette_ == null && UseAutoModuleColors) {
-      modulesPalette_ = ColorPalette.GetPalette(ModulesColorPalette);
-    }
   }
 
   public override bool Equals(object obj) {
@@ -285,7 +137,6 @@ public class FlameGraphSettings : SettingsBase {
            DefaultColorPalette == settings.DefaultColorPalette &&
            KernelColorPalette == settings.KernelColorPalette &&
            ManagedColorPalette == settings.ManagedColorPalette &&
-           ModulesColorPalette == settings.ModulesColorPalette &&
            UseKernelColorPalette == settings.UseKernelColorPalette &&
            UseManagedColorPalette == settings.UseManagedColorPalette &&
            SelectedNodeColor == settings.SelectedNodeColor &&
@@ -297,12 +148,7 @@ public class FlameGraphSettings : SettingsBase {
            NodeModuleColor == settings.NodeModuleColor &&
            NodeWeightColor == settings.NodeWeightColor &&
            NodePercentageColor == settings.NodePercentageColor &&
-           SearchedNodeColor == settings.SearchedNodeColor &&
-           UseAutoModuleColors == settings.UseAutoModuleColors &&
-           UseModuleColors == settings.UseModuleColors &&
-           ModuleColors.AreEqual(settings.ModuleColors) &&
-           UseFunctionColors == settings.UseFunctionColors &&
-           FunctionColors.AreEqual(settings.FunctionColors);
+           SearchedNodeColor == settings.SearchedNodeColor;
   }
 
   public override string ToString() {
@@ -318,7 +164,6 @@ public class FlameGraphSettings : SettingsBase {
            $"DefaultColorPalette: {DefaultColorPalette}\n" +
            $"KernelColorPalette: {KernelColorPalette}\n" +
            $"ManagedColorPalette: {ManagedColorPalette}\n" +
-           $"ModulesColorPalette: {ModulesColorPalette}\n" +
            $"UseKernelColorPalette: {UseKernelColorPalette}\n" +
            $"UseManagedColorPalette: {UseManagedColorPalette}\n" +
            $"SelectedNodeColor: {SelectedNodeColor}\n" +
@@ -330,11 +175,6 @@ public class FlameGraphSettings : SettingsBase {
            $"NodeModuleColor: {NodeModuleColor}\n" +
            $"NodeWeightColor: {NodeWeightColor}\n" +
            $"NodePercentageColor: {NodePercentageColor}\n" +
-           $"SearchedNodeColor: {SearchedNodeColor}\n" +
-           $"UseAutoModuleColors: {UseAutoModuleColors}\n" +
-           $"UseModuleColors: {UseModuleColors}\n" +
-           $"ModuleColors: {ModuleColors}\n" +
-           $"UseFunctionColors: {UseFunctionColors}\n" +
-           $"FunctionColors: {FunctionColors}";
+           $"SearchedNodeColor: {SearchedNodeColor}\n";
   }
 }

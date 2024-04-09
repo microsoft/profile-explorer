@@ -1,0 +1,347 @@
+﻿<local:OptionsPanelBase
+  x:Class="IRExplorerUI.OptionsPanels.FunctionMarkingOptionsPanel"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:controls="clr-namespace:IRExplorerUI.Controls"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="clr-namespace:IRExplorerUI.OptionsPanels"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+  d:DesignHeight="450"
+  d:DesignWidth="350"
+  mc:Ignorable="d">
+  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <StackPanel Margin="4,4,4,4">
+      <CheckBox
+        x:Name="ModuleColorsCheckBox"
+        Margin="0,2,0,2"
+        Content="Pick function color based on module"
+        IsChecked="{Binding UseAutoModuleColors, Mode=TwoWay}"
+        ToolTip="Automatically pick a function color based on the module name" />
+      <StackPanel
+        Margin="0,2,0,0"
+        IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked}"
+        Orientation="Horizontal">
+        <controls:ColorPaletteSelector
+          x:Name="ModulePaletteSelector"
+          Width="120"
+          Height="20"
+          HorizontalAlignment="Left"
+          PreviewWidth="200"
+          SelectedPalette="{Binding ModulesColorPalette, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
+        <TextBlock
+          Margin="8,0,0,0"
+          VerticalAlignment="Center"
+          Text="Module color palette" />
+      </StackPanel>
+      <Separator Margin="0,4,0,4" />
+
+      <TextBlock FontWeight="Medium" Text="Module marking" />
+      <CheckBox
+        x:Name="ModuleCheckBox"
+        Margin="0,4,0,2"
+        Content="Mark functions based on module name"
+        IsChecked="{Binding UseModuleColors, Mode=TwoWay}"
+        ToolTip="Use a different color for specified modules" />
+      <Grid Margin="0,0,0,0" IsEnabled="{Binding ElementName=ModuleCheckBox, Path=IsChecked}">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="80" />
+        </Grid.ColumnDefinitions>
+
+        <ListView
+          x:Name="ModuleList"
+          Grid.Row="0"
+          Grid.Column="0"
+          MinHeight="100"
+          MaxHeight="300"
+          Margin="0,4,4,4"
+          HorizontalContentAlignment="Left"
+          VerticalContentAlignment="Center"
+          IsTextSearchEnabled="True"
+          ScrollViewer.VerticalScrollBarVisibility="Auto"
+          SelectionMode="Single"
+          TextSearch.TextPath="Name">
+          <ListView.View>
+            <GridView>
+              <GridViewColumn Width="150" Header="Module name">
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="ToolTip" Value="Module name substring or Regex pattern" />
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+                <GridViewColumn.CellTemplate>
+                  <DataTemplate>
+                    <TextBox
+                      Height="20"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Center"
+                      VerticalContentAlignment="Center"
+                      BorderThickness="0"
+                      PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
+                      Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                  </DataTemplate>
+                </GridViewColumn.CellTemplate>
+              </GridViewColumn>
+              <GridViewColumn Width="80" Header="Color">
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+                <GridViewColumn.CellTemplate>
+                  <DataTemplate>
+                    <xctk:ColorPicker
+                      Width="64"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Center"
+                      AvailableColorsSortingMode="HueSaturationBrightness"
+                      BorderBrush="#707070"
+                      IsManipulationEnabled="True"
+                      SelectedColor="{Binding Path=Color, Mode=TwoWay}"
+                      ShowDropDownButton="True"
+                      UsingAlphaChannel="False" />
+                  </DataTemplate>
+                </GridViewColumn.CellTemplate>
+              </GridViewColumn>
+              <GridViewColumn Width="35" Header="Regex">
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+                <GridViewColumn.CellTemplate>
+                  <DataTemplate>
+                    <CheckBox
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Center"
+                      IsChecked="{Binding Path=IsRegex, Mode=TwoWay}" />
+                  </DataTemplate>
+                </GridViewColumn.CellTemplate>
+              </GridViewColumn>
+            </GridView>
+          </ListView.View>
+          <ListView.ItemContainerStyle>
+            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+              <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+          </ListView.ItemContainerStyle>
+        </ListView>
+
+        <StackPanel
+          Grid.Row="0"
+          Grid.Column="1"
+          Margin="2,4,4,4">
+          <Button
+            Height="24"
+            Padding="2"
+            HorizontalContentAlignment="Left"
+            Click="ModuleAdd_Click"
+            ToolTip="Add new module to the list">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource PlusIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Margin="4,0,0,0" Text="Add" />
+            </StackPanel>
+          </Button>
+          <Button
+            Height="24"
+            Margin="0,2,0,0"
+            Padding="2"
+            HorizontalContentAlignment="Left"
+            Click="ModuleRemove_Click"
+            ToolTip="Remove module from the list">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource MinusIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Margin="4,0,0,0" Text="Remove" />
+            </StackPanel>
+          </Button>
+          <Button
+            Height="24"
+            Margin="0,2,0,0"
+            Padding="2"
+            HorizontalContentAlignment="Left"
+            Click="ClearModule_Click"
+            ToolTip="Remove all modules from the list">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource RemoveIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Margin="4,0,0,0" Text="Clear" />
+            </StackPanel>
+          </Button>
+
+        </StackPanel>
+      </Grid>
+      <Separator Margin="0,4,0,4" />
+      <TextBlock FontWeight="Medium" Text="Function marking" />
+
+      <CheckBox
+        x:Name="FunctionCheckBox"
+        Margin="0,4,0,2"
+        Content="Mark functions based on function name"
+        IsChecked="{Binding UseFunctionColors, Mode=TwoWay}"
+        ToolTip="Use a different color for specified functions" />
+      <Grid Margin="0,0,0,0" IsEnabled="{Binding ElementName=FunctionCheckBox, Path=IsChecked}">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="80" />
+        </Grid.ColumnDefinitions>
+
+        <ListView
+          x:Name="FunctionList"
+          Grid.Row="0"
+          Grid.Column="0"
+          MinHeight="100"
+          MaxHeight="300"
+          Margin="0,4,4,4"
+          HorizontalContentAlignment="Left"
+          VerticalContentAlignment="Center"
+          IsTextSearchEnabled="True"
+          ScrollViewer.VerticalScrollBarVisibility="Auto"
+          SelectionMode="Single"
+          TextSearch.TextPath="Name">
+          <ListView.View>
+            <GridView>
+              <GridViewColumn Width="150" Header="Function name">
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="ToolTip" Value="Function name substring or Regex pattern" />
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+                <GridViewColumn.CellTemplate>
+                  <DataTemplate>
+                    <TextBox
+                      Height="20"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Center"
+                      VerticalContentAlignment="Center"
+                      BorderThickness="0"
+                      PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
+                      Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                  </DataTemplate>
+                </GridViewColumn.CellTemplate>
+              </GridViewColumn>
+              <GridViewColumn Width="80" Header="Color">
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+                <GridViewColumn.CellTemplate>
+                  <DataTemplate>
+                    <xctk:ColorPicker
+                      Width="64"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Center"
+                      AvailableColorsSortingMode="HueSaturationBrightness"
+                      BorderBrush="#707070"
+                      IsManipulationEnabled="True"
+                      SelectedColor="{Binding Path=Color, Mode=TwoWay}"
+                      ShowDropDownButton="True"
+                      UsingAlphaChannel="False" />
+                  </DataTemplate>
+                </GridViewColumn.CellTemplate>
+              </GridViewColumn>
+              <GridViewColumn Width="35" Header="Regex">
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+                <GridViewColumn.CellTemplate>
+                  <DataTemplate>
+                    <CheckBox
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Center"
+                      IsChecked="{Binding Path=IsRegex, Mode=TwoWay}" />
+                  </DataTemplate>
+                </GridViewColumn.CellTemplate>
+              </GridViewColumn>
+            </GridView>
+          </ListView.View>
+          <ListView.ItemContainerStyle>
+            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+              <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+          </ListView.ItemContainerStyle>
+        </ListView>
+
+        <StackPanel
+          Grid.Row="0"
+          Grid.Column="1"
+          Margin="2,4,4,4">
+          <Button
+            Height="24"
+            Padding="2"
+            HorizontalContentAlignment="Left"
+            Click="FunctionAdd_Click"
+            ToolTip="Add new module to the list">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource PlusIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Margin="4,0,0,0" Text="Add" />
+            </StackPanel>
+          </Button>
+          <Button
+            Height="24"
+            Margin="0,2,0,0"
+            Padding="2"
+            HorizontalContentAlignment="Left"
+            Click="FunctionRemove_Click"
+            ToolTip="Remove module from the list">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource MinusIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Margin="4,0,0,0" Text="Remove" />
+            </StackPanel>
+          </Button>
+          <Button
+            Height="24"
+            Margin="0,2,0,0"
+            Padding="2"
+            HorizontalContentAlignment="Left"
+            Click="ClearFunction_Click"
+            ToolTip="Remove all modules from the list">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource RemoveIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Margin="4,0,0,0" Text="Clear" />
+            </StackPanel>
+          </Button>
+
+        </StackPanel>
+      </Grid>
+    </StackPanel>
+  </Grid>
+</local:OptionsPanelBase>

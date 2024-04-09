@@ -80,7 +80,9 @@ public class ApplicationSettings {
   public PreviewPopupSettings PreviewPopupSettings;
   [ProtoMember(28)]
   public Dictionary<ToolPanelKind, PreviewPopupSettings> ElementPreviewPopupSettings;
-
+  [ProtoMember(29)]
+  public FunctionMarkingSettings MarkingSettings;
+  
   public ApplicationSettings() {
     Reset();
   }
@@ -102,6 +104,7 @@ public class ApplicationSettings {
     TimelineSettings.Reset();
     CallTreeNodeSettings.Reset();
     PreviewPopupSettings.Reset();
+    MarkingSettings.Reset();
     ElementPreviewPopupSettings.Clear();
     AutoReloadDocument = true;
     ThemeIndex = 0; // Light theme.
@@ -237,6 +240,7 @@ public class ApplicationSettings {
     DocumentPopupSettings ??= new IRDocumentPopupSettings();
     TimelineSettings ??= new TimelineSettings();
     CallTreeNodeSettings ??= new CallTreeNodeSettings();
+    MarkingSettings ??= new FunctionMarkingSettings();
 
     if (PreviewPopupSettings == null) {
       PreviewPopupSettings = new PreviewPopupSettings(false);

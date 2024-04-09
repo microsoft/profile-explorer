@@ -538,7 +538,7 @@ public static class DocumentUtils {
   
   public static void CreateMarkedModulesMenu(MenuItem menu,
                                        RoutedEventHandler menuClickHandler,
-                                       FlameGraphSettings settings, ISession session) {
+                                       FunctionMarkingSettings settings, ISession session) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
     var separatorIndex = defaultItems.FindIndex(item => item is Separator);
@@ -547,7 +547,7 @@ public static class DocumentUtils {
     double maxWidth = 0;
 
     // Sort modules by weight in decreasing order.
-    var sortedModules = new List<(FlameGraphSettings.NodeMarkingStyle Module, TimeSpan Weight)>();
+    var sortedModules = new List<(FunctionMarkingStyle Module, TimeSpan Weight)>();
 
     foreach (var moduleStyle in settings.ModuleColors) {
       var moduleWeight = session.ProfileData.FindModulesWeight(name =>
@@ -604,7 +604,7 @@ public static class DocumentUtils {
   
   public static void CreateMarkedFunctionsMenu(MenuItem menu,
                                              RoutedEventHandler menuClickHandler,
-                                             FlameGraphSettings settings, ISession session) {
+                                             FunctionMarkingSettings settings, ISession session) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
     var separatorIndex = defaultItems.FindIndex(item => item is Separator);
@@ -614,7 +614,7 @@ public static class DocumentUtils {
     double maxWidth = 0;
     
     // Sort functions by weight in decreasing order.
-    var sortedFuncts = new List<(FlameGraphSettings.NodeMarkingStyle Function, TimeSpan Weight)>();
+    var sortedFuncts = new List<(FunctionMarkingStyle Function, TimeSpan Weight)>();
 
     foreach (var funcStyle in settings.FunctionColors) {
       // Find all functions matching the marked name. There can be multiple
@@ -670,6 +670,7 @@ public static class DocumentUtils {
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };
 
+      item.Click += menuClickHandler;
       defaultItems.Insert(separatorIndex + 1, item);
       profileItems.Add(value);
 
@@ -686,7 +687,7 @@ public static class DocumentUtils {
     DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
   }
   
-  private static Image CreateMarkedMenuIcon(FlameGraphSettings.NodeMarkingStyle nodeMarkingStyle) {
+  private static Image CreateMarkedMenuIcon(FunctionMarkingStyle nodeMarkingStyle) {
     // Make a small square image with the marking background color.
     var visual = new DrawingVisual();
 

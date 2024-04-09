@@ -137,14 +137,16 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     MarkSelectedNodes(obj, (node, color) => MarkFunctionInstances(node.Function, GraphViewer.MarkedColoredNodeStyle(color)));
   });
   public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
-    MarkSelectedNodes(obj, (node, color) => settings_.AddModuleColor(node.ModuleName, color));
-    settings_.UseModuleColors = true;
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) => markingSettings.AddModuleColor(node.ModuleName, color));
+    markingSettings.UseModuleColors = true;
     SettingsUpdated(settings_);
     MarkingChanged?.Invoke(this, EventArgs.Empty);
   });
   public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
-    MarkSelectedNodes(obj, (node, color) => settings_.AddFunctionColor(node.FunctionName, color));
-    settings_.UseFunctionColors = true;
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) => markingSettings.AddFunctionColor(node.FunctionName, color));
+    markingSettings.UseFunctionColors = true;
     SettingsUpdated(settings_);
     MarkingChanged?.Invoke(this, EventArgs.Empty);
   });
@@ -268,6 +270,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
   }
 
+  public void Redraw() {
+    GraphViewer.Redraw();
+  }
+  
   private void HostOnKeyUp(object sender, KeyEventArgs e) {
     if (Utils.IsControlModifierActive()) {
       Cursor = Cursors.Arrow;

@@ -531,9 +531,17 @@ public partial class MainWindow : Window, ISession {
     return await CompilerInfo.GetOrCreateDebugInfoProvider(function).ConfigureAwait(false);
   }
 
-  public async Task<bool> FunctionMarkingChanged() {
-    var sectionPanel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
-    sectionPanel?.UpdateMarkedFunctions();
+  public async Task<bool> FunctionMarkingChanged(ToolPanelKind sourcePanelKind) {
+    if (sourcePanelKind != ToolPanelKind.Section) {
+      var panel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
+      panel?.UpdateMarkedFunctions();
+    }
+
+    if (sourcePanelKind != ToolPanelKind.FlameGraph) {
+      var panel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+      panel?.UpdateMarkedFunctions();
+    }
+
     return true;
   }
 }

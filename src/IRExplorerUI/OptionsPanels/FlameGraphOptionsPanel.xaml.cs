@@ -25,52 +25,41 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     DefaultPaletteSelector.PalettesSource = ColorPalette.BuiltinPalettes;
     KernelPaletteSelector.PalettesSource = ColorPalette.BuiltinPalettes;
     ManagedPaletteSelector.PalettesSource = ColorPalette.BuiltinPalettes;
-    ModulePaletteSelector.PalettesSource = ColorPalette.GradientBuiltinPalettes;
 
+    //? TODO: Change to calling Initialize
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
     PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
-
-
+  
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);
     settings_ = (FlameGraphSettings)Settings;
-    ReloadModuleList();
-    ReloadFunctionList();
+    FunctionMarkingOptionsPanel.Initialize(parent, App.Settings.MarkingSettings, session);
   }
 
   public override void OnSettingsChanged(object newSettings) {
     settings_ = (FlameGraphSettings)newSettings;
-    ReloadModuleList();
-    ReloadFunctionList();
   }
 
-  private void ReloadModuleList() {
-    var list = new ObservableCollectionRefresh<FlameGraphSettings.NodeMarkingStyle>(settings_.ModuleColors);
-    ModuleList.ItemsSource = list;
-  }
-
-  private void ReloadFunctionList() {
-    var list = new ObservableCollectionRefresh<FlameGraphSettings.NodeMarkingStyle>(settings_.FunctionColors);
-    FunctionList.ItemsSource = list;
-  }
-
-  protected override void ReloadSettings() {
+  public override void ReloadSettings() {
     base.ReloadSettings();
+    //? TODO: Change to calling ReloadSettings
     DetailsPanel.DataContext = null;
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
     PreviewPopupOptionsPanel.DataContext = null;
     PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
     FunctionListOptionsPanel.DataContext = null;
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
+    FunctionMarkingOptionsPanel.ReloadSettings();
   }
 
   public override void PanelResetting() {
     base.PanelResetting();
     App.Settings.CallTreeNodeSettings.Reset();
     App.Settings.PreviewPopupSettings.Reset();
+    App.Settings.MarkingSettings.Reset();
   }
 
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
@@ -117,64 +106,5 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   private void ResetFilterWeightButton_Click(object sender, RoutedEventArgs e) {
     ((ProfileListViewFilter)FunctionListOptionsPanel.DataContext).MinWeight = ProfileListViewFilter.DefaultMinWeight;
     ReloadSettings();
-  }
-
-  private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-    if (sender is TextBox textBox) {
-      Utils.SelectTextBoxListViewItem(textBox, ModuleList);
-      e.Handled = true;
-    }
-  }
-
-  private void ModuleRemove_Click(object sender, RoutedEventArgs e) {
-    if (ModuleList.SelectedItem is FlameGraphSettings.NodeMarkingStyle pair) {
-      settings_.ModuleColors.Remove((pair));
-      ReloadModuleList();
-      NotifySettingsChanged();
-    }
-  }
-
-  private void ModuleAdd_Click(object sender, RoutedEventArgs e) {
-    settings_.ModuleColors.Add(new FlameGraphSettings.NodeMarkingStyle("", Colors.White));
-    ReloadModuleList();
-    NotifySettingsChanged();
-
-    Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => {
-      Utils.SelectEditableListViewItem(ModuleList, settings_.ModuleColors.Count - 1);
-    });
-  }
-
-  private void ClearModule_Click(object sender, RoutedEventArgs e) {
-    if (Utils.ShowYesNoMessageBox("Do you want to clear the list?", this) == MessageBoxResult.Yes) {
-      settings_.ModuleColors.Clear();
-      ReloadModuleList();
-      NotifySettingsChanged();
-    }
-  }
-
-  private void ClearFunction_Click(object sender, RoutedEventArgs e) {
-    if (Utils.ShowYesNoMessageBox("Do you want to clear the list?", this) == MessageBoxResult.Yes) {
-      settings_.FunctionColors.Clear();
-      ReloadFunctionList();
-      NotifySettingsChanged();
-    }
-  }
-
-  private void FunctionRemove_Click(object sender, RoutedEventArgs e) {
-    if (FunctionList.SelectedItem is FlameGraphSettings.NodeMarkingStyle pair) {
-      settings_.FunctionColors.Remove((pair));
-      ReloadFunctionList();
-      NotifySettingsChanged();
-    }
-  }
-
-  private void FunctionAdd_Click(object sender, RoutedEventArgs e) {
-    settings_.FunctionColors.Add(new FlameGraphSettings.NodeMarkingStyle("", Colors.White));
-    ReloadFunctionList();
-    NotifySettingsChanged();
-
-    Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => {
-      Utils.SelectEditableListViewItem(FunctionList, settings_.FunctionColors.Count - 1);
-    });
   }
 }

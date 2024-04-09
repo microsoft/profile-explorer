@@ -244,6 +244,95 @@
             </ToggleButton>
 
             <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Menu
+              Height="20"
+              Margin="2,0,0,0"
+              VerticalAlignment="Center"
+              ToolTip="Color functions based on the module name">
+              <MenuItem
+                x:Name="ModuleMenu"
+                Margin="0,0,0,0"
+                Padding="0,0,0,0"
+                Background="{Binding Path=HasEnabledMarkedModules, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                OverridesDefaultStyle="True"
+                SubmenuOpened="ModuleMenu_OnSubmenuOpened">
+                <MenuItem.Header>
+                  <StackPanel Orientation="Horizontal">
+                    <Image Source="{StaticResource TagIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    <TextBlock
+                      Margin="4,0,0,0"
+                      VerticalAlignment="Bottom"
+                      Text="Module" />
+                    <Path
+                      Margin="4,2,2,0"
+                      VerticalAlignment="Center"
+                      Data="M 0 0 L 3 3 L 6 0 Z"
+                      Fill="Black" />
+                  </StackPanel>
+                </MenuItem.Header>
+                <MenuItem
+                  Click="ToggleButton_Click"
+                  Header="Pick Function Color Based on module"
+                  IsCheckable="True"
+                  IsChecked="{Binding MarkingSettings.UseAutoModuleColors}"
+                  Style="{DynamicResource SubMenuItemHeaderStyle}"
+                  ToolTip="Automatically pick a function color based on the module name" />
+                <MenuItem
+                  Click="ToggleButton_Click"
+                  Header="Mark Functions Based on Module Name"
+                  IsCheckable="True"
+                  IsChecked="{Binding MarkingSettings.UseModuleColors}"
+                  Style="{DynamicResource SubMenuItemHeaderStyle}"
+                  ToolTip="Use a different color for specified modules" />
+                <Separator />
+                <MenuItem
+                  Click="ClearModulesButton_Click"
+                  Header="Clear Marked Modules"
+                  Style="{DynamicResource SubMenuItemHeaderStyle}"
+                  ToolTip="Remove all saved module markings" />
+              </MenuItem>
+            </Menu>
+            <Menu
+              Height="20"
+              Margin="2,0,0,0"
+              VerticalAlignment="Center"
+              ToolTip="Color functions based on the module name">
+              <MenuItem
+                x:Name="FunctionMenu"
+                Padding="0,0,0,0"
+                Background="{Binding Path=HasEnabledMarkedFunctions, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                OverridesDefaultStyle="True"
+                SubmenuOpened="FunctionMenu_OnSubmenuOpened">
+                <MenuItem.Header>
+                  <StackPanel Orientation="Horizontal">
+                    <Image Source="{StaticResource TagIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    <TextBlock
+                      Margin="4,0,0,0"
+                      VerticalAlignment="Bottom"
+                      Text="Function" />
+                    <Path
+                      Margin="4,2,2,0"
+                      VerticalAlignment="Center"
+                      Data="M 0 0 L 3 3 L 6 0 Z"
+                      Fill="Black" />
+                  </StackPanel>
+                </MenuItem.Header>
+                <MenuItem
+                  Click="ToggleButton_Click"
+                  Header="Mark Functions Based on Name"
+                  IsCheckable="True"
+                  IsChecked="{Binding MarkingSettings.UseFunctionColors}"
+                  Style="{DynamicResource SubMenuItemHeaderStyle}"
+                  ToolTip="Use a different color for specified functions" />
+                <Separator />
+                <MenuItem
+                  Click="ClearFunctionsButton_Click"
+                  Header="Clear Marked Functions"
+                  Style="{DynamicResource SubMenuItemHeaderStyle}"
+                  ToolTip="Remove all saved function markings" />
+              </MenuItem>
+            </Menu>
+            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <Menu
               Margin="0,0,0,0"
@@ -396,8 +485,8 @@
           BorderBrush="{x:Null}"
           BorderThickness="0,0,0,0"
           IsTextSearchEnabled="True"
-          SelectionMode="Single"
           SelectionChanged="ModulesList_OnSelectionChanged"
+          SelectionMode="Single"
           TextSearch.TextPath="Name"
           VirtualizingStackPanel.IsVirtualizing="True"
           VirtualizingStackPanel.VirtualizationMode="Recycling"
@@ -550,9 +639,7 @@
                 </GridViewColumn.HeaderContainerStyle>
               </GridViewColumn>
 
-              <GridViewColumn
-                Width="100"
-                local:GridViewColumnVisibility.IsVisible="{Binding ModuleControlsVisible}">
+              <GridViewColumn Width="100" local:GridViewColumnVisibility.IsVisible="{Binding ModuleControlsVisible}">
                 <GridViewColumnHeader x:Name="FunctionModuleColumnHeader" Content="Module" />
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -568,9 +655,9 @@
                         VerticalAlignment="Center"
                         FontWeight="Medium"
                         Text="{Binding Path=ModuleName}" />
-</Grid>
-                    </DataTemplate>
-                  </GridViewColumn.CellTemplate>
+                    </Grid>
+                  </DataTemplate>
+                </GridViewColumn.CellTemplate>
               </GridViewColumn>
 
               <GridViewColumn
@@ -804,6 +891,35 @@
                 InputGestureText="Ctrl+Alt+C"
                 ToolTip="Copy the mangled function name to the clipboard (C++)" />
 
+              <Separator />
+              <MenuItem Header="Mark Module" ToolTip="Mark all functions belonging to this module (saved)">
+                <MenuItem.Icon>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource TagIcon}" />
+                </MenuItem.Icon>
+                <MenuItem>
+                  <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="{Binding MarkModuleCommand}" />
+                  </MenuItem.Header>
+
+                </MenuItem>
+              </MenuItem>
+              <MenuItem Header="Mark Function" ToolTip="Mark all functions with the same name (saved)">
+                <MenuItem.Icon>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource TagIcon}" />
+                </MenuItem.Icon>
+                <MenuItem>
+                  <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="{Binding MarkFunctionCommand}" />
+                  </MenuItem.Header>
+
+                </MenuItem>
+              </MenuItem>
               <Separator />
 
               <MenuItem

@@ -219,6 +219,11 @@ public partial class FlameGraphViewer : FrameworkElement {
     initialized_ = true;
   }
 
+  public void Redraw() {
+    // Force re-evaluating the styles and redraw.
+    SettingsUpdated(settings_);
+  }
+
   private void ReloadSettings() {
     markedNodeBackColor_ = ColorBrushes.GetBrush(settings_.SearchedNodeColor);
     markedNodeBorderColor_ = ColorPens.GetPen(settings_.NodeBorderColor, 2);

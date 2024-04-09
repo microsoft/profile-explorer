@@ -186,8 +186,8 @@
               x:Name="ModuleMenu"
               Margin="0,0,0,0"
               Padding="0,0,0,0"
-              OverridesDefaultStyle="True"
               Background="{Binding Path=HasEnabledMarkedModules, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+              OverridesDefaultStyle="True"
               SubmenuOpened="ModuleMenu_OnSubmenuOpened">
               <MenuItem.Header>
                 <StackPanel Orientation="Horizontal">
@@ -207,14 +207,14 @@
                 Click="ToggleButton_Click"
                 Header="Pick Function Color Based on module"
                 IsCheckable="True"
-                IsChecked="{Binding Settings.UseAutoModuleColors}"
+                IsChecked="{Binding MarkingSettings.UseAutoModuleColors}"
                 Style="{DynamicResource SubMenuItemHeaderStyle}"
                 ToolTip="Automatically pick a function color based on the module name" />
               <MenuItem
                 Click="ToggleButton_Click"
                 Header="Mark Functions Based on Module Name"
                 IsCheckable="True"
-                IsChecked="{Binding Settings.UseModuleColors}"
+                IsChecked="{Binding MarkingSettings.UseModuleColors}"
                 Style="{DynamicResource SubMenuItemHeaderStyle}"
                 ToolTip="Use a different color for specified modules" />
               <Separator />
@@ -233,8 +233,8 @@
             <MenuItem
               x:Name="FunctionMenu"
               Padding="0,0,0,0"
-              OverridesDefaultStyle="True"
               Background="{Binding Path=HasEnabledMarkedFunctions, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+              OverridesDefaultStyle="True"
               SubmenuOpened="FunctionMenu_OnSubmenuOpened">
               <MenuItem.Header>
                 <StackPanel Orientation="Horizontal">
@@ -254,7 +254,7 @@
                 Click="ToggleButton_Click"
                 Header="Mark Functions Based on Name"
                 IsCheckable="True"
-                IsChecked="{Binding Settings.UseFunctionColors}"
+                IsChecked="{Binding MarkingSettings.UseFunctionColors}"
                 Style="{DynamicResource SubMenuItemHeaderStyle}"
                 ToolTip="Use a different color for specified functions" />
               <Separator />

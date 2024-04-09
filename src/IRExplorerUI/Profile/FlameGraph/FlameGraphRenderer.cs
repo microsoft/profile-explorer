@@ -138,22 +138,23 @@ public class FlameGraphRenderer {
 
   public HighlightingStyle GetNodeStyle(FlameGraphNode node) {
     var backColor = settings_.GetNodeDefaultBrush(node);
-
+    var markingSettings = App.Settings.MarkingSettings;
+    
     // Override color based on function name or module name,
     // with function name marking having priority.
     if (!string.IsNullOrEmpty(node.FunctionName) &&
-        settings_.UseFunctionColors &&
-        settings_.GetFunctionColor(node.FunctionName, out var functionColor)) {
+        markingSettings.UseFunctionColors &&
+        markingSettings.GetFunctionColor(node.FunctionName, out var functionColor)) {
       backColor = functionColor.AsBrush();
     }
     else if (!string.IsNullOrEmpty(node.ModuleName)) {
-      if (settings_.UseModuleColors &&
-          settings_.GetModuleColor(node.ModuleName, out var moduleColor)) {
+      if (markingSettings.UseModuleColors &&
+          markingSettings.GetModuleColor(node.ModuleName, out var moduleColor)) {
         backColor = moduleColor.AsBrush();
       }
-      else if (settings_.UseAutoModuleColors) {
+      else if (markingSettings.UseAutoModuleColors) {
         // Use a color based on the module name.
-        backColor = settings_.GetAutoModuleBrush(node.ModuleName);
+        backColor = markingSettings.GetAutoModuleBrush(node.ModuleName);
       }
     }
 

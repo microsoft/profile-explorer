@@ -111,9 +111,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
   }
 
-  public bool HasEnabledMarkedFunctions => settings_.UseFunctionColors && settings_.FunctionColors.Count > 0;
-  public bool HasEnabledMarkedModules => settings_.UseModuleColors && settings_.ModuleColors.Count > 0;
-
+  public bool HasEnabledMarkedFunctions => MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
+  public bool HasEnabledMarkedModules => MarkingSettings.UseModuleColors && MarkingSettings.ModuleColors.Count > 0;
+  public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
+  
   public override async void OnShowPanel() {
     base.OnShowPanel();
     panelVisible_ = true;
@@ -484,11 +485,15 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       return;
     }
 
+    //? TODO: Redesign settings change detection, doesn't work well
+    //? when a panel shows multiple settings objects.
+    var initialMarkingSettings = MarkingSettings.Clone();
     FrameworkElement relativeControl = settings_.ShowDetailsPanel ? NodeDetailsPanel : GraphHost;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<FlameGraphOptionsPanel, FlameGraphSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
-        if (!newSettings.Equals(settings_)) {
+        if (!newSettings.Equals(settings_) ||
+            !initialMarkingSettings.Equals(MarkingSettings)) {
           Settings = newSettings;
           NodeDetailsPanel.Settings = App.Settings.CallTreeNodeSettings;
           App.Settings.FlameGraphSettings = newSettings;
@@ -496,6 +501,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
           if (commit) {
             App.SaveApplicationSettings();
           }
+          
+          initialMarkingSettings = MarkingSettings.Clone();
           return settings_.Clone();
         }
 
@@ -510,12 +517,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
-    settings_.ModuleColors.Clear();
+    MarkingSettings.ModuleColors.Clear();
     ReloadSettings();
   }
 
   private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
-    settings_.FunctionColors.Clear();
+    MarkingSettings.FunctionColors.Clear();
     ReloadSettings();
   }
 
@@ -527,7 +534,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   private void UpdateMarkingUI() {
     OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
     OnPropertyChanged(nameof(HasEnabledMarkedModules));
-    Session.FunctionMarkingChanged();
+    Session.FunctionMarkingChanged(ToolPanelKind.FlameGraph);
   }
 
   public override async Task OnReloadSettings() {
@@ -536,24 +543,27 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     DocumentUtils.CreateMarkedModulesMenu(ModuleMenu, ModuleMenuItem_OnClick,
-                                          settings_, Session);
+                                          MarkingSettings, Session);
   }
 
   private async void ModuleMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    var style = ((MenuItem)sender)?.Tag as FlameGraphSettings.NodeMarkingStyle;
-    settings_.ModuleColors.Remove(style);
+    var style = ((MenuItem)sender)?.Tag as FunctionMarkingStyle;
+    MarkingSettings.ModuleColors.Remove(style);
     ReloadSettings();
   }
 
   private void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     DocumentUtils.CreateMarkedFunctionsMenu(FunctionMenu, FunctionMenuItem_OnClick,
-      settings_, Session);
+      MarkingSettings, Session);
   }
   
   private async void FunctionMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    var style = ((MenuItem)sender)?.Tag as FlameGraphSettings.NodeMarkingStyle;
-    settings_.FunctionColors.Remove(style);
+    var style = ((MenuItem)sender)?.Tag as FunctionMarkingStyle;
+    MarkingSettings.FunctionColors.Remove(style);
     ReloadSettings();
   }
 
+  public void UpdateMarkedFunctions() {
+    GraphHost.Redraw();
+  }
 }
