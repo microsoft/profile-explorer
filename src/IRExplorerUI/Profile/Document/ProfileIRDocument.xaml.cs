@@ -481,11 +481,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private void UpdateProfileDescription(FunctionProfileData funcProfile) {
     DescriptionPrefixChanged?.Invoke(this, DocumentUtils.
-      GenerateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session));
+      CreateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session));
     TitlePrefixChanged?.Invoke(this, DocumentUtils.
-      GenerateProfileFilterTitle(profileFilter_, Session));
+      CreateProfileFilterTitle(profileFilter_, Session));
     DescriptionSuffixChanged?.Invoke(this, DocumentUtils.
-      GenerateProfileFilterDescription(profileFilter_, Session));
+      CreateProfileFilterDescription(profileFilter_, Session));
   }
 
   public bool HasProfileInstanceFilter => profileFilter_ is {HasInstanceFilter:true};
@@ -760,8 +760,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       ProfileElementsMenu.Items.Add(item);
 
       // Make sure percentage rects are aligned.
-      double width = Utils.MeasureString(prefixText, settings_.FontName, settings_.FontSize).Width;
-      maxWidth = Math.Max(width, maxWidth);
+      Utils.UpdateMaxMenuItemWidth(prefixText, ref maxWidth, ProfileElementsMenu);
       list.Add(value);
     }
 

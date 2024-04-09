@@ -1124,19 +1124,27 @@ static class Utils {
   public static Point SnapPointToPixels(double x, double y) {
     return new Point(Math.Round(x), Math.Round(y));
   }
+  
+  public static void UpdateMaxMenuItemWidth(string title, ref double maxWidth, MenuItem targetMenu) {
+    double width = Utils.MeasureString(title, targetMenu).Width + 20;
+    maxWidth = Math.Max(width, maxWidth);
+  }
+
+  
+  public static Size MeasureString(string text, Control targetControl) {
+    var font = new Typeface(targetControl.FontFamily, targetControl.FontStyle,
+      targetControl.FontWeight, targetControl.FontStretch);
+    return MeasureString(text, font, targetControl.FontSize);
+  }
 
   public static Size MeasureString(string text, string fontName, double fontSize,
                                    FontWeight? fontWeight = null) {
-    var formattedText = new FormattedText(text, CultureInfo.CurrentCulture,
-                                          FlowDirection.LeftToRight,
-                                          new Typeface(new FontFamily(fontName), FontStyles.Normal,
-                                                       fontWeight ?? FontWeights.Normal, FontStretches.Normal),
-                                          fontSize, Brushes.Black, new NumberSubstitution(), 1);
-    return new Size(formattedText.WidthIncludingTrailingWhitespace, formattedText.Height);
+    var font = new Typeface(new FontFamily(fontName), FontStyles.Normal,
+      fontWeight ?? FontWeights.Normal, FontStretches.Normal);
+    return MeasureString(text, font, fontSize);
   }
 
-  public static Size MeasureString(string text, Typeface font, double fontSize,
-                                   FontWeight? fontWeight = null) {
+  public static Size MeasureString(string text, Typeface font, double fontSize) {
     var formattedText = new FormattedText(text, CultureInfo.CurrentCulture,
                                           FlowDirection.LeftToRight, font, fontSize, Brushes.Black,
                                           new NumberSubstitution(), 1);
@@ -1149,14 +1157,13 @@ static class Utils {
     return MeasureString(dummyString, fontName, fontSize, fontWeight);
   }
 
-  public static Size MeasureString(int letterCount, Typeface font, double fontSize,
-                                   FontWeight? fontWeight = null) {
+  public static Size MeasureString(int letterCount, Typeface font, double fontSize) {
     if (letterCount == 1) {
-      return MeasureString("X", font, fontSize, fontWeight);
+      return MeasureString("X", font, fontSize);
     }
 
     string dummyString = new string('X', letterCount);
-    return MeasureString(dummyString, font, fontSize, fontWeight);
+    return MeasureString(dummyString, font, fontSize);
   }
 
   public static void SelectEditableListViewItem(ListView listView, int index) {

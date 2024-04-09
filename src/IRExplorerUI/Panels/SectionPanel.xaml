@@ -529,10 +529,12 @@
 
                 <GridViewColumn.CellTemplate>
                   <DataTemplate>
-                    <TextBlock
-                      FontWeight="Medium"
-                      Text="{Binding Name}"
-                      ToolTip="{Binding ToolTip}" />
+                    <Grid HorizontalAlignment="Stretch" Background="{Binding FunctionBackColor}">
+                      <TextBlock
+                        FontWeight="Medium"
+                        Text="{Binding Name}"
+                        ToolTip="{Binding ToolTip}" />
+                    </Grid>
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
@@ -550,14 +552,25 @@
 
               <GridViewColumn
                 Width="100"
-                local:GridViewColumnVisibility.IsVisible="{Binding ModuleControlsVisible}"
-                DisplayMemberBinding="{Binding ModuleName}">
+                local:GridViewColumnVisibility.IsVisible="{Binding ModuleControlsVisible}">
                 <GridViewColumnHeader x:Name="FunctionModuleColumnHeader" Content="Module" />
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                   </Style>
                 </GridViewColumn.HeaderContainerStyle>
+
+                <GridViewColumn.CellTemplate>
+                  <DataTemplate>
+                    <Grid HorizontalAlignment="Stretch" Background="{Binding ModuleBackColor}">
+                      <TextBlock
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        FontWeight="Medium"
+                        Text="{Binding Path=ModuleName}" />
+</Grid>
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
               </GridViewColumn>
 
               <GridViewColumn

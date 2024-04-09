@@ -1253,8 +1253,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       ProfileBlocksMenu.Items.Add(item);
 
       // Make sure percentage rects are aligned.
-      double width = Utils.MeasureString(prefixText, settings_.FontName, settings_.FontSize).Width;
-      maxWidth = Math.Max(width, maxWidth);
+      Utils.UpdateMaxMenuItemWidth(prefixText, ref maxWidth, ProfileBlocksMenu);
       list.Add(value);
     }
 
@@ -1306,8 +1305,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       ProfileElementsMenu.Items.Add(item);
 
       // Make sure percentage rects are aligned.
-      double width = Utils.MeasureString(prefixText, settings_.FontName, settings_.FontSize).Width;
-      maxWidth = Math.Max(width, maxWidth);
+      Utils.UpdateMaxMenuItemWidth(prefixText, ref maxWidth, ProfileElementsMenu);
       list.Add(value);
     }
 
@@ -1329,8 +1327,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     // Apply the same filter in the source file panel.
     await Session.OpenProfileSourceFile(Section.ParentFunction, profileFilter_);
 
-    TitlePrefix = DocumentUtils.GenerateProfileFilterTitle(profileFilter_, session_);
-    DescriptionSuffix = "\n\n" + DocumentUtils.GenerateProfileFilterDescription(profileFilter_, Session);
+    TitlePrefix = DocumentUtils.CreateProfileFilterTitle(profileFilter_, session_);
+    DescriptionSuffix = "\n\n" + DocumentUtils.CreateProfileFilterDescription(profileFilter_, Session);
     Session.UpdateDocumentTitles();
   }
 
@@ -1397,7 +1395,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private void UpdateDocumentTitle(FunctionProfileData funcProfile) {
     // Update document tooltip.
     DescriptionPrefix =
-      DocumentUtils.GenerateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session) + "\n\n";
+      DocumentUtils.CreateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session) + "\n\n";
     Session.UpdateDocumentTitles();
   }
 

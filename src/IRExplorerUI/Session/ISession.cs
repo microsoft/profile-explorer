@@ -129,6 +129,8 @@ public interface ISession {
 
   Task<bool> ProfileFunctionSelected(IRTextFunction function, ToolPanelKind sourcePanelKind);
   Task<bool> ProfileFunctionDeselected();
+  Task<bool> FunctionMarkingChanged();
+
   bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);
   IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);
   void SetApplicationStatus(string text, string tooltip = "");

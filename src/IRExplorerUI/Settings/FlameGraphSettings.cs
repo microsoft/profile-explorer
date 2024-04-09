@@ -19,6 +19,11 @@ public class FlameGraphSettings : SettingsBase {
     private string name_;
 
     [ProtoMember(1)]
+    public bool IsEnabled { get; set; }
+    [ProtoMember(2)]
+    public string Title { get; set; }
+    
+    [ProtoMember(3)]
     public string Name {
       get => name_;
       set {
@@ -27,18 +32,19 @@ public class FlameGraphSettings : SettingsBase {
       }
     }
 
-    [ProtoMember(2)]
+    [ProtoMember(4)]
     public Color Color { get; set; }
-    [ProtoMember(3)]
+    [ProtoMember(5)]
     public bool IsRegex { get; set; }
 
     public NodeMarkingStyle(string name, Color color) {
       Name = name;
       Color = color;
+      IsEnabled = true;
     }
 
     public bool NameMatches(string candidate) {
-      if (candidate.Length <= 0 || Name.Length <= 0) {
+      if (!IsEnabled || candidate.Length <= 0 || Name.Length <= 0) {
         return false;
       }
 
@@ -52,6 +58,8 @@ public class FlameGraphSettings : SettingsBase {
 
     protected bool Equals(NodeMarkingStyle other) {
       return Name == other.Name &&
+             IsEnabled == other.IsEnabled &&
+             Title == other.Title &&
              IsRegex == other.IsRegex &&
              Color.Equals(other.Color);
     }

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
@@ -279,7 +280,6 @@ public static class DocumentUtils {
                                          TextViewSettingsBase settings, ISession session) {
     var defaultItems = SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
-
     var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
     var markerSettings = settings.ProfileMarkerSettings;
     int order = 0;
@@ -321,8 +321,7 @@ public static class DocumentUtils {
       profileItems.Add(value);
 
       // Make sure percentage rects are aligned.
-      double width = Utils.MeasureString(title, settings.FontName, settings.FontSize).Width;
-      maxWidth = Math.Max(width, maxWidth);
+      Utils.UpdateMaxMenuItemWidth(title, ref maxWidth, menu);
     }
 
     foreach (var value in profileItems) {
@@ -374,8 +373,7 @@ public static class DocumentUtils {
       profileItems.Add(value);
 
       // Make sure percentage rects are aligned.
-      double width = Utils.MeasureString(title, settings.FontName, settings.FontSize).Width;
-      maxWidth = Math.Max(width, maxWidth);
+      Utils.UpdateMaxMenuItemWidth(title, ref maxWidth, menu);
     }
 
     foreach (var value in profileItems) {
@@ -435,8 +433,7 @@ public static class DocumentUtils {
       profileItems.Add(value);
 
       // Make sure percentage rects are aligned.
-      double width = Utils.MeasureString(title, settings.FontName, settings.FontSize).Width;
-      maxWidth = Math.Max(width, maxWidth);
+      Utils.UpdateMaxMenuItemWidth(title, ref maxWidth, menu);
     }
 
     foreach (var value in profileItems) {
@@ -495,7 +492,7 @@ public static class DocumentUtils {
       var title = node.InlineeFrame.Function.FormatFunctionName(session, 80);
       string text = $"({markerSettings.FormatWeightValue(null, node.ExclusiveWeight)})";
       string tooltip = $"File {Utils.TryGetFileName(node.InlineeFrame.FilePath)}:{node.InlineeFrame.Line}\n";
-      tooltip += GenerateInlineeFunctionDescription(node, funcProfile, settings.ProfileMarkerSettings, session);
+      tooltip += CreateInlineeFunctionDescription(node, funcProfile, settings.ProfileMarkerSettings, session);
 
       var value = new ProfileMenuItem(text, node.ExclusiveWeight.Ticks, weightPercentage) {
         PrefixText = title,
@@ -517,8 +514,7 @@ public static class DocumentUtils {
       profileItems.Add(value);
 
       // Make sure percentage rects are aligned.
-      double width = Utils.MeasureString(title, settings.FontName, settings.FontSize).Width;
-      maxWidth = Math.Max(width, maxWidth);
+      Utils.UpdateMaxMenuItemWidth(title, ref maxWidth, menu);
     }
 
     // If no items were added (besides "Non-Inlinee Code"),
@@ -539,7 +535,170 @@ public static class DocumentUtils {
     menu.Items.Clear();
     RestoreDefaultMenuItems(menu, defaultItems);
   }
+  
+  public static void CreateMarkedModulesMenu(MenuItem menu,
+                                       RoutedEventHandler menuClickHandler,
+                                       FlameGraphSettings settings, ISession session) {
+    var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
+    var profileItems = new List<ProfileMenuItem>();
+    var separatorIndex = defaultItems.FindIndex(item => item is Separator);
+    var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    double maxWidth = 0;
 
+    // Sort modules by weight in decreasing order.
+    var sortedModules = new List<(FlameGraphSettings.NodeMarkingStyle Module, TimeSpan Weight)>();
+
+    foreach (var moduleStyle in settings.ModuleColors) {
+      var moduleWeight = session.ProfileData.FindModulesWeight(name =>
+        moduleStyle.NameMatches(name));
+      sortedModules.Add((moduleStyle, moduleWeight));
+    }
+
+    sortedModules.Sort((a, b) => a.Weight.CompareTo(b.Weight));
+
+    // Insert module markers after separator.
+    foreach (var pair in sortedModules) {
+      double weightPercentage = session.ProfileData.ScaleModuleWeight(pair.Weight);
+      string text = $"({markerSettings.FormatWeightValue(null, pair.Weight)})";
+      string tooltip = "Click to remove module marking";
+      string title = pair.Module.Name;
+
+      if (pair.Module.IsRegex) {
+        title += " (Regex)";
+      }
+
+      var value = new ProfileMenuItem(text, pair.Weight.Ticks, weightPercentage) {
+        PrefixText = title,
+        ToolTip = tooltip,
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
+      var item = new MenuItem {
+        Header = value,
+        Tag = pair.Module,
+        Icon = CreateMarkedMenuIcon(pair.Module),
+        HeaderTemplate = valueTemplate,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+      };
+
+      item.Click += menuClickHandler;
+      defaultItems.Insert(separatorIndex + 1, item);
+      profileItems.Add(value);
+
+      // Make sure percentage rects are aligned.
+      Utils.UpdateMaxMenuItemWidth(title, ref maxWidth, menu);
+    }
+
+    foreach (var value in profileItems) {
+      value.MinTextWidth = maxWidth;
+    }
+
+    // Populate the module menu.
+    menu.Items.Clear();
+    DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
+  }
+
+  
+  public static void CreateMarkedFunctionsMenu(MenuItem menu,
+                                             RoutedEventHandler menuClickHandler,
+                                             FlameGraphSettings settings, ISession session) {
+    var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
+    var profileItems = new List<ProfileMenuItem>();
+    var separatorIndex = defaultItems.FindIndex(item => item is Separator);
+    var nameProvider = session.CompilerInfo.NameProvider;
+    var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    double maxWidth = 0;
+    
+    // Sort functions by weight in decreasing order.
+    var sortedFuncts = new List<(FlameGraphSettings.NodeMarkingStyle Function, TimeSpan Weight)>();
+
+    foreach (var funcStyle in settings.FunctionColors) {
+      // Find all functions matching the marked name. There can be multiple
+      // since the same func. name may be used in multiple modules,
+      // and also because the name matching may use Regex.
+      var weight = TimeSpan.Zero;
+
+      foreach (var loadedDoc in session.SessionState.Documents) {
+        if (loadedDoc.Summary == null) {
+          continue;
+        }
+
+        var funcList = loadedDoc.Summary.FindFunctions(name =>
+          funcStyle.NameMatches(nameProvider.FormatFunctionName(name)));
+
+        foreach (var func in funcList) {
+          var funcProfile = session.ProfileData.GetFunctionProfile(func);
+
+          if (funcProfile != null) {
+            weight += funcProfile.Weight;
+          }
+        }
+      }
+
+      sortedFuncts.Add((funcStyle, weight));
+    }
+
+    sortedFuncts.Sort((a, b) => a.Weight.CompareTo(b.Weight));
+
+    foreach (var pair in sortedFuncts) {
+      double weightPercentage = session.ProfileData.ScaleFunctionWeight(pair.Weight);
+      string text = $"({markerSettings.FormatWeightValue(null, pair.Weight)})";
+      string tooltip = "Click to remove function marking";
+      string title = pair.Function.Name.TrimToLength(80);
+
+      if (pair.Function.IsRegex) {
+        title += " (Regex)";
+      }
+
+      var value = new ProfileMenuItem(text, pair.Weight.Ticks, weightPercentage) {
+        PrefixText = title,
+        ToolTip = tooltip,
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = markerSettings.PickTextWeight(weightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
+      var item = new MenuItem {
+        Header = value,
+        Tag = pair.Function,
+        Icon = CreateMarkedMenuIcon(pair.Function),
+        HeaderTemplate = valueTemplate,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+      };
+
+      defaultItems.Insert(separatorIndex + 1, item);
+      profileItems.Add(value);
+
+      // Make sure percentage rects are aligned.
+      Utils.UpdateMaxMenuItemWidth(title, ref maxWidth, menu);
+    }
+
+    foreach (var value in profileItems) {
+      value.MinTextWidth = maxWidth;
+    }
+
+    // Populate the menu.
+    menu.Items.Clear();
+    DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
+  }
+  
+  private static Image CreateMarkedMenuIcon(FlameGraphSettings.NodeMarkingStyle nodeMarkingStyle) {
+    // Make a small square image with the marking background color.
+    var visual = new DrawingVisual();
+
+    using (var dc = visual.RenderOpen()) {
+      dc.DrawRectangle(nodeMarkingStyle.Color.AsBrush(), ColorPens.GetPen(Colors.Black), new Rect(0, 0, 16, 16));
+    }
+
+    var targetBitmap = new RenderTargetBitmap(16, 16, 96, 96, PixelFormats.Default);
+    targetBitmap.Render(visual);
+    return new Image { Source = targetBitmap };
+  }
+  
   private static int CommonParentCallerIndex(ProfileCallTreeNode a, ProfileCallTreeNode b) {
     int index = 0;
 
@@ -694,7 +853,7 @@ public static class DocumentUtils {
     });
   }
 
-  public static string GenerateProfileFilterTitle(ProfileSampleFilter instanceFilter, ISession session) {
+  public static string CreateProfileFilterTitle(ProfileSampleFilter instanceFilter, ISession session) {
     if (instanceFilter == null) {
       return "";
     }
@@ -702,7 +861,7 @@ public static class DocumentUtils {
     return !instanceFilter.IncludesAll ? "Instance: " : "";
   }
 
-  public static string GenerateProfileFilterDescription(ProfileSampleFilter instanceFilter, ISession session) {
+  public static string CreateProfileFilterDescription(ProfileSampleFilter instanceFilter, ISession session) {
     if (instanceFilter == null) {
       return "";
     }
@@ -736,20 +895,20 @@ public static class DocumentUtils {
     return sb.ToString().Trim();
   }
 
-  public static string GenerateProfileFunctionDescription(FunctionProfileData funcProfile,
+  public static string CreateProfileFunctionDescription(FunctionProfileData funcProfile,
                                                           ProfileDocumentMarkerSettings settings,ISession session) {
-    return GenerateProfileDescription(funcProfile.Weight, funcProfile.ExclusiveWeight,
+    return CreateProfileDescription(funcProfile.Weight, funcProfile.ExclusiveWeight,
                                       settings, session.ProfileData.ScaleFunctionWeight);
   }
 
-  public static string GenerateInlineeFunctionDescription(InlineeListItem inlinee,
+  public static string CreateInlineeFunctionDescription(InlineeListItem inlinee,
                                                           FunctionProfileData funcProfile,
                                                           ProfileDocumentMarkerSettings settings,ISession session) {
-    return GenerateProfileDescription(inlinee.Weight, inlinee.ExclusiveWeight,
+    return CreateProfileDescription(inlinee.Weight, inlinee.ExclusiveWeight,
                                       settings, funcProfile.ScaleWeight);
   }
 
-  public static string GenerateProfileDescription(TimeSpan weight, TimeSpan exclusiveWeight,
+  public static string CreateProfileDescription(TimeSpan weight, TimeSpan exclusiveWeight,
                                                   ProfileDocumentMarkerSettings settings,
                                                   Func<TimeSpan, double> weightFunc) {
     var weightPerc = weightFunc(weight);

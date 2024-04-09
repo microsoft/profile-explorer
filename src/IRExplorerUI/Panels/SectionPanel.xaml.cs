@@ -385,6 +385,8 @@ public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
   public Brush TextColor { get; set; }
   public Brush BackColor { get; set; }
   public Brush BackColor2 { get; set; }
+  public Brush ModuleBackColor { get; set; }
+  public Brush FunctionBackColor { get; set; }
   public int SectionCount => Function.SectionCount;
   public FunctionCodeStatistics Statistics { get; set; }
   public FunctionCodeStatistics DiffStatistics { get; set; }
@@ -481,6 +483,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private IRTextSummary summary_;
   private IRTextSummary otherSummary_;
   private List<IRTextSectionEx> sections_;
+  private List<IRTextFunctionEx> functions_;
   private List<IRTextSummary> moduleSummaries_;
   private bool sectionExtensionComputed_;
   private Dictionary<IRTextSection, IRTextSectionEx> sectionExtMap_;
@@ -1252,17 +1255,63 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     // Create mappings between each function and their UI counterparts.
     // In two-document diff mode, also add entries for functions that are found
     // only in the left or in the right document and mark them as diffs.
-    var functionsEx = SetupFunctionExtensions();
+    functions_ = SetupFunctionExtensions();
 
     // Prepare UI.
-    await SetupFunctionListUI(functionsEx);
+    await SetupFunctionListUI(functions_);
 
     // Attach additional data to the UI.
-    await LoadFunctionProfile(functionsEx);
+    await LoadFunctionProfile(functions_);
+    UpdateMarkedFunctions(functions_, true);
 
     if (analyzeFunctions) {
-      await RunFunctionAnalysis(functionsEx);
+      await RunFunctionAnalysis(functions_);
     }
+  }
+
+  public void UpdateMarkedFunctions() {
+    if (functions_ != null) {
+      UpdateMarkedFunctions(functions_);
+    }
+  }
+
+  private void UpdateMarkedFunctions(List<IRTextFunctionEx> functionsEx, bool initial = false) {
+    var fgSettings = App.Settings.FlameGraphSettings;
+
+    if (!initial) {
+      foreach (var f in functionsEx) {
+        f.ModuleBackColor = null;
+        f.FunctionBackColor = null;
+      }
+
+      RefreshFunctionList(false);
+    }
+
+    if (!fgSettings.UseAutoModuleColors &&
+        !fgSettings.UseModuleColors &&
+        !fgSettings.UseFunctionColors) {
+      return;
+    }
+
+    foreach (var f in functionsEx) {
+      f.ModuleBackColor = null;
+      f.FunctionBackColor = null;
+
+      if (fgSettings.UseModuleColors &&
+          fgSettings.GetModuleBrush(f.ModuleName, out var brush)) {
+        f.ModuleBackColor = brush;
+      }
+      else if (fgSettings.UseAutoModuleColors) {
+        f.ModuleBackColor = fgSettings.GetAutoModuleBrush(f.ModuleName);
+      }
+
+      if (fgSettings.UseFunctionColors &&
+          fgSettings.GetFunctionColor(f.Name, out var color)) {
+        f.FunctionBackColor = color.AsBrush();
+      }
+    }
+
+    RefreshFunctionList(false);
   }
 
   public List<IRTextSectionEx> CreateSectionsExtension(bool force = false) {
@@ -1342,14 +1391,14 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  public void RefreshFunctionList() {
+  public void RefreshFunctionList(bool scrollToFirst = true) {
     if (FunctionList.ItemsSource == null) {
       return;
     }
 
     ((ListCollectionView)FunctionList.ItemsSource).Refresh();
 
-    if (FunctionList.Items.Count > 0) {
+    if (scrollToFirst && FunctionList.Items.Count > 0) {
       FunctionList.ScrollIntoView(FunctionList.Items[0]);
     }
   }
