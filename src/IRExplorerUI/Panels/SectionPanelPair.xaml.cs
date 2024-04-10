@@ -513,8 +513,8 @@ public partial class SectionPanelPair : ToolPanelControl {
                                                   Session.CompilerInfo, true, cancelableTask);
   }
 
-  public void UpdateMarkedFunctions() {
-    MainPanel.UpdateMarkedFunctions();
-    DiffPanel.UpdateMarkedFunctions();
+  public void UpdateMarkedFunctions(bool externalCall) {
+    MainPanel.UpdateMarkedFunctions(externalCall);
+    DiffPanel.UpdateMarkedFunctions(externalCall);
   }
 }

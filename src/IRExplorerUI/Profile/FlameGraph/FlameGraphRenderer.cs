@@ -60,7 +60,8 @@ public class FlameGraphRenderer {
   }
 
   private void ReloadSettings() {
-    settings_.CachePalettes();
+    settings_.ResedCachedPalettes();
+    App.Settings.MarkingSettings.ResedCachedPalettes();
     defaultBorder_ = ColorPens.GetPen(settings_.NodeBorderColor, 0.5);
     font_ = new Typeface("Segoe UI"); //? TODO: Option
     nameFont_ = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Medium,

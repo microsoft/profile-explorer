@@ -124,6 +124,11 @@
 		  <XamlRuntime>Wpf</XamlRuntime>
 		  <SubType>Designer</SubType>
 		</Page>
+		<Page Update="OptionsPanels\FunctionMarkingOptionsPanel.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		  <XamlRuntime>Wpf</XamlRuntime>
+		  <SubType>Designer</SubType>
+		</Page>
 	</ItemGroup>
 
 	<ItemGroup>

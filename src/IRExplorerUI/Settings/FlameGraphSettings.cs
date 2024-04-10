@@ -108,7 +108,11 @@ public class FlameGraphSettings : SettingsBase {
     return StateSerializer.Deserialize<FlameGraphSettings>(serialized);
   }
 
-  public void CachePalettes() {
+  public void ResedCachedPalettes() {
+    palettes_ = null;
+  }
+
+  private void CachePalettes() {
     if (palettes_ == null) {
       palettes_ = new Dictionary<ProfileCallTreeNodeKind, ColorPalette> {
         [ProfileCallTreeNodeKind.Unset] = ColorPalette.GetPalette(DefaultColorPalette),

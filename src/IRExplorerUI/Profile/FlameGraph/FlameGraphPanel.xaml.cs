@@ -563,7 +563,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     ReloadSettings();
   }
 
-  public void UpdateMarkedFunctions() {
+  public void UpdateMarkedFunctions(bool externalCall) {
     GraphHost.Redraw();
+    OnPropertyChanged(nameof(HasEnabledMarkedModules));
+    OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
   }
 }

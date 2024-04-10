@@ -124,6 +124,10 @@ public class FunctionMarkingSettings : SettingsBase {
     return false;
   }
 
+  public void ResedCachedPalettes() {
+    modulesPalette_ = null;
+  }
+  
   public override bool Equals(object obj) {
     return obj is FunctionMarkingSettings settings &&
            Title == settings.Title &&
@@ -194,6 +198,8 @@ public class FunctionMarkingStyle {
   [ProtoMember(5)]
   public bool IsRegex { get; set; }
 
+  public bool HasTitle => !string.IsNullOrEmpty(Title);
+  
   public FunctionMarkingStyle(string name, Color color) {
     Name = name;
     Color = color;

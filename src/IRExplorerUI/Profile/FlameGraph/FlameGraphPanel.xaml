@@ -184,6 +184,7 @@
             ToolTip="Color functions based on the module name">
             <MenuItem
               x:Name="ModuleMenu"
+              Height="20"
               Margin="0,0,0,0"
               Padding="0,0,0,0"
               Background="{Binding Path=HasEnabledMarkedModules, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
@@ -232,6 +233,7 @@
             ToolTip="Color functions based on the module name">
             <MenuItem
               x:Name="FunctionMenu"
+              Height="20"
               Padding="0,0,0,0"
               Background="{Binding Path=HasEnabledMarkedFunctions, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
               OverridesDefaultStyle="True"

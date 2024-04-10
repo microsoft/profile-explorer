@@ -534,12 +534,22 @@ public partial class MainWindow : Window, ISession {
   public async Task<bool> FunctionMarkingChanged(ToolPanelKind sourcePanelKind) {
     if (sourcePanelKind != ToolPanelKind.Section) {
       var panel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
-      panel?.UpdateMarkedFunctions();
+      panel?.UpdateMarkedFunctions(true);
     }
 
     if (sourcePanelKind != ToolPanelKind.FlameGraph) {
       var panel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
-      panel?.UpdateMarkedFunctions();
+      panel?.UpdateMarkedFunctions(true);
+    }
+
+    if (sourcePanelKind != ToolPanelKind.CallTree) {
+      var panel = FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
+      panel?.UpdateMarkedFunctions(true);
+    }
+    
+    if (sourcePanelKind != ToolPanelKind.CallerCallee) {
+      var panel = FindPanel(ToolPanelKind.CallerCallee) as CallTreePanel;
+      panel?.UpdateMarkedFunctions(true);
     }
 
     return true;

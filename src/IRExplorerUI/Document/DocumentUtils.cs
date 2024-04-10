@@ -564,8 +564,12 @@ public static class DocumentUtils {
       string tooltip = "Click to remove module marking";
       string title = pair.Module.Name;
 
+      if (pair.Module.HasTitle) {
+        title = $"{pair.Module.Title} ({title})";
+      }
+      
       if (pair.Module.IsRegex) {
-        title += " (Regex)";
+        title = $"{title} (Regex)";
       }
 
       var value = new ProfileMenuItem(text, pair.Weight.Ticks, weightPercentage) {
@@ -647,11 +651,15 @@ public static class DocumentUtils {
     foreach (var pair in sortedFuncts) {
       double weightPercentage = session.ProfileData.ScaleFunctionWeight(pair.Weight);
       string text = $"({markerSettings.FormatWeightValue(null, pair.Weight)})";
-      string tooltip = "Click to remove function marking";
+      string tooltip = "Right-click to remove function marking";
       string title = pair.Function.Name.TrimToLength(80);
 
+      if (pair.Function.HasTitle) {
+        title = $"{pair.Function.Title} ({title})";
+      }
+
       if (pair.Function.IsRegex) {
-        title += " (Regex)";
+        title = $"{title} (Regex)";
       }
 
       var value = new ProfileMenuItem(text, pair.Weight.Ticks, weightPercentage) {

@@ -1262,59 +1262,56 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     functions_ = SetupFunctionExtensions();
 
     // Prepare UI.
-    await SetupFunctionListUI(functions_);
+    await SetupFunctionListUI();
 
     // Attach additional data to the UI.
-    await LoadFunctionProfile(functions_);
-    UpdateMarkedFunctions(functions_, true);
+    await LoadFunctionProfile();
+    UpdateMarkedFunctions(true);
 
     if (analyzeFunctions) {
-      await RunFunctionAnalysis(functions_);
+      await RunFunctionAnalysis();
     }
   }
 
-  public void UpdateMarkedFunctions() {
+  public void UpdateMarkedFunctions(bool externalCall = false) {
     if (functions_ != null) {
-      UpdateMarkedFunctions(functions_);
+      UpdateMarkedFunctionsImpl();
       OnPropertyChanged(nameof(HasEnabledMarkedModules));
       OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
-      Session.FunctionMarkingChanged(ToolPanelKind.Section);
+      
+      if (!externalCall) {
+        Session.FunctionMarkingChanged(PanelKind);
+      }
     }
   }
 
-  private void UpdateMarkedFunctions(List<IRTextFunctionEx> functionsEx, bool initial = false) {
+  private void UpdateMarkedFunctionsImpl() {
     var fgSettings = App.Settings.MarkingSettings;
 
-    if (!initial) {
-      foreach (var f in functionsEx) {
-        f.ModuleBackColor = null;
-        f.FunctionBackColor = null;
-      }
-
-      RefreshFunctionList(false);
+    foreach (var f in functions_) {
+      f.ModuleBackColor = null;
+      f.FunctionBackColor = null;
     }
 
     if (!fgSettings.UseAutoModuleColors &&
         !fgSettings.UseModuleColors &&
         !fgSettings.UseFunctionColors) {
+      RefreshFunctionList(false);
       return;
     }
 
-    foreach (var f in functionsEx) {
-      f.ModuleBackColor = null;
-      f.FunctionBackColor = null;
-
+    foreach (var funcEx in functions_) {
       if (fgSettings.UseModuleColors &&
-          fgSettings.GetModuleBrush(f.ModuleName, out var brush)) {
-        f.ModuleBackColor = brush;
+          fgSettings.GetModuleBrush(funcEx.ModuleName, out var brush)) {
+        funcEx.ModuleBackColor = brush;
       }
       else if (fgSettings.UseAutoModuleColors) {
-        f.ModuleBackColor = fgSettings.GetAutoModuleBrush(f.ModuleName);
+        funcEx.ModuleBackColor = fgSettings.GetAutoModuleBrush(funcEx.ModuleName);
       }
 
       if (fgSettings.UseFunctionColors &&
-          fgSettings.GetFunctionColor(f.Name, out var color)) {
-        f.FunctionBackColor = color.AsBrush();
+          fgSettings.GetFunctionColor(funcEx.Name, out var color)) {
+        funcEx.FunctionBackColor = color.AsBrush();
       }
     }
 
@@ -1589,7 +1586,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     AlternateNameColumnVisible = settings_.ShowMangleNamesColumn;
   }
 
-  private async Task LoadFunctionProfile(List<IRTextFunctionEx> functions) {
+  private async Task LoadFunctionProfile() {
     var profile = Session.ProfileData;
 
     if (profile == null) {
@@ -1645,7 +1642,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
     // Add the profile info and column data to each function.
     hasPerfCounters = await Task.Run(() =>
-      PrepareFunctionProfile(functions, profile, markerOptions));
+      PrepareFunctionProfile(functions_, profile, markerOptions));
 
     if (hasPerfCounters) {
       // Wait for all other columns to be added to the UI first
@@ -1816,13 +1813,13 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     return functionsEx;
   }
 
-  private async Task SetupFunctionListUI(List<IRTextFunctionEx> functionsEx) {
+  private async Task SetupFunctionListUI() {
     if (!FunctionPartVisible) {
       return;
     }
 
     // Set up the filter used to search the list.
-    var functionFilter = new ListCollectionView(functionsEx);
+    var functionFilter = new ListCollectionView(functions_);
     functionFilter.Filter = FilterFunctionList;
     FunctionList.ItemsSource = functionFilter;
     SectionList.ItemsSource = null;
@@ -1832,9 +1829,9 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  private async Task RunFunctionAnalysis(List<IRTextFunctionEx> functions) {
+  private async Task RunFunctionAnalysis() {
     if (settings_.ComputeStatistics) {
-      await ComputeFunctionStatistics(functions);
+      await ComputeFunctionStatistics(functions_);
     }
   }
 
@@ -3434,24 +3431,32 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   
   public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
-    MarkSelectedNodes(obj, (node, color) => markingSettings.AddModuleColor(node.ModuleName, color));
+    MarkSelectedNodes(obj, (node, color) => 
+      markingSettings.AddModuleColor(node.ModuleName, color));
     markingSettings.UseModuleColors = true;
     UpdateMarkedFunctions();
 
   });
+  
   public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
-    MarkSelectedNodes(obj, (node, color) => markingSettings.AddFunctionColor(node.Name, color));
+    MarkSelectedNodes(obj, (node, color) => {
+      if (settings_.ShowDemangledNames) {
+        markingSettings.AddFunctionColor(node.AlternateName, color);
+      }
+      else {
+        markingSettings.AddFunctionColor(node.Name, color);
+      }
+    });
     markingSettings.UseFunctionColors = true;
     UpdateMarkedFunctions();
   });
   
-  private void MarkSelectedNodes(object obj, Action<IRTextFunction, Color> action) {
+  private void MarkSelectedNodes(object obj, Action<IRTextFunctionEx, Color> action) {
     if (obj is SelectedColorEventArgs e) {
       foreach (IRTextFunctionEx funcEx in FunctionList.SelectedItems) {
-        action(funcEx.Function, e.SelectedColor);
+        action(funcEx, e.SelectedColor);
       }
     }
   }
-
 }

@@ -15,6 +15,7 @@ using System.Windows.Media;
 using Aga.Controls.Tree;
 using IRExplorerCore;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Utilities;
@@ -22,7 +23,7 @@ using Microsoft.Diagnostics.Tracing.Stacks;
 
 namespace IRExplorerUI.Profile;
 
-public enum ChildFunctionExKind {
+public enum CallTreeListItemKind {
   Root,
   ChildrenPlaceholder,
   CallerNode,
@@ -76,8 +77,11 @@ public static class CallTreeCommand {
 }
 
 public class CallTreeListItem : SearchableProfileItem, ITreeModel {
-  public CallTreeListItem(ChildFunctionExKind kind, CallTreePanel owner,
-                         FunctionNameFormatter funcNameFormatter = null) :
+  private Brush functionBackColor;
+  private Brush moduleBackColor;
+
+  public CallTreeListItem(CallTreeListItemKind kind, CallTreePanel owner,
+                          FunctionNameFormatter funcNameFormatter = null) :
     base(funcNameFormatter) {
     Children = new List<CallTreeListItem>();
     Kind = kind;
@@ -90,10 +94,21 @@ public class CallTreeListItem : SearchableProfileItem, ITreeModel {
   public Brush TextColor { get; set; }
   public Brush BackColor { get; set; }
   public Brush BackColor2 { get; set; }
+
+  public Brush FunctionBackColor {
+    get => functionBackColor;
+    set => SetAndNotify(ref functionBackColor, value);
+  }
+
+  public Brush ModuleBackColor {
+    get => moduleBackColor;
+    set => SetAndNotify(ref moduleBackColor, value);
+  }
+
   public CallTreeListItem Parent { get; set; }
   public List<CallTreeListItem> Children { get; set; }
   public long Time { get; set; }
-  public ChildFunctionExKind Kind { get; set; }
+  public CallTreeListItemKind Kind { get; set; }
   public bool HasCallTreeNode => CallTreeNode?.Function != null;
   public override TimeSpan Weight => HasCallTreeNode ? CallTreeNode.Weight : TimeSpan.Zero;
   public override TimeSpan ExclusiveWeight => HasCallTreeNode ? CallTreeNode.ExclusiveWeight : TimeSpan.Zero;
@@ -122,7 +137,7 @@ public class CallTreeListItem : SearchableProfileItem, ITreeModel {
   }
 
   protected override bool ShouldPrependModule() {
-    return Kind != ChildFunctionExKind.Header &&
+    return Kind != CallTreeListItemKind.Header &&
            Owner.Settings.PrependModuleToFunction;
   }
 }
@@ -168,6 +183,10 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
+  public bool HasEnabledMarkedFunctions => MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
+  public bool HasEnabledMarkedModules => MarkingSettings.UseModuleColors && MarkingSettings.ModuleColors.Count > 0;
+  public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
+
   public event PropertyChangedEventHandler PropertyChanged;
 
   //? TODO: Replace all other commands with RelayCommand.
@@ -184,15 +203,15 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     await SelectFunctionInPanel(obj, ToolPanelKind.Source);
   });
   public RelayCommand<object> CopyFunctionNameCommand => new RelayCommand<object>(async obj => {
-    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem childInfo) {
-      string text = Session.CompilerInfo.NameProvider.GetFunctionName(childInfo.Function);
+    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
+      string text = Session.CompilerInfo.NameProvider.GetFunctionName(item.Function);
       Clipboard.SetText(text);
     }
   });
   public RelayCommand<object> CopyDemangledFunctionNameCommand => new RelayCommand<object>(async obj => {
-    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem childInfo) {
+    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
       var options = FunctionNameDemanglingOptions.Default;
-      string text = Session.CompilerInfo.NameProvider.DemangleFunctionName(childInfo.Function, options);
+      string text = Session.CompilerInfo.NameProvider.DemangleFunctionName(item.Function, options);
       Clipboard.SetText(text);
     }
   });
@@ -210,31 +229,31 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   });
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
-    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem childInfo) {
-      await IRDocumentPopupInstance.ShowPreviewPopup(childInfo.Function, "",
+    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
+      await IRDocumentPopupInstance.ShowPreviewPopup(item.Function, "",
                                                      CallTreeList, Session);
     }
   });
   public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
-    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem childInfo) {
-      var filter = new ProfileSampleFilter(childInfo.CallTreeNode);
-      await IRDocumentPopupInstance.ShowPreviewPopup(childInfo.Function, "",
+    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
+      var filter = new ProfileSampleFilter(item.CallTreeNode);
+      await IRDocumentPopupInstance.ShowPreviewPopup(item.Function, "",
                                                      CallTreeList, Session, filter);
     }
   });
 
   public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node) {
-      var childInfo = node.Tag as CallTreeListItem;
+      var item = node.Tag as CallTreeListItem;
       var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
-      await OpenFunctionInstance(childInfo, mode);
+      await OpenFunctionInstance(item, mode);
     }
   });
 
   public RelayCommand<object> OpenInstanceInNewTabCommand => new RelayCommand<object>(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node) {
-      var childInfo = node.Tag as CallTreeListItem;
-      await OpenFunctionInstance(childInfo, OpenSectionKind.NewTabDockRight);
+      var item = node.Tag as CallTreeListItem;
+      await OpenFunctionInstance(item, OpenSectionKind.NewTabDockRight);
     }
   });
 
@@ -313,6 +332,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     CallTree = Session.ProfileData.CallTree;
     callTreeEx_ = await Task.Run(() => CreateProfileCallTree());
     CallTreeList.Model = callTreeEx_;
+    UpdateMarkedFunctions(true);
 
     if (true) { //? TODO: Use option from UI settings
       ExpandHottestFunctionPath();
@@ -327,6 +347,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     callTreeEx_ = await Task.Run(() => CreateProfileCallerCalleeTree(function));
     CallTreeList.Model = callTreeEx_;
+    UpdateMarkedFunctions(true);
     ExpandCallTreeTop();
     ignoreNextSelectionEvent_ = false;
   }
@@ -395,10 +416,10 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private async Task SelectFunctionInPanel(object target, ToolPanelKind panelKind) {
     if (target is TreeNode node) {
-      var childInfo = node.Tag as CallTreeListItem;
+      var item = node.Tag as CallTreeListItem;
 
-      if (childInfo?.CallTreeNode != null) {
-        await Session.SelectProfileFunctionInPanel(childInfo.CallTreeNode, panelKind);
+      if (item?.CallTreeNode != null) {
+        await Session.SelectProfileFunctionInPanel(item.CallTreeNode, panelKind);
       }
     }
   }
@@ -472,7 +493,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     // If children not populated yet, there is a single dummy node.
     if (funcNode.Children.Count == 1 &&
-        funcNode.Children[0].Kind == ChildFunctionExKind.ChildrenPlaceholder) {
+        funcNode.Children[0].Kind == CallTreeListItemKind.ChildrenPlaceholder) {
       var callNode = funcNode.CallTreeNode;
       var visitedNodes = new HashSet<ProfileCallTreeNode>();
 
@@ -481,7 +502,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       funcNode.Children.Clear();
       CallTreeListItem firstNodeEx = null;
 
-      if (funcNode.Kind == ChildFunctionExKind.CalleeNode && callNode.HasChildren) {
+      if (funcNode.Kind == CallTreeListItemKind.CalleeNode && callNode.HasChildren) {
         var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
 
         foreach (var childNode in callNode.Children) {
@@ -489,7 +510,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                                                 visitedNodes, percentageFunc);
         }
       }
-      else if (funcNode.Kind == ChildFunctionExKind.CallerNode && callNode.HasCallers) {
+      else if (funcNode.Kind == CallTreeListItemKind.CallerNode && callNode.HasCallers) {
         var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
 
         foreach (var childNode in callNode.Callers) {
@@ -538,7 +559,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private CallTreeListItem CreateProfileCallerCalleeTree(IRTextFunction function) {
     var visitedNodes = new HashSet<ProfileCallTreeNode>();
-    var rootNode = new CallTreeListItem(ChildFunctionExKind.Root, this);
+    var rootNode = new CallTreeListItem(CallTreeListItemKind.Root, this);
     rootNode.Children = new List<CallTreeListItem>();
     var nodeList = GetCallTreeNodes(function, callTree_);
 
@@ -570,7 +591,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       if (instance.HasCallers) {
         // Percentage relative to entire profile for callers.
         percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
-        var callersNode = CreateProfileCallTreeHeader(ChildFunctionExKind.Header, "Callers", 2);
+        var callersNode = CreateProfileCallTreeHeader(CallTreeListItemKind.Header, "Callers", 2);
 
         if (nodeList.Count > 1) {
           instanceNode.Children.Add(callersNode);
@@ -580,7 +601,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         }
 
         foreach (var callerNode in instance.Callers) {
-          CreateProfileCallTree(callerNode, callersNode, instanceNode, ChildFunctionExKind.CallerNode,
+          CreateProfileCallTree(callerNode, callersNode, instanceNode, CallTreeListItemKind.CallerNode,
                                 visitedNodes, percentageFunc);
         }
 
@@ -602,7 +623,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         }
 
         foreach (var childNode in instance.Children) {
-          CreateProfileCallTree(childNode, childrenNode, instanceNode, ChildFunctionExKind.CalleeNode,
+          CreateProfileCallTree(childNode, childrenNode, instanceNode, CallTreeListItemKind.CalleeNode,
                                 visitedNodes, percentageFunc);
         }
 
@@ -620,12 +641,12 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     var visitedNodes = new HashSet<ProfileCallTreeNode>();
     var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
 
-    var rootNode = new CallTreeListItem(ChildFunctionExKind.Root, this);
+    var rootNode = new CallTreeListItem(CallTreeListItemKind.Root, this);
     rootNode.Children = new List<CallTreeListItem>();
 
     foreach (var node in callTree_.RootNodes) {
       visitedNodes.Clear();
-      CreateProfileCallTree(node, rootNode, ChildFunctionExKind.CallTreeNode,
+      CreateProfileCallTree(node, rootNode, CallTreeListItemKind.CallTreeNode,
                             visitedNodes, percentageFunc);
     }
 
@@ -633,14 +654,14 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private CallTreeListItem CreateProfileCallTree(ProfileCallTreeNode node, CallTreeListItem parentNodeEx,
-                                                ChildFunctionExKind kind,
+                                                CallTreeListItemKind kind,
                                                 HashSet<ProfileCallTreeNode> visitedNodes,
                                                 Func<TimeSpan, double> percentageFunc) {
     return CreateProfileCallTree(node, parentNodeEx, parentNodeEx, kind, visitedNodes, percentageFunc);
   }
 
   private CallTreeListItem CreateProfileCallTree(ProfileCallTreeNode node, CallTreeListItem parentNodeEx,
-                                                CallTreeListItem actualParentNode, ChildFunctionExKind kind,
+                                                CallTreeListItem actualParentNode, CallTreeListItemKind kind,
                                                 HashSet<ProfileCallTreeNode> visitedNodes,
                                                 Func<TimeSpan, double> percentageFunc) {
     bool newFunc = visitedNodes.Add(node);
@@ -651,38 +672,38 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       return nodeEx; // Recursion in the call graph.
     }
 
-    if (kind == ChildFunctionExKind.CalleeNode) {
+    if (kind == CallTreeListItemKind.CalleeNode) {
       //? TODO: This is still not quite right, the selected nodes
       //? shoud be found on a path that has the current stack frame as a prefix in theirs.
       //? actualParentNode is just the last in that list
       node = GetChildCallTreeNode(node, actualParentNode.CallTreeNode, callTree_);
       nodeEx.CallTreeNode = node;
     }
-    else if (kind == ChildFunctionExKind.CallerNode) {
+    else if (kind == CallTreeListItemKind.CallerNode) {
       node = GetChildCallTreeNode(node, null, callTree_);
       nodeEx.CallTreeNode = node;
     }
 
     switch (kind) {
-      case ChildFunctionExKind.CallTreeNode when node.HasChildren: {
+      case CallTreeListItemKind.CallTreeNode when node.HasChildren: {
         foreach (var childNode in node.Children) {
           CreateProfileCallTree(childNode, nodeEx, nodeEx, kind, visitedNodes, percentageFunc);
         }
 
         break;
       }
-      case ChildFunctionExKind.CalleeNode when node.HasChildren: {
+      case CallTreeListItemKind.CalleeNode when node.HasChildren: {
         // For caller-callee mode, use a placeholder than when the tree gets expanded,
         // gets replaced by the real callee nodes.
-        var dummyChildNode = CreateProfileCallTreeHeader(ChildFunctionExKind.ChildrenPlaceholder, "Placeholder", 0);
+        var dummyChildNode = CreateProfileCallTreeHeader(CallTreeListItemKind.ChildrenPlaceholder, "Placeholder", 0);
         dummyChildNode.CallTreeNode = node;
         nodeEx.Children.Add(dummyChildNode);
         break;
       }
-      case ChildFunctionExKind.CallerNode when node.HasCallers: {
+      case CallTreeListItemKind.CallerNode when node.HasCallers: {
         // For caller-callee mode, use a placeholder than when tree gets expanded,
         // gets replaced by the real caller (backtrace) nodes.
-        var dummyChildNode = CreateProfileCallTreeHeader(ChildFunctionExKind.ChildrenPlaceholder, "Placeholder", 0);
+        var dummyChildNode = CreateProfileCallTreeHeader(CallTreeListItemKind.ChildrenPlaceholder, "Placeholder", 0);
         dummyChildNode.CallTreeNode = node;
         nodeEx.Children.Add(dummyChildNode);
         break;
@@ -702,7 +723,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
-  private CallTreeListItem CreateProfileCallTreeChild(ProfileCallTreeNode node, ChildFunctionExKind kind,
+  private CallTreeListItem CreateProfileCallTreeChild(ProfileCallTreeNode node, CallTreeListItemKind kind,
                                                      Func<TimeSpan, double> percentageFunc,
                                                      CallTreeListItem parentNodeEx = null) {
     double weightPercentage = percentageFunc(node.Weight);
@@ -729,7 +750,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                                                       Func<TimeSpan, double> percentageFunc, int priority) {
     double weightPercentage = percentageFunc(weight);
     double exclusiveWeightPercentage = percentageFunc(exclusiveWeight);
-    return new CallTreeListItem(ChildFunctionExKind.Header, this) {
+    return new CallTreeListItem(CallTreeListItemKind.Header, this) {
       CallTreeNode = new ProfileCallTreeNode(null, null) {Weight = weight, ExclusiveWeight = exclusiveWeight},
       Time = TimeSpan.MaxValue.Ticks - priority,
       FunctionName = name,
@@ -742,32 +763,32 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     };
   }
 
-  private CallTreeListItem CreateProfileCallTreeHeader(ChildFunctionExKind kind, string name, int priority) {
+  private CallTreeListItem CreateProfileCallTreeHeader(CallTreeListItemKind kind, string name, int priority) {
     return new CallTreeListItem(kind, this)
       {Time = TimeSpan.MaxValue.Ticks - priority, FunctionName = name, TextColor = Brushes.Black, IsMarked = true};
   }
 
   private CallTreeListItem CreateProfileCallTreeInstance(string name, ProfileCallTreeNode node,
                                                         Func<TimeSpan, double> percentageFunc) {
-    var result = CreateProfileCallTreeChild(node, ChildFunctionExKind.Header, percentageFunc);
+    var result = CreateProfileCallTreeChild(node, CallTreeListItemKind.Header, percentageFunc);
     result.FunctionName = name;
     result.IsMarked = true;
     return result;
   }
 
   private async void ChildDoubleClick(object sender, MouseButtonEventArgs e) {
-    var childInfo = ((ListViewItem)sender).Content as CallTreeListItem;
+    var item = ((ListViewItem)sender).Content as CallTreeListItem;
 
-    if (childInfo != null) {
+    if (item != null) {
       if (Utils.IsControlModifierActive()) {
         var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
-        await OpenFunction(childInfo, openMode);
+        await OpenFunction(item, openMode);
       }
       else {
-        await SwitchFunction(childInfo);
+        await SwitchFunction(item);
 
         if (IsCallerCalleePanel) {
-          await DisplayProfileCallerCalleeTree(childInfo.Function);
+          await DisplayProfileCallerCalleeTree(item.Function);
         }
       }
     }
@@ -791,8 +812,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void ExpandHottestFunctionPathImpl(TreeNode node, int depth = 0) {
-    var childInfo = node.Tag as CallTreeListItem;
-    childInfo.IsMarked = true;
+    var item = node.Tag as CallTreeListItem;
+    item.IsMarked = true;
 
     if (node.HasChildren && depth <= 10) {
       node.IsExpanded = true;
@@ -833,23 +854,23 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private async void SelectFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (CallTreeList.SelectedItem is TreeNode node) {
-      var childInfo = node.Tag as CallTreeListItem;
-      await SwitchFunction(childInfo);
+      var item = node.Tag as CallTreeListItem;
+      await SwitchFunction(item);
     }
   }
 
   private async void OpenFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (CallTreeList.SelectedItem is TreeNode node) {
-      var childInfo = node.Tag as CallTreeListItem;
+      var item = node.Tag as CallTreeListItem;
       var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
-      await OpenFunction(childInfo, mode);
+      await OpenFunction(item, mode);
     }
   }
 
   private async void OpenFunctionInNewTab(object sender, ExecutedRoutedEventArgs e) {
     if (CallTreeList.SelectedItem is TreeNode node) {
-      var childInfo = node.Tag as CallTreeListItem;
-      await OpenFunction(childInfo, OpenSectionKind.NewTabDockRight);
+      var item = node.Tag as CallTreeListItem;
+      await OpenFunction(item, OpenSectionKind.NewTabDockRight);
     }
   }
 
@@ -857,27 +878,27 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     await RestorePreviousState();
   }
 
-  private async Task OpenFunction(CallTreeListItem childInfo, OpenSectionKind openMode) {
-    if (childInfo.HasCallTreeNode) {
-      await Session.OpenProfileFunction(childInfo.CallTreeNode, openMode);
+  private async Task OpenFunction(CallTreeListItem item, OpenSectionKind openMode) {
+    if (item.HasCallTreeNode) {
+      await Session.OpenProfileFunction(item.CallTreeNode, openMode);
     }
   }
 
-  private async Task OpenFunctionInstance(CallTreeListItem childInfo, OpenSectionKind openMode) {
-    if (childInfo.HasCallTreeNode) {
-      var filter = new ProfileSampleFilter(childInfo.CallTreeNode);
-      await Session.OpenProfileFunction(childInfo.CallTreeNode, openMode, filter);
+  private async Task OpenFunctionInstance(CallTreeListItem item, OpenSectionKind openMode) {
+    if (item.HasCallTreeNode) {
+      var filter = new ProfileSampleFilter(item.CallTreeNode);
+      await Session.OpenProfileFunction(item.CallTreeNode, openMode, filter);
     }
   }
 
-  private async Task SwitchFunction(CallTreeListItem childInfo) {
-    if (childInfo.HasCallTreeNode) {
+  private async Task SwitchFunction(CallTreeListItem item) {
+    if (item.HasCallTreeNode) {
       if (function_ != null) {
         stateStack_.Push(function_);
         OnPropertyChanged(nameof(HasPreviousState));
       }
 
-      await Session.SwitchActiveProfileFunction(childInfo.CallTreeNode);
+      await Session.SwitchActiveProfileFunction(item.CallTreeNode);
     }
   }
 
@@ -1016,11 +1037,15 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       return;
     }
 
+    //? TODO: Redesign settings change detection, doesn't work well
+    //? when a panel shows multiple settings objects.
+    var initialMarkingSettings = MarkingSettings.Clone();
     FrameworkElement relativeControl = CallTreeList;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<CallTreeOptionsPanel, CallTreeSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
-        if (!newSettings.Equals(settings_)) {
+        if (!newSettings.Equals(settings_) ||
+            !initialMarkingSettings.Equals(MarkingSettings)) {
           Settings = newSettings;
 
           if (IsCallerCalleePanel) {
@@ -1035,6 +1060,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
           if (commit) {
             App.SaveApplicationSettings();
           }
+          
+          initialMarkingSettings = MarkingSettings.Clone();
           return settings_.Clone();
         }
 
@@ -1067,5 +1094,108 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private async void ToggleButton_Click(object sender, RoutedEventArgs e) {
     await UpdateCallTree();
+    UpdateMarkedFunctions();
+  }
+
+  private void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
+    MarkingSettings.ModuleColors.Clear();
+    UpdateMarkedFunctions();
+  }
+
+  private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
+    MarkingSettings.FunctionColors.Clear();
+    UpdateMarkedFunctions();
+  }
+
+  private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    DocumentUtils.CreateMarkedModulesMenu(ModuleMenu, ModuleMenuItem_OnClick,
+      MarkingSettings, Session);
+  }
+
+  private async void ModuleMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var style = ((MenuItem)sender)?.Tag as FunctionMarkingStyle;
+    MarkingSettings.ModuleColors.Remove(style);
+    UpdateMarkedFunctions();
+  }
+
+  private void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    DocumentUtils.CreateMarkedFunctionsMenu(FunctionMenu, FunctionMenuItem_OnClick,
+      MarkingSettings, Session);
+  }
+  
+  private async void FunctionMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var style = ((MenuItem)sender)?.Tag as FunctionMarkingStyle;
+    MarkingSettings.FunctionColors.Remove(style);
+    UpdateMarkedFunctions();
+  }
+  
+  public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) => 
+      markingSettings.AddModuleColor(node.ModuleName, color));
+    markingSettings.UseModuleColors = true;
+    UpdateMarkedFunctions();
+
+  });
+  
+  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) => {
+      markingSettings.AddFunctionColor(node.FunctionName, color);
+    });
+    markingSettings.UseFunctionColors = true;
+    UpdateMarkedFunctions();
+  });
+  
+  private void MarkSelectedNodes(object obj, Action<CallTreeListItem, Color> action) {
+    if (obj is SelectedColorEventArgs e) {
+      foreach (TreeNode node in CallTreeList.SelectedItems) {
+        if (node.Tag is CallTreeListItem item) {
+          action(item, e.SelectedColor);
+        }
+      }
+    }
+  }
+  
+  public void UpdateMarkedFunctions(bool externalCall = false) {
+    if (callTreeNodeToNodeExMap_ != null) {
+      UpdateMarkedFunctionsImpl();
+      OnPropertyChanged(nameof(HasEnabledMarkedModules));
+      OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
+
+      if (!externalCall) {
+        Session.FunctionMarkingChanged(PanelKind);
+      }
+    }
+  }
+  
+  private void UpdateMarkedFunctionsImpl() {
+    var fgSettings = App.Settings.MarkingSettings;
+
+    foreach (var f in callTreeNodeToNodeExMap_.Values) {
+      f.ModuleBackColor = null;
+      f.FunctionBackColor = null;
+    }
+
+    if (!fgSettings.UseAutoModuleColors &&
+        !fgSettings.UseModuleColors &&
+        !fgSettings.UseFunctionColors) {
+      return;
+    }
+
+    foreach (var item in callTreeNodeToNodeExMap_.Values) {
+      if (fgSettings.UseModuleColors &&
+          fgSettings.GetModuleBrush(item.ModuleName, out var brush)) {
+        item.ModuleBackColor = brush;
+      }
+      else if (fgSettings.UseAutoModuleColors) {
+        item.ModuleBackColor = fgSettings.GetAutoModuleBrush(item.ModuleName);
+      }
+
+      if (fgSettings.UseFunctionColors &&
+          fgSettings.GetFunctionColor(item.FunctionName, out var color)) {
+        item.FunctionBackColor = color.AsBrush();
+      }
+    }
   }
 }
