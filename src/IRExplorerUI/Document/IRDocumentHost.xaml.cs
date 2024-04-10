@@ -1216,7 +1216,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     double maxWidth = 0;
 
     ProfileBlocksMenu.Items.Clear();
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings_.ProfileMarkerSettings;
     int order = 0;
 
@@ -1267,7 +1267,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     var list = new List<ProfileMenuItem>(result.SampledElements.Count);
     ProfileElementsMenu.Items.Clear();
 
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings_.ProfileMarkerSettings;
     int order = 0;
     double maxWidth = 0;

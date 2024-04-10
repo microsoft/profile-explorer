@@ -715,7 +715,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     double maxWidth = 0;
 
     ProfileElementsMenu.Items.Clear();
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings_.ProfileMarkerSettings;
     int order = 0;
 

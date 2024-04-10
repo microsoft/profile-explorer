@@ -542,27 +542,15 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    DocumentUtils.CreateMarkedModulesMenu(ModuleMenu, ModuleMenuItem_OnClick,
-                                          MarkingSettings, Session);
-  }
-
-  private async void ModuleMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    var style = ((MenuItem)sender)?.Tag as FunctionMarkingStyle;
-    MarkingSettings.ModuleColors.Remove(style);
-    ReloadSettings();
+    DocumentUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
+      ReloadSettings);
   }
 
   private void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    DocumentUtils.CreateMarkedFunctionsMenu(FunctionMenu, FunctionMenuItem_OnClick,
-      MarkingSettings, Session);
+    DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
+      ReloadSettings);
   }
   
-  private async void FunctionMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    var style = ((MenuItem)sender)?.Tag as FunctionMarkingStyle;
-    MarkingSettings.FunctionColors.Remove(style);
-    ReloadSettings();
-  }
-
   public void UpdateMarkedFunctions(bool externalCall) {
     GraphHost.Redraw();
     OnPropertyChanged(nameof(HasEnabledMarkedModules));

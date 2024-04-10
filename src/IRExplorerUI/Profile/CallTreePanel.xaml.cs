@@ -1108,27 +1108,15 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    DocumentUtils.CreateMarkedModulesMenu(ModuleMenu, ModuleMenuItem_OnClick,
-      MarkingSettings, Session);
-  }
-
-  private async void ModuleMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    var style = ((MenuItem)sender)?.Tag as FunctionMarkingStyle;
-    MarkingSettings.ModuleColors.Remove(style);
-    UpdateMarkedFunctions();
+    DocumentUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
+      () => UpdateMarkedFunctions());
   }
 
   private void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    DocumentUtils.CreateMarkedFunctionsMenu(FunctionMenu, FunctionMenuItem_OnClick,
-      MarkingSettings, Session);
+    DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
+      () => UpdateMarkedFunctions());
   }
-  
-  private async void FunctionMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    var style = ((MenuItem)sender)?.Tag as FunctionMarkingStyle;
-    MarkingSettings.FunctionColors.Remove(style);
-    UpdateMarkedFunctions();
-  }
-  
+ 
   public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
     MarkSelectedNodes(obj, (node, color) => 

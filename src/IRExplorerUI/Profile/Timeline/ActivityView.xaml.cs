@@ -463,12 +463,15 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     var time = PositionToTime(e.GetPosition(this).X);
 
     if (hasSelection_) {
-      if (e.ClickCount > 1) { // Check for double-click.
-        ApplyTimeRangeFilter();
+      if (time >= selectionStartTime_ && time <= selectionEndTime_) {
+        if (e.ClickCount > 1) { // Check for double-click.
+          ApplyTimeRangeFilter();
+        }
+
         return;
       }
 
-      // Deselect even if click inside existing selection.
+      // Deselect with click outside the selection.
       hasSelection_ = false;
       UpdateSelectionState();
     }

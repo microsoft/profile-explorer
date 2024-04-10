@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ICSharpCode.AvalonEdit;
@@ -280,7 +281,7 @@ public static class DocumentUtils {
                                          TextViewSettingsBase settings, ISession session) {
     var defaultItems = SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings.ProfileMarkerSettings;
     int order = 0;
     double maxWidth = 0;
@@ -338,7 +339,7 @@ public static class DocumentUtils {
     var defaultItems = SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
 
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings.ProfileMarkerSettings;
     var profile = session.ProfileData;
     int order = 0;
@@ -391,7 +392,7 @@ public static class DocumentUtils {
     var defaultItems = SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
 
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings.ProfileMarkerSettings;
     var timelineSettings = App.Settings.TimelineSettings;
     int order = 0;
@@ -451,7 +452,7 @@ public static class DocumentUtils {
                                         TextViewSettingsBase settings, ISession session) {
     var defaultItems = SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings.ProfileMarkerSettings;
     int order = 0;
     double maxWidth = 0;
@@ -535,15 +536,54 @@ public static class DocumentUtils {
     menu.Items.Clear();
     RestoreDefaultMenuItems(menu, defaultItems);
   }
+
+  public static void PopulateMarkedModulesMenu(MenuItem menu, FunctionMarkingSettings settings,
+                                               ISession session, Action changedHandler) {
+    DocumentUtils.CreateMarkedModulesMenu(menu,
+      (o, args) => {
+        if (o is MenuItem menuItem &&
+            menuItem.Tag is FunctionMarkingStyle style) {
+          style.IsEnabled = menuItem.IsChecked;
+          changedHandler();
+        }
+      },
+      (o, args) => {
+        var style = ((MenuItem)o).Tag as FunctionMarkingStyle;
+        settings.ModuleColors.Remove(style);
+        ((MenuItem)o).IsSubmenuOpen = false;
+        changedHandler();
+      },
+      settings, session);
+  }
+  
+  public static void PopulateMarkedFunctionsMenu(MenuItem menu, FunctionMarkingSettings settings,
+                                                 ISession session, Action changedHandler) {
+    DocumentUtils.CreateMarkedFunctionsMenu(menu,
+      (o, args) => {
+        if (o is MenuItem menuItem &&
+            menuItem.Tag is FunctionMarkingStyle style) {
+          style.IsEnabled = menuItem.IsChecked;
+          changedHandler();
+        }
+      },
+      (o, args) => {
+        var style = ((MenuItem)o).Tag as FunctionMarkingStyle;
+        settings.FunctionColors.Remove(style);
+        ((MenuItem)o).IsSubmenuOpen = false;
+        changedHandler();
+      },
+      settings, session);
+  }
   
   public static void CreateMarkedModulesMenu(MenuItem menu,
-                                       RoutedEventHandler menuClickHandler,
+                                             RoutedEventHandler menuClickHandler,
+                                             MouseButtonEventHandler menuRightClickHandler,
                                        FunctionMarkingSettings settings, ISession session) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
     var separatorIndex = defaultItems.FindIndex(item => item is Separator);
     var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("CheckableProfileMenuItemValueTemplate");
     double maxWidth = 0;
 
     // Sort modules by weight in decreasing order.
@@ -561,7 +601,7 @@ public static class DocumentUtils {
     foreach (var pair in sortedModules) {
       double weightPercentage = session.ProfileData.ScaleModuleWeight(pair.Weight);
       string text = $"({markerSettings.FormatWeightValue(null, pair.Weight)})";
-      string tooltip = "Click to remove module marking";
+      string tooltip = "Right-click to remove module marking";
       string title = pair.Module.Name;
 
       if (pair.Module.HasTitle) {
@@ -578,17 +618,21 @@ public static class DocumentUtils {
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
         PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+        BackColor = pair.Module.Color.AsBrush()
       };
 
       var item = new MenuItem {
+        IsChecked = pair.Module.IsEnabled,
+        IsCheckable = true,
+        StaysOpenOnClick = true,
         Header = value,
         Tag = pair.Module,
-        Icon = CreateMarkedMenuIcon(pair.Module),
         HeaderTemplate = valueTemplate,
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };
 
       item.Click += menuClickHandler;
+      item.MouseRightButtonUp += menuRightClickHandler;
       defaultItems.Insert(separatorIndex + 1, item);
       profileItems.Add(value);
 
@@ -608,13 +652,14 @@ public static class DocumentUtils {
   
   public static void CreateMarkedFunctionsMenu(MenuItem menu,
                                              RoutedEventHandler menuClickHandler,
+                                             MouseButtonEventHandler menuRightClickHandler,
                                              FunctionMarkingSettings settings, ISession session) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
     var separatorIndex = defaultItems.FindIndex(item => item is Separator);
     var nameProvider = session.CompilerInfo.NameProvider;
     var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("CheckableProfileMenuItemValueTemplate");
     double maxWidth = 0;
     
     // Sort functions by weight in decreasing order.
@@ -668,17 +713,21 @@ public static class DocumentUtils {
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
         PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+        BackColor = pair.Function.Color.AsBrush()
       };
 
       var item = new MenuItem {
+        IsChecked = pair.Function.IsEnabled,
+        IsCheckable = true,
+        StaysOpenOnClick = true,
         Header = value,
         Tag = pair.Function,
-        Icon = CreateMarkedMenuIcon(pair.Function),
         HeaderTemplate = valueTemplate,
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };
 
       item.Click += menuClickHandler;
+      item.MouseRightButtonUp += menuRightClickHandler;
       defaultItems.Insert(separatorIndex + 1, item);
       profileItems.Add(value);
 
@@ -693,19 +742,6 @@ public static class DocumentUtils {
     // Populate the menu.
     menu.Items.Clear();
     DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
-  }
-  
-  private static Image CreateMarkedMenuIcon(FunctionMarkingStyle nodeMarkingStyle) {
-    // Make a small square image with the marking background color.
-    var visual = new DrawingVisual();
-
-    using (var dc = visual.RenderOpen()) {
-      dc.DrawRectangle(nodeMarkingStyle.Color.AsBrush(), ColorPens.GetPen(Colors.Black), new Rect(0, 0, 16, 16));
-    }
-
-    var targetBitmap = new RenderTargetBitmap(16, 16, 96, 96, PixelFormats.Default);
-    targetBitmap.Render(visual);
-    return new Image { Source = targetBitmap };
   }
   
   private static int CommonParentCallerIndex(ProfileCallTreeNode a, ProfileCallTreeNode b) {
