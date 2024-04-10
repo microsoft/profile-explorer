@@ -781,6 +781,88 @@
                 UseLayoutRounding="True" />
             </Button>
           </Border>
+          <Border
+            x:Name="ProfileFilterStateHost"
+            Visibility="{Binding HasAnyFilter,  Converter={StaticResource BoolToVisibilityConverter}}"
+            Background="AntiqueWhite"
+            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            BorderThickness="1,0,1,0">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock
+                Margin="4,0,4,0"
+                VerticalAlignment="Center"
+                FontWeight="Medium"
+                Text="Profile Filter"
+                ToolTip="Active filtering of entire profile by thread and/or time range"                 />
+
+              <Image Source="{StaticResource FilterIcon}" Width="16" Height="16" Margin="2,1,4,0"
+                     ToolTip="Active time and thread filters"
+                     Style="{StaticResource DisabledImageStyle}"
+                     Visibility="{Binding HasAnyFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+          <TextBlock
+            VerticalAlignment="Center"
+            FontWeight="Medium"
+            Foreground="DarkBlue"
+            Text="Time:"
+            Visibility="{Binding HasFilter,  Converter={StaticResource BoolToVisibilityConverter}}" />
+          <TextBlock
+            Margin="4,0,0,0"
+            VerticalAlignment="Center"
+            FontWeight="Medium"
+            Foreground="DarkBlue"
+            Text="{Binding FilteredTime,  Converter={StaticResource MillisecondTimeConverter}}"
+            ToolTip="Time range included in the view"
+            Visibility="{Binding HasFilter,  Converter={StaticResource BoolToVisibilityConverter}}" />
+
+          <Button
+           TabIndex="5"
+            BorderBrush="{x:Null}"
+            Background="{x:Null}"
+            ToolTip="Remove time range filter"
+           Click="RemoveProfileTimeRangeButton_Click"
+            Visibility="{Binding HasFilter,  Converter={StaticResource BoolToVisibilityConverter}}">
+            <Image
+              Width="16"
+              Height="16"
+              Source="{StaticResource ClearIcon}" />
+          </Button>
+          <Separator
+            Visibility="{Binding HasFilter,  Converter={StaticResource BoolToVisibilityConverter}}" />
+
+          <TextBlock
+            Margin="2,0,0,0"
+            VerticalAlignment="Center"
+            FontWeight="Medium"
+            Foreground="Indigo"
+            Text="Threads:"
+            Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+          <TextBlock
+            Margin="4,0,0,0"
+            VerticalAlignment="Center"
+            FontWeight="Medium"
+            Foreground="Indigo"
+            MaxWidth="200"
+            TextTrimming="CharacterEllipsis"
+            Text="{Binding ThreadFilterText, Converter={StaticResource MillisecondTimeConverter}}"
+            ToolTip="Threads included in the view"
+            Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+          <Button
+            TabIndex="5"
+            BorderBrush="{x:Null}"
+            Background="{x:Null}"
+            ToolTip="Remove thread filters"
+            Click="RemoveProfileThreadButton_Click"
+            Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Image
+              Width="16"
+              Height="16"
+              Source="{StaticResource ClearIcon}"
+              Style="{StaticResource DisabledImageStyle}" />
+          </Button>
+
+            </StackPanel>
+          </Border>
         </StackPanel>
         <Button
           x:Name="HelpButton"

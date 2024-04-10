@@ -36,6 +36,7 @@ public interface ISession {
   IRTextSummary MainDocumentSummary { get; }
   IRTextSummary DiffDocumentSummary { get; }
   ProfileData ProfileData { get; }
+  ProfileFilterState ProfileFilter { get; set; }
   Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo);
   Task<bool> SetupNewSession(LoadedDocument mainDocument, List<LoadedDocument> otherDocuments, ProfileData profileData);
   IRTextSummary GetDocumentSummary(IRTextSection section);
@@ -107,7 +108,7 @@ public interface ISession {
                              ProfileLoadProgressHandler progressCallback,
                              CancelableTask cancelableTask);
 
-  Task<bool> FilterProfileSamples(ProfileSampleFilter filter);
+  Task<bool> FilterProfileSamples(ProfileFilterState filter);
   Task<bool> RemoveProfileSamplesFilter();
   Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode,
                                  ProfileSampleFilter instanceFilter = null,

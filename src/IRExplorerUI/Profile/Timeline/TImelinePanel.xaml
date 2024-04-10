@@ -202,35 +202,35 @@
           <Image Source="{StaticResource FilterIcon}" Width="16" Height="16" Margin="2,1,4,0"
                  ToolTip="Active time and thread filters"
                  Style="{StaticResource DisabledImageStyle}"
-                 Visibility="{Binding HasAnyFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+                 Visibility="{Binding ProfileFilter.HasAnyFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
           <TextBlock
             VerticalAlignment="Center"
             FontWeight="Medium"
             Foreground="DarkBlue"
             Text="Time:"
-            Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+            Visibility="{Binding ProfileFilter.HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
           <TextBlock
             Margin="4,0,0,0"
             VerticalAlignment="Center"
             FontWeight="Medium"
             Foreground="DarkBlue"
-            Text="{Binding FilteredTime, ElementName=ActivityView, Converter={StaticResource MillisecondTimeConverter}}"
+            Text="{Binding ProfileFilter.FilteredTime, Converter={StaticResource MillisecondTimeConverter}}"
             ToolTip="Time range included in the view"
-            Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+            Visibility="{Binding ProfileFilter.HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
 
           <Button
             Command="local:CallTreeCommand.RemoveFilters"
             CommandTarget="{Binding ElementName=ActivityView}"
             TabIndex="5"
             ToolTip="Remove time range filter"
-            Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}">
+            Visibility="{Binding ProfileFilter.HasFilter, Converter={StaticResource BoolToVisibilityConverter}}">
             <Image
               Width="16"
               Height="16"
               Source="{StaticResource ClearIcon}" />
           </Button>
           <Separator
-            Visibility="{Binding HasFilter, ElementName=ActivityView, Converter={StaticResource BoolToVisibilityConverter}}" />
+            Visibility="{Binding ProfileFilter.HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
 
           <TextBlock
             Margin="2,0,0,0"
@@ -238,7 +238,7 @@
             FontWeight="Medium"
             Foreground="Indigo"
             Text="Threads:"
-            Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+            Visibility="{Binding ProfileFilter.HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
           <TextBlock
             Margin="4,0,0,0"
             VerticalAlignment="Center"
@@ -246,16 +246,16 @@
             Foreground="Indigo"
             MaxWidth="200"
             TextTrimming="CharacterEllipsis"
-            Text="{Binding ThreadFilterText, Converter={StaticResource MillisecondTimeConverter}}"
+            Text="{Binding ProfileFilter.ThreadFilterText, Converter={StaticResource MillisecondTimeConverter}}"
             ToolTip="Threads included in the view"
-            Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+            Visibility="{Binding ProfileFilter.HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
 
           <Button
             Command="local:CallTreeCommand.RemoveThreadFilters"
             CommandTarget="{Binding ElementName=ActivityView}"
             TabIndex="5"
             ToolTip="Remove thread filters"
-            Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}">
+            Visibility="{Binding ProfileFilter.HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}">
             <Image
               Width="16"
               Height="16"

@@ -53,6 +53,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private string threadFilterText_;
   private bool showNodePanel_;
   private OptionsPanelHostWindow optionsPanelWindow_;
+  private ProfileFilterState profileFilter;
 
   public TimelinePanel() {
     InitializeComponent();
@@ -63,6 +64,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     SetupEvents();
     DataContext = this;
+    ProfileFilter = new ProfileFilterState();
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
@@ -95,6 +97,12 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   public bool HasCallTree => callTree_ != null;
 
+
+  public ProfileFilterState ProfileFilter {
+    get => profileFilter;
+    set => SetField(ref profileFilter, value);
+  }
+  
   public bool ShowSearchSection {
     get => showSearchSection_;
     set {
@@ -114,29 +122,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
   }
-
-  public bool HasThreadFilter {
-    get => hasThreadFilter_;
-    set {
-      if (hasThreadFilter_ != value) {
-        hasThreadFilter_ = value;
-        OnPropertyChanged();
-        OnPropertyChanged(nameof(HasAnyFilter));
-      }
-    }
-  }
-
-  public string ThreadFilterText {
-    get => threadFilterText_;
-    set {
-      if (threadFilterText_ != value) {
-        threadFilterText_ = value;
-        OnPropertyChanged();
-      }
-    }
-  }
-
-  public bool HasAnyFilter => HasThreadFilter || ActivityView.HasFilter;
 
   public bool ShowNodePanel {
     get => showNodePanel_;
@@ -556,13 +541,13 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       await ApplyProfileFilter();
     }
   }
-
-  private void UpdateFilteredThreads() {
+  
+  private void SetFilteredThreadsState(ProfileFilterState state) {
     int excludedCount = CountExcludedThreads();
 
     if (excludedCount == 0) {
-      HasThreadFilter = false;
-      ThreadFilterText = null;
+      state.HasThreadFilter = false;
+      state.ThreadFilterText = null;
       return;
     }
 
@@ -596,17 +581,32 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
 
-    ThreadFilterText = sb.ToString().Trim();
-    HasThreadFilter = true;
+    state.ThreadFilterText = sb.ToString().Trim();
+    state.HasThreadFilter = true;
+  }
+  
+  ProfileFilterState CreateProfileFilterState() {
+    var timeRange = ActivityView.HasFilter ? ActivityView.FilteredRange : null;
+    var filter = ConstructProfileSampleFilter(timeRange);
+    
+    var state = new ProfileFilterState(filter);
+    state.HasFilter = ActivityView.HasFilter;
+    state.FilteredTime = ActivityView.FilteredTime;
+    
+    state.RemoveThreadFilter += async () => {
+      await RemoveThreadFilters();
+    };
+    state.RemoveTimeRangeFilter += async () => {
+      await RemoveTimeRangeFilters();
+    };
+    
+    SetFilteredThreadsState(state);
+    return state;
   }
 
   private async Task ApplyProfileFilter() {
-    OnPropertyChanged(nameof(HasAnyFilter));
-    UpdateFilteredThreads();
-
-    var timeRange = ActivityView.HasFilter ? ActivityView.FilteredRange : null;
-    var filter = ConstructProfileSampleFilter(timeRange);
-    await Session.FilterProfileSamples(filter);
+    ProfileFilter = CreateProfileFilterState();
+    await Session.FilterProfileSamples(ProfileFilter);
   }
 
   private bool UpdateThreadFilter(ActivityView view, bool included) {

@@ -215,6 +215,7 @@ public class SessionStateManager : IDisposable {
   public LoadedDocument DiffDocument { get; set; }
   public List<DocumentHostInfo> DocumentHosts { get; set; }
   public ProfileData ProfileData { get; set; }
+  public ProfileFilterState ProfileFilter { get; set; }
   public DiffModeInfo SectionDiffState { get; set; }
   public bool NotifiedSessionStart { get; set; }
   public DateTime SessionStartTime { get; set; }

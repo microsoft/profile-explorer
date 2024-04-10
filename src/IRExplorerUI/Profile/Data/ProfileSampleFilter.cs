@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using IRExplorerCore;
 
 namespace IRExplorerUI.Profile;
@@ -141,4 +142,21 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
            ThreadIds.AreEqual(other.ThreadIds) &&
            FunctionInstances.AreEqual(other.FunctionInstances);
   }
+}
+
+
+public class ProfileFilterState {
+  public ProfileFilterState(ProfileSampleFilter filter = null) {
+    Filter = filter ?? new ProfileSampleFilter();
+  }
+  
+  public bool HasAnyFilter => HasThreadFilter || HasFilter;
+  public ProfileSampleFilter Filter { get; set; }
+  public bool HasFilter { get; set; }
+  public TimeSpan FilteredTime { get; set; }
+  public bool HasThreadFilter { get; set; }
+  public string ThreadFilterText { get; set; }
+    
+  public Func<Task> RemoveThreadFilter { get; set; }
+  public Func<Task> RemoveTimeRangeFilter { get; set; }
 }

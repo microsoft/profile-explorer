@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
@@ -18,9 +19,13 @@ namespace IRExplorerUI;
 public partial class MainWindow : Window, ISession {
   private CancelableTaskInstance updateProfileTask_ = new CancelableTaskInstance();
   private ProfileData.ProcessingResult allThreadsProfile_;
-  private Dictionary<ProfileSampleFilter, ProfileData.ProcessingResult> prevProfiles =
-    new Dictionary<ProfileSampleFilter, ProfileData.ProcessingResult>();
+  private ProfileFilterState profileFilter_;
+  
   public ProfileData ProfileData => sessionState_?.ProfileData;
+  public ProfileFilterState ProfileFilter {
+    get => profileFilter_;
+    set => profileFilter_ = value;
+  }
 
   public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds,
                                           ProfileDataProviderOptions options,
@@ -72,30 +77,30 @@ public partial class MainWindow : Window, ISession {
     return result != null;
   }
 
-  public async Task<bool> FilterProfileSamples(ProfileSampleFilter filter) {
+  public async Task<bool> FilterProfileSamples(ProfileFilterState state) {
     using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
 
     SetApplicationProgress(true, double.NaN, "Filtering profiling data");
     StartUIUpdate();
+    
+    // Update the active profile UI.
+    SetActiveProfileFilter(state);
 
     var totalSw = Stopwatch.StartNew();
     Trace.WriteLine("--------------------------------------------------------\n");
-    Trace.WriteLine($"Filter {filter}, samples {ProfileData.Samples.Count}");
+    Trace.WriteLine($"Profile filter {state.Filter}, samples {ProfileData.Samples.Count}");
 
     var filterSw = Stopwatch.StartNew();
     ProfileData.ProcessingResult result = null;
 
-    if (filter.IncludesAll && allThreadsProfile_ != null) {
+    if (state.Filter.IncludesAll && allThreadsProfile_ != null) {
+      // This speeds up going back to the unfiltered profile.
       Trace.WriteLine("Restore main profile");
       result = ProfileData.RestorePreviousProfile(allThreadsProfile_);
     }
-    // else if (prevProfiles.TryGetValue(filter, out result)) {
-    //   Trace.WriteLine($"Restore other profile");
-    //   result = ProfileData.RestorePreviousProfile(allThreadsProfile_);
-    // }
     else {
       Trace.WriteLine("Compute new profile");
-      result = await Task.Run(() => ProfileData.FilterFunctionProfile(filter));
+      result = await Task.Run(() => ProfileData.FilterFunctionProfile(state.Filter));
     }
 
     if (result.Filter.IncludesAll) {
@@ -121,8 +126,15 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
+  private void SetActiveProfileFilter(ProfileFilterState state)
+  {
+    ProfileFilter = state;
+    ProfileFilterStateHost.DataContext = null;
+    ProfileFilterStateHost.DataContext = state;
+  }
+
   public async Task<bool> RemoveProfileSamplesFilter() {
-    await FilterProfileSamples(new ProfileSampleFilter());
+    await FilterProfileSamples(new ProfileFilterState());
     await ProfileSampleRangeDeselected();
     return true;
   }
@@ -553,5 +565,13 @@ public partial class MainWindow : Window, ISession {
     }
 
     return true;
+  }
+
+  private void RemoveProfileTimeRangeButton_Click(object sender, RoutedEventArgs e) { 
+    ProfileFilter?.RemoveTimeRangeFilter?.Invoke();
+  }
+
+  private void RemoveProfileThreadButton_Click(object sender, RoutedEventArgs e) {
+    ProfileFilter?.RemoveThreadFilter?.Invoke();
   }
 }

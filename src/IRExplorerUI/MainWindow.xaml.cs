@@ -324,6 +324,7 @@ public partial class MainWindow : Window, ISession {
     PopulateWorkspacesCombobox();
     ThemeCombobox.SelectedIndex = App.Settings.ThemeIndex;
     DiffModeButton.IsEnabled = false;
+    SetActiveProfileFilter(new ProfileFilterState());
   }
 
   private void SetupMainWindowCompilerTarget() {
