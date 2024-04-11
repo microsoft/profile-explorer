@@ -50,7 +50,7 @@ public partial class GraphPanel : ToolPanelControl {
   private const double FastPanOffset = 80;
   private const double FastZoomFactor = 4;
   private const double MaxZoomLevel = 2.0;
-  private const double MinZoomLevel = 0.05;
+  private const double MinZoomLevel = 0.25;
   private const double PanOffset = 20;
   private const double ZoomAdjustment = 0.05;
   private const double HorizontalViewMargin = 50;
@@ -513,7 +513,7 @@ public partial class GraphPanel : ToolPanelControl {
       return;
     }
 
-    SetZoom(GraphViewer.ZoomLevel * Math.CopySign(1 + e.Delta / 1000.0, e.Delta));
+    SetZoom(GraphViewer.ZoomLevel * Math.Abs(1 + e.Delta / 1000.0));
     e.Handled = true;
   }
 

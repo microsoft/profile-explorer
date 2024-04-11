@@ -30,6 +30,7 @@ using IRExplorerUI.Compilers.LLVM;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.Panels;
+using IRExplorerUI.Profile;
 using IRExplorerUI.Scripting;
 using IRExplorerUI.Settings;
 using IRExplorerUI.Utilities;

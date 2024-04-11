@@ -87,6 +87,11 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     PanelBorder.BorderBrush = ColorBrushes.GetBrush(color);
   }
 
+  public void SetPanelAccentColor(Brush color) {
+    ToolbarPanel.Background = color;
+    PanelBorder.BorderBrush = color;
+  }
+  
   public event PropertyChangedEventHandler PropertyChanged;
   public IRElement PreviewedElement { get; set; }
 
@@ -544,7 +549,7 @@ public class IRDocumentPopupInstance {
     }
   }
 
-  private async Task ShowPreviewPopup(PreviewPopupArgs args) {
+  private async Task<IRDocumentPopup> ShowPreviewPopup(PreviewPopupArgs args) {
     if (args.Document != null) {
       await ShowPreviewPopupForDocument(args);
     }
@@ -557,16 +562,23 @@ public class IRDocumentPopupInstance {
     else {
       throw new InvalidOperationException();
     }
+
+    return previewPopup_;
   }
 
   public static async Task ShowPreviewPopup(IRTextFunction function, string title,
                                             UIElement relativeElement, ISession session,
                                             ProfileSampleFilter profileFilter = null,
-                                            bool showSourceCode = false) {
+                                            bool showSourceCode = false,
+                                            Brush titleBarColor = null) {
     var settings = App.Settings.PreviewPopupSettings;
     var instance = new IRDocumentPopupInstance(settings, session);
     var args = PreviewPopupArgs.ForFunction(function, relativeElement, title, profileFilter, showSourceCode);
-    await instance.ShowPreviewPopup(args);
+    var popup = await instance.ShowPreviewPopup(args);
+
+    if (titleBarColor != null) {
+      popup.SetPanelAccentColor(titleBarColor);
+    }
   }
 
   private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {

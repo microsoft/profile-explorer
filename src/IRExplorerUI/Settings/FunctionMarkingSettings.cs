@@ -124,6 +124,19 @@ public class FunctionMarkingSettings : SettingsBase {
     return false;
   }
 
+  public Brush GetMarkedNodeBrush(string funcName, string moduleName) {
+    if (UseModuleColors &&
+        GetFunctionColor(funcName, out var color)) {
+      return ColorBrushes.GetBrush(color);
+    }
+    else if (UseFunctionColors &&
+             GetModuleColor(moduleName, out var color2)) {
+      return ColorBrushes.GetBrush(color2);
+    }
+
+    return null;
+  }
+
   public void ResedCachedPalettes() {
     modulesPalette_ = null;
   }
@@ -207,7 +220,8 @@ public class FunctionMarkingStyle {
   }
 
   public bool NameMatches(string candidate) {
-    if (!IsEnabled || candidate.Length <= 0 || Name.Length <= 0) {
+    if (!IsEnabled || candidate == null ||
+        candidate.Length <= 0 || Name.Length <= 0) {
       return false;
     }
 

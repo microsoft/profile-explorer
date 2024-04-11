@@ -210,7 +210,7 @@
             Text="Time:"
             Visibility="{Binding ProfileFilter.HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
           <TextBlock
-            Margin="4,0,0,0"
+            Margin="4,0,2,0"
             VerticalAlignment="Center"
             FontWeight="Medium"
             Foreground="DarkBlue"
@@ -240,7 +240,7 @@
             Text="Threads:"
             Visibility="{Binding ProfileFilter.HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
           <TextBlock
-            Margin="4,0,0,0"
+            Margin="4,0,2,0"
             VerticalAlignment="Center"
             FontWeight="Medium"
             Foreground="Indigo"

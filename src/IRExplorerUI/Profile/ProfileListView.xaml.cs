@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using HtmlAgilityPack;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
@@ -20,6 +21,8 @@ namespace IRExplorerUI.Profile;
 
 public class ProfileListViewItem : SearchableProfileItem {
   CallTreeNodeSettings settings_;
+  private Brush functionBackColor_;
+  private Brush moduleBackColor_;
 
   private ProfileListViewItem(FunctionNameFormatter funcNameFormatter,
                               CallTreeNodeSettings settings) :
@@ -29,6 +32,17 @@ public class ProfileListViewItem : SearchableProfileItem {
 
   public ProfileCallTreeNode CallTreeNode { get; set; }
   public ModuleProfileInfo ModuleInfo { get; set; }
+
+  
+  public Brush FunctionBackColor {
+    get => functionBackColor_;
+    set => SetAndNotify(ref functionBackColor_, value);
+  }
+
+  public Brush ModuleBackColor {
+    get => moduleBackColor_;
+    set => SetAndNotify(ref moduleBackColor_, value);
+  }
 
   protected override string GetFunctionName() {
     return CallTreeNode?.FunctionName;
@@ -416,6 +430,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     filteredNodes.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
                                                                          Session.CompilerInfo.NameProvider.FormatFunctionName,
                                                                          Settings)));
+    UpdateMarkedFunctions();
     ItemList.ItemsSource = itemList_;
     GridViewColumnVisibility.UpdateListView(ItemList);
   }
@@ -425,8 +440,43 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     nodes.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
                                                                  Session.CompilerInfo.NameProvider.FormatFunctionName,
                                                                  Settings)));
+    UpdateMarkedFunctions();
     ItemList.ItemsSource = new ListCollectionView(itemList_);
     ItemList.ContextMenu = null;
+  }
+  
+  private void UpdateMarkedFunctions() {
+    var fgSettings = App.Settings.MarkingSettings;
+
+    foreach (var f in itemList_) {
+      f.ModuleBackColor = null;
+      f.FunctionBackColor = null;
+    }
+
+    if (!fgSettings.UseAutoModuleColors &&
+        !fgSettings.UseModuleColors &&
+        !fgSettings.UseFunctionColors) {
+      return;
+    }
+
+    foreach (var item in itemList_) {
+      if (item.ModuleName == null || item.FunctionName == null) {
+        continue;
+      }
+      
+      if (fgSettings.UseModuleColors &&
+          fgSettings.GetModuleBrush(item.ModuleName, out var brush)) {
+        item.ModuleBackColor = brush;
+      }
+      else if (fgSettings.UseAutoModuleColors) {
+        item.ModuleBackColor = fgSettings.GetAutoModuleBrush(item.ModuleName);
+      }
+
+      if (fgSettings.UseFunctionColors &&
+          fgSettings.GetFunctionColor(item.FunctionName, out var color)) {
+        item.FunctionBackColor = color.AsBrush();
+      }
+    }
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {

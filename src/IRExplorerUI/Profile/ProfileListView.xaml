@@ -56,7 +56,10 @@
             <GridViewColumn.CellTemplate>
               <DataTemplate>
                 <StackPanel>
-                  <ContentPresenter Content="{Binding Name}" ToolTip="{Binding FunctionName}" />
+                  <Grid Background="{Binding FunctionBackColor}">
+                  <ContentPresenter Content="{Binding Name}" 
+                                    ToolTip="{Binding FunctionName}" />
+                  </Grid>
                   <ContentControl
                     HorizontalAlignment="Stretch"
                     Content="{Binding}"
@@ -86,6 +89,7 @@
             </GridViewColumn.HeaderContainerStyle>
             <GridViewColumn.CellTemplate>
               <DataTemplate>
+                <Grid HorizontalAlignment="Stretch" Background="{Binding ModuleBackColor}">
                 <TextBlock
                   Margin="1,0,0,0"
                   HorizontalAlignment="Left"
@@ -102,6 +106,7 @@
                     </Style>
                   </TextBlock.Style>
                 </TextBlock>
+                  </Grid>
               </DataTemplate>
             </GridViewColumn.CellTemplate>
           </GridViewColumn>

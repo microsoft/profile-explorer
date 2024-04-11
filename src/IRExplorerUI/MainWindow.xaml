@@ -786,7 +786,7 @@
             Visibility="{Binding HasAnyFilter,  Converter={StaticResource BoolToVisibilityConverter}}"
             Background="AntiqueWhite"
             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-            BorderThickness="1,0,1,0">
+            BorderThickness="0,0,1,0">
             <StackPanel Orientation="Horizontal">
               <TextBlock
                 Margin="4,0,4,0"
@@ -806,7 +806,7 @@
             Text="Time:"
             Visibility="{Binding HasFilter,  Converter={StaticResource BoolToVisibilityConverter}}" />
           <TextBlock
-            Margin="4,0,0,0"
+            Margin="4,0,2,0"
             VerticalAlignment="Center"
             FontWeight="Medium"
             Foreground="DarkBlue"
@@ -826,7 +826,10 @@
               Height="16"
               Source="{StaticResource ClearIcon}" />
           </Button>
-          <Separator
+          <Border
+            Margin="0,0,2,0"
+            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            BorderThickness="1,0,0,0"
             Visibility="{Binding HasFilter,  Converter={StaticResource BoolToVisibilityConverter}}" />
 
           <TextBlock
@@ -837,7 +840,7 @@
             Text="Threads:"
             Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
           <TextBlock
-            Margin="4,0,0,0"
+            Margin="4,0,2,0"
             VerticalAlignment="Center"
             FontWeight="Medium"
             Foreground="Indigo"

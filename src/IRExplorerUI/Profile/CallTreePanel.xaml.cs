@@ -77,8 +77,8 @@ public static class CallTreeCommand {
 }
 
 public class CallTreeListItem : SearchableProfileItem, ITreeModel {
-  private Brush functionBackColor;
-  private Brush moduleBackColor;
+  private Brush functionBackColor_;
+  private Brush moduleBackColor_;
 
   public CallTreeListItem(CallTreeListItemKind kind, CallTreePanel owner,
                           FunctionNameFormatter funcNameFormatter = null) :
@@ -96,13 +96,13 @@ public class CallTreeListItem : SearchableProfileItem, ITreeModel {
   public Brush BackColor2 { get; set; }
 
   public Brush FunctionBackColor {
-    get => functionBackColor;
-    set => SetAndNotify(ref functionBackColor, value);
+    get => functionBackColor_;
+    set => SetAndNotify(ref functionBackColor_, value);
   }
 
   public Brush ModuleBackColor {
-    get => moduleBackColor;
-    set => SetAndNotify(ref moduleBackColor, value);
+    get => moduleBackColor_;
+    set => SetAndNotify(ref moduleBackColor_, value);
   }
 
   public CallTreeListItem Parent { get; set; }

@@ -160,17 +160,30 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   });
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
+      Brush brush = GetMarkedNodeColor(GraphViewer.SelectedNode);
       await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function, "",
-                                                     GraphViewer, Session);
+                                                     GraphViewer, Session, null, false, brush);
     }
   });
+
   public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
+      Brush brush = GetMarkedNodeColor(GraphViewer.SelectedNode);
       await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function, "",
-                                                     GraphViewer, Session, filter);
+                                                     GraphViewer, Session, filter, false, brush);
     }
   });
+  
+  private Brush GetMarkedNodeColor(FlameGraphNode node) {
+    if (node is not {HasFunction: true}) {
+      return null;
+    }
+
+    return App.Settings.MarkingSettings.
+      GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
+  }
+  
   public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
