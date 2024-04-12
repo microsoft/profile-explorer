@@ -47,6 +47,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private DoubleAnimation zoomAnimation_;
   private double zoomPointX_;
   private bool enableSingleNodeActions_;
+  private List<(ProfileCallTreeNode Node, HighlightingStyle Style)> unmatchedMarkedNodes_;
 
   public FlameGraphHost() {
     InitializeComponent();
@@ -174,7 +175,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                                                      GraphViewer, Session, filter, false, brush);
     }
   });
-  
+
   private Brush GetMarkedNodeColor(FlameGraphNode node) {
     if (node is not {HasFunction: true}) {
       return null;
@@ -183,7 +184,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     return App.Settings.MarkingSettings.
       GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
   }
-  
+
   public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
@@ -258,7 +259,19 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public async Task InitializeFlameGraph(ProfileCallTree callTree) {
+    List<(ProfileCallTreeNode Node, HighlightingStyle Style)> markedNodes = null;
+
     if (IsInitialized) {
+      markedNodes = new List<(ProfileCallTreeNode Node, HighlightingStyle Style)>();
+      GraphViewer.SaveFixedMarkedNodes(markedNodes);
+
+      // Combined nodes currently marked in instance N-1 of the call tree,
+      // with nodes marked from a previous call tree instance N-2... which
+      // could not be associated with flame graph nodes because they were filtered out.
+      if (unmatchedMarkedNodes_ != null) {
+        markedNodes.AddRange(unmatchedMarkedNodes_);
+      }
+
       Reset();
     }
 
@@ -267,6 +280,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     if (callTree_ != null) {
       await GraphViewer.Initialize(callTree, GraphArea, settings_, Session);
       ResetWidth(false);
+
+      if (markedNodes != null) {
+        unmatchedMarkedNodes_ = GraphViewer.RestoreFixedMarkedNodes(markedNodes, callTree);
+      }
     }
   }
 
@@ -286,7 +303,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   public void Redraw() {
     GraphViewer.Redraw();
   }
-  
+
   private void HostOnKeyUp(object sender, KeyEventArgs e) {
     if (Utils.IsControlModifierActive()) {
       Cursor = Cursors.Arrow;
@@ -522,6 +539,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     GraphViewer.ResetMarkedNodes(clearFixedNodes);
+
+    if (clearFixedNodes) {
+      unmatchedMarkedNodes_ = null;
+    }
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {

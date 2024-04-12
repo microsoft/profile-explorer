@@ -34,7 +34,7 @@
           VerticalAlignment="Center"
           Text="Module color palette" />
       </StackPanel>
-      <Separator Margin="0,4,0,4" />
+      <Separator Margin="0,4,0,4" Background="LightGray"/>
 
       <TextBlock FontWeight="Medium" Text="Module marking" />
       <CheckBox
@@ -188,7 +188,7 @@
 
         </StackPanel>
       </Grid>
-      <Separator Margin="0,4,0,4" />
+      <Separator Margin="0,4,0,4" Background="LightGray"/>
       <TextBlock FontWeight="Medium" Text="Function marking" />
 
       <CheckBox

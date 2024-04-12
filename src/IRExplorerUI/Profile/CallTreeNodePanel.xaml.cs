@@ -17,6 +17,7 @@ using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Utilities;
+using Microsoft.Diagnostics.Tracing.Stacks;
 using Microsoft.Extensions.Primitives;
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -97,6 +98,8 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   public event EventHandler<ProfileCallTreeNode> ModuleNodeClick;
   public event EventHandler<ProfileCallTreeNode> ModuleNodeDoubleClick;
   public event EventHandler<List<ProfileCallTreeNode>> NodesSelected;
+  public event EventHandler<(string, Color)> FunctionMarked;
+  public event EventHandler<(string, Color)> ModuleMarked;
   public event PropertyChangedEventHandler PropertyChanged;
 
   public override ISession Session {
@@ -308,7 +311,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         // For a node group, combine the instances for each node.
         var instanceNodes = new List<ProfileCallTreeNode>();
         var handledFuncts = new HashSet<IRTextFunction>();
-        
+
         foreach (var n in groupNode.Nodes) {
           if (handledFuncts.Add(n.Function)) {
             instanceNodes.Add(callTree.GetCombinedCallTreeNode(n.Function));
@@ -580,7 +583,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       functionNames = node.FormatFunctionName(nameProvider.FormatFunctionName, MaxFunctionNameLength);
       fullFunctionNames = node.FormatFunctionName(nameProvider.FormatFunctionName);
     }
-    
+
     var nodeEx = new ProfileCallTreeNodeEx(node) {
       FullFunctionName = fullFunctionNames,
       FunctionName = functionNames,
@@ -746,4 +749,36 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   private async void OpenButton_OnClick(object sender, RoutedEventArgs e) {
     await Session.OpenProfileFunction(instancesNode_.CallTreeNode, OpenSectionKind.NewTabDockRight);
   }
+
+  private void MarkModuleButton_OnClick(object sender, RoutedEventArgs e) {
+    Utils.ShowContextMenu(sender as FrameworkElement, this);
+  }
+
+  public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
+    if (obj is SelectedColorEventArgs e) {
+      if (CallTreeNode.CallTreeNode is ProfileCallTreeGroupNode groupNode) {
+        foreach (var node in groupNode.Nodes) {
+          ModuleMarked?.Invoke(this, (node.ModuleName, e.SelectedColor));
+        }
+      }
+      else {
+        ModuleMarked?.Invoke(this, (CallTreeNode.CallTreeNode.ModuleName, e.SelectedColor));
+      }
+    }
+  });
+
+  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+    if (obj is SelectedColorEventArgs e) {
+      if (CallTreeNode.CallTreeNode is ProfileCallTreeGroupNode groupNode) {
+        foreach (var node in groupNode.Nodes) {
+          var funcName = node.FormatFunctionName(Session);
+          FunctionMarked?.Invoke(this, (funcName, e.SelectedColor));
+        }
+      }
+      else {
+        var funcName = CallTreeNode.CallTreeNode.FormatFunctionName(Session);
+        FunctionMarked?.Invoke(this, (funcName, e.SelectedColor));
+      }
+    }
+  });
 }

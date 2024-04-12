@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using DocumentFormat.OpenXml.Packaging;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
@@ -262,6 +263,45 @@ public sealed class ProfileCallTree {
     return nodeIdMap_.GetValueOrNull(nodeId);
   }
 
+  public ProfileCallTreeNode FindMatchingNode(ProfileCallTreeNode queryNode) {
+    // Find in the call tree node that corresponds to
+    // a node from another instance of a call tree.
+    if (queryNode.IsGroup) {
+      return null;
+    }
+
+    if(!funcToNodesMap_.TryGetValue(queryNode.Function, out var nodeList)) {
+      return null;
+    }
+
+    foreach (var node in nodeList) {
+      if (ReferenceEquals(node, queryNode)) {
+        return node; // Shortcut for same call tree instance.
+      }
+
+      // Since the IRTextFunctions remain stable across a session,
+      // check the equivalence of the nodes by looking at the
+      // function in each stack frame (parent) up to the root.
+      var nodeA = node;
+      var nodeB = queryNode;
+
+      while (nodeA != null && nodeB != null) {
+        if (!nodeA.Function.Equals(nodeB.Function)) {
+          break;
+        }
+
+        nodeA = nodeA.Caller;
+        nodeB = nodeB.Caller;
+      }
+
+      if (nodeA == null && nodeB == null) {
+        return node; // Reached root from both nodes.
+      }
+    }
+
+    return null;
+  }
+
   public List<ProfileCallTreeNode> GetCallTreeNodes(IRTextFunction function) {
     try {
       //funcLock_.EnterReadLock();
@@ -391,7 +431,7 @@ public sealed class ProfileCallTree {
           existingNode.AccumulateWeight(caller.Weight);
           existingNode.AccumulateExclusiveWeight(caller.ExclusiveWeight);
         }
-        
+
         if (node is ProfileCallTreeGroupNode groupNode) {
           foreach (var caller in groupNode.Callers) {
             HandleCaller(caller);
@@ -452,7 +492,7 @@ public sealed class ProfileCallTree {
         groupNode.Nodes.Count > 1) {
       return list;
     }
-    
+
     while (node.HasCallers) {
       list.Add(node.Callers[0]);
       node = node.Callers[0];
@@ -586,6 +626,14 @@ public sealed class ProfileCallTree {
       ChildrenIds = new Dictionary<long, long[]>(callTree.funcToNodesMap_.Count * 2);
       RootNodeIds = new long[callTree.rootNodes_.Count];
       NextNodeId = callTree.nextNodeId_;
+    }
+  }
+
+  public void ResetTags() {
+    foreach (var list in funcToNodesMap_.Values) {
+      foreach (var node in list) {
+        node.Tag = null;
+      }
     }
   }
 }

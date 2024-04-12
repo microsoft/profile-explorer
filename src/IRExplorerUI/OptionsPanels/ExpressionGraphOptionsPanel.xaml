@@ -56,7 +56,7 @@
                         <TextBlock Margin="8,0,0,0" Text="{Binding Path=MaxExpressionDepth}" />
                         <TextBlock Margin="4,0,0,0" Text="instructions" />
                     </StackPanel>
-                    <Separator Margin="0,4,0,4" />
+                    <Separator Margin="0,4,0,4" Background="LightGray"/>
 
                     <TextBlock FontWeight="Medium" Text="Graph Interaction" />
 
@@ -97,7 +97,7 @@
                         Margin="0,2,0,2"
                         Content="Highlight connected nodes on selection"
                         IsChecked="{Binding Path=HighlightConnectedNodesOnSelection, Mode=TwoWay}" />
-                    <Separator Margin="0,4,0,4" />
+                    <Separator Margin="0,4,0,4" Background="LightGray"/>
 
                     <TextBlock FontWeight="Medium" Text="Graph Colors" />
                     <StackPanel Margin="0,4,0,0" Orientation="Vertical">

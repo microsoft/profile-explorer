@@ -20,7 +20,7 @@ public partial class MainWindow : Window, ISession {
   private CancelableTaskInstance updateProfileTask_ = new CancelableTaskInstance();
   private ProfileData.ProcessingResult allThreadsProfile_;
   private ProfileFilterState profileFilter_;
-  
+
   public ProfileData ProfileData => sessionState_?.ProfileData;
   public ProfileFilterState ProfileFilter {
     get => profileFilter_;
@@ -82,7 +82,7 @@ public partial class MainWindow : Window, ISession {
 
     SetApplicationProgress(true, double.NaN, "Filtering profiling data");
     StartUIUpdate();
-    
+
     // Update the active profile UI.
     SetActiveProfileFilter(state);
 
@@ -91,7 +91,7 @@ public partial class MainWindow : Window, ISession {
     Trace.WriteLine($"Profile filter {state.Filter}, samples {ProfileData.Samples.Count}");
 
     var filterSw = Stopwatch.StartNew();
-    ProfileData.ProcessingResult result = null;
+    ProfileData.ProcessingResult result = null; // Profile before filtering.
 
     if (state.Filter.IncludesAll && allThreadsProfile_ != null) {
       // This speeds up going back to the unfiltered profile.
@@ -558,7 +558,7 @@ public partial class MainWindow : Window, ISession {
       var panel = FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
       panel?.UpdateMarkedFunctions(true);
     }
-    
+
     if (sourcePanelKind != ToolPanelKind.CallerCallee) {
       var panel = FindPanel(ToolPanelKind.CallerCallee) as CallTreePanel;
       panel?.UpdateMarkedFunctions(true);
@@ -567,7 +567,7 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
-  private void RemoveProfileTimeRangeButton_Click(object sender, RoutedEventArgs e) { 
+  private void RemoveProfileTimeRangeButton_Click(object sender, RoutedEventArgs e) {
     ProfileFilter?.RemoveTimeRangeFilter?.Invoke();
   }
 

@@ -729,7 +729,7 @@ static class Utils {
       return null;
     }
 
-    var currentParent = VisualTreeHelper.GetParent(child);
+    var currentParent = child;
 
     do {
       var element = currentParent as FrameworkElement;
@@ -745,7 +745,7 @@ static class Utils {
   }
 
   public static bool ShowContextMenu(FrameworkElement element, object dataContext) {
-    var host = Utils.FindContextMenuParent(element);
+    var host = FindContextMenuParent(element);
 
     if (host != null) {
       host.ContextMenu.DataContext = dataContext;
@@ -1124,13 +1124,13 @@ static class Utils {
   public static Point SnapPointToPixels(double x, double y) {
     return new Point(Math.Round(x), Math.Round(y));
   }
-  
+
   public static void UpdateMaxMenuItemWidth(string title, ref double maxWidth, MenuItem targetMenu) {
     double width = Utils.MeasureString(title, targetMenu).Width + 20;
     maxWidth = Math.Max(width, maxWidth);
   }
 
-  
+
   public static Size MeasureString(string text, Control targetControl) {
     var font = new Typeface(targetControl.FontFamily, targetControl.FontStyle,
       targetControl.FontWeight, targetControl.FontStretch);

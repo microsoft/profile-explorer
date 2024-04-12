@@ -54,6 +54,58 @@ public partial class FlameGraphViewer : FrameworkElement {
     return new HighlightingStyle(color, markedNodeBorderColor_);
   }
 
+  public void SaveFixedMarkedNodes(List<(ProfileCallTreeNode Node,
+                                         HighlightingStyle Style)> list) {
+    foreach (var pair in fixedMarkedNodes_) {
+      if (pair.Key.HasFunction) {
+        list.Add((pair.Key.CallTreeNode, pair.Value));
+      }
+    }
+  }
+
+  public List<(ProfileCallTreeNode Node,
+               HighlightingStyle Style)>
+    RestoreFixedMarkedNodes(List<(ProfileCallTreeNode Node,
+                                  HighlightingStyle Style)> markedNodes,
+                            ProfileCallTree callTree) {
+    if (markedNodes.Count == 0) {
+      return null;
+    }
+
+    List<(ProfileCallTreeNode Node,
+          HighlightingStyle Style)> unmatchedList = null;
+
+    foreach (var pair in markedNodes) {
+      // Find in the call tree node that corresponds to
+      // a node from another instance of a call tree.
+      // This happens when filtering the profile, which creates
+      // a new call tree. Function marked in the flame graph
+      // should still be marked in the filtered profile.
+      bool added = false;
+      var treeNode = callTree.FindMatchingNode(pair.Node);
+
+      if (treeNode != null) {
+        var fgNode = flameGraph_.GetFlameGraphNode(treeNode);
+
+        if (fgNode != null) {
+          MarkNodeImpl(fgNode, HighlighingType.Marked, pair.Style, true);
+          added = true;
+        }
+      }
+
+      // If a marked node could not be mapped to one in the current
+      // call tree instance, remember it in case the filtering changes
+      // later to a state where the call tree includes it again.
+      if (!added) {
+        unmatchedList ??= new();
+        unmatchedList.Add(pair);
+      }
+    }
+
+    renderer_.Redraw();
+    return unmatchedList;
+  }
+
   public void RestoreFixedMarkedNodes() {
     if (fixedMarkedNodes_.Count == 0) {
       return;
@@ -304,6 +356,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     RemoveLogicalChild(graphVisual_);
     hoverNodes_.Clear();
     markedNodes_.Clear();
+    fixedMarkedNodes_.Clear();
     selectedNodes_.Clear();
     selectedNode_ = null;
     graphVisual_ = null;

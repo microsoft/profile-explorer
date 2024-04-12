@@ -31,7 +31,7 @@
             IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
             ToolTip="Sync file displayed in the Source File panel with selection" />
 
-          <Separator Margin="0,4,0,4" />
+          <Separator Margin="0,4,0,4" Background="LightGray" />
           <TextBlock FontWeight="Medium" Text="Function nodes" />
           <CheckBox
             Margin="0,4,0,2"
@@ -167,7 +167,7 @@
               VerticalAlignment="Center"
               Text="Managed (.NET) code color palette" />
           </StackPanel>
-          <Separator Margin="0,4,0,4" />
+          <Separator Margin="0,4,0,4" Background="LightGray"/>
 
           <TextBlock
             Margin="0,4,0,4"
@@ -282,6 +282,50 @@
               HorizontalAlignment="Left"
               VerticalAlignment="Center"
               Text="Function border color" />
+          </Grid>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=KernelNodeBorderColor, Mode=TwoWay}"
+              ShowDropDownButton="True"
+              UsingAlphaChannel="False" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Kernel function border color" />
+          </Grid>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=ManagedNodeBorderColor, Mode=TwoWay}"
+              ShowDropDownButton="True"
+              UsingAlphaChannel="False" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Managed function border color" />
           </Grid>
           <Grid>
             <Grid.ColumnDefinitions>
@@ -426,7 +470,7 @@
             Content="Alternate list view background color"
             IsChecked="{Binding AlternateListRows, Mode=TwoWay}"
             ToolTip="Alternate the background color of the function/module list view items" />
-          <Separator Margin="0,4,0,4" />
+          <Separator Margin="0,4,0,4" Background="LightGray"/>
 
           <TextBlock FontWeight="Medium" Text="Function List" />
           <StackPanel x:Name="FunctionListOptionsPanel">
@@ -472,7 +516,7 @@
               IsChecked="{Binding SortByExclusiveTime}" />
           </StackPanel>
 
-          <Separator Margin="0,4,0,4" />
+          <Separator Margin="0,4,0,4" Background="LightGray"/>
           <TextBlock FontWeight="Medium" Text="Preview Popup" />
           <CheckBox
             x:Name="ShowDetailsPopupCheckbox"

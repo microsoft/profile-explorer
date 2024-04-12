@@ -147,7 +147,7 @@
                                     IsEnabled="{Binding InputControlsEnabled}"
                                     ToolTip="Profiles all applications running on the current machine" />
 
-                                <Separator Margin="0,8,0,8" />
+                                <Separator Margin="0,8,0,8" Background="LightGray"/>
 
                                 <StackPanel x:Name="AttachToProcessPanel" Visibility="{Binding ElementName=AttachRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
                                     <Grid
@@ -421,7 +421,7 @@
                                     </StackPanel>
                                 </Expander>
 
-                                <Separator Margin="0,8,0,8" />
+                                <Separator Margin="0,8,0,8" Background="LightGray"/>
                                 <StackPanel
                                     Margin="8,0,0,0"
                                     Orientation="Horizontal"

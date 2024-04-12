@@ -31,6 +31,8 @@ public class FlameGraphRenderer {
   private Typeface nameFont_;
   private double fontSize_;
   private Pen defaultBorder_;
+  private Pen kernelBorder_;
+  private Pen managedBorder_;
   private Brush placeholderTileBrush_;
   private DrawingVisual graphVisual_;
   private GlyphRunCache glyphs_;
@@ -63,6 +65,9 @@ public class FlameGraphRenderer {
     settings_.ResedCachedPalettes();
     App.Settings.MarkingSettings.ResedCachedPalettes();
     defaultBorder_ = ColorPens.GetPen(settings_.NodeBorderColor, 0.5);
+    kernelBorder_ = ColorPens.GetPen(settings_.KernelNodeBorderColor,  1);
+    managedBorder_ = ColorPens.GetPen(settings_.ManagedNodeBorderColor, 1);
+
     font_ = new Typeface("Segoe UI"); //? TODO: Option
     nameFont_ = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Medium,
                              FontStretch.FromOpenTypeStretch(5));
@@ -140,7 +145,7 @@ public class FlameGraphRenderer {
   public HighlightingStyle GetNodeStyle(FlameGraphNode node) {
     var backColor = settings_.GetNodeDefaultBrush(node);
     var markingSettings = App.Settings.MarkingSettings;
-    
+
     // Override color based on function name or module name,
     // with function name marking having priority.
     if (!string.IsNullOrEmpty(node.FunctionName) &&
@@ -159,7 +164,19 @@ public class FlameGraphRenderer {
       }
     }
 
-    return new HighlightingStyle(backColor, defaultBorder_);
+    // Select border based on execution context.
+    var border = defaultBorder_;
+
+    if (node.CallTreeNode != null) {
+      if (node.CallTreeNode.Kind == ProfileCallTreeNodeKind.NativeKernel) {
+        border = kernelBorder_;
+      }
+      else if (node.CallTreeNode.Kind == ProfileCallTreeNodeKind.Managed) {
+        border = managedBorder_;
+      }
+    }
+
+    return new HighlightingStyle(backColor, border);
   }
 
   public void Redraw() {

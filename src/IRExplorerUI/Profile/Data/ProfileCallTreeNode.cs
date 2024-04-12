@@ -29,7 +29,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   [ProtoMember(8)]
   public ProfileCallTreeNodeKind Kind { get; set; }
   public object Tag { get; set; }
-  
+
   //? TODO: Replace Threads dict and CallSites with a TinyDictionary-like data struct
   //? like TinyList, also consider DictionarySlim instead of Dictionary from
   //? https://github.com/dotnet/corefxlab/blob/archive/src/Microsoft.Experimental.Collections/Microsoft/Collections/Extensions/DictionarySlim
@@ -139,7 +139,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   public ProfileCallTreeNode FindChild(IRTextFunction function) {
     return children_.Find(node => node.Function == function);
   }
-  
+
   internal void SetChildrenNoLock(List<ProfileCallTreeNode> children) {
     // Used by ProfileCallTree.Deserialize.
     children_ = new TinyList<ProfileCallTreeNode>(children);
@@ -222,6 +222,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
       return false;
     }
 
+    // Note that this holds only for nodes
+    // belonging to the same ProfileCallTree instance.
     return Id == other.Id;
   }
 

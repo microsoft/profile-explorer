@@ -69,6 +69,10 @@ public class FlameGraphSettings : SettingsBase {
   public Color NodePercentageColor { get; set; }
   [ProtoMember(24)]
   public Color SearchedNodeColor { get; set; }
+  [ProtoMember(25)]
+  public Color KernelNodeBorderColor { get; set; }
+  [ProtoMember(26)]
+  public Color ManagedNodeBorderColor { get; set; }
 
   public Brush GetNodeDefaultBrush(FlameGraphNode node) {
     CachePalettes();
@@ -94,6 +98,8 @@ public class FlameGraphSettings : SettingsBase {
     SearchResultMarkingColor = Colors.Khaki;
     NodeTextColor = Colors.DarkBlue;
     NodeBorderColor = Colors.Black;
+    KernelNodeBorderColor = Colors.DarkBlue;
+    ManagedNodeBorderColor = Colors.Indigo;
     NodeModuleColor = Colors.DimGray;
     NodeWeightColor = Colors.Maroon;
     NodePercentageColor = Colors.Black;
@@ -152,7 +158,9 @@ public class FlameGraphSettings : SettingsBase {
            NodeModuleColor == settings.NodeModuleColor &&
            NodeWeightColor == settings.NodeWeightColor &&
            NodePercentageColor == settings.NodePercentageColor &&
-           SearchedNodeColor == settings.SearchedNodeColor;
+           SearchedNodeColor == settings.SearchedNodeColor &&
+           KernelNodeBorderColor == settings.KernelNodeBorderColor &&
+           ManagedNodeBorderColor == settings.ManagedNodeBorderColor;
   }
 
   public override string ToString() {

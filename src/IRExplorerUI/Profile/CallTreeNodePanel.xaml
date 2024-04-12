@@ -361,7 +361,7 @@
                                 Source="{StaticResource LayoutOpenNewIcon}" />
                             </MenuItem.Icon>
                           </MenuItem>
-                          <Separator />
+                          <Separator Background="LightGray"/>
                           <MenuItem
                             Command="{Binding DataContext.FilterToThreadCommand}"
                             CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
@@ -380,7 +380,7 @@
                             CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
                             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                             Header="Exclude Thread" />
-                          <Separator />
+                          <Separator Background="LightGray"/>
 
                           <MenuItem
                             Command="{Binding DataContext.FilterToSameNameThreadCommand}"
@@ -425,7 +425,7 @@
               </ItemsControl>
             </Expander>
 
-            <Separator />
+            <Separator Background="LightGray"/>
             <Grid>
               <TextBlock
                 Margin="4,4,0,2"
@@ -436,6 +436,32 @@
                 Margin="0,0,4,0"
                 HorizontalAlignment="Right"
                 Orientation="Horizontal">
+                <Button
+                  x:Name="MarkModuleButton"
+                  Width="20"
+                  Height="20"
+                  Margin="2,0,0,0"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Click="MarkModuleButton_OnClick"
+                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                  BorderThickness="0"
+                  ToolTip="Mark all functions belonging to this module (saved)">
+                  <Image
+                    Width="18"
+                    Height="18"
+                    Source="{StaticResource ThemeIcon}"
+                    Style="{StaticResource DisabledImageStyle}" />
+                  <Button.ContextMenu>
+                    <ContextMenu DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}" Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
+                    <MenuItem>
+                      <MenuItem.Header>
+                        <client:ColorSelector ColorSelectedCommand="{Binding MarkModuleCommand}" />
+                      </MenuItem.Header>
+                    </MenuItem>
+                    </ContextMenu>
+                  </Button.ContextMenu>
+                </Button>
                 <Button
                   x:Name="CopyModuleButton"
                   Width="20"
@@ -493,6 +519,24 @@
                 HorizontalAlignment="Right"
                 Orientation="Horizontal">
                 <Button
+                  x:Name="OpenButton"
+                  Width="20"
+                  Height="20"
+                  Margin="2,0,0,0"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                  BorderThickness="0"
+                  Click="OpenButton_OnClick"
+                  ToolTip="Open the function assembly view in a new tab"
+                  Visibility="{Binding EnableSingleNodeActions, Converter={StaticResource BoolToVisibilityConverter}}">
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource LayoutOpenNewIcon}"
+                    Style="{StaticResource DisabledImageStyle}" />
+                </Button>
+                <Button
                   x:Name="PreviewButton"
                   Width="20"
                   Height="20"
@@ -510,8 +554,9 @@
                     Source="{StaticResource PeekDefinitionIcon}"
                     Style="{StaticResource DisabledImageStyle}" />
                 </Button>
+
                 <Button
-                  x:Name="OpenButton"
+                  x:Name="MarkFunctionButton"
                   Width="20"
                   Height="20"
                   Margin="2,0,0,0"
@@ -519,14 +564,22 @@
                   VerticalAlignment="Center"
                   Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                   BorderThickness="0"
-                  Click="OpenButton_OnClick"
-                  ToolTip="Open the function assembly view in a new tab"
-                  Visibility="{Binding EnableSingleNodeActions, Converter={StaticResource BoolToVisibilityConverter}}">
+                  Click="MarkModuleButton_OnClick"
+                  ToolTip="Mark all functions with the same name (saved)">
                   <Image
-                    Width="16"
-                    Height="16"
-                    Source="{StaticResource LayoutOpenNewIcon}"
+                    Width="18"
+                    Height="18"
+                    Source="{StaticResource ThemeIcon}"
                     Style="{StaticResource DisabledImageStyle}" />
+                  <Button.ContextMenu>
+                    <ContextMenu  DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}" Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
+                      <MenuItem>
+                        <MenuItem.Header>
+                          <client:ColorSelector ColorSelectedCommand="{Binding MarkFunctionCommand}" />
+                        </MenuItem.Header>
+                      </MenuItem>
+                    </ContextMenu>
+                  </Button.ContextMenu>
                 </Button>
                 <Button
                   x:Name="CopyFUnctionButton"

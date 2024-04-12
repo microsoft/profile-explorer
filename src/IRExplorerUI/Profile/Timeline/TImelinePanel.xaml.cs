@@ -102,7 +102,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     get => profileFilter;
     set => SetField(ref profileFilter, value);
   }
-  
+
   public bool ShowSearchSection {
     get => showSearchSection_;
     set {
@@ -541,7 +541,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       await ApplyProfileFilter();
     }
   }
-  
+
   private void SetFilteredThreadsState(ProfileFilterState state) {
     int excludedCount = CountExcludedThreads();
 
@@ -584,22 +584,22 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     state.ThreadFilterText = sb.ToString().Trim();
     state.HasThreadFilter = true;
   }
-  
+
   ProfileFilterState CreateProfileFilterState() {
     var timeRange = ActivityView.HasFilter ? ActivityView.FilteredRange : null;
     var filter = ConstructProfileSampleFilter(timeRange);
-    
+
     var state = new ProfileFilterState(filter);
     state.HasFilter = ActivityView.HasFilter;
     state.FilteredTime = ActivityView.FilteredTime;
-    
+
     state.RemoveThreadFilter += async () => {
       await RemoveThreadFilters();
     };
     state.RemoveTimeRangeFilter += async () => {
       await RemoveTimeRangeFilters();
     };
-    
+
     SetFilteredThreadsState(state);
     return state;
   }
@@ -993,10 +993,11 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         OverridesDefaultStyle = true,
         Header = samples.Node.FormatFunctionName(Session.CompilerInfo.NameProvider.FormatFunctionName, 50),
         Icon = CreateMarkerMenuIcon(samples),
-        Tag = samples
+        Tag = samples,
+        ToolTip = "Right-click to remove marking"
       };
 
-      item.Click += (s, args) => {
+      item.MouseRightButtonUp += (s, args) => {
         var samples = (MarkedSamples)((MenuItem)s).Tag;
         ActivityView.RemoveMarkedSamples(samples.Node);
 

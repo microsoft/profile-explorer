@@ -35,7 +35,7 @@
                 Margin="0,2,0,2"
                 Content="Display called function list for calls"
                 IsChecked="{Binding MarkCallTargets, Mode=TwoWay}" />
-            <Separator Margin="0,4,0,4" />
+            <Separator Margin="0,4,0,4" Background="LightGray"/>
 
             <TextBlock FontWeight="Medium" Text="Columns" />
             <CheckBox
@@ -119,7 +119,7 @@
                     Content="Default"
                     ToolTip="Reset value to default weight cutoff" />
             </StackPanel>
-            <Separator Margin="0,4,0,4" />
+            <Separator Margin="0,4,0,4" Background="LightGray"/>
 
             <TextBlock FontWeight="Medium" Text="Colors" />
             <Grid Margin="0,4,0,0">

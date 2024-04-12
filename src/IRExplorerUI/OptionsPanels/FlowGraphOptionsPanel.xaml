@@ -43,7 +43,7 @@
                         Content="Only when the Shift key is pressed"
                         IsChecked="{Binding Path=ShowPreviewPopupWithModifier, Mode=TwoWay}"
                         IsEnabled="{Binding ElementName=ShowPreviewCheckbox, Path=IsChecked}" />
-                    <Separator Margin="0,4,0,4" />
+                    <Separator Margin="0,4,0,4" Background="LightGray"/>
 
                     <TextBlock FontWeight="Medium" Text="Graph Node Style" />
                     <CheckBox
@@ -312,7 +312,7 @@
                                 Text="Immediate dominator edge color" />
                         </Grid>
 
-                        <Separator Margin="0,4,0,4" />
+                        <Separator Margin="0,4,0,4" Background="LightGray"/>
                         <TextBlock FontWeight="Medium" Text="Loop Graph Colors" />
                         <CheckBox
                             x:Name="LoopCheckbox"

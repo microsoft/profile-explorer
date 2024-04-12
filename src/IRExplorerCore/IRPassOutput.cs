@@ -17,10 +17,7 @@ public class IRPassOutput {
   }
 
   public long DataStartOffset { get; set; }
-  /// <summary>
-  ///   One past the end
-  /// </summary>
-  public long DataEndOffset { get; set; }
+  public long DataEndOffset { get; set; } // One past end.
   public long Size => DataEndOffset - DataStartOffset;
   public byte[] Signature { get; set; } // SHA256 signature of the text.
   public int StartLine { get; set; }

@@ -191,7 +191,7 @@
                         Margin="0,0,0,2"
                         Content="Allow block folding"
                         IsChecked="{Binding Path=ShowBlockFolding, Mode=TwoWay}" />
-                    <Separator Margin="0,4,0,4" />
+                    <Separator Margin="0,4,0,4" Background="LightGray"/>
 
                     <TextBlock FontWeight="Medium" Text="IR Value Interaction" />
 
@@ -396,7 +396,7 @@
                                 Text="Left margin background color" />
                         </Grid>
                     </StackPanel>
-                    <Separator Margin="0,4,0,4" />
+                    <Separator Margin="0,4,0,4" Background="LightGray"/>
 
                     <TextBlock FontWeight="Medium" Text="IR Value Colors" />
                     <StackPanel Margin="0,4,0,0" Orientation="Vertical">
@@ -504,7 +504,7 @@
                         Content="Annotate instrs. with inlined functions trace (inlinees)"
                         IsChecked="{Binding Path=AnnotateInlinees, Mode=TwoWay}"
                         ToolTip="Append the associated list of inlined functions (inlinees) based on the debug info file" />
-                    <Separator Margin="0,4,0,4" />
+                    <Separator Margin="0,4,0,4" Background="LightGray"/>
 
                     <TextBlock FontWeight="Medium" Text="Annotation Colors" />
                     <StackPanel Margin="0,4,0,0" Orientation="Vertical">

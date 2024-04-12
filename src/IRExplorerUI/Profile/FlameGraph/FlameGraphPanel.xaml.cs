@@ -20,6 +20,7 @@ using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Profile.Document;
+using Color = System.Windows.Media.Color;
 using Style = System.Windows.Style;
 
 namespace IRExplorerUI.Profile;
@@ -114,7 +115,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   public bool HasEnabledMarkedFunctions => MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
   public bool HasEnabledMarkedModules => MarkingSettings.UseModuleColors && MarkingSettings.ModuleColors.Count > 0;
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
-  
+
   public override async void OnShowPanel() {
     base.OnShowPanel();
     panelVisible_ = true;
@@ -240,6 +241,22 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     NodeDetailsPanel.FunctionNodeClick += NodeDetailsPanel_NodeClick;
     NodeDetailsPanel.FunctionNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
     NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
+    NodeDetailsPanel.FunctionMarked += NodeDetailsPanelOnFunctionMarked;
+    NodeDetailsPanel.ModuleMarked += NodeDetailsPanelOnModuleMarked;
+  }
+
+  private void NodeDetailsPanelOnModuleMarked(object sender, (string, Color) e) {
+    MarkingSettings.UseModuleColors = true;
+    MarkingSettings.AddModuleColor(e.Item1, e.Item2);
+    ReloadSettings();
+    UpdateMarkingUI();
+  }
+
+  private void NodeDetailsPanelOnFunctionMarked(object sender, (string, Color) e) {
+    MarkingSettings.UseFunctionColors = true;
+    MarkingSettings.AddFunctionColor(e.Item1, e.Item2);
+    ReloadSettings();
+    UpdateMarkingUI();
   }
 
   private void GraphHostOnRootNodeCleared(object sender, EventArgs e) {
@@ -379,7 +396,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void ExecuteGraphResetWidth(object sender, ExecutedRoutedEventArgs e) {
-    //? TODO: Buttons should be disabled
     GraphHost.ResetWidth();
   }
 
@@ -501,7 +517,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
           if (commit) {
             App.SaveApplicationSettings();
           }
-          
+
           initialMarkingSettings = MarkingSettings.Clone();
           return settings_.Clone();
         }
@@ -550,7 +566,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
       ReloadSettings);
   }
-  
+
   public void UpdateMarkedFunctions(bool externalCall) {
     GraphHost.Redraw();
     OnPropertyChanged(nameof(HasEnabledMarkedModules));

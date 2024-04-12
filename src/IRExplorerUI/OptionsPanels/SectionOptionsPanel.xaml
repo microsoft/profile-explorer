@@ -62,7 +62,7 @@
             Content="Alternate list view background color"
             IsChecked="{Binding AlternateListRows, Mode=TwoWay}"
             ToolTip="Alternate the background color of the function/module list view items" />
-          <Separator Margin="0,4,0,4" />
+          <Separator Margin="0,4,0,4" Background="LightGray"/>
           <TextBlock FontWeight="Medium" Text="Section List" />
           <StackPanel Orientation="Horizontal">
             <CheckBox
@@ -134,7 +134,7 @@
             Content="Mark sections with annotations"
             IsChecked="{Binding MarkAnnotatedSections, Mode=TwoWay}"
             ToolTip="Tag sections that have highlighted IR, bookmarks and other annotations" />
-          <Separator Margin="0,4,0,4" />
+          <Separator Margin="0,4,0,4" Background="LightGray"/>
 
           <TextBlock FontWeight="Medium" Text="List Filtering" />
           <CheckBox
@@ -146,7 +146,7 @@
             Content="Use case-sensitive section name search"
             IsChecked="{Binding SectionSearchCaseSensitive, Mode=TwoWay}" />
 
-          <Separator Margin="0,4,0,4" />
+          <Separator Margin="0,4,0,4" Background="LightGray"/>
           <TextBlock FontWeight="Medium" Text="Document Diffs" />
 
           <Grid Margin="0,4,0,0">
@@ -295,7 +295,7 @@
               ToolTip="Reset value to default duration" />
           </StackPanel>
 
-          <Separator Margin="0,4,0,4" />
+          <Separator Margin="0,4,0,4" Background="LightGray"/>
           <TextBlock FontWeight="Medium" Text="Function List Columns" />
           <CheckBox
             Margin="0,4,0,2"

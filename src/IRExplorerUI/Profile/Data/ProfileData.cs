@@ -368,6 +368,7 @@ public partial class ProfileData {
       Filter = Filter
     };
 
+    CallTree?.ResetTags();
     ModuleWeights = new Dictionary<int, TimeSpan>();
     FunctionProfiles = new ConcurrentDictionary<IRTextFunction, FunctionProfileData>();
     ProfileWeight = TimeSpan.Zero;

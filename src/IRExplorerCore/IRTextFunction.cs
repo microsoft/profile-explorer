@@ -66,7 +66,7 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
     return Name.Equals(other.Name, StringComparison.Ordinal);
   }
 
-  public bool Equals(object obj) {
+  public override bool Equals(object obj) {
     if (ReferenceEquals(null, obj)) {
       return false;
     }
@@ -79,7 +79,7 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
       return false;
     }
 
-    return Equals((IRTextFunction)obj, true);
+    return Equals((IRTextFunction)obj);
   }
 
   public override int GetHashCode() {

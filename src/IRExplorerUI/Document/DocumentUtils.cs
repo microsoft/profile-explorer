@@ -550,12 +550,12 @@ public static class DocumentUtils {
       (o, args) => {
         var style = ((MenuItem)o).Tag as FunctionMarkingStyle;
         settings.ModuleColors.Remove(style);
-        ((MenuItem)o).IsSubmenuOpen = false;
+        menu.IsSubmenuOpen = false;
         changedHandler();
       },
       settings, session);
   }
-  
+
   public static void PopulateMarkedFunctionsMenu(MenuItem menu, FunctionMarkingSettings settings,
                                                  ISession session, Action changedHandler) {
     DocumentUtils.CreateMarkedFunctionsMenu(menu,
@@ -569,12 +569,12 @@ public static class DocumentUtils {
       (o, args) => {
         var style = ((MenuItem)o).Tag as FunctionMarkingStyle;
         settings.FunctionColors.Remove(style);
-        ((MenuItem)o).IsSubmenuOpen = false;
+          menu.IsSubmenuOpen = false;
         changedHandler();
       },
       settings, session);
   }
-  
+
   public static void CreateMarkedModulesMenu(MenuItem menu,
                                              RoutedEventHandler menuClickHandler,
                                              MouseButtonEventHandler menuRightClickHandler,
@@ -607,7 +607,7 @@ public static class DocumentUtils {
       if (pair.Module.HasTitle) {
         title = $"{pair.Module.Title} ({title})";
       }
-      
+
       if (pair.Module.IsRegex) {
         title = $"{title} (Regex)";
       }
@@ -649,7 +649,7 @@ public static class DocumentUtils {
     DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
   }
 
-  
+
   public static void CreateMarkedFunctionsMenu(MenuItem menu,
                                              RoutedEventHandler menuClickHandler,
                                              MouseButtonEventHandler menuRightClickHandler,
@@ -661,7 +661,7 @@ public static class DocumentUtils {
     var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
     var valueTemplate = (DataTemplate)Application.Current.FindResource("CheckableProfileMenuItemValueTemplate");
     double maxWidth = 0;
-    
+
     // Sort functions by weight in decreasing order.
     var sortedFuncts = new List<(FunctionMarkingStyle Function, TimeSpan Weight)>();
 
@@ -743,7 +743,7 @@ public static class DocumentUtils {
     menu.Items.Clear();
     DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
   }
-  
+
   private static int CommonParentCallerIndex(ProfileCallTreeNode a, ProfileCallTreeNode b) {
     int index = 0;
 
