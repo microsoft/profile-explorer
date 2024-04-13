@@ -17,7 +17,7 @@ using Microsoft.Diagnostics.Tracing.Session;
 namespace IRExplorerUI.Profile;
 
 public sealed class ETWRecordingSession : IDisposable {
-  private static readonly string ProfilerPath = "irexplorer_profiler.dll";
+  private static readonly string ProfilerPath = "IRExplorerProfiler.dll";
   private static readonly string ProfilerGuid = "{805A308B-061C-47F3-9B30-F785C3186E81}";
   private TraceEventSession session_;
   private DiagnosticsClient diagClient_;
