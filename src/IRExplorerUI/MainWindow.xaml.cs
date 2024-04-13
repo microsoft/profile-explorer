@@ -134,7 +134,17 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     SizeChanged += MainWindow_SizeChanged;
   }
 
+  public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
   public SessionStateManager SessionState => sessionState_;
+
+  public bool ProfileControlsVisible {
+    get => profileControlsVisible;
+    set {
+      if (value == profileControlsVisible) return;
+      profileControlsVisible = value;
+      OnPropertyChanged();
+    }
+  }
 
   private static void CheckForUpdate() {
     string autoUpdateInfo;
@@ -1045,17 +1055,6 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
 
-  public bool ProfileControlsVisible {
-    get => profileControlsVisible;
-    set {
-      if (value == profileControlsVisible) return;
-      profileControlsVisible = value;
-      OnPropertyChanged();
-    }
-  }
-
-  public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
-
   private void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, this,
       ReloadMarkingSettings);
@@ -1066,11 +1065,6 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
       ReloadMarkingSettings);
   }
   
-  private void ReloadMarkingSettings() {
-    // Notify all panels about the marking changes.
-    FunctionMarkingChanged(ToolPanelKind.Other);
-  }
-
   public event PropertyChangedEventHandler PropertyChanged;
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
@@ -1086,49 +1080,5 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
 
   private void ProfileMenuItem_Click(object sender, RoutedEventArgs e) {
     ReloadMarkingSettings();
-  }
-
-  private void MarkingMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    int insertionIndex = 1;
-
-    foreach (var item in MarkingMenu.Items) {
-      if (item is MenuItem menuItem &&
-          menuItem.Name == "BuiltinMarkingsMenu") {
-        break;
-      }
-
-      insertionIndex++;
-    }
-
-    if (MarkingMenu.Items[insertionIndex] is not Separator) {
-      return; // Already populated.
-    }
-    
-    var builtinMarkings = MarkingSettings.BuiltinMarkingCategories;
-
-    foreach (var markingSet in builtinMarkings.FunctionColors) {
-      var item = new MenuItem {
-        Header = markingSet.Title,
-        ToolTip = markingSet.Name,
-        Tag = markingSet,
-      };
-
-      var colorSelector = new ColorSelector();
-      var selectorItem = new MenuItem {
-        Header = colorSelector,
-        Tag = markingSet,
-      };
-
-      colorSelector.ColorSelected += (o, args) => {
-        var style = markingSet.CloneWithNewColor(args.SelectedColor);
-        MarkingSettings.UseFunctionColors = true;
-        MarkingSettings.AddFunctionColor(style);
-        ReloadMarkingSettings();
-      };
-      
-      item.Items.Add(selectorItem);
-      MarkingMenu.Items.Insert(insertionIndex, item);
-      insertionIndex++;
-    }
   }
 }

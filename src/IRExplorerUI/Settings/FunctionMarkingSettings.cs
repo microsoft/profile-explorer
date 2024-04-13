@@ -45,11 +45,44 @@ public class FunctionMarkingSettings : SettingsBase {
     }
   }
 
-  public void Save() {
-    var markingsFile = @"C:\work\markings.json";
-    JsonUtils.SerializeToFile(CurrentSet, markingsFile);
+  public void SwitchMarkingSet(FunctionMarkingSet set) {
+    CurrentSet = set.Clone();
+  }
+  
+  public void AppendMarkingSet(FunctionMarkingSet set) {
+    foreach (var marking in set.FunctionColors) {
+      AddFunctionColor(marking);
+    }
+
+    foreach (var marking in set.ModuleColors) {
+      AddModuleColor(marking);
+    }
   }
 
+  public void SaveCurrentMarkingSet(string title) {
+    SavedSets.RemoveAll(set => set.Title == title);
+    var clone = CurrentSet.Clone();
+    clone.Title = title;
+    SavedSets.Add(clone);
+  }
+
+  record Markings(FunctionMarkingSet Current, List<FunctionMarkingSet> Saved);
+  
+  public bool SaveToFile(string filePath) {
+    var markings = new Markings(CurrentSet, SavedSets);
+    return JsonUtils.SerializeToFile(markings, filePath);
+  }
+  
+  public bool LoadFromFile(string filePath) {
+    if (!JsonUtils.DeserializeFromFile(filePath, out Markings data)) {
+      return false;
+    }
+
+    CurrentSet = data.Current;
+    SavedSets = data.Saved;
+    return true;
+  }
+  
   public FunctionMarkingSettings() {
     Reset();
   }
@@ -81,7 +114,6 @@ public class FunctionMarkingSettings : SettingsBase {
 
   public void AddFunctionColor(string functionName, Color color) {
     AddMarkingColor(functionName, color, FunctionColors);
-    Save();
   }
   
   public void AddModuleColor(FunctionMarkingStyle style) {
@@ -163,7 +195,7 @@ public class FunctionMarkingSettings : SettingsBase {
     return null;
   }
 
-  public void ResedCachedPalettes() {
+  public void ResetCachedPalettes() {
     modulesPalette_ = null;
   }
   
@@ -201,6 +233,21 @@ public class FunctionMarkingSet {
   public FunctionMarkingSet(string title = null) {
     Title = title;
     InitializeReferenceMembers();
+  }
+
+  public FunctionMarkingSet Clone() {
+    var clone = new FunctionMarkingSet();
+
+    foreach (var marking in FunctionColors) {
+      clone.FunctionColors.Add(marking.Clone());
+    }
+    
+    
+    foreach (var marking in ModuleColors) {
+      clone.ModuleColors.Add(marking.Clone());
+    }
+
+    return clone;
   }
   
   [ProtoAfterDeserialization]
@@ -243,12 +290,13 @@ public class FunctionMarkingStyle {
   public bool HasTitle => !string.IsNullOrEmpty(Title);
   
   public FunctionMarkingStyle(string name, Color color, 
-                              string title = null, bool isRegex = false) {
+                              string title = null, bool isRegex = false,
+                              bool isEnabled = true) {
     Name = name;
     Color = color;
     Title = title;
     IsRegex = isRegex;
-    IsEnabled = true;
+    IsEnabled = isEnabled;
   }
 
   public bool NameMatches(string candidate) {
@@ -269,11 +317,11 @@ public class FunctionMarkingStyle {
   }
 
   public FunctionMarkingStyle CloneWithNewColor(Color newColor) {
-    return new FunctionMarkingStyle(Name, newColor, Title, IsRegex);
+    return new FunctionMarkingStyle(Name, newColor, Title, IsRegex, IsEnabled);
   }
   
   public FunctionMarkingStyle Clone() {
-    return new FunctionMarkingStyle(Name, Color, Title, IsRegex);
+    return new FunctionMarkingStyle(Name, Color, Title, IsRegex, IsEnabled);
   }
   
   protected bool Equals(FunctionMarkingStyle other) {

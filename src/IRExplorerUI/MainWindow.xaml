@@ -1,4 +1,4 @@
-<Window
+  <Window
   x:Class="IRExplorerUI.MainWindow"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -858,19 +858,24 @@
                 <Separator />
 
               <MenuItem
+                Click="SaveMarkingsMenuItem_OnClick"
                 Header="Save Markings Set"
                 ToolTip="Use a different color for specified modules" />
               <MenuItem
+                x:Name="SwitchMarkingsMenu"
                 Header="Switch Markings Set"
                 ToolTip="Remove all saved module markings" />
               <MenuItem
+                x:Name="AppendMarkingsMenu"
                 Header="Append Markings Set"
                 ToolTip="Remove all saved module markings" />
               <Separator/>
               <MenuItem
+                Click="ExportMarkingsMenuItem_OnClick"
                 Header="Export All Markings"
                 ToolTip="Use a different color for specified modules" />
               <MenuItem
+                Click="ImportMarkingsMenuItem_OnClick"
                 Header="Import Markings"
                 ToolTip="Remove all saved module markings" />
             </MenuItem>

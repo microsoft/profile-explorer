@@ -584,4 +584,100 @@ public partial class MainWindow : Window, ISession {
     MarkingSettings.ModuleColors.Clear();
     ReloadMarkingSettings();
   }
+  
+  private void MarkingMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    CreateSavedMarkingMenu(SwitchMarkingsMenu, markingSet => {
+      MarkingSettings.SwitchMarkingSet(markingSet);
+    });
+    
+    CreateSavedMarkingMenu(AppendMarkingsMenu, markingSet => {
+      MarkingSettings.AppendMarkingSet(markingSet);
+    });
+
+    // Add the built-in function markings to the menu,
+    // if not already added.
+    int insertionIndex = 1;
+
+    foreach (var item in MarkingMenu.Items) {
+      if (item is MenuItem menuItem &&
+          menuItem.Name == "BuiltinMarkingsMenu") {
+        break;
+      }
+
+      insertionIndex++;
+    }
+
+    if (MarkingMenu.Items[insertionIndex] is not Separator) {
+      return; // Already populated.
+    }
+    
+    var builtinMarkings = MarkingSettings.BuiltinMarkingCategories;
+
+    foreach (var markingSet in builtinMarkings.FunctionColors) {
+      var item = new MenuItem {
+        Header = markingSet.Title,
+        ToolTip = markingSet.Name,
+        Tag = markingSet,
+      };
+
+      var colorSelector = new ColorSelector();
+      var selectorItem = new MenuItem {
+        Header = colorSelector,
+        Tag = markingSet,
+      };
+
+      colorSelector.ColorSelected += (o, args) => {
+        var style = markingSet.CloneWithNewColor(args.SelectedColor);
+        MarkingSettings.UseFunctionColors = true;
+        MarkingSettings.AddFunctionColor(style);
+        ReloadMarkingSettings();
+      };
+      
+      item.Items.Add(selectorItem);
+      MarkingMenu.Items.Insert(insertionIndex, item);
+      insertionIndex++;
+    }
+  }
+
+  private void CreateSavedMarkingMenu(MenuItem menu, Action<FunctionMarkingSet> action) {
+    menu.Items.Clear();
+
+    foreach (var markingSet in MarkingSettings.SavedSets) {
+      var item = new MenuItem {
+        Header = markingSet.Title,
+        Tag = markingSet,
+      };
+      item.Click += (sender, args) => action(markingSet);
+      menu.Items.Add(item);
+    }
+  }
+  
+  private void ReloadMarkingSettings() {
+    // Notify all panels about the marking changes.
+    FunctionMarkingChanged(ToolPanelKind.Other);
+  }
+
+  private void SaveMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    MarkingSettings.SaveCurrentMarkingSet(Guid.NewGuid().ToString());
+  }
+
+  private void ImportMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var filePath = Utils.ShowOpenFileDialog("JSON files|*.json", "*.*", "Save markings");
+
+    if (filePath != null) {
+      if (!MarkingSettings.LoadFromFile(filePath)) {
+        Utils.ShowWarningMessageBox("Failed to load markings", this);
+      }
+    }
+  }
+
+  private void ExportMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var filePath = Utils.ShowSaveFileDialog("JSON files|*.json", "*.*", "Save markings");
+
+    if (filePath != null) {
+      if (!MarkingSettings.SaveToFile(filePath)) {
+        Utils.ShowWarningMessageBox("Failed to save markings", this);
+      }
+    }
+  }
 }

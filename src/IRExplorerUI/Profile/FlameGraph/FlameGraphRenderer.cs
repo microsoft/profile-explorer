@@ -63,7 +63,7 @@ public class FlameGraphRenderer {
 
   private void ReloadSettings() {
     settings_.ResedCachedPalettes();
-    App.Settings.MarkingSettings.ResedCachedPalettes();
+    App.Settings.MarkingSettings.ResetCachedPalettes();
     defaultBorder_ = ColorPens.GetPen(settings_.NodeBorderColor, 0.5);
     kernelBorder_ = ColorPens.GetPen(settings_.KernelNodeBorderColor,  1);
     managedBorder_ = ColorPens.GetPen(settings_.ManagedNodeBorderColor, 1);

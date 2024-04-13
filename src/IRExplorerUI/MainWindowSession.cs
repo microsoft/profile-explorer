@@ -586,13 +586,13 @@ public partial class MainWindow : Window, ISession {
 
   private async Task OpenDocument() {
     await Utils.ShowOpenFileDialogAsync(CompilerInfo.OpenFileFilter, "*.*", "Open file",
-                                        async path => {
-                                          var loadedDoc = await OpenDocument(path);
+      async path => {
+        var loadedDoc = await OpenDocument(path);
 
-                                          if (loadedDoc != null) {
-                                            AddRecentFile(path);
-                                          }
-                                        });
+        if (loadedDoc != null) {
+          AddRecentFile(path);
+        }
+      });
   }
 
   private async Task<LoadedDocument>
