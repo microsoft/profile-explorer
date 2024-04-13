@@ -1,0 +1,27 @@
+{
+  "ModuleColors": [],
+  "FunctionColors": [
+    {
+      "IsEnabled": true,
+      "Title": "Memory Allocation",
+      "Name": "(free|malloc|operator delete|operator new|realloc|RtlAllocateHeap|RtlFreeHeap|RtlpAllocateHeap|RtlpAllocateHeapInternal|RtlpFreeHeap|RtlpFreeHeapInternal|_free_base|_malloc_base)",
+      "Color": "#000000",
+      "IsRegex": true
+    },
+    {
+      "IsEnabled": true,
+      "Title": "Page Fault",
+      "Name": "(KiPageFault)",
+      "Color": "#000000",
+      "IsRegex": true
+    },
+    {
+      "IsEnabled": true,
+      "Title": "Thread Synchronization",
+      "Name": "(KiPageFault)",
+      "Color": "#000000",
+      "IsRegex": true
+    }
+  ],
+  "Title": "Builtin"
+}

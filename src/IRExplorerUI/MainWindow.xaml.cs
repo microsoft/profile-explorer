@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -85,7 +86,7 @@ public static class AppCommand {
     new RoutedUICommand("Untitled", "ShowProfileCallGraph", typeof(Window));
 }
 
-public partial class MainWindow : Window, ISession {
+public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
   private LayoutDocumentPane activeDocumentPanel_;
   private AssemblyMetadataTag addressTag_;
   private bool appIsActivated_;
@@ -108,6 +109,7 @@ public partial class MainWindow : Window, ISession {
   private bool documentSearchVisible_;
   private DocumentSearchPanel documentSearchPanel_;
   private bool initialDockLayoutRestored_;
+  private bool profileControlsVisible;
 
   public MainWindow() {
     InitializeComponent();
@@ -118,7 +120,11 @@ public partial class MainWindow : Window, ISession {
 
     SetupMainWindow();
     SetupGraphLayoutCache();
+    SetupEvents();
+    DataContext = this;
+  }
 
+  private void SetupEvents() {
     ContentRendered += MainWindow_ContentRendered;
     StateChanged += MainWindow_StateChanged;
     LocationChanged += MainWindow_LocationChanged;
@@ -1033,5 +1039,96 @@ public partial class MainWindow : Window, ISession {
 
   private async void HelpButton_Click(object sender, RoutedEventArgs e) {
     await ShowPanel(ToolPanelKind.Help);
+  }
+  
+  private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
+    Utils.PatchToolbarStyle(sender as ToolBar);
+  }
+
+  public bool ProfileControlsVisible {
+    get => profileControlsVisible;
+    set {
+      if (value == profileControlsVisible) return;
+      profileControlsVisible = value;
+      OnPropertyChanged();
+    }
+  }
+
+  public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
+
+  private void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, this,
+      ReloadMarkingSettings);
+  }
+
+  private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, this,
+      ReloadMarkingSettings);
+  }
+  
+  private void ReloadMarkingSettings() {
+    // Notify all panels about the marking changes.
+    FunctionMarkingChanged(ToolPanelKind.Other);
+  }
+
+  public event PropertyChangedEventHandler PropertyChanged;
+
+  protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
+    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+  }
+
+  protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
+    if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+    field = value;
+    OnPropertyChanged(propertyName);
+    return true;
+  }
+
+  private void ProfileMenuItem_Click(object sender, RoutedEventArgs e) {
+    ReloadMarkingSettings();
+  }
+
+  private void MarkingMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    int insertionIndex = 1;
+
+    foreach (var item in MarkingMenu.Items) {
+      if (item is MenuItem menuItem &&
+          menuItem.Name == "BuiltinMarkingsMenu") {
+        break;
+      }
+
+      insertionIndex++;
+    }
+
+    if (MarkingMenu.Items[insertionIndex] is not Separator) {
+      return; // Already populated.
+    }
+    
+    var builtinMarkings = MarkingSettings.BuiltinMarkingCategories;
+
+    foreach (var markingSet in builtinMarkings.FunctionColors) {
+      var item = new MenuItem {
+        Header = markingSet.Title,
+        ToolTip = markingSet.Name,
+        Tag = markingSet,
+      };
+
+      var colorSelector = new ColorSelector();
+      var selectorItem = new MenuItem {
+        Header = colorSelector,
+        Tag = markingSet,
+      };
+
+      colorSelector.ColorSelected += (o, args) => {
+        var style = markingSet.CloneWithNewColor(args.SelectedColor);
+        MarkingSettings.UseFunctionColors = true;
+        MarkingSettings.AddFunctionColor(style);
+        ReloadMarkingSettings();
+      };
+      
+      item.Items.Add(selectorItem);
+      MarkingMenu.Items.Insert(insertionIndex, item);
+      insertionIndex++;
+    }
   }
 }

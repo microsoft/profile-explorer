@@ -177,66 +177,7 @@
             Content="m!F"
             IsChecked="{Binding Path=Settings.PrependModuleToFunction, Mode=TwoWay}"
             ToolTip="Show the module name in front of the function name" />
-           <Menu
-            Height="20"
-            VerticalAlignment="Center"
-            ToolTip="Color functions based on the module name">
-            <MenuItem
-              x:Name="MarkingMenu"
-              Height="20"
-              Margin="0,0,0,0"
-              Padding="0,0,0,0"
-              OverridesDefaultStyle="True"
-              SubmenuOpened="ModuleMenu_OnSubmenuOpened">
-              <MenuItem.Header>
-                <StackPanel Orientation="Horizontal">
-                  <Image Source="{StaticResource ThemeIcon}" Style="{StaticResource DisabledImageStyle}" />
-                  <Path
-                    Margin="1,2,0,0"
-                    VerticalAlignment="Center"
-                    Data="M 0 0 L 3 3 L 6 0 Z"
-                    Fill="Black" />
-                </StackPanel>
-              </MenuItem.Header>
-              <MenuItem
-                Click="ToggleButton_Click"
-                Header="Pick Function Color Based on module"
-                IsCheckable="True"
-                IsChecked="{Binding MarkingSettings.UseAutoModuleColors}"
-                Style="{DynamicResource SubMenuItemHeaderStyle}"
-                ToolTip="Automatically pick a function color based on the module name" />
-              <Separator />
-
-              <MenuItem
-                Click="ClearModulesButton_Click"
-                Header="Predefined Function Markings"
-                IsHitTestVisible="False"
-                Style="{DynamicResource SubMenuItemHeaderStyle}"
-                ToolTip="Remove all saved module markings" />
-              <MenuItem
-                Click="ClearModulesButton_Click"
-                Header="Memory Allocation"
-                Style="{DynamicResource SubMenuItemHeaderStyle}"
-                ToolTip="Remove all saved module markings" />
-              <MenuItem
-                Click="ClearModulesButton_Click"
-                Header="Thread Synchronization"
-                Style="{DynamicResource SubMenuItemHeaderStyle}"
-                ToolTip="Remove all saved module markings" />
-              <MenuItem
-                Click="ToggleButton_Click"
-                Header="Save Markings Set"
-                IsChecked="{Binding MarkingSettings.UseModuleColors}"
-                Style="{DynamicResource SubMenuItemHeaderStyle}"
-                ToolTip="Use a different color for specified modules" />
-              <MenuItem
-                Click="ClearModulesButton_Click"
-                Header="Switch Markings Set"
-                Style="{DynamicResource SubMenuItemHeaderStyle}"
-                ToolTip="Remove all saved module markings" />
-              <Separator/>
-            </MenuItem>
-          </Menu>
+          
           <Menu
             Height="20"
             VerticalAlignment="Center"
@@ -254,7 +195,7 @@
                   <TextBlock
                     Margin="4,0,0,0"
                     VerticalAlignment="Center"
-                    Text="Module" />
+                    Text="Modules" />
                   <Path
                     Margin="4,2,2,0"
                     VerticalAlignment="Center"
@@ -294,7 +235,7 @@
                   <TextBlock
                     Margin="4,0,0,0"
                     VerticalAlignment="Center"
-                    Text="Function" />
+                    Text="Functions" />
                   <Path
                     Margin="4,2,2,0"
                     VerticalAlignment="Center"

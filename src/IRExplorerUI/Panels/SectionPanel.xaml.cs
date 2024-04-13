@@ -1964,7 +1964,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private bool FilterFunctionList(object value) {
     var functionEx = (IRTextFunctionEx)value;
-    var function = functionEx.Function;
 
     if (activeModuleFilter_ != null) {
       if (functionEx.ModuleName != activeModuleFilter_.Name) {
@@ -1981,8 +1980,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
     // Search the function name.
     if (App.Settings.SectionSettings.FunctionSearchCaseSensitive
-      ? function.Name.Contains(text, StringComparison.Ordinal)
-      : function.Name.Contains(text, StringComparison.OrdinalIgnoreCase)) {
+      ? functionEx.Name.Contains(text, StringComparison.Ordinal)
+      : functionEx.Name.Contains(text, StringComparison.OrdinalIgnoreCase)) {
       return true;
     }
 

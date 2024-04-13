@@ -260,11 +260,10 @@
                 SubmenuOpened="ModuleMenu_OnSubmenuOpened">
                 <MenuItem.Header>
                   <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource TagIcon}" Style="{StaticResource DisabledImageStyle}" />
                     <TextBlock
                       Margin="4,0,0,0"
                       VerticalAlignment="Bottom"
-                      Text="Module" />
+                      Text="Modules" />
                     <Path
                       Margin="4,2,2,0"
                       VerticalAlignment="Center"
@@ -309,11 +308,10 @@
                 SubmenuOpened="FunctionMenu_OnSubmenuOpened">
                 <MenuItem.Header>
                   <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource TagIcon}" Style="{StaticResource DisabledImageStyle}" />
                     <TextBlock
                       Margin="4,0,0,0"
                       VerticalAlignment="Bottom"
-                      Text="Function" />
+                      Text="Functions" />
                     <Path
                       Margin="4,2,2,0"
                       VerticalAlignment="Center"

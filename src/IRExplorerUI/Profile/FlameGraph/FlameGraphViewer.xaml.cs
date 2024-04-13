@@ -135,16 +135,19 @@ public partial class FlameGraphViewer : FrameworkElement {
     Session.SetApplicationStatus("");
   }
 
-  public void SelectNode(FlameGraphNode graphNode, bool append = false) {
-    if (selectedNode_ != graphNode) {
-      if (!append) {
-        ResetNodeHighlighting();
+  public void SelectNode(FlameGraphNode graphNode, bool append = false,
+                         bool deselectIfSelected = true) {
+    if (!selectedNodes_.ContainsKey(graphNode)) {
+      // Select a currently unselected node.
+      if (!append && deselectIfSelected) {
+        ResetNodeHighlighting(); // Deselect all other nodes.
       }
 
       HighlightNode(graphNode, HighlighingType.Selected);
       selectedNode_ = graphNode; // Last selected node.
     }
-    else if (append && selectedNodes_.ContainsKey(graphNode)) {
+    else if (deselectIfSelected) {
+      // Remove selection if node is already selected.
       selectedNodes_.Remove(graphNode);
       selectedNode_ = null;
     }
@@ -519,23 +522,58 @@ public partial class FlameGraphViewer : FrameworkElement {
   }
 
   private void OnMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
-    SelectPointedNode(e);
+    SelectPointedNode(e, false);
   }
 
   private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-    SelectPointedNode(e);
+    SelectPointedNode(e, true);
   }
 
-  private void SelectPointedNode(MouseButtonEventArgs e) {
+  private void SelectPointedNode(MouseButtonEventArgs e, bool deselectIfSelected) {
     var point = e.GetPosition(this);
     var graphNode = FindPointedNode(point);
 
     if (graphNode != null) {
-      SelectNode(graphNode, Utils.IsControlModifierActive());
+      if (Utils.IsShiftModifierActive() && selectedNode_ != null) {
+        // Try to extend the selection to include all nodes between
+        // the currently selected one and new one.
+        var nodes = FindNodesInBetween(graphNode, selectedNode_);
+
+        if (nodes is {Count:> 0}) {
+          foreach (var node in nodes) {
+            SelectNode(node, true);
+          }
+
+          return;
+        }
+      }
+
+      SelectNode(graphNode, Utils.IsControlModifierActive(), deselectIfSelected);
     }
     else {
       ClearSelection();
     }
+  }
+
+  private List<FlameGraphNode> FindNodesInBetween(FlameGraphNode startNode, FlameGraphNode stopNode) {
+    var list = new List<FlameGraphNode>();
+    bool found = false;
+
+    if (startNode.Depth < stopNode.Depth) {
+      Utils.Swap(ref startNode, ref stopNode);
+    }
+
+    while (startNode.Depth >= stopNode.Depth) {
+      if (startNode == stopNode) {
+        found = true;
+        break;
+      }
+
+      list.Add(startNode);
+      startNode = startNode.Parent;
+    }
+
+    return found ? list : null;
   }
 
   private void MarkNodeNoRedraw(ProfileCallTreeNode node, HighlightingStyle style, bool overwriteStyle) {

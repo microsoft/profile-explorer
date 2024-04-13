@@ -338,15 +338,25 @@ public sealed class ProfileCallTree {
   }
 
   public static ProfileCallTreeNode CombinedCallTreeNodes(List<ProfileCallTreeNode> nodes) {
-    return CombinedCallTreeNodesImpl(nodes);
+    var nodeListCopy = new List<ProfileCallTreeNode>(nodes);
+    nodeListCopy.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+    return CombinedCallTreeNodesImpl(nodeListCopy);
+  }
+  
+  public static TimeSpan CombinedCallTreeNodesWeight(List<ProfileCallTreeNode> nodes) {
+    if (nodes.Count == 0) {
+      return TimeSpan.Zero;
+    }
+    
+    var combinedNode = CombinedCallTreeNodes(nodes);
+    return combinedNode.Weight;
   }
 
   private static ProfileCallTreeNode CombinedCallTreeNodesImpl(List<ProfileCallTreeNode> nodes,
                                                                ProfileCallTreeNode parentNode = null) {
-    if (nodes == null) {
+    if (nodes == null || nodes.Count == 0) {
       return null;
     }
-
     if (nodes.Count == 1) {
       return nodes[0];
     }
@@ -466,22 +476,13 @@ public sealed class ProfileCallTree {
 
   public TimeSpan GetCombinedCallTreeNodeWeight(IRTextFunction function) {
     var nodes = GetCallTreeNodes(function);
-
+    
     if (nodes == null) {
       return TimeSpan.Zero;
     }
-
-    if (nodes.Count == 1) {
-      return nodes[0].Weight;
-    }
-
-    var weight = TimeSpan.Zero;
-
-    foreach (var node in nodes) {
-      weight += node.Weight;
-    }
-
-    return weight;
+    
+    var combinedNode = CombinedCallTreeNodesImpl(nodes);
+    return combinedNode.Weight;
   }
 
   public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {

@@ -65,6 +65,7 @@ public partial class App : Application {
   private const string BackupTraceFile = "IRExplorerBackup.log";
   private const string RemarkDefinitionFile = @"remark-settings.json";
   private const string SectionDefinitionFile = @"section-settings.json";
+  private const string FunctionMarkingsFile = @"function-markings.json";
   private const string InternalIRSyntaxHighlightingFile = @"ir.xshd";
   private const string InternalExtensionFile = @"IRExplorerExtension.vsix";
   private const string SyntaxFileSearchPattern = @"*.xshd";
@@ -223,6 +224,10 @@ public partial class App : Application {
     return GetApplicationFilePath(compilerIRName, SectionDefinitionFile);
   }
 
+  public static string GetFunctionMarkingsFilePath(string compilerIRName) {
+    return GetSettingsFilePath(compilerIRName, FunctionMarkingsFile);
+  }
+  
   public static List<SyntaxFileInfo> GetSyntaxHighlightingFiles(string compilerIRName, bool internalFiles = false) {
     if (!internalFiles && cachedSyntaxHighlightinFiles_ != null) {
       return cachedSyntaxHighlightinFiles_;

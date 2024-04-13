@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -277,13 +278,21 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private async Task UpdateNodeDetailsPanel() {
-    var selectedNodes = GraphHost.SelectedNodes.ConvertAll(node => node.CallTreeNode);
-
+    var selectedNodes = GraphHost.SelectedNodes;
+    
     if (selectedNodes.Count == 0) {
       NodeDetailsPanel.Reset();
     }
     else {
-      var combinedNode = await Task.Run(() => ProfileCallTree.CombinedCallTreeNodes(selectedNodes));
+      var callTreeNodes = new List<ProfileCallTreeNode>();
+
+      foreach (var node in selectedNodes) {
+        if (node.HasFunction) {
+          callTreeNodes.Add(node.CallTreeNode);
+        }
+      }
+      
+      var combinedNode = await Task.Run(() => ProfileCallTree.CombinedCallTreeNodes(callTreeNodes));
       await NodeDetailsPanel.ShowWithDetailsAsync(combinedNode);
     }
   }
@@ -548,8 +557,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void UpdateMarkingUI() {
-    OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
-    OnPropertyChanged(nameof(HasEnabledMarkedModules));
     Session.FunctionMarkingChanged(ToolPanelKind.FlameGraph);
   }
 
@@ -572,4 +579,5 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     OnPropertyChanged(nameof(HasEnabledMarkedModules));
     OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
   }
+
 }

@@ -126,8 +126,7 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
-  private void SetActiveProfileFilter(ProfileFilterState state)
-  {
+  private void SetActiveProfileFilter(ProfileFilterState state) {
     ProfileFilter = state;
     ProfileFilterStateHost.DataContext = null;
     ProfileFilterStateHost.DataContext = state;
@@ -423,6 +422,7 @@ public partial class MainWindow : Window, ISession {
     UpdateWindowTitle();
     SetApplicationProgress(true, double.NaN, "Loading profiling data");
     StartUIUpdate();
+    ProfileControlsVisible = true;
 
     await SetupPanels();
     await RefreshProfilingPanels();
@@ -563,7 +563,7 @@ public partial class MainWindow : Window, ISession {
       var panel = FindPanel(ToolPanelKind.CallerCallee) as CallTreePanel;
       panel?.UpdateMarkedFunctions(true);
     }
-
+    
     return true;
   }
 
@@ -573,5 +573,15 @@ public partial class MainWindow : Window, ISession {
 
   private void RemoveProfileThreadButton_Click(object sender, RoutedEventArgs e) {
     ProfileFilter?.RemoveThreadFilter?.Invoke();
+  }
+
+  private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
+    MarkingSettings.FunctionColors.Clear();
+    ReloadMarkingSettings();
+  }
+
+  private void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
+    MarkingSettings.ModuleColors.Clear();
+    ReloadMarkingSettings();
   }
 }

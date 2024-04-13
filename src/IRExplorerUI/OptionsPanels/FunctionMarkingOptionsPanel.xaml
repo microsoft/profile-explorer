@@ -83,7 +83,8 @@
                       VerticalContentAlignment="Center"
                       BorderThickness="0"
                       PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
-                      Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                      Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                      ToolTip="{Binding Path=Name}"/>
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
@@ -237,7 +238,8 @@
                       VerticalContentAlignment="Center"
                       BorderThickness="0"
                       PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
-                      Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                      Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" 
+                      ToolTip="{Binding Path=Name}"/>
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>

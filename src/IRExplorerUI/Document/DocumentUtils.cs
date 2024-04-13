@@ -662,14 +662,18 @@ public static class DocumentUtils {
     var valueTemplate = (DataTemplate)Application.Current.FindResource("CheckableProfileMenuItemValueTemplate");
     double maxWidth = 0;
 
+    //? TODO: Make processing asyn
+    //! Same for the other menus
+    
     // Sort functions by weight in decreasing order.
     var sortedFuncts = new List<(FunctionMarkingStyle Function, TimeSpan Weight)>();
+    var callTree = session.ProfileData.CallTree;
 
     foreach (var funcStyle in settings.FunctionColors) {
       // Find all functions matching the marked name. There can be multiple
       // since the same func. name may be used in multiple modules,
       // and also because the name matching may use Regex.
-      var weight = TimeSpan.Zero;
+      var funcNodeList = new List<ProfileCallTreeNode>();
 
       foreach (var loadedDoc in session.SessionState.Documents) {
         if (loadedDoc.Summary == null) {
@@ -680,14 +684,16 @@ public static class DocumentUtils {
           funcStyle.NameMatches(nameProvider.FormatFunctionName(name)));
 
         foreach (var func in funcList) {
-          var funcProfile = session.ProfileData.GetFunctionProfile(func);
+          var nodeList = callTree.GetCallTreeNodes(func);
 
-          if (funcProfile != null) {
-            weight += funcProfile.Weight;
+          if (nodeList != null) {
+            funcNodeList.AddRange(nodeList);
           }
         }
       }
 
+      // Combine all marked functions to obtain the proper total weight.
+      var weight = ProfileCallTree.CombinedCallTreeNodesWeight(funcNodeList);
       sortedFuncts.Add((funcStyle, weight));
     }
 
@@ -699,12 +705,17 @@ public static class DocumentUtils {
       string tooltip = "Right-click to remove function marking";
       string title = pair.Function.Name.TrimToLength(80);
 
-      if (pair.Function.HasTitle) {
-        title = $"{pair.Function.Title} ({title})";
+      if (pair.Function.HasTitle && pair.Function.IsRegex) {
+        title = $"{pair.Function.Title.TrimToLength(40)} ({title.TrimToLength(40)}) (Regex)";
       }
+      else {
+        if (pair.Function.HasTitle) {
+          title = $"{pair.Function.Title} ({title})";
+        }
 
-      if (pair.Function.IsRegex) {
-        title = $"{title} (Regex)";
+        if (pair.Function.IsRegex) {
+          title = $"{title} (Regex)";
+        }
       }
 
       var value = new ProfileMenuItem(text, pair.Weight.Ticks, weightPercentage) {

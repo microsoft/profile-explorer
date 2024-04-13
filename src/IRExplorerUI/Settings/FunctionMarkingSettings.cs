@@ -8,7 +8,8 @@ namespace IRExplorerUI;
 [ProtoContract(SkipConstructor = true)]
 public class FunctionMarkingSettings : SettingsBase {
   private ColorPalette modulesPalette_;
-
+  private FunctionMarkingSet builtinMarking_;
+  
   [ProtoMember(1)]
   public string Title { get; set; }
   [ProtoMember(2)]
@@ -28,11 +29,25 @@ public class FunctionMarkingSettings : SettingsBase {
   public List<FunctionMarkingStyle> ModuleColors => CurrentSet?.ModuleColors;
   public List<FunctionMarkingStyle> FunctionColors => CurrentSet?.FunctionColors;
   
-  public static List<FunctionMarkingStyle> BuiltinFunctionMarkingCategories {
+  public FunctionMarkingSet BuiltinMarkingCategories {
     get {
-      var list = new List<FunctionMarkingStyle>();
-      return list;
+      if (builtinMarking_ != null) {
+        return builtinMarking_;
+      }
+
+      var markingsFile = App.GetFunctionMarkingsFilePath(App.Session.CompilerInfo.CompilerIRName);
+
+      if (!JsonUtils.DeserializeFromFile<FunctionMarkingSet>(markingsFile, out builtinMarking_)) {
+        builtinMarking_ = new FunctionMarkingSet();
+      }
+      
+      return builtinMarking_;
     }
+  }
+
+  public void Save() {
+    var markingsFile = @"C:\work\markings.json";
+    JsonUtils.SerializeToFile(CurrentSet, markingsFile);
   }
 
   public FunctionMarkingSettings() {
@@ -66,19 +81,30 @@ public class FunctionMarkingSettings : SettingsBase {
 
   public void AddFunctionColor(string functionName, Color color) {
     AddMarkingColor(functionName, color, FunctionColors);
+    Save();
   }
-
+  
+  public void AddModuleColor(FunctionMarkingStyle style) {
+    AddMarkingColor(style, ModuleColors);
+  }
+  
+  public void AddFunctionColor(FunctionMarkingStyle style) {
+    AddMarkingColor(style, FunctionColors);
+  }
+  
   private void AddMarkingColor(string name, Color color, List<FunctionMarkingStyle> markingColors) {
-    foreach (var pair in markingColors) {
-      if (pair.Name.Length > 0 &&
-          pair.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) {
-        pair.Color = color;
-
-        return;
-      }
+    AddMarkingColor(new FunctionMarkingStyle(name, color), markingColors);
+  }
+  
+  
+  private void AddMarkingColor(FunctionMarkingStyle style, List<FunctionMarkingStyle> markingColors) {
+    if(markingColors.Find(item => 
+          item.Name.Length > 0 &&
+          item.Name.Equals(style.Name, StringComparison.Ordinal)) != null) {
+      return;
     }
 
-    markingColors.Add(new FunctionMarkingStyle(name, color));
+    markingColors.Add(style);
   }
   
   public bool GetFunctionColor(string name, out Color color) {
@@ -87,7 +113,7 @@ public class FunctionMarkingSettings : SettingsBase {
 
   private bool GetMarkingColor(string name, List<FunctionMarkingStyle> markingColors, out Color color) {
     foreach (var pair in markingColors) {
-      if (pair.NameMatches(name)) {
+      if (pair.IsEnabled && pair.NameMatches(name)) {
         color = pair.Color;
         return true;
       }
@@ -169,8 +195,11 @@ public class FunctionMarkingSet {
   public List<FunctionMarkingStyle> ModuleColors { get; set; }
   [ProtoMember(2)]
   public List<FunctionMarkingStyle> FunctionColors { get; set; }
+  [ProtoMember(3)]
+  public string Title { get; set; }
 
-  public FunctionMarkingSet() {
+  public FunctionMarkingSet(string title = null) {
+    Title = title;
     InitializeReferenceMembers();
   }
   
@@ -213,26 +242,40 @@ public class FunctionMarkingStyle {
 
   public bool HasTitle => !string.IsNullOrEmpty(Title);
   
-  public FunctionMarkingStyle(string name, Color color) {
+  public FunctionMarkingStyle(string name, Color color, 
+                              string title = null, bool isRegex = false) {
     Name = name;
     Color = color;
+    Title = title;
+    IsRegex = isRegex;
     IsEnabled = true;
   }
 
   public bool NameMatches(string candidate) {
-    if (!IsEnabled || candidate == null ||
+    if (candidate == null ||
         candidate.Length <= 0 || Name.Length <= 0) {
       return false;
     }
 
     if (IsRegex) {
+      // Regex allows partial match.
       return searcher_.Includes(candidate, Name, TextSearchKind.Regex);
     }
     else {
-      return searcher_.Includes(candidate, Name, TextSearchKind.CaseInsensitive);
+      // Otherwise accept full match only, not substring,
+      // otherwise it finds all functions with a prefix/suffix too.
+      return Name.Equals(candidate, StringComparison.Ordinal);
     }
   }
 
+  public FunctionMarkingStyle CloneWithNewColor(Color newColor) {
+    return new FunctionMarkingStyle(Name, newColor, Title, IsRegex);
+  }
+  
+  public FunctionMarkingStyle Clone() {
+    return new FunctionMarkingStyle(Name, Color, Title, IsRegex);
+  }
+  
   protected bool Equals(FunctionMarkingStyle other) {
     return Name == other.Name &&
            IsEnabled == other.IsEnabled &&

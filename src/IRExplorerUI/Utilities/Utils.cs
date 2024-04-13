@@ -598,9 +598,17 @@ static class Utils {
     var logicalRoot = LogicalTreeHelper.GetParent(control);
 
     while (logicalRoot != null) {
-      if (logicalRoot is ContextMenu menu) {
-        menu.IsOpen = false;
+      if (logicalRoot is ContextMenu cmenu) {
+        cmenu.IsOpen = false;
         break;
+      }
+
+      if (logicalRoot is Menu menu) {
+        break;
+      }
+      else if (logicalRoot is MenuItem menuItem) {
+        // Close each submenu until reaching the entry menu.
+        menuItem.IsSubmenuOpen = false;
       }
 
       if (logicalRoot is Popup popup) {
