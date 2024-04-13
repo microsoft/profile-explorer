@@ -1,4 +1,4 @@
-set _GRAPHVIZ_PATH="C:\Program Files (x86)\Graphviz 2.44.1\bin"
+set _GRAPHVIZ_PATH="..\src\external\GraphViz"
 set %_VERSION="0.8.3"
 set _SETUP_PATH="C:\Program Files (x86)\Inno Setup 6"
 set _PUBLISH_PATH="publish-arm64"
