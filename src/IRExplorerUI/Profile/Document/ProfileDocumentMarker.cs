@@ -607,10 +607,12 @@ public class ProfileDocumentMarker {
       if (settings_.MarkBlocksInFlowGraph &&
           weightPercentage > settings_.ElementWeightCutoff) {
         block.AddTag(GraphNodeTag.MakeColor(weightPercentage.AsTrimmedPercentageString(),
-                                            ((SolidColorBrush)color).Color));
+          ((SolidColorBrush)color).Color,
+          ((SolidColorBrush)overlay.TextColor).Color,
+          ((SolidColorBrush)overlay.TextColor).Color));
       }
     }
-    
+
     document.ResumeUpdate();
   }
 

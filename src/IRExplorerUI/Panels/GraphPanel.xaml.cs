@@ -195,7 +195,7 @@ public partial class GraphPanel : ToolPanelControl {
     var node = GraphViewer.FindElementNode(element);
 
     if (node != null) {
-      GraphViewer.ResetMarkedNode(node);
+      GraphViewer.ResetMarkedNode(node, element);
     }
   }
 
@@ -925,7 +925,7 @@ public partial class GraphPanel : ToolPanelControl {
   }
 
   public override void OnRedrawPanel() {
-    GraphViewer.ReloadCurrentGraph();
+    GraphViewer.RedrawCurrentGraph();
   }
 
   public override async Task OnReloadSettings() {

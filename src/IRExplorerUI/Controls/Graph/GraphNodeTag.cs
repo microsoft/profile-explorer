@@ -46,27 +46,34 @@ public sealed class GraphNodeTag : ITag {
   public string Label { get; set; }
   public string ToolTip { get; set; }
   public LabelPlacementKind LabelPlacement { get; set; }
-  public Color? LabelFontColor { get; set; }
+  public Color? LabelTextColor { get; set; }
+  public Color? TextColor { get; set; }
   public string Name => "Graph Node Tag";
   public TaggedObject Owner { get; set; }
 
-  public static GraphNodeTag MakeLabel(string label, string tooltip = null, Color? fontColor = null,
+  public static GraphNodeTag MakeLabel(string label, string tooltip = null,
+                                       Color? textColor = null,
+                                       Color? labelColor = null,
                                        LabelPlacementKind position = LabelPlacementKind.Bottom) {
     return new GraphNodeTag {
       Label = label,
       ToolTip = tooltip,
-      LabelFontColor = fontColor,
+      LabelTextColor = labelColor,
+      TextColor = textColor,
       LabelPlacement = position
     };
   }
 
-  public static GraphNodeTag MakeColor(string label, Color backColor, Color? fontColor = null,
+  public static GraphNodeTag MakeColor(string label, Color backColor,
+                                       Color? textColor = null,
+                                       Color? labelColor = null,
                                        LabelPlacementKind position = LabelPlacementKind.Bottom) {
     return new GraphNodeTag {
       Label = label,
       BackgroundColor = backColor,
-      LabelFontColor = fontColor,
-      LabelPlacement = position
+      LabelTextColor = labelColor,
+      TextColor = textColor,
+      LabelPlacement = position,
     };
   }
 

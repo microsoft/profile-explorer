@@ -4023,6 +4023,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void UpdateMargin() {
+    if (updateSuspended_) {
+      return;
+    }
+
     margin_.InvalidateVisual();
   }
 

@@ -34,12 +34,14 @@ public interface IGraphStyleProvider {
 
 public class GraphNode {
   private const double DefaultTextSize = 0.225;
-  private const double DefaultLabelTextSize = 0.190;
+  private const double DefaultLabelTextSize = 0.205;
   public Node NodeInfo { get; set; }
   public GraphSettings Settings { get; set; }
   public DrawingVisual Visual { get; set; }
   public HighlightingStyle Style { get; set; }
   public Typeface TextFont { get; set; }
+  public Typeface MarkedTextFont { get; set; }
+  public Typeface MarkedLabelTextFont { get; set; }
   public Brush TextColor { get; set; }
 
   public void Draw() {
@@ -49,15 +51,21 @@ public class GraphNode {
     // GraphNodeTag may override the colors.
     var backColor = Style.BackColor;
     var textColor = TextColor;
+    var labelColor = TextColor;
+    var textFont = TextFont;
 
     if (graphTag != null) {
       if (graphTag.BackgroundColor.HasValue) {
         backColor = graphTag.BackgroundColor.Value.AsBrush();
       }
 
-      if (graphTag.LabelFontColor.HasValue) {
-        //? TODO: Intended only for label, text needs another property
-        backColor = graphTag.LabelFontColor.Value.AsBrush();
+      if (graphTag.TextColor.HasValue) {
+        textColor = graphTag.TextColor.Value.AsBrush();
+        textFont = MarkedTextFont;
+      }
+
+      if (graphTag.LabelTextColor.HasValue) {
+        labelColor = graphTag.LabelTextColor.Value.AsBrush();
       }
     }
 
@@ -77,7 +85,7 @@ public class GraphNode {
     dc.DrawRectangle(backColor, Style.Border, region);
 
     var text = new FormattedText(NodeInfo.Label, CultureInfo.InvariantCulture,
-                                 FlowDirection.LeftToRight, TextFont, DefaultTextSize, textColor,
+                                 FlowDirection.LeftToRight, textFont, DefaultTextSize, textColor,
                                  VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
 
     dc.DrawText(text, new Point(NodeInfo.CenterX - text.Width / 2,
@@ -86,7 +94,7 @@ public class GraphNode {
     // Display the label under the node if there is a tag.
     if (graphTag != null && !string.IsNullOrEmpty(graphTag.Label)) {
       var labelText = new FormattedText(graphTag.Label, CultureInfo.InvariantCulture,
-                                        FlowDirection.LeftToRight, TextFont, DefaultLabelTextSize, textColor,
+                                        FlowDirection.LeftToRight, MarkedLabelTextFont, DefaultLabelTextSize, labelColor,
                                         VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
       var textBackground = ColorBrushes.GetBrush(Settings.BackgroundColor);
       dc.DrawRectangle(textBackground, null, new Rect(NodeInfo.CenterX - labelText.Width / 2,
@@ -104,7 +112,9 @@ public class GraphRenderer {
   private const double DefaultEdgeThickness = 0.025;
   private const double GroupBoundingBoxMargin = 0.20;
   private const double GroupBoundingBoxTextMargin = 0.10;
-  private Typeface defaultNodeFont_;
+  private Typeface nodeFont_;
+  private Typeface markedNodeFont_;
+  private Typeface labelFont_;
   private Typeface edgeFont_;
   private Graph graph_;
   private IGraphStyleProvider graphStyle_;
@@ -115,8 +125,10 @@ public class GraphRenderer {
                        ICompilerInfoProvider compilerInfo) {
     settings_ = settings;
     graph_ = graph;
-    edgeFont_ = new Typeface("Verdana");
-    defaultNodeFont_ = new Typeface("Verdana");
+    edgeFont_ = new Typeface(new FontFamily("Verdana"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    nodeFont_ = new Typeface(new FontFamily("Verdana"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    markedNodeFont_= new Typeface(new FontFamily("Verdana"), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal);
+    labelFont_ = new Typeface(new FontFamily("Verdana"), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal);
 
     graphStyle_ = graph.Kind switch {
       GraphKind.FlowGraph =>
@@ -174,7 +186,7 @@ public class GraphRenderer {
 
         var text = new FormattedText($"B{((BlockIR)group.Key).Number}",
                                      CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
-                                     defaultNodeFont_, textSize, Brushes.DimGray,
+                                     nodeFont_, textSize, Brushes.DimGray,
                                      VisualTreeHelper.GetDpi(groupVisual).PixelsPerDip);
         //? TODO: Text placement can overlap with other elements,
         //? try each corner of the bounding box to find one that's free
@@ -224,7 +236,9 @@ public class GraphRenderer {
         NodeInfo = node,
         Settings = settings_,
         Visual = nodeVisual,
-        TextFont = defaultNodeFont_,
+        TextFont = nodeFont_,
+        MarkedTextFont = markedNodeFont_,
+        MarkedLabelTextFont = labelFont_,
         TextColor = textColor,
         Style = GetDefaultNodeStyle(node)
       };
