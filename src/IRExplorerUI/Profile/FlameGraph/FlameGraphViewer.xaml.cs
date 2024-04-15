@@ -139,7 +139,7 @@ public partial class FlameGraphViewer : FrameworkElement {
                          bool deselectIfSelected = true) {
     if (!selectedNodes_.ContainsKey(graphNode)) {
       // Select a currently unselected node.
-      if (!append && deselectIfSelected) {
+      if (!append) {
         ResetNodeHighlighting(); // Deselect all other nodes.
       }
 

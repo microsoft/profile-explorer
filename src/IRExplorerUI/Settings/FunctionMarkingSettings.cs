@@ -9,7 +9,7 @@ namespace IRExplorerUI;
 public class FunctionMarkingSettings : SettingsBase {
   private ColorPalette modulesPalette_;
   private FunctionMarkingSet builtinMarking_;
-  
+
   [ProtoMember(1)]
   public string Title { get; set; }
   [ProtoMember(2)]
@@ -28,7 +28,7 @@ public class FunctionMarkingSettings : SettingsBase {
   //? TODO: Rename Color to Markinng or MarkedModules
   public List<FunctionMarkingStyle> ModuleColors => CurrentSet?.ModuleColors;
   public List<FunctionMarkingStyle> FunctionColors => CurrentSet?.FunctionColors;
-  
+
   public FunctionMarkingSet BuiltinMarkingCategories {
     get {
       if (builtinMarking_ != null) {
@@ -40,7 +40,7 @@ public class FunctionMarkingSettings : SettingsBase {
       if (!JsonUtils.DeserializeFromFile<FunctionMarkingSet>(markingsFile, out builtinMarking_)) {
         builtinMarking_ = new FunctionMarkingSet();
       }
-      
+
       return builtinMarking_;
     }
   }
@@ -48,7 +48,7 @@ public class FunctionMarkingSettings : SettingsBase {
   public void SwitchMarkingSet(FunctionMarkingSet set) {
     CurrentSet = set.Clone();
   }
-  
+
   public void AppendMarkingSet(FunctionMarkingSet set) {
     foreach (var marking in set.FunctionColors) {
       AddFunctionColor(marking);
@@ -71,12 +71,12 @@ public class FunctionMarkingSettings : SettingsBase {
   }
 
   record Markings(FunctionMarkingSet Current, List<FunctionMarkingSet> Saved);
-  
+
   public bool SaveToFile(string filePath) {
     var markings = new Markings(CurrentSet, SavedSets);
     return JsonUtils.SerializeToFile(markings, filePath);
   }
-  
+
   public bool LoadFromFile(string filePath) {
     if (!JsonUtils.DeserializeFromFile(filePath, out Markings data)) {
       return false;
@@ -96,13 +96,14 @@ public class FunctionMarkingSettings : SettingsBase {
     }
     return true;
   }
-  
+
   public FunctionMarkingSettings() {
     Reset();
   }
 
   public override void Reset() {
     InitializeReferenceMembers();
+    UseAutoModuleColors = true;
     UseModuleColors = false;
     UseFunctionColors = false;
     ModulesColorPalette = ColorPalette.LightPastels.Name;
@@ -116,12 +117,12 @@ public class FunctionMarkingSettings : SettingsBase {
     CurrentSet ??= new FunctionMarkingSet();
     SavedSets ??= new List<FunctionMarkingSet>();
   }
-  
+
   public FunctionMarkingSettings Clone() {
     byte[] serialized = StateSerializer.Serialize(this);
     return StateSerializer.Deserialize<FunctionMarkingSettings>(serialized);
   }
-  
+
   public void AddModuleColor(string moduleName, Color color) {
     AddMarkingColor(moduleName, color, ModuleColors);
   }
@@ -129,26 +130,26 @@ public class FunctionMarkingSettings : SettingsBase {
   public void AddFunctionColor(string functionName, Color color) {
     AddMarkingColor(functionName, color, FunctionColors);
   }
-  
+
   public void AddModuleColor(FunctionMarkingStyle style) {
     AddMarkingColor(style, ModuleColors);
   }
-  
+
   public void AddFunctionColor(FunctionMarkingStyle style) {
     AddMarkingColor(style, FunctionColors);
   }
-  
+
   private void AddMarkingColor(string name, Color color, List<FunctionMarkingStyle> markingColors) {
     AddMarkingColor(new FunctionMarkingStyle(name, color), markingColors);
   }
-  
+
   private void AddMarkingColor(FunctionMarkingStyle style, List<FunctionMarkingStyle> markingColors) {
     // Overwrite marking by removing exact matches.
     markingColors.RemoveAll(item =>
       item.Name.Equals(style.Name, StringComparison.Ordinal));
     markingColors.Add(style);
   }
-  
+
   public bool GetFunctionColor(string name, out Color color) {
     return GetMarkingColor(name, FunctionColors, out color);
   }
@@ -164,15 +165,14 @@ public class FunctionMarkingSettings : SettingsBase {
     color = default(Color);
     return false;
   }
-  
+
   public Brush GetAutoModuleBrush(string name) {
     if (modulesPalette_ == null) {
       modulesPalette_ = ColorPalette.GetPalette(ModulesColorPalette);
     }
 
     if (modulesPalette_ != null) {
-      int hash = name.GetStableHashCode();
-      return modulesPalette_.PickBrush(hash % modulesPalette_.Count);
+      return modulesPalette_.PickBrush(name);
     }
 
     return Brushes.Transparent;
@@ -208,7 +208,7 @@ public class FunctionMarkingSettings : SettingsBase {
   public void ResetCachedPalettes() {
     modulesPalette_ = null;
   }
-  
+
   public override bool Equals(object obj) {
     return obj is FunctionMarkingSettings settings &&
            Title == settings.Title &&
@@ -220,7 +220,7 @@ public class FunctionMarkingSettings : SettingsBase {
            FunctionColors.AreEqual(settings.FunctionColors) &&
            SavedSets.AreEqual(settings.SavedSets);
   }
-  
+
   public override string ToString() {
     return $"Title: {Title}\n" +
            $"UseAutoModuleColors: {UseAutoModuleColors}\n" +
@@ -251,15 +251,15 @@ public class FunctionMarkingSet {
     foreach (var marking in FunctionColors) {
       clone.FunctionColors.Add(marking.Clone());
     }
-    
-    
+
+
     foreach (var marking in ModuleColors) {
       clone.ModuleColors.Add(marking.Clone());
     }
 
     return clone;
   }
-  
+
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     ModuleColors ??= new List<FunctionMarkingStyle>();
@@ -292,7 +292,7 @@ public class FunctionMarkingStyle {
   public bool IsEnabled { get; set; }
   [ProtoMember(2)]
   public string Title { get; set; }
-    
+
   [ProtoMember(3)]
   public string Name {
     get => name_;
@@ -308,8 +308,8 @@ public class FunctionMarkingStyle {
   public bool IsRegex { get; set; }
 
   public bool HasTitle => !string.IsNullOrEmpty(Title);
-  
-  public FunctionMarkingStyle(string name, Color color, 
+
+  public FunctionMarkingStyle(string name, Color color,
                               string title = null, bool isRegex = false,
                               bool isEnabled = true) {
     Name = name;
@@ -339,11 +339,11 @@ public class FunctionMarkingStyle {
   public FunctionMarkingStyle CloneWithNewColor(Color newColor) {
     return new FunctionMarkingStyle(Name, newColor, Title, IsRegex, IsEnabled);
   }
-  
+
   public FunctionMarkingStyle Clone() {
     return new FunctionMarkingStyle(Name, Color, Title, IsRegex, IsEnabled);
   }
-  
+
   protected bool Equals(FunctionMarkingStyle other) {
     return Name == other.Name &&
            IsEnabled == other.IsEnabled &&

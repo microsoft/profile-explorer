@@ -363,7 +363,7 @@
                 <MenuItem
                   Command="local:Command.ExportFunctionList"
                   CommandTarget="{Binding ElementName=FunctionList}"
-                  Header="Export as Excel worksheet"
+                  Header="Export as Excel File"
                   ToolTip="Save the list of functions and additional columns as an Excel worksheet">
                   <MenuItem.Icon>
                     <Image
@@ -375,7 +375,7 @@
                 <MenuItem
                   Command="local:Command.ExportFunctionListHtml"
                   CommandTarget="{Binding ElementName=FunctionList}"
-                  Header="Export as HTML page"
+                  Header="Export as HTML File"
                   ToolTip="Save the list of functions and additional columns as an HTML page">
                   <MenuItem.Icon>
                     <Image
@@ -827,7 +827,7 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open in Left Tab"
-                InputGestureText="Ctrl+Left">
+                InputGestureText="Ctrl+Shift+Left">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -840,7 +840,7 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open in Right Tab"
-                InputGestureText="Ctrl+Right">
+                InputGestureText="Ctrl+Shift+Right">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -899,7 +899,7 @@
                   <Image
                     Width="16"
                     Height="16"
-                    Source="{StaticResource TagIcon}" />
+                    Source="{StaticResource AddBookmarkIcon}" />
                 </MenuItem.Icon>
                 <MenuItem>
                   <MenuItem.Header>
@@ -913,7 +913,7 @@
                   <Image
                     Width="16"
                     Height="16"
-                    Source="{StaticResource TagIcon}" />
+                    Source="{StaticResource BookIcon}" />
                 </MenuItem.Icon>
                 <MenuItem>
                   <MenuItem.Header>
@@ -941,7 +941,7 @@
                 Command="local:Command.ExportFunctionListHtml"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Export Function List as HTML page"
+                Header="Export Function List as HTML File"
                 ToolTip="Save the list of functions and additional columns as an HTML page">
                 <MenuItem.Icon>
                   <Image
@@ -1588,12 +1588,12 @@
       Key="Left"
       Command="local:Command.OpenLeft"
       CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
-      Modifiers="Ctrl" />
+      Modifiers="Ctrl+Shift" />
     <KeyBinding
       Key="Right"
       Command="local:Command.OpenRight"
       CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
-      Modifiers="Ctrl" />
+      Modifiers="Ctrl+Shift" />
     <KeyBinding
       Key="Return"
       Command="local:Command.DiffWithOtherDocument"

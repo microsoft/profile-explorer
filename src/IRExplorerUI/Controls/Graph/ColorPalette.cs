@@ -236,4 +236,10 @@ public class ColorPalette {
     colorIndex = Math.Clamp(colorIndex, 0, Colors.Count - 1);
     return Brushes[colorIndex];
   }
+
+  public Brush PickBrush(string name, bool reverse = false) {
+    int hash = name.GetStableHashCode();
+    int index = Math.Abs(hash % Count);
+    return PickBrush(index);
+  }
 }

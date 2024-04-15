@@ -866,9 +866,12 @@
                                             Click="SaveMarkingsMenuItem_OnClick"
                                             Header="Save Markings Set"
                                             ToolTip="Save current function and module marks as a named set">
-                                            <MenuItem.Icon>
-                                                <Image Source="{StaticResource AddBookmarkIcon}" />
-                                            </MenuItem.Icon>
+                                          <MenuItem.Icon>
+                                          <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource BookmarkIcon}" />
+                                          </MenuItem.Icon>
                                         </MenuItem>
                                         <MenuItem
                                             x:Name="SwitchMarkingsMenu"
@@ -884,8 +887,15 @@
                                         <MenuItem
                                             x:Name="AppendMarkingsMenu"
                                             Header="Append Markings Set"
-                                            ToolTip="Add saved markings to the current function/module markings" />
-                                        <Separator />
+                                            ToolTip="Add saved markings to the current function/module markings">
+                                          <MenuItem.Icon>
+                                          <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource AddBookmarkIcon}" />
+                                          </MenuItem.Icon>
+                                          </MenuItem>
+                                          <Separator />
                                         <MenuItem
                                             Click="ImportMarkingsMenuItem_OnClick"
                                             Header="Import Markings"
@@ -1009,22 +1019,23 @@
                         BorderThickness="1,0,1,0"
                         Visibility="{Binding HasAnyFilter, Converter={StaticResource BoolToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock
-                                Margin="4,0,4,0"
+
+                          <Image
+                            Width="16"
+                            Height="16"
+                            Margin="2,1,1,0"
+                            Source="{StaticResource FilterIcon}"
+                            Style="{StaticResource DisabledImageStyle}"
+                            ToolTip="Active time and thread filters"
+                            Visibility="{Binding HasAnyFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                          <TextBlock
+                                Margin="0,0,4,0"
                                 VerticalAlignment="Center"
                                 FontWeight="SemiBold"
                                 Text="Profile Filter"
                                 ToolTip="Active filtering of entire profile by thread and/or time range" />
-
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Margin="2,1,4,0"
-                                Source="{StaticResource FilterIcon}"
-                                Style="{StaticResource DisabledImageStyle}"
-                                ToolTip="Active time and thread filters"
-                                Visibility="{Binding HasAnyFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
-                            <TextBlock
+                          <TextBlock
                                 VerticalAlignment="Center"
                                 FontWeight="SemiBold"
                                 Foreground="DarkBlue"

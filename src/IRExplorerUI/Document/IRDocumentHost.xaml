@@ -768,7 +768,7 @@
                     <MenuItem
                       Command="local:DocumentHostCommand.ExportFunctionProfile"
                       CommandTarget="{Binding ElementName=TextView}"
-                      Header="Export as Excel worksheet"
+                      Header="Export as Excel File"
                       ToolTip="Save the list of functions and additional columns as an Excel worksheet">
                       <MenuItem.Icon>
                         <Image
@@ -780,7 +780,7 @@
                     <MenuItem
                       Command="local:DocumentHostCommand.ExportFunctionProfileHTML"
                       CommandTarget="{Binding ElementName=TextView}"
-                      Header="Export as HTML page"
+                      Header="Export as HTML File"
                       ToolTip="Save the list of functions and additional columns as an HTML page">
                       <MenuItem.Icon>
                         <Image

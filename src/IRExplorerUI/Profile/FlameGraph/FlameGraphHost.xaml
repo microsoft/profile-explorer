@@ -180,7 +180,7 @@
               <Image
                 Width="16"
                 Height="16"
-                Source="{StaticResource TagIcon}" />
+                Source="{StaticResource AddBookmarkIcon}" />
             </MenuItem.Icon>
             <MenuItem>
               <MenuItem.Header>
@@ -194,7 +194,7 @@
               <Image
                 Width="16"
                 Height="16"
-                Source="{StaticResource TagIcon}" />
+                Source="{StaticResource BookmarkIcon}" />
             </MenuItem.Icon>
             <MenuItem>
               <MenuItem.Header>
