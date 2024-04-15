@@ -66,6 +66,10 @@ public class FunctionMarkingSettings : SettingsBase {
     SavedSets.Add(clone);
   }
 
+  public void RemoveMarkingSet(FunctionMarkingSet markingSet) {
+    SavedSets.RemoveAll(set => set.Title == markingSet.Title);
+  }
+
   record Markings(FunctionMarkingSet Current, List<FunctionMarkingSet> Saved);
   
   public bool SaveToFile(string filePath) {
@@ -78,8 +82,18 @@ public class FunctionMarkingSettings : SettingsBase {
       return false;
     }
 
-    CurrentSet = data.Current;
-    SavedSets = data.Saved;
+    CurrentSet.MergeWith(data.Current);
+
+    foreach (var savedSet in data.Saved) {
+      var existingSet = SavedSets.Find(set => set.Title == savedSet.Title);
+
+      if (existingSet != null) {
+        existingSet.MergeWith(savedSet);
+      }
+      else {
+        SavedSets.Add(savedSet);
+      }
+    }
     return true;
   }
   
@@ -128,14 +142,10 @@ public class FunctionMarkingSettings : SettingsBase {
     AddMarkingColor(new FunctionMarkingStyle(name, color), markingColors);
   }
   
-  
   private void AddMarkingColor(FunctionMarkingStyle style, List<FunctionMarkingStyle> markingColors) {
-    if(markingColors.Find(item => 
-          item.Name.Length > 0 &&
-          item.Name.Equals(style.Name, StringComparison.Ordinal)) != null) {
-      return;
-    }
-
+    // Overwrite marking by removing exact matches.
+    markingColors.RemoveAll(item =>
+      item.Name.Equals(style.Name, StringComparison.Ordinal));
     markingColors.Add(style);
   }
   
@@ -260,6 +270,16 @@ public class FunctionMarkingSet {
     return obj is FunctionMarkingSet other &&
            ModuleColors.AreEqual(other.ModuleColors) &&
            FunctionColors.AreEqual(other.FunctionColors);
+  }
+
+  public void MergeWith(FunctionMarkingSet set) {
+    foreach (var marking in set.FunctionColors) {
+      FunctionColors.Add(marking.Clone());
+    }
+
+    foreach (var marking in set.ModuleColors) {
+      ModuleColors.Add(marking.Clone());
+    }
   }
 }
 

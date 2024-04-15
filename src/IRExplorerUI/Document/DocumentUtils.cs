@@ -632,7 +632,7 @@ public static class DocumentUtils {
       };
 
       item.Click += menuClickHandler;
-      item.MouseRightButtonUp += menuRightClickHandler;
+      item.PreviewMouseRightButtonDown += menuRightClickHandler;
       defaultItems.Insert(separatorIndex + 1, item);
       profileItems.Add(value);
 
@@ -738,7 +738,7 @@ public static class DocumentUtils {
       };
 
       item.Click += menuClickHandler;
-      item.MouseRightButtonUp += menuRightClickHandler;
+      item.PreviewMouseRightButtonDown += menuRightClickHandler;
       defaultItems.Insert(separatorIndex + 1, item);
       profileItems.Add(value);
 

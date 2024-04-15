@@ -842,13 +842,14 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     await EndSession();
   }
 
-  private void OptionalStatusText_MouseDown(object sender, MouseButtonEventArgs e) {
-    ErrorReporting.SaveOpenSections();
-  }
-
   private void MenuItem_Click_2(object sender, RoutedEventArgs e) {
-    ErrorReporting.SaveOpenSections();
-  }
+    TextInputWindow input = new("Save marked functions/modules", "Saved marking set name:", "Save", "Cancel");
+
+    if (input.Show(out string result, true)) {
+      Trace.WriteLine($"Result  ={result}");
+    }
+  
+}
 
   private async Task DisplayCallGraph(IRTextSummary summary, IRTextSection section,
                                       bool buildPartialGraph) {

@@ -98,7 +98,7 @@ public class FlameGraphSettings : SettingsBase {
     SearchResultMarkingColor = Colors.Khaki;
     NodeTextColor = Colors.DarkBlue;
     NodeBorderColor = Colors.Black;
-    KernelNodeBorderColor = Colors.MediumBlue;
+    KernelNodeBorderColor = Colors.DarkBlue;
     ManagedNodeBorderColor = Colors.BlueViolet;
     NodeModuleColor = Colors.DimGray;
     NodeWeightColor = Colors.Maroon;

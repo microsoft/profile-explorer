@@ -400,6 +400,10 @@ static class Utils {
   }
 
   public static bool OpenExternalFile(string path) {
+    if (!File.Exists(path)) {
+      return false;
+    }
+
     try {
       var psi = new ProcessStartInfo(path) {
         UseShellExecute = true

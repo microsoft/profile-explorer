@@ -586,16 +586,19 @@ public partial class MainWindow : Window, ISession {
   }
   
   private void MarkingMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    // Add the saved markings menu items.
     CreateSavedMarkingMenu(SwitchMarkingsMenu, markingSet => {
       MarkingSettings.SwitchMarkingSet(markingSet);
+      ReloadMarkingSettings();
     });
     
     CreateSavedMarkingMenu(AppendMarkingsMenu, markingSet => {
       MarkingSettings.AppendMarkingSet(markingSet);
+      ReloadMarkingSettings();
     });
 
     // Add the built-in function markings to the menu,
-    // if not already added.
+    // if not already added, after the title "builtin markings" title.
     int insertionIndex = 1;
 
     foreach (var item in MarkingMenu.Items) {
@@ -607,7 +610,8 @@ public partial class MainWindow : Window, ISession {
       insertionIndex++;
     }
 
-    if (MarkingMenu.Items[insertionIndex] is not Separator) {
+    if (MarkingMenu.Items[insertionIndex] is not MenuItem stopMenuItem ||
+        !stopMenuItem.Tag.Equals("BuiltinMarkingsMenuEnd")) {
       return; // Already populated.
     }
     
@@ -643,11 +647,22 @@ public partial class MainWindow : Window, ISession {
     menu.Items.Clear();
 
     foreach (var markingSet in MarkingSettings.SavedSets) {
+      var tooltip = $"Function markings: {markingSet.FunctionColors.Count}";
+      tooltip += $"\nModule markings: {markingSet.ModuleColors.Count}";
+      tooltip += "\nRight-click to remove marking set";
+
       var item = new MenuItem {
         Header = markingSet.Title,
+        ToolTip = tooltip,
         Tag = markingSet,
       };
+
       item.Click += (sender, args) => action(markingSet);
+      item.PreviewMouseRightButtonDown += (sender, args) => {
+        MarkingSettings.RemoveMarkingSet(markingSet);
+        menu.IsSubmenuOpen = false;
+      };
+
       menu.Items.Add(item);
     }
   }
@@ -658,26 +673,38 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void SaveMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    MarkingSettings.SaveCurrentMarkingSet(Guid.NewGuid().ToString());
+    TextInputWindow input = new("Save marked functions/modules", "Saved marking set name:", "Save", "Cancel");
+
+    if (input.Show(out string result, true)) {
+      MarkingSettings.SaveCurrentMarkingSet(result);
+    }
   }
 
   private void ImportMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    var filePath = Utils.ShowOpenFileDialog("JSON files|*.json", "*.*", "Save markings");
+    var filePath = Utils.ShowOpenFileDialog("JSON files|*.json", "*.*", "Import markings from file");
 
     if (filePath != null) {
       if (!MarkingSettings.LoadFromFile(filePath)) {
-        Utils.ShowWarningMessageBox("Failed to load markings", this);
+        Utils.ShowWarningMessageBox("$Failed to import markings from {filePath}", this);
+        return;
       }
+
+      ReloadMarkingSettings();
     }
   }
 
   private void ExportMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    var filePath = Utils.ShowSaveFileDialog("JSON files|*.json", "*.*", "Save markings");
+    var filePath = Utils.ShowSaveFileDialog("JSON files|*.json", "*.*", "Export markings to file");
 
     if (filePath != null) {
       if (!MarkingSettings.SaveToFile(filePath)) {
-        Utils.ShowWarningMessageBox("Failed to save markings", this);
+        Utils.ShowWarningMessageBox($"Failed to export markings to {filePath}", this);
       }
     }
+  }
+
+  private void EditMarkingsMenu_OnClick(object sender, RoutedEventArgs e) {
+    var filePath = App.GetFunctionMarkingsFilePath(compilerInfo_.CompilerIRName);
+    Utils.OpenExternalFile(filePath);
   }
 }
