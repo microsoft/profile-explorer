@@ -516,6 +516,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private bool moduleControlsVisible_;
   private CallTreeNodePopup funcBacktracePreviewPopup_;
   private PopupHoverPreview preview_;
+  private List<ModuleEx> modules_;
+  private FunctionMarkingSettings initialMarkingSettings_;
 
   public SectionPanel() {
     InitializeComponent();
@@ -1278,7 +1280,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       UpdateMarkedFunctionsImpl();
       OnPropertyChanged(nameof(HasEnabledMarkedModules));
       OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
-      
+
       if (!externalCall) {
         Session.FunctionMarkingChanged(PanelKind);
       }
@@ -1291,6 +1293,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     foreach (var f in functions_) {
       f.ModuleBackColor = null;
       f.FunctionBackColor = null;
+    }
+
+    foreach (var module in modules_) {
+      module.BackColor = null;
     }
 
     if (!fgSettings.UseAutoModuleColors &&
@@ -1315,7 +1321,22 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       }
     }
 
+    foreach (var module in modules_) {
+      if (module.IsAllEntry) {
+        continue;
+      }
+
+      if (fgSettings.UseModuleColors &&
+          fgSettings.GetModuleBrush(module.Name, out var brush)) {
+        module.BackColor = brush;
+      }
+      else if (fgSettings.UseAutoModuleColors) {
+        module.BackColor = fgSettings.GetAutoModuleBrush(module.Name);
+      }
+    }
+
     RefreshFunctionList(false);
+    RefreshModuleList();
   }
 
   public List<IRTextSectionEx> CreateSectionsExtension(bool force = false) {
@@ -1405,6 +1426,15 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     if (scrollToFirst && FunctionList.Items.Count > 0) {
       FunctionList.ScrollIntoView(FunctionList.Items[0]);
     }
+  }
+
+
+  public void RefreshModuleList(bool scrollToFirst = true) {
+    if (ModulesList.ItemsSource == null) {
+      return;
+    }
+
+    ((ListCollectionView)ModulesList.ItemsSource).Refresh();
   }
 
   public bool SwitchToSection(int offset, IRDocumentHost targetDocument = null) {
@@ -1632,6 +1662,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     ModulesList.ItemsSource = modulesFilter;
     moduleValueSorter_.SortByField(ModuleFieldKind.Name);
     ModulesList.SelectedItem = allModules;
+    modules_ = modulesEx;
 
     OptionalDataColumnVisible = true;
     OptionalDataColumnName = "Time (self)";
@@ -1862,6 +1893,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     sections_.Clear();
     sectionExtMap_.Clear();
     annotatedSections_.Clear();
+    functions_?.Clear();
+    modules_?.Clear();
     sectionExtensionComputed_ = false;
 
     SectionList.UpdateLayout();
@@ -2274,6 +2307,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     double height = Math.Max(SectionOptionsPanel.MinimumHeight,
                              Math.Min(SectionList.ActualHeight, SectionOptionsPanel.DefaultHeight));
     var position = new Point(SectionList.ActualWidth - width, 0);
+    initialMarkingSettings_ = MarkingSettings.Clone();
     optionsPanelWindow_ = new OptionsPanelHostWindow(new SectionOptionsPanel(),
                                                      position, width, height, SectionList,
                                                      settings_.Clone(), Session);
@@ -2326,7 +2360,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       App.SaveApplicationSettings();
     }
 
-    if (force || !newSettings.Equals(settings_)) {
+    if (force || !newSettings.Equals(settings_) ||
+        !MarkingSettings.Equals(initialMarkingSettings_)) {
       bool updateFunctionList = newSettings.HasFunctionListChanges(settings_);
       App.Settings.SectionSettings = newSettings;
       settings_ = newSettings;
@@ -2345,6 +2380,9 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         OnPropertyChanged(nameof(SyncSourceFile));
         OnPropertyChanged(nameof(ShowModules));
       }
+
+      UpdateMarkedFunctions();
+      initialMarkingSettings_ = MarkingSettings.Clone();
     }
   }
 
@@ -3390,7 +3428,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     ShowModules = false;
     ShowSections = false;
   }
-  
+
   private void ToggleButton_Click(object sender, RoutedEventArgs e) {
     // Force an update for toolbar buttons.
     UpdateMarkedFunctions();
@@ -3405,7 +3443,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     MarkingSettings.FunctionColors.Clear();
     UpdateMarkedFunctions();
   }
-  
+
   private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     DocumentUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
       () => UpdateMarkedFunctions());
@@ -3418,13 +3456,13 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
-    MarkSelectedNodes(obj, (node, color) => 
+    MarkSelectedNodes(obj, (node, color) =>
       markingSettings.AddModuleColor(node.ModuleName, color));
     markingSettings.UseModuleColors = true;
     UpdateMarkedFunctions();
 
   });
-  
+
   public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
     MarkSelectedNodes(obj, (node, color) => {
@@ -3438,7 +3476,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     markingSettings.UseFunctionColors = true;
     UpdateMarkedFunctions();
   });
-  
+
   private void MarkSelectedNodes(object obj, Action<IRTextFunctionEx, Color> action) {
     if (obj is SelectedColorEventArgs e) {
       foreach (IRTextFunctionEx funcEx in FunctionList.SelectedItems) {

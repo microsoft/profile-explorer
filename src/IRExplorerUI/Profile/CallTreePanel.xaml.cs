@@ -1056,11 +1056,12 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
           }
 
           await UpdateCallTree();
+          UpdateMarkedFunctions();
 
           if (commit) {
             App.SaveApplicationSettings();
           }
-          
+
           initialMarkingSettings = MarkingSettings.Clone();
           return settings_.Clone();
         }
@@ -1116,16 +1117,16 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
       () => UpdateMarkedFunctions());
   }
- 
+
   public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
-    MarkSelectedNodes(obj, (node, color) => 
+    MarkSelectedNodes(obj, (node, color) =>
       markingSettings.AddModuleColor(node.ModuleName, color));
     markingSettings.UseModuleColors = true;
     UpdateMarkedFunctions();
 
   });
-  
+
   public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
     MarkSelectedNodes(obj, (node, color) => {
@@ -1134,7 +1135,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     markingSettings.UseFunctionColors = true;
     UpdateMarkedFunctions();
   });
-  
+
   private void MarkSelectedNodes(object obj, Action<CallTreeListItem, Color> action) {
     if (obj is SelectedColorEventArgs e) {
       foreach (TreeNode node in CallTreeList.SelectedItems) {
@@ -1144,7 +1145,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
   }
-  
+
   public void UpdateMarkedFunctions(bool externalCall = false) {
     if (callTreeNodeToNodeExMap_ != null) {
       UpdateMarkedFunctionsImpl();
@@ -1156,7 +1157,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
   }
-  
+
   private void UpdateMarkedFunctionsImpl() {
     var fgSettings = App.Settings.MarkingSettings;
 

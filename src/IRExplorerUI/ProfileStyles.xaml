@@ -118,7 +118,7 @@
       </StackPanel>
     </Border>
   </DataTemplate>
-  
+
     <DataTemplate x:Key="CheckableProfileMenuItemValueTemplate">
     <Border
       Padding="0"
@@ -262,6 +262,51 @@
         HorizontalAlignment="Left"
         VerticalAlignment="Center"
         FontWeight="Medium"
+        Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}"
+        ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}" />
+      <Border
+        Height="16"
+        Margin="50,0,0,1"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Center"
+        Background="{StaticResource ProfilePercentageBackBrush}"
+        BorderBrush="Black"
+        BorderThickness="0.5"
+        CornerRadius="0">
+        <Grid>
+          <Border
+            Height="16"
+            HorizontalAlignment="Left"
+            Background="{StaticResource ProfilePercentageExclusiveBrush}"
+            CornerRadius="0">
+            <Border.Width>
+              <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
+                <Binding Path="ExclusivePercentage" />
+                <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+              </MultiBinding>
+            </Border.Width>
+          </Border>
+
+          <TextBlock
+            Margin="4,0,2,0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Center"
+            Text="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
+            TextTrimming="CharacterEllipsis"
+            ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}" />
+        </Grid>
+      </Border>
+    </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="ModulePercentageTemplate">
+    <Grid HorizontalAlignment="Stretch">
+      <TextBlock
+        Width="45"
+        HorizontalAlignment="Left"
+        VerticalAlignment="Center"
+        FontWeight="Medium"
+        Background="{Binding BackColor}"
         Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}"
         ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}" />
       <Border
