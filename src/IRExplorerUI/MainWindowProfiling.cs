@@ -563,7 +563,7 @@ public partial class MainWindow : Window, ISession {
       var panel = FindPanel(ToolPanelKind.CallerCallee) as CallTreePanel;
       panel?.UpdateMarkedFunctions(true);
     }
-    
+
     return true;
   }
 
@@ -584,14 +584,14 @@ public partial class MainWindow : Window, ISession {
     MarkingSettings.ModuleColors.Clear();
     ReloadMarkingSettings();
   }
-  
+
   private void MarkingMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     // Add the saved markings menu items.
     CreateSavedMarkingMenu(SwitchMarkingsMenu, markingSet => {
       MarkingSettings.SwitchMarkingSet(markingSet);
       ReloadMarkingSettings();
     });
-    
+
     CreateSavedMarkingMenu(AppendMarkingsMenu, markingSet => {
       MarkingSettings.AppendMarkingSet(markingSet);
       ReloadMarkingSettings();
@@ -614,7 +614,7 @@ public partial class MainWindow : Window, ISession {
         !stopMenuItem.Tag.Equals("BuiltinMarkingsMenuEnd")) {
       return; // Already populated.
     }
-    
+
     var builtinMarkings = MarkingSettings.BuiltinMarkingCategories;
 
     foreach (var markingSet in builtinMarkings.FunctionColors) {
@@ -636,7 +636,7 @@ public partial class MainWindow : Window, ISession {
         MarkingSettings.AddFunctionColor(style);
         ReloadMarkingSettings();
       };
-      
+
       item.Items.Add(selectorItem);
       MarkingMenu.Items.Insert(insertionIndex, item);
       insertionIndex++;
@@ -666,7 +666,7 @@ public partial class MainWindow : Window, ISession {
       menu.Items.Add(item);
     }
   }
-  
+
   private void ReloadMarkingSettings() {
     // Notify all panels about the marking changes.
     FunctionMarkingChanged(ToolPanelKind.Other);
@@ -684,8 +684,10 @@ public partial class MainWindow : Window, ISession {
     var filePath = Utils.ShowOpenFileDialog("JSON files|*.json", "*.*", "Import markings from file");
 
     if (filePath != null) {
-      if (!MarkingSettings.LoadFromFile(filePath)) {
-        Utils.ShowWarningMessageBox("$Failed to import markings from {filePath}", this);
+      var (result, failureText) = MarkingSettings.LoadFromFile(filePath);
+
+      if (!result) {
+        Utils.ShowWarningMessageBox($"Failed to import markings from {filePath}.\n{failureText}", this);
         return;
       }
 

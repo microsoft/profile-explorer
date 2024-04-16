@@ -4,21 +4,35 @@
     {
       "IsEnabled": true,
       "Title": "Memory Allocation",
-      "Name": "(free|malloc|operator delete|operator new|realloc|RtlAllocateHeap|RtlFreeHeap|RtlpAllocateHeap|RtlpAllocateHeapInternal|RtlpFreeHeap|RtlpFreeHeapInternal|_free_base|_malloc_base)",
+      "Name": "(\\bfree\\b|\\bmalloc\\b|\\boperator delete\\b|\\boperator new\\b|\\brealloc\\b|RtlAllocateHeap|RtlFreeHeap|RtlpAllocateHeap|RtlpAllocateHeapInternal|RtlpFreeHeap|RtlpFreeHeapInternal|_free_base|_malloc_base)",
+      "Color": "#000000",
+      "IsRegex": true
+    },
+    {
+      "IsEnabled": true,
+      "Title": "Memory copy/set/move",
+      "Name": "(memset|memcpy|memmove|ZeroMemory|SecureZeroMemory|SecureZeroMemory2|CopyMemory|MoveMemory|FillMemory)",
       "Color": "#000000",
       "IsRegex": true
     },
     {
       "IsEnabled": true,
       "Title": "Page Fault",
-      "Name": "(KiPageFault)",
+      "Name": "(KiPageFault|MiCompletePrivateZeroFault|MiDispatchFault|MiFastLockLeafPageTable|MiGetPage|MiGetPageChain|MiGetPerfectColorHeadPage|MiReplenishPageSlist|MiResolveDemandZeroFault|MiResolvePageTablePage|MiResolvePrivateZeroFault|MiUserFault|MmAccessFault)",
       "Color": "#000000",
       "IsRegex": true
     },
     {
       "IsEnabled": true,
       "Title": "Thread Synchronization",
-      "Name": "(KiPageFault)",
+      "Name": "(NtDelayExecution|NtWaitForAlertByThreadId|RtlAcquireSRWLockExclusive|RtlBackoff|RtlDelayExecution|RtlEnterCriticalSection|RtlLeaveCriticalSection|RtlpEnterCriticalSectionContended|RtlpOptimizeConditionVariableWaitList|RtlpWaitOnCriticalSection|RtlpWakeSRWLock|RtlReleaseSRWLockExclusive|RtlSleepConditionVariableSRW|RtlWakeConditionVariable\\bSleep\\b|\\bSleepEx\\b|KeDelayExecutionThread|KeYieldExecution)",
+      "Color": "#000000",
+      "IsRegex": true
+    },
+    {
+      "IsEnabled": true,
+      "Title": "C-style strings",
+      "Name": "(memchr|strcat|strchr|strcmp|strcpy|strcspn|strlen|strncat|strncmp|strpbrk|strrchr|strspn|strstr|strtok|wcscat|wcschr|wcscmp|wcscoll|wcscpy|wcscspn|wcslen|wcsncat|wcsncmp|wcsncpy|wcspbrk|wcsrchr|wcsspn|wcsstr|wcstod|wcstof|wcstok|wcstol|wcstold|wcstoll|wcstoul|wcstoull|wcsxfrm|mblen|mbtowc|wctomb|mbstowcs|wcstombs)",
       "Color": "#000000",
       "IsRegex": true
     }

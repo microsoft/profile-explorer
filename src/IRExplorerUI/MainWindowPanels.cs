@@ -1290,6 +1290,7 @@ public partial class MainWindow : Window, ISession {
   public bool SaveDockLayout(string dockLayoutFile) {
     try {
       var serializer = new XmlLayoutSerializer(DockManager);
+      Utils.TryDeleteFile(dockLayoutFile);
       serializer.Serialize(dockLayoutFile);
       return true;
     }

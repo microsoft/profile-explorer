@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Windows.Media;
 using ProtoBuf;
 
@@ -77,9 +78,13 @@ public class FunctionMarkingSettings : SettingsBase {
     return JsonUtils.SerializeToFile(markings, filePath);
   }
 
-  public bool LoadFromFile(string filePath) {
+  public (bool, string) LoadFromFile(string filePath) {
     if (!JsonUtils.DeserializeFromFile(filePath, out Markings data)) {
-      return false;
+      return (false, "Failed to read markings file");
+    }
+
+    if (!ValidateMarkings(data, out var failureText)) {
+      return (false, failureText);
     }
 
     CurrentSet.MergeWith(data.Current);
@@ -94,6 +99,22 @@ public class FunctionMarkingSettings : SettingsBase {
         SavedSets.Add(savedSet);
       }
     }
+    return (true, null);
+  }
+
+  private bool ValidateMarkings(Markings data, out string failureText) {
+    failureText = null;
+
+    if (!data.Current.ValidateMarkings(out failureText)) {
+      return false;
+    }
+
+    foreach (var set in data.Saved) {
+      if (!set.ValidateMarkings(out failureText)) {
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -281,6 +302,23 @@ public class FunctionMarkingSet {
       ModuleColors.Add(marking.Clone());
     }
   }
+
+  public bool ValidateMarkings(out string failureText) {
+    foreach (var marking in FunctionColors) {
+      if (!marking.ValidateMarking(out failureText)) {
+        return false;
+      }
+    }
+
+    foreach (var marking in ModuleColors) {
+      if (!marking.ValidateMarking(out failureText)) {
+        return false;
+      }
+    }
+
+    failureText = null;
+    return true;
+  }
 }
 
 [ProtoContract(SkipConstructor = true)]
@@ -360,5 +398,30 @@ public class FunctionMarkingStyle {
     if (obj.GetType() != this.GetType())
       return false;
     return Equals((FunctionMarkingStyle)obj);
+  }
+
+  public bool ValidateMarking(out string failureText) {
+    if (IsRegex && !ValidateRegex(Name)) {
+      failureText = $"Invalid Regex for marking definition.\n";
+      failureText += $"  Title: {Title}\n";
+      failureText += $"  Pattern: {Name}\n";
+      return false;
+    }
+
+    failureText = null;
+    return true;
+  }
+
+  private bool ValidateRegex(string pattern) {
+    if (string.IsNullOrEmpty(pattern)) {
+      return false;
+    }
+
+    try {
+      Regex re = new Regex(pattern, RegexOptions.None, TimeSpan.FromSeconds(1));
+      re.IsMatch(" ");
+    }
+    catch { return false; }
+    return true;
   }
 }
