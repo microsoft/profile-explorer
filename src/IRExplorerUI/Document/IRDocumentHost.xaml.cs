@@ -212,7 +212,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     historyManager_.ClearNextStates(); // Reset forward history.
-    await Session.OpenProfileFunction(targetFunc, OpenSectionKind.ReplaceCurrent,
+    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab :
+                                               OpenSectionKind.ReplaceCurrent;
+    await Session.OpenProfileFunction(targetFunc, mode,
                                       targetFilter, this);
   }
 

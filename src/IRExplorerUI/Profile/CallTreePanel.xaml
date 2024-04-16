@@ -436,7 +436,7 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Preview Function"
             InputGestureText="Alt+Enter"
-            ToolTip="Show a preview popup of the function ASM or source code">
+            ToolTip="Show a preview popup of the function assembly or source code">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -478,7 +478,7 @@
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
               Header="Preview Function Instance"
               InputGestureText="Alt+Shift+Return"
-              ToolTip="Show a preview popup of the function ASM or source code">
+              ToolTip="Show a preview popup of the function assembly or source code">
               <MenuItem.Icon>
                 <Image
                   Width="16"

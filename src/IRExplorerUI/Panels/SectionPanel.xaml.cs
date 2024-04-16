@@ -811,10 +811,18 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (obj is IRTextFunctionEx funcEx) {
+      var brush = GetMarkedNodeColor(funcEx);
       await IRDocumentPopupInstance.ShowPreviewPopup(funcEx.Function, "",
-                                                     FunctionList, Session);
+                                                     FunctionList, Session, null, false, brush);
     }
   });
+
+
+  private Brush GetMarkedNodeColor(IRTextFunctionEx node) {
+    return App.Settings.MarkingSettings.
+      GetMarkedNodeBrush(node.Name, node.ModuleName);
+  }
+
 
   public bool BottomSectionToolbar {
     get => (bool)GetValue(BottomSectionToolbarProperty);
@@ -2308,7 +2316,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
                              Math.Min(SectionList.ActualHeight, SectionOptionsPanel.DefaultHeight));
     var position = new Point(SectionList.ActualWidth - width, 0);
     initialMarkingSettings_ = MarkingSettings.Clone();
-    optionsPanelWindow_ = new OptionsPanelHostWindow(new SectionOptionsPanel(),
+     optionsPanelWindow_ = new OptionsPanelHostWindow(new SectionOptionsPanel(),
                                                      position, width, height, SectionList,
                                                      settings_.Clone(), Session);
     optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;

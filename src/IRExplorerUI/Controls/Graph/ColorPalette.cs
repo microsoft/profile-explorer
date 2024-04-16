@@ -71,7 +71,6 @@ public class ColorPalette {
       LightPastels2,
       LightPastels3,
       LightPastels4,
-      LightPastels5,
       Pastels2,
       Profile,
       ProfileManaged,
@@ -156,12 +155,6 @@ public class ColorPalette {
       "#C5DEDD","#DBE7E4","#F0EFEB","#D6E2E9",
       "#BCD4E6","#99C1DE"
     }, "LightPastels4");
-  public static ColorPalette LightPastels5 =>
-    new ColorPalette(new[] {
-      "#FEC5BB","#FCD5CE","#FAE1DD","#F8EDEB",
-      "#E8E8E4","#D8E2DC","#ECE4DB","#FFE5D9",
-      "#FFD7BA","#FEC89A"
-    }, "LightPastels5");
   public static ColorPalette DarkHue => MakeHue(0.9f, 0.2f, 10);
   public static ColorPalette LightHue => MakeHue(0.9f, 0.5f, 10);
 

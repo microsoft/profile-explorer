@@ -789,10 +789,25 @@
           <ListView.ContextMenu>
             <ContextMenu>
               <MenuItem
+                Command="{Binding PreviewFunctionCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Preview Function"
+                InputGestureText="Alt+Return"
+                ToolTip="Show a preview popup of the function asembly or source code">
+                <MenuItem.Icon>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource PeekDefinitionIcon}" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <MenuItem
                 Command="local:Command.Open"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open"
+                ToolTip="Open the assembly view, replacing the active tab"
                 InputGestureText="Return">
                 <MenuItem.Icon>
                   <Image
@@ -806,6 +821,7 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open in New Tab"
+                ToolTip="Open the assembly view in a new tab"
                 InputGestureText="Shift+Return">
                 <MenuItem.Icon>
                   <Image
@@ -819,6 +835,7 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open in Left Tab"
+                ToolTip="Open the assembly view in a new tab docked left"
                 InputGestureText="Ctrl+Shift+Left">
                 <MenuItem.Icon>
                   <Image
@@ -832,26 +849,13 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open in Right Tab"
+                ToolTip="Open the assembly view in a new tab docked right"
                 InputGestureText="Ctrl+Shift+Right">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
                     Height="16"
                     Source="{StaticResource LayoutRightIcon}" />
-                </MenuItem.Icon>
-              </MenuItem>
-              <MenuItem
-                Command="{Binding PreviewFunctionCommand}"
-                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                Header="Preview Function"
-                InputGestureText="Alt+Return"
-                ToolTip="Show a preview popup of the function ASM or source code">
-                <MenuItem.Icon>
-                  <Image
-                    Width="16"
-                    Height="16"
-                    Source="{StaticResource PeekDefinitionIcon}" />
                 </MenuItem.Icon>
               </MenuItem>
               <Separator />

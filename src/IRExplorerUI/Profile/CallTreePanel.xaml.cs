@@ -230,17 +230,24 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   });
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
+      var brush = GetMarkedNodeColor(item);
       await IRDocumentPopupInstance.ShowPreviewPopup(item.Function, "",
-                                                     CallTreeList, Session);
+                                                     CallTreeList, Session, null, false, brush);
     }
   });
   public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
       var filter = new ProfileSampleFilter(item.CallTreeNode);
+      var brush = GetMarkedNodeColor(item);
       await IRDocumentPopupInstance.ShowPreviewPopup(item.Function, "",
-                                                     CallTreeList, Session, filter);
+                                                     CallTreeList, Session, filter, false, brush);
     }
   });
+
+  private Brush GetMarkedNodeColor(CallTreeListItem node) {
+    return App.Settings.MarkingSettings.
+      GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
+  }
 
   public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node) {

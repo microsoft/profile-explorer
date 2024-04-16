@@ -195,7 +195,51 @@
               VerticalAlignment="Center"
               Text="Function text color" />
           </Grid>
-          <Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=KernelNodeTextColor, Mode=TwoWay}"
+              ShowDropDownButton="True"
+              UsingAlphaChannel="False" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Kernel function text color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=ManagedNodeTextColor, Mode=TwoWay}"
+              ShowDropDownButton="True"
+              UsingAlphaChannel="False" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Managed function text color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="70" />
               <ColumnDefinition />
@@ -217,7 +261,7 @@
               VerticalAlignment="Center"
               Text="Module text color" />
           </Grid>
-          <Grid>
+          <Grid Margin="0,2,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="70" />
               <ColumnDefinition />
@@ -239,7 +283,7 @@
               VerticalAlignment="Center"
               Text="Percentage text color" />
           </Grid>
-          <Grid>
+          <Grid Margin="0,2,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="70" />
               <ColumnDefinition />
@@ -261,7 +305,7 @@
               VerticalAlignment="Center"
               Text="Time text color" />
           </Grid>
-          <Grid>
+          <Grid Margin="0,2,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="70" />
               <ColumnDefinition />
@@ -283,7 +327,7 @@
               VerticalAlignment="Center"
               Text="Function border color" />
           </Grid>
-          <Grid>
+          <Grid Margin="0,2,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="70" />
               <ColumnDefinition />
@@ -305,7 +349,7 @@
               VerticalAlignment="Center"
               Text="Kernel function border color" />
           </Grid>
-          <Grid>
+          <Grid Margin="0,2,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="70" />
               <ColumnDefinition />
@@ -327,7 +371,7 @@
               VerticalAlignment="Center"
               Text="Managed function border color" />
           </Grid>
-          <Grid>
+          <Grid Margin="0,2,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="70" />
               <ColumnDefinition />
@@ -349,7 +393,7 @@
               VerticalAlignment="Center"
               Text="Selected function color" />
           </Grid>
-          <Grid>
+          <Grid Margin="0,2,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="70" />
               <ColumnDefinition />
@@ -371,7 +415,7 @@
               VerticalAlignment="Center"
               Text="Selected function border color" />
           </Grid>
-          <Grid>
+          <Grid Margin="0,2,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="70" />
               <ColumnDefinition />
@@ -393,7 +437,7 @@
               VerticalAlignment="Center"
               Text="Search result marking color" />
           </Grid>
-          <Grid>
+          <Grid Margin="0,2,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="70" />
               <ColumnDefinition />
@@ -415,7 +459,7 @@
               VerticalAlignment="Center"
               Text="Search result function color" />
           </Grid>
-          <Grid>
+          <Grid Margin="0,2,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="70" />
               <ColumnDefinition />

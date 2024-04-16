@@ -238,6 +238,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
                       settings_.FunctionListViewFilter);
     ModuleList.ShowModules(await Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode.CallTreeNode)));
     ModuleFunctionList.Reset();
+    ModuleList.SelectFirstItem();
   }
 
   public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {

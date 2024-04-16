@@ -33,12 +33,24 @@ public interface IGraphStyleProvider {
 }
 
 public class GraphNode {
+  private HighlightingStyle style;
   private const double DefaultTextSize = 0.225;
   private const double DefaultLabelTextSize = 0.205;
   public Node NodeInfo { get; set; }
   public GraphSettings Settings { get; set; }
   public DrawingVisual Visual { get; set; }
-  public HighlightingStyle Style { get; set; }
+
+  public HighlightingStyle Style {
+    get => style;
+    set {
+      style = value;
+
+      if (value == null) {
+        return;
+      }
+    }
+  }
+
   public Typeface TextFont { get; set; }
   public Typeface MarkedTextFont { get; set; }
   public Typeface MarkedLabelTextFont { get; set; }
@@ -112,6 +124,7 @@ public class GraphRenderer {
   private const double DefaultEdgeThickness = 0.025;
   private const double GroupBoundingBoxMargin = 0.20;
   private const double GroupBoundingBoxTextMargin = 0.10;
+  private const string FontName = "Verdana";
   private Typeface nodeFont_;
   private Typeface markedNodeFont_;
   private Typeface labelFont_;
@@ -125,10 +138,10 @@ public class GraphRenderer {
                        ICompilerInfoProvider compilerInfo) {
     settings_ = settings;
     graph_ = graph;
-    edgeFont_ = new Typeface(new FontFamily("Verdana"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-    nodeFont_ = new Typeface(new FontFamily("Verdana"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-    markedNodeFont_= new Typeface(new FontFamily("Verdana"), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal);
-    labelFont_ = new Typeface(new FontFamily("Verdana"), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal);
+    edgeFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    nodeFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    markedNodeFont_= new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal);
+    labelFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal);
 
     graphStyle_ = graph.Kind switch {
       GraphKind.FlowGraph =>

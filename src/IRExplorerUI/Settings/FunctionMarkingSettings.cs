@@ -193,11 +193,11 @@ public class FunctionMarkingSettings : SettingsBase {
   }
 
   public Brush GetMarkedNodeBrush(string funcName, string moduleName) {
-    if (UseModuleColors &&
+    if (UseFunctionColors &&
         GetFunctionColor(funcName, out var color)) {
       return ColorBrushes.GetBrush(color);
     }
-    else if (UseFunctionColors &&
+    else if (UseModuleColors &&
              GetModuleColor(moduleName, out var color2)) {
       return ColorBrushes.GetBrush(color2);
     }

@@ -15,6 +15,7 @@ public class FlameGraphRenderer {
   internal const double DefaultNodeHeight = 18;
   internal const double CompactTextSize = 11;
   internal const double CompactNodeHeight = 15;
+  private const string FontName = "Segoe UI";
   private FlameGraphSettings settings_;
   private FlameGraph flameGraph_;
   private int maxNodeDepth_;
@@ -44,6 +45,8 @@ public class FlameGraphRenderer {
   private GuidelineSet cachedNodeGuidelines_;
   private GuidelineSet cachedDummyNodeGuidelines_;
   private SolidColorBrush nodeTextBrush_;
+  private SolidColorBrush kernelNodeTextBrush_;
+  private SolidColorBrush managedNodeTextBrush_;
   private SolidColorBrush nodeModuleBrush_;
   private SolidColorBrush nodeWeightBrush_;
   private SolidColorBrush nodePercentageBrush_;
@@ -68,10 +71,12 @@ public class FlameGraphRenderer {
     kernelBorder_ = ColorPens.GetPen(settings_.KernelNodeBorderColor,  1);
     managedBorder_ = ColorPens.GetPen(settings_.ManagedNodeBorderColor, 1);
 
-    font_ = new Typeface("Segoe UI"); //? TODO: Option
-    nameFont_ = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Medium,
+    font_ = new Typeface(FontName);
+    nameFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Medium,
                              FontStretch.FromOpenTypeStretch(5));
     nodeTextBrush_ = settings_.NodeTextColor.AsBrush();
+    kernelNodeTextBrush_ = settings_.KernelNodeTextColor.AsBrush();
+    managedNodeTextBrush_ = settings_.ManagedNodeTextColor.AsBrush();
     nodeModuleBrush_ = settings_.NodeModuleColor.AsBrush();
     nodeWeightBrush_ = settings_.NodeWeightColor.AsBrush();
     nodePercentageBrush_ = settings_.NodePercentageColor.AsBrush();
@@ -406,7 +411,7 @@ public class FlameGraphRenderer {
 
   private void SetupNode(FlameGraphNode node) {
     node.Style = GetNodeStyle(node);
-    node.TextColor = nodeTextBrush_;
+    node.TextColor = GetNodeTextColor(node);;
     node.ModuleTextColor = nodeModuleBrush_;
     node.WeightTextColor = nodeWeightBrush_;
     node.PercentageTextColor = nodePercentageBrush_;
@@ -417,6 +422,21 @@ public class FlameGraphRenderer {
         SetupNode(childNode);
       }
     }
+  }
+
+  private Brush GetNodeTextColor(FlameGraphNode node) {
+    var textBrush = nodeTextBrush_;
+
+    if (node.CallTreeNode != null) {
+      if (node.CallTreeNode.Kind == ProfileCallTreeNodeKind.NativeKernel) {
+        textBrush = kernelNodeTextBrush_;
+      }
+      else if (node.CallTreeNode.Kind == ProfileCallTreeNodeKind.Managed) {
+        textBrush = managedNodeTextBrush_;
+      }
+    }
+
+    return textBrush;
   }
 
   private void RedrawGraph(bool updateLayout = true) {

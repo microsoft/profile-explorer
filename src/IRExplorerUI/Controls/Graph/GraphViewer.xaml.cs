@@ -30,12 +30,10 @@ public partial class GraphViewer : FrameworkElement {
   private Dictionary<GraphNode, HighlightingStyle> selectedNodes_;
   private HighlightingStyleCyclingCollection nodeStyles_;
 
-  //? TODO: Allow color change
-  private Pen predecessorNodeBorder_ = ColorPens.GetPen("#6927CC", 0.05);
-  private HighlightingStyle selectedNodeStyle =
-    new HighlightingStyle(Color.FromRgb(174, 220, 244), DefaultSelectedPen);
+  private Pen predecessorNodeBorder_;
+  private Pen successorNodeBorder_;
+  private HighlightingStyle selectedNodeStyle_;
   private GraphSettings settings_;
-  private Pen successorNodeBorder_ = ColorPens.GetPen("#008230", 0.05);
   private double zoomLevel_ = 0.5;
   private ICompilerInfoProvider compilerInfo_;
   private HashSet<BlockIR> markedBlocks_;
@@ -81,7 +79,7 @@ public partial class GraphViewer : FrameworkElement {
     get => settings_;
     set {
       settings_ = value;
-      ReloadOptions();
+      ReloadSettings();
     }
   }
 
@@ -449,7 +447,11 @@ public partial class GraphViewer : FrameworkElement {
                     TransformPoint(bounds.Height + 2 * GraphMargin));
   }
 
-  private void ReloadOptions() {
+  private void ReloadSettings() {
+    selectedNodeStyle_ = new HighlightingStyle(settings_.SelectedNodeColor, DefaultSelectedPen);
+    predecessorNodeBorder_ = ColorPens.GetPen(settings_.PredecessorNodeBorderColor, 0.05);
+    successorNodeBorder_ = ColorPens.GetPen(settings_.SuccesorNodeBorderColor, 0.05);
+
     if (graph_ != null) {
       ReloadGraph(graph_);
     }
@@ -503,7 +505,7 @@ public partial class GraphViewer : FrameworkElement {
                                        Dictionary<GraphNode, HighlightingStyle> group,
                                        bool highlightConnectedNodes) {
     ResetHighlightedNodes(HighlighingType.Hovered);
-    HighlightNode(graphNode, selectedNodeStyle, group);
+    HighlightNode(graphNode, selectedNodeStyle_, group);
 
     if (!highlightConnectedNodes) {
       return;

@@ -38,7 +38,7 @@
             Header="Preview Function"
             InputGestureText="Alt+Return"
             IsEnabled="{Binding EnableSingleNodeActions}"
-            ToolTip="Show a preview popup of the function ASM or source code">
+            ToolTip="Show a preview popup of the function assembly or source code">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -81,7 +81,7 @@
               Header="Preview Function Instance"
               InputGestureText="Alt+Shift+Return"
               IsEnabled="{Binding EnableSingleNodeActions}"
-              ToolTip="Show a preview popup of the function ASM or source code">
+              ToolTip="Show a preview popup of the function assembly or source code">
               <MenuItem.Icon>
                 <Image
                   Width="16"

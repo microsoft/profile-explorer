@@ -33,7 +33,7 @@ public class ProfileListViewItem : SearchableProfileItem {
   public ProfileCallTreeNode CallTreeNode { get; set; }
   public ModuleProfileInfo ModuleInfo { get; set; }
 
-  
+
   public Brush FunctionBackColor {
     get => functionBackColor_;
     set => SetAndNotify(ref functionBackColor_, value);
@@ -216,10 +216,17 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
+      var brush = GetMarkedNodeColor(item);
       await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function, "",
-                                                     ItemList, session_);
+                                                     ItemList, session_, null, false, brush);
     }
   });
+
+  private Brush GetMarkedNodeColor(ProfileListViewItem node) {
+    return App.Settings.MarkingSettings.
+      GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
+  }
+
   public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
     var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
     await OpenFunction(mode);
@@ -444,7 +451,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     ItemList.ItemsSource = new ListCollectionView(itemList_);
     ItemList.ContextMenu = null;
   }
-  
+
   private void UpdateMarkedFunctions() {
     var fgSettings = App.Settings.MarkingSettings;
 
@@ -463,7 +470,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       if (item.ModuleName == null || item.FunctionName == null) {
         continue;
       }
-      
+
       if (fgSettings.UseModuleColors &&
           fgSettings.GetModuleBrush(item.ModuleName, out var brush)) {
         item.ModuleBackColor = brush;
@@ -535,5 +542,11 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public void Reset() {
     ItemList.ItemsSource = null;
     itemList_ = null;
+  }
+
+  public void SelectFirstItem() {
+    if (ItemList.Items.Count > 0) {
+      ItemList.SelectedIndex = 0;
+    }
   }
 }

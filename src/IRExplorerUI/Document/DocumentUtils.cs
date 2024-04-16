@@ -544,6 +544,10 @@ public static class DocumentUtils {
         if (o is MenuItem menuItem &&
             menuItem.Tag is FunctionMarkingStyle style) {
           style.IsEnabled = menuItem.IsChecked;
+
+          if (style.IsEnabled) {
+            settings.UseModuleColors = true;
+          }
           changedHandler();
         }
       },
@@ -563,6 +567,11 @@ public static class DocumentUtils {
         if (o is MenuItem menuItem &&
             menuItem.Tag is FunctionMarkingStyle style) {
           style.IsEnabled = menuItem.IsChecked;
+
+          if (style.IsEnabled) {
+            settings.UseFunctionColors = true;
+          }
+
           changedHandler();
         }
       },
@@ -664,7 +673,7 @@ public static class DocumentUtils {
 
     //? TODO: Make processing asyn
     //! Same for the other menus
-    
+
     // Sort functions by weight in decreasing order.
     var sortedFuncts = new List<(FunctionMarkingStyle Function, TimeSpan Weight)>();
     var callTree = session.ProfileData.CallTree;

@@ -73,6 +73,10 @@ public class FlameGraphSettings : SettingsBase {
   public Color KernelNodeBorderColor { get; set; }
   [ProtoMember(26)]
   public Color ManagedNodeBorderColor { get; set; }
+  [ProtoMember(27)]
+  public Color KernelNodeTextColor { get; set; }
+  [ProtoMember(28)]
+  public Color ManagedNodeTextColor { get; set; }
 
   public Brush GetNodeDefaultBrush(FlameGraphNode node) {
     CachePalettes();
@@ -96,10 +100,12 @@ public class FlameGraphSettings : SettingsBase {
     KernelColorPalette = ColorPalette.ProfileKernel.Name;
     ManagedColorPalette = ColorPalette.ProfileManaged.Name;
     SearchResultMarkingColor = Colors.Khaki;
-    NodeTextColor = Colors.DarkBlue;
+    NodeTextColor = Colors.MidnightBlue;
+    KernelNodeTextColor = Colors.MediumBlue;
+    ManagedNodeTextColor = Colors.Purple;
     NodeBorderColor = Colors.Black;
     KernelNodeBorderColor = Colors.DarkBlue;
-    ManagedNodeBorderColor = Colors.BlueViolet;
+    ManagedNodeBorderColor = Colors.Indigo;
     NodeModuleColor = Colors.DimGray;
     NodeWeightColor = Colors.Maroon;
     NodePercentageColor = Colors.Black;
@@ -160,7 +166,9 @@ public class FlameGraphSettings : SettingsBase {
            NodePercentageColor == settings.NodePercentageColor &&
            SearchedNodeColor == settings.SearchedNodeColor &&
            KernelNodeBorderColor == settings.KernelNodeBorderColor &&
-           ManagedNodeBorderColor == settings.ManagedNodeBorderColor;
+           ManagedNodeBorderColor == settings.ManagedNodeBorderColor &&
+           KernelNodeTextColor == settings.KernelNodeTextColor &&
+           ManagedNodeTextColor == settings.ManagedNodeTextColor;
   }
 
   public override string ToString() {
@@ -183,7 +191,11 @@ public class FlameGraphSettings : SettingsBase {
            $"SelectedNodeBorderColor: {SelectedNodeBorderColor}\n" +
            $"SearchedNodeBorderColor: {SearchedNodeBorderColor}\n" +
            $"NodeBorderColor: {NodeBorderColor}\n" +
+           $"KernelNodeBorderColor: {KernelNodeBorderColor}\n" +
+           $"ManagedNodeBorderColor: {ManagedNodeBorderColor}\n" +
            $"NodeTextColor: {NodeTextColor}\n" +
+           $"KernelNodeTextColor: {KernelNodeTextColor}\n" +
+           $"ManagedNodeTextColor: {ManagedNodeTextColor}\n" +
            $"NodeModuleColor: {NodeModuleColor}\n" +
            $"NodeWeightColor: {NodeWeightColor}\n" +
            $"NodePercentageColor: {NodePercentageColor}\n" +

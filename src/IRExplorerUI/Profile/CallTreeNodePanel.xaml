@@ -327,7 +327,7 @@
                             CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
                             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                             Header="Preview Thread Instance"
-                            ToolTip="Show a preview popup of the function ASM or source code">
+                            ToolTip="Show a preview popup of the function assembly or source code">
                             <MenuItem.Icon>
                               <Image
                                 Width="16"
@@ -546,7 +546,7 @@
                   Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                   BorderThickness="0"
                   Click="PreviewButton_OnClick"
-                  ToolTip="Show a preview popup of the function ASM or source code"
+                  ToolTip="Show a preview popup of the function assembly or source code"
                   Visibility="{Binding EnableSingleNodeActions, Converter={StaticResource BoolToVisibilityConverter}}">
                   <Image
                     Width="16"

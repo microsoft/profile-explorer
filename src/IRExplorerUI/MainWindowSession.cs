@@ -1019,6 +1019,12 @@ public partial class MainWindow : Window, ISession {
                              bool runExtraTasks = true) {
     var document = targetDocument;
 
+    if ((args.OpenKind == OpenSectionKind.NewTab ||
+         args.OpenKind == OpenSectionKind.NewTabDockLeft ||
+         args.OpenKind == OpenSectionKind.NewTabDockRight)) {
+      document = (await AddNewDocument(args.OpenKind)).DocumentHost;
+    }
+
     if (document == null &&
         (args.OpenKind == OpenSectionKind.ReplaceCurrent ||
          args.OpenKind == OpenSectionKind.ReplaceLeft ||
@@ -1028,14 +1034,6 @@ public partial class MainWindow : Window, ISession {
       if (document == null && args.OpenKind == OpenSectionKind.ReplaceCurrent) {
         document = FindActiveDocumentHost();
       }
-    }
-
-    if (document == null ||
-        targetDocument == null &&
-        (args.OpenKind == OpenSectionKind.NewTab ||
-         args.OpenKind == OpenSectionKind.NewTabDockLeft ||
-         args.OpenKind == OpenSectionKind.NewTabDockRight)) {
-      document = (await AddNewDocument(args.OpenKind)).DocumentHost;
     }
 
     // In diff mode, reload both left/right sections and redo the diffs.
