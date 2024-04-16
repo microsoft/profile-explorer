@@ -164,7 +164,7 @@ public partial class MainWindow : Window, ISession {
     RenameAllPanels();
 
     if (reloadWorkspace) {
-      var defaultWs = App.Settings.WorkspaceOptions.GetDefaultWorkspace();
+      var defaultWs = App.Settings.WorkspaceOptions.CreateNewActiveWorkspace();
       SaveDockLayout(defaultWs.FilePath);
       PopulateWorkspacesCombobox();
       RestoreDockLayout(defaultWs.FilePath);

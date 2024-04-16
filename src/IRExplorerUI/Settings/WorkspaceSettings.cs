@@ -112,7 +112,7 @@ public class WorkspaceSettings {
   }
 
   public bool RestoreDefaultActiveWorkspace() {
-    if (ActiveWorkspace == null) {
+    if (!HasValidActiveWorkspace()) {
       string wsName = GetBuiltinWorkspaceName(App.Settings.DefaultCompilerIR);
       var defaultWs = Workspaces.FirstOrDefault(w => w.Name == wsName);
 
@@ -125,6 +125,10 @@ public class WorkspaceSettings {
     }
 
     return false;
+  }
+
+  private bool HasValidActiveWorkspace() {
+    return ActiveWorkspace != null && File.Exists(ActiveWorkspace.FilePath);
   }
 
   public bool RenumberWorkspaces() {
@@ -176,8 +180,10 @@ public class WorkspaceSettings {
     return ws;
   }
 
-  public Workspace GetDefaultWorkspace() {
-    return CreateWorkspace(DefaultWorkspaceName);
+  public Workspace CreateNewActiveWorkspace() {
+    var ws = CreateWorkspace(DefaultWorkspaceName);
+    ActiveWorkspace = ws;
+    return ws;
   }
 
   public void RemoveWorkspace(Workspace ws) {
