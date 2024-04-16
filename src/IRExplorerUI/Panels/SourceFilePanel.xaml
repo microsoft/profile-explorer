@@ -154,12 +154,6 @@
           </Button>
           <TextBlock Text="{Binding InlineeText}" Margin="4,0,4,0" VerticalAlignment="Center"
                      Visibility="{Binding HasInlinees, Converter={StaticResource BoolToVisibilityConverter}}"></TextBlock>
-          <TextBlock
-            Margin="4,0,0,0"
-            VerticalAlignment="Center"
-            IsEnabled="False"
-            Text="0/0"
-            Visibility="Collapsed" />
           <Separator />
           <Button
             Width="20"

@@ -683,7 +683,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         }
       }
 
-      ProfileColumns.UseSmallerFontSize = UseSmallerFontSize;
       ProfileColumns.Settings = settings_;
       ProfileColumns.ColumnSettings = settings_.ColumnSettings;
 
@@ -966,7 +965,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.FontFamily = new FontFamily(settings_.FontName);
 
     if (UseSmallerFontSize) {
-      TextView.FontSize = settings_.FontSize - 2;
+      TextView.FontSize = settings_.FontSize - 1;
     }
     else {
       TextView.FontSize = settings_.FontSize;

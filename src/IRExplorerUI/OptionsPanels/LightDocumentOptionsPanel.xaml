@@ -45,7 +45,7 @@
                     Minimum="5.0"
                     ParsingNumberStyle="Number"
                     ShowButtonSpinner="True"
-                    Value="{Binding Path=FontSize, Mode=TwoWay}" />
+                    Value="{Binding Path=TextFontSize, Mode=TwoWay}" />
             </StackPanel>
             <Separator Margin="0,4,0,4" Background="LightGray"/>
 

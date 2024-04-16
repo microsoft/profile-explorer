@@ -144,6 +144,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private async void InlineeCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
     if (InlineeComboBox.SelectedItem != null &&
         !disableInlineeComboboxEvents_) {
+      UpdateInlineeText();
       var inlinee = (SourceStackFrame)InlineeComboBox.SelectedItem;
 
       if (InlineeComboBox.SelectedIndex > 0) {
@@ -475,7 +476,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   private async void InlineeButton_OnClick(object sender, RoutedEventArgs e) {
     // Load main function if inlinee syncing gets disabled.
-    if (!settings_.SyncInlineeWithDocument) {
+    if (!settings_.SyncInlineeWithDocument && section_ != null) {
       await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter);
     }
   }

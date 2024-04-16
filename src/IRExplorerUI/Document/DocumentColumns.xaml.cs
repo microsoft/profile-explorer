@@ -63,6 +63,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   public bool UseSmallerFontSize { get; set; }
+  public double TextFontSize => UseSmallerFontSize ? settings_.FontSize - 1 : settings_.FontSize;
 
   public void SelectRow(int index) {
     if (index >= 0 && ColumnsList.Items.Count > index) {
@@ -101,7 +102,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
       var oddBackColor = settings_.AlternateBackgroundColor.AsBrush();
       var blockSeparatorColor = settings_.ShowBlockSeparatorLine ? settings_.BlockSeparatorColor.AsBrush() : null;
       var font = new FontFamily(settings_.FontName);
-      double fontSize = UseSmallerFontSize ? settings_.FontSize - 1 : settings_.FontSize;
+      double fontSize = TextFontSize;
 
       var comparer = new IRDocumentColumnData.ColumnComparer();
       Dictionary<OptionalColumn, ElementColumnValue> dummyCells = new(comparer);
@@ -376,7 +377,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     var maxColumnTextSize = new Dictionary<OptionalColumn, double>();
     var maxColumnExtraSize = new Dictionary<OptionalColumn, double>();
     var font = new FontFamily(settings_.FontName);
-    double fontSize = settings_.FontSize;
+    double fontSize = TextFontSize;
     double maxBarWidth = settings_.ProfileMarkerSettings.MaxPercentageBarWidth;
     const double columnMargin = 8;
 
@@ -409,7 +410,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
     // Set the MinWidth of the text for each cell.
     foreach (var pair in maxColumnTextSize) {
-      var columnContentSize = Utils.MeasureString((int)pair.Value, settings_.FontName, settings_.FontSize);
+      var columnContentSize = Utils.MeasureString((int)pair.Value, settings_.FontName, TextFontSize);
       double columnWidth = columnContentSize.Width + columnMargin;
       maxColumnTextSize[pair.Key] = Math.Ceiling(columnWidth);
 
@@ -423,7 +424,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         pair.Key.IsVisible = false;
       }
       else {
-        var columnTitleSize = Utils.MeasureString(pair.Key.Title, settings_.FontName, settings_.FontSize);
+        var columnTitleSize = Utils.MeasureString(pair.Key.Title, settings_.FontName, TextFontSize);
         var gridColumn = profileColumnHeaders_.Find(item => item.Header.Tag.Equals(pair.Key));
 
         if (gridColumn.Column == null || gridColumn.Header == null) {
@@ -461,7 +462,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   public void UpdateColumnsList() {
     ColumnsList.Background = settings_.BackgroundColor.AsBrush();
     ColumnsList.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
-    ColumnsListItemHeight = Utils.MeasureString("0123456789ABCXYZ!?|()", settings_.FontName, settings_.FontSize).Height;
+    ColumnsListItemHeight = Utils.MeasureString("0123456789ABCXYZ!?|()",
+      settings_.FontName, TextFontSize).Height;
   }
 
   private void ColumnHeaderOnClick(object sender, RoutedEventArgs e) {

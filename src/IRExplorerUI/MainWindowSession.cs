@@ -1019,21 +1019,28 @@ public partial class MainWindow : Window, ISession {
                              bool runExtraTasks = true) {
     var document = targetDocument;
 
-    if ((args.OpenKind == OpenSectionKind.NewTab ||
+    if (args.OpenKind == OpenSectionKind.NewTab ||
          args.OpenKind == OpenSectionKind.NewTabDockLeft ||
-         args.OpenKind == OpenSectionKind.NewTabDockRight)) {
+         args.OpenKind == OpenSectionKind.NewTabDockRight) {
       document = (await AddNewDocument(args.OpenKind)).DocumentHost;
     }
-
-    if (document == null &&
-        (args.OpenKind == OpenSectionKind.ReplaceCurrent ||
-         args.OpenKind == OpenSectionKind.ReplaceLeft ||
-         args.OpenKind == OpenSectionKind.ReplaceRight)) {
+    else if (args.OpenKind == OpenSectionKind.ReplaceCurrent ||
+             args.OpenKind == OpenSectionKind.ReplaceLeft ||
+             args.OpenKind == OpenSectionKind.ReplaceRight) {
+      // Try to pick a host from the same module first.
       document = FindSameSummaryDocumentHost(args.Section);
 
+      // Otherwise pick the active host, if any, or create a new one.
       if (document == null && args.OpenKind == OpenSectionKind.ReplaceCurrent) {
         document = FindActiveDocumentHost();
       }
+
+      if (document == null) {
+        document = (await AddNewDocument(args.OpenKind)).DocumentHost;
+      }
+    }
+    else {
+      throw new InvalidOperationException("Unhandled OpenSectionKind");
     }
 
     // In diff mode, reload both left/right sections and redo the diffs.
