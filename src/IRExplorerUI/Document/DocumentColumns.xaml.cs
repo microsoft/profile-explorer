@@ -289,6 +289,11 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
           return newSettings.Clone();
         }
 
+        if (commit) {
+          columnSettings_.AddColumnStyle(column, newSettings);
+          App.SaveApplicationSettings();
+        }
+
         return null;
       },
       () => optionsPanelWindow_ = null,
@@ -349,6 +354,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   private bool ProfileListRowFilter(object item) {
+    // Filter out rows to keep in sync with the collapsed
+    // block foldings in the associated document.
     foreach (var range in foldedTextRegions_) {
       var startLine = associatedDocument_.GetLineByOffset(range.StartOffset);
       var endLine = associatedDocument_.GetLineByOffset(range.EndOffset);
@@ -368,7 +375,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     return true;
   }
 
-  private void UpdateColumnWidths() {
+  public void UpdateColumnWidths() {
     if (profileDataRows_ == null ||
         profileColumnHeaders_ == null) {
       return;

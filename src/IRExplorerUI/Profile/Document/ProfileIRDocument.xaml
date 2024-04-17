@@ -281,7 +281,7 @@
                 <MenuItem
                   Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileMarkdown"
                   CommandTarget="{Binding ElementName=TextView}"
-                  Header="Export as Markdown file"
+                  Header="Export as Markdown File"
                   ToolTip="Save the list of functions and additional columns as a Markdown file">
                   <MenuItem.Icon>
                     <Image

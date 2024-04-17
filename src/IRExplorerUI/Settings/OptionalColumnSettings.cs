@@ -19,7 +19,7 @@ public class OptionalColumnSettings : SettingsBase {
   [ProtoMember(3)]  public bool RemoveEmptyColumns { get; set; }
   [ProtoMember(4)]  public bool ShowPerformanceCounterColumns { get; set; }
   [ProtoMember(5)]  public bool ShowPerformanceMetricColumns { get; set; }
-  
+
   public OptionalColumnSettings() {
     Reset();
   }
@@ -32,7 +32,7 @@ public class OptionalColumnSettings : SettingsBase {
 
   public static OptionalColumnStyle DefaultTimePercentageColumnStyle =>
     new OptionalColumnStyle() {
-      ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
+      ShowPercentageBar = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       UseBackColor = OptionalColumnStyle.PartVisibility.Always,
       ShowIcon = OptionalColumnStyle.PartVisibility.Always,
       //BackColorPalette = ColorPalette.Profile,
@@ -163,7 +163,7 @@ public class OptionalColumnSettings : SettingsBase {
            $"ShowPerformanceMetricColumns: {ShowPerformanceMetricColumns}\n" +
            $"columnStyles_: {columnStyles_}\n" +
            $"columnStates_: {columnStates_}";
-  
+
   }
 }
 

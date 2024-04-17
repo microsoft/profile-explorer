@@ -1188,8 +1188,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileColumns.Settings = settings_;
     ProfileColumns.ColumnSettings = settings_.ColumnSettings;
 
-    profileMarker_.UpdateColumnStyles(columnData, Function, TextView);
     await ProfileColumns.Display(columnData, TextView);
+    profileMarker_.UpdateColumnStyles(columnData, Function, TextView);
+    ProfileColumns.UpdateColumnWidths();
 
     ProfileColumns.ColumnSettingsChanged -= OnProfileColumnsOnColumnSettingsChanged;
     ProfileColumns.ColumnSettingsChanged += OnProfileColumnsOnColumnSettingsChanged;
