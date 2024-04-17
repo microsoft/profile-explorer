@@ -11,6 +11,7 @@ using System.Windows.Input;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Windows;
 
@@ -693,5 +694,10 @@ public partial class MainWindow : Window, ISession {
   private void EditMarkingsMenu_OnClick(object sender, RoutedEventArgs e) {
     var filePath = App.GetFunctionMarkingsFilePath(compilerInfo_.CompilerIRName);
     Utils.OpenExternalFile(filePath);
+  }
+
+  private async void CategoriesMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    await DocumentUtils.CreateFunctionsCategoriesMenu(CategoriesMenu, null, null,
+      MarkingSettings, this);
   }
 }

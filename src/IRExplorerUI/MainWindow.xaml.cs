@@ -848,7 +848,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     if (input.Show(out string result, true)) {
       Trace.WriteLine($"Result  ={result}");
     }
-  
+
 }
 
   private async Task DisplayCallGraph(IRTextSummary summary, IRTextSection section,
@@ -1051,21 +1051,21 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
   private async void HelpButton_Click(object sender, RoutedEventArgs e) {
     await ShowPanel(ToolPanelKind.Help);
   }
-  
+
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
 
-  private void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, this,
+  private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    await DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, this,
       ReloadMarkingSettings);
   }
 
   private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, this,
+    DocumentUtils.PopulateMarkedModulesMenu(FunctionMenu, MarkingSettings, this,
       ReloadMarkingSettings);
   }
-  
+
   public event PropertyChangedEventHandler PropertyChanged;
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {

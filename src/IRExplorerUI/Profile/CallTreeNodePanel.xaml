@@ -519,24 +519,6 @@
                 HorizontalAlignment="Right"
                 Orientation="Horizontal">
                 <Button
-                  x:Name="OpenButton"
-                  Width="20"
-                  Height="20"
-                  Margin="2,0,0,0"
-                  HorizontalAlignment="Right"
-                  VerticalAlignment="Center"
-                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                  BorderThickness="0"
-                  Click="OpenButton_OnClick"
-                  ToolTip="Open the function assembly view in a new tab"
-                  Visibility="{Binding EnableSingleNodeActions, Converter={StaticResource BoolToVisibilityConverter}}">
-                  <Image
-                    Width="16"
-                    Height="16"
-                    Source="{StaticResource LayoutOpenNewIcon}"
-                    Style="{StaticResource DisabledImageStyle}" />
-                </Button>
-                <Button
                   x:Name="PreviewButton"
                   Width="20"
                   Height="20"
@@ -552,6 +534,25 @@
                     Width="16"
                     Height="17"
                     Source="{StaticResource PeekDefinitionIcon}"
+                    Style="{StaticResource DisabledImageStyle}" />
+                </Button>
+
+                <Button
+                  x:Name="OpenButton"
+                  Width="20"
+                  Height="20"
+                  Margin="2,0,0,0"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                  BorderThickness="0"
+                  Click="OpenButton_OnClick"
+                  ToolTip="Open the function assembly view in a new tab"
+                  Visibility="{Binding EnableSingleNodeActions, Converter={StaticResource BoolToVisibilityConverter}}">
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource LayoutOpenNewIcon}"
                     Style="{StaticResource DisabledImageStyle}" />
                 </Button>
 

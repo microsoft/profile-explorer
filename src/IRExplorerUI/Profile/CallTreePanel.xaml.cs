@@ -1120,8 +1120,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       () => UpdateMarkedFunctions());
   }
 
-  private void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
+  private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    await DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
       () => UpdateMarkedFunctions());
   }
 

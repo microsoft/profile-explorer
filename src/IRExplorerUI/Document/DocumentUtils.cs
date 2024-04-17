@@ -560,9 +560,9 @@ public static class DocumentUtils {
       settings, session);
   }
 
-  public static void PopulateMarkedFunctionsMenu(MenuItem menu, FunctionMarkingSettings settings,
-                                                 ISession session, Action changedHandler) {
-    DocumentUtils.CreateMarkedFunctionsMenu(menu,
+  public static async Task PopulateMarkedFunctionsMenu(MenuItem menu, FunctionMarkingSettings settings,
+                                                       ISession session, Action changedHandler) {
+    await DocumentUtils.CreateMarkedFunctionsMenu(menu,
       (o, args) => {
         if (o is MenuItem menuItem &&
             menuItem.Tag is FunctionMarkingStyle style) {
@@ -658,17 +658,34 @@ public static class DocumentUtils {
     DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
   }
 
+  public static async Task CreateMarkedFunctionsMenu(MenuItem menu,
+                                                     RoutedEventHandler menuClickHandler,
+                                                     MouseButtonEventHandler menuRightClickHandler,
+                                                     FunctionMarkingSettings settings, ISession session) {
+    await CreateMarkedFunctionsMenu(menu, false, menuClickHandler, menuRightClickHandler,
+                              settings.FunctionColors, session);
+  }
 
-  public static void CreateMarkedFunctionsMenu(MenuItem menu,
-                                             RoutedEventHandler menuClickHandler,
-                                             MouseButtonEventHandler menuRightClickHandler,
-                                             FunctionMarkingSettings settings, ISession session) {
+  public static async Task CreateFunctionsCategoriesMenu(MenuItem menu,
+                                                         RoutedEventHandler menuClickHandler,
+                                                         MouseButtonEventHandler menuRightClickHandler,
+                                                         FunctionMarkingSettings settings, ISession session) {
+    await CreateMarkedFunctionsMenu(menu, true, menuClickHandler, menuRightClickHandler,
+                              settings.BuiltinMarkingCategories.FunctionColors, session);
+  }
+
+  public static async Task CreateMarkedFunctionsMenu(MenuItem menu, bool isCategoriesMenu,
+                                               RoutedEventHandler menuClickHandler,
+                                               MouseButtonEventHandler menuRightClickHandler,
+                                               List<FunctionMarkingStyle> markings, ISession session) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
     var separatorIndex = defaultItems.FindIndex(item => item is Separator);
     var nameProvider = session.CompilerInfo.NameProvider;
     var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("CheckableProfileMenuItemValueTemplate");
+    var tempate = isCategoriesMenu ? "CategoriesProfileMenuItemValueTemplate" :
+                                     "CheckableProfileMenuItemValueTemplate";
+    var valueTemplate = (DataTemplate)Application.Current.FindResource(tempate);
     double maxWidth = 0;
 
     //? TODO: Make processing asyn
@@ -678,52 +695,64 @@ public static class DocumentUtils {
     var sortedFuncts = new List<(FunctionMarkingStyle Function, TimeSpan Weight)>();
     var callTree = session.ProfileData.CallTree;
 
-    foreach (var funcStyle in settings.FunctionColors) {
-      // Find all functions matching the marked name. There can be multiple
-      // since the same func. name may be used in multiple modules,
-      // and also because the name matching may use Regex.
-      var funcNodeList = new List<ProfileCallTreeNode>();
+    await Task.Run(() => {
+      foreach (var funcStyle in markings) {
+        // Find all functions matching the marked name. There can be multiple
+        // since the same func. name may be used in multiple modules,
+        // and also because the name matching may use Regex.
+        var funcNodeList = new List<ProfileCallTreeNode>();
 
-      foreach (var loadedDoc in session.SessionState.Documents) {
-        if (loadedDoc.Summary == null) {
-          continue;
-        }
+        foreach (var loadedDoc in session.SessionState.Documents) {
+          if (loadedDoc.Summary == null) {
+            continue;
+          }
 
-        var funcList = loadedDoc.Summary.FindFunctions(name =>
-          funcStyle.NameMatches(nameProvider.FormatFunctionName(name)));
+          var funcList = loadedDoc.Summary.FindFunctions(name =>
+            funcStyle.NameMatches(nameProvider.FormatFunctionName(name)));
 
-        foreach (var func in funcList) {
-          var nodeList = callTree.GetCallTreeNodes(func);
+          foreach (var func in funcList) {
+            var nodeList = callTree.GetCallTreeNodes(func);
 
-          if (nodeList != null) {
-            funcNodeList.AddRange(nodeList);
+            if (nodeList != null) {
+              funcNodeList.AddRange(nodeList);
+            }
           }
         }
+
+        // Combine all marked functions to obtain the proper total weight.
+        var weight = ProfileCallTree.CombinedCallTreeNodesWeight(funcNodeList);
+        sortedFuncts.Add((funcStyle, weight));
       }
 
-      // Combine all marked functions to obtain the proper total weight.
-      var weight = ProfileCallTree.CombinedCallTreeNodesWeight(funcNodeList);
-      sortedFuncts.Add((funcStyle, weight));
-    }
-
-    sortedFuncts.Sort((a, b) => a.Weight.CompareTo(b.Weight));
+      sortedFuncts.Sort((a, b) => a.Weight.CompareTo(b.Weight));
+    });
 
     foreach (var pair in sortedFuncts) {
       double weightPercentage = session.ProfileData.ScaleFunctionWeight(pair.Weight);
       string text = $"({markerSettings.FormatWeightValue(null, pair.Weight)})";
-      string tooltip = "Right-click to remove function marking";
-      string title = pair.Function.Name.TrimToLength(80);
 
-      if (pair.Function.HasTitle && pair.Function.IsRegex) {
-        title = $"{pair.Function.Title.TrimToLength(40)} ({title.TrimToLength(40)}) (Regex)";
+      string title = null;
+      string tooltip = null;
+
+      if (isCategoriesMenu) {
+        title = pair.Function.Title;
+        tooltip = DocumentUtils.FormatLongFunctionName(pair.Function.Name);
       }
       else {
-        if (pair.Function.HasTitle) {
-          title = $"{pair.Function.Title} ({title})";
-        }
+        tooltip = "Right-click to remove function marking";
+        title = pair.Function.Name.TrimToLength(80);
 
-        if (pair.Function.IsRegex) {
-          title = $"{title} (Regex)";
+        if (pair.Function.HasTitle && pair.Function.IsRegex) {
+          title = $"{pair.Function.Title.TrimToLength(40)} ({title.TrimToLength(40)}) (Regex)";
+        }
+        else {
+          if (pair.Function.HasTitle) {
+            title = $"{pair.Function.Title} ({title})";
+          }
+
+          if (pair.Function.IsRegex) {
+            title = $"{title} (Regex)";
+          }
         }
       }
 
@@ -733,21 +762,27 @@ public static class DocumentUtils {
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
         PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
-        BackColor = pair.Function.Color.AsBrush()
+        BackColor = !isCategoriesMenu ? pair.Function.Color.AsBrush() : Brushes.Transparent
       };
 
       var item = new MenuItem {
-        IsChecked = pair.Function.IsEnabled,
-        IsCheckable = true,
-        StaysOpenOnClick = true,
+        IsChecked = !isCategoriesMenu && pair.Function.IsEnabled,
+        IsCheckable = !isCategoriesMenu,
+        StaysOpenOnClick = !isCategoriesMenu,
         Header = value,
         Tag = pair.Function,
         HeaderTemplate = valueTemplate,
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };
 
-      item.Click += menuClickHandler;
-      item.PreviewMouseRightButtonDown += menuRightClickHandler;
+      if (menuClickHandler != null) {
+        item.Click += menuClickHandler;
+      }
+
+      if (menuRightClickHandler != null) {
+        item.PreviewMouseRightButtonDown += menuRightClickHandler;
+      }
+
       defaultItems.Insert(separatorIndex + 1, item);
       profileItems.Add(value);
 

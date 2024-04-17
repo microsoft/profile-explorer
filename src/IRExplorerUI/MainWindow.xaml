@@ -798,7 +798,7 @@
                             DockPanel.Dock="Left"
                             IsLocked="True">
                             <ToolBarTray.Clip>
-                                <RectangleGeometry Rect="0 0 250 20" />
+                                <RectangleGeometry Rect="0 0 330 20" />
                             </ToolBarTray.Clip>
                             <ToolBar
                                 HorizontalAlignment="Stretch"
@@ -806,6 +806,55 @@
                                 Background="#F7EFCD"
                                 Loaded="ToolBar_Loaded">
                                 <Menu
+                                    Height="20"
+                                    VerticalAlignment="Center"
+                                    Background="#F7EFCD">
+                                    <MenuItem
+                                        x:Name="CategoriesMenu"
+                                        Height="20"
+                                        Margin="0,0,0,0"
+                                        Padding="0,0,0,0"
+                                        OverridesDefaultStyle="True"
+                                        SubmenuOpened="CategoriesMenu_OnSubmenuOpened"
+                                        ToolTip="Overview of time distribution based on function categories">
+                                        <MenuItem.Header>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Image
+                                                    Width="14"
+                                                    Height="14"
+                                                    Margin="0,1,0,0"
+                                                    Source="{StaticResource TasklistIcon}"
+                                                    Style="{StaticResource DisabledImageStyle}" />
+                                                <TextBlock
+                                                    Margin="3,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    FontWeight="SemiBold"
+                                                    Text="Overview" />
+                                                <Path
+                                                    Margin="2,2,2,0"
+                                                    VerticalAlignment="Center"
+                                                    Data="M 0 0 L 3 3 L 6 0 Z"
+                                                    Fill="Black" />
+                                            </StackPanel>
+                                        </MenuItem.Header>
+                                      <MenuItem
+                                        Click="EditMarkingsMenu_OnClick"
+                                        Header="Edit Category Definitions"
+                                        ToolTip="Edit the category definitions JSON file.&#x0a;A restart of the app is needed to load the new definitions">
+                                        <MenuItem.Icon>
+                                          <Image Source="{StaticResource EditIcon}" />
+                                        </MenuItem.Icon>
+                                      </MenuItem>
+                                      </MenuItem>
+                                  </Menu>
+                              <Border
+                                Width="1"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                BorderThickness="1,0,0,0"
+                                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                              <Menu
                                     Height="20"
                                     VerticalAlignment="Center"
                                     Background="#F7EFCD">
@@ -1005,15 +1054,15 @@
                     </Border>
                     <!--  Border used to cover the part of the toolbar that extends too much past the bounds  -->
                     <Border
-                        Width="20"
-                        Margin="-15,0,0,0"
+                        Width="28"
+                        Margin="-16,0,0,0"
                         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         BorderThickness="1,0,0,0"
                         Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                     <Border
                         x:Name="ProfileFilterStateHost"
-                        Margin="-20,0,0,0"
+                        Margin="-28,0,0,0"
                         Background="AntiqueWhite"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         BorderThickness="1,0,1,0"

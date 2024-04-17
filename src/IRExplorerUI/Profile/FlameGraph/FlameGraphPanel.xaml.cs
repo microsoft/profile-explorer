@@ -279,7 +279,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private async Task UpdateNodeDetailsPanel() {
     var selectedNodes = GraphHost.SelectedNodes;
-    
+
     if (selectedNodes.Count == 0) {
       NodeDetailsPanel.Reset();
     }
@@ -291,7 +291,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
           callTreeNodes.Add(node.CallTreeNode);
         }
       }
-      
+
       var combinedNode = await Task.Run(() => ProfileCallTree.CombinedCallTreeNodes(callTreeNodes));
       await NodeDetailsPanel.ShowWithDetailsAsync(combinedNode);
     }
@@ -569,8 +569,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       ReloadSettings);
   }
 
-  private void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
+  private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    await DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
       ReloadSettings);
   }
 
