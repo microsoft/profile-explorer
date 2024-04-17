@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Windows;
 using System.Windows.Media;
 using ProtoBuf;
 
@@ -44,6 +45,38 @@ public class FunctionMarkingSettings : SettingsBase {
 
       return builtinMarking_;
     }
+  }
+
+  public bool ImportMarkings(FrameworkElement owner) {
+    var filePath = Utils.ShowOpenFileDialog("JSON files|*.json", "*.*", "Import markings from file");
+
+    if (filePath != null) {
+      var (result, failureText) = LoadFromFile(filePath);
+
+      if (!result) {
+        Utils.ShowWarningMessageBox($"Failed to import markings from {filePath}.\n{failureText}", owner);
+        return false;
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  public bool ExportMarkings(FrameworkElement owner) {
+    var filePath = Utils.ShowSaveFileDialog("JSON files|*.json", "*.*", "Export markings to file");
+
+    if (filePath != null) {
+      if (!SaveToFile(filePath)) {
+        Utils.ShowWarningMessageBox($"Failed to export markings to {filePath}", owner);
+        return false;
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   public void SwitchMarkingSet(FunctionMarkingSet set) {
@@ -295,10 +328,14 @@ public class FunctionMarkingSet {
 
   public void MergeWith(FunctionMarkingSet set) {
     foreach (var marking in set.FunctionColors) {
+      FunctionColors.RemoveAll(item =>
+        item.Name.Equals(marking.Name, StringComparison.Ordinal));
       FunctionColors.Add(marking.Clone());
     }
 
     foreach (var marking in set.ModuleColors) {
+      ModuleColors.RemoveAll(item =>
+        item.Name.Equals(marking.Name, StringComparison.Ordinal));
       ModuleColors.Add(marking.Clone());
     }
   }

@@ -1064,6 +1064,15 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private void ReloadSymbolPathsList() {
     var list = new ObservableCollectionRefresh<string>(symbolSettings_.SymbolPaths);
     SymbolPathsList.ItemsSource = list;
+
+    var binariesList = symbolSettings_.RejectedBinaryFiles.ToList();
+    binariesList.Sort((a, b) => String.Compare(a.ImageName, b.ImageName, StringComparison.OrdinalIgnoreCase));
+    RejectedBinariesList.ItemsSource = binariesList;
+
+    var symbolList = symbolSettings_.RejectedSymbolFiles.ToList();
+    symbolList.Sort((a, b) => String.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase));
+    RejectedSymbolsList.ItemsSource = symbolList;
+    OnPropertyChange(nameof(SymbolSettings));
   }
 
   private void SymbolPath_LostFocus(object sender, RoutedEventArgs e) {
@@ -1121,9 +1130,44 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void ClearRejectedButton_Click(object sender, RoutedEventArgs e) {
-    symbolSettings_.ClearRejectedFiles();
-    OnPropertyChange(nameof(SymbolSettings));
-    App.Settings.SymbolSettings = symbolSettings_;
-    App.SaveApplicationSettings();
+    if (Utils.ShowYesNoMessageBox("Do you want to remove all excluded binaries and symbols?", this) ==
+        MessageBoxResult.Yes) {
+      symbolSettings_.ClearRejectedFiles();
+      OnPropertyChange(nameof(SymbolSettings));
+      App.Settings.SymbolSettings = symbolSettings_;
+      App.SaveApplicationSettings();
+    }
+  }
+
+  private void RemoveRejectedBinariesButton_Click(object sender, RoutedEventArgs e) {
+    foreach (var item in RejectedBinariesList.SelectedItems) {
+      symbolSettings_.RejectedBinaryFiles.Remove(item as BinaryFileDescriptor);
+    }
+
+    ReloadSymbolPathsList();
+  }
+
+  private void ClearRejectedBinariesButton_Click(object sender, RoutedEventArgs e) {
+    if (Utils.ShowYesNoMessageBox("Do you want to remove all excluded binaries?", this) ==
+        MessageBoxResult.Yes) {
+      symbolSettings_.RejectedBinaryFiles.Clear();
+      ReloadSymbolPathsList();
+    }
+  }
+
+  private void RemoveRejectedSymbolsButton_Click(object sender, RoutedEventArgs e) {
+    foreach (var item in RejectedSymbolsList.SelectedItems) {
+      symbolSettings_.RejectedSymbolFiles.Remove(item as SymbolFileDescriptor);
+    }
+
+    ReloadSymbolPathsList();
+  }
+
+  private void ClearRejectedSymbolsButton_Click(object sender, RoutedEventArgs e) {
+    if (Utils.ShowYesNoMessageBox("Do you want to remove all excluded symbols?", this) ==
+        MessageBoxResult.Yes) {
+      symbolSettings_.RejectedSymbolFiles.Clear();
+      ReloadSymbolPathsList();
+    }
   }
 }

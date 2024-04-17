@@ -681,28 +681,13 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void ImportMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    var filePath = Utils.ShowOpenFileDialog("JSON files|*.json", "*.*", "Import markings from file");
-
-    if (filePath != null) {
-      var (result, failureText) = MarkingSettings.LoadFromFile(filePath);
-
-      if (!result) {
-        Utils.ShowWarningMessageBox($"Failed to import markings from {filePath}.\n{failureText}", this);
-        return;
-      }
-
+    if(MarkingSettings.ImportMarkings(this)) {
       ReloadMarkingSettings();
     }
   }
 
   private void ExportMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    var filePath = Utils.ShowSaveFileDialog("JSON files|*.json", "*.*", "Export markings to file");
-
-    if (filePath != null) {
-      if (!MarkingSettings.SaveToFile(filePath)) {
-        Utils.ShowWarningMessageBox($"Failed to export markings to {filePath}", this);
-      }
-    }
+    MarkingSettings.ExportMarkings(this);
   }
 
   private void EditMarkingsMenu_OnClick(object sender, RoutedEventArgs e) {

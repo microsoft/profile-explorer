@@ -48,6 +48,7 @@ public class SymbolFileDescriptor : IEquatable<SymbolFileDescriptor> {
   public Guid Id { get; set; }
   [ProtoMember(3)]
   public int Age { get; set; }
+  public string SymbolName => Utils.TryGetFileName(FileName);
 
   public static bool operator ==(SymbolFileDescriptor left, SymbolFileDescriptor right) {
     return Equals(left, right);

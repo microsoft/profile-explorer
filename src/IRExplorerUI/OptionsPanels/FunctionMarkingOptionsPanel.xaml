@@ -238,7 +238,7 @@
                       VerticalContentAlignment="Center"
                       BorderThickness="0"
                       PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
-                      Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" 
+                      Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                       ToolTip="{Binding Path=Name}"/>
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
@@ -342,6 +342,137 @@
             </StackPanel>
           </Button>
 
+        </StackPanel>
+      </Grid>
+
+      <TextBlock FontWeight="Medium" Text="Saved marking sets" />
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="80" />
+        </Grid.ColumnDefinitions>
+
+        <ListView
+          x:Name="MarkingsList"
+          Grid.Row="0"
+          Grid.Column="0"
+          MinHeight="100"
+          MaxHeight="300"
+          Margin="0,4,4,4"
+          HorizontalContentAlignment="Left"
+          VerticalContentAlignment="Center"
+          IsTextSearchEnabled="True"
+          ScrollViewer.VerticalScrollBarVisibility="Auto"
+          SelectionMode="Single"
+          TextSearch.TextPath="Name">
+          <ListView.View>
+            <GridView>
+              <GridViewColumn Width="130" Header="Name" DisplayMemberBinding="{Binding Title}">
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="ToolTip" Value="Marking set name" />
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+               </GridViewColumn>
+              <GridViewColumn Width="Auto" Header="Functions" DisplayMemberBinding="{Binding FunctionColors.Count}">
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="ToolTip" Value="Number of function patterns in the set" />
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+              </GridViewColumn>
+              <GridViewColumn Width="Auto" Header="Modules" DisplayMemberBinding="{Binding ModuleColors.Count}">
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="ToolTip" Value="Number of module patterns in the set" />
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+              </GridViewColumn>
+            </GridView>
+          </ListView.View>
+          <ListView.ItemContainerStyle>
+            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+              <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+          </ListView.ItemContainerStyle>
+        </ListView>
+
+        <StackPanel
+          Grid.Row="0"
+          Grid.Column="1"
+          Margin="2,4,4,4">
+          <Button
+            Height="24"
+            Margin="0,2,0,0"
+            Padding="2"
+            HorizontalContentAlignment="Left"
+            Click="MarkingRemove_Click"
+            ToolTip="Remove marking set from the list">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource MinusIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Margin="4,0,0,0" Text="Remove" />
+            </StackPanel>
+          </Button>
+          <Button
+            Height="24"
+            Margin="0,2,0,0"
+            Padding="2"
+            HorizontalContentAlignment="Left"
+            Click="MarkingClear_Click"
+            ToolTip="Remove all marking sets from the list">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource RemoveIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Margin="4,0,0,0" Text="Clear" />
+            </StackPanel>
+          </Button>
+          <Button
+            Height="24"
+            Margin="0,2,0,0"
+            Padding="2"
+            HorizontalContentAlignment="Left"
+            Click="MarkingImport_Click"
+            ToolTip="Import current and saved marking sets from a JSON file.&#x0a;This appends the new marking sets to the existing ones">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource FolderIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Margin="4,0,0,0" Text="Import" />
+            </StackPanel>
+          </Button>
+          <Button
+            Height="24"
+            Margin="0,2,0,0"
+            Padding="2"
+            HorizontalContentAlignment="Left"
+            Click="MarkingExport_Click"
+            ToolTip="Export current and saved marking sets as a JSON file">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource SaveIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Margin="4,0,0,0" Text="Export" />
+            </StackPanel>
+          </Button>
         </StackPanel>
       </Grid>
     </StackPanel>

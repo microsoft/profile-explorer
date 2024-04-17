@@ -18,18 +18,20 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
     ModulePaletteSelector.PalettesSource = ColorPalette.GradientBuiltinPalettes;
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
-  
+
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);
     settings_ = (FunctionMarkingSettings)Settings;
     ReloadModuleList();
     ReloadFunctionList();
+    ReloadMarkingsList();
   }
 
   public override void OnSettingsChanged(object newSettings) {
     settings_ = (FunctionMarkingSettings)newSettings;
     ReloadModuleList();
     ReloadFunctionList();
+    ReloadMarkingsList();
   }
 
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
@@ -41,7 +43,7 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
       RaiseSettingsChanged(null);
     });
   }
-  
+
   private void ReloadModuleList() {
     var list = new ObservableCollectionRefresh<FunctionMarkingStyle>(settings_.ModuleColors);
     ModuleList.ItemsSource = list;
@@ -51,7 +53,12 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
     var list = new ObservableCollectionRefresh<FunctionMarkingStyle>(settings_.FunctionColors);
     FunctionList.ItemsSource = list;
   }
-  
+
+  private void ReloadMarkingsList() {
+    var list = new ObservableCollectionRefresh<FunctionMarkingSet>(settings_.SavedSets);
+    MarkingsList.ItemsSource = list;
+  }
+
   private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
     if (sender is TextBox textBox) {
       Utils.SelectTextBoxListViewItem(textBox, ModuleList);
@@ -109,5 +116,34 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
     Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => {
       Utils.SelectEditableListViewItem(FunctionList, settings_.FunctionColors.Count - 1);
     });
+  }
+
+  private void MarkingClear_Click(object sender, RoutedEventArgs e) {
+    if (Utils.ShowYesNoMessageBox("Do you want to clear the list?", this) == MessageBoxResult.Yes) {
+      settings_.SavedSets.Clear();
+      ReloadMarkingsList();
+      NotifySettingsChanged();
+    }
+  }
+
+  private void MarkingRemove_Click(object sender, RoutedEventArgs e) {
+    if (MarkingsList.SelectedItem is FunctionMarkingSet set) {
+      settings_.SavedSets.Remove(set);
+      ReloadMarkingsList();
+      NotifySettingsChanged();
+    }
+  }
+
+  private void MarkingImport_Click(object sender, RoutedEventArgs e) {
+    if(settings_.ImportMarkings(this)) {
+      ReloadMarkingsList();
+      ReloadFunctionList();
+      ReloadMarkingsList();
+      NotifySettingsChanged();
+    }
+  }
+
+  private void MarkingExport_Click(object sender, RoutedEventArgs e) {
+    settings_.ExportMarkings(this);
   }
 }
