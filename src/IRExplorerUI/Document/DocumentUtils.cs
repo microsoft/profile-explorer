@@ -692,7 +692,7 @@ public static class DocumentUtils {
     //! Same for the other menus
 
     // Sort functions by weight in decreasing order.
-    var sortedFuncts = new List<(FunctionMarkingStyle Function, TimeSpan Weight)>();
+    var sortedFuncts = new List<(FunctionMarkingStyle Function, TimeSpan Weight, IRTextFunction HottestFunction)>();
     var callTree = session.ProfileData.CallTree;
 
     await Task.Run(() => {
@@ -701,6 +701,7 @@ public static class DocumentUtils {
         // since the same func. name may be used in multiple modules,
         // and also because the name matching may use Regex.
         var funcNodeList = new List<ProfileCallTreeNode>();
+        (IRTextFunction Function, TimeSpan Weight) hottestFunc = (null, TimeSpan.Zero);
 
         foreach (var loadedDoc in session.SessionState.Documents) {
           if (loadedDoc.Summary == null) {
@@ -716,12 +717,20 @@ public static class DocumentUtils {
             if (nodeList != null) {
               funcNodeList.AddRange(nodeList);
             }
+
+            // Pick the hottest function in the set.
+            var funcProfile = session.ProfileData.GetFunctionProfile(func);
+
+            if (funcProfile != null && (hottestFunc.Function == null ||
+                                        hottestFunc.Weight < funcProfile.Weight)) {
+              hottestFunc = (func, funcProfile.Weight);
+            }
           }
         }
 
         // Combine all marked functions to obtain the proper total weight.
         var weight = ProfileCallTree.CombinedCallTreeNodesWeight(funcNodeList);
-        sortedFuncts.Add((funcStyle, weight));
+        sortedFuncts.Add((funcStyle, weight, hottestFunc.Function));
       }
 
       sortedFuncts.Sort((a, b) => a.Weight.CompareTo(b.Weight));
@@ -770,7 +779,7 @@ public static class DocumentUtils {
         IsCheckable = !isCategoriesMenu,
         StaysOpenOnClick = !isCategoriesMenu,
         Header = value,
-        Tag = pair.Function,
+        Tag = pair.HottestFunction,
         HeaderTemplate = valueTemplate,
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };

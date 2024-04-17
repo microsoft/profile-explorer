@@ -697,7 +697,12 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async void CategoriesMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    await DocumentUtils.CreateFunctionsCategoriesMenu(CategoriesMenu, null, null,
+    await DocumentUtils.CreateFunctionsCategoriesMenu(CategoriesMenu, async (o, args) => {
+        if (o is MenuItem menuItem &&
+            menuItem.Tag is IRTextFunction func) {
+          await SwitchActiveFunction(func);
+        }
+      }, null,
       MarkingSettings, this);
   }
 }

@@ -4,35 +4,42 @@
     {
       "IsEnabled": true,
       "Title": "Memory Allocation",
-      "Name": "(\\bfree\\b|\\bmalloc\\b|\\boperator delete\\b|\\boperator new\\b|\\brealloc\\b|RtlAllocateHeap|RtlFreeHeap|RtlpAllocateHeap|RtlpAllocateHeapInternal|RtlpFreeHeap|RtlpFreeHeapInternal|_free_base|_malloc_base)",
+      "Name": "\\b(free|malloc|operator delete|operator new|realloc|RtlAllocateHeap|RtlFreeHeap|RtlpAllocateHeap|RtlpAllocateHeapInternal|RtlpFreeHeap|RtlpFreeHeapInternal|_free_base|_malloc_base)\\b",
       "Color": "#000000",
       "IsRegex": true
     },
     {
       "IsEnabled": true,
       "Title": "Memory copy/set/move",
-      "Name": "(memset|memcpy|memmove|ZeroMemory|SecureZeroMemory|SecureZeroMemory2|CopyMemory|MoveMemory|FillMemory)",
+      "Name": "\\b(memset|memcpy|memmove|ZeroMemory|SecureZeroMemory|SecureZeroMemory2|CopyMemory|MoveMemory|FillMemory)\\b",
       "Color": "#000000",
       "IsRegex": true
     },
     {
       "IsEnabled": true,
       "Title": "Page Fault",
-      "Name": "(KiPageFault|MiCompletePrivateZeroFault|MiDispatchFault|MiFastLockLeafPageTable|MiGetPage|MiGetPageChain|MiGetPerfectColorHeadPage|MiReplenishPageSlist|MiResolveDemandZeroFault|MiResolvePageTablePage|MiResolvePrivateZeroFault|MiUserFault|MmAccessFault)",
+      "Name": "\\b(KiPageFault|MiCompletePrivateZeroFault|MiDispatchFault|MiResolveDemandZeroFault|MiResolvePrivateZeroFault|MiUserFault|MmAccessFault)\\b",
       "Color": "#000000",
       "IsRegex": true
     },
     {
       "IsEnabled": true,
       "Title": "Thread Synchronization",
-      "Name": "(NtDelayExecution|NtWaitForAlertByThreadId|RtlAcquireSRWLockExclusive|RtlBackoff|RtlDelayExecution|RtlEnterCriticalSection|RtlLeaveCriticalSection|RtlpEnterCriticalSectionContended|RtlpOptimizeConditionVariableWaitList|RtlpWaitOnCriticalSection|RtlpWakeSRWLock|RtlReleaseSRWLockExclusive|RtlSleepConditionVariableSRW|RtlWakeConditionVariable\\bSleep\\b|\\bSleepEx\\b|KeDelayExecutionThread|KeYieldExecution)",
+      "Name": "\\b(NtDelayExecution|NtWaitForAlertByThreadId|RtlAcquireSRWLockExclusive|RtlBackoff|RtlDelayExecution|RtlEnterCriticalSection|RtlLeaveCriticalSection|RtlpEnterCriticalSectionContended|RtlpOptimizeConditionVariableWaitList|RtlpWaitOnCriticalSection|RtlpWakeSRWLock|RtlReleaseSRWLockExclusive|RtlSleepConditionVariableSRW|RtlWakeConditionVariable\\bSleep\\b|\\bSleepEx\\b|KeDelayExecutionThread|KeYieldExecution)\\b",
+      "Color": "#000000",
+      "IsRegex": true
+    },
+    {
+      "IsEnabled": true,
+      "Title": "File I\/O",
+      "Name": "\\b(CreateFile|CreateFile2|DeleteFile|FindClose|FindFirstFile|FindFirstFileEx|FindNextFile|FlushFileBuffers|GetFileAttributes|GetFileAttributesEx|GetFileSize|GetFileSizeEx|GetFileTime|IopCreateFile|IopReadFile|IopWriteFile|NtCreateFile|NtReadFile|NtWriteFile|ReadFile|ReadFileEx|SetFileAttributes|SetFileInformationByHandle|SetFilePointer|SetFilePointerEx|WriteFile|WriteFileEx)\\b",
       "Color": "#000000",
       "IsRegex": true
     },
     {
       "IsEnabled": true,
       "Title": "C-style strings",
-      "Name": "(memchr|strcat|strchr|strcmp|strcpy|strcspn|strlen|strncat|strncmp|strpbrk|strrchr|strspn|strstr|strtok|wcscat|wcschr|wcscmp|wcscoll|wcscpy|wcscspn|wcslen|wcsncat|wcsncmp|wcsncpy|wcspbrk|wcsrchr|wcsspn|wcsstr|wcstod|wcstof|wcstok|wcstol|wcstold|wcstoll|wcstoul|wcstoull|wcsxfrm|mblen|mbtowc|wctomb|mbstowcs|wcstombs)",
+      "Name": "\\b(memchr|strcat|strchr|strcmp|strcpy|strcspn|strlen|strncat|strncmp|strpbrk|strrchr|strspn|strstr|strtok|wcscat|wcschr|wcscmp|wcscoll|wcscpy|wcscspn|wcslen|wcsncat|wcsncmp|wcsncpy|wcspbrk|wcsrchr|wcsspn|wcsstr|wcstod|wcstof|wcstok|wcstol|wcstold|wcstoll|wcstoul|wcstoull|wcsxfrm|mblen|mbtowc|wctomb|mbstowcs|wcstombs)\\b",
       "Color": "#000000",
       "IsRegex": true
     }
