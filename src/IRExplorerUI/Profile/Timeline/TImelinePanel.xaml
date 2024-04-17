@@ -150,7 +150,7 @@
                 Margin="0,1,0,0"
                 Source="{StaticResource SwitchIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Text="Sync" />
+              <TextBlock Margin="2,0,0,0" Text="Sync" />
             </StackPanel>
           </ToggleButton>
 
@@ -167,7 +167,7 @@
                 Margin="0,1,0,0"
                 Source="{StaticResource GroupIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Text="" />
+              <TextBlock Margin="1,0,0,0" Text="Group" />
             </StackPanel>
           </ToggleButton>
           <Separator />
@@ -374,12 +374,12 @@
             VerticalAlignment="Top"
             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
             BorderThickness="0,0,1,0">
-            <Grid Background="PapayaWhip">
+            <Grid Background="PapayaWhip"
+                  MouseDown="ActivityViewHeader_MouseDown">
               <Grid
                 x:Name="ActivityViewHeader"
                 Margin="2,0,30,0"
-                HorizontalAlignment="Stretch"
-                MouseDown="ActivityViewHeader_MouseDown">
+                HorizontalAlignment="Stretch">
                 <StackPanel Margin="2">
                   <TextBlock FontWeight="Medium" Text="All Threads" />
 

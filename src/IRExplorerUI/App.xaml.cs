@@ -227,7 +227,7 @@ public partial class App : Application {
   public static string GetFunctionMarkingsFilePath(string compilerIRName) {
     return GetSettingsFilePath(compilerIRName, FunctionMarkingsFile);
   }
-  
+
   public static List<SyntaxFileInfo> GetSyntaxHighlightingFiles(string compilerIRName, bool internalFiles = false) {
     if (!internalFiles && cachedSyntaxHighlightinFiles_ != null) {
       return cachedSyntaxHighlightinFiles_;
@@ -549,8 +549,7 @@ public partial class App : Application {
 
       foreach (string file in files) {
         string destFile = GetCompilerSettingsFilePath(Path.GetFileName(file), directory);
-
-        File.Copy(file, destFile, true);
+        File.Copy(file, destFile, false);
       }
 
       return true;

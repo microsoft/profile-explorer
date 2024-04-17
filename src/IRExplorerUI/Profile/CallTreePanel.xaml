@@ -94,7 +94,7 @@
                 Margin="0,1,0,0"
                 Source="{StaticResource SwitchIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Text="Sync" />
+              <TextBlock Margin="2,0,0,0" Text="Sync" />
             </StackPanel>
           </ToggleButton>
 
