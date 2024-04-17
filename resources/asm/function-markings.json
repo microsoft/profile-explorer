@@ -18,7 +18,7 @@
     {
       "IsEnabled": true,
       "Title": "Page Fault",
-      "Name": "\\b(KiPageFault|MiCompletePrivateZeroFault|MiDispatchFault|MiResolveDemandZeroFault|MiResolvePrivateZeroFault|MiUserFault|MmAccessFault)\\b",
+      "Name": "\\b(KiPageFault|MiCompletePrivateZeroFault|MiDispatchFault|MiResolveDemandZeroFault|MiResolvePrivateZeroFault|MiUserFault|MiZeroFault|MmAccessFault)\\b",
       "Color": "#000000",
       "IsRegex": true
     },
@@ -38,7 +38,14 @@
     },
     {
       "IsEnabled": true,
-      "Title": "C-style strings",
+      "Title": "C\/C++ File I\/O",
+      "Name": "\\b(_fgetc_nolock|_fread|_fsopen|_fwrite_nolock_internal|_read_nolock|fclose|fgetc|fread_s|fwrite|std::basic_filebuf)\\b",
+      "Color": "#000000",
+      "IsRegex": true
+    },
+    {
+      "IsEnabled": true,
+      "Title": "C-style Strings",
       "Name": "\\b(memchr|strcat|strchr|strcmp|strcpy|strcspn|strlen|strncat|strncmp|strpbrk|strrchr|strspn|strstr|strtok|wcscat|wcschr|wcscmp|wcscoll|wcscpy|wcscspn|wcslen|wcsncat|wcsncmp|wcsncpy|wcspbrk|wcsrchr|wcsspn|wcsstr|wcstod|wcstof|wcstok|wcstol|wcstold|wcstoll|wcstoul|wcstoull|wcsxfrm|mblen|mbtowc|wctomb|mbstowcs|wcstombs)\\b",
       "Color": "#000000",
       "IsRegex": true

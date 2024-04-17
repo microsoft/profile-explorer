@@ -9,6 +9,7 @@
   <SolidColorBrush x:Key="ProfilePercentageBackBrush" Color="#66FFFFFF" />
   <SolidColorBrush x:Key="ProfilePercentageBrush" Color="#88eb8888" />
   <SolidColorBrush x:Key="ProfilePercentageExclusiveBrush" Color="#88A6C8F1" />
+  <SolidColorBrush x:Key="ProfileUncategorizedBrush" Color="#FFA6C8F1" />
 
   <DataTemplate x:Key="TimePercentageColumnValueTemplate">
     <Border
@@ -187,7 +188,7 @@
       VerticalAlignment="Stretch"
       BorderBrush="{Binding BorderBrush}"
       BorderThickness="{Binding BorderThickness}">
-      <StackPanel Orientation="Horizontal">
+      <StackPanel Orientation="Horizontal" Margin="-10,0,0,0">
         <TextBlock
           MinWidth="{Binding MinTextWidth}"
           Margin="4,0,2,0"

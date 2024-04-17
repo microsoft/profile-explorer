@@ -60,7 +60,10 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     set {
       base.Session = value;
       ProfileTextView.Session = value;
-      Settings = App.Settings.SourceFileSettings;
+
+      if (value != null) {
+        Settings = App.Settings.SourceFileSettings;
+      }
     }
   }
 

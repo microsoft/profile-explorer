@@ -688,14 +688,14 @@ public static class DocumentUtils {
     var valueTemplate = (DataTemplate)Application.Current.FindResource(tempate);
     double maxWidth = 0;
 
-    //? TODO: Make processing asyn
-    //! Same for the other menus
-
     // Sort functions by weight in decreasing order.
     var sortedFuncts = new List<(FunctionMarkingStyle Function, TimeSpan Weight, IRTextFunction HottestFunction)>();
     var callTree = session.ProfileData.CallTree;
 
     await Task.Run(() => {
+      // Collect functions across all markings to compute the "Unmarked" weight.
+      var allFuncNodeList = new List<ProfileCallTreeNode>();
+
       foreach (var funcStyle in markings) {
         // Find all functions matching the marked name. There can be multiple
         // since the same func. name may be used in multiple modules,
@@ -716,6 +716,10 @@ public static class DocumentUtils {
 
             if (nodeList != null) {
               funcNodeList.AddRange(nodeList);
+
+              if (isCategoriesMenu) {
+                allFuncNodeList.AddRange(nodeList);
+              }
             }
 
             // Pick the hottest function in the set.
@@ -734,6 +738,14 @@ public static class DocumentUtils {
       }
 
       sortedFuncts.Sort((a, b) => a.Weight.CompareTo(b.Weight));
+
+      if (isCategoriesMenu) {
+        var categoriesWeight = ProfileCallTree.CombinedCallTreeNodesWeight(allFuncNodeList);
+        var otherWeight = session.ProfileData.TotalWeight - categoriesWeight;
+        var uncategorizedMarking = (new FunctionMarkingStyle("Other functions not covered by categories",
+          Colors.Transparent, "Uncategorized"), otherWeight, (IRTextFunction)null);
+        sortedFuncts.Insert(0, uncategorizedMarking);
+      }
     });
 
     foreach (var pair in sortedFuncts) {
@@ -770,7 +782,9 @@ public static class DocumentUtils {
         ToolTip = tooltip,
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+        PercentageBarBackColor = pair.HottestFunction != null ?
+          markerSettings.PercentageBarBackColor.AsBrush() :
+          (Brush)App.Current.FindResource("ProfileUncategorizedBrush"),
         BackColor = !isCategoriesMenu ? pair.Function.Color.AsBrush() : Brushes.Transparent
       };
 
@@ -779,7 +793,8 @@ public static class DocumentUtils {
         IsCheckable = !isCategoriesMenu,
         StaysOpenOnClick = !isCategoriesMenu,
         Header = value,
-        Tag = pair.HottestFunction,
+        IsHitTestVisible = pair.HottestFunction != null,
+        Tag = pair.HottestFunction ?? new IRTextFunction(""),
         HeaderTemplate = valueTemplate,
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };
