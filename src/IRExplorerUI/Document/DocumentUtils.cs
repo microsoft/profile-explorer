@@ -793,8 +793,7 @@ public static class DocumentUtils {
         IsCheckable = !isCategoriesMenu,
         StaysOpenOnClick = !isCategoriesMenu,
         Header = value,
-        IsHitTestVisible = pair.HottestFunction != null,
-        Tag = pair.HottestFunction ?? new IRTextFunction(""),
+        Tag = pair.HottestFunction ?? new object(),
         HeaderTemplate = valueTemplate,
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };
@@ -837,7 +836,7 @@ public static class DocumentUtils {
 
   public static (string Short, string Long)
     GenerateInstancePreviewText(ProfileCallTreeNode node, ISession session, int maxCallers = int.MaxValue) {
-    return GenerateInstancePreviewText(node, maxCallers, 50, 30, 1000, 50, session);
+    return GenerateInstancePreviewText(node, maxCallers, 80, 25, 1000, 50, session);
   }
   private static (string Short, string Long)
     GenerateInstancePreviewText(ProfileCallTreeNode node, int maxCallers,

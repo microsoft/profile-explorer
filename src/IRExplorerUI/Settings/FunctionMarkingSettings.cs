@@ -160,7 +160,7 @@ public class FunctionMarkingSettings : SettingsBase {
     UseAutoModuleColors = true;
     UseModuleColors = false;
     UseFunctionColors = false;
-    ModulesColorPalette = ColorPalette.LightPastels.Name;
+    ModulesColorPalette = ColorPalette.LightPastels2.Name;
     CurrentSet = new FunctionMarkingSet();
     SavedSets.Clear();
     modulesPalette_ = null;

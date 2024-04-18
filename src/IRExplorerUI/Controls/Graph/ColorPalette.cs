@@ -140,20 +140,19 @@ public class ColorPalette {
     new ColorPalette(ColorUtils.LightPastelColors, "LightPastels");
   public static ColorPalette LightPastels2 =>
     new ColorPalette(new[] {
-      "#F0D7DF", "#F9E0E2", "#F8EAEC", "#F7DDD9",
-      "#F7E6DA", "#E3E9DD", "#C4DBD9", "#D4E5E3",
-      "#CAE0E4", "#C8C7D6"
+      "#EAE4E9","#FFF1E6","#FDE2E4","#FAD2E1",
+      "#E2ECE9","#BEE1E6","#F0EFEB","#DFE7FD",
     }, "LightPastels2");
   public static ColorPalette LightPastels3 =>
     new ColorPalette(new[] {
-      "#EAE4E9","#FFF1E6","#FDE2E4","#FAD2E1",
-      "#E2ECE9","#BEE1E6","#F0EFEB","#DFE7FD",
+      "#FFF1E6","#FDE2E4","#FAD2E1",
+      "#C5DEDD","#DBE7E4","#F0EFEB","#BCD4E6","#99C1DE"
     }, "LightPastels3");
   public static ColorPalette LightPastels4 =>
     new ColorPalette(new[] {
-      "#EDDCD2","#FFF1E6","#FDE2E4","#FAD2E1",
-      "#C5DEDD","#DBE7E4","#F0EFEB","#D6E2E9",
-      "#BCD4E6","#99C1DE"
+      "#F0D7DF","#F8EAEC","#F7DDD9",
+      "#F7E6DA","#E3E9DD","#C4DBD9","#D4E5E3",
+      "#C8C7D6"
     }, "LightPastels4");
   public static ColorPalette DarkHue => MakeHue(0.9f, 0.2f, 10);
   public static ColorPalette LightHue => MakeHue(0.9f, 0.5f, 10);

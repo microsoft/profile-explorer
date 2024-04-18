@@ -4,13 +4,13 @@
     {
       "IsEnabled": true,
       "Title": "Memory Allocation",
-      "Name": "\\b(free|malloc|operator delete|operator new|realloc|RtlAllocateHeap|RtlFreeHeap|RtlpAllocateHeap|RtlpAllocateHeapInternal|RtlpFreeHeap|RtlpFreeHeapInternal|_free_base|_malloc_base)\\b",
+      "Name": "\\b(free|malloc|calloc|aligned_alloc|operator delete|operator new|realloc|RtlAllocateHeap|RtlFreeHeap|RtlpAllocateHeap|RtlpAllocateHeapInternal|RtlpFreeHeap|RtlpFreeHeapInternal|_free_base|_malloc_base)\\b",
       "Color": "#000000",
       "IsRegex": true
     },
     {
       "IsEnabled": true,
-      "Title": "Memory copy/set/move",
+      "Title": "Memory Copy/Set/Move",
       "Name": "\\b(memset|memcpy|memmove|ZeroMemory|SecureZeroMemory|SecureZeroMemory2|CopyMemory|MoveMemory|FillMemory)\\b",
       "Color": "#000000",
       "IsRegex": true
@@ -24,8 +24,15 @@
     },
     {
       "IsEnabled": true,
+      "Title": "Virtual Memory",
+      "Name": "\\b(DiscardVirtualMemory|OfferVirtualMemory|PrefetchVirtualMemory|QueryVirtualMemoryInformation|ReclaimVirtualMemory|VirtualAlloc|VirtualAlloc2|VirtualAllocEx|VirtualAllocExNuma|VirtualFree|VirtualFreeEx|VirtualLock|VirtualProtect|VirtualProtectEx|VirtualProtectFromApp|VirtualQuery|VirtualQueryEx|VirtualUnlock)\\b",
+      "Color": "#000000",
+      "IsRegex": true
+    },
+    {
+      "IsEnabled": true,
       "Title": "Thread Synchronization",
-      "Name": "\\b(NtDelayExecution|NtWaitForAlertByThreadId|RtlAcquireSRWLockExclusive|RtlBackoff|RtlDelayExecution|RtlEnterCriticalSection|RtlLeaveCriticalSection|RtlpEnterCriticalSectionContended|RtlpOptimizeConditionVariableWaitList|RtlpWaitOnCriticalSection|RtlpWakeSRWLock|RtlReleaseSRWLockExclusive|RtlSleepConditionVariableSRW|RtlWakeConditionVariable\\bSleep\\b|\\bSleepEx\\b|KeDelayExecutionThread|KeYieldExecution)\\b",
+      "Name": "\\b(AcquireSRWLockExclusive|AcquireSRWLockShared|DeleteCriticalSection|EnterCriticalSection|InitializeConditionVariable|InitializeCriticalSection|InitializeCriticalSectionAndSpinCount|InitializeCriticalSectionEx|InitializeSRWLock|KeDelayExecutionThread|KeYieldExecution|LeaveCriticalSection|ReleaseSRWLockExclusive|ReleaseSRWLockShared|RtlAcquireSRWLockExclusive|RtlAcquireSRWLockShared|RtlBackoff|RtlDelayExecution|RtlEnterCriticalSection|RtlLeaveCriticalSection|RtlpEnterCriticalSectionContended|RtlpOptimizeConditionVariableWaitList|RtlpWaitOnCriticalSection|RtlpWakeSRWLock|RtlReleaseSRWLockExclusive|RtlReleaseSRWLockShared|RtlSleepConditionVariableSRW|RtlWakeConditionVariable|SetCriticalSectionSpinCount|SleepConditionVariableCS|SleepConditionVariableSRW|TryAcquireSRWLockExclusive|TryAcquireSRWLockShared|TryEnterCriticalSection|WakeAllConditionVariable|WakeConditionVariable|NtDelayExecution)\\b",
       "Color": "#000000",
       "IsRegex": true
     },
@@ -46,7 +53,14 @@
     {
       "IsEnabled": true,
       "Title": "C-style Strings",
-      "Name": "\\b(memchr|strcat|strchr|strcmp|strcpy|strcspn|strlen|strncat|strncmp|strpbrk|strrchr|strspn|strstr|strtok|wcscat|wcschr|wcscmp|wcscoll|wcscpy|wcscspn|wcslen|wcsncat|wcsncmp|wcsncpy|wcspbrk|wcsrchr|wcsspn|wcsstr|wcstod|wcstof|wcstok|wcstol|wcstold|wcstoll|wcstoul|wcstoull|wcsxfrm|mblen|mbtowc|wctomb|mbstowcs|wcstombs)\\b",
+      "Name": "\\b(mblen|mbstowcs|mbtowc|memchr|strcat|strcat_s|strchr|strcmp|strcoll|strcpy|strcpy_s|strcspn|strlen|strncat|strncat_s|strncmp|strncpy|strncpy_s|strpbrk|strrchr|strspn|strstr|strtok|wcscat|wcscat_s|wcschr|wcscmp|wcscoll|wcscpy|wcscpy_s|wcscspn|wcslen|wcsncat|wcsncat_s|wcsncmp|wcsncpy|wcsncpy_s|wcspbrk|wcsrchr|wcsspn|wcsstr|wcstod|wcstof|wcstok|wcstol|wcstold|wcstoll|wcstombs|wcstoul|wcstoull|wcsxfrm|wctomb|_mbscat|_mbscat_s|_mbscmp|_mbscoll|_mbscoll_l|_mbscpy|_mbscpy_s|_mbsicmp|_mbsicmp_l|_mbsicoll|_mbsicoll_l|_mbsncat|_mbsncat_l|_mbsncat_s|_mbsncat_s_l|_mbsncoll|_mbsncoll_l|_mbsncpy|_mbsncpy_l|_mbsncpy_s|_mbsncpy_s_l|_mbsnicmp|_mbsnicmp_l|_mbsnicoll|_mbsnicoll_l|_mbsrchr|_mbsrchr_l|_strcoll_l|_stricmp|_stricmp_l|_stricoll|_stricoll_l|_strncat_l|_strncat_s_l|_strncoll|_strncoll_l|_strncpy_l|_strncpy_s_l|_strnicmp|_strnicmp_l|_strnicoll|_strnicoll_l|_wcscoll_l|_wcsicmp|_wcsicmp_l|_wcsicoll|_wcsicoll_l|_wcsncat_l|_wcsncat_s_l|_wcsncoll|_wcsncoll_l|_wcsncpy_l|_wcsncpy_s_l|_wcsnicmp|_wcsnicmp_l|_wcsnicoll|_wcsnicoll_l)\\b",
+      "Color": "#000000",
+      "IsRegex": true
+    },
+    {
+      "IsEnabled": true,
+      "Title": "Wait on Objects",
+      "Name": "\\b(MsgWaitForMultipleObjects|MsgWaitForMultipleObjectsEx|RegisterWaitForSingleObject|SignalObjectAndWait|UnregisterWait|UnregisterWaitEx|WaitForMultipleObjects|WaitForMultipleObjectsEx|WaitForSingleObject|WaitForSingleObjectEx|WaitOnAddress|WaitOrTimerCallback|WakeByAddressAll|WakeByAddressSingle)\\b",
       "Color": "#000000",
       "IsRegex": true
     }

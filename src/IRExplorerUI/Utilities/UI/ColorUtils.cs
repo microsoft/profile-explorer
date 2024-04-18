@@ -10,10 +10,7 @@ namespace IRExplorerUI;
 class ColorUtils {
   public static readonly string[] PastelColors = {
     "#f4a3a3",
-    "#fbc29c",
     "#dabdce",
-    "#fcfc9b",
-    "#ebacc2",
     "#ebacd6",
     "#fcb89b",
     "#dbbcbe",
@@ -26,7 +23,6 @@ class ColorUtils {
     "#b1d0dc",
     "#b1e6c2",
     "#daedaa",
-    "#acbeeb",
     "#dcdab6",
     "#b5b5ed",
     "#d3b8df",
@@ -35,10 +31,7 @@ class ColorUtils {
   };
   public static readonly string[] LightPastelColors = {
     "#fed7d7",
-    "#fee6d6",
     "#f0e4eb",
-    "#FFFFDE",
-    "#f7dde6",
     "#f7ddee",
     "#fee2d6",
     "#f1e4e5",
@@ -51,7 +44,6 @@ class ColorUtils {
     "#e6eeee",
     "#dff5e6",
     "#f0f8dc",
-    "#dde4f7",
     "#f1f0e3",
     "#dde6f7",
     "#e4e2f2",
