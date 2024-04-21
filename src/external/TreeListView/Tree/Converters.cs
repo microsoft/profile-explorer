@@ -12,7 +12,7 @@ namespace Aga.Controls.Tree
     /// </summary>
 	internal class LevelToIndentConverter : IValueConverter
     {
-		private const double IndentSize = 10.0;
+		private const double IndentSize = 15.0;
 
 		public object Convert(object o, Type type, object parameter, CultureInfo culture)
         {

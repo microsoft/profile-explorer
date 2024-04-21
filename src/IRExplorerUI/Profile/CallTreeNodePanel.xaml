@@ -270,7 +270,7 @@
 
             <Expander
               x:Name="ThreadsExpander"
-              MaxHeight="200"
+              MaxHeight="180"
               Margin="0,0,0,8"
               HorizontalAlignment="Stretch"
               Header="Threads"
@@ -448,9 +448,9 @@
                   BorderThickness="0"
                   ToolTip="Mark all functions belonging to this module (saved)">
                   <Image
-                    Width="18"
-                    Height="18"
-                    Source="{StaticResource ThemeIcon}"
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource AddBookmarkIcon}"
                     Style="{StaticResource DisabledImageStyle}" />
                   <Button.ContextMenu>
                     <ContextMenu DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}" Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
@@ -568,9 +568,9 @@
                   Click="MarkModuleButton_OnClick"
                   ToolTip="Mark all functions with the same name (saved)">
                   <Image
-                    Width="18"
-                    Height="18"
-                    Source="{StaticResource ThemeIcon}"
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource BookmarkIcon}"
                     Style="{StaticResource DisabledImageStyle}" />
                   <Button.ContextMenu>
                     <ContextMenu  DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}" Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
@@ -629,7 +629,7 @@
         VerticalAlignment="Stretch"
         Header="Stack"
         Style="{StaticResource TabControlStyle}"
-        ToolTip="Reverse call stack for current function instance">
+        ToolTip="Reversed call stack for current function instance">
         <profile:ProfileListView
           x:Name="BacktraceList"
           NameColumnTitle="Function"
@@ -643,7 +643,7 @@
         VerticalAlignment="Stretch"
         Header="Functions"
         Style="{StaticResource TabControlStyle}"
-        ToolTip="Exclusive (self) time for functions under this instance">
+        ToolTip="Exclusive (self) time for functions executing under this instance">
         <profile:ProfileListView
           x:Name="FunctionList"
           NameColumnTitle="Function"
@@ -656,12 +656,12 @@
         VerticalAlignment="Stretch"
         Header="Modules"
         Style="{StaticResource TabControlStyle}"
-        ToolTip="Exclusive (self) time for modules under this instance">
+        ToolTip="Time for modules executing under this function instance">
         <Grid>
           <Grid.RowDefinitions>
-            <RowDefinition Height="3*" />
+            <RowDefinition Height="1*" />
             <RowDefinition Height="3" />
-            <RowDefinition Height="2*" />
+            <RowDefinition Height="1*" />
           </Grid.RowDefinitions>
           <profile:ProfileListView
             x:Name="ModuleList"
@@ -680,13 +680,45 @@
             x:Name="ModuleFunctionList"
             Grid.Row="2"
             MinHeight="100"
-            ExclusiveTimeColumnTitle="Time"
             NameColumnTitle="Module Function"
             ShowContextColumn="True"
-            ShowExclusiveTimeNameRow="True" />
+            ShowCombinedTimeNameRow="True"/>
         </Grid>
       </TabItem>
-
+      <TabItem
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        Header="Categories"
+        Style="{StaticResource TabControlStyle}"
+        ToolTip="Categorized time for functions executing under this instance">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="3" />
+            <RowDefinition Height="1*" />
+          </Grid.RowDefinitions>
+          <profile:ProfileListView
+            x:Name="CategoryList"
+            Grid.Row="0"
+            MinHeight="100"
+            ExclusiveTimeColumnTitle="Time"
+            NameColumnTitle="Category"
+            ShowTimeNameRow="True" />
+          <GridSplitter
+            Grid.Row="1"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            ResizeBehavior="PreviousAndNext" />
+          <profile:ProfileListView
+            x:Name="CategoryFunctionList"
+            Grid.Row="2"
+            MinHeight="100"
+            NameColumnTitle="Category Function"
+            ShowContextColumn="True"
+            ShowCombinedTimeNameRow="True" />
+        </Grid>
+      </TabItem>
       <TabItem
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"

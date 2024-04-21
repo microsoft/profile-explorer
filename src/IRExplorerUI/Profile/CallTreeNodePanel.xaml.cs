@@ -110,6 +110,8 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       FunctionList.Session = value;
       ModuleList.Session = value;
       ModuleFunctionList.Session = value;
+      CategoryList.Session = value;
+      CategoryFunctionList.Session = value;
       InstancesList.Session = value;
     }
   }
@@ -122,6 +124,8 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       FunctionList.Settings = value;
       ModuleList.Settings = value;
       ModuleFunctionList.Settings = value;
+      CategoryList.Settings = value;
+      CategoryFunctionList.Settings = value;
       InstancesList.Settings = value;
     }
   }
@@ -233,10 +237,18 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     await SetupInstanceInfo(CallTreeNode.CallTreeNode);
     ShowDetails = true;
 
-    BacktraceList.ShowFunctions(await Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode.CallTreeNode)));
-    FunctionList.ShowFunctions(await Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode.CallTreeNode)),
-                      settings_.FunctionListViewFilter);
-    ModuleList.ShowModules(await Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode.CallTreeNode)));
+    var markings = App.Settings.MarkingSettings.BuiltinMarkingCategories.FunctionColors;
+    var task1 = Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode.CallTreeNode));
+    var task2 = Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode.CallTreeNode));
+    var task3 = Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode.CallTreeNode));
+    var task4 = Task.Run(() => ProfilingUtils.CollectMarkedFunctions(markings, false, 
+      Session, CallTreeNode.CallTreeNode));
+    
+    BacktraceList.ShowFunctions(await task1);
+    FunctionList.ShowFunctions(await task2, settings_.FunctionListViewFilter);
+    ModuleList.ShowModules(await task3);
+    CategoryList.ShowCategories(await task4);
+    
     ModuleFunctionList.Reset();
     ModuleList.SelectFirstItem();
   }
@@ -270,10 +282,17 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     ModuleList.ModuleClick += (sender, moduleInfo) => UpdateModuleFunctions(moduleInfo);
     ModuleFunctionList.NodeClick += (sender, node) => FunctionNodeClick?.Invoke(sender, node);
     ModuleFunctionList.NodeDoubleClick += (sender, node) => FunctionNodeDoubleClick?.Invoke(sender, node);
+    CategoryList.CategoryClick += (sender, category) => UpdateCategoryFunctions(category);
+    CategoryFunctionList.NodeClick += (sender, node) => FunctionNodeClick?.Invoke(sender, node);
+    CategoryFunctionList.NodeDoubleClick += (sender, node) => FunctionNodeDoubleClick?.Invoke(sender, node);
+  }
+
+  private void UpdateCategoryFunctions(FunctionMarkingCategory category) {
+    CategoryFunctionList.ShowFunctions(category.SortedFunctions);
   }
 
   private void UpdateModuleFunctions(ModuleProfileInfo moduleInfo) {
-    ModuleFunctionList.ShowFunctions(moduleInfo.Functions, settings_.FunctionListViewFilter);
+    ModuleFunctionList.ShowFunctions(moduleInfo.Functions);
   }
 
   private async Task SetupInstanceInfo(ProfileCallTreeNode node) {
@@ -281,6 +300,8 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     var groupNode = node as ProfileCallTreeGroupNode;
 
     // Collect all instances associated with the node's function.
+    // With multiple nodes selected, the node is a ProfileCallTreeGroupNode,
+    // combine the instances of all functions in the group.
     if (groupNode != null) {
       instanceNodes_ = await Task.Run(() => {
         // For a node group, combine the instances for each node.
@@ -305,6 +326,9 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       return;
     }
 
+    // Create the node that sums up all selected nodes.
+    // With multiple nodes selected, the node is a ProfileCallTreeGroupNode,
+    // combine the instances of all functions in the group.
     ProfileCallTreeNode combinedNode = null;
 
     if (groupNode != null) {

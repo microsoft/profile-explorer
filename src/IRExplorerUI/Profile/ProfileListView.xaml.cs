@@ -16,13 +16,17 @@ using HtmlAgilityPack;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.Utilities;
+using Microsoft.Diagnostics.Runtime;
 
 namespace IRExplorerUI.Profile;
 
 public class ProfileListViewItem : SearchableProfileItem {
   CallTreeNodeSettings settings_;
+  private object associatedObject_;
   private Brush functionBackColor_;
   private Brush moduleBackColor_;
+  private ProfileCallTreeNode callTreeNode;
+  private ModuleProfileInfo moduleInfo;
 
   private ProfileListViewItem(FunctionNameFormatter funcNameFormatter,
                               CallTreeNodeSettings settings) :
@@ -30,10 +34,21 @@ public class ProfileListViewItem : SearchableProfileItem {
     settings_ = settings;
   }
 
-  public ProfileCallTreeNode CallTreeNode { get; set; }
-  public ModuleProfileInfo ModuleInfo { get; set; }
+  public ProfileCallTreeNode CallTreeNode {
+    get => associatedObject_ as ProfileCallTreeNode;
+    set => associatedObject_ = value;
+  }
 
+  public ModuleProfileInfo ModuleInfo {
+    get => associatedObject_ as ModuleProfileInfo;
+    set => associatedObject_ = value;
+  }
 
+  public FunctionMarkingCategory MarkingCategory {
+    get => associatedObject_ as FunctionMarkingCategory;
+    set => associatedObject_ = value;
+  }
+  
   public Brush FunctionBackColor {
     get => functionBackColor_;
     set => SetAndNotify(ref functionBackColor_, value);
@@ -69,6 +84,17 @@ public class ProfileListViewItem : SearchableProfileItem {
       FunctionName = moduleInfo.Name, // Override name, disables GetFunctionName.
       Weight = moduleInfo.Weight,
       Percentage = moduleInfo.Percentage
+    };
+  }
+  
+  public static ProfileListViewItem From(FunctionMarkingCategory category, ProfileData profileData,
+                                         FunctionNameFormatter funcNameFormatter,
+                                         CallTreeNodeSettings settings) {
+    return new ProfileListViewItem(funcNameFormatter, settings) {
+      MarkingCategory = category,
+      FunctionName = category.Marking.Title, // Override name, disables GetFunctionName.
+      Weight = category.Weight,
+      Percentage = category.Percentage
     };
   }
 
@@ -210,6 +236,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   }
 
   public event EventHandler<ModuleProfileInfo> ModuleClick;
+  public event EventHandler<FunctionMarkingCategory> CategoryClick;
   public event EventHandler<ProfileCallTreeNode> NodeClick;
   public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
   public event PropertyChangedEventHandler PropertyChanged;
@@ -442,11 +469,28 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     GridViewColumnVisibility.UpdateListView(ItemList);
   }
 
-  public void ShowModules(List<ModuleProfileInfo> nodes) {
-    itemList_ = new List<ProfileListViewItem>(nodes.Count);
-    nodes.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
+  public void ShowModules(List<ModuleProfileInfo> modules) {
+    itemList_ = new List<ProfileListViewItem>(modules.Count);
+    modules.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
                                                                  Session.CompilerInfo.NameProvider.FormatFunctionName,
                                                                  Settings)));
+    UpdateMarkedFunctions();
+    ItemList.ItemsSource = new ListCollectionView(itemList_);
+    ItemList.ContextMenu = null;
+  }
+  
+  public void ShowCategories(List<FunctionMarkingCategory> nodes) {
+    itemList_ = new List<ProfileListViewItem>(nodes.Count);
+
+    foreach (var node in nodes) {
+      if(node.SortedFunctions.Count == 0) {
+        continue;
+      }
+      
+      itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
+        Session.CompilerInfo.NameProvider.FormatFunctionName, Settings));
+    }
+
     UpdateMarkedFunctions();
     ItemList.ItemsSource = new ListCollectionView(itemList_);
     ItemList.ContextMenu = null;
@@ -513,6 +557,9 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
     else if (node?.ModuleInfo != null) {
       ModuleClick?.Invoke(this, node.ModuleInfo);
+    }
+    else if (node?.MarkingCategory != null) {
+      CategoryClick?.Invoke(this, node.MarkingCategory);
     }
 
     // Show the sum of the selected functions.

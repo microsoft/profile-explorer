@@ -80,7 +80,7 @@
             </GridViewColumn.CellTemplate>
           </GridViewColumn>
 
-          <GridViewColumn Width="120" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowModuleColumn}">
+          <GridViewColumn Width="100" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowModuleColumn}">
             <GridViewColumnHeader x:Name="ModuleColumnHeader" Content="Module" />
             <GridViewColumn.HeaderContainerStyle>
               <Style TargetType="{x:Type GridViewColumnHeader}">

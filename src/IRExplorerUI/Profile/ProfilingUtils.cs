@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using IRExplorerCore;
+using IRExplorerCore.Utilities;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile.Document;
 
@@ -15,8 +16,9 @@ namespace IRExplorerUI.Profile;
 public record FunctionMarkingCategory(
   FunctionMarkingStyle Marking,
   TimeSpan Weight,
-  IRTextFunction HottestFunction,
-  List<(IRTextFunction Function, TimeSpan Weight)> SortedFunctions) {
+  double Percentage,
+  ProfileCallTreeNode HottestFunction,
+  List<ProfileCallTreeNode> SortedFunctions) {
 
   public virtual bool Equals(FunctionMarkingCategory other) {
     if (ReferenceEquals(null, other)) return false;
@@ -404,71 +406,119 @@ public static class ProfilingUtils {
   }
 
   public static List<FunctionMarkingCategory> CollectMarkedFunctions(List<FunctionMarkingStyle> markings,
-                                                                     bool isCategoriesMenu, ISession session) {
+                                                                     bool isCategoriesMenu, ISession session,
+                                                                     ProfileCallTreeNode startNode = null) {
     // Collect functions across all markings to compute the "Unmarked" weight.
-    var nameProvider = session.CompilerInfo.NameProvider;
     var markingCategoryList = new List<FunctionMarkingCategory>();
     var allFuncNodeList = new List<ProfileCallTreeNode>();
 
-    //? TODO: Multi-thread
     foreach (var marking in markings) {
       // Find all functions matching the marked name. There can be multiple
       // since the same func. name may be used in multiple modules,
       // and also because the name matching may use Regex.
       var funcNodeList = new List<ProfileCallTreeNode>();
-      var funcSet = new HashSet<(IRTextFunction Function, TimeSpan Weight)>();
+      var funcMap = new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();
 
-      foreach (var loadedDoc in session.SessionState.Documents) {
-        if (loadedDoc.Summary == null) {
-          continue;
-        }
-
-        var matchingFuncList = loadedDoc.Summary.FindFunctions(name =>
-          marking.NameMatches(nameProvider.FormatFunctionName(name)));
-
-        foreach (var func in matchingFuncList) {
-          var nodeList = session.ProfileData.CallTree.GetCallTreeNodes(func);
-
-          if (nodeList != null) {
-            funcNodeList.AddRange(nodeList);
-
-            if (marking.IsRegex) {
-              allFuncNodeList.AddRange(nodeList);
-            }
-          }
-
-          // Add the function to the category if it has a profile.
-          var funcProfile = session.ProfileData.GetFunctionProfile(func);
-
-          if (funcProfile != null) {
-            funcSet.Add((func, funcProfile.Weight));
-          }
-        }
+      if (startNode == null) {
+        CollectGlobalMarkedFunctions(marking, funcNodeList, allFuncNodeList, funcMap, session);
+      }
+      else {
+        CollectCallTreeMarkedFunctions(marking, startNode, funcNodeList, allFuncNodeList, funcMap, session);
       }
 
       // Combine all marked functions to obtain the proper total weight.
       var weight = ProfileCallTree.CombinedCallTreeNodesWeight(funcNodeList);
-      var funcList = funcSet.ToList();
-      funcList.Sort((a, b) => b.Weight.CompareTo(a.Weight));
-      var hottestFunc = funcList.Count > 0 ? funcList[0].Function : null;
-      markingCategoryList.Add(new FunctionMarkingCategory(marking, weight, hottestFunc, funcList));
+      double weightPercentage = session.ProfileData.ScaleFunctionWeight(weight);
+      var funcList = new List<ProfileCallTreeNode>();
+      
+      foreach(var pair in funcMap) {
+        funcList.Add(ProfileCallTree.CombinedCallTreeNodes(pair.Value));
+      }
+      
+      
+      funcList.Sort((a, b) => 
+        b.Weight.CompareTo(a.Weight));
+      var hottestFunc = funcList.Count > 0 ? funcList[0] : null;
+      markingCategoryList.Add(new FunctionMarkingCategory(marking, weight, weightPercentage,
+        hottestFunc, funcList));
     }
 
     // Sort markings by weight in decreasing order.
-    markingCategoryList.Sort((a, b) => a.Weight.CompareTo(b.Weight));
+    markingCategoryList.Sort((a, b) => b.Weight.CompareTo(a.Weight));
 
     if (isCategoriesMenu) {
       // Compute the "Unmarked" weight and add it as the last entry.
       var categoriesWeight = ProfileCallTree.CombinedCallTreeNodesWeight(allFuncNodeList);
       var otherWeight = session.ProfileData.TotalWeight - categoriesWeight;
+      double otherWeightPercentage = session.ProfileData.ScaleFunctionWeight(otherWeight);
       var uncategorizedMarking = new FunctionMarkingCategory(
         new FunctionMarkingStyle("Other functions not covered by categories",
           Colors.Transparent, "Uncategorized"),
-        otherWeight, null, null);
-      markingCategoryList.Insert(0, uncategorizedMarking);
+        otherWeight, otherWeightPercentage, null, null);
+      markingCategoryList.Add(uncategorizedMarking);
     }
 
     return markingCategoryList;
+  }
+
+  private static void CollectCallTreeMarkedFunctions(FunctionMarkingStyle marking, ProfileCallTreeNode startNode, 
+                                                     List<ProfileCallTreeNode> funcNodeList, 
+                                                     List<ProfileCallTreeNode> allFuncNodeList, 
+                                                     Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcNodeMap, ISession session) {
+    var nameProvider = session.CompilerInfo.NameProvider;
+    var visited = new HashSet<ProfileCallTreeNode>();
+    var queue = new Queue<ProfileCallTreeNode>();
+    queue.Enqueue(startNode);
+
+    while (queue.Count > 0) {
+      var node = queue.Dequeue();
+
+      if (visited.Contains(node)) {
+        continue;
+      }
+
+      visited.Add(node);
+
+      if (marking.NameMatches(nameProvider.FormatFunctionName(node.Function.Name))) {
+        funcNodeList.Add(node); // Per-category list.
+        allFuncNodeList.Add(node); // All categories list.
+        var instanceNodeList = funcNodeMap.GetOrAddValue(node.Function, () => new List<ProfileCallTreeNode>());
+        instanceNodeList.Add(node);
+      }
+
+      if (node.HasChildren) {
+        foreach (var child in node.Children) {
+          queue.Enqueue(child);
+        }
+      }
+    }
+  }
+
+  private static void CollectGlobalMarkedFunctions(FunctionMarkingStyle marking, 
+                                                   List<ProfileCallTreeNode> funcNodeList,
+                                                   List<ProfileCallTreeNode> allFuncNodeList, 
+                                                   Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcNodeMap, ISession session) {
+    var nameProvider = session.CompilerInfo.NameProvider;
+    
+    foreach (var loadedDoc in session.SessionState.Documents) {
+      if (loadedDoc.Summary == null) {
+        continue;
+      }
+
+      var matchingFuncList = loadedDoc.Summary.FindFunctions(name =>
+        marking.NameMatches(nameProvider.FormatFunctionName(name)));
+
+      foreach (var func in matchingFuncList) {
+        var nodeList = session.ProfileData.CallTree.GetCallTreeNodes(func);
+
+        if (nodeList != null) {
+          funcNodeList.AddRange(nodeList); // Per-category list.
+          allFuncNodeList.AddRange(nodeList); // All categories list.
+        }
+
+        funcNodeMap[func] = nodeList;
+      }
+    }
   }
 
   private static int CommonParentCallerIndex(ProfileCallTreeNode a, ProfileCallTreeNode b) {
@@ -681,7 +731,7 @@ public static class ProfilingUtils {
 
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
-    var separatorIndex = defaultItems.FindIndex(item => item is Separator);
+    var separatorIndex = !isCategoriesMenu ? defaultItems.FindIndex(item => item is Separator) : -1;
     var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
     var valueTemplate = (DataTemplate)Application.Current.
       FindResource("ProfileMenuItemValueTemplate");
@@ -693,52 +743,51 @@ public static class ProfilingUtils {
     var menuStyle = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle");
     double maxWidth = 0;
 
-    foreach (var pair in markingCategoryList) {
-      double weightPercentage = session.ProfileData.ScaleFunctionWeight(pair.Weight);
-      string text = $"({markerSettings.FormatWeightValue(null, pair.Weight)})";
+    foreach (var category in markingCategoryList) {
+      string text = $"({markerSettings.FormatWeightValue(null, category.Weight)})";
       string title = null;
       string tooltip = null;
 
       if (isCategoriesMenu) {
-        title = pair.Marking.Title;
-        tooltip = DocumentUtils.FormatLongFunctionName(pair.Marking.Name);
+        title = category.Marking.Title;
+        tooltip = DocumentUtils.FormatLongFunctionName(category.Marking.Name);
       }
       else {
         tooltip = "Right-click to remove function marking";
-        title = pair.Marking.Name.TrimToLength(80);
+        title = category.Marking.Name.TrimToLength(80);
 
-        if (pair.Marking.HasTitle && pair.Marking.IsRegex) {
-          title = $"{pair.Marking.Title.TrimToLength(40)} ({title.TrimToLength(40)}) (Regex)";
+        if (category.Marking.HasTitle && category.Marking.IsRegex) {
+          title = $"{category.Marking.Title.TrimToLength(40)} ({title.TrimToLength(40)}) (Regex)";
         }
         else {
-          if (pair.Marking.HasTitle) {
-            title = $"{pair.Marking.Title} ({title})";
+          if (category.Marking.HasTitle) {
+            title = $"{category.Marking.Title} ({title})";
           }
 
-          if (pair.Marking.IsRegex) {
+          if (category.Marking.IsRegex) {
             title = $"{title} (Regex)";
           }
         }
       }
 
-      var value = new ProfileMenuItem(text, pair.Weight.Ticks, weightPercentage) {
+      var value = new ProfileMenuItem(text, category.Weight.Ticks, category.Percentage) {
         PrefixText = title,
         ToolTip = tooltip,
-        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
-        TextWeight = markerSettings.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = pair.HottestFunction != null ?
+        ShowPercentageBar = markerSettings.ShowPercentageBar(category.Percentage),
+        TextWeight = markerSettings.PickTextWeight(category.Percentage),
+        PercentageBarBackColor = category.HottestFunction != null ?
           markerSettings.PercentageBarBackColor.AsBrush() :
           (Brush)App.Current.FindResource("ProfileUncategorizedBrush"),
-        BackColor = !isCategoriesMenu ? pair.Marking.Color.AsBrush() : Brushes.Transparent
+        BackColor = !isCategoriesMenu ? category.Marking.Color.AsBrush() : Brushes.Transparent
       };
 
       var item = new MenuItem {
-        IsChecked = !isCategoriesMenu && pair.Marking.IsEnabled,
-        StaysOpenOnClick = !isCategoriesMenu,
+        IsChecked = !isCategoriesMenu && category.Marking.IsEnabled,
+        StaysOpenOnClick = true,
         Header = value,
-        Tag = !isCategoriesMenu ? pair.Marking : pair.HottestFunction,
+        Tag = !isCategoriesMenu ? category.Marking : (category.HottestFunction ?? new object()),
         HeaderTemplate = !isCategoriesMenu ? checkableValueTemplate : categoriesValueTemplate,
-        Style = pair.SortedFunctions is {Count: > 0} ? submenuStyle : menuStyle
+        Style = category.SortedFunctions is {Count: > 0} ? submenuStyle : menuStyle
       };
 
       if (menuClickHandler != null) {
@@ -757,17 +806,17 @@ public static class ProfilingUtils {
 
       // Create a submenu with the sorted functions
       // part of the marking/category.
-      if (pair.SortedFunctions is {Count: > 0}) {
+      if (category.SortedFunctions is {Count: > 0}) {
         var profileSubItems = new List<ProfileMenuItem>();
         double subitemMaxWidth = 0;
         int order = 0;
 
-        foreach (var node in pair.SortedFunctions) {
+        foreach (var node in category.SortedFunctions) {
           double funcWeightPercentage = session.ProfileData.ScaleFunctionWeight(node.Weight);
           string funcText = $"({markerSettings.FormatWeightValue(null, node.Weight)})";
 
           // Stop once the weight is too small to be significant.
-          if (!markerSettings.IsVisibleValue(order++, weightPercentage)) {
+          if (!markerSettings.IsVisibleValue(order++, funcWeightPercentage)) {
             break;
           }
 
@@ -803,7 +852,7 @@ public static class ProfilingUtils {
         }
       }
 
-      defaultItems.Insert(separatorIndex + 1, item);
+      defaultItems.Insert(++separatorIndex, item);
       profileItems.Add(value);
 
       // Make sure percentage rects are aligned.
