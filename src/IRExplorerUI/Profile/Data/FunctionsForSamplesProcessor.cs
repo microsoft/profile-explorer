@@ -8,7 +8,7 @@ public sealed class FunctionsForSamplesProcessor : ProfileSampleProcessor {
   private List<ChunkData> chunks_;
 
   private class ChunkData {
-    public HashSet<IRTextFunction> functionSet_ = new();
+    public HashSet<IRTextFunction> functionSet_ = new(1024);
   }
 
   public FunctionsForSamplesProcessor() {

@@ -16,36 +16,21 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   private TinyList<ProfileCallTreeNode> children_;
   //private SparseBitvector samplesIndices_;
 
-  //? TODO: ProfileCallSite not serialized properly, references CallTreeNode and should use Id instead
-  //[ProtoMember(3)]
+  public FunctionDebugInfo FunctionDebugInfo { get; set; }
+  public TimeSpan Weight { get; set; }
+  public TimeSpan ExclusiveWeight { get; set; }
   private Dictionary<long, ProfileCallSite> callSites_; //? Use Hybrid array/dict to save space
   private ProfileCallTreeNode caller_; // Can't be serialized, reconstructed.
-  [ProtoMember(4)]
-  public long Id { get; set; }
-  [ProtoMember(5)]
-  public FunctionDebugInfo FunctionDebugInfo { get; set; }
-  [ProtoMember(6)] private TimeSpan weight_; // Weight saved as ticks to use Interlocked.Add
-  [ProtoMember(7)] private TimeSpan exclusiveWeight_;
-  [ProtoMember(8)]
-  public ProfileCallTreeNodeKind Kind { get; set; }
   public object Tag { get; set; }
-
+  public int Id { get; set; }
+  public ProfileCallTreeNodeKind Kind { get; set; }
+  
   //? TODO: Replace Threads dict and CallSites with a TinyDictionary-like data struct
   //? like TinyList, also consider DictionarySlim instead of Dictionary from
   //? https://github.com/dotnet/corefxlab/blob/archive/src/Microsoft.Experimental.Collections/Microsoft/Collections/Extensions/DictionarySlim
   public Dictionary<int, (TimeSpan Weight, TimeSpan ExclusiveWeight)> ThreadWeights { get; set; }
   public bool HasThreadWeights => ThreadWeights != null && ThreadWeights.Count > 0;
   
-  public TimeSpan Weight {
-    get => weight_;
-    set => weight_ = value;
-  }
-
-  public TimeSpan ExclusiveWeight {
-    get => exclusiveWeight_;
-    set => exclusiveWeight_ = value;
-  }
-
   public virtual List<ProfileCallTreeNode> Nodes => new List<ProfileCallTreeNode>() {this};
   public IList<ProfileCallTreeNode> Children => children_;
   public virtual List<ProfileCallTreeNode> Callers => new List<ProfileCallTreeNode> {caller_};
@@ -101,7 +86,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   }
 
   public void AccumulateWeight(TimeSpan weight) {
-    weight_ += weight;
+    Weight += weight;
   }
 
   public void AccumulateWeight(TimeSpan weight, TimeSpan exclusiveWeight, int threadId) {
@@ -127,7 +112,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   }
 
   public void AccumulateExclusiveWeight(TimeSpan weight) {
-    exclusiveWeight_ += weight;
+    ExclusiveWeight += weight;
   }
 
   public (ProfileCallTreeNode, bool) AddChild(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
@@ -272,8 +257,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
       Kind = Kind,
       Function = Function,
       FunctionDebugInfo = FunctionDebugInfo,
-      weight_ = weight_,
-      exclusiveWeight_ = exclusiveWeight_,
+      Weight = Weight,
+      ExclusiveWeight = ExclusiveWeight,
       children_ = children_,
       caller_ = caller_,
       callSites_ = callSites_

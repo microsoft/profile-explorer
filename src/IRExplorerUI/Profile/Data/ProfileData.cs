@@ -285,7 +285,7 @@ public partial class ProfileData {
   public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function,
                                                         FunctionDebugInfo debugInfo) {
     return FunctionProfiles.GetOrAdd(function, key => {
-      return new FunctionProfileData {FunctionDebugInfo = debugInfo};
+      return new FunctionProfileData(debugInfo);
     });
   }
 

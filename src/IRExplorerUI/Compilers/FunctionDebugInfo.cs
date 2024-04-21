@@ -110,8 +110,8 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     // it is often the slowest part in processing a trace, while the memory
     // saving are quite small (under 15%, a few dozen MBs even for big traces).
     Name = name;
-    RVA = rva;
-    Size = size;
+    RVA = (uint)rva;
+    Size = (uint)size;
     OptimizationLevel = optLevel;
     SourceLines = null;
     Id = id;
@@ -123,14 +123,14 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   [ProtoMember(2)]
   public string Name { get; private set; }
   [ProtoMember(3)]
-  public long RVA { get; set; }
-  [ProtoMember(4)]
-  public long Size { get; set; }
-  [ProtoMember(5)]
   public List<SourceLineDebugInfo> SourceLines { get; set; }
-  [ProtoMember(5)]
+  [ProtoMember(4)]
   public long AuxiliaryId { get; set; } // Used for RejitID in managed code.
+  [ProtoMember(5)]
+  public uint RVA { get; set; }
   [ProtoMember(6)]
+  public uint Size { get; set; }
+  [ProtoMember(7)]
   public short OptimizationLevel { get; set; } // Used for OptimizationTier in managed code.
 
   public bool HasSourceLines => SourceLines is {Count: > 0};
@@ -143,8 +143,8 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   //? TODO: Remove SourceFileName from SourceLineDebugInfo
   public string SourceFileName { get; set; }
   public string OriginalSourceFileName { get; set; }
-  public long StartRVA => RVA;
-  public long EndRVA => RVA + Size - 1;
+  public uint StartRVA => RVA;
+  public uint EndRVA => RVA + Size - 1;
   public bool IsUnknown => RVA == 0 && Size == 0;
 
   public static T BinarySearch<T>(List<T> ranges, long value) where T : IComparable<long> {

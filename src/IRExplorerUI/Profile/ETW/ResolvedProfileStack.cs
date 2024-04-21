@@ -15,11 +15,11 @@ namespace IRExplorerUI.Profile;
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct ResolvedProfileStackFrame {
   [ProtoMember(1)]
-  public long FrameRVA { get; set; }
-  [ProtoMember(2)]
   public ResolvedProfileStackFrameDetails FrameDetails { get; set; }
+  [ProtoMember(2)]
+  public uint FrameRVA { get; set; }
 
-  public ResolvedProfileStackFrame(long frameRva, ResolvedProfileStackFrameDetails frameDetails) {
+  public ResolvedProfileStackFrame(uint frameRva, ResolvedProfileStackFrameDetails frameDetails) {
     FrameRVA = frameRva;
     FrameDetails = frameDetails;
   }
@@ -54,7 +54,7 @@ public sealed class ResolvedProfileStack {
                        ProfileStack stack) {
     // Deduplicate the frame.
     var uniqueFrame = uniqueFrames_.GetOrAdd(frameDetails, frameDetails);
-    var rvaFrame = new ResolvedProfileStackFrame(frameRVA, uniqueFrame);
+    var rvaFrame = new ResolvedProfileStackFrame((uint)frameRVA, uniqueFrame);
 
     // A stack frame IP can be called from both user and kernel mode code.
     frameDetails.IsKernelCode = frameIndex < stack.UserModeTransitionIndex;

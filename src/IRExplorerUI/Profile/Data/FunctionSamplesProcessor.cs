@@ -7,17 +7,23 @@ using IRExplorerCore.Utilities;
 namespace IRExplorerUI.Profile;
 
 public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
-  private ProfileCallTreeNode node_;
   private Dictionary<int, List<SampleIndex>> threadListMap_;
   private List<ChunkData> chunks_;
+  private ProfileCallTreeNode node_;
 
+  private static int EstimateSampleCount(ProfileCallTreeNode node) {
+    return (int)node.Weight.TotalSeconds * 8000;
+  }
+  
   private class ChunkData {
-    public ChunkData() {
-      threadListMap[-1] = allThreadsList;
+    public ChunkData(ProfileCallTreeNode node) {
+      AllThreadsList = new List<SampleIndex>(EstimateSampleCount(node));
+      ThreadListMap = new Dictionary<int, List<SampleIndex>>();
+      ThreadListMap[-1] = AllThreadsList;
     }
 
-    public List<SampleIndex> allThreadsList = new();
-    public Dictionary<int, List<SampleIndex>> threadListMap = new();
+    public List<SampleIndex> AllThreadsList;
+    public Dictionary<int, List<SampleIndex>> ThreadListMap;
   }
 
   public FunctionSamplesProcessor(ProfileCallTreeNode node) {
@@ -38,7 +44,7 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
   }
 
   protected override object InitializeChunk(int k) {
-    var chunk = new ChunkData();
+    var chunk = new ChunkData(node_);
 
     lock (chunks_) {
       chunks_.Add(chunk);
@@ -79,9 +85,11 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
     }
 
     if (match) {
-      var threadList = data.threadListMap.GetOrAddValue(stack.Context.ThreadId);
-      threadList.Add(new SampleIndex(sampleIndex, sample.Time));
-      data.allThreadsList.Add(new SampleIndex(sampleIndex, sample.Time));
+      var threadList = data.ThreadListMap.GetOrAddValue(stack.Context.ThreadId,
+        () => new List<SampleIndex>(EstimateSampleCount(node_)));
+      var index = new SampleIndex(sampleIndex, sample.Time);
+      threadList.Add(index);
+      data.AllThreadsList.Add(index);
     }
   }
 
@@ -91,7 +99,7 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
     var countMap = new Dictionary<int, int>();
 
     foreach (var chunk in chunks_) {
-      foreach (var pair in chunk.threadListMap) {
+      foreach (var pair in chunk.ThreadListMap) {
         countMap.AccumulateValue(pair.Key, pair.Value.Count);
       }
     }
@@ -104,7 +112,7 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
 
     // Merge the per-thread sample lists.
     foreach (var chunk in chunks_) {
-      foreach (var pair in chunk.threadListMap) {
+      foreach (var pair in chunk.ThreadListMap) {
         threadListMap_[pair.Key].AddRange(pair.Value);
       }
     }

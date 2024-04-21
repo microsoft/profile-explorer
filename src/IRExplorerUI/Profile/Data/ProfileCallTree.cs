@@ -28,7 +28,7 @@ public sealed class ProfileCallTree {
   private ConcurrentDictionary<IRTextFunction, ProfileCallTreeNode> rootNodes_;
   private Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcToNodesMap_;
   private Dictionary<long, ProfileCallTreeNode> nodeIdMap_;
-  private long nextNodeId_;
+  private int nextNodeId_;
   //private ReaderWriterLockSlim lock_;
   //private ReaderWriterLockSlim funcLock_;
 
@@ -623,7 +623,7 @@ public sealed class ProfileCallTree {
     [ProtoMember(4)]
     public long[] RootNodeIds;
     [ProtoMember(5)]
-    public long NextNodeId;
+    public int NextNodeId;
 
     public ProfileCallTreeState(ProfileCallTree callTree) {
       NodeIdMap = new Dictionary<long, ProfileCallTreeNode>(callTree.funcToNodesMap_.Count * 2);

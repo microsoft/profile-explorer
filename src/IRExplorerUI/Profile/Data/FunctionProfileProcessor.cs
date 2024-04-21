@@ -113,16 +113,18 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
         continue;
       }
 
-      if (isTopFrame && data.StackModules.Add(resolvedFrame.FrameDetails.Image.Id)) {
-        data.ModuleWeights.AccumulateValue(resolvedFrame.FrameDetails.Image.Id, sample.Weight);
+      var frameDetails = resolvedFrame.FrameDetails;
+      
+      if (isTopFrame && data.StackModules.Add(frameDetails.Image.Id)) {
+        data.ModuleWeights.AccumulateValue(frameDetails.Image.Id, sample.Weight);
       }
 
-      long funcRva = resolvedFrame.FrameDetails.DebugInfo.RVA;
+      long funcRva = frameDetails.DebugInfo.RVA;
       long frameRva = resolvedFrame.FrameRVA;
-      var textFunction = resolvedFrame.FrameDetails.Function;
+      var textFunction = frameDetails.Function;
       var funcProfile =
-        Profile.GetOrCreateFunctionProfile(resolvedFrame.FrameDetails.Function,
-                                           resolvedFrame.FrameDetails.DebugInfo);
+        Profile.GetOrCreateFunctionProfile(frameDetails.Function,
+                                           frameDetails.DebugInfo);
 
       lock (funcProfile) {
         long offset = frameRva - funcRva;

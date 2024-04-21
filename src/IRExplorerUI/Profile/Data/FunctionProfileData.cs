@@ -21,6 +21,11 @@ public class FunctionProfileData {
     InitializeReferenceMembers();
   }
 
+  public FunctionProfileData(FunctionDebugInfo debugInfo) {
+    FunctionDebugInfo = debugInfo;
+    InitializeReferenceMembers(debugInfo);
+  }
+
   [ProtoMember(2)]
   public TimeSpan Weight { get; set; }
   [ProtoMember(3)]
@@ -194,6 +199,21 @@ public class FunctionProfileData {
     InstructionWeight ??= new Dictionary<long, TimeSpan>();
     InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>();
 
+    SampleStartIndex = int.MaxValue;
+    SampleEndIndex = int.MinValue;
+  }
+  
+  private void InitializeReferenceMembers(FunctionDebugInfo debugInfo) {
+    if(debugInfo != null) {
+      int size = (int)debugInfo.Size / 4; // Assume 4 bytes per instruction.
+      InstructionWeight ??= new Dictionary<long, TimeSpan>(size);
+      InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>(size);
+    }
+    else {
+      InstructionWeight ??= new Dictionary<long, TimeSpan>();
+      InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>();
+    }
+    
     SampleStartIndex = int.MaxValue;
     SampleEndIndex = int.MinValue;
   }
