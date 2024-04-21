@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -410,44 +411,56 @@ public static class ProfilingUtils {
                                                                      ProfileCallTreeNode startNode = null) {
     // Collect functions across all markings to compute the "Unmarked" weight.
     var markingCategoryList = new List<FunctionMarkingCategory>();
-    var allFuncNodeList = new List<ProfileCallTreeNode>();
-
+    var lockObject = new object();
+    var tasks = new List<Task>();
+    
     foreach (var marking in markings) {
-      // Find all functions matching the marked name. There can be multiple
-      // since the same func. name may be used in multiple modules,
-      // and also because the name matching may use Regex.
-      var funcNodeList = new List<ProfileCallTreeNode>();
-      var funcMap = new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();
+      tasks.Add(Task.Run(() => {
+        // Find all functions matching the marked name. There can be multiple
+        // since the same func. name may be used in multiple modules,
+        // and also because the name matching may use Regex.
+        var funcNodeList = new List<ProfileCallTreeNode>();
+        var funcMap = new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();
 
-      if (startNode == null) {
-        CollectGlobalMarkedFunctions(marking, funcNodeList, allFuncNodeList, funcMap, session);
-      }
-      else {
-        CollectCallTreeMarkedFunctions(marking, startNode, funcNodeList, allFuncNodeList, funcMap, session);
-      }
+        if (startNode == null) {
+          CollectGlobalMarkedFunctions(marking, funcNodeList, funcMap, session);
+        }
+        else {
+          CollectCallTreeMarkedFunctions(marking, startNode, funcNodeList, funcMap, session);
+        }
 
-      // Combine all marked functions to obtain the proper total weight.
-      var weight = ProfileCallTree.CombinedCallTreeNodesWeight(funcNodeList);
-      double weightPercentage = session.ProfileData.ScaleFunctionWeight(weight);
-      var funcList = new List<ProfileCallTreeNode>();
-      
-      foreach(var pair in funcMap) {
-        funcList.Add(ProfileCallTree.CombinedCallTreeNodes(pair.Value));
-      }
-      
-      
-      funcList.Sort((a, b) => 
-        b.Weight.CompareTo(a.Weight));
-      var hottestFunc = funcList.Count > 0 ? funcList[0] : null;
-      markingCategoryList.Add(new FunctionMarkingCategory(marking, weight, weightPercentage,
-        hottestFunc, funcList));
+        // Combine all marked functions to obtain the proper total weight.
+        var weight = ProfileCallTree.CombinedCallTreeNodesWeight(funcNodeList);
+        double weightPercentage = session.ProfileData.ScaleFunctionWeight(weight);
+        var funcList = new List<ProfileCallTreeNode>();
+
+        foreach (var pair in funcMap) {
+          funcList.Add(ProfileCallTree.CombinedCallTreeNodes(pair.Value, false));
+        }
+
+        funcList.Sort((a, b) =>
+          b.Weight.CompareTo(a.Weight));
+        var hottestFunc = funcList.Count > 0 ? funcList[0] : null;
+
+        lock (lockObject) {
+          markingCategoryList.Add(new FunctionMarkingCategory(marking, weight, weightPercentage,
+            hottestFunc, funcList));
+        }
+      }));
     }
-
+    
     // Sort markings by weight in decreasing order.
+    Task.WaitAll(tasks.ToArray());
     markingCategoryList.Sort((a, b) => b.Weight.CompareTo(a.Weight));
 
     if (isCategoriesMenu) {
       // Compute the "Unmarked" weight and add it as the last entry.
+      var allFuncNodeList = new List<ProfileCallTreeNode>();
+      
+      foreach (var category in markingCategoryList) {
+        allFuncNodeList.AddRange(category.SortedFunctions);
+      }
+      
       var categoriesWeight = ProfileCallTree.CombinedCallTreeNodesWeight(allFuncNodeList);
       var otherWeight = session.ProfileData.TotalWeight - categoriesWeight;
       double otherWeightPercentage = session.ProfileData.ScaleFunctionWeight(otherWeight);
@@ -463,7 +476,6 @@ public static class ProfilingUtils {
 
   private static void CollectCallTreeMarkedFunctions(FunctionMarkingStyle marking, ProfileCallTreeNode startNode, 
                                                      List<ProfileCallTreeNode> funcNodeList, 
-                                                     List<ProfileCallTreeNode> allFuncNodeList, 
                                                      Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcNodeMap, ISession session) {
     var nameProvider = session.CompilerInfo.NameProvider;
     var visited = new HashSet<ProfileCallTreeNode>();
@@ -481,7 +493,6 @@ public static class ProfilingUtils {
 
       if (marking.NameMatches(nameProvider.FormatFunctionName(node.Function.Name))) {
         funcNodeList.Add(node); // Per-category list.
-        allFuncNodeList.Add(node); // All categories list.
         var instanceNodeList = funcNodeMap.GetOrAddValue(node.Function, () => new List<ProfileCallTreeNode>());
         instanceNodeList.Add(node);
       }
@@ -496,7 +507,6 @@ public static class ProfilingUtils {
 
   private static void CollectGlobalMarkedFunctions(FunctionMarkingStyle marking, 
                                                    List<ProfileCallTreeNode> funcNodeList,
-                                                   List<ProfileCallTreeNode> allFuncNodeList, 
                                                    Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcNodeMap, ISession session) {
     var nameProvider = session.CompilerInfo.NameProvider;
     
@@ -513,7 +523,6 @@ public static class ProfilingUtils {
 
         if (nodeList != null) {
           funcNodeList.AddRange(nodeList); // Per-category list.
-          allFuncNodeList.AddRange(nodeList); // All categories list.
         }
 
         funcNodeMap[func] = nodeList;

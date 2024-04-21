@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI.Profile;
@@ -108,9 +109,14 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
       }
     }
 
-    // Sort each list, since samples may not be in order.
+    // Sort each list in parallel, since samples may not be in order.
+    var sortTasks = new List<Task>();
+    
     foreach (var pair in threadListMap_) {
-      pair.Value.Sort((a, b) => a.Index.CompareTo(b.Index));
+      var list = pair.Value;
+      sortTasks.Add(Task.Run(() => list.Sort((a, b) => a.Index.CompareTo(b.Index))));
     }
+    
+    Task.WaitAll(sortTasks.ToArray());
   }
 }

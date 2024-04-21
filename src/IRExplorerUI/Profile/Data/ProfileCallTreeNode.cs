@@ -34,7 +34,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   //? like TinyList, also consider DictionarySlim instead of Dictionary from
   //? https://github.com/dotnet/corefxlab/blob/archive/src/Microsoft.Experimental.Collections/Microsoft/Collections/Extensions/DictionarySlim
   public Dictionary<int, (TimeSpan Weight, TimeSpan ExclusiveWeight)> ThreadWeights { get; set; }
-
+  public bool HasThreadWeights => ThreadWeights != null && ThreadWeights.Count > 0;
+  
   public TimeSpan Weight {
     get => weight_;
     set => weight_ = value;

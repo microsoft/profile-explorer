@@ -334,13 +334,14 @@ public sealed class ProfileCallTree {
 
   public ProfileCallTreeNode GetCombinedCallTreeNode(IRTextFunction function, ProfileCallTreeNode parentNode = null) {
     var nodes = GetSortedCallTreeNodes(function);
-    return CombinedCallTreeNodesImpl(nodes, parentNode);
+    return CombinedCallTreeNodesImpl(nodes, true, parentNode);
   }
 
-  public static ProfileCallTreeNode CombinedCallTreeNodes(List<ProfileCallTreeNode> nodes) {
+  public static ProfileCallTreeNode CombinedCallTreeNodes(List<ProfileCallTreeNode> nodes,
+                                                          bool combineLists = true) {
     var nodeListCopy = new List<ProfileCallTreeNode>(nodes);
     nodeListCopy.Sort((a, b) => b.Weight.CompareTo(a.Weight));
-    return CombinedCallTreeNodesImpl(nodeListCopy);
+    return CombinedCallTreeNodesImpl(nodeListCopy, combineLists);
   }
 
   public static TimeSpan CombinedCallTreeNodesWeight(List<ProfileCallTreeNode> nodes) {
@@ -348,11 +349,12 @@ public sealed class ProfileCallTree {
       return TimeSpan.Zero;
     }
 
-    var combinedNode = CombinedCallTreeNodes(nodes);
+    var combinedNode = CombinedCallTreeNodes(nodes, false);
     return combinedNode.Weight;
   }
 
   private static ProfileCallTreeNode CombinedCallTreeNodesImpl(List<ProfileCallTreeNode> nodes,
+                                                               bool combineLists = true,
                                                                ProfileCallTreeNode parentNode = null) {
     if (nodes == null || nodes.Count == 0) {
       return new ProfileCallTreeGroupNode();
@@ -409,15 +411,17 @@ public sealed class ProfileCallTree {
       excWeight += node.ExclusiveWeight;
 
       // Sum up per-thread weights.
-      foreach (var pair in node.ThreadWeights) {
-        threadsMap.AccumulateValue(pair.Key,
-          countWeight ? pair.Value.Weight : TimeSpan.Zero,
-          pair.Value.ExclusiveWeight);
+      if (combineLists && node.HasThreadWeights) {
+        foreach (var pair in node.ThreadWeights) {
+          threadsMap.AccumulateValue(pair.Key,
+            countWeight ? pair.Value.Weight : TimeSpan.Zero,
+            pair.Value.ExclusiveWeight);
+        }
       }
 
       kind = node.Kind;
 
-      if (node.HasChildren) {
+      if (combineLists && node.HasChildren) {
         foreach (var childNode in node.Children) {
           if (!childrenSet.TryGetValue(childNode, out var existingNode)) {
             existingNode = new ProfileCallTreeNode(childNode.FunctionDebugInfo, childNode.Function);
@@ -430,7 +434,7 @@ public sealed class ProfileCallTree {
         }
       }
 
-      if (node.HasCallers) {
+      if (combineLists && node.HasCallers) {
         void HandleCaller(ProfileCallTreeNode caller) {
           if (!callersSet.TryGetValue(caller, out var existingNode)) {
             existingNode = new ProfileCallTreeNode(caller.FunctionDebugInfo, caller.Function);
@@ -452,7 +456,7 @@ public sealed class ProfileCallTree {
         }
       }
 
-      if (node.HasCallSites) {
+      if (combineLists && node.HasCallSites) {
         foreach (var pair in node.CallSites) {
           if (!callSiteMap.TryGetValue(pair.Key, out var callsite)) {
             callsite = new ProfileCallSite(pair.Key);
@@ -481,7 +485,7 @@ public sealed class ProfileCallTree {
       return TimeSpan.Zero;
     }
 
-    var combinedNode = CombinedCallTreeNodesImpl(nodes);
+    var combinedNode = CombinedCallTreeNodesImpl(nodes, false);
     return combinedNode.Weight;
   }
 
