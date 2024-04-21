@@ -1116,13 +1116,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    DocumentUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
-      () => UpdateMarkedFunctions());
+    ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
+      e.OriginalSource, () => UpdateMarkedFunctions());
   }
 
   private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    await DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
-      () => UpdateMarkedFunctions());
+    await ProfilingUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
+      e.OriginalSource, () => UpdateMarkedFunctions());
   }
 
   public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {

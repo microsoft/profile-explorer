@@ -21,6 +21,7 @@ public partial class MainWindow : Window, ISession {
   private CancelableTaskInstance updateProfileTask_ = new CancelableTaskInstance();
   private ProfileData.ProcessingResult allThreadsProfile_;
   private ProfileFilterState profileFilter_;
+  private List<FunctionMarkingCategory> currentMarkingCategories_;
 
   public ProfileData ProfileData => sessionState_?.ProfileData;
   public ProfileFilterState ProfileFilter {
@@ -131,6 +132,7 @@ public partial class MainWindow : Window, ISession {
     ProfileFilter = state;
     ProfileFilterStateHost.DataContext = null;
     ProfileFilterStateHost.DataContext = state;
+    currentMarkingCategories_ = null;
   }
 
   public async Task<bool> RemoveProfileSamplesFilter() {
@@ -695,14 +697,30 @@ public partial class MainWindow : Window, ISession {
     var filePath = App.GetFunctionMarkingsFilePath(compilerInfo_.CompilerIRName);
     Utils.OpenExternalFile(filePath);
   }
-
+  
   private async void CategoriesMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    await DocumentUtils.CreateFunctionsCategoriesMenu(CategoriesMenu, async (o, args) => {
+    if (e.OriginalSource is MenuItem menuItem &&
+        menuItem.Tag != null) {
+      return;
+    }
+    
+    currentMarkingCategories_ = await ProfilingUtils.CreateFunctionsCategoriesMenu(CategoriesMenu, async (o, args) => {
         if (o is MenuItem menuItem &&
             menuItem.Tag is IRTextFunction func) {
           await SwitchActiveFunction(func);
         }
       }, null,
-      MarkingSettings, this);
+      currentMarkingCategories_, MarkingSettings, this);
   }
+  
+  private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, this,
+      e.OriginalSource, ReloadMarkingSettings);
+  }
+
+  private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    ProfilingUtils.PopulateMarkedModulesMenu(FunctionMenu, MarkingSettings, this,
+      e.OriginalSource, ReloadMarkingSettings);
+  }
+
 }

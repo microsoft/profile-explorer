@@ -45,6 +45,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     set => exclusiveWeight_ = value;
   }
 
+  public virtual List<ProfileCallTreeNode> Nodes => new List<ProfileCallTreeNode>() {this};
   public IList<ProfileCallTreeNode> Children => children_;
   public virtual List<ProfileCallTreeNode> Callers => new List<ProfileCallTreeNode> {caller_};
 #if DEBUG
@@ -283,6 +284,10 @@ public sealed class ProfileCallTreeGroupNode : ProfileCallTreeNode {
   private List<ProfileCallTreeNode> nodes_;
   private List<ProfileCallTreeNode> callers_;
 
+  public ProfileCallTreeGroupNode() {
+
+  }
+
   public ProfileCallTreeGroupNode(FunctionDebugInfo funcInfo, IRTextFunction function,
                                   List<ProfileCallTreeNode> nodes = null,
                                   List<ProfileCallTreeNode> children = null,
@@ -301,7 +306,7 @@ public sealed class ProfileCallTreeGroupNode : ProfileCallTreeNode {
   }
 
   public override bool IsGroup => true;
-  public List<ProfileCallTreeNode> Nodes => nodes_;
+  public override List<ProfileCallTreeNode> Nodes => nodes_;
   public override List<ProfileCallTreeNode> Callers => callers_;
   public override bool HasCallers => callers_ != null && callers_.Count > 0;
 

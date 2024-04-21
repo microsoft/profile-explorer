@@ -274,8 +274,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       }
 
       UpdateProfileFilterUI();
-      DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, profileFilter_);
-      DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, profileFilter_);
+      ProfilingUtils.SyncInstancesMenuWithFilter(InstancesMenu, profileFilter_);
+      ProfilingUtils.SyncThreadsMenuWithFilter(ThreadsMenu, profileFilter_);
     }
   }
 
@@ -399,7 +399,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (TextView.ProfileProcessingResult != null) {
       if (!isSourceFileDocument_) {
         var inlineeList = profileMarker_.GenerateInlineeList(TextView.ProfileProcessingResult);
-        DocumentUtils.CreateInlineesMenu(InlineesMenu, Section, inlineeList,
+        ProfilingUtils.CreateInlineesMenu(InlineesMenu, Section, inlineeList,
           funcProfile, InlineeMenuItem_OnClick, settings_, Session);
       }
 
@@ -480,11 +480,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void UpdateProfileDescription(FunctionProfileData funcProfile) {
-    DescriptionPrefixChanged?.Invoke(this, DocumentUtils.
+    DescriptionPrefixChanged?.Invoke(this, ProfilingUtils.
       CreateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session));
-    TitlePrefixChanged?.Invoke(this, DocumentUtils.
+    TitlePrefixChanged?.Invoke(this, ProfilingUtils.
       CreateProfileFilterTitle(profileFilter_, Session));
-    DescriptionSuffixChanged?.Invoke(this, DocumentUtils.
+    DescriptionSuffixChanged?.Invoke(this, ProfilingUtils.
       CreateProfileFilterDescription(profileFilter_, Session));
   }
 
@@ -570,12 +570,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void CreateProfileFilterMenus(IRTextSection section, FunctionProfileData funcProfile) {
-    DocumentUtils.CreateInstancesMenu(InstancesMenu, section, funcProfile,
+    ProfilingUtils.CreateInstancesMenu(InstancesMenu, section, funcProfile,
                                       InstanceMenuItem_OnClick, settings_, Session);
-    DocumentUtils.CreateThreadsMenu(ThreadsMenu, section, funcProfile,
+    ProfilingUtils.CreateThreadsMenu(ThreadsMenu, section, funcProfile,
                                     ThreadMenuItem_OnClick, settings_, Session);
-    DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, profileFilter_);
-    DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, profileFilter_);
+    ProfilingUtils.SyncInstancesMenuWithFilter(InstancesMenu, profileFilter_);
+    ProfilingUtils.SyncThreadsMenuWithFilter(ThreadsMenu, profileFilter_);
   }
 
   private async Task<bool> MarkSourceFileProfile(IRTextSection section, FunctionProfileData funcProfile) {
@@ -1034,12 +1034,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    DocumentUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, profileFilter_);
+    ProfilingUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, profileFilter_);
     await ApplyProfileFilter();
   }
 
   private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    DocumentUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);
+    ProfilingUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);
     await ApplyProfileFilter();
   }
 

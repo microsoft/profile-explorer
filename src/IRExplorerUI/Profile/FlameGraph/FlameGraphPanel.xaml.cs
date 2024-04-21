@@ -565,13 +565,13 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    DocumentUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
-      ReloadSettings);
+    ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
+      e.OriginalSource, ReloadSettings);
   }
 
   private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    await DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
-      ReloadSettings);
+    await ProfilingUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
+      e.OriginalSource, ReloadSettings);
   }
 
   public void UpdateMarkedFunctions(bool externalCall) {

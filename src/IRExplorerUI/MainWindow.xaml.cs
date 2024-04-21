@@ -1056,16 +1056,6 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
 
-  private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    await DocumentUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, this,
-      ReloadMarkingSettings);
-  }
-
-  private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    DocumentUtils.PopulateMarkedModulesMenu(FunctionMenu, MarkingSettings, this,
-      ReloadMarkingSettings);
-  }
-
   public event PropertyChangedEventHandler PropertyChanged;
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {

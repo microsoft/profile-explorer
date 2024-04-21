@@ -58,7 +58,7 @@ public static class CollectionExtensionMethods {
     return newHashSet;
   }
 
-  public static HashSet<T> ToHashSet<T>(this List<T> list) where T : class {
+  public static HashSet<T> ToHashSet<T>(this List<T> list) {
     var hashSet = new HashSet<T>(list.Count);
     list.ForEach(item => hashSet.Add(item));
     return hashSet;
@@ -71,7 +71,7 @@ public static class CollectionExtensionMethods {
     return hashSet;
   }
 
-  public static List<T> ToList<T>(this HashSet<T> hashSet) where T : class {
+  public static List<T> ToList<T>(this HashSet<T> hashSet) {
     var list = new List<T>(hashSet.Count);
 
     foreach (var item in hashSet) {
@@ -81,8 +81,7 @@ public static class CollectionExtensionMethods {
     return list;
   }
 
-  public static List<TOut> ToList<TIn, TOut>(this HashSet<TIn> hashSet, Func<TIn, TOut> action)
-    where TIn : class {
+  public static List<TOut> ToList<TIn, TOut>(this HashSet<TIn> hashSet, Func<TIn, TOut> action) {
     var list = new List<TOut>(hashSet.Count);
 
     foreach (var item in hashSet) {
@@ -112,7 +111,7 @@ public static class CollectionExtensionMethods {
     return list;
   }
 
-  public static List<T> ToList<T>(this ListCollectionView view) where T:class {
+  public static List<T> ToList<T>(this ListCollectionView view) {
     var list = new List<T>(view.Count);
 
     foreach (T item in view) {
@@ -143,7 +142,7 @@ public static class CollectionExtensionMethods {
   }
 
   public static List<Tuple<K2, V>> ToList<K1, K2, V>(this Dictionary<K1, V> dict)
-    where K1 : IRElement where K2 : IRElementReference where V : class {
+    where K1 : IRElement where K2 : IRElementReference {
     var list = new List<Tuple<K2, V>>(dict.Count);
 
     foreach (var item in dict) {
@@ -153,8 +152,7 @@ public static class CollectionExtensionMethods {
     return list;
   }
 
-  public static Dictionary<K, V> ToDictionary<K, V>(this List<Tuple<K, V>> list)
-    where K : class where V : class {
+  public static Dictionary<K, V> ToDictionary<K, V>(this List<Tuple<K, V>> list) {
     var dict = new Dictionary<K, V>(list.Count);
 
     foreach (var item in list) {
@@ -165,7 +163,7 @@ public static class CollectionExtensionMethods {
   }
 
   public static Dictionary<K2, V> ToDictionary<K1, K2, V>(this List<Tuple<K1, V>> list)
-    where K1 : IRElementReference where K2 : IRElement where V : class {
+    where K1 : IRElementReference where K2 : IRElement {
     var dict = new Dictionary<K2, V>(list.Count);
 
     foreach (var item in list) {
