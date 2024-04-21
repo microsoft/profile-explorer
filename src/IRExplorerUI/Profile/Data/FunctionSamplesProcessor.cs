@@ -11,13 +11,20 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
   private List<ChunkData> chunks_;
   private ProfileCallTreeNode node_;
 
-  private static int EstimateSampleCount(ProfileCallTreeNode node) {
-    return (int)node.Weight.TotalSeconds * 8000;
+  private static int EstimateSampleCount(ProfileCallTreeNode node, bool perThread) {
+    // Assume a medium sampling frequency (min 1000, max ~8000).
+    int size = (int)(node.ExclusiveWeight.TotalSeconds * 4000);
+
+    if (perThread && node.HasThreadWeights) {
+      return size / node.ThreadWeights.Count;
+    }
+
+    return size;
   }
   
   private class ChunkData {
     public ChunkData(ProfileCallTreeNode node) {
-      AllThreadsList = new List<SampleIndex>(EstimateSampleCount(node));
+      AllThreadsList = new List<SampleIndex>(EstimateSampleCount(node, false));
       ThreadListMap = new Dictionary<int, List<SampleIndex>>();
       ThreadListMap[-1] = AllThreadsList;
     }
@@ -86,7 +93,7 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
 
     if (match) {
       var threadList = data.ThreadListMap.GetOrAddValue(stack.Context.ThreadId,
-        () => new List<SampleIndex>(EstimateSampleCount(node_)));
+        () => new List<SampleIndex>(EstimateSampleCount(node_, true)));
       var index = new SampleIndex(sampleIndex, sample.Time);
       threadList.Add(index);
       data.AllThreadsList.Add(index);
