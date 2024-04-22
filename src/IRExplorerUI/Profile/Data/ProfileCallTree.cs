@@ -641,6 +641,14 @@ public sealed class ProfileCallTree {
       }
     }
   }
+
+  public ProfileCallTreeNode FindRootNode(IRTextFunction func) {
+    if (rootNodes_.TryGetValue(func, out var node)) {
+      return node;
+    }
+
+    return null;
+  }
 }
 
 public class ModuleProfileInfo {

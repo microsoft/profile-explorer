@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using HtmlAgilityPack;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Document;
@@ -485,11 +487,10 @@ public static class ProfilingUtils {
     while (queue.Count > 0) {
       var node = queue.Dequeue();
 
-      if (visited.Contains(node)) {
-        continue;
-      }
-
+#if DEBUG
+      Debug.Assert(!visited.Contains(node), "Cycle detected in call tree");
       visited.Add(node);
+#endif
 
       if (marking.NameMatches(nameProvider.FormatFunctionName(node.Function.Name))) {
         funcNodeList.Add(node); // Per-category list.
@@ -884,5 +885,143 @@ public static class ProfilingUtils {
         menuItem.IsChecked = false;
       }
     }
+  }
+
+  public static HtmlNode ExportFunctionListAsHtmlTable(List<ProfileCallTreeNode> list, HtmlDocument doc, 
+                                                       ISession session) {
+    var itemList = new List<SearchableProfileItem>();
+    var markerOptions = App.Settings.DocumentSettings.ProfileMarkerSettings;
+
+    foreach (var node in list) {
+      var item = ProfileListViewItem.From(node, session.ProfileData,
+        session.CompilerInfo.NameProvider.FormatFunctionName, null);
+      item.FunctionBackColor = markerOptions.PickBrushForPercentage(item.ExclusivePercentage);
+      itemList.Add(item);
+    }
+
+    return ExportFunctionListAsHtmlTable(itemList, doc);
+  }
+  
+  public static HtmlNode ExportFunctionListAsHtmlTable(List<SearchableProfileItem> list, HtmlDocument doc) {
+    string TableStyle = @"border-collapse:collapse;border-spacing:0;";
+    string HeaderStyle =
+      @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
+    string CellStyle =
+      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
+
+    var table = doc.CreateElement("table");
+    table.SetAttributeValue("style", TableStyle);
+
+    var thead = doc.CreateElement("thead");
+    var tbody = doc.CreateElement("tbody");
+    var tr = doc.CreateElement("tr");
+
+    var th = doc.CreateElement("th");
+    th.InnerHtml = "Function";
+    th.SetAttributeValue("style", HeaderStyle);
+    tr.AppendChild(th);
+    th = doc.CreateElement("th");
+    th.InnerHtml = "Module";
+    th.SetAttributeValue("style", HeaderStyle);
+    tr.AppendChild(th);
+    thead.AppendChild(tr);
+
+    th = doc.CreateElement("th");
+    th.InnerHtml = HttpUtility.HtmlEncode("Time (ms)");
+    th.SetAttributeValue("style", HeaderStyle);
+    tr.AppendChild(th);
+
+    th = doc.CreateElement("th");
+    th.InnerHtml = HttpUtility.HtmlEncode("Time (%)");
+    th.SetAttributeValue("style", HeaderStyle);
+    tr.AppendChild(th);
+
+    th = doc.CreateElement("th");
+    th.InnerHtml = HttpUtility.HtmlEncode("Tine incl (ms)");
+    th.SetAttributeValue("style", HeaderStyle);
+    tr.AppendChild(th);
+
+    th = doc.CreateElement("th");
+    th.InnerHtml = HttpUtility.HtmlEncode("Time incl (%)");
+    th.SetAttributeValue("style", HeaderStyle);
+    tr.AppendChild(th);
+
+    table.AppendChild(thead);
+
+    foreach (var node in list) {
+      tr = doc.CreateElement("tr");
+      var td = doc.CreateElement("td");
+      td.InnerHtml = HttpUtility.HtmlEncode(node.FunctionName);
+      td.SetAttributeValue("style", CellStyle);
+      tr.AppendChild(td);
+      td = doc.CreateElement("td");
+      td.InnerHtml = HttpUtility.HtmlEncode(node.ModuleName);
+      td.SetAttributeValue("style", CellStyle);
+      tr.AppendChild(td);
+
+      // Use a background color if defined.
+      string colorAttr = "";
+      
+      if (node is ProfileListViewItem listViewItem) {
+        var backColor = Utils.BrushToString(listViewItem.FunctionBackColor);
+        colorAttr = backColor != null ? $";background-color:{backColor}" : "";
+      }
+
+      td = doc.CreateElement("td");
+      td.InnerHtml = HttpUtility.HtmlEncode($"{node.ExclusiveWeight.TotalMilliseconds}");
+      td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
+      tr.AppendChild(td);
+      td = doc.CreateElement("td");
+      td.InnerHtml = HttpUtility.HtmlEncode($"{node.ExclusivePercentage.AsPercentageString(2, false)}");
+      td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
+      tr.AppendChild(td);
+      td = doc.CreateElement("td");
+      td.InnerHtml = HttpUtility.HtmlEncode($"{node.Weight.TotalMilliseconds}");
+      td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
+      tr.AppendChild(td);
+      td = doc.CreateElement("td");
+      td.InnerHtml = HttpUtility.HtmlEncode($"{node.Percentage.AsPercentageString(2, false)}");
+      td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
+      tr.AppendChild(td);
+
+      tbody.AppendChild(tr);
+    }
+
+    table.AppendChild(tbody);
+    return table;
+  }
+  
+  public static string ExportFunctionListAsMarkdownTable(List<ProfileCallTreeNode> list, 
+                                                       ISession session) {
+    var itemList = new List<SearchableProfileItem>();
+    var nameFormatter = session.CompilerInfo.NameProvider;
+
+    foreach (var node in list) {
+      itemList.Add(ProfileListViewItem.From(node, session.ProfileData,
+        session.CompilerInfo.NameProvider.FormatFunctionName, null));
+    }
+
+    return ExportFunctionListAsMarkdownTable(itemList);
+  }
+  
+  public static string ExportFunctionListAsMarkdownTable(List<SearchableProfileItem> list) {
+    var sb = new StringBuilder();
+    string header    = "| Function | Module |";
+    string separator = "|----------|--------|";
+    header    += " Time (ms) | Time (%) | Time incl (ms) | Time incl (%) |";
+    separator += "-----------|----------|----------------|---------------|";
+
+    sb.AppendLine(header);
+    sb.AppendLine(separator);
+
+    foreach (var func in list) {
+      sb.Append($"| {func.FunctionName} | {func.ModuleName} " +
+                $"| {func.ExclusiveWeight.TotalMilliseconds} " +
+                $"| {func.ExclusivePercentage.AsPercentageString(2, false)} " +
+                $"| {func.Weight.TotalMilliseconds} " +
+                $"| {func.Percentage.AsPercentageString(2, false)} |\n");
+    }
+
+    return sb.ToString();
   }
 }

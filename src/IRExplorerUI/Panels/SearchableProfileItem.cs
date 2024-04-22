@@ -11,6 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using HtmlAgilityPack;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI;
 
@@ -120,7 +121,7 @@ public class SearchableProfileItem : BindableObject {
   }
 
   private void CreateSearchResultName(TextBlock textBlock, FontWeight nameFontWeight) {
-    if (SearchResult.Value.Offset > 0) {
+    if (SearchResult is {Offset: > 0}) {
       textBlock.Inlines.Add(new Run(FunctionName.Substring(0, SearchResult.Value.Offset)) {
         FontWeight = nameFontWeight
       });
@@ -141,113 +142,17 @@ public class SearchableProfileItem : BindableObject {
 
   public static void CopyFunctionListAsHtml(List<SearchableProfileItem> list) {
     var html = ExportFunctionListAsHtml((list));
-    var plainText = ExportFunctionListAsMarkdown(list);
+    var plainText = ProfilingUtils.ExportFunctionListAsMarkdownTable(list);
     Utils.CopyHtmlToClipboard(html, plainText);
   }
 
   public static string ExportFunctionListAsHtml(List<SearchableProfileItem> list) {
-    string TableStyle = @"border-collapse:collapse;border-spacing:0;";
-    string HeaderStyle = @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
-    string CellStyle = @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
-
     var doc = new HtmlDocument();
-    var table = doc.CreateElement("table");
-    table.SetAttributeValue("style", TableStyle);
-
-    var thead = doc.CreateElement("thead");
-    var tbody = doc.CreateElement("tbody");
-    var tr = doc.CreateElement("tr");
-
-    var th = doc.CreateElement("th");
-    th.InnerHtml = "Function";
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-    th = doc.CreateElement("th");
-    th.InnerHtml = "Module";
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-    thead.AppendChild(tr);
-
-    th = doc.CreateElement("th");
-    th.InnerHtml = HttpUtility.HtmlEncode("Time (ms)");
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-
-    th = doc.CreateElement("th");
-    th.InnerHtml = HttpUtility.HtmlEncode("Time (%)");
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-
-    th = doc.CreateElement("th");
-    th.InnerHtml = HttpUtility.HtmlEncode("Tine incl (ms)");
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-
-    th = doc.CreateElement("th");
-    th.InnerHtml = HttpUtility.HtmlEncode("Time incl (%)");
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-
-    table.AppendChild(thead);
-
-    foreach (var node in list) {
-      tr = doc.CreateElement("tr");
-      var td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode(node.FunctionName);
-      td.SetAttributeValue("style", CellStyle);
-      tr.AppendChild(td);
-      td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode(node.ModuleName);
-      td.SetAttributeValue("style", CellStyle);
-      tr.AppendChild(td);
-
-      td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode($"{node.ExclusiveWeight.TotalMilliseconds}");
-      td.SetAttributeValue("style", CellStyle);
-      tr.AppendChild(td);
-      td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode($"{node.ExclusivePercentage.AsPercentageString(2, false)}");
-      td.SetAttributeValue("style", CellStyle);
-      tr.AppendChild(td);
-      td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode($"{node.Weight.TotalMilliseconds}");
-      td.SetAttributeValue("style", CellStyle);
-      tr.AppendChild(td);
-      td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode($"{node.Percentage.AsPercentageString(2, false)}");
-      td.SetAttributeValue("style", CellStyle);
-      tr.AppendChild(td);
-
-      tbody.AppendChild(tr);
-    }
-
-    table.AppendChild(tbody);
+    var table = ProfilingUtils.ExportFunctionListAsHtmlTable(list, doc);
     doc.DocumentNode.AppendChild(table);
-
 
     var writer = new StringWriter();
     doc.Save(writer);
     return writer.ToString();
-  }
-
-  public static string ExportFunctionListAsMarkdown(List<SearchableProfileItem> list) {
-    var sb = new StringBuilder();
-    string header    = "| Function | Module |";
-    string separator = "|----------|--------|";
-    header    += " Time (ms) | Time (%) | Time incl (ms) | Time incl (%) |";
-    separator += "-----------|----------|----------------|---------------|";
-
-    sb.AppendLine(header);
-    sb.AppendLine(separator);
-
-    foreach (var func in list) {
-      sb.Append($"| {func.FunctionName} | {func.ModuleName} " +
-                $"| {func.ExclusiveWeight.TotalMilliseconds} " +
-                $"| {func.ExclusivePercentage.AsPercentageString(2, false)} " +
-                $"| {func.Weight.TotalMilliseconds} " +
-                $"| {func.Percentage.AsPercentageString(2, false)} |\n");
-    }
-
-    return sb.ToString();
   }
 }

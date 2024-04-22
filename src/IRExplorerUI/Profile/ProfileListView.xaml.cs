@@ -75,7 +75,7 @@ public class ProfileListViewItem : SearchableProfileItem {
       ExclusivePercentage = profileData.ScaleFunctionWeight(node.ExclusiveWeight)
     };
   }
-
+  
   public static ProfileListViewItem From(ModuleProfileInfo moduleInfo, ProfileData profileData,
                                          FunctionNameFormatter funcNameFormatter,
                                          CallTreeNodeSettings settings) {

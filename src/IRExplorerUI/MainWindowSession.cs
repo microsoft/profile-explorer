@@ -771,6 +771,7 @@ public partial class MainWindow : Window, ISession {
   private async Task BeginSessionStateChange() {
     // Wait for any running state changes.
     await SessionLoadCompleted.WaitAsync();
+    await updateProfileTask_.CancelTaskAndWaitAsync();
 
     loadingDocuments_ = true;
     documentLoadStartTime_ = DateTime.UtcNow;

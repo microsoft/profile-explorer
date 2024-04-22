@@ -4,10 +4,15 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using HtmlAgilityPack;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
@@ -723,4 +728,128 @@ public partial class MainWindow : Window, ISession {
       e.OriginalSource, ReloadMarkingSettings);
   }
 
+  private async void CopyOverviewMenu_OnClick(object sender, RoutedEventArgs e) {
+    var (html, plaintext) = await ExportProfilingReportAsHtml();
+    Utils.CopyHtmlToClipboard(html, plaintext);
+  }
+
+  private async Task<(string Html, string Plaintext)> ExportProfilingReportAsHtml() {
+    var markings = App.Settings.MarkingSettings.BuiltinMarkingCategories.FunctionColors;
+    var markingCategoryList =
+      await Task.Run(() => ProfilingUtils.CollectMarkedFunctions(markings, false, this));
+
+    string TitleStyle =
+      @"text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:16px;margin-top:0em";
+    string TimeStyle =
+      @"text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:14px;margin-top:0em";
+    var doc = new HtmlDocument();
+    var sb = new StringBuilder();
+    var markingSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
+
+    // Add a table with the hottest functions overall.
+    int hotFuncLimit = 20;
+    var hottestFuncts = new List<ProfileCallTreeNode>();
+    var functs = ProfileData.GetSortedFunctions();
+
+    var funcParagraph = doc.CreateElement("p");
+    var funcTitle = $"Hottest {hotFuncLimit} Functions";
+    funcParagraph.InnerHtml = HttpUtility.HtmlEncode(funcTitle);
+    funcParagraph.SetAttributeValue("style", TitleStyle);
+    doc.DocumentNode.AppendChild(funcParagraph);
+
+    foreach (var pair in functs.Take(hotFuncLimit)) {
+      hottestFuncts.Add(ProfileData.CallTree.GetCombinedCallTreeNode(pair.Item1));
+    }
+
+    var hotFuncTable = ProfilingUtils.ExportFunctionListAsHtmlTable(hottestFuncts, doc, this);
+    doc.DocumentNode.AppendChild(hotFuncTable);
+
+    sb.AppendLine(funcTitle);
+    sb.AppendLine();
+    sb.AppendLine(ProfilingUtils.ExportFunctionListAsMarkdownTable(hottestFuncts, this));
+
+    // Add a table for each category.
+    foreach (var category in markingCategoryList) {
+      if (category.SortedFunctions.Count == 0) {
+        continue;
+      }
+
+      //? also title/time to sb
+      var newLineParagraph = doc.CreateElement("p");
+      newLineParagraph.InnerHtml = "&nbsp;";
+      doc.DocumentNode.AppendChild(newLineParagraph);
+
+      var titleParagraph = doc.CreateElement("p");
+      var title = category.Marking.HasTitle ? category.Marking.Title : category.Marking.Name;
+      titleParagraph.InnerHtml = HttpUtility.HtmlEncode(title);
+      titleParagraph.SetAttributeValue("style", TitleStyle);
+      doc.DocumentNode.AppendChild(titleParagraph);
+
+      var timeParagraph = doc.CreateElement("p");
+      var time = markingSettings.FormatWeightValue(null, category.Weight);
+      var percentage = category.Percentage.AsPercentageString();
+      timeParagraph.InnerHtml = HttpUtility.HtmlEncode($"{time} ({percentage})");
+      timeParagraph.SetAttributeValue("style", TimeStyle);
+      doc.DocumentNode.AppendChild(timeParagraph);
+
+      var table = ProfilingUtils.ExportFunctionListAsHtmlTable(category.SortedFunctions, doc, this);
+      doc.DocumentNode.AppendChild(table);
+
+      sb.AppendLine();
+      sb.AppendLine(title);
+      sb.AppendLine($"{time} ({percentage})");
+      sb.AppendLine();
+
+      var plainText = ProfilingUtils.ExportFunctionListAsMarkdownTable(category.SortedFunctions, this);
+      sb.AppendLine(plainText);
+    }
+
+    var writer = new StringWriter();
+    doc.Save(writer);
+    return (writer.ToString(), sb.ToString());
+  }
+
+  private async void ExportOverviewHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        var (html, _) = await ExportProfilingReportAsHtml();
+        await File.WriteAllTextAsync(path, html);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save report to {path}: {ex.Message}");
+        success = false;
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save profiling report to {path}", "IR Explorer",
+          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  private async void ExportOverviewMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("Markdown file|*.md", "*.md|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        var (_, plaintext) = await ExportProfilingReportAsHtml();
+        await File.WriteAllTextAsync(path, plaintext);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save report to {path}: {ex.Message}");
+        success = false;
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save profiling report to {path}", "IR Explorer",
+          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
 }

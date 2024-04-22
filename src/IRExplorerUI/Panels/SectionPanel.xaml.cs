@@ -2872,14 +2872,14 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     Utils.CopyHtmlToClipboard(writer.ToString(), plainText);
   }
 
-  private bool ExportFunctionListAsHtmlFile(string filePath) {
+  private async Task<bool> ExportFunctionListAsHtmlFile(string filePath) {
     try {
       var funcList = (ListCollectionView)FunctionList.ItemsSource;
       var doc = new HtmlDocument();
       doc.DocumentNode.AppendChild(ExportFunctionListAsHtml(funcList.ToList<IRTextFunctionEx>()));
       var writer = new StringWriter();
       doc.Save(writer);
-      File.WriteAllText(filePath, writer.ToString());
+      await File.WriteAllTextAsync(filePath, writer.ToString());
       return true;
     }
     catch (Exception ex) {
@@ -2888,11 +2888,11 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  private bool ExportFunctionListAsMarkdownFile(string filePath) {
+  private async Task<bool> ExportFunctionListAsMarkdownFile(string filePath) {
     try {
       var funcList = (ListCollectionView)FunctionList.ItemsSource;
       var text = ExportFunctionListAsMarkdown(funcList.ToList<IRTextFunctionEx>());
-      File.WriteAllText(filePath, text);
+      await File.WriteAllTextAsync(filePath, text);
       return true;
     }
     catch (Exception ex) {
@@ -3375,21 +3375,17 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  private void FunctionToolbar_OnMouseDoubleClick(object sender, MouseButtonEventArgs e) {
-    ExportFunctionListAsHtmlFile(@"C:\work\out.html");
-  }
-
   private void CopyFunctionDetailsExecuted(object sender, ExecutedRoutedEventArgs e) {
     CopyFunctionListAsHtml();
   }
 
-  private void ExportFunctionListHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+  private async void ExportFunctionListHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
     string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
     bool success = true;
 
     if (!string.IsNullOrEmpty(path)) {
       try {
-        success = ExportFunctionListAsHtmlFile(path);
+        success = await ExportFunctionListAsHtmlFile(path);
       }
       catch (Exception ex) {
         Trace.WriteLine($"Failed to save function list to {path}: {ex.Message}");
@@ -3403,13 +3399,13 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  private void ExportFunctionListMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
+  private async void ExportFunctionListMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
     string path = Utils.ShowSaveFileDialog("Markdown file|*.md", "*.md|All Files|*.*");
     bool success = true;
 
     if (!string.IsNullOrEmpty(path)) {
       try {
-        success = ExportFunctionListAsMarkdownFile(path);
+        success = await ExportFunctionListAsMarkdownFile(path);
       }
       catch (Exception ex) {
         Trace.WriteLine($"Failed to save function list to {path}: {ex.Message}");

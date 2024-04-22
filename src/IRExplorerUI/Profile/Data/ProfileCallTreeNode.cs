@@ -123,7 +123,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     return children_.Contains(node);
   }
 
-  public ProfileCallTreeNode FindChild(IRTextFunction function) {
+  public ProfileCallTreeNode FindChildNode(IRTextFunction function) {
     return children_.Find(node => node.Function == function);
   }
 
