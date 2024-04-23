@@ -448,6 +448,7 @@
                   BorderThickness="0"
                   ToolTip="Mark all functions belonging to this module (saved)">
                   <Image
+                    Margin="0,1,0,0"
                     Width="16"
                     Height="16"
                     Source="{StaticResource AddBookmarkIcon}"
@@ -568,6 +569,7 @@
                   Click="MarkModuleButton_OnClick"
                   ToolTip="Mark all functions with the same name (saved)">
                   <Image
+                    Margin="0,1,0,0"
                     Width="16"
                     Height="16"
                     Source="{StaticResource BookmarkIcon}"

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -397,14 +399,14 @@ public static class ProfilingUtils {
   }
 
   public static async Task<List<FunctionMarkingCategory>>
-    
+
     CreateFunctionsCategoriesMenu(MenuItem menu,
                                   MouseButtonEventHandler menuClickHandler,
                                   MouseButtonEventHandler menuRightClickHandler,
                                   List<FunctionMarkingCategory> currentMarkingCategories,
                                   FunctionMarkingSettings settings, ISession session) {
     return await CreateMarkedFunctionsMenu(menu, true, menuClickHandler, menuRightClickHandler,
-      settings.BuiltinMarkingCategories.FunctionColors, 
+      settings.BuiltinMarkingCategories.FunctionColors,
       session, currentMarkingCategories);
   }
 
@@ -415,7 +417,7 @@ public static class ProfilingUtils {
     var markingCategoryList = new List<FunctionMarkingCategory>();
     var lockObject = new object();
     var tasks = new List<Task>();
-    
+
     foreach (var marking in markings) {
       tasks.Add(Task.Run(() => {
         // Find all functions matching the marked name. There can be multiple
@@ -450,7 +452,7 @@ public static class ProfilingUtils {
         }
       }));
     }
-    
+
     // Sort markings by weight in decreasing order.
     Task.WaitAll(tasks.ToArray());
     markingCategoryList.Sort((a, b) => b.Weight.CompareTo(a.Weight));
@@ -458,11 +460,11 @@ public static class ProfilingUtils {
     if (isCategoriesMenu) {
       // Compute the "Unmarked" weight and add it as the last entry.
       var allFuncNodeList = new List<ProfileCallTreeNode>();
-      
+
       foreach (var category in markingCategoryList) {
         allFuncNodeList.AddRange(category.SortedFunctions);
       }
-      
+
       var categoriesWeight = ProfileCallTree.CombinedCallTreeNodesWeight(allFuncNodeList);
       var otherWeight = session.ProfileData.TotalWeight - categoriesWeight;
       double otherWeightPercentage = session.ProfileData.ScaleFunctionWeight(otherWeight);
@@ -476,9 +478,10 @@ public static class ProfilingUtils {
     return markingCategoryList;
   }
 
-  private static void CollectCallTreeMarkedFunctions(FunctionMarkingStyle marking, ProfileCallTreeNode startNode, 
-                                                     List<ProfileCallTreeNode> funcNodeList, 
-                                                     Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcNodeMap, ISession session) {
+  private static void CollectCallTreeMarkedFunctions(FunctionMarkingStyle marking, ProfileCallTreeNode startNode,
+                                                     List<ProfileCallTreeNode> funcNodeList,
+                                                     Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcNodeMap,
+                                                     ISession session) {
     var nameProvider = session.CompilerInfo.NameProvider;
     var visited = new HashSet<ProfileCallTreeNode>();
     var queue = new Queue<ProfileCallTreeNode>();
@@ -506,11 +509,12 @@ public static class ProfilingUtils {
     }
   }
 
-  private static void CollectGlobalMarkedFunctions(FunctionMarkingStyle marking, 
+  private static void CollectGlobalMarkedFunctions(FunctionMarkingStyle marking,
                                                    List<ProfileCallTreeNode> funcNodeList,
-                                                   Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcNodeMap, ISession session) {
+                                                   Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcNodeMap,
+                                                   ISession session) {
     var nameProvider = session.CompilerInfo.NameProvider;
-    
+
     foreach (var loadedDoc in session.SessionState.Documents) {
       if (loadedDoc.Summary == null) {
         continue;
@@ -887,12 +891,16 @@ public static class ProfilingUtils {
     }
   }
 
-  public static HtmlNode ExportFunctionListAsHtmlTable(List<ProfileCallTreeNode> list, HtmlDocument doc, 
+  public static HtmlNode ExportFunctionListAsHtmlTable(List<ProfileCallTreeNode> list, HtmlDocument doc,
                                                        ISession session) {
     var itemList = new List<SearchableProfileItem>();
     var markerOptions = App.Settings.DocumentSettings.ProfileMarkerSettings;
 
     foreach (var node in list) {
+      if (!node.HasFunction) {
+        continue;
+      }
+
       var item = ProfileListViewItem.From(node, session.ProfileData,
         session.CompilerInfo.NameProvider.FormatFunctionName, null);
       item.FunctionBackColor = markerOptions.PickBrushForPercentage(item.ExclusivePercentage);
@@ -901,7 +909,7 @@ public static class ProfilingUtils {
 
     return ExportFunctionListAsHtmlTable(itemList, doc);
   }
-  
+
   public static HtmlNode ExportFunctionListAsHtmlTable(List<SearchableProfileItem> list, HtmlDocument doc) {
     string TableStyle = @"border-collapse:collapse;border-spacing:0;";
     string HeaderStyle =
@@ -961,7 +969,7 @@ public static class ProfilingUtils {
 
       // Use a background color if defined.
       string colorAttr = "";
-      
+
       if (node is ProfileListViewItem listViewItem) {
         var backColor = Utils.BrushToString(listViewItem.FunctionBackColor);
         colorAttr = backColor != null ? $";background-color:{backColor}" : "";
@@ -990,25 +998,29 @@ public static class ProfilingUtils {
     table.AppendChild(tbody);
     return table;
   }
-  
-  public static string ExportFunctionListAsMarkdownTable(List<ProfileCallTreeNode> list, 
-                                                       ISession session) {
+
+  public static string ExportFunctionListAsMarkdownTable(List<ProfileCallTreeNode> list,
+                                                         ISession session) {
     var itemList = new List<SearchableProfileItem>();
     var nameFormatter = session.CompilerInfo.NameProvider;
 
     foreach (var node in list) {
+      if (!node.HasFunction) {
+        continue;
+      }
+
       itemList.Add(ProfileListViewItem.From(node, session.ProfileData,
         session.CompilerInfo.NameProvider.FormatFunctionName, null));
     }
 
     return ExportFunctionListAsMarkdownTable(itemList);
   }
-  
+
   public static string ExportFunctionListAsMarkdownTable(List<SearchableProfileItem> list) {
     var sb = new StringBuilder();
-    string header    = "| Function | Module |";
+    string header = "| Function | Module |";
     string separator = "|----------|--------|";
-    header    += " Time (ms) | Time (%) | Time incl (ms) | Time incl (%) |";
+    header += " Time (ms) | Time (%) | Time incl (ms) | Time incl (%) |";
     separator += "-----------|----------|----------------|---------------|";
 
     sb.AppendLine(header);
@@ -1023,5 +1035,138 @@ public static class ProfilingUtils {
     }
 
     return sb.ToString();
+  }
+
+  public static (string Html, string Plaintext)
+    ExportProfilingReportAsHtml(List<FunctionMarkingCategory> markingCategoryList, ISession session,
+                                bool includeHottestFunctions, int hotFuncLimit = 20) {
+    string TitleStyle =
+      @"margin:5;text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:16px;margin-top:0em";
+    string TimeStyle =
+      @"margin:5;text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:14px;margin-top:0em";
+    var doc = new HtmlDocument();
+    var sb = new StringBuilder();
+    var markingSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
+
+    //? TODO: Add table of categories
+    //? TODO: Add some trace info (ETL path, process name/id, duration)
+    
+    if (includeHottestFunctions) {
+      // Add a table with the hottest functions overall.
+      var hottestFuncts = new List<ProfileCallTreeNode>();
+      var funcList = session.ProfileData.GetSortedFunctions();
+
+      var funcParagraph = doc.CreateElement("p");
+      var funcTitle = $"Hottest {hotFuncLimit} Functions";
+      funcParagraph.InnerHtml = HttpUtility.HtmlEncode(funcTitle);
+      funcParagraph.SetAttributeValue("style", TitleStyle);
+      doc.DocumentNode.AppendChild(funcParagraph);
+
+      foreach (var pair in funcList.Take(hotFuncLimit)) {
+        hottestFuncts.Add(session.ProfileData.CallTree.GetCombinedCallTreeNode(pair.Item1));
+      }
+
+      var hotFuncTable = ProfilingUtils.ExportFunctionListAsHtmlTable(hottestFuncts, doc, session);
+      doc.DocumentNode.AppendChild(hotFuncTable);
+
+      sb.AppendLine(funcTitle);
+      sb.AppendLine();
+      sb.AppendLine(ProfilingUtils.ExportFunctionListAsMarkdownTable(hottestFuncts, session));
+    }
+
+    // Add a table for each category.
+    foreach (var category in markingCategoryList) {
+      if (category.SortedFunctions.Count == 0) {
+        continue;
+      }
+
+      var newLineParagraph = doc.CreateElement("p");
+      newLineParagraph.InnerHtml = "&nbsp;";
+      newLineParagraph.SetAttributeValue("style", "margin:5;");
+      doc.DocumentNode.AppendChild(newLineParagraph);
+
+      var titleParagraph = doc.CreateElement("p");
+      var title = category.Marking.HasTitle ? category.Marking.Title : category.Marking.Name;
+      titleParagraph.InnerHtml = HttpUtility.HtmlEncode(title);
+      titleParagraph.SetAttributeValue("style", TitleStyle);
+      doc.DocumentNode.AppendChild(titleParagraph);
+
+      var timeParagraph = doc.CreateElement("p");
+      var time = markingSettings.FormatWeightValue(null, category.Weight);
+      var percentage = category.Percentage.AsPercentageString();
+      timeParagraph.InnerHtml = HttpUtility.HtmlEncode($"Time: {time} ({percentage})");
+      timeParagraph.SetAttributeValue("style", TimeStyle);
+      doc.DocumentNode.AppendChild(timeParagraph);
+
+      var table = ProfilingUtils.ExportFunctionListAsHtmlTable(category.SortedFunctions, doc, session);
+      doc.DocumentNode.AppendChild(table);
+
+      sb.AppendLine($"{title}  ");
+      sb.AppendLine($"Time: {time} ({percentage})  ");
+      sb.AppendLine();
+
+      var plainText = ProfilingUtils.ExportFunctionListAsMarkdownTable(category.SortedFunctions, session);
+      sb.AppendLine(plainText);
+    }
+
+    var writer = new StringWriter();
+    doc.Save(writer);
+    return (writer.ToString(), sb.ToString());
+  }
+  
+  public static async Task CopyFunctionMarkingsAsHtml(ISession session) {
+    var (html, plaintext) = await ExportFunctionMarkingsAsHtml(session);
+    Utils.CopyHtmlToClipboard(html, plaintext);
+  }
+
+  private static async Task<(string html, string plaintext)>
+    ExportFunctionMarkingsAsHtml(ISession session) {
+    var markingCategoryList = await Task.Run(() =>
+      CollectMarkedFunctions(App.Settings.MarkingSettings.FunctionColors, false, session));
+    return ExportProfilingReportAsHtml(markingCategoryList, session, false, 0);
+  }
+
+  public static async Task ExportFunctionMarkingsAsHtmlFile(ISession session) {
+    string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        var (html, _) = await ExportFunctionMarkingsAsHtml(session);
+        await File.WriteAllTextAsync(path, html);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save marked functions report to {path}: {ex.Message}");
+        success = false;
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(App.Current.MainWindow);
+        MessageBox.Show($"Failed to save marked functions report to {path}", "IR Explorer",
+          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  public static async Task CopyFunctionMarkingsAsMarkdownFile(ISession session) {
+    string path = Utils.ShowSaveFileDialog("Markdown file|*.md", "*.md|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        var (_, plaintext) = await ExportFunctionMarkingsAsHtml(session);
+        await File.WriteAllTextAsync(path, plaintext);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save marked functions report to {path}: {ex.Message}");
+        success = false;
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(App.Current.MainWindow);
+        MessageBox.Show($"Failed to save marked functions report to {path}", "IR Explorer",
+          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
   }
 }

@@ -113,7 +113,18 @@ public class CallTreeListItem : SearchableProfileItem, ITreeModel {
   public override TimeSpan Weight => HasCallTreeNode ? CallTreeNode.Weight : TimeSpan.Zero;
   public override TimeSpan ExclusiveWeight => HasCallTreeNode ? CallTreeNode.ExclusiveWeight : TimeSpan.Zero;
   public override string ModuleName =>
-    CallTreeNode != null && CallTreeNode.Function != null ? CallTreeNode.ModuleName : null;
+    CallTreeNode is {HasFunction: true} ? CallTreeNode.ModuleName : null;
+
+  public override string FunctionName {
+    get {
+      var name = base.FunctionName;
+      return $"{name} ({Percentage.AsPercentageString()})";
+    }
+    set {
+      base.FunctionName = value;
+    }
+  }
+  
   public TreeNode TreeNode { get; set; } // Associated UI tree node.
 
   public IEnumerable GetChildren(object node) {
@@ -133,7 +144,7 @@ public class CallTreeListItem : SearchableProfileItem, ITreeModel {
   }
 
   protected override string GetFunctionName() {
-    return CallTreeNode != null && CallTreeNode.Function != null ? CallTreeNode.FunctionName : null;
+    return CallTreeNode is {HasFunction: true} ? CallTreeNode.FunctionName : null;
   }
 
   protected override bool ShouldPrependModule() {
@@ -470,7 +481,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         var funcNode = treeItem.Node?.Tag as CallTreeListItem;
         var callNode = funcNode?.CallTreeNode;
 
-        if (callNode != null && callNode.Function != null) {
+        if (callNode is {HasFunction: true}) {
           // If popup already opened for this node reuse the instance.
           if (nodeHoverPreview_.PreviewPopup is CallTreeNodePopup
             popup) {
@@ -1193,5 +1204,17 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         item.FunctionBackColor = color.AsBrush();
       }
     }
+  }
+  
+  private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.CopyFunctionMarkingsAsHtml(Session);
+  }
+
+  private async void ExportMarkedFunctionsHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.ExportFunctionMarkingsAsHtmlFile(Session);
+  }
+
+  private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.CopyFunctionMarkingsAsMarkdownFile(Session);
   }
 }

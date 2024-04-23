@@ -52,7 +52,7 @@ public class FlameGraphNode : SearchableProfileItem, IEquatable<FlameGraphNode> 
   public TimeSpan EndTime { get; set; }
   public TimeSpan Duration => EndTime - StartTime;
   public override string ModuleName =>
-    CallTreeNode != null && CallTreeNode.Function != null ? CallTreeNode.ModuleName : null;
+    CallTreeNode is {HasFunction: true} ? CallTreeNode.ModuleName : null;
 
   public static bool operator ==(FlameGraphNode left, FlameGraphNode right) {
     return Equals(left, right);
@@ -95,8 +95,7 @@ public class FlameGraphNode : SearchableProfileItem, IEquatable<FlameGraphNode> 
   }
 
   protected override string GetFunctionName() {
-    return CallTreeNode != null && CallTreeNode.Function != null ?
-      CallTreeNode.FunctionName : null;
+    return CallTreeNode is {HasFunction: true} ? CallTreeNode.FunctionName : null;
   }
 }
 

@@ -833,7 +833,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private async Task OpenFunction(ProfileCallTreeNode node) {
-    if (node != null && node.Function.HasSections) {
+    if (node is {HasFunction: true} && node.Function.HasSections) {
       var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
       await Session.SwitchDocumentSectionAsync(args);

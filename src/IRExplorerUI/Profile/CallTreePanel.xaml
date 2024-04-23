@@ -180,7 +180,7 @@
               Height="20"
               Margin="2,0,0,0"
               VerticalAlignment="Center"
-              ToolTip="Color functions based on the module name"
+              ToolTip="Color functions based on the function name"
               Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
               <MenuItem
                 x:Name="FunctionMenu"
@@ -216,6 +216,40 @@
                   Header="Clear Marked Functions"
                   Style="{DynamicResource SubMenuItemHeaderStyle}"
                   ToolTip="Remove all saved function markings" />
+                <Separator/>
+                <MenuItem
+                  Click="CopyMarkedFunctionMenu_OnClick"
+                  Header="Copy Marked Functions"
+                  ToolTip="Copy the report with marked functions as an HTML table">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource ClipboardIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem
+                  Click="ExportMarkedFunctionsHtmlMenu_OnClick"
+                  Header="Export Marked Functions as HTML File"
+                  ToolTip="Save the report with marked function as an HTML file">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource SourceIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem
+                  Click="ExportMarkedFunctionsMarkdownMenu_OnClick"
+                  Header="Export Marked Functions as Markdown File"
+                  ToolTip="Save the report with marked function as a Markdown file">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource DocumentIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
               </MenuItem>
             </Menu>
           <ToggleButton
@@ -361,6 +395,28 @@
           </GridViewColumn>
 
           <GridViewColumn Width="150">
+            <GridViewColumnHeader x:Name="ExclusiveChildTimeColumnHeader" Content="Time (self)" />
+
+            <GridViewColumn.HeaderContainerStyle>
+              <Style TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+              </Style>
+            </GridViewColumn.HeaderContainerStyle>
+
+            <GridViewColumn.CellTemplate>
+              <DataTemplate>
+                <Border HorizontalAlignment="Stretch" Background="{Binding BackColor2}">
+                  <ContentControl
+                    HorizontalAlignment="Stretch"
+                    Content="{Binding}"
+                    ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}"
+                    Visibility="{Binding HasCallTreeNode, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </Border>
+              </DataTemplate>
+            </GridViewColumn.CellTemplate>
+          </GridViewColumn>
+          
+          <GridViewColumn Width="150">
             <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="Time (total)" />
 
             <GridViewColumn.HeaderContainerStyle>
@@ -382,27 +438,6 @@
             </GridViewColumn.CellTemplate>
           </GridViewColumn>
 
-          <GridViewColumn Width="150">
-            <GridViewColumnHeader x:Name="ExclusiveChildTimeColumnHeader" Content="Time (self)" />
-
-            <GridViewColumn.HeaderContainerStyle>
-              <Style TargetType="{x:Type GridViewColumnHeader}">
-                <Setter Property="HorizontalContentAlignment" Value="Left" />
-              </Style>
-            </GridViewColumn.HeaderContainerStyle>
-
-            <GridViewColumn.CellTemplate>
-              <DataTemplate>
-                <Border HorizontalAlignment="Stretch" Background="{Binding BackColor2}">
-                  <ContentControl
-                    HorizontalAlignment="Stretch"
-                    Content="{Binding}"
-                    ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}"
-                    Visibility="{Binding HasCallTreeNode, Converter={StaticResource BoolToVisibilityConverter}}" />
-                </Border>
-              </DataTemplate>
-            </GridViewColumn.CellTemplate>
-          </GridViewColumn>
         </GridView>
       </tree:TreeList.View>
 

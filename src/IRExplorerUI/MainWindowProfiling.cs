@@ -123,7 +123,7 @@ public partial class MainWindow : Window, ISession {
     await SectionPanel.RefreshProfile();
     await RefreshProfilingPanels();
     await ProfileSampleRangeDeselected();
-
+    
     Trace.WriteLine($"RefreshProfile time: {updateSw.ElapsedMilliseconds} ms");
     Trace.WriteLine($"FilterProfileSamples time: {totalSw.ElapsedMilliseconds} ms");
     Trace.WriteLine("--------------------------------------------------------\n");
@@ -149,7 +149,7 @@ public partial class MainWindow : Window, ISession {
   public async Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode,
                                               ProfileSampleFilter instanceFilter = null,
                                               IRDocumentHost targetDocument = null) {
-    if (node.Function == null) {
+    if (node is not {HasFunction: true}) {
       return false;
     }
 
@@ -170,7 +170,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> SwitchActiveProfileFunction(ProfileCallTreeNode node) {
-    if (node.Function == null) {
+    if (node is not {HasFunction: true}) {
       return false;
     }
 
@@ -179,7 +179,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node, ProfileSampleFilter profileFilter = null) {
-    if (node.Function == null) {
+    if (node is not {HasFunction: true}) {
       return false;
     }
 
@@ -322,15 +322,17 @@ public partial class MainWindow : Window, ISession {
     if (ProfileData.CallTree == null) {
       return false;
     }
-
-    if (FindPanel(ToolPanelKind.Timeline) is TimelinePanel panel) {
-      //? TODO: Select only samples included in this call node,
-      //? right now selects any instance of the func
-      await SelectFunctionSamples(node, panel);
-    }
-
+    
+    
     if (sourcePanelKind != ToolPanelKind.Section) {
       await SwitchActiveFunction(node.Function, false);
+    }
+
+
+    if (sourcePanelKind != ToolPanelKind.FlameGraph) {
+      if (FindPanel(ToolPanelKind.FlameGraph) is FlameGraphPanel flameGraphPanel) {
+        await flameGraphPanel.SelectFunction(node.Function, false);
+      }
     }
 
     if (sourcePanelKind != ToolPanelKind.CallTree) {
@@ -345,10 +347,10 @@ public partial class MainWindow : Window, ISession {
       }
     }
 
-    if (sourcePanelKind != ToolPanelKind.FlameGraph) {
-      if (FindPanel(ToolPanelKind.FlameGraph) is FlameGraphPanel flameGraphPanel) {
-        await flameGraphPanel.SelectFunction(node.Function, false);
-      }
+    if (FindPanel(ToolPanelKind.Timeline) is TimelinePanel panel) {
+      //? TODO: Select only samples included in this call node,
+      //? right now selects any instance of the func
+      await SelectFunctionSamples(node, panel);
     }
 
     return true;
@@ -572,6 +574,13 @@ public partial class MainWindow : Window, ISession {
       panel?.UpdateMarkedFunctions(true);
     }
 
+    // Also update any detached profiling popup.
+    foreach (var popup in detachedPanels_) {
+      if (popup is CallTreeNodePopup nodePopup) {
+        nodePopup.UpdateMarkedFunctions();
+      }
+    }
+
     return true;
   }
 
@@ -733,80 +742,12 @@ public partial class MainWindow : Window, ISession {
     Utils.CopyHtmlToClipboard(html, plaintext);
   }
 
-  private async Task<(string Html, string Plaintext)> ExportProfilingReportAsHtml() {
+  private async Task<(string Html, string Plaintext)>
+    ExportProfilingReportAsHtml() {
     var markings = App.Settings.MarkingSettings.BuiltinMarkingCategories.FunctionColors;
     var markingCategoryList =
       await Task.Run(() => ProfilingUtils.CollectMarkedFunctions(markings, false, this));
-
-    string TitleStyle =
-      @"text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:16px;margin-top:0em";
-    string TimeStyle =
-      @"text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:14px;margin-top:0em";
-    var doc = new HtmlDocument();
-    var sb = new StringBuilder();
-    var markingSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
-
-    // Add a table with the hottest functions overall.
-    int hotFuncLimit = 20;
-    var hottestFuncts = new List<ProfileCallTreeNode>();
-    var functs = ProfileData.GetSortedFunctions();
-
-    var funcParagraph = doc.CreateElement("p");
-    var funcTitle = $"Hottest {hotFuncLimit} Functions";
-    funcParagraph.InnerHtml = HttpUtility.HtmlEncode(funcTitle);
-    funcParagraph.SetAttributeValue("style", TitleStyle);
-    doc.DocumentNode.AppendChild(funcParagraph);
-
-    foreach (var pair in functs.Take(hotFuncLimit)) {
-      hottestFuncts.Add(ProfileData.CallTree.GetCombinedCallTreeNode(pair.Item1));
-    }
-
-    var hotFuncTable = ProfilingUtils.ExportFunctionListAsHtmlTable(hottestFuncts, doc, this);
-    doc.DocumentNode.AppendChild(hotFuncTable);
-
-    sb.AppendLine(funcTitle);
-    sb.AppendLine();
-    sb.AppendLine(ProfilingUtils.ExportFunctionListAsMarkdownTable(hottestFuncts, this));
-
-    // Add a table for each category.
-    foreach (var category in markingCategoryList) {
-      if (category.SortedFunctions.Count == 0) {
-        continue;
-      }
-
-      //? also title/time to sb
-      var newLineParagraph = doc.CreateElement("p");
-      newLineParagraph.InnerHtml = "&nbsp;";
-      doc.DocumentNode.AppendChild(newLineParagraph);
-
-      var titleParagraph = doc.CreateElement("p");
-      var title = category.Marking.HasTitle ? category.Marking.Title : category.Marking.Name;
-      titleParagraph.InnerHtml = HttpUtility.HtmlEncode(title);
-      titleParagraph.SetAttributeValue("style", TitleStyle);
-      doc.DocumentNode.AppendChild(titleParagraph);
-
-      var timeParagraph = doc.CreateElement("p");
-      var time = markingSettings.FormatWeightValue(null, category.Weight);
-      var percentage = category.Percentage.AsPercentageString();
-      timeParagraph.InnerHtml = HttpUtility.HtmlEncode($"{time} ({percentage})");
-      timeParagraph.SetAttributeValue("style", TimeStyle);
-      doc.DocumentNode.AppendChild(timeParagraph);
-
-      var table = ProfilingUtils.ExportFunctionListAsHtmlTable(category.SortedFunctions, doc, this);
-      doc.DocumentNode.AppendChild(table);
-
-      sb.AppendLine();
-      sb.AppendLine(title);
-      sb.AppendLine($"{time} ({percentage})");
-      sb.AppendLine();
-
-      var plainText = ProfilingUtils.ExportFunctionListAsMarkdownTable(category.SortedFunctions, this);
-      sb.AppendLine(plainText);
-    }
-
-    var writer = new StringWriter();
-    doc.Save(writer);
-    return (writer.ToString(), sb.ToString());
+    return ProfilingUtils.ExportProfilingReportAsHtml(markingCategoryList, this, true, 20);
   }
 
   private async void ExportOverviewHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
@@ -851,5 +792,17 @@ public partial class MainWindow : Window, ISession {
           MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }
+  }
+  
+  private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.CopyFunctionMarkingsAsHtml(this);
+  }
+
+  private async void ExportMarkedFunctionsHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.ExportFunctionMarkingsAsHtmlFile(this);
+  }
+
+  private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.CopyFunctionMarkingsAsMarkdownFile(this);
   }
 }

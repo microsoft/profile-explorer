@@ -239,6 +239,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public event EventHandler<FunctionMarkingCategory> CategoryClick;
   public event EventHandler<ProfileCallTreeNode> NodeClick;
   public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
+  public event EventHandler MarkingChanged;
   public event PropertyChangedEventHandler PropertyChanged;
 
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
@@ -329,6 +330,37 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
   });
 
+  public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+
+    foreach (var item in ItemList.SelectedItems) {
+      if (item is ProfileListViewItem profileItem &&
+          obj is SelectedColorEventArgs e) {
+        markingSettings.AddModuleColor(profileItem.ModuleName, e.SelectedColor);
+      }
+    }
+    
+    markingSettings.UseModuleColors = true;
+    UpdateMarkedFunctions();
+    MarkingChanged?.Invoke(this, EventArgs.Empty);
+  });
+  
+  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+
+    foreach (var item in ItemList.SelectedItems) {
+      if (item is ProfileListViewItem profileItem &&
+          obj is SelectedColorEventArgs e) {
+        markingSettings.AddFunctionColor(profileItem.FunctionName, e.SelectedColor);
+      }
+    }
+    
+    markingSettings.UseFunctionColors = true;
+    UpdateMarkedFunctions();
+    MarkingChanged?.Invoke(this, EventArgs.Empty);
+  });
+
+  
   private async Task SelectFunctionInPanel(ToolPanelKind panelKind) {
     if (ItemList.SelectedItem is ProfileListViewItem item) {
       await Session.SelectProfileFunctionInPanel(item.CallTreeNode, panelKind);
@@ -496,7 +528,11 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     ItemList.ContextMenu = null;
   }
 
-  private void UpdateMarkedFunctions() {
+  public void UpdateMarkedFunctions() {
+    if (itemList_ == null) {
+      return; // Control not being used.
+    }
+    
     var fgSettings = App.Settings.MarkingSettings;
 
     foreach (var f in itemList_) {

@@ -43,28 +43,7 @@ public static class DocumentExporting {
     await ExportToFile(textView, MarkdownFileFilter, MarkdownExtension, saveAction);
   }
 
-  private static void ExportToFile(IRDocument textView, string fileFilter, string defaultExtension,
-                                   Func<IRDocument, string, bool> saveAction) {
-    string path = Utils.ShowSaveFileDialog(fileFilter, defaultExtension);
-    bool success = true;
-
-    if (!string.IsNullOrEmpty(path)) {
-      try {
-        success = saveAction(textView, path);
-      }
-      catch (Exception ex) {
-        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
-      }
-
-      if (!success) {
-        using var centerForm = new DialogCenteringHelper(textView);
-        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
-                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
-      }
-    }
-  }
-
-  public static async Task ExportToFile(IRDocument textView, string fileFilter, string defaultExtension,
+  private static async Task ExportToFile(IRDocument textView, string fileFilter, string defaultExtension,
                                         Func<IRDocument, string, Task<bool>> saveAction) {
     string path = Utils.ShowSaveFileDialog(fileFilter, defaultExtension);
     bool success = true;

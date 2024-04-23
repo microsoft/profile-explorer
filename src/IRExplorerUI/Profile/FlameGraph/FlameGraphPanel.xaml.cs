@@ -242,24 +242,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     NodeDetailsPanel.FunctionNodeClick += NodeDetailsPanel_NodeClick;
     NodeDetailsPanel.FunctionNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
     NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
-    NodeDetailsPanel.FunctionMarked += NodeDetailsPanelOnFunctionMarked;
-    NodeDetailsPanel.ModuleMarked += NodeDetailsPanelOnModuleMarked;
+    NodeDetailsPanel.MarkingChanged += (sender, args) => UpdateMarkingUI();
   }
-
-  private void NodeDetailsPanelOnModuleMarked(object sender, (string, Color) e) {
-    MarkingSettings.UseModuleColors = true;
-    MarkingSettings.AddModuleColor(e.Item1, e.Item2);
-    ReloadSettings();
-    UpdateMarkingUI();
-  }
-
-  private void NodeDetailsPanelOnFunctionMarked(object sender, (string, Color) e) {
-    MarkingSettings.UseFunctionColors = true;
-    MarkingSettings.AddFunctionColor(e.Item1, e.Item2);
-    ReloadSettings();
-    UpdateMarkingUI();
-  }
-
+  
   private void GraphHostOnRootNodeCleared(object sender, EventArgs e) {
     HasRootNode = false;
     RootNode = null;
@@ -398,7 +383,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private async Task OpenFunction(ProfileCallTreeNode node) {
-    if (node != null && node.Function.HasSections) {
+    if (node is {HasFunction: true} && node.Function.HasSections) {
       var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await Session.OpenProfileFunction(node, openMode);
     }
@@ -578,6 +563,18 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     GraphHost.Redraw();
     OnPropertyChanged(nameof(HasEnabledMarkedModules));
     OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
+    NodeDetailsPanel.UpdateMarkedFunctions();
   }
 
+  private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.CopyFunctionMarkingsAsHtml(Session);
+  }
+
+  private async void ExportMarkedFunctionsHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.ExportFunctionMarkingsAsHtmlFile(Session);
+  }
+
+  private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.CopyFunctionMarkingsAsMarkdownFile(Session);
+  }
 }

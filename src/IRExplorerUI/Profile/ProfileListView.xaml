@@ -80,7 +80,7 @@
             </GridViewColumn.CellTemplate>
           </GridViewColumn>
 
-          <GridViewColumn Width="100" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowModuleColumn}">
+          <GridViewColumn Width="80" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowModuleColumn}">
             <GridViewColumnHeader x:Name="ModuleColumnHeader" Content="Module" />
             <GridViewColumn.HeaderContainerStyle>
               <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -292,6 +292,36 @@
             InputGestureText="Ctrl+Alt+C"
             ToolTip="Copy the mangled function name to the clipboard (C++)" />
           <Separator />
+          
+          <MenuItem Header="Mark Module" ToolTip="Mark all functions belonging to this module (saved)">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource AddBookmarkIcon}" />
+            </MenuItem.Icon>
+            <MenuItem>
+              <MenuItem.Header>
+                <irExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkModuleCommand}" />
+              </MenuItem.Header>
+
+            </MenuItem>
+          </MenuItem>
+          <MenuItem Header="Mark Function" ToolTip="Mark all functions with the same name (saved)">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource BookmarkIcon}" />
+            </MenuItem.Icon>
+            <MenuItem>
+              <MenuItem.Header>
+                <irExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkFunctionCommand}" />
+              </MenuItem.Header>
+
+            </MenuItem>
+          </MenuItem>
+          <Separator/>
 
           <MenuItem
             Command="{Binding SelectFunctionSummaryCommand}"

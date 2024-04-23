@@ -59,6 +59,13 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
       var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await Session.OpenProfileFunction(treeNode, mode);
     };
+
+    PanelHost.MarkingChanged += (sender, args) => UpdateMarkingUI();
+    FunctionListView.MarkingChanged += (sender, args) => UpdateMarkingUI();
+  }
+  
+  private void UpdateMarkingUI() {
+    Session.FunctionMarkingChanged(ToolPanelKind.Other);
   }
 
   protected override void SetPanelAccentColor(Color color) {
@@ -223,5 +230,10 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     Height = Math.Max(Height, InitialHeight);
     ShowResizeGrip = true;
     CanExpand = false;
+  }
+
+  public void UpdateMarkedFunctions() {
+    FunctionListView.UpdateMarkedFunctions();
+    PanelHost.UpdateMarkedFunctions();
   }
 }

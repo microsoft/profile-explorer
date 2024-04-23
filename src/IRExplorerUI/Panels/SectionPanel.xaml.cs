@@ -3419,6 +3419,18 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
+  private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.CopyFunctionMarkingsAsHtml(Session);
+  }
+
+  private async void ExportMarkedFunctionsHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.ExportFunctionMarkingsAsHtmlFile(Session);
+  }
+
+  private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.CopyFunctionMarkingsAsMarkdownFile(Session);
+  }
+  
   private void ScrollUpButton_OnClick(object sender, RoutedEventArgs e) {
     if (FunctionList.Items is {Count: > 0}) {
       FunctionList.ScrollIntoView(FunctionList.Items[0]);

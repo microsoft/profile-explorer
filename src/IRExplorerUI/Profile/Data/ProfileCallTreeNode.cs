@@ -14,13 +14,12 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   [ProtoMember(1)]
   public IRTextFunction Function { get; set; }
   private TinyList<ProfileCallTreeNode> children_;
-  //private SparseBitvector samplesIndices_;
+  private ProfileCallTreeNode caller_; // Can't be serialized, reconstructed.
 
   public FunctionDebugInfo FunctionDebugInfo { get; set; }
   public TimeSpan Weight { get; set; }
   public TimeSpan ExclusiveWeight { get; set; }
   private Dictionary<long, ProfileCallSite> callSites_; //? Use Hybrid array/dict to save space
-  private ProfileCallTreeNode caller_; // Can't be serialized, reconstructed.
   public object Tag { get; set; }
   public int Id { get; set; }
   public ProfileCallTreeNodeKind Kind { get; set; }
@@ -45,6 +44,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   public bool HasChildren => Children != null && Children.Count > 0;
   public virtual bool HasCallers => caller_ != null;
   public bool HasCallSites => CallSites != null && CallSites.Count > 0;
+  public bool HasFunction => Function != null;
   public string FunctionName => Function.Name;
   public string ModuleName => Function.ModuleName;
 

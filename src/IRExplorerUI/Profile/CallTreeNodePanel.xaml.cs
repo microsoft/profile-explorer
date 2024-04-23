@@ -98,8 +98,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   public event EventHandler<ProfileCallTreeNode> ModuleNodeClick;
   public event EventHandler<ProfileCallTreeNode> ModuleNodeDoubleClick;
   public event EventHandler<List<ProfileCallTreeNode>> NodesSelected;
-  public event EventHandler<(string, Color)> FunctionMarked;
-  public event EventHandler<(string, Color)> ModuleMarked;
+  public event EventHandler MarkingChanged;
   public event PropertyChangedEventHandler PropertyChanged;
 
   public override ISession Session {
@@ -234,6 +233,9 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   }
 
   public async Task ShowDetailsAsync() {
+    ModuleFunctionList.Reset();
+    CategoryFunctionList.Reset();
+
     await SetupInstanceInfo(CallTreeNode.CallTreeNode);
     ShowDetails = true;
 
@@ -243,20 +245,27 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     var task3 = Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode.CallTreeNode));
     var task4 = Task.Run(() => ProfilingUtils.CollectMarkedFunctions(markings, false, 
       Session, CallTreeNode.CallTreeNode));
-    
     BacktraceList.ShowFunctions(await task1);
     FunctionList.ShowFunctions(await task2, settings_.FunctionListViewFilter);
     ModuleList.ShowModules(await task3);
     CategoryList.ShowCategories(await task4);
-    
-    ModuleFunctionList.Reset();
-    ModuleList.SelectFirstItem();
   }
 
   public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {
     Session = session;
     Settings = App.Settings.CallTreeNodeSettings;
     funcInfoProvider_ = funcInfoProvider;
+  }
+
+  public void UpdateMarkedFunctions() {
+    BacktraceList.UpdateMarkedFunctions();
+    FunctionList.UpdateMarkedFunctions();
+    BacktraceList.UpdateMarkedFunctions();
+    InstancesList.UpdateMarkedFunctions();
+    ModuleList.UpdateMarkedFunctions();
+    ModuleFunctionList.UpdateMarkedFunctions();
+    CategoryList.UpdateMarkedFunctions();
+    CategoryFunctionList.UpdateMarkedFunctions();
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
@@ -273,18 +282,24 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   private void SetupEvents() {
     BacktraceList.NodeClick += (sender, node) => BacktraceNodeClick?.Invoke(sender, node);
     BacktraceList.NodeDoubleClick += (sender, node) => BacktraceNodeDoubleClick?.Invoke(sender, node);
+    BacktraceList.MarkingChanged += (sender, args) => MarkingChanged?.Invoke(sender, args);
     FunctionList.NodeClick += (sender, node) => FunctionNodeClick?.Invoke(sender, node);
     FunctionList.NodeDoubleClick += (sender, node) => FunctionNodeDoubleClick?.Invoke(sender, node);
+    FunctionList.MarkingChanged += (sender, args) => MarkingChanged?.Invoke(sender, args);
     InstancesList.NodeClick += (sender, node) => InstanceNodeClick?.Invoke(sender, node);
     InstancesList.NodeDoubleClick += (sender, node) => InstanceNodeDoubleClick?.Invoke(sender, node);
+    InstancesList.MarkingChanged += (sender, args) => MarkingChanged?.Invoke(sender, args);
     ModuleList.NodeClick += (sender, node) => ModuleNodeClick?.Invoke(sender, node);
     ModuleList.NodeDoubleClick += (sender, node) => ModuleNodeDoubleClick?.Invoke(sender, node);
     ModuleList.ModuleClick += (sender, moduleInfo) => UpdateModuleFunctions(moduleInfo);
+    ModuleList.MarkingChanged += (sender, args) => MarkingChanged?.Invoke(sender, args);
     ModuleFunctionList.NodeClick += (sender, node) => FunctionNodeClick?.Invoke(sender, node);
     ModuleFunctionList.NodeDoubleClick += (sender, node) => FunctionNodeDoubleClick?.Invoke(sender, node);
+    ModuleFunctionList.MarkingChanged += (sender, args) => MarkingChanged?.Invoke(sender, args);
     CategoryList.CategoryClick += (sender, category) => UpdateCategoryFunctions(category);
     CategoryFunctionList.NodeClick += (sender, node) => FunctionNodeClick?.Invoke(sender, node);
     CategoryFunctionList.NodeDoubleClick += (sender, node) => FunctionNodeDoubleClick?.Invoke(sender, node);
+    CategoryFunctionList.MarkingChanged += (sender, args) => MarkingChanged?.Invoke(sender, args);
   }
 
   private void UpdateCategoryFunctions(FunctionMarkingCategory category) {
@@ -783,11 +798,11 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     if (obj is SelectedColorEventArgs e) {
       if (CallTreeNode.CallTreeNode is ProfileCallTreeGroupNode groupNode) {
         foreach (var node in groupNode.Nodes) {
-          ModuleMarked?.Invoke(this, (node.ModuleName, e.SelectedColor));
+          MarkModule(node.ModuleName, e.SelectedColor);
         }
       }
       else {
-        ModuleMarked?.Invoke(this, (CallTreeNode.CallTreeNode.ModuleName, e.SelectedColor));
+        MarkModule(CallTreeNode.CallTreeNode.ModuleName, e.SelectedColor);
       }
     }
   });
@@ -797,13 +812,27 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       if (CallTreeNode.CallTreeNode is ProfileCallTreeGroupNode groupNode) {
         foreach (var node in groupNode.Nodes) {
           var funcName = node.FormatFunctionName(Session);
-          FunctionMarked?.Invoke(this, (funcName, e.SelectedColor));
+          MarkFunction(funcName, e.SelectedColor);
         }
       }
       else {
         var funcName = CallTreeNode.CallTreeNode.FormatFunctionName(Session);
-        FunctionMarked?.Invoke(this, (funcName, e.SelectedColor));
+        MarkFunction(funcName, e.SelectedColor);
       }
     }
   });
+  
+  private void MarkModule(string module, Color color) {
+    var markingSettings = App.Settings.MarkingSettings;
+    markingSettings.UseModuleColors = true;
+    markingSettings.AddModuleColor(module, color);
+    MarkingChanged?.Invoke(this, EventArgs.Empty);
+  }
+
+  private void MarkFunction(string function, Color color) {
+    var markingSettings = App.Settings.MarkingSettings;
+    markingSettings.UseFunctionColors = true;
+    markingSettings.AddFunctionColor(function, color);
+    MarkingChanged?.Invoke(this, EventArgs.Empty);
+  }
 }

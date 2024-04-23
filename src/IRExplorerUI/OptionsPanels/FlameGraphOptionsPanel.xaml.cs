@@ -59,7 +59,6 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     base.PanelResetting();
     App.Settings.CallTreeNodeSettings.Reset();
     App.Settings.PreviewPopupSettings.Reset();
-    App.Settings.MarkingSettings.Reset();
   }
 
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {

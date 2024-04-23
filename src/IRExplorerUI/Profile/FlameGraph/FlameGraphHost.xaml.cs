@@ -693,7 +693,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   private async Task OpenFunction(ProfileCallTreeNode node) {
-    if (node != null && node.Function.HasSections) {
+    if (node is {HasFunction: true} && node.Function.HasSections) {
       var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await Session.OpenProfileFunction(node, openMode);
     }

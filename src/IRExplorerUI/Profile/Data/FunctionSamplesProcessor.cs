@@ -7,26 +7,16 @@ using IRExplorerCore.Utilities;
 namespace IRExplorerUI.Profile;
 
 public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
+  private const int AllThreadsKey = -1;
   private Dictionary<int, List<SampleIndex>> threadListMap_;
   private List<ChunkData> chunks_;
   private ProfileCallTreeNode node_;
 
-  private static int EstimateSampleCount(ProfileCallTreeNode node, bool perThread) {
-    // Assume a medium sampling frequency (min 1000, max ~8000).
-    int size = (int)(node.ExclusiveWeight.TotalSeconds * 4000);
-
-    if (perThread && node.HasThreadWeights) {
-      return size / node.ThreadWeights.Count;
-    }
-
-    return size;
-  }
-  
   private class ChunkData {
-    public ChunkData(ProfileCallTreeNode node) {
-      AllThreadsList = new List<SampleIndex>(EstimateSampleCount(node, false));
+    public ChunkData() {
+      AllThreadsList = new List<SampleIndex>();
       ThreadListMap = new Dictionary<int, List<SampleIndex>>();
-      ThreadListMap[-1] = AllThreadsList;
+      ThreadListMap[AllThreadsKey] = AllThreadsList;
     }
 
     public List<SampleIndex> AllThreadsList;
@@ -51,7 +41,7 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
   }
 
   protected override object InitializeChunk(int k) {
-    var chunk = new ChunkData(node_);
+    var chunk = new ChunkData();
 
     lock (chunks_) {
       chunks_.Add(chunk);
@@ -93,7 +83,7 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
 
     if (match) {
       var threadList = data.ThreadListMap.GetOrAddValue(stack.Context.ThreadId,
-        () => new List<SampleIndex>(EstimateSampleCount(node_, true)));
+        () => new List<SampleIndex>());
       var index = new SampleIndex(sampleIndex, sample.Time);
       threadList.Add(index);
       data.AllThreadsList.Add(index);
