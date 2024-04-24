@@ -373,10 +373,21 @@ public static class DocumentExporting {
     }
   }
 
+  public static async Task CopyAllLinesAsHtml(IRDocument textView) {
+    await CopyLinesAsHtml(textView, 0, textView.Document.LineCount);
+  }
+  
+  public static async Task CopyAllSourceLinesAsHtml(IRDocument textView) {
+    await CopySourceLinesAsHtml(textView, 0, textView.Document.LineCount);
+  }
+
   public static async Task CopySelectedLinesAsHtml(IRDocument textView) {
     int startLine = textView.TextArea.Selection.StartPosition.Line - 1;
     int endLine = textView.TextArea.Selection.EndPosition.Line - 1;
+    await CopyLinesAsHtml(textView, startLine, endLine);
+  }
 
+  private static async Task CopyLinesAsHtml(IRDocument textView, int startLine, int endLine) {
     if (startLine > endLine) {
       // Happens when selecting bottom-up.
       (startLine, endLine) = (endLine, startLine);
@@ -659,7 +670,10 @@ public static class DocumentExporting {
   public static async Task CopySelectedSourceLinesAsHtml(IRDocument textView) {
     int startLine = textView.TextArea.Selection.StartPosition.Line;
     int endLine = textView.TextArea.Selection.EndPosition.Line;
+    await CopySourceLinesAsHtml(textView, startLine, endLine);
+  }
 
+  private static async Task CopySourceLinesAsHtml(IRDocument textView, int startLine, int endLine) {
     if (startLine > endLine) {
       // Happens when selecting bottom-up.
       (startLine, endLine) = (endLine, startLine);

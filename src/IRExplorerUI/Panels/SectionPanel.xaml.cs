@@ -817,7 +817,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   });
 
-
+  public RelayCommand<object> CopyAllFunctionsCommand => new RelayCommand<object>(async obj => {
+    CopyFunctionListAsHtml(true);
+  });
+  
   private Brush GetMarkedNodeColor(IRTextFunctionEx node) {
     return App.Settings.MarkingSettings.
       GetMarkedNodeBrush(node.Name, node.ModuleName);
@@ -2169,6 +2172,21 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     if (e.AddedItems.Count == 1) {
       await SelectFunction(((IRTextFunctionEx)FunctionList.SelectedItem).Function);
     }
+
+    if (FunctionList.SelectedItems.Count > 1) {
+      var selectedNodes = new List<ProfileCallTreeNode>();
+
+      foreach (var item in FunctionList.SelectedItems) {
+        if (item is IRTextFunctionEx funcEx) {
+          selectedNodes.Add(Session.ProfileData.CallTree.GetCombinedCallTreeNode(funcEx.Function));
+        }
+      }
+
+      var weightSum = ProfileCallTree.CombinedCallTreeNodesWeight(selectedNodes);
+      double weightPercentage = Session.ProfileData.ScaleFunctionWeight(weightSum);
+      string text = $"Selected {FunctionList.SelectedItems.Count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+      Session.SetApplicationStatus(text, "Sum of time for the selected functions");
+    }
   }
 
   private (TimeSpan Weight, TimeSpan ExclusiveWeight) ComputeSelectedFunctionsWeight() {
@@ -2855,13 +2873,21 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     return doc.DocumentNode;
   }
 
-  private void CopyFunctionListAsHtml() {
+  private void CopyFunctionListAsHtml(bool allFunctions) {
     var doc = new HtmlDocument();
-    var funcList = new List<IRTextFunctionEx>();
+    List<IRTextFunctionEx> funcList = null;
 
-    foreach (var item in FunctionList.SelectedItems) {
-      funcList.Add((IRTextFunctionEx)item);
+    if (allFunctions) {
+      funcList = functions_;
     }
+    else {
+      funcList = new List<IRTextFunctionEx>();
+      
+      foreach (var item in FunctionList.SelectedItems) {
+        funcList.Add((IRTextFunctionEx)item);
+      }
+    }
+    
 
     doc.DocumentNode.AppendChild(ExportFunctionListAsHtml(funcList));
     var writer = new StringWriter();
@@ -3376,7 +3402,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private void CopyFunctionDetailsExecuted(object sender, ExecutedRoutedEventArgs e) {
-    CopyFunctionListAsHtml();
+    CopyFunctionListAsHtml(false);
   }
 
   private async void ExportFunctionListHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {

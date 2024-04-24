@@ -600,21 +600,17 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
     // Show the sum of the selected functions.
     if (ItemList.SelectedItems.Count > 1) {
-      var weightSum = TimeSpan.Zero;
-
+      var selectedNodes = new List<ProfileCallTreeNode>();
+      
       foreach (var item in ItemList.SelectedItems) {
         if (item is ProfileListViewItem profileItem && profileItem.CallTreeNode != null) {
-          weightSum += profileItem.CallTreeNode.Weight;
+          selectedNodes.Add(profileItem.CallTreeNode);
         }
       }
 
-      if(weightSum == TimeSpan.Zero) {
-        Session.SetApplicationStatus("");
-        return;
-      }
-
+      var weightSum = ProfileCallTree.CombinedCallTreeNodesWeight(selectedNodes);
       double weightPercentage = Session.ProfileData.ScaleFunctionWeight(weightSum);
-      string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+      string text = $"Selected {ItemList.SelectedItems.Count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
       Session.SetApplicationStatus(text, "Sum of time for the selected functions");
     }
     else {

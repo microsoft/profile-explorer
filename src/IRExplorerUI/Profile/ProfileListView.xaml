@@ -30,7 +30,7 @@
       DockPanel.Dock="Bottom"
       IsTextSearchEnabled="True"
       SelectionChanged="ItemList_SelectionChanged"
-      SelectionMode="Single"
+      SelectionMode="Extended"
       TextSearch.TextPath="Name"
       VirtualizingStackPanel.IsVirtualizing="True"
       VirtualizingStackPanel.VirtualizationMode="Recycling">

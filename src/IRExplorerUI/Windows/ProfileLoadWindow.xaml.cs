@@ -1133,6 +1133,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     if (Utils.ShowYesNoMessageBox("Do you want to remove all excluded binaries and symbols?", this) ==
         MessageBoxResult.Yes) {
       symbolSettings_.ClearRejectedFiles();
+      ReloadSymbolPathsList();
       OnPropertyChange(nameof(SymbolSettings));
       App.Settings.SymbolSettings = symbolSettings_;
       App.SaveApplicationSettings();

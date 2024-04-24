@@ -424,6 +424,19 @@
                       Source="{StaticResource DocumentIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
+                <Separator/>
+                <MenuItem
+                  Command="{Binding CopyAllFunctionsCommand}"
+                  CommandTarget="{Binding ElementName=FunctionList}"
+                  Header="Copy as HTML Table"
+                  ToolTip="Copy the list of functions and additional columns as an HTML file">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource ClipboardIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
               </MenuItem>
             </Menu>
 

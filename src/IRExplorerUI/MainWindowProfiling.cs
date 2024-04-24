@@ -733,7 +733,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    ProfilingUtils.PopulateMarkedModulesMenu(FunctionMenu, MarkingSettings, this,
+    ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, this,
       e.OriginalSource, ReloadMarkingSettings);
   }
 

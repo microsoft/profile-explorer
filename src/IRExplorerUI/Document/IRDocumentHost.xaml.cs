@@ -29,6 +29,7 @@ using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Profile.Document;
 using IRExplorerUI.Query;
+using IRExplorerUI.Utilities;
 using Microsoft.Extensions.Primitives;
 using ProtoBuf;
 
@@ -685,6 +686,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     var weightSum = TimeSpan.Zero;
     int startLine = TextView.TextArea.Selection.StartPosition.Line;
     int endLine = TextView.TextArea.Selection.EndPosition.Line;
+    int count = 0;
 
     if (startLine > endLine) {
       // Happens when selecting bottom-up.
@@ -697,6 +699,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         if (metadataTag.ElementToOffsetMap.TryGetValue(tuple, out long offset) &&
             funcProfile_.InstructionWeight.TryGetValue(offset, out var weight)) {
           weightSum += weight;
+          count++;
         }
       }
     }
@@ -707,7 +710,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     double weightPercentage = funcProfile_.ScaleWeight(weightSum);
-    string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+    string text = $"Selected {count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
     Session.SetApplicationStatus(text, "Sum of time for the selected instructions");
   }
 
@@ -2374,6 +2377,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.Copy();
   }
 
+  public RelayCommand<object> CopyDocumentCommand => new RelayCommand<object>(async obj => {
+    DocumentExporting.CopyAllLinesAsHtml(TextView);
+  });
+  
   private class DummyQuery : IElementQuery {
     public ISession Session { get; }
 

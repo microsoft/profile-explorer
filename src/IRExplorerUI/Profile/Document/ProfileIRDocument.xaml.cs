@@ -23,6 +23,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
+using IRExplorerUI.Utilities;
 using Microsoft.Extensions.Primitives;
 
 namespace IRExplorerUI.Profile.Document;
@@ -979,26 +980,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private async void ExportFunctionProfileHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
-    string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
-    bool success = true;
-
-    if (!string.IsNullOrEmpty(path)) {
-      try {
-        success = await DocumentExporting.ExportSourceAsHtmlFile(TextView, path);
-      }
-      catch (Exception ex) {
-        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
-      }
-
-      if (!success) {
-        using var centerForm = new DialogCenteringHelper(this);
-        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
-                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
-      }
-    }
-  }
-
   private async void ExportSourceExecuted(object sender, ExecutedRoutedEventArgs e) {
     await DocumentExporting.ExportToExcelFile(TextView,
                                               isSourceFileDocument_ ?
@@ -1030,6 +1011,15 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
     else {
       await DocumentExporting.CopySelectedLinesAsHtml(TextView);
+    }
+  }
+  
+  public async Task CopyAllLinesAsHtml() {
+    if (isSourceFileDocument_) {
+      await DocumentExporting.CopyAllSourceLinesAsHtml(TextView);
+    }
+    else {
+      await DocumentExporting.CopyAllLinesAsHtml(TextView);
     }
   }
 
@@ -1107,4 +1097,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private void CopySelectedTextExecuted(object sender, ExecutedRoutedEventArgs e) {
     TextView.Copy();
   }
+
+  public RelayCommand<object> CopyDocumentCommand => new RelayCommand<object>(async obj => {
+    await CopyAllLinesAsHtml();
+  });
 }

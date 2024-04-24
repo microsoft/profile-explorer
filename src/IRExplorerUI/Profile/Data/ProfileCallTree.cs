@@ -326,7 +326,7 @@ public sealed class ProfileCallTree {
 
     // Make a copy of the list since it's shared with all other instances
     // of the node and it may be iterated on another thread, sorting may
-    // modifies the list which invalidates iteration and throws.
+    // modify the list which invalidates iteration and throws.
     var nodeListCopy = new List<ProfileCallTreeNode>(nodeList);
     nodeListCopy.Sort((a, b) => b.Weight.CompareTo(a.Weight));
     return nodeListCopy;

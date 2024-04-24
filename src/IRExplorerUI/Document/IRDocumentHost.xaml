@@ -769,7 +769,7 @@
                       Command="local:DocumentHostCommand.ExportFunctionProfile"
                       CommandTarget="{Binding ElementName=TextView}"
                       Header="Export as Excel File"
-                      ToolTip="Save the list of functions and additional columns as an Excel worksheet">
+                      ToolTip="Save the document lines and additional columns as an Excel worksheet">
                       <MenuItem.Icon>
                         <Image
                           Width="16"
@@ -781,7 +781,7 @@
                       Command="local:DocumentHostCommand.ExportFunctionProfileHTML"
                       CommandTarget="{Binding ElementName=TextView}"
                       Header="Export as HTML File"
-                      ToolTip="Save the list of functions and additional columns as an HTML file">
+                      ToolTip="Save the document lines and additional columns as an HTML file">
                       <MenuItem.Icon>
                         <Image
                           Width="16"
@@ -793,12 +793,25 @@
                       Command="local:DocumentHostCommand.ExportFunctionProfileMarkdown"
                       CommandTarget="{Binding ElementName=TextView}"
                       Header="Export as Markdown File"
-                      ToolTip="Save the list of functions and additional columns as a Markdown file">
+                      ToolTip="Save the document lines and additional columns as a Markdown file">
                       <MenuItem.Icon>
                         <Image
                           Width="16"
                           Height="16"
                           Source="{StaticResource DocumentIcon}" />
+                      </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem
+                      Command="{Binding CopyDocumentCommand}"
+                      CommandTarget="{Binding ElementName=FunctionList}"
+                      Header="Copy as HTML Table"
+                      ToolTip="Copy the document lines and additional columns as an HTML file">
+                      <MenuItem.Icon>
+                        <Image
+                          Width="16"
+                          Height="16"
+                          Source="{StaticResource ClipboardIcon}" />
                       </MenuItem.Icon>
                     </MenuItem>
                   </MenuItem>
