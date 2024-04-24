@@ -791,7 +791,7 @@
                         <ToolBarTray
                             Grid.Column="0"
                             Height="20"
-                            Margin="0,-3,0,0"
+                            Margin="0,-2,0,0"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Top"
                             Background="#F7EFCD"
@@ -1083,17 +1083,6 @@
                                             ToolTip="Remove all saved function markings" />
                                         <Separator/>
                                         <MenuItem
-                                          Click="CopyMarkedFunctionMenu_OnClick"
-                                          Header="Copy Marked Functions"
-                                          ToolTip="Copy the report with marked functions as an HTML table">
-                                          <MenuItem.Icon>
-                                            <Image
-                                              Width="16"
-                                              Height="16"
-                                              Source="{StaticResource ClipboardIcon}" />
-                                          </MenuItem.Icon>
-                                        </MenuItem>
-                                        <MenuItem
                                           Click="ExportMarkedFunctionsHtmlMenu_OnClick"
                                           Header="Export Marked Functions as HTML File"
                                           ToolTip="Save the report with marked function as an HTML file">
@@ -1113,6 +1102,18 @@
                                               Width="16"
                                               Height="16"
                                               Source="{StaticResource DocumentIcon}" />
+                                          </MenuItem.Icon>
+                                        </MenuItem>
+                                        <Separator/>
+                                        <MenuItem
+                                          Click="CopyMarkedFunctionMenu_OnClick"
+                                          Header="Copy Marked Functions"
+                                          ToolTip="Copy the report with marked functions as an HTML table">
+                                          <MenuItem.Icon>
+                                            <Image
+                                              Width="16"
+                                              Height="16"
+                                              Source="{StaticResource ClipboardIcon}" />
                                           </MenuItem.Icon>
                                         </MenuItem>
                                     </MenuItem>

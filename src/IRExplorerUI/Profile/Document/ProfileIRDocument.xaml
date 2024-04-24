@@ -294,7 +294,7 @@
                 <MenuItem
                   Command="{Binding CopyDocumentCommand}"
                   CommandTarget="{Binding ElementName=FunctionList}"
-                  Header="Copy as HTML Table"
+                  Header="Copy as HTML/Markdown table"
                   ToolTip="Copy the document lines and additional columns as an HTML file">
                   <MenuItem.Icon>
                     <Image
