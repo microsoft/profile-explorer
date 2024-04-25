@@ -199,8 +199,16 @@ public class FunctionMarkingSettings : SettingsBase {
 
   private void AddMarkingColor(FunctionMarkingStyle style, List<FunctionMarkingStyle> markingColors) {
     // Overwrite marking by removing exact matches.
-    markingColors.RemoveAll(item =>
-      item.Name.Equals(style.Name, StringComparison.Ordinal));
+    var existing = markingColors.Find(item => item.Name.Equals(style.Name, StringComparison.Ordinal));
+
+    if (existing != null) {
+      if (existing.IsEnabled) {
+        style.IsEnabled = true; // Keep enabled state.
+      }
+
+      markingColors.Remove(existing);
+    }
+
     markingColors.Add(style);
   }
 

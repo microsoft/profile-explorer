@@ -980,7 +980,7 @@ public static class ProfilingUtils {
       td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
       tr.AppendChild(td);
       td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode($"{node.ExclusivePercentage.AsPercentageString(2, false)}");
+      td.InnerHtml = HttpUtility.HtmlEncode($"{node.ExclusivePercentage.AsPercentageString()}");
       td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
       tr.AppendChild(td);
       td = doc.CreateElement("td");
@@ -988,7 +988,7 @@ public static class ProfilingUtils {
       td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
       tr.AppendChild(td);
       td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode($"{node.Percentage.AsPercentageString(2, false)}");
+      td.InnerHtml = HttpUtility.HtmlEncode($"{node.Percentage.AsPercentageString()}");
       td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
       tr.AppendChild(td);
 
@@ -1029,9 +1029,9 @@ public static class ProfilingUtils {
     foreach (var func in list) {
       sb.Append($"| {func.FunctionName} | {func.ModuleName} " +
                 $"| {func.ExclusiveWeight.TotalMilliseconds} " +
-                $"| {func.ExclusivePercentage.AsPercentageString(2, false)} " +
+                $"| {func.ExclusivePercentage.AsPercentageString()} " +
                 $"| {func.Weight.TotalMilliseconds} " +
-                $"| {func.Percentage.AsPercentageString(2, false)} |\n");
+                $"| {func.Percentage.AsPercentageString()} |\n");
     }
 
     return sb.ToString();
@@ -1039,39 +1039,96 @@ public static class ProfilingUtils {
 
   public static (string Html, string Plaintext)
     ExportProfilingReportAsHtml(List<FunctionMarkingCategory> markingCategoryList, ISession session,
-                                bool includeHottestFunctions, int hotFuncLimit = 20) {
-    string TitleStyle =
-      @"margin:5;text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:16px;margin-top:0em";
-    string TimeStyle =
-      @"margin:5;text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:14px;margin-top:0em";
+                                bool includeHottestFunctions, int hotFuncLimit = 20,
+                                bool includeCategoriesTable = true) {
+    string TableStyle = @"border-collapse:collapse;border-spacing:0;";
+    string HeaderStyle =
+      @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
+    string CellStyle =
+      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
+    string PatternCellStyle =
+      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:500px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
+
     var doc = new HtmlDocument();
     var sb = new StringBuilder();
     var markingSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
 
-    //? TODO: Add table of categories
-    //? TODO: Add some trace info (ETL path, process name/id, duration)
-    
+    if (includeCategoriesTable) {
+      ExportTraceOverviewasHtml(session, doc, sb);
+
+      AppendTitleParagraph(includeHottestFunctions ? "Categories Summary" : "Markings Summary", doc);
+      var table = doc.CreateElement("table");
+      table.SetAttributeValue("style", TableStyle);
+
+      var thead = doc.CreateElement("thead");
+      var tbody = doc.CreateElement("tbody");
+      var tr = doc.CreateElement("tr");
+      var th = doc.CreateElement("th");
+      var title = includeHottestFunctions ? "Category" : "Marking";
+      th.InnerHtml = title;
+      th.SetAttributeValue("style", HeaderStyle);
+      tr.AppendChild(th);
+
+      th = doc.CreateElement("th");
+      th.InnerHtml = "Time (ms)";
+      th.SetAttributeValue("style", HeaderStyle);
+      tr.AppendChild(th);
+
+      th = doc.CreateElement("th");
+      th.InnerHtml = "Time (%)";
+      th.SetAttributeValue("style", HeaderStyle);
+      tr.AppendChild(th);
+      thead.AppendChild(tr);
+      table.AppendChild(thead);
+
+      string header = $"| {title} | Time (ms) | Time (%) |";
+      string separator = "|----------|--------|--------|";
+      sb.AppendLine(header);
+      sb.AppendLine(separator);
+
+      foreach (var category in markingCategoryList) {
+        tr = doc.CreateElement("tr");
+        var td = doc.CreateElement("td");
+        td.InnerHtml = HttpUtility.HtmlEncode(category.Marking.Title);
+        td.SetAttributeValue("style", CellStyle);
+        tr.AppendChild(td);
+
+        td = doc.CreateElement("td");
+        td.InnerHtml = HttpUtility.HtmlEncode(category.Weight.TotalMilliseconds);
+        td.SetAttributeValue("style", CellStyle);
+        tr.AppendChild(td);
+
+        td = doc.CreateElement("td");
+        td.InnerHtml = HttpUtility.HtmlEncode(category.Percentage.AsPercentageString());
+        td.SetAttributeValue("style", CellStyle);
+        tr.AppendChild(td);
+        tbody.AppendChild(tr);
+
+        sb.AppendLine($"| {category.Marking.Title} | {category.Weight.TotalMilliseconds} | {category.Percentage.AsPercentageString()} |");
+      }
+
+      table.AppendChild(tbody);
+      doc.DocumentNode.AppendChild(table);
+      AppendHtmlNewLine(doc, sb);
+    }
+
     if (includeHottestFunctions) {
       // Add a table with the hottest functions overall.
       var hottestFuncts = new List<ProfileCallTreeNode>();
       var funcList = session.ProfileData.GetSortedFunctions();
 
-      var funcParagraph = doc.CreateElement("p");
       var funcTitle = $"Hottest {hotFuncLimit} Functions";
-      funcParagraph.InnerHtml = HttpUtility.HtmlEncode(funcTitle);
-      funcParagraph.SetAttributeValue("style", TitleStyle);
-      doc.DocumentNode.AppendChild(funcParagraph);
+      AppendTitleParagraph(funcTitle, doc, sb);
 
       foreach (var pair in funcList.Take(hotFuncLimit)) {
         hottestFuncts.Add(session.ProfileData.CallTree.GetCombinedCallTreeNode(pair.Item1));
       }
 
-      var hotFuncTable = ProfilingUtils.ExportFunctionListAsHtmlTable(hottestFuncts, doc, session);
+      var hotFuncTable = ExportFunctionListAsHtmlTable(hottestFuncts, doc, session);
       doc.DocumentNode.AppendChild(hotFuncTable);
 
-      sb.AppendLine(funcTitle);
       sb.AppendLine();
-      sb.AppendLine(ProfilingUtils.ExportFunctionListAsMarkdownTable(hottestFuncts, session));
+      sb.AppendLine(ExportFunctionListAsMarkdownTable(hottestFuncts, session));
     }
 
     // Add a table for each category.
@@ -1080,40 +1137,128 @@ public static class ProfilingUtils {
         continue;
       }
 
-      var newLineParagraph = doc.CreateElement("p");
-      newLineParagraph.InnerHtml = "&nbsp;";
-      newLineParagraph.SetAttributeValue("style", "margin:5;");
-      doc.DocumentNode.AppendChild(newLineParagraph);
-
-      var titleParagraph = doc.CreateElement("p");
       var title = category.Marking.HasTitle ? category.Marking.Title : category.Marking.Name;
-      titleParagraph.InnerHtml = HttpUtility.HtmlEncode(title);
-      titleParagraph.SetAttributeValue("style", TitleStyle);
-      doc.DocumentNode.AppendChild(titleParagraph);
-
-      var timeParagraph = doc.CreateElement("p");
       var time = markingSettings.FormatWeightValue(null, category.Weight);
       var percentage = category.Percentage.AsPercentageString();
-      timeParagraph.InnerHtml = HttpUtility.HtmlEncode($"Time: {time} ({percentage})");
-      timeParagraph.SetAttributeValue("style", TimeStyle);
-      doc.DocumentNode.AppendChild(timeParagraph);
 
-      var table = ProfilingUtils.ExportFunctionListAsHtmlTable(category.SortedFunctions, doc, session);
+      AppendHtmlNewLine(doc);
+      AppendTitleParagraph(title, doc, sb);
+      AppendParagraph($"Time: {time} ({percentage})", doc, sb);
+
+      var table = ExportFunctionListAsHtmlTable(category.SortedFunctions, doc, session);
       doc.DocumentNode.AppendChild(table);
-
-      sb.AppendLine($"{title}  ");
-      sb.AppendLine($"Time: {time} ({percentage})  ");
       sb.AppendLine();
 
-      var plainText = ProfilingUtils.ExportFunctionListAsMarkdownTable(category.SortedFunctions, session);
+      var plainText = ExportFunctionListAsMarkdownTable(category.SortedFunctions, session);
       sb.AppendLine(plainText);
+    }
+
+    if (includeCategoriesTable) {
+      AppendHtmlNewLine(doc, sb);
+      AppendTitleParagraph(includeHottestFunctions ? "Categories Definitions" :
+        "Markings Definitions", doc);
+      var table = doc.CreateElement("table");
+      table.SetAttributeValue("style", TableStyle);
+
+      var thead = doc.CreateElement("thead");
+      var tbody = doc.CreateElement("tbody");
+      var tr = doc.CreateElement("tr");
+
+      var title = includeHottestFunctions ? "Category" : "Marking";
+      var th = doc.CreateElement("th");
+      th.InnerHtml = title;
+      th.SetAttributeValue("style", HeaderStyle);
+      tr.AppendChild(th);
+
+      th = doc.CreateElement("th");
+      th.InnerHtml = "Pattern";
+      th.SetAttributeValue("style", HeaderStyle);
+      tr.AppendChild(th);
+      thead.AppendChild(tr);
+      table.AppendChild(thead);
+
+      string header = $"| {title} | Pattern |";
+      string separator = "|----------|--------|";
+      sb.AppendLine(header);
+      sb.AppendLine(separator);
+
+      foreach (var category in markingCategoryList) {
+        tr = doc.CreateElement("tr");
+        var td = doc.CreateElement("td");
+        td.InnerHtml = HttpUtility.HtmlEncode(category.Marking.Title);
+        td.SetAttributeValue("style", CellStyle);
+        tr.AppendChild(td);
+
+        td = doc.CreateElement("td");
+        td.InnerHtml = HttpUtility.HtmlEncode(category.Marking.Name);
+        td.SetAttributeValue("style", PatternCellStyle);
+        tr.AppendChild(td);
+        tbody.AppendChild(tr);
+
+        sb.AppendLine($"| {category.Marking.Title} | {category.Marking.Name} |");
+      }
+
+      table.AppendChild(tbody);
+      doc.DocumentNode.AppendChild(table);
     }
 
     var writer = new StringWriter();
     doc.Save(writer);
     return (writer.ToString(), sb.ToString());
   }
-  
+
+  private static void ExportTraceOverviewasHtml(ISession session, HtmlDocument doc, StringBuilder sb) {
+    var report = session.ProfileData.Report;
+
+    if (report != null) {
+      AppendTitleParagraph("Overview", doc, sb);
+      AppendParagraph($"Trace File: {report.TraceInfo.TraceFilePath}", doc, sb);
+      AppendParagraph($"Trace Duration: {report.TraceInfo.ProfileDuration}", doc, sb);
+      AppendParagraph($"Process Name: {report.Process.Name}", doc, sb);
+      AppendParagraph($"Process Id: {report.Process.ProcessId}", doc, sb);
+      AppendParagraph($"Total Time: {session.ProfileData.TotalWeight}", doc, sb);
+      AppendParagraph($"Total Time (ms): {session.ProfileData.TotalWeight.AsMillisecondsString()}", doc, sb);
+      AppendHtmlNewLine(doc, sb);
+    }
+  }
+
+  private static void AppendParagraph(string text, HtmlDocument doc, StringBuilder sb = null) {
+    string SubtitleStyle =
+      @"margin:5;text-align:left;font-family:Arial, sans-serif;font-size:14px;margin-top:0em";
+    var paragraph = doc.CreateElement("p");
+    paragraph.InnerHtml = HttpUtility.HtmlEncode(text);
+    paragraph.SetAttributeValue("style", SubtitleStyle);
+    doc.DocumentNode.AppendChild(paragraph);
+
+    if (sb != null) {
+      sb.AppendLine($"{text}  ");
+    }
+  }
+
+  private static void AppendTitleParagraph(string text, HtmlDocument doc, StringBuilder sb = null) {
+    string TitleStyle =
+      @"margin:5;text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:16px;margin-top:0em";
+    var paragraph = doc.CreateElement("p");
+    paragraph.InnerHtml = HttpUtility.HtmlEncode(text);
+    paragraph.SetAttributeValue("style", TitleStyle);
+    doc.DocumentNode.AppendChild(paragraph);
+
+    if (sb != null) {
+      sb.AppendLine($"**{text}**  ");
+    }
+  }
+
+  private static void AppendHtmlNewLine(HtmlDocument doc, StringBuilder sb = null) {
+    var newLineParagraph = doc.CreateElement("p");
+    newLineParagraph.InnerHtml = "&nbsp;";
+    newLineParagraph.SetAttributeValue("style", "margin:5;");
+    doc.DocumentNode.AppendChild(newLineParagraph);
+
+    if (sb != null) {
+      sb.AppendLine("  ");
+    }
+  }
+
   public static async Task CopyFunctionMarkingsAsHtml(ISession session) {
     var (html, plaintext) = await ExportFunctionMarkingsAsHtml(session);
     Utils.CopyHtmlToClipboard(html, plaintext);
@@ -1123,7 +1268,7 @@ public static class ProfilingUtils {
     ExportFunctionMarkingsAsHtml(ISession session) {
     var markingCategoryList = await Task.Run(() =>
       CollectMarkedFunctions(App.Settings.MarkingSettings.FunctionColors, false, session));
-    return ExportProfilingReportAsHtml(markingCategoryList, session, false, 0);
+    return ExportProfilingReportAsHtml(markingCategoryList, session, false, 0, true);
   }
 
   public static async Task ExportFunctionMarkingsAsHtmlFile(ISession session) {

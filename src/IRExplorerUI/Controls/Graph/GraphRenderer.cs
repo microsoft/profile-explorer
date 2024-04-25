@@ -53,7 +53,9 @@ public class GraphNode {
 
   public Typeface TextFont { get; set; }
   public Typeface MarkedTextFont { get; set; }
+  public Typeface BoldMarkedTextFont { get; set; }
   public Typeface MarkedLabelTextFont { get; set; }
+  public Typeface BoldMarkedLabelTextFont { get; set; }
   public Brush TextColor { get; set; }
 
   public void Draw() {
@@ -73,7 +75,7 @@ public class GraphNode {
 
       if (graphTag.TextColor.HasValue) {
         textColor = graphTag.TextColor.Value.AsBrush();
-        textFont = MarkedTextFont;
+        textFont = graphTag.UseBoldText ? BoldMarkedTextFont : MarkedTextFont;
       }
 
       if (graphTag.LabelTextColor.HasValue) {
@@ -106,7 +108,9 @@ public class GraphNode {
     // Display the label under the node if there is a tag.
     if (graphTag != null && !string.IsNullOrEmpty(graphTag.Label)) {
       var labelText = new FormattedText(graphTag.Label, CultureInfo.InvariantCulture,
-                                        FlowDirection.LeftToRight, MarkedLabelTextFont, DefaultLabelTextSize, labelColor,
+                                        FlowDirection.LeftToRight,
+                                        graphTag.UseBoldText ? BoldMarkedLabelTextFont : MarkedLabelTextFont,
+                                        DefaultLabelTextSize, labelColor,
                                         VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
       var textBackground = ColorBrushes.GetBrush(Settings.BackgroundColor);
       dc.DrawRectangle(textBackground, null, new Rect(NodeInfo.CenterX - labelText.Width / 2,
@@ -127,7 +131,9 @@ public class GraphRenderer {
   private const string FontName = "Verdana";
   private Typeface nodeFont_;
   private Typeface markedNodeFont_;
+  private Typeface boldMarkedNodeFont_;
   private Typeface labelFont_;
+  private Typeface boldLabelFont_;
   private Typeface edgeFont_;
   private Graph graph_;
   private IGraphStyleProvider graphStyle_;
@@ -138,10 +144,15 @@ public class GraphRenderer {
                        ICompilerInfoProvider compilerInfo) {
     settings_ = settings;
     graph_ = graph;
+
+    //? TODO: Instead of adding extra fields to Node,
+    //? pass the renderer and use these definitions instead.
     edgeFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
     nodeFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-    markedNodeFont_= new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal);
-    labelFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal);
+    markedNodeFont_= new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    boldMarkedNodeFont_= new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal);
+    labelFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    boldLabelFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal);
 
     graphStyle_ = graph.Kind switch {
       GraphKind.FlowGraph =>
@@ -251,7 +262,9 @@ public class GraphRenderer {
         Visual = nodeVisual,
         TextFont = nodeFont_,
         MarkedTextFont = markedNodeFont_,
+        BoldMarkedTextFont = boldMarkedNodeFont_,
         MarkedLabelTextFont = labelFont_,
+        BoldMarkedLabelTextFont = boldLabelFont_,
         TextColor = textColor,
         Style = GetDefaultNodeStyle(node)
       };

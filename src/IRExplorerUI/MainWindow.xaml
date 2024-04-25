@@ -847,17 +847,6 @@
                                       </MenuItem>
                                       <Separator />
                                       <MenuItem
-                                        Click="CopyOverviewMenu_OnClick"
-                                        Header="Copy Overview Report"
-                                        ToolTip="Copy the report with function categories as an HTML table">
-                                        <MenuItem.Icon>
-                                          <Image
-                                            Width="16"
-                                            Height="16"
-                                            Source="{StaticResource ClipboardIcon}" />
-                                        </MenuItem.Icon>
-                                      </MenuItem>
-                                      <MenuItem
                                         Click="ExportOverviewHtmlMenu_OnClick"
                                         Header="Export Overview Report as HTML File"
                                         ToolTip="Save the report with function categories as an HTML file">
@@ -877,6 +866,18 @@
                                             Width="16"
                                             Height="16"
                                             Source="{StaticResource DocumentIcon}" />
+                                        </MenuItem.Icon>
+                                      </MenuItem>
+                                      <Separator/>
+                                      <MenuItem
+                                        Click="CopyOverviewMenu_OnClick"
+                                        Header="Copy Overview Report as HTML/Markdown"
+                                        ToolTip="Copy the report with function categories as an HTML table">
+                                        <MenuItem.Icon>
+                                          <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource ClipboardIcon}" />
                                         </MenuItem.Icon>
                                       </MenuItem>
                                       </MenuItem>

@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Windows;
 using System.Windows.Media;
 using IRExplorerCore.IR;
 
@@ -45,6 +46,7 @@ public sealed class GraphNodeTag : ITag {
   public double BorderThickness { get; set; }
   public string Label { get; set; }
   public string ToolTip { get; set; }
+  public bool UseBoldText { get; set; }
   public LabelPlacementKind LabelPlacement { get; set; }
   public Color? LabelTextColor { get; set; }
   public Color? TextColor { get; set; }
@@ -67,6 +69,7 @@ public sealed class GraphNodeTag : ITag {
   public static GraphNodeTag MakeColor(string label, Color backColor,
                                        Color? textColor = null,
                                        Color? labelColor = null,
+                                       bool useBoldText = false,
                                        LabelPlacementKind position = LabelPlacementKind.Bottom) {
     return new GraphNodeTag {
       Label = label,
@@ -74,6 +77,7 @@ public sealed class GraphNodeTag : ITag {
       LabelTextColor = labelColor,
       TextColor = textColor,
       LabelPlacement = position,
+      UseBoldText = useBoldText
     };
   }
 

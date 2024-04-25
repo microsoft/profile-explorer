@@ -609,7 +609,8 @@ public class ProfileDocumentMarker {
         block.AddTag(GraphNodeTag.MakeColor(weightPercentage.AsTrimmedPercentageString(),
           ((SolidColorBrush)color).Color,
           ((SolidColorBrush)overlay.TextColor).Color,
-          ((SolidColorBrush)overlay.TextColor).Color));
+          ((SolidColorBrush)overlay.TextColor).Color,
+          (i < 3 || weightPercentage >= 0.1))); // Bold text for >10%.
       }
     }
 
