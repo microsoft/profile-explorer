@@ -220,6 +220,16 @@ public class FunctionProfileData {
 }
 
 public class FunctionProcessingResult {
+  // Mapping from a source line number to a list
+  // of associated instructions and their weight and/or perf. counters.
+  public record SampledElementsToLineMapping(
+    Dictionary<int, List<(IRElement Element,
+      (TimeSpan Weight, PerformanceCounterValueSet Counters) Profile)>> SampledElements) {
+    public SampledElementsToLineMapping() :
+      this(new Dictionary<int, List<(IRElement Element,
+        (TimeSpan Weight, PerformanceCounterValueSet Counters) Profile)>>()) { }
+  }
+
   public FunctionProcessingResult(int capacity = 0) {
     SampledElements = new List<(IRElement, TimeSpan)>(capacity);
     BlockSampledElementsMap = new Dictionary<BlockIR, TimeSpan>(capacity);
@@ -243,6 +253,53 @@ public class FunctionProcessingResult {
   public void SortSampledElements() {
     BlockSampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
     SampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+  }
+
+  public SampledElementsToLineMapping BuildSampledElementsToLineMapping(FunctionProfileData profile, ParsedIRTextSection parsedSection) {
+    var elementMap = BuildElementToWeightMap();
+    var counterMap = BuildElementToCounterMap();
+    var instrToLineMap = new SampledElementsToLineMapping();
+
+    // Build groups of instructions mapping to the same source line,
+    // with their associated sampled weight and perf. counters.
+    foreach (var instr in parsedSection.Function.AllInstructions) {
+      var tag = instr.GetTag<SourceLocationTag>();
+
+      if (tag != null) {
+        var weight = elementMap.GetValueOr(instr, TimeSpan.Zero);
+        var counters = counterMap.GetValueOrNull(instr);
+        var list = instrToLineMap.SampledElements.GetOrAddValue(tag.Line,
+          () => new List<(IRElement Element, (TimeSpan Weight, PerformanceCounterValueSet Counters))>());
+        list.Add((instr, (weight, counters)));
+      }
+    }
+
+    // Sort elements in each line group by text offset.
+    foreach (var linePair in instrToLineMap.SampledElements) {
+      linePair.Value.Sort((a,b) => a.Item1.TextLocation.CompareTo(b.Item1.TextLocation));
+    }
+
+    return instrToLineMap;
+  }
+
+  public Dictionary<IRElement, TimeSpan> BuildElementToWeightMap() {
+    var map = new Dictionary<IRElement, TimeSpan>();
+
+    foreach (var pair in SampledElements) {
+      map[pair.Item1] = pair.Item2;
+    }
+
+    return map;
+  }
+
+  public Dictionary<IRElement, PerformanceCounterValueSet> BuildElementToCounterMap() {
+    var map = new Dictionary<IRElement, PerformanceCounterValueSet>();
+
+    foreach (var pair in CounterElements) {
+      map[pair.Item1] = pair.Item2;
+    }
+
+    return map;
   }
 }
 

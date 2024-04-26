@@ -1033,8 +1033,15 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     folding_ = FoldingManager.Install(TextArea);
     var foldingStrategy = Session.CompilerInfo.CreateFoldingStrategy(Function);
     foldingStrategy.UpdateFoldings(folding_, Document);
-
     SetupBlockFoldingEvents();
+  }
+
+  public IEnumerable<FoldingSection> SetupCustomBlockFolding(IBlockFoldingStrategy foldingStrategy) {
+    UninstallBlockFolding();
+    folding_ = FoldingManager.Install(TextArea);
+    foldingStrategy.UpdateFoldings(folding_, Document);
+    SetupBlockFoldingEvents();
+    return folding_.AllFoldings;
   }
 
   private void SetupBlockFoldingEvents() {

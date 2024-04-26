@@ -722,7 +722,7 @@ static class Utils {
     T foundParent = null;
     var currentParent = VisualTreeHelper.GetParent(child);
 
-    do {
+    while(currentParent != null) {
       var element = currentParent as FrameworkElement;
 
       if (element is T && (parentName == null || element?.Name == parentName)) {
@@ -731,7 +731,7 @@ static class Utils {
       }
 
       currentParent = VisualTreeHelper.GetParent(currentParent);
-    } while (currentParent != null);
+    }
 
     return foundParent;
   }

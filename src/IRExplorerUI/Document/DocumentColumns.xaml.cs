@@ -25,7 +25,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private double columnsListItemHeight_;
   private Brush selectedLineBrush_;
   private ListCollectionView profileRowCollection_;
-  private List<FoldingSection> foldedTextRegions_;
+  private List<(int StartOffset, int EndOffset)> foldedTextRegions_;
   private int rowFilterIndex_;
   private MarkedDocument associatedDocument_;
   private OptionsPanelHostWindow optionsPanelWindow_;
@@ -34,7 +34,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     InitializeComponent();
     profileColumnHeaders_ = new List<(GridViewColumnHeader Header, GridViewColumn Column)>();
     profileDataRows_ = new List<ElementRowValue>();
-    foldedTextRegions_ = new List<FoldingSection>();
+    foldedTextRegions_ = new List<(int StartOffset, int EndOffset)>();
   }
 
   public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
@@ -83,6 +83,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     OptionalColumn.RemoveListViewColumns(ColumnsList);
     ColumnsList.ItemsSource = null;
     profileColumnHeaders_.Clear();
+    foldedTextRegions_.Clear();
   }
 
   public async Task Display(IRDocumentColumnData columnData, MarkedDocument associatedDocument) {
@@ -340,7 +341,22 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
   }
 
+  public void SetupFoldedTextRegions(IEnumerable<(int StartOffset, int EndOffset)> regions) {
+    foldedTextRegions_.AddRange(regions);
+    foldedTextRegions_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
+    rowFilterIndex_ = 0;
+    profileRowCollection_.Refresh();
+  }
+
   public void HandleTextRegionFolded(FoldingSection section) {
+    HandleTextRegionFolded((section.StartOffset, section.EndOffset));
+  }
+
+  public void HandleTextRegionFolded((int StartOffset, int EndOffset) section) {
+    if (foldedTextRegions_.Contains(section)) {
+      return;
+    }
+
     foldedTextRegions_.Add(section);
     foldedTextRegions_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
     rowFilterIndex_ = 0;
@@ -348,6 +364,10 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   public void HandleTextRegionUnfolded(FoldingSection section) {
+    HandleTextRegionUnfolded((section.StartOffset, section.EndOffset));
+  }
+
+  public void HandleTextRegionUnfolded((int StartOffset, int EndOffset) section) {
     foldedTextRegions_.Remove(section);
     rowFilterIndex_ = 0;
     profileRowCollection_.Refresh();

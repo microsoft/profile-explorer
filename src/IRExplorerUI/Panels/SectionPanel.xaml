@@ -304,7 +304,7 @@
                   <StackPanel Orientation="Horizontal">
                     <TextBlock
                       Margin="4,0,0,0"
-                      VerticalAlignment="Bottom"
+                      VerticalAlignment="Center"
                       Text="Functions" />
                     <Path
                       Margin="4,2,2,0"

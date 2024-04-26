@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text;
@@ -16,8 +17,10 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using ClosedXML.Excel;
 using HtmlAgilityPack;
+using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
@@ -135,7 +138,88 @@ public class ProfileMenuItem : BindableObject {
 }
 
 public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
-  private List<(IRElement, TimeSpan)> profileElements_;
+  sealed class RangeFoldingStrategy : IBlockFoldingStrategy {
+    private List<(int StartOffset, int EndOffset)> ranges_;
+    private bool defaultClosed_;
+
+    public RangeFoldingStrategy(List<(int StartOffset, int EndOffset)> ranges, bool defaultClosed = false) {
+      ranges_ = ranges;
+      defaultClosed_ = defaultClosed;
+    }
+
+    public void UpdateFoldings(FoldingManager manager, TextDocument document) {
+      var newFoldings = CreateNewFoldings(document);
+      manager.UpdateFoldings(newFoldings, -1);
+    }
+
+    private IEnumerable<NewFolding> CreateNewFoldings(TextDocument document) {
+      foreach (var range in ranges_) {
+        yield return new NewFolding(range.StartOffset, range.EndOffset) {
+          DefaultClosed = defaultClosed_
+        };
+      }
+    }
+  }
+
+  sealed class RangeColorizer : DocumentColorizingTransformer {
+    public class CompareRanges : IComparer<(int StartOffset, int EndOffset)> {
+
+      public int Compare((int StartOffset, int EndOffset) x, (int StartOffset, int EndOffset) y) {
+        if (x.EndOffset < y.StartOffset) {
+          return -1;
+        }
+        else if (x.StartOffset > y.EndOffset) {
+          return 1;
+        }
+
+        return 0;
+      }
+    }
+
+    private List<(int StartOffset, int EndOffset)> ranges_;
+    private Brush textColor_;
+    private Typeface typeface_;
+    private CompareRanges comparer_;
+
+    public RangeColorizer(List<(int StartOffset, int EndOffset)> ranges,
+                          Brush textColor, Typeface typeface = null) {
+      ranges_ = ranges;
+      textColor_ = textColor;
+      typeface_ = typeface;
+      comparer_ = new CompareRanges();
+      ranges.Sort((a, b) => a.CompareTo(b));
+    }
+
+    protected override void ColorizeLine(DocumentLine line) {
+      if (line.Length == 0) {
+        return;
+      }
+
+      var query = (line.Offset, line.EndOffset);
+      int result = ranges_.BinarySearch(query, comparer_);
+
+      if (result >= 0) {
+        var range = ranges_[result];
+
+        if (line.Offset < range.StartOffset ||
+            line.Offset > range.EndOffset) {
+          return;
+        }
+
+        int start = line.Offset > range.StartOffset ? line.Offset : range.StartOffset;
+        int end = range.EndOffset > line.EndOffset ? line.EndOffset : range.EndOffset;
+        ChangeLinePart(start, end, element => {
+          element.TextRunProperties.SetForegroundBrush(textColor_);
+
+          if (typeface_ != null) {
+            element.TextRunProperties.SetTypeface(typeface_);
+          }
+        });
+      }
+    }
+  }
+
+private List<(IRElement, TimeSpan)> profileElements_;
   private int profileElementIndex_;
   private SourceLineProcessingResult sourceLineProfileResult_;
   private bool columnsVisible_;
@@ -154,6 +238,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private SourceStackFrame inlinee_;
   private bool ignoreNextRowSelectedEvent_;
   private ProfileHistoryManager historyManager_;
+  private SourceLineProfileResult sourceLineProcessingResult_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -592,9 +677,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     // Create a dummy FunctionIR that has fake tuples representing each
     // source line, with the profiling data attached to the tuples.
-    var processingResult = profileMarker_.PrepareSourceLineProfile(funcProfile, TextView,
-                                                                   sourceLineProfileResult);
-
+    var parsedSection = await Session.LoadAndParseSection(section);
+    var processingResult = await profileMarker_.PrepareSourceLineProfile(funcProfile, TextView,
+                                                                   sourceLineProfileResult,
+                                                                   parsedSection);
     if (processingResult == null) {
       return false;
     }
@@ -604,6 +690,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       TextView.ClearInstructionMarkers();
     }
 
+    sourceText_ = TextView.Text.AsMemory();
     var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, processingResult.Function);
     await TextView.LoadSection(dummyParsedSection);
 
@@ -612,7 +699,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     // Annotate call sites next to source lines by parsing the actual section
     // and mapping back the call sites to the dummy elements representing the source lines.
-    var parsedSection = await Session.LoadAndParseSection(section);
 
     if (parsedSection != null) {
       profileMarker_.MarkCallSites(TextView, parsedSection.Function,
@@ -620,6 +706,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     sourceLineProfileResult_ = sourceLineProfileResult;
+    sourceLineProcessingResult_ = processingResult;
     TextView.ResumeUpdate();
 
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
@@ -629,7 +716,30 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     UpdateProfileFilterUI();
     UpdateProfileDescription(funcProfile);
     await UpdateProfilingColumns();
+
+    SetupSourceAssembly(processingResult);
     return true;
+  }
+
+  private void SetupSourceAssembly(SourceLineProfileResult processingResult) {
+    //? TODO: Options in settings and UI for:
+    //? - auto-expand or not (or just hottest N lines)
+    //? - use ASM
+    //? - ASM text color, dark gray default
+
+    FoldingElementGenerator.TextBrush = Brushes.Transparent;
+    bool defaultClosed = true;
+    var foldingStrategy = new RangeFoldingStrategy(processingResult.AssemblyRanges, defaultClosed);
+    var foldings = TextView.SetupCustomBlockFolding(foldingStrategy);
+
+    if (defaultClosed) {
+      var foldedRanges = foldings.Select(f => (f.StartOffset, f.EndOffset));
+      ProfileColumns.SetupFoldedTextRegions(foldedRanges);
+    }
+
+    var asmFont = new Typeface(TextView.FontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    var rangeColorizer = new RangeColorizer(processingResult.AssemblyRanges, Brushes.DimGray, asmFont);
+    TextView.TextArea.TextView.LineTransformers.Add(rangeColorizer);
   }
 
   private async Task ApplyProfileFilter() {
@@ -913,12 +1023,33 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var line = TextView.Document.GetLineByOffset(TextView.CaretOffset);
 
     if (line != null) {
+      // With assembly lines, source line numbers are shifted.
+      if (sourceLineProcessingResult_ != null) {
+        if (sourceLineProcessingResult_.LineToOriginalLineMap.
+          TryGetValue(line.LineNumber, out int originalLineNumber)) {
+          LineSelected?.Invoke(this, originalLineNumber);
+        }
+
+        return; // One of the assembly lines, ignore.
+      }
+
       LineSelected?.Invoke(this, line.LineNumber);
     }
   }
 
   public void SelectLine(int line) {
     ignoreNextCaretEvent_ = true;
+
+    // With assembly lines, source line numbers are shifted.
+    if (sourceLineProcessingResult_ != null) {
+      if (sourceLineProcessingResult_.OriginalLineToLineMap.
+        TryGetValue(line, out int mappedLine)) {
+        TextView.SelectLine(mappedLine);
+      }
+
+      return;
+    }
+
     TextView.SelectLine(line);
   }
 
@@ -929,6 +1060,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     sourceText_ = null;
     profileElements_ = null;
     sourceLineProfileResult_ = null;
+    sourceLineProcessingResult_ = null;
     inlinee_ = null;
     ProfileFilter = new ProfileSampleFilter();
     historyManager_.Reset();
@@ -1013,7 +1145,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       await DocumentExporting.CopySelectedLinesAsHtml(TextView);
     }
   }
-  
+
   public async Task CopyAllLinesAsHtml() {
     if (isSourceFileDocument_) {
       await DocumentExporting.CopyAllSourceLinesAsHtml(TextView);

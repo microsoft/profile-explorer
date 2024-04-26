@@ -146,7 +146,7 @@ public partial class FlameGraphViewer : FrameworkElement {
       HighlightNode(graphNode, HighlighingType.Selected);
       selectedNode_ = graphNode; // Last selected node.
     }
-    else if (deselectIfSelected) {
+    else if (append && deselectIfSelected) {
       // Remove selection if node is already selected.
       selectedNodes_.Remove(graphNode);
       selectedNode_ = null;

@@ -11,16 +11,15 @@ using IRExplorerCore.IR;
 namespace IRExplorerUI;
 
 public interface IBlockFoldingStrategy {
-  FunctionIR Function { get; set; }
   public void UpdateFoldings(FoldingManager manager, TextDocument document);
 }
 
 public sealed class BasicBlockFoldingStrategy : IBlockFoldingStrategy {
-  public BasicBlockFoldingStrategy(FunctionIR function) {
-    Function = function;
-  }
+  private FunctionIR function_;
 
-  public FunctionIR Function { get; set; }
+  public BasicBlockFoldingStrategy(FunctionIR function) {
+    function_ = function;
+  }
 
   public void UpdateFoldings(FoldingManager manager, TextDocument document) {
     var newFoldings = CreateNewFoldings(document, out int firstErrorOffset);
@@ -33,9 +32,9 @@ public sealed class BasicBlockFoldingStrategy : IBlockFoldingStrategy {
   }
 
   private IEnumerable<NewFolding> CreateNewFoldings(ITextSource document) {
-    var newFoldings = new List<NewFolding>(Function.Blocks.Count);
+    var newFoldings = new List<NewFolding>(function_.Blocks.Count);
 
-    if (Function.Blocks.Count == 0) {
+    if (function_.Blocks.Count == 0) {
       return newFoldings;
     }
 
@@ -43,7 +42,7 @@ public sealed class BasicBlockFoldingStrategy : IBlockFoldingStrategy {
     int lastOffset = 0;
     int textLength = document.TextLength;
 
-    foreach (var block in Function.Blocks) {
+    foreach (var block in function_.Blocks) {
       int offset = block.TextLocation.Offset;
       int foldingLength = offset - lastOffset;
 
@@ -62,7 +61,7 @@ public sealed class BasicBlockFoldingStrategy : IBlockFoldingStrategy {
 
     // Handle the last block.
     if (lastOffset < textLength - 1) {
-      int endOffset = Math.Min(lastOffset + Function.Blocks[^1].TextLength, textLength - 1);
+      int endOffset = Math.Min(lastOffset + function_.Blocks[^1].TextLength, textLength - 1);
 
       if (endOffset > lastOffset) {
         newFoldings.Add(new NewFolding(lastOffset, endOffset - 2));

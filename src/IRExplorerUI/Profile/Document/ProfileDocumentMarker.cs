@@ -44,6 +44,16 @@ public interface MarkedDocument {
   public void RemoveElementOverlays(IRElement element, object onlyWithTag = null);
 }
 
+
+public record SourceLineProfileResult(
+  FunctionProcessingResult Result,
+  SourceLineProcessingResult SourceLineResult,
+  FunctionIR Function,
+  Dictionary<int, IRElement> LineToElementMap,
+  Dictionary<int, int> LineToOriginalLineMap,
+  Dictionary<int, int> OriginalLineToLineMap,
+  List<(int StartOffset, int EndOffset)> AssemblyRanges);
+
 public class InlineeListItem {
   public InlineeListItem(SourceStackFrame frame) {
     InlineeFrame = frame;
@@ -218,16 +228,11 @@ public class ProfileDocumentMarker {
     return document.ProfileColumnData;
   }
 
-  public record SourceLineProfileResult(
-    FunctionProcessingResult Result,
-    SourceLineProcessingResult SourceLineResult,
-    FunctionIR Function,
-    Dictionary<int, IRElement> LineToElementMap);
-
-  public SourceLineProfileResult
+  public async Task<SourceLineProfileResult>
     PrepareSourceLineProfile(FunctionProfileData profile, MarkedDocument document,
-                             SourceLineProcessingResult result) {
-    var sourceLineWeights = result.SourceLineWeightList;
+                             SourceLineProcessingResult sourceProcResult,
+                             ParsedIRTextSection parsedSection = null) {
+    var sourceLineWeights = sourceProcResult.SourceLineWeightList;
 
     if (sourceLineWeights.Count == 0) {
       return null;
@@ -235,8 +240,8 @@ public class ProfileDocumentMarker {
 
     // Check for cases where instead of the source code smth. like
     // a source server authentication failure response is displayed.
-    if (result.FirstLineIndex > document.LineCount &&
-        result.LastLineIndex > document.LineCount) {
+    if (sourceProcResult.FirstLineIndex > document.LineCount &&
+        sourceProcResult.LastLineIndex > document.LineCount) {
       return null;
     }
 
@@ -250,6 +255,9 @@ public class ProfileDocumentMarker {
 
     var processingResult = new FunctionProcessingResult();
     var lineToElementMap = new Dictionary<int, IRElement>();
+    var lineToOriginalLineMap = new Dictionary<int, int>();
+    var originalLineToLineMap = new Dictionary<int, int>();
+    var assemblyRanges = new List<(int StartOffset, int EndOffset)>();
 
     TupleIR MakeDummyTuple(TextLocation textLocation, DocumentLine documentLine) {
       var tupleIr = new TupleIR(ids.NextTuple(), TupleKind.Other, dummyBlock);
@@ -259,34 +267,91 @@ public class ProfileDocumentMarker {
       return tupleIr;
     }
 
+    // If assembly should be inserted after each source line,
+    // precompute the list of instructions mapping to each line.
+    FunctionProcessingResult.SampledElementsToLineMapping instrToLineMap = null;
+
+    if (parsedSection != null) {
+      instrToLineMap = await Task.Run(() => {
+        var funcProcResult = profile.Process(parsedSection.Function, irInfo_.IR);
+        return funcProcResult.BuildSampledElementsToLineMapping(profile, parsedSection);
+      });
+    }
+
     // For each source line, accumulate the weight of all instructions
     // mapped to that line, for both samples and performance counters.
-    int lastLine = Math.Min(result.LastLineIndex, document.LineCount);
-
-    for (int lineNumber = result.FirstLineIndex; lineNumber <= lastLine; lineNumber++) {
+    int lastLine = Math.Min(sourceProcResult.LastLineIndex, document.LineCount);
+    int inserted = 0;
+    for (int lineNumber = sourceProcResult.FirstLineIndex; lineNumber <= lastLine; lineNumber++) {
       TupleIR dummyTuple = null;
 
-      if (result.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
-        var documentLine = document.GetLineByNumber(lineNumber);
-        var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
+      if (sourceProcResult.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
+        var documentLine = document.GetLineByNumber(lineNumber + inserted);
+        var location = new TextLocation(documentLine.Offset, lineNumber + inserted - 1, 0);
         dummyTuple = MakeDummyTuple(location, documentLine);
         processingResult.SampledElements.Add((dummyTuple, lineWeight));
-        lineToElementMap[lineNumber] = dummyTuple;
+        lineToElementMap[lineNumber + inserted] = dummyTuple;
+        lineToOriginalLineMap[lineNumber + inserted] = lineNumber;
+        originalLineToLineMap[lineNumber] = lineNumber + inserted;
       }
 
-      if (result.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
+      if (sourceProcResult.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
         var documentLine = document.GetLineByNumber(lineNumber);
         var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
         dummyTuple ??= MakeDummyTuple(location, documentLine);
         lineToElementMap[lineNumber] = dummyTuple;
         processingResult.CounterElements.Add((dummyTuple, counters));
+        lineToOriginalLineMap[lineNumber + inserted] = lineNumber;
+        originalLineToLineMap[lineNumber] = lineNumber + inserted;
       }
+
+      // Insert assembly instructions for each source line.
+      if (dummyTuple == null || instrToLineMap == null ||
+          !instrToLineMap.SampledElements.TryGetValue(lineNumber, out var lineInstrs)) {
+        continue;
+      }
+
+      var instrLine = document.GetLineByNumber(lineNumber + inserted);
+      var instrDocument = (IRDocument)document; //? TODO: Get rid of MarkedDocument, it's always IRDocument
+      int rangeStart = instrLine.EndOffset;
+      int rangeEnd = instrLine.EndOffset;
+
+      foreach (var pair in lineInstrs) {
+        var instr = pair.Element;
+        var instrWeight = pair.Profile.Weight;
+        var instrCounters = pair.Profile.Counters;
+        var instrText = parsedSection.Text.Slice(instr.TextLocation.Offset, instr.TextLength).ToString();
+        instrDocument.Document.Insert(instrLine.EndOffset, $"\n{instrText.TrimEnd()}");
+
+        inserted++;
+        instrLine = instrDocument.GetLineByNumber(lineNumber + inserted);
+        rangeEnd = instrLine.EndOffset;
+
+        if (instrWeight != TimeSpan.Zero || counters != null) {
+          var location = new TextLocation(instrLine.Offset, lineNumber + inserted - 1, 0);
+          dummyTuple = MakeDummyTuple(location, instrLine);
+
+          if (instrWeight != TimeSpan.Zero) {
+            processingResult.SampledElements.Add((dummyTuple, instrWeight));
+          }
+
+          if (instrCounters != null) {
+            processingResult.CounterElements.Add((dummyTuple, instrCounters));
+          }
+
+          lineToElementMap[lineNumber + inserted] = dummyTuple;
+        }
+      }
+
+      assemblyRanges.Add((rangeStart, rangeEnd));
     }
 
     processingResult.SortSampledElements(); // Used for ordering.
-    processingResult.FunctionCountersValue = result.FunctionCountersValue;
+    processingResult.FunctionCountersValue = sourceProcResult.FunctionCountersValue;
     document.ProfileProcessingResult = processingResult;
-    return new SourceLineProfileResult(processingResult, result, dummyFunc, lineToElementMap);
+    return new SourceLineProfileResult(processingResult, sourceProcResult, dummyFunc,
+                                       lineToElementMap, lineToOriginalLineMap,
+                                       originalLineToLineMap, assemblyRanges);
   }
 
   public List<InlineeListItem> GenerateInlineeList(FunctionProcessingResult result) {
@@ -426,7 +491,6 @@ public class ProfileDocumentMarker {
     foreach (var callsite in node.CallSites.Values) {
       if (!FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA - profile_.FunctionDebugInfo.RVA,
                                                        irInfo_.IR, out var element)) {
-
         continue;
       }
 
@@ -443,8 +507,18 @@ public class ProfileDocumentMarker {
       // When annotating a source file, map the instruction to the
       // fake tuple used the represent the source line.
       if (processingResult != null) {
-        if (!instr.TryGetTag(out SourceLocationTag sourceTag) ||
-            !processingResult.LineToElementMap.TryGetValue(sourceTag.Line, out element)) {
+        if (!instr.TryGetTag(out SourceLocationTag sourceTag)) {
+          continue; // Couldn't map for some reason, ignore.
+        }
+
+        // With assembly lines, source line numbers are shifted.
+        int sourceLine = sourceTag.Line;
+
+        if (processingResult.OriginalLineToLineMap.TryGetValue(sourceTag.Line, out int mappedLine)) {
+          sourceLine = mappedLine;
+        }
+
+        if (!processingResult.LineToElementMap.TryGetValue(sourceLine, out element)) {
           continue; // Couldn't map for some reason, ignore.
         }
       }
@@ -620,9 +694,8 @@ public class ProfileDocumentMarker {
   private async Task<IRDocumentColumnData>
     MarkProfiledElements(FunctionProcessingResult result,
                          FunctionIR function, MarkedDocument document) {
-    var elements = result.SampledElements;
-
     // Add a time column.
+    var elements = result.SampledElements;
     var columnData = new IRDocumentColumnData(function.InstructionCount);
     var percentageColumn = columnData.AddColumn(TimePercentageColumnTemplate());
     var timeColumn = columnData.AddColumn(TimeColumnTemplate());
