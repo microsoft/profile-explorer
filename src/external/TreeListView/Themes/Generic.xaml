@@ -1,84 +1,109 @@
 <ResourceDictionary
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:Aga.Controls"
-    xmlns:tree="clr-namespace:Aga.Controls.Tree">
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:local="clr-namespace:Aga.Controls"
+  xmlns:tree="clr-namespace:Aga.Controls.Tree">
 
-    <Style x:Key="ExpandCollapseToggleStyle" TargetType="{x:Type ToggleButton}">
-        <Style.Resources>
-            <Style x:Key="TreeViewItemFocusVisual">
-                <Setter Property="Control.Template">
-                    <Setter.Value>
-                        <ControlTemplate>
-                            <Rectangle
-                                Margin="0,0,0,0"
-                                Opacity="0"
-                                Stroke="Black"
-                                StrokeDashArray="1 2"
-                                StrokeThickness="5" />
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-        </Style.Resources>
-
-        <Setter Property="Focusable" Value="False" />
-        <Setter Property="Width" Value="19" />
-        <Setter Property="Height" Value="13" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ToggleButton">
-                    <Border
-                        Width="9"
-                        Height="9"
-                        Margin="0,4,0,0"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Background="#00FFFFFF"
-                        BorderBrush="#444"
-                        BorderThickness="1,1,1,1"
-                        SnapsToDevicePixels="True">
-                        <Path
-                            Name="ExpandPath"
-                            Margin="1,1,1,1"
-                            Data="M0,2L0,3 2,3 2,5 3,5 3,3 5,3 5,2 3,2 3,0 2,0 2,2z"
-                            Fill="#444" />
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="ToggleButton.IsChecked" Value="True">
-                            <Setter TargetName="ExpandPath" Property="Path.Data">
-                                <Setter.Value>
-                                    <StreamGeometry>M0,2L0,3 5,3 5,2z</StreamGeometry>
-                                </Setter.Value>
-                            </Setter>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
+  <Style x:Key="ExpandCollapseToggleStyle" TargetType="{x:Type ToggleButton}">
+    <Style.Resources>
+      <Style x:Key="TreeViewItemFocusVisual">
+        <Setter Property="Control.Template">
+          <Setter.Value>
+            <ControlTemplate>
+              <Rectangle
+                Margin="0,0,0,0"
+                Opacity="0"
+                Stroke="Black"
+                StrokeDashArray="1 2"
+                StrokeThickness="5" />
+            </ControlTemplate>
+          </Setter.Value>
         </Setter>
-    </Style>
+      </Style>
+    </Style.Resources>
 
-    <tree:LevelToIndentConverter x:Key="LevelToIndentConverter" />
-    <tree:CanExpandConverter x:Key="CanExpandConverter" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="Width" Value="19" />
+    <Setter Property="Height" Value="13" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ToggleButton">
+          <Border
+            Width="9"
+            Height="9"
+            Margin="0,4,0,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Background="#00FFFFFF"
+            BorderBrush="#444"
+            BorderThickness="1,1,1,1"
+            SnapsToDevicePixels="True">
+            <Path
+              Name="ExpandPath"
+              Margin="1,1,1,1"
+              Data="M0,2L0,3 2,3 2,5 3,5 3,3 5,3 5,2 3,2 3,0 2,0 2,2z"
+              Fill="#444" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="ToggleButton.IsChecked" Value="True">
+              <Setter TargetName="ExpandPath" Property="Path.Data">
+                <Setter.Value>
+                  <StreamGeometry>M0,2L0,3 5,3 5,2z</StreamGeometry>
+                </Setter.Value>
+              </Setter>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
 
-    <Style TargetType="{x:Type tree:RowExpander}">
-        <Setter Property="Focusable" Value="False" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type tree:RowExpander}">
-                    <Grid SnapsToDevicePixels="true">
-                        <ToggleButton
-                            x:Name="Expander"
-                            Margin="{Binding Node.Level, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType={x:Type tree:TreeListItem}}}"
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch"
-                            ClickMode="Press"
-                            IsChecked="{Binding Node.IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource AncestorType={x:Type tree:TreeListItem}}}"
-                            Style="{StaticResource ExpandCollapseToggleStyle}"
-                            Visibility="{Binding Node.IsExpandable, Converter={StaticResource CanExpandConverter}, RelativeSource={RelativeSource AncestorType={x:Type tree:TreeListItem}}}" />
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
+  <tree:LevelToIndentConverter x:Key="LevelToIndentConverter" />
+  <tree:CanExpandConverter x:Key="CanExpandConverter" />
+
+  <VisualBrush
+    x:Key="HatchBrush"
+    TileMode="Tile"
+    Viewbox="0,0,15,20"
+    ViewboxUnits="Absolute"
+    Viewport="0,0,15,20"
+    ViewportUnits="Absolute">
+    <VisualBrush.Visual>
+      <Canvas>
+        <Rectangle
+          Width="0.7"
+          Height="20"
+          Fill="Gray" />
+      </Canvas>
+    </VisualBrush.Visual>
+  </VisualBrush>
+
+  <Style TargetType="{x:Type tree:RowExpander}">
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type tree:RowExpander}">
+          <Grid SnapsToDevicePixels="true">
+            <Border
+              x:Name="VerLn"
+              Width="Auto"
+              Margin="10,0,15,0"
+              Padding="0,0,0,0"
+              HorizontalAlignment="Stretch"
+              Background="{StaticResource HatchBrush}"
+              ClipToBounds="True" />
+            <ToggleButton
+              x:Name="Expander"
+              Margin="{Binding Node.Level, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType={x:Type tree:TreeListItem}}}"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Center"
+              ClickMode="Press"
+              IsChecked="{Binding Node.IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource AncestorType={x:Type tree:TreeListItem}}}"
+              Style="{StaticResource ExpandCollapseToggleStyle}"
+              Visibility="{Binding Node.IsExpandable, Converter={StaticResource CanExpandConverter}, RelativeSource={RelativeSource AncestorType={x:Type tree:TreeListItem}}}" />
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
 </ResourceDictionary>
