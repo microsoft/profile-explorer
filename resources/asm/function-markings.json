@@ -53,7 +53,7 @@
     {
       "IsEnabled": true,
       "Title": "Network I\/O",
-      "Name": "\\b(WSARecv|WSASend|TcpTlConnectionSend)\\b||_WSARecv||_WSASend",
+      "Name": "\\b(WSARecv|WSASend|TcpTlConnectionSend|TcpReceive)\\b|_WSARecv|_WSASend",
       "Color": "#000000",
       "IsRegex": true
     },
