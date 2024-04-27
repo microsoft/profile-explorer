@@ -20,6 +20,7 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
+using IRExplorerCore.SourceParser;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
 using Microsoft.Extensions.Primitives;
@@ -169,13 +170,13 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
   }
 
-  
+
   public event EventHandler<string> TitlePrefixChanged;
   public event EventHandler<string> TitleSuffixChanged;
   public event EventHandler<string> DescriptionPrefixChanged;
   public event EventHandler<string> DescriptionSuffixChanged;
   public event PropertyChangedEventHandler PropertyChanged;
-  
+
   public ISession Session { get; set; }
   public IRDocument AssociatedDocument { get; set; }
   public IRTextSection Section => TextView.Section;
@@ -280,17 +281,17 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     await MarkAssemblyProfile(parsedSection, funcProfile);
   }
 
-  private async Task LoadSourceFileProfileInstance(IRTextSection section) {
+  private async Task<bool> LoadSourceFileProfileInstance(IRTextSection section) {
     UpdateProfileFilterUI();
     var instanceProfile = await Task.Run(
       () => Session.ProfileData.ComputeProfile(Session.ProfileData, profileFilter_, false));
     var funcProfile = instanceProfile.GetFunctionProfile(section.ParentFunction);
 
     if (funcProfile == null) {
-      return;
+      return false;
     }
 
-    await MarkSourceFileProfile(section, funcProfile);
+    return await MarkSourceFileProfile(section, funcProfile);
   }
 
   private async Task MarkAssemblyProfile(ParsedIRTextSection parsedSection, FunctionProfileData funcProfile) {
@@ -343,20 +344,43 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       //? TODO: Is panel is not visible, scroll doesn't do anything,
       //? should be executed again when panel is activated
 
-      var (firstSourceLineIndex, lastSourceLineIndex) =
-        await DocumentUtils.FindFunctionSourceLineRange(section.ParentFunction, Session);
-
-      if (firstSourceLineIndex != 0) {
-        SelectLine(firstSourceLineIndex);
-      }
+      bool loaded = false;
 
       if (profileFilter is {IncludesAll:false}) {
         ProfileFilter = profileFilter;
-        await LoadSourceFileProfileInstance(section);
+        loaded = await LoadSourceFileProfileInstance(section);
       }
       else {
-        await LoadSourceFileProfile(section);
+        loaded = await LoadSourceFileProfile(section);
       }
+
+      var (firstSourceLineIndex, lastSourceLineIndex) =
+        await DocumentUtils.FindFunctionSourceLineRange(section.ParentFunction, Session);
+
+
+      SourceCodeParser parser = new();
+      var tree = parser.Parse(sourceText_.ToString());
+
+      if (tree != null) {
+        var funcTreeNoe = tree.FindFunctionNode(firstSourceLineIndex);
+        funcTreeNoe.WalkNodes((node, depth) => {
+          foreach (var t in TextView.Function.AllTuples) {
+            if (t.TextLocation.Line >= node.Start.Line &&
+                t.TextLocation.Line <= node.End.Line) {
+              TextView.MarkElement(t,Colors.PaleGreen);
+            }
+          }
+
+          return true;
+        }, SourceSyntaxNodeKind.Loop);
+      }
+
+      if (!loaded || !settings_.ProfileMarkerSettings.JumpToHottestElement) {
+        if (firstSourceLineIndex != 0) {
+          SelectLine(firstSourceLineIndex);
+        }
+      }
+
       return true;
     }
     catch (Exception ex) {
@@ -375,15 +399,15 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     SetSourceText(text, "");
   }
 
-  private async Task LoadSourceFileProfile(IRTextSection section, bool reloadFilterMenus = true) {
+  private async Task<bool> LoadSourceFileProfile(IRTextSection section, bool reloadFilterMenus = true) {
     var funcProfile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
 
     if (funcProfile == null) {
-      return;
+      return false;
     }
 
     if (!(await MarkSourceFileProfile(section, funcProfile))) {
-      return;
+      return false;
     }
 
     if (reloadFilterMenus) {
@@ -396,6 +420,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (TextView.ProfileProcessingResult != null) {
       CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, false);
     }
+
+    return true;
   }
 
   private async Task<bool> MarkSourceFileProfile(IRTextSection section, FunctionProfileData funcProfile) {
@@ -468,7 +494,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         else {
           await LoadAssemblyProfile(parsedSection, false);
         }
-      } 
+      }
   }
 
   public async Task UpdateProfilingColumns() {
