@@ -3454,7 +3454,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.CopyFunctionMarkingsAsMarkdownFile(Session);
+    await ProfilingUtils.ExportFunctionMarkingsAsMarkdownFile(Session);
   }
   
   private void ScrollUpButton_OnClick(object sender, RoutedEventArgs e) {

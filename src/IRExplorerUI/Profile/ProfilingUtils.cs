@@ -1040,7 +1040,9 @@ public static class ProfilingUtils {
   public static (string Html, string Plaintext)
     ExportProfilingReportAsHtml(List<FunctionMarkingCategory> markingCategoryList, ISession session,
                                 bool includeHottestFunctions, int hotFuncLimit = 20,
-                                bool includeCategoriesTable = true) {
+                                bool includeCategoriesTable = true,
+                                bool includeOverview = true,
+                                bool isCategoryList = true) {
     string TableStyle = @"border-collapse:collapse;border-spacing:0;";
     string HeaderStyle =
       @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
@@ -1054,7 +1056,9 @@ public static class ProfilingUtils {
     var markingSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
 
     if (includeCategoriesTable) {
-      ExportTraceOverviewasHtml(session, doc, sb);
+      if (includeOverview) {
+        ExportTraceOverviewasHtml(session, doc, sb);
+      }
 
       AppendTitleParagraph(includeHottestFunctions ? "Categories Summary" : "Markings Summary", doc);
       var table = doc.CreateElement("table");
@@ -1064,7 +1068,7 @@ public static class ProfilingUtils {
       var tbody = doc.CreateElement("tbody");
       var tr = doc.CreateElement("tr");
       var th = doc.CreateElement("th");
-      var title = includeHottestFunctions ? "Category" : "Marking";
+      var title = isCategoryList ? "Category" : "Marking";
       th.InnerHtml = title;
       th.SetAttributeValue("style", HeaderStyle);
       tr.AppendChild(th);
@@ -1087,6 +1091,10 @@ public static class ProfilingUtils {
       sb.AppendLine(separator);
 
       foreach (var category in markingCategoryList) {
+        if (category.Weight == TimeSpan.Zero && !includeOverview) {
+          continue;
+        }
+
         tr = doc.CreateElement("tr");
         var td = doc.CreateElement("td");
         td.InnerHtml = HttpUtility.HtmlEncode(category.Marking.Title);
@@ -1104,7 +1112,8 @@ public static class ProfilingUtils {
         tr.AppendChild(td);
         tbody.AppendChild(tr);
 
-        sb.AppendLine($"| {category.Marking.Title} | {category.Weight.TotalMilliseconds} | {category.Percentage.AsPercentageString()} |");
+        sb.AppendLine(
+          $"| {category.Marking.Title} | {category.Weight.TotalMilliseconds} | {category.Percentage.AsPercentageString()} |");
       }
 
       table.AppendChild(tbody);
@@ -1164,7 +1173,7 @@ public static class ProfilingUtils {
       var tbody = doc.CreateElement("tbody");
       var tr = doc.CreateElement("tr");
 
-      var title = includeHottestFunctions ? "Category" : "Marking";
+      var title = isCategoryList ? "Category" : "Marking";
       var th = doc.CreateElement("th");
       th.InnerHtml = title;
       th.SetAttributeValue("style", HeaderStyle);
@@ -1183,6 +1192,10 @@ public static class ProfilingUtils {
       sb.AppendLine(separator);
 
       foreach (var category in markingCategoryList) {
+        if (category.Weight == TimeSpan.Zero && !includeOverview) {
+          continue;
+        }
+
         tr = doc.CreateElement("tr");
         var td = doc.CreateElement("td");
         td.InnerHtml = HttpUtility.HtmlEncode(category.Marking.Title);
@@ -1264,21 +1277,36 @@ public static class ProfilingUtils {
     Utils.CopyHtmlToClipboard(html, plaintext);
   }
 
+  public static void CopyFunctionMarkingsAsHtml(List<FunctionMarkingCategory> markings, ISession session) {
+    var (html, plaintext) = ExportFunctionMarkingsAsHtml(markings, session);
+    Utils.CopyHtmlToClipboard(html, plaintext);
+  }
+
+  private static (string Html, string Plaintext)
+    ExportFunctionMarkingsAsHtml(List<FunctionMarkingCategory> markings, ISession session) {
+    return ExportProfilingReportAsHtml(markings, session, false, 0, true, false, true);
+  }
+
   private static async Task<(string html, string plaintext)>
     ExportFunctionMarkingsAsHtml(ISession session) {
     var markingCategoryList = await Task.Run(() =>
       CollectMarkedFunctions(App.Settings.MarkingSettings.FunctionColors, false, session));
-    return ExportProfilingReportAsHtml(markingCategoryList, session, false, 0, true);
+    return ExportProfilingReportAsHtml(markingCategoryList, session,
+                                       false, 0, true, false, false);
   }
 
   public static async Task ExportFunctionMarkingsAsHtmlFile(ISession session) {
+    var (html, _) = await ExportFunctionMarkingsAsHtml(session);
+    await ExportFunctionMarkingsAsHtmlFile(html, session);
+  }
+
+  private static async Task ExportFunctionMarkingsAsHtmlFile(string text, ISession session) {
     string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
     bool success = true;
 
     if (!string.IsNullOrEmpty(path)) {
       try {
-        var (html, _) = await ExportFunctionMarkingsAsHtml(session);
-        await File.WriteAllTextAsync(path, html);
+        await File.WriteAllTextAsync(path, text);
       }
       catch (Exception ex) {
         Trace.WriteLine($"Failed to save marked functions report to {path}: {ex.Message}");
@@ -1293,14 +1321,18 @@ public static class ProfilingUtils {
     }
   }
 
-  public static async Task CopyFunctionMarkingsAsMarkdownFile(ISession session) {
+  public static async Task ExportFunctionMarkingsAsMarkdownFile(ISession session) {
+    var (_, plaintext) = await ExportFunctionMarkingsAsHtml(session);
+    await ExportFunctionMarkingsAsMarkdownFile(plaintext, session);
+  }
+
+  private static async Task ExportFunctionMarkingsAsMarkdownFile(string text, ISession session) {
     string path = Utils.ShowSaveFileDialog("Markdown file|*.md", "*.md|All Files|*.*");
     bool success = true;
 
     if (!string.IsNullOrEmpty(path)) {
       try {
-        var (_, plaintext) = await ExportFunctionMarkingsAsHtml(session);
-        await File.WriteAllTextAsync(path, plaintext);
+        await File.WriteAllTextAsync(path, text);
       }
       catch (Exception ex) {
         Trace.WriteLine($"Failed to save marked functions report to {path}: {ex.Message}");
@@ -1313,5 +1345,15 @@ public static class ProfilingUtils {
           MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }
+  }
+
+  public static async Task ExportFunctionMarkingsAsHtmlFile(List<FunctionMarkingCategory> categories, ISession session) {
+    var (html, _) = ExportFunctionMarkingsAsHtml(categories, session);
+    await ExportFunctionMarkingsAsHtmlFile(html, session);
+  }
+
+  public static async Task ExportFunctionMarkingsAsMarkdownFile(List<FunctionMarkingCategory> categories, ISession session) {
+    var (_, plaintext) = ExportFunctionMarkingsAsHtml(categories, session);
+    await ExportFunctionMarkingsAsMarkdownFile(plaintext, session);
   }
 }

@@ -153,11 +153,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       return; //? TODO: Maybe do the init now?
     }
 
-    var nodes = callTree_.GetSortedCallTreeNodes(function);
+    GraphHost.ClearSelection();
+    var groupNode = callTree_.GetCombinedCallTreeNode(function);
 
-    if (nodes is {Count: > 0}) {
-      GraphHost.SelectNodes(nodes, false, bringIntoView);
-      await NodeDetailsPanel.ShowWithDetailsAsync(nodes[^1]);
+    if (groupNode is {Nodes.Count: > 0}) {
+      GraphHost.SelectNode(groupNode, false, bringIntoView);
+      await NodeDetailsPanel.ShowWithDetailsAsync(groupNode);
     }
   }
 
@@ -170,6 +171,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       node = groupNode.Nodes[0];
     }
 
+    GraphHost.ClearSelection();
     GraphHost.SelectNode(node, true, bringIntoView);
 
     if (showDetails) {
@@ -244,7 +246,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
     NodeDetailsPanel.MarkingChanged += (sender, args) => UpdateMarkingUI();
   }
-  
+
   private void GraphHostOnRootNodeCleared(object sender, EventArgs e) {
     HasRootNode = false;
     RootNode = null;
@@ -318,7 +320,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             nodes.Add(selectedNode.CallTreeNode);
           }
         }
-        
+
         var selectionWeight = ProfileCallTree.CombinedCallTreeNodesWeight(nodes);
         double weightPercentage = 0;
 
@@ -550,6 +552,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.CopyFunctionMarkingsAsMarkdownFile(Session);
+    await ProfilingUtils.ExportFunctionMarkingsAsMarkdownFile(Session);
   }
 }

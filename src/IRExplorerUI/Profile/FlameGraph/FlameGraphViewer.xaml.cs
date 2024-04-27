@@ -137,6 +137,10 @@ public partial class FlameGraphViewer : FrameworkElement {
 
   public void SelectNode(FlameGraphNode graphNode, bool append = false,
                          bool deselectIfSelected = true) {
+    if (!append) {
+      ResetNodeHighlighting(); // Deselect all other nodes.
+    }
+
     if (!selectedNodes_.ContainsKey(graphNode)) {
       // Select a currently unselected node.
       if (!append) {
@@ -146,10 +150,17 @@ public partial class FlameGraphViewer : FrameworkElement {
       HighlightNode(graphNode, HighlighingType.Selected);
       selectedNode_ = graphNode; // Last selected node.
     }
-    else if (append && deselectIfSelected) {
-      // Remove selection if node is already selected.
-      selectedNodes_.Remove(graphNode);
-      selectedNode_ = null;
+    else if (deselectIfSelected) {
+      if (append) {
+        // Remove selection if node is already selected in append mode.
+        selectedNodes_.Remove(graphNode);
+        selectedNode_ = null;
+      }
+      else {
+        // Otherwise select the node again.
+        HighlightNode(graphNode, HighlighingType.Selected);
+        selectedNode_ = graphNode; // Last selected node.
+      }
     }
   }
 
@@ -207,7 +218,10 @@ public partial class FlameGraphViewer : FrameworkElement {
     // Because the flame graph can be rooted at a different node then
     // the call tree, parts of the call tree may not have a flame graph node.
     if (nodes is {Count: > 0}) {
-      SelectNode(nodes[0]);
+      foreach (var node in nodes) {
+        SelectNode(node, true, false);
+      }
+
       return nodes[0];
     }
 

@@ -1215,6 +1215,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.CopyFunctionMarkingsAsMarkdownFile(Session);
+    await ProfilingUtils.ExportFunctionMarkingsAsMarkdownFile(Session);
   }
 }
