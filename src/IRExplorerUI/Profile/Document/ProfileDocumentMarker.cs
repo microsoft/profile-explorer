@@ -171,13 +171,13 @@ public class ProfileDocumentMarker {
       columnData = await MarkProfiledElements(result, function, document);
       document.ProfileProcessingResult = result;
       document.ProfileColumnData = columnData;
-      
-      
+
+
       // Remove any overlays from a previous marking.
       foreach (var block in function.Blocks) {
         document.RemoveElementOverlays(block, ProfileOverlayTag);
       }
-      
+
       foreach(var tuple in function.AllTuples) {
         document.RemoveElementOverlays(tuple, ProfileOverlayTag);
       }
@@ -240,20 +240,16 @@ public class ProfileDocumentMarker {
     // For each source line, accumulate the weight of all instructions
     // mapped to that line, for both samples and performance counters.
     for (int lineNumber = result.FirstLineIndex; lineNumber <= result.LastLineIndex; lineNumber++) {
-      TupleIR dummyTuple = null;
+      var documentLine = document.GetLineByNumber(lineNumber);
+      var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
+      var         dummyTuple = MakeDummyTuple(location, documentLine);
 
       if (result.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
-        var documentLine = document.GetLineByNumber(lineNumber);
-        var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
-        dummyTuple = MakeDummyTuple(location, documentLine);
         processingResult.SampledElements.Add((dummyTuple, lineWeight));
         lineToElementMap[lineNumber] = dummyTuple;
       }
 
       if (result.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
-        var documentLine = document.GetLineByNumber(lineNumber);
-        var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
-        dummyTuple ??= MakeDummyTuple(location, documentLine);
         lineToElementMap[lineNumber] = dummyTuple;
         processingResult.CounterElements.Add((dummyTuple, counters));
       }

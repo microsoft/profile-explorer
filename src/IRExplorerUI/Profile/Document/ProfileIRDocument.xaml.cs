@@ -149,6 +149,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private bool isSourceFileDocument_;
   private bool suspendColumnVisibilityHandler_;
   private ProfileSampleFilter profileFilter_;
+  private SourceCodeLanguage sourceLanguage_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -184,7 +185,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public ProfileSampleFilter ProfileFilter {
     get => profileFilter_;
     set {
-      profileFilter_ = value.Clone(); // Clone to detect changes later.
+       profileFilter_ = value.Clone(); // Clone to detect changes later.
       DocumentUtils.SyncInstancesMenuWithFilter(InstancesMenu, value);
       DocumentUtils.SyncThreadsMenuWithFilter(ThreadsMenu, value);
     }
@@ -358,21 +359,32 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         await DocumentUtils.FindFunctionSourceLineRange(section.ParentFunction, Session);
 
 
-      SourceCodeParser parser = new();
+      SourceCodeParser parser = new(sourceLanguage_);
       var tree = parser.Parse(sourceText_.ToString());
 
       if (tree != null) {
+        Trace.WriteLine("----------------------");
+        Trace.WriteLine(tree.Print());
         var funcTreeNoe = tree.FindFunctionNode(firstSourceLineIndex);
         funcTreeNoe.WalkNodes((node, depth) => {
+          if (node.Kind == SourceSyntaxNodeKind.Function) {
+            return true;
+          }
+
+          Trace.WriteLine($" at line {node.Start.Line}, kind {node.Kind}" );
+
           foreach (var t in TextView.Function.AllTuples) {
-            if (t.TextLocation.Line >= node.Start.Line &&
-                t.TextLocation.Line <= node.End.Line) {
-              TextView.MarkElement(t,Colors.PaleGreen);
+            Trace.WriteLine($"    - tuple line {t.TextLocation.Line}");
+
+            if (t.TextLocation.Line+1 == node.Start.Line) {
+              TextView.AddBookmark(t, $"{node.Kind}, depth {depth}");
+              break;
+              //TextView.MarkElement(t,Colors.PaleGreen);
             }
           }
 
           return true;
-        }, SourceSyntaxNodeKind.Loop);
+        });
       }
 
       if (!loaded || !settings_.ProfileMarkerSettings.JumpToHottestElement) {
@@ -630,15 +642,18 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       case ".inl":
       case ".ixx": {
         highlightingDef = HighlightingManager.Instance.GetDefinition("C++");
+        sourceLanguage_ = SourceCodeLanguage.Cpp;
         break;
       }
       case ".cs": {
         highlightingDef = HighlightingManager.Instance.GetDefinition("C#");
+        sourceLanguage_ = SourceCodeLanguage.CSharp;
         break;
       }
       case ".rs": {
         //? TODO: Rust syntax highlighting
         highlightingDef = HighlightingManager.Instance.GetDefinition("C++");
+        sourceLanguage_ = SourceCodeLanguage.Rust;
         break;
       }
     }

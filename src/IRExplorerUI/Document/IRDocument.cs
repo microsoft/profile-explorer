@@ -923,15 +923,17 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
   }
 
-  public void AddBookmark(IRElement selectedElement, string text = null) {
+  public Bookmark AddBookmark(IRElement selectedElement, string text = null, bool pinned = false) {
     var bookmark = bookmarks_.AddBookmark(selectedElement);
     bookmark.Text = text;
+    bookmark.IsPinned = pinned;
 
     margin_.AddBookmark(bookmark);
     margin_.SelectBookmark(bookmark);
     UpdateMargin();
     UpdateHighlighting();
     RaiseBookmarkAddedEvent(bookmark);
+    return bookmark;
   }
 
   public void PreloadSection(ParsedIRTextSection parsedSection) {

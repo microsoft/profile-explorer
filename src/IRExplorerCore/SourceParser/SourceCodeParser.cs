@@ -64,7 +64,6 @@ public class SourceCodeParser {
         var type = node.type();
         var sym = node.symbol();
         Trace.WriteLine($"    node type is {type}, startL {sl}, endL {el}");
-      }
 #endif
 
       bool accepted = true;
