@@ -11,9 +11,9 @@ public enum SourceSyntaxNodeKind {
   Else,
   Loop,
   Switch,
+  SwitchCase,
   Compound,
   Condition,
-  Body,
   Call,
   Other,
 }
@@ -24,20 +24,38 @@ public class SourceSyntaxNode {
   }
 
   public SourceSyntaxNodeKind Kind { get; set; }
-  public string Value { get; set; }
+  public SourceSyntaxNode ParentNode { get; set; }
+  public List<SourceSyntaxNode> ChildNodes { get; set; }
   public TextLocation Start { get; set; }
   public TextLocation End { get; set; }
-  public List<SourceSyntaxNode> ChildNodes;
+  public object Tag { get; set; }
+
+  public int Length => End.Offset - Start.Offset;
+  public bool SpansMultipleLines => End.Line != Start.Line;
+  public bool HasChildren => ChildNodes is {Count: > 0};
 
   public void AddChild(SourceSyntaxNode node) {
     ChildNodes ??= new();
     ChildNodes.Add(node);
+    node.ParentNode = this;
+  }
+
+  public SourceSyntaxNode GetChildOfKind(SourceSyntaxNodeKind kind) {
+    if (ChildNodes != null) {
+      foreach (var child in ChildNodes) {
+        if (child.Kind == kind) {
+          return child;
+        }
+      }
+    }
+
+    return null;
   }
 
   public string GetText(ReadOnlyMemory<char> text) {
-    if (Start.Offset < text.Length &&
+    if (text.Length > 0 &&
         End.Offset < text.Length) {
-      return text.Slice(Start.Offset, End.Offset - Start.Offset).ToString();
+      return text.Slice(Start.Offset, Length).ToString();
     }
 
     return null;
@@ -51,13 +69,14 @@ public class SourceSyntaxNode {
   private bool WalkNodes(SourceSyntaxNode node, Func<SourceSyntaxNode, int, bool> action,
                         SourceSyntaxNodeKind kindFilter = SourceSyntaxNodeKind.Other,
                         int depth = 0) {
+    // Do a pre-order traversal of the tree.
     if (node.Kind == kindFilter || kindFilter == SourceSyntaxNodeKind.Other) {
       if (!action(node, depth)) {
         return false;
       }
     }
 
-    if (node.ChildNodes != null) {
+    if (node.HasChildren) {
       foreach (var childNode in node.ChildNodes) {
         if (!WalkNodes(childNode, action, kindFilter, depth + 1)) {
           return false;
@@ -66,6 +85,12 @@ public class SourceSyntaxNode {
     }
 
     return true;
+  }
+
+  public string Print() {
+    var sb = new StringBuilder();
+    Print(sb, 0);
+    return sb.ToString();
   }
 
   public void Print(StringBuilder sb, int level) {
@@ -108,9 +133,18 @@ public class SourceSyntaxTree {
     }
 
     foreach (var node in RootNode.ChildNodes) {
-      if (node.Kind == SourceSyntaxNodeKind.Function &&
-          Math.Abs(node.Start.Line - startLine) <= 2) {
-        return node;
+      if (node.Kind == SourceSyntaxNodeKind.Function) {
+        if (Math.Abs(node.Start.Line - startLine) <= 1) {
+          return node;
+        }
+
+        // Check the compound node of the function,
+        // the start line in debug info is usually this line.
+        var childNode = node.GetChildOfKind(SourceSyntaxNodeKind.Compound);
+
+        if (childNode != null && Math.Abs(childNode.Start.Line - startLine) <= 1) {
+          return node;
+        }
       }
     }
 
@@ -118,10 +152,6 @@ public class SourceSyntaxTree {
   }
 
   public List<SourceSyntaxNode> FindNodes(int startLine, int endLine) {
-    return null;
-  }
-
-  public List<(int StartOffset, int EndOffset)> FindBracePairs() {
     return null;
   }
 

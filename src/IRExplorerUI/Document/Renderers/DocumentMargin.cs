@@ -406,7 +406,7 @@ public class DocumentMargin : AbstractMargin {
     }
 
     // Draw bookmarks in two steps, first the unselected ones, then the selected ones.
-    // This is done so that the borders of the selected ones are not drawn over by other 
+    // This is done so that the borders of the selected ones are not drawn over by other
     // segments with a different border color.
     double lineHeight = Math.Ceiling(TextView.DefaultLineHeight);
     var segments = bookmarkSegments_.FindOverlappingSegments(TextView);
@@ -737,7 +737,7 @@ public class DocumentMargin : AbstractMargin {
                                         startBounds.Height);
     drawingContext.DrawRectangle(pinStyle.BackColor, pinStyle.Border, bounds);
 
-    icon.Draw(bounds.Left + 1, bounds.Top + 1, ButtonIconWidth,
+    icon.Draw(bounds.Left + 1, bounds.Top, ButtonIconWidth,
               bounds.Width, bounds.Height, drawingContext);
     return bounds;
   }

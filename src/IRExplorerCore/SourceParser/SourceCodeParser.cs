@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using GitHub.TreeSitter;
 
 namespace IRExplorerCore.SourceParser;
@@ -35,6 +36,10 @@ public class SourceCodeParser {
       case SourceCodeLanguage.Rust: return new TSLanguage(tree_sitter_rust());
       default: throw new InvalidOperationException();
     }
+  }
+
+  public SourceSyntaxTree Parse(ReadOnlyMemory<char> text) {
+    return Parse(text.ToString());
   }
 
   public SourceSyntaxTree Parse(string text) {
@@ -121,7 +126,6 @@ public class SourceCodeParser {
         treeNode.Kind = nodeKind;
         treeNode.Start = new TextLocation(startOffset, startLine, 0);
         treeNode.End = new TextLocation(endOffset, endLine, 0);
-        treeNode.Value = text.Substring(startOffset, endOffset - startOffset);
 
         if (tree.RootNode == null) {
           tree.RootNode = treeNode;
@@ -134,20 +138,6 @@ public class SourceCodeParser {
 
           if (parentTreeNode != null) {
             parentTreeNode.AddChild(treeNode);
-
-            if (nodeKind == SourceSyntaxNodeKind.Compound) {
-              switch (parentTreeNode.Kind) {
-                case SourceSyntaxNodeKind.If: {
-                  treeNode.Kind = SourceSyntaxNodeKind.Body;
-                  break;
-                }
-                case SourceSyntaxNodeKind.Loop: {
-                  treeNode.Kind = SourceSyntaxNodeKind.Body;
-                  break;
-                }
-              }
-            }
-
             break;
           }
 

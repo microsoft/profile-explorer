@@ -528,6 +528,27 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
                              false, true, inlinee);
   }
 
+
+  public void SelectElementsInLineRange(int startLine, int endLine) {
+    ClearTemporaryHighlighting();
+    var group = new HighlightedElementGroup(selectedStyle_);
+
+    foreach (var block in Function.Blocks) {
+      foreach (var tuple in block.Tuples) {
+        if (tuple.TextLocation.Line + 1 >= startLine &&
+            tuple.TextLocation.Line + 1 <= endLine) {
+          group.Add(tuple);
+        }
+      }
+    }
+
+    if (!group.IsEmpty()) {
+      selectedHighlighter_.Add(group);
+    }
+
+    UpdateHighlighting();
+  }
+
   public void SelectLine(int line) {
     if (line >= 0 && line <= Document.LineCount) {
       TextArea.Caret.Line = line;
@@ -1139,7 +1160,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     return overlay;
   }
 
-  public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
+  private IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
                                                        double width, double height,
                                                        string label, string tooltip,
                                                        HorizontalAlignment alignmentX,
@@ -1159,9 +1180,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     return RegisterIconElementOverlay(element, null, 0, 0, label, tooltip);
   }
 
-  public IElementOverlay RegisterElementOverlay(IRElement element, IElementOverlay overlay) {
+  public IElementOverlay RegisterElementOverlay(IRElement element, IElementOverlay overlay,
+                                                bool prepend = false) {
     SetupElementOverlayEvents(overlay);
-    overlayRenderer_.AddElementOverlay(element, overlay);
+    overlayRenderer_.AddElementOverlay(element, overlay, prepend);
     return overlay;
   }
 
@@ -1264,13 +1286,14 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
                                                        double width, double height,
-                                                       string label, string tooltip) {
+                                                       string label = null, string tooltip = null,
+                                                       bool prepend = false) {
     var overlay = IconElementOverlay.CreateDefault(icon, width, height,
                                                    Brushes.Transparent,
                                                    selectedStyle_.BackColor,
                                                    selectedStyle_.Border,
                                                    label, tooltip);
-    return (IconElementOverlay)RegisterElementOverlay(element, overlay);
+    return (IconElementOverlay)RegisterElementOverlay(element, overlay, prepend);
   }
 
   public void SuspendUpdate() {
@@ -1451,7 +1474,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       // Selection styles are also used in non-IR documents,
       // make sure they are not null and have reasonable defaults.
       selectedStyle_ ??= new HighlightingStyle();
-      selectedStyle_.BackColor = settings_.BackgroundColor.AsBrush();
+      selectedStyle_.BackColor = Brushes.Transparent;
       selectedStyle_.Border = settings_.CurrentLineBorderColor.AsPen();
       selectedBlockStyle_ ??= new HighlightingStyle();
       selectedBlockStyle_.BackColor = settings_.BackgroundColor.AsBrush();
@@ -1800,7 +1823,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
   }
 
-  private void ClearSelectedElements() {
+  public void ClearSelectedElements() {
     selectedHighlighter_.Clear();
     selectedElements_.Clear();
   }

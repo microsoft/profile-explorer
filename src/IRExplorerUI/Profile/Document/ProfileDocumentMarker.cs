@@ -40,7 +40,8 @@ public interface MarkedDocument {
 
   public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
                                                        double width, double height,
-                                                       string label = null, string tooltip = null);
+                                                       string label = null, string tooltip = null,
+                                                       bool prepend = false);
   public void RemoveElementOverlays(IRElement element, object onlyWithTag = null);
 }
 
@@ -242,15 +243,14 @@ public class ProfileDocumentMarker {
     for (int lineNumber = result.FirstLineIndex; lineNumber <= result.LastLineIndex; lineNumber++) {
       var documentLine = document.GetLineByNumber(lineNumber);
       var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
-      var         dummyTuple = MakeDummyTuple(location, documentLine);
+      var  dummyTuple = MakeDummyTuple(location, documentLine);
+      lineToElementMap[lineNumber] = dummyTuple;
 
       if (result.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
         processingResult.SampledElements.Add((dummyTuple, lineWeight));
-        lineToElementMap[lineNumber] = dummyTuple;
       }
 
       if (result.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
-        lineToElementMap[lineNumber] = dummyTuple;
         processingResult.CounterElements.Add((dummyTuple, counters));
       }
     }
