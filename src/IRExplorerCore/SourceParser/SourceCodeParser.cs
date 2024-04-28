@@ -56,15 +56,15 @@ public class SourceCodeParser {
     using var cursor = new TSCursor(parsedTree.root_node(), language);
 
     foreach (var node in WalkTreeNodes(cursor)) {
-#if DEBUG
-        int so = (int)cursor.current_node().start_offset();
-        int eo = (int)cursor.current_node().end_offset();
-        int sl = (int)cursor.current_node().start_point().row + 1;
-        int el = (int)cursor.current_node().end_point().row + 1;
-        var type = node.type();
-        var sym = node.symbol();
-        Trace.WriteLine($"    node type is {type}, startL {sl}, endL {el}");
-#endif
+// #if DEBUG
+//         int so = (int)cursor.current_node().start_offset();
+//         int eo = (int)cursor.current_node().end_offset();
+//         int sl = (int)cursor.current_node().start_point().row + 1;
+//         int el = (int)cursor.current_node().end_point().row + 1;
+//         var type = node.type();
+//         var sym = node.symbol();
+//         Trace.WriteLine($"    node type is {type}, startL {sl}, endL {el}");
+// #endif
 
       bool accepted = true;
       var nodeKind = SourceSyntaxNodeKind.Compound;

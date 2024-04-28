@@ -35,6 +35,11 @@ public class SourceSyntaxNode {
   }
 
   public string GetText(ReadOnlyMemory<char> text) {
+    if (Start.Offset < text.Length &&
+        End.Offset < text.Length) {
+      return text.Slice(Start.Offset, End.Offset - Start.Offset).ToString();
+    }
+
     return null;
   }
 

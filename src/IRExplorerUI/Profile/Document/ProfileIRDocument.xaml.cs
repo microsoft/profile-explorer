@@ -333,6 +333,23 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     get => profileFilter_ is {HasThreadFilter:true};
   }
 
+  string MakeSyntaxNodePreviewText(string text, int maxLength) {
+    int i  = 0;
+
+    while (i < text.Length && text[i] != '\n') {
+      i++;
+    }
+
+    i = Math.Min(i, maxLength);
+
+    if (i == 0) return null;
+    if (i <= text.Length) {
+      return text.Substring(0, i).Trim();
+    }
+    else {
+      return $"{text.Substring(0, i)}...".Trim();
+    }
+  }
 
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
                                          IRTextSection section,
@@ -363,13 +380,28 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       var tree = parser.Parse(sourceText_.ToString());
 
       if (tree != null) {
+
+        var funcTreeNoe = tree.FindFunctionNode(firstSourceLineIndex);
+
+        if (funcTreeNoe == null) {
+          return true;
+        }
+
+        var profileItems = new List<ProfileMenuItem>();
+        var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+        var markerSettings = settings_.ProfileMarkerSettings;
+        var funcProfile = Session.ProfileData.GetFunctionProfile(section.ParentFunction);
+        double maxWidth = 0;
+
         Trace.WriteLine("----------------------");
         Trace.WriteLine(tree.Print());
-        var funcTreeNoe = tree.FindFunctionNode(firstSourceLineIndex);
+
+        OutlineMenu.Items.Clear();
+
         funcTreeNoe.WalkNodes((node, depth) => {
-          if (node.Kind == SourceSyntaxNodeKind.Function ||
-              node.Kind == SourceSyntaxNodeKind.Call ||
-              node.Kind == SourceSyntaxNodeKind.Compound) {
+          if(node.Kind == SourceSyntaxNodeKind.Compound ||
+             node.Kind == SourceSyntaxNodeKind.Condition ||
+             node.Kind == SourceSyntaxNodeKind.Body) {
             return true;
           }
 
@@ -395,15 +427,97 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
             }
           }
 
-          if (markedTuple != null) {
-            TextView.AddBookmark(markedTuple, $"{node.Kind}: {weight.AsMillisecondsString()}");
+            double weightPercentage = funcProfile.ScaleWeight(weight);
+
+            if (!(node.Kind == SourceSyntaxNodeKind.Function ||
+                  node.Kind == SourceSyntaxNodeKind.Body ||
+                  node.Kind == SourceSyntaxNodeKind.Call ||
+                  node.Kind == SourceSyntaxNodeKind.Compound)
+            ) {
+              if (markedTuple != null) {
+                TextView.AddBookmark(markedTuple,
+                                     $"{node.Kind}: {weight.AsMillisecondsString()} ({weightPercentage.AsPercentageString()})");
+              }
+            }
+
             //? Add bookmarkHovered on/off event
             //? Add Tag to bookmark and syntaxNode
-          }
 
+            var nodeText = node.GetText(sourceText_);
+            string nesting = "";
+
+            for (int i = 0; i < depth/2; i++) {
+                nesting += " \u250A   ";
+            }
+
+            string kind = node.Kind switch {
+              SourceSyntaxNodeKind.Loop => "\u2B6F",
+              SourceSyntaxNodeKind.If => "\u2BA7",
+              SourceSyntaxNodeKind.Else => "\u2BA6",
+              SourceSyntaxNodeKind.Call => "\u25B7",
+              _ => $"{node.Kind}"
+            };
+
+
+            int CountDigits(int number) {
+              int count = 1;
+
+              while (number >= 10) {
+                count++;
+                number /= 10;
+              }
+
+              return count;
+            }
+
+            var line = node.Kind != SourceSyntaxNodeKind.Function ? node.Start.Line.ToString() : "";
+            line = line.PadRight(CountDigits(TextView.LineCount));
+
+            var preview = MakeSyntaxNodePreviewText(nodeText, 50);
+            var title = $"{line} {nesting}{kind}  {preview}";
+            var tooltip = nodeText;
+            string text = $"({markerSettings.FormatWeightValue(null, weight)})";
+
+            var value = new ProfileMenuItem(text, weight.Ticks, weightPercentage) {
+              PrefixText = title,
+              ToolTip = tooltip,
+              ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+              TextWeight = node.Kind != SourceSyntaxNodeKind.Function ?
+                markerSettings.PickTextWeight(weightPercentage) : FontWeights.Normal,
+              PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+            };
+
+            if (node.Kind == SourceSyntaxNodeKind.Loop) {
+              value.TextColor = Brushes.DarkGreen;
+              value.TextWeight = FontWeights.Bold;
+            }
+            else if (node.Kind == SourceSyntaxNodeKind.If ||
+                     node.Kind == SourceSyntaxNodeKind.Else) {
+              value.TextColor = Brushes.DarkBlue;
+              value.TextWeight = FontWeights.SemiBold;
+
+            }
+
+            var item = new MenuItem {
+              Header = value,
+              IsEnabled = node.Kind != SourceSyntaxNodeKind.Function,
+              StaysOpenOnClick = true,
+              HeaderTemplate = valueTemplate,
+              Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+            };
+
+            profileItems.Add(value);
+            OutlineMenu.Items.Add(item);
+
+            double width = Utils.MeasureString(title, settings_.FontName, settings_.FontSize).Width;
+            maxWidth = Math.Max(width, maxWidth);
 
           return true;
         });
+
+        foreach (var value in profileItems) {
+          value.MinTextWidth = maxWidth;
+        }
       }
 
       if (!loaded || !settings_.ProfileMarkerSettings.JumpToHottestElement) {
