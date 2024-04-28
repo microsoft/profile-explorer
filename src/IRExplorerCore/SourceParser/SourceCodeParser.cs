@@ -6,31 +6,57 @@ using GitHub.TreeSitter;
 
 namespace IRExplorerCore.SourceParser;
 
+public enum SourceCodeLanguage {
+  Cpp,
+  CSharp,
+  Rust
+}
+
 public class SourceCodeParser {
   [DllImport("tree-sitter-cpp.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr tree_sitter_cpp();
 
-  public SourceCodeParser() {
+  [DllImport("tree-sitter-c-sharp.dll", CallingConvention = CallingConvention.Cdecl)]
+  private static extern IntPtr tree_sitter_c_sharp();
 
+  [DllImport("tree-sitter-rust.dll", CallingConvention = CallingConvention.Cdecl)]
+  private static extern IntPtr tree_sitter_rust();
+
+  private SourceCodeLanguage language_;
+
+  public SourceCodeParser(SourceCodeLanguage language = SourceCodeLanguage.Cpp) {
+    language_ = language;
+  }
+
+  private TSLanguage InitializeParserLanguage(SourceCodeLanguage language) {
+    switch (language) {
+      case SourceCodeLanguage.Cpp: return new TSLanguage(tree_sitter_cpp());
+      case SourceCodeLanguage.CSharp: return new TSLanguage(tree_sitter_c_sharp());
+      case SourceCodeLanguage.Rust: return new TSLanguage(tree_sitter_rust());
+      default: throw new InvalidOperationException();
+    }
   }
 
   public SourceSyntaxTree Parse(string text) {
+    // Initialize parser.
     using var parser = new TSParser();
-    var language = new TSLanguage(tree_sitter_cpp());
+    using var language = InitializeParserLanguage(language_);
     parser.set_language(language);
 
+    // Try to parse the text.
     using var parsedTree = parser.parse_string(null, text);
 
     if (parsedTree == null) {
       return null;
     }
 
+    // Walked the parse tree and build a reduced syntax tree
+    // of the main statement and expression nodes.
     var tree = new SourceSyntaxTree();
     using var cursor = new TSCursor(parsedTree.root_node(), language);
 
     foreach (var node in WalkTreeNodes(cursor)) {
-
-      {
+#if DEBUG
         int so = (int)cursor.current_node().start_offset();
         int eo = (int)cursor.current_node().end_offset();
         int sl = (int)cursor.current_node().start_point().row + 1;
@@ -39,8 +65,10 @@ public class SourceCodeParser {
         var sym = node.symbol();
         Trace.WriteLine($"    node type is {type}, startL {sl}, endL {el}");
       }
+#endif
+
       bool accepted = true;
-      SourceSyntaxNodeKind nodeKind = SourceSyntaxNodeKind.Compound;
+      var nodeKind = SourceSyntaxNodeKind.Compound;
 
       switch (node.type()) {
         case "if_statement":
@@ -86,15 +114,15 @@ public class SourceCodeParser {
 
       if (accepted) {
         var treeNode = tree.GetOrCreateNode(node.id.ToInt64());
-        int so = (int)cursor.current_node().start_offset();
-        int eo = (int)cursor.current_node().end_offset();
-        int sl = (int)cursor.current_node().start_point().row + 1;
-        int el = (int)cursor.current_node().end_point().row + 1;
+        int startOffset = (int)cursor.current_node().start_offset();
+        int endOffset = (int)cursor.current_node().end_offset();
+        int startLine = (int)cursor.current_node().start_point().row + 1;
+        int endLine = (int)cursor.current_node().end_point().row + 1;
 
         treeNode.Kind = nodeKind;
-        treeNode.Start = new TextLocation(so, sl, 0);
-        treeNode.End = new TextLocation(eo, el, 0);
-        treeNode.Value = text.Substring(so, eo - so);
+        treeNode.Start = new TextLocation(startOffset, startLine, 0);
+        treeNode.End = new TextLocation(endOffset, endLine, 0);
+        treeNode.Value = text.Substring(startOffset, endOffset - startOffset);
 
         if (tree.RootNode == null) {
           tree.RootNode = treeNode;
@@ -120,6 +148,7 @@ public class SourceCodeParser {
                 }
               }
             }
+
             break;
           }
 
@@ -128,8 +157,6 @@ public class SourceCodeParser {
       }
     }
 
-    Trace.WriteLine("======================================\n");
-    Trace.WriteLine(tree.Print());
     return tree;
   }
 
@@ -146,7 +173,7 @@ public class SourceCodeParser {
       }
 
       if (cursor.current_node().next_sibling().id != IntPtr.Zero &&
-        cursor.goto_next_sibling()) {
+          cursor.goto_next_sibling()) {
         continue;
       }
 
