@@ -367,21 +367,40 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         Trace.WriteLine(tree.Print());
         var funcTreeNoe = tree.FindFunctionNode(firstSourceLineIndex);
         funcTreeNoe.WalkNodes((node, depth) => {
-          if (node.Kind == SourceSyntaxNodeKind.Function) {
+          if (node.Kind == SourceSyntaxNodeKind.Function ||
+              node.Kind == SourceSyntaxNodeKind.Call ||
+              node.Kind == SourceSyntaxNodeKind.Compound) {
             return true;
           }
 
           Trace.WriteLine($" at line {node.Start.Line}, kind {node.Kind}" );
+          TupleIR markedTuple = null;
+          TimeSpan weight = TimeSpan.Zero;
+
 
           foreach (var t in TextView.Function.AllTuples) {
             Trace.WriteLine($"    - tuple line {t.TextLocation.Line}");
 
             if (t.TextLocation.Line+1 == node.Start.Line) {
-              TextView.AddBookmark(t, $"{node.Kind}, depth {depth}");
-              break;
-              //TextView.MarkElement(t,Colors.PaleGreen);
+              markedTuple = t;
+            }
+
+            if (sourceLineProfileResult_ != null) {
+              if (t.TextLocation.Line + 1 >= node.Start.Line &&
+                  t.TextLocation.Line < node.End.Line) {
+                if (sourceLineProfileResult_.SourceLineWeight.TryGetValue(t.TextLocation.Line + 1, out var w)) {
+                  weight += w;
+                }
+              }
             }
           }
+
+          if (markedTuple != null) {
+            TextView.AddBookmark(markedTuple, $"{node.Kind}: {weight.AsMillisecondsString()}");
+            //? Add bookmarkHovered on/off event
+            //? Add Tag to bookmark and syntaxNode
+          }
+
 
           return true;
         });
