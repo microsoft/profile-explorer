@@ -1826,6 +1826,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public void ClearSelectedElements() {
     selectedHighlighter_.Clear();
     selectedElements_.Clear();
+    UpdateHighlighting();
   }
 
   private void ClearTemporaryHighlighting(bool clearSelected = true) {
