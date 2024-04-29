@@ -115,6 +115,12 @@ public class ProfileSourceSyntaxNode {
 
     return tooltip.ToString();
   }
+
+  public bool IsMarkedNode => SyntaxNode.Kind == SourceSyntaxNodeKind.If ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.Else ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.Loop ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.Switch ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.SwitchCase;
 }
 
 public class ProfileMenuItem : BindableObject {
@@ -670,7 +676,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
       if (sourceColumnData.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timeColumn) {
         foreach (var node in syntaxNodes) {
-          if (node.StartElement == null || node.Overlay == null) {
+          if (node.StartElement == null || !node.IsMarkedNode) {
             continue;
           }
 
@@ -748,9 +754,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       double weightPercentage = funcProfile.ScaleWeight(node.Weight);
       var nodeText = node.SyntaxNode.GetText(sourceText_);
 
-      if (!(node.Kind == SourceSyntaxNodeKind.Function ||
-            node.Kind == SourceSyntaxNodeKind.Call)
-      ) {
+      if (node.IsMarkedNode) {
         if (node.StartElement != null) {
           var color = App.Settings.DocumentSettings.BackgroundColor;
 
@@ -774,6 +778,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
             overalyTooltip += $"\nCondition: {node.ConditionWeight.AsMillisecondsString()}";
           }
 
+          #if false
           var overlay = TextView.RegisterIconElementOverlay(node.StartElement, icon, 16, 16,
                                                             label, overalyTooltip, true);
           node.Overlay = overlay;
@@ -807,6 +812,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
             overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
                                                   App.Settings.DocumentSettings.FontSize).Width - 20;
           }
+#endif
         }
       }
 
