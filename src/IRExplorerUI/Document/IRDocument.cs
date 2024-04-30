@@ -199,6 +199,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private int currentExprLevel_;
   private Remark selectedRemark_;
   private bool selectingText_;
+  private HashSet<FoldingSection> foldedBlocks_;
 
   public IRDocument() {
     // Setup element tracking data structures.
@@ -550,6 +551,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     Function = null;
     selectedRemark_ = null;
     currentExprElement_ = null;
+    foldedBlocks_ = null;
     ClearSelectedElements();
 
     ResetRenderers();
@@ -1033,37 +1035,44 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     folding_ = FoldingManager.Install(TextArea);
     var foldingStrategy = Session.CompilerInfo.CreateFoldingStrategy(Function);
     foldingStrategy.UpdateFoldings(folding_, Document);
-    SetupBlockFoldingEvents();
+    SetupBlockFoldingEvents(folding_.AllFoldings);
   }
 
   public IEnumerable<FoldingSection> SetupCustomBlockFolding(IBlockFoldingStrategy foldingStrategy) {
     UninstallBlockFolding();
     folding_ = FoldingManager.Install(TextArea);
     foldingStrategy.UpdateFoldings(folding_, Document);
-    SetupBlockFoldingEvents();
+    SetupBlockFoldingEvents(folding_.AllFoldings);
     return folding_.AllFoldings;
   }
 
-  private void SetupBlockFoldingEvents() {
+  private void SetupBlockFoldingEvents(IEnumerable<FoldingSection> foldings) {
     var foldingMargin = TextArea.LeftMargins.OfType<FoldingMargin>().FirstOrDefault();
 
     if (foldingMargin == null) {
       return;
     }
 
-    var foldedBlocks = new HashSet<FoldingSection>();
+    // Set initial folded state.
+    foldedBlocks_ = new HashSet<FoldingSection>();
+
+    foreach(var folding in foldings) {
+      if (folding.IsFolded) {
+        foldedBlocks_.Add(folding);
+      }
+    }
 
     void DetectFoldingChanges() {
       // Check each folding if there is a change, since there is
       // no event for a single folding being changed.
       foreach (var folding in folding_.AllFoldings) {
         if (folding.IsFolded) {
-          if (foldedBlocks.Add(folding)) {
+          if (foldedBlocks_.Add(folding)) {
             TextRegionFolded?.Invoke(this, folding);
           }
         }
         else {
-          if (foldedBlocks.Remove(folding)) {
+          if (foldedBlocks_.Remove(folding)) {
             TextRegionUnfolded?.Invoke(this, folding);
           }
         }
