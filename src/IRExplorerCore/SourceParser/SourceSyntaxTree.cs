@@ -128,7 +128,7 @@ public class SourceSyntaxTree {
   }
 
   public SourceSyntaxNode FindFunctionNode(int startLine) {
-    if (RootNode == null) {
+    if (RootNode == null || RootNode.ChildNodes == null) {
       return null;
     }
 
