@@ -93,19 +93,32 @@ public class SourceFileMapperTests {
   }
 
   [TestMethod]
-  public void Map_RetriesNextTimeWhenLookupWasCanceled() {
+  public void Map_FirstTime_NetworkPath() {
     var mapper = new SourceFileMapper();
     bool called = false;
-    const string path = @"c:\path\to\file.txt";
-    const string expectedResult = @"c:\mapped\path\to\file.txt";
-
-    // prime with canceled result
-    mapper.Map(path, () => null);
-
-    Assert.AreEqual(expectedResult, mapper.Map(path, () => {
+    const string expectedResult = @"\\network\path\file.txt";
+    Assert.AreEqual(expectedResult, mapper.Map(@"\\network\path\file.txt", () => {
       called = true;
       return expectedResult;
     }));
     Assert.IsTrue(called);
+  }
+
+  [TestMethod]
+  public void Map_FirstTime_NetworkPath_SamePrefix() {
+    const string file1 = @"\\network\to\file.txt";
+    const string file2 = @"\\network\for\file2.txt";
+    string mappedFile1 = @"c:\mapped\to\file.txt";
+    string mappedFile2 = @"c:\mapped\for\file2.txt";
+
+    var mapper = new SourceFileMapper();
+
+    // prime it
+    mapper.Map(file1, () => mappedFile1);
+
+    Assert.AreEqual(mappedFile2, mapper.Map(file2, () => {
+      Assert.Fail();
+      return "";
+    }));
   }
 }

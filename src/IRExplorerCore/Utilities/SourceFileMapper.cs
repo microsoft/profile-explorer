@@ -21,6 +21,10 @@ public class SourceFileMapper {
   public Dictionary<string, string> SourceMap => map_;
 
   public string Map(string sourceFile, Func<string> lookup) {
+    if (string.IsNullOrEmpty(sourceFile)) {
+      return null;
+    }
+
     lock (lockObject_) {
       if (TryLookupInMap(sourceFile, out string result)) {
         return result;
@@ -55,7 +59,7 @@ public class SourceFileMapper {
   private bool TryLookupInMap(string sourceFile, out string result) {
     int index = sourceFile.LastIndexOf(Path.DirectorySeparatorChar);
 
-    while (index != -1) {
+    while (index > 0) {
       if (map_.TryGetValue(sourceFile.Substring(0, index), out var mappedDirectory)) {
         result = Path.Combine(mappedDirectory, sourceFile.Substring(index + 1));
         return true;
@@ -69,12 +73,17 @@ public class SourceFileMapper {
   }
 
   private void UpdateMap(string originalPath, string mappedPath) {
+    if (string.IsNullOrEmpty(originalPath) ||
+        string.IsNullOrEmpty(mappedPath)) {
+      return;
+    }
+
     int prevOriginalPath = originalPath.Length;
     int prevMappedPath = mappedPath.Length;
     int originalPathIndex = originalPath.LastIndexOf(Path.DirectorySeparatorChar);
     int mappedPathIndex = mappedPath.LastIndexOf(Path.DirectorySeparatorChar);
 
-    while (originalPathIndex != -1 && mappedPathIndex != -1) {
+    while (originalPathIndex > 0 && mappedPathIndex > 0) {
       if (originalPath.Substring(originalPathIndex, prevOriginalPath - originalPathIndex) !=
           mappedPath.Substring(mappedPathIndex, prevMappedPath - mappedPathIndex)) {
         return;
