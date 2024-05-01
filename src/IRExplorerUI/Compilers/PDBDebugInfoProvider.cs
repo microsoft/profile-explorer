@@ -685,19 +685,16 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     try {
-      // Lookup in the public symbols first because
-      // they have the mangled (decorated) C++ names, while
-      // the instance of the sym in the private symbol list doesn't.
-      session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var pubSym);
-
-      if (pubSym != null) {
-        return pubSym;
-      }
-
       session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
 
       if (funcSym != null) {
         return funcSym;
+      }
+      
+      session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var pubSym);
+
+      if (pubSym != null) {
+        return pubSym;
       }
     }
     catch (Exception ex) {
