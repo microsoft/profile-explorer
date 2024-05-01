@@ -1458,4 +1458,44 @@
     </DrawingGroup>
   </DrawingImage.Drawing>
 </DrawingImage>
+
+  <DrawingImage x:Key="ElseArrowIcon">
+    <DrawingImage.Drawing>
+      <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing Brush="DarkBlue" Geometry="F1 M24,24z M0,0z M10.0001,4.99989L19,4.99976 19,6.99976 12.0001,6.99986 12,14.5859 17.4142,14.5859 11,21.0001 4.58578,14.5859 10,14.5859 10.0001,4.99989z" />
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <DrawingImage x:Key="ThenArrowIcon">
+    <DrawingImage.Drawing>
+      <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing Brush="DarkBlue" Geometry="F1 M24,24z M0,0z M13.9999,4.99989L5.00001,4.99976 4.99998,6.99976 11.9999,6.99986 12,14.5859 6.5858,14.5859 13,21.0001 19.4142,14.5859 14,14.5859 13.9999,4.99989z" />
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <DrawingImage x:Key="SwitchArrowIcon">
+    <DrawingImage.Drawing>
+      <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing Brush="Purple" Geometry="F1 M24,24z M0,0z M3.99966,19.0001L3.9998,10.0002 9.58585,10.0002 9.58585,4.58588 16.0001,11.0001 9.58585,17.4143 9.58585,12.0002 5.99977,12.0002 5.99966,19.0001 3.99966,19.0001z M13.8363,6.05023L15.2505,4.63601 21.6144,11 15.2505,17.3639 13.8363,15.9497 18.786,11 13.8363,6.05023z" />
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <DrawingImage x:Key="SwitchCaseArrowIcon">
+    <DrawingImage.Drawing>
+      <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing Brush="Purple" Geometry="F1 M24,24z M0,0z M4.99989,10.0001L4.99976,19 6.99976,19 6.99986,12.0001 14.5859,12 14.5859,17.4142 21.0001,11 14.5859,4.58578 14.5859,10 4.99989,10.0001z" />
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <DrawingImage x:Key="LoopIcon">
+    <DrawingImage.Drawing>
+      <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing Brush="DarkGreen" Geometry="F1 M24,24z M0,0z M12,4C14.7486,4,17.1749,5.38626,18.6156,7.5L16,7.5 16,9.5 22,9.5 22,3.5 20,3.5 20,5.99936C18.1762,3.57166 15.2724,2 12,2 6.47715,2 2,6.47715 2,12L4,12C4,7.58172,7.58172,4,12,4z M20,12C20,16.4183 16.4183,20 12,20 9.25144,20 6.82508,18.6137 5.38443,16.5L8,16.5 8,14.5 2,14.5 2,20.5 4,20.5 4,18.0006C5.82381,20.4283 8.72764,22 12,22 17.5228,22 22,17.5228 22,12L20,12z" />
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
 </ResourceDictionary>

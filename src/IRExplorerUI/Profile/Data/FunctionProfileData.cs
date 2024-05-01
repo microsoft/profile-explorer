@@ -115,6 +115,18 @@ public class FunctionProfileData {
     int lastLine = int.MinValue;
     var offsetData = ir.InstructionOffsetData;
 
+    var firstLineInfo = debugInfo.FindSourceLineByRVA(FunctionDebugInfo.RVA);
+
+    if (!firstLineInfo.IsUnknown) {
+      firstLine = firstLineInfo.Line;
+    }
+
+    var lastLineInfo = debugInfo.FindSourceLineByRVA(FunctionDebugInfo.EndRVA);
+
+    if (!lastLineInfo.IsUnknown) {
+      lastLine = lastLineInfo.Line;
+    }
+
     foreach (var pair in InstructionWeight) {
       long rva = pair.Key + FunctionDebugInfo.RVA - offsetData.InitialMultiplier;
       var lineInfo = debugInfo.FindSourceLineByRVA(rva, inlinee != null);

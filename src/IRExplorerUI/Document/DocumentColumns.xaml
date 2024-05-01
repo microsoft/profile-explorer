@@ -60,7 +60,10 @@
 
         <ListView.ItemContainerStyle>
             <Style TargetType="{x:Type ListViewItem}">
-                <Setter Property="OverridesDefaultStyle" Value="true" />
+              <EventSetter Event="MouseEnter" Handler="ListViewItem_MouseEnter" />
+              <EventSetter Event="MouseLeave" Handler="ListViewItem_MouseLeave" />
+
+              <Setter Property="OverridesDefaultStyle" Value="true" />
                 <Setter Property="Height" Value="{Binding ColumnsListItemHeight, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 <Setter Property="VerticalContentAlignment" Value="Stretch" />

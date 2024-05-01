@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,11 +19,107 @@ using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
 using IRExplorerCore;
 using IRExplorerCore.IR;
+using IRExplorerCore.SourceParser;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
+using Microsoft.CodeAnalysis;
 using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI.Profile.Document;
+
+public class ProfileSourceSyntaxNode {
+  private static readonly IconDrawing loopIcon;
+  private static readonly IconDrawing thenIcon;
+  private static readonly IconDrawing elseIcon;
+  private static readonly IconDrawing switchCaseIcon;
+  private static readonly IconDrawing switchIcon;
+  public SourceSyntaxNode SyntaxNode { get; set; }
+  public int Level { get; set; }
+  public ProfileSourceSyntaxNode Parent { get; set; }
+  public IRElement StartElement { get; set; }
+  public List<IRElement> Elements { get; set; }
+  public TimeSpan Weight { get; set; }
+  public TimeSpan BodyWeight { get; set; }
+  public TimeSpan ConditionWeight { get; set; }
+  public IconElementOverlay Overlay { get; set; }
+
+  public SourceSyntaxNodeKind Kind => SyntaxNode.Kind;
+  public TextLocation Start { get; set; }
+  public TextLocation End { get; set; }
+  public int Length => End.Offset - Start.Offset;
+
+  static ProfileSourceSyntaxNode() {
+    loopIcon = IconDrawing.FromIconResource("LoopIcon");
+    thenIcon = IconDrawing.FromIconResource("ThenArrowIcon");
+    elseIcon = IconDrawing.FromIconResource("ElseArrowIcon");
+    switchIcon = IconDrawing.FromIconResource("SwitchArrowIcon");
+    switchCaseIcon = IconDrawing.FromIconResource("SwitchCaseArrowIcon");
+  }
+
+  public ProfileSourceSyntaxNode(SourceSyntaxNode syntaxNode) {
+    SyntaxNode = syntaxNode;
+    Weight = TimeSpan.Zero;
+    Start = syntaxNode.Start;
+    End = syntaxNode.End;
+  }
+
+  public IconDrawing GetIcon() {
+    return Kind switch {
+      SourceSyntaxNodeKind.Loop => loopIcon,
+      SourceSyntaxNodeKind.If => thenIcon,
+      SourceSyntaxNodeKind.Else => elseIcon,
+      SourceSyntaxNodeKind.Switch => switchIcon,
+      SourceSyntaxNodeKind.SwitchCase => switchCaseIcon,
+      _ => null
+    };
+  }
+
+  public string GetTextIcon() {
+    return Kind switch {
+      SourceSyntaxNodeKind.Loop => "\u2B6F",
+      SourceSyntaxNodeKind.If => "\u2BA7",
+      SourceSyntaxNodeKind.Else => "\u2BA6",
+      //? TODO: Pick switch char
+      SourceSyntaxNodeKind.Switch => "\u21B5",
+      SourceSyntaxNodeKind.SwitchCase => "\u21B5",
+      _ => ""
+    };
+  }
+
+  public string GetKindText() {
+    return Kind switch {
+      SourceSyntaxNodeKind.Loop => "Loop",
+      SourceSyntaxNodeKind.If => "If",
+      SourceSyntaxNodeKind.Else => "Else",
+      SourceSyntaxNodeKind.Switch => "Switch",
+      SourceSyntaxNodeKind.SwitchCase => "Switch Case",
+      SourceSyntaxNodeKind.Call => "Call",
+      _ => ""
+    };
+  }
+
+  public string GetTooltip(FunctionProfileData funcProfile) {
+    var tooltip = new StringBuilder();
+    tooltip.Append(GetKindText());
+    tooltip.Append($"\nWeight: {Weight.AsMillisecondsString()}");
+
+    if (BodyWeight != TimeSpan.Zero) {
+      tooltip.Append($"\nBody: {BodyWeight.AsMillisecondsString()}");
+    }
+
+    if (ConditionWeight != TimeSpan.Zero) {
+      tooltip.Append($"\nCondition: {ConditionWeight.AsMillisecondsString()}");
+    }
+
+    return tooltip.ToString();
+  }
+
+  public bool IsMarkedNode => SyntaxNode.Kind == SourceSyntaxNodeKind.If ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.Else ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.Loop ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.Switch ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.SwitchCase;
+}
 
 public class ProfileMenuItem : BindableObject {
   private Thickness borderThickness_;
@@ -148,10 +245,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private bool suspendColumnVisibilityHandler_;
   private ProfileSampleFilter profileFilter_;
   private CancelableTaskInstance loadTask_;
-  private SourceStackFrame inlinee_;
-  private bool ignoreNextRowSelectedEvent_;
+  private SourceCodeLanguage sourceLanguage_;
   private ProfileHistoryManager historyManager_;
   private RangeColorizer assemblyColorizer_;
+  private SourceStackFrame inlinee_;
+  private bool ignoreNextRowSelectedEvent_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -492,6 +590,145 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public bool HasProfileInstanceFilter => profileFilter_ is {HasInstanceFilter:true};
   public bool HasProfileThreadFilter => profileFilter_ is {HasThreadFilter:true};
 
+
+  string MakeSyntaxNodePreviewText(string text, int maxLength) {
+    int i = 0;
+
+    while (i < text.Length && text[i] != '\n') {
+      i++;
+    }
+
+    i = Math.Min(i, maxLength);
+
+    if (i == 0) return null;
+
+    if (i <= text.Length) {
+      return text.Substring(0, i).Trim();
+    }
+    else {
+      return $"{text.Substring(0, i)}...".Trim();
+    }
+  }
+
+  private List<ProfileSourceSyntaxNode> PrepareSourceSyntaxTree(IRTextFunction function) {
+    SourceCodeParser parser = new(sourceLanguage_);
+    var tree = parser.Parse(sourceText_);
+    if (tree == null) return null;
+
+    var funcTreeNoe = tree.FindFunctionNode(sourceLineProfileResult_.FirstLineIndex);
+    if (funcTreeNoe == null) return null;
+
+    // Trace.WriteLine("-------------------------------------------");
+    // Trace.WriteLine("Source Syntax Tree:");
+    // Trace.WriteLine($"{funcTreeNoe.Print()}");
+
+    var profileNodes = new List<ProfileSourceSyntaxNode>();
+    var profileNodeMap = new Dictionary<SourceSyntaxNode, ProfileSourceSyntaxNode>();
+
+    funcTreeNoe.WalkNodes((node, depth) => {
+      IRElement startElement = null;
+      TimeSpan weight = TimeSpan.Zero;
+      List<IRElement> elements = new();
+
+      // Collect the elements for the source lines that are part of the node
+      // and accumulate the weight of the source lines.
+      int startLine = node.Start.Line;
+      int endLine = node.End.Line;
+
+      // For if statements, the syntax node coveres the line range
+      // of any any other nested if/else statements, but here consider
+      // only the lines in the "then" part of the if statement.
+      if (node.Kind == SourceSyntaxNodeKind.If) {
+        var elseNode = node.GetChildOfKind(SourceSyntaxNodeKind.Else);
+
+        if (elseNode != null) {
+          var thenNode = node.GetChildOfKind(SourceSyntaxNodeKind.Compound);
+
+          if(thenNode != null) {
+            endLine = thenNode.End.Line;
+            node.End = thenNode.End;
+          }
+          else {
+            endLine = elseNode.Start.Line;
+            node.End = elseNode.Start;
+          }
+        }
+      }
+
+      for (int line = startLine; line <= endLine; line++) {
+        if (sourceLineProcessingResult_.LineToElementMap.TryGetValue(line, out var element)) {
+          startElement ??= element;
+          elements.Add(element);
+
+          if (sourceLineProfileResult_.SourceLineWeight.TryGetValue(line, out var w)) {
+            weight += w;
+          }
+        }
+      }
+
+      // Create a profile node for the syntax node,
+      // except for nodes that are not interesting.
+      if (startElement != null &&
+          node.Kind != SourceSyntaxNodeKind.Compound &&
+          node.Kind != SourceSyntaxNodeKind.Condition &&
+          node.Kind != SourceSyntaxNodeKind.Other) {
+        var profileNode = new ProfileSourceSyntaxNode(node) {
+          Weight = weight,
+          StartElement = startElement,
+          Elements = elements
+        };
+
+        // Connect node to the parent (because some nodes are skipped,
+        // parent may not be the direct parent from the syntax tree).
+        var parentNode = node.ParentNode;
+
+        while (parentNode != null) {
+          if (profileNodeMap.TryGetValue(parentNode, out var nodeParent)) {
+            profileNode.Parent = nodeParent;
+            profileNode.Level = nodeParent.Level + 1;
+            break;
+          }
+
+          parentNode = parentNode.ParentNode;
+        }
+
+        profileNodes.Add(profileNode);
+        profileNodeMap[node] = profileNode;
+      }
+
+      // Distinguish between the body and the whole statement
+      // by recording the weight of the body part too.
+      if (node.ParentNode != null &&
+          profileNodeMap.TryGetValue(node.ParentNode, out var parent)) {
+        if (node.ParentNode.Kind == SourceSyntaxNodeKind.If ||
+            node.ParentNode.Kind == SourceSyntaxNodeKind.Else) {
+          if (node.Kind == SourceSyntaxNodeKind.Condition) {
+            parent.ConditionWeight = weight;
+          }
+          else if (node.Kind == SourceSyntaxNodeKind.Compound) {
+            parent.BodyWeight = weight;
+          }
+        }
+        else if (node.ParentNode.Kind == SourceSyntaxNodeKind.Loop) {
+          if (node.Kind == SourceSyntaxNodeKind.Condition) {
+            parent.ConditionWeight = weight;
+          }
+          else if (node.Kind == SourceSyntaxNodeKind.Compound) {
+            parent.BodyWeight = weight;
+          }
+        }
+        else if (node.ParentNode.Kind == SourceSyntaxNodeKind.Switch &&
+                 node.Kind == SourceSyntaxNodeKind.SwitchCase) {
+          parent.BodyWeight += weight;
+        }
+      }
+
+      return true;
+    });
+
+    return profileNodes;
+  }
+  
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
                                          IRTextSection section,
                                          ProfileSampleFilter profileFilter = null,
@@ -627,8 +864,53 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, processingResult.Function);
     await TextView.LoadSection(dummyParsedSection);
 
+    sourceLineProfileResult_ = sourceLineProfileResult;
+    sourceLineProcessingResult_ = processingResult;
+    var syntaxNodes = await MarkSourceFileStructure(section.ParentFunction);
+
     TextView.SuspendUpdate();
     await profileMarker_.MarkSourceLines(TextView, processingResult);
+
+    if (syntaxNodes != null) {
+      var sourceColumnData = TextView.ProfileColumnData;
+
+      if (sourceColumnData.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timeColumn) {
+        foreach (var node in syntaxNodes) {
+          if (node.StartElement == null || !node.IsMarkedNode) {
+            continue;
+          }
+
+          var row = sourceColumnData.GetValues(node.StartElement);
+
+          if (row != null) {
+            foreach (var pair in row.ColumnValues) {
+              bool showIcon = Equals(pair.Key, timeColumn);
+              var cell = pair.Value;
+
+              if (showIcon) {
+                cell.Icon = node.GetIcon()?.Icon;
+              }
+
+              cell.CanShowIcon = false; // Disable auto-icon.
+              cell.ToolTip = node.GetTooltip(funcProfile);
+              cell.CanShowPercentageBar = false;
+              cell.CanShowBackgroundColor = false;
+              row.Tag = node;
+            }
+          }
+        }
+      }
+
+      ProfileColumns.RowHoverStart += (sender, value) => {
+        if(value.Tag is ProfileSourceSyntaxNode node) {
+          TextView.SelectElementsInLineRange(node.Start.Line, node.End.Line);
+        }
+      };
+
+      ProfileColumns.RowHoverStop += (sender, value) => {
+        TextView.ClearSelectedElements();
+      };
+    }
 
     // Annotate call sites next to source lines by parsing the actual section
     // and mapping back the call sites to the dummy elements representing the source lines.
@@ -649,12 +931,161 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     UpdateProfileFilterUI();
     UpdateProfileDescription(funcProfile);
     await UpdateProfilingColumns();
-
     if (showAssemblyLines) {
       SetupSourceAssembly();
     }
 
     return true;
+  }
+
+  private async Task<List<ProfileSourceSyntaxNode>> MarkSourceFileStructure(IRTextFunction function) {
+    var nodeList = await Task.Run(() => PrepareSourceSyntaxTree(function));
+
+    if (nodeList == null) {
+      return null;
+    }
+
+    var profileItems = new List<ProfileMenuItem>();
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
+    var markerSettings = settings_.ProfileMarkerSettings;
+    var funcProfile = Session.ProfileData.GetFunctionProfile(function);
+    double maxWidth = 0;
+
+    OutlineMenu.Items.Clear();
+
+    foreach (var node in nodeList) {
+      Trace.WriteLine($" at line {node.SyntaxNode.Start.Line}, kind {node.SyntaxNode.Kind}");
+
+      double weightPercentage = funcProfile.ScaleWeight(node.Weight);
+      var nodeText = node.SyntaxNode.GetText(sourceText_);
+
+      if (node.IsMarkedNode) {
+        if (node.StartElement != null) {
+          var color = App.Settings.DocumentSettings.BackgroundColor;
+
+          if (node.StartElement.ParentBlock != null &&
+              !node.StartElement.ParentBlock.HasEvenIndexInFunction) {
+            color = App.Settings.DocumentSettings.AlternateBackgroundColor;
+          }
+
+          sourceLineProcessingResult_.Result.SampledElements.Add((node.StartElement, node.Weight));
+
+          var icon = node.GetIcon();
+
+          var label =
+            $"{node.GetKindText()}: {weightPercentage.AsPercentageString()} ({node.Weight.AsMillisecondsString()})";
+          string overalyTooltip = null;
+
+          if (node.Kind == SourceSyntaxNodeKind.If ||
+              node.Kind == SourceSyntaxNodeKind.Loop) {
+            overalyTooltip = $"{node.Kind} statement";
+            overalyTooltip += $"\nBody: {node.BodyWeight.AsMillisecondsString()}";
+            overalyTooltip += $"\nCondition: {node.ConditionWeight.AsMillisecondsString()}";
+          }
+
+          #if false
+          var overlay = TextView.RegisterIconElementOverlay(node.StartElement, icon, 16, 16,
+                                                            label, overalyTooltip, true);
+          node.Overlay = overlay;
+          //? overlay.Tag = ProfileOverlayTag;
+          overlay.Tag = node;
+          overlay.Background = color.AsBrush();
+          overlay.IsLabelPinned = false;
+          overlay.AllowLabelEditing = false;
+          overlay.UseLabelBackground = true;
+          overlay.ShowBackgroundOnMouseOverOnly = true;
+          overlay.ShowBorderOnMouseOverOnly = true;
+          overlay.AlignmentX = HorizontalAlignment.Left;
+          overlay.MarginY = 2;
+          (overlay.TextColor, overlay.TextWeight) = markerSettings.PickBlockOverlayStyle(weightPercentage);
+
+          overlay.OnHover += (s, e) => {
+            if (node.Elements != null) {
+              TextView.SelectElementsInLineRange(node.Start.Line, node.End.Line);
+            }
+          };
+
+          overlay.OnHoverEnd += (sender, args) => {
+            TextView.ClearSelectedElements();
+          };
+
+          //? TODO: Click - proper selection
+
+          if (node.StartElement is InstructionIR instr) {
+            // Place before the call opcode.
+            int lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
+            overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
+                                                  App.Settings.DocumentSettings.FontSize).Width - 20;
+          }
+#endif
+        }
+      }
+
+      string nesting = "";
+
+      for (int i = 0; i < node.Level; i++) {
+        nesting += " \u250A   ";
+      }
+
+      int CountDigits(int number) {
+        int count = 1;
+
+        while (number >= 10) {
+          count++;
+          number /= 10;
+        }
+
+        return count;
+      }
+
+      var line = node.Kind != SourceSyntaxNodeKind.Function ? node.Start.Line.ToString() : "";
+      line = line.PadRight(CountDigits(TextView.LineCount));
+
+      var preview = MakeSyntaxNodePreviewText(nodeText, 50);
+      var title = $"{line} {nesting}{node.GetTextIcon()} {preview}";
+      var tooltip = nodeText;
+      string nodeTitle = $"({markerSettings.FormatWeightValue(null, node.Weight)})";
+
+      var value = new ProfileMenuItem(nodeTitle, node.Weight.Ticks, weightPercentage) {
+        PrefixText = title,
+        ToolTip = tooltip,
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = node.Kind != SourceSyntaxNodeKind.Function ?
+          markerSettings.PickTextWeight(weightPercentage) : FontWeights.Normal,
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
+      if (node.Kind == SourceSyntaxNodeKind.Loop) {
+        value.TextColor = Brushes.DarkGreen;
+        value.TextWeight = FontWeights.Bold;
+      }
+      else if (node.Kind == SourceSyntaxNodeKind.If ||
+               node.Kind == SourceSyntaxNodeKind.Else) {
+        value.TextColor = Brushes.DarkBlue;
+        value.TextWeight = FontWeights.SemiBold;
+      }
+
+      var item = new MenuItem {
+        Tag = node,
+        Header = value,
+        IsEnabled = node.Kind != SourceSyntaxNodeKind.Function,
+        StaysOpenOnClick = true,
+        HeaderTemplate = valueTemplate,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+      };
+
+      profileItems.Add(value);
+      OutlineMenu.Items.Add(item);
+
+      double width = Utils.MeasureString(title, settings_.FontName, settings_.FontSize).Width;
+      maxWidth = Math.Max(width, maxWidth);
+    }
+
+    foreach (var value in profileItems) {
+      value.MinTextWidth = maxWidth;
+    }
+
+    return nodeList;
   }
 
   private void SetupSourceAssembly() {
@@ -707,7 +1138,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       else {
         await LoadAssemblyProfile(parsedSection, false);
       }
-    }
+  	} 
   }
 
   public async Task UpdateProfilingColumns() {
@@ -847,15 +1278,18 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       case ".inl":
       case ".ixx": {
         highlightingDef = HighlightingManager.Instance.GetDefinition("C++");
+        sourceLanguage_ = SourceCodeLanguage.Cpp;
         break;
       }
       case ".cs": {
         highlightingDef = HighlightingManager.Instance.GetDefinition("C#");
+        sourceLanguage_ = SourceCodeLanguage.CSharp;
         break;
       }
       case ".rs": {
         //? TODO: Rust syntax highlighting
         highlightingDef = HighlightingManager.Instance.GetDefinition("C++");
+        sourceLanguage_ = SourceCodeLanguage.Rust;
         break;
       }
     }

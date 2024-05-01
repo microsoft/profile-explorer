@@ -56,12 +56,18 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   public Typeface TextFont { get; set; }
   public KnownLayer Layer => KnownLayer.Background;
 
-  public void AddElementOverlay(IRElement element, IElementOverlay overlay) {
+  public void AddElementOverlay(IRElement element, IElementOverlay overlay,
+                                bool prepend = false) {
     overlay.Element = element;
     Version++;
 
     if (overlaySegmentMap_.TryGetValue(element, out var segment)) {
-      segment.Overlays.Add(overlay);
+      if (prepend) {
+        segment.Overlays.Insert(0, overlay);
+      }
+      else {
+        segment.Overlays.Add(overlay);
+      }
     }
     else {
       segment = new IROverlaySegment(element, overlay);

@@ -77,7 +77,7 @@
           VerticalAlignment="Center"
           FontFamily="{Binding TextFont}"
           FontSize="{Binding TextSize}"
-          FontWeight="Medium"
+          FontWeight="{Binding TextWeight}"
           Foreground="{Binding TextColor}"
           Text="{Binding PrefixText}"
           ToolTip="{Binding ToolTip}" />
@@ -103,7 +103,7 @@
           VerticalAlignment="Center"
           FontFamily="{Binding TextFont}"
           FontSize="{Binding TextSize}"
-          FontWeight="Medium"
+          FontWeight="{Binding TextWeight}"
           Foreground="{Binding TextColor}"
           Text="{Binding ValuePercentage, StringFormat=p2}"
           ToolTip="{Binding ToolTip}" />
