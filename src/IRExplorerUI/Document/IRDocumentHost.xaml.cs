@@ -676,35 +676,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     // Compute the weight sum of the selected range of instructions
     // and display it in the main status bar.
-    var metadataTag = Function.GetTag<AssemblyMetadataTag>();
-    bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
-
-    if (!hasInstrOffsetMetadata) {
-      return;
-    }
-
-    var weightSum = TimeSpan.Zero;
     int startLine = TextView.TextArea.Selection.StartPosition.Line;
     int endLine = TextView.TextArea.Selection.EndPosition.Line;
-    int count = 0;
 
-    if (startLine > endLine) {
-      // Happens when selecting bottom-up.
-      (startLine, endLine) = (endLine, startLine);
-    }
-
-    foreach (var tuple in Function.AllTuples) {
-      if (tuple.TextLocation.Line >= startLine &&
-          tuple.TextLocation.Line <= endLine) {
-        if (metadataTag.ElementToOffsetMap.TryGetValue(tuple, out long offset) &&
-            funcProfile_.InstructionWeight.TryGetValue(offset, out var weight)) {
-          weightSum += weight;
-          count++;
-        }
-      }
-    }
-
-    if(weightSum == TimeSpan.Zero) {
+    if (!ProfilingUtils.ComputeAssemblyWeightInRange(startLine, endLine,
+                                                     Function, funcProfile_,
+                                                     out var weightSum, out int count)) {
       Session.SetApplicationStatus("");
       return;
     }

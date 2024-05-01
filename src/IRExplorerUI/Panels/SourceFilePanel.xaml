@@ -123,6 +123,41 @@
               <TextBlock Text="Inlinees" ToolTip="Functions inlined into the displayed function"/>
             </StackPanel>
           </ToggleButton>
+          <Separator/>
+          <ToggleButton
+            Height="20"
+            Padding="0,0,0,0"
+            Click="ToggleButton_Click"
+            IsChecked="{Binding Path=Settings.ShowInlineAssembly, Mode=TwoWay}"
+            ToolTip="Display the associated assembly instructions for each source line">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Margin="0,1,0,0"
+                Source="{StaticResource InlineAssemblyIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Text="ASM" Margin="4,0,0,0"/>
+            </StackPanel>
+          </ToggleButton>
+          <Button Padding="0" Click="CollapseAssemblyButton_Click" 
+                  Width="20"
+                  ToolTip="Collapse all sections of assembly code">
+            <Image
+              Width="18"
+              Height="18"
+              Margin="0,1,0,0"
+              Source="{StaticResource ContractIcon}" />
+          </Button>
+          <Button Padding="0" Click="ExpandAssemblyButton_Click" Width="20" 
+                  ToolTip="Expand all sections of assembly code">
+              <Image
+                Width="18"
+                Height="18"
+                Margin="0,1,0,0"
+                Source="{StaticResource ExpandIcon}" />
+          </Button>
+          <Separator/>
           <ComboBox
             Name="InlineeComboBox"
             Width="200"

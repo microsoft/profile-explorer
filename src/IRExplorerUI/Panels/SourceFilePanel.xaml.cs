@@ -12,6 +12,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
@@ -482,5 +483,19 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     if (!settings_.SyncInlineeWithDocument && section_ != null) {
       await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter);
     }
+  }
+
+  private void CollapseAssemblyButton_Click(object sender, RoutedEventArgs e) {
+    ProfileTextView.CollapseBlockFoldings();
+  }
+
+  private void ExpandAssemblyButton_Click(object sender, RoutedEventArgs e) {
+    ProfileTextView.ExpandBlockFoldings();
+ 
+  }
+
+  private async void ToggleButton_Click(object sender, RoutedEventArgs e) {
+    await OnReloadSettings();
+    await ReloadSourceFile();
   }
 }

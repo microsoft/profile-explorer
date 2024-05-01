@@ -271,11 +271,7 @@ public partial class ProfileData {
   }
 
   public FunctionProfileData GetFunctionProfile(IRTextFunction function) {
-    if (FunctionProfiles.TryGetValue(function, out var profile)) {
-      return profile;
-    }
-
-    return null;
+    return FunctionProfiles.TryGetValue(function, out var profile) ? profile : null;
   }
 
   public bool HasFunctionProfile(IRTextFunction function) {

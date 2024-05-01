@@ -12,6 +12,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using HtmlAgilityPack;
 using IRExplorerCore;
+using IRExplorerCore.IR;
+using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile.Document;
@@ -1313,5 +1315,71 @@ public static class ProfilingUtils {
           MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }
+  }
+  
+  public static bool ComputeAssemblyWeightInRange(int startLine, int endLine, 
+                                                  FunctionIR function, FunctionProfileData funcProfile,
+                                                  out TimeSpan weightSum, out int count) {
+    var metadataTag = function.GetTag<AssemblyMetadataTag>();
+    bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+
+    if (!hasInstrOffsetMetadata) {
+      weightSum = TimeSpan.Zero;
+      count = 0;
+      return false;
+    }
+    
+    weightSum = TimeSpan.Zero;
+    count = 0;
+
+    if (startLine > endLine) {
+      // Happens when selecting bottom-up.
+      (startLine, endLine) = (endLine, startLine);
+    }
+
+    foreach (var tuple in function.AllTuples) {
+      if (tuple.TextLocation.Line >= startLine &&
+          tuple.TextLocation.Line <= endLine) {
+        if (metadataTag.ElementToOffsetMap.TryGetValue(tuple, out long offset) &&
+            funcProfile.InstructionWeight.TryGetValue(offset, out var weight)) {
+          weightSum += weight;
+          count++;
+        }
+      }
+    }
+
+    return weightSum != TimeSpan.Zero;
+  }
+
+
+  public static bool ComputeSourceWeightInRange(int startLine, int endLine,
+                                                SourceLineProcessingResult profileResult,
+                                                SourceLineProfileResult processingResult,
+                                                out TimeSpan weightSum, out int count) {
+    weightSum = TimeSpan.Zero;
+    count = 0;
+
+    if (startLine > endLine) {
+      // Happens when selecting bottom-up.
+      (startLine, endLine) = (endLine, startLine);
+    }
+    
+    for(int i = startLine; i<= endLine; i++) {
+      int line = i;
+    
+      // With assembly lines, source line numbers are shifted.
+      if (processingResult != null) {
+        if (processingResult.LineToOriginalLineMap.TryGetValue(line, out int mappedLine)) {
+          line = mappedLine;
+        }
+        else continue;
+      }
+      
+      if(profileResult.SourceLineWeight.TryGetValue(line, out var weight)) {
+        weightSum += weight;
+      }
+    }
+    
+    return weightSum != TimeSpan.Zero;
   }
 }

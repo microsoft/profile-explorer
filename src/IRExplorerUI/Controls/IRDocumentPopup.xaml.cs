@@ -247,7 +247,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
   private string GetFunctionName() {
     if (parsedSection_ != null) {
-      return parsedSection_.Section.ParentFunction.FormatFunctionName(session, 80);
+      return parsedSection_.ParentFunction.FormatFunctionName(session, 80);
     }
 
     return "";
@@ -255,7 +255,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
   private string GetTooltipFunctionName() {
     if (parsedSection_ != null) {
-      var funName = parsedSection_.Section.ParentFunction.FormatFunctionName(session);
+      var funName = parsedSection_.ParentFunction.FormatFunctionName(session);
       return $"Module: {parsedSection_.Section.ModuleName}\nFunction: {DocumentUtils.FormatLongFunctionName(funName)}";
     }
 
@@ -385,7 +385,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
     if (showSourceFile_) {
       ProfileTextView.Initialize(App.Settings.SourceFileSettings);
-      var function = parsedSection_.Section.ParentFunction;
+      var function = parsedSection_.ParentFunction;
       var (sourceInfo, debugInfo) = await Session.CompilerInfo.SourceFileFinder.FindLocalSourceFile(function);
 
       if (!sourceInfo.IsUnknown) {
@@ -400,7 +400,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     else {
       // Show assembly.
       ProfileTextView.Initialize(App.Settings.DocumentSettings);
-      await ProfileTextView.LoadSection(parsedSection_, filter);
+      await ProfileTextView.LoadAssembly(parsedSection_, filter);
     }
   }
 

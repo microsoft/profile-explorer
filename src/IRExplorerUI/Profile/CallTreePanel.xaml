@@ -58,7 +58,7 @@
               <TextBlock Margin="4,0,0,0" Text="Back" />
             </StackPanel>
           </Button>
-
+          <Separator/>
           <Button
             Command="local:CallTreeCommand.CollapseNodes"
             CommandTarget="{Binding ElementName=CallTreeList}"
@@ -125,7 +125,7 @@
                 Margin="0,0,2,0"
                 Source="{StaticResource CombineIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Text="Combine" />
+              <TextBlock Text="Combine" Margin="2,0,0,0"/>
             </StackPanel>
           </ToggleButton>
 
@@ -134,7 +134,25 @@
             Content="m!F"
             IsChecked="{Binding Path=Settings.PrependModuleToFunction, Mode=TwoWay}"
             ToolTip="Show the module name in front of the function name" />
- <Menu
+          <ToggleButton
+            IsEnabled="False"
+            Height="20"
+            Margin="0,0,0,0"
+            Padding="0,0,2,0"
+            IsChecked="{Binding Path=Settings.ShowDetailsPanel, Mode=TwoWay}"
+            ToolTip="Show the function details panel on the right-hand side">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="18"
+                Height="18"
+                Margin="0,1,0,0"
+                Source="{StaticResource SidebarIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Text="Details" VerticalAlignment="Center"/>
+            </StackPanel>
+          </ToggleButton>
+          <Separator/>
+           <Menu
               Height="20"
               Margin="2,0,0,0"
               VerticalAlignment="Center"

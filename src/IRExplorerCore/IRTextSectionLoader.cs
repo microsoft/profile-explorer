@@ -23,6 +23,7 @@ public class ParsedIRTextSection {
   public bool IsCached { get; set; }
   public bool LoadFailed { get; set; }
   public bool HadParsingErrors => ParsingErrors != null && ParsingErrors.Count > 0;
+  public IRTextFunction ParentFunction => Section.ParentFunction;
 
   public override string ToString() {
     return Section.ToString();

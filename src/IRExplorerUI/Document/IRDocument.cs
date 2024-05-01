@@ -12,12 +12,15 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using System.Windows.Threading;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
@@ -1008,7 +1011,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
   }
 
-  private void UninstallBlockFolding() {
+  public void UninstallBlockFolding() {
     if (folding_ != null) {
       FoldingManager.Uninstall(folding_);
       folding_ = null;
@@ -1042,6 +1045,38 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     foldingStrategy.UpdateFoldings(folding_, Document);
     SetupBlockFoldingEvents();
     return folding_.AllFoldings;
+  }
+
+  public void SetupCustomLineNumbers(LineNumberMargin lineNumbers) {
+    // Disable builtin line numbers margin and replace it with a custom one,
+    // plus a dotted line between it and the document itself.
+    ShowLineNumbers = false;
+    var leftMargins = TextArea.LeftMargins;
+
+    for (int i = 0; i < leftMargins.Count; i++) {
+      if (leftMargins[i] is LineNumberMargin ||
+          leftMargins[i] is Line) {
+        leftMargins.RemoveAt(i);
+        i--;
+      }
+    }
+    
+    var line = (Line)DottedLineMargin.Create();
+    leftMargins.Insert(0, lineNumbers);
+    leftMargins.Insert(1, line);
+    var lineNumbersForeground = new Binding("LineNumbersForeground") { Source = this };
+    line.SetBinding(Shape.StrokeProperty, lineNumbersForeground);
+    lineNumbers.SetBinding(Control.ForegroundProperty, lineNumbersForeground);
+  }
+
+  public void RegisterTextColorizer(DocumentColorizingTransformer colorizer) {
+    if (!TextArea.TextView.LineTransformers.Contains(colorizer)) {
+      TextArea.TextView.LineTransformers.Add(colorizer);
+    }
+  }
+
+  public void UnregisterTextColorizer(DocumentColorizingTransformer colorizer) {
+    TextArea.TextView.LineTransformers.Remove(colorizer);
   }
 
   private void SetupBlockFoldingEvents() {

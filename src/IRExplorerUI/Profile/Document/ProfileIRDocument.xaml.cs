@@ -5,32 +5,24 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.JavaScript;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using System.Windows.Threading;
-using ClosedXML.Excel;
-using HtmlAgilityPack;
-using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
-using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
-using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
 using IRExplorerUI.Utilities;
-using Microsoft.Extensions.Primitives;
 
 namespace IRExplorerUI.Profile.Document;
-
 
 public class ProfileMenuItem : BindableObject {
   private Thickness borderThickness_;
@@ -138,93 +130,14 @@ public class ProfileMenuItem : BindableObject {
 }
 
 public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
-  sealed class RangeFoldingStrategy : IBlockFoldingStrategy {
-    private List<(int StartOffset, int EndOffset)> ranges_;
-    private bool defaultClosed_;
-
-    public RangeFoldingStrategy(List<(int StartOffset, int EndOffset)> ranges, bool defaultClosed = false) {
-      ranges_ = ranges;
-      defaultClosed_ = defaultClosed;
-    }
-
-    public void UpdateFoldings(FoldingManager manager, TextDocument document) {
-      var newFoldings = CreateNewFoldings(document);
-      manager.UpdateFoldings(newFoldings, -1);
-    }
-
-    private IEnumerable<NewFolding> CreateNewFoldings(TextDocument document) {
-      foreach (var range in ranges_) {
-        yield return new NewFolding(range.StartOffset, range.EndOffset) {
-          DefaultClosed = defaultClosed_
-        };
-      }
-    }
-  }
-
-  sealed class RangeColorizer : DocumentColorizingTransformer {
-    public class CompareRanges : IComparer<(int StartOffset, int EndOffset)> {
-
-      public int Compare((int StartOffset, int EndOffset) x, (int StartOffset, int EndOffset) y) {
-        if (x.EndOffset < y.StartOffset) {
-          return -1;
-        }
-        else if (x.StartOffset > y.EndOffset) {
-          return 1;
-        }
-
-        return 0;
-      }
-    }
-
-    private List<(int StartOffset, int EndOffset)> ranges_;
-    private Brush textColor_;
-    private Typeface typeface_;
-    private CompareRanges comparer_;
-
-    public RangeColorizer(List<(int StartOffset, int EndOffset)> ranges,
-                          Brush textColor, Typeface typeface = null) {
-      ranges_ = ranges;
-      textColor_ = textColor;
-      typeface_ = typeface;
-      comparer_ = new CompareRanges();
-      ranges.Sort((a, b) => a.CompareTo(b));
-    }
-
-    protected override void ColorizeLine(DocumentLine line) {
-      if (line.Length == 0) {
-        return;
-      }
-
-      var query = (line.Offset, line.EndOffset);
-      int result = ranges_.BinarySearch(query, comparer_);
-
-      if (result >= 0) {
-        var range = ranges_[result];
-
-        if (line.Offset < range.StartOffset ||
-            line.Offset > range.EndOffset) {
-          return;
-        }
-
-        int start = line.Offset > range.StartOffset ? line.Offset : range.StartOffset;
-        int end = range.EndOffset > line.EndOffset ? line.EndOffset : range.EndOffset;
-        ChangeLinePart(start, end, element => {
-          element.TextRunProperties.SetForegroundBrush(textColor_);
-
-          if (typeface_ != null) {
-            element.TextRunProperties.SetTypeface(typeface_);
-          }
-        });
-      }
-    }
-  }
-
-private List<(IRElement, TimeSpan)> profileElements_;
+  private List<(IRElement, TimeSpan)> profileElements_;
   private int profileElementIndex_;
   private SourceLineProcessingResult sourceLineProfileResult_;
+  private SourceLineProfileResult sourceLineProcessingResult_;
   private bool columnsVisible_;
   private bool ignoreNextCaretEvent_;
   private bool disableCaretEvent_;
+  private ReadOnlyMemory<char> originalSourceText_;
   private ReadOnlyMemory<char> sourceText_;
   private bool hasProfileInfo_;
   private Brush selectedLineBrush_;
@@ -238,7 +151,7 @@ private List<(IRElement, TimeSpan)> profileElements_;
   private SourceStackFrame inlinee_;
   private bool ignoreNextRowSelectedEvent_;
   private ProfileHistoryManager historyManager_;
-  private SourceLineProfileResult sourceLineProcessingResult_;
+  private RangeColorizer assemblyColorizer_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -319,7 +232,7 @@ private List<(IRElement, TimeSpan)> profileElements_;
   }
 
   private async Task LoadPreviousSectionState(ProfileFunctionState state) {
-    await LoadSection(state.ParsedSection, state.ProfileFilter);
+    await LoadAssembly(state.ParsedSection, state.ProfileFilter);
   }
   private async void TextViewOnFunctionCallOpen(object sender, IRTextSection targetSection) {
     var targetFunc = targetSection.ParentFunction;
@@ -333,7 +246,7 @@ private List<(IRElement, TimeSpan)> profileElements_;
     var parsedSection = await Session.LoadAndParseSection(targetFunc.Sections[0]);
 
     if (parsedSection != null) {
-      await LoadSection(parsedSection, targetFilter);
+      await LoadAssembly(parsedSection, targetFilter);
     }
   }
 
@@ -413,9 +326,10 @@ private List<(IRElement, TimeSpan)> profileElements_;
     return true;
   }
 
-  public async Task<bool> LoadSection(ParsedIRTextSection parsedSection,
-                                      ProfileSampleFilter profileFilter = null) {
+  public async Task<bool> LoadAssembly(ParsedIRTextSection parsedSection,
+                                       ProfileSampleFilter profileFilter = null) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    ResetInstance();
     IsSourceFileDocument = false;
 
     if (TextView.IsLoaded) {
@@ -465,7 +379,7 @@ private List<(IRElement, TimeSpan)> profileElements_;
 
   private async Task<bool> LoadAssemblyProfile(ParsedIRTextSection parsedSection,
                                                bool reloadFilterMenus = true) {
-    var funcProfile = Session.ProfileData?.GetFunctionProfile(parsedSection.Section.ParentFunction);
+    var funcProfile = Session.ProfileData?.GetFunctionProfile(parsedSection.ParentFunction);
 
     if (funcProfile == null) {
       return false;
@@ -497,7 +411,7 @@ private List<(IRElement, TimeSpan)> profileElements_;
                                                        bool reloadFilterMenus = true) {
     UpdateProfileFilterUI();
     var instanceProfile = await ComputeInstanceProfile();
-    var funcProfile = instanceProfile.GetFunctionProfile(parsedSection.Section.ParentFunction);
+    var funcProfile = instanceProfile.GetFunctionProfile(parsedSection.ParentFunction);
 
     if (funcProfile == null) {
       return false;
@@ -545,11 +459,12 @@ private List<(IRElement, TimeSpan)> profileElements_;
   }
 
   private async Task MarkAssemblyProfile(ParsedIRTextSection parsedSection, FunctionProfileData funcProfile) {
+    ResetInstanceProfiling();
     profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
                                                settings_.ProfileMarkerSettings,
                                                settings_.ColumnSettings, Session.CompilerInfo);
     await profileMarker_.Mark(TextView, parsedSection.Function,
-                              parsedSection.Section.ParentFunction);
+                              parsedSection.ParentFunction);
 
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
       JumpToHottestProfiledElement(true);
@@ -583,7 +498,9 @@ private List<(IRElement, TimeSpan)> profileElements_;
                                          SourceStackFrame inlinee = null) {
     try {
       using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+      ResetInstance();
       IsSourceFileDocument = true;
+      
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
       SetSourceText(text, sourceInfo.FilePath);
 
@@ -665,6 +582,7 @@ private List<(IRElement, TimeSpan)> profileElements_;
   }
 
   private async Task<bool> MarkSourceFileProfile(IRTextSection section, FunctionProfileData funcProfile) {
+    ResetInstanceProfiling();
     profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
                                                settings_.ProfileMarkerSettings,
                                                settings_.ColumnSettings,
@@ -675,22 +593,37 @@ private List<(IRElement, TimeSpan)> profileElements_;
       return funcProfile.ProcessSourceLines(debugInfo, Session.CompilerInfo.IR, inlinee_);
     });
 
-    // Create a dummy FunctionIR that has fake tuples representing each
-    // source line, with the profiling data attached to the tuples.
-    var parsedSection = await Session.LoadAndParseSection(section);
-    var processingResult = await profileMarker_.PrepareSourceLineProfile(funcProfile, TextView,
-                                                                   sourceLineProfileResult,
-                                                                   parsedSection);
-    if (processingResult == null) {
-      return false;
-    }
-
     // Clear markers when switching between ASM/source modes.
     if (TextView.IsLoaded) {
       TextView.ClearInstructionMarkers();
     }
+    
+    // Insert assembly lines corresponding to each source code line,
+    // grouped as a code folding that can be hidden.
+    bool showAssemblyLines = ((SourceFileSettings)settings_).ShowInlineAssembly;
+    ParsedIRTextSection parsedSection = null;
 
-    sourceText_ = TextView.Text.AsMemory();
+    if (showAssemblyLines) {
+      // In case of changing the instance, start again from
+      // the original source code text when inserting the assembly lines.
+      TextView.Text = originalSourceText_.ToString();
+      parsedSection = await Session.LoadAndParseSection(section);
+    }
+
+    // Create a dummy FunctionIR that has fake tuples representing each
+    // source line, with the profiling data attached to the tuples.
+    var processingResult = await profileMarker_.
+      PrepareSourceLineProfile(funcProfile, TextView,
+                               sourceLineProfileResult, parsedSection);
+    if (processingResult == null) {
+      return false;
+    }
+
+    // Replace the text after the assembly lines were inserted.
+    if (showAssemblyLines) {
+      sourceText_ = TextView.Text.AsMemory();
+    }
+
     var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, processingResult.Function);
     await TextView.LoadSection(dummyParsedSection);
 
@@ -717,29 +650,39 @@ private List<(IRElement, TimeSpan)> profileElements_;
     UpdateProfileDescription(funcProfile);
     await UpdateProfilingColumns();
 
-    SetupSourceAssembly(processingResult);
+    if (showAssemblyLines) {
+      SetupSourceAssembly();
+    }
+
     return true;
   }
 
-  private void SetupSourceAssembly(SourceLineProfileResult processingResult) {
-    //? TODO: Options in settings and UI for:
-    //? - auto-expand or not (or just hottest N lines)
-    //? - use ASM
-    //? - ASM text color, dark gray default
+  private void SetupSourceAssembly() {
+    
+    // Replace the default line number left margin with one
+    // that doesn't number the assembly lines, to keep same line numbers
+    // with the original source file.
+    var lineNumbers = new SourceLineNumberMargin(TextView, sourceLineProcessingResult_);
+    TextView.SetupCustomLineNumbers(lineNumbers);
+    
+    // Create the block foldings for each source line and its assembly section.
+    bool defaultClosed = !((SourceFileSettings)settings_).AutoExpandInlineAssembly;
+    SetupSourceAssemblyFolding(defaultClosed);
 
+    // Change the text color of the assembly section to be the same
+    // (the source syntax highlighting may mark some ASM opcodes for ex).
+    var asmFont = new Typeface(TextView.FontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    assemblyColorizer_ = new RangeColorizer(sourceLineProcessingResult_.AssemblyRanges, Brushes.DimGray, asmFont);
+    TextView.RegisterTextColorizer(assemblyColorizer_);
+  }
+
+  private void SetupSourceAssemblyFolding(bool defaultClosed) {
     FoldingElementGenerator.TextBrush = Brushes.Transparent;
-    bool defaultClosed = true;
-    var foldingStrategy = new RangeFoldingStrategy(processingResult.AssemblyRanges, defaultClosed);
+    var foldingStrategy = new RangeFoldingStrategy(sourceLineProcessingResult_.AssemblyRanges, defaultClosed);
     var foldings = TextView.SetupCustomBlockFolding(foldingStrategy);
 
-    if (defaultClosed) {
-      var foldedRanges = foldings.Select(f => (f.StartOffset, f.EndOffset));
-      ProfileColumns.SetupFoldedTextRegions(foldedRanges);
-    }
-
-    var asmFont = new Typeface(TextView.FontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-    var rangeColorizer = new RangeColorizer(processingResult.AssemblyRanges, Brushes.DimGray, asmFont);
-    TextView.TextArea.TextView.LineTransformers.Add(rangeColorizer);
+    // Sync the initial folding status in the columns with the document.
+    ProfileColumns.SetupFoldedTextRegions(foldings);
   }
 
   private async Task ApplyProfileFilter() {
@@ -794,6 +737,7 @@ private List<(IRElement, TimeSpan)> profileElements_;
         }
       }
 
+      ProfileColumns.Reset();
       ProfileColumns.Settings = settings_;
       ProfileColumns.ColumnSettings = settings_.ColumnSettings;
 
@@ -831,6 +775,11 @@ private List<(IRElement, TimeSpan)> profileElements_;
     int order = 0;
 
     foreach (var (element, weight) in result.SampledElements) {
+      // For source files, don't include assembly line elements.
+      if (isSourceFileDocument_ && !IsSourceLine(element.TextLocation.Line + 1)) {
+        continue;
+      }
+      
       double weightPercentage = funcProfile.ScaleWeight(weight);
 
       if (!markerSettings.IsVisibleValue(order++, weightPercentage)) {
@@ -914,6 +863,7 @@ private List<(IRElement, TimeSpan)> profileElements_;
     TextView.SyntaxHighlighting = highlightingDef;
     TextView.Text = text;
     sourceText_ = text.AsMemory();
+    originalSourceText_ = sourceText_;
     disableCaretEvent_ = false;
   }
 
@@ -1053,19 +1003,39 @@ private List<(IRElement, TimeSpan)> profileElements_;
     TextView.SelectLine(line);
   }
 
+  bool IsSourceLine(int line) {
+    return sourceLineProcessingResult_ == null ||
+           sourceLineProcessingResult_.LineToOriginalLineMap.ContainsKey(line);
+  }
+
   public void Reset() {
     ResetProfilingMenus();
+    ResetInstance();
+    ProfileFilter = new ProfileSampleFilter();
+    historyManager_.Reset();
+    originalSourceText_ = null;
+  }
+
+  private void ResetInstance() {
+    ResetInstanceProfiling();
     TextView.UnloadDocument();
-    ProfileColumns.Reset();
     sourceText_ = null;
+    inlinee_ = null;
+  }
+
+  private void ResetInstanceProfiling() {
+    ProfileColumns.Reset();
     profileElements_ = null;
     sourceLineProfileResult_ = null;
     sourceLineProcessingResult_ = null;
-    inlinee_ = null;
-    ProfileFilter = new ProfileSampleFilter();
-    historyManager_.Reset();
-  }
 
+    if (assemblyColorizer_ != null) {
+      TextView.UnregisterTextColorizer(assemblyColorizer_);
+      TextView.UninstallBlockFolding();
+      assemblyColorizer_ = null;
+    }
+  }
+  
   private void TextViewOnScrollOffsetChanged(object? sender, EventArgs e) {
     // Sync scrolling with the optional columns.
     double offset = TextView.TextArea.TextView.VerticalOffset;
@@ -1177,29 +1147,36 @@ private List<(IRElement, TimeSpan)> profileElements_;
 
   private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
     // For source files, compute the sum of the selected lines time.
-    if(sourceLineProfileResult_ == null) {
-      return;
-    }
-
     int startLine = TextView.TextArea.Selection.StartPosition.Line;
     int endLine = TextView.TextArea.Selection.EndPosition.Line;
-    var weightSum = TimeSpan.Zero;
+    var funcProfile = Session.ProfileData?.GetFunctionProfile(Section.ParentFunction);
 
-    for(int i = startLine; i<= endLine; i++) {
-      if(sourceLineProfileResult_.SourceLineWeight.TryGetValue(i, out var weight)) {
-        weightSum += weight;
+    if(sourceLineProfileResult_ == null) {
+      if (funcProfile == null ||
+          !ProfilingUtils.ComputeAssemblyWeightInRange(startLine, endLine,
+              TextView.Function, funcProfile,
+              out var weightSum, out int count)) {
+        Session.SetApplicationStatus("");
+        return;
       }
-    }
 
-    if(weightSum == TimeSpan.Zero) {
-      Session.SetApplicationStatus("");
-      return;
+      double weightPercentage = funcProfile.ScaleWeight(weightSum);
+      string text = $"Selected {count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+      Session.SetApplicationStatus(text, "Sum of time for the selected instructions");
     }
+    else {
+      if (funcProfile == null ||
+          !ProfilingUtils.ComputeSourceWeightInRange(startLine, endLine, 
+              sourceLineProfileResult_, sourceLineProcessingResult_,
+              out var weightSum, out int count)) {
+        Session.SetApplicationStatus("");
+        return;
+      }
 
-    var funcProfile = Session.ProfileData.GetFunctionProfile(TextView.Section.ParentFunction);
-    double weightPercentage = funcProfile.ScaleWeight(weightSum);
-    string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
-    Session.SetApplicationStatus(text, "Sum of time for the selected lines");
+      double weightPercentage = funcProfile.ScaleWeight(weightSum);
+      string text = $"Selected {count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+      Session.SetApplicationStatus(text, "Sum of time for the selected source lines");
+    }
   }
 
   private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
@@ -1233,4 +1210,12 @@ private List<(IRElement, TimeSpan)> profileElements_;
   public RelayCommand<object> CopyDocumentCommand => new RelayCommand<object>(async obj => {
     await CopyAllLinesAsHtml();
   });
+
+  public void ExpandBlockFoldings() {
+    SetupSourceAssemblyFolding(false);
+  }
+
+  public void CollapseBlockFoldings() {
+    SetupSourceAssemblyFolding(true);
+  }
 }

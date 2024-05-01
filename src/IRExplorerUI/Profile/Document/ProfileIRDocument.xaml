@@ -35,7 +35,7 @@
           </DataTrigger.Setters>
         </DataTrigger>
 
-        <DataTrigger Binding="{Binding UseCompactMode}" Value="True">
+        <DataTrigger Binding="{Binding UseCompactProfilingColumns}" Value="True">
           <DataTrigger.Setters>
             <Setter Property="Width" Value="100" />
           </DataTrigger.Setters>

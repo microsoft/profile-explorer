@@ -341,8 +341,15 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
   }
 
-  public void SetupFoldedTextRegions(IEnumerable<(int StartOffset, int EndOffset)> regions) {
-    foldedTextRegions_.AddRange(regions);
+  public void SetupFoldedTextRegions(IEnumerable<FoldingSection> regions) {
+    foldedTextRegions_.Clear();
+
+    foreach (var region in regions) {
+      if (region.IsFolded) {
+        foldedTextRegions_.Add((region.StartOffset, region.EndOffset));
+      }
+    }
+    
     foldedTextRegions_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
     rowFilterIndex_ = 0;
     profileRowCollection_.Refresh();

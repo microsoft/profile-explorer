@@ -21,13 +21,18 @@ public class SourceFileSettings : TextViewSettingsBase {
   public bool SyncLineWithDocument { get; set; }
   [ProtoMember(4)]
   public bool SyncInlineeWithDocument { get; set; }
-
+  [ProtoMember(5)]
+  public bool ShowInlineAssembly { get; set; }
+  [ProtoMember(6)]
+  public bool AutoExpandInlineAssembly { get; set; }
+  
   public override void Reset() {
     base.Reset();
     InitializeReferenceMembers();
     ProfileMarkerSettings.JumpToHottestElement = true;
     SyncStyleWithDocument = true;
     SyncLineWithDocument = true;
+    ShowInlineAssembly = true;
     FinderSettings.Reset();
   }
 
@@ -47,6 +52,8 @@ public class SourceFileSettings : TextViewSettingsBase {
            SyncStyleWithDocument == settings.SyncStyleWithDocument &&
            SyncLineWithDocument == settings.SyncLineWithDocument &&
            SyncInlineeWithDocument == settings.SyncInlineeWithDocument &&
+           ShowInlineAssembly == settings.ShowInlineAssembly &&
+           AutoExpandInlineAssembly == settings.AutoExpandInlineAssembly &&
            FinderSettings.Equals(settings.FinderSettings);
   }
 }

@@ -283,26 +283,20 @@ public class ProfileDocumentMarker {
     int lastLine = Math.Min(sourceProcResult.LastLineIndex, document.LineCount);
     int inserted = 0;
     for (int lineNumber = sourceProcResult.FirstLineIndex; lineNumber <= lastLine; lineNumber++) {
-      TupleIR dummyTuple = null;
-
+      var documentLine = document.GetLineByNumber(lineNumber + inserted);
+      var location = new TextLocation(documentLine.Offset, lineNumber + inserted - 1, 0);
+      var dummyTuple = MakeDummyTuple(location, documentLine);
+      lineToElementMap[lineNumber + inserted] = dummyTuple;
+      lineToOriginalLineMap[lineNumber + inserted] = lineNumber;
+      originalLineToLineMap[lineNumber] = lineNumber + inserted;
+      
       if (sourceProcResult.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
-        var documentLine = document.GetLineByNumber(lineNumber + inserted);
-        var location = new TextLocation(documentLine.Offset, lineNumber + inserted - 1, 0);
-        dummyTuple = MakeDummyTuple(location, documentLine);
         processingResult.SampledElements.Add((dummyTuple, lineWeight));
-        lineToElementMap[lineNumber + inserted] = dummyTuple;
-        lineToOriginalLineMap[lineNumber + inserted] = lineNumber;
-        originalLineToLineMap[lineNumber] = lineNumber + inserted;
+        
       }
 
       if (sourceProcResult.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
-        var documentLine = document.GetLineByNumber(lineNumber);
-        var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
-        dummyTuple ??= MakeDummyTuple(location, documentLine);
-        lineToElementMap[lineNumber] = dummyTuple;
         processingResult.CounterElements.Add((dummyTuple, counters));
-        lineToOriginalLineMap[lineNumber + inserted] = lineNumber;
-        originalLineToLineMap[lineNumber] = lineNumber + inserted;
       }
 
       // Insert assembly instructions for each source line.
@@ -328,7 +322,7 @@ public class ProfileDocumentMarker {
         rangeEnd = instrLine.EndOffset;
 
         if (instrWeight != TimeSpan.Zero || counters != null) {
-          var location = new TextLocation(instrLine.Offset, lineNumber + inserted - 1, 0);
+          location = new TextLocation(instrLine.Offset, lineNumber + inserted - 1, 0);
           dummyTuple = MakeDummyTuple(location, instrLine);
 
           if (instrWeight != TimeSpan.Zero) {

@@ -20,7 +20,17 @@
       <TabItem Header="General" Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
-            Margin="0,4,0,0"
+            Margin="0,2,0,0"
+            Content="Show assembly sections for source lines"
+            IsChecked="{Binding Path=ShowInlineAssembly, Mode=TwoWay}"
+            ToolTip="Display the associated assembly instructions for each source line" />
+          <CheckBox
+            Margin="0,2,0,0"
+            Content="Auto-expand assembly sections"
+            IsChecked="{Binding Path=AutoExpandInlineAssembly, Mode=TwoWay}"
+            ToolTip="Display the assembly sections in expanded state by default" />
+          <CheckBox
+            Margin="0,2,0,0"
             Content="Sync selected line with assembly document"
             IsChecked="{Binding Path=SyncLineWithDocument, Mode=TwoWay}"
             ToolTip="Sync the corresponding lines with the selection in the assembly document" />
@@ -28,7 +38,7 @@
             Margin="0,2,0,0"
             Content="Sync inlinee with assembly document"
             IsChecked="{Binding Path=SyncInlineeWithDocument, Mode=TwoWay}"
-            ToolTip="Display the deepest inlinee function for the selection in the assembly document" />
+            ToolTip="Display the deepest inlined function for the selection in the assembly document" />
 
           <Separator Margin="0,4,0,4" Background="LightGray"/>
           <TextBlock FontWeight="Medium" Text="Document Style" />
