@@ -1280,4 +1280,8 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     GraphViewer.SettingsUpdated(value);
     SetupPreviewPopup();
   }
+
+  public void ClearSelection() {
+    GraphViewer.ClearSelection();
+  }
 }

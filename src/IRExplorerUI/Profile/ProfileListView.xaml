@@ -188,6 +188,7 @@
       <ListView.ContextMenu>
         <ContextMenu>
           <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
             Command="{Binding PreviewFunctionCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Preview Function"
@@ -201,6 +202,7 @@
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
             Command="{Binding OpenFunctionCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function"
@@ -214,6 +216,7 @@
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
             Command="{Binding OpenFunctionInNewTabCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function in New Tab"
@@ -226,7 +229,8 @@
                 Source="{StaticResource LayoutOpenNewIcon}" />
             </MenuItem.Icon>
           </MenuItem>
-          <MenuItem Header="Instance">
+          <MenuItem Header="Instance"
+                    Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <MenuItem
               Command="{Binding PreviewFunctionInstanceCommand}"
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
@@ -265,8 +269,9 @@
               </MenuItem.Icon>
             </MenuItem>
           </MenuItem>
-          <Separator />
+          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
           <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
             Command="{Binding CopyFunctionDetailsCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Copy Function Details"
@@ -280,20 +285,23 @@
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
             Command="{Binding CopyDemangledFunctionNameCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Copy Function Name"
             InputGestureText="Ctrl+Shift+C"
             ToolTip="Copy the function name to the clipboard" />
           <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
             Command="{Binding CopyFunctionNameCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Copy Mangled Function Name"
             InputGestureText="Ctrl+Alt+C"
             ToolTip="Copy the mangled function name to the clipboard (C++)" />
-          <Separator />
-          
-          <MenuItem Header="Mark Module" ToolTip="Mark all functions belonging to this module (saved)">
+          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"/>
+
+          <MenuItem Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
+                    Header="Mark Module" ToolTip="Mark all functions belonging to this module (saved)">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -307,7 +315,8 @@
 
             </MenuItem>
           </MenuItem>
-          <MenuItem Header="Mark Function" ToolTip="Mark all functions with the same name (saved)">
+          <MenuItem Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
+                    Header="Mark Function" ToolTip="Mark all functions with the same name (saved)">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -321,9 +330,10 @@
 
             </MenuItem>
           </MenuItem>
-          <Separator/>
+          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"/>
 
           <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
             Command="{Binding SelectFunctionSummaryCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Summary"
@@ -336,6 +346,7 @@
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
             Command="{Binding SelectFunctionCallTreeCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Call Tree"
@@ -348,6 +359,7 @@
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
             Command="{Binding SelectFunctionFlameGraphCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Flame Graph"
@@ -360,6 +372,7 @@
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
             Command="{Binding SelectFunctionTimelineCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Timeline"
@@ -371,6 +384,45 @@
                 Source="{StaticResource TimelineIcon}" />
             </MenuItem.Icon>
           </MenuItem>
+
+          <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}"
+            Command="{Binding ExportCategoriesHtmlCommand}"
+            Header="Export Categories as HTML File"
+              ToolTip="Save the report with function categories as an HTML file">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource SourceIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem
+              Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}"
+              Command="{Binding ExportCategoriesMarkdownCommand}"
+              Header="Export Categories as Markdown File"
+              ToolTip="Save the report with function categories as a Markdown file">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource DocumentIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}"
+            />
+            <MenuItem
+              Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}"
+              Command="{Binding CopyCategoriesCommand}"
+              Header="Copy Categories as HTML/Markdown"
+              ToolTip="Copy the report with function categories as an HTML table">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource ClipboardIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
         </ContextMenu>
       </ListView.ContextMenu>
     </ListView>

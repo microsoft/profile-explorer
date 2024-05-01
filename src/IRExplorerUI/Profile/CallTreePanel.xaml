@@ -368,30 +368,19 @@
 
             <GridViewColumn.CellTemplate>
               <DataTemplate>
-                <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
-                  <tree:RowExpander />
-                  <Border Background="{Binding FunctionBackColor}">
+                <StackPanel
+                  Height="20"
+                  Margin="0,0,0,0"
+                  HorizontalAlignment="Stretch"
+                  Orientation="Horizontal">
+                  <tree:RowExpander Padding="0" />
+                  <Border
+                    Margin="0,2,0,0"
+                    VerticalAlignment="Center"
+                    Background="{Binding FunctionBackColor}">
                     <ContentPresenter Content="{Binding Name}" />
                   </Border>
                 </StackPanel>
-              </DataTemplate>
-            </GridViewColumn.CellTemplate>
-          </GridViewColumn>
-
-          <GridViewColumn Width="120">
-            <GridViewColumnHeader x:Name="ChildAlternateNameColumnHeader" Content="Module" />
-
-            <GridViewColumn.HeaderContainerStyle>
-              <Style TargetType="{x:Type GridViewColumnHeader}">
-                <Setter Property="HorizontalContentAlignment" Value="Left" />
-              </Style>
-            </GridViewColumn.HeaderContainerStyle>
-
-            <GridViewColumn.CellTemplate>
-              <DataTemplate>
-                <Border HorizontalAlignment="Stretch" Background="{Binding ModuleBackColor}">
-                  <TextBlock Margin="6,2,6,2" Text="{Binding ModuleName}" />
-                </Border>
               </DataTemplate>
             </GridViewColumn.CellTemplate>
           </GridViewColumn>
@@ -417,7 +406,7 @@
               </DataTemplate>
             </GridViewColumn.CellTemplate>
           </GridViewColumn>
-          
+
           <GridViewColumn Width="150">
             <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="Time (total)" />
 
@@ -439,12 +428,28 @@
               </DataTemplate>
             </GridViewColumn.CellTemplate>
           </GridViewColumn>
+          <GridViewColumn Width="120">
+            <GridViewColumnHeader x:Name="ChildAlternateNameColumnHeader" Content="Module" />
 
+            <GridViewColumn.HeaderContainerStyle>
+              <Style TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+              </Style>
+            </GridViewColumn.HeaderContainerStyle>
+
+            <GridViewColumn.CellTemplate>
+              <DataTemplate>
+                <Border HorizontalAlignment="Stretch" Background="{Binding ModuleBackColor}">
+                  <TextBlock Margin="6,2,6,2" Text="{Binding ModuleName}" />
+                </Border>
+              </DataTemplate>
+            </GridViewColumn.CellTemplate>
+          </GridViewColumn>
         </GridView>
       </tree:TreeList.View>
 
       <ListView.ItemContainerStyle>
-        <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+        <Style BasedOn="{StaticResource TreeListViewItem}" TargetType="{x:Type ListViewItem}">
           <EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />
           <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
           <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -608,7 +613,8 @@
             CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Copy Mangled Function Name"
             InputGestureText="Ctrl+Alt+C"
-            ToolTip="Copy the mangled function name to the clipboard (C++)" /> <Separator />
+            ToolTip="Copy the mangled function name to the clipboard (C++)" />
+          <Separator />
           <MenuItem Header="Mark Module" ToolTip="Mark all functions belonging to this module (saved)">
             <MenuItem.Icon>
               <Image

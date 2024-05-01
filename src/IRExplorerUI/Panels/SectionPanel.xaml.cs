@@ -518,6 +518,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private PopupHoverPreview preview_;
   private List<ModuleEx> modules_;
   private FunctionMarkingSettings initialMarkingSettings_;
+  private TextSearcher nameSearcher_;
 
   public SectionPanel() {
     InitializeComponent();
@@ -820,7 +821,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   public RelayCommand<object> CopyAllFunctionsCommand => new RelayCommand<object>(async obj => {
     CopyFunctionListAsHtml(true);
   });
-  
+
   private Brush GetMarkedNodeColor(IRTextFunctionEx node) {
     return App.Settings.MarkingSettings.
       GetMarkedNodeBrush(node.Name, node.ModuleName);
@@ -1420,6 +1421,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return;
     }
 
+    nameSearcher_ = null;
     ((ListCollectionView)SectionList.ItemsSource).Refresh();
 
     if (SectionList.Items.Count > 0) {
@@ -1432,6 +1434,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return;
     }
 
+    nameSearcher_ = null;
     ((ListCollectionView)FunctionList.ItemsSource).Refresh();
 
     if (scrollToFirst && FunctionList.Items.Count > 0) {
@@ -1445,6 +1448,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return;
     }
 
+    nameSearcher_ = null;
     ((ListCollectionView)ModulesList.ItemsSource).Refresh();
   }
 
@@ -2022,21 +2026,18 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return true;
     }
 
+    if (nameSearcher_ == null) {
+      nameSearcher_ = new TextSearcher(text, !App.Settings.SectionSettings.FunctionSearchCaseSensitive);
+    }
+
     // Search the function name.
-    if (App.Settings.SectionSettings.FunctionSearchCaseSensitive
-      ? functionEx.Name.Contains(text, StringComparison.Ordinal)
-      : functionEx.Name.Contains(text, StringComparison.OrdinalIgnoreCase)) {
+    if (nameSearcher_.Includes(functionEx.Name)) {
       return true;
     }
 
     // Search the demangled name.
-    if (!string.IsNullOrEmpty(functionEx.AlternateName)) {
-      return App.Settings.SectionSettings.FunctionSearchCaseSensitive
-        ? functionEx.AlternateName.Contains(text, StringComparison.Ordinal)
-        : functionEx.AlternateName.Contains(text, StringComparison.OrdinalIgnoreCase);
-    }
-
-    return false;
+    return !string.IsNullOrEmpty(functionEx.AlternateName) &&
+           nameSearcher_.Includes(functionEx.AlternateName);
   }
 
   private bool FilterSectionList(object value) {
@@ -2882,12 +2883,12 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
     else {
       funcList = new List<IRTextFunctionEx>();
-      
+
       foreach (var item in FunctionList.SelectedItems) {
         funcList.Add((IRTextFunctionEx)item);
       }
     }
-    
+
 
     doc.DocumentNode.AppendChild(ExportFunctionListAsHtml(funcList));
     var writer = new StringWriter();
@@ -3454,9 +3455,9 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.CopyFunctionMarkingsAsMarkdownFile(Session);
+    await ProfilingUtils.ExportFunctionMarkingsAsMarkdownFile(Session);
   }
-  
+
   private void ScrollUpButton_OnClick(object sender, RoutedEventArgs e) {
     if (FunctionList.Items is {Count: > 0}) {
       FunctionList.ScrollIntoView(FunctionList.Items[0]);

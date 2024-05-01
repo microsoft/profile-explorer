@@ -123,7 +123,7 @@ public partial class MainWindow : Window, ISession {
     await SectionPanel.RefreshProfile();
     await RefreshProfilingPanels();
     await ProfileSampleRangeDeselected();
-    
+
     Trace.WriteLine($"RefreshProfile time: {updateSw.ElapsedMilliseconds} ms");
     Trace.WriteLine($"FilterProfileSamples time: {totalSw.ElapsedMilliseconds} ms");
     Trace.WriteLine("--------------------------------------------------------\n");
@@ -322,8 +322,8 @@ public partial class MainWindow : Window, ISession {
     if (ProfileData.CallTree == null) {
       return false;
     }
-    
-    
+
+
     if (sourcePanelKind != ToolPanelKind.Section) {
       await SwitchActiveFunction(node.Function, false);
     }
@@ -711,13 +711,13 @@ public partial class MainWindow : Window, ISession {
     var filePath = App.GetFunctionMarkingsFilePath(compilerInfo_.CompilerIRName);
     Utils.OpenExternalFile(filePath);
   }
-  
+
   private async void CategoriesMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     if (e.OriginalSource is MenuItem menuItem &&
         menuItem.Tag != null) {
       return;
     }
-    
+
     currentMarkingCategories_ = await ProfilingUtils.CreateFunctionsCategoriesMenu(CategoriesMenu, async (o, args) => {
         if (o is MenuItem menuItem &&
             menuItem.Tag is IRTextFunction func) {
@@ -726,7 +726,7 @@ public partial class MainWindow : Window, ISession {
       }, null,
       currentMarkingCategories_, MarkingSettings, this);
   }
-  
+
   private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     await ProfilingUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, this,
       e.OriginalSource, ReloadMarkingSettings);
@@ -793,7 +793,7 @@ public partial class MainWindow : Window, ISession {
       }
     }
   }
-  
+
   private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
     await ProfilingUtils.CopyFunctionMarkingsAsHtml(this);
   }
@@ -803,6 +803,6 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.CopyFunctionMarkingsAsMarkdownFile(this);
+    await ProfilingUtils.ExportFunctionMarkingsAsMarkdownFile(this);
   }
 }

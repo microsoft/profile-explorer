@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO.Enumeration;
 using System.Text.RegularExpressions;
 using IRExplorerCore;
 
@@ -14,7 +15,8 @@ public enum TextSearchKind {
   Default = 1 << 0, // Case sensitive
   CaseInsensitive = 1 << 1,
   Regex = 1 << 2,
-  WholeWord = 1 << 3
+  WholeWord = 1 << 3,
+  Wildcard = 1 << 4
 }
 
 public struct TextSearchResult {
@@ -37,6 +39,27 @@ public struct TextSearchResult {
 
 public class TextSearcher {
   private Regex cachedRegex_;
+  private TextSearchKind searchKind_;
+  private string searchedText_;
+
+  public TextSearcher() {}
+
+  public TextSearcher(string text, bool caseInsensitive = false) {
+    searchedText_ = text;
+    searchKind_ = GetWildcardSearchKind(text, caseInsensitive);
+  }
+
+  public static TextSearchKind GetWildcardSearchKind(string pattern, bool caseInsensitive = false) {
+    if (pattern.Contains('*')) {
+      return caseInsensitive ?
+        TextSearchKind.Wildcard | TextSearchKind.CaseInsensitive :
+        TextSearchKind.Wildcard;
+    }
+
+    return caseInsensitive ?
+      TextSearchKind.Default | TextSearchKind.CaseInsensitive :
+      TextSearchKind.Default;
+  }
 
   public static bool IsWholeWord(ReadOnlySpan<char> matchedText, ReadOnlySpan<char> text, int startOffset) {
     if (startOffset > 0) {
@@ -133,6 +156,15 @@ public class TextSearcher {
     return offset != -1;
   }
 
+  public bool Includes(string text) {
+    if (searchKind_.HasFlag(TextSearchKind.Regex)) {
+      cachedRegex_ ??= CreateRegex(searchedText_, searchKind_);
+    }
+
+    (int offset, _) = IndexOf(text.AsMemory(), searchedText_.AsMemory(), 0, searchKind_, cachedRegex_);
+    return offset != -1;
+  }
+
   public static List<TextSearchResult> AllIndexesOf(ReadOnlyMemory<char> text, string searchedText,
                                                     int startOffset = 0,
                                                     TextSearchKind searchKind = TextSearchKind.Default,
@@ -184,6 +216,12 @@ public class TextSearcher {
     if (searchKind.HasFlag(TextSearchKind.Regex)) {
       try {
         regex ??= CreateRegex(searchedText.ToString(), searchKind);
+
+        if (regex == null) {
+          // Regex pattern is invalid if it cannot be created.
+          return (-1, searchedText.Length);
+        }
+
         var result = regex.Matches(text.ToString(), startOffset);
 
         if (result.Count > 0) {
@@ -193,6 +231,12 @@ public class TextSearcher {
       catch (Exception ex) {
         //? TODO: Handle invalid regex, report in UI
         Debug.WriteLine($"Failed regex text search: {ex}");
+      }
+    }
+    else if (searchKind.HasFlag(TextSearchKind.Wildcard)) {
+      if (FileSystemName.MatchesSimpleExpression(searchedText.ToString(), text.ToString(),
+        searchKind.HasFlag(TextSearchKind.CaseInsensitive))) {
+        return (startOffset, searchedText.Length);
       }
     }
     else {

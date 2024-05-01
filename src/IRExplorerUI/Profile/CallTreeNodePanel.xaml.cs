@@ -243,12 +243,15 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     var task1 = Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode.CallTreeNode));
     var task2 = Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode.CallTreeNode));
     var task3 = Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode.CallTreeNode));
-    var task4 = Task.Run(() => ProfilingUtils.CollectMarkedFunctions(markings, false, 
+    var task4 = Task.Run(() => ProfilingUtils.CollectMarkedFunctions(markings, false,
       Session, CallTreeNode.CallTreeNode));
     BacktraceList.ShowFunctions(await task1);
     FunctionList.ShowFunctions(await task2, settings_.FunctionListViewFilter);
     ModuleList.ShowModules(await task3);
     CategoryList.ShowCategories(await task4);
+
+    ModuleList.SelectFirstItem();
+    CategoryList.SelectFirstItem();
   }
 
   public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {
@@ -821,7 +824,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       }
     }
   });
-  
+
   private void MarkModule(string module, Color color) {
     var markingSettings = App.Settings.MarkingSettings;
     markingSettings.UseModuleColors = true;
