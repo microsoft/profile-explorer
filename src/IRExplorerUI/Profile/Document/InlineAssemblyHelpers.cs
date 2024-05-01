@@ -37,7 +37,15 @@ sealed class SourceLineNumberMargin : LineNumberMargin, IWeakEventListener {
       int lineNumber = line.FirstDocumentLine.LineNumber;
 
       if (sourceLineProfileResult_ != null) {
-        if (sourceLineProfileResult_.LineToOriginalLineMap.TryGetValue(lineNumber, out var mappedLine)) {
+        if (lineNumber < sourceLineProfileResult_.SourceLineResult.FirstLineIndex) {
+          // Line numbers before function start are unchanged.
+        }
+        else if (lineNumber > sourceLineProfileResult_.SourceLineResult.LastLineIndex +
+                 sourceLineProfileResult_.AssemblyLineCount) {
+          // For lines after function end, subtract the assembly line count.
+          lineNumber -= sourceLineProfileResult_.AssemblyLineCount;
+        }
+        else if (sourceLineProfileResult_.LineToOriginalLineMap.TryGetValue(lineNumber, out var mappedLine)) {
           lineNumber = mappedLine;
         }
         else {

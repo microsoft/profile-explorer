@@ -161,7 +161,7 @@ static class Utils {
   }
 
   public static void WaitForDebugger(bool showMessageBox = true) {
-#if DEBUG
+#if true || DEBUG
     if (Debugger.IsAttached) {
       return;
     }

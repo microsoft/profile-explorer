@@ -54,7 +54,8 @@ public record SourceLineProfileResult(
   Dictionary<int, IRElement> LineToElementMap,
   Dictionary<int, int> LineToOriginalLineMap,
   Dictionary<int, int> OriginalLineToLineMap,
-  List<(int StartOffset, int EndOffset)> AssemblyRanges);
+  List<(int StartOffset, int EndOffset)> AssemblyRanges,
+  int AssemblyLineCount);
 
 public class InlineeListItem {
   public InlineeListItem(SourceStackFrame frame) {
@@ -260,6 +261,7 @@ public class ProfileDocumentMarker {
     var lineToOriginalLineMap = new Dictionary<int, int>();
     var originalLineToLineMap = new Dictionary<int, int>();
     var assemblyRanges = new List<(int StartOffset, int EndOffset)>();
+    int asmLineCount = 0;
 
     TupleIR MakeDummyTuple(TextLocation textLocation, DocumentLine documentLine) {
       var tupleIr = new TupleIR(ids.NextTuple(), TupleKind.Other, dummyBlock);
@@ -320,6 +322,7 @@ public class ProfileDocumentMarker {
         instrDocument.Document.Insert(instrLine.EndOffset, $"\n{instrText.TrimEnd()}");
 
         inserted++;
+        asmLineCount++;
         instrLine = instrDocument.GetLineByNumber(lineNumber + inserted);
         rangeEnd = instrLine.EndOffset;
 
@@ -347,7 +350,7 @@ public class ProfileDocumentMarker {
     document.ProfileProcessingResult = processingResult;
     return new SourceLineProfileResult(processingResult, sourceProcResult, dummyFunc,
                                        lineToElementMap, lineToOriginalLineMap,
-                                       originalLineToLineMap, assemblyRanges);
+                                       originalLineToLineMap, assemblyRanges, asmLineCount);
   }
 
   public List<InlineeListItem> GenerateInlineeList(FunctionProcessingResult result) {

@@ -610,13 +610,23 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private List<ProfileSourceSyntaxNode> PrepareSourceSyntaxTree(IRTextFunction function) {
+  private List<ProfileSourceSyntaxNode> PrepareSourceSyntaxTree(string sourceText) {
     SourceCodeParser parser = new(sourceLanguage_);
-    var tree = parser.Parse(sourceText_);
+    var tree = parser.Parse(sourceText);
     if (tree == null) return null;
 
+    if (sourceLineProfileResult_ == null) {
+      //? TODO: Shouldn't happen when waiting for prev task to finish
+      Utils.WaitForDebugger();
+      return null;
+    }
+
     var funcTreeNoe = tree.FindFunctionNode(sourceLineProfileResult_.FirstLineIndex);
-    if (funcTreeNoe == null) return null;
+
+    if (funcTreeNoe == null) {
+      Trace.WriteLine(        $"Couldn't find function in the syntax tree at line {sourceLineProfileResult_.FirstLineIndex}");
+      return null;
+    }
 
     // Trace.WriteLine("-------------------------------------------");
     // Trace.WriteLine("Source Syntax Tree:");
@@ -627,7 +637,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     funcTreeNoe.WalkNodes((node, depth) => {
       IRElement startElement = null;
-      TimeSpan weight = TimeSpan.Zero;
+      var weight = TimeSpan.Zero;
       List<IRElement> elements = new();
 
       // Collect the elements for the source lines that are part of the node
@@ -635,7 +645,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       int startLine = node.Start.Line;
       int endLine = node.End.Line;
 
-      // For if statements, the syntax node coveres the line range
+      // For if statements, the syntax node covers the line range
       // of any any other nested if/else statements, but here consider
       // only the lines in the "then" part of the if statement.
       if (node.Kind == SourceSyntaxNodeKind.If) {
@@ -656,7 +666,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       }
 
       for (int line = startLine; line <= endLine; line++) {
-        if (sourceLineProcessingResult_.LineToElementMap.TryGetValue(line, out var element)) {
+        int mappedLine = GetOriginalSourceLineNumber(line);
+
+        if (sourceLineProcessingResult_.LineToElementMap.TryGetValue(mappedLine, out var element)) {
           startElement ??= element;
           elements.Add(element);
 
@@ -728,7 +740,19 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     return profileNodes;
   }
-  
+
+  private int GetOriginalSourceLineNumber(int line) {
+    if (sourceLineProcessingResult_ != null) {
+      if (sourceLineProcessingResult_.OriginalLineToLineMap.TryGetValue(line, out var mappedLine)) {
+        return mappedLine;
+      }
+
+      return -1; // Line is assembly.
+    }
+
+    return line;
+  }
+
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
                                          IRTextSection section,
                                          ProfileSampleFilter profileFilter = null,
@@ -844,6 +868,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       // In case of changing the instance, start again from
       // the original source code text when inserting the assembly lines.
       TextView.Text = originalSourceText_.ToString();
+      sourceText_ = originalSourceText_;
       parsedSection = await Session.LoadAndParseSection(section);
     }
 
@@ -855,62 +880,31 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (processingResult == null) {
       return false;
     }
+    
+    sourceLineProfileResult_ = sourceLineProfileResult;
+    sourceLineProcessingResult_ = processingResult;
+
+    // Parse the source code to get the syntax tree nodes.
+    List<ProfileSourceSyntaxNode> syntaxNodes = null;
+    syntaxNodes = await Task.Run(() => PrepareSourceSyntaxTree(sourceText_.ToString()));
 
     // Replace the text after the assembly lines were inserted.
     if (showAssemblyLines) {
       sourceText_ = TextView.Text.AsMemory();
     }
 
+    // Load the dummy section with the source lines.
     var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, processingResult.Function);
     await TextView.LoadSection(dummyParsedSection);
+    
+    // Annotate the source lines with the profiling data based on the code statements.
+    if (syntaxNodes != null) {
+      await MarkSourceFileStructure(syntaxNodes, section.ParentFunction);
+    }
 
-    sourceLineProfileResult_ = sourceLineProfileResult;
-    sourceLineProcessingResult_ = processingResult;
-    var syntaxNodes = await MarkSourceFileStructure(section.ParentFunction);
-
+    
     TextView.SuspendUpdate();
     await profileMarker_.MarkSourceLines(TextView, processingResult);
-
-    if (syntaxNodes != null) {
-      var sourceColumnData = TextView.ProfileColumnData;
-
-      if (sourceColumnData.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timeColumn) {
-        foreach (var node in syntaxNodes) {
-          if (node.StartElement == null || !node.IsMarkedNode) {
-            continue;
-          }
-
-          var row = sourceColumnData.GetValues(node.StartElement);
-
-          if (row != null) {
-            foreach (var pair in row.ColumnValues) {
-              bool showIcon = Equals(pair.Key, timeColumn);
-              var cell = pair.Value;
-
-              if (showIcon) {
-                cell.Icon = node.GetIcon()?.Icon;
-              }
-
-              cell.CanShowIcon = false; // Disable auto-icon.
-              cell.ToolTip = node.GetTooltip(funcProfile);
-              cell.CanShowPercentageBar = false;
-              cell.CanShowBackgroundColor = false;
-              row.Tag = node;
-            }
-          }
-        }
-      }
-
-      ProfileColumns.RowHoverStart += (sender, value) => {
-        if(value.Tag is ProfileSourceSyntaxNode node) {
-          TextView.SelectElementsInLineRange(node.Start.Line, node.End.Line);
-        }
-      };
-
-      ProfileColumns.RowHoverStop += (sender, value) => {
-        TextView.ClearSelectedElements();
-      };
-    }
 
     // Annotate call sites next to source lines by parsing the actual section
     // and mapping back the call sites to the dummy elements representing the source lines.
@@ -920,9 +914,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                    section.ParentFunction, processingResult);
     }
 
-    sourceLineProfileResult_ = sourceLineProfileResult;
-    sourceLineProcessingResult_ = processingResult;
     TextView.ResumeUpdate();
+
+    if (syntaxNodes != null) {
+      PatchSourceStructureRows(syntaxNodes, funcProfile);
+    }
 
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
       JumpToHottestProfiledElement(true);
@@ -938,24 +934,17 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     return true;
   }
 
-  private async Task<List<ProfileSourceSyntaxNode>> MarkSourceFileStructure(IRTextFunction function) {
-    var nodeList = await Task.Run(() => PrepareSourceSyntaxTree(function));
-
-    if (nodeList == null) {
-      return null;
-    }
-
+  private async Task MarkSourceFileStructure(List<ProfileSourceSyntaxNode> nodes, IRTextFunction function) {
     var profileItems = new List<ProfileMenuItem>();
     var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings_.ProfileMarkerSettings;
     var funcProfile = Session.ProfileData.GetFunctionProfile(function);
     double maxWidth = 0;
 
+    //? TODO Extract out the menu outline part
     OutlineMenu.Items.Clear();
 
-    foreach (var node in nodeList) {
-      Trace.WriteLine($" at line {node.SyntaxNode.Start.Line}, kind {node.SyntaxNode.Kind}");
-
+    foreach (var node in nodes) {
       double weightPercentage = funcProfile.ScaleWeight(node.Weight);
       var nodeText = node.SyntaxNode.GetText(sourceText_);
 
@@ -968,6 +957,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
             color = App.Settings.DocumentSettings.AlternateBackgroundColor;
           }
 
+          sourceLineProcessingResult_.Result.SampledElements.RemoveAll((item) => item.Item1 == node.StartElement);
           sourceLineProcessingResult_.Result.SampledElements.Add((node.StartElement, node.Weight));
 
           var icon = node.GetIcon();
@@ -982,8 +972,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
             overalyTooltip += $"\nBody: {node.BodyWeight.AsMillisecondsString()}";
             overalyTooltip += $"\nCondition: {node.ConditionWeight.AsMillisecondsString()}";
           }
+          
+          //? TODO: Have option to add overlays too
+          //? Extract out the menu outline part
 
-          #if false
+          #if true
           var overlay = TextView.RegisterIconElementOverlay(node.StartElement, icon, 16, 16,
                                                             label, overalyTooltip, true);
           node.Overlay = overlay;
@@ -1021,6 +1014,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         }
       }
 
+      if (markerSettings.IsVisibleValue(weightPercentage)) {
+        continue;
+      }
+      
       string nesting = "";
 
       for (int i = 0; i < node.Level; i++) {
@@ -1084,10 +1081,50 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     foreach (var value in profileItems) {
       value.MinTextWidth = maxWidth;
     }
-
-    return nodeList;
   }
 
+  private void PatchSourceStructureRows(List<ProfileSourceSyntaxNode> nodes, FunctionProfileData funcProfile) {
+    // Add statements profile data to the columns.
+    var sourceColumnData = TextView.ProfileColumnData;
+
+    if (sourceColumnData.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timeColumn) {
+      foreach (var node in nodes) {
+        if (node.StartElement == null || !node.IsMarkedNode) {
+          continue;
+        }
+
+        var row = sourceColumnData.GetValues(node.StartElement);
+
+        if (row != null) {
+          foreach (var pair in row.ColumnValues) {
+            bool showIcon = Equals(pair.Key, timeColumn);
+            var cell = pair.Value;
+
+            if (showIcon) {
+              cell.Icon = node.GetIcon()?.Icon;
+            }
+
+            cell.CanShowIcon = false; // Disable auto-icon.
+            cell.ToolTip = node.GetTooltip(funcProfile);
+            cell.CanShowPercentageBar = false;
+            cell.CanShowBackgroundColor = false;
+            row.Tag = node;
+          }
+        }
+      }
+    }
+    
+    ProfileColumns.RowHoverStart += (sender, value) => {
+      if(value.Tag is ProfileSourceSyntaxNode node) {
+        TextView.SelectElementsInLineRange(node.Start.Line, node.End.Line);
+      }
+    };
+
+    ProfileColumns.RowHoverStop += (sender, value) => {
+      TextView.ClearSelectedElements();
+    };
+  }
+  
   private void SetupSourceAssembly() {
     
     // Replace the default line number left margin with one
@@ -1423,18 +1460,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public void SelectLine(int line) {
     ignoreNextCaretEvent_ = true;
+    int mappedLine = GetOriginalSourceLineNumber(line);
 
-    // With assembly lines, source line numbers are shifted.
-    if (sourceLineProcessingResult_ != null) {
-      if (sourceLineProcessingResult_.OriginalLineToLineMap.
-        TryGetValue(line, out int mappedLine)) {
-        TextView.SelectLine(mappedLine);
-      }
-
-      return;
-    }
-
-    TextView.SelectLine(line);
+    if(mappedLine != -1) {
+      TextView.SelectLine(mappedLine);
+    } 
   }
 
   bool IsSourceLine(int line) {
