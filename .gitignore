@@ -368,3 +368,11 @@ src/GrpcCppLib/ReleaseStaticLib
 !/src/external/*
 !/src/external/arm64/*
 !/src/external/GraphViz/*
+
+# Include installer folders
+!/installer/x64
+installer/x64/publish
+installer/x64/out
+!/installer/arm64
+installer/arm64/publish
+installer/arm64/out

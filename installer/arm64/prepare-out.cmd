@@ -1,9 +1,9 @@
-set _GRAPHVIZ_PATH="..\src\external\GraphViz"
-set _PUBLISH_PATH="publish-arm64"
-set _BUILD_TARGET="..\src\IRExplorerUI\IRExplorerUI.csproj"
-set _EXTERNALS_PATH="..\src\external\arm64"
-set _RESOURCES_PATH="..\resources"
-set _OUT_PATH="out-arm64"
+set _GRAPHVIZ_PATH="..\..\src\external\GraphViz"
+set _PUBLISH_PATH="publish"
+set _BUILD_TARGET="..\..\src\IRExplorerUI\IRExplorerUI.csproj"
+set _EXTERNALS_PATH="..\..\src\external\arm64"
+set _RESOURCES_PATH="..\..\resources"
+set _OUT_PATH="out"
 
 rd %_OUT_PATH% /s /q
 rd %_PUBLISH_PATH% /s /q

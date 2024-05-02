@@ -3,7 +3,7 @@
 
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING .ISS SCRIPT FILES!
                                               
-#include "environment.iss"
+#include "..\environment.iss"
 
 #define MyAppName "IR Explorer"
 #define MyAppExeName "irexplorer.exe"
@@ -21,7 +21,7 @@ SolidCompression=yes
 OutputDir=userdocs:IRExplorer
 ChangesAssociations = yes
 ChangesEnvironment = yes
-OutputBaseFilename=irexplorer_installer_{#APP_VERSION}_arm64
+OutputBaseFilename=irexplorer_installer_{#APP_VERSION}
 
 [Registry]
 Root: HKCR; Subkey: ".irx";                             ValueData: "{#MyAppName}";          Flags: uninsdeletevalue; ValueType: string;  ValueName: ""
@@ -30,7 +30,7 @@ Root: HKCR; Subkey: "{#MyAppName}\DefaultIcon";             ValueData: "{app}\{#
 Root: HKCR; Subkey: "{#MyAppName}\shell\open\command";  ValueData: """{app}\{#MyAppExeName}"" ""%1""";  ValueType: string;  ValueName: ""
 
 [Files]
-Source: ".\out-arm64\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: ".\out\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 Name: "{group}\IR Explorer"; Filename: "{app}\irexplorer.exe"
