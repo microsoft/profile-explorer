@@ -203,6 +203,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private Remark selectedRemark_;
   private bool selectingText_;
   private HashSet<FoldingSection> foldedBlocks_;
+  private bool hasCustomLineNumbers_;
 
   public IRDocument() {
     // Setup element tracking data structures.
@@ -534,10 +535,22 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
                              false, true, inlinee);
   }
 
-
-  public void SelectElementsInLineRange(int startLine, int endLine) {
+  public void SelectElementsInLineRange(int startLine, int endLine, 
+                                        Func<int, int> lineMapper = null,
+                                        Brush backColor = null) {
     ClearTemporaryHighlighting();
-    var group = new HighlightedElementGroup(selectedStyle_);
+    var style = selectedStyle_;
+
+    if (backColor != null) {
+      style = new HighlightingStyle(backColor, selectedStyle_.Border);
+    }
+
+    var group = new HighlightedElementGroup(style);
+
+    if (lineMapper != null) {
+      startLine = lineMapper(startLine);
+      endLine = lineMapper(endLine);
+    }
 
     foreach (var block in Function.Blocks) {
       foreach (var tuple in block.Tuples) {
@@ -1113,22 +1126,34 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     // Disable builtin line numbers margin and replace it with a custom one,
     // plus a dotted line between it and the document itself.
     ShowLineNumbers = false;
-    var leftMargins = TextArea.LeftMargins;
-
-    for (int i = 0; i < leftMargins.Count; i++) {
-      if (leftMargins[i] is LineNumberMargin ||
-          leftMargins[i] is Line) {
-        leftMargins.RemoveAt(i);
-        i--;
-      }
-    }
+    UninstallCustomLineNumbers(false);
     
+    var leftMargins = TextArea.LeftMargins;
     var line = (Line)DottedLineMargin.Create();
     leftMargins.Insert(0, lineNumbers);
     leftMargins.Insert(1, line);
     var lineNumbersForeground = new Binding("LineNumbersForeground") { Source = this };
     line.SetBinding(Shape.StrokeProperty, lineNumbersForeground);
     lineNumbers.SetBinding(Control.ForegroundProperty, lineNumbersForeground);
+    hasCustomLineNumbers_ = true;
+  }
+
+  public void UninstallCustomLineNumbers(bool restoreBuiltin) {
+    if (hasCustomLineNumbers_) {
+      var leftMargins = TextArea.LeftMargins;
+
+      for (int i = 0; i < leftMargins.Count; i++) {
+        if (leftMargins[i] is LineNumberMargin ||
+            leftMargins[i] is Line) {
+          leftMargins.RemoveAt(i);
+          i--;
+        }
+      }
+
+      hasCustomLineNumbers_ = false;
+    }
+
+    ShowLineNumbers = restoreBuiltin;
   }
 
   public void RegisterTextColorizer(DocumentColorizingTransformer colorizer) {

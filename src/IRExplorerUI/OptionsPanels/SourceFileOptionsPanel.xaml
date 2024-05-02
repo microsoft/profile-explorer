@@ -20,17 +20,32 @@
       <TabItem Header="General" Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
+            x:Name="AssemblyCheckBox"
             Margin="0,2,0,0"
             Content="Show assembly sections for source lines"
             IsChecked="{Binding Path=ShowInlineAssembly, Mode=TwoWay}"
             ToolTip="Display the associated assembly instructions for each source line" />
           <CheckBox
-            Margin="0,2,0,0"
+            Margin="20,2,0,0"
             Content="Auto-expand assembly sections"
+            IsEnabled="{Binding ElementName=AssemblyCheckBox, Path=IsChecked}"
             IsChecked="{Binding Path=AutoExpandInlineAssembly, Mode=TwoWay}"
             ToolTip="Display the assembly sections in expanded state by default" />
           <CheckBox
-            Margin="0,2,0,0"
+            x:Name="StatementsCheckBox"
+            Margin="0,4,0,0"
+            Content="Show source file statement annotations"
+            IsChecked="{Binding Path=ShowSourceStatements, Mode=TwoWay}"
+            ToolTip="Parse source file and mark loops and if/else/switch statements in profiling columns" />
+          <CheckBox
+            Margin="20,2,0,0"
+            Content="Show statement annotations on left margin"
+            IsEnabled="{Binding ElementName=StatementsCheckBox, Path=IsChecked}"
+            IsChecked="{Binding Path=ShowSourceStatementsOnMargin, Mode=TwoWay}"
+            ToolTip="Show the statement annotations as icons in the left document margin" />
+
+          <CheckBox
+            Margin="0,4,0,0"
             Content="Sync selected line with assembly document"
             IsChecked="{Binding Path=SyncLineWithDocument, Mode=TwoWay}"
             ToolTip="Sync the corresponding lines with the selection in the assembly document" />

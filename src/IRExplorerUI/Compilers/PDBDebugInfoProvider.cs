@@ -411,7 +411,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
           // The checksum should match, but do a check just in case.
           string filePath = sourceLine.SourceFile.GetSourceFile();
 
-          if (File.Exists(filePath)) {
+          if (ValidateDownloadedSourceFile(filePath)) {
             Trace.WriteLine($"Downloaded source file {filePath}");
             localFilePath = filePath;
             hasChecksumMismatch = !SourceFileChecksumMatchesPDB(sourceFile, localFilePath);
@@ -429,6 +429,24 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     return new SourceFileDebugInfo(localFilePath, originalFilePath, lineInfo.Line, hasChecksumMismatch);
+  }
+
+  private bool ValidateDownloadedSourceFile(string filePath) {
+    try {
+      if (!File.Exists(filePath)) {
+        return false;
+      }
+      
+      // If the source server requires authentication, but it's not properly set up,
+      // usually an HTML error page is returned instead, treat it as a failure.
+      //? TODO: Better way to detect this, may need change in TraceEvent lib.
+      var fileText = File.ReadAllText(filePath);
+      return !fileText.Contains(@"<!DOCTYPE html");
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to validate downloaded source file {filePath}: {ex.Message}");
+      return false;
+    }
   }
 
   private bool SourceFileChecksumMatchesPDB(IDiaSourceFile sourceFile, string filePath) {

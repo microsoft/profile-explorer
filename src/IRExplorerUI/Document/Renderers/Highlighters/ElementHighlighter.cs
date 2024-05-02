@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore.IR;
@@ -155,6 +156,11 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
     // Create BackgroundGeometryBuilder only if needed.
     BackgroundGeometryBuilder geoBuilder = null;
 
+    var mergedRect = new Rect();
+    int prevMergedLine = -1;
+    int mergedLineCount = 0;
+    double prevMergedY = -1;
+    
     foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
       if (geoBuilder == null) {
         geoBuilder = new BackgroundGeometryBuilder {
@@ -166,11 +172,41 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
         geoBuilder.AddSegment(textView, segment);
       }
       else if (segment.Element is TupleIR) {
+        int line = segment.Element.TextLocation.Line;
+        
         // Extend width to cover entire line.
         foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
           var width = textView.ActualWidth + textView.HorizontalOffset;
           var actualRect = Utils.SnapRectToPixels(rect.X - 1, rect.Y, width, rect.Height);
-          geoBuilder.AddRectangle(textView, actualRect);
+
+          // When selecting multiple consecutive tuples, create a single
+          // rect covering the region of each individual selection rect.
+          // This is done to avoid horizontal lines showing sometimes otherwise.
+          if (mergedLineCount > 0) {
+            if (prevMergedLine == line - 1) {
+              // Don't extend the accumulated height if the Y position
+              // is unchanged, this happens with lines that are in a collapsed block folding.
+              if (Math.Abs(actualRect.Y - prevMergedY) > double.Epsilon) {
+                mergedRect = new Rect(mergedRect.Left, mergedRect.Top,
+                  Math.Max(mergedRect.Width, actualRect.Width),
+                  mergedRect.Height + actualRect.Height);
+              }
+
+              mergedLineCount++;
+              prevMergedLine = line;
+              prevMergedY = actualRect.Y;
+              continue;
+            }
+            else {
+              // Disjoint line, commit the current merged rect and start a new region.
+              geoBuilder.AddRectangle(textView, mergedRect);
+            }
+          }
+
+          mergedRect = actualRect;
+          prevMergedLine = line;
+          prevMergedY = actualRect.Y;
+          mergedLineCount = 1;
         }
       }
       else {
@@ -181,6 +217,10 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
       }
     }
 
+    if (mergedLineCount > 0) {
+      geoBuilder.AddRectangle(textView, mergedRect);
+    }
+    
     if (geoBuilder != null) {
       var geometry = geoBuilder.CreateGeometry();
 

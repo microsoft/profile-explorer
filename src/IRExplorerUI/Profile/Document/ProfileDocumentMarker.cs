@@ -47,6 +47,7 @@ public interface MarkedDocument {
 }
 
 
+//? TODO: Use better names for members
 public record SourceLineProfileResult(
   FunctionProcessingResult Result,
   SourceLineProcessingResult SourceLineResult,
@@ -261,7 +262,6 @@ public class ProfileDocumentMarker {
     var lineToOriginalLineMap = new Dictionary<int, int>();
     var originalLineToLineMap = new Dictionary<int, int>();
     var assemblyRanges = new List<(int StartOffset, int EndOffset)>();
-    int asmLineCount = 0;
 
     TupleIR MakeDummyTuple(TextLocation textLocation, DocumentLine documentLine) {
       var tupleIr = new TupleIR(ids.NextTuple(), TupleKind.Other, dummyBlock);
@@ -286,6 +286,7 @@ public class ProfileDocumentMarker {
     // mapped to that line, for both samples and performance counters.
     int lastLine = Math.Min(sourceProcResult.LastLineIndex, document.LineCount);
     int inserted = 0;
+    
     for (int lineNumber = sourceProcResult.FirstLineIndex; lineNumber <= lastLine; lineNumber++) {
       var documentLine = document.GetLineByNumber(lineNumber + inserted);
       var location = new TextLocation(documentLine.Offset, lineNumber + inserted - 1, 0);
@@ -322,23 +323,19 @@ public class ProfileDocumentMarker {
         instrDocument.Document.Insert(instrLine.EndOffset, $"\n{instrText.TrimEnd()}");
 
         inserted++;
-        asmLineCount++;
         instrLine = instrDocument.GetLineByNumber(lineNumber + inserted);
         rangeEnd = instrLine.EndOffset;
 
-        if (instrWeight != TimeSpan.Zero || counters != null) {
-          location = new TextLocation(instrLine.Offset, lineNumber + inserted - 1, 0);
-          dummyTuple = MakeDummyTuple(location, instrLine);
+        location = new TextLocation(instrLine.Offset, lineNumber + inserted - 1, 0);
+        dummyTuple = MakeDummyTuple(location, instrLine);
+        lineToElementMap[lineNumber + inserted] = dummyTuple;
 
-          if (instrWeight != TimeSpan.Zero) {
-            processingResult.SampledElements.Add((dummyTuple, instrWeight));
-          }
+        if (instrWeight != TimeSpan.Zero) {
+          processingResult.SampledElements.Add((dummyTuple, instrWeight));
+        }
 
-          if (instrCounters != null) {
-            processingResult.CounterElements.Add((dummyTuple, instrCounters));
-          }
-
-          lineToElementMap[lineNumber + inserted] = dummyTuple;
+        if (instrCounters != null) {
+          processingResult.CounterElements.Add((dummyTuple, instrCounters));
         }
       }
 
@@ -350,7 +347,7 @@ public class ProfileDocumentMarker {
     document.ProfileProcessingResult = processingResult;
     return new SourceLineProfileResult(processingResult, sourceProcResult, dummyFunc,
                                        lineToElementMap, lineToOriginalLineMap,
-                                       originalLineToLineMap, assemblyRanges, asmLineCount);
+                                       originalLineToLineMap, assemblyRanges, inserted);
   }
 
   public List<InlineeListItem> GenerateInlineeList(FunctionProcessingResult result) {

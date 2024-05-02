@@ -25,6 +25,10 @@ public class SourceFileSettings : TextViewSettingsBase {
   public bool ShowInlineAssembly { get; set; }
   [ProtoMember(6)]
   public bool AutoExpandInlineAssembly { get; set; }
+  [ProtoMember(7)]
+  public bool ShowSourceStatements { get; set; }
+  [ProtoMember(8)]
+  public bool ShowSourceStatementsOnMargin { get; set; }
   
   public override void Reset() {
     base.Reset();
@@ -33,6 +37,8 @@ public class SourceFileSettings : TextViewSettingsBase {
     SyncStyleWithDocument = true;
     SyncLineWithDocument = true;
     ShowInlineAssembly = true;
+    ShowSourceStatements = true;
+    ShowSourceStatementsOnMargin = true;
     FinderSettings.Reset();
   }
 
@@ -54,6 +60,8 @@ public class SourceFileSettings : TextViewSettingsBase {
            SyncInlineeWithDocument == settings.SyncInlineeWithDocument &&
            ShowInlineAssembly == settings.ShowInlineAssembly &&
            AutoExpandInlineAssembly == settings.AutoExpandInlineAssembly &&
+           ShowSourceStatements == settings.ShowSourceStatements &&
+           ShowSourceStatementsOnMargin == settings.ShowSourceStatementsOnMargin &&
            FinderSettings.Equals(settings.FinderSettings);
   }
 }
