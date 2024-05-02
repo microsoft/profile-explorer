@@ -1,4 +1,3 @@
-set _GRAPHVIZ_PATH="..\src\external\GraphViz"
 set %_VERSION="0.8.3"
 set _SETUP_PATH="C:\Program Files (x86)\Inno Setup 6"
 set _PUBLISH_PATH="publish"
@@ -13,7 +12,6 @@ mkdir %_OUT_PATH%
 
 dotnet publish -c Release -r win-x64  --self-contained true --output %_PUBLISH_PATH% %_BUILD_TARGET%
 
-xcopy %_GRAPHVIZ_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_PUBLISH_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_RESOURCES_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_EXTERNALS_PATH% %_OUT_PATH% /i /c /y

@@ -1,3 +1,0 @@
-[submodule "src/external/csharp-tree-sitter"]
-	path = src/external/csharp-tree-sitter
-	url = https://github.com/tree-sitter/csharp-tree-sitter.git

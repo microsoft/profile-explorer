@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using GitHub.TreeSitter;
 
 namespace IRExplorerCore.SourceParser;
 
@@ -32,10 +30,10 @@ public class SourceCodeParser {
 
   private TSLanguage InitializeParserLanguage(SourceCodeLanguage language) {
     switch (language) {
-      case SourceCodeLanguage.Cpp: return new TSLanguage(tree_sitter_cpp());
+      case SourceCodeLanguage.Cpp:    return new TSLanguage(tree_sitter_cpp());
       case SourceCodeLanguage.CSharp: return new TSLanguage(tree_sitter_c_sharp());
-      case SourceCodeLanguage.Rust: return new TSLanguage(tree_sitter_rust());
-      default: throw new InvalidOperationException();
+      case SourceCodeLanguage.Rust:   return new TSLanguage(tree_sitter_rust());
+      default:                        throw new InvalidOperationException();
     }
   }
 
@@ -75,7 +73,7 @@ public class SourceCodeParser {
 //         int el = (int)cursor.current_node().end_point().row + 1;
 //         var type = node.type();
 //         var sym = node.symbol();
-//         Trace.WriteLine($"    node type is {type}, startL {sl}, endL {el}");
+//         Trace.WriteLine($" - node type is {type}, startL {sl}, endL {el}");
 // #endif
 
         bool accepted = true;
@@ -92,7 +90,8 @@ public class SourceCodeParser {
             nodeKind = SourceSyntaxNodeKind.Else;
             break;
           case "for_statement":
-          case "for_range_loop": {
+          case "for_range_loop":
+          case "for_each_statement": { // C#
             nodeKind = SourceSyntaxNodeKind.Loop;
             break;
           }
@@ -101,11 +100,23 @@ public class SourceCodeParser {
             nodeKind = SourceSyntaxNodeKind.Loop;
             break;
           }
-          case "compound_statement": {
+          case "switch_statement": {
+            nodeKind = SourceSyntaxNodeKind.Switch;
+            break;
+          }
+          case "case_statement":
+          case "switch_section": { // C#
+            nodeKind = SourceSyntaxNodeKind.SwitchCase;
+            break;
+          }
+          case "compound_statement":
+          case "block": { // C#
             nodeKind = SourceSyntaxNodeKind.Compound;
             break;
           }
-          case "function_definition": {
+          case "function_definition":
+          case "method_declaration": // C#
+          case "local_function_statement": { // C#
             nodeKind = SourceSyntaxNodeKind.Function;
             break;
           }
@@ -144,6 +155,8 @@ public class SourceCodeParser {
             tree.RootNode.AddChild(treeNode);
           }
           else {
+            // Because not all nodes are created in the reduce syntax tree,
+            // look up for first ancestor node that is added and use it as parent.
             var parentNode = node.parent();
 
             while (parentNode.id != IntPtr.Zero) {
@@ -168,6 +181,7 @@ public class SourceCodeParser {
   }
 
   private IEnumerable<TSNode> WalkTreeNodes(TSCursor rootNode) {
+    // Preorder traversal of the syntax tree, without using recursion.
     var cursor = rootNode;
     bool reachedRoot = false;
 

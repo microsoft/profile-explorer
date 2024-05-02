@@ -29,7 +29,6 @@ public class SourceSyntaxNode {
   public TextLocation Start { get; set; }
   public TextLocation End { get; set; }
   public object Tag { get; set; }
-
   public int Length => End.Offset - Start.Offset;
   public bool SpansMultipleLines => End.Line != Start.Line;
   public bool HasChildren => ChildNodes is {Count: > 0};
@@ -67,8 +66,8 @@ public class SourceSyntaxNode {
   }
 
   private bool WalkNodes(SourceSyntaxNode node, Func<SourceSyntaxNode, int, bool> action,
-                        SourceSyntaxNodeKind kindFilter = SourceSyntaxNodeKind.Other,
-                        int depth = 0) {
+                         SourceSyntaxNodeKind kindFilter = SourceSyntaxNodeKind.Other,
+                         int depth = 0) {
     // Do a pre-order traversal of the tree.
     if (node.Kind == kindFilter || kindFilter == SourceSyntaxNodeKind.Other) {
       if (!action(node, depth)) {
@@ -148,10 +147,6 @@ public class SourceSyntaxTree {
       }
     }
 
-    return null;
-  }
-
-  public List<SourceSyntaxNode> FindNodes(int startLine, int endLine) {
     return null;
   }
 
