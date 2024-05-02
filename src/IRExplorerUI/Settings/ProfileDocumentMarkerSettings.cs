@@ -57,7 +57,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   [ProtoMember(24)]  public Color PerformanceCounterBackColor { get; set; }
 
   public static int DefaultMaxPercentageBarWidth = 50;
-  public static double DefaultElementWeightCutoff = 0.009; // 0.9%;
+  public static double DefaultElementWeightCutoff = 0.01; // 1%;
 
   public override void Reset() {
     MarkElements = true;
@@ -157,11 +157,26 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   }
 
   public bool IsVisibleValue(int order, double percentage) {
-    return order < TopOrderCutoff || percentage >= ElementWeightCutoff;
+    return (order < TopOrderCutoff && percentage > double.Epsilon) ||
+           percentage >= ElementWeightCutoff;
+  }
+  
+  public bool IsVisibleValue(double percentage, double scale = 1.0) {
+    return percentage >= ElementWeightCutoff * scale;
   }
 
   public Brush PickBackColorForOrder(int order, double percentage, bool inverted) {
     return PickBackColorForOrder(null, order, percentage, inverted);
+  }
+
+  public (Brush, FontWeight) PickBlockOverlayStyle(int order, double percentage) {
+    return IsSignificantValue(order, percentage)
+      ? (HotBlockOverlayTextColor.AsBrush(), FontWeights.Bold)
+      : (BlockOverlayTextColor.AsBrush(), FontWeights.Normal);
+  }
+
+  public (Brush, FontWeight) PickBlockOverlayStyle(double percentage) {
+    return PickBlockOverlayStyle(int.MaxValue, percentage);
   }
 
   public Brush PickTextColor(OptionalColumn column, int order, double percentage) {

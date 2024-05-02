@@ -16,7 +16,7 @@ using OxyPlot;
 namespace IRExplorerUI.Profile;
 
 public class SourceDocumentMarker {
-  private static readonly string SourceOverlayTag = "ProfileTag";
+  private static readonly string SourceOverlayTag = "SourceTag";
   private const int FunctionNameMaxLength = 80;
 
   private SourceDocumentMarkerSettings settings_;

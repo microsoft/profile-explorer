@@ -7,10 +7,12 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -27,7 +29,9 @@ using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Compilers.LLVM;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Document;
 using IRExplorerUI.Panels;
+using IRExplorerUI.Profile;
 using IRExplorerUI.Scripting;
 using IRExplorerUI.Settings;
 using IRExplorerUI.Utilities;
@@ -82,7 +86,7 @@ public static class AppCommand {
     new RoutedUICommand("Untitled", "ShowProfileCallGraph", typeof(Window));
 }
 
-public partial class MainWindow : Window, ISession {
+public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
   private LayoutDocumentPane activeDocumentPanel_;
   private AssemblyMetadataTag addressTag_;
   private bool appIsActivated_;
@@ -105,6 +109,7 @@ public partial class MainWindow : Window, ISession {
   private bool documentSearchVisible_;
   private DocumentSearchPanel documentSearchPanel_;
   private bool initialDockLayoutRestored_;
+  private bool profileControlsVisible;
 
   public MainWindow() {
     InitializeComponent();
@@ -115,7 +120,11 @@ public partial class MainWindow : Window, ISession {
 
     SetupMainWindow();
     SetupGraphLayoutCache();
+    SetupEvents();
+    DataContext = this;
+  }
 
+  private void SetupEvents() {
     ContentRendered += MainWindow_ContentRendered;
     StateChanged += MainWindow_StateChanged;
     LocationChanged += MainWindow_LocationChanged;
@@ -125,7 +134,17 @@ public partial class MainWindow : Window, ISession {
     SizeChanged += MainWindow_SizeChanged;
   }
 
+  public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
   public SessionStateManager SessionState => sessionState_;
+
+  public bool ProfileControlsVisible {
+    get => profileControlsVisible;
+    set {
+      if (value == profileControlsVisible) return;
+      profileControlsVisible = value;
+      OnPropertyChanged();
+    }
+  }
 
   private static void CheckForUpdate() {
     string autoUpdateInfo;
@@ -199,6 +218,35 @@ public partial class MainWindow : Window, ISession {
   protected override void OnSourceInitialized(EventArgs e) {
     base.OnSourceInitialized(e);
     WindowPlacement.SetPlacement(this, App.Settings.MainWindowPlacement);
+
+    // Handle touchpad horizontal scroll event, which is not supported
+    // in WPF by default. This sends the event to any ScrollViewer.
+    var source = PresentationSource.FromVisual(this);
+    ((HwndSource) source)?.AddHook(Hook);
+  }
+
+  private IntPtr Hook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) {
+    switch (msg) {
+      case NativeMethods.WM_MOUSEHWHEEL:
+        int tilt = (short)NativeMethods.HIWORD(wParam);
+        OnMouseTilt(tilt);
+        return (IntPtr)1;
+    }
+
+    return IntPtr.Zero;
+  }
+
+  private void OnMouseTilt(int tilt) {
+    UIElement element = Mouse.DirectlyOver as UIElement;
+
+    if (element == null) return;
+
+    ScrollViewer scrollViewer = element is ScrollViewer viewer ?
+      viewer : Utils.FindParent<ScrollViewer>(element);
+
+    if (scrollViewer != null) {
+      scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset + tilt);
+    }
   }
 
   private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e) {
@@ -293,6 +341,7 @@ public partial class MainWindow : Window, ISession {
     PopulateWorkspacesCombobox();
     ThemeCombobox.SelectedIndex = App.Settings.ThemeIndex;
     DiffModeButton.IsEnabled = false;
+    SetActiveProfileFilter(new ProfileFilterState());
   }
 
   private void SetupMainWindowCompilerTarget() {
@@ -748,7 +797,8 @@ public partial class MainWindow : Window, ISession {
   }
 
   private string GetDocumentTitle(IRDocumentHost document, IRTextSection section) {
-    string title = compilerInfo_.NameProvider.GetSectionName(section);
+    bool includeNumber = ProfileData == null || section.ParentFunction.SectionCount > 1;
+    string title = compilerInfo_.NameProvider.GetSectionName(section, includeNumber);
 
     if (sessionState_.SectionDiffState.IsEnabled) {
       if (sessionState_.SectionDiffState.LeftDocument == document) {
@@ -760,25 +810,46 @@ public partial class MainWindow : Window, ISession {
       }
     }
 
+    if (!string.IsNullOrEmpty(document.TitlePrefix)) {
+      title = $"{document.TitlePrefix}{title}";
+    }
+
+    if (!string.IsNullOrEmpty(document.TitleSuffix)) {
+      title = $"{title}{document.TitleSuffix}";
+    }
+
     return title;
   }
 
   private string GetDocumentDescription(IRDocumentHost document, IRTextSection section) {
     var docInfo = sessionState_.FindLoadedDocument(section);
-    return $"{section.ParentFunction.Name.Trim()} ({section.ParentFunction.ParentSummary.ModuleName})";
+    string funcName = compilerInfo_.NameProvider.GetFunctionName(section.ParentFunction);
+    funcName = DocumentUtils.FormatLongFunctionName(funcName);
+    string text = $"Module: {section.ModuleName}\nFunction: {funcName}";
+
+    if (!string.IsNullOrEmpty(document.DescriptionPrefix)) {
+      text = $"{document.DescriptionPrefix}{text}";
+    }
+
+    if (!string.IsNullOrEmpty(document.DescriptionSuffix)) {
+      text = $"{text}{document.DescriptionSuffix}";
+    }
+
+    return text.Trim();
   }
 
   private async void MenuItem_Click_1(object sender, RoutedEventArgs e) {
     await EndSession();
   }
 
-  private void OptionalStatusText_MouseDown(object sender, MouseButtonEventArgs e) {
-    ErrorReporting.SaveOpenSections();
-  }
-
   private void MenuItem_Click_2(object sender, RoutedEventArgs e) {
-    ErrorReporting.SaveOpenSections();
-  }
+    TextInputWindow input = new("Save marked functions/modules", "Saved marking set name:", "Save", "Cancel");
+
+    if (input.Show(out string result, true)) {
+      Trace.WriteLine($"Result  ={result}");
+    }
+
+}
 
   private async Task DisplayCallGraph(IRTextSummary summary, IRTextSection section,
                                       bool buildPartialGraph) {
@@ -903,14 +974,6 @@ public partial class MainWindow : Window, ISession {
     await SwitchCompilerTarget("ASM", IRMode.ARM64);
   }
 
-  private async void DotNetMenuItem_Click(object sender, RoutedEventArgs e) {
-    await SwitchCompilerTarget("DotNet", IRMode.x86_64);
-  }
-
-  private async void DotNetARM64MenuItem_Click(object sender, RoutedEventArgs e) {
-    await SwitchCompilerTarget("DotNet", IRMode.ARM64);
-  }
-
   private async Task SetupCompilerTarget() {
     await SwitchCompilerTarget(App.Settings.DefaultCompilerIR, App.Settings.DefaultIRMode);
   }
@@ -924,10 +987,6 @@ public partial class MainWindow : Window, ISession {
       }
       case "ASM": {
         await SwitchCompilerTarget(new ASMCompilerInfoProvider(irMode, this));
-        break;
-      }
-      case "DotNet": {
-        await SwitchCompilerTarget(new DotNetCompilerInfoProvider(irMode, this));
         break;
       }
       default: {
@@ -991,5 +1050,26 @@ public partial class MainWindow : Window, ISession {
 
   private async void HelpButton_Click(object sender, RoutedEventArgs e) {
     await ShowPanel(ToolPanelKind.Help);
+  }
+
+  private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
+    Utils.PatchToolbarStyle(sender as ToolBar);
+  }
+
+  public event PropertyChangedEventHandler PropertyChanged;
+
+  protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
+    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+  }
+
+  protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
+    if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+    field = value;
+    OnPropertyChanged(propertyName);
+    return true;
+  }
+
+  private void ProfileMenuItem_Click(object sender, RoutedEventArgs e) {
+    ReloadMarkingSettings();
   }
 }

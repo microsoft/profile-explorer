@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -21,17 +22,25 @@ public partial class ColorSelector : UserControl {
     DependencyProperty.Register("ColorSelectedCommand", typeof(ICommand), typeof(ColorSelector));
   private static readonly Color[] ButtonColors;
 
+  public Brush[] ButtonBrushes { get; set; }
+
   static ColorSelector() {
     ButtonColors = new[] {
-      (Color)ColorConverter.ConvertFromString("#f0da69"),
-      (Color)ColorConverter.ConvertFromString("#f7938f"),
-      (Color)ColorConverter.ConvertFromString("#F3F986"),
-      (Color)ColorConverter.ConvertFromString("#A7F986"),
-      (Color)ColorConverter.ConvertFromString("#86B0F9"),
-      (Color)ColorConverter.ConvertFromString("#85decc"),
-      (Color)ColorConverter.ConvertFromString("#B696FC"),
-      (Color)ColorConverter.ConvertFromString("#86D4F9"),
-      (Color)ColorConverter.ConvertFromString("#f5ac6c")
+      Utils.ColorFromString("#F2C3C1"),
+      Utils.ColorFromString("#F3F4A6"),
+      Utils.ColorFromString("#D2F4C3"),
+      Utils.ColorFromString("#C1D4F2"),
+      Utils.ColorFromString("#B1DDD4"),
+      Utils.ColorFromString("#F2C1DA"),
+      Utils.ColorFromString("#DED1FF"),
+      Utils.ColorFromString("#C3E6F4"),
+      Utils.ColorFromString("#F2D8C1"),
+      Utils.ColorFromString("#EDE4BD"),
+      Utils.ColorFromString("#ED8EBF"),
+      Utils.ColorFromString("#FFF47F"),
+      Utils.ColorFromString("#B9FF99"),
+      Utils.ColorFromString("#99E2FF"),
+      Utils.ColorFromString("#C6B2FF"),
     };
   }
 
@@ -40,6 +49,12 @@ public partial class ColorSelector : UserControl {
     Focusable = true;
     PreviewKeyDown += ColorSelector_PreviewKeyDown;
     Loaded += ColorSelector_Loaded;
+
+    ButtonBrushes = new Brush[ButtonColors.Length];
+
+    for (int i = 0; i < ButtonColors.Length; i++) {
+      ButtonBrushes[i] = ColorBrushes.GetBrush(ButtonColors[i]);
+    }
   }
 
   public event EventHandler<SelectedColorEventArgs> ColorSelected;
@@ -70,7 +85,12 @@ public partial class ColorSelector : UserControl {
       Key.D7 => 7,
       Key.D8 => 8,
       Key.D9 => 9,
-      _ => -1
+      Key.A => 10,
+      Key.B => 11,
+      Key.C => 12,
+      Key.D => 13,
+      Key.E => 14,
+      _      => -1
     };
 
     if (index != -1) {

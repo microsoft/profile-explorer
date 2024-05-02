@@ -43,6 +43,7 @@ public class SectionSettings : SettingsBase {
   [ProtoMember(31)] public bool AppendTimeToSelfColumn { get; set; }
   [ProtoMember(32)] public bool ShowModulePanel { get; set; }
   [ProtoMember(33)] public bool AlternateListRows { get; set; }
+  [ProtoMember(34)] public bool ShowMangleNamesColumn { get; set; }
 
   public FunctionNameDemanglingOptions DemanglingOptions {
     get {
@@ -72,7 +73,8 @@ public class SectionSettings : SettingsBase {
            ShowPerformanceCounterColumns != other.ShowPerformanceCounterColumns ||
            ShowPerformanceMetricColumns != other.ShowPerformanceMetricColumns ||
            AppendTimeToTotalColumn != other.AppendTimeToTotalColumn ||
-           AppendTimeToSelfColumn != other.AppendTimeToSelfColumn;
+           AppendTimeToSelfColumn != other.AppendTimeToSelfColumn ||
+           ShowMangleNamesColumn != other.ShowMangleNamesColumn;
   }
 
   public override void Reset() {
@@ -137,7 +139,8 @@ public class SectionSettings : SettingsBase {
            AppendTimeToTotalColumn == settings.AppendTimeToTotalColumn &&
            AppendTimeToSelfColumn == settings.AppendTimeToSelfColumn &&
            ShowModulePanel == settings.ShowModulePanel &&
-           AlternateListRows == settings.AlternateListRows;
+           AlternateListRows == settings.AlternateListRows &&
+           ShowMangleNamesColumn == settings.ShowMangleNamesColumn;
   }
 
   public override string ToString() {
@@ -168,6 +171,7 @@ public class SectionSettings : SettingsBase {
            $"AppendTimeToTotalColumn: {AppendTimeToTotalColumn}\n" +
            $"AppendTimeToSelfColumn: {AppendTimeToSelfColumn}\n" +
            $"ShowModulePanel: {ShowModulePanel}\n" +
+           $"ShowMangleNamesColumn: {ShowMangleNamesColumn}\n" +
            $"AlternateListRows: {AlternateListRows}";
   }
 }

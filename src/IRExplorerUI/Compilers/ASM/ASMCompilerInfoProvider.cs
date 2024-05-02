@@ -59,7 +59,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     var debugInfo = await GetOrCreateDebugInfoProvider(section.ParentFunction);
 
     if (debugInfo != null) {
-      debugInfo.AnnotateSourceLocations(function, section.ParentFunction);
+      await Task.Run(() => debugInfo.AnnotateSourceLocations(function, section.ParentFunction));
     }
 
     return true;
@@ -70,14 +70,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
 
     lock (loadedDoc) {
       if (loadedDoc.DebugInfo != null) {
-        if (loadedDoc.DebugInfo.CanUseInstance()) {
-          // Used for managed binaries, where the debug info is constructed during profiling.
-          return loadedDoc.DebugInfo;
-        }
-        else {
-          loadedDoc.DebugInfo.Dispose();
-          loadedDoc.DebugInfo = null;
-        }
+        return loadedDoc.DebugInfo;
       }
     }
 
@@ -128,8 +121,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     }
 
     lock (this) {
-      if (loadedDebugInfo_.TryGetValue(debugFile, out var provider) &&
-          provider.CanUseInstance()) {
+      if (loadedDebugInfo_.TryGetValue(debugFile, out var provider)) {
         return provider;
       }
 
@@ -237,6 +229,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     var options = App.Settings.DocumentSettings.ProfileMarkerSettings;
     var blockPen = ColorPens.GetPen(options.BlockOverlayBorderColor,
                                     options.BlockOverlayBorderThickness);
+    document.SuspendUpdate();
 
     foreach (var block in function.Blocks) {
       if (block.Tuples.Count <= 0) {
@@ -264,6 +257,8 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
       overlay.ShowBorderOnMouseOverOnly = false;
       overlay.UseLabelBackground = true;
     }
+    
+    document.ResumeUpdate();
   }
 
   public Task ReloadSettings() {

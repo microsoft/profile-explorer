@@ -17,6 +17,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using System.Xml;
 using DocumentFormat.OpenXml.Vml.Spreadsheet;
 using ICSharpCode.AvalonEdit.Highlighting;
@@ -160,7 +161,7 @@ static class Utils {
   }
 
   public static void WaitForDebugger(bool showMessageBox = true) {
-#if DEBUG
+#if true || DEBUG
     if (Debugger.IsAttached) {
       return;
     }
@@ -399,6 +400,10 @@ static class Utils {
   }
 
   public static bool OpenExternalFile(string path) {
+    if (!File.Exists(path)) {
+      return false;
+    }
+
     try {
       var psi = new ProcessStartInfo(path) {
         UseShellExecute = true
@@ -597,9 +602,17 @@ static class Utils {
     var logicalRoot = LogicalTreeHelper.GetParent(control);
 
     while (logicalRoot != null) {
-      if (logicalRoot is ContextMenu menu) {
-        menu.IsOpen = false;
+      if (logicalRoot is ContextMenu cmenu) {
+        cmenu.IsOpen = false;
         break;
+      }
+
+      if (logicalRoot is Menu menu) {
+        break;
+      }
+      else if (logicalRoot is MenuItem menuItem) {
+        // Close each submenu until reaching the entry menu.
+        menuItem.IsSubmenuOpen = false;
       }
 
       if (logicalRoot is Popup popup) {
@@ -698,6 +711,62 @@ static class Utils {
     }
 
     return foundChild;
+  }
+
+  public static T FindParent<T>(DependencyObject child, string parentName = null)
+    where T : DependencyObject {
+    if (child == null) {
+      return null;
+    }
+
+    T foundParent = null;
+    var currentParent = VisualTreeHelper.GetParent(child);
+
+    while(currentParent != null) {
+      var element = currentParent as FrameworkElement;
+
+      if (element is T && (parentName == null || element?.Name == parentName)) {
+        foundParent = (T)currentParent;
+        break;
+      }
+
+      currentParent = VisualTreeHelper.GetParent(currentParent);
+    }
+
+    return foundParent;
+  }
+
+  public static FrameworkElement FindContextMenuParent(DependencyObject child) {
+    if (child == null) {
+      return null;
+    }
+
+    var currentParent = child;
+
+    do {
+      var element = currentParent as FrameworkElement;
+
+      if (element?.ContextMenu != null) {
+        return element;
+      }
+
+      currentParent = VisualTreeHelper.GetParent(currentParent);
+    } while (currentParent != null);
+
+    return null;
+  }
+
+  public static bool ShowContextMenu(FrameworkElement element, object dataContext) {
+    var host = FindContextMenuParent(element);
+
+    if (host != null) {
+      host.ContextMenu.DataContext = dataContext;
+      host.ContextMenu.PlacementTarget = element;
+      host.ContextMenu.IsOpen = true;
+      return true;
+    }
+
+    return false;
   }
 
   public static Point CoordinatesToScreen(Point point, UIElement control) {
@@ -1068,18 +1137,26 @@ static class Utils {
     return new Point(Math.Round(x), Math.Round(y));
   }
 
-  public static Size MeasureString(string text, string fontName, double fontSize,
-                                   FontWeight? fontWeight = null) {
-    var formattedText = new FormattedText(text, CultureInfo.CurrentCulture,
-                                          FlowDirection.LeftToRight,
-                                          new Typeface(new FontFamily(fontName), FontStyles.Normal,
-                                                       fontWeight ?? FontWeights.Normal, FontStretches.Normal),
-                                          fontSize, Brushes.Black, new NumberSubstitution(), 1);
-    return new Size(formattedText.WidthIncludingTrailingWhitespace, formattedText.Height);
+  public static void UpdateMaxMenuItemWidth(string title, ref double maxWidth, MenuItem targetMenu) {
+    double width = Utils.MeasureString(title, targetMenu).Width + 20;
+    maxWidth = Math.Max(width, maxWidth);
   }
 
-  public static Size MeasureString(string text, Typeface font, double fontSize,
+
+  public static Size MeasureString(string text, Control targetControl) {
+    var font = new Typeface(targetControl.FontFamily, targetControl.FontStyle,
+      targetControl.FontWeight, targetControl.FontStretch);
+    return MeasureString(text, font, targetControl.FontSize);
+  }
+
+  public static Size MeasureString(string text, string fontName, double fontSize,
                                    FontWeight? fontWeight = null) {
+    var font = new Typeface(new FontFamily(fontName), FontStyles.Normal,
+      fontWeight ?? FontWeights.Normal, FontStretches.Normal);
+    return MeasureString(text, font, fontSize);
+  }
+
+  public static Size MeasureString(string text, Typeface font, double fontSize) {
     var formattedText = new FormattedText(text, CultureInfo.CurrentCulture,
                                           FlowDirection.LeftToRight, font, fontSize, Brushes.Black,
                                           new NumberSubstitution(), 1);
@@ -1092,22 +1169,20 @@ static class Utils {
     return MeasureString(dummyString, fontName, fontSize, fontWeight);
   }
 
-  public static Size MeasureString(int letterCount, Typeface font, double fontSize,
-                                   FontWeight? fontWeight = null) {
+  public static Size MeasureString(int letterCount, Typeface font, double fontSize) {
     if (letterCount == 1) {
-      return MeasureString("X", font, fontSize, fontWeight);
+      return MeasureString("X", font, fontSize);
     }
 
     string dummyString = new string('X', letterCount);
-    return MeasureString(dummyString, font, fontSize, fontWeight);
+    return MeasureString(dummyString, font, fontSize);
   }
 
   public static void SelectEditableListViewItem(ListView listView, int index) {
     listView.SelectedItem = null;
     listView.SelectedIndex = index;
     listView.UpdateLayout(); // Force the ListView to generate the containers.
-    var item =
-      listView.ItemContainerGenerator.ContainerFromIndex(index) as ListViewItem;
+    var item = listView.ItemContainerGenerator.ContainerFromIndex(index) as ListViewItem;
 
     if (item != null) {
       var textBox = FindChild<TextBox>(item);
@@ -1140,20 +1215,6 @@ static class Utils {
     if (listViewItem != null) {
       listView.SelectedItem = null;
       listViewItem.IsSelected = true;
-    }
-  }
-
-  public static void FocusTextBoxListViewItem(object item, ListView listView) {
-    var listViewItem = (ListViewItem)listView.ItemContainerGenerator.ContainerFromItem(item);
-
-    if (listViewItem != null) {
-      // Find the TextBox within the ListViewItem
-      var textBox = Utils.FindChild<TextBox>(listViewItem);
-
-      if (textBox != null) {
-        // Set keyboard focus to the TextBox
-        textBox.Focus();
-      }
     }
   }
 

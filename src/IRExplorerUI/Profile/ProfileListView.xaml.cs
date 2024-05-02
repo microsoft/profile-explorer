@@ -11,15 +11,22 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using HtmlAgilityPack;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.Utilities;
+using Microsoft.Diagnostics.Runtime;
 
 namespace IRExplorerUI.Profile;
 
 public class ProfileListViewItem : SearchableProfileItem {
   CallTreeNodeSettings settings_;
+  private object associatedObject_;
+  private Brush functionBackColor_;
+  private Brush moduleBackColor_;
+  private ProfileCallTreeNode callTreeNode;
+  private ModuleProfileInfo moduleInfo;
 
   private ProfileListViewItem(FunctionNameFormatter funcNameFormatter,
                               CallTreeNodeSettings settings) :
@@ -27,8 +34,30 @@ public class ProfileListViewItem : SearchableProfileItem {
     settings_ = settings;
   }
 
-  public ProfileCallTreeNode CallTreeNode { get; set; }
-  public ModuleProfileInfo ModuleInfo { get; set; }
+  public ProfileCallTreeNode CallTreeNode {
+    get => associatedObject_ as ProfileCallTreeNode;
+    set => associatedObject_ = value;
+  }
+
+  public ModuleProfileInfo ModuleInfo {
+    get => associatedObject_ as ModuleProfileInfo;
+    set => associatedObject_ = value;
+  }
+
+  public FunctionMarkingCategory MarkingCategory {
+    get => associatedObject_ as FunctionMarkingCategory;
+    set => associatedObject_ = value;
+  }
+
+  public Brush FunctionBackColor {
+    get => functionBackColor_;
+    set => SetAndNotify(ref functionBackColor_, value);
+  }
+
+  public Brush ModuleBackColor {
+    get => moduleBackColor_;
+    set => SetAndNotify(ref moduleBackColor_, value);
+  }
 
   protected override string GetFunctionName() {
     return CallTreeNode?.FunctionName;
@@ -58,6 +87,17 @@ public class ProfileListViewItem : SearchableProfileItem {
     };
   }
 
+  public static ProfileListViewItem From(FunctionMarkingCategory category, ProfileData profileData,
+                                         FunctionNameFormatter funcNameFormatter,
+                                         CallTreeNodeSettings settings) {
+    return new ProfileListViewItem(funcNameFormatter, settings) {
+      MarkingCategory = category,
+      FunctionName = category.Marking.Title, // Override name, disables GetFunctionName.
+      Weight = category.Weight,
+      Percentage = category.Percentage
+    };
+  }
+
   protected override bool ShouldPrependModule() {
     return settings_.PrependModuleToFunction;
   }
@@ -83,11 +123,8 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   private bool searchPanelVisible_;
   private List<ProfileListViewItem> itemList_;
   private List<ProfileListViewItem> resultList_;
-
-  public double FunctionColumnWidth {
-    get => functionColumnWidth_;
-    set => SetField(ref functionColumnWidth_, value);
-  }
+  private List<FunctionMarkingCategory> categories_;
+  private bool isCategoriesList_;
 
   public ProfileListView() {
     InitializeComponent();
@@ -169,6 +206,16 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     set => session_ = value;
   }
 
+  public double FunctionColumnWidth {
+    get => functionColumnWidth_;
+    set => SetField(ref functionColumnWidth_, value);
+  }
+
+  public bool IsCategoriesList {
+    get => isCategoriesList_;
+    set => SetField(ref isCategoriesList_, value);
+  }
+
   private void SetupPreviewPopup() {
     if (previewPopup_ != null) {
       previewPopup_.UnregisterHoverEvents();
@@ -188,8 +235,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       var item = (ProfileListViewItem)hoveredItem.DataContext;
 
       if (item.CallTreeNode != null) {
-        return PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList,
-                                            $"Function {item.FunctionName}");
+        return PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList);
       }
 
       return null;
@@ -197,27 +243,57 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   }
 
   public event EventHandler<ModuleProfileInfo> ModuleClick;
+  public event EventHandler<FunctionMarkingCategory> CategoryClick;
   public event EventHandler<ProfileCallTreeNode> NodeClick;
   public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
+  public event EventHandler MarkingChanged;
   public event PropertyChangedEventHandler PropertyChanged;
 
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
-      await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function,
-                                                     $"Function {item.FunctionName}",
-                                                     ItemList, session_);
+      var brush = GetMarkedNodeColor(item);
+      await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function, "",
+                                                     ItemList, session_, null, false, brush);
     }
   });
+
+  private Brush GetMarkedNodeColor(ProfileListViewItem node) {
+    return App.Settings.MarkingSettings.
+      GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
+  }
+
   public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
-    await OpenFunction(OpenSectionKind.ReplaceCurrent);
+    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+    await OpenFunction(mode);
   });
   public RelayCommand<object> OpenFunctionInNewTabCommand => new RelayCommand<object>(async obj => {
-    await OpenFunction(OpenSectionKind.NewTab);
+    await OpenFunction(OpenSectionKind.NewTabDockRight);
   });
 
   private async Task OpenFunction(OpenSectionKind openMode) {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
       await Session.OpenProfileFunction(item.CallTreeNode, openMode);
+    }
+  }
+  public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
+    if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
+      var filter = new ProfileSampleFilter(item.CallTreeNode);
+      await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function, "",
+                                                     ItemList, session_, filter);
+    }
+  });
+  public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
+    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+    await OpenFunction(mode);
+  });
+  public RelayCommand<object> OpenInstanceInNewTabCommand => new RelayCommand<object>(async obj => {
+    await OpenFunctionInstance(OpenSectionKind.NewTabDockRight);
+  });
+
+  private async Task OpenFunctionInstance(OpenSectionKind openMode) {
+    if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
+      var filter = new ProfileSampleFilter(item.CallTreeNode);
+      await Session.OpenProfileFunction(item.CallTreeNode, openMode, filter);
     }
   }
 
@@ -258,6 +334,54 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       }
 
       SearchableProfileItem.CopyFunctionListAsHtml(funcList);
+    }
+  });
+
+  public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+
+    foreach (var item in ItemList.SelectedItems) {
+      if (item is ProfileListViewItem profileItem &&
+          obj is SelectedColorEventArgs e) {
+        markingSettings.AddModuleColor(profileItem.ModuleName, e.SelectedColor);
+      }
+    }
+
+    markingSettings.UseModuleColors = true;
+    UpdateMarkedFunctions();
+    MarkingChanged?.Invoke(this, EventArgs.Empty);
+  });
+
+  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+
+    foreach (var item in ItemList.SelectedItems) {
+      if (item is ProfileListViewItem profileItem &&
+          obj is SelectedColorEventArgs e) {
+        markingSettings.AddFunctionColor(profileItem.FunctionName, e.SelectedColor);
+      }
+    }
+
+    markingSettings.UseFunctionColors = true;
+    UpdateMarkedFunctions();
+    MarkingChanged?.Invoke(this, EventArgs.Empty);
+  });
+
+  public RelayCommand<object> CopyCategoriesCommand => new RelayCommand<object>(async obj => {
+    if (categories_ != null) {
+      ProfilingUtils.CopyFunctionMarkingsAsHtml(categories_, Session);
+    }
+  });
+
+  public RelayCommand<object> ExportCategoriesHtmlCommand => new RelayCommand<object>(async obj => {
+    if (categories_ != null) {
+      ProfilingUtils.ExportFunctionMarkingsAsHtmlFile(categories_, Session);
+    }
+  });
+
+  public RelayCommand<object> ExportCategoriesMarkdownCommand => new RelayCommand<object>(async obj => {
+    if (categories_ != null) {
+      ProfilingUtils.ExportFunctionMarkingsAsMarkdownFile(categories_, Session);
     }
   });
 
@@ -396,17 +520,75 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     filteredNodes.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
                                                                          Session.CompilerInfo.NameProvider.FormatFunctionName,
                                                                          Settings)));
+    UpdateMarkedFunctions();
     ItemList.ItemsSource = itemList_;
     GridViewColumnVisibility.UpdateListView(ItemList);
   }
 
-  public void ShowModules(List<ModuleProfileInfo> nodes) {
-    itemList_ = new List<ProfileListViewItem>(nodes.Count);
-    nodes.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
+  public void ShowModules(List<ModuleProfileInfo> modules) {
+    itemList_ = new List<ProfileListViewItem>(modules.Count);
+    modules.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
                                                                  Session.CompilerInfo.NameProvider.FormatFunctionName,
                                                                  Settings)));
+    UpdateMarkedFunctions();
     ItemList.ItemsSource = new ListCollectionView(itemList_);
     ItemList.ContextMenu = null;
+  }
+
+  public void ShowCategories(List<FunctionMarkingCategory> categories) {
+    itemList_ = new List<ProfileListViewItem>(categories.Count);
+
+    foreach (var node in categories) {
+      if(node.SortedFunctions.Count == 0) {
+        continue;
+      }
+
+      itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
+        Session.CompilerInfo.NameProvider.FormatFunctionName, Settings));
+    }
+
+    UpdateMarkedFunctions();
+    ItemList.ItemsSource = new ListCollectionView(itemList_);
+    IsCategoriesList = true;
+    categories_ = categories;
+  }
+
+  public void UpdateMarkedFunctions() {
+    if (itemList_ == null) {
+      return; // Control not being used.
+    }
+
+    var fgSettings = App.Settings.MarkingSettings;
+
+    foreach (var f in itemList_) {
+      f.ModuleBackColor = null;
+      f.FunctionBackColor = null;
+    }
+
+    if (!fgSettings.UseAutoModuleColors &&
+        !fgSettings.UseModuleColors &&
+        !fgSettings.UseFunctionColors) {
+      return;
+    }
+
+    foreach (var item in itemList_) {
+      if (item.ModuleName == null || item.FunctionName == null) {
+        continue;
+      }
+
+      if (fgSettings.UseModuleColors &&
+          fgSettings.GetModuleBrush(item.ModuleName, out var brush)) {
+        item.ModuleBackColor = brush;
+      }
+      else if (fgSettings.UseAutoModuleColors) {
+        item.ModuleBackColor = fgSettings.GetAutoModuleBrush(item.ModuleName);
+      }
+
+      if (fgSettings.UseFunctionColors &&
+          fgSettings.GetFunctionColor(item.FunctionName, out var color)) {
+        item.FunctionBackColor = color.AsBrush();
+      }
+    }
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
@@ -437,24 +619,23 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     else if (node?.ModuleInfo != null) {
       ModuleClick?.Invoke(this, node.ModuleInfo);
     }
+    else if (node?.MarkingCategory != null) {
+      CategoryClick?.Invoke(this, node.MarkingCategory);
+    }
 
     // Show the sum of the selected functions.
     if (ItemList.SelectedItems.Count > 1) {
-      var weightSum = TimeSpan.Zero;
+      var selectedNodes = new List<ProfileCallTreeNode>();
 
       foreach (var item in ItemList.SelectedItems) {
         if (item is ProfileListViewItem profileItem && profileItem.CallTreeNode != null) {
-          weightSum += profileItem.CallTreeNode.Weight;
+          selectedNodes.Add(profileItem.CallTreeNode);
         }
       }
 
-      if(weightSum == TimeSpan.Zero) {
-        Session.SetApplicationStatus("");
-        return;
-      }
-
+      var weightSum = ProfileCallTree.CombinedCallTreeNodesWeight(selectedNodes);
       double weightPercentage = Session.ProfileData.ScaleFunctionWeight(weightSum);
-      string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+      string text = $"Selected {ItemList.SelectedItems.Count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
       Session.SetApplicationStatus(text, "Sum of time for the selected functions");
     }
     else {
@@ -465,5 +646,12 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public void Reset() {
     ItemList.ItemsSource = null;
     itemList_ = null;
+    categories_ = null;
+  }
+
+  public void SelectFirstItem() {
+    if (ItemList.Items.Count > 0) {
+      ItemList.SelectedIndex = 0;
+    }
   }
 }

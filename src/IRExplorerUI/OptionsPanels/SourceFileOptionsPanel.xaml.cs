@@ -91,8 +91,7 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
 
     // Wait for the UI to update
     Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => {
-      var newItem = settings_.FinderSettings.DisabledSourceMappings.Last();
-      Utils.FocusTextBoxListViewItem(newItem, ExcludedPathsList);
+      Utils.SelectEditableListViewItem(ExcludedPathsList, settings_.FinderSettings.DisabledSourceMappings.Count - 1);
     });
   }
 

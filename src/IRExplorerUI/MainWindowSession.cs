@@ -214,7 +214,9 @@ public partial class MainWindow : Window, ISession {
 
       string placeholderText = "Could not find function code";
       var dummyFunc = new FunctionIR(section.ParentFunction.Name);
-      return new ParsedIRTextSection(section, placeholderText.AsMemory(), dummyFunc);
+      return new ParsedIRTextSection(section, placeholderText.AsMemory(), dummyFunc) {
+        LoadFailed = true
+      };
     });
   }
 
@@ -584,13 +586,13 @@ public partial class MainWindow : Window, ISession {
 
   private async Task OpenDocument() {
     await Utils.ShowOpenFileDialogAsync(CompilerInfo.OpenFileFilter, "*.*", "Open file",
-                                        async path => {
-                                          var loadedDoc = await OpenDocument(path);
+      async path => {
+        var loadedDoc = await OpenDocument(path);
 
-                                          if (loadedDoc != null) {
-                                            AddRecentFile(path);
-                                          }
-                                        });
+        if (loadedDoc != null) {
+          AddRecentFile(path);
+        }
+      });
   }
 
   private async Task<LoadedDocument>
@@ -722,7 +724,6 @@ public partial class MainWindow : Window, ISession {
     await ExitDocumentDiffState(true);
     sessionState_.DocumentChanged -= DocumentState_DocumentChangedEvent;
     sessionState_.EndSession();
-    sessionState_ = null;
 
     FunctionAnalysisCache.ResetCache();
     DiffModeButton.IsEnabled = false;
@@ -770,6 +771,7 @@ public partial class MainWindow : Window, ISession {
   private async Task BeginSessionStateChange() {
     // Wait for any running state changes.
     await SessionLoadCompleted.WaitAsync();
+    await updateProfileTask_.CancelTaskAndWaitAsync();
 
     loadingDocuments_ = true;
     documentLoadStartTime_ = DateTime.UtcNow;
@@ -1018,23 +1020,28 @@ public partial class MainWindow : Window, ISession {
                              bool runExtraTasks = true) {
     var document = targetDocument;
 
-    if (document == null &&
-        (args.OpenKind == OpenSectionKind.ReplaceCurrent ||
-         args.OpenKind == OpenSectionKind.ReplaceLeft ||
-         args.OpenKind == OpenSectionKind.ReplaceRight)) {
+    if (args.OpenKind == OpenSectionKind.NewTab ||
+         args.OpenKind == OpenSectionKind.NewTabDockLeft ||
+         args.OpenKind == OpenSectionKind.NewTabDockRight) {
+      document = (await AddNewDocument(args.OpenKind)).DocumentHost;
+    }
+    else if (args.OpenKind == OpenSectionKind.ReplaceCurrent ||
+             args.OpenKind == OpenSectionKind.ReplaceLeft ||
+             args.OpenKind == OpenSectionKind.ReplaceRight) {
+      // Try to pick a host from the same module first.
       document = FindSameSummaryDocumentHost(args.Section);
 
+      // Otherwise pick the active host, if any, or create a new one.
       if (document == null && args.OpenKind == OpenSectionKind.ReplaceCurrent) {
         document = FindActiveDocumentHost();
       }
-    }
 
-    if (document == null ||
-        targetDocument == null &&
-        (args.OpenKind == OpenSectionKind.NewTab ||
-         args.OpenKind == OpenSectionKind.NewTabDockLeft ||
-         args.OpenKind == OpenSectionKind.NewTabDockRight)) {
-      document = (await AddNewDocument(args.OpenKind)).DocumentHost;
+      if (document == null) {
+        document = (await AddNewDocument(args.OpenKind)).DocumentHost;
+      }
+    }
+    else {
+      throw new InvalidOperationException("Unhandled OpenSectionKind");
     }
 
     // In diff mode, reload both left/right sections and redo the diffs.
@@ -1075,7 +1082,7 @@ public partial class MainWindow : Window, ISession {
 
     if (result != null) {
       // Update UI to reflect new section before starting long-running tasks.
-      document.LoadSectionMinimal(result);
+      await document.LoadSectionMinimal(result);
       NotifyPanelsOfSectionLoad(section, document, true);
       SetupDocumentEvents(document);
       await UpdateUIAfterSectionSwitch(section, document);
@@ -1227,8 +1234,15 @@ public partial class MainWindow : Window, ISession {
     return delayedAction;
   }
 
-  private async Task UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentHost document,
-                                                DelayedAction delayedAction = null) {
+  public void UpdateDocumentTitles() {
+    foreach (var docHostPair in sessionState_.DocumentHosts) {
+      docHostPair.Host.Title = GetDocumentTitle(docHostPair.DocumentHost, docHostPair.Section);
+      docHostPair.Host.ToolTip = GetDocumentDescription(docHostPair.DocumentHost, docHostPair.Section);
+    }
+  }
+
+private async Task UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentHost document,
+                                              DelayedAction delayedAction = null) {
     var docHostPair = FindDocumentHostPair(document);
 
     //? TODO: Can happen if the loading is slow (debug mode?)

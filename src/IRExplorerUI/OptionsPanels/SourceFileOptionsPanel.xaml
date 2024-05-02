@@ -19,13 +19,53 @@
     <TabControl Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderThickness="0">
       <TabItem Header="General" Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
+          <CheckBox
+            x:Name="AssemblyCheckBox"
+            Margin="0,2,0,0"
+            Content="Show assembly sections for source lines"
+            IsChecked="{Binding Path=ShowInlineAssembly, Mode=TwoWay}"
+            ToolTip="Display the associated assembly instructions for each source line" />
+          <CheckBox
+            Margin="20,2,0,0"
+            Content="Auto-expand assembly sections"
+            IsEnabled="{Binding ElementName=AssemblyCheckBox, Path=IsChecked}"
+            IsChecked="{Binding Path=AutoExpandInlineAssembly, Mode=TwoWay}"
+            ToolTip="Display the assembly sections in expanded state by default" />
+          <CheckBox
+            x:Name="StatementsCheckBox"
+            Margin="0,4,0,0"
+            Content="Show source file statement annotations"
+            IsChecked="{Binding Path=ShowSourceStatements, Mode=TwoWay}"
+            ToolTip="Parse source file and mark loops and if/else/switch statements in profiling columns" />
+          <CheckBox
+            Margin="20,2,0,0"
+            Content="Show statement annotations on left margin"
+            IsEnabled="{Binding ElementName=StatementsCheckBox, Path=IsChecked}"
+            IsChecked="{Binding Path=ShowSourceStatementsOnMargin, Mode=TwoWay}"
+            ToolTip="Show the statement annotations as icons in the left document margin" />
 
+          <CheckBox
+            Margin="0,4,0,0"
+            Content="Sync selected line with assembly document"
+            IsChecked="{Binding Path=SyncLineWithDocument, Mode=TwoWay}"
+            ToolTip="Sync the corresponding lines with the selection in the assembly document" />
+          <CheckBox
+            Margin="0,2,0,0"
+            Content="Sync inlinee with assembly document"
+            IsChecked="{Binding Path=SyncInlineeWithDocument, Mode=TwoWay}"
+            ToolTip="Display the deepest inlined function for the selection in the assembly document" />
+
+          <Separator Margin="0,4,0,4" Background="LightGray"/>
           <TextBlock FontWeight="Medium" Text="Document Style" />
           <CheckBox
+            Margin="0,4,0,2"
+            Content="Highlight current text line"
+            IsChecked="{Binding Path=HighlightCurrentLine, Mode=TwoWay}" />
+          <CheckBox
             x:Name="SyncWithDocumentCheckBox"
-            Margin="0,4,0,4"
+            Margin="0,2,0,4"
             Content="Sync style with assembly document"
-            IsChecked="{Binding Path=SyncWithDocument, Mode=TwoWay}"
+            IsChecked="{Binding Path=SyncStyleWithDocument, Mode=TwoWay}"
             ToolTip="Use the same font as the assembly document" />
           <StackPanel
             Margin="0,2,0,2"
@@ -57,10 +97,10 @@
               Minimum="5.0"
               ParsingNumberStyle="Number"
               ShowButtonSpinner="True"
-              Value="{Binding Path=FontSize, Mode=TwoWay}" />
+              Value="{Binding Path=TextFontSize, Mode=TwoWay}" />
           </StackPanel>
 
-          <Separator Margin="0,4,0,4" />
+          <Separator Margin="0,4,0,4" Background="LightGray"/>
           <DockPanel IsEnabled="{Binding ElementName=SyncWithDocumentCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}">
             <TextBlock FontWeight="Medium" Text="Document Colors" />
             <Button
@@ -105,6 +145,7 @@
                 VerticalAlignment="Center"
                 Text="Background color" />
             </Grid>
+
             <Grid Margin="0,2,0,0">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="70" />
@@ -126,7 +167,27 @@
                 VerticalAlignment="Center"
                 Text="Default text color" />
             </Grid>
-
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=CurrentLineBorderColor, Mode=TwoWay}"
+                ShowDropDownButton="True"
+                UsingAlphaChannel="False" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Current line border color" />
+            </Grid>
             <Grid Margin="0,2,0,0">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="70" />
@@ -152,7 +213,7 @@
         </StackPanel>
       </TabItem>
       <TabItem
-        Header="Source File"
+        Header="Source Files"
         Style="{StaticResource TabControlStyle}"
         ToolTip="Options for finding source files">
         <StackPanel Margin="4,4,4,4">
@@ -268,7 +329,7 @@
               Orientation="Horizontal" />
           </Grid>
           <TextBlock FontSize="11" Text="Wildcards in the path are accepted, e.g. *path\foo*" />
-          <Separator Margin="0,4,0,4" />
+          <Separator Margin="0,4,0,4" Background="LightGray"/>
 
 
           <TextBlock FontWeight="Medium" Text="File Path Mappings" />

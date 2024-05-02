@@ -125,6 +125,18 @@ public class SparseBitvector : IEquatable<SparseBitvector> {
       a = nextNode;
     }
   }
+  
+  public void ForEachSetBit(Func<int, bool> action) {
+    var node = startNode_;
+    
+    while(node != null) {
+      if (!node.ForEachSetBit(action)) {
+        return;
+      }
+
+      node = node.NextNode;
+    }
+  }
 
   public override bool Equals(object? obj) {
     if (ReferenceEquals(null, obj)) return false;
@@ -223,6 +235,10 @@ public class SparseBitvector : IEquatable<SparseBitvector> {
     if (prevNode != null) {
       node.NextNode = prevNode.NextNode;
       prevNode.NextNode = node;
+
+      if (prevNode == lastNode_) {
+        lastNode_ = node;
+      }
     }
     else {
       node.NextNode = startNode_;
@@ -358,7 +374,18 @@ public class SparseBitvector : IEquatable<SparseBitvector> {
     public bool IsBitInRange(int bit) {
       return bit >= StartBit && bit < StartBit + BitsPerNode;
     }
+    
+    
+    public bool ForEachSetBit(Func<int, bool> action) {
+      for (int i = StartBit; i < EndBit; i++) {
+        if (this[i] && !action(i)) {
+          return false;
+        }
+      }
 
+      return true;
+    }
+    
     public override bool Equals(object obj) {
       return Equals((Node)obj);
     }

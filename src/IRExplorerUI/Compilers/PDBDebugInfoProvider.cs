@@ -244,15 +244,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
   }
 
-  public bool CanUseInstance() {
-#if DEBUG
-    if (creationThreadId_ != Thread.CurrentThread.ManagedThreadId) {
-      Trace.WriteLine($"Cross-thread PDB access: {creationThreadId_} != {Thread.CurrentThread.ManagedThreadId}");
-    }
-#endif
-    return creationThreadId_ == Thread.CurrentThread.ManagedThreadId;
-  }
-
   public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {
     return AnnotateSourceLocations(function, textFunc.Name);
   }
@@ -302,8 +293,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return FindFunctionSourceFilePathImpl(lineInfo, sourceFile, funcSymbol.relativeVirtualAddress);
   }
 
-  public SourceLineDebugInfo FindSourceLineByRVA(long rva) {
-    return FindSourceLineByRVAImpl(rva).Item1;
+  public SourceLineDebugInfo FindSourceLineByRVA(long rva, bool includeInlinees) {
+    return FindSourceLineByRVAImpl(rva, includeInlinees).Item1;
   }
 
   public FunctionDebugInfo FindFunctionByRVA(long rva) {
@@ -312,17 +303,10 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     try {
-      session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
+      var symbol = FindFunctionSymbolByRVA(rva);
 
-      if (funcSym != null) {
-        return new FunctionDebugInfo(funcSym.name, funcSym.relativeVirtualAddress, (long)funcSym.length);
-      }
-
-      // Do another lookup as a public symbol.
-      session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var funcSym2);
-
-      if (funcSym2 != null) {
-        return new FunctionDebugInfo(funcSym2.name, funcSym2.relativeVirtualAddress, (long)funcSym2.length);
+      if(symbol != null) {
+        return new FunctionDebugInfo(symbol.name, symbol.relativeVirtualAddress, (long)symbol.length);
       }
     }
     catch (Exception ex) {
@@ -427,7 +411,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
           // The checksum should match, but do a check just in case.
           string filePath = sourceLine.SourceFile.GetSourceFile();
 
-          if (File.Exists(filePath)) {
+          if (ValidateDownloadedSourceFile(filePath)) {
             Trace.WriteLine($"Downloaded source file {filePath}");
             localFilePath = filePath;
             hasChecksumMismatch = !SourceFileChecksumMatchesPDB(sourceFile, localFilePath);
@@ -447,6 +431,24 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return new SourceFileDebugInfo(localFilePath, originalFilePath, lineInfo.Line, hasChecksumMismatch);
   }
 
+  private bool ValidateDownloadedSourceFile(string filePath) {
+    try {
+      if (!File.Exists(filePath)) {
+        return false;
+      }
+      
+      // If the source server requires authentication, but it's not properly set up,
+      // usually an HTML error page is returned instead, treat it as a failure.
+      //? TODO: Better way to detect this, may need change in TraceEvent lib.
+      var fileText = File.ReadAllText(filePath);
+      return !fileText.Contains(@"<!DOCTYPE html");
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to validate downloaded source file {filePath}: {ex.Message}");
+      return false;
+    }
+  }
+
   private bool SourceFileChecksumMatchesPDB(IDiaSourceFile sourceFile, string filePath) {
     var hashAlgo = GetSourceFileChecksumHashAlgorithm(sourceFile);
     byte[] pdbChecksum = GetSourceFileChecksum(sourceFile);
@@ -455,7 +457,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
            pdbChecksum.SequenceEqual(fileChecksum);
   }
 
-  private (SourceLineDebugInfo, IDiaSourceFile) FindSourceLineByRVAImpl(long rva) {
+  private (SourceLineDebugInfo, IDiaSourceFile)
+    FindSourceLineByRVAImpl(long rva, bool includeInlinees = false) {
     if (!EnsureLoaded()) {
       return (SourceLineDebugInfo.Unknown, null);
     }
@@ -471,8 +474,28 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         }
 
         var sourceFile = lineNumber.sourceFile;
-        return (new SourceLineDebugInfo((int)lineNumber.addressOffset, (int)lineNumber.lineNumber,
-                                        (int)lineNumber.columnNumber, sourceFile.fileName), sourceFile);
+        var sourceLine = new SourceLineDebugInfo((int)lineNumber.addressOffset,
+                                                 (int)lineNumber.lineNumber,
+                                                 (int)lineNumber.columnNumber,
+                                                 sourceFile.fileName);
+
+        if (includeInlinees) {
+          var funcSymbol = FindFunctionSymbolByRVA(rva);
+
+          if (funcSymbol != null) {
+            // Enumerate the functions that got inlined at this call site.
+            foreach (var inlinee in EnumerateInlinees(funcSymbol, (uint)rva)) {
+              if (string.IsNullOrEmpty(inlinee.FilePath)) {
+                // If the file name is not set, it means it's the same file
+                // as the function into which the inlining happened.
+                inlinee.FilePath = sourceFile.fileName;
+              }
+
+              sourceLine.AddInlinee(inlinee);
+            }
+          }
+        }
+        return (sourceLine, sourceFile);
       }
     }
     catch (Exception ex) {
@@ -542,31 +565,14 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         }
 
         // Enumerate the functions that got inlined at this call site.
-        funcSymbol.findInlineFramesByRVA(instrRVA, out var inlineeFrameEnum);
-
-        foreach (IDiaSymbol inlineFrame in inlineeFrameEnum) {
-          inlineFrame.findInlineeLinesByRVA(instrRVA, 0, out var inlineeLineEnum);
-
-          while (true) {
-            inlineeLineEnum.Next(1, out var inlineeLineNumber, out uint inlineeRetrieved);
-
-            if (inlineeRetrieved == 0) {
-              break;
-            }
-
-            // Getting the source file of the inlinee often fails, ignore it.
-            string inlineeFileName = "";
-
-            try {
-              inlineeFileName = inlineeLineNumber.sourceFile.fileName;
-            }
-            catch {
-            }
-
-            locationTag.AddInlinee(inlineFrame.name, inlineeFileName,
-                                   (int)inlineeLineNumber.lineNumber,
-                                   (int)inlineeLineNumber.columnNumber);
+        foreach (var inlinee in EnumerateInlinees(funcSymbol, instrRVA)) {
+          if (string.IsNullOrEmpty(inlinee.FilePath)) {
+            // If the file name is not set, it means it's the same file
+            // as the function into which the inlining happened.
+            inlinee.FilePath = locationTag.FilePath;
           }
+
+          locationTag.AddInlinee(inlinee);
         }
       }
     }
@@ -578,12 +584,44 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return true;
   }
 
-  public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
-    if (funcInfo.HasSourceLines) {
-      return true; // Already populated.
-    }
+  private IEnumerable<SourceStackFrame>
+    EnumerateInlinees(IDiaSymbol funcSymbol, uint instrRVA) {
+    funcSymbol.findInlineFramesByRVA(instrRVA, out var inlineeFrameEnum);
 
+    foreach (IDiaSymbol inlineFrame in inlineeFrameEnum) {
+      inlineFrame.findInlineeLinesByRVA(instrRVA, 0, out var inlineeLineEnum);
+
+      while (true) {
+        inlineeLineEnum.Next(1, out var inlineeLineNumber, out uint inlineeRetrieved);
+
+        if (inlineeRetrieved == 0) {
+          break;
+        }
+
+        // Getting the source file of the inlinee often fails, ignore it.
+        string inlineeFileName = null;
+
+        try {
+          inlineeFileName = inlineeLineNumber.sourceFile.fileName;
+        }
+        catch {
+          //? TODO: Any way to detect this and avoid throwing?
+        }
+
+        yield return new SourceStackFrame(
+          inlineFrame.name, inlineeFileName,
+          (int)inlineeLineNumber.lineNumber,
+          (int)inlineeLineNumber.columnNumber);
+      }
+    }
+  }
+
+  public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
     lock (funcInfo) {
+      if (funcInfo.HasSourceLines) {
+        return true; // Already populated.
+      }
+
       try {
         session_.findLinesByRVA((uint)funcInfo.StartRVA, (uint)funcInfo.Size, out var lineEnum);
 
@@ -657,6 +695,31 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     return FindFunctionSymbolImpl(SymTagEnum.SymTagPublicSymbol, functionName, demangledName, queryDemangledName);
+  }
+
+  private IDiaSymbol FindFunctionSymbolByRVA(long rva) {
+    if (!EnsureLoaded()) {
+      return null;
+    }
+
+    try {
+      session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
+
+      if (funcSym != null) {
+        return funcSym;
+      }
+      
+      session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var pubSym);
+
+      if (pubSym != null) {
+        return pubSym;
+      }
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to find function symbol for RVA {rva}: {ex.Message}");
+    }
+
+    return null;
   }
 
   private IDiaSymbol FindFunctionSymbolImpl(SymTagEnum symbolType, string functionName, string demangledName,

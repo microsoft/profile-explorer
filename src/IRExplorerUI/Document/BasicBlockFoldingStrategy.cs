@@ -1,7 +1,9 @@
 // Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
 using IRExplorerCore.IR;
@@ -9,16 +11,15 @@ using IRExplorerCore.IR;
 namespace IRExplorerUI;
 
 public interface IBlockFoldingStrategy {
-  FunctionIR Function { get; set; }
   public void UpdateFoldings(FoldingManager manager, TextDocument document);
 }
 
 public sealed class BasicBlockFoldingStrategy : IBlockFoldingStrategy {
-  public BasicBlockFoldingStrategy(FunctionIR function) {
-    Function = function;
-  }
+  private FunctionIR function_;
 
-  public FunctionIR Function { get; set; }
+  public BasicBlockFoldingStrategy(FunctionIR function) {
+    function_ = function;
+  }
 
   public void UpdateFoldings(FoldingManager manager, TextDocument document) {
     var newFoldings = CreateNewFoldings(document, out int firstErrorOffset);
@@ -31,33 +32,40 @@ public sealed class BasicBlockFoldingStrategy : IBlockFoldingStrategy {
   }
 
   private IEnumerable<NewFolding> CreateNewFoldings(ITextSource document) {
-    var newFoldings = new List<NewFolding>(Function.Blocks.Count);
+    var newFoldings = new List<NewFolding>(function_.Blocks.Count);
+
+    if (function_.Blocks.Count == 0) {
+      return newFoldings;
+    }
+
     BlockIR lastBlock = null;
     int lastOffset = 0;
     int textLength = document.TextLength;
-    bool sorted = true;
 
-    foreach (var block in Function.Blocks) {
+    foreach (var block in function_.Blocks) {
       int offset = block.TextLocation.Offset;
       int foldingLength = offset - lastOffset;
 
-      if (lastBlock != null && foldingLength > 1 && lastBlock.Tuples.Count > 0) {
+      if (lastBlock != null && foldingLength > 1) {
         //? TODO: This seems to be a bug with diff mode
-        if (offset + foldingLength < textLength) {
-          newFoldings.Add(new NewFolding(lastOffset, offset - 2));
-        }
-      }
+        int endOffset = Math.Min(offset, textLength - 1);
 
-      if (offset < lastOffset) {
-        sorted = false;
+        if (endOffset > lastOffset) {
+          newFoldings.Add(new NewFolding(lastOffset, endOffset - 2));
+        }
       }
 
       lastOffset = offset;
       lastBlock = block;
     }
 
-    if (!sorted) {
-      newFoldings.Sort((a, b) => a.StartOffset - b.StartOffset);
+    // Handle the last block.
+    if (lastOffset < textLength - 1) {
+      int endOffset = Math.Min(lastOffset + function_.Blocks[^1].TextLength, textLength - 1);
+
+      if (endOffset > lastOffset) {
+        newFoldings.Add(new NewFolding(lastOffset, endOffset - 2));
+      }
     }
 
     return newFoldings;

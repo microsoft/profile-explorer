@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Shell;
 using System.Xml;
+using IRExplorerCore.SourceParser;
 using IRExplorerUI.Settings;
 
 namespace IRExplorerUI;
@@ -65,6 +66,7 @@ public partial class App : Application {
   private const string BackupTraceFile = "IRExplorerBackup.log";
   private const string RemarkDefinitionFile = @"remark-settings.json";
   private const string SectionDefinitionFile = @"section-settings.json";
+  private const string FunctionMarkingsFile = @"function-markings.json";
   private const string InternalIRSyntaxHighlightingFile = @"ir.xshd";
   private const string InternalExtensionFile = @"IRExplorerExtension.vsix";
   private const string SyntaxFileSearchPattern = @"*.xshd";
@@ -221,6 +223,10 @@ public partial class App : Application {
 
   public static string GetInternalSectionsDefinitionFilePath(string compilerIRName) {
     return GetApplicationFilePath(compilerIRName, SectionDefinitionFile);
+  }
+
+  public static string GetFunctionMarkingsFilePath(string compilerIRName) {
+    return GetSettingsFilePath(compilerIRName, FunctionMarkingsFile);
   }
 
   public static List<SyntaxFileInfo> GetSyntaxHighlightingFiles(string compilerIRName, bool internalFiles = false) {
@@ -544,8 +550,7 @@ public partial class App : Application {
 
       foreach (string file in files) {
         string destFile = GetCompilerSettingsFilePath(Path.GetFileName(file), directory);
-
-        File.Copy(file, destFile, true);
+        File.Copy(file, destFile, false);
       }
 
       return true;

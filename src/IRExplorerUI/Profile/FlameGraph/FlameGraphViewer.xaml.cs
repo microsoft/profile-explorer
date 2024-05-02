@@ -54,6 +54,58 @@ public partial class FlameGraphViewer : FrameworkElement {
     return new HighlightingStyle(color, markedNodeBorderColor_);
   }
 
+  public void SaveFixedMarkedNodes(List<(ProfileCallTreeNode Node,
+                                         HighlightingStyle Style)> list) {
+    foreach (var pair in fixedMarkedNodes_) {
+      if (pair.Key.HasFunction) {
+        list.Add((pair.Key.CallTreeNode, pair.Value));
+      }
+    }
+  }
+
+  public List<(ProfileCallTreeNode Node,
+               HighlightingStyle Style)>
+    RestoreFixedMarkedNodes(List<(ProfileCallTreeNode Node,
+                                  HighlightingStyle Style)> markedNodes,
+                            ProfileCallTree callTree) {
+    if (markedNodes.Count == 0) {
+      return null;
+    }
+
+    List<(ProfileCallTreeNode Node,
+          HighlightingStyle Style)> unmatchedList = null;
+
+    foreach (var pair in markedNodes) {
+      // Find in the call tree node that corresponds to
+      // a node from another instance of a call tree.
+      // This happens when filtering the profile, which creates
+      // a new call tree. Function marked in the flame graph
+      // should still be marked in the filtered profile.
+      bool added = false;
+      var treeNode = callTree.FindMatchingNode(pair.Node);
+
+      if (treeNode != null) {
+        var fgNode = flameGraph_.GetFlameGraphNode(treeNode);
+
+        if (fgNode != null) {
+          MarkNodeImpl(fgNode, HighlighingType.Marked, pair.Style, true);
+          added = true;
+        }
+      }
+
+      // If a marked node could not be mapped to one in the current
+      // call tree instance, remember it in case the filtering changes
+      // later to a state where the call tree includes it again.
+      if (!added) {
+        unmatchedList ??= new();
+        unmatchedList.Add(pair);
+      }
+    }
+
+    renderer_.Redraw();
+    return unmatchedList;
+  }
+
   public void RestoreFixedMarkedNodes() {
     if (fixedMarkedNodes_.Count == 0) {
       return;
@@ -83,18 +135,32 @@ public partial class FlameGraphViewer : FrameworkElement {
     Session.SetApplicationStatus("");
   }
 
-  public void SelectNode(FlameGraphNode graphNode, bool append = false) {
-    if (selectedNode_ != graphNode) {
+  public void SelectNode(FlameGraphNode graphNode, bool append = false,
+                         bool deselectIfSelected = true) {
+    if (!append) {
+      ResetNodeHighlighting(); // Deselect all other nodes.
+    }
+
+    if (!selectedNodes_.ContainsKey(graphNode)) {
+      // Select a currently unselected node.
       if (!append) {
-        ResetNodeHighlighting();
+        ResetNodeHighlighting(); // Deselect all other nodes.
       }
 
       HighlightNode(graphNode, HighlighingType.Selected);
       selectedNode_ = graphNode; // Last selected node.
     }
-    else if (append && selectedNodes_.ContainsKey(graphNode)) {
-      selectedNodes_.Remove(graphNode);
-      selectedNode_ = null;
+    else if (deselectIfSelected) {
+      if (append) {
+        // Remove selection if node is already selected in append mode.
+        selectedNodes_.Remove(graphNode);
+        selectedNode_ = null;
+      }
+      else {
+        // Otherwise select the node again.
+        HighlightNode(graphNode, HighlighingType.Selected);
+        selectedNode_ = graphNode; // Last selected node.
+      }
     }
   }
 
@@ -152,7 +218,10 @@ public partial class FlameGraphViewer : FrameworkElement {
     // Because the flame graph can be rooted at a different node then
     // the call tree, parts of the call tree may not have a flame graph node.
     if (nodes is {Count: > 0}) {
-      SelectNode(nodes[0]);
+      foreach (var node in nodes) {
+        SelectNode(node, true, false);
+      }
+
       return nodes[0];
     }
 
@@ -217,6 +286,11 @@ public partial class FlameGraphViewer : FrameworkElement {
     AddLogicalChild(graphVisual_);
     UpdateMaxWidth(renderer_.MaxGraphWidth);
     initialized_ = true;
+  }
+
+  public void Redraw() {
+    // Force re-evaluating the styles and redraw.
+    SettingsUpdated(settings_);
   }
 
   private void ReloadSettings() {
@@ -299,6 +373,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     RemoveLogicalChild(graphVisual_);
     hoverNodes_.Clear();
     markedNodes_.Clear();
+    fixedMarkedNodes_.Clear();
     selectedNodes_.Clear();
     selectedNode_ = null;
     graphVisual_ = null;
@@ -461,25 +536,58 @@ public partial class FlameGraphViewer : FrameworkElement {
   }
 
   private void OnMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
-    SelectPointedNode(e);
-    e.Handled = true;
+    SelectPointedNode(e, false);
   }
 
   private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-    SelectPointedNode(e);
-    e.Handled = true;
+    SelectPointedNode(e, true);
   }
 
-  private void SelectPointedNode(MouseButtonEventArgs e) {
+  private void SelectPointedNode(MouseButtonEventArgs e, bool deselectIfSelected) {
     var point = e.GetPosition(this);
     var graphNode = FindPointedNode(point);
 
     if (graphNode != null) {
-      SelectNode(graphNode, Utils.IsControlModifierActive());
+      if (Utils.IsShiftModifierActive() && selectedNode_ != null) {
+        // Try to extend the selection to include all nodes between
+        // the currently selected one and new one.
+        var nodes = FindNodesInBetween(graphNode, selectedNode_);
+
+        if (nodes is {Count:> 0}) {
+          foreach (var node in nodes) {
+            SelectNode(node, true);
+          }
+
+          return;
+        }
+      }
+
+      SelectNode(graphNode, Utils.IsControlModifierActive(), deselectIfSelected);
     }
     else {
       ClearSelection();
     }
+  }
+
+  private List<FlameGraphNode> FindNodesInBetween(FlameGraphNode startNode, FlameGraphNode stopNode) {
+    var list = new List<FlameGraphNode>();
+    bool found = false;
+
+    if (startNode.Depth < stopNode.Depth) {
+      Utils.Swap(ref startNode, ref stopNode);
+    }
+
+    while (startNode.Depth >= stopNode.Depth) {
+      if (startNode == stopNode) {
+        found = true;
+        break;
+      }
+
+      list.Add(startNode);
+      startNode = startNode.Parent;
+    }
+
+    return found ? list : null;
   }
 
   private void MarkNodeNoRedraw(ProfileCallTreeNode node, HighlightingStyle style, bool overwriteStyle) {

@@ -10,8 +10,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Folding;
+using IRExplorerCore.IR;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Profile;
 
@@ -25,20 +27,24 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private double columnsListItemHeight_;
   private Brush selectedLineBrush_;
   private ListCollectionView profileRowCollection_;
-  private List<FoldingSection> foldedTextRegions_;
+  private List<(int StartOffset, int EndOffset)> foldedTextRegions_;
   private int rowFilterIndex_;
   private MarkedDocument associatedDocument_;
   private OptionsPanelHostWindow optionsPanelWindow_;
+  private Dictionary<IRElement, ElementRowValue> profileDataRowsMap_;
 
   public DocumentColumns() {
     InitializeComponent();
     profileColumnHeaders_ = new List<(GridViewColumnHeader Header, GridViewColumn Column)>();
     profileDataRows_ = new List<ElementRowValue>();
-    foldedTextRegions_ = new List<FoldingSection>();
+    foldedTextRegions_ = new List<(int StartOffset, int EndOffset)>();
+    profileDataRowsMap_ = new Dictionary<IRElement, ElementRowValue>();
   }
 
   public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
   public event EventHandler<int> RowSelected;
+  public event EventHandler<ElementRowValue> RowHoverStart;
+  public event EventHandler<ElementRowValue> RowHoverStop;
   public event PropertyChangedEventHandler PropertyChanged;
   public event EventHandler<OptionalColumn> ColumnSettingsChanged;
 
@@ -63,6 +69,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   public bool UseSmallerFontSize { get; set; }
+  public double TextFontSize => UseSmallerFontSize ? settings_.FontSize - 1 : settings_.FontSize;
 
   public void SelectRow(int index) {
     if (index >= 0 && ColumnsList.Items.Count > index) {
@@ -82,6 +89,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     OptionalColumn.RemoveListViewColumns(ColumnsList);
     ColumnsList.ItemsSource = null;
     profileColumnHeaders_.Clear();
+    foldedTextRegions_.Clear();
   }
 
   public async Task Display(IRDocumentColumnData columnData, MarkedDocument associatedDocument) {
@@ -101,7 +109,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
       var oddBackColor = settings_.AlternateBackgroundColor.AsBrush();
       var blockSeparatorColor = settings_.ShowBlockSeparatorLine ? settings_.BlockSeparatorColor.AsBrush() : null;
       var font = new FontFamily(settings_.FontName);
-      double fontSize = UseSmallerFontSize ? settings_.FontSize - 1 : settings_.FontSize;
+      double fontSize = TextFontSize;
 
       var comparer = new IRDocumentColumnData.ColumnComparer();
       Dictionary<OptionalColumn, ElementColumnValue> dummyCells = new(comparer);
@@ -175,8 +183,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
           var tuple = block.Tuples[i];
           int currentLine = tuple.TextLocation.Line;
           bool isSeparatorLine = settings_.ShowBlockSeparatorLine &&
-                                 i < function.Blocks.Count - 1 &&
-                                 i == block.Tuples.Count - 1;
+                                 block.IndexInFunction < function.BlockCount - 1 &&
+                                 i == block.TupleCount - 1;
 
           // Add dummy empty list view lines to match document text.
           if (currentLine > prevLine + 1) {
@@ -217,6 +225,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
             SetValueBorder(rowValues);
             profileDataRows_.Add(rowValues);
+            profileDataRowsMap_[tuple] = rowValues;
           }
           else {
             // No data at all, use an empty row.
@@ -264,6 +273,10 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     UpdateColumnsList();
   }
 
+  public ElementRowValue GetRowValue(IRElement element) {
+    return profileDataRowsMap_.GetValueOrDefault(element);
+  }
+
   private void ColumnSettingsClickHandler(object sender, RoutedEventArgs e) {
     if (optionsPanelWindow_ != null) {
       optionsPanelWindow_.Close();
@@ -288,6 +301,11 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
           return newSettings.Clone();
         }
 
+        if (commit) {
+          columnSettings_.AddColumnStyle(column, newSettings);
+          App.SaveApplicationSettings();
+        }
+
         return null;
       },
       () => optionsPanelWindow_ = null,
@@ -296,6 +314,9 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
   public void BuildColumnsVisibilityMenu(IRDocumentColumnData columnData, MenuItem menu,
                                          Action columnsChanged) {
+    // Add the columns at the end of the menu,
+    // keeping the original items.
+    var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     menu.Items.Clear();
 
     foreach (var column in columnData.Columns) {
@@ -304,6 +325,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         Tag = column,
         IsCheckable = true,
         IsChecked = column.IsVisible,
+        StaysOpenOnClick = true,
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };
 
@@ -324,11 +346,35 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         }
       };
 
-      menu.Items.Add(item);
+      defaultItems.Add(item);
     }
+
+    DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
+  }
+
+  public void SetupFoldedTextRegions(IEnumerable<FoldingSection> regions) {
+    foldedTextRegions_.Clear();
+
+    foreach (var region in regions) {
+      if (region.IsFolded) {
+        foldedTextRegions_.Add((region.StartOffset, region.EndOffset));
+      }
+    }
+    
+    foldedTextRegions_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
+    rowFilterIndex_ = 0;
+    profileRowCollection_.Refresh();
   }
 
   public void HandleTextRegionFolded(FoldingSection section) {
+    HandleTextRegionFolded((section.StartOffset, section.EndOffset));
+  }
+
+  public void HandleTextRegionFolded((int StartOffset, int EndOffset) section) {
+    if (foldedTextRegions_.Contains(section)) {
+      return;
+    }
+
     foldedTextRegions_.Add(section);
     foldedTextRegions_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
     rowFilterIndex_ = 0;
@@ -336,20 +382,23 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   public void HandleTextRegionUnfolded(FoldingSection section) {
+    HandleTextRegionUnfolded((section.StartOffset, section.EndOffset));
+  }
+
+  public void HandleTextRegionUnfolded((int StartOffset, int EndOffset) section) {
     foldedTextRegions_.Remove(section);
     rowFilterIndex_ = 0;
     profileRowCollection_.Refresh();
   }
 
   private bool ProfileListRowFilter(object item) {
-    var rowValue = (ElementRowValue)item;
-
+    // Filter out rows to keep in sync with the collapsed
+    // block foldings in the associated document.
     foreach (var range in foldedTextRegions_) {
       var startLine = associatedDocument_.GetLineByOffset(range.StartOffset);
       var endLine = associatedDocument_.GetLineByOffset(range.EndOffset);
 
       if (startLine.LineNumber - 1 > rowFilterIndex_) {
-        rowFilterIndex_++;
         break; // Early stop in sorted range list.
       }
 
@@ -373,7 +422,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     var maxColumnTextSize = new Dictionary<OptionalColumn, double>();
     var maxColumnExtraSize = new Dictionary<OptionalColumn, double>();
     var font = new FontFamily(settings_.FontName);
-    double fontSize = settings_.FontSize;
+    double fontSize = TextFontSize;
     double maxBarWidth = settings_.ProfileMarkerSettings.MaxPercentageBarWidth;
     const double columnMargin = 8;
 
@@ -406,7 +455,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
     // Set the MinWidth of the text for each cell.
     foreach (var pair in maxColumnTextSize) {
-      var columnContentSize = Utils.MeasureString((int)pair.Value, settings_.FontName, settings_.FontSize);
+      var columnContentSize = Utils.MeasureString((int)pair.Value, settings_.FontName, TextFontSize);
       double columnWidth = columnContentSize.Width + columnMargin;
       maxColumnTextSize[pair.Key] = Math.Ceiling(columnWidth);
 
@@ -420,7 +469,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         pair.Key.IsVisible = false;
       }
       else {
-        var columnTitleSize = Utils.MeasureString(pair.Key.Title, settings_.FontName, settings_.FontSize);
+        var columnTitleSize = Utils.MeasureString(pair.Key.Title, settings_.FontName, TextFontSize);
         var gridColumn = profileColumnHeaders_.Find(item => item.Header.Tag.Equals(pair.Key));
 
         if (gridColumn.Column == null || gridColumn.Header == null) {
@@ -458,7 +507,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   public void UpdateColumnsList() {
     ColumnsList.Background = settings_.BackgroundColor.AsBrush();
     ColumnsList.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
-    ColumnsListItemHeight = Utils.MeasureString("0123456789ABCXYZ!?|()", settings_.FontName, settings_.FontSize).Height;
+    ColumnsListItemHeight = Utils.MeasureString("0123456789ABCXYZ!?|()",
+      settings_.FontName, TextFontSize).Height;
   }
 
   private void ColumnHeaderOnClick(object sender, RoutedEventArgs e) {
@@ -499,6 +549,18 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private void ColumnsList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
     if(ColumnsList.SelectedItem != null) {
       RowSelected?.Invoke(this, ColumnsList.SelectedIndex);
+    }
+  }
+
+  private void ListViewItem_MouseEnter(object sender, MouseEventArgs e) {
+    if (sender is ListViewItem {DataContext: ElementRowValue row}) {
+      RowHoverStart?.Invoke(this, row);
+    }
+  }
+
+  private void ListViewItem_MouseLeave(object sender, MouseEventArgs e) {
+    if (sender is ListViewItem {DataContext: ElementRowValue row}) {
+      RowHoverStop?.Invoke(this, row);
     }
   }
 }

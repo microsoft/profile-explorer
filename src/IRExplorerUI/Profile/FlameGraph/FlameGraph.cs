@@ -52,7 +52,7 @@ public class FlameGraphNode : SearchableProfileItem, IEquatable<FlameGraphNode> 
   public TimeSpan EndTime { get; set; }
   public TimeSpan Duration => EndTime - StartTime;
   public override string ModuleName =>
-    CallTreeNode != null && CallTreeNode.Function != null ? CallTreeNode.ModuleName : null;
+    CallTreeNode is {HasFunction: true} ? CallTreeNode.ModuleName : null;
 
   public static bool operator ==(FlameGraphNode left, FlameGraphNode right) {
     return Equals(left, right);
@@ -95,8 +95,7 @@ public class FlameGraphNode : SearchableProfileItem, IEquatable<FlameGraphNode> 
   }
 
   protected override string GetFunctionName() {
-    return CallTreeNode != null && CallTreeNode.Function != null ?
-      CallTreeNode.FunctionName : null;
+    return CallTreeNode is {HasFunction: true} ? CallTreeNode.FunctionName : null;
   }
 }
 
@@ -347,10 +346,6 @@ public sealed class FlameGraph {
     for (int k = stack.FrameCount - 1; k >= 0; k--) {
       var resolvedFrame = stack.StackFrames[k];
 
-      // if (resolvedFrame.IsUnknown) {
-      //     continue;
-      // }
-
       if (resolvedFrame.FrameDetails.Function == null) {
         continue;
       }
@@ -376,9 +371,7 @@ public sealed class FlameGraph {
       if (targetNode == null) {
         var callNode = new ProfileCallTreeNode(resolvedFrame.FrameDetails.DebugInfo,
                                                resolvedFrame.FrameDetails.Function,
-                                               null, node.CallTreeNode) {
-          //? TODO: Kind = resolvedFrame.IsKernelCode
-        };
+                                               null, node.CallTreeNode);
         targetNode = new FlameGraphNode(callNode, TimeSpan.Zero, depth, nameFormatter_);
         node.Children ??= new List<FlameGraphNode>();
         node.Children.Add(targetNode);
@@ -400,8 +393,6 @@ public sealed class FlameGraph {
       }
 
       targetNode.Weight += sample.Weight;
-      //targetNode.Weight = targetNode.EndTime - targetNode.StartTime + sample.Weight;
-
       node = targetNode;
       depth++;
     }
@@ -431,7 +422,7 @@ public sealed class FlameGraph {
       var childNode = Build(childFlameNode, child.Children, depth + 1);
       childNode.Parent = flameNode;
       flameNode.Children.Add(childNode);
-      child.Tag = childFlameNode;
+      child.Tag = childFlameNode; // Quick mapping between call tree and flame graph node.
     }
 
     return flameNode;

@@ -39,7 +39,7 @@
                             IsChecked="{Binding ShowMinorModifications, Mode=TwoWay}" />
                     </StackPanel>
 
-                    <Separator Margin="0,4,0,4" />
+                    <Separator Margin="0,4,0,4" Background="LightGray"/>
                     <TextBlock FontWeight="Medium" Text="Diffs Handling" />
                     <CheckBox
                         Margin="0,4,0,2"

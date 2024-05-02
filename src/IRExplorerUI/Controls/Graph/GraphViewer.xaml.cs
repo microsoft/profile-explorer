@@ -16,7 +16,8 @@ namespace IRExplorerUI;
 
 public partial class GraphViewer : FrameworkElement {
   public static Pen DefaultPen = ColorPens.GetPen(Colors.Black, 0.025);
-  public static Pen DefaultBoldPen = ColorPens.GetPen(Colors.Black, 0.06);
+  public static Pen DefaultBoldPen = ColorPens.GetPen(Colors.Black, 0.04);
+  public static Pen DefaultSelectedPen = ColorPens.GetPen(Colors.Black, 0.05);
   private readonly double GraphMargin = 0.15;
   private readonly double ScaleFactor = 50;
   private IRElement element_;
@@ -29,14 +30,13 @@ public partial class GraphViewer : FrameworkElement {
   private Dictionary<GraphNode, HighlightingStyle> selectedNodes_;
   private HighlightingStyleCyclingCollection nodeStyles_;
 
-  //? TODO: Allow color change
-  private Pen predecessorNodeBorder_ = ColorPens.GetPen("#6927CC", 0.05);
-  private HighlightingStyle selectedNodeStyle =
-    new HighlightingStyle(Color.FromRgb(174, 220, 244), DefaultBoldPen);
+  private Pen predecessorNodeBorder_;
+  private Pen successorNodeBorder_;
+  private HighlightingStyle selectedNodeStyle_;
   private GraphSettings settings_;
-  private Pen successorNodeBorder_ = ColorPens.GetPen("#008230", 0.05);
   private double zoomLevel_ = 0.5;
   private ICompilerInfoProvider compilerInfo_;
+  private HashSet<BlockIR> markedBlocks_;
 
   public GraphViewer() {
     InitializeComponent();
@@ -46,6 +46,7 @@ public partial class GraphViewer : FrameworkElement {
     markedNodes_ = new Dictionary<GraphNode, HighlightingStyle>();
     hoverNodes_ = new Dictionary<GraphNode, HighlightingStyle>();
     selectedNodes_ = new Dictionary<GraphNode, HighlightingStyle>();
+    markedBlocks_ = new HashSet<BlockIR>();
 
     var stylesWithBorder =
       DefaultHighlightingStyles.GetStyleSetWithBorder(DefaultHighlightingStyles.StyleSet, DefaultBoldPen);
@@ -78,7 +79,7 @@ public partial class GraphViewer : FrameworkElement {
     get => settings_;
     set {
       settings_ = value;
-      ReloadOptions();
+      ReloadSettings();
     }
   }
 
@@ -271,6 +272,12 @@ public partial class GraphViewer : FrameworkElement {
         var node = graph_.DataNodeMap[block];
         var graphNode = node.Tag as GraphNode;
 
+        // Keep track of entire blocks being marked,
+        // to not reset the marking later when resetting just an element.
+        if (element is BlockIR blockElement) {
+          markedBlocks_.Add(blockElement);
+        }
+
         // If it's a block not being marked, highlight
         // the entire group of the block and its pred/succ. blocks.
         if (element is BlockIR && info.Type != HighlighingType.Marked) {
@@ -308,12 +315,22 @@ public partial class GraphViewer : FrameworkElement {
     ResetMarkedNode(GetSelectedNode());
   }
 
-  public void ResetMarkedNode(GraphNode node) {
+  public void ResetMarkedNode(GraphNode node, IRElement element = null) {
     if (node == null) {
       return;
     }
 
     if (markedNodes_.ContainsKey(node)) {
+      // When resetting an element, don't remove the node marking
+      // if the entire block was marked before, only when the block
+      // is reset.
+      if (element is BlockIR block) {
+        markedBlocks_.Remove(block);
+      }
+      else if (element != null && markedBlocks_.Contains(element.ParentBlock)) {
+        return;
+      }
+
       markedNodes_.Remove(node);
       RestoreNodeStyle(node);
 
@@ -333,6 +350,7 @@ public partial class GraphViewer : FrameworkElement {
     }
 
     ResetHighlightedNodes(markedNodes_);
+    markedBlocks_.Clear();
   }
 
   public void ShowGraph(Graph graph, ICompilerInfoProvider sessionCompilerInfo) {
@@ -359,6 +377,7 @@ public partial class GraphViewer : FrameworkElement {
     markedNodes_.Clear();
     hoverNodes_.Clear();
     selectedNodes_.Clear();
+    markedBlocks_.Clear();
   }
 
   public void FitWidthToSize(Size size) {
@@ -428,7 +447,11 @@ public partial class GraphViewer : FrameworkElement {
                     TransformPoint(bounds.Height + 2 * GraphMargin));
   }
 
-  private void ReloadOptions() {
+  private void ReloadSettings() {
+    selectedNodeStyle_ = new HighlightingStyle(settings_.SelectedNodeColor, DefaultSelectedPen);
+    predecessorNodeBorder_ = ColorPens.GetPen(settings_.PredecessorNodeBorderColor, 0.05);
+    successorNodeBorder_ = ColorPens.GetPen(settings_.SuccesorNodeBorderColor, 0.05);
+
     if (graph_ != null) {
       ReloadGraph(graph_);
     }
@@ -482,7 +505,7 @@ public partial class GraphViewer : FrameworkElement {
                                        Dictionary<GraphNode, HighlightingStyle> group,
                                        bool highlightConnectedNodes) {
     ResetHighlightedNodes(HighlighingType.Hovered);
-    HighlightNode(graphNode, selectedNodeStyle, group);
+    HighlightNode(graphNode, selectedNodeStyle_, group);
 
     if (!highlightConnectedNodes) {
       return;
@@ -633,5 +656,17 @@ public partial class GraphViewer : FrameworkElement {
     graphVisual_ = graphRenderer_.Render();
     AddVisualChild(graphVisual_);
     InvalidateMeasure();
+  }
+
+  public void RedrawCurrentGraph() {
+    if (graph_ == null) return;
+
+    // Redraw only the nodes, currently used when file marking
+    // adds GraphNodeTags for blocks after the graph has been loaded.
+    foreach (var node in graph_.Nodes) {
+      if (node.Tag is GraphNode graphNode) {
+        graphNode.Draw();
+      }
+    }
   }
 }

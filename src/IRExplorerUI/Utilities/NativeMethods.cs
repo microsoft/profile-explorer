@@ -9,6 +9,9 @@ namespace IRExplorerUI;
 
 static class NativeMethods {
   [DllImport("user32.dll")]
+  public static extern uint GetDoubleClickTime();
+
+  [DllImport("user32.dll")]
   [return: MarshalAs(UnmanagedType.Bool)]
   public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
@@ -110,5 +113,19 @@ static class NativeMethods {
     public int Top;
     public int Right;
     public int Bottom;
+  }
+
+  public const int WM_MOUSEHWHEEL = 0x020E;
+
+  public static int HIWORD(IntPtr ptr) {
+    unchecked {
+      if (Environment.Is64BitOperatingSystem) {
+        var val64 = ptr.ToInt64();
+        return (short)((val64 >> 16) & 0xFFFF);
+      }
+
+      var val32 = ptr.ToInt32();
+      return (short)((val32 >> 16) & 0xFFFF);
+    }
   }
 }

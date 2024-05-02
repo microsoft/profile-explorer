@@ -14,6 +14,7 @@
     Height="600"
     MinWidth="600"
     MinHeight="400"
+    MaxHeight="800"
     d:DesignHeight="1200"
     ResizeMode="CanResizeWithGrip"
     ShowInTaskbar="False"
@@ -147,7 +148,7 @@
                                     IsEnabled="{Binding InputControlsEnabled}"
                                     ToolTip="Profiles all applications running on the current machine" />
 
-                                <Separator Margin="0,8,0,8" />
+                                <Separator Margin="0,8,0,8" Background="LightGray"/>
 
                                 <StackPanel x:Name="AttachToProcessPanel" Visibility="{Binding ElementName=AttachRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
                                     <Grid
@@ -421,7 +422,7 @@
                                     </StackPanel>
                                 </Expander>
 
-                                <Separator Margin="0,8,0,8" />
+                                <Separator Margin="0,8,0,8" Background="LightGray"/>
                                 <StackPanel
                                     Margin="8,0,0,0"
                                     Orientation="Horizontal"
@@ -720,9 +721,9 @@
                                             x:Name="SymbolPathsList"
                                             Grid.Row="0"
                                             Grid.Column="0"
-                                            Margin="0,8,4,4"
+                                            Margin="0,4,4,4"
                                             IsTextSearchEnabled="True"
-                                            SelectionMode="Extended"
+                                            SelectionMode="Single"
                                             TextSearch.TextPath="Name">
                                             <ListView.View>
                                                 <GridView>
@@ -897,9 +898,19 @@
   <TextBlock Margin="4,0,0,0" Text="{Binding  SymbolSettings.RejectedBinaryFiles.Count}" VerticalAlignment="Center"></TextBlock>
   <TextBlock  Margin="24,0,0,0" Text="Excluded symbols:"  VerticalAlignment="Center"></TextBlock>
   <TextBlock  Margin="4,0,0,0" Text="{Binding  SymbolSettings.RejectedSymbolFiles.Count}" VerticalAlignment="Center"></TextBlock>
-  <Button
+  <ToggleButton
+    x:Name="ExcludedToggleButton"
     Height="22"
     Margin="16,0,0,0"
+    Padding="4,2,4,2"
+    HorizontalAlignment="Right"
+    VerticalAlignment="Center"
+    Content="View"
+    ToolTip="View rejected binaries and symbols"
+    IsEnabled="{Binding InputControlsEnabled}" />
+  <Button
+    Height="22"
+    Margin="4,0,0,0"
     Padding="4,2,4,2"
     HorizontalAlignment="Right"
     VerticalAlignment="Center"
@@ -908,7 +919,207 @@
     ToolTip="Reset lists of rejected binaries and symbols"
     IsEnabled="{Binding InputControlsEnabled}" />
 </StackPanel>
-                                </StackPanel>
+        <Border Margin="20,4,0,0" BorderBrush="LightGray" BorderThickness="1"
+                Visibility="{Binding IsChecked, ElementName=ExcludedToggleButton, Converter={StaticResource BoolToVisibilityConverter}}">
+          <TabControl Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                      BorderThickness="0">
+            <TabItem Header="Binaries" Style="{StaticResource TabControlStyle}">
+ <Grid >
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="80" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <ListView
+                                            x:Name="RejectedBinariesList"
+                                            Grid.Row="0"
+                                            Grid.Column="0"
+                                            Margin="0,4,4,4"
+                                            MaxHeight="200"
+                                            IsTextSearchEnabled="True"
+                                            SelectionMode="Extended"
+                                            TextSearch.TextPath="ImageName">
+                                            <ListView.View>
+                                                <GridView>
+                                                    <GridViewColumn Width="Auto" Header="File" DisplayMemberBinding="{Binding ImageName}">
+                                                        <GridViewColumn.HeaderContainerStyle>
+                                                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                            </Style>
+                                                        </GridViewColumn.HeaderContainerStyle>
+                                                    </GridViewColumn>
+                                                  <GridViewColumn Width="150" Header="Path" DisplayMemberBinding="{Binding ImagePath}">
+                                                    <GridViewColumn.HeaderContainerStyle>
+                                                      <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                      </Style>
+                                                    </GridViewColumn.HeaderContainerStyle>
+                                                  </GridViewColumn>
+                                                  <GridViewColumn Width="Auto" Header="Size" DisplayMemberBinding="{Binding ImageSize}">
+                                                    <GridViewColumn.HeaderContainerStyle>
+                                                      <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                      </Style>
+                                                    </GridViewColumn.HeaderContainerStyle>
+                                                  </GridViewColumn>
+                                                  <GridViewColumn Width="Auto" Header="TimeStamp" DisplayMemberBinding="{Binding TimeStamp}">
+                                                    <GridViewColumn.HeaderContainerStyle>
+                                                      <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                      </Style>
+                                                    </GridViewColumn.HeaderContainerStyle>
+                                                  </GridViewColumn>
+                                                </GridView>
+                                            </ListView.View>
+                                            <ListView.ItemContainerStyle>
+                                                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                </Style>
+                                            </ListView.ItemContainerStyle>
+                                        </ListView>
+
+                                        <StackPanel
+                                            Grid.Row="0"
+                                            Grid.Column="1"
+                                            Margin="2,4,4,4">
+                                            <Button
+                                              Click="RemoveRejectedBinariesButton_Click"
+                                                Height="24"
+                                                Padding="2"
+                                                HorizontalContentAlignment="Left">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Image
+                                                        Width="16"
+                                                        Height="16"
+                                                        Source="{StaticResource MinusIcon}"
+                                                        Style="{StaticResource DisabledImageStyle}" />
+                                                    <TextBlock Margin="4,0,0,0" Text="Remove" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Button
+                                              Click="ClearRejectedBinariesButton_Click"
+                                                Height="24"
+                                                Margin="0,2,0,0"
+                                                Padding="2"
+                                                HorizontalContentAlignment="Left">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Image
+                                                        Width="16"
+                                                        Height="16"
+                                                        Source="{StaticResource RemoveIcon}"
+                                                        Style="{StaticResource DisabledImageStyle}" />
+                                                    <TextBlock Margin="4,0,0,0" Text="Clear" />
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+
+                                    </Grid>
+              </TabItem>
+             <TabItem Header="Symbols" Style="{StaticResource TabControlStyle}">
+ <Grid >
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="80" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <ListView
+                                            x:Name="RejectedSymbolsList"
+                                            Grid.Row="0"
+                                            Grid.Column="0"
+                                            Margin="0,4,4,4"
+                                            MaxHeight="200"
+                                            IsTextSearchEnabled="True"
+                                            SelectionMode="Extended"
+                                            TextSearch.TextPath="ImageName">
+                                            <ListView.View>
+                                                <GridView>
+                                                    <GridViewColumn Width="Auto" Header="File" DisplayMemberBinding="{Binding SymbolName}">
+                                                        <GridViewColumn.HeaderContainerStyle>
+                                                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                            </Style>
+                                                        </GridViewColumn.HeaderContainerStyle>
+                                                    </GridViewColumn>
+                                                  <GridViewColumn Width="150" Header="File" DisplayMemberBinding="{Binding FileName}">
+                                                    <GridViewColumn.HeaderContainerStyle>
+                                                      <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                      </Style>
+                                                    </GridViewColumn.HeaderContainerStyle>
+                                                  </GridViewColumn>
+                                                  <GridViewColumn Width="Auto" Header="Id" DisplayMemberBinding="{Binding Id}">
+                                                    <GridViewColumn.HeaderContainerStyle>
+                                                      <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                      </Style>
+                                                    </GridViewColumn.HeaderContainerStyle>
+                                                  </GridViewColumn>
+                                                  <GridViewColumn Width="Auto" Header="Age" DisplayMemberBinding="{Binding Age}">
+                                                    <GridViewColumn.HeaderContainerStyle>
+                                                      <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                      </Style>
+                                                    </GridViewColumn.HeaderContainerStyle>
+                                                  </GridViewColumn>
+                                                </GridView>
+                                            </ListView.View>
+                                            <ListView.ItemContainerStyle>
+                                                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                </Style>
+                                            </ListView.ItemContainerStyle>
+                                        </ListView>
+
+                                        <StackPanel
+                                            Grid.Row="0"
+                                            Grid.Column="1"
+                                            Margin="2,4,4,4">
+                                            <Button
+                                              Click="RemoveRejectedSymbolsButton_Click"
+                                                Height="24"
+                                                Padding="2"
+                                                HorizontalContentAlignment="Left">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Image
+                                                        Width="16"
+                                                        Height="16"
+                                                        Source="{StaticResource MinusIcon}"
+                                                        Style="{StaticResource DisabledImageStyle}" />
+                                                    <TextBlock Margin="4,0,0,0" Text="Remove" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Button
+                                              Click="ClearRejectedSymbolsButton_Click"
+                                                Height="24"
+                                                Margin="0,2,0,0"
+                                                Padding="2"
+                                                HorizontalContentAlignment="Left">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Image
+                                                        Width="16"
+                                                        Height="16"
+                                                        Source="{StaticResource RemoveIcon}"
+                                                        Style="{StaticResource DisabledImageStyle}" />
+                                                    <TextBlock Margin="4,0,0,0" Text="Clear" />
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+
+                                    </Grid>
+              </TabItem>
+          </TabControl>
+        </Border>
+      </StackPanel>
                             </Expander>
 
                             <Expander

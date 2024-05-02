@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -18,12 +20,14 @@ public enum ThreadActivityAction {
   ExcludeThread,
   ExcludeSameNameThread,
   FilterToThread,
-  FilterToSameNameThread
+  FilterToSameNameThread,
+  SelectThread
 }
 
 public partial class ActivityTimelineView : UserControl, INotifyPropertyChanged {
   private Brush disabledMarginBackColor_;
   private Brush marginBackColor_;
+  private bool pendingClick_;
 
   public ActivityTimelineView() {
     InitializeComponent();
@@ -88,7 +92,28 @@ public partial class ActivityTimelineView : UserControl, INotifyPropertyChanged 
   private void Margin_MouseDown(object sender, MouseButtonEventArgs e) {
     if (e.LeftButton == MouseButtonState.Pressed &&
         e.ClickCount >= 2) {
+      pendingClick_ = false; // Cancel click action.
       ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.FilterToThread);
     }
+    else  if(e.LeftButton == MouseButtonState.Pressed) {
+      // There is no way in WPF to ignore a click event if double-click happens,
+      // add some delay to the action to see that a double-click happens.
+      pendingClick_ = true;
+
+      Task.Run(async () => {
+        // Wait system double-click time interval.
+        await Task.Delay(TimeSpan.FromMilliseconds(NativeMethods.GetDoubleClickTime()));
+
+        if (pendingClick_) { // No double-click happened.
+          pendingClick_ = false;
+          Dispatcher.Invoke(() =>
+            ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.SelectThread));
+        }
+      });
+    }
+  }
+
+  private void ThreadContextMenuButton_Click(object sender, RoutedEventArgs e) {
+    Utils.ShowContextMenu(sender as FrameworkElement, this);
   }
 }

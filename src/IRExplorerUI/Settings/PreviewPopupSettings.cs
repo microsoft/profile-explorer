@@ -32,14 +32,14 @@ public class PreviewPopupSettings : SettingsBase {
   public bool IsElementPopup { get; set; }
 
   private static PreviewPopupSettings Default => new PreviewPopupSettings(false) {
-    PopupWidth = 600,
-    PopupHeight = 400, // For ASM/source preview.
+    PopupWidth = 650,
+    PopupHeight = 450, // For ASM/source preview.
     JumpToHottestElement = true,
     UseCompactProfilingColumns = true
   };
 
   private static PreviewPopupSettings ElementDefault => new PreviewPopupSettings(true) {
-    PopupWidth = 600,
+    PopupWidth = 650,
     PopupHeight = 200
   };
 

@@ -56,7 +56,7 @@
                         <TextBlock Margin="8,0,0,0" Text="{Binding Path=MaxExpressionDepth}" />
                         <TextBlock Margin="4,0,0,0" Text="instructions" />
                     </StackPanel>
-                    <Separator Margin="0,4,0,4" />
+                    <Separator Margin="0,4,0,4" Background="LightGray"/>
 
                     <TextBlock FontWeight="Medium" Text="Graph Interaction" />
 
@@ -97,7 +97,7 @@
                         Margin="0,2,0,2"
                         Content="Highlight connected nodes on selection"
                         IsChecked="{Binding Path=HighlightConnectedNodesOnSelection, Mode=TwoWay}" />
-                    <Separator Margin="0,4,0,4" />
+                    <Separator Margin="0,4,0,4" Background="LightGray"/>
 
                     <TextBlock FontWeight="Medium" Text="Graph Colors" />
                     <StackPanel Margin="0,4,0,0" Orientation="Vertical">
@@ -167,6 +167,27 @@
                                 VerticalAlignment="Center"
                                 Text="Node color" />
                         </Grid>
+                      <Grid Margin="0,2,0,0">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="70" />
+                          <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <toolkit:ColorPicker
+                          Grid.Column="0"
+                          Width="64"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          AvailableColorsSortingMode="HueSaturationBrightness"
+                          BorderBrush="#707070"
+                          SelectedColor="{Binding Path=SelectedNodeColor, Mode=TwoWay}"
+                          ShowDropDownButton="True"
+                          UsingAlphaChannel="False" />
+                        <TextBlock
+                          Grid.Column="1"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          Text="Selected node color" />
+                      </Grid>
                         <Grid Margin="0,2,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="70" />
@@ -188,6 +209,48 @@
                                 VerticalAlignment="Center"
                                 Text="Node border color" />
                         </Grid>
+                        <Grid Margin="0,2,0,0">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="70" />
+                          <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <toolkit:ColorPicker
+                          Grid.Column="0"
+                          Width="64"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          AvailableColorsSortingMode="HueSaturationBrightness"
+                          BorderBrush="#707070"
+                          SelectedColor="{Binding Path=PredecessorNodeBorderColor, Mode=TwoWay}"
+                          ShowDropDownButton="True"
+                          UsingAlphaChannel="False" />
+                        <TextBlock
+                          Grid.Column="1"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          Text="Predecessor node border color" />
+                      </Grid>
+                      <Grid Margin="0,2,0,0">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="70" />
+                          <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <toolkit:ColorPicker
+                          Grid.Column="0"
+                          Width="64"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          AvailableColorsSortingMode="HueSaturationBrightness"
+                          BorderBrush="#707070"
+                          SelectedColor="{Binding Path=SuccessorNodeBorderColor, Mode=TwoWay}"
+                          ShowDropDownButton="True"
+                          UsingAlphaChannel="False" />
+                        <TextBlock
+                          Grid.Column="1"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          Text="Successor node border color" />
+                      </Grid>
                         <Grid Margin="0,2,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="70" />

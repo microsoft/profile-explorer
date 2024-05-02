@@ -30,6 +30,9 @@ public class DraggablePopup : Popup {
       HorizontalOffset += e.HorizontalChange;
       VerticalOffset += e.VerticalChange;
     };
+
+    // Bring popup over other popups on click anywhere inside it.
+    PreviewMouseDown += (sender, args) => BringToFront();
   }
 
   public RelayCommand<SelectedColorEventArgs> PopupColorSelectedCommand =>

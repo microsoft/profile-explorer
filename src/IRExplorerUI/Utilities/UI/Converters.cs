@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Utilities;
@@ -218,9 +219,9 @@ public class ProfileCallTreeNodeKindConverter : IValueConverter {
       }
 
       return kind switch {
-        ProfileCallTreeNodeKind.NativeUser => "User mode",
-        ProfileCallTreeNodeKind.NativeKernel => "Kernel mode",
-        ProfileCallTreeNodeKind.Managed => "Managed",
+        ProfileCallTreeNodeKind.NativeUser => "User mode execution context",
+        ProfileCallTreeNodeKind.NativeKernel => "Kernel mode execution context",
+        ProfileCallTreeNodeKind.Managed => "Managed (.NET) execution context",
         _ => ""
       };
     }
@@ -463,6 +464,35 @@ class ExclusivePercentageConverter : IValueConverter {
 class AlternateRowConverter : IValueConverter {
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
     return (bool)value ? 2 : 1;
+  }
+
+  public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    return null;
+  }
+}
+
+public class FunctionNameConverter : IValueConverter {
+  public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    if (string.IsNullOrEmpty(value as string)) {
+      return null;
+    }
+
+    return ((string)value).TrimToLength(80);
+  }
+
+  public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    return null;
+  }
+
+
+}
+public class LongFunctionNameConverter : IValueConverter {
+  public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    if (string.IsNullOrEmpty(value as string)) {
+      return null;
+    }
+
+    return DocumentUtils.FormatLongFunctionName((string)value);
   }
 
   public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {

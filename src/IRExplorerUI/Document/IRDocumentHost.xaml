@@ -22,7 +22,10 @@
     <CommandBinding Command="local:DocumentHostCommand.SearchSymbolAllSections" Executed="SearchSymbolAllSectionsExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.JumpToProfiledElement" Executed="JumpToProfiledElementExecuted" />
     <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfile" Executed="ExportFunctionProfileExecuted" />
-    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportFunctionProfileHTMLExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportFunctionProfileHtmlExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.CopySelectedLinesAsHTML" Executed="CopySelectedLinesAsHtmlExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.CopySelectedText" Executed="CopySelectedTextExecuted" />
+    <CommandBinding Command="local:DocumentHostCommand.ExportFunctionProfileMarkdown" Executed="ExportFunctionProfileMarkdownExecuted" />
 
     <CommandBinding
       CanExecute="JumpToNextProfiledElementCanExecute"
@@ -132,9 +135,63 @@
             Loaded="ToolBar_Loaded">
 
             <Button
+              Margin="2,0,0,0"
+              Click="BackButton_Click"
+              CommandTarget="{Binding ElementName=GraphHost}"
+              IsEnabled="{Binding HasPreviousFunctions}"
+              ToolTip="Go back to previous function (Backspace/Mouse Back button)">
+              <StackPanel Orientation="Horizontal">
+                <Image Source="{StaticResource DockLeftIcon}" Style="{StaticResource DisabledImageStyle}" />
+                <TextBlock Margin="4,0,0,0" Text="Back" />
+              </StackPanel>
+            </Button>
+            <Menu
+              Width="10"
+              Height="20"
+              VerticalAlignment="Center"
+              IsEnabled="{Binding HasPreviousFunctions}"
+              ToolTip="View list of functions to go back to">
+              <MenuItem
+                x:Name="BackMenu"
+                Width="10"
+                Height="20"
+                Margin="0,0,0,0"
+                Padding="0,2,0,0"
+                OverridesDefaultStyle="True">
+                <MenuItem.HeaderTemplate>
+                  <DataTemplate>
+                    <Path
+                      x:Name="Foo"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      Data="M 0 0 L 4 4 L 8 0 Z"
+                      Fill="Black" />
+                    <DataTemplate.Triggers>
+                      <DataTrigger Binding="{Binding DataContext.HasPreviousFunctions, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ToolBar}}}" Value="False">
+                        <Setter TargetName="Foo" Property="Fill" Value="Gray" />
+                      </DataTrigger>
+                    </DataTemplate.Triggers>
+                  </DataTemplate>
+                </MenuItem.HeaderTemplate>
+              </MenuItem>
+            </Menu>
+            <Button
+              Margin="2,0,0,0"
+              Click="NextButton_Click"
+              CommandTarget="{Binding ElementName=GraphHost}"
+              IsEnabled="{Binding HasNextFunctions}"
+              ToolTip="Go back to next function (Shift+Backspace/Mouse Forward button)">
+              <StackPanel Orientation="Horizontal">
+                <Image Source="{StaticResource DockRightIcon}" Style="{StaticResource DisabledImageStyle}" />
+              </StackPanel>
+            </Button>
+            <Separator />
+
+            <Button
               Command="local:DocumentHostCommand.ShowSectionList"
               CommandTarget="{Binding ElementName=TextView}"
-              ToolTip="Switch to section (Alt+S)">
+              ToolTip="Switch to section (Alt+S)"
+              Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
               <Image
                 Width="16"
                 Height="16"
@@ -143,7 +200,8 @@
             <Button
               Command="local:DocumentHostCommand.PreviousSection"
               CommandTarget="{Binding ElementName=TextView}"
-              ToolTip="Switch to previous section (Ctrl+P)">
+              ToolTip="Switch to previous section (Ctrl+P)"
+              Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
               <Image
                 Width="16"
                 Height="16"
@@ -152,13 +210,14 @@
             <Button
               Command="local:DocumentHostCommand.NextSection"
               CommandTarget="{Binding ElementName=TextView}"
-              ToolTip="Switch to next section (Ctrl+N)">
+              ToolTip="Switch to next section (Ctrl+N)"
+              Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
               <Image
                 Width="16"
                 Height="16"
                 Source="{StaticResource RightArrowIcon}" />
             </Button>
-            <Separator />
+            <Separator Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
             <TextBlock
               Margin="4,0,0,0"
@@ -433,7 +492,6 @@
 
             <Separator />
 
-
             <ToggleButton
               Width="20"
               Height="20"
@@ -443,6 +501,15 @@
               ToolTip="Show associated pass output in this document">
               <Image Source="{StaticResource ListIcon}" />
             </ToggleButton>
+            <Button
+              Width="20"
+              Height="20"
+              Margin="0,0,2,0"
+              Padding="0,0,0,0"
+              Click="OpenPopupButton_Click"
+              ToolTip="Open the document in a new popup window">
+              <Image Source="{StaticResource OpenExternalIcon}" />
+            </Button>
 
             <ToggleButton
               x:Name="SearchButton"
@@ -494,7 +561,8 @@
                     x:Name="ProfileElementsMenu"
                     Margin="0,0,0,0"
                     Padding="0,0,0,0"
-                    OverridesDefaultStyle="True">
+                    OverridesDefaultStyle="True"
+                    ToolTip="View sorted list of hottest lines">
                     <MenuItem.Header>
                       <StackPanel Orientation="Horizontal">
                         <TextBlock VerticalAlignment="Bottom" Text="Profile" />
@@ -526,6 +594,7 @@
                   <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
                 </Button>
                 <Button
+                  Margin="0,0,2,0"
                   Padding="0"
                   Command="local:DocumentHostCommand.JumpToNextProfiledElement"
                   CommandTarget="{Binding ElementName=TextView}"
@@ -539,10 +608,15 @@
                     x:Name="ProfileBlocksMenu"
                     Margin="0,0,0,0"
                     Padding="0,0,0,0"
-                    OverridesDefaultStyle="True">
+                    OverridesDefaultStyle="True"
+                    ToolTip="View sorted list of hottest blocks">
                     <MenuItem.Header>
                       <StackPanel Orientation="Horizontal">
-                        <TextBlock VerticalAlignment="Bottom" Text="Blocks" />
+                        <Image Source="{StaticResource BlockIcon}" Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock
+                          Margin="2,0,0,0"
+                          VerticalAlignment="Bottom"
+                          Text="Blocks" />
                         <Path
                           Margin="4,2,0,0"
                           VerticalAlignment="Center"
@@ -552,77 +626,200 @@
                     </MenuItem.Header>
                   </MenuItem>
                 </Menu>
+                <Menu
+                  Margin="2,0,0,0"
+                  VerticalAlignment="Center"
+                  ToolTip="View sorted list of inlined functions">
+                  <MenuItem
+                    x:Name="InlineesMenu"
+                    Margin="0,0,0,0"
+                    Padding="0,0,0,0"
+                    OverridesDefaultStyle="True">
+                    <MenuItem.Header>
+                      <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource FlowChartSolidIcon}" Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock
+                          Margin="2,0,0,0"
+                          VerticalAlignment="Bottom"
+                          Text="Inlinees" />
+                        <Path
+                          Margin="4,2,2,0"
+                          VerticalAlignment="Center"
+                          Data="M 0 0 L 3 3 L 6 0 Z"
+                          Fill="Black" />
+                      </StackPanel>
+                    </MenuItem.Header>
+                    <MenuItem
+                      Header="Non-Inlinee"
+                      IsCheckable="False"
+                      Style="{DynamicResource SubMenuItemHeaderStyle}"
+                      ToolTip="Time for parts not originating from inlined functions" />
+                    <Separator />
+                  </MenuItem>
+                </Menu>
 
                 <Button
                   Margin="2,0,0,0"
                   Padding="0"
                   Command="local:DocumentHostCommand.JumpToPreviousProfiledBlock"
                   CommandTarget="{Binding ElementName=TextView}"
-                  ToolTip="Jump to the previous hottest block (Shift+F2)">
+                  ToolTip="Jump to the previous hottest block (Shift+F2)"
+                  Visibility="Collapsed">
                   <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
                 </Button>
                 <Button
                   Padding="0"
                   Command="local:DocumentHostCommand.JumpToNextProfiledBlock"
                   CommandTarget="{Binding ElementName=TextView}"
-                  ToolTip="Jump to next hottest block (Shift+F2)">
+                  ToolTip="Jump to next hottest block (Shift+F2)"
+                  Visibility="Collapsed">
                   <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
                 </Button>
                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
 
-                 <Menu
-              Margin="0,0,0,0"
-              VerticalAlignment="Center"
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-              <MenuItem
-                Padding="0,0,0,0"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                OverridesDefaultStyle="True"
-                ToolTip="Export function list">
-                <MenuItem.Header>
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock
-                      Margin="2,0,0,0"
-                      VerticalAlignment="Bottom"
-                      Text="Export" />
-                    <Path
-                      Margin="4,2,0,0"
-                      VerticalAlignment="Center"
-                      Data="M 0 0 L 3 3 L 6 0 Z"
-                      Fill="Black" />
-                  </StackPanel>
-                </MenuItem.Header>
-                <MenuItem
-                  Command="local:DocumentHostCommand.ExportFunctionProfile"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Export as Excel worksheet"
-                  ToolTip="Save the list of functions and additional columns as an Excel worksheet">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource ExcelIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem
-                  Command="local:DocumentHostCommand.ExportFunctionProfile"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Export as HTML page"
-                  ToolTip="Save the list of functions and additional columns as an HTML page">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource SourceIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-              </MenuItem>
-            </Menu>
-
-                <Separator />
+                <Menu
+                  Margin="2,0,0,0"
+                  VerticalAlignment="Center"
+                  ToolTip="Select function instances to display">
+                  <MenuItem
+                    x:Name="InstancesMenu"
+                    Margin="0,0,0,0"
+                    Padding="0,0,0,0"
+                    Background="{Binding Path=HasProfileInstanceFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                    OverridesDefaultStyle="True">
+                    <MenuItem.Header>
+                      <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource TasklistIcon}" Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock
+                          Margin="2,0,0,0"
+                          VerticalAlignment="Bottom"
+                          Text="Instances" />
+                        <Path
+                          Margin="4,2,2,0"
+                          VerticalAlignment="Center"
+                          Data="M 0 0 L 3 3 L 6 0 Z"
+                          Fill="Black" />
+                      </StackPanel>
+                    </MenuItem.Header>
+                    <MenuItem
+                      Click="InstanceMenuItem_OnClick"
+                      Header="All Instances"
+                      IsCheckable="False"
+                      IsChecked="{Binding RemoveEmptyColumns}"
+                      Style="{DynamicResource SubMenuItemHeaderStyle}" />
+                    <Separator />
+                  </MenuItem>
+                </Menu>
                 <Menu Margin="2,0,0,0" VerticalAlignment="Center">
+                  <MenuItem
+                    x:Name="ThreadsMenu"
+                    Margin="0,0,0,0"
+                    Padding="0,0,0,0"
+                    Background="{Binding Path=HasProfileThreadFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                    OverridesDefaultStyle="True"
+                    ToolTip="Select threads the function ran on to display">
+                    <MenuItem.Header>
+                      <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource FilterIcon}" Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock
+                          Margin="2,0,0,0"
+                          VerticalAlignment="Bottom"
+                          Text="Threads" />
+                        <Path
+                          Margin="4,2,2,0"
+                          VerticalAlignment="Center"
+                          Data="M 0 0 L 3 3 L 6 0 Z"
+                          Fill="Black" />
+                      </StackPanel>
+                    </MenuItem.Header>
+                    <MenuItem
+                      Click="ThreadMenuItem_OnClick"
+                      Header="All Threads"
+                      IsCheckable="False"
+                      Style="{DynamicResource SubMenuItemHeaderStyle}" />
+                    <Separator />
+                  </MenuItem>
+                </Menu>
+                <Separator />
+                <Menu
+                  Margin="0,0,0,0"
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                  Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                  <MenuItem
+                    Padding="0,0,0,0"
+                    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    OverridesDefaultStyle="True"
+                    ToolTip="Export function list">
+                    <MenuItem.Header>
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock
+                          Margin="2,0,0,0"
+                          VerticalAlignment="Bottom"
+                          Text="Export" />
+                        <Path
+                          Margin="4,2,2,0"
+                          VerticalAlignment="Center"
+                          Data="M 0 0 L 3 3 L 6 0 Z"
+                          Fill="Black" />
+                      </StackPanel>
+                    </MenuItem.Header>
+                    <MenuItem
+                      Command="local:DocumentHostCommand.ExportFunctionProfile"
+                      CommandTarget="{Binding ElementName=TextView}"
+                      Header="Export as Excel File"
+                      ToolTip="Save the document lines and additional columns as an Excel worksheet">
+                      <MenuItem.Icon>
+                        <Image
+                          Width="16"
+                          Height="16"
+                          Source="{StaticResource ExcelIcon}" />
+                      </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem
+                      Command="local:DocumentHostCommand.ExportFunctionProfileHTML"
+                      CommandTarget="{Binding ElementName=TextView}"
+                      Header="Export as HTML File"
+                      ToolTip="Save the document lines and additional columns as an HTML file">
+                      <MenuItem.Icon>
+                        <Image
+                          Width="16"
+                          Height="16"
+                          Source="{StaticResource SourceIcon}" />
+                      </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem
+                      Command="local:DocumentHostCommand.ExportFunctionProfileMarkdown"
+                      CommandTarget="{Binding ElementName=TextView}"
+                      Header="Export as Markdown File"
+                      ToolTip="Save the document lines and additional columns as a Markdown file">
+                      <MenuItem.Icon>
+                        <Image
+                          Width="16"
+                          Height="16"
+                          Source="{StaticResource DocumentIcon}" />
+                      </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem
+                      Command="{Binding CopyDocumentCommand}"
+                      CommandTarget="{Binding ElementName=FunctionList}"
+                      Header="Copy as HTML/Markdown table"
+                      ToolTip="Copy the document lines and additional columns as an HTML file">
+                      <MenuItem.Icon>
+                        <Image
+                          Width="16"
+                          Height="16"
+                          Source="{StaticResource ClipboardIcon}" />
+                      </MenuItem.Icon>
+                    </MenuItem>
+                  </MenuItem>
+                </Menu>
+                <Menu
+                  Margin="2,0,0,0"
+                  VerticalAlignment="Center"
+                  ToolTip="Configure displayed profiling columns">
                   <MenuItem
                     x:Name="ProfileViewMenu"
                     Margin="0,0,0,0"
@@ -644,46 +841,34 @@
                     </MenuItem.Header>
                     <MenuItem
                       Checked="ViewMenuItem_OnCheckedChanged"
-                      Header="Show performance counters"
+                      Header="Show Performance Counters"
                       IsCheckable="True"
                       IsChecked="{Binding ShowPerformanceCounterColumns}"
+                      StaysOpenOnClick="True"
                       Style="{DynamicResource SubMenuItemHeaderStyle}"
                       Unchecked="ViewMenuItem_OnCheckedChanged" />
                     <MenuItem
                       Checked="ViewMenuItem_OnCheckedChanged"
-                      Header="Show performance metrics"
+                      Header="Show Performance Metrics"
                       IsCheckable="True"
                       IsChecked="{Binding ShowPerformanceMetricColumns}"
+                      StaysOpenOnClick="True"
                       Style="{DynamicResource SubMenuItemHeaderStyle}"
                       Unchecked="ViewMenuItem_OnCheckedChanged" />
                     <MenuItem
                       Checked="ViewMenuItem_OnCheckedChanged"
-                      Header="Hide empty columns"
+                      Header="Hide Empty Columns"
                       IsCheckable="True"
                       IsChecked="{Binding RemoveEmptyColumns}"
                       Style="{DynamicResource SubMenuItemHeaderStyle}"
+                      StaysOpenOnClick="True"
                       Unchecked="ViewMenuItem_OnCheckedChanged" />
-                  </MenuItem>
-                </Menu>
-                <Menu Margin="2,0,0,0" VerticalAlignment="Center">
-                  <MenuItem
-                    x:Name="ProfileColumnsMenu"
-                    Margin="0,0,0,0"
-                    Padding="0,0,0,0"
-                    OverridesDefaultStyle="True">
-                    <MenuItem.Header>
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock
-                          Margin="4,0,0,0"
-                          VerticalAlignment="Bottom"
-                          Text="Columns" />
-                        <Path
-                          Margin="4,2,0,0"
-                          VerticalAlignment="Center"
-                          Data="M 0 0 L 3 3 L 6 0 Z"
-                          Fill="Black" />
-                      </StackPanel>
-                    </MenuItem.Header>
+                    <Separator />
+                    <MenuItem
+                      Checked="ViewMenuItem_OnCheckedChanged"
+                      Header="Columns"
+                      IsHitTestVisible="False"
+                      Style="{DynamicResource SubMenuItemHeaderStyle}" />
                   </MenuItem>
                 </Menu>
               </ToolBar>
@@ -739,6 +924,26 @@
                 <Separator />
 
                 <MenuItem
+                  Command="local:DocumentHostCommand.CopySelectedLinesAsHTML"
+                  CommandTarget="{Binding ElementName=TextView}"
+                  Header="Copy Selection Details"
+                  InputGestureText="Ctrl+C"
+                  ToolTip="Copy the selected text and additional profiling columns as a HTML table">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource ClipboardIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem
+                  Command="local:DocumentHostCommand.CopySelectedText"
+                  CommandTarget="{Binding ElementName=TextView}"
+                  Header="Copy Text"
+                  InputGestureText="Ctrl+Shift+C"
+                  ToolTip="Copy the selected text only" />
+                <Separator />
+                <MenuItem
                   Command="local:DocumentHostCommand.SearchSymbol"
                   CommandTarget="{Binding ElementName=TextView}"
                   Header="Search Symbol"
@@ -754,14 +959,7 @@
                   Command="local:DocumentHostCommand.SearchSymbolAllSections"
                   CommandTarget="{Binding ElementName=TextView}"
                   Header="Search Symbol in All Sections"
-                  InputGestureText="Ctrl+Shift+F">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource SearchIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
+                  InputGestureText="Ctrl+Shift+F" />
                 <Separator />
 
                 <MenuItem
@@ -827,30 +1025,6 @@
                       Width="16"
                       Height="16"
                       Source="{StaticResource RemoveIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem
-                  Command="local:DocumentCommand.PreviousBookmark"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Previous Bookmark"
-                  InputGestureText="Shift+F2">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource UpArrowIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem
-                  Command="local:DocumentCommand.NextBookmark"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Next Bookmark"
-                  InputGestureText="F2">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource DownArrowIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
@@ -1073,16 +1247,19 @@
       Command="local:DocumentHostCommand.NextSection"
       CommandTarget="{Binding ElementName=TextView}"
       Modifiers="Ctrl" />
-
     <KeyBinding
       Key="F3"
       Command="doc:SearchCommand.PreviousResult"
       CommandTarget="{Binding ElementName=SearchPanel}"
       Modifiers="Shift" />
-
     <KeyBinding
       Key="F3"
       Command="doc:SearchCommand.NextResult"
       CommandTarget="{Binding ElementName=SearchPanel}" />
+    <KeyBinding
+      Key="C"
+      Command="local:DocumentHostCommand.CopySelectedText"
+      CommandTarget="{Binding ElementName=TextView}"
+      Modifiers="Ctrl+Shift" />
   </UserControl.InputBindings>
 </UserControl>

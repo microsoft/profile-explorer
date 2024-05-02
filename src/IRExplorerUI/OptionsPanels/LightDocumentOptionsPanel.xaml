@@ -45,9 +45,9 @@
                     Minimum="5.0"
                     ParsingNumberStyle="Number"
                     ShowButtonSpinner="True"
-                    Value="{Binding Path=FontSize, Mode=TwoWay}" />
+                    Value="{Binding Path=TextFontSize, Mode=TwoWay}" />
             </StackPanel>
-            <Separator Margin="0,4,0,4" />
+            <Separator Margin="0,4,0,4" Background="LightGray"/>
 
             <CheckBox
                 Margin="0,2,0,2"
@@ -65,7 +65,7 @@
                 Margin="0,2,0,2"
                 Content="Word-wrap long lines"
                 IsChecked="{Binding Path=ShowInfoOnHover, Mode=TwoWay}" />
-            <Separator Margin="0,4,0,4" />
+            <Separator Margin="0,4,0,4" Background="LightGray"/>
 
             <DockPanel>
                 <TextBlock FontWeight="Medium" Text="Document Colors" />
@@ -139,9 +139,6 @@
                         Text="IR element highlight color" />
                 </Grid>
             </StackPanel>
-
-            <Separator Margin="0,4,0,4" />
-            <StackPanel Margin="0,4,0,0" Orientation="Vertical" />
         </StackPanel>
     </Grid>
 </local:OptionsPanelBase>

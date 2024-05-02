@@ -4,12 +4,19 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using HtmlAgilityPack;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Windows;
 
@@ -18,14 +25,13 @@ namespace IRExplorerUI;
 public partial class MainWindow : Window, ISession {
   private CancelableTaskInstance updateProfileTask_ = new CancelableTaskInstance();
   private ProfileData.ProcessingResult allThreadsProfile_;
-  private Dictionary<ProfileSampleFilter, ProfileData.ProcessingResult> prevProfiles =
-    new Dictionary<ProfileSampleFilter, ProfileData.ProcessingResult>();
-  public ProfileData ProfileData => sessionState_?.ProfileData;
+  private ProfileFilterState profileFilter_;
+  private List<FunctionMarkingCategory> currentMarkingCategories_;
 
-  public async Task<bool> OpenProfileFunction(IRTextFunction function, OpenSectionKind openMode) {
-    var args = new OpenSectionEventArgs(function.Sections[0], openMode);
-    await SwitchDocumentSectionAsync(args);
-    return true;
+  public ProfileData ProfileData => sessionState_?.ProfileData;
+  public ProfileFilterState ProfileFilter {
+    get => profileFilter_;
+    set => profileFilter_ = value;
   }
 
   public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds,
@@ -78,30 +84,30 @@ public partial class MainWindow : Window, ISession {
     return result != null;
   }
 
-  public async Task<bool> FilterProfileSamples(ProfileSampleFilter filter) {
+  public async Task<bool> FilterProfileSamples(ProfileFilterState state) {
     using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
 
     SetApplicationProgress(true, double.NaN, "Filtering profiling data");
     StartUIUpdate();
 
+    // Update the active profile UI.
+    SetActiveProfileFilter(state);
+
     var totalSw = Stopwatch.StartNew();
     Trace.WriteLine("--------------------------------------------------------\n");
-    Trace.WriteLine($"Filter {filter}, samples {ProfileData.Samples.Count}");
+    Trace.WriteLine($"Profile filter {state.Filter}, samples {ProfileData.Samples.Count}");
 
     var filterSw = Stopwatch.StartNew();
-    ProfileData.ProcessingResult result = null;
+    ProfileData.ProcessingResult result = null; // Profile before filtering.
 
-    if (filter.IncludesAll && allThreadsProfile_ != null) {
+    if (state.Filter.IncludesAll && allThreadsProfile_ != null) {
+      // This speeds up going back to the unfiltered profile.
       Trace.WriteLine("Restore main profile");
       result = ProfileData.RestorePreviousProfile(allThreadsProfile_);
     }
-    // else if (prevProfiles.TryGetValue(filter, out result)) {
-    //   Trace.WriteLine($"Restore other profile");
-    //   result = ProfileData.RestorePreviousProfile(allThreadsProfile_);
-    // }
     else {
       Trace.WriteLine("Compute new profile");
-      result = await Task.Run(() => ProfileData.FilterFunctionProfile(filter));
+      result = await Task.Run(() => ProfileData.FilterFunctionProfile(state.Filter));
     }
 
     if (result.Filter.IncludesAll) {
@@ -127,22 +133,44 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
+  private void SetActiveProfileFilter(ProfileFilterState state) {
+    ProfileFilter = state;
+    ProfileFilterStateHost.DataContext = null;
+    ProfileFilterStateHost.DataContext = state;
+    currentMarkingCategories_ = null;
+  }
+
   public async Task<bool> RemoveProfileSamplesFilter() {
-    await FilterProfileSamples(new ProfileSampleFilter());
+    await FilterProfileSamples(new ProfileFilterState());
     await ProfileSampleRangeDeselected();
     return true;
   }
 
-  public async Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode) {
-    if (node.Function == null) {
+  public async Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode,
+                                              ProfileSampleFilter instanceFilter = null,
+                                              IRDocumentHost targetDocument = null) {
+    if (node is not {HasFunction: true}) {
       return false;
     }
 
-    return await OpenProfileFunction(node.Function, openMode);
+    return await OpenProfileFunction(node.Function, openMode, instanceFilter, targetDocument);
+  }
+
+  public async Task<bool> OpenProfileFunction(IRTextFunction function, OpenSectionKind openMode,
+                                              ProfileSampleFilter instanceFilter = null,
+                                              IRDocumentHost targetDocument = null) {
+    var args = new OpenSectionEventArgs(function.Sections[0], openMode, targetDocument);
+    var docHost = await SwitchDocumentSectionAsync(args);
+
+    if (instanceFilter != null) {
+      await docHost.SwitchProfileInstanceAsync(instanceFilter);
+    }
+
+    return true;
   }
 
   public async Task<bool> SwitchActiveProfileFunction(ProfileCallTreeNode node) {
-    if (node.Function == null) {
+    if (node is not {HasFunction: true}) {
       return false;
     }
 
@@ -150,19 +178,21 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
-  public async Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node) {
-    if (node.Function == null) {
+  public async Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node, ProfileSampleFilter profileFilter = null) {
+    if (node is not {HasFunction: true}) {
       return false;
     }
 
-    return await OpenProfileSourceFile(node.Function);
+    return await OpenProfileSourceFile(node.Function, profileFilter);
   }
 
-  public async Task<bool> OpenProfileSourceFile(IRTextFunction function) {
-    if (FindPanel(ToolPanelKind.Source) is SourceFilePanel panel) {
-      if (function.HasSections) {
-        await panel.LoadSourceFile(function.Sections[0]);
-      }
+  public async Task<bool> OpenProfileSourceFile(IRTextFunction function, ProfileSampleFilter profileFilter = null) {
+    if (FindPanel(ToolPanelKind.Source) is not SourceFilePanel panel) {
+      panel = await ShowPanel(ToolPanelKind.Source) as SourceFilePanel;
+    }
+
+    if (panel != null && function.HasSections) {
+      await panel.LoadSourceFile(function.Sections[0], profileFilter);
     }
 
     return true;
@@ -173,18 +203,29 @@ public partial class MainWindow : Window, ISession {
 
     switch (panelKind) {
       case ToolPanelKind.CallTree: {
-        var panel = FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
+        if (FindAndActivatePanel(ToolPanelKind.CallTree) is not CallTreePanel panel) {
+          panel = await ShowPanel(ToolPanelKind.CallTree) as CallTreePanel;
+        }
+
         panel?.SelectFunction(node);
         break;
       }
       case ToolPanelKind.FlameGraph: {
-        var panel = FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+        if (FindAndActivatePanel(ToolPanelKind.FlameGraph) is not FlameGraphPanel panel) {
+          panel = await ShowPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+        }
+
         panel?.SelectFunction(node);
         break;
       }
       case ToolPanelKind.Timeline: {
-        var panel = FindAndActivatePanel(ToolPanelKind.Timeline) as TimelinePanel;
-        await SelectFunctionSamples(node, panel);
+        if (FindAndActivatePanel(ToolPanelKind.Timeline) is not TimelinePanel panel) {
+          panel = await ShowPanel(ToolPanelKind.Timeline) as TimelinePanel;
+        }
+
+        if (panel != null) {
+          await SelectFunctionSamples(node, panel);
+        }
         break;
       }
       case ToolPanelKind.Source: {
@@ -192,6 +233,10 @@ public partial class MainWindow : Window, ISession {
         break;
       }
       case ToolPanelKind.Section: {
+        if (FindAndActivatePanel(ToolPanelKind.Section) is not SectionPanel panel) {
+          await ShowPanel(ToolPanelKind.Section);
+        }
+
         await SwitchActiveProfileFunction(node);
         break;
       }
@@ -208,28 +253,35 @@ public partial class MainWindow : Window, ISession {
 
     switch (panelKind) {
       case ToolPanelKind.CallTree: {
-        if (FindAndActivatePanel(ToolPanelKind.CallTree) is CallTreePanel panel) {
-          panel.SelectFunction(func);
+        if (FindAndActivatePanel(ToolPanelKind.CallTree) is not CallTreePanel panel) {
+          panel = await ShowPanel(ToolPanelKind.CallTree) as CallTreePanel;
         }
 
+        panel?.SelectFunction(func);
         break;
       }
       case ToolPanelKind.FlameGraph: {
-        if (FindAndActivatePanel(ToolPanelKind.FlameGraph) is FlameGraphPanel panel) {
-          await panel.SelectFunction(func);
+        if (FindAndActivatePanel(ToolPanelKind.FlameGraph) is not FlameGraphPanel panel) {
+          panel = await ShowPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
         }
 
+        if (panel != null) {
+          await panel.SelectFunction(func);
+        }
         break;
       }
       case ToolPanelKind.Timeline: {
-        if (FindAndActivatePanel(ToolPanelKind.Timeline) is TimelinePanel panel) {
+        if (FindAndActivatePanel(ToolPanelKind.Timeline) is not TimelinePanel panel) {
+          panel = await ShowPanel(ToolPanelKind.Timeline) as TimelinePanel;
+        }
+
+        if (panel != null) {
           var nodeList = ProfileData.CallTree.GetSortedCallTreeNodes(func);
 
           if (nodeList is {Count: > 0}) {
             await SelectFunctionSamples(nodeList[0], panel);
           }
         }
-
         break;
       }
       default: {
@@ -271,14 +323,16 @@ public partial class MainWindow : Window, ISession {
       return false;
     }
 
-    if (FindPanel(ToolPanelKind.Timeline) is TimelinePanel panel) {
-      //? TODO: Select only samples included in this call node,
-      //? right now selects any instance of the func
-      await SelectFunctionSamples(node, panel);
-    }
 
     if (sourcePanelKind != ToolPanelKind.Section) {
       await SwitchActiveFunction(node.Function, false);
+    }
+
+
+    if (sourcePanelKind != ToolPanelKind.FlameGraph) {
+      if (FindPanel(ToolPanelKind.FlameGraph) is FlameGraphPanel flameGraphPanel) {
+        await flameGraphPanel.SelectFunction(node.Function, false);
+      }
     }
 
     if (sourcePanelKind != ToolPanelKind.CallTree) {
@@ -293,10 +347,10 @@ public partial class MainWindow : Window, ISession {
       }
     }
 
-    if (sourcePanelKind != ToolPanelKind.FlameGraph) {
-      if (FindPanel(ToolPanelKind.FlameGraph) is FlameGraphPanel flameGraphPanel) {
-        await flameGraphPanel.SelectFunction(node.Function, false);
-      }
+    if (FindPanel(ToolPanelKind.Timeline) is TimelinePanel panel) {
+      //? TODO: Select only samples included in this call node,
+      //? right now selects any instance of the func
+      await SelectFunctionSamples(node, panel);
     }
 
     return true;
@@ -321,7 +375,7 @@ public partial class MainWindow : Window, ISession {
 
     var funcNodes = ProfileData.CallTree.GetSortedCallTreeNodes(function);
 
-    if (funcNodes.Count > 0) {
+    if (funcNodes is {Count: > 0}) {
       await ProfileFunctionSelected(funcNodes[0], sourcePanelKind);
     }
 
@@ -378,6 +432,7 @@ public partial class MainWindow : Window, ISession {
     UpdateWindowTitle();
     SetApplicationProgress(true, double.NaN, "Loading profiling data");
     StartUIUpdate();
+    ProfileControlsVisible = true;
 
     await SetupPanels();
     await RefreshProfilingPanels();
@@ -438,101 +493,20 @@ public partial class MainWindow : Window, ISession {
 
   private Dictionary<int, List<SampleIndex>>
     FindFunctionSamples(ProfileCallTreeNode node, ProfileData profile) {
-    // Compute the list of samples associated with the function,
-    // for each thread it was executed on.
-    var sw = Stopwatch.StartNew();
-    var allThreadsList = new List<SampleIndex>();
-    var threadListMap = new Dictionary<int, List<SampleIndex>>();
-    threadListMap[-1] = allThreadsList;
-
-    if (node.Function == null) {
-      return threadListMap;
-    }
-
-    int sampleStartIndex = 0;
-    int sampleEndIndex = profile.Samples.Count;
-    var funcProfile = profile.GetFunctionProfile(node.Function);
-
-    if (funcProfile != null && funcProfile.SampleStartIndex != int.MaxValue) {
-      sampleStartIndex = funcProfile.SampleStartIndex;
-      sampleEndIndex = funcProfile.SampleEndIndex;
-    }
-
-    //? TODO: Abstract parallel run chunks to take action per sample
-    for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
-      var (sample, stack) = profile.Samples[i];
-
-      var currentNode = node;
-      bool match = false;
-
-      for (int k = 0; k < stack.StackFrames.Count; k++) {
-        var stackFrame = stack.StackFrames[k];
-
-        if (stackFrame.IsUnknown) {
-          continue;
-        }
-
-        if (currentNode == null || currentNode.IsGroup) {
-          // Mismatch along the call path leading to the function.
-          match = false;
-          break;
-        }
-
-        if (stackFrame.FrameDetails.Function.Equals(currentNode.Function)) {
-          // Continue checking if the callers show up on the stack trace
-          // to make the search context-sensitive.
-          match = true;
-          currentNode = currentNode.Caller;
-        }
-        else if (match) {
-          // Mismatch along the call path leading to the function.
-          match = false;
-          break;
-        }
-      }
-
-      if (match) {
-        var threadList = threadListMap.GetOrAddValue(stack.Context.ThreadId);
-        threadList.Add(new SampleIndex(i, sample.Time));
-        allThreadsList.Add(new SampleIndex(i, sample.Time));
-      }
-    }
-
-    Trace.WriteLine($"FindSamples took: {sw.ElapsedMilliseconds} for {allThreadsList.Count} samples");
-    return threadListMap;
+    return FunctionSamplesProcessor.Compute(node, profile, new ProfileSampleFilter());
   }
 
   private HashSet<IRTextFunction> FindFunctionsForSamples(int sampleStartIndex, int sampleEndIndex, int threadId,
                                                           ProfileData profile) {
-    // Compute the list of functions covered by the samples
-    // on the specified thread or all threads.
-    var funcSet = new HashSet<IRTextFunction>();
+    var filter = new ProfileSampleFilter();
+    filter.TimeRange = new SampleTimeRangeInfo(TimeSpan.Zero, TimeSpan.Zero,
+      sampleStartIndex, sampleEndIndex, threadId);
 
-    //? TODO: If an event fires during the call tree/sample filtering,
-    //? either ignore it or better run it after the filtering is done
-    if (ProfileData.CallTree == null) {
-      return funcSet;
+    if (threadId != -1) {
+      filter.AddThread(threadId);
     }
 
-    //? TODO: Abstract parallel run chunks to take action per sample (ComputeFunctionProfile)
-    //? Look at SearchAsync in SectionTextSearcher.cs for an example
-    //? ConcurrentExclusiveSchedulerPair from DocSectionLoader is not the right solution
-    //? + AreSectionsDifferentImpl
-    for (int i = sampleStartIndex; i < sampleEndIndex; i++) {
-      var (sample, stack) = profile.Samples[i];
-
-      if (threadId != -1 && stack.Context.ThreadId != threadId) {
-        continue;
-      }
-
-      foreach (var stackFrame in stack.StackFrames) {
-        if (!stackFrame.IsUnknown) {
-          funcSet.Add(stackFrame.FrameDetails.Function);
-        }
-      }
-    }
-
-    return funcSet;
+    return FunctionsForSamplesProcessor.Compute(filter, profile);
   }
 
   private List<ProfileCallTreeNode> FindCallTreeNodesForSamples(HashSet<IRTextFunction> funcs, ProfileData profile) {
@@ -576,6 +550,259 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function) {
-    return await CompilerInfo.GetOrCreateDebugInfoProvider(function);
+    return await CompilerInfo.GetOrCreateDebugInfoProvider(function).ConfigureAwait(false);
+  }
+
+  public async Task<bool> FunctionMarkingChanged(ToolPanelKind sourcePanelKind) {
+    if (sourcePanelKind != ToolPanelKind.Section) {
+      var panel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
+      panel?.UpdateMarkedFunctions(true);
+    }
+
+    if (sourcePanelKind != ToolPanelKind.FlameGraph) {
+      var panel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+      panel?.UpdateMarkedFunctions(true);
+    }
+
+    if (sourcePanelKind != ToolPanelKind.CallTree) {
+      var panel = FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
+      panel?.UpdateMarkedFunctions(true);
+    }
+
+    if (sourcePanelKind != ToolPanelKind.CallerCallee) {
+      var panel = FindPanel(ToolPanelKind.CallerCallee) as CallTreePanel;
+      panel?.UpdateMarkedFunctions(true);
+    }
+
+    // Also update any detached profiling popup.
+    foreach (var popup in detachedPanels_) {
+      if (popup is CallTreeNodePopup nodePopup) {
+        nodePopup.UpdateMarkedFunctions();
+      }
+    }
+
+    return true;
+  }
+
+  private void RemoveProfileTimeRangeButton_Click(object sender, RoutedEventArgs e) {
+    ProfileFilter?.RemoveTimeRangeFilter?.Invoke();
+  }
+
+  private void RemoveProfileThreadButton_Click(object sender, RoutedEventArgs e) {
+    ProfileFilter?.RemoveThreadFilter?.Invoke();
+  }
+
+  private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
+    MarkingSettings.FunctionColors.Clear();
+    ReloadMarkingSettings();
+  }
+
+  private void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
+    MarkingSettings.ModuleColors.Clear();
+    ReloadMarkingSettings();
+  }
+
+  private void MarkingMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    // Add the saved markings menu items.
+    CreateSavedMarkingMenu(SwitchMarkingsMenu, markingSet => {
+      MarkingSettings.SwitchMarkingSet(markingSet);
+      ReloadMarkingSettings();
+    });
+
+    CreateSavedMarkingMenu(AppendMarkingsMenu, markingSet => {
+      MarkingSettings.AppendMarkingSet(markingSet);
+      ReloadMarkingSettings();
+    });
+
+    // Add the built-in function markings to the menu,
+    // if not already added, after the title "builtin markings" title.
+    int insertionIndex = 1;
+
+    foreach (var item in MarkingMenu.Items) {
+      if (item is MenuItem menuItem &&
+          menuItem.Name == "BuiltinMarkingsMenu") {
+        break;
+      }
+
+      insertionIndex++;
+    }
+
+    if (MarkingMenu.Items[insertionIndex] is not MenuItem stopMenuItem ||
+        !stopMenuItem.Tag.Equals("BuiltinMarkingsMenuEnd")) {
+      return; // Already populated.
+    }
+
+    var builtinMarkings = MarkingSettings.BuiltinMarkingCategories;
+
+    foreach (var markingSet in builtinMarkings.FunctionColors) {
+      var item = new MenuItem {
+        Header = markingSet.Title,
+        ToolTip = markingSet.Name,
+        Tag = markingSet,
+      };
+
+      var colorSelector = new ColorSelector();
+      var selectorItem = new MenuItem {
+        Header = colorSelector,
+        Tag = markingSet,
+      };
+
+      colorSelector.ColorSelected += (o, args) => {
+        var style = markingSet.CloneWithNewColor(args.SelectedColor);
+        MarkingSettings.UseFunctionColors = true;
+        MarkingSettings.AddFunctionColor(style);
+        ReloadMarkingSettings();
+      };
+
+      item.Items.Add(selectorItem);
+      MarkingMenu.Items.Insert(insertionIndex, item);
+      insertionIndex++;
+    }
+  }
+
+  private void CreateSavedMarkingMenu(MenuItem menu, Action<FunctionMarkingSet> action) {
+    menu.Items.Clear();
+
+    foreach (var markingSet in MarkingSettings.SavedSets) {
+      var tooltip = $"Function markings: {markingSet.FunctionColors.Count}";
+      tooltip += $"\nModule markings: {markingSet.ModuleColors.Count}";
+      tooltip += "\nRight-click to remove marking set";
+
+      var item = new MenuItem {
+        Header = markingSet.Title,
+        ToolTip = tooltip,
+        Tag = markingSet,
+      };
+
+      item.Click += (sender, args) => action(markingSet);
+      item.PreviewMouseRightButtonDown += (sender, args) => {
+        MarkingSettings.RemoveMarkingSet(markingSet);
+        menu.IsSubmenuOpen = false;
+      };
+
+      menu.Items.Add(item);
+    }
+  }
+
+  private void ReloadMarkingSettings() {
+    // Notify all panels about the marking changes.
+    FunctionMarkingChanged(ToolPanelKind.Other);
+  }
+
+  private void SaveMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    TextInputWindow input = new("Save marked functions/modules", "Saved marking set name:", "Save", "Cancel");
+
+    if (input.Show(out string result, true)) {
+      MarkingSettings.SaveCurrentMarkingSet(result);
+    }
+  }
+
+  private void ImportMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    if(MarkingSettings.ImportMarkings(this)) {
+      ReloadMarkingSettings();
+    }
+  }
+
+  private void ExportMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    MarkingSettings.ExportMarkings(this);
+  }
+
+  private void EditMarkingsMenu_OnClick(object sender, RoutedEventArgs e) {
+    var filePath = App.GetFunctionMarkingsFilePath(compilerInfo_.CompilerIRName);
+    Utils.OpenExternalFile(filePath);
+  }
+
+  private async void CategoriesMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    if (e.OriginalSource is MenuItem menuItem &&
+        menuItem.Tag != null) {
+      return;
+    }
+
+    currentMarkingCategories_ = await ProfilingUtils.CreateFunctionsCategoriesMenu(CategoriesMenu, async (o, args) => {
+        if (o is MenuItem menuItem &&
+            menuItem.Tag is IRTextFunction func) {
+          await SwitchActiveFunction(func);
+        }
+      }, null,
+      currentMarkingCategories_, MarkingSettings, this);
+  }
+
+  private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, this,
+      e.OriginalSource, ReloadMarkingSettings);
+  }
+
+  private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, this,
+      e.OriginalSource, ReloadMarkingSettings);
+  }
+
+  private async void CopyOverviewMenu_OnClick(object sender, RoutedEventArgs e) {
+    var (html, plaintext) = await ExportProfilingReportAsHtml();
+    Utils.CopyHtmlToClipboard(html, plaintext);
+  }
+
+  private async Task<(string Html, string Plaintext)>
+    ExportProfilingReportAsHtml() {
+    var markings = App.Settings.MarkingSettings.BuiltinMarkingCategories.FunctionColors;
+    var markingCategoryList =
+      await Task.Run(() => ProfilingUtils.CollectMarkedFunctions(markings, false, this));
+    return ProfilingUtils.ExportProfilingReportAsHtml(markingCategoryList, this, true, 20);
+  }
+
+  private async void ExportOverviewHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        var (html, _) = await ExportProfilingReportAsHtml();
+        await File.WriteAllTextAsync(path, html);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save report to {path}: {ex.Message}");
+        success = false;
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save profiling report to {path}", "IR Explorer",
+          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  private async void ExportOverviewMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("Markdown file|*.md", "*.md|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        var (_, plaintext) = await ExportProfilingReportAsHtml();
+        await File.WriteAllTextAsync(path, plaintext);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save report to {path}: {ex.Message}");
+        success = false;
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save profiling report to {path}", "IR Explorer",
+          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.CopyFunctionMarkingsAsHtml(this);
+  }
+
+  private async void ExportMarkedFunctionsHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.ExportFunctionMarkingsAsHtmlFile(this);
+  }
+
+  private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.ExportFunctionMarkingsAsMarkdownFile(this);
   }
 }

@@ -18,6 +18,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Document;
+using IRExplorerUI.Profile;
 using MouseHoverLogic = IRExplorerUI.Utilities.UI.MouseHoverLogic;
 
 namespace IRExplorerUI.Controls;
@@ -33,21 +34,52 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private ISession session;
   private ParsedIRTextSection parsedSection_;
   private PreviewPopupSettings settings_;
+  private bool showHistoryButtons_;
 
   public IRDocumentPopup(Point position, UIElement owner, ISession session, PreviewPopupSettings settings) {
     Debug.Assert(settings != null);
     InitializeComponent();
+    SetupEvents();
 
     settings_ = settings;
     double width = Math.Max(settings.PopupWidth, MinWidth);
     double height = Math.Max(settings.PopupHeight, MinHeight);
     Initialize(position, width, height, owner);
 
-    ProfileTextView.PreviewMouseWheel += ProfileTextViewOnMouseWheel;
     PanelResizeGrip.ResizedControl = this;
     Session = session;
     owner_ = owner;
     DataContext = this;
+  }
+
+  private void SetupEvents() {
+    ProfileTextView.PreviewMouseWheel += ProfileTextViewOnMouseWheel;
+    ProfileTextView.TitlePrefixChanged += (sender, s) => {
+      TitlePrefix = s;
+      UpdatePopupTitle();
+    };
+    ProfileTextView.TitleSuffixChanged += (sender, s) => {
+      TitleSuffix = s;
+      UpdatePopupTitle();
+    };
+    ProfileTextView.DescriptionPrefixChanged += (sender, s) => {
+      DescriptionPrefix = !string.IsNullOrEmpty(s) ? s + "\n\n" : "";
+      UpdatePopupTitle();
+    };
+    ProfileTextView.DescriptionSuffixChanged += (sender, s) => {
+      DescriptionSuffix = !string.IsNullOrEmpty(s) ? "\n\n" + s : "";
+      UpdatePopupTitle();
+    };
+    ProfileTextView.LoadedFunctionChanged += (sender, s) => {
+      parsedSection_ = s;
+      UpdatePopupTitle();
+    };
+    ProfileTextView.FunctionHistoryChanged += (sender, args) => {
+      ShowHistoryButtons = ProfileTextView.HasPreviousFunctions ||
+                           ProfileTextView.HasNextFunctions;
+      OnPropertyChanged(nameof(HasNextFunctions));
+      OnPropertyChanged(nameof(HasPreviousFunctions));
+    };
   }
 
   protected override void SetPanelAccentColor(Color color) {
@@ -55,6 +87,11 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     PanelBorder.BorderBrush = ColorBrushes.GetBrush(color);
   }
 
+  public void SetPanelAccentColor(Brush color) {
+    ToolbarPanel.Background = color;
+    PanelBorder.BorderBrush = color;
+  }
+  
   public event PropertyChangedEventHandler PropertyChanged;
   public IRElement PreviewedElement { get; set; }
 
@@ -75,6 +112,21 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     get => panelToolTip_;
     set => SetField(ref panelToolTip_, value);
   }
+
+  public string TitlePrefix { get; set; }
+  public string TitleSuffix { get; set; }
+  public string DescriptionPrefix { get; set; }
+  public string DescriptionSuffix { get; set; }
+
+  public bool ShowHistoryButtons {
+    get => showHistoryButtons_;
+    set {
+      SetField(ref showHistoryButtons_, value);
+    }
+  }
+
+  public bool HasPreviousFunctions => ProfileTextView.HasPreviousFunctions;
+  public bool HasNextFunctions => ProfileTextView.HasNextFunctions;
 
   public bool ShowAssembly {
     get => !showSourceFile_;
@@ -97,15 +149,11 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     set => SetField(ref showModeButtons_, value);
   }
 
-  private async Task SetupInitialMode(ParsedIRTextSection parsedSection) {
+  private async Task SetupInitialMode(ParsedIRTextSection parsedSection, bool showSourceCode) {
     parsedSection_ = parsedSection;
     ShowModeButtons = true;
-    ShowAssembly = !settings_.ShowSourcePreviewPopup;
+    ShowAssembly = !showSourceCode && !settings_.ShowSourcePreviewPopup;
     await SwitchAssemblySourceMode();
-
-    if (settings_.JumpToHottestElement) {
-      ProfileTextView.JumpToHottestProfiledElement();
-    }
   }
 
   public static async Task<IRDocumentPopup> CreateNew(IRDocument document, IRElement previewedElement,
@@ -120,13 +168,15 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   public static async Task<IRDocumentPopup> CreateNew(ParsedIRTextSection parsedSection,
-                                                      Point position,
-                                                      UIElement owner, ISession session,
+                                                      Point position, UIElement owner,
+                                                      ISession session,
                                                       PreviewPopupSettings settings,
-                                                      string titlePrefix = "") {
+                                                      string titlePrefix = "",
+                                                      bool showSourceCode = false,
+                                                      ProfileSampleFilter profileFilter = null) {
     var popup = CreatePopup(parsedSection.Section, null, position,
                             owner, session, settings, titlePrefix);
-    await popup.InitializeFromSection(parsedSection);
+    await popup.InitializeFromSection(parsedSection, profileFilter, showSourceCode);
     SetupNewPopup(popup, settings);
     return popup;
   }
@@ -138,37 +188,78 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       settings.PopupHeight = popup.Height;
     };
 
+    popup.UpdatePopupTitle();
     popup.CaptureMouseWheel();
   }
 
-  private async Task InitializeFromSection(ParsedIRTextSection parsedSection) {
+  private async Task InitializeFromSection(ParsedIRTextSection parsedSection,
+                                           ProfileSampleFilter filter,
+                                           bool showSourceCode) {
     ProfileTextView.IsPreviewDocument = true;
     ProfileTextView.UseSmallerFontSize = settings_.UseSmallerFontSize;
     ProfileTextView.UseCompactProfilingColumns = settings_.UseCompactProfilingColumns;
     ProfileTextView.ShowPerformanceCounterColumns = settings_.ShowPerformanceCounterColumns;
     ProfileTextView.ShowPerformanceMetricColumns = settings_.ShowPerformanceMetricColumns;
+    ProfileTextView.ProfileFilter = filter;
     ProfileTextView.Initialize(App.Settings.DocumentSettings);
-    await ProfileTextView.LoadSection(parsedSection);
-    await SetupInitialMode(parsedSection);
+    await SetupInitialMode(parsedSection, showSourceCode);
   }
 
   private static IRDocumentPopup CreatePopup(IRTextSection section, IRElement previewedElement,
-                                             Point position,
-                                             UIElement owner, ISession session, PreviewPopupSettings settings,
-                                             string titlePrefix) {
+                                             Point position, UIElement owner, ISession session,
+                                             PreviewPopupSettings settings, string titlePrefix) {
     var popup = new IRDocumentPopup(position, owner, session, settings);
-
-    if (previewedElement != null) {
-      string elementText = Utils.MakeElementDescription(previewedElement);
-      popup.PanelTitle = !string.IsNullOrEmpty(titlePrefix) ? $"{titlePrefix}{elementText}" : elementText;
-    }
-    else {
-      popup.PanelTitle = titlePrefix;
-    }
-
-    popup.PanelToolTip = popup.Session.CompilerInfo.NameProvider.GetSectionName(section);
     popup.PreviewedElement = previewedElement;
+    popup.TitlePrefix = titlePrefix;
+    SetupNewPopup(popup, settings);
     return popup;
+  }
+
+  private void UpdatePopupTitle() {
+    var title = GetFunctionName();
+
+    if (PreviewedElement != null) {
+      string elementText = Utils.MakeElementDescription(PreviewedElement);
+      title = $"{title}: {elementText}";
+    }
+
+    if (!string.IsNullOrEmpty(TitlePrefix)) {
+      title = $"{TitlePrefix}{title}";
+    }
+
+    if (!string.IsNullOrEmpty(TitleSuffix)) {
+      title = $"{title}{TitleSuffix}";
+    }
+
+    var tooltip = GetTooltipFunctionName();
+
+    if (!string.IsNullOrEmpty(DescriptionPrefix)) {
+      tooltip = $"{DescriptionPrefix}{tooltip}";
+    }
+
+    if (!string.IsNullOrEmpty(DescriptionSuffix)) {
+      tooltip = $"{tooltip}{DescriptionSuffix}";
+    }
+
+    PanelTitle = title;
+    PanelToolTip = tooltip;
+  }
+
+  private string GetFunctionName() {
+    if (parsedSection_ != null) {
+      return parsedSection_.ParentFunction.FormatFunctionName(session, 80);
+    }
+
+    return "";
+  }
+
+  private string GetTooltipFunctionName() {
+    if (parsedSection_ != null) {
+      var funName = parsedSection_.ParentFunction.FormatFunctionName(session);
+      return $"Module: {parsedSection_.Section.ModuleName}\nFunction: {DocumentUtils.FormatLongFunctionName(funName)}";
+    }
+
+    return "";
   }
 
   private async Task InitializeFromDocument(IRDocument document, string text = null) {
@@ -288,26 +379,37 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private async Task SwitchAssemblySourceMode() {
+    // Save current profile filter to restore after switch.
+    var filter = ProfileTextView.ProfileFilter;
     ProfileTextView.Reset();
 
     if (showSourceFile_) {
       ProfileTextView.Initialize(App.Settings.SourceFileSettings);
-      var function = parsedSection_.Section.ParentFunction;
+      var function = parsedSection_.ParentFunction;
       var (sourceInfo, debugInfo) = await Session.CompilerInfo.SourceFileFinder.FindLocalSourceFile(function);
 
       if (!sourceInfo.IsUnknown) {
-        await ProfileTextView.LoadSourceFile(sourceInfo, parsedSection_.Section, debugInfo);
+        await ProfileTextView.LoadSourceFile(sourceInfo, parsedSection_.Section, filter);
+        await ProfileTextView.LoadSourceFile(sourceInfo, parsedSection_.Section, filter);
       }
       else {
         var failureText = $"Could not find debug info for function:\n{function.Name}";
-        ProfileTextView.HandleMissingSourceFile(failureText);
+        await ProfileTextView.HandleMissingSourceFile(failureText);
       }
     }
     else {
       // Show assembly.
       ProfileTextView.Initialize(App.Settings.DocumentSettings);
-      await ProfileTextView.LoadSection(parsedSection_);
+      await ProfileTextView.LoadAssembly(parsedSection_, filter);
     }
+  }
+
+  private async void NextButton_Click(object sender, RoutedEventArgs e) {
+    await ProfileTextView.LoadNextSection();
+  }
+
+  private async void BackButton_Click(object sender, RoutedEventArgs e) {
+    await ProfileTextView.LoadPreviousSection();
   }
 }
 
@@ -364,36 +466,31 @@ public class IRDocumentPopupInstance {
   }
 
   private async Task ShowPreviewPopupForLoadedSection(PreviewPopupArgs args) {
-    await ShowPreviewPopupForSection(args.LoadedSection, args.RelativeElement, args.Title);
-  }
-
-  private async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection, UIElement relativeElement,
-                                                string title) {
     if (!Prepare()) {
       return;
     }
 
-    var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
-    previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position,
-                                                    relativeElement, session_, settings_, title);
+    var position = Mouse.GetPosition(args.RelativeElement).AdjustForMouseCursor();
+    previewPopup_ = await IRDocumentPopup.CreateNew(args.LoadedSection, position,
+                                                    args.RelativeElement, session_,
+                                                    settings_, args.Title,
+                                                    args.ShowSourceCode, args.ProfilerFilter);
     Complete();
   }
 
   private async Task ShowPreviewPopupForSection(PreviewPopupArgs args) {
-    await ShowPreviewPopupForSection(args.Section, args.RelativeElement, args.Title);
-  }
-
-  private async Task ShowPreviewPopupForSection(IRTextSection section, UIElement relativeElement, string title) {
     if (!Prepare()) {
       return;
     }
 
-    var parsedSection = await session_.LoadAndParseSection(section);
+    var parsedSection = await session_.LoadAndParseSection(args.Section);
 
     if (parsedSection != null) {
-      var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
+      var position = Mouse.GetPosition(args.RelativeElement).AdjustForMouseCursor();
       previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position,
-                                                      relativeElement, session_, settings_, title);
+                                                      args.RelativeElement, session_,
+                                                      settings_, args.Title,
+                                                      args.ShowSourceCode, args.ProfilerFilter);
       Complete();
     }
   }
@@ -452,7 +549,7 @@ public class IRDocumentPopupInstance {
     }
   }
 
-  private async Task ShowPreviewPopup(PreviewPopupArgs args) {
+  private async Task<IRDocumentPopup> ShowPreviewPopup(PreviewPopupArgs args) {
     if (args.Document != null) {
       await ShowPreviewPopupForDocument(args);
     }
@@ -465,14 +562,23 @@ public class IRDocumentPopupInstance {
     else {
       throw new InvalidOperationException();
     }
+
+    return previewPopup_;
   }
 
   public static async Task ShowPreviewPopup(IRTextFunction function, string title,
-                                            UIElement relativeElement, ISession session) {
+                                            UIElement relativeElement, ISession session,
+                                            ProfileSampleFilter profileFilter = null,
+                                            bool showSourceCode = false,
+                                            Brush titleBarColor = null) {
     var settings = App.Settings.PreviewPopupSettings;
     var instance = new IRDocumentPopupInstance(settings, session);
-    var args = PreviewPopupArgs.ForFunction(function, relativeElement, title);
-    await instance.ShowPreviewPopup(args);
+    var args = PreviewPopupArgs.ForFunction(function, relativeElement, title, profileFilter, showSourceCode);
+    var popup = await instance.ShowPreviewPopup(args);
+
+    if (titleBarColor != null) {
+      popup.SetPanelAccentColor(titleBarColor);
+    }
   }
 
   private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {
@@ -492,17 +598,24 @@ public class PreviewPopupArgs {
   }
 
   public static PreviewPopupArgs ForSection(IRTextSection section,
-                                            UIElement relativeElement, string title = "",
-                                            bool showAssembly = true) {
+                                            UIElement relativeElement,
+                                            string title = "",
+                                            ProfileSampleFilter profileFilter = null,
+                                            bool showSourceCode = false) {
     return new PreviewPopupArgs {
       Section = section,
       RelativeElement = relativeElement,
       Title = title,
+      ProfilerFilter = profileFilter,
+      ShowSourceCode = showSourceCode,
     };
   }
 
   public static PreviewPopupArgs ForFunction(IRTextFunction function,
-                                             UIElement relativeElement, string title = "") {
+                                             UIElement relativeElement,
+                                             string title = "",
+                                             ProfileSampleFilter profileFilter = null,
+                                             bool showSourceCode = false) {
     if (function == null || function.Sections.Count == 0) {
       return null;
     }
@@ -511,6 +624,8 @@ public class PreviewPopupArgs {
       Section = function.Sections[0],
       RelativeElement = relativeElement,
       Title = title,
+      ProfilerFilter = profileFilter,
+      ShowSourceCode = showSourceCode,
     };
   }
 
@@ -529,4 +644,6 @@ public class PreviewPopupArgs {
   public IRDocument Document { get; set; }
   public ParsedIRTextSection LoadedSection { get; set; }
   public IRTextSection Section { get; set; }
+  public bool ShowSourceCode { get; set; }
+  public ProfileSampleFilter ProfilerFilter { get; set; }
 }

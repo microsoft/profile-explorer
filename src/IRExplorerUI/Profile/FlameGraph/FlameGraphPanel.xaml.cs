@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -19,6 +20,9 @@ using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
+using IRExplorerUI.Profile.Document;
+using Color = System.Windows.Media.Color;
+using Style = System.Windows.Style;
 
 namespace IRExplorerUI.Profile;
 
@@ -64,7 +68,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     get => settings_;
     set {
       settings_ = value;
-      GraphHost.SettingsUpdated(value);
+      ReloadSettings();
       OnPropertyChanged();
     }
   }
@@ -109,6 +113,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
   }
 
+  public bool HasEnabledMarkedFunctions => MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
+  public bool HasEnabledMarkedModules => MarkingSettings.UseModuleColors && MarkingSettings.ModuleColors.Count > 0;
+  public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
+
   public override async void OnShowPanel() {
     base.OnShowPanel();
     panelVisible_ = true;
@@ -145,11 +153,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       return; //? TODO: Maybe do the init now?
     }
 
-    var nodes = callTree_.GetSortedCallTreeNodes(function);
+    GraphHost.ClearSelection();
+    var groupNode = callTree_.GetCombinedCallTreeNode(function);
 
-    if (nodes is {Count: > 0}) {
-      GraphHost.SelectNodes(nodes, false, bringIntoView);
-      await NodeDetailsPanel.ShowWithDetailsAsync(nodes[^1]);
+    if (groupNode is {Nodes.Count: > 0}) {
+      GraphHost.SelectNode(groupNode, false, bringIntoView);
+      await NodeDetailsPanel.ShowWithDetailsAsync(groupNode);
     }
   }
 
@@ -162,6 +171,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       node = groupNode.Nodes[0];
     }
 
+    GraphHost.ClearSelection();
     GraphHost.SelectNode(node, true, bringIntoView);
 
     if (showDetails) {
@@ -214,6 +224,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private async Task InitializeCallTree(ProfileCallTree callTree) {
     CallTree = callTree;
+    NodeDetailsPanel.Reset();
     await GraphHost.InitializeFlameGraph(callTree);
   }
 
@@ -222,6 +233,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     GraphHost.NodesDeselected += GraphHost_NodesDeselected;
     GraphHost.RootNodeChanged += GraphHostOnRootNodeChanged;
     GraphHost.RootNodeCleared += GraphHostOnRootNodeCleared;
+    GraphHost.MarkingChanged += (sender, args) => UpdateMarkingUI();
 
     // Setup events for the node details view.
     NodeDetailsPanel.NodeInstanceChanged += NodeDetailsPanel_NodeInstanceChanged;
@@ -232,6 +244,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     NodeDetailsPanel.FunctionNodeClick += NodeDetailsPanel_NodeClick;
     NodeDetailsPanel.FunctionNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
     NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
+    NodeDetailsPanel.MarkingChanged += (sender, args) => UpdateMarkingUI();
   }
 
   private void GraphHostOnRootNodeCleared(object sender, EventArgs e) {
@@ -251,8 +264,28 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     set => SetField(ref rootNode_, value);
   }
 
+  private async Task UpdateNodeDetailsPanel() {
+    var selectedNodes = GraphHost.SelectedNodes;
+
+    if (selectedNodes.Count == 0) {
+      NodeDetailsPanel.Reset();
+    }
+    else {
+      var callTreeNodes = new List<ProfileCallTreeNode>();
+
+      foreach (var node in selectedNodes) {
+        if (node.HasFunction) {
+          callTreeNodes.Add(node.CallTreeNode);
+        }
+      }
+
+      var combinedNode = await Task.Run(() => ProfileCallTree.CombinedCallTreeNodes(callTreeNodes));
+      await NodeDetailsPanel.ShowWithDetailsAsync(combinedNode);
+    }
+  }
+
   private async void GraphHost_NodesDeselected(object sender, EventArgs e) {
-    NodeDetailsPanel.Reset();
+    await UpdateNodeDetailsPanel();
 
     if (settings_.SyncSelection) {
       await Session.ProfileFunctionDeselected();
@@ -265,7 +298,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private async void GraphHost_NodeSelected(object sender, FlameGraphNode node) {
     if (node.HasFunction) {
-      await NodeDetailsPanel.ShowWithDetailsAsync(node.CallTreeNode);
+      await UpdateNodeDetailsPanel();
 
       if (settings_.SyncSourceFile) {
         // Load the source file and scroll to the hottest line.
@@ -280,7 +313,15 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       var selectedNodes = GraphHost.SelectedNodes;
 
       if (selectedNodes.Count > 1) {
-        var selectionWeight = ComputeSelectedNodeWeight(selectedNodes);
+        var nodes = new List<ProfileCallTreeNode>();
+
+        foreach (var selectedNode in selectedNodes) {
+          if (selectedNode.HasFunction) {
+            nodes.Add(selectedNode.CallTreeNode);
+          }
+        }
+
+        var selectionWeight = ProfileCallTree.CombinedCallTreeNodesWeight(nodes);
         double weightPercentage = 0;
 
         if (rootNode_ != null) {
@@ -291,7 +332,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
           weightPercentage = Session.ProfileData.ScaleFunctionWeight(selectionWeight);
         }
 
-        string text = $"{weightPercentage.AsPercentageString()} ({selectionWeight.AsMillisecondsString()})";
+        string text = $"Selected {nodes.Count}: {weightPercentage.AsPercentageString()} ({selectionWeight.AsMillisecondsString()})";
         Session.SetApplicationStatus(text, "Sum of selected flame graph nodes");
       }
       else {
@@ -300,46 +341,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
   }
 
-  private TimeSpan ComputeSelectedNodeWeight(List<FlameGraphNode> selectedNodes) {
-    // Sum up the total weight of all selected nodes,
-    // but ignore nodes whose time is covered by a parent node
-    // in case it is also selected. Sort by weight so that parent
-    // (more inclusive time) get processed first.
-    var nodes = new List<FlameGraphNode>(selectedNodes);
-    nodes.Sort((a, b) => b.Weight.CompareTo(a.Weight));
-
-    var handledNodes = new HashSet<FlameGraphNode>();
-    var sum = TimeSpan.Zero;
-
-    foreach (var node in nodes) {
-      var parentNode = node.Parent;
-      bool reject = false;
-
-      while (parentNode != null) {
-        if (handledNodes.Contains(parentNode)) {
-          reject = true;
-          break;
-        }
-
-        parentNode = parentNode.Parent;
-      }
-
-      if (!reject) {
-        sum += node.Weight;
-        handledNodes.Add(node);
-      }
-    }
-
-    return sum;
-  }
-
   private void NodeDetailsPanel_NodesSelected(object sender, List<ProfileCallTreeNode> e) {
     GraphHost.SelectNodes(e);
   }
 
   private void NodeDetailsPanel_NodeInstanceChanged(object sender, ProfileCallTreeNode e) {
-    var node = GraphHost.GraphViewer.SelectNode(e);
-    GraphHost.BringNodeIntoView(node);
+    GraphHost.SelectNode(e, true);
   }
 
   private async void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
@@ -353,14 +360,13 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private async Task OpenFunction(ProfileCallTreeNode node) {
-    if (node != null && node.Function.HasSections) {
-      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+    if (node is {HasFunction: true} && node.Function.HasSections) {
+      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await Session.OpenProfileFunction(node, openMode);
     }
   }
 
   private void ExecuteGraphResetWidth(object sender, ExecutedRoutedEventArgs e) {
-    //? TODO: Buttons should be disabled
     GraphHost.ResetWidth();
   }
 
@@ -380,7 +386,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
 
-  private async void UndoButtoon_Click(object sender, RoutedEventArgs e) {
+  private async void UndoButton_Click(object sender, RoutedEventArgs e) {
     await GraphHost.RestorePreviousState();
   }
 
@@ -446,6 +452,11 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     ((TextBox)e.Parameter).Text = string.Empty;
   }
 
+  private void FocusSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
+    FunctionFilter.Focus();
+    FunctionFilter.SelectAll();
+  }
+
   private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
     await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
@@ -461,11 +472,15 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       return;
     }
 
+    //? TODO: Redesign settings change detection, doesn't work well
+    //? when a panel shows multiple settings objects.
+    var initialMarkingSettings = MarkingSettings.Clone();
     FrameworkElement relativeControl = settings_.ShowDetailsPanel ? NodeDetailsPanel : GraphHost;
     optionsPanelWindow_ = OptionsPanelHostWindow.Create<FlameGraphOptionsPanel, FlameGraphSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
-        if (!newSettings.Equals(settings_)) {
+        if (!newSettings.Equals(settings_) ||
+            !initialMarkingSettings.Equals(MarkingSettings)) {
           Settings = newSettings;
           NodeDetailsPanel.Settings = App.Settings.CallTreeNodeSettings;
           App.Settings.FlameGraphSettings = newSettings;
@@ -473,6 +488,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
           if (commit) {
             App.SaveApplicationSettings();
           }
+
+          initialMarkingSettings = MarkingSettings.Clone();
           return settings_.Clone();
         }
 
@@ -487,12 +504,22 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
-    settings_.ModuleColors.Clear();
+    MarkingSettings.ModuleColors.Clear();
+    ReloadSettings();
+  }
+
+  private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
+    MarkingSettings.FunctionColors.Clear();
     ReloadSettings();
   }
 
   private void ReloadSettings() {
     GraphHost.SettingsUpdated(settings_);
+    UpdateMarkingUI();
+  }
+
+  private void UpdateMarkingUI() {
+    Session.FunctionMarkingChanged(ToolPanelKind.FlameGraph);
   }
 
   public override async Task OnReloadSettings() {
@@ -500,43 +527,31 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    var defaultItems = DocumentUtils.SaveDefaultMenuItems(ModuleMenu);
-    var separatorIndex = defaultItems.FindIndex(item => item is Separator);
-
-    // Insert module markers after separator.
-    foreach (var moduleStyle in settings_.ModuleColors) {
-      var item = new MenuItem {
-        Header = moduleStyle.Name,
-        ToolTip = "Click to remove module marking",
-        Icon = CreateModuleMenuIcon(moduleStyle),
-        Tag = moduleStyle
-      };
-
-      item.Click += (o, args) => {
-        settings_.ModuleColors.Remove(item.Tag as FlameGraphSettings.ModuleStyle);
-        ReloadSettings();
-      };
-
-      defaultItems.Insert(separatorIndex + 1, item);
-    }
-
-    // Populate the module menu.
-    ModuleMenu.Items.Clear();
-
-    foreach (var item in defaultItems) {
-      ModuleMenu.Items.Add(item);
-    }
+    ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
+      e.OriginalSource, ReloadSettings);
   }
 
-  private Image CreateModuleMenuIcon(FlameGraphSettings.ModuleStyle moduleStyle) {
-    var visual = new DrawingVisual();
+  private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
+      e.OriginalSource, ReloadSettings);
+  }
 
-    using (var dc = visual.RenderOpen()) {
-      dc.DrawRectangle(moduleStyle.Color.AsBrush(), ColorPens.GetPen(Colors.Black), new Rect(0, 0, 16, 16));
-    }
+  public void UpdateMarkedFunctions(bool externalCall) {
+    GraphHost.Redraw();
+    OnPropertyChanged(nameof(HasEnabledMarkedModules));
+    OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
+    NodeDetailsPanel.UpdateMarkedFunctions();
+  }
 
-    var targetBitmap = new RenderTargetBitmap(16, 16, 96, 96, PixelFormats.Default);
-    targetBitmap.Render(visual);
-    return new Image { Source = targetBitmap };
+  private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.CopyFunctionMarkingsAsHtml(Session);
+  }
+
+  private async void ExportMarkedFunctionsHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.ExportFunctionMarkingsAsHtmlFile(Session);
+  }
+
+  private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.ExportFunctionMarkingsAsMarkdownFile(Session);
   }
 }

@@ -18,9 +18,7 @@ namespace IRExplorerUI.OptionsPanels;
 public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   private FlameGraphSettings settings_;
   public override double DefaultHeight => 450;
-  public const double MinimumHeight = 200;
-  public const double DefaultWidth = 350;
-  public const double MinimumWidth = 350;
+  public override double DefaultWidth => 400;
 
   public FlameGraphOptionsPanel() {
     InitializeComponent();
@@ -28,37 +26,33 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     KernelPaletteSelector.PalettesSource = ColorPalette.BuiltinPalettes;
     ManagedPaletteSelector.PalettesSource = ColorPalette.BuiltinPalettes;
 
+    //? TODO: Change to calling Initialize
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
     PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
-
-
+  
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);
     settings_ = (FlameGraphSettings)Settings;
-    ReloadModuleList();
+    FunctionMarkingOptionsPanel.Initialize(parent, App.Settings.MarkingSettings, session);
   }
 
   public override void OnSettingsChanged(object newSettings) {
     settings_ = (FlameGraphSettings)newSettings;
-    ReloadModuleList();
   }
 
-  private void ReloadModuleList() {
-    var list = new ObservableCollectionRefresh<FlameGraphSettings.ModuleStyle>(settings_.ModuleColors);
-    ModuleList.ItemsSource = list;
-  }
-
-  protected override void ReloadSettings() {
+  public override void ReloadSettings() {
     base.ReloadSettings();
+    //? TODO: Change to calling ReloadSettings
     DetailsPanel.DataContext = null;
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
     PreviewPopupOptionsPanel.DataContext = null;
     PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
     FunctionListOptionsPanel.DataContext = null;
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
+    FunctionMarkingOptionsPanel.ReloadSettings();
   }
 
   public override void PanelResetting() {
@@ -111,39 +105,5 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   private void ResetFilterWeightButton_Click(object sender, RoutedEventArgs e) {
     ((ProfileListViewFilter)FunctionListOptionsPanel.DataContext).MinWeight = ProfileListViewFilter.DefaultMinWeight;
     ReloadSettings();
-  }
-
-  private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-    if (sender is TextBox textBox) {
-      Utils.SelectTextBoxListViewItem(textBox, ModuleList);
-      e.Handled = true;
-    }
-  }
-
-  private void ModuleRemove_Click(object sender, RoutedEventArgs e) {
-    if (ModuleList.SelectedItem is FlameGraphSettings.ModuleStyle pair) {
-      settings_.ModuleColors.Remove((pair));
-      ReloadModuleList();
-      NotifySettingsChanged();
-    }
-  }
-
-  private void ModuleAdd_Click(object sender, RoutedEventArgs e) {
-    settings_.ModuleColors.Add(new FlameGraphSettings.ModuleStyle("", Colors.White));
-    ReloadModuleList();
-    NotifySettingsChanged();
-
-    Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => {
-      var newItem = settings_.ModuleColors.Last();
-      Utils.FocusTextBoxListViewItem(newItem, ModuleList);
-    });
-  }
-
-  private void ClearModule_Click(object sender, RoutedEventArgs e) {
-    if (Utils.ShowYesNoMessageBox("Do you want to clear the list?", this) == MessageBoxResult.Yes) {
-      settings_.ModuleColors.Clear();
-      ReloadModuleList();
-      NotifySettingsChanged();
-    }
   }
 }

@@ -8,12 +8,13 @@
   d:DesignHeight="250"
   d:DesignWidth="400"
   mc:Ignorable="d">
-  <StackPanel Orientation="Vertical">
+  <StackPanel Orientation="Vertical"
+              DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
     <StackPanel Margin="0,2,0,0" Orientation="Horizontal">
       <Button
         Width="20"
         Height="20"
-        Background="#f7938f"
+        Background="{Binding Path=ButtonBrushes[0]}"
         BorderThickness="1,1,1,1"
         Content="1"
         FontSize="10"
@@ -22,7 +23,7 @@
         Width="20"
         Height="20"
         Margin="2,0,0,0"
-        Background="#F3F986"
+        Background="{Binding Path=ButtonBrushes[1]}"
         BorderThickness="1,1,1,1"
         Content="2"
         FontSize="10"
@@ -31,7 +32,7 @@
         Width="20"
         Height="20"
         Margin="2,0,0,0"
-        Background="#A7F986"
+        Background="{Binding Path=ButtonBrushes[2]}"
         BorderThickness="1,1,1,1"
         Content="3"
         FontSize="10"
@@ -40,7 +41,7 @@
         Width="20"
         Height="20"
         Margin="2,0,0,0"
-        Background="#86B0F9"
+        Background="{Binding Path=ButtonBrushes[3]}"
         BorderThickness="1,1,1,1"
         Content="4"
         FontSize="10"
@@ -49,7 +50,7 @@
         Width="20"
         Height="20"
         Margin="2,0,0,0"
-        Background="#85decc"
+        Background="{Binding Path=ButtonBrushes[4]}"
         BorderThickness="1,1,1,1"
         Content="5"
         FontSize="10"
@@ -69,7 +70,7 @@
       <Button
         Width="20"
         Height="20"
-        Background="#f5a1ca"
+        Background="{Binding Path=ButtonBrushes[5]}"
         BorderThickness="1,1,1,1"
         Content="6"
         FontSize="10"
@@ -78,7 +79,7 @@
         Width="20"
         Height="20"
         Margin="2,0,0,0"
-        Background="#B696FC"
+        Background="{Binding Path=ButtonBrushes[6]}"
         BorderThickness="1,1,1,1"
         Content="7"
         FontSize="10"
@@ -87,7 +88,7 @@
         Width="20"
         Height="20"
         Margin="2,0,0,0"
-        Background="#86D4F9"
+        Background="{Binding Path=ButtonBrushes[7]}"
         BorderThickness="1,1,1,1"
         Content="8"
         FontSize="10"
@@ -96,7 +97,7 @@
         Width="20"
         Height="20"
         Margin="2,0,0,0"
-        Background="#f5ac6c"
+        Background="{Binding Path=ButtonBrushes[8]}"
         BorderThickness="1,1,1,1"
         Content="9"
         FontSize="10"
@@ -105,7 +106,7 @@
         Width="20"
         Height="20"
         Margin="2,0,0,0"
-        Background="#f0da69"
+        Background="{Binding Path=ButtonBrushes[9]}"
         BorderThickness="1,1,1,1"
         Content="0"
         FontSize="10"
@@ -129,6 +130,52 @@
         ShowTabHeaders="False"
         UsingAlphaChannel="False"
         Visibility="Collapsed" />
+    </StackPanel>
+    <StackPanel Orientation="Horizontal">
+      <Button
+        Width="20"
+        Height="20"
+        Background="{Binding Path=ButtonBrushes[10]}"
+        BorderThickness="1,1,1,1"
+        Content="A"
+        FontSize="10"
+        PreviewMouseUp="Button_MouseUp" />
+      <Button
+        Width="20"
+        Height="20"
+        Margin="2,0,0,0"
+        Background="{Binding Path=ButtonBrushes[11]}"
+        BorderThickness="1,1,1,1"
+        Content="B"
+        FontSize="10"
+        PreviewMouseUp="Button_MouseUp" />
+      <Button
+        Width="20"
+        Height="20"
+        Margin="2,0,0,0"
+        Background="{Binding Path=ButtonBrushes[12]}"
+        BorderThickness="1,1,1,1"
+        Content="C"
+        FontSize="10"
+        PreviewMouseUp="Button_MouseUp" />
+      <Button
+        Width="20"
+        Height="20"
+        Margin="2,0,0,0"
+        Background="{Binding Path=ButtonBrushes[13]}"
+        BorderThickness="1,1,1,1"
+        Content="D"
+        FontSize="10"
+        PreviewMouseUp="Button_MouseUp" />
+      <Button
+        Width="20"
+        Height="20"
+        Margin="2,0,0,0"
+        Background="{Binding Path=ButtonBrushes[14]}"
+        BorderThickness="1,1,1,1"
+        Content="E"
+        FontSize="10"
+        PreviewMouseUp="Button_MouseUp" />
     </StackPanel>
   </StackPanel>
 </UserControl>

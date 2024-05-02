@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
@@ -19,8 +20,8 @@ using IRExplorerUI.Utilities;
 namespace IRExplorerUI.Profile;
 
 public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider, INotifyPropertyChanged {
-  public const double ZoomAmount = 500;
-  public const double ScrollWheelZoomAmount = 300;
+  private const double ZoomAmount = 500;
+  private const double ScrollWheelZoomAmount = 300;
   private const double TimePerFrame = 1000.0 / 60; // ~16.6ms per frame at 60Hz.
   private const double FastPanOffset = 1000;
   private const double DefaultPanOffset = 100;
@@ -45,6 +46,8 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private DoubleAnimation widthAnimation_;
   private DoubleAnimation zoomAnimation_;
   private double zoomPointX_;
+  private bool enableSingleNodeActions_;
+  private List<(ProfileCallTreeNode Node, HighlightingStyle Style)> unmatchedMarkedNodes_;
 
   public FlameGraphHost() {
     InitializeComponent();
@@ -58,6 +61,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   public new bool IsInitialized => GraphViewer.IsInitialized;
   public ISession Session { get; set; }
   public List<FlameGraphNode> SelectedNodes => GraphViewer.SelectedNodes;
+
+  public bool EnableSingleNodeActions {
+    get => enableSingleNodeActions_;
+    set => SetField(ref enableSingleNodeActions_, value);
+  }
+
   public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.CallTree);
   });
@@ -68,17 +77,34 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     await SelectFunctionInPanel(ToolPanelKind.Source);
   });
   public RelayCommand<object> CopyFunctionNameCommand => new RelayCommand<object>(async obj => {
-    if (GraphViewer.SelectedNode is {HasFunction: true}) {
-      string text = Session.CompilerInfo.NameProvider.GetFunctionName(GraphViewer.SelectedNode.Function);
-      Clipboard.SetText(text);
+    string text = "";
+
+    foreach (var node in SelectedNodes) {
+      if (!string.IsNullOrEmpty(text)) {
+        text += Environment.NewLine;
+      }
+
+      if (node.HasFunction) {
+        text += Session.CompilerInfo.NameProvider.GetFunctionName(node.Function);
+      }
     }
+
+    Clipboard.SetText(text);
   });
   public RelayCommand<object> CopyDemangledFunctionNameCommand => new RelayCommand<object>(async obj => {
-    if (GraphViewer.SelectedNode is {HasFunction: true}) {
-      var options = FunctionNameDemanglingOptions.Default;
-      string text = Session.CompilerInfo.NameProvider.DemangleFunctionName(GraphViewer.SelectedNode.Function, options);
-      Clipboard.SetText(text);
+    string text = "";
+
+    foreach (var node in SelectedNodes) {
+      if (!string.IsNullOrEmpty(text)) {
+        text += Environment.NewLine;
+      }
+
+      if (node.HasFunction) {
+        text += Session.CompilerInfo.NameProvider.FormatFunctionName(node.Function);
+      }
     }
+
+    Clipboard.SetText(text);
   });
   public RelayCommand<object> CopyFunctionDetailsCommand => new RelayCommand<object>(async obj => {
     if (SelectedNodes.Count > 0) {
@@ -93,23 +119,39 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       SearchableProfileItem.CopyFunctionListAsHtml(funcList);
     }
   });
-  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
-    if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
-      GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
+
+  private void MarkSelectedNodes(object obj, Action<FlameGraphNode, Color> action) {
+    if (obj is SelectedColorEventArgs e) {
+      foreach (var node in SelectedNodes) {
+        if (node.HasFunction) {
+          action(node, e.SelectedColor);
+        }
+      }
     }
+  }
+
+  public RelayCommand<object> MarkInstanceCommand => new RelayCommand<object>(async obj => {
+    MarkSelectedNodes(obj, (node, color) => GraphViewer.MarkNode(node, GraphViewer.MarkedColoredNodeStyle(color)));
   });
-  public RelayCommand<object> MarkAllFunctionsCommand => new RelayCommand<object>(async obj => {
-    if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
-      MarkFunctionInstances(GraphViewer.SelectedNode.Function, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
-    }
+
+  public RelayCommand<object> MarkAllInstancesCommand => new RelayCommand<object>(async obj => {
+    MarkSelectedNodes(obj, (node, color) => MarkFunctionInstances(node.Function, GraphViewer.MarkedColoredNodeStyle(color)));
   });
   public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
-    if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is { HasFunction: true }) {
-      settings_.AddModuleColor(GraphViewer.SelectedNode.ModuleName, e.SelectedColor);
-      settings_.UseModuleColors = true;
-      SettingsUpdated(settings_);
-    }
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) => markingSettings.AddModuleColor(node.ModuleName, color));
+    markingSettings.UseModuleColors = true;
+    SettingsUpdated(settings_);
+    MarkingChanged?.Invoke(this, EventArgs.Empty);
   });
+  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) => markingSettings.AddFunctionColor(node.FunctionName, color));
+    markingSettings.UseFunctionColors = true;
+    SettingsUpdated(settings_);
+    MarkingChanged?.Invoke(this, EventArgs.Empty);
+  });
+
   public RelayCommand<object> MarkTimelineCommand => new RelayCommand<object>(async obj => {
     if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
       GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
@@ -119,9 +161,43 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   });
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
-      await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function,
-                                                     $"Function {GraphViewer.SelectedNode.FunctionName}",
-                                                     GraphViewer, Session);
+      var brush = GetMarkedNodeColor(GraphViewer.SelectedNode);
+      await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function, "",
+                                                     GraphViewer, Session, null, false, brush);
+    }
+  });
+
+  public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
+    if (GraphViewer.SelectedNode is {HasFunction: true}) {
+      var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
+      var brush = GetMarkedNodeColor(GraphViewer.SelectedNode);
+      await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function, "",
+                                                     GraphViewer, Session, filter, false, brush);
+    }
+  });
+
+  private Brush GetMarkedNodeColor(FlameGraphNode node) {
+    if (node is not {HasFunction: true}) {
+      return null;
+    }
+
+    return App.Settings.MarkingSettings.
+      GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
+  }
+
+  public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
+    if (GraphViewer.SelectedNode is {HasFunction: true}) {
+      var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
+      var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+      await Session.OpenProfileFunction(GraphViewer.SelectedNode.CallTreeNode, mode, filter);
+    }
+  });
+
+  public RelayCommand<object> OpenInstanceInNewTabCommand => new RelayCommand<object>(async obj => {
+    if (GraphViewer.SelectedNode is {HasFunction: true}) {
+      var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
+      await Session.OpenProfileFunction(GraphViewer.SelectedNode.CallTreeNode,
+                                        OpenSectionKind.NewTabDockRight, filter);
     }
   });
 
@@ -155,6 +231,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler MarkingChanged;
 
   private enum FlameGraphStateKind {
     Default,
@@ -182,7 +259,19 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public async Task InitializeFlameGraph(ProfileCallTree callTree) {
+    List<(ProfileCallTreeNode Node, HighlightingStyle Style)> markedNodes = null;
+
     if (IsInitialized) {
+      markedNodes = new List<(ProfileCallTreeNode Node, HighlightingStyle Style)>();
+      GraphViewer.SaveFixedMarkedNodes(markedNodes);
+
+      // Combined nodes currently marked in instance N-1 of the call tree,
+      // with nodes marked from a previous call tree instance N-2... which
+      // could not be associated with flame graph nodes because they were filtered out.
+      if (unmatchedMarkedNodes_ != null) {
+        markedNodes.AddRange(unmatchedMarkedNodes_);
+      }
+
       Reset();
     }
 
@@ -191,6 +280,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     if (callTree_ != null) {
       await GraphViewer.Initialize(callTree, GraphArea, settings_, Session);
       ResetWidth(false);
+
+      if (markedNodes != null) {
+        unmatchedMarkedNodes_ = GraphViewer.RestoreFixedMarkedNodes(markedNodes, callTree);
+      }
     }
   }
 
@@ -205,6 +298,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     if (callTree != null && !GraphViewer.IsInitialized) {
       await GraphViewer.Initialize(callTree, GraphArea, settings_, Session, true, threadId);
     }
+  }
+
+  public void Redraw() {
+    GraphViewer.Redraw();
   }
 
   private void HostOnKeyUp(object sender, KeyEventArgs e) {
@@ -442,6 +539,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     GraphViewer.ResetMarkedNodes(clearFixedNodes);
+
+    if (clearFixedNodes) {
+      unmatchedMarkedNodes_ = null;
+    }
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
@@ -474,6 +575,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     // Setup events for the flame graph area.
     MouseLeftButtonDown += OnMouseLeftButtonDown;
     MouseLeftButtonUp += OnMouseLeftButtonUp;
+    MouseRightButtonDown += OnMouseRightButtonDown;
     MouseDoubleClick += OnMouseDoubleClick;
     MouseMove += OnMouseMove;
     MouseDown += OnMouseDown; // Handles back button.
@@ -494,41 +596,41 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     nodeHoverPreview_ = new PopupHoverPreview(GraphViewer,
-                                              TimeSpan.FromMilliseconds(settings_.NodePopupDuration),
-                                              (mousePoint, previewPoint) => {
-                                                var pointedNode = GraphViewer.FindPointedNode(mousePoint);
-                                                var callNode = pointedNode?.CallTreeNode;
+      TimeSpan.FromMilliseconds(settings_.NodePopupDuration),
+      (mousePoint, previewPoint) => {
+        var pointedNode = GraphViewer.FindPointedNode(mousePoint);
+        var callNode = pointedNode?.CallTreeNode;
 
-                                                if (callNode != null) {
-                                                  // If popup already opened for this node reuse the instance.
-                                                  if (nodeHoverPreview_.PreviewPopup is CallTreeNodePopup
-                                                    popup) {
-                                                    popup.UpdatePosition(previewPoint, GraphViewer);
-                                                  }
-                                                  else {
-                                                    popup = new CallTreeNodePopup(
-                                                      callNode, this, previewPoint, GraphViewer, Session);
-                                                  }
+        if (callNode != null) {
+          // If popup already opened for this node reuse the instance.
+          if (nodeHoverPreview_.PreviewPopup is CallTreeNodePopup
+            popup) {
+            popup.UpdatePosition(previewPoint, GraphViewer);
+          }
+          else {
+            popup = new CallTreeNodePopup(
+              callNode, this, previewPoint, GraphViewer, Session);
+          }
 
-                                                  popup.UpdateNode(callNode);
-                                                  return popup;
-                                                }
+          popup.UpdateNode(callNode);
+          return popup;
+        }
 
-                                                return null;
-                                              },
-                                              (mousePoint, popup) => {
-                                                if (popup is CallTreeNodePopup previewPopup) {
-                                                  // Hide if not over the same node anymore.
-                                                  var pointedNode = GraphViewer.FindPointedNode(mousePoint);
-                                                  return previewPopup.CallTreeNode.CallTreeNode !=
-                                                         pointedNode?.CallTreeNode;
-                                                }
+        return null;
+      },
+      (mousePoint, popup) => {
+        if (popup is CallTreeNodePopup previewPopup) {
+          // Hide if not over the same node anymore.
+          var pointedNode = GraphViewer.FindPointedNode(mousePoint);
+          return previewPopup.CallTreeNode.CallTreeNode !=
+                 pointedNode?.CallTreeNode;
+        }
 
-                                                return true;
-                                              },
-                                              popup => {
-                                                Session.RegisterDetachedPanel(popup);
-                                              });
+        return true;
+      },
+      popup => {
+        Session.RegisterDetachedPanel(popup);
+      });
   }
 
   private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) {
@@ -553,6 +655,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   private async void OnMouseDown(object sender, MouseButtonEventArgs e) {
     if (e.ChangedButton == MouseButton.XButton1) {
+      e.Handled = true;
       await RestorePreviousState();
     }
   }
@@ -590,10 +693,9 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   private async Task OpenFunction(ProfileCallTreeNode node) {
-    if (node != null && node.Function.HasSections) {
-      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
-      var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
-      await Session.SwitchDocumentSectionAsync(args);
+    if (node is {HasFunction: true} && node.Function.HasSections) {
+      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+      await Session.OpenProfileFunction(node, openMode);
     }
   }
 
@@ -724,9 +826,28 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       EndMouseDragging();
       e.Handled = true;
     }
+  }
 
+  private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+    // Start dragging the graph only if the click starts inside the scroll area,
+    // excluding the scroll bars, and it in an empty spot.
     if (IsMouseOutsideViewport(e)) {
       return;
+    }
+
+    if (!HandleNodeSelection(e)) {
+      StartMouseDragging(e);
+      e.Handled = true;
+    }
+  }
+
+  private void OnMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
+    HandleNodeSelection(e);
+  }
+
+  private bool HandleNodeSelection(MouseButtonEventArgs e) {
+    if (IsMouseOutsideViewport(e)) {
+      return false;
     }
 
     var point = e.GetPosition(GraphViewer);
@@ -735,21 +856,14 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     if (pointedNode == null) {
       GraphViewer.ClearSelection(); // Click outside graph is captured here.
       NodesDeselected?.Invoke(this, EventArgs.Empty);
+      EnableSingleNodeActions = SelectedNodes.Count < 2;
+      return false;
     }
     else {
       NodeSelected?.Invoke(this, pointedNode);
+      EnableSingleNodeActions = SelectedNodes.Count < 2;
+      return true;
     }
-  }
-
-  private async void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-    // Start dragging the graph only if the click starts inside the scroll area,
-    // excluding the scroll bars, and it in an empty spot.
-    if (IsMouseOutsideViewport(e)) {
-      return;
-    }
-
-    StartMouseDragging(e);
-    e.Handled = true;
   }
 
   private void StartMouseDragging(MouseButtonEventArgs e) {
@@ -759,7 +873,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     draggingStart_ = e.GetPosition(GraphHost);
     draggingViewStart_ = new Point(GraphHost.HorizontalOffset, GraphHost.VerticalOffset);
     Cursor = Cursors.SizeAll;
-    CaptureMouse();
   }
 
   private bool IsMouseOutsideViewport(MouseButtonEventArgs e) {
@@ -904,7 +1017,8 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     if (!(Utils.IsKeyboardModifierActive() ||
-          e.LeftButton == MouseButtonState.Pressed)) {
+          e.LeftButton == MouseButtonState.Pressed ||
+          e.RightButton == MouseButtonState.Pressed)) {
       // Zoom when Ctrl/Alt/Shift or left mouse button are pressed.
       return;
     }
@@ -1038,13 +1152,12 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   private async Task OpenFunction(FlameGraphNode node, OpenSectionKind openMode) {
     if (node is {HasFunction: true}) {
-      var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
-      await Session.SwitchDocumentSectionAsync(args);
+      await Session.OpenProfileFunction(node.CallTreeNode, openMode);
     }
   }
 
   private async void OpenFunctionInNewTab(object sender, ExecutedRoutedEventArgs e) {
-    await OpenFunction(GraphViewer.SelectedNode, OpenSectionKind.NewTab);
+    await OpenFunction(GraphViewer.SelectedNode, OpenSectionKind.NewTabDockRight);
   }
 
   private async void ChangeRootNodeExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -1166,5 +1279,9 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     settings_ = value;
     GraphViewer.SettingsUpdated(value);
     SetupPreviewPopup();
+  }
+
+  public void ClearSelection() {
+    GraphViewer.ClearSelection();
   }
 }

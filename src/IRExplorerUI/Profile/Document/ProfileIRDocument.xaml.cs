@@ -3,23 +3,128 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using System.Windows.Threading;
-using ClosedXML.Excel;
+using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
 using IRExplorerCore;
 using IRExplorerCore.IR;
+using IRExplorerCore.SourceParser;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
+using Microsoft.CodeAnalysis;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI.Profile.Document;
 
+public class ProfileSourceSyntaxNode {
+  private static readonly IconDrawing LoopIcon;
+  private static readonly IconDrawing ThenIcon;
+  private static readonly IconDrawing ElseIcon;
+  private static readonly IconDrawing SwitchCaseIcon;
+  private static readonly IconDrawing SwitchIcon;
+  
+  public SourceSyntaxNode SyntaxNode { get; set; }
+  public int Level { get; set; }
+  public ProfileSourceSyntaxNode Parent { get; set; }
+  public IRElement StartElement { get; set; }
+  public List<IRElement> Elements { get; set; }
+  public TimeSpan Weight { get; set; }
+  public TimeSpan BodyWeight { get; set; }
+  public TimeSpan ConditionWeight { get; set; }
+  public PerformanceCounterValueSet Counters { get; set; }
+  
+  public SourceSyntaxNodeKind Kind => SyntaxNode.Kind;
+  public TextLocation Start { get; set; }
+  public TextLocation End { get; set; }
+  public int Length => End.Offset - Start.Offset;
+
+  static ProfileSourceSyntaxNode() {
+    LoopIcon = IconDrawing.FromIconResource("LoopIcon");
+    ThenIcon = IconDrawing.FromIconResource("ThenArrowIcon");
+    ElseIcon = IconDrawing.FromIconResource("ElseArrowIcon");
+    SwitchIcon = IconDrawing.FromIconResource("SwitchArrowIcon");
+    SwitchCaseIcon = IconDrawing.FromIconResource("SwitchCaseArrowIcon");
+  }
+
+  public ProfileSourceSyntaxNode(SourceSyntaxNode syntaxNode) {
+    SyntaxNode = syntaxNode;
+    Weight = TimeSpan.Zero;
+    Start = syntaxNode.Start;
+    End = syntaxNode.End;
+  }
+
+  public IconDrawing GetIcon() {
+    return Kind switch {
+      SourceSyntaxNodeKind.Loop => LoopIcon,
+      SourceSyntaxNodeKind.If => ThenIcon,
+      SourceSyntaxNodeKind.Else => ElseIcon,
+      SourceSyntaxNodeKind.Switch => SwitchIcon,
+      SourceSyntaxNodeKind.SwitchCase => SwitchCaseIcon,
+      _ => null
+    };
+  }
+
+  public string GetTextIcon() {
+    return Kind switch {
+      SourceSyntaxNodeKind.Loop       => "\u2B6F",
+      SourceSyntaxNodeKind.If         => "\u2BA7",
+      SourceSyntaxNodeKind.Else       => "\u2BA6",
+      SourceSyntaxNodeKind.Switch     => "\u21C9",
+      SourceSyntaxNodeKind.SwitchCase => "\u2BA3",
+      _                               => ""
+    };
+  }
+
+  public string GetKindText() {
+    return Kind switch {
+      SourceSyntaxNodeKind.Loop => "Loop",
+      SourceSyntaxNodeKind.If => "If",
+      SourceSyntaxNodeKind.Else => "Else",
+      SourceSyntaxNodeKind.Switch => "Switch",
+      SourceSyntaxNodeKind.SwitchCase => "Switch Case",
+      SourceSyntaxNodeKind.Call => "Call",
+      _ => ""
+    };
+  }
+
+  public string GetTooltip(FunctionProfileData funcProfile) {
+    var tooltip = new StringBuilder();
+    tooltip.Append($"{GetKindText()} statement");
+    tooltip.Append($"\nWeight: {funcProfile.ScaleWeight(Weight).AsPercentageString()}");
+    tooltip.Append($" ({Weight.AsMillisecondsString()})");
+
+    if (SyntaxNode.Kind == SourceSyntaxNodeKind.If) {
+      if (ConditionWeight != TimeSpan.Zero) {
+        tooltip.Append($"\n    Condition: {funcProfile.ScaleWeight(ConditionWeight).AsPercentageString()}");
+        tooltip.Append($" ({ConditionWeight.AsMillisecondsString()})");
+      }
+      
+      if (BodyWeight != TimeSpan.Zero) {
+        tooltip.Append($"\n    Body: {funcProfile.ScaleWeight(BodyWeight).AsPercentageString()}");
+        tooltip.Append($" ({BodyWeight.AsMillisecondsString()})");
+      }
+    }
+
+    return tooltip.ToString();
+  }
+
+  public bool IsMarkedNode => SyntaxNode.Kind == SourceSyntaxNodeKind.If ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.Else ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.Loop ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.Switch ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.SwitchCase;
+}
 
 public class ProfileMenuItem : BindableObject {
   private Thickness borderThickness_;
@@ -129,18 +234,27 @@ public class ProfileMenuItem : BindableObject {
 public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private List<(IRElement, TimeSpan)> profileElements_;
   private int profileElementIndex_;
-  private FunctionProcessingResult sourceProfileResult_;
-  private SourceLineProcessingResult sourceLineProfileResult_;
-  private IRDocumentColumnData sourceColumnData_;
+  private SourceLineProcessingResult sourceProcessingResult_;
+  private SourceLineProfileResult sourceProfileResult_;
   private bool columnsVisible_;
   private bool ignoreNextCaretEvent_;
   private bool disableCaretEvent_;
+  private ReadOnlyMemory<char> originalSourceText_;
   private ReadOnlyMemory<char> sourceText_;
   private bool hasProfileInfo_;
   private Brush selectedLineBrush_;
   private TextViewSettingsBase settings_;
   private ProfileDocumentMarker profileMarker_;
   private bool isPreviewDocument_;
+  private bool isSourceFileDocument_;
+  private bool suspendColumnVisibilityHandler_;
+  private ProfileSampleFilter profileFilter_;
+  private CancelableTaskInstance loadTask_;
+  private SourceCodeLanguage sourceLanguage_;
+  private ProfileHistoryManager historyManager_;
+  private RangeColorizer assemblyColorizer_;
+  private SourceStackFrame inlinee_;
+  private bool ignoreNextRowSelectedEvent_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -149,6 +263,13 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ShowPerformanceCounterColumns = true;
     ShowPerformanceMetricColumns = true;
     DataContext = this;
+    loadTask_ = new CancelableTaskInstance();
+    profileFilter_ = new ProfileSampleFilter();
+    historyManager_ = new ProfileHistoryManager(() =>
+      new ProfileFunctionState(TextView.Section, TextView.Function,
+      TextView.SectionText, profileFilter_), () => {
+      FunctionHistoryChanged?.Invoke(this, EventArgs.Empty);
+    });
   }
 
   private void SetupEvents() {
@@ -159,50 +280,106 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ProfileColumns.RowSelected += ProfileColumns_RowSelected;
     TextView.TextRegionFolded += TextViewOnTextRegionFolded;
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
+    TextView.PreviewMouseDown += TextView_PreviewMouseDown;
+    PreviewKeyDown += TextView_PreviewKeyDown;
+    TextView.FunctionCallOpen += TextViewOnFunctionCallOpen;
   }
 
-  private void ProfileColumns_RowSelected(object sender, int line) {
-    TextView.SelectLine(line + 1);
-  }
-
-  private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
-    // For source files, compute the sum of the selected lines time.
-    if(sourceLineProfileResult_ == null) {
-      return;
-    }
-
-    int startLine = TextView.TextArea.Selection.StartPosition.Line;
-    int endLine = TextView.TextArea.Selection.EndPosition.Line;
-    var weightSum = TimeSpan.Zero;
-
-    for(int i = startLine; i<= endLine; i++) {
-      if(sourceLineProfileResult_.SourceLineWeight.TryGetValue(i, out var weight)) {
-        weightSum += weight;
+  private async void TextView_PreviewKeyDown(object sender, KeyEventArgs e) {
+    if (e.Key == Key.Back) {
+      if (Utils.IsKeyboardModifierActive()) {
+        await LoadNextSection();
+      }
+      else {
+        await LoadPreviousSection();
       }
     }
+    else if (e.Key == Key.C && Utils.IsControlModifierActive()) {
+      // Override Ctrl+C to copy instruction details instead of just text,
+      // but not if Shift/Alt key is also pressed, copy plain text then.
+      if (!Utils.IsAltModifierActive() &&
+          !Utils.IsShiftModifierActive()) {
+        await CopySelectedLinesAsHtml();
+        e.Handled = true;
+      }
+    }
+  }
 
-    if(weightSum == TimeSpan.Zero) {
-      Session.SetApplicationStatus("");
-      return;
+  private async void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
+    // Handle the back/forward mouse buttons
+    // to navigate through the function history.
+    if (e.ChangedButton == MouseButton.XButton1) {
+      e.Handled = true;
+      await LoadPreviousSection();
+    }
+    else if (e.ChangedButton == MouseButton.XButton2) {
+      e.Handled = true;
+      await LoadNextSection();
+    }
+  }
+
+  public async Task LoadPreviousSection() {
+    var state = historyManager_.PopPreviousState();
+
+    if (state != null) {
+      await LoadPreviousSectionState(state);
+    }
+  }
+
+  public async Task LoadNextSection() {
+    var state = historyManager_.PopNextState();
+
+    if (state != null) {
+      await LoadPreviousSectionState(state);
+    }
+  }
+
+  private async Task LoadPreviousSectionState(ProfileFunctionState state) {
+    await LoadAssembly(state.ParsedSection, state.ProfileFilter);
+  }
+  private async void TextViewOnFunctionCallOpen(object sender, IRTextSection targetSection) {
+    var targetFunc = targetSection.ParentFunction;
+    ProfileSampleFilter targetFilter = null;
+
+    if (profileFilter_ is {IncludesAll: false}) {
+      targetFilter = profileFilter_.CloneForCallTarget(targetFunc);
     }
 
-    var funcProfile = Session.ProfileData.GetFunctionProfile(TextView.Section.ParentFunction);
-    double weightPercentage = funcProfile.ScaleWeight(weightSum);
-    string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
-    Session.SetApplicationStatus(text, "Sum of time for the selected lines");
+    historyManager_.ClearNextStates(); // Reset forward history.
+    var parsedSection = await Session.LoadAndParseSection(targetFunc.Sections[0]);
+
+    if (parsedSection != null) {
+      await LoadAssembly(parsedSection, targetFilter);
+    }
   }
 
-  private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
-    ProfileColumns.HandleTextRegionUnfolded(e);
-  }
-
-  private void TextViewOnTextRegionFolded(object sender, FoldingSection e) {
-    ProfileColumns.HandleTextRegionFolded(e);
-  }
-
+  public event EventHandler<string> TitlePrefixChanged;
+  public event EventHandler<string> TitleSuffixChanged;
+  public event EventHandler<string> DescriptionPrefixChanged;
+  public event EventHandler<string> DescriptionSuffixChanged;
+  public event EventHandler<ParsedIRTextSection> LoadedFunctionChanged;
+  public event EventHandler<int> LineSelected;
+  public event EventHandler FunctionHistoryChanged;
   public event PropertyChangedEventHandler PropertyChanged;
+
   public ISession Session { get; set; }
-  public IRDocument AssociatedDocument { get; set; }
+  public IRTextSection Section => TextView.Section;
+
+  public ProfileSampleFilter ProfileFilter {
+    get => profileFilter_;
+    set {
+      if (value == null) {
+        profileFilter_ = new ProfileSampleFilter();
+      }
+      else {
+        profileFilter_ = value.Clone(); // Clone to detect changes later.
+      }
+
+      UpdateProfileFilterUI();
+      ProfilingUtils.SyncInstancesMenuWithFilter(InstancesMenu, profileFilter_);
+      ProfilingUtils.SyncThreadsMenuWithFilter(ThreadsMenu, profileFilter_);
+    }
+  }
 
   public bool HasProfileInfo {
     get => hasProfileInfo_;
@@ -228,10 +405,18 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     set => SetField(ref isPreviewDocument_, value);
   }
 
+  public bool IsSourceFileDocument {
+    get => isSourceFileDocument_;
+    set => SetField(ref isSourceFileDocument_, value);
+  }
+
   public Brush SelectedLineBrush {
     get => selectedLineBrush_;
     set => SetField(ref selectedLineBrush_, value);
   }
+
+  public bool HasPreviousFunctions => historyManager_.HasPreviousStates;
+  public bool HasNextFunctions => historyManager_.HasNextStates;
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -244,47 +429,380 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     return true;
   }
 
-  public async Task<bool> LoadSection(ParsedIRTextSection parsedSection) {
-    TextView.Initialize(App.Settings.DocumentSettings, Session);
-    TextView.EarlyLoadSectionSetup(parsedSection);
+  public async Task<bool> LoadAssembly(ParsedIRTextSection parsedSection,
+                                       ProfileSampleFilter profileFilter = null) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    ResetInstance();
+    IsSourceFileDocument = false;
+
+    if (TextView.IsLoaded) {
+      historyManager_.SaveCurrentState();
+    }
+
     await TextView.LoadSection(parsedSection);
 
-    var debugInfo = await Session.GetDebugInfoProvider(parsedSection.Section.ParentFunction);
-    await AnnotateAssemblyProfile(parsedSection, debugInfo);
+    // Apply profile filter if needed.
+    ProfileFilter = profileFilter;
+    bool success = true;
+
+    if (!parsedSection.LoadFailed) {
+      if (profileFilter is {IncludesAll: false}) {
+        success = await LoadAssemblyProfileInstance(parsedSection);
+      }
+      else {
+        success = await LoadAssemblyProfile(parsedSection);
+      }
+    }
+    else {
+      success = false;
+    }
+
+    if (!success) {
+      await HideProfile();
+      return false;
+    }
+
+    LoadedFunctionChanged?.Invoke(this, parsedSection);
     return true;
   }
 
-  private async Task AnnotateAssemblyProfile(ParsedIRTextSection parsedSection,
-                                             IDebugInfoProvider debugInfo) {
-    var funcProfile = Session.ProfileData?.GetFunctionProfile(parsedSection.Section.ParentFunction);
+
+  private async Task HideProfile() {
+    HasProfileInfo = false;
+    ColumnsVisible = false;
+    ResetProfilingMenus();
+  }
+
+  private void ResetProfilingMenus() {
+    DocumentUtils.RemoveNonDefaultMenuItems(ProfileElementsMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(InstancesMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(ThreadsMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(InlineesMenu);
+  }
+
+  private async Task<bool> LoadAssemblyProfile(ParsedIRTextSection parsedSection,
+                                               bool reloadFilterMenus = true) {
+    var funcProfile = Session.ProfileData?.GetFunctionProfile(parsedSection.ParentFunction);
 
     if (funcProfile == null) {
-      return;
+      return false;
     }
 
+    await MarkAssemblyProfile(parsedSection, funcProfile);
+    CreateProfileElementMenus(funcProfile);
+
+    if (reloadFilterMenus) {
+      CreateProfileFilterMenus(parsedSection.Section, funcProfile);
+    }
+
+    return true;
+  }
+
+  private void CreateProfileElementMenus(FunctionProfileData funcProfile) {
+    if (TextView.ProfileProcessingResult != null) {
+      if (!isSourceFileDocument_) {
+        var inlineeList = profileMarker_.GenerateInlineeList(TextView.ProfileProcessingResult);
+        ProfilingUtils.CreateInlineesMenu(InlineesMenu, Section, inlineeList,
+          funcProfile, InlineeMenuItem_OnClick, settings_, Session);
+      }
+
+      CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
+    }
+  }
+
+  private async Task<bool> LoadAssemblyProfileInstance(ParsedIRTextSection parsedSection,
+                                                       bool reloadFilterMenus = true) {
+    UpdateProfileFilterUI();
+    var instanceProfile = await ComputeInstanceProfile();
+    var funcProfile = instanceProfile.GetFunctionProfile(parsedSection.ParentFunction);
+
+    if (funcProfile == null) {
+      return false;
+    }
+
+    await MarkAssemblyProfile(parsedSection, funcProfile);
+    CreateProfileElementMenus(funcProfile);
+
+    if (reloadFilterMenus) {
+      CreateProfileFilterMenus(parsedSection.Section, funcProfile);
+    }
+
+    return true;
+  }
+
+  private async Task<ProfileData> ComputeInstanceProfile() {
+    return await LongRunningAction.Start(
+      async () => await Task.Run(() => Session.ProfileData.
+        ComputeProfile(Session.ProfileData, profileFilter_, false)),
+      TimeSpan.FromMilliseconds(500),
+      "Filtering function instance", this, Session);
+  }
+
+  private async Task<bool> LoadSourceFileProfileInstance(IRTextSection section,
+                                                         bool reloadFilterMenus = true) {
+    UpdateProfileFilterUI();
+    var instanceProfile = await ComputeInstanceProfile();
+    var funcProfile = instanceProfile.GetFunctionProfile(section.ParentFunction);
+
+    if (funcProfile == null) {
+      return false;
+    }
+
+    if(!(await MarkSourceFileProfile(section, funcProfile))) {
+      return false;
+    }
+
+    CreateProfileElementMenus(funcProfile);
+
+    if (reloadFilterMenus) {
+      CreateProfileFilterMenus(section, funcProfile);
+    }
+
+    return true;
+  }
+
+  private async Task MarkAssemblyProfile(ParsedIRTextSection parsedSection, FunctionProfileData funcProfile) {
+    ResetInstanceProfiling();
     profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
                                                settings_.ProfileMarkerSettings,
                                                settings_.ColumnSettings, Session.CompilerInfo);
     await profileMarker_.Mark(TextView, parsedSection.Function,
-                              parsedSection.Section.ParentFunction);
-    await UpdateProfilingColumns();
+                              parsedSection.ParentFunction);
 
-    if (TextView.ProfileProcessingResult != null) {
-      CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, true);
+    if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
+      JumpToHottestProfiledElement(true);
     }
+
+    UpdateProfileFilterUI();
+    UpdateProfileDescription(funcProfile);
+    await UpdateProfilingColumns();
+  }
+
+  private void UpdateProfileFilterUI() {
+    OnPropertyChanged(nameof(HasProfileInstanceFilter));
+    OnPropertyChanged(nameof(HasProfileThreadFilter));
+  }
+
+  private void UpdateProfileDescription(FunctionProfileData funcProfile) {
+    DescriptionPrefixChanged?.Invoke(this, ProfilingUtils.
+      CreateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session));
+    TitlePrefixChanged?.Invoke(this, ProfilingUtils.
+      CreateProfileFilterTitle(profileFilter_, Session));
+    DescriptionSuffixChanged?.Invoke(this, ProfilingUtils.
+      CreateProfileFilterDescription(profileFilter_, Session));
+  }
+
+  public bool HasProfileInstanceFilter => profileFilter_ is {HasInstanceFilter:true};
+  public bool HasProfileThreadFilter => profileFilter_ is {HasThreadFilter:true};
+
+
+  string MakeSyntaxNodePreviewText(string text, int maxLength) {
+    int i = 0;
+
+    while (i < text.Length && text[i] != '\n') {
+      i++;
+    }
+
+    i = Math.Min(i, maxLength);
+
+    if (i == 0) return null;
+
+    if (i <= text.Length) {
+      return text.Substring(0, i).Trim();
+    }
+    else {
+      return $"{text.Substring(0, i)}...".Trim();
+    }
+  }
+
+  private List<ProfileSourceSyntaxNode> 
+    PrepareSourceSyntaxTree(string sourceText, SourceLineProcessingResult sourceProcessingResult,
+                            SourceCodeLanguage sourceLanguage) {
+    var parser = new SourceCodeParser(sourceLanguage_);
+    var tree = parser.Parse(sourceText);
+    if (tree == null) return null;
+
+    var funcTreeNoe = tree.FindFunctionNode(sourceProcessingResult.FirstLineIndex);
+
+    if (funcTreeNoe == null) {
+      Trace.WriteLine(        $"Couldn't find function in the syntax tree at line {sourceProcessingResult.FirstLineIndex}");
+      return null;
+    }
+
+    // Trace.WriteLine("-------------------------------------------");
+    // Trace.WriteLine("Source Syntax Tree:");
+    // Trace.WriteLine($"{funcTreeNoe.Print()}");
+
+    var profileNodes = new List<ProfileSourceSyntaxNode>();
+    var profileNodeMap = new Dictionary<SourceSyntaxNode, ProfileSourceSyntaxNode>();
+
+    funcTreeNoe.WalkNodes((node, depth) => {
+      IRElement startElement = null;
+      var weight = TimeSpan.Zero;
+      var counters = new PerformanceCounterValueSet();
+      List<IRElement> elements = new();
+
+      // Collect the elements for the source lines that are part of the node
+      // and accumulate the weight of the source lines.
+      int startLine = node.Start.Line;
+      int endLine = node.End.Line;
+
+      // For if statements, the syntax node covers the line range
+      // of any any other nested if/else statements, but here consider
+      // only the lines in the "then" part of the if statement.
+      if (node.Kind == SourceSyntaxNodeKind.If) {
+        var elseNode = node.GetChildOfKind(SourceSyntaxNodeKind.Else);
+
+        if (elseNode != null) {
+          var thenNode = node.GetChildOfKind(SourceSyntaxNodeKind.Compound);
+
+          if(thenNode != null) {
+            endLine = thenNode.End.Line;
+            node.End = thenNode.End;
+          }
+          else {
+            endLine = elseNode.Start.Line;
+            node.End = elseNode.Start;
+          }
+        }
+      }
+
+      for (int line = startLine; line <= endLine; line++) {
+        int mappedLine = MapFromOriginalSourceLineNumber(line);
+
+        if (sourceProfileResult_.LineToElementMap.TryGetValue(mappedLine, out var element)) {
+          startElement ??= element;
+          elements.Add(element);
+
+          if (sourceProcessingResult_.SourceLineWeight.TryGetValue(line, out var w)) {
+            weight += w;
+          }
+          
+          
+          if (sourceProcessingResult_.SourceLineCounters.TryGetValue(line, out var c)) {
+            counters.Add(c);
+          }
+        }
+      }
+
+      // Create a profile node for the syntax node,
+      // except for nodes that are not interesting.
+      if (startElement != null &&
+          node.Kind != SourceSyntaxNodeKind.Compound &&
+          node.Kind != SourceSyntaxNodeKind.Condition &&
+          node.Kind != SourceSyntaxNodeKind.Other) {
+        var profileNode = new ProfileSourceSyntaxNode(node) {
+          Weight = weight,
+          Counters = counters,
+          StartElement = startElement,
+          Elements = elements
+        };
+
+        // Connect node to the parent (because some nodes are skipped,
+        // parent may not be the direct parent from the syntax tree).
+        var parentNode = node.ParentNode;
+
+        while (parentNode != null) {
+          if (profileNodeMap.TryGetValue(parentNode, out var nodeParent)) {
+            profileNode.Parent = nodeParent;
+            profileNode.Level = nodeParent.Level + 1;
+            break;
+          }
+
+          parentNode = parentNode.ParentNode;
+        }
+
+        profileNodes.Add(profileNode);
+        profileNodeMap[node] = profileNode;
+      }
+
+      // Distinguish between the body and the whole statement
+      // by recording the weight of the body part too.
+      if (node.ParentNode != null &&
+          profileNodeMap.TryGetValue(node.ParentNode, out var parent)) {
+        if (node.ParentNode.Kind == SourceSyntaxNodeKind.If ||
+            node.ParentNode.Kind == SourceSyntaxNodeKind.Else) {
+          if (node.Kind == SourceSyntaxNodeKind.Condition) {
+            parent.ConditionWeight = weight;
+          }
+          else if (node.Kind == SourceSyntaxNodeKind.Compound) {
+            parent.BodyWeight = weight;
+          }
+        }
+        else if (node.ParentNode.Kind == SourceSyntaxNodeKind.Loop) {
+          if (node.Kind == SourceSyntaxNodeKind.Condition) {
+            parent.ConditionWeight = weight;
+          }
+          else if (node.Kind == SourceSyntaxNodeKind.Compound) {
+            parent.BodyWeight = weight;
+          }
+        }
+        else if (node.ParentNode.Kind == SourceSyntaxNodeKind.Switch &&
+                 node.Kind == SourceSyntaxNodeKind.SwitchCase) {
+          parent.BodyWeight += weight;
+        }
+      }
+
+      return true;
+    });
+
+    return profileNodes;
+  }
+
+  private int MapFromOriginalSourceLineNumber(int line) {
+    // Map from original line to adjusted line with assembly.
+    if (sourceProfileResult_ != null) {
+      if (sourceProfileResult_.OriginalLineToLineMap.TryGetValue(line, out var mappedLine)) {
+        return mappedLine;
+      }
+
+      return -1; // Line is assembly.
+    }
+
+    return line;
   }
 
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
                                          IRTextSection section,
-                                         IDebugInfoProvider debugInfo) {
+                                         ProfileSampleFilter profileFilter = null,
+                                         SourceStackFrame inlinee = null) {
     try {
+      using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+      ResetInstance();
+      IsSourceFileDocument = true;
+      
       string text = await File.ReadAllTextAsync(sourceInfo.FilePath);
       SetSourceText(text, sourceInfo.FilePath);
-      await AnnotateSourceFileProfile(section, debugInfo);
+
+      // Apply profile filter if needed.
+      ProfileFilter = profileFilter;
+      inlinee_ = inlinee;
+      ignoreNextCaretEvent_ = true;
+      bool success = true;
+
+      if (profileFilter is {IncludesAll:false}) {
+        success = await LoadSourceFileProfileInstance(section);
+      }
+      else {
+        success = await LoadSourceFileProfile(section);
+      }
+
+      if (!success) {
+        await HideProfile();
+        return true; // Only profile part failed, keep text.
+      }
 
       //? TODO: Is panel is not visible, scroll doesn't do anything,
-      //? should be executed again when panel is activated
-      TextView.ScrollToLine(sourceInfo.StartLine);
+      //? should be executed again when panel is activated.
+      if (!settings_.ProfileMarkerSettings.JumpToHottestElement) {
+        var (firstSourceLineIndex, lastSourceLineIndex) =
+          await DocumentUtils.FindFunctionSourceLineRange(section.ParentFunction, TextView);
+
+        if (firstSourceLineIndex != 0) {
+          SelectLine(firstSourceLineIndex);
+        }
+      }
+
       return true;
     }
     catch (Exception ex) {
@@ -293,7 +811,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
   }
 
-  public void HandleMissingSourceFile(string failureText) {
+  public async Task HandleMissingSourceFile(string failureText) {
     string text = "Failed to load source file.";
 
     if (!string.IsNullOrEmpty(failureText)) {
@@ -301,43 +819,109 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     SetSourceText(text, "");
+    await HideProfile();
   }
 
-  private async Task AnnotateSourceFileProfile(IRTextSection section,
-                                               IDebugInfoProvider debugInfo) {
+  private async Task<bool> LoadSourceFileProfile(IRTextSection section, bool reloadFilterMenus = true) {
     var funcProfile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
 
     if (funcProfile == null) {
-      return;
+      return false;
     }
 
-    //? TODO: Check if it's still the case
-    //? Accessing the PDB (DIA) from another thread fails.
-    //var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
-    profileMarker_ =
-      new ProfileDocumentMarker(funcProfile, Session.ProfileData,
-      settings_.ProfileMarkerSettings, settings_.ColumnSettings,
-      Session.CompilerInfo);
-    var processingResult = profileMarker_.PrepareSourceLineProfile(funcProfile, TextView, debugInfo);
-
-    if (processingResult == null) {
-      return;
+    if (!(await MarkSourceFileProfile(section, funcProfile))) {
+      return false;
     }
 
+    CreateProfileElementMenus(funcProfile);
+
+    if (reloadFilterMenus) {
+      CreateProfileFilterMenus(section, funcProfile);
+    }
+
+    return true;
+  }
+
+  private void CreateProfileFilterMenus(IRTextSection section, FunctionProfileData funcProfile) {
+    ProfilingUtils.CreateInstancesMenu(InstancesMenu, section, funcProfile,
+                                      InstanceMenuItem_OnClick, settings_, Session);
+    ProfilingUtils.CreateThreadsMenu(ThreadsMenu, section, funcProfile,
+                                    ThreadMenuItem_OnClick, settings_, Session);
+    ProfilingUtils.SyncInstancesMenuWithFilter(InstancesMenu, profileFilter_);
+    ProfilingUtils.SyncThreadsMenuWithFilter(ThreadsMenu, profileFilter_);
+  }
+
+  private async Task<bool> MarkSourceFileProfile(IRTextSection section, FunctionProfileData funcProfile) {
+    ResetInstanceProfiling();
+    profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
+                                               settings_.ProfileMarkerSettings,
+                                               settings_.ColumnSettings,
+                                               Session.CompilerInfo);
+    // Accumulate the instruction weight for each source line.
+    var sourceLineProfileResult = await Task.Run(async () => {
+      var debugInfo = await Session.GetDebugInfoProvider(section.ParentFunction).ConfigureAwait(false);
+      return funcProfile.ProcessSourceLines(debugInfo, Session.CompilerInfo.IR, inlinee_);
+    });
+
+    // Clear markers when switching between ASM/source modes.
     if (TextView.IsLoaded) {
       TextView.ClearInstructionMarkers();
     }
+    
+    // Insert assembly lines corresponding to each source code line,
+    // grouped as a code folding that can be hidden.
+    bool showAssemblyLines = ((SourceFileSettings)settings_).ShowInlineAssembly;
+    bool showSourceStatements = ((SourceFileSettings)settings_).ShowSourceStatements;
+    ParsedIRTextSection parsedSection = null;
 
+    if (showAssemblyLines) {
+      // In case of changing the instance, start again from
+      // the original source code text when inserting the assembly lines.
+      TextView.Text = originalSourceText_.ToString();
+      sourceText_ = originalSourceText_;
+      parsedSection = await Session.LoadAndParseSection(section);
+    }
+
+    // Create a dummy FunctionIR that has fake tuples representing each
+    // source line, with the profiling data attached to the tuples.
+    var processingResult = await profileMarker_.
+      PrepareSourceLineProfile(funcProfile, TextView,
+                               sourceLineProfileResult, parsedSection);
+    if (processingResult == null) {
+      return false;
+    }
+    
+    sourceProcessingResult_ = sourceLineProfileResult;
+    sourceProfileResult_ = processingResult;
+
+    // Parse the source code to get the syntax tree nodes.
+    List<ProfileSourceSyntaxNode> syntaxNodes = null;
+
+    if (showSourceStatements) {
+      syntaxNodes = await Task.Run(() =>
+        PrepareSourceSyntaxTree(sourceText_.ToString(), sourceProcessingResult_, sourceLanguage_));
+    }
+
+    // Replace the text after the assembly lines were inserted.
+    if (showAssemblyLines) {
+      sourceText_ = TextView.Text.AsMemory();
+    }
+
+    // Load the dummy section with the source lines.
     var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, processingResult.Function);
-    TextView.EarlyLoadSectionSetup(dummyParsedSection);
     await TextView.LoadSection(dummyParsedSection);
-
+    
+    // Annotate the source lines with the profiling data based on the code statements.
+    if (syntaxNodes != null) {
+      await MarkSourceFileStructure(syntaxNodes, sourceProfileResult_,
+                                    originalSourceText_, section.ParentFunction);
+    }
+    
     TextView.SuspendUpdate();
     await profileMarker_.MarkSourceLines(TextView, processingResult);
 
     // Annotate call sites next to source lines by parsing the actual section
     // and mapping back the call sites to the dummy elements representing the source lines.
-    var parsedSection = await Session.LoadAndParseSection(section);
 
     if (parsedSection != null) {
       profileMarker_.MarkCallSites(TextView, parsedSection.Function,
@@ -345,27 +929,329 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     TextView.ResumeUpdate();
-    sourceProfileResult_ = processingResult.Result;
-    sourceLineProfileResult_ = processingResult.SourceLineResult;
-    await UpdateProfilingColumns();
 
-    if (TextView.ProfileProcessingResult != null) {
-      CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult, false);
+    if (syntaxNodes != null) {
+      PatchSourceStructureRows(syntaxNodes, funcProfile);
+    }
+
+    if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
+      JumpToHottestProfiledElement(true);
+    }
+
+    UpdateProfileFilterUI();
+    UpdateProfileDescription(funcProfile);
+    await UpdateProfilingColumns();
+    if (showAssemblyLines) {
+      SetupSourceAssembly();
+    }
+
+    return true;
+  }
+
+  private async Task MarkSourceFileStructure(List<ProfileSourceSyntaxNode> nodes,
+                                             SourceLineProfileResult sourceProfileResult,
+                                             ReadOnlyMemory<char> sourceText, IRTextFunction function) {
+    var profileItems = new List<ProfileMenuItem>();
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
+    var markerSettings = settings_.ProfileMarkerSettings;
+    var funcProfile = Session.ProfileData.GetFunctionProfile(function);
+    double maxWidth = 0;
+
+    //? TODO Extract out the menu outline part
+    OutlineMenu.Items.Clear();
+
+    foreach (var node in nodes) {
+      MarkSourceSyntaxNode(node, sourceProfileResult, funcProfile, markerSettings);
+
+      // Build outline menu.
+      double weightPercentage = funcProfile.ScaleWeight(node.Weight);
+
+      if (!markerSettings.IsVisibleValue(weightPercentage)) {
+        continue;
+      }
+      
+      // Append | chars for alignment based on node level.
+      string nesting = "";
+
+      for (int i = 0; i < node.Level; i++) {
+        nesting += " \u250A   ";
+      }
+
+      int CountDigits(int number) {
+        int count = 1;
+
+        while (number >= 10) {
+          count++;
+          number /= 10;
+        }
+
+        return count;
+      }
+
+      // Append node start line number.
+      var line = node.Kind != SourceSyntaxNodeKind.Function ? node.Start.Line.ToString() : "";
+      line = line.PadRight(CountDigits(TextView.LineCount));
+      
+      var nodeText = node.SyntaxNode.GetText(sourceText);
+      var preview = MakeSyntaxNodePreviewText(nodeText, 50);
+      var title = $"{line} {nesting}{node.GetTextIcon()} {preview}";
+      var tooltip = nodeText;
+      string nodeTitle = $"({markerSettings.FormatWeightValue(null, node.Weight)})";
+
+      var value = new ProfileMenuItem(nodeTitle, node.Weight.Ticks, weightPercentage) {
+        PrefixText = title,
+        ToolTip = tooltip,
+        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
+        TextWeight = node.Kind != SourceSyntaxNodeKind.Function ?
+          markerSettings.PickTextWeight(weightPercentage) : FontWeights.Normal,
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      };
+
+      if (node.Kind == SourceSyntaxNodeKind.Loop) {
+        value.TextColor = Brushes.DarkGreen;
+        value.TextWeight = FontWeights.Bold;
+      }
+      else if (node.Kind == SourceSyntaxNodeKind.If ||
+               node.Kind == SourceSyntaxNodeKind.Else) {
+        value.TextColor = Brushes.DarkBlue;
+        value.TextWeight = FontWeights.SemiBold;
+      }
+
+      var item = new MenuItem {
+        Tag = node,
+        Header = value,
+        IsEnabled = node.Kind != SourceSyntaxNodeKind.Function,
+        HeaderTemplate = valueTemplate,
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+      };
+
+      item.Click += (sender, args) => {
+        if (sender is MenuItem menuItem &&
+            menuItem.Tag is ProfileSourceSyntaxNode syntaxNode) {
+          TextView.SelectLine(syntaxNode.StartElement.TextLocation.Line + 1);
+        }
+      };
+
+      item.MouseEnter += (sender, args) => {
+        if(sender is MenuItem menuItem &&
+          menuItem.Tag is ProfileSourceSyntaxNode syntaxNode) {
+          SelectSyntaxNodeLineRange(syntaxNode);
+        }
+      };
+
+      item.MouseLeave += (sender, args) => {
+        TextView.ClearSelectedElements();
+      };
+      
+      profileItems.Add(value);
+      OutlineMenu.Items.Add(item);
+      double width = Utils.MeasureString(title, settings_.FontName, settings_.FontSize).Width;
+      maxWidth = Math.Max(width, maxWidth);
+    }
+
+    foreach (var value in profileItems) {
+      value.MinTextWidth = maxWidth;
     }
   }
 
+  private void MarkSourceSyntaxNode(ProfileSourceSyntaxNode node,
+                                    SourceLineProfileResult sourceProfileResult, FunctionProfileData funcProfile,
+                                    ProfileDocumentMarkerSettings markerSettings) {
+    if (!node.IsMarkedNode || 
+        node.StartElement == null) return;
+    
+    // Show statement time in the columns, but only if
+    // it doesn't replace a large enough value already associated with the line.
+    int existingIndex = sourceProfileResult.Result.SampledElements.FindIndex((item) => item.Item1 == node.StartElement);
+    bool mark = true;
+
+    if (existingIndex != -1) {
+      var existingWeight = sourceProfileResult.Result.SampledElements[existingIndex].Item2;
+      double existingWeightPercentage = funcProfile.ScaleWeight(existingWeight);
+
+      mark = !markerSettings.IsVisibleValue(existingWeightPercentage, 2.0);
+
+      if (mark) {
+        sourceProfileResult.Result.SampledElements.RemoveAt(existingIndex);
+        sourceProfileResult.Result.CounterElements.RemoveAll((item) => item.Item1 == node.StartElement);
+      }
+    }
+
+    if (mark) {
+      sourceProfileResult.Result.SampledElements.Add((node.StartElement, node.Weight));
+      
+      if (node.Counters is {Count: > 0}) {
+        sourceProfileResult.Result.CounterElements.Add((node.StartElement, node.Counters));
+      }
+    }
+
+    bool showStatementOverlays = ((SourceFileSettings)settings_).ShowSourceStatementsOnMargin;
+
+    if (showStatementOverlays) {
+      CreateFileStructureOverlay(node, funcProfile, markerSettings);
+    }
+  }
+
+  private void CreateFileStructureOverlay(ProfileSourceSyntaxNode node,
+                                          FunctionProfileData funcProfile,
+                                          ProfileDocumentMarkerSettings markerSettings) {
+    double weightPercentage = funcProfile.ScaleWeight(node.Weight);
+    var color = App.Settings.DocumentSettings.BackgroundColor;
+
+    if (node.StartElement.ParentBlock != null &&
+        !node.StartElement.ParentBlock.HasEvenIndexInFunction) {
+      color = App.Settings.DocumentSettings.AlternateBackgroundColor;
+    }
+
+    var label = $"{node.GetKindText()}: {weightPercentage.AsPercentageString()} ({node.Weight.AsMillisecondsString()})";
+    string overalyTooltip = node.GetTooltip(funcProfile);
+    var overlay = TextView.RegisterIconElementOverlay(node.StartElement, node.GetIcon(), 16, 16,
+                                                      label, overalyTooltip, true);
+    overlay.Tag = node;
+    overlay.Background = color.AsBrush();
+    overlay.IsLabelPinned = false;
+    overlay.AllowLabelEditing = false;
+    overlay.UseLabelBackground = true;
+    overlay.ShowBackgroundOnMouseOverOnly = true;
+    overlay.ShowBorderOnMouseOverOnly = true;
+    overlay.AlignmentX = HorizontalAlignment.Left;
+    overlay.MarginY = 2;
+    (overlay.TextColor, overlay.TextWeight) = markerSettings.PickBlockOverlayStyle(weightPercentage);
+
+    //? TODO: Click - proper selection, easy to Ctrl+C 
+    overlay.OnHover += (s, e) => {
+      if (node.Elements != null) {
+        SelectSyntaxNodeLineRange(node);
+      }
+    };
+
+    overlay.OnHoverEnd += (sender, args) => {
+      TextView.ClearSelectedElements();
+    };
+
+    if (node.StartElement is InstructionIR instr) {
+      // Place before the call opcode.
+      int lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
+      overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
+        App.Settings.DocumentSettings.FontSize).Width - 20;
+    }
+  }
+
+  private void PatchSourceStructureRows(List<ProfileSourceSyntaxNode> nodes, FunctionProfileData funcProfile) {
+    // Override icons and tooltips for each row that corresponds
+    // to a source code statement like for/if.
+    var sourceColumnData = TextView.ProfileColumnData;
+
+    if (sourceColumnData.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timeColumn) {
+      foreach (var node in nodes) {
+        if (node.StartElement == null || !node.IsMarkedNode) {
+          continue;
+        }
+
+        var row = sourceColumnData.GetValues(node.StartElement);
+        if (row == null) continue;
+
+        foreach (var pair in row.ColumnValues) {
+          bool showIcon = Equals(pair.Key, timeColumn);
+          var cell = pair.Value;
+
+          if (showIcon) {
+            // Override default icon.
+            cell.Icon = node.GetIcon()?.Icon;
+          }
+
+          cell.CanShowIcon = false; // Disable auto-icon.
+          cell.ToolTip = node.GetTooltip(funcProfile);
+          cell.CanShowPercentageBar = false;
+          cell.CanShowBackgroundColor = false;
+          row.Tag = node;
+        }
+      }
+    }
+    
+    // Select statement line range when hovering over the column cell.
+    ProfileColumns.RowHoverStart += (sender, value) => {
+      if(value.Tag is ProfileSourceSyntaxNode node) {
+        SelectSyntaxNodeLineRange(node);
+      }
+    };
+
+    ProfileColumns.RowHoverStop += (sender, value) => {
+      TextView.ClearSelectedElements();
+    };
+  }
+
+  private void SelectSyntaxNodeLineRange(ProfileSourceSyntaxNode node) {
+    var backColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.25);
+    TextView.SelectElementsInLineRange(node.Start.Line, node.End.Line,
+      MapFromOriginalSourceLineNumber, backColor);
+  }
+  
+  private void SetupSourceAssembly() {
+    
+    // Replace the default line number left margin with one
+    // that doesn't number the assembly lines, to keep same line numbers
+    // with the original source file.
+    var lineNumbers = new SourceLineNumberMargin(TextView, sourceProfileResult_);
+    TextView.SetupCustomLineNumbers(lineNumbers);
+    
+    // Create the block foldings for each source line and its assembly section.
+    bool defaultClosed = !((SourceFileSettings)settings_).AutoExpandInlineAssembly;
+    SetupSourceAssemblyFolding(defaultClosed);
+
+    // Change the text color of the assembly section to be the same
+    // (the source syntax highlighting may mark some ASM opcodes for ex).
+    var asmFont = new Typeface(TextView.FontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    assemblyColorizer_ = new RangeColorizer(sourceProfileResult_.AssemblyRanges, Brushes.DimGray, asmFont);
+    TextView.RegisterTextColorizer(assemblyColorizer_);
+  }
+
+  private void SetupSourceAssemblyFolding(bool defaultClosed) {
+    FoldingElementGenerator.TextBrush = Brushes.Transparent;
+    var foldingStrategy = new RangeFoldingStrategy(sourceProfileResult_.AssemblyRanges, defaultClosed);
+    var foldings = TextView.SetupCustomBlockFolding(foldingStrategy);
+
+    // Sync the initial folding status in the columns with the document.
+    ProfileColumns.SetupFoldedTextRegions(foldings);
+  }
+
+  private async Task ApplyProfileFilter() {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
+    if (isSourceFileDocument_) {
+      if (profileFilter_ is {IncludesAll: false}) {
+        await LoadSourceFileProfileInstance(TextView.Section, false);
+      }
+      else {
+        await LoadSourceFileProfile(TextView.Section, false);
+      }
+    }
+    else {
+      var parsedSection = new ParsedIRTextSection(TextView.Section,
+        TextView.SectionText,
+        TextView.Function);
+
+      if (profileFilter_ is {IncludesAll: false}) {
+        await LoadAssemblyProfileInstance(parsedSection, false);
+      }
+      else {
+        await LoadAssemblyProfile(parsedSection, false);
+      }
+  	} 
+  }
+
   public async Task UpdateProfilingColumns() {
-    sourceColumnData_ = TextView.ProfileColumnData;
-    ColumnsVisible = sourceColumnData_ is {HasData: true};
+    var sourceColumnData = TextView.ProfileColumnData;
+    ColumnsVisible = sourceColumnData is {HasData: true};
 
     if (ColumnsVisible) {
       if (UseCompactProfilingColumns) {
         // Use compact mode that shows only the time column.
-        if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TimeColumnDefinition) is var timeColumn) {
+        if (sourceColumnData.GetColumn(ProfileDocumentMarker.TimeColumnDefinition) is var timeColumn) {
           timeColumn.Style.ShowIcon = OptionalColumnStyle.PartVisibility.Never;
         }
 
-        if (sourceColumnData_.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timePercColumn) {
+        if (sourceColumnData.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timePercColumn) {
           timePercColumn.IsVisible = false;
         }
       }
@@ -373,7 +1259,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       // Hide perf counter columns.
       if (!ShowPerformanceCounterColumns ||
           !ShowPerformanceMetricColumns) {
-        foreach (var column in sourceColumnData_.Columns) {
+        foreach (var column in sourceColumnData.Columns) {
           if ((!ShowPerformanceCounterColumns && column.IsPerformanceCounter) ||
               (!ShowPerformanceMetricColumns && column.IsPerformanceMetric)) {
             column.IsVisible = false;
@@ -381,19 +1267,25 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         }
       }
 
-      ProfileColumns.UseSmallerFontSize = UseSmallerFontSize;
+      ProfileColumns.Reset();
       ProfileColumns.Settings = settings_;
       ProfileColumns.ColumnSettings = settings_.ColumnSettings;
 
-      profileMarker_.UpdateColumnStyles(sourceColumnData_, TextView.Function, TextView);
-      await ProfileColumns.Display(sourceColumnData_, TextView);
+      await ProfileColumns.Display(sourceColumnData, TextView);
+      profileMarker_.UpdateColumnStyles(sourceColumnData, TextView.Function, TextView);
+      ProfileColumns.UpdateColumnWidths();
 
       profileElements_ = TextView.ProfileProcessingResult.SampledElements;
       UpdateHighlighting();
 
-      ProfileColumns.BuildColumnsVisibilityMenu(sourceColumnData_, ProfileColumnsMenu, async () => {
+      // Add the columns to the View menu.
+      // While doing that, disable handling the MenuItem Checked event,
+      // it gets triggered when the MenuItems are temporarily removed.
+      suspendColumnVisibilityHandler_ = true;
+      ProfileColumns.BuildColumnsVisibilityMenu(sourceColumnData, ProfileViewMenu, async () => {
         await UpdateProfilingColumns();
       });
+      suspendColumnVisibilityHandler_ = false;
     }
     else {
       ProfileColumns.Reset();
@@ -403,17 +1295,21 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void CreateProfileElementMenu(FunctionProfileData funcProfile,
-                                        FunctionProcessingResult result,
-                                        bool isAssemblyView) {
+                                        FunctionProcessingResult result) {
     var list = new List<ProfileMenuItem>(result.SampledElements.Count);
     double maxWidth = 0;
 
     ProfileElementsMenu.Items.Clear();
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings_.ProfileMarkerSettings;
     int order = 0;
 
     foreach (var (element, weight) in result.SampledElements) {
+      // For source files, don't include assembly line elements.
+      if (isSourceFileDocument_ && !IsSourceLine(element.TextLocation.Line + 1)) {
+        continue;
+      }
+      
       double weightPercentage = funcProfile.ScaleWeight(weight);
 
       if (!markerSettings.IsVisibleValue(order++, weightPercentage)) {
@@ -423,12 +1319,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       string text = $"({markerSettings.FormatWeightValue(null, weight)})";
       string prefixText;
 
-      if (isAssemblyView) {
-        prefixText = DocumentUtils.GenerateElementPreviewText(element, TextView.SectionText, 50);
+      if (isSourceFileDocument_) {
+        prefixText = element.GetText(TextView.SectionText).ToString();
+        prefixText = prefixText.Trim().TrimToLength(80);
       }
       else {
-        prefixText = element.GetText(TextView.SectionText).ToString();
-        prefixText = prefixText.Trim().TrimToLength(50);
+        prefixText = DocumentUtils.GenerateElementPreviewText(element, TextView.SectionText, 50);
       }
 
       var value = new ProfileMenuItem(text, weight.Ticks, weightPercentage) {
@@ -454,26 +1350,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       ProfileElementsMenu.Items.Add(item);
 
       // Make sure percentage rects are aligned.
-      double width = Utils.MeasureString(prefixText, settings_.FontName, settings_.FontSize).Width;
-      maxWidth = Math.Max(width, maxWidth);
+      Utils.UpdateMaxMenuItemWidth(prefixText, ref maxWidth, ProfileElementsMenu);
       list.Add(value);
     }
 
     foreach (var value in list) {
       value.MinTextWidth = maxWidth;
-    }
-  }
-
-  private async void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
-    string path = Utils.ShowSaveFileDialog("Excel Worksheets|*.xlsx", "*.xlsx|All Files|*.*");
-
-    if (!string.IsNullOrEmpty(path)) {
-      try {
-        await ExportFunctionAsExcelFile(path);
-      }
-      catch (Exception ex) {
-        Utils.ShowErrorMessageBox($"Failed to save source profiling results to {path}: {ex.Message}", this);
-      }
     }
   }
 
@@ -495,15 +1377,18 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       case ".inl":
       case ".ixx": {
         highlightingDef = HighlightingManager.Instance.GetDefinition("C++");
+        sourceLanguage_ = SourceCodeLanguage.Cpp;
         break;
       }
       case ".cs": {
         highlightingDef = HighlightingManager.Instance.GetDefinition("C#");
+        sourceLanguage_ = SourceCodeLanguage.CSharp;
         break;
       }
       case ".rs": {
         //? TODO: Rust syntax highlighting
         highlightingDef = HighlightingManager.Instance.GetDefinition("C++");
+        sourceLanguage_ = SourceCodeLanguage.Rust;
         break;
       }
     }
@@ -511,6 +1396,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.SyntaxHighlighting = highlightingDef;
     TextView.Text = text;
     sourceText_ = text.AsMemory();
+    originalSourceText_ = sourceText_;
     disableCaretEvent_ = false;
   }
 
@@ -557,8 +1443,16 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     JumpToProfiledElement(1);
   }
 
-  public void JumpToHottestProfiledElement() {
-    Dispatcher.BeginInvoke(() => JumpToProfiledElement(0), DispatcherPriority.ContextIdle);
+  public void JumpToHottestProfiledElement(bool onLoad = false) {
+    Dispatcher.BeginInvoke(() => {
+      if (onLoad) {
+        // Don't select the associated document instructions
+        // when jumping during the source file load.
+        ignoreNextCaretEvent_ = true;
+      }
+
+      JumpToProfiledElement(0);
+    }, DispatcherPriority.ContextIdle);
   }
 
   private void JumpToProfiledElement(int offset) {
@@ -571,7 +1465,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void JumpToProfiledElement(IRElement element) {
-    TextView.ScrollToLine(element.TextLocation.Line);
+    TextView.SetCaretAtElement(element);
     double offset = TextView.TextArea.TextView.VerticalOffset;
     SyncColumnsVerticalScrollOffset(offset);
   }
@@ -591,6 +1485,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private void Caret_PositionChanged(object sender, EventArgs e) {
     if (columnsVisible_) {
+      ignoreNextRowSelectedEvent_ = true;
       var line = TextView.Document.GetLineByOffset(TextView.TextArea.Caret.Offset);
       ProfileColumns.SelectRow(line.LineNumber - 1);
     }
@@ -610,32 +1505,63 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private void HighlightElementsOnSelectedLine() {
     var line = TextView.Document.GetLineByOffset(TextView.CaretOffset);
 
-    if (line != null && AssociatedDocument != null) {
-      AssociatedDocument.SelectElementsOnSourceLine(line.LineNumber, null);
+    if (line != null) {
+      // With assembly lines, source line numbers are shifted.
+      if (sourceProfileResult_ != null) {
+        if (sourceProfileResult_.LineToOriginalLineMap.
+          TryGetValue(line.LineNumber, out int originalLineNumber)) {
+          LineSelected?.Invoke(this, originalLineNumber);
+        }
+
+        return; // One of the assembly lines, ignore.
+      }
+
+      LineSelected?.Invoke(this, line.LineNumber);
     }
   }
 
   public void SelectLine(int line) {
-    if (line <= 0 || line > TextView.Document.LineCount) {
-      return;
-    }
-
-    var documentLine = TextView.Document.GetLineByNumber(line);
     ignoreNextCaretEvent_ = true;
-    TextView.CaretOffset = documentLine.Offset;
-    TextView.ScrollToLine(line);
+    int mappedLine = MapFromOriginalSourceLineNumber(line);
+
+    if(mappedLine != -1) {
+      TextView.SelectLine(mappedLine);
+    } 
+  }
+
+  bool IsSourceLine(int line) {
+    return sourceProfileResult_ == null ||
+           sourceProfileResult_.LineToOriginalLineMap.ContainsKey(line);
   }
 
   public void Reset() {
-    TextView.UnloadDocument();
-    ProfileColumns.Reset();
-    sourceText_ = null;
-    profileElements_ = null;
-    sourceProfileResult_ = null;
-    sourceLineProfileResult_ = null;
-    sourceColumnData_ = null;
+    ResetProfilingMenus();
+    ResetInstance();
+    ProfileFilter = new ProfileSampleFilter();
+    historyManager_.Reset();
+    originalSourceText_ = null;
   }
 
+  private void ResetInstance() {
+    ResetInstanceProfiling();
+    TextView.UnloadDocument();
+    sourceText_ = null;
+    inlinee_ = null;
+  }
+
+  private void ResetInstanceProfiling() {
+    ProfileColumns.Reset();
+    profileElements_ = null;
+    sourceProcessingResult_ = null;
+    sourceProfileResult_ = null;
+
+    if (assemblyColorizer_ != null) {
+      TextView.UnregisterTextColorizer(assemblyColorizer_);
+      TextView.UninstallBlockFolding();
+      assemblyColorizer_ = null;
+    }
+  }
+  
   private void TextViewOnScrollOffsetChanged(object? sender, EventArgs e) {
     // Sync scrolling with the optional columns.
     double offset = TextView.TextArea.TextView.VerticalOffset;
@@ -653,102 +1579,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.TextArea.TextView.Redraw();
   }
 
-  private async Task ExportFunctionAsExcelFile(string filePath) {
-    var function = TextView.Section.ParentFunction;
-    var (firstSourceLineIndex, lastSourceLineIndex) = await FindFunctionSourceLineRange(function);
-
-    if (firstSourceLineIndex == 0) {
-      Utils.ShowWarningMessageBox("Failed to export source file", this);
-      return;
-    }
-
-    var wb = new XLWorkbook();
-    var ws = wb.Worksheets.Add("Source");
-    var columnData = sourceColumnData_;
-    int rowId = 2; // First row is for the table column names.
-    int maxLineLength = 0;
-
-    for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
-      var line = TextView.Document.GetLineByNumber(i);
-      string text = TextView.Document.GetText(line.Offset, line.Length);
-      ws.Cell(rowId, 1).Value = text;
-      ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-      maxLineLength = Math.Max(text.Length, maxLineLength);
-
-      ws.Cell(rowId, 2).Value = i;
-      ws.Cell(rowId, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-      ws.Cell(rowId, 2).Style.Font.FontColor = XLColor.DarkGreen;
-
-      if (columnData != null) {
-        IRElement tuple = null;
-        tuple = FindTupleOnSourceLine(i);
-
-        if (tuple != null) {
-          columnData.ExportColumnsToExcel(tuple, ws, rowId, 3);
-        }
-      }
-
-      rowId++;
-    }
-
-    var firstCell = ws.Cell(1, 1);
-    var lastCell = ws.LastCellUsed();
-    var range = ws.Range(firstCell.Address, lastCell.Address);
-    var table = range.CreateTable();
-    table.Theme = XLTableTheme.None;
-
-    foreach (var cell in table.HeadersRow().Cells()) {
-      if (cell.Address.ColumnNumber == 1) {
-        cell.Value = "Source";
-      }
-      else if (cell.Address.ColumnNumber == 2) {
-        cell.Value = "Line";
-      }
-      else if (columnData != null && cell.Address.ColumnNumber - 3 < columnData.Columns.Count) {
-        cell.Value = columnData.Columns[cell.Address.ColumnNumber - 3].Title;
-      }
-
-      cell.Style.Font.Bold = true;
-      cell.Style.Fill.BackgroundColor = XLColor.LightGray;
-    }
-
-    for (int i = 1; i <= 1; i++) {
-      ws.Column(i).AdjustToContents((double)1, maxLineLength);
-    }
-
-    wb.SaveAs(filePath);
-  }
-
-  public async Task<(int, int)> FindFunctionSourceLineRange(IRTextFunction function) {
-    var debugInfo = await Session.GetDebugInfoProvider(function);
-    var funcProfile = Session.ProfileData?.GetFunctionProfile(function);
-
-    if (debugInfo == null || funcProfile == null) {
-      return (0, 0);
-    }
-
-    int firstSourceLineIndex = 0;
-    int lastSourceLineIndex = 0;
-
-    if (debugInfo.PopulateSourceLines(funcProfile.FunctionDebugInfo)) {
-      firstSourceLineIndex = funcProfile.FunctionDebugInfo.FirstSourceLine.Line;
-      lastSourceLineIndex = funcProfile.FunctionDebugInfo.LastSourceLine.Line;
-    }
-
-    return (firstSourceLineIndex, lastSourceLineIndex);
-  }
-
-  private IRElement FindTupleOnSourceLine(int line) {
-    var pair1 = sourceProfileResult_.SampledElements.Find(e => e.Item1.TextLocation.Line == line - 1);
-
-    if (pair1.Item1 != null) {
-      return pair1.Item1;
-    }
-
-    var pair2 = sourceProfileResult_.CounterElements.Find(e => e.Item1.TextLocation.Line == line - 1);
-    return pair2.Item1;
-  }
-
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
@@ -761,10 +1591,16 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public void Initialize(TextViewSettingsBase settings) {
     settings_ = settings;
     ProfileViewMenu.DataContext = settings_.ColumnSettings;
+    TextView.Initialize(settings, Session);
     TextView.FontFamily = new FontFamily(settings_.FontName);
 
+    if (settings_ is SourceFileSettings sourceSettings &&
+        !sourceSettings.ShowInlineAssembly) {
+      TextView.UninstallCustomLineNumbers(true);
+    }
+
     if (UseSmallerFontSize) {
-      TextView.FontSize = settings_.FontSize - 2;
+      TextView.FontSize = settings_.FontSize - 1;
     }
     else {
       TextView.FontSize = settings_.FontSize;
@@ -772,6 +1608,145 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void ViewMenuItem_OnCheckedChanged(object sender, RoutedEventArgs e) {
-    await UpdateProfilingColumns();
+    if (!suspendColumnVisibilityHandler_) {
+      await UpdateProfilingColumns();
+    }
+  }
+
+  private async void ExportSourceExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.ExportToExcelFile(TextView,
+                                              isSourceFileDocument_ ?
+                                              DocumentExporting.ExportSourceAsExcelFile :
+                                              DocumentExporting.ExportFunctionAsExcelFile);
+  }
+
+  private async void ExportSourceHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.ExportToHtmlFile(TextView,
+                                             isSourceFileDocument_ ?
+                                             DocumentExporting.ExportSourceAsHtmlFile :
+                                             DocumentExporting.ExportFunctionAsHtmlFile);
+  }
+
+  private async void ExportSourceMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.ExportToMarkdownFile(TextView,
+                                                 isSourceFileDocument_ ?
+                                                 DocumentExporting.ExportSourceAsMarkdownFile :
+                                                 DocumentExporting.ExportFunctionAsMarkdownFile);
+  }
+
+  private async void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await CopySelectedLinesAsHtml();
+  }
+
+  public async Task CopySelectedLinesAsHtml() {
+    if (isSourceFileDocument_) {
+      await DocumentExporting.CopySelectedSourceLinesAsHtml(TextView);
+    }
+    else {
+      await DocumentExporting.CopySelectedLinesAsHtml(TextView);
+    }
+  }
+
+  public async Task CopyAllLinesAsHtml() {
+    if (isSourceFileDocument_) {
+      await DocumentExporting.CopyAllSourceLinesAsHtml(TextView);
+    }
+    else {
+      await DocumentExporting.CopyAllLinesAsHtml(TextView);
+    }
+  }
+
+  private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    ProfilingUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, profileFilter_);
+    await ApplyProfileFilter();
+  }
+
+  private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    ProfilingUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);
+    await ApplyProfileFilter();
+  }
+
+
+  private void ProfileColumns_RowSelected(object sender, int line) {
+    if (ignoreNextRowSelectedEvent_) {
+      ignoreNextRowSelectedEvent_ = false;
+      return;
+    }
+
+    TextView.SelectLine(line + 1);
+  }
+
+  private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
+    // For source files, compute the sum of the selected lines time.
+    int startLine = TextView.TextArea.Selection.StartPosition.Line;
+    int endLine = TextView.TextArea.Selection.EndPosition.Line;
+    var funcProfile = Session.ProfileData?.GetFunctionProfile(Section.ParentFunction);
+
+    if(sourceProcessingResult_ == null) {
+      if (funcProfile == null ||
+          !ProfilingUtils.ComputeAssemblyWeightInRange(startLine, endLine,
+              TextView.Function, funcProfile,
+              out var weightSum, out int count)) {
+        Session.SetApplicationStatus("");
+        return;
+      }
+
+      double weightPercentage = funcProfile.ScaleWeight(weightSum);
+      string text = $"Selected {count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+      Session.SetApplicationStatus(text, "Sum of time for the selected instructions");
+    }
+    else {
+      if (funcProfile == null ||
+          !ProfilingUtils.ComputeSourceWeightInRange(startLine, endLine, 
+              sourceProcessingResult_, sourceProfileResult_,
+              out var weightSum, out int count)) {
+        Session.SetApplicationStatus("");
+        return;
+      }
+
+      double weightPercentage = funcProfile.ScaleWeight(weightSum);
+      string text = $"Selected {count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+      Session.SetApplicationStatus(text, "Sum of time for the selected source lines");
+    }
+  }
+
+  private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
+    ProfileColumns.HandleTextRegionUnfolded(e);
+  }
+
+  private void TextViewOnTextRegionFolded(object sender, FoldingSection e) {
+    ProfileColumns.HandleTextRegionFolded(e);
+  }
+
+  public async Task SwitchProfileInstanceAsync(ProfileSampleFilter instanceFilter) {
+    ProfileFilter = instanceFilter;
+    await ApplyProfileFilter();
+  }
+
+  private async void InlineeMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var inlinee = ((MenuItem)sender)?.Tag as InlineeListItem;
+
+    if (inlinee != null && inlinee.ElementWeights is {Count:>0}) {
+      // Sort by weight and bring the hottest element into view.
+      var elements = inlinee.SortedElements;
+      TextView.SelectElements(elements);
+      TextView.BringElementIntoView(elements[0]);
+    }
+  }
+
+  private void CopySelectedTextExecuted(object sender, ExecutedRoutedEventArgs e) {
+    TextView.Copy();
+  }
+
+  public RelayCommand<object> CopyDocumentCommand => new RelayCommand<object>(async obj => {
+    await CopyAllLinesAsHtml();
+  });
+
+  public void ExpandBlockFoldings() {
+    SetupSourceAssemblyFolding(false);
+  }
+
+  public void CollapseBlockFoldings() {
+    SetupSourceAssemblyFolding(true);
   }
 }

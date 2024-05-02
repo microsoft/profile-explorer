@@ -36,6 +36,7 @@ public interface ISession {
   IRTextSummary MainDocumentSummary { get; }
   IRTextSummary DiffDocumentSummary { get; }
   ProfileData ProfileData { get; }
+  ProfileFilterState ProfileFilter { get; set; }
   Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo);
   Task<bool> SetupNewSession(LoadedDocument mainDocument, List<LoadedDocument> otherDocuments, ProfileData profileData);
   IRTextSummary GetDocumentSummary(IRTextSection section);
@@ -57,7 +58,7 @@ public interface ISession {
 
   void RedrawPanels(params ToolPanelKind[] kinds);
   IToolPanel FindPanel(ToolPanelKind kind);
-  Task ShowPanel(ToolPanelKind kind);
+  Task<IToolPanel> ShowPanel(ToolPanelKind kind);
   void ActivatePanel(IToolPanel panel);
   Task<IRDocumentHost> SwitchDocumentSectionAsync(OpenSectionEventArgs args);
   Task<IRDocumentHost> OpenDocumentSectionAsync(OpenSectionEventArgs args);
@@ -107,14 +108,19 @@ public interface ISession {
                              ProfileLoadProgressHandler progressCallback,
                              CancelableTask cancelableTask);
 
-  Task<bool> FilterProfileSamples(ProfileSampleFilter filter);
+  Task<bool> FilterProfileSamples(ProfileFilterState filter);
   Task<bool> RemoveProfileSamplesFilter();
-  Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode);
+  Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode,
+                                 ProfileSampleFilter instanceFilter = null,
+                                 IRDocumentHost targetDocument = null);
+  Task<bool> OpenProfileFunction(IRTextFunction function, OpenSectionKind openMode,
+                                 ProfileSampleFilter instanceFilter = null,
+                                 IRDocumentHost targetDocument = null);
   Task<bool> SwitchActiveProfileFunction(ProfileCallTreeNode node);
   Task<bool> SelectProfileFunctionInPanel(ProfileCallTreeNode node, ToolPanelKind panelKind);
   Task<bool> SelectProfileFunctionInPanel(IRTextFunction node, ToolPanelKind panelKind);
-  Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node);
-  Task<bool> OpenProfileSourceFile(IRTextFunction function);
+  Task<bool> OpenProfileSourceFile(ProfileCallTreeNode node, ProfileSampleFilter profileFilter = null);
+  Task<bool> OpenProfileSourceFile(IRTextFunction function, ProfileSampleFilter profileFilter = null);
   Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range);
   Task<bool> ProfileSampleRangeDeselected();
   Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node, ToolPanelKind sourcePanelKind);
@@ -124,9 +130,12 @@ public interface ISession {
 
   Task<bool> ProfileFunctionSelected(IRTextFunction function, ToolPanelKind sourcePanelKind);
   Task<bool> ProfileFunctionDeselected();
+  Task<bool> FunctionMarkingChanged(ToolPanelKind sourcePanelKind);
+
   bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);
   IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);
   void SetApplicationStatus(string text, string tooltip = "");
   void SetApplicationProgress(bool visible, double percentage, string title = null);
   void UpdatePanelTitles();
+  void UpdateDocumentTitles();
 }

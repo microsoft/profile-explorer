@@ -33,53 +33,67 @@ public class SourceFileFinder {
   }
 
   public async Task<(SourceFileDebugInfo, IDebugInfoProvider)>
+    FindLocalSourceFile(SourceFileDebugInfo sourceInfo) {
+    return FindLocalSourceFile(sourceInfo, null, null);
+  }
+
+  public async Task<(SourceFileDebugInfo, IDebugInfoProvider)>
     FindLocalSourceFile(IRTextFunction function, FrameworkElement owner = null) {
-    var debugInfo = await session_.GetDebugInfoProvider(function);
+    return await Task.Run(async () => {
+      var debugInfo = await session_.GetDebugInfoProvider(function).ConfigureAwait(false);
 
-    if (debugInfo == null) {
+      if (debugInfo == null) {
+        return (SourceFileDebugInfo.Unknown, null);
+      }
+
+      var sourceInfo = SourceFileDebugInfo.Unknown;
+      var funcProfile = session_.ProfileData?.GetFunctionProfile(function);
+
+      if (funcProfile != null) {
+        // Try precise function mapping from profiling data first.
+        sourceInfo = LocateSourceFile(funcProfile, debugInfo);
+      }
+
+      if (sourceInfo.IsUnknown) {
+        // Try again using the function name.
+        sourceInfo = debugInfo.FindFunctionSourceFilePath(function);
+      }
+
+      if (sourceInfo.HasFilePath) {
+        return FindLocalSourceFile(sourceInfo, debugInfo, owner);
+      }
+
       return (SourceFileDebugInfo.Unknown, null);
+    });
+  }
+
+  private (SourceFileDebugInfo, IDebugInfoProvider)
+    FindLocalSourceFile(SourceFileDebugInfo sourceInfo, IDebugInfoProvider debugInfo, FrameworkElement owner) {
+    // Check if the file can be found. If it's from another machine,
+    // a mapping is done after the user is asked to pick the new location of the file.
+    if (File.Exists(sourceInfo.FilePath)) {
+      return (sourceInfo, debugInfo);
     }
-
-    var sourceInfo = SourceFileDebugInfo.Unknown;
-    var funcProfile = session_.ProfileData?.GetFunctionProfile(function);
-
-    if (funcProfile != null) {
-      // Try precise function mapping from profiling data first.
-      sourceInfo = LocateSourceFile(funcProfile, debugInfo);
-    }
-
-    if (sourceInfo.IsUnknown) {
-      // Try again using the function name.
-      sourceInfo = debugInfo.FindFunctionSourceFilePath(function);
-    }
-
-    if (sourceInfo.HasFilePath) {
-      // Check if the file can be found. If it's from another machine,
-      // a mapping is done after the user is asked to pick the new location of the file.
-      if (File.Exists(sourceInfo.FilePath)) {
-        return (sourceInfo, debugInfo);
+    else if (!IsDisabledSourceFilePath(sourceInfo.FilePath)) {
+      var filePath = sourceFileMapper_.Map(sourceInfo.FilePath, () =>
+                                             Utils.ShowOpenFileDialog(
+                                               $"Source File|{Utils.TryGetFileName(sourceInfo.OriginalFilePath)}",
+                                               null, $"Open {sourceInfo.OriginalFilePath}"));
+      if (!string.IsNullOrEmpty(filePath)) {
+        sourceInfo.FilePath = filePath;
       }
-      else if (!IsDisabledSourceFilePath(sourceInfo.FilePath)) {
-        var filePath = sourceFileMapper_.Map(sourceInfo.FilePath, () =>
-                                               Utils.ShowOpenFileDialog(
-                                                 $"Source File|{Utils.TryGetFileName(sourceInfo.OriginalFilePath)}",
-                                                 null, $"Open {sourceInfo.OriginalFilePath}"));
-        if (!string.IsNullOrEmpty(filePath)) {
-          sourceInfo.FilePath = filePath;
+      else if (Utils.ShowYesNoMessageBox("Continue asking for the location of this source file?", owner) ==
+               MessageBoxResult.No) {
+        if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
+          disabledSourceMappings_.Add(sourceInfo.FilePath);
         }
-        else if (Utils.ShowYesNoMessageBox("Continue asking for the location of this source file?", owner) ==
-                 MessageBoxResult.No) {
-          if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
-            disabledSourceMappings_.Add(sourceInfo.FilePath);
-          }
-        }
-
-        SaveSettings();
-        return (sourceInfo, debugInfo);
       }
+
+      SaveSettings();
+      return (sourceInfo, debugInfo);
     }
 
-    return (SourceFileDebugInfo.Unknown, null);
+    return  (SourceFileDebugInfo.Unknown, null);
   }
 
   private bool IsDisabledSourceFilePath(string filePath) {

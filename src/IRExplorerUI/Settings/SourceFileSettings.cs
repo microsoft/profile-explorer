@@ -16,13 +16,29 @@ public class SourceFileSettings : TextViewSettingsBase {
   [ProtoMember(1)]
   public SourceFileFinderSettings FinderSettings { get; set; }
   [ProtoMember(2)]
-  public bool SyncWithDocument { get; set; }
-
+  public bool SyncStyleWithDocument { get; set; }
+  [ProtoMember(3)]
+  public bool SyncLineWithDocument { get; set; }
+  [ProtoMember(4)]
+  public bool SyncInlineeWithDocument { get; set; }
+  [ProtoMember(5)]
+  public bool ShowInlineAssembly { get; set; }
+  [ProtoMember(6)]
+  public bool AutoExpandInlineAssembly { get; set; }
+  [ProtoMember(7)]
+  public bool ShowSourceStatements { get; set; }
+  [ProtoMember(8)]
+  public bool ShowSourceStatementsOnMargin { get; set; }
+  
   public override void Reset() {
     base.Reset();
     InitializeReferenceMembers();
     ProfileMarkerSettings.JumpToHottestElement = true;
-    SyncWithDocument = true;
+    SyncStyleWithDocument = true;
+    SyncLineWithDocument = true;
+    ShowInlineAssembly = true;
+    ShowSourceStatements = true;
+    ShowSourceStatementsOnMargin = true;
     FinderSettings.Reset();
   }
 
@@ -39,7 +55,13 @@ public class SourceFileSettings : TextViewSettingsBase {
   public override bool Equals(object obj) {
     return obj is SourceFileSettings settings &&
            base.Equals(settings) &&
-           SyncWithDocument == settings.SyncWithDocument &&
+           SyncStyleWithDocument == settings.SyncStyleWithDocument &&
+           SyncLineWithDocument == settings.SyncLineWithDocument &&
+           SyncInlineeWithDocument == settings.SyncInlineeWithDocument &&
+           ShowInlineAssembly == settings.ShowInlineAssembly &&
+           AutoExpandInlineAssembly == settings.AutoExpandInlineAssembly &&
+           ShowSourceStatements == settings.ShowSourceStatements &&
+           ShowSourceStatementsOnMargin == settings.ShowSourceStatementsOnMargin &&
            FinderSettings.Equals(settings.FinderSettings);
   }
 }

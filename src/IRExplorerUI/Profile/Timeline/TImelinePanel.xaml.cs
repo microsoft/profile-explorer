@@ -53,6 +53,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private string threadFilterText_;
   private bool showNodePanel_;
   private OptionsPanelHostWindow optionsPanelWindow_;
+  private ProfileFilterState profileFilter;
 
   public TimelinePanel() {
     InitializeComponent();
@@ -63,6 +64,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     SetupEvents();
     DataContext = this;
+    ProfileFilter = new ProfileFilterState();
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
@@ -95,6 +97,12 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   public bool HasCallTree => callTree_ != null;
 
+
+  public ProfileFilterState ProfileFilter {
+    get => profileFilter;
+    set => SetField(ref profileFilter, value);
+  }
+
   public bool ShowSearchSection {
     get => showSearchSection_;
     set {
@@ -114,29 +122,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
   }
-
-  public bool HasThreadFilter {
-    get => hasThreadFilter_;
-    set {
-      if (hasThreadFilter_ != value) {
-        hasThreadFilter_ = value;
-        OnPropertyChanged();
-        OnPropertyChanged(nameof(HasAnyFilter));
-      }
-    }
-  }
-
-  public string ThreadFilterText {
-    get => threadFilterText_;
-    set {
-      if (threadFilterText_ != value) {
-        threadFilterText_ = value;
-        OnPropertyChanged();
-      }
-    }
-  }
-
-  public bool HasAnyFilter => HasThreadFilter || ActivityView.HasFilter;
 
   public bool ShowNodePanel {
     get => showNodePanel_;
@@ -283,23 +268,11 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
       threadView.ThreadActivityAction += ThreadView_ThreadActivityAction;
 
-      // Set thread color based on name, if available,
-      // otherwise on the thread ID. The picked color is stable
-      // between different sessions loading the same trace.
+      // Set thread background colors.
       var threadInfo = Session.ProfileData.FindThread(thread.ThreadId);
-      uint colorIndex = 0;
 
-      if (threadInfo != null && threadInfo.HasName) {
-        colorIndex = (uint)threadInfo.Name.GetStableHashCode();
-      }
-      else {
-        colorIndex = (uint)thread.ThreadId;
-      }
-
-      threadView.MarginBackColor =
-        ColorBrushes.GetBrush(ColorUtils.GenerateLightPastelColor(colorIndex));
-      threadView.ActivityHost.SamplesBackColor =
-        ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(colorIndex));
+      (threadView.MarginBackColor, threadView.ActivityHost.SamplesBackColor) =
+        settings_.GetThreadBackgroundColors(threadInfo, thread.ThreadId);
 
       threadActivityViews_.Add(threadView);
       threadActivityViewsMap_[thread.ThreadId] = threadView;
@@ -332,10 +305,21 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
+  public async Task ApplyThreadFilterAction(int threadId, ThreadActivityAction action) {
+    var view = threadActivityViews_.Find(item => item.ThreadId == threadId);
+
+    if (view != null) {
+      await ApplyThreadFilterChange(view, action);
+    }
+  }
+
   private async void ThreadView_ThreadActivityAction(object sender, ThreadActivityAction action) {
     var view = sender as ActivityTimelineView;
-    Trace.WriteLine($"Thread action {action} for thread {view.ThreadId}");
+    await ApplyThreadFilterChange(view, action);
+  }
 
+  private async Task ApplyThreadFilterChange(ActivityTimelineView view, ThreadActivityAction action) {
+    Trace.WriteLine($"Thread action {action} for thread {view.ThreadId}");
     bool changed = false;
     changingThreadFiltering_ = true;
 
@@ -352,9 +336,12 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         changed = UpdateThreadFilter(view, true);
 
         foreach (var otherView in threadActivityViews_) {
-          if (otherView != view &&
-              UpdateThreadFilter(otherView, false)) {
-            changed = true;
+          if (otherView != view) {
+            otherView.ActivityHost.ClearSelectedTimeRange();
+
+            if (UpdateThreadFilter(otherView, false)) {
+              changed = true;
+            }
           }
         }
 
@@ -379,6 +366,22 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
         break;
       }
+      case ThreadActivityAction.SelectThread: {
+        // Select the entire thread and deselect range in other ones.
+        bool wasSelected = view.ActivityHost.HasAllTimeSelected;
+
+        foreach (var otherView in threadActivityViews_) {
+          otherView.ActivityHost.ClearSelectedTimeRange();
+        }
+
+        // Click if already selected deselects.
+        if (!wasSelected) {
+          view.ActivityHost.SelectAllTime();
+        }
+
+        break;
+      }
+      default: throw new NotImplementedException();
     }
 
     changingThreadFiltering_ = false;
@@ -440,7 +443,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
         //? TODO: if selection, use range covered by it
         ProfileCallTreeNode callNode = null;
-        var rangeProfile = Session.ProfileData.ComputeProfile(Session.ProfileData, filter, 1);
+        var rangeProfile = Session.ProfileData.ComputeProfile(Session.ProfileData, filter, true, 1);
         var funcs = rangeProfile.GetSortedFunctions();
 
         if (funcs.Count > 0) {
@@ -539,12 +542,12 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
-  private void UpdateFilteredThreads() {
+  private void SetFilteredThreadsState(ProfileFilterState state) {
     int excludedCount = CountExcludedThreads();
 
     if (excludedCount == 0) {
-      HasThreadFilter = false;
-      ThreadFilterText = null;
+      state.HasThreadFilter = false;
+      state.ThreadFilterText = null;
       return;
     }
 
@@ -578,17 +581,32 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
 
-    ThreadFilterText = sb.ToString().Trim();
-    HasThreadFilter = true;
+    state.ThreadFilterText = sb.ToString().Trim();
+    state.HasThreadFilter = true;
+  }
+
+  ProfileFilterState CreateProfileFilterState() {
+    var timeRange = ActivityView.HasFilter ? ActivityView.FilteredRange : null;
+    var filter = ConstructProfileSampleFilter(timeRange);
+
+    var state = new ProfileFilterState(filter);
+    state.HasFilter = ActivityView.HasFilter;
+    state.FilteredTime = ActivityView.FilteredTime;
+
+    state.RemoveThreadFilter += async () => {
+      await RemoveThreadFilters();
+    };
+    state.RemoveTimeRangeFilter += async () => {
+      await RemoveTimeRangeFilters();
+    };
+
+    SetFilteredThreadsState(state);
+    return state;
   }
 
   private async Task ApplyProfileFilter() {
-    OnPropertyChanged(nameof(HasAnyFilter));
-    UpdateFilteredThreads();
-
-    var timeRange = ActivityView.HasFilter ? ActivityView.FilteredRange : null;
-    var filter = ConstructProfileSampleFilter(timeRange);
-    await Session.FilterProfileSamples(filter);
+    ProfileFilter = CreateProfileFilterState();
+    await Session.FilterProfileSamples(ProfileFilter);
   }
 
   private bool UpdateThreadFilter(ActivityView view, bool included) {
@@ -815,8 +833,8 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private async Task OpenFunction(ProfileCallTreeNode node) {
-    if (node != null && node.Function.HasSections) {
-      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+    if (node is {HasFunction: true} && node.Function.HasSections) {
+      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
       await Session.SwitchDocumentSectionAsync(args);
     }
@@ -975,10 +993,11 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         OverridesDefaultStyle = true,
         Header = samples.Node.FormatFunctionName(Session.CompilerInfo.NameProvider.FormatFunctionName, 50),
         Icon = CreateMarkerMenuIcon(samples),
-        Tag = samples
+        Tag = samples,
+        ToolTip = "Right-click to remove marking"
       };
 
-      item.Click += (s, args) => {
+      item.MouseRightButtonUp += (s, args) => {
         var samples = (MarkedSamples)((MenuItem)s).Tag;
         ActivityView.RemoveMarkedSamples(samples.Node);
 

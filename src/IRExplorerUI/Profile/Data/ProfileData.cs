@@ -271,11 +271,7 @@ public partial class ProfileData {
   }
 
   public FunctionProfileData GetFunctionProfile(IRTextFunction function) {
-    if (FunctionProfiles.TryGetValue(function, out var profile)) {
-      return profile;
-    }
-
-    return null;
+    return FunctionProfiles.TryGetValue(function, out var profile) ? profile : null;
   }
 
   public bool HasFunctionProfile(IRTextFunction function) {
@@ -285,7 +281,7 @@ public partial class ProfileData {
   public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function,
                                                         FunctionDebugInfo debugInfo) {
     return FunctionProfiles.GetOrAdd(function, key => {
-      return new FunctionProfileData {FunctionDebugInfo = debugInfo};
+      return new FunctionProfileData(debugInfo);
     });
   }
 
@@ -334,6 +330,28 @@ public partial class ProfileData {
     return null;
   }
 
+  public List<int> FindModuleIds(Func<string, bool> matchCheck) {
+    var ids = new List<int>();
+    foreach (var module in Modules) {
+      if (matchCheck( module.Value.ModuleName)) {
+        ids.Add(module.Key);
+      }
+    }
+
+    return ids;
+  }
+
+  public TimeSpan FindModulesWeight(Func<string, bool> matchCheck) {
+    var ids = FindModuleIds(matchCheck);
+    var weight = TimeSpan.Zero;
+
+    foreach (var id in ids) {
+      weight += ModuleWeights.GetValueOrDefault(id);
+    }
+
+    return weight;
+  }
+
   public ProcessingResult FilterFunctionProfile(ProfileSampleFilter filter) {
     //? TODO: Split ProfileData into a part that has the samples and other info that doesn't change,
     //? while the rest is more like a processing result similar to FuncProfileData
@@ -346,12 +364,13 @@ public partial class ProfileData {
       Filter = Filter
     };
 
+    CallTree?.ResetTags();
     ModuleWeights = new Dictionary<int, TimeSpan>();
     FunctionProfiles = new ConcurrentDictionary<IRTextFunction, FunctionProfileData>();
     ProfileWeight = TimeSpan.Zero;
     TotalWeight = TimeSpan.Zero;
 
-    var profile = ComputeProfile(this, filter, int.MaxValue);
+    var profile = ComputeProfile(this, filter);
     ModuleWeights = profile.ModuleWeights;
     ProfileWeight = profile.ProfileWeight;
     TotalWeight = profile.TotalWeight;
@@ -381,12 +400,17 @@ public partial class ProfileData {
   }
 
   public ProfileData ComputeProfile(ProfileData baseProfile, ProfileSampleFilter filter,
+                                    bool computeCallTree = true,
                                     int maxChunks = int.MaxValue) {
     // Compute the call tree in parallel with the per-function profiles.
     var tasks = new List<Task>();
 
     var callTreeTask = Task.Run(() => {
-      return CallTreeProcessor.Compute(baseProfile, filter, maxChunks);
+      if (computeCallTree) {
+        return CallTreeProcessor.Compute(baseProfile, filter, maxChunks);
+      }
+
+      return null;
     });
 
     var funcProfileTask = Task.Run(() => {

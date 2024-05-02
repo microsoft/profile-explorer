@@ -56,12 +56,18 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   public Typeface TextFont { get; set; }
   public KnownLayer Layer => KnownLayer.Background;
 
-  public void AddElementOverlay(IRElement element, IElementOverlay overlay) {
+  public void AddElementOverlay(IRElement element, IElementOverlay overlay,
+                                bool prepend = false) {
     overlay.Element = element;
     Version++;
 
     if (overlaySegmentMap_.TryGetValue(element, out var segment)) {
-      segment.Overlays.Add(overlay);
+      if (prepend) {
+        segment.Overlays.Insert(0, overlay);
+      }
+      else {
+        segment.Overlays.Add(overlay);
+      }
     }
     else {
       segment = new IROverlaySegment(element, overlay);
@@ -436,10 +442,16 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
 
     tooltipOverlay_ = elementOverlay;
     hoverTooltip_ ??= new ToolTip();
-    hoverTooltip_.Placement = PlacementMode.Mouse;
-    hoverTooltip_.Content = elementOverlay.ToolTip;
-    hoverTooltip_.FontFamily = new FontFamily("Consolas");
-    hoverTooltip_.IsOpen = true;
+
+    // Showing the tooltip from the Dispatcher somehow prevents
+    // it from temporarily showing in the top-left screen corner
+    // with an annoying flicker...
+    Dispatcher.BeginInvoke(() => {
+      hoverTooltip_.Placement = PlacementMode.Mouse;
+      hoverTooltip_.PlacementTarget = textView_;
+      hoverTooltip_.Content = elementOverlay.ToolTip;
+      hoverTooltip_.IsOpen = true;
+    });
   }
 
   private void HideTooltip() {

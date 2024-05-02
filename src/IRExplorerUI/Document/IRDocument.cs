@@ -12,12 +12,15 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using System.Windows.Threading;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
@@ -187,7 +190,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private HashSet<IRElement> selectedElements_;
   private ElementHighlighter selectedHighlighter_;
   private HighlightingStyle selectedStyle_;
-  private DocumentSettings settings_;
+  private TextViewSettingsBase settings_;
   private PairHighlightingStyle ssaDefinitionStyle_;
   private PairHighlightingStyle ssaUserStyle_;
   private PairHighlightingStyle iteratedUserStyle_;
@@ -198,6 +201,9 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private int currentExprStyleIndex_;
   private int currentExprLevel_;
   private Remark selectedRemark_;
+  private bool selectingText_;
+  private HashSet<FoldingSection> foldedBlocks_;
+  private bool hasCustomLineNumbers_;
 
   public IRDocument() {
     // Setup element tracking data structures.
@@ -234,6 +240,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public event EventHandler<IRElementEventArgs> ElementSelected;
   public event EventHandler<IRElementEventArgs> ElementUnselected;
   public event EventHandler<int> CaretChanged;
+  public event EventHandler<FoldingSection> TextRegionFolded;
+  public event EventHandler<FoldingSection> TextRegionUnfolded;
+  public event EventHandler<IRTextSection> FunctionCallOpen;
+
   public event PropertyChangedEventHandler PropertyChanged;
   public List<BlockIR> Blocks => Function.Blocks;
   public BookmarkManager BookmarkManager => bookmarks_;
@@ -245,7 +255,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public bool DuringSectionLoading => duringSectionLoading_;
   public bool IsLoaded => Function != null;
 
-  public DocumentSettings Settings {
+  public TextViewSettingsBase Settings {
     get => settings_;
     private set {
       settings_ = value;
@@ -266,7 +276,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     return line;
   }
 
-  public void Initialize(DocumentSettings settings, ISession session) {
+  public void Initialize(TextViewSettingsBase settings, ISession session) {
     Session = session;
     Settings = settings;
   }
@@ -519,14 +529,47 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     HighlightSingleElement(element, GetHighlighter(type));
   }
 
-  public void SelectElementsOnSourceLine(int lineNumber, IRExplorerCore.IR.StackFrame inlinee = null) {
+  public void SelectElementsOnSourceLine(int lineNumber, SourceStackFrame inlinee = null) {
     ClearTemporaryHighlighting();
     MarkElementsOnSourceLine(selectedHighlighter_, lineNumber, Colors.Transparent,
                              false, true, inlinee);
   }
 
+  public void SelectElementsInLineRange(int startLine, int endLine, 
+                                        Func<int, int> lineMapper = null,
+                                        Brush backColor = null) {
+    ClearTemporaryHighlighting();
+    var style = selectedStyle_;
+
+    if (backColor != null) {
+      style = new HighlightingStyle(backColor, selectedStyle_.Border);
+    }
+
+    var group = new HighlightedElementGroup(style);
+
+    if (lineMapper != null) {
+      startLine = lineMapper(startLine);
+      endLine = lineMapper(endLine);
+    }
+
+    foreach (var block in Function.Blocks) {
+      foreach (var tuple in block.Tuples) {
+        if (tuple.TextLocation.Line + 1 >= startLine &&
+            tuple.TextLocation.Line + 1 <= endLine) {
+          group.Add(tuple);
+        }
+      }
+    }
+
+    if (!group.IsEmpty()) {
+      selectedHighlighter_.Add(group);
+    }
+
+    UpdateHighlighting();
+  }
+
   public void SelectLine(int line) {
-    if (line >= 0 && line < Document.LineCount) {
+    if (line >= 0 && line <= Document.LineCount) {
       TextArea.Caret.Line = line;
       ScrollToLine(line);
     }
@@ -541,16 +584,16 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   public void UnloadDocument() {
-    Section = null;
-    Function = null;
-    selectedRemark_ = null;
-    currentExprElement_ = null;
-    ClearSelectedElements();
-
     ResetRenderers();
     Text = "";
     SectionText = ReadOnlyMemory<char>.Empty;
     ProfileColumnData = null;
+    Section = null;
+    Function = null;
+    selectedRemark_ = null;
+    currentExprElement_ = null;
+    foldedBlocks_ = null;
+    ClearSelectedElements();
   }
 
   public async Task<bool> InitializeFromDocument(IRDocument doc, bool copyTemporaryHighlighting = true,
@@ -626,7 +669,12 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public async Task LoadSection(ParsedIRTextSection parsedSection) {
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Load section {parsedSection}");
-    SetCaretAtOffset(0);
+
+    // If the section loading is not done in two stages,
+    // run the first stage now to initialize the text view.
+    if (!duringSectionLoading_) {
+      PreloadSection(parsedSection);
+    }
 
     await ComputeElementListsAsync();
     await LateLoadSectionSetup(parsedSection);
@@ -663,6 +711,15 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     ClearTemporaryHighlighting();
     markedHighlighter_.Add(group);
+    UpdateHighlighting();
+  }
+
+  public void SelectElements(IEnumerable<IRElement> elements) {
+    var group = new HighlightedElementGroup(selectedStyle_);
+    group.AddRange(elements);
+
+    ClearTemporaryHighlighting();
+    selectedHighlighter_.Add(group);
     UpdateHighlighting();
   }
 
@@ -838,7 +895,13 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public void SelectElement(IRElement element, bool raiseEvent = true, bool fromUICommand = false,
                             int textOffset = -1) {
-    if (Function == null) { // For source code documents.
+    if (settings_ is not DocumentSettings) { // For source code documents.
+      return;
+    }
+
+    // During a text selection, don't select more
+    // than the first clicked element.
+    if (selectingText_) {
       return;
     }
 
@@ -915,37 +978,37 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
   }
 
-  public void AddBookmark(IRElement selectedElement, string text = null) {
+  public Bookmark AddBookmark(IRElement selectedElement, string text = null, bool pinned = false) {
     var bookmark = bookmarks_.AddBookmark(selectedElement);
     bookmark.Text = text;
+    bookmark.IsPinned = pinned;
 
     margin_.AddBookmark(bookmark);
     margin_.SelectBookmark(bookmark);
     UpdateMargin();
     UpdateHighlighting();
     RaiseBookmarkAddedEvent(bookmark);
+    return bookmark;
   }
 
-  public void EarlyLoadSectionSetup(ParsedIRTextSection parsedSection) {
+  public void PreloadSection(ParsedIRTextSection parsedSection) {
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Start setup for {parsedSection}");
     duringSectionLoading_ = true;
     Section = parsedSection.Section;
     Function = parsedSection.Function;
     ignoreNextCaretEvent_ = true;
     ClearSelectedElements();
-
     ResetRenderers();
+
+    // Replace the text in the view.
     Text = parsedSection.Text.ToString();
-    SectionText = parsedSection.Text;
+    SectionText = parsedSection.Text; // Cache raw text.
+    SetCaretAtOffset(0);
   }
 
   public IRElement GetElementAt(Point position) {
     int offset = DocumentUtils.GetOffsetFromMousePosition(position, this, out _);
     return offset != -1 ? FindElementAtOffset(offset) : null;
-  }
-
-  public IRElement TryGetSelectedElement() {
-    return selectedElements_.Count > 0 ? GetSelectedElement() : null;
   }
 
   public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
@@ -985,7 +1048,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
   }
 
-  private void UninstallBlockFolding() {
+  public void UninstallBlockFolding() {
     if (folding_ != null) {
       FoldingManager.Uninstall(folding_);
       folding_ = null;
@@ -993,7 +1056,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void SetupBlockFolding() {
-    if (!settings_.ShowBlockFolding) {
+    if (settings_ is not DocumentSettings docSettings) {
+      return;
+    }
+
+    if (!docSettings.ShowBlockFolding) {
       UninstallBlockFolding();
       return;
     }
@@ -1006,39 +1073,97 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     folding_ = FoldingManager.Install(TextArea);
     var foldingStrategy = Session.CompilerInfo.CreateFoldingStrategy(Function);
     foldingStrategy.UpdateFoldings(folding_, Document);
-
-    SetupBlockFoldingEvents();
+    SetupBlockFoldingEvents(folding_.AllFoldings);
   }
 
-  private void SetupBlockFoldingEvents() {
+  public IEnumerable<FoldingSection> SetupCustomBlockFolding(IBlockFoldingStrategy foldingStrategy) {
+    UninstallBlockFolding();
+    folding_ = FoldingManager.Install(TextArea);
+    foldingStrategy.UpdateFoldings(folding_, Document);
+    SetupBlockFoldingEvents(folding_.AllFoldings);
+    return folding_.AllFoldings;
+  }
+
+  private void SetupBlockFoldingEvents(IEnumerable<FoldingSection> foldings) {
     var foldingMargin = TextArea.LeftMargins.OfType<FoldingMargin>().FirstOrDefault();
 
     if (foldingMargin == null) {
       return;
     }
 
-    var foldedBlocks = new HashSet<FoldingSection>();
+    // Set initial folded state.
+    foldedBlocks_ = new HashSet<FoldingSection>();
 
-    foldingMargin.PreviewMouseLeftButtonUp += (sender, args) => {
+    foreach(var folding in foldings) {
+      if (folding.IsFolded) {
+        foldedBlocks_.Add(folding);
+      }
+    }
+
+    void DetectFoldingChanges() {
       // Check each folding if there is a change, since there is
       // no event for a single folding being changed.
       foreach (var folding in folding_.AllFoldings) {
         if (folding.IsFolded) {
-          if (foldedBlocks.Add(folding)) {
+          if (foldedBlocks_.Add(folding)) {
             TextRegionFolded?.Invoke(this, folding);
           }
         }
         else {
-          if (foldedBlocks.Remove(folding)) {
+          if (foldedBlocks_.Remove(folding)) {
             TextRegionUnfolded?.Invoke(this, folding);
           }
         }
       }
-    };
+    }
+
+    foldingMargin.PreviewMouseLeftButtonUp += (sender, args) => DetectFoldingChanges();
+    foldingMargin.PreviewTouchUp += (sender, args) => DetectFoldingChanges();
   }
 
-  public event EventHandler<FoldingSection> TextRegionFolded;
-  public event EventHandler<FoldingSection> TextRegionUnfolded;
+  public void SetupCustomLineNumbers(LineNumberMargin lineNumbers) {
+    // Disable builtin line numbers margin and replace it with a custom one,
+    // plus a dotted line between it and the document itself.
+    ShowLineNumbers = false;
+    UninstallCustomLineNumbers(false);
+    
+    var leftMargins = TextArea.LeftMargins;
+    var line = (Line)DottedLineMargin.Create();
+    leftMargins.Insert(0, lineNumbers);
+    leftMargins.Insert(1, line);
+    var lineNumbersForeground = new Binding("LineNumbersForeground") { Source = this };
+    line.SetBinding(Shape.StrokeProperty, lineNumbersForeground);
+    lineNumbers.SetBinding(Control.ForegroundProperty, lineNumbersForeground);
+    hasCustomLineNumbers_ = true;
+  }
+
+  public void UninstallCustomLineNumbers(bool restoreBuiltin) {
+    if (hasCustomLineNumbers_) {
+      var leftMargins = TextArea.LeftMargins;
+
+      for (int i = 0; i < leftMargins.Count; i++) {
+        if (leftMargins[i] is LineNumberMargin ||
+            leftMargins[i] is Line) {
+          leftMargins.RemoveAt(i);
+          i--;
+        }
+      }
+
+      hasCustomLineNumbers_ = false;
+    }
+
+    ShowLineNumbers = restoreBuiltin;
+  }
+
+  public void RegisterTextColorizer(DocumentColorizingTransformer colorizer) {
+    if (!TextArea.TextView.LineTransformers.Contains(colorizer)) {
+      TextArea.TextView.LineTransformers.Add(colorizer);
+    }
+  }
+
+  public void UnregisterTextColorizer(DocumentColorizingTransformer colorizer) {
+    TextArea.TextView.LineTransformers.Remove(colorizer);
+  }
 
   private void AddDiffTextSegments(List<DiffTextSegment> segments) {
     diffSegments_ = segments;
@@ -1123,7 +1248,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     return overlay;
   }
 
-  public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
+  private IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
                                                        double width, double height,
                                                        string label, string tooltip,
                                                        HorizontalAlignment alignmentX,
@@ -1143,9 +1268,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     return RegisterIconElementOverlay(element, null, 0, 0, label, tooltip);
   }
 
-  public IElementOverlay RegisterElementOverlay(IRElement element, IElementOverlay overlay) {
+  public IElementOverlay RegisterElementOverlay(IRElement element, IElementOverlay overlay,
+                                                bool prepend = false) {
     SetupElementOverlayEvents(overlay);
-    overlayRenderer_.AddElementOverlay(element, overlay);
+    overlayRenderer_.AddElementOverlay(element, overlay, prepend);
     return overlay;
   }
 
@@ -1248,13 +1374,14 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
                                                        double width, double height,
-                                                       string label, string tooltip) {
+                                                       string label = null, string tooltip = null,
+                                                       bool prepend = false) {
     var overlay = IconElementOverlay.CreateDefault(icon, width, height,
                                                    Brushes.Transparent,
                                                    selectedStyle_.BackColor,
                                                    selectedStyle_.Border,
                                                    label, tooltip);
-    return (IconElementOverlay)RegisterElementOverlay(element, overlay);
+    return (IconElementOverlay)RegisterElementOverlay(element, overlay, prepend);
   }
 
   public void SuspendUpdate() {
@@ -1284,6 +1411,12 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     switch (e.Key) {
       case Key.Return: {
+        if (GetSelectedElement() is var element &&
+            TryOpenFunctionCallTarget(element)) {
+          e.Handled = true;
+          return;
+        }
+
         if (Utils.IsShiftModifierActive()) {
           PreviewDefinitionExecuted(this, null);
         }
@@ -1431,8 +1564,20 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void SetupStyles() {
-    var borderPen = ColorPens.GetBoldPen(settings_.BorderColor);
-    var lightBorderPen = ColorPens.GetTransparentPen(settings_.BorderColor, 150);
+    if (settings_ is not DocumentSettings docSettings) {
+      // Selection styles are also used in non-IR documents,
+      // make sure they are not null and have reasonable defaults.
+      selectedStyle_ ??= new HighlightingStyle();
+      selectedStyle_.BackColor = Brushes.Transparent;
+      selectedStyle_.Border = settings_.CurrentLineBorderColor.AsPen();
+      selectedBlockStyle_ ??= new HighlightingStyle();
+      selectedBlockStyle_.BackColor = settings_.BackgroundColor.AsBrush();
+      selectedBlockStyle_.Border = settings_.CurrentLineBorderColor.AsPen();
+      return;
+    }
+
+    var borderPen = ColorPens.GetBoldPen(docSettings.BorderColor);
+    var lightBorderPen = ColorPens.GetTransparentPen(docSettings.BorderColor, 150);
     selectedStyle_ ??= new HighlightingStyle();
     selectedStyle_.BackColor = ColorBrushes.GetBrush(settings_.SelectedValueColor);
     selectedStyle_.Border = borderPen;
@@ -1445,28 +1590,28 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     ssaUserStyle_ ??= new PairHighlightingStyle();
     ssaUserStyle_.ParentStyle.BackColor =
       ColorBrushes.GetBrush(
-        ColorUtils.AdjustLight(settings_.UseValueColor, ParentStyleLightAdjustment));
+        ColorUtils.AdjustLight(docSettings.UseValueColor, ParentStyleLightAdjustment));
 
-    ssaUserStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(settings_.UseValueColor);
+    ssaUserStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(docSettings.UseValueColor);
     ssaUserStyle_.ChildStyle.Border = borderPen;
 
     iteratedUserStyle_ ??= new PairHighlightingStyle();
-    iteratedUserStyle_.ParentStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.UseValueColor, 0);
-    iteratedUserStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.UseValueColor, 50);
+    iteratedUserStyle_.ParentStyle.BackColor = ColorBrushes.GetTransparentBrush(docSettings.UseValueColor, 0);
+    iteratedUserStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(docSettings.UseValueColor, 50);
     iteratedUserStyle_.ChildStyle.Border = lightBorderPen;
 
     ssaDefinitionStyle_ ??= new PairHighlightingStyle();
     ssaDefinitionStyle_.ParentStyle.BackColor = ColorBrushes.GetBrush(
-      ColorUtils.AdjustLight(settings_.DefinitionValueColor, ParentStyleLightAdjustment));
+      ColorUtils.AdjustLight(docSettings.DefinitionValueColor, ParentStyleLightAdjustment));
 
-    ssaDefinitionStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(settings_.DefinitionValueColor);
+    ssaDefinitionStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(docSettings.DefinitionValueColor);
     ssaDefinitionStyle_.ChildStyle.Border = borderPen;
 
     iteratedDefinitionStyle_ ??= new PairHighlightingStyle();
     iteratedDefinitionStyle_.ParentStyle.BackColor =
-      ColorBrushes.GetTransparentBrush(settings_.DefinitionValueColor, 0);
+      ColorBrushes.GetTransparentBrush(docSettings.DefinitionValueColor, 0);
     iteratedDefinitionStyle_.ChildStyle.BackColor =
-      ColorBrushes.GetTransparentBrush(settings_.DefinitionValueColor, 50);
+      ColorBrushes.GetTransparentBrush(docSettings.DefinitionValueColor, 50);
     iteratedDefinitionStyle_.ChildStyle.Border = lightBorderPen;
   }
 
@@ -1562,7 +1707,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void MarkElementsOnSourceLine(ElementHighlighter highlighter, int lineNumber, Color selectedColor,
-                                        bool raiseEvent, bool bringIntoView, IRExplorerCore.IR.StackFrame inlinee) {
+                                        bool raiseEvent, bool bringIntoView, SourceStackFrame inlinee) {
     var style = highlighter == selectedHighlighter_ ? selectedStyle_ : new HighlightingStyle(selectedColor);
     var group = new HighlightedElementGroup(style);
     IRElement firstTuple = null;
@@ -1767,14 +1912,15 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void ClearMarkerExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      ClearMarkedElement(GetSelectedElement());
+    if (GetSelectedElement() is var element) {
+      ClearMarkedElement(element);
     }
   }
 
-  private void ClearSelectedElements() {
+  public void ClearSelectedElements() {
     selectedHighlighter_.Clear();
     selectedElements_.Clear();
+    UpdateHighlighting();
   }
 
   private void ClearTemporaryHighlighting(bool clearSelected = true) {
@@ -2003,7 +2149,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     };
   }
 
-  private IRElement GetSelectedElement() {
+  public IRElement GetSelectedElement() {
+    if (selectedElements_.Count == 0) {
+      return null;
+    }
+
     var selectedEnum = selectedElements_.GetEnumerator();
     selectedEnum.MoveNext();
     return selectedEnum.Current;
@@ -2037,23 +2187,20 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void GoToDefinitionExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      var element = GetSelectedElement();
+    if (GetSelectedElement() is var element) {
       GoToElementDefinition(element);
       MirrorAction(DocumentActionKind.GoToDefinition, element);
     }
   }
 
   private async void PreviewDefinitionExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      var element = GetSelectedElement();
+    if (GetSelectedElement() is var element) {
       await ShowDefinitionPreview(element, true);
     }
   }
 
   private void GoToDefinitionSkipCopiesExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      var element = GetSelectedElement();
+    if (GetSelectedElement() is var element) {
       GoToElementDefinition(element, true);
       MirrorAction(DocumentActionKind.GoToDefinition, element);
     }
@@ -2079,7 +2226,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private ReferenceFinder CreateReferenceFinder() {
-    return DocumentUtils.CreateReferenceFinder(Function, Session, settings_);
+    return DocumentUtils.CreateReferenceFinder(Function, Session,
+                                               settings_ as DocumentSettings);
   }
 
   private bool GoToElementDefinition(IRElement element, bool skipCopies = false) {
@@ -2191,7 +2339,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return true;
     }
 
-    if (!settings_.HighlightInstructionOperands) {
+    if (settings_ is not DocumentSettings docSettings) {
+      return false;
+    }
+
+    if (!docSettings.HighlightInstructionOperands) {
       return false;
     }
 
@@ -2209,7 +2361,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       }
     }
 
-    if (settings_.HighlightDestinationUses) {
+    if (docSettings.HighlightDestinationUses) {
       foreach (var destOp in instr.Destinations) {
         HandleOperandElement(destOp, highlighter, markExpression, false, action);
       }
@@ -2221,6 +2373,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private bool HandleOperandElement(OperandIR op, ElementHighlighter highlighter,
                                     bool markExpression, bool markReferences,
                                     HighlightingEventAction action) {
+    if (settings_ is not DocumentSettings docSettings) {
+      return false;
+    }
+
     if (op.Role == OperandRole.Source) {
       if (markExpression) {
         // Mark an entire SSA def-use expression DAG.
@@ -2231,7 +2387,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       // Further handling of sources is done below.
     }
     else if ((op.Role == OperandRole.Destination || op.Role == OperandRole.Parameter) &&
-             settings_.HighlightDestinationUses) {
+             docSettings.HighlightDestinationUses) {
       // First look for an SSA definition and its uses,
       // if not found highlight every load of the same symbol.
       var refFinder = CreateReferenceFinder();
@@ -2266,7 +2422,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       }
     }
 
-    if (settings_.HighlightSourceDefinition) {
+    if (docSettings.HighlightSourceDefinition) {
       if (op.IsLabelAddress) {
         return HighlightBlockLabel(op, highlighter, ssaUserStyle_, action);
       }
@@ -2583,7 +2739,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     RaiseElementHighlightingEvent(op, useGroup, highlighter.Type, action);
   }
 
-  private void IRDocument_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e) {
+  private async void IRDocument_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e) {
     // If Ctrl is pressed, instead of go to definition
     // the action is a text search, which is handled by the host.
     if (Utils.IsControlModifierActive()) {
@@ -2592,17 +2748,42 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     var position = e.GetPosition(TextArea.TextView);
     var element = FindPointedElement(position, out _);
+
+    if (TryOpenFunctionCallTarget(element)) {
+      e.Handled = true;
+      return;
+    }
+
     e.Handled = GoToElementDefinition(element, Utils.IsAltModifierActive());
   }
 
+  private bool TryOpenFunctionCallTarget(IRElement element) {
+    // For call function names, notify owner in case it wants
+    // to switch the view to the called function.
+    if (IsCallTargetElement(element)) {
+      var targetSection = FindCallTargetSection(element);
+
+      if (targetSection != null && FunctionCallOpen != null) {
+        FunctionCallOpen.Invoke(this, targetSection);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private async void IRDocument_PreviewMouseHover(object sender, MouseEventArgs e) {
+    if (settings_ is not DocumentSettings docSettings) {
+      return;
+    }
+
     if (ignoreNextHoverEvent_) {
       ignoreNextHoverEvent_ = false;
       return;
     }
 
-    bool highlightElement = settings_.ShowInfoOnHover &&
-                            (!settings_.ShowInfoOnHoverWithModifier || Utils.IsKeyboardModifierActive());
+    bool highlightElement = docSettings.ShowInfoOnHover &&
+                            (!docSettings.ShowInfoOnHoverWithModifier || Utils.IsKeyboardModifierActive());
 
     if (!highlightElement) {
       return;
@@ -2669,6 +2850,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private void IRDocument_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
     HidePreviewPopup();
+    selectingText_ = false;
 
     if (ignoreNextScrollEvent_) {
       ignoreNextScrollEvent_ = false;
@@ -2692,7 +2874,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private void IRDocument_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
     Focus();
-    Keyboard.Focus(this);
     HideTemporaryUI();
   }
 
@@ -2850,8 +3031,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void MarkBlockExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      var element = GetSelectedElement().ParentBlock;
+    if (GetSelectedElement() is var element) {
+      element = element.ParentBlock;
       var style = GetMarkerStyleForCommand(e);
       MarkBlock(element, style);
       MirrorAction(DocumentActionKind.MarkBlock, element, style);
@@ -2888,8 +3069,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void MarkExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      var element = GetSelectedElement();
+    if (GetSelectedElement() is var element) {
       var style = GetPairMarkerStyleForCommand(e);
       MarkElement(element, style);
       MirrorAction(DocumentActionKind.MarkElement, element, style);
@@ -2897,12 +3077,14 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void MarkIconExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (selectedElements_.Count == 1) {
-      var element = GetSelectedElement();
-
+    if (GetSelectedElement() is var element) {
       if (e != null && e.Parameter is SelectedIconEventArgs iconArgs) {
         var icon = IconDrawing.FromIconResource(iconArgs.SelectedIconName);
-        AddIconElementOverlay(element, icon, DefaultLineHeight, DefaultLineHeight);
+        var overlay = AddIconElementOverlay(element, icon, DefaultLineHeight, DefaultLineHeight);
+        overlay.Background = Background;
+        overlay.ShowBorderOnMouseOverOnly = true;
+        overlay.ShowBackgroundOnMouseOverOnly = true;
+        overlay.IsLabelPinned = true;
         // MirrorAction(DocumentActionKind.MarkIcon, element, iconArgs);
       }
     }
@@ -3079,7 +3261,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     int lines = Document.LineCount;
     double dotSize = Math.Max(2, availableHeight / lines);
     double dotWidth = width / 3;
-    double markerDotSize = Math.Max(8, availableHeight / lines);
     availableHeight -= dotSize;
 
     PopulateMarkerBarForHighlighter(markedHighlighter_, startY, width, availableHeight, dotSize);
@@ -3444,7 +3625,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return;
     }
 
-    TextArea.SelectionChanged += TextAreaOnSelectionChanged;
     MouseDown += IRDocument_MouseDown;
     PreviewMouseLeftButtonDown += IRDocument_PreviewMouseLeftButtonDown;
     PreviewMouseRightButtonDown += IRDocument_PreviewMouseRightButtonDown;
@@ -3467,52 +3647,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private void IRDocument_MouseLeave(object sender, MouseEventArgs e) {
     HideTemporaryUI();
     overlayRenderer_.MouseLeave();
-  }
-
-  //? TODO: Profile hanling should be moved out of IRDocument,
-  //? handled up when a TextSelection event is fired.
-  private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
-    if (!IsInitialized || Session.ProfileData == null) {
-      return;
-    }
-
-    // Compute the weight sum of the selected range of instructions
-    // and display it in the main status bar.
-    var funcProfile = Session.ProfileData.GetFunctionProfile(Section.ParentFunction);
-    var metadataTag = Function.GetTag<AssemblyMetadataTag>();
-    bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
-
-    if (funcProfile == null || !hasInstrOffsetMetadata) {
-      return;
-    }
-
-    var weightSum = TimeSpan.Zero;
-    int startLine = TextArea.Selection.StartPosition.Line;
-    int endLine = TextArea.Selection.EndPosition.Line;
-
-    if (startLine > endLine) {
-      // Happens when selecting bottom-up.
-      (startLine, endLine) = (endLine, startLine);
-    }
-
-    foreach (var tuple in tupleElements_) {
-      if (tuple.TextLocation.Line >= startLine &&
-          tuple.TextLocation.Line <= endLine) {
-        if (metadataTag.ElementToOffsetMap.TryGetValue(tuple, out long offset) &&
-            funcProfile.InstructionWeight.TryGetValue(offset, out var weight)) {
-          weightSum += weight;
-        }
-      }
-    }
-
-    if(weightSum == TimeSpan.Zero) {
-      Session.SetApplicationStatus("");
-      return;
-    }
-
-    double weightPercentage = funcProfile.ScaleWeight(weightSum);
-    string text = $"{weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
-    Session.SetApplicationStatus(text, "Sum of time for the selected instructions");
   }
 
   private void IRDocument_GiveFeedback(object sender, GiveFeedbackEventArgs e) {
@@ -3663,7 +3797,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       }
     }
 
-
     if (settings_.HighlightCurrentLine) {
       lineHighlighter_ = new CurrentLineHighlighter(this, settings_.CurrentLineBorderColor);
       TextArea.TextView.BackgroundRenderers.Add(lineHighlighter_);
@@ -3739,12 +3872,16 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private async Task<bool> ShowDefinitionPreview(IRElement element, bool alwaysShow = false) {
+    if (settings_ is not DocumentSettings docSettings) {
+      return false;
+    }
+
     IRElement target = null;
     bool isCallTarget = false;
     bool show = false;
 
     if (!alwaysShow) {
-      if (!settings_.ShowPreviewPopup) {
+      if (!docSettings.ShowPreviewPopup) {
         HidePreviewPopup();
         return false;
       }
@@ -3774,6 +3911,15 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     if (show) {
       await ShowPreviewPopup(target, isCallTarget, alwaysShow);
       return true;
+    }
+
+    return false;
+  }
+
+  private bool IsCallTargetElement(IRElement element) {
+    if (element is OperandIR op &&
+        op.ParentInstruction != null) {
+      return op.Equals(Session.CompilerInfo.IR.GetCallTarget(op.ParentInstruction));
     }
 
     return false;
@@ -3879,7 +4025,12 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return null;
     }
 
-    var targetFunc = Section.ParentFunction.ParentSummary.FindFunction(element.Name);
+    // Function names in the summary are mangled, while the document
+    // has them demangled, run the demangler while searching for the target.
+    var nameProvider = Session.CompilerInfo.NameProvider;
+    var searchedName = element.Name;
+    var targetFunc = Section.ParentFunction.ParentSummary.FindFunction(name =>
+      nameProvider.FormatFunctionName(name).Equals(searchedName, StringComparison.Ordinal));
 
     if (targetFunc == null) {
       return null;
@@ -3929,7 +4080,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
 
     Focus();
-    Keyboard.Focus(this);
     HideTemporaryUI();
 
     // Check if there is any overlay being clicked
@@ -3941,6 +4091,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     var element = FindPointedElement(position, out int textOffset);
     SelectElement(element, true, true, textOffset);
+    selectingText_ = true;
 
     //? TODO: This would prevent selection of text from working,
     //? but allowing it also sometimes selects a letter of the element...
@@ -3973,6 +4124,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void UpdateMargin() {
+    if (updateSuspended_) {
+      return;
+    }
+
     margin_.InvalidateVisual();
   }
 

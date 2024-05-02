@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using System.Windows;
@@ -28,6 +29,8 @@ using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Profile.Document;
 using IRExplorerUI.Query;
+using IRExplorerUI.Utilities;
+using Microsoft.Extensions.Primitives;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -61,6 +64,12 @@ public static class DocumentHostCommand {
     new RoutedUICommand("Untitled", "ExportFunctionProfile", typeof(IRDocumentHost));
   public static readonly RoutedUICommand ExportFunctionProfileHTML =
     new RoutedUICommand("Untitled", "ExportFunctionProfileHTML", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand ExportFunctionProfileMarkdown =
+    new RoutedUICommand("Untitled", "ExportFunctionProfileMarkdown", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand CopySelectedLinesAsHTML =
+    new RoutedUICommand("Untitled", "CopySelectedLinesAsHTML", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand CopySelectedText =
+    new RoutedUICommand("Untitled", "CopySelectedText", typeof(IRDocumentHost));
 }
 
 [ProtoContract]
@@ -118,6 +127,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private bool profileVisible_;
   private double columnsListItemHeight_;
   private ProfileDocumentMarker profileMarker_;
+  private bool suspendColumnVisibilityHandler_;
+  private ProfileSampleFilter profileFilter_;
+  private FunctionProfileData funcProfile_;
+  private bool ignoreNextRowSelectedEvent_;
+  private bool ignoreNextSaveFunctionState_;
+  private ProfileHistoryManager historyManager_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -143,6 +158,19 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     loadTask_ = new CancelableTaskInstance(true, Session.SessionState.RegisterCancelableTask,
                                            Session.SessionState.UnregisterCancelableTask);
     activeQueryPanels_ = new List<QueryPanel>();
+    profileFilter_ = new ProfileSampleFilter();
+    historyManager_ = new ProfileHistoryManager(() => {
+      var state = new ProfileFunctionState(TextView.Section, TextView.Function,
+        TextView.SectionText, profileFilter_);
+
+      if (funcProfile_ != null) {
+        state.Weight = funcProfile_.Weight;
+      }
+
+      return state;
+    }, () => {
+      UpdateHistoryMenu();
+    });
   }
 
   private void SetupEvents() {
@@ -161,8 +189,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.GotKeyboardFocus += TextView_GotKeyboardFocus;
     TextView.CaretChanged += TextViewOnCaretChanged;
     TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
+    TextView.TextArea.SelectionChanged += TextAreaOnSelectionChanged;
     TextView.TextRegionFolded += TextViewOnTextRegionFolded;
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
+    TextView.FunctionCallOpen += TextViewOnFunctionCallOpen;
 
     SectionPanel.OpenSection += SectionPanel_OpenSection;
     SearchPanel.SearchChanged += SearchPanel_SearchChanged;
@@ -170,11 +200,31 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
     SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
-    ProfileColumns.RowSelected += ProfileColumns_RowSelected;
+    ProfileColumns.RowSelected += ProfileColumn_RowSelected;
     Unloaded += IRDocumentHost_Unloaded;
   }
 
-  private void ProfileColumns_RowSelected(object sender, int line) {
+  private async void TextViewOnFunctionCallOpen(object sender, IRTextSection targetSection) {
+    var targetFunc = targetSection.ParentFunction;
+    ProfileSampleFilter targetFilter = null;
+
+    if (profileFilter_ is {IncludesAll: false}) {
+      targetFilter = profileFilter_.CloneForCallTarget(targetFunc);
+    }
+
+    historyManager_.ClearNextStates(); // Reset forward history.
+    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab :
+                                               OpenSectionKind.ReplaceCurrent;
+    await Session.OpenProfileFunction(targetFunc, mode,
+                                      targetFilter, this);
+  }
+
+  private void ProfileColumn_RowSelected(object sender, int line) {
+    if (ignoreNextRowSelectedEvent_) {
+      ignoreNextRowSelectedEvent_ = false;
+      return;
+    }
+
     TextView.SelectLine(line + 1);
   }
 
@@ -200,10 +250,16 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   public event EventHandler<bool> PassOutputVisibilityChanged;
   public event PropertyChangedEventHandler PropertyChanged;
 
+  public string TitlePrefix { get; set; }
+  public string TitleSuffix { get; set; }
+
+  public string DescriptionPrefix { get; set; }
+  public string DescriptionSuffix { get; set; }
+
   public double ColumnsListItemHeight {
     get => columnsListItemHeight_;
     set {
-      if (columnsListItemHeight_ != value) {
+      if (Math.Abs(columnsListItemHeight_ - value) > double.Epsilon) {
         columnsListItemHeight_ = value;
         NotifyPropertyChanged(nameof(ColumnsListItemHeight));
       }
@@ -297,6 +353,17 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
+  public bool HasPreviousFunctions => historyManager_.HasPreviousStates;
+  public bool HasNextFunctions => historyManager_.HasNextStates;
+
+  public bool HasProfileInstanceFilter {
+    get => profileFilter_ is {HasInstanceFilter:true};
+  }
+
+  public bool HasProfileThreadFilter {
+    get => profileFilter_ is {HasThreadFilter:true};
+  }
+
   public void NotifyPropertyChanged(string propertyName) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
   }
@@ -307,11 +374,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public async Task ReloadSettings(bool hasProfilingChanges = true) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, true);
     TextView.Initialize(settings_, session_);
 
     if (hasProfilingChanges) {
-      await ReloadProfile();
+      await LoadProfile();
     }
   }
 
@@ -340,6 +408,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       selectedElement_ = null;
       remarkElement_ = null;
       selectedBlock_ = null;
+      profileFilter_ = new ProfileSampleFilter();
+      TitlePrefix = TitleSuffix = null;
+      DescriptionPrefix = DescriptionSuffix = null;
       PassOutputVisible = false;
       BlockSelector.SelectedItem = null;
       BlockSelector.ItemsSource = null;
@@ -386,11 +457,19 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.JumpToSearchResult(result, Colors.LightSkyBlue);
   }
 
-  public void LoadSectionMinimal(ParsedIRTextSection parsedSection) {
-    TextView.EarlyLoadSectionSetup(parsedSection);
+  public async Task LoadSectionMinimal(ParsedIRTextSection parsedSection) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
+    // Save state of currently loaded function for going back.
+    if (TextView.IsLoaded) {
+      historyManager_.SaveCurrentState();
+    }
+
+    TextView.PreloadSection(parsedSection);
   }
 
   public async Task LoadSection(ParsedIRTextSection parsedSection) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     duringSectionSwitching_ = true;
     object data = Session.LoadDocumentState(parsedSection.Section);
     double horizontalOffset = 0;
@@ -410,14 +489,56 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       await PassOutput.SwitchSection(parsedSection.Section, TextView);
     }
 
-    if (!await ReloadProfile()) {
+    await ReloadRemarks();
+
+    if (parsedSection.LoadFailed || !await LoadProfile()) {
       await HideProfile();
     }
 
-    await ReloadRemarks();
     TextView.ScrollToHorizontalOffset(horizontalOffset);
     TextView.ScrollToVerticalOffset(verticalOffset);
     duringSectionSwitching_ = false;
+  }
+
+  private void UpdateHistoryMenu() {
+    NotifyPropertyChanged(nameof(HasPreviousFunctions));
+    NotifyPropertyChanged(nameof(HasNextFunctions));
+    DocumentUtils.CreateBackMenu(BackMenu, historyManager_.PreviousFunctions,
+      BackMenuItem_OnClick,
+      settings_, session_);
+  }
+
+  private async void BackMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var state = ((MenuItem)sender)?.Tag as ProfileFunctionState;
+
+    if (state != null) {
+      historyManager_.RevertToState(state);
+      await LoadPreviousSectionState(state);
+    }
+  }
+
+  private async Task LoadPreviousSection() {
+    var state = historyManager_.PopPreviousState();
+
+    if (state != null) {
+      await LoadPreviousSectionState(state);
+    }
+  }
+
+  private async Task LoadNextSection() {
+    var state = historyManager_.PopNextState();
+
+    if (historyManager_ != null) {
+      await LoadPreviousSectionState(state);
+    }
+  }
+
+  private async Task LoadPreviousSectionState(ProfileFunctionState state) {
+    await session_.OpenDocumentSectionAsync(new OpenSectionEventArgs(state.Section, OpenSectionKind.ReplaceCurrent, this));
+
+    if (state.ProfileFilter is {IncludesAll: false}) {
+      await SwitchProfileInstanceAsync(state.ProfileFilter);
+    }
   }
 
   //? TODO: Create a new class to do the remark finding/filtering work
@@ -529,6 +650,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private void TextViewOnCaretChanged(object? sender, int offset) {
     if (columnsVisible_) {
+      ignoreNextRowSelectedEvent_ = true;
       var line = TextView.Document.GetLineByOffset(offset);
       ProfileColumns.SelectRow(line.LineNumber - 1);
     }
@@ -545,6 +667,28 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     // Sync scrolling with the optional columns.
     SyncColumnsVerticalScrollOffset(offset);
     VerticalScrollChanged?.Invoke(this, (offset, changeAmount));
+  }
+
+  private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
+    if (funcProfile_ == null) {
+      return;
+    }
+
+    // Compute the weight sum of the selected range of instructions
+    // and display it in the main status bar.
+    int startLine = TextView.TextArea.Selection.StartPosition.Line;
+    int endLine = TextView.TextArea.Selection.EndPosition.Line;
+
+    if (!ProfilingUtils.ComputeAssemblyWeightInRange(startLine, endLine,
+                                                     Function, funcProfile_,
+                                                     out var weightSum, out int count)) {
+      Session.SetApplicationStatus("");
+      return;
+    }
+
+    double weightPercentage = funcProfile_.ScaleWeight(weightSum);
+    string text = $"Selected {count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+    Session.SetApplicationStatus(text, "Sum of time for the selected instructions");
   }
 
   private void SyncColumnsVerticalScrollOffset(double offset) {
@@ -566,6 +710,19 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
     await HideRemarkPanel();
+
+    // Handle the back/forward mouse buttons
+    // to navigate through the function history.
+    if (e.ChangedButton == MouseButton.XButton1) {
+      e.Handled = true;
+      await LoadPreviousSection();
+      return;
+    }
+    else if (e.ChangedButton == MouseButton.XButton2) {
+      e.Handled = true;
+      await LoadNextSection();
+      return;
+    }
 
     var point = e.GetPosition(TextView.TextArea.TextView);
     var element = TextView.GetElementAt(point);
@@ -904,11 +1061,28 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.JumpToSearchResult(searchResult_.Results[e.CurrentResult], Colors.LightSkyBlue);
   }
 
-  private void IRDocumentHost_PreviewKeyDown(object sender, KeyEventArgs e) {
+  private async void IRDocumentHost_PreviewKeyDown(object sender, KeyEventArgs e) {
     if (e.Key == Key.Escape) {
       CloseSectionPanel();
       HideSearchPanel();
       e.Handled = true;
+    }
+    else if (e.Key == Key.C && Utils.IsControlModifierActive()) {
+      // Override Ctrl+C to copy instruction details instead of just text,
+      // but not if Shift/Alt key is also pressed, copy plain text then.
+      if (!Utils.IsAltModifierActive() &&
+          !Utils.IsShiftModifierActive()) {
+        await DocumentExporting.CopySelectedLinesAsHtml(TextView);
+        e.Handled = true;
+      }
+    }
+    else if (e.Key == Key.Back) {
+      if (Utils.IsKeyboardModifierActive()) {
+        await LoadNextSection();
+      }
+      else {
+        await LoadPreviousSection();
+      }
     }
   }
 
@@ -952,36 +1126,27 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     Session.SetSectionAnnotationState(section, state.HasAnnotations);
   }
 
-  private async Task<bool> ReloadProfile() {
+  private async Task<bool> LoadProfile(bool reloadFilterMenus = true) {
     if (Session.ProfileData == null) {
       return false;
     }
 
+    UpdateProfileFilterUI();
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var funcProfile = Session.ProfileData.GetFunctionProfile(Section.ParentFunction);
-    var metadataTag = Function.GetTag<AssemblyMetadataTag>();
 
-    if (funcProfile == null || metadataTag == null) {
+    if (funcProfile == null) {
       return false;
     }
 
-    // Mark instructions.
-    profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
-                                                  settings_.ProfileMarkerSettings,
-                                                  settings_.ColumnSettings, Session.CompilerInfo);
-    await profileMarker_.Mark(TextView, Function, Section.ParentFunction);
+    await MarkFunctionProfile(funcProfile);
 
-    // Redraw the flow graphs, may have loaded before the marker set the node tags.
-    Session.RedrawPanels();
-
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
-    CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
-    profileElements_ = TextView.ProfileProcessingResult.SampledElements;
-    ProfileVisible = true;
-
-    // Show optional columns with timing, counters, etc.
-    // First remove any previous columns.
-    await UpdateProfilingColumns();
+    if (reloadFilterMenus) {
+      ProfilingUtils.CreateInstancesMenu(InstancesMenu, Section, funcProfile,
+                             InstanceMenuItem_OnClick, settings_, Session);
+      ProfilingUtils.CreateThreadsMenu(ThreadsMenu, Section, funcProfile,
+                           ThreadMenuItem_OnClick, settings_, Session);
+    }
 
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
       JumpToHottestProfiledElement();
@@ -1003,15 +1168,21 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileColumns.Settings = settings_;
     ProfileColumns.ColumnSettings = settings_.ColumnSettings;
 
-    profileMarker_.UpdateColumnStyles(columnData, Function, TextView);
     await ProfileColumns.Display(columnData, TextView);
+    profileMarker_.UpdateColumnStyles(columnData, Function, TextView);
+    ProfileColumns.UpdateColumnWidths();
 
     ProfileColumns.ColumnSettingsChanged -= OnProfileColumnsOnColumnSettingsChanged;
     ProfileColumns.ColumnSettingsChanged += OnProfileColumnsOnColumnSettingsChanged;
 
-    ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileColumnsMenu, async () => {
+    // Add the columns to the View menu.
+    // While doing that, disable handling the MenuItem Checked event,
+    // it gets triggered when the MenuItems are temporarily removed.
+    suspendColumnVisibilityHandler_ = true;
+    ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileViewMenu, async () => {
       await UpdateProfilingColumns();
     });
+    suspendColumnVisibilityHandler_ = false;
     return true;
   }
 
@@ -1019,7 +1190,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileDocumentMarker.UpdateColumnStyle(column, TextView.ProfileColumnData, Function, TextView,
                                             settings_.ProfileMarkerSettings,
                                             settings_.ColumnSettings);
-    //await UpdateProfilingColumns();
   }
 
   private void CreateProfileBlockMenu(FunctionProfileData funcProfile,
@@ -1029,7 +1199,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     double maxWidth = 0;
 
     ProfileBlocksMenu.Items.Clear();
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings_.ProfileMarkerSettings;
     int order = 0;
 
@@ -1066,8 +1236,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       ProfileBlocksMenu.Items.Add(item);
 
       // Make sure percentage rects are aligned.
-      double width = Utils.MeasureString(prefixText, settings_.FontName, settings_.FontSize).Width;
-      maxWidth = Math.Max(width, maxWidth);
+      Utils.UpdateMaxMenuItemWidth(prefixText, ref maxWidth, ProfileBlocksMenu);
       list.Add(value);
     }
 
@@ -1079,12 +1248,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private void CreateProfileElementMenu(FunctionProfileData funcProfile,
                                       FunctionProcessingResult result) {
     var list = new List<ProfileMenuItem>(result.SampledElements.Count);
-    double maxWidth = 0;
-
     ProfileElementsMenu.Items.Clear();
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+
+    var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings_.ProfileMarkerSettings;
     int order = 0;
+    double maxWidth = 0;
 
     foreach (var (element, weight) in result.SampledElements) {
       double weightPercentage = funcProfile.ScaleWeight(weight);
@@ -1119,8 +1288,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       ProfileElementsMenu.Items.Add(item);
 
       // Make sure percentage rects are aligned.
-      double width = Utils.MeasureString(prefixText, settings_.FontName, settings_.FontSize).Width;
-      maxWidth = Math.Max(width, maxWidth);
+      Utils.UpdateMaxMenuItemWidth(prefixText, ref maxWidth, ProfileElementsMenu);
       list.Add(value);
     }
 
@@ -1129,10 +1297,103 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
+  private async Task ApplyProfileFilter() {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
+    if (profileFilter_ is {IncludesAll: false}) {
+      await LoadProfileInstance();
+    }
+    else {
+      await LoadProfile(false);
+    }
+
+    // Apply the same filter in the source file panel.
+    await Session.OpenProfileSourceFile(Section.ParentFunction, profileFilter_);
+
+    TitlePrefix = ProfilingUtils.CreateProfileFilterTitle(profileFilter_, session_);
+    DescriptionSuffix = "\n\n" + ProfilingUtils.CreateProfileFilterDescription(profileFilter_, Session);
+    Session.UpdateDocumentTitles();
+  }
+
+  public async Task SwitchProfileInstanceAsync(ProfileSampleFilter instanceFilter) {
+    profileFilter_ = instanceFilter;
+    ProfilingUtils.SyncInstancesMenuWithFilter(InstancesMenu, instanceFilter);
+    ProfilingUtils.SyncThreadsMenuWithFilter(ThreadsMenu, instanceFilter);
+    await LoadProfileInstance();
+  }
+
+  private async Task LoadProfileInstance() {
+    UpdateProfileFilterUI();
+    var instanceProfile = await ComputeInstanceProfile();
+    var funcProfile = instanceProfile.GetFunctionProfile(Section.ParentFunction);
+
+    if (funcProfile == null) {
+      return;
+    }
+
+    await MarkFunctionProfile(funcProfile);
+  }
+
+  private async Task<ProfileData> ComputeInstanceProfile() {
+    return await LongRunningAction.Start(
+      async () => await Task.Run(() => Session.ProfileData.
+        ComputeProfile(Session.ProfileData, profileFilter_, false)),
+      TimeSpan.FromMilliseconds(500),
+      "Filtering function instance", this, Session);
+  }
+
+  private void UpdateProfileFilterUI() {
+    NotifyPropertyChanged(nameof(HasProfileInstanceFilter));
+    NotifyPropertyChanged(nameof(HasProfileThreadFilter));
+  }
+
+  private async Task MarkFunctionProfile(FunctionProfileData funcProfile) {
+    // Mark instructions.
+    profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
+                                               settings_.ProfileMarkerSettings,
+                                               settings_.ColumnSettings, Session.CompilerInfo);
+    await profileMarker_.Mark(TextView, Function, Section.ParentFunction);
+
+    // Redraw the flow graphs, may have loaded before the marker set the node tags.
+    Session.RedrawPanels();
+
+    if (TextView.ProfileProcessingResult != null) {
+      var inlineeList = profileMarker_.GenerateInlineeList(TextView.ProfileProcessingResult);
+      ProfilingUtils.CreateInlineesMenu(InlineesMenu, Section, inlineeList,
+                                       funcProfile, InlineeMenuItem_OnClick, settings_, Session);
+      CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
+      CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
+    }
+
+    UpdateDocumentTitle(funcProfile);
+    profileElements_ = TextView.ProfileProcessingResult?.SampledElements;
+    funcProfile_ = funcProfile;
+    ProfileVisible = true;
+
+    // Show optional columns with timing, counters, etc.
+    // First remove any previous columns.
+    await UpdateProfilingColumns();
+  }
+
+  private void UpdateDocumentTitle(FunctionProfileData funcProfile) {
+    // Update document tooltip.
+    DescriptionPrefix =
+      ProfilingUtils.CreateProfileFunctionDescription(funcProfile, settings_.ProfileMarkerSettings, Session) + "\n\n";
+    Session.UpdateDocumentTitles();
+  }
+
   private async Task HideProfile() {
     ProfileVisible = false;
     ColumnsVisible = false;
-    ProfileBlocksMenu.Items.Clear();
+    ResetProfilingMenus();
+  }
+
+  private void ResetProfilingMenus() {
+    DocumentUtils.RemoveNonDefaultMenuItems(ProfileBlocksMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(ProfileElementsMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(InstancesMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(ThreadsMenu);
+    DocumentUtils.RemoveNonDefaultMenuItems(InlineesMenu);
   }
 
   private async Task ReloadRemarks() {
@@ -1151,8 +1412,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async Task<List<Remark>> FindRemarks(CancelableTask cancelableTask) {
-    var remarkProvider = Session.CompilerInfo.RemarkProvider;
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    var remarkProvider = Session.CompilerInfo.RemarkProvider;
 
     return await Task.Run(() => {
       var sections = remarkProvider.GetSectionList(Section, remarkSettings_.SectionHistoryDepth,
@@ -1410,18 +1671,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private void JumpToProfiledElement(IRElement element) {
     TextView.SetCaretAtElement(element);
-    TextView.BringElementIntoView(element);
-
-    //? TODO: Still needed?
-    ProfileColumns.InvalidateVisual();
-    ProfileColumns.UpdateLayout();
-
     double offset = TextView.TextArea.TextView.VerticalOffset;
     SyncColumnsVerticalScrollOffset(offset);
   }
 
   private void SearchSymbolImpl(bool searchAllSections) {
-    var element = TextView.TryGetSelectedElement();
+    var element = TextView.GetSelectedElement();
 
     if (element == null || !element.HasName) {
       return;
@@ -1865,6 +2120,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         var view = new NotesPopup(new Point(queryPanel.HorizontalOffset,
                                             queryPanel.VerticalOffset + queryPanel.Height),
                                   500, 200, null);
+        view.Session = Session;
         Session.RegisterDetachedPanel(view);
         var button = (QueryButton)sender;
         button.IsEnabled = false;
@@ -2078,246 +2334,30 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     e.CanExecute = HasProfiledBlock(1);
   }
 
-  private void ExportFunctionAsExcelFile(string filePath) {
-    var wb = new XLWorkbook();
-    var ws = wb.Worksheets.Add("Function");
-    var columnData = TextView.ProfileColumnData;
-    int rowId = 1; // First row is for the table column names.
-    int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
-    int maxLineLength = 0;
-
-    foreach (var block in Function.Blocks) {
-      rowId++;
-      ws.Cell(rowId, 1).Value = $"Block {block.Number}";
-      ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-      ws.Cell(rowId, 1).Style.Font.Bold = true;
-      ws.Cell(rowId, 1).Style.Font.FontColor = XLColor.DarkBlue;
-
-      for (int i = 1; i <= maxColumn; i++) {
-        ws.Cell(rowId, i).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-      }
-
-      foreach (var tuple in block.Tuples) {
-        rowId++;
-        var line = TextView.Document.GetLineByNumber(tuple.TextLocation.Line + 1);
-        string text = TextView.Document.GetText(line.Offset, line.Length);
-        ws.Cell(rowId, 1).Value = text;
-        ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-        maxLineLength = Math.Max(text.Length, maxLineLength);
-
-        var sourceTag = tuple.GetTag<SourceLocationTag>();
-
-        if (sourceTag != null) {
-          ws.Cell(rowId, 2).Value = sourceTag.Line;
-          ws.Cell(rowId, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-          ws.Cell(rowId, 2).Style.Font.FontColor = XLColor.DarkGreen;
-        }
-
-        if (columnData != null) {
-          columnData.ExportColumnsToExcel(tuple, ws, rowId, 3);
-        }
-      }
-    }
-
-    var firstCell = ws.Cell(1, 1);
-    var lastCell = ws.LastCellUsed();
-    var range = ws.Range(firstCell.Address, lastCell.Address);
-    var table = range.CreateTable();
-    table.Theme = XLTableTheme.None;
-
-    foreach (var cell in table.HeadersRow().Cells()) {
-      if (cell.Address.ColumnNumber == 1) {
-        cell.Value = "Instruction";
-      }
-      else if (cell.Address.ColumnNumber == 2) {
-        cell.Value = "Line";
-      }
-      else if (columnData != null && cell.Address.ColumnNumber - 3 < columnData.Columns.Count) {
-        cell.Value = columnData.Columns[cell.Address.ColumnNumber - 3].Title;
-      }
-
-      cell.Style.Font.Bold = true;
-      cell.Style.Fill.BackgroundColor = XLColor.LightGray;
-    }
-
-    for (int i = 1; i <= 1; i++) {
-      ws.Column(i).AdjustToContents((double)1, maxLineLength);
-    }
-
-    wb.SaveAs(filePath);
+  private async void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.ExportToExcelFile(TextView, DocumentExporting.ExportFunctionAsExcelFile);
   }
 
-  private void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
-    string path = Utils.ShowSaveFileDialog("Excel Worksheets|*.xlsx", "*.xlsx|All Files|*.*");
-
-    if (!string.IsNullOrEmpty(path)) {
-      try {
-        ExportFunctionAsExcelFile(path);
-      }
-      catch (Exception ex) {
-        using var centerForm = new DialogCenteringHelper(this);
-        MessageBox.Show($"Failed to save profiling results to {path}: {ex.Message}", "IR Explorer",
-                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
-      }
-    }
+  private async void ExportFunctionProfileHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.ExportToHtmlFile(TextView, DocumentExporting.ExportFunctionAsHtmlFile);
   }
 
-  private void ExportFunctionProfileHTMLExecuted(object sender, ExecutedRoutedEventArgs e) {
-    string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
-    bool success = true;
-
-    if (!string.IsNullOrEmpty(path)) {
-      try {
-        success = ExportFunctionAsHtmlFile(path);
-      }
-      catch (Exception ex) {
-        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
-      }
-
-      if (!success) {
-        using var centerForm = new DialogCenteringHelper(this);
-        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
-                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
-      }
-    }
+  private async void ExportFunctionProfileMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.ExportToMarkdownFile(TextView, DocumentExporting.ExportFunctionAsMarkdownFile);
   }
 
-  private bool ExportFunctionAsHtmlFile(string filePath) {
-    try {
-      Trace.WriteLine("ExportFunctionAsHtmlFile");
-      var doc = new HtmlDocument();
-      string TitleStyle =
-        @"text-align:left;font-family:Arial, sans-serif;font-weight:bold";
-
-      var p = doc.CreateElement("p");
-      var funcName = Session.CompilerInfo.NameProvider.FormatFunctionName(Section.ParentFunction);
-      p.InnerHtml = $"Function: {HttpUtility.HtmlEncode(funcName)}";
-      p.SetAttributeValue("style", TitleStyle);
-      doc.DocumentNode.AppendChild(p);
-
-      p = doc.CreateElement("p");
-      p.InnerHtml = $"Module: {HttpUtility.HtmlEncode(Section.ParentFunction.ParentSummary.ModuleName)}";
-      p.SetAttributeValue("style", TitleStyle);
-      doc.DocumentNode.AppendChild(p);
-
-      doc.DocumentNode.AppendChild(ExportFunctionAsHtml());
-      var writer = new StringWriter();
-      doc.Save(writer);
-      File.WriteAllText(filePath, writer.ToString());
-      return true;
-    }
-    catch (Exception ex) {
-      Trace.WriteLine($"Failed to export to HTML file: {filePath}, {ex.Message}");
-      return false;
-    }
+  private async void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await DocumentExporting.CopySelectedLinesAsHtml(TextView);
   }
 
-  private void CopyFunctionAsHtml() {
-    var doc = new HtmlDocument();
-    doc.DocumentNode.AppendChild( ExportFunctionAsHtml());
-    var writer = new StringWriter();
-    doc.Save(writer);
-
-    // Also save as Markdown so that it can be pasted in plain text editors.
-    //var plainText = ExportFunctionListAsMarkdown(funcList);
-    string plainText = null;
-    Utils.CopyHtmlToClipboard(writer.ToString(), plainText);
+  private void CopySelectedTextExecuted(object sender, ExecutedRoutedEventArgs e) {
+    TextView.Copy();
   }
 
-  private HtmlNode ExportFunctionAsHtml(bool includeBlocks = true) {
-    string TableStyle = @"border-collapse:collapse;border-spacing:0;";
-    string HeaderStyle =
-      @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
-    string CellStyle =
-      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:500px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
-    string BlockStyle =
-      @"color:#00008B;font-weight:bold;text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
-    string LineNumberStyle =
-      @"color:#006400;text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
-
-    var columnData = TextView.ProfileColumnData;
-    int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
-    int rowId = 1; // First row is for the table column names.
-    var doc = new HtmlDocument();
-    var table = doc.CreateElement("table");
-    table.SetAttributeValue("style", TableStyle);
-
-    var thead = doc.CreateElement("thead");
-    var tbody = doc.CreateElement("tbody");
-    var tr = doc.CreateElement("tr");
-
-    var th = doc.CreateElement("th");
-    th.InnerHtml = "Instruction";
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-    th = doc.CreateElement("th");
-    th.InnerHtml = "Line";
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-
-    if (columnData != null) {
-      foreach (var column in columnData.Columns) {
-        th = doc.CreateElement("th");
-        th.InnerHtml = HttpUtility.HtmlEncode(column.Title);
-        th.SetAttributeValue("style", HeaderStyle);
-        tr.AppendChild(th);
-      }
-    }
-
-    thead.AppendChild(tr);
-    table.AppendChild(thead);
-
-    foreach (var block in Function.Blocks) {
-      if (includeBlocks) {
-        tr = doc.CreateElement("tr");
-        var td = doc.CreateElement("td");
-        td.InnerHtml = HttpUtility.HtmlEncode($"Block {block.Number}");
-        td.SetAttributeValue("style", BlockStyle);
-        tr.AppendChild(td);
-
-        for (int i = 1; i < maxColumn; i++) {
-          td = doc.CreateElement("td");
-          td.SetAttributeValue("style", BlockStyle);
-          tr.AppendChild(td);
-        }
-
-        tbody.AppendChild(tr);
-      }
-
-      foreach (var tuple in block.Tuples) {
-        rowId++;
-
-        var line = TextView.Document.GetLineByNumber(tuple.TextLocation.Line + 1);
-        string text = TextView.Document.GetText(line.Offset, line.Length);
-        tr = doc.CreateElement("tr");
-        var td = doc.CreateElement("td");
-        td.InnerHtml = HttpUtility.HtmlEncode(text);
-        td.SetAttributeValue("style", CellStyle);
-        tr.AppendChild(td);
-        td = doc.CreateElement("td");
-
-        var sourceTag = tuple.GetTag<SourceLocationTag>();
-
-        if (sourceTag != null) {
-          td.InnerHtml = HttpUtility.HtmlEncode(sourceTag.Line);
-        }
-
-        td.SetAttributeValue("style", LineNumberStyle);
-        tr.AppendChild(td);
-
-        if (columnData != null) {
-          columnData.ExportColumnsAsHTML(tuple, doc, tr, rowId, 3);
-        }
-
-        tbody.AppendChild(tr);
-      }
-    }
-
-    table.AppendChild(tbody);
-    doc.DocumentNode.AppendChild(table);
-    return doc.DocumentNode;
-  }
-
+  public RelayCommand<object> CopyDocumentCommand => new RelayCommand<object>(async obj => {
+    DocumentExporting.CopyAllLinesAsHtml(TextView);
+  });
+  
   private class DummyQuery : IElementQuery {
     public ISession Session { get; }
 
@@ -2331,7 +2371,47 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void ViewMenuItem_OnCheckedChanged(object sender, RoutedEventArgs e) {
-    await UpdateProfilingColumns();
+    if (!suspendColumnVisibilityHandler_) {
+      await UpdateProfilingColumns();
+    }
+  }
+
+  private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    ProfilingUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, profileFilter_);
+    await ApplyProfileFilter();
+  }
+
+  private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    ProfilingUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);
+    await ApplyProfileFilter();
+  }
+
+  private async void InlineeMenuItem_OnClick(object sender, RoutedEventArgs e) {
+    var inlinee = ((MenuItem)sender)?.Tag as InlineeListItem;
+
+    if (inlinee != null && inlinee.ElementWeights is {Count:>0}) {
+      // Sort by weight and bring the hottest element into view.
+      var elements = inlinee.SortedElements;
+      TextView.SetCaretAtElement(elements[0]);
+      TextView.SelectElements(elements);
+    }
+  }
+
+  private async void OpenPopupButton_Click(object sender, RoutedEventArgs e) {
+    if (Section == null) {
+      return; //? TODO: Button should rather be disabled
+    }
+
+    await IRDocumentPopupInstance.ShowPreviewPopup(Section.ParentFunction, "",
+                                                   this, Session, profileFilter_);
+  }
+
+  private async void BackButton_Click(object sender, RoutedEventArgs e) {
+    await LoadPreviousSection();
+  }
+
+  private async void NextButton_Click(object sender, RoutedEventArgs e) {
+    await LoadNextSection();
   }
 }
 

@@ -17,7 +17,6 @@ public interface IDebugInfoProvider : IDisposable {
   bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null);
   bool LoadDebugInfo(DebugFileSearchResult debugFile, IDebugInfoProvider other = null);
   void Unload();
-  bool CanUseInstance();
   bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc);
   bool AnnotateSourceLocations(FunctionIR function, string functionName);
   IEnumerable<FunctionDebugInfo> EnumerateFunctions();
@@ -28,7 +27,7 @@ public interface IDebugInfoProvider : IDisposable {
   SourceFileDebugInfo FindFunctionSourceFilePath(IRTextFunction textFunc);
   SourceFileDebugInfo FindFunctionSourceFilePath(string functionName);
   SourceFileDebugInfo FindSourceFilePathByRVA(long rva);
-  SourceLineDebugInfo FindSourceLineByRVA(long rva);
+  SourceLineDebugInfo FindSourceLineByRVA(long rva, bool includeInlinees = false);
 }
 
 [ProtoContract(SkipConstructor = true)]
@@ -49,6 +48,7 @@ public class SymbolFileDescriptor : IEquatable<SymbolFileDescriptor> {
   public Guid Id { get; set; }
   [ProtoMember(3)]
   public int Age { get; set; }
+  public string SymbolName => Utils.TryGetFileName(FileName);
 
   public static bool operator ==(SymbolFileDescriptor left, SymbolFileDescriptor right) {
     return Equals(left, right);

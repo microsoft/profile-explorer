@@ -21,7 +21,6 @@ public class IRTextSummary {
     sectionMap_ = new Dictionary<int, IRTextSection>();
   }
 
-  public delegate bool FunctionNameMatchDelegate(string name);
   public Guid Id { get; set; }
   public string ModuleName { get; private set; }
   public List<IRTextFunction> Functions { get; set; }
@@ -59,7 +58,7 @@ public class IRTextSummary {
     return functionNameMap_.TryGetValue(name, out var result) ? result : null;
   }
 
-  public IRTextFunction FindFunction(FunctionNameMatchDelegate matchCheck) {
+  public IRTextFunction FindFunction(Func<string, bool> matchCheck) {
     foreach (var function in Functions) {
       if (matchCheck(function.Name)) {
         return function;
@@ -68,6 +67,19 @@ public class IRTextSummary {
 
     return null;
   }
+
+  public List<IRTextFunction> FindFunctions(Func<string, bool> matchCheck) {
+    var list = new List<IRTextFunction>();
+
+    foreach (var function in Functions) {
+      if (matchCheck(function.Name)) {
+        list.Add(function);
+      }
+    }
+
+    return list;
+  }
+
 
   public List<IRTextFunction> FindAllFunctions(string nameSubstring) {
     return Functions.FindAll(func => func.Name.Contains(nameSubstring, StringComparison.Ordinal));

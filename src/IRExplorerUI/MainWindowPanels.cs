@@ -148,7 +148,7 @@ public partial class MainWindow : Window, ISession {
     RegisterPanel(DominatorTreePanel, DominatorTreePanelHost);
     RegisterPanel(PostDominatorTreePanel, PostDominatorTreePanelHost);
     RegisterPanel(DefinitionPanel, DefinitionPanelHost);
-    RegisterPanel(IRInfoPanel, IRInfoPanelHost);
+    RegisterPanel(DeveloperPanel, DeveloperPanelHost);
     RegisterPanel(SourceFilePanel, SourceFilePanelHost);
     RegisterPanel(BookmarksPanel, BookmarksPanelHost);
     RegisterPanel(ReferencesPanel, ReferencesPanelHost);
@@ -164,7 +164,7 @@ public partial class MainWindow : Window, ISession {
     RenameAllPanels();
 
     if (reloadWorkspace) {
-      var defaultWs = App.Settings.WorkspaceOptions.GetDefaultWorkspace();
+      var defaultWs = App.Settings.WorkspaceOptions.CreateNewActiveWorkspace();
       SaveDockLayout(defaultWs.FilePath);
       PopulateWorkspacesCombobox();
       RestoreDockLayout(defaultWs.FilePath);
@@ -1123,9 +1123,9 @@ public partial class MainWindow : Window, ISession {
               break;
             }
             case ToolPanelKind.Developer: {
-              IRInfoPanel = (IRInfoPanel)panel;
-              IRInfoPanelHost = (LayoutAnchorable)args.Model;
-              RegisterPanel(IRInfoPanel, IRInfoPanelHost);
+              DeveloperPanel = (DeveloperPanel)panel;
+              DeveloperPanelHost = (LayoutAnchorable)args.Model;
+              RegisterPanel(DeveloperPanel, DeveloperPanelHost);
               break;
             }
             case ToolPanelKind.Notes: {
@@ -1177,12 +1177,6 @@ public partial class MainWindow : Window, ISession {
               break;
             }
           }
-
-          // Manually invoke the events, they are not triggered automatically.
-          foreach (var visiblePanel in visiblePanels) {
-            visiblePanel.OnShowPanel();
-            visiblePanel.OnActivatePanel();
-          }
         }
       };
 
@@ -1191,6 +1185,13 @@ public partial class MainWindow : Window, ISession {
 
       // Load panels from layout file.
       serializer.Deserialize(dockLayoutFile);
+
+      // Manually invoke the events, they are not triggered automatically.
+      foreach (var visiblePanel in visiblePanels) {
+        visiblePanel.OnShowPanel();
+        visiblePanel.OnActivatePanel();
+      }
+
       RegisterNewVersionPanels(registeredPanelKinds);
       RenameAllPanels();
       return true;
@@ -1289,6 +1290,7 @@ public partial class MainWindow : Window, ISession {
   public bool SaveDockLayout(string dockLayoutFile) {
     try {
       var serializer = new XmlLayoutSerializer(DockManager);
+      Utils.TryDeleteFile(dockLayoutFile);
       serializer.Serialize(dockLayoutFile);
       return true;
     }
@@ -1335,7 +1337,7 @@ public partial class MainWindow : Window, ISession {
     await ShowPanel(panelKind);
   }
 
-  public async Task ShowPanel(ToolPanelKind panelKind) {
+  public async Task<IToolPanel> ShowPanel(ToolPanelKind panelKind) {
     // Panel hosts must be found at runtime because of deserialization.
     RegisterDefaultToolPanels(false);
     var panelHost = FindPanelHostForKind(panelKind);
@@ -1348,6 +1350,8 @@ public partial class MainWindow : Window, ISession {
       panelHost.Show();
       panelHost.IsActive = true;
     }
+
+    return FindPanel(panelKind);
   }
 
   private LayoutAnchorable FindPanelHostForKind(ToolPanelKind panelKind) {
@@ -1380,7 +1384,7 @@ public partial class MainWindow : Window, ISession {
         return ScriptingPanelHost;
       }
       case ToolPanelKind.Developer: {
-        return IRInfoPanelHost;
+        return DeveloperPanelHost;
       }
       case ToolPanelKind.FlowGraph: {
         return FlowGraphPanelHost;

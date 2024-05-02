@@ -18,6 +18,11 @@ public partial class SectionOptionsPanel : OptionsPanelBase {
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
 
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+    base.Initialize(parent, settings, session);
+    FunctionMarkingOptionsPanel.Initialize(parent, App.Settings.MarkingSettings, session);
+  }
+  
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
     NotifySettingsChanged();
   }

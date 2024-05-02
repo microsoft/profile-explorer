@@ -21,6 +21,11 @@ public class FunctionProfileData {
     InitializeReferenceMembers();
   }
 
+  public FunctionProfileData(FunctionDebugInfo debugInfo) {
+    FunctionDebugInfo = debugInfo;
+    InitializeReferenceMembers(debugInfo);
+  }
+
   [ProtoMember(2)]
   public TimeSpan Weight { get; set; }
   [ProtoMember(3)]
@@ -103,29 +108,75 @@ public class FunctionProfileData {
   }
 
   public SourceLineProcessingResult ProcessSourceLines(IDebugInfoProvider debugInfo,
-                                                       ICompilerIRInfo ir) {
+                                                       ICompilerIRInfo ir,
+                                                       SourceStackFrame inlinee = null) {
     var result = new SourceLineProcessingResult();
     int firstLine = int.MaxValue;
     int lastLine = int.MinValue;
     var offsetData = ir.InstructionOffsetData;
 
+    var firstLineInfo = debugInfo.FindSourceLineByRVA(FunctionDebugInfo.RVA);
+
+    if (!firstLineInfo.IsUnknown) {
+      firstLine = firstLineInfo.Line;
+    }
+
+    var lastLineInfo = debugInfo.FindSourceLineByRVA(FunctionDebugInfo.EndRVA);
+
+    if (!lastLineInfo.IsUnknown) {
+      lastLine = lastLineInfo.Line;
+    }
+
     foreach (var pair in InstructionWeight) {
       long rva = pair.Key + FunctionDebugInfo.RVA - offsetData.InitialMultiplier;
-      var lineInfo = debugInfo.FindSourceLineByRVA(rva);
+      var lineInfo = debugInfo.FindSourceLineByRVA(rva, inlinee != null);
+
 
       if (!lineInfo.IsUnknown) {
-        result.SourceLineWeight.AccumulateValue(lineInfo.Line, pair.Value);
-        firstLine = Math.Min(lineInfo.Line, firstLine);
-        lastLine = Math.Max(lineInfo.Line, lastLine);
+        int line = lineInfo.Line;
+
+        if (inlinee != null) {
+          // Map the instruction back to the function that got inlined
+          // at the call site, if filtering by an inlinee is used.
+          var matchingInlinee = lineInfo.FindSameFunctionInlinee(inlinee);
+
+          if(matchingInlinee != null) {
+            line = matchingInlinee.Line;
+          }
+          else {
+            continue; // Don't count the instr. if not part of the inlinee.
+          }
+        }
+
+        result.SourceLineWeight.AccumulateValue(line, pair.Value);
+        firstLine = Math.Min(line, firstLine);
+        lastLine = Math.Max(line, lastLine);
       }
     }
 
     foreach (var pair in InstructionCounters) {
       long rva = pair.Key + FunctionDebugInfo.RVA;
-      var lineInfo = debugInfo.FindSourceLineByRVA(rva);
+      var lineInfo = debugInfo.FindSourceLineByRVA(rva, inlinee != null);
 
       if (!lineInfo.IsUnknown) {
-        result.SourceLineCounters.AccumulateValue(lineInfo.Line, pair.Value);
+        int line = lineInfo.Line;
+
+        if (inlinee != null) {
+          // Map the instruction back to the function that got inlined
+          // at the call site, if filtering by an inlinee is used.
+          var matchingInlinee = lineInfo.FindSameFunctionInlinee(inlinee);
+
+          if(matchingInlinee != null) {
+            line = matchingInlinee.Line;
+          }
+          else {
+            continue; // Don't count the instr. if not part of the inlinee.
+          }
+        }
+
+        result.SourceLineCounters.AccumulateValue(line, pair.Value);
+        firstLine = Math.Min(line, firstLine);
+        lastLine = Math.Max(line, lastLine);
       }
 
       result.FunctionCountersValue.Add(pair.Value);
@@ -163,9 +214,34 @@ public class FunctionProfileData {
     SampleStartIndex = int.MaxValue;
     SampleEndIndex = int.MinValue;
   }
+  
+  private void InitializeReferenceMembers(FunctionDebugInfo debugInfo) {
+    if(debugInfo != null) {
+      int size = (int)debugInfo.Size / 4; // Assume 4 bytes per instruction.
+      InstructionWeight ??= new Dictionary<long, TimeSpan>(size);
+      InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>(size);
+    }
+    else {
+      InstructionWeight ??= new Dictionary<long, TimeSpan>();
+      InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>();
+    }
+    
+    SampleStartIndex = int.MaxValue;
+    SampleEndIndex = int.MinValue;
+  }
 }
 
 public class FunctionProcessingResult {
+  // Mapping from a source line number to a list
+  // of associated instructions and their weight and/or perf. counters.
+  public record SampledElementsToLineMapping(
+    Dictionary<int, List<(IRElement Element,
+      (TimeSpan Weight, PerformanceCounterValueSet Counters) Profile)>> SampledElements) {
+    public SampledElementsToLineMapping() :
+      this(new Dictionary<int, List<(IRElement Element,
+        (TimeSpan Weight, PerformanceCounterValueSet Counters) Profile)>>()) { }
+  }
+
   public FunctionProcessingResult(int capacity = 0) {
     SampledElements = new List<(IRElement, TimeSpan)>(capacity);
     BlockSampledElementsMap = new Dictionary<BlockIR, TimeSpan>(capacity);
@@ -189,6 +265,53 @@ public class FunctionProcessingResult {
   public void SortSampledElements() {
     BlockSampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
     SampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+  }
+
+  public SampledElementsToLineMapping BuildSampledElementsToLineMapping(FunctionProfileData profile, ParsedIRTextSection parsedSection) {
+    var elementMap = BuildElementToWeightMap();
+    var counterMap = BuildElementToCounterMap();
+    var instrToLineMap = new SampledElementsToLineMapping();
+
+    // Build groups of instructions mapping to the same source line,
+    // with their associated sampled weight and perf. counters.
+    foreach (var instr in parsedSection.Function.AllInstructions) {
+      var tag = instr.GetTag<SourceLocationTag>();
+
+      if (tag != null) {
+        var weight = elementMap.GetValueOr(instr, TimeSpan.Zero);
+        var counters = counterMap.GetValueOrNull(instr);
+        var list = instrToLineMap.SampledElements.GetOrAddValue(tag.Line,
+          () => new List<(IRElement Element, (TimeSpan Weight, PerformanceCounterValueSet Counters))>());
+        list.Add((instr, (weight, counters)));
+      }
+    }
+
+    // Sort elements in each line group by text offset.
+    foreach (var linePair in instrToLineMap.SampledElements) {
+      linePair.Value.Sort((a,b) => a.Item1.TextLocation.CompareTo(b.Item1.TextLocation));
+    }
+
+    return instrToLineMap;
+  }
+
+  public Dictionary<IRElement, TimeSpan> BuildElementToWeightMap() {
+    var map = new Dictionary<IRElement, TimeSpan>();
+
+    foreach (var pair in SampledElements) {
+      map[pair.Item1] = pair.Item2;
+    }
+
+    return map;
+  }
+
+  public Dictionary<IRElement, PerformanceCounterValueSet> BuildElementToCounterMap() {
+    var map = new Dictionary<IRElement, PerformanceCounterValueSet>();
+
+    foreach (var pair in CounterElements) {
+      map[pair.Item1] = pair.Item2;
+    }
+
+    return map;
   }
 }
 

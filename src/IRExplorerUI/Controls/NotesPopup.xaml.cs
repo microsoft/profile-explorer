@@ -23,6 +23,11 @@ public partial class NotesPopup : DraggablePopup, INotifyPropertyChanged {
 
   public event PropertyChangedEventHandler PropertyChanged;
 
+  public ISession Session {
+    get => TextView.Session;
+    set => TextView.Session = value;
+  }
+
   public string PanelTitle {
     get => panelTitle_;
     set {

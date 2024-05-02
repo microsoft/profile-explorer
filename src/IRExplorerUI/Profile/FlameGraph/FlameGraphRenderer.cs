@@ -15,6 +15,7 @@ public class FlameGraphRenderer {
   internal const double DefaultNodeHeight = 18;
   internal const double CompactTextSize = 11;
   internal const double CompactNodeHeight = 15;
+  private const string FontName = "Segoe UI";
   private FlameGraphSettings settings_;
   private FlameGraph flameGraph_;
   private int maxNodeDepth_;
@@ -30,8 +31,9 @@ public class FlameGraphRenderer {
   private Typeface font_;
   private Typeface nameFont_;
   private double fontSize_;
-  private Dictionary<ProfileCallTreeNodeKind, ColorPalette> palettes_;
   private Pen defaultBorder_;
+  private Pen kernelBorder_;
+  private Pen managedBorder_;
   private Brush placeholderTileBrush_;
   private DrawingVisual graphVisual_;
   private GlyphRunCache glyphs_;
@@ -43,6 +45,8 @@ public class FlameGraphRenderer {
   private GuidelineSet cachedNodeGuidelines_;
   private GuidelineSet cachedDummyNodeGuidelines_;
   private SolidColorBrush nodeTextBrush_;
+  private SolidColorBrush kernelNodeTextBrush_;
+  private SolidColorBrush managedNodeTextBrush_;
   private SolidColorBrush nodeModuleBrush_;
   private SolidColorBrush nodeWeightBrush_;
   private SolidColorBrush nodePercentageBrush_;
@@ -61,22 +65,18 @@ public class FlameGraphRenderer {
   }
 
   private void ReloadSettings() {
-    palettes_ = new Dictionary<ProfileCallTreeNodeKind, ColorPalette> {
-      [ProfileCallTreeNodeKind.Unset] = ColorPalette.GetPalette(settings_.DefaultColorPalette),
-      [ProfileCallTreeNodeKind.NativeUser] = ColorPalette.GetPalette(settings_.DefaultColorPalette),
-      [ProfileCallTreeNodeKind.NativeKernel] = settings_.UseKernelColorPalette ?
-        ColorPalette.GetPalette(settings_.KernelColorPalette) :
-        ColorPalette.GetPalette(settings_.DefaultColorPalette),
-      [ProfileCallTreeNodeKind.Managed] = settings_.UseManagedColorPalette ?
-        ColorPalette.GetPalette(settings_.ManagedColorPalette) :
-        ColorPalette.GetPalette(settings_.DefaultColorPalette)
-    };
-
+    settings_.ResedCachedPalettes();
+    App.Settings.MarkingSettings.ResetCachedPalettes();
     defaultBorder_ = ColorPens.GetPen(settings_.NodeBorderColor, 0.5);
-    font_ = new Typeface("Segoe UI"); //? TODO: Option
-    nameFont_ = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Medium,
+    kernelBorder_ = ColorPens.GetPen(settings_.KernelNodeBorderColor,  1);
+    managedBorder_ = ColorPens.GetPen(settings_.ManagedNodeBorderColor, 1);
+
+    font_ = new Typeface(FontName);
+    nameFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Medium,
                              FontStretch.FromOpenTypeStretch(5));
     nodeTextBrush_ = settings_.NodeTextColor.AsBrush();
+    kernelNodeTextBrush_ = settings_.KernelNodeTextColor.AsBrush();
+    managedNodeTextBrush_ = settings_.ManagedNodeTextColor.AsBrush();
     nodeModuleBrush_ = settings_.NodeModuleColor.AsBrush();
     nodeWeightBrush_ = settings_.NodeWeightColor.AsBrush();
     nodePercentageBrush_ = settings_.NodePercentageColor.AsBrush();
@@ -148,24 +148,40 @@ public class FlameGraphRenderer {
   }
 
   public HighlightingStyle GetNodeStyle(FlameGraphNode node) {
-    var palette = node.HasFunction ? palettes_[node.CallTreeNode.Kind] : palettes_[ProfileCallTreeNodeKind.Unset];
-    int colorIndex = node.Depth % palette.Count;
-    var backColor = palette.PickBrush(palette.Count - colorIndex - 1);
+    var backColor = settings_.GetNodeDefaultBrush(node);
+    var markingSettings = App.Settings.MarkingSettings;
 
-    // Override color based on module name.
-    if (!string.IsNullOrEmpty(node.ModuleName)) {
-      if (settings_.UseModuleColors &&
-          settings_.GetModuleColor(node.ModuleName, out var moduleColor)) {
+    // Override color based on function name or module name,
+    // with function name marking having priority.
+    if (!string.IsNullOrEmpty(node.FunctionName) &&
+        markingSettings.UseFunctionColors &&
+        markingSettings.GetFunctionColor(node.FunctionName, out var functionColor)) {
+      backColor = functionColor.AsBrush();
+    }
+    else if (!string.IsNullOrEmpty(node.ModuleName)) {
+      if (markingSettings.UseModuleColors &&
+          markingSettings.GetModuleColor(node.ModuleName, out var moduleColor)) {
         backColor = moduleColor.AsBrush();
       }
-      else if (settings_.UseAutoModuleColors) {
+      else if (markingSettings.UseAutoModuleColors) {
         // Use a color based on the module name.
-        uint hash = (uint)node.ModuleName.GetStableHashCode();
-        backColor = ColorUtils.GenerateLightPastelBrush(hash);
+        backColor = markingSettings.GetAutoModuleBrush(node.ModuleName);
       }
     }
 
-    return new HighlightingStyle(backColor, defaultBorder_);
+    // Select border based on execution context.
+    var border = defaultBorder_;
+
+    if (node.CallTreeNode != null) {
+      if (node.CallTreeNode.Kind == ProfileCallTreeNodeKind.NativeKernel) {
+        border = kernelBorder_;
+      }
+      else if (node.CallTreeNode.Kind == ProfileCallTreeNodeKind.Managed) {
+        border = managedBorder_;
+      }
+    }
+
+    return new HighlightingStyle(backColor, border);
   }
 
   public void Redraw() {
@@ -395,7 +411,7 @@ public class FlameGraphRenderer {
 
   private void SetupNode(FlameGraphNode node) {
     node.Style = GetNodeStyle(node);
-    node.TextColor = nodeTextBrush_;
+    node.TextColor = GetNodeTextColor(node);;
     node.ModuleTextColor = nodeModuleBrush_;
     node.WeightTextColor = nodeWeightBrush_;
     node.PercentageTextColor = nodePercentageBrush_;
@@ -406,6 +422,21 @@ public class FlameGraphRenderer {
         SetupNode(childNode);
       }
     }
+  }
+
+  private Brush GetNodeTextColor(FlameGraphNode node) {
+    var textBrush = nodeTextBrush_;
+
+    if (node.CallTreeNode != null) {
+      if (node.CallTreeNode.Kind == ProfileCallTreeNodeKind.NativeKernel) {
+        textBrush = kernelNodeTextBrush_;
+      }
+      else if (node.CallTreeNode.Kind == ProfileCallTreeNodeKind.Managed) {
+        textBrush = managedNodeTextBrush_;
+      }
+    }
+
+    return textBrush;
   }
 
   private void RedrawGraph(bool updateLayout = true) {
@@ -792,8 +823,8 @@ public class FlameGraphRenderer {
       cachedTextGuidelines_ = CreateGuidelineSet(rect, 1.0f);
     }
 
-    dc.PushGuidelineSet(cachedTextGuidelines_);
     dc.PushTransform(new TranslateTransform(x, y));
+    dc.PushGuidelineSet(cachedTextGuidelines_);
     dc.DrawGlyphRun(textColor, glyphs);
     dc.Pop();
     dc.Pop(); // PushGuidelineSet

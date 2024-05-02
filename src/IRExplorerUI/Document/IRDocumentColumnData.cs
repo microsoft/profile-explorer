@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System.Collections.Generic;
+using System.Text;
 using System.Web;
 using System.Windows;
 using System.Windows.Forms;
@@ -79,10 +80,9 @@ public class IRDocumentColumnData {
   }
 
 
-  public void ExportColumnsAsHTML(IRElement tuple, HtmlDocument doc, HtmlNode tr,
-                                  int rowId, int columnId) {
+  public void ExportColumnsAsHTML(IRElement tuple, HtmlDocument doc, HtmlNode tr) {
     string CellStyle =
-      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:500px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
+      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:500px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-size:14px;font-family:Arial, sans-serif;";
 
     foreach (var column in Columns) {
       var value = GetColumnValue(tuple, column);
@@ -109,6 +109,14 @@ public class IRDocumentColumnData {
 
       td.SetAttributeValue("style", style);
       tr.AppendChild(td);
+    }
+  }
+
+  public void ExportColumnsAsMarkdown(IRElement tuple, StringBuilder sb) {
+    foreach (var column in Columns) {
+      var value = GetColumnValue(tuple, column);
+      string text = value != null ? value.Text : "";
+      sb.Append($" {text} |");
     }
   }
 
@@ -193,6 +201,8 @@ public sealed class ElementColumnValue : BindableObject {
   private FontFamily textFont_;
   private bool canShowPercentageBar_;
   private double percentageBarMaxWidth_;
+  private bool canShowBackgroundColor_;
+  private bool canShowIcon_;
 
   public ElementColumnValue(string text, long value = 0, double valueValuePercentage = 0.0,
                             int valueOrder = int.MaxValue, string tooltip = null) {
@@ -204,6 +214,8 @@ public sealed class ElementColumnValue : BindableObject {
     TextColor = Brushes.Black;
     ToolTip = tooltip;
     CanShowPercentageBar = true;
+    CanShowBackgroundColor = true;
+    CanShowIcon = true;
   }
 
   public IRElement Element { get; set; }
@@ -244,6 +256,16 @@ public sealed class ElementColumnValue : BindableObject {
   public Brush BackColor {
     get => backColor_;
     set => SetAndNotify(ref backColor_, value);
+  }
+
+  public bool CanShowBackgroundColor {
+    get => canShowBackgroundColor_;
+    set => SetAndNotify(ref canShowBackgroundColor_, value);
+  }
+
+  public bool CanShowIcon {
+    get => canShowIcon_;
+    set => SetAndNotify(ref canShowIcon_, value);
   }
 
   public ImageSource Icon {
@@ -334,6 +356,8 @@ public sealed class ElementRowValue : BindableObject {
     get => borderBrush_;
     set => SetAndNotify(ref borderBrush_, value);
   }
+
+  public object Tag { get; set; }
 
   public ElementColumnValue this[OptionalColumn column] => ColumnValues.GetValueOrNull(column);
 

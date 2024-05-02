@@ -15,12 +15,16 @@ public sealed partial class ETWEventProcessor {
   private void ProcessDotNetEvents(RawProfileData profile, CancelableTask cancelableTask) {
     if (pipeServer_ != null) {
       pipeServer_.FunctionCodeReceived += (functionId, rejitId, processId, address, codeSize, codeBytes) => {
+#if DEBUG
         Trace.WriteLine($"PipeServer_OnFunctionCodeReceived: {functionId}, {rejitId}, {address}, {codeSize}");
+#endif
         profile.AddManagedMethodCode(functionId, rejitId, processId, address, codeSize, codeBytes);
       };
 
       pipeServer_.FunctionCallTargetsReceived += (functionId, rejitId, processId, address, name) => {
+#if DEBUG
         Trace.WriteLine($"PipeServer_OnFunctionCallTargetsReceived: {functionId}, {rejitId}, {address}, {name}");
+#endif
         profile.AddManagedMethodCallTarget(functionId, rejitId, processId, address, name);
       };
 
@@ -145,8 +149,9 @@ public sealed partial class ETWEventProcessor {
 
     if (rundown) {
       if (pipeServer_ != null && !cancelableTask.IsCanceled) {
+#if DEBUG
         Trace.WriteLine($"Request {data.MethodStartAddress:x}: {data.MethodSignature}");
-
+#endif
         if (!pipeServer_.RequestFunctionCode((long)data.MethodStartAddress, data.MethodID, (int)data.ReJITID,
                                              data.ProcessID)) {
           Trace.WriteLine($"Failed to request rundown method {data.MethodStartAddress:x}");

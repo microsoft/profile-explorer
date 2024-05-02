@@ -16,6 +16,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+using DocumentFormat.OpenXml.Presentation;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
@@ -46,6 +47,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private string binaryFilePath_;
   private bool showOnlyManagedProcesses_;
   private bool showLoadingProgress_;
+  double lastProgressPercentage_ = 0;
 
   public ProfileLoadWindow(ISession session, bool recordMode,
                            RecordingSession loadedSession = null) {
@@ -442,11 +444,27 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void ProfileLoadProgressCallback(ProfileLoadProgress progressInfo) {
-    Dispatcher.Invoke((Action)(() => {
-      if (progressInfo == null) {
+    if (progressInfo == null) {
+      return;
+    }
+
+    // Update progress in UI only if there is any visible change, calling though
+    // the Dispatcher is slow and slows down the trace reading by a lot otherwise.
+    double percentage = 0;
+
+    if (progressInfo.Total != 0) {
+      percentage = Math.Min(1.0, progressInfo.Current / (double)progressInfo.Total);
+      double diff = percentage - lastProgressPercentage_;
+
+      if (diff > 0.01 || diff < 0) {
+        lastProgressPercentage_ = percentage;
+      }
+      else {
         return;
       }
+    }
 
+    Dispatcher.Invoke(() => {
       // With multi-threaded processing, current value is not always increasing...
       if (progressInfo.Stage == ProfileLoadStage.TraceProcessing) {
         progressInfo.Current = Math.Max(progressInfo.Current, (int)LoadProgressBar.Value);
@@ -469,17 +487,36 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       };
 
       if (progressInfo.Total != 0) {
-        double percentage = Math.Min(1.0, progressInfo.Current / (double)progressInfo.Total);
         ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
         LoadProgressBar.IsIndeterminate = false;
       }
       else {
         LoadProgressBar.IsIndeterminate = true;
       }
-    }));
+    });
   }
 
   private void ProcessListProgressCallback(ProcessListProgress progressInfo) {
+    if (progressInfo == null) {
+      return;
+    }
+
+    // Update progress in UI only if there is any visible change, calling though
+    // the Dispatcher is slow and slows down the trace reading by a lot otherwise.
+    double percentage = 0;
+
+    if (progressInfo.Total != 0) {
+      percentage = Math.Min(1.0, progressInfo.Current / (double)progressInfo.Total);
+      double diff = percentage - lastProgressPercentage_;
+
+      if (diff > 0.01 || diff < 0) {
+        lastProgressPercentage_ = percentage;
+      }
+      else {
+        return;
+      }
+    }
+
     Dispatcher.Invoke(() => {
       if (progressInfo == null) {
         return;
@@ -489,7 +526,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       LoadProgressBar.Value = progressInfo.Current;
 
       if (progressInfo.Total != 0) {
-        double percentage = progressInfo.Current / (double)progressInfo.Total;
         ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
         LoadProgressLabel.Text = "Building process list";
         LoadProgressBar.IsIndeterminate = false;
@@ -501,7 +537,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       if (progressInfo.Processes != null) {
         DisplayProcessList(progressInfo.Processes, selectedProcSummary_);
       }
-    });
+    }, DispatcherPriority.Render);
   }
 
   private async void CancelButton_Click(object sender, RoutedEventArgs e) {
@@ -980,9 +1016,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     // Wait for the UI to update
     Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle , () => {
-      // Get the ListViewItem for the new item
-      var newItem = symbolSettings_.SymbolPaths.Last();
-      Utils.FocusTextBoxListViewItem(newItem, SymbolPathsList);
+      Utils.SelectEditableListViewItem(SymbolPathsList, symbolSettings_.SymbolPaths.Count - 1);
     });
   }
 
@@ -1030,6 +1064,15 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private void ReloadSymbolPathsList() {
     var list = new ObservableCollectionRefresh<string>(symbolSettings_.SymbolPaths);
     SymbolPathsList.ItemsSource = list;
+
+    var binariesList = symbolSettings_.RejectedBinaryFiles.ToList();
+    binariesList.Sort((a, b) => String.Compare(a.ImageName, b.ImageName, StringComparison.OrdinalIgnoreCase));
+    RejectedBinariesList.ItemsSource = binariesList;
+
+    var symbolList = symbolSettings_.RejectedSymbolFiles.ToList();
+    symbolList.Sort((a, b) => String.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase));
+    RejectedSymbolsList.ItemsSource = symbolList;
+    OnPropertyChange(nameof(SymbolSettings));
   }
 
   private void SymbolPath_LostFocus(object sender, RoutedEventArgs e) {
@@ -1087,9 +1130,45 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void ClearRejectedButton_Click(object sender, RoutedEventArgs e) {
-    symbolSettings_.ClearRejectedFiles();
-    OnPropertyChange(nameof(SymbolSettings));
-    App.Settings.SymbolSettings = symbolSettings_;
-    App.SaveApplicationSettings();
+    if (Utils.ShowYesNoMessageBox("Do you want to remove all excluded binaries and symbols?", this) ==
+        MessageBoxResult.Yes) {
+      symbolSettings_.ClearRejectedFiles();
+      ReloadSymbolPathsList();
+      OnPropertyChange(nameof(SymbolSettings));
+      App.Settings.SymbolSettings = symbolSettings_;
+      App.SaveApplicationSettings();
+    }
+  }
+
+  private void RemoveRejectedBinariesButton_Click(object sender, RoutedEventArgs e) {
+    foreach (var item in RejectedBinariesList.SelectedItems) {
+      symbolSettings_.RejectedBinaryFiles.Remove(item as BinaryFileDescriptor);
+    }
+
+    ReloadSymbolPathsList();
+  }
+
+  private void ClearRejectedBinariesButton_Click(object sender, RoutedEventArgs e) {
+    if (Utils.ShowYesNoMessageBox("Do you want to remove all excluded binaries?", this) ==
+        MessageBoxResult.Yes) {
+      symbolSettings_.RejectedBinaryFiles.Clear();
+      ReloadSymbolPathsList();
+    }
+  }
+
+  private void RemoveRejectedSymbolsButton_Click(object sender, RoutedEventArgs e) {
+    foreach (var item in RejectedSymbolsList.SelectedItems) {
+      symbolSettings_.RejectedSymbolFiles.Remove(item as SymbolFileDescriptor);
+    }
+
+    ReloadSymbolPathsList();
+  }
+
+  private void ClearRejectedSymbolsButton_Click(object sender, RoutedEventArgs e) {
+    if (Utils.ShowYesNoMessageBox("Do you want to remove all excluded symbols?", this) ==
+        MessageBoxResult.Yes) {
+      symbolSettings_.RejectedSymbolFiles.Clear();
+      ReloadSymbolPathsList();
+    }
   }
 }

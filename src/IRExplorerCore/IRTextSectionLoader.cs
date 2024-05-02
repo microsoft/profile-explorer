@@ -21,7 +21,9 @@ public class ParsedIRTextSection {
   public FunctionIR Function { get; set; }
   public List<IRParsingError> ParsingErrors { get; set; }
   public bool IsCached { get; set; }
+  public bool LoadFailed { get; set; }
   public bool HadParsingErrors => ParsingErrors != null && ParsingErrors.Count > 0;
+  public IRTextFunction ParentFunction => Section.ParentFunction;
 
   public override string ToString() {
     return Section.ToString();

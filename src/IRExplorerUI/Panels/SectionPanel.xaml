@@ -47,6 +47,7 @@
     <CommandBinding Command="local:Command.ExportFunctionList" Executed="ExportFunctionListExecuted" />
     <CommandBinding Command="local:Command.CopyFunctionDetails" Executed="CopyFunctionDetailsExecuted" />
     <CommandBinding Command="local:Command.ExportFunctionListHtml" Executed="ExportFunctionListHtmlExecuted" />
+    <CommandBinding Command="local:Command.ExportFunctionListMarkdown" Executed="ExportFunctionListMarkdownExecuted" />
   </local:ToolPanelControl.CommandBindings>
 
   <local:ToolPanelControl.Resources>
@@ -223,7 +224,7 @@
                   Height="16"
                   Margin="0,1,0,0"
                   Source="{StaticResource SwitchIcon}" />
-                <TextBlock Text="Sync" />
+                <TextBlock Margin="2,0,0,0" Text="Sync" />
               </StackPanel>
             </ToggleButton>
 
@@ -242,6 +243,126 @@
                 Source="{StaticResource SourceIcon}" />
             </ToggleButton>
 
+            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Menu
+              Height="20"
+              Margin="2,0,0,0"
+              VerticalAlignment="Center"
+              ToolTip="Color functions based on the module name"
+              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+              <MenuItem
+                x:Name="ModuleMenu"
+                Height="20"
+                Margin="0,0,0,0"
+                Padding="0,0,0,0"
+                Background="{Binding Path=HasEnabledMarkedModules, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                OverridesDefaultStyle="True"
+                SubmenuOpened="ModuleMenu_OnSubmenuOpened">
+                <MenuItem.Header>
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock
+                      Margin="4,0,0,0"
+                      VerticalAlignment="Bottom"
+                      Text="Modules" />
+                    <Path
+                      Margin="4,2,2,0"
+                      VerticalAlignment="Center"
+                      Data="M 0 0 L 3 3 L 6 0 Z"
+                      Fill="Black" />
+                  </StackPanel>
+                </MenuItem.Header>
+                <MenuItem
+                  Click="ToggleButton_Click"
+                  Header="Mark Functions Based on Module Name"
+                  IsCheckable="True"
+                  IsChecked="{Binding MarkingSettings.UseModuleColors}"
+                  Style="{DynamicResource SubMenuItemHeaderStyle}"
+                  ToolTip="Use a different color for specified modules" />
+                <Separator />
+                <MenuItem
+                  Click="ClearModulesButton_Click"
+                  Header="Clear Marked Modules"
+                  Style="{DynamicResource SubMenuItemHeaderStyle}"
+                  ToolTip="Remove all saved module markings" />
+              </MenuItem>
+            </Menu>
+            <Menu
+              Height="20"
+              Margin="2,0,0,0"
+              VerticalAlignment="Center"
+              ToolTip="Color functions based on the function name"
+              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+              <MenuItem
+                x:Name="FunctionMenu"
+                Height="20"
+                Margin="0,0,0,0"
+                Padding="0,0,0,0"
+                Background="{Binding Path=HasEnabledMarkedFunctions, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                OverridesDefaultStyle="True"
+                SubmenuOpened="FunctionMenu_OnSubmenuOpened">
+                <MenuItem.Header>
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock
+                      Margin="4,0,0,0"
+                      VerticalAlignment="Center"
+                      Text="Functions" />
+                    <Path
+                      Margin="4,2,2,0"
+                      VerticalAlignment="Center"
+                      Data="M 0 0 L 3 3 L 6 0 Z"
+                      Fill="Black" />
+                  </StackPanel>
+                </MenuItem.Header>
+                <MenuItem
+                  Click="ToggleButton_Click"
+                  Header="Mark Functions Based on Name"
+                  IsCheckable="True"
+                  IsChecked="{Binding MarkingSettings.UseFunctionColors}"
+                  Style="{DynamicResource SubMenuItemHeaderStyle}"
+                  ToolTip="Use a different color for specified functions" />
+                <Separator />
+                <MenuItem
+                  Click="ClearFunctionsButton_Click"
+                  Header="Clear Marked Functions"
+                  Style="{DynamicResource SubMenuItemHeaderStyle}"
+                  ToolTip="Remove all saved function markings" />
+                <Separator/>
+                <MenuItem
+                  Click="ExportMarkedFunctionsHtmlMenu_OnClick"
+                  Header="Export Marked Functions as HTML File"
+                  ToolTip="Save the report with marked function as an HTML file">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource SourceIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem
+                  Click="ExportMarkedFunctionsMarkdownMenu_OnClick"
+                  Header="Export Marked Functions as Markdown File"
+                  ToolTip="Save the report with marked function as a Markdown file">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource DocumentIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <Separator/>
+                <MenuItem
+                  Click="CopyMarkedFunctionMenu_OnClick"
+                  Header="Copy Marked Functions"
+                  ToolTip="Copy the report with marked functions as an HTML table">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource ClipboardIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+              </MenuItem>
+            </Menu>
             <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <Menu
@@ -271,7 +392,7 @@
                 <MenuItem
                   Command="local:Command.ExportFunctionList"
                   CommandTarget="{Binding ElementName=FunctionList}"
-                  Header="Export as Excel worksheet"
+                  Header="Export as Excel File"
                   ToolTip="Save the list of functions and additional columns as an Excel worksheet">
                   <MenuItem.Icon>
                     <Image
@@ -283,13 +404,38 @@
                 <MenuItem
                   Command="local:Command.ExportFunctionListHtml"
                   CommandTarget="{Binding ElementName=FunctionList}"
-                  Header="Export as HTML page"
-                  ToolTip="Save the list of functions and additional columns as an HTML page">
+                  Header="Export as HTML File"
+                  ToolTip="Save the list of functions and additional columns as an HTML file">
                   <MenuItem.Icon>
                     <Image
                       Width="16"
                       Height="16"
                       Source="{StaticResource SourceIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem
+                  Command="local:Command.ExportFunctionListMarkdown"
+                  CommandTarget="{Binding ElementName=FunctionList}"
+                  Header="Export as Markdown File"
+                  ToolTip="Save the list of functions and additional columns as Markdown file">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource DocumentIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <Separator/>
+                <MenuItem
+                  Command="{Binding CopyAllFunctionsCommand}"
+                  CommandTarget="{Binding ElementName=FunctionList}"
+                  Header="Copy as HTML/Markdown table"
+                  ToolTip="Copy the list of functions and additional columns as an HTML file">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource ClipboardIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
               </MenuItem>
@@ -301,12 +447,12 @@
             <Grid
               x:Name="FunctionFilterGrid"
               Height="24"
-              MaxWidth="300"
+              MaxWidth="200"
               ToolBar.OverflowMode="Never">
               <TextBox
                 Name="FunctionFilter"
                 Height="24"
-                MaxWidth="300"
+                MaxWidth="200"
                 Margin="4,0,0,0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Center"
@@ -383,6 +529,8 @@
           BorderBrush="{x:Null}"
           BorderThickness="0,0,0,0"
           IsTextSearchEnabled="True"
+          SelectionChanged="ModulesList_OnSelectionChanged"
+          SelectionMode="Single"
           TextSearch.TextPath="Name"
           VirtualizingStackPanel.IsVirtualizing="True"
           VirtualizingStackPanel.VirtualizationMode="Recycling"
@@ -401,7 +549,7 @@
                   <DataTemplate>
                     <DockPanel Margin="2">
                       <Grid Margin="0,0,0,2" DockPanel.Dock="Top">
-                        <TextBlock FontWeight="Medium" Text="{Binding Name}" />
+                        <TextBlock FontWeight="Medium" Text="{Binding Name}"/>
                         <Image
                           Width="16"
                           Height="16"
@@ -423,12 +571,11 @@
                       </Grid>
                       <Border
                         HorizontalAlignment="Stretch"
-                        Background="{Binding BackColor}"
                         DockPanel.Dock="Bottom">
                         <ContentControl
                           HorizontalAlignment="Stretch"
                           Content="{Binding}"
-                          ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
+                          ContentTemplate="{StaticResource ModulePercentageTemplate}" />
                       </Border>
                     </DockPanel>
                   </DataTemplate>
@@ -482,19 +629,19 @@
               Command="local:Command.CopyDemangledFunctionName"
               CommandParameter="{Binding ElementName=FunctionList, Path=SelectedItem}"
               CommandTarget="{Binding ElementName=FunctionList}"
-              Modifiers="Control" />
+              Modifiers="Control+Shift" />
             <KeyBinding
               Key="C"
               Command="local:Command.CopyFunctionName"
               CommandParameter="{Binding ElementName=FunctionList, Path=SelectedItem}"
               CommandTarget="{Binding ElementName=FunctionList}"
-              Modifiers="Control+Shift" />
+              Modifiers="Control+Alt" />
             <KeyBinding
               Key="C"
               Command="local:Command.CopyFunctionDetails"
               CommandParameter="{Binding ElementName=FunctionList, Path=SelectedItem}"
               CommandTarget="{Binding ElementName=FunctionList}"
-              Modifiers="Control+Alt" />
+              Modifiers="Control" />
             <KeyBinding
               Key="Return"
               Command="{Binding PreviewFunctionCommand}"
@@ -514,10 +661,12 @@
 
                 <GridViewColumn.CellTemplate>
                   <DataTemplate>
-                    <TextBlock
-                      FontWeight="Medium"
-                      Text="{Binding Name}"
-                      ToolTip="{Binding Name}" />
+                    <Grid HorizontalAlignment="Stretch" Background="{Binding FunctionBackColor}">
+                      <TextBlock
+                        FontWeight="Medium"
+                        Text="{Binding Name}"
+                        ToolTip="{Binding ToolTip}" />
+                    </Grid>
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
@@ -533,19 +682,31 @@
                 </GridViewColumn.HeaderContainerStyle>
               </GridViewColumn>
 
-              <GridViewColumn
-                Width="100"
-                local:GridViewColumnVisibility.IsVisible="{Binding ModuleControlsVisible}"
-                DisplayMemberBinding="{Binding ModuleName}">
+              <GridViewColumn Width="100" local:GridViewColumnVisibility.IsVisible="{Binding ModuleControlsVisible}">
                 <GridViewColumnHeader x:Name="FunctionModuleColumnHeader" Content="Module" />
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                   </Style>
                 </GridViewColumn.HeaderContainerStyle>
+
+                <GridViewColumn.CellTemplate>
+                  <DataTemplate>
+                    <Grid HorizontalAlignment="Stretch" Background="{Binding ModuleBackColor}">
+                      <TextBlock
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        FontWeight="Medium"
+                        Text="{Binding Path=ModuleName}" />
+                    </Grid>
+                  </DataTemplate>
+                </GridViewColumn.CellTemplate>
               </GridViewColumn>
 
-              <GridViewColumn Width="{Binding SelfTimeColumnWidth}" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible}">
+              <GridViewColumn
+                x:Name="OptionalDataColumn"
+                Width="{Binding SelfTimeColumnWidth}"
+                local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible}">
                 <GridViewColumnHeader x:Name="OptionalColumnHeader" Content="{Binding OptionalDataColumnName}" />
 
                 <GridViewColumn.HeaderContainerStyle>
@@ -574,7 +735,10 @@
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
 
-              <GridViewColumn Width="{Binding TotalTimeColumnWidth}" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible2}">
+              <GridViewColumn
+                x:Name="OptionalDataColumn2"
+                Width="{Binding TotalTimeColumnWidth}"
+                local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible2}">
                 <GridViewColumnHeader x:Name="OptionalColumnHeader2" Content="{Binding OptionalDataColumnName2}" />
 
                 <GridViewColumn.HeaderContainerStyle>
@@ -596,7 +760,8 @@
                       <ContentControl
                         HorizontalAlignment="Stretch"
                         Content="{Binding}"
-                        ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
+                        ContentTemplate="{StaticResource ProfilePercentageTemplate}"
+                        Visibility="{Binding Settings.AppendTimeToTotalColumn, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:SectionPanel}}, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </Grid>
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
@@ -673,10 +838,25 @@
           <ListView.ContextMenu>
             <ContextMenu>
               <MenuItem
+                Command="{Binding PreviewFunctionCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Preview Function"
+                InputGestureText="Alt+Return"
+                ToolTip="Show a preview popup of the function asembly or source code">
+                <MenuItem.Icon>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource PeekDefinitionIcon}" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <MenuItem
                 Command="local:Command.Open"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open"
+                ToolTip="Open the assembly view, replacing the active tab"
                 InputGestureText="Return">
                 <MenuItem.Icon>
                   <Image
@@ -690,6 +870,7 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open in New Tab"
+                ToolTip="Open the assembly view in a new tab"
                 InputGestureText="Shift+Return">
                 <MenuItem.Icon>
                   <Image
@@ -703,7 +884,8 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open in Left Tab"
-                InputGestureText="Ctrl+Left">
+                ToolTip="Open the assembly view in a new tab docked left"
+                InputGestureText="Ctrl+Shift+Left">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -716,7 +898,8 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open in Right Tab"
-                InputGestureText="Ctrl+Right">
+                ToolTip="Open the assembly view in a new tab docked right"
+                InputGestureText="Ctrl+Shift+Right">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -724,52 +907,66 @@
                     Source="{StaticResource LayoutRightIcon}" />
                 </MenuItem.Icon>
               </MenuItem>
-              <MenuItem
-                Command="{Binding PreviewFunctionCommand}"
-                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                Header="Preview Function"
-                InputGestureText="Alt+Return"
-                ToolTip="Show a preview popup of the function ASM or source code">
-                <MenuItem.Icon>
-                  <Image
-                    Height="16"
-                    Source="{StaticResource PeekDefinitionIcon}"
-                    Width="16" />
-                </MenuItem.Icon>
-              </MenuItem>
               <Separator />
-
               <MenuItem
-                Command="local:Command.CopyDemangledFunctionName"
+                Command="local:Command.CopyFunctionDetails"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Copy Function Name"
+                Header="Copy Function Details"
                 InputGestureText="Ctrl+C"
-                ToolTip="Copy the function name to the clipboard">
+                ToolTip="Copy the function name and additional information as an HTML table">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
                     Height="16"
                     Source="{StaticResource ClipboardIcon}" />
                 </MenuItem.Icon>
-                </MenuItem>
+              </MenuItem>
+
+              <MenuItem
+                Command="local:Command.CopyDemangledFunctionName"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding ElementName=FunctionList}"
+                Header="Copy Function Name"
+                InputGestureText="Ctrl+Shift+C"
+                ToolTip="Copy the function name to the clipboard" />
               <MenuItem
                 Command="local:Command.CopyFunctionName"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Copy Mangled Function Name"
-                InputGestureText="Ctrl+Shift+C"
-                ToolTip="Copy the mangled function name to the clipboard (C++)">
-              </MenuItem>
-
-              <MenuItem
-                Command="local:Command.CopyFunctionDetails"
-                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Copy Function Details"
                 InputGestureText="Ctrl+Alt+C"
-                ToolTip="Copy the function name and additional information as an HTML table" />
+                ToolTip="Copy the mangled function name to the clipboard (C++)" />
+
+              <Separator />
+              <MenuItem Header="Mark Module" ToolTip="Mark all functions belonging to this module (saved)">
+                <MenuItem.Icon>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource AddBookmarkIcon}" />
+                </MenuItem.Icon>
+                <MenuItem>
+                  <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="{Binding MarkModuleCommand}" />
+                  </MenuItem.Header>
+
+                </MenuItem>
+              </MenuItem>
+              <MenuItem Header="Mark Function" ToolTip="Mark all functions with the same name (saved)">
+                <MenuItem.Icon>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource BookIcon}" />
+                </MenuItem.Icon>
+                <MenuItem>
+                  <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="{Binding MarkFunctionCommand}" />
+                  </MenuItem.Header>
+
+                </MenuItem>
+              </MenuItem>
               <Separator />
 
               <MenuItem
@@ -796,6 +993,19 @@
                     Width="16"
                     Height="16"
                     Source="{StaticResource SourceIcon}" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <MenuItem
+                Command="local:Command.ExportFunctionListMarkdown"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding ElementName=FunctionList}"
+                Header="Export Function List as Markdown File"
+                ToolTip="Save the list of functions and additional columns as a Markdown file">
+                <MenuItem.Icon>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource DocumentIcon}" />
                 </MenuItem.Icon>
               </MenuItem>
               <Separator />
@@ -1423,12 +1633,12 @@
       Key="Left"
       Command="local:Command.OpenLeft"
       CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
-      Modifiers="Ctrl" />
+      Modifiers="Ctrl+Shift" />
     <KeyBinding
       Key="Right"
       Command="local:Command.OpenRight"
       CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
-      Modifiers="Ctrl" />
+      Modifiers="Ctrl+Shift" />
     <KeyBinding
       Key="Return"
       Command="local:Command.DiffWithOtherDocument"

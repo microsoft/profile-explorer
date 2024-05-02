@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Windows;
 using System.Windows.Media;
 using IRExplorerCore.IR;
 
@@ -45,28 +46,38 @@ public sealed class GraphNodeTag : ITag {
   public double BorderThickness { get; set; }
   public string Label { get; set; }
   public string ToolTip { get; set; }
+  public bool UseBoldText { get; set; }
   public LabelPlacementKind LabelPlacement { get; set; }
-  public Color? LabelFontColor { get; set; }
+  public Color? LabelTextColor { get; set; }
+  public Color? TextColor { get; set; }
   public string Name => "Graph Node Tag";
   public TaggedObject Owner { get; set; }
 
-  public static GraphNodeTag MakeLabel(string label, string tooltip = null, Color? fontColor = null,
+  public static GraphNodeTag MakeLabel(string label, string tooltip = null,
+                                       Color? textColor = null,
+                                       Color? labelColor = null,
                                        LabelPlacementKind position = LabelPlacementKind.Bottom) {
     return new GraphNodeTag {
       Label = label,
       ToolTip = tooltip,
-      LabelFontColor = fontColor,
+      LabelTextColor = labelColor,
+      TextColor = textColor,
       LabelPlacement = position
     };
   }
 
-  public static GraphNodeTag MakeColor(string label, Color backColor, Color? fontColor = null,
+  public static GraphNodeTag MakeColor(string label, Color backColor,
+                                       Color? textColor = null,
+                                       Color? labelColor = null,
+                                       bool useBoldText = false,
                                        LabelPlacementKind position = LabelPlacementKind.Bottom) {
     return new GraphNodeTag {
       Label = label,
       BackgroundColor = backColor,
-      LabelFontColor = fontColor,
-      LabelPlacement = position
+      LabelTextColor = labelColor,
+      TextColor = textColor,
+      LabelPlacement = position,
+      UseBoldText = useBoldText
     };
   }
 

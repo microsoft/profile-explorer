@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ using HtmlAgilityPack;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Profile;
@@ -141,6 +143,8 @@ public static class Command {
     new RoutedUICommand("Untitled", "CopyFunctionDetails", typeof(SectionPanel));
   public static readonly RoutedUICommand ExportFunctionListHtml =
     new RoutedUICommand("Untitled", "ExportFunctionListHtml", typeof(SectionPanel));
+  public static readonly RoutedUICommand ExportFunctionListMarkdown =
+    new RoutedUICommand("Untitled", "ExportFunctionListMarkdown", typeof(SectionPanel));
 }
 
 public class OpenSectionEventArgs : EventArgs {
@@ -360,9 +364,10 @@ public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
     set => functionName_ = value;
   }
 
+  public string ToolTip => DocumentUtils.FormatLongFunctionName(Name);
   public int Index { get; set; }
   public IRTextFunction Function { get; set; }
-  public string ModuleName => Function.ParentSummary.ModuleName;
+  public string ModuleName => Function.ModuleName;
   public TimeSpan Weight { get; set; }
   public TimeSpan ExclusiveWeight { get; set; }
   public string AlternateName { get; set; }
@@ -380,6 +385,8 @@ public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
   public Brush TextColor { get; set; }
   public Brush BackColor { get; set; }
   public Brush BackColor2 { get; set; }
+  public Brush ModuleBackColor { get; set; }
+  public Brush FunctionBackColor { get; set; }
   public int SectionCount => Function.SectionCount;
   public FunctionCodeStatistics Statistics { get; set; }
   public FunctionCodeStatistics DiffStatistics { get; set; }
@@ -402,6 +409,7 @@ public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
 }
 
 public class ModuleEx {
+  public bool IsAllEntry { get; set; }
   public string Name { get; set; }
   public Brush BackColor { get; set; }
   public double ExclusivePercentage { get; set; }
@@ -475,6 +483,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private IRTextSummary summary_;
   private IRTextSummary otherSummary_;
   private List<IRTextSectionEx> sections_;
+  private List<IRTextFunctionEx> functions_;
   private List<IRTextSummary> moduleSummaries_;
   private bool sectionExtensionComputed_;
   private Dictionary<IRTextSection, IRTextSectionEx> sectionExtMap_;
@@ -507,6 +516,9 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private bool moduleControlsVisible_;
   private CallTreeNodePopup funcBacktracePreviewPopup_;
   private PopupHoverPreview preview_;
+  private List<ModuleEx> modules_;
+  private FunctionMarkingSettings initialMarkingSettings_;
+  private TextSearcher nameSearcher_;
 
   public SectionPanel() {
     InitializeComponent();
@@ -525,254 +537,254 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
     functionValueSorter_ =
       new GridViewColumnValueSorter<FunctionFieldKind>(FunctionList,
-                                                       name => name switch {
-                                                         "FunctionColumnHeader" => FunctionFieldKind.Name,
-                                                         "AlternateNameColumnHeader" => FunctionFieldKind.AlternateName,
-                                                         "SectionsColumnHeader" => FunctionFieldKind.Sections,
-                                                         "FunctionModuleColumnHeader" => FunctionFieldKind.Module,
-                                                         "OptionalColumnHeader" => FunctionFieldKind.Optional,
-                                                         "OptionalColumnHeader2" => FunctionFieldKind.Optional2,
-                                                         "SizeHeader" => FunctionFieldKind.StatisticSize,
-                                                         "LoadsHeader" => FunctionFieldKind.StatisticLoads,
-                                                         "StoresHeader" => FunctionFieldKind.StatisticStores,
-                                                         "InstructionsHeader" => FunctionFieldKind.
-                                                           StatisticInstructions,
-                                                         "BranchesHeader" => FunctionFieldKind.StatisticBranches,
-                                                         "CallsHeader" => FunctionFieldKind.StatisticCalls,
-                                                         "CallersHeader" => FunctionFieldKind.StatisticCallers,
-                                                         "CalleesHeader" => FunctionFieldKind.StatisticCallees,
-                                                         "IndirectCallsHeader" => FunctionFieldKind.
-                                                           StatisticIndirectCalls,
-                                                         "DiffHeader" => FunctionFieldKind.StatisticDiff,
-                                                         _ => FunctionFieldKind.PerformanceCounter
-                                                       },
-                                                       (x, y, field, direction, tag) => {
-                                                         var functionX = x as IRTextFunctionEx;
-                                                         var functionY = y as IRTextFunctionEx;
+        name => name switch {
+          "FunctionColumnHeader"       => FunctionFieldKind.Name,
+          "AlternateNameColumnHeader"  => FunctionFieldKind.AlternateName,
+          "SectionsColumnHeader"       => FunctionFieldKind.Sections,
+          "FunctionModuleColumnHeader" => FunctionFieldKind.Module,
+          "OptionalColumnHeader"       => FunctionFieldKind.Optional,
+          "OptionalColumnHeader2"      => FunctionFieldKind.Optional2,
+          "SizeHeader"                 => FunctionFieldKind.StatisticSize,
+          "LoadsHeader"                => FunctionFieldKind.StatisticLoads,
+          "StoresHeader"               => FunctionFieldKind.StatisticStores,
+          "InstructionsHeader" => FunctionFieldKind.
+            StatisticInstructions,
+          "BranchesHeader" => FunctionFieldKind.StatisticBranches,
+          "CallsHeader"    => FunctionFieldKind.StatisticCalls,
+          "CallersHeader"  => FunctionFieldKind.StatisticCallers,
+          "CalleesHeader"  => FunctionFieldKind.StatisticCallees,
+          "IndirectCallsHeader" => FunctionFieldKind.
+            StatisticIndirectCalls,
+          "DiffHeader" => FunctionFieldKind.StatisticDiff,
+          _            => FunctionFieldKind.PerformanceCounter
+        },
+        (x, y, field, direction, tag) => {
+          var functionX = x as IRTextFunctionEx;
+          var functionY = y as IRTextFunctionEx;
 
-                                                         switch (field) {
-                                                           case FunctionFieldKind.Sections: {
-                                                             int result = functionY.SectionCount -
-                                                                          functionX.SectionCount;
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.Name: {
-                                                             int result = string.Compare(
-                                                               functionY.Name, functionX.Name,
-                                                               StringComparison.OrdinalIgnoreCase);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.AlternateName: {
-                                                             int result = string.Compare(
-                                                               functionY.AlternateName, functionX.AlternateName,
-                                                               StringComparison.OrdinalIgnoreCase);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.Module: {
-                                                             int result = string.Compare(
-                                                               functionY.ModuleName, functionX.ModuleName,
-                                                               StringComparison.OrdinalIgnoreCase);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.Optional: {
-                                                             int result =
-                                                               functionY.ExclusiveWeight.CompareTo(
-                                                                 functionX.ExclusiveWeight);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.Optional2: {
-                                                             int result = functionY.Weight.CompareTo(functionX.Weight);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.StatisticSize: {
-                                                             int result =
-                                                               functionY.Statistics.Size.CompareTo(
-                                                                 functionX.Statistics.Size);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.StatisticInstructions: {
-                                                             int result =
-                                                               functionY.Statistics.Instructions.CompareTo(
-                                                                 functionX.Statistics.Instructions);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.StatisticLoads: {
-                                                             int result =
-                                                               functionY.Statistics.Loads.CompareTo(
-                                                                 functionX.Statistics.Loads);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.StatisticStores: {
-                                                             int result =
-                                                               functionY.Statistics.Stores.CompareTo(
-                                                                 functionX.Statistics.Stores);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.StatisticBranches: {
-                                                             int result =
-                                                               functionY.Statistics.Branches.CompareTo(
-                                                                 functionX.Statistics.Branches);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.StatisticCalls: {
-                                                             int result =
-                                                               functionY.Statistics.Calls.CompareTo(
-                                                                 functionX.Statistics.Calls);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.StatisticCallees: {
-                                                             int result =
-                                                               functionY.Statistics.Callees.CompareTo(
-                                                                 functionX.Statistics.Callees);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.StatisticCallers: {
-                                                             int result =
-                                                               functionY.Statistics.Callers.CompareTo(
-                                                                 functionX.Statistics.Callers);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.StatisticIndirectCalls: {
-                                                             int result =
-                                                               functionY.Statistics.IndirectCalls.CompareTo(
-                                                                 functionX.Statistics.IndirectCalls);
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.StatisticDiff: {
-                                                             int result = 0;
+          switch (field) {
+            case FunctionFieldKind.Sections: {
+              int result = functionY.SectionCount -
+                           functionX.SectionCount;
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.Name: {
+              int result = string.Compare(
+                functionY.Name, functionX.Name,
+                StringComparison.OrdinalIgnoreCase);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.AlternateName: {
+              int result = string.Compare(
+                functionY.AlternateName, functionX.AlternateName,
+                StringComparison.OrdinalIgnoreCase);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.Module: {
+              int result = string.Compare(
+                functionY.ModuleName, functionX.ModuleName,
+                StringComparison.OrdinalIgnoreCase);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.Optional: {
+              int result =
+                functionY.ExclusiveWeight.CompareTo(
+                  functionX.ExclusiveWeight);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.Optional2: {
+              int result = functionY.Weight.CompareTo(functionX.Weight);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.StatisticSize: {
+              int result =
+                functionY.Statistics.Size.CompareTo(
+                  functionX.Statistics.Size);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.StatisticInstructions: {
+              int result =
+                functionY.Statistics.Instructions.CompareTo(
+                  functionX.Statistics.Instructions);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.StatisticLoads: {
+              int result =
+                functionY.Statistics.Loads.CompareTo(
+                  functionX.Statistics.Loads);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.StatisticStores: {
+              int result =
+                functionY.Statistics.Stores.CompareTo(
+                  functionX.Statistics.Stores);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.StatisticBranches: {
+              int result =
+                functionY.Statistics.Branches.CompareTo(
+                  functionX.Statistics.Branches);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.StatisticCalls: {
+              int result =
+                functionY.Statistics.Calls.CompareTo(
+                  functionX.Statistics.Calls);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.StatisticCallees: {
+              int result =
+                functionY.Statistics.Callees.CompareTo(
+                  functionX.Statistics.Callees);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.StatisticCallers: {
+              int result =
+                functionY.Statistics.Callers.CompareTo(
+                  functionX.Statistics.Callers);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.StatisticIndirectCalls: {
+              int result =
+                functionY.Statistics.IndirectCalls.CompareTo(
+                  functionX.Statistics.IndirectCalls);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.StatisticDiff: {
+              int result = 0;
 
-                                                             if (functionY.FunctionDiffKind !=
-                                                                 functionX.FunctionDiffKind) {
-                                                               if (functionY.IsDeletionDiff ||
-                                                                   functionX.IsInsertionDiff) {
-                                                                 result = -1;
-                                                               }
-                                                               else if (functionY.IsInsertionDiff ||
-                                                                        functionX.IsDeletionDiff) {
-                                                                 result = 1;
-                                                               }
-                                                               else if (functionY.IsModificationDiff) {
-                                                                 result = -1;
-                                                               }
-                                                               else if (functionX.IsModificationDiff) {
-                                                                 result = 1;
-                                                               }
-                                                               else {
-                                                                 result = string.Compare(
-                                                                   functionY.Name, functionX.Name,
-                                                                   StringComparison.Ordinal);
-                                                               }
-                                                             }
-                                                             else {
-                                                               result = string.Compare(
-                                                                 functionY.Name, functionX.Name,
-                                                                 StringComparison.Ordinal);
-                                                             }
+              if (functionY.FunctionDiffKind !=
+                  functionX.FunctionDiffKind) {
+                if (functionY.IsDeletionDiff ||
+                    functionX.IsInsertionDiff) {
+                  result = -1;
+                }
+                else if (functionY.IsInsertionDiff ||
+                         functionX.IsDeletionDiff) {
+                  result = 1;
+                }
+                else if (functionY.IsModificationDiff) {
+                  result = -1;
+                }
+                else if (functionX.IsModificationDiff) {
+                  result = 1;
+                }
+                else {
+                  result = string.Compare(
+                    functionY.Name, functionX.Name,
+                    StringComparison.Ordinal);
+                }
+              }
+              else {
+                result = string.Compare(
+                  functionY.Name, functionX.Name,
+                  StringComparison.Ordinal);
+              }
 
-                                                             return direction == ListSortDirection.Ascending ? -result
-                                                               : result;
-                                                           }
-                                                           case FunctionFieldKind.PerformanceCounter: {
-                                                             if (tag is PerformanceCounter counter) {
-                                                               int result = 0;
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case FunctionFieldKind.PerformanceCounter: {
+              if (tag is PerformanceCounter counter) {
+                int result = 0;
 
-                                                               if (functionX.Counters != null &&
-                                                                   functionY.Counters != null) {
-                                                                 double valueX =
-                                                                   functionX.Counters.FindCounterValue(counter.Id);
-                                                                 double valueY =
-                                                                   functionY.Counters.FindCounterValue(counter.Id);
-                                                                 result = valueX.CompareTo(valueY);
-                                                               }
-                                                               else if (functionY.Counters == null &&
-                                                                        functionX.Counters != null) {
-                                                                 result = 1;
-                                                               }
-                                                               else if (functionX.Counters == null &&
-                                                                        functionY.Counters != null) {
-                                                                 result = -1;
-                                                               }
+                if (functionX.Counters != null &&
+                    functionY.Counters != null) {
+                  double valueX =
+                    functionX.Counters.FindCounterValue(counter.Id);
+                  double valueY =
+                    functionY.Counters.FindCounterValue(counter.Id);
+                  result = valueX.CompareTo(valueY);
+                }
+                else if (functionY.Counters == null &&
+                         functionX.Counters != null) {
+                  result = 1;
+                }
+                else if (functionX.Counters == null &&
+                         functionY.Counters != null) {
+                  result = -1;
+                }
 
-                                                               return direction == ListSortDirection.Ascending ? -result
-                                                                 : result;
-                                                             }
+                return direction == ListSortDirection.Ascending ? -result
+                  : result;
+              }
 
-                                                             return 0;
-                                                           }
-                                                           default:
-                                                             throw new ArgumentOutOfRangeException();
-                                                         }
-                                                       });
+              return 0;
+            }
+            default:
+              throw new ArgumentOutOfRangeException();
+          }
+        });
 
     sectionValueSorter_ =
       new GridViewColumnValueSorter<SectionFieldKind>(SectionList,
-                                                      name => name switch {
-                                                        "NumberColumnHeader" => SectionFieldKind.Number,
-                                                        "NameColumnHeader" => SectionFieldKind.Name,
-                                                        "BlocksColumnHeader" => SectionFieldKind.Blocks
-                                                      },
-                                                      (x, y, field, direction, tag) => {
-                                                        var sectionX = x as IRTextSectionEx;
-                                                        var sectionY = y as IRTextSectionEx;
+        name => name switch {
+          "NumberColumnHeader" => SectionFieldKind.Number,
+          "NameColumnHeader"   => SectionFieldKind.Name,
+          "BlocksColumnHeader" => SectionFieldKind.Blocks
+        },
+        (x, y, field, direction, tag) => {
+          var sectionX = x as IRTextSectionEx;
+          var sectionY = y as IRTextSectionEx;
 
-                                                        switch (field) {
-                                                          case SectionFieldKind.Number: {
-                                                            int result = sectionY.Number - sectionX.Number;
-                                                            return direction == ListSortDirection.Ascending ? -result
-                                                              : result;
-                                                          }
-                                                          case SectionFieldKind.Name: {
-                                                            int result = string.Compare(
-                                                              sectionY.Name, sectionX.Name, StringComparison.Ordinal);
-                                                            return direction == ListSortDirection.Ascending ? -result
-                                                              : result;
-                                                          }
-                                                          case SectionFieldKind.Blocks: {
-                                                            int result = sectionY.BlockCount - sectionX.BlockCount;
-                                                            return direction == ListSortDirection.Ascending ? -result
-                                                              : result;
-                                                          }
-                                                          default:
-                                                            throw new ArgumentOutOfRangeException();
-                                                        }
-                                                      });
+          switch (field) {
+            case SectionFieldKind.Number: {
+              int result = sectionY.Number - sectionX.Number;
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case SectionFieldKind.Name: {
+              int result = string.Compare(
+                sectionY.Name, sectionX.Name, StringComparison.Ordinal);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            case SectionFieldKind.Blocks: {
+              int result = sectionY.BlockCount - sectionX.BlockCount;
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            default:
+              throw new ArgumentOutOfRangeException();
+          }
+        });
 
     moduleValueSorter_ =
       new GridViewColumnValueSorter<ModuleFieldKind>(ModulesList,
-                                                     name => name switch {
-                                                       "ModuleColumnHeader" => ModuleFieldKind.Name
-                                                     },
-                                                     (x, y, field, direction, tag) => {
-                                                       var moduleX = x as ModuleEx;
-                                                       var moduleY = y as ModuleEx;
+        name => name switch {
+          "ModuleColumnHeader" => ModuleFieldKind.Name
+        },
+        (x, y, field, direction, tag) => {
+          var moduleX = x as ModuleEx;
+          var moduleY = y as ModuleEx;
 
-                                                       switch (field) {
-                                                         case ModuleFieldKind.Name: {
-                                                           // Always sort modules by time.
-                                                           int result =
-                                                             moduleY.ExclusiveWeight.CompareTo(moduleX.ExclusiveWeight);
-                                                           return direction == ListSortDirection.Ascending ? -result
-                                                             : result;
-                                                         }
-                                                         default:
-                                                           throw new ArgumentOutOfRangeException();
-                                                       }
-                                                     });
+          switch (field) {
+            case ModuleFieldKind.Name: {
+              // Always sort modules by time.
+              int result =
+                moduleY.ExclusiveWeight.CompareTo(moduleX.ExclusiveWeight);
+              return direction == ListSortDirection.Ascending ? -result
+                : result;
+            }
+            default:
+              throw new ArgumentOutOfRangeException();
+          }
+        });
   }
 
   public event EventHandler<IRTextFunction> FunctionSwitched;
@@ -782,6 +794,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   public event EventHandler<bool> SyncDiffedDocumentsChanged;
   public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
   public event PropertyChangedEventHandler PropertyChanged;
+
+  public bool HasEnabledMarkedFunctions => MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
+  public bool HasEnabledMarkedModules => MarkingSettings.UseModuleColors && MarkingSettings.ModuleColors.Count > 0;
+  public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
 
   //? TODO: Replace all other commands with RelayCommand.
   public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
@@ -796,11 +812,21 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (obj is IRTextFunctionEx funcEx) {
-      await IRDocumentPopupInstance.ShowPreviewPopup(funcEx.Function,
-                                                     $"Function {funcEx.Name}",
-                                                     FunctionList, Session);
+      var brush = GetMarkedNodeColor(funcEx);
+      await IRDocumentPopupInstance.ShowPreviewPopup(funcEx.Function, "",
+                                                     FunctionList, Session, null, false, brush);
     }
   });
+
+  public RelayCommand<object> CopyAllFunctionsCommand => new RelayCommand<object>(async obj => {
+    CopyFunctionListAsHtml(true);
+  });
+
+  private Brush GetMarkedNodeColor(IRTextFunctionEx node) {
+    return App.Settings.MarkingSettings.
+      GetMarkedNodeBrush(node.Name, node.ModuleName);
+  }
+
 
   public bool BottomSectionToolbar {
     get => (bool)GetValue(BottomSectionToolbarProperty);
@@ -933,8 +959,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   //? TODO: Remember column width, order
-  public double SelfTimeColumnWidth => settings_ is {AppendTimeToSelfColumn: true} ? 150 : 60;
-  public double TotalTimeColumnWidth => settings_ is { AppendTimeToTotalColumn: true } ? 150 : 60;
+  public double SelfTimeColumnWidth => settings_ is {AppendTimeToSelfColumn: true} ? 140 : 60;
+  public double TotalTimeColumnWidth => settings_ is { AppendTimeToTotalColumn: true } ? 140 : 60;
 
   public IRTextSummary Summary {
     get => summary_;
@@ -942,7 +968,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       if (value != summary_) {
         summary_ = value;
         sectionExtensionComputed_ = false;
-        //SetupFunctionList();
       }
     }
   }
@@ -952,7 +977,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     set {
       if (value != otherSummary_) {
         otherSummary_ = value;
-        //SetupFunctionList(false);
       }
     }
   }
@@ -1204,6 +1228,14 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
            moduleSummaries_.Contains(summary);
   }
 
+  public IRTextSummary FindModuleSummary(string name) {
+    if (summary_.ModuleName == name) {
+      return summary_;
+    }
+
+    return moduleSummaries_.Find(item => item.ModuleName == name);
+  }
+
   public void RegisterSectionListScrollEvent() {
     if (sectionsScrollViewer_ != null) {
       return;
@@ -1241,17 +1273,82 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     // Create mappings between each function and their UI counterparts.
     // In two-document diff mode, also add entries for functions that are found
     // only in the left or in the right document and mark them as diffs.
-    var functionsEx = SetupFunctionExtensions();
+    functions_ = SetupFunctionExtensions();
 
     // Prepare UI.
-    await SetupFunctionListUI(functionsEx);
+    await SetupFunctionListUI();
 
     // Attach additional data to the UI.
-    await SetFunctionProfileInfo(functionsEx);
+    await LoadFunctionProfile();
+    UpdateMarkedFunctions(true);
 
     if (analyzeFunctions) {
-      await RunFunctionAnalysis(functionsEx);
+      await RunFunctionAnalysis();
     }
+  }
+
+  public void UpdateMarkedFunctions(bool externalCall = false) {
+    if (functions_ != null) {
+      UpdateMarkedFunctionsImpl();
+      OnPropertyChanged(nameof(HasEnabledMarkedModules));
+      OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
+
+      if (!externalCall) {
+        Session.FunctionMarkingChanged(PanelKind);
+      }
+    }
+  }
+
+  private void UpdateMarkedFunctionsImpl() {
+    var fgSettings = App.Settings.MarkingSettings;
+
+    foreach (var f in functions_) {
+      f.ModuleBackColor = null;
+      f.FunctionBackColor = null;
+    }
+
+    foreach (var module in modules_) {
+      module.BackColor = null;
+    }
+
+    if (!fgSettings.UseAutoModuleColors &&
+        !fgSettings.UseModuleColors &&
+        !fgSettings.UseFunctionColors) {
+      RefreshFunctionList(false);
+      return;
+    }
+
+    foreach (var funcEx in functions_) {
+      if (fgSettings.UseModuleColors &&
+          fgSettings.GetModuleBrush(funcEx.ModuleName, out var brush)) {
+        funcEx.ModuleBackColor = brush;
+      }
+      else if (fgSettings.UseAutoModuleColors) {
+        funcEx.ModuleBackColor = fgSettings.GetAutoModuleBrush(funcEx.ModuleName);
+      }
+
+      if (fgSettings.UseFunctionColors &&
+          fgSettings.GetFunctionColor(funcEx.Name, out var color)) {
+        funcEx.FunctionBackColor = color.AsBrush();
+      }
+    }
+
+    foreach (var module in modules_) {
+      if (module.IsAllEntry) {
+        continue;
+      }
+
+      if (fgSettings.UseModuleColors &&
+          fgSettings.GetModuleBrush(module.Name, out var brush)) {
+        module.BackColor = brush;
+      }
+      else if (fgSettings.UseAutoModuleColors) {
+        module.BackColor = fgSettings.GetAutoModuleBrush(module.Name);
+      }
+    }
+
+    RefreshFunctionList(false);
+    RefreshModuleList();
   }
 
   public List<IRTextSectionEx> CreateSectionsExtension(bool force = false) {
@@ -1324,6 +1421,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return;
     }
 
+    nameSearcher_ = null;
     ((ListCollectionView)SectionList.ItemsSource).Refresh();
 
     if (SectionList.Items.Count > 0) {
@@ -1331,16 +1429,27 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  public void RefreshFunctionList() {
+  public void RefreshFunctionList(bool scrollToFirst = true) {
     if (FunctionList.ItemsSource == null) {
       return;
     }
 
+    nameSearcher_ = null;
     ((ListCollectionView)FunctionList.ItemsSource).Refresh();
 
-    if (FunctionList.Items.Count > 0) {
+    if (scrollToFirst && FunctionList.Items.Count > 0) {
       FunctionList.ScrollIntoView(FunctionList.Items[0]);
     }
+  }
+
+
+  public void RefreshModuleList(bool scrollToFirst = true) {
+    if (ModulesList.ItemsSource == null) {
+      return;
+    }
+
+    nameSearcher_ = null;
+    ((ListCollectionView)ModulesList.ItemsSource).Refresh();
   }
 
   public bool SwitchToSection(int offset, IRDocumentHost targetDocument = null) {
@@ -1502,14 +1611,12 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private void SetDemangledFunctionNames(List<IRTextFunctionEx> functions) {
-    var nameProvider = Session.CompilerInfo.NameProvider;
-
-    if (!nameProvider.IsDemanglingEnabled) {
+    if (!Session.CompilerInfo.NameProvider.IsDemanglingSupported ||
+        !Session.CompilerInfo.NameProvider.IsDemanglingEnabled) {
       AlternateNameColumnVisible = false;
 
       // Clear the cached names.
       foreach (var funcEx in functions) {
-        string funcName = funcEx.Function.Name;
         funcEx.Name = null;
       }
 
@@ -1521,10 +1628,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       funcEx.AlternateName = funcEx.Function.Name;
     }
 
-    AlternateNameColumnVisible = true;
+    AlternateNameColumnVisible = settings_.ShowMangleNamesColumn;
   }
 
-  private async Task SetFunctionProfileInfo(List<IRTextFunctionEx> functions) {
+  private async Task LoadFunctionProfile() {
     var profile = Session.ProfileData;
 
     if (profile == null) {
@@ -1558,24 +1665,59 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
     // Add one entry to represent all modules.
     double allWeightPercentage = profile.ScaleFunctionWeight(profile.ProfileWeight);
-    modulesEx.Add(new ModuleEx {
+    var allModules = new ModuleEx {
       Name = "All",
+      IsAllEntry = true,
       ExclusivePercentage = allWeightPercentage,
       ExclusiveWeight = profile.ProfileWeight
-    });
+    };
+    modulesEx.Add(allModules);
 
     var modulesFilter = new ListCollectionView(modulesEx);
     ModulesList.ItemsSource = modulesFilter;
     moduleValueSorter_.SortByField(ModuleFieldKind.Name);
+    ModulesList.SelectedItem = allModules;
+    modules_ = modulesEx;
 
     OptionalDataColumnVisible = true;
     OptionalDataColumnName = "Time (self)";
     OptionalDataColumnVisible2 = true;
     OptionalDataColumnName2 = "Time (total)";
     var markerOptions = App.Settings.DocumentSettings.ProfileMarkerSettings;
-    bool counterColumnsAdded = false;
+    bool hasPerfCounters = false;
 
-    //? TODO: Can be expensive, multithread and async
+    // Add the profile info and column data to each function.
+    hasPerfCounters = await Task.Run(() =>
+      PrepareFunctionProfile(functions_, profile, markerOptions));
+
+    if (hasPerfCounters) {
+      // Wait for all other columns to be added to the UI first
+      // before adding the counter columns, which are relative to other
+      // columns, such as the mangled name.
+      Dispatcher.BeginInvoke(() => {
+        AddCountersFunctionListColumns(false);
+      }, DispatcherPriority.ContextIdle);
+    }
+
+    functionValueSorter_.SortByField(FunctionFieldKind.Optional);
+    ProfileControlsVisible = true;
+    ModuleControlsVisible = true;
+    IsFunctionListVisible = false;
+    IsFunctionListVisible = true;
+    SectionCountColumnVisible = false;
+    ShowSections = false;
+    UseProfileCallTree = true;
+
+    // Update column visibility and state.
+    GridViewColumnVisibility.UpdateListView(FunctionList);
+    Utils.ScrollToFirstListViewItem(FunctionList);
+    SetupStackFunctionHoverPreview();
+  }
+
+  private static bool PrepareFunctionProfile(List<IRTextFunctionEx> functions, ProfileData profile,
+                                             ProfileDocumentMarkerSettings markerOptions) {
+    bool hasPerfCounters = false;
+
     foreach (var funcEx in functions) {
       var funcProfile = profile.GetFunctionProfile(funcEx.Function);
 
@@ -1591,6 +1733,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         funcEx.BackColor2 = markerOptions.PickBrushForPercentage(percentage);
 
         if (funcProfile.HasPerformanceCounters) {
+          hasPerfCounters = true;
           var counters = funcProfile.ComputeFunctionTotalCounters();
           funcEx.Counters = new PerformanceCounterSetEx(counters.Count);
 
@@ -1615,17 +1758,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
               funcEx.Counters.Add(counterEx);
             }
           }
-
-          if (!counterColumnsAdded) {
-            counterColumnsAdded = true;
-
-            // Wait for all other columns to be added to the UI first
-            // before adding the counter columns, which are relative to other
-            // columns, such as the mangled name.
-            Dispatcher.BeginInvoke(() => {
-              AddCountersFunctionListColumns(false);
-            }, DispatcherPriority.ContextIdle);
-          }
         }
       }
       else {
@@ -1634,18 +1766,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       }
     }
 
-    functionValueSorter_.SortByField(FunctionFieldKind.Optional);
-    ProfileControlsVisible = true;
-    ModuleControlsVisible = true;
-    IsFunctionListVisible = false;
-    IsFunctionListVisible = true;
-    SectionCountColumnVisible = false;
-    ShowSections = false;
-
-    UseProfileCallTree = true;
-    GridViewColumnVisibility.UpdateListView(FunctionList);
-    Utils.ScrollToFirstListViewItem(FunctionList);
-    SetupStackFunctionHoverPreview();
+    return hasPerfCounters;
   }
 
   private void SetupStackFunctionHoverPreview() {
@@ -1738,13 +1859,13 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     return functionsEx;
   }
 
-  private async Task SetupFunctionListUI(List<IRTextFunctionEx> functionsEx) {
+  private async Task SetupFunctionListUI() {
     if (!FunctionPartVisible) {
       return;
     }
 
     // Set up the filter used to search the list.
-    var functionFilter = new ListCollectionView(functionsEx);
+    var functionFilter = new ListCollectionView(functions_);
     functionFilter.Filter = FilterFunctionList;
     FunctionList.ItemsSource = functionFilter;
     SectionList.ItemsSource = null;
@@ -1754,18 +1875,14 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  private async Task RunFunctionAnalysis(List<IRTextFunctionEx> functions) {
+  private async Task RunFunctionAnalysis() {
     if (settings_.ComputeStatistics) {
-      await ComputeFunctionStatistics(functions);
+      await ComputeFunctionStatistics(functions_);
     }
   }
 
   private void CreateFunctionExtensions(IRTextSummary summary, List<IRTextFunctionEx> functionsEx) {
     foreach (var func in summary.Functions) {
-      if (IsHiddenFunction(func)) {
-        continue;
-      }
-
       if (!functionExtMap_.TryGetValue(func, out var funcEx)) {
         funcEx = new IRTextFunctionEx(func, functionsEx.Count, Session.CompilerInfo.NameProvider.FormatFunctionName);
         functionExtMap_[func] = funcEx;
@@ -1776,17 +1893,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
       functionsEx.Add(funcEx);
     }
-  }
-
-  private bool IsHiddenFunction(IRTextFunction func) {
-    // Don't display functions that have no profile data.
-    if (Session.ProfileData != null) {
-      var funcProfile = Session.ProfileData.GetFunctionProfile(func);
-      return funcProfile == null ||
-             funcProfile.Weight == TimeSpan.Zero;
-    }
-
-    return false;
   }
 
   private void ResetSectionPanel() {
@@ -1802,6 +1908,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     sections_.Clear();
     sectionExtMap_.Clear();
     annotatedSections_.Clear();
+    functions_?.Clear();
+    modules_?.Clear();
     sectionExtensionComputed_ = false;
 
     SectionList.UpdateLayout();
@@ -1841,10 +1949,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private void SetupSectionExtensions(IRTextSummary summary) {
     foreach (var func in summary.Functions) {
-      if (IsHiddenFunction(func)) {
-        continue;
-      }
-
       int index = 0;
 
       foreach (var section in func.Sections) {
@@ -1908,7 +2012,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private bool FilterFunctionList(object value) {
     var functionEx = (IRTextFunctionEx)value;
-    var function = functionEx.Function;
 
     if (activeModuleFilter_ != null) {
       if (functionEx.ModuleName != activeModuleFilter_.Name) {
@@ -1923,21 +2026,18 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return true;
     }
 
+    if (nameSearcher_ == null) {
+      nameSearcher_ = new TextSearcher(text, !App.Settings.SectionSettings.FunctionSearchCaseSensitive);
+    }
+
     // Search the function name.
-    if (App.Settings.SectionSettings.FunctionSearchCaseSensitive
-      ? function.Name.Contains(text, StringComparison.Ordinal)
-      : function.Name.Contains(text, StringComparison.OrdinalIgnoreCase)) {
+    if (nameSearcher_.Includes(functionEx.Name)) {
       return true;
     }
 
     // Search the demangled name.
-    if (!string.IsNullOrEmpty(functionEx.AlternateName)) {
-      return App.Settings.SectionSettings.FunctionSearchCaseSensitive
-        ? functionEx.AlternateName.Contains(text, StringComparison.Ordinal)
-        : functionEx.AlternateName.Contains(text, StringComparison.OrdinalIgnoreCase);
-    }
-
-    return false;
+    return !string.IsNullOrEmpty(functionEx.AlternateName) &&
+           nameSearcher_.Includes(functionEx.AlternateName);
   }
 
   private bool FilterSectionList(object value) {
@@ -2072,6 +2172,21 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private async void FunctionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
     if (e.AddedItems.Count == 1) {
       await SelectFunction(((IRTextFunctionEx)FunctionList.SelectedItem).Function);
+    }
+
+    if (FunctionList.SelectedItems.Count > 1) {
+      var selectedNodes = new List<ProfileCallTreeNode>();
+
+      foreach (var item in FunctionList.SelectedItems) {
+        if (item is IRTextFunctionEx funcEx) {
+          selectedNodes.Add(Session.ProfileData.CallTree.GetCombinedCallTreeNode(funcEx.Function));
+        }
+      }
+
+      var weightSum = ProfileCallTree.CombinedCallTreeNodesWeight(selectedNodes);
+      double weightPercentage = Session.ProfileData.ScaleFunctionWeight(weightSum);
+      string text = $"Selected {FunctionList.SelectedItems.Count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+      Session.SetApplicationStatus(text, "Sum of time for the selected functions");
     }
   }
 
@@ -2219,7 +2334,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     double height = Math.Max(SectionOptionsPanel.MinimumHeight,
                              Math.Min(SectionList.ActualHeight, SectionOptionsPanel.DefaultHeight));
     var position = new Point(SectionList.ActualWidth - width, 0);
-    optionsPanelWindow_ = new OptionsPanelHostWindow(new SectionOptionsPanel(),
+    initialMarkingSettings_ = MarkingSettings.Clone();
+     optionsPanelWindow_ = new OptionsPanelHostWindow(new SectionOptionsPanel(),
                                                      position, width, height, SectionList,
                                                      settings_.Clone(), Session);
     optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
@@ -2271,7 +2387,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       App.SaveApplicationSettings();
     }
 
-    if (force || !newSettings.Equals(settings_)) {
+    if (force || !newSettings.Equals(settings_) ||
+        !MarkingSettings.Equals(initialMarkingSettings_)) {
       bool updateFunctionList = newSettings.HasFunctionListChanges(settings_);
       App.Settings.SectionSettings = newSettings;
       settings_ = newSettings;
@@ -2290,6 +2407,9 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         OnPropertyChanged(nameof(SyncSourceFile));
         OnPropertyChanged(nameof(ShowModules));
       }
+
+      UpdateMarkedFunctions();
+      initialMarkingSettings_ = MarkingSettings.Clone();
     }
   }
 
@@ -2552,21 +2672,28 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     return stats;
   }
 
-  private void AutoResizeColumns(ListView listView, int skipCount) {
-    int index = 0;
+  private void ModuleDoubleClick(object sender, MouseButtonEventArgs e) {
+    SwitchModule(sender);
+  }
 
-    foreach (var column in ((GridView)listView.View).Columns) {
-      if (index >= skipCount) {
-        column.Width = 0;
-        column.Width = double.NaN;
-      }
-
-      index++;
+  private void ModulesList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
+    if (ModulesList.SelectedItem is ModuleEx moduleEx) {
+      SelectModule(moduleEx);
     }
   }
 
-  private void ModuleDoubleClick(object sender, MouseButtonEventArgs e) {
-    SwitchModule(sender);
+  private void SelectModule(ModuleEx moduleEx) {
+    if (moduleEx != null) {
+      ClearMarkedFunctions();
+
+      if (!moduleEx.IsAllEntry) {
+        var summary = FindModuleSummary(moduleEx.Name);
+
+        if (summary != null) {
+          MarkFunctions(summary.Functions);
+        }
+      }
+    }
   }
 
   private void SwitchModule(object sender) {
@@ -2574,11 +2701,12 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
     if (moduleEx != null) {
       ApplyModuleFilter(moduleEx);
+      ClearMarkedFunctions();
     }
   }
 
   private void ApplyModuleFilter(ModuleEx moduleEx) {
-    if (moduleEx.Name == "All") {
+    if (moduleEx.IsAllEntry) {
       activeModuleFilter_ = null;
     }
     else {
@@ -2746,13 +2874,21 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     return doc.DocumentNode;
   }
 
-  private void CopyFunctionListAsHtml() {
+  private void CopyFunctionListAsHtml(bool allFunctions) {
     var doc = new HtmlDocument();
-    var funcList = new List<IRTextFunctionEx>();
+    List<IRTextFunctionEx> funcList = null;
 
-    foreach (var item in FunctionList.SelectedItems) {
-      funcList.Add((IRTextFunctionEx)item);
+    if (allFunctions) {
+      funcList = functions_;
     }
+    else {
+      funcList = new List<IRTextFunctionEx>();
+
+      foreach (var item in FunctionList.SelectedItems) {
+        funcList.Add((IRTextFunctionEx)item);
+      }
+    }
+
 
     doc.DocumentNode.AppendChild(ExportFunctionListAsHtml(funcList));
     var writer = new StringWriter();
@@ -2763,18 +2899,31 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     Utils.CopyHtmlToClipboard(writer.ToString(), plainText);
   }
 
-  private bool ExportFunctionListAsHtmlFile(string filePath) {
+  private async Task<bool> ExportFunctionListAsHtmlFile(string filePath) {
     try {
       var funcList = (ListCollectionView)FunctionList.ItemsSource;
       var doc = new HtmlDocument();
       doc.DocumentNode.AppendChild(ExportFunctionListAsHtml(funcList.ToList<IRTextFunctionEx>()));
       var writer = new StringWriter();
       doc.Save(writer);
-      File.WriteAllText(filePath, writer.ToString());
+      await File.WriteAllTextAsync(filePath, writer.ToString());
       return true;
     }
     catch (Exception ex) {
       Trace.WriteLine($"Failed to export to HTML file: {filePath}, {ex.Message}");
+      return false;
+    }
+  }
+
+  private async Task<bool> ExportFunctionListAsMarkdownFile(string filePath) {
+    try {
+      var funcList = (ListCollectionView)FunctionList.ItemsSource;
+      var text = ExportFunctionListAsMarkdown(funcList.ToList<IRTextFunctionEx>());
+      await File.WriteAllTextAsync(filePath, text);
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to export to Markdown file: {filePath}, {ex.Message}");
       return false;
     }
   }
@@ -3053,7 +3202,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     FunctionList.ScrollIntoView(FunctionList.SelectedItem);
     RefreshSectionList();
 
-    if (handleProfiling && profileControlsVisible_ && Session.ProfileData != null) {
+    if (handleProfiling && profileControlsVisible_) {
       var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
       if (funcProfile != null) {
@@ -3253,21 +3402,17 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  private void FunctionToolbar_OnMouseDoubleClick(object sender, MouseButtonEventArgs e) {
-    ExportFunctionListAsHtmlFile(@"C:\work\out.html");
-  }
-
   private void CopyFunctionDetailsExecuted(object sender, ExecutedRoutedEventArgs e) {
-    CopyFunctionListAsHtml();
+    CopyFunctionListAsHtml(false);
   }
 
-  private void ExportFunctionListHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+  private async void ExportFunctionListHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
     string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
     bool success = true;
 
     if (!string.IsNullOrEmpty(path)) {
       try {
-        success = ExportFunctionListAsHtmlFile(path);
+        success = await ExportFunctionListAsHtmlFile(path);
       }
       catch (Exception ex) {
         Trace.WriteLine($"Failed to save function list to {path}: {ex.Message}");
@@ -3279,6 +3424,38 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
                         MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }
+  }
+
+  private async void ExportFunctionListMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
+    string path = Utils.ShowSaveFileDialog("Markdown file|*.md", "*.md|All Files|*.*");
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        success = await ExportFunctionListAsMarkdownFile(path);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save function list to {path}: {ex.Message}");
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to save function list to {path}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.CopyFunctionMarkingsAsHtml(Session);
+  }
+
+  private async void ExportMarkedFunctionsHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.ExportFunctionMarkingsAsHtmlFile(Session);
+  }
+
+  private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.ExportFunctionMarkingsAsMarkdownFile(Session);
   }
 
   private void ScrollUpButton_OnClick(object sender, RoutedEventArgs e) {
@@ -3293,5 +3470,61 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     SectionCountColumnVisible = false;
     ShowModules = false;
     ShowSections = false;
+  }
+
+  private void ToggleButton_Click(object sender, RoutedEventArgs e) {
+    // Force an update for toolbar buttons.
+    UpdateMarkedFunctions();
+  }
+
+  private void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
+    MarkingSettings.ModuleColors.Clear();
+    UpdateMarkedFunctions();
+  }
+
+  private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
+    MarkingSettings.FunctionColors.Clear();
+    UpdateMarkedFunctions();
+  }
+
+  private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
+      e.OriginalSource, () => UpdateMarkedFunctions());
+  }
+
+  private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
+      e.OriginalSource,() => UpdateMarkedFunctions());
+  }
+
+  public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) =>
+      markingSettings.AddModuleColor(node.ModuleName, color));
+    markingSettings.UseModuleColors = true;
+    UpdateMarkedFunctions();
+
+  });
+
+  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) => {
+      if (settings_.ShowDemangledNames) {
+        markingSettings.AddFunctionColor(node.AlternateName, color);
+      }
+      else {
+        markingSettings.AddFunctionColor(node.Name, color);
+      }
+    });
+    markingSettings.UseFunctionColors = true;
+    UpdateMarkedFunctions();
+  });
+
+  private void MarkSelectedNodes(object obj, Action<IRTextFunctionEx, Color> action) {
+    if (obj is SelectedColorEventArgs e) {
+      foreach (IRTextFunctionEx funcEx in FunctionList.SelectedItems) {
+        action(funcEx, e.SelectedColor);
+      }
+    }
   }
 }

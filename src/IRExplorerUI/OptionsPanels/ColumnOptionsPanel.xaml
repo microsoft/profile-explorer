@@ -73,7 +73,7 @@
                 Content="Pick background color based on percentage"
                 IsChecked="{Binding PickColorForPercentage, Mode=TwoWay}" />
 
-            <Separator Margin="0,4,0,4" />
+            <Separator Margin="0,4,0,4" Background="LightGray"/>
 
             <TextBlock FontWeight="Medium" Text="Colors" />
             <Grid Margin="0,4,0,0">
@@ -139,7 +139,6 @@
                     VerticalAlignment="Center"
                     Text="Percentage bar color" />
             </Grid>
-            <TextBlock Text="TODO: Color palette settings" />
         </StackPanel>
     </Grid>
 </local:OptionsPanelBase>

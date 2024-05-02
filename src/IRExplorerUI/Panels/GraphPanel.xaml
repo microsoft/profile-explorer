@@ -30,6 +30,11 @@
       CommandTarget="{Binding ElementName=GraphHost}"
       Modifiers="Ctrl" />
     <KeyBinding
+      Key="D0"
+      Command="local:GraphCommand.GraphResetWidth"
+      CommandTarget="{Binding ElementName=GraphHost}"
+      Modifiers="Ctrl" />
+    <KeyBinding
       Key="A"
       Command="local:GraphCommand.GraphFitAll"
       CommandTarget="{Binding ElementName=GraphHost}"
@@ -97,7 +102,7 @@
           <Button
             Command="local:GraphCommand.GraphResetWidth"
             CommandTarget="{Binding ElementName=GraphHost}"
-            ToolTip="Zoom the graph view to 100% (Ctrl+R)">
+            ToolTip="Zoom the graph view to 100% (Ctrl+0)">
             <StackPanel Orientation="Horizontal">
               <Image Source="{StaticResource ResetWidthIcon}" />
               <TextBlock Margin="4,0,0,0" Text="Reset" />

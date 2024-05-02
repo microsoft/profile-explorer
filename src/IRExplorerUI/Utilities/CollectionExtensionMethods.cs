@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows.Data;
 using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore.IR;
@@ -9,15 +10,31 @@ namespace IRExplorerUI;
 
 public static class CollectionExtensionMethods {
   public static List<T> CloneList<T>(this List<T> list) {
+    if (list == null) {
+      return null;
+    }
+    
     return list.ConvertAll(item => item);
   }
 
   public static bool AreEqual<T>(this List<T> list, List<T> other) {
+    if (list == other) {
+      return true;
+    }
+    else if (list == null || other == null ||
+             list.Count != other.Count) {
+      return false;
+    }
+    
     return list.SequenceEqual(other);
   }
 
   public static Dictionary<TKey, TValue> CloneDictionary<TKey, TValue>(
     this Dictionary<TKey, TValue> dict) {
+    if (dict == null) {
+      return null;
+    }
+    
     var newDict = new Dictionary<TKey, TValue>(dict.Count);
 
     foreach (var item in dict) {
@@ -28,6 +45,10 @@ public static class CollectionExtensionMethods {
   }
 
   public static HashSet<T> CloneHashSet<T>(this HashSet<T> hashSet) {
+    if (hashSet == null) {
+      return null;
+    }
+    
     var newHashSet = new HashSet<T>(hashSet.Count);
 
     foreach (var item in hashSet) {
@@ -37,7 +58,7 @@ public static class CollectionExtensionMethods {
     return newHashSet;
   }
 
-  public static HashSet<T> ToHashSet<T>(this List<T> list) where T : class {
+  public static HashSet<T> ToHashSet<T>(this List<T> list) {
     var hashSet = new HashSet<T>(list.Count);
     list.ForEach(item => hashSet.Add(item));
     return hashSet;
@@ -50,7 +71,7 @@ public static class CollectionExtensionMethods {
     return hashSet;
   }
 
-  public static List<T> ToList<T>(this HashSet<T> hashSet) where T : class {
+  public static List<T> ToList<T>(this HashSet<T> hashSet) {
     var list = new List<T>(hashSet.Count);
 
     foreach (var item in hashSet) {
@@ -60,8 +81,7 @@ public static class CollectionExtensionMethods {
     return list;
   }
 
-  public static List<TOut> ToList<TIn, TOut>(this HashSet<TIn> hashSet, Func<TIn, TOut> action)
-    where TIn : class {
+  public static List<TOut> ToList<TIn, TOut>(this HashSet<TIn> hashSet, Func<TIn, TOut> action) {
     var list = new List<TOut>(hashSet.Count);
 
     foreach (var item in hashSet) {
@@ -91,7 +111,7 @@ public static class CollectionExtensionMethods {
     return list;
   }
 
-  public static List<T> ToList<T>(this ListCollectionView view) where T:class {
+  public static List<T> ToList<T>(this ListCollectionView view) {
     var list = new List<T>(view.Count);
 
     foreach (T item in view) {
@@ -122,7 +142,7 @@ public static class CollectionExtensionMethods {
   }
 
   public static List<Tuple<K2, V>> ToList<K1, K2, V>(this Dictionary<K1, V> dict)
-    where K1 : IRElement where K2 : IRElementReference where V : class {
+    where K1 : IRElement where K2 : IRElementReference {
     var list = new List<Tuple<K2, V>>(dict.Count);
 
     foreach (var item in dict) {
@@ -132,8 +152,7 @@ public static class CollectionExtensionMethods {
     return list;
   }
 
-  public static Dictionary<K, V> ToDictionary<K, V>(this List<Tuple<K, V>> list)
-    where K : class where V : class {
+  public static Dictionary<K, V> ToDictionary<K, V>(this List<Tuple<K, V>> list) {
     var dict = new Dictionary<K, V>(list.Count);
 
     foreach (var item in list) {
@@ -144,7 +163,7 @@ public static class CollectionExtensionMethods {
   }
 
   public static Dictionary<K2, V> ToDictionary<K1, K2, V>(this List<Tuple<K1, V>> list)
-    where K1 : IRElementReference where K2 : IRElement where V : class {
+    where K1 : IRElementReference where K2 : IRElement {
     var dict = new Dictionary<K2, V>(list.Count);
 
     foreach (var item in list) {
@@ -197,7 +216,7 @@ public static class CollectionExtensionMethods {
     return true;
   }
 
-
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static int AccumulateValue<K>(this Dictionary<K, int> dict, K key, int value) {
     if (dict.TryGetValue(key, out int currentValue)) {
       int newValue = currentValue + value;
@@ -209,6 +228,7 @@ public static class CollectionExtensionMethods {
     return value;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static long AccumulateValue<K>(this Dictionary<K, long> dict, K key, long value) {
     if (dict.TryGetValue(key, out long currentValue)) {
       long newValue = currentValue + value;
@@ -220,6 +240,7 @@ public static class CollectionExtensionMethods {
     return value;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static TimeSpan AccumulateValue<K>(this Dictionary<K, TimeSpan> dict, K key, TimeSpan value) {
     if (dict.TryGetValue(key, out var currentValue)) {
       // The TimeSpan + operator does an overflow check that is not relevant
@@ -234,6 +255,26 @@ public static class CollectionExtensionMethods {
     return value;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static (TimeSpan, TimeSpan)
+    AccumulateValue<K>(this Dictionary<K, (TimeSpan, TimeSpan)> dict, K key,
+                       TimeSpan value1, TimeSpan value2) {
+    if (dict.TryGetValue(key, out var currentValue)) {
+      // The TimeSpan + operator does an overflow check that is not relevant
+      // (and an exception undesirable), avoid it for some speedup.
+      long sum1 = currentValue.Item1.Ticks + value1.Ticks;
+      long sum2 = currentValue.Item2.Ticks + value2.Ticks;
+      var newValue = (TimeSpan.FromTicks(sum1), TimeSpan.FromTicks(sum2));
+      dict[key] = newValue;
+      return newValue;
+    }
+
+    var pair = (value1, value2);
+    dict[key] = pair;
+    return pair;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static int CollectMaxValue<K>(this Dictionary<K, int> dict, K key, int value) {
     if (dict.TryGetValue(key, out int currentValue)) {
       if (value > currentValue) {
@@ -248,6 +289,7 @@ public static class CollectionExtensionMethods {
     return value;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static double CollectMaxValue<K>(this Dictionary<K, double> dict, K key, double value) {
     if (dict.TryGetValue(key, out double currentValue)) {
       if (value > currentValue) {
@@ -262,6 +304,7 @@ public static class CollectionExtensionMethods {
     return value;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static TimeSpan CollectMaxValue<K>(this Dictionary<K, TimeSpan> dict, K key, TimeSpan value) {
     if (dict.TryGetValue(key, out var currentValue)) {
       if (value > currentValue) {

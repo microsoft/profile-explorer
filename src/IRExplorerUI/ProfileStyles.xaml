@@ -9,6 +9,7 @@
   <SolidColorBrush x:Key="ProfilePercentageBackBrush" Color="#66FFFFFF" />
   <SolidColorBrush x:Key="ProfilePercentageBrush" Color="#88eb8888" />
   <SolidColorBrush x:Key="ProfilePercentageExclusiveBrush" Color="#88A6C8F1" />
+  <SolidColorBrush x:Key="ProfileUncategorizedBrush" Color="#FFA6C8F1" />
 
   <DataTemplate x:Key="TimePercentageColumnValueTemplate">
     <Border
@@ -61,7 +62,7 @@
     </Border>
   </DataTemplate>
 
-  <DataTemplate x:Key="BlockPercentageValueTemplate">
+  <DataTemplate x:Key="ProfileMenuItemValueTemplate">
     <Border
       Padding="0"
       HorizontalAlignment="Stretch"
@@ -73,6 +74,124 @@
         <TextBlock
           MinWidth="{Binding MinTextWidth}"
           Margin="0,0,2,0"
+          VerticalAlignment="Center"
+          FontFamily="{Binding TextFont}"
+          FontSize="{Binding TextSize}"
+          FontWeight="{Binding TextWeight}"
+          Foreground="{Binding TextColor}"
+          Text="{Binding PrefixText}"
+          ToolTip="{Binding ToolTip}" />
+        <Rectangle
+          Height="Auto"
+          Margin="4,0,2,0"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Stretch"
+          Fill="{Binding PercentageBarBackColor}"
+          Stroke="{Binding PercentageBarBorderBrush}"
+          StrokeThickness="{Binding PercentageBarBorderThickness}"
+          ToolTip="{Binding ToolTip}"
+          Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibilityConverter}}">
+          <Rectangle.Width>
+            <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
+              <Binding Path="ValuePercentage" />
+              <Binding FallbackValue="50.0" Path="PercentageBarMaxWidth" />
+            </MultiBinding>
+          </Rectangle.Width>
+        </Rectangle>
+        <TextBlock
+          Margin="4,0,2,0"
+          VerticalAlignment="Center"
+          FontFamily="{Binding TextFont}"
+          FontSize="{Binding TextSize}"
+          FontWeight="{Binding TextWeight}"
+          Foreground="{Binding TextColor}"
+          Text="{Binding ValuePercentage, StringFormat=p2}"
+          ToolTip="{Binding ToolTip}" />
+        <TextBlock
+          Margin="6,0,2,0"
+          VerticalAlignment="Center"
+          FontFamily="{Binding TextFont}"
+          FontSize="{Binding TextSize}"
+          FontWeight="{Binding TextWeight}"
+          Foreground="{Binding TextColor}"
+          Text="{Binding Text}"
+          ToolTip="{Binding ToolTip}" />
+      </StackPanel>
+    </Border>
+  </DataTemplate>
+
+    <DataTemplate x:Key="CheckableProfileMenuItemValueTemplate">
+    <Border
+      Padding="0"
+      HorizontalAlignment="Stretch"
+      VerticalAlignment="Stretch"
+      BorderBrush="{Binding BorderBrush}"
+      BorderThickness="{Binding BorderThickness}">
+      <StackPanel Orientation="Horizontal">
+        <Border Background="{Binding BackColor}"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Width="16" Height="16"></Border>
+        <TextBlock
+          MinWidth="{Binding MinTextWidth}"
+          Margin="4,0,2,0"
+          VerticalAlignment="Center"
+          FontFamily="{Binding TextFont}"
+          FontSize="{Binding TextSize}"
+          FontWeight="Medium"
+          Foreground="{Binding TextColor}"
+          Text="{Binding PrefixText}"
+          ToolTip="{Binding ToolTip}" />
+        <Rectangle
+          Height="Auto"
+          Margin="4,0,2,0"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Stretch"
+          Fill="{Binding PercentageBarBackColor}"
+          Stroke="{Binding PercentageBarBorderBrush}"
+          StrokeThickness="{Binding PercentageBarBorderThickness}"
+          ToolTip="{Binding ToolTip}"
+          Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibilityConverter}}">
+          <Rectangle.Width>
+            <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
+              <Binding Path="ValuePercentage" />
+              <Binding FallbackValue="50.0" Path="PercentageBarMaxWidth" />
+            </MultiBinding>
+          </Rectangle.Width>
+        </Rectangle>
+        <TextBlock
+          Margin="4,0,2,0"
+          VerticalAlignment="Center"
+          FontFamily="{Binding TextFont}"
+          FontSize="{Binding TextSize}"
+          FontWeight="Medium"
+          Foreground="{Binding TextColor}"
+          Text="{Binding ValuePercentage, StringFormat=p2}"
+          ToolTip="{Binding ToolTip}" />
+        <TextBlock
+          Margin="6,0,2,0"
+          VerticalAlignment="Center"
+          FontFamily="{Binding TextFont}"
+          FontSize="{Binding TextSize}"
+          FontWeight="{Binding TextWeight}"
+          Foreground="{Binding TextColor}"
+          Text="{Binding Text}"
+          ToolTip="{Binding ToolTip}" />
+      </StackPanel>
+    </Border>
+  </DataTemplate>
+
+    <DataTemplate x:Key="CategoriesProfileMenuItemValueTemplate">
+    <Border
+      Padding="0"
+      HorizontalAlignment="Stretch"
+      VerticalAlignment="Stretch"
+      BorderBrush="{Binding BorderBrush}"
+      BorderThickness="{Binding BorderThickness}">
+      <StackPanel Orientation="Horizontal" Margin="-10,0,0,0">
+        <TextBlock
+          MinWidth="{Binding MinTextWidth}"
+          Margin="4,0,2,0"
           VerticalAlignment="Center"
           FontFamily="{Binding TextFont}"
           FontSize="{Binding TextSize}"
@@ -145,7 +264,8 @@
         HorizontalAlignment="Left"
         VerticalAlignment="Center"
         FontWeight="Medium"
-        Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}">
+        Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}"
+        ToolTip="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}">
         <TextBlock.Style>
           <Style TargetType="{x:Type TextBlock}">
             <Style.Triggers>
@@ -182,11 +302,12 @@
           </Border>
 
           <TextBlock
-            Margin="4,0,0,0"
+            Margin="4,0,2,0"
             HorizontalAlignment="Left"
             VerticalAlignment="Center"
             Text="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}"
-            TextTrimming="CharacterEllipsis" />
+            TextTrimming="CharacterEllipsis"
+            ToolTip="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}" />
         </Grid>
       </Border>
     </Grid>
@@ -199,7 +320,8 @@
         HorizontalAlignment="Left"
         VerticalAlignment="Center"
         FontWeight="Medium"
-        Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}" />
+        Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}"
+        ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}" />
       <Border
         Height="16"
         Margin="50,0,0,1"
@@ -224,11 +346,57 @@
           </Border>
 
           <TextBlock
-            Margin="4,0,0,0"
+            Margin="4,0,2,0"
             HorizontalAlignment="Left"
             VerticalAlignment="Center"
             Text="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
-            TextTrimming="CharacterEllipsis" />
+            TextTrimming="CharacterEllipsis"
+            ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}" />
+        </Grid>
+      </Border>
+    </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="ModulePercentageTemplate">
+    <Grid HorizontalAlignment="Stretch">
+      <TextBlock
+        Width="45"
+        HorizontalAlignment="Left"
+        VerticalAlignment="Center"
+        FontWeight="Medium"
+        Background="{Binding BackColor}"
+        Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}"
+        ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}" />
+      <Border
+        Height="16"
+        Margin="50,0,0,1"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Center"
+        Background="{StaticResource ProfilePercentageBackBrush}"
+        BorderBrush="Black"
+        BorderThickness="0.5"
+        CornerRadius="0">
+        <Grid>
+          <Border
+            Height="16"
+            HorizontalAlignment="Left"
+            Background="{StaticResource ProfilePercentageExclusiveBrush}"
+            CornerRadius="0">
+            <Border.Width>
+              <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
+                <Binding Path="ExclusivePercentage" />
+                <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+              </MultiBinding>
+            </Border.Width>
+          </Border>
+
+          <TextBlock
+            Margin="4,0,2,0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Center"
+            Text="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
+            TextTrimming="CharacterEllipsis"
+            ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}" />
         </Grid>
       </Border>
     </Grid>

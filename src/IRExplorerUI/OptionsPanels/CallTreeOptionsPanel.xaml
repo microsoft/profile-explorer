@@ -30,9 +30,9 @@
             IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Sync file displayed in the Source File panel with selection" />
-          <Separator Margin="0,4,0,4" />
+          <Separator Margin="0,4,0,4" Background="LightGray"/>
           <TextBlock FontWeight="Medium" Text="Function node" />
-         
+
           <CheckBox
             Content="Auto-expand hottest call path"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
@@ -92,6 +92,12 @@
 
         </StackPanel>
       </TabItem>
+     <TabItem
+       x:Name="MarkingPanel"
+       Header="Marking"
+       Style="{StaticResource TabControlStyle}">
+       <local:FunctionMarkingOptionsPanel x:Name="FunctionMarkingOptionsPanel" />
+     </TabItem>
       <TabItem IsEnabled="False" Header="Details Panel" Style="{StaticResource TabControlStyle}">
       </TabItem>
     </TabControl>

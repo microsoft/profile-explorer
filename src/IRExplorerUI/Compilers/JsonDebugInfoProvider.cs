@@ -91,7 +91,7 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
     return SourceFileDebugInfo.Unknown;
   }
 
-  public SourceLineDebugInfo FindSourceLineByRVA(long rva) {
+  public SourceLineDebugInfo FindSourceLineByRVA(long rva, bool includeInlinees) {
     var funcInfo = FindFunctionByRVA(rva);
 
     if (funcInfo != null && funcInfo.HasSourceLines) {
@@ -130,10 +130,6 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
   }
 
   public void Unload() {
-  }
-
-  public bool CanUseInstance() {
-    return true;
   }
 
   public void Dispose() {

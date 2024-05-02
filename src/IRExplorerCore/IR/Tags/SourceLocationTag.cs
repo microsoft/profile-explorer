@@ -15,7 +15,7 @@ public sealed class SourceLocationTag : ITag {
     Column = column;
   }
 
-  public List<StackFrame> Inlinees { get; set; }
+  public List<SourceStackFrame> Inlinees { get; set; }
   public int Line { get; set; }
   public int Column { get; set; }
   public string FilePath { get; set; }
@@ -23,9 +23,22 @@ public sealed class SourceLocationTag : ITag {
   public string Name => "Source location";
   public TaggedObject Owner { get; set; }
 
+  public List<SourceStackFrame> InlineesReversed {
+    get {
+      var clone = new List<SourceStackFrame>(Inlinees);
+      clone.Reverse();
+      return clone;
+    }
+  }
+
   public void AddInlinee(string function, string filePath, int line, int column) {
-    Inlinees ??= new List<StackFrame>();
-    Inlinees.Add(new StackFrame(function, filePath, line, column));
+    Inlinees ??= new List<SourceStackFrame>();
+    Inlinees.Add(new SourceStackFrame(function, filePath, line, column));
+  }
+
+  public void AddInlinee(SourceStackFrame inlinee) {
+    Inlinees ??= new List<SourceStackFrame>();
+    Inlinees.Add(inlinee);
   }
 
   public void Reset() {

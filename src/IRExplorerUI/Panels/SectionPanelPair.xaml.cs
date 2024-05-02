@@ -512,4 +512,9 @@ public partial class SectionPanelPair : ToolPanelControl {
     return await diffBuilder.AreSectionsDifferent(comparedSections, baseLoader, diffLoader,
                                                   Session.CompilerInfo, true, cancelableTask);
   }
+
+  public void UpdateMarkedFunctions(bool externalCall) {
+    MainPanel.UpdateMarkedFunctions(externalCall);
+    DiffPanel.UpdateMarkedFunctions(externalCall);
+  }
 }

@@ -29,6 +29,9 @@ public class GraphSettings : SettingsBase {
   [ProtoMember(12)] public Color NodeColor { get; set; }
   [ProtoMember(13)] public Color NodeBorderColor { get; set; }
   [ProtoMember(14)] public Color EdgeColor { get; set; }
+  [ProtoMember(15)] public Color PredecessorNodeBorderColor { get; set; }
+  [ProtoMember(16)] public Color SuccesorNodeBorderColor { get; set; }
+  [ProtoMember(17)] public Color SelectedNodeColor { get; set; }
 
   public GraphSettings Clone() {
     return MakeClone();
@@ -47,7 +50,10 @@ public class GraphSettings : SettingsBase {
     TextColor = Colors.Black;
     EdgeColor = Colors.Black;
     NodeColor = Utils.ColorFromString("#CBCBCB");
+    SelectedNodeColor = Utils.ColorFromString("#AEDCF4");
     NodeBorderColor = Utils.ColorFromString("#000000");
+    PredecessorNodeBorderColor = Utils.ColorFromString("#6927CC");
+    SuccesorNodeBorderColor = Utils.ColorFromString("#008230");
   }
 
   public override bool Equals(object obj) {
@@ -55,6 +61,7 @@ public class GraphSettings : SettingsBase {
            TextColor.Equals(options.TextColor) &&
            EdgeColor.Equals(options.EdgeColor) &&
            NodeColor.Equals(options.NodeColor) &&
+           SelectedNodeColor == options.SelectedNodeColor &&
            NodeBorderColor.Equals(options.NodeBorderColor) &&
            SyncSelectedNodes == options.SyncSelectedNodes &&
            SyncMarkedNodes == options.SyncMarkedNodes &&
@@ -65,7 +72,9 @@ public class GraphSettings : SettingsBase {
            ColorizeEdges == options.ColorizeEdges &&
            HighlightConnectedNodesOnHover == options.HighlightConnectedNodesOnHover &&
            HighlightConnectedNodesOnSelection == options.HighlightConnectedNodesOnSelection &&
-           BackgroundColor.Equals(options.BackgroundColor);
+           BackgroundColor.Equals(options.BackgroundColor) &&
+           PredecessorNodeBorderColor == options.PredecessorNodeBorderColor &&
+           SuccesorNodeBorderColor == options.SuccesorNodeBorderColor;
   }
 
   protected virtual GraphSettings MakeClone() {
@@ -85,7 +94,10 @@ public class GraphSettings : SettingsBase {
            $"BackgroundColor: {BackgroundColor}\n" +
            $"TextColor: {TextColor}\n" +
            $"NodeColor: {NodeColor}\n" +
+           $"SelectedNodeColor: {SelectedNodeColor}\n" +
            $"NodeBorderColor: {NodeBorderColor}\n" +
+           $"PredecessorNodeBorderColor: {PredecessorNodeBorderColor}\n" +
+           $"SuccessorNodeBorderColor: {SuccesorNodeBorderColor}\n" +
            $"EdgeColor: {EdgeColor}";
   }
 }
