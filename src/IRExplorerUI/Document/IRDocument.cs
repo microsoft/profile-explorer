@@ -584,17 +584,16 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   public void UnloadDocument() {
+    ResetRenderers();
+    Text = "";
+    SectionText = ReadOnlyMemory<char>.Empty;
+    ProfileColumnData = null;
     Section = null;
     Function = null;
     selectedRemark_ = null;
     currentExprElement_ = null;
     foldedBlocks_ = null;
     ClearSelectedElements();
-
-    ResetRenderers();
-    Text = "";
-    SectionText = ReadOnlyMemory<char>.Empty;
-    ProfileColumnData = null;
   }
 
   public async Task<bool> InitializeFromDocument(IRDocument doc, bool copyTemporaryHighlighting = true,

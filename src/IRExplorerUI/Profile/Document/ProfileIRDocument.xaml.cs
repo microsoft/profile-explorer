@@ -28,11 +28,12 @@ using IRExplorerUI.Utilities;
 namespace IRExplorerUI.Profile.Document;
 
 public class ProfileSourceSyntaxNode {
-  private static readonly IconDrawing loopIcon;
-  private static readonly IconDrawing thenIcon;
-  private static readonly IconDrawing elseIcon;
-  private static readonly IconDrawing switchCaseIcon;
-  private static readonly IconDrawing switchIcon;
+  private static readonly IconDrawing LoopIcon;
+  private static readonly IconDrawing ThenIcon;
+  private static readonly IconDrawing ElseIcon;
+  private static readonly IconDrawing SwitchCaseIcon;
+  private static readonly IconDrawing SwitchIcon;
+  
   public SourceSyntaxNode SyntaxNode { get; set; }
   public int Level { get; set; }
   public ProfileSourceSyntaxNode Parent { get; set; }
@@ -41,19 +42,19 @@ public class ProfileSourceSyntaxNode {
   public TimeSpan Weight { get; set; }
   public TimeSpan BodyWeight { get; set; }
   public TimeSpan ConditionWeight { get; set; }
-  public IconElementOverlay Overlay { get; set; }
-
+  public PerformanceCounterValueSet Counters { get; set; }
+  
   public SourceSyntaxNodeKind Kind => SyntaxNode.Kind;
   public TextLocation Start { get; set; }
   public TextLocation End { get; set; }
   public int Length => End.Offset - Start.Offset;
 
   static ProfileSourceSyntaxNode() {
-    loopIcon = IconDrawing.FromIconResource("LoopIcon");
-    thenIcon = IconDrawing.FromIconResource("ThenArrowIcon");
-    elseIcon = IconDrawing.FromIconResource("ElseArrowIcon");
-    switchIcon = IconDrawing.FromIconResource("SwitchArrowIcon");
-    switchCaseIcon = IconDrawing.FromIconResource("SwitchCaseArrowIcon");
+    LoopIcon = IconDrawing.FromIconResource("LoopIcon");
+    ThenIcon = IconDrawing.FromIconResource("ThenArrowIcon");
+    ElseIcon = IconDrawing.FromIconResource("ElseArrowIcon");
+    SwitchIcon = IconDrawing.FromIconResource("SwitchArrowIcon");
+    SwitchCaseIcon = IconDrawing.FromIconResource("SwitchCaseArrowIcon");
   }
 
   public ProfileSourceSyntaxNode(SourceSyntaxNode syntaxNode) {
@@ -65,11 +66,11 @@ public class ProfileSourceSyntaxNode {
 
   public IconDrawing GetIcon() {
     return Kind switch {
-      SourceSyntaxNodeKind.Loop => loopIcon,
-      SourceSyntaxNodeKind.If => thenIcon,
-      SourceSyntaxNodeKind.Else => elseIcon,
-      SourceSyntaxNodeKind.Switch => switchIcon,
-      SourceSyntaxNodeKind.SwitchCase => switchCaseIcon,
+      SourceSyntaxNodeKind.Loop => LoopIcon,
+      SourceSyntaxNodeKind.If => ThenIcon,
+      SourceSyntaxNodeKind.Else => ElseIcon,
+      SourceSyntaxNodeKind.Switch => SwitchIcon,
+      SourceSyntaxNodeKind.SwitchCase => SwitchCaseIcon,
       _ => null
     };
   }
@@ -638,6 +639,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     funcTreeNoe.WalkNodes((node, depth) => {
       IRElement startElement = null;
       var weight = TimeSpan.Zero;
+      var counters = new PerformanceCounterValueSet();
       List<IRElement> elements = new();
 
       // Collect the elements for the source lines that are part of the node
@@ -675,6 +677,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
           if (sourceProcessingResult_.SourceLineWeight.TryGetValue(line, out var w)) {
             weight += w;
           }
+          
+          
+          if (sourceProcessingResult_.SourceLineCounters.TryGetValue(line, out var c)) {
+            counters.Add(c);
+          }
         }
       }
 
@@ -686,6 +693,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
           node.Kind != SourceSyntaxNodeKind.Other) {
         var profileNode = new ProfileSourceSyntaxNode(node) {
           Weight = weight,
+          Counters = counters,
           StartElement = startElement,
           Elements = elements
         };
@@ -905,7 +913,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     
     // Annotate the source lines with the profiling data based on the code statements.
     if (syntaxNodes != null) {
-      await MarkSourceFileStructure(syntaxNodes, originalSourceText_, section.ParentFunction);
+      await MarkSourceFileStructure(syntaxNodes, sourceProfileResult_,
+                                    originalSourceText_, section.ParentFunction);
     }
     
     TextView.SuspendUpdate();
@@ -940,8 +949,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async Task MarkSourceFileStructure(List<ProfileSourceSyntaxNode> nodes,
+                                             SourceLineProfileResult sourceProfileResult,
                                              ReadOnlyMemory<char> sourceText, IRTextFunction function) {
-    bool showStatementOverlays = ((SourceFileSettings)settings_).ShowSourceStatementsOnMargin;
     var profileItems = new List<ProfileMenuItem>();
     var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings_.ProfileMarkerSettings;
@@ -952,89 +961,16 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     OutlineMenu.Items.Clear();
 
     foreach (var node in nodes) {
-      double weightPercentage = funcProfile.ScaleWeight(node.Weight);
-      var nodeText = node.SyntaxNode.GetText(sourceText);
-
-      if (node.IsMarkedNode) {
-        if (node.StartElement != null) {
-          var color = App.Settings.DocumentSettings.BackgroundColor;
-
-          if (node.StartElement.ParentBlock != null &&
-              !node.StartElement.ParentBlock.HasEvenIndexInFunction) {
-            color = App.Settings.DocumentSettings.AlternateBackgroundColor;
-          }
-
-          // Show statement time in the columns, but only if
-          // it doesn't replace a large enough value already associated with the line.
-          int existingIndex = sourceProfileResult_.Result.SampledElements.FindIndex((item) => item.Item1 == node.StartElement);
-          bool replace = true;
-          
-          if (existingIndex != -1) {
-            var existingWeight = sourceProfileResult_.Result.SampledElements[existingIndex].Item2;
-            double existingWeightPercentage = funcProfile.ScaleWeight(existingWeight);
-
-            replace = !markerSettings.IsVisibleValue(existingWeightPercentage, 2.0);
-
-            if (replace) {
-              sourceProfileResult_.Result.SampledElements.RemoveAt(existingIndex);
-            }
-          }
-
-          if (replace) {
-            sourceProfileResult_.Result.SampledElements.Add((node.StartElement, node.Weight));
-          }
-
-          var icon = node.GetIcon();
-
-          var label =
-            $"{node.GetKindText()}: {weightPercentage.AsPercentageString()} ({node.Weight.AsMillisecondsString()})";
-          string overalyTooltip = node.GetTooltip(funcProfile);
-          //? TODO: Extract out the menu outline part
-
-          if (showStatementOverlays) {
-            var overlay = TextView.RegisterIconElementOverlay(node.StartElement, icon, 16, 16,
-              label, overalyTooltip, true);
-            node.Overlay = overlay;
-            //? overlay.Tag = ProfileOverlayTag;
-            overlay.Tag = node;
-            overlay.Background = color.AsBrush();
-            overlay.IsLabelPinned = false;
-            overlay.AllowLabelEditing = false;
-            overlay.UseLabelBackground = true;
-            overlay.ShowBackgroundOnMouseOverOnly = true;
-            overlay.ShowBorderOnMouseOverOnly = true;
-            overlay.AlignmentX = HorizontalAlignment.Left;
-            overlay.MarginY = 2;
-            (overlay.TextColor, overlay.TextWeight) = markerSettings.PickBlockOverlayStyle(weightPercentage);
-
-            overlay.OnHover += (s, e) => {
-              if (node.Elements != null) {
-                SelectSyntaxNodeLineRange(node);
-              }
-            };
-
-            overlay.OnHoverEnd += (sender, args) => {
-              TextView.ClearSelectedElements();
-            };
-
-            //? TODO: Click - proper selection, easy to Ctrl+C 
-
-            if (node.StartElement is InstructionIR instr) {
-              // Place before the call opcode.
-              int lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
-              overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
-                App.Settings.DocumentSettings.FontSize).Width - 20;
-            }
-          }
-        }
-      }
+      MarkSourceSyntaxNode(node, sourceProfileResult, funcProfile, markerSettings);
 
       // Build outline menu.
-      //? TODO: Extract
+      double weightPercentage = funcProfile.ScaleWeight(node.Weight);
+
       if (!markerSettings.IsVisibleValue(weightPercentage)) {
         continue;
       }
       
+      // Append | chars for alignment based on node level.
       string nesting = "";
 
       for (int i = 0; i < node.Level; i++) {
@@ -1052,9 +988,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         return count;
       }
 
+      // Append node start line number.
       var line = node.Kind != SourceSyntaxNodeKind.Function ? node.Start.Line.ToString() : "";
       line = line.PadRight(CountDigits(TextView.LineCount));
-
+      
+      var nodeText = node.SyntaxNode.GetText(sourceText);
       var preview = MakeSyntaxNodePreviewText(nodeText, 50);
       var title = $"{line} {nesting}{node.GetTextIcon()} {preview}";
       var tooltip = nodeText;
@@ -1083,7 +1021,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         Tag = node,
         Header = value,
         IsEnabled = node.Kind != SourceSyntaxNodeKind.Function,
-        StaysOpenOnClick = true,
         HeaderTemplate = valueTemplate,
         Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
       };
@@ -1094,16 +1031,109 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
           TextView.SelectLine(syntaxNode.StartElement.TextLocation.Line + 1);
         }
       };
+
+      item.MouseEnter += (sender, args) => {
+        if(sender is MenuItem menuItem &&
+          menuItem.Tag is ProfileSourceSyntaxNode syntaxNode) {
+          SelectSyntaxNodeLineRange(syntaxNode);
+        }
+      };
+
+      item.MouseLeave += (sender, args) => {
+        TextView.ClearSelectedElements();
+      };
       
       profileItems.Add(value);
       OutlineMenu.Items.Add(item);
-
       double width = Utils.MeasureString(title, settings_.FontName, settings_.FontSize).Width;
       maxWidth = Math.Max(width, maxWidth);
     }
 
     foreach (var value in profileItems) {
       value.MinTextWidth = maxWidth;
+    }
+  }
+
+  private void MarkSourceSyntaxNode(ProfileSourceSyntaxNode node,
+                                    SourceLineProfileResult sourceProfileResult, FunctionProfileData funcProfile,
+                                    ProfileDocumentMarkerSettings markerSettings) {
+    if (!node.IsMarkedNode || 
+        node.StartElement == null) return;
+    
+    // Show statement time in the columns, but only if
+    // it doesn't replace a large enough value already associated with the line.
+    int existingIndex = sourceProfileResult.Result.SampledElements.FindIndex((item) => item.Item1 == node.StartElement);
+    bool mark = true;
+
+    if (existingIndex != -1) {
+      var existingWeight = sourceProfileResult.Result.SampledElements[existingIndex].Item2;
+      double existingWeightPercentage = funcProfile.ScaleWeight(existingWeight);
+
+      mark = !markerSettings.IsVisibleValue(existingWeightPercentage, 2.0);
+
+      if (mark) {
+        sourceProfileResult.Result.SampledElements.RemoveAt(existingIndex);
+        sourceProfileResult.Result.CounterElements.RemoveAll((item) => item.Item1 == node.StartElement);
+      }
+    }
+
+    if (mark) {
+      sourceProfileResult.Result.SampledElements.Add((node.StartElement, node.Weight));
+      
+      if (node.Counters is {Count: > 0}) {
+        sourceProfileResult.Result.CounterElements.Add((node.StartElement, node.Counters));
+      }
+    }
+
+    bool showStatementOverlays = ((SourceFileSettings)settings_).ShowSourceStatementsOnMargin;
+
+    if (showStatementOverlays) {
+      CreateFileStructureOverlay(node, funcProfile, markerSettings);
+    }
+  }
+
+  private void CreateFileStructureOverlay(ProfileSourceSyntaxNode node,
+                                          FunctionProfileData funcProfile,
+                                          ProfileDocumentMarkerSettings markerSettings) {
+    double weightPercentage = funcProfile.ScaleWeight(node.Weight);
+    var color = App.Settings.DocumentSettings.BackgroundColor;
+
+    if (node.StartElement.ParentBlock != null &&
+        !node.StartElement.ParentBlock.HasEvenIndexInFunction) {
+      color = App.Settings.DocumentSettings.AlternateBackgroundColor;
+    }
+
+    var label = $"{node.GetKindText()}: {weightPercentage.AsPercentageString()} ({node.Weight.AsMillisecondsString()})";
+    string overalyTooltip = node.GetTooltip(funcProfile);
+    var overlay = TextView.RegisterIconElementOverlay(node.StartElement, node.GetIcon(), 16, 16,
+                                                      label, overalyTooltip, true);
+    overlay.Tag = node;
+    overlay.Background = color.AsBrush();
+    overlay.IsLabelPinned = false;
+    overlay.AllowLabelEditing = false;
+    overlay.UseLabelBackground = true;
+    overlay.ShowBackgroundOnMouseOverOnly = true;
+    overlay.ShowBorderOnMouseOverOnly = true;
+    overlay.AlignmentX = HorizontalAlignment.Left;
+    overlay.MarginY = 2;
+    (overlay.TextColor, overlay.TextWeight) = markerSettings.PickBlockOverlayStyle(weightPercentage);
+
+    //? TODO: Click - proper selection, easy to Ctrl+C 
+    overlay.OnHover += (s, e) => {
+      if (node.Elements != null) {
+        SelectSyntaxNodeLineRange(node);
+      }
+    };
+
+    overlay.OnHoverEnd += (sender, args) => {
+      TextView.ClearSelectedElements();
+    };
+
+    if (node.StartElement is InstructionIR instr) {
+      // Place before the call opcode.
+      int lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
+      overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
+        App.Settings.DocumentSettings.FontSize).Width - 20;
     }
   }
 
@@ -1126,6 +1156,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
           var cell = pair.Value;
 
           if (showIcon) {
+            // Override default icon.
             cell.Icon = node.GetIcon()?.Icon;
           }
 
@@ -1150,13 +1181,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     };
   }
 
-  private void SelectSyntaxNodeLineRange(ProfileSourceSyntaxNode node)
-  {
-    var backColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.2);
+  private void SelectSyntaxNodeLineRange(ProfileSourceSyntaxNode node) {
+    var backColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.25);
     TextView.SelectElementsInLineRange(node.Start.Line, node.End.Line,
       MapFromOriginalSourceLineNumber, backColor);
   }
-
+  
   private void SetupSourceAssembly() {
     
     // Replace the default line number left margin with one
