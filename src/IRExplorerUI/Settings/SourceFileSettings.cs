@@ -29,6 +29,8 @@ public class SourceFileSettings : TextViewSettingsBase {
   public bool ShowSourceStatements { get; set; }
   [ProtoMember(8)]
   public bool ShowSourceStatementsOnMargin { get; set; }
+  [ProtoMember(9)]
+  public bool ReplaceInsignificantSourceStatements { get; set; }
   
   public override void Reset() {
     base.Reset();
@@ -39,6 +41,7 @@ public class SourceFileSettings : TextViewSettingsBase {
     ShowInlineAssembly = true;
     ShowSourceStatements = true;
     ShowSourceStatementsOnMargin = true;
+    ReplaceInsignificantSourceStatements = true;
     FinderSettings.Reset();
   }
 
@@ -62,6 +65,7 @@ public class SourceFileSettings : TextViewSettingsBase {
            AutoExpandInlineAssembly == settings.AutoExpandInlineAssembly &&
            ShowSourceStatements == settings.ShowSourceStatements &&
            ShowSourceStatementsOnMargin == settings.ShowSourceStatementsOnMargin &&
+           ReplaceInsignificantSourceStatements == settings.ReplaceInsignificantSourceStatements &&
            FinderSettings.Equals(settings.FinderSettings);
   }
 }

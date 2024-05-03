@@ -43,6 +43,7 @@ public class ProfileSourceSyntaxNode {
   public TimeSpan BodyWeight { get; set; }
   public TimeSpan ConditionWeight { get; set; }
   public PerformanceCounterValueSet Counters { get; set; }
+  public bool ShowInDocumentColumns { get; set; }
   
   public SourceSyntaxNodeKind Kind => SyntaxNode.Kind;
   public TextLocation Start { get; set; }
@@ -104,16 +105,15 @@ public class ProfileSourceSyntaxNode {
     tooltip.Append($"\nWeight: {funcProfile.ScaleWeight(Weight).AsPercentageString()}");
     tooltip.Append($" ({Weight.AsMillisecondsString()})");
 
-    if (SyntaxNode.Kind == SourceSyntaxNodeKind.If) {
-      if (ConditionWeight != TimeSpan.Zero) {
-        tooltip.Append($"\n    Condition: {funcProfile.ScaleWeight(ConditionWeight).AsPercentageString()}");
-        tooltip.Append($" ({ConditionWeight.AsMillisecondsString()})");
-      }
-      
-      if (BodyWeight != TimeSpan.Zero) {
-        tooltip.Append($"\n    Body: {funcProfile.ScaleWeight(BodyWeight).AsPercentageString()}");
-        tooltip.Append($" ({BodyWeight.AsMillisecondsString()})");
-      }
+    if ((SyntaxNode.Kind == SourceSyntaxNodeKind.If ||
+         SyntaxNode.Kind == SourceSyntaxNodeKind.Loop) &&
+        ConditionWeight != TimeSpan.Zero &&
+        BodyWeight != TimeSpan.Zero) {
+      tooltip.Append($"\n    Condition: {funcProfile.ScaleWeight(ConditionWeight).AsPercentageString()}");
+      tooltip.Append($" ({ConditionWeight.AsMillisecondsString()})");
+    
+      tooltip.Append($"\n    Body: {funcProfile.ScaleWeight(BodyWeight).AsPercentageString()}");
+      tooltip.Append($" ({BodyWeight.AsMillisecondsString()})");
     }
 
     return tooltip.ToString();
@@ -597,6 +597,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
 
   string MakeSyntaxNodePreviewText(string text, int maxLength) {
+    if (string.IsNullOrEmpty(text)) {
+      return "";
+    }
+    
+    // Extract until either a new line or the max length is reached.
     int i = 0;
 
     while (i < text.Length && text[i] != '\n') {
@@ -617,8 +622,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private List<ProfileSourceSyntaxNode> 
     PrepareSourceSyntaxTree(string sourceText, SourceLineProcessingResult sourceProcessingResult,
+                            SourceLineProfileResult sourceProfileResult,
                             SourceCodeLanguage sourceLanguage) {
-    var parser = new SourceCodeParser(sourceLanguage_);
+    var parser = new SourceCodeParser(sourceLanguage);
     var tree = parser.Parse(sourceText);
     if (tree == null) return null;
 
@@ -667,19 +673,20 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         }
       }
 
+      // Accumulate profile values in range.
       for (int line = startLine; line <= endLine; line++) {
         int mappedLine = MapFromOriginalSourceLineNumber(line);
 
-        if (sourceProfileResult_.LineToElementMap.TryGetValue(mappedLine, out var element)) {
+        if (sourceProfileResult.LineToElementMap.TryGetValue(mappedLine, out var element)) {
           startElement ??= element;
           elements.Add(element);
 
-          if (sourceProcessingResult_.SourceLineWeight.TryGetValue(line, out var w)) {
+          if (sourceProcessingResult.SourceLineWeight.TryGetValue(line, out var w)) {
             weight += w;
           }
           
           
-          if (sourceProcessingResult_.SourceLineCounters.TryGetValue(line, out var c)) {
+          if (sourceProcessingResult.SourceLineCounters.TryGetValue(line, out var c)) {
             counters.Add(c);
           }
         }
@@ -807,6 +814,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to load source file {sourceInfo.FilePath}: {ex.Message}");
+      Trace.TraceError(ex.StackTrace);
+      Trace.Flush();
       return false;
     }
   }
@@ -899,7 +908,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     if (showSourceStatements) {
       syntaxNodes = await Task.Run(() =>
-        PrepareSourceSyntaxTree(sourceText_.ToString(), sourceProcessingResult_, sourceLanguage_));
+        PrepareSourceSyntaxTree(sourceText_.ToString(), sourceProcessingResult_,
+                                sourceProfileResult_, sourceLanguage_));
     }
 
     // Replace the text after the assembly lines were inserted.
@@ -1063,14 +1073,18 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     // Show statement time in the columns, but only if
     // it doesn't replace a large enough value already associated with the line.
     int existingIndex = sourceProfileResult.Result.SampledElements.FindIndex((item) => item.Item1 == node.StartElement);
+    bool replaceOnlyInsignificant = ((SourceFileSettings)settings_).ReplaceInsignificantSourceStatements;
+    bool failedReplaceAttempt = false;
     bool mark = true;
 
     if (existingIndex != -1) {
       var existingWeight = sourceProfileResult.Result.SampledElements[existingIndex].Item2;
       double existingWeightPercentage = funcProfile.ScaleWeight(existingWeight);
 
-      mark = !markerSettings.IsVisibleValue(existingWeightPercentage, 2.0);
-
+      mark = !replaceOnlyInsignificant || // Always replace.
+             !markerSettings.IsVisibleValue(existingWeightPercentage, 2.0);
+      failedReplaceAttempt = !mark;
+      
       if (mark) {
         sourceProfileResult.Result.SampledElements.RemoveAt(existingIndex);
         sourceProfileResult.Result.CounterElements.RemoveAll((item) => item.Item1 == node.StartElement);
@@ -1078,6 +1092,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     if (mark) {
+      node.ShowInDocumentColumns = true;
       sourceProfileResult.Result.SampledElements.Add((node.StartElement, node.Weight));
       
       if (node.Counters is {Count: > 0}) {
@@ -1086,8 +1101,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
 
     bool showStatementOverlays = ((SourceFileSettings)settings_).ShowSourceStatementsOnMargin;
-
-    if (showStatementOverlays) {
+    
+    if (showStatementOverlays || (failedReplaceAttempt && replaceOnlyInsignificant)) {
       CreateFileStructureOverlay(node, funcProfile, markerSettings);
     }
   }
@@ -1144,7 +1159,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     if (sourceColumnData.GetColumn(ProfileDocumentMarker.TimePercentageColumnDefinition) is var timeColumn) {
       foreach (var node in nodes) {
-        if (node.StartElement == null || !node.IsMarkedNode) {
+        if (node.StartElement == null || !node.IsMarkedNode ||
+            !node.ShowInDocumentColumns) {
           continue;
         }
 
@@ -1484,6 +1500,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void Caret_PositionChanged(object sender, EventArgs e) {
+    if (!TextView.IsLoaded) {
+      return; // Event still triggered when unloading document, ignore.
+    }
+    
     if (columnsVisible_) {
       ignoreNextRowSelectedEvent_ = true;
       var line = TextView.Document.GetLineByOffset(TextView.TextArea.Caret.Offset);

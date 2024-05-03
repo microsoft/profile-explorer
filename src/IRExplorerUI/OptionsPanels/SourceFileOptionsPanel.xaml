@@ -27,22 +27,29 @@
             ToolTip="Display the associated assembly instructions for each source line" />
           <CheckBox
             Margin="20,2,0,0"
-            Content="Auto-expand assembly sections"
+            Content="Auto-expand all assembly sections"
             IsEnabled="{Binding ElementName=AssemblyCheckBox, Path=IsChecked}"
             IsChecked="{Binding Path=AutoExpandInlineAssembly, Mode=TwoWay}"
             ToolTip="Display the assembly sections in expanded state by default" />
           <CheckBox
             x:Name="StatementsCheckBox"
             Margin="0,4,0,0"
-            Content="Show source file statement annotations"
+            Content="Show source code statement annotations"
             IsChecked="{Binding Path=ShowSourceStatements, Mode=TwoWay}"
-            ToolTip="Parse source file and mark loops and if/else/switch statements in profiling columns" />
+            ToolTip="Parse source file and mark loops and if/else/switch statements in the profiling columns" />
+          <CheckBox
+            Margin="20,2,0,0"
+            Content="Replace only insignificant column values"
+            IsEnabled="{Binding ElementName=StatementsCheckBox, Path=IsChecked}"
+            IsChecked="{Binding Path=ReplaceInsignificantSourceStatements, Mode=TwoWay}"
+            ToolTip="Show annotations in the profiling columns only if replacing insignificant values&#x0a;If not replaced, annotation is displayed in document left margin" />
+
           <CheckBox
             Margin="20,2,0,0"
             Content="Show statement annotations on left margin"
             IsEnabled="{Binding ElementName=StatementsCheckBox, Path=IsChecked}"
             IsChecked="{Binding Path=ShowSourceStatementsOnMargin, Mode=TwoWay}"
-            ToolTip="Show the statement annotations as icons in the left document margin" />
+            ToolTip="Show the statement annotations as icons in the document left margin" />
 
           <CheckBox
             Margin="0,4,0,0"

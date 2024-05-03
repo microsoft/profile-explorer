@@ -156,7 +156,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public bool disableOverlayEvents_;
   private ScrollBar docVerticalScrollBar_;
   private bool duringDiffModeSetup_;
-  private bool duringSectionLoading_;
   private bool eventSetupDone_;
   private HighlightingStyleCollection expressionOperandStyle_;
   private HighlightingStyleCollection expressionStyle_;
@@ -252,8 +251,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public IRTextSection Section { get; set; }
   public ReadOnlyMemory<char> SectionText { get; set; }
   public bool DiffModeEnabled { get; set; }
-  public bool DuringSectionLoading => duringSectionLoading_;
-  public bool IsLoaded => Function != null;
+  public bool IsLoaded { get; set; }
+  public bool DuringSectionLoading { get; set; }
 
   public TextViewSettingsBase Settings {
     get => settings_;
@@ -585,6 +584,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public void UnloadDocument() {
     ResetRenderers();
+    IsLoaded = false;
     Text = "";
     SectionText = ReadOnlyMemory<char>.Empty;
     ProfileColumnData = null;
@@ -672,7 +672,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     // If the section loading is not done in two stages,
     // run the first stage now to initialize the text view.
-    if (!duringSectionLoading_) {
+    if (!DuringSectionLoading) {
       PreloadSection(parsedSection);
     }
 
@@ -993,7 +993,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public void PreloadSection(ParsedIRTextSection parsedSection) {
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Start setup for {parsedSection}");
-    duringSectionLoading_ = true;
+    DuringSectionLoading = true;
     Section = parsedSection.Section;
     Function = parsedSection.Function;
     ignoreNextCaretEvent_ = true;
@@ -1924,6 +1924,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void ClearTemporaryHighlighting(bool clearSelected = true) {
+    if (!IsLoaded) {
+      return;
+    }
+    
     HideHoverHighlighting();
 
     if (clearSelected) {
@@ -2051,7 +2055,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private IRElement FindElementAtOffset(int offset) {
     // Exit if the element lists are still being computed or
     // for source code documents.
-    if (duringSectionLoading_ || Function == null) {
+    if (DuringSectionLoading || Function == null) {
       return null;
     }
 
@@ -2911,10 +2915,11 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
     CreateRightMarkerMargin();
     MarkLoopBlocks();
+    DuringSectionLoading = false;
+    IsLoaded = true;
 
     UpdateHighlighting();
     NotifyPropertyChanged("Blocks"); // Force block dropdown to update.
-    duringSectionLoading_ = false;
 
     //? TODO: Check if other sections have marked elements and try to mark same ones
     //!  - session can be queried
@@ -4115,7 +4120,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   private void UpdateHighlighting() {
-    if (updateSuspended_) {
+    if (updateSuspended_ || !IsLoaded) {
       return;
     }
 
