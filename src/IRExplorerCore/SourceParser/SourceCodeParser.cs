@@ -81,17 +81,22 @@ public class SourceCodeParser {
 
         switch (node.type()) {
           case "if_statement":
+          case "if_expression": { // Rust
             nodeKind = SourceSyntaxNodeKind.If;
             break;
-          case "condition_clause":
+          }
+          case "condition_clause": {
             nodeKind = SourceSyntaxNodeKind.Condition;
             break;
-          case "else_clause":
+          }
+          case "else_clause": {
             nodeKind = SourceSyntaxNodeKind.Else;
             break;
+          }
           case "for_statement":
           case "for_range_loop":
-          case "for_each_statement": { // C#
+          case "for_each_statement": // C#
+          case "for_expression": { // Rust
             nodeKind = SourceSyntaxNodeKind.Loop;
             break;
           }
@@ -100,12 +105,14 @@ public class SourceCodeParser {
             nodeKind = SourceSyntaxNodeKind.Loop;
             break;
           }
-          case "switch_statement": {
+          case "switch_statement": 
+          case "match_expression": { // Rust
             nodeKind = SourceSyntaxNodeKind.Switch;
             break;
           }
           case "case_statement":
-          case "switch_section": { // C#
+          case "switch_section": // C#
+          case "match_arm": { // Rust
             nodeKind = SourceSyntaxNodeKind.SwitchCase;
             break;
           }
@@ -116,15 +123,18 @@ public class SourceCodeParser {
           }
           case "function_definition":
           case "method_declaration": // C#
-          case "local_function_statement": { // C#
+          case "local_function_statement": // C#
+          case "function_item": { // Rust
             nodeKind = SourceSyntaxNodeKind.Function;
             break;
           }
-          case "call_expression": {
+          case "call_expression": 
+          case "macro_invocation": { // Rust
             nodeKind = SourceSyntaxNodeKind.Call;
             break;
           }
-          case "translation_unit": {
+          case "translation_unit":
+          case "source_file": { // Rust
             nodeKind = SourceSyntaxNodeKind.Root;
             break;
           }
