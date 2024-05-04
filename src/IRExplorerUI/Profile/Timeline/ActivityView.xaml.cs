@@ -448,15 +448,15 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
   }
 
   private SampleTimeRangeInfo GetSelectedTimeRange() {
+    var (startIndex, endIndex) = TimeRangeToSampleIndex(selectionStartTime_, selectionEndTime_);
     return new SampleTimeRangeInfo(selectionStartTime_ + startTime_, selectionEndTime_ + startTime_,
-                                   TimeToSampleIndex(selectionStartTime_, SelectionTimeDiff),
-                                   TimeToSampleIndexBack(selectionEndTime_, SelectionTimeDiff), ThreadId);
+                                   startIndex, endIndex, ThreadId);
   }
 
   private SampleTimeRangeInfo GetFilteredTimeRange() {
+    var (startIndex, endIndex) = TimeRangeToSampleIndex(filterStartTime_, filterEndTime_);
     return new SampleTimeRangeInfo(filterStartTime_ + startTime_, filterEndTime_ + startTime_,
-                                   TimeToSampleIndex(selectionStartTime_, SelectionTimeDiff),
-                                   TimeToSampleIndexBack(selectionEndTime_, SelectionTimeDiff), ThreadId);
+                                   startIndex, endIndex, ThreadId);
   }
 
   private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
@@ -1101,6 +1101,18 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
     return slices_[0].Slices[sliceIndex];
+  }
+
+  private (int, int) TimeRangeToSampleIndex(TimeSpan startTime, TimeSpan endTime) {
+    var timeRange = endTime - startTime;
+    int startIndex = TimeToSampleIndex(startTime, timeRange);
+    int endIndex = TimeToSampleIndexBack(endTime, timeRange);
+
+    if (startIndex > endIndex) {
+      (startIndex, endIndex) = (endIndex, startIndex);
+    }
+
+    return (startIndex, endIndex);
   }
 
   private int TimeToSampleIndex(TimeSpan time, TimeSpan timeRange) {

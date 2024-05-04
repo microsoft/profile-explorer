@@ -98,6 +98,15 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
   }
 
+
+  public bool SourceFileLoaded {
+    get => sourceFileLoaded_;
+    set {
+      sourceFileLoaded_ = value;
+      OnPropertyChanged();
+    }
+  }
+
   public event PropertyChangedEventHandler PropertyChanged;
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
@@ -201,7 +210,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       return;
     }
 
-    sourceFileLoaded_ = false; // Force a reload.
+    SourceFileLoaded = false; // Force a reload.
     await LoadSourceFileForFunction(section_.ParentFunction, null);
   }
 
@@ -309,7 +318,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private bool ShouldReloadFunction(IRTextFunction function, ProfileSampleFilter profileFilter) {
-    if (!sourceFileLoaded_) {
+    if (!SourceFileLoaded) {
       return true;
     }
 
@@ -321,7 +330,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private bool ShouldReloadInlinee(SourceStackFrame inlinee, ProfileSampleFilter profileFilter) {
-    if (!sourceFileLoaded_ || currentInlinee_ == null) {
+    if (!SourceFileLoaded || currentInlinee_ == null) {
       return true;
     }
 
@@ -344,7 +353,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
     private void HandleLoadedSourceFile(SourceFileDebugInfo sourceInfo, IRTextFunction function) {
     SetPanelName(sourceInfo.OriginalFilePath);
-    sourceFileLoaded_ = true;
+    SourceFileLoaded = true;
     sourceFileFunc_ = function;
     sourceFilePath_ = sourceInfo.FilePath;
   }
@@ -352,7 +361,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private async Task HandleMissingSourceFile(string failureText) {
     await ProfileTextView.HandleMissingSourceFile(failureText);
     SetPanelName("");
-    sourceFileLoaded_ = false;
+    SourceFileLoaded = false;
     sourceFileFunc_ = null;
   }
 
@@ -364,7 +373,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private void ResetState() {
     ProfileTextView.Reset();
     section_ = null;
-    sourceFileLoaded_ = false;
+    SourceFileLoaded = false;
     sourceFileFunc_ = null;
     currentInlinee_ = null;
     associatedDocument_ = null;
@@ -373,7 +382,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   public override async void OnElementSelected(IRElementEventArgs e) {
-    if (!sourceFileLoaded_) {
+    if (!SourceFileLoaded) {
       return;
     }
 
@@ -491,7 +500,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   private void ExpandAssemblyButton_Click(object sender, RoutedEventArgs e) {
     ProfileTextView.ExpandBlockFoldings();
- 
+
   }
 
   private async void ToggleButton_Click(object sender, RoutedEventArgs e) {
