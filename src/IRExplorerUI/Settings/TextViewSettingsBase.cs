@@ -10,19 +10,42 @@ namespace IRExplorerUI;
 public class TextViewSettingsBase : SettingsBase {
   [ProtoMember(1)]
   public ProfileDocumentMarkerSettings ProfileMarkerSettings { get; set; }
+  
   [ProtoMember(2)]
   public OptionalColumnSettings ColumnSettings { get; set; }
-  [ProtoMember(3)] public string FontName { get; set; }
-  [ProtoMember(4)] public double FontSize { get; set; }
-  [ProtoMember(5)] public Color BackgroundColor { get; set; }
-  [ProtoMember(6)] public Color AlternateBackgroundColor { get; set; }
-  [ProtoMember(7)] public Color MarginBackgroundColor { get; set; }
-  [ProtoMember(8)] public Color TextColor { get; set; }
-  [ProtoMember(9)] public Color SelectedValueColor { get; set; }
-  [ProtoMember(10)] public bool ShowBlockSeparatorLine { get; set; }
-  [ProtoMember(11)] public Color BlockSeparatorColor { get; set; }
-  [ProtoMember(12)] public Color CurrentLineBorderColor { get; set; }
-  [ProtoMember(13)] public bool HighlightCurrentLine { get; set; }
+  
+  [ProtoMember(3), OptionValue("Consolas")] 
+  public string FontName { get; set; }
+  
+  [ProtoMember(4), OptionValue(12)] 
+  public double FontSize { get; set; }
+  
+  [ProtoMember(5), OptionValue(typeof(Color), "#FFFAFA")] 
+  public Color BackgroundColor { get; set; }
+  
+  [ProtoMember(6), OptionValue(typeof(Color), "#f5f5f5")] 
+  public Color AlternateBackgroundColor { get; set; }
+  
+  [ProtoMember(7), OptionValue(typeof(Color), "#FFFAFA")] 
+  public Color MarginBackgroundColor { get; set; }
+  
+  [ProtoMember(8), OptionValue(typeof(Color), "#FFFAFA")] 
+  public Color TextColor { get; set; }
+  
+  [ProtoMember(9), OptionValue(typeof(Color), "#FFFAFA")] 
+  public Color SelectedValueColor { get; set; }
+  
+  [ProtoMember(10), OptionValue(true)] 
+  public bool ShowBlockSeparatorLine { get; set; }
+  
+  [ProtoMember(11), OptionValue(typeof(Color), "#FFFAFA")] 
+  public Color BlockSeparatorColor { get; set; }
+  
+  [ProtoMember(12), OptionValue(typeof(Color), "#FFFAFA")] 
+  public Color CurrentLineBorderColor { get; set; }
+  
+  [ProtoMember(13), OptionValue(true)] 
+  public bool HighlightCurrentLine { get; set; }
 
   public TextViewSettingsBase() {
     Reset();

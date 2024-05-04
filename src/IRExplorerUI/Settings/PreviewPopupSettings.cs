@@ -12,7 +12,7 @@ public class PreviewPopupSettings : SettingsBase {
     IsElementPopup = isElementPopup;
   }
 
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue(false)]
   public bool JumpToHottestElement { get; set; }
   [ProtoMember(2)]
   public bool UseCompactProfilingColumns { get; set; }

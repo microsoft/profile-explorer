@@ -294,7 +294,7 @@ public class FunctionMarkingSettings : SettingsBase {
 }
 
 [ProtoContract(SkipConstructor = true)]
-public class FunctionMarkingSet {
+public class FunctionMarkingSet : SettingsBase {
   [ProtoMember(1)]
   public List<FunctionMarkingStyle> ModuleColors { get; set; }
   [ProtoMember(2)]
@@ -367,7 +367,7 @@ public class FunctionMarkingSet {
 }
 
 [ProtoContract(SkipConstructor = true)]
-public class FunctionMarkingStyle {
+public class FunctionMarkingStyle : SettingsBase {
   private TextSearcher searcher_;
   private string name_;
 

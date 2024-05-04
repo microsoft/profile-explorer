@@ -2,7 +2,11 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
+using System.Windows.Media;
+using DocumentFormat.OpenXml.Vml.Spreadsheet;
+using IRExplorerCore;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -15,34 +19,42 @@ public class SourceFileSettings : TextViewSettingsBase {
 
   [ProtoMember(1)]
   public SourceFileFinderSettings FinderSettings { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue(true)]
   public bool SyncStyleWithDocument { get; set; }
-  [ProtoMember(3)]
+  [ProtoMember(3), OptionValue(true)]
   public bool SyncLineWithDocument { get; set; }
-  [ProtoMember(4)]
+  [ProtoMember(4), OptionValue(false)]
   public bool SyncInlineeWithDocument { get; set; }
-  [ProtoMember(5)]
+  [ProtoMember(5), OptionValue(true)]
   public bool ShowInlineAssembly { get; set; }
-  [ProtoMember(6)]
+  [ProtoMember(6), OptionValue(false)]
   public bool AutoExpandInlineAssembly { get; set; }
-  [ProtoMember(7)]
+  [ProtoMember(7), OptionValue(true)]
   public bool ShowSourceStatements { get; set; }
-  [ProtoMember(8)]
+  [ProtoMember(8), OptionValue(false)]
   public bool ShowSourceStatementsOnMargin { get; set; }
-  [ProtoMember(9)]
+  [ProtoMember(9), OptionValue(true)]
   public bool ReplaceInsignificantSourceStatements { get; set; }
   
   public override void Reset() {
-    base.Reset();
-    InitializeReferenceMembers();
-    ProfileMarkerSettings.JumpToHottestElement = true;
-    SyncStyleWithDocument = true;
-    SyncLineWithDocument = true;
-    ShowInlineAssembly = true;
-    ShowSourceStatements = true;
-    ShowSourceStatementsOnMargin = true;
-    ReplaceInsignificantSourceStatements = true;
-    FinderSettings.Reset();
+    if (false) {
+      base.Reset();
+      InitializeReferenceMembers();
+      ProfileMarkerSettings.JumpToHottestElement = true;
+      SyncStyleWithDocument = true;
+      SyncLineWithDocument = true;
+      ShowInlineAssembly = true;
+      ShowSourceStatements = true;
+      ShowSourceStatementsOnMargin = true;
+      ReplaceInsignificantSourceStatements = true;
+      FinderSettings.Reset();
+    }
+    else {
+      base.Reset();
+      InitializeReferenceMembers();
+      OptionValueAttribute.ResetAllOptions(this);
+      ProfileMarkerSettings.JumpToHottestElement = true;
+    }
   }
 
   [ProtoAfterDeserialization]

@@ -27,61 +27,61 @@ public class SettingsBase {
 [ProtoContract(SkipConstructor = true)]
 public class ApplicationSettings {
   [ProtoMember(1)]
-  public List<string> RecentFiles;
+  public List<string> RecentFiles { get; set; }
   [ProtoMember(2)]
-  public bool AutoReloadDocument;
+  public bool AutoReloadDocument { get; set; }
   [ProtoMember(3)]
-  public string MainWindowPlacement;
+  public string MainWindowPlacement { get; set; }
   [ProtoMember(4)]
-  public int ThemeIndex;
+  public int ThemeIndex { get; set; }
   [ProtoMember(5)]
-  public List<Tuple<string, string>> RecentComparedFiles;
+  public List<Tuple<string, string>> RecentComparedFiles { get; set; }
   [ProtoMember(6)]
-  public DocumentSettings DocumentSettings;
+  public DocumentSettings DocumentSettings { get; set; }
   [ProtoMember(7)]
-  public FlowGraphSettings FlowGraphSettings;
+  public FlowGraphSettings FlowGraphSettings { get; set; }
   [ProtoMember(8)]
-  public ExpressionGraphSettings ExpressionGraphSettings;
+  public ExpressionGraphSettings ExpressionGraphSettings { get; set; }
   [ProtoMember(9)]
-  public RemarkSettings RemarkSettings;
+  public RemarkSettings RemarkSettings { get; set; }
   [ProtoMember(10)]
-  public DiffSettings DiffSettings;
+  public DiffSettings DiffSettings { get; set; }
   [ProtoMember(11)]
-  public SectionSettings SectionSettings;
+  public SectionSettings SectionSettings { get; set; }
   [ProtoMember(12)]
-  public List<string> RecentTextSearches;
+  public List<string> RecentTextSearches { get; set; }
   [ProtoMember(13)]
-  public Dictionary<Guid, byte[]> FunctionTaskOptions;
+  public Dictionary<Guid, byte[]> FunctionTaskOptions { get; set; }
   [ProtoMember(14)]
-  public string DefaultCompilerIR;
+  public string DefaultCompilerIR { get; set; }
   [ProtoMember(15)]
-  public IRMode DefaultIRMode;
+  public IRMode DefaultIRMode { get; set; }
   [ProtoMember(16)]
-  public ProfileDataProviderOptions ProfileOptions;
+  public ProfileDataProviderOptions ProfileOptions { get; set; }
   [ProtoMember(17)]
-  public SymbolFileSourceSettings SymbolSettings;
+  public SymbolFileSourceSettings SymbolSettings { get; set; }
   [ProtoMember(18)]
-  public CallTreeSettings CallTreeSettings;
+  public CallTreeSettings CallTreeSettings { get; set; }
   [ProtoMember(19)]
-  public CallTreeSettings CallerCalleeSettings;
+  public CallTreeSettings CallerCalleeSettings { get; set; }
   [ProtoMember(20)]
-  public FlameGraphSettings FlameGraphSettings;
+  public FlameGraphSettings FlameGraphSettings { get; set; }
   [ProtoMember(21)]
-  public WorkspaceSettings WorkspaceOptions;
+  public WorkspaceSettings WorkspaceOptions { get; set; }
   [ProtoMember(22)]
-  public SourceFileSettings SourceFileSettings;
+  public SourceFileSettings SourceFileSettings { get; set; }
   [ProtoMember(24)]
-  public IRDocumentPopupSettings DocumentPopupSettings;
+  public IRDocumentPopupSettings DocumentPopupSettings { get; set; }
   [ProtoMember(25)]
-  public TimelineSettings TimelineSettings;
+  public TimelineSettings TimelineSettings { get; set; }
   [ProtoMember(26)]
-  public CallTreeNodeSettings CallTreeNodeSettings;
+  public CallTreeNodeSettings CallTreeNodeSettings { get; set; }
   [ProtoMember(27)]
-  public PreviewPopupSettings PreviewPopupSettings;
+  public PreviewPopupSettings PreviewPopupSettings { get; set; }
   [ProtoMember(28)]
-  public Dictionary<ToolPanelKind, PreviewPopupSettings> ElementPreviewPopupSettings;
+  public Dictionary<ToolPanelKind, PreviewPopupSettings> ElementPreviewPopupSettings { get; set; }
   [ProtoMember(29)]
-  public FunctionMarkingSettings MarkingSettings;
+  public FunctionMarkingSettings MarkingSettings { get; set; }
   
   public ApplicationSettings() {
     Reset();

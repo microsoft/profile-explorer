@@ -856,7 +856,12 @@ static class Utils {
   }
 
   public static Color ColorFromString(string color) {
-    return (Color)ColorConverter.ConvertFromString(color);
+    try {
+      return (Color)ColorConverter.ConvertFromString(color);
+    }
+    catch (Exception ex) {
+      return Colors.Transparent;
+    }
   }
 
   public static Brush BrushFromString(string color) {
