@@ -12,7 +12,7 @@ namespace IRExplorerUI;
 public class SettingsBase {
   public record OptionValueId(string ClassName, int MemberId);
 
-  private delegate void VisitOptionAction(object settings, PropertyInfo property,
+  private delegate bool VisitOptionAction(object settings, PropertyInfo property,
                                    OptionValueAttribute optionAttr, OptionValueId optionId);
   private delegate void VisitSettingsAction(object settings, int level);
   private delegate void VisitNestedSettingsAction(object nestedSettings, PropertyInfo property, bool isCollection);
@@ -44,13 +44,21 @@ public class SettingsBase {
     return null;
   }
   
-  public static void ResetAllOptions(object settings, Type type = null) {
+  public static void ResetAllOptions(object settings, Type type = null,
+                                     bool resetNestedSettings = true) {
     var visited = new HashSet<object>();
     WalkSettingsOptions(settings, (settings, property, optionAttr, optionId) => {
         // Trace.WriteLine($"Resetting property {property.Name}, type {type.Name}: {optionAttr.Value}");
         if (optionAttr != null) {
           property.SetValue(settings, optionAttr.Value);
         }
+
+        if (resetNestedSettings &&
+            property.GetValue(settings) is SettingsBase nestedSettings) {
+          nestedSettings.Reset();
+        }
+
+        return true;
       }, EmptyVisitSettingsAction, EmptyVisitSettingsAction,
       EmptyVisitNestedSettingsAction, false, false, type, visited);
   }
@@ -62,31 +70,47 @@ public class SettingsBase {
           // Trace.WriteLine($"Setting missing property {property.Name}, type {type.Name}: {optionAttr.Value}");
           property.SetValue(settings, optionAttr.Value);
         }
+
+        return true;
       }, EmptyVisitSettingsAction, EmptyVisitSettingsAction,
       EmptyVisitNestedSettingsAction, true, true, null, visited);
   }
   
   
-  public static string PrintOptions(object settings, bool includeBaseClass = true) {
+  public static string PrintOptions(object settings, Type type = null,
+                                    bool includeBaseClass = true) {
     var visited = new HashSet<object>();
-    var sb = new StringBuilder();
+    var sb = new StringBuilder(); 
     int currentLevel = 0;
+    
+    if (type != null) {
+      Debug.Assert(type.IsAssignableFrom(settings.GetType()));
+    }
+    else {
+      type = settings.GetType();
+    }
 
     WalkSettingsOptions(settings, (settings, property, optionAttr, optionId) => {
         var value = property.GetValue(settings);
+
+        if (value is SettingsBase) {
+          return true; // Printed as sub-section.
+        }
+        
         sb.Append(' ', currentLevel * 4);
         sb.Append($"{property.Name}: {value}");
 
         if (optionAttr != null && optionAttr.Value != null) {
-          if (value != null && value.Equals(optionAttr.Value)) {
-            sb.Append($" (\u2713)");
+          if (value != null && AreValuesEqual(value, optionAttr.Value)) {
+            sb.Append($"  (default \u2713)");
           }
           else {
-            sb.Append($" (default {optionAttr.Value})");
+            sb.Append($"  (default {optionAttr.Value})");
           }
         }
 
         sb.AppendLine();
+        return true;
       }, (settings, level) => {
         sb.Append(' ', currentLevel * 4);
         sb.AppendLine($"{settings.GetType().Name}:");
@@ -94,28 +118,124 @@ public class SettingsBase {
       },
       (settings, level) => {
         sb.Append(' ', currentLevel * 4);
-        sb.AppendLine("------------------------");
+        sb.AppendLine("--------------------------------------");
         currentLevel = level;
       },
       (nestedSettings, property, isCollection) => {
         //? TODO: Pretty-print list/dict
-      }, true, includeBaseClass, null, visited);
+      }, true, includeBaseClass, type, visited);
 
     return sb.ToString();
   }
 
-  private static void WalkSettingsOptions(object settings, VisitOptionAction optionAction,
+  private static bool AreValuesEqual(object a, object b) {
+    if (ReferenceEquals(a, b)) {
+      return true;
+    }
+    else if (a == null || b == null) {
+      return false;
+    }
+
+    switch ((a, b)) {
+      case (double da, double db): {
+        return Math.Abs(da - db) < double.Epsilon;
+        break;
+      }
+      case (float fa, float fb): {
+        return Math.Abs(fa - fb) < float.Epsilon;
+        break;
+      }
+      case (double da, int ib): {
+        return Math.Abs(da - ib) < double.Epsilon;
+        break;
+      }
+      case (float fa, int ib): {
+        return Math.Abs(fa - ib) < float.Epsilon;
+        break;
+      }
+      case (string sa, string sb): {
+        return sa.Equals(sb, StringComparison.Ordinal);
+      }
+      case (IList listA, IList listB): {
+        // Compare each element of the collection.
+        return listA.AreEqual(listB);
+      }
+      case (IDictionary dictA, IDictionary dictB): {
+        // Compare each element of the collection.
+        return dictA.AreEqual(dictB);
+      }
+      case (IEnumerable enumA, IEnumerable enumB): {
+        // Compare each element of the collection.
+        var iterA = enumA.GetEnumerator();
+        var iterB = enumB.GetEnumerator();
+        bool hasA = iterA.MoveNext();
+        bool hasB = iterB.MoveNext();
+
+        while (hasA && hasB) {
+          if (!Equals(iterA.Current, iterB.Current)) {
+            return false;
+          }
+
+          hasA = iterA.MoveNext();
+          hasB = iterB.MoveNext();
+
+          if (!hasA && !hasB) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+      default: {
+        return a.Equals(b);
+      }
+    }
+  }
+
+  public static bool AreSettingsOptionsEqual(object settingsA, object settingsB,
+                                             Type type = null, bool compareBaseClass = false) {
+    if (settingsA == null || settingsB == null ||
+        settingsA.GetType() != settingsB.GetType()) {
+      return false;
+    }
+    else if (ReferenceEquals(settingsA, settingsB)) {
+      return true;
+    }
+    
+    if (type != null) {
+      Debug.Assert(type.IsAssignableFrom(settingsA.GetType()));
+    }
+    else {
+      type = settingsA.GetType();
+    }
+    
+    var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
+    if (!compareBaseClass) {
+      // When resetting don't consider properties from the base class.
+      flags |= BindingFlags.DeclaredOnly;
+    }
+
+    foreach (var property in type.GetProperties(flags)) {
+      var valueA = property.GetValue(settingsA);
+      var valueB = property.GetValue(settingsB);
+
+      if (!AreValuesEqual(valueA, valueB)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+  
+  private static bool WalkSettingsOptions(object settings, VisitOptionAction optionAction,
                                           VisitSettingsAction beginVisitSettingsAction,
                                           VisitSettingsAction endVisitSettingsAction,
                                           VisitNestedSettingsAction beginNestedSettingsAction,
-                                   bool visitedNestedSettings, bool visitBaseClass, Type type,
-                                   HashSet<object> visited, int level = 0) {
-    if (settings == null) {
-      return;
-    }
-
-    if (!visited.Add(settings)) {
-      return; // Avoid cycles in the object graph.
+                                          bool visitedNestedSettings, bool visitBaseClass, 
+                                          Type type, HashSet<object> visited, int level = 0) {
+    if (settings == null || !visited.Add(settings)) {
+      return true; // Avoid cycles in the object graph.
     }
 
     if (type != null) {
@@ -128,7 +248,7 @@ public class SettingsBase {
     var contractAttr = type.GetCustomAttribute<ProtoContractAttribute>();
 
     if (contractAttr == null) {
-      return;
+      return true;
     }
 
     beginVisitSettingsAction?.Invoke(settings, level);
@@ -149,10 +269,15 @@ public class SettingsBase {
 
       if (optionAttr != null) {
         var optionId = MakeOptionId(property, type, contractAttr, protoAttr);
-        optionAction(settings, property, optionAttr, optionId);
+
+        if (!optionAction(settings, property, optionAttr, optionId)) {
+          return false;
+        }
       }
-      else if (!propertyIsSettings) {
-        optionAction(settings, property, null, null);
+      else {
+        if (!optionAction(settings, property, null, null)) {
+          return false;
+        }
       }
 
       if (!visitedNestedSettings) {
@@ -215,6 +340,7 @@ public class SettingsBase {
     }
     
     endVisitSettingsAction?.Invoke(settings, Math.Max(0, level - 1));
+    return true;
   }
 
   private static bool IsSettingsBaseGenericType(PropertyInfo property) {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -18,7 +19,7 @@ public static class CollectionExtensionMethods {
   }
 
   public static bool AreEqual<T>(this List<T> list, List<T> other) {
-    if (list == other) {
+    if (ReferenceEquals(list, other)) {
       return true;
     }
     else if (list == null || other == null ||
@@ -28,6 +29,26 @@ public static class CollectionExtensionMethods {
     
     return list.SequenceEqual(other);
   }
+  
+  
+  public static bool AreEqual(this IList list, IList other) {
+    if (ReferenceEquals(list, other)) {
+      return true;
+    }
+    else if (list == null || other == null ||
+             list.Count != other.Count) {
+      return false;
+    }
+
+    for (int i = 0; i < list.Count; i++) {
+      if (!Equals(list[i], other[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
 
   public static Dictionary<TKey, TValue> CloneDictionary<TKey, TValue>(
     this Dictionary<TKey, TValue> dict) {
@@ -196,6 +217,25 @@ public static class CollectionExtensionMethods {
     return true;
   }
 
+  public static bool AreEqual(this IDictionary first, IDictionary second) {
+    if (first == second)
+      return true;
+    if (first == null || second == null)
+      return false;
+    if (first.Count != second.Count)
+      return false;
+    
+
+    foreach (DictionaryEntry kvp in first) {
+      if (!second.Contains(kvp.Key))
+        return false;
+      if (!Equals(kvp.Value, second[kvp.Key]))
+        return false;
+    }
+
+    return true;
+  }
+  
   public static bool AreEqual<T>(this HashSet<T> first, HashSet<T> second) {
     if (first == second)
       return true;

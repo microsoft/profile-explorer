@@ -61,35 +61,10 @@ public abstract class TextViewSettingsBase : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is TextViewSettingsBase settings &&
-           FontName == settings.FontName &&
-           Math.Abs(FontSize - settings.FontSize) < double.Epsilon &&
-           BackgroundColor == settings.BackgroundColor &&
-           AlternateBackgroundColor == settings.AlternateBackgroundColor &&
-           MarginBackgroundColor == settings.MarginBackgroundColor &&
-           TextColor == settings.TextColor &&
-           SelectedValueColor == settings.SelectedValueColor &&
-           HighlightCurrentLine == settings.HighlightCurrentLine &&
-           ShowBlockSeparatorLine == settings.ShowBlockSeparatorLine &&
-           BlockSeparatorColor == settings.BlockSeparatorColor &&
-           CurrentLineBorderColor == settings.CurrentLineBorderColor &&
-           ProfileMarkerSettings.Equals(settings.ProfileMarkerSettings) &&
-           ColumnSettings.Equals(settings.ColumnSettings);
+    return AreSettingsOptionsEqual(this, obj, typeof(TextViewSettingsBase));
   }
 
   public override string ToString() {
-    return $"FontName:{FontName}\n" +
-           $"FontSize:{FontSize}\n" +
-           $"BackgroundColor:{BackgroundColor}\n" +
-           $"AlternateBackgroundColor:{AlternateBackgroundColor}\n" +
-           $"MarginBackgroundColor:{MarginBackgroundColor}\n" +
-           $"TextColor:{TextColor}\n" +
-           $"SelectedValueColor:{SelectedValueColor}\n" +
-           $"ShowBlockSeparatorLine:{ShowBlockSeparatorLine}\n" +
-           $"HighlightCurrentLine:{HighlightCurrentLine}\n" +
-           $"BlockSeparatorColor:{BlockSeparatorColor}\n" +
-           $"CurrentLineBorderColor:{CurrentLineBorderColor}\n" +
-           $"ProfileMarkerSettings:{ProfileMarkerSettings}\n" +
-           $"ColumnSettings:{ColumnSettings}";
+    return PrintOptions(this);
   }
 }
