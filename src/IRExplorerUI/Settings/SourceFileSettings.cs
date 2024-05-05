@@ -37,24 +37,10 @@ public class SourceFileSettings : TextViewSettingsBase {
   public bool ReplaceInsignificantSourceStatements { get; set; }
   
   public override void Reset() {
-    if (false) {
       base.Reset();
       InitializeReferenceMembers();
+      ResetAllOptions(this);
       ProfileMarkerSettings.JumpToHottestElement = true;
-      SyncStyleWithDocument = true;
-      SyncLineWithDocument = true;
-      ShowInlineAssembly = true;
-      ShowSourceStatements = true;
-      ShowSourceStatementsOnMargin = true;
-      ReplaceInsignificantSourceStatements = true;
-      FinderSettings.Reset();
-    }
-    else {
-      base.Reset();
-      InitializeReferenceMembers();
-      OptionValueAttribute.ResetAllOptions(this);
-      ProfileMarkerSettings.JumpToHottestElement = true;
-    }
   }
 
   [ProtoAfterDeserialization]
@@ -79,6 +65,10 @@ public class SourceFileSettings : TextViewSettingsBase {
            ShowSourceStatementsOnMargin == settings.ShowSourceStatementsOnMargin &&
            ReplaceInsignificantSourceStatements == settings.ReplaceInsignificantSourceStatements &&
            FinderSettings.Equals(settings.FinderSettings);
+  }
+
+  public override string ToString() {
+    return PrintOptions(this);
   }
 }
 

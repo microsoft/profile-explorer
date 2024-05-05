@@ -16,14 +16,6 @@ using ProtoBuf;
 
 namespace IRExplorerUI;
 
-public class SettingsBase {
-  public virtual void Reset() { }
-
-  public virtual bool HasChanges(SettingsBase other) {
-    return !other.Equals(this);
-  }
-}
-
 [ProtoContract(SkipConstructor = true)]
 public class ApplicationSettings {
   [ProtoMember(1)]
