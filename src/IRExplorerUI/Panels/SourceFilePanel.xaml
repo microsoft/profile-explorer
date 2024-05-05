@@ -58,7 +58,9 @@
               <TextBlock Text="Reset" />
             </StackPanel>
           </Button>
-          <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+          <Menu VerticalAlignment="Center"
+                IsEnabled="{Binding SourceFileLoaded}"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
             <MenuItem
               Padding="0,0,0,0"
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
@@ -128,6 +130,7 @@
             Height="20"
             Padding="0,0,0,0"
             Click="ToggleButton_Click"
+            IsEnabled="{Binding SourceFileLoaded}"
             IsChecked="{Binding Path=Settings.ShowInlineAssembly, Mode=TwoWay}"
             ToolTip="Display the associated assembly instructions for each source line">
             <StackPanel Orientation="Horizontal">
@@ -140,21 +143,25 @@
               <TextBlock Text="ASM" Margin="4,0,0,0"/>
             </StackPanel>
           </ToggleButton>
-          <Button Padding="0" Click="CollapseAssemblyButton_Click" 
+          <Button Padding="0" Click="CollapseAssemblyButton_Click"
                   Width="20"
+                  IsEnabled="{Binding SourceFileLoaded}"
                   ToolTip="Collapse all sections of assembly code">
             <Image
               Width="18"
               Height="18"
               Margin="0,1,0,0"
+              Style="{StaticResource DisabledImageStyle}"
               Source="{StaticResource ContractIcon}" />
           </Button>
-          <Button Padding="0" Click="ExpandAssemblyButton_Click" Width="20" 
+          <Button Padding="0" Click="ExpandAssemblyButton_Click" Width="20"
+                  IsEnabled="{Binding SourceFileLoaded}"
                   ToolTip="Expand all sections of assembly code">
               <Image
                 Width="18"
                 Height="18"
                 Margin="0,1,0,0"
+                Style="{StaticResource DisabledImageStyle}"
                 Source="{StaticResource ExpandIcon}" />
           </Button>
           <Separator/>
@@ -195,9 +202,11 @@
             Height="20"
             Margin="0,0,2,0"
             Padding="0,0,0,0"
+            IsEnabled="{Binding SourceFileLoaded}"
             Click="OpenPopupButton_Click"
             ToolTip="Open the source file document in a new popup window">
-            <Image Source="{StaticResource OpenExternalIcon}" />
+            <Image Source="{StaticResource OpenExternalIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
         </ToolBar>
       </ToolBarTray>
