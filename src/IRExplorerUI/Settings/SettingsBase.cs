@@ -9,6 +9,7 @@ using ProtoBuf;
 
 namespace IRExplorerUI;
 
+//? TODO: Unit tets for options reflection methods.
 public class SettingsBase {
   public record OptionValueId(string ClassName, int MemberId);
 
@@ -26,6 +27,12 @@ public class SettingsBase {
 
   public virtual bool HasChanges(SettingsBase other) {
     return !other.Equals(this);
+  }
+
+  public static HashSet<OptionValueId> CollectOptionMembers(object settings) {
+    var set = new HashSet<OptionValueId>();
+    CollectOptionMembers(settings, set);
+    return set;
   }
   
   public static void CollectOptionMembers(object settings, HashSet<OptionValueId> set) {
@@ -45,37 +52,64 @@ public class SettingsBase {
   }
   
   public static void ResetAllOptions(object settings, Type type = null,
-                                     bool resetNestedSettings = true) {
+                                     bool resetNestedSettings = true,
+                                     bool resetToNew = true) {
     var visited = new HashSet<object>();
     WalkSettingsOptions(settings, (settings, property, optionAttr, optionId) => {
         // Trace.WriteLine($"Resetting property {property.Name}, type {type.Name}: {optionAttr.Value}");
         if (optionAttr != null) {
           property.SetValue(settings, optionAttr.Value);
+          return true;
         }
 
         if (resetNestedSettings &&
             property.GetValue(settings) is SettingsBase nestedSettings) {
           nestedSettings.Reset();
         }
+        else if (resetToNew) {
+          if (property.GetValue(settings) is IList list) {
+            list.Clear();
+          }
+          else if (property.GetValue(settings) is IDictionary dict) {
+            dict.Clear();
+          }
+          else {
+            var newObject = Activator.CreateInstance(property.PropertyType);
+            property.SetValue(settings, newObject);
+          }
+        }
 
         return true;
       }, EmptyVisitSettingsAction, EmptyVisitSettingsAction,
       EmptyVisitNestedSettingsAction, false, false, type, visited);
   }
+
+  public static void InitializeAllNewOptions(object settings, HashSet<OptionValueId> knownOptions) {
+    InitializeNewOptions(settings, knownOptions, true);
+  }
   
-  public static void InitializeNewOptions(object settings, HashSet<OptionValueId> knownOptions) {
+  public static void InitializeReferenceOptions(object settings) {
+    InitializeNewOptions(settings, null, false);
+  }
+
+  private static void InitializeNewOptions(object settings, HashSet<OptionValueId> knownOptions = null,
+                                          bool visitNestedSettings = false) {
     var visited = new HashSet<object>();
     WalkSettingsOptions(settings, (settings, property, optionAttr, optionId) => {
-        if (optionAttr != null && !knownOptions.Contains(optionId)) {
+        if (optionAttr != null && knownOptions != null &&
+            !knownOptions.Contains(optionId)) {
           // Trace.WriteLine($"Setting missing property {property.Name}, type {type.Name}: {optionAttr.Value}");
           property.SetValue(settings, optionAttr.Value);
         }
-
+        else if (property.GetValue(settings) == null) {
+          // If no default value defined, set to new instance.
+          var newObject = Activator.CreateInstance(property.PropertyType);
+          property.SetValue(settings, newObject);
+        }
         return true;
       }, EmptyVisitSettingsAction, EmptyVisitSettingsAction,
-      EmptyVisitNestedSettingsAction, true, true, null, visited);
+      EmptyVisitNestedSettingsAction, visitNestedSettings, true, null, visited);
   }
-  
   
   public static string PrintOptions(object settings, Type type = null,
                                     bool includeBaseClass = true) {
@@ -128,7 +162,8 @@ public class SettingsBase {
     return sb.ToString();
   }
 
-  private static bool AreValuesEqual(object a, object b) {
+  private static bool AreValuesEqual(object a, object b, bool 
+                                       compareNestedSettings = false) {
     if (ReferenceEquals(a, b)) {
       return true;
     }
@@ -155,6 +190,24 @@ public class SettingsBase {
       }
       case (string sa, string sb): {
         return sa.Equals(sb, StringComparison.Ordinal);
+      }
+      case (SettingsBase settingsA, SettingsBase settingsB): {
+        if (compareNestedSettings) {
+          // If Equals was overridden use it, otherwise
+          // recursively compare each property in nested settings.
+          var equals = settingsA.GetType().GetMethod("Equals");
+          
+          if (equals != null && equals.DeclaringType == settingsA.GetType()){
+            return settingsA.Equals(settingsB);
+          }
+          else {
+            return AreSettingsOptionsEqual(settingsA, settingsB, null, false, compareNestedSettings);
+          }
+          return AreSettingsOptionsEqual(settingsA, settingsB, null, false, compareNestedSettings);
+        }
+        else {
+          return ReferenceEquals(settingsA, settingsB);
+        }
       }
       case (IList listA, IList listB): {
         // Compare each element of the collection.
@@ -193,7 +246,8 @@ public class SettingsBase {
   }
 
   public static bool AreSettingsOptionsEqual(object settingsA, object settingsB,
-                                             Type type = null, bool compareBaseClass = false) {
+                                             Type type = null, bool compareBaseClass = false,
+                                             bool compareNestedSettings = true) {
     if (settingsA == null || settingsB == null ||
         settingsA.GetType() != settingsB.GetType()) {
       return false;
@@ -212,7 +266,6 @@ public class SettingsBase {
     var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
     if (!compareBaseClass) {
-      // When resetting don't consider properties from the base class.
       flags |= BindingFlags.DeclaredOnly;
     }
 
@@ -220,7 +273,7 @@ public class SettingsBase {
       var valueA = property.GetValue(settingsA);
       var valueB = property.GetValue(settingsB);
 
-      if (!AreValuesEqual(valueA, valueB)) {
+      if (!AreValuesEqual(valueA, valueB, compareNestedSettings)) {
         return false;
       }
     }

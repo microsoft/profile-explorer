@@ -19,4 +19,19 @@ public class OptionValueAttribute : Attribute {
       throw new InvalidOperationException("Type not handled");
     }
   }
+  
+  public OptionValueAttribute(Type type, params string[] convertedValue) {
+    if (type == typeof(Color)) {
+      var colors = new Color[convertedValue.Length];
+
+      for(int i = 0; i < convertedValue.Length; i++) {
+        colors[i] = Utils.ColorFromString(convertedValue[i]);
+      }
+
+      Value = colors;
+    }
+    else {
+      throw new InvalidOperationException("Type not handled");
+    }
+  }
 }

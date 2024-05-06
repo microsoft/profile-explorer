@@ -29,7 +29,7 @@ using Xceed.Wpf.Toolkit.Core.Utilities;
 
 namespace IRExplorerUI;
 
-static class Utils {
+public static class Utils {
   public static bool IsShiftModifierActive() {
     return (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
   }
