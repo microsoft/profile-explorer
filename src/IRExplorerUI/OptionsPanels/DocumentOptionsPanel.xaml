@@ -176,7 +176,7 @@
                             Minimum="5.0"
                             ParsingNumberStyle="Number"
                             ShowButtonSpinner="True"
-                            Value="{Binding Path=TextFontSize, Mode=TwoWay}" />
+                            Value="{Binding Path=FontSize, Mode=TwoWay}" />
                     </StackPanel>
 
                     <CheckBox
