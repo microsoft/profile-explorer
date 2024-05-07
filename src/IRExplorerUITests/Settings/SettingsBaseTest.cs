@@ -94,10 +94,12 @@ public class SettingsBaseTest {
 
   [ProtoContract()]
   public class CollectionObject : SettingsBase {
-    [ProtoMember(1)]
+    [ProtoMember(1), OptionValue()]
     public List<int> list { get; set; }
-    [ProtoMember(2)]
+    [ProtoMember(2), OptionValue()]
     public Dictionary<string, int> dict { get; set; }
+    [ProtoMember(3), OptionValue(true)]
+    public bool flag { get; set; }
     
     public override void Reset() {
       ResetAllOptions(this);
@@ -193,6 +195,15 @@ public class SettingsBaseTest {
     data.Reset();
     Assert.AreEqual(data.list.Count, 0);
     Assert.AreEqual(data.dict.Count, 0);
+  }
+  
+  [TestMethod]
+  public void TestConstructOptionsCollection() {
+    var data = new CollectionObject();
+    data.Reset();
+    Assert.AreEqual(data.list.Count, 0);
+    Assert.AreEqual(data.dict.Count, 0);
+    Assert.IsTrue(data.flag);
   }
   
   [TestMethod]
@@ -337,7 +348,11 @@ public class SettingsBaseTest {
   }
 
   [TestMethod]
-  public void TestResetOptionsDerived() {
-
+  public void TestInitializeReferenceOptions() {
+    var data = new CollectionObject();
+    SettingsBase.InitializeReferenceOptions(data);
+    Assert.IsNotNull(data.list);
+    Assert.IsNotNull(data.dict);
+    Assert.IsFalse(data.flag);// Should not be changed.
   }
 }

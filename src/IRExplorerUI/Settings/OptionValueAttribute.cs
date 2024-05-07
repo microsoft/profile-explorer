@@ -6,15 +6,16 @@ namespace IRExplorerUI;
 [AttributeUsage(AttributeTargets.All)]
 public class OptionValueAttribute : Attribute {
   public object Value { get; set; }
-
+  public bool CreateNewInstance { get; set; }
+  
+  public OptionValueAttribute() {
+    // Create new object of type, calling default constructor.
+    CreateNewInstance = true;
+  }
+  
   public OptionValueAttribute(object value) {
     // Set value to the primitive value passed in.
     Value = value;
-  }
-  
-  public OptionValueAttribute(Type type) {
-    // Create new object of type, calling default constructor.
-    Value = Activator.CreateInstance(type);
   }
   
   public OptionValueAttribute(Type type, string convertedValue) {

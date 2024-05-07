@@ -42,14 +42,11 @@ public abstract class TextViewSettingsBase : SettingsBase {
   public override void Reset() {
     InitializeReferenceMembers();
     ResetAllOptions(this, typeof(TextViewSettingsBase));
-    ProfileMarkerSettings.Reset();
-    ColumnSettings.Reset();
   }
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
-    ProfileMarkerSettings ??= new();
-    ColumnSettings ??= new();
+    InitializeReferenceOptions(this);
   }
 
   public bool HasProfilingChanges(TextViewSettingsBase other) {

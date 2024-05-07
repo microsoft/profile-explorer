@@ -2,11 +2,6 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
-using System.Windows.Media;
-using DocumentFormat.OpenXml.Vml.Spreadsheet;
-using IRExplorerCore;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -45,7 +40,7 @@ public class SourceFileSettings : TextViewSettingsBase {
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
-    FinderSettings ??= new();
+    InitializeReferenceOptions(this);
   }
 
   public SourceFileSettings Clone() {
@@ -56,28 +51,20 @@ public class SourceFileSettings : TextViewSettingsBase {
   public override bool Equals(object obj) {
     return obj is SourceFileSettings settings &&
            base.Equals(settings) &&
-           SyncStyleWithDocument == settings.SyncStyleWithDocument &&
-           SyncLineWithDocument == settings.SyncLineWithDocument &&
-           SyncInlineeWithDocument == settings.SyncInlineeWithDocument &&
-           ShowInlineAssembly == settings.ShowInlineAssembly &&
-           AutoExpandInlineAssembly == settings.AutoExpandInlineAssembly &&
-           ShowSourceStatements == settings.ShowSourceStatements &&
-           ShowSourceStatementsOnMargin == settings.ShowSourceStatementsOnMargin &&
-           ReplaceInsignificantSourceStatements == settings.ReplaceInsignificantSourceStatements &&
-           FinderSettings.Equals(settings.FinderSettings);
+           AreSettingsOptionsEqual(this, settings);
   }
 
   public override string ToString() {
-    return PrintOptions(this);
+    return base.ToString() + PrintOptions(this);
   }
 }
 
 [ProtoContract(SkipConstructor = true)]
 public class SourceFileFinderSettings : SettingsBase {
-  [ProtoMember(1)]
-  public Dictionary<string, string> SourceMappings;
-  [ProtoMember(2)]
-  public List<string> DisabledSourceMappings;
+  [ProtoMember(1), OptionValue()]
+  public Dictionary<string, string> SourceMappings { get; set; }
+  [ProtoMember(2), OptionValue()]
+  public List<string> DisabledSourceMappings { get; set; }
 
   public SourceFileFinderSettings() {
     Reset();
@@ -85,32 +72,19 @@ public class SourceFileFinderSettings : SettingsBase {
 
   public override void Reset() {
     InitializeReferenceMembers();
-    SourceMappings.Clear();
-    DisabledSourceMappings.Clear();
+    ResetAllOptions(this);
   }
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
-    SourceMappings ??= new();
-    DisabledSourceMappings ??= new();
-  }
-  protected bool Equals(SourceFileFinderSettings other) {
-    return SourceMappings.AreEqual(other.SourceMappings) &&
-           DisabledSourceMappings.AreEqual(other.DisabledSourceMappings);
+    InitializeReferenceOptions(this);
   }
 
   public override bool Equals(object obj) {
-    if (ReferenceEquals(null, obj))
-      return false;
-    if (ReferenceEquals(this, obj))
-      return true;
-    if (obj.GetType() != this.GetType())
-      return false;
-    return Equals((SourceFileFinderSettings)obj);
+    return AreSettingsOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-    return $"SourceMappings: {SourceMappings.Count}\n" +
-           $"DisabledSourceMappings: {DisabledSourceMappings.Count}";
+    return PrintOptions(this);
   }
 }

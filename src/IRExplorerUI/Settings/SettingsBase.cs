@@ -9,6 +9,50 @@ using ProtoBuf;
 
 namespace IRExplorerUI;
 
+// A typical settings class should:
+// - should inherit from SettingsBase and be marked with ProtoContract.
+// - have a constructor that calls Reset() and is skipped by ProtoBuf.
+// - have a ProtoMember for each setting with an OptionValue default value.
+// - have a ProtoAfterDeserialization method that initializes reference members.
+// - have a Reset method that calls ResetAllOptions.
+// - have an Equals method that calls AreSettingsOptionsEqual.
+// - have a ToString method that calls PrintOptions.
+// - have a Clone method that serializes and deserializes the object.
+//
+// Example:
+// [ProtoContract(SkipConstructor = true)]
+// public class ExampleSettings : SettingsBase {
+//   [ProtoMember(1), OptionValue("Default Value")]
+//   public string SomeSetting { get; set; }
+// 
+//   public ExampleSettings() {
+//     Reset();
+//   }
+// 
+//   public override void Reset() {
+//     InitializeReferenceMembers();
+//     ResetAllOptions(this);
+//   }
+// 
+//   [ProtoAfterDeserialization]
+//   private void InitializeReferenceMembers() {
+//     // Initialize reference members here.
+//   }
+// 
+//   public override bool Equals(object obj) {
+//     return AreSettingsOptionsEqual(this, obj);
+//   }
+// 
+//   public override string ToString() {
+//     return PrintOptions(this);
+//   }
+// 
+//   public ExampleSettings Clone() {
+//     byte[] serialized = StateSerializer.Serialize(this);
+//     return StateSerializer.Deserialize<ExampleSettings>(serialized);
+//   }
+// }
+
 public class SettingsBase {
   public record OptionValueId(string ClassName, int MemberId);
 
@@ -57,10 +101,7 @@ public class SettingsBase {
     WalkSettingsOptions(settings, (obj, property, optionAttr, optionId) => {
         // Trace.WriteLine($"Resetting property {property.Name}, type {type.Name}: {optionAttr.Value}");
         if (optionAttr != null) {
-          if (property.GetSetMethod() != null) {
-            property.SetValue(obj, optionAttr.Value);
-          }
-
+          SetOptionValue(property, obj, optionAttr);
           return true;
         }
 
@@ -86,40 +127,48 @@ public class SettingsBase {
       EmptyVisitNestedSettingsAction, false, false, type, visited);
   }
 
-  public static void InitializeAllNewOptions(object settings, HashSet<OptionValueId> knownOptions) {
-    InitializeNewOptions(settings, knownOptions, true);
-  }
-  
-  public static void InitializeReferenceOptions(object settings) {
-    InitializeNewOptions(settings, null, false);
+  private static void SetOptionValue(PropertyInfo property, object obj,
+                                     OptionValueAttribute optionAttr) {
+    if (property.GetSetMethod() == null) return;
+
+    if (optionAttr.CreateNewInstance) {
+      property.SetValue(obj, Activator.CreateInstance(property.PropertyType));
+    }
+    else {
+      property.SetValue(obj, optionAttr.Value);
+    }
   }
 
-  private static void InitializeNewOptions(object settings, HashSet<OptionValueId> knownOptions = null,
-                                          bool visitNestedSettings = false) {
+  public static void InitializeAllNewOptions(object settings, HashSet<OptionValueId> knownOptions) {
     var visited = new HashSet<object>();
     WalkSettingsOptions(settings, (obj, property, optionAttr, optionId) => {
-        if (knownOptions != null &&
-            knownOptions.Contains(optionId)) {
-          return true; // Option already initialized.
-        }
-        
-        if (optionAttr != null) {
+        // Initialize only missing properties.
+        if (optionAttr != null && knownOptions != null && !knownOptions.Contains(optionId) ) { 
           // Trace.WriteLine($"Setting missing property {property.Name}, type {type.Name}: {optionAttr.Value}");
-          if (property.GetSetMethod() != null) {
-            property.SetValue(obj, optionAttr.Value);
-          }
-        }
-        else if (property.GetValue(obj) == null &&
-                 property.GetSetMethod() != null) {
-          // If no default value defined, set to new instance.
-          var newObject = Activator.CreateInstance(property.PropertyType);
-          property.SetValue(obj, newObject);
+          SetOptionValue(property, obj, optionAttr);
         }
         return true;
       }, EmptyVisitSettingsAction, EmptyVisitSettingsAction,
-      EmptyVisitNestedSettingsAction, visitNestedSettings, true, null, visited);
+      EmptyVisitNestedSettingsAction, true, true, null, visited);
   }
-  
+
+  public static void InitializeReferenceOptions(object settings) {
+    var visited = new HashSet<object>();
+    WalkSettingsOptions(settings, (obj, property, optionAttr, optionId) => {
+        if (!property.GetType().IsValueType &&
+            property.GetValue(obj) == null &&
+            (optionAttr == null || optionAttr.CreateNewInstance) &&
+            property.GetSetMethod() != null) {
+          // Initialize all reference properties with an instance.
+          var newObject = Activator.CreateInstance(property.PropertyType);
+          property.SetValue(obj, newObject);
+        }
+
+        return true;
+      }, EmptyVisitSettingsAction, EmptyVisitSettingsAction,
+      EmptyVisitNestedSettingsAction, false, true, null, visited);
+  }
+
   public static string PrintOptions(object settings, Type type = null,
                                     bool includeBaseClass = true) {
     var visited = new HashSet<object>();
