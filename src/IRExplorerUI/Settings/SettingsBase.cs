@@ -9,7 +9,6 @@ using ProtoBuf;
 
 namespace IRExplorerUI;
 
-//? TODO: Unit tets for options reflection methods.
 public class SettingsBase {
   public record OptionValueId(string ClassName, int MemberId);
 
@@ -55,27 +54,30 @@ public class SettingsBase {
                                      bool resetNestedSettings = true,
                                      bool resetToNew = true) {
     var visited = new HashSet<object>();
-    WalkSettingsOptions(settings, (settings, property, optionAttr, optionId) => {
+    WalkSettingsOptions(settings, (obj, property, optionAttr, optionId) => {
         // Trace.WriteLine($"Resetting property {property.Name}, type {type.Name}: {optionAttr.Value}");
         if (optionAttr != null) {
-          property.SetValue(settings, optionAttr.Value);
+          if (property.GetSetMethod() != null) {
+            property.SetValue(obj, optionAttr.Value);
+          }
+
           return true;
         }
 
         if (resetNestedSettings &&
-            property.GetValue(settings) is SettingsBase nestedSettings) {
+            property.GetValue(obj) is SettingsBase nestedSettings) {
           nestedSettings.Reset();
         }
         else if (resetToNew) {
-          if (property.GetValue(settings) is IList list) {
+          if (property.GetValue(obj) is IList list) {
             list.Clear();
           }
-          else if (property.GetValue(settings) is IDictionary dict) {
+          else if (property.GetValue(obj) is IDictionary dict) {
             dict.Clear();
           }
-          else {
+          else if (property.GetSetMethod() != null) {
             var newObject = Activator.CreateInstance(property.PropertyType);
-            property.SetValue(settings, newObject);
+            property.SetValue(obj, newObject);
           }
         }
 
@@ -95,16 +97,23 @@ public class SettingsBase {
   private static void InitializeNewOptions(object settings, HashSet<OptionValueId> knownOptions = null,
                                           bool visitNestedSettings = false) {
     var visited = new HashSet<object>();
-    WalkSettingsOptions(settings, (settings, property, optionAttr, optionId) => {
-        if (optionAttr != null && knownOptions != null &&
-            !knownOptions.Contains(optionId)) {
-          // Trace.WriteLine($"Setting missing property {property.Name}, type {type.Name}: {optionAttr.Value}");
-          property.SetValue(settings, optionAttr.Value);
+    WalkSettingsOptions(settings, (obj, property, optionAttr, optionId) => {
+        if (knownOptions != null &&
+            knownOptions.Contains(optionId)) {
+          return true; // Option already initialized.
         }
-        else if (property.GetValue(settings) == null) {
+        
+        if (optionAttr != null) {
+          // Trace.WriteLine($"Setting missing property {property.Name}, type {type.Name}: {optionAttr.Value}");
+          if (property.GetSetMethod() != null) {
+            property.SetValue(obj, optionAttr.Value);
+          }
+        }
+        else if (property.GetValue(obj) == null &&
+                 property.GetSetMethod() != null) {
           // If no default value defined, set to new instance.
           var newObject = Activator.CreateInstance(property.PropertyType);
-          property.SetValue(settings, newObject);
+          property.SetValue(obj, newObject);
         }
         return true;
       }, EmptyVisitSettingsAction, EmptyVisitSettingsAction,
@@ -124,8 +133,8 @@ public class SettingsBase {
       type = settings.GetType();
     }
 
-    WalkSettingsOptions(settings, (settings, property, optionAttr, optionId) => {
-        var value = property.GetValue(settings);
+    WalkSettingsOptions(settings, (obj, property, optionAttr, optionId) => {
+        var value = property.GetValue(obj);
 
         if (value is SettingsBase) {
           return true; // Printed as sub-section.
@@ -196,18 +205,13 @@ public class SettingsBase {
           // If Equals was overridden use it, otherwise
           // recursively compare each property in nested settings.
           var equals = settingsA.GetType().GetMethod("Equals");
-          
-          if (equals != null && equals.DeclaringType == settingsA.GetType()){
-            return settingsA.Equals(settingsB);
-          }
-          else {
+
+          if (equals == null || equals.DeclaringType != settingsA.GetType()) {
             return AreSettingsOptionsEqual(settingsA, settingsB, null, false, compareNestedSettings);
           }
-          return AreSettingsOptionsEqual(settingsA, settingsB, null, false, compareNestedSettings);
         }
-        else {
-          return ReferenceEquals(settingsA, settingsB);
-        }
+
+        return settingsA.Equals(settingsB);
       }
       case (IList listA, IList listB): {
         // Compare each element of the collection.
@@ -244,7 +248,7 @@ public class SettingsBase {
       }
     }
   }
-
+  
   public static bool AreSettingsOptionsEqual(object settingsA, object settingsB,
                                              Type type = null, bool compareBaseClass = false,
                                              bool compareNestedSettings = true) {

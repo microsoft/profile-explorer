@@ -8,9 +8,15 @@ public class OptionValueAttribute : Attribute {
   public object Value { get; set; }
 
   public OptionValueAttribute(object value) {
+    // Set value to the primitive value passed in.
     Value = value;
   }
-
+  
+  public OptionValueAttribute(Type type) {
+    // Create new object of type, calling default constructor.
+    Value = Activator.CreateInstance(type);
+  }
+  
   public OptionValueAttribute(Type type, string convertedValue) {
     if (type == typeof(Color)) {
       Value = Utils.ColorFromString(convertedValue);

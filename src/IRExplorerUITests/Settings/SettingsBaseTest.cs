@@ -280,7 +280,62 @@ public class SettingsBaseTest {
     data2.ns.b = 252627;
     Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
   }
+
+  [TestMethod]
+  public void TestInitializeAllNewOptions() {
+    var data = new DerivedObject();
+    data.Reset();
+    var options = SettingsBase.CollectOptionMembers(data);
+    data.a = false;
+    data.b = true;
+    data.c = 456;
+    data.s = "bar";
+    
+    options.RemoveWhere(item => item.MemberId >= 100);
+    SettingsBase.InitializeAllNewOptions(data, options);
+    Assert.AreEqual(data.a, true);
+    Assert.AreEqual(data.b, false);
+    Assert.AreEqual(data.c, 123);
+    Assert.AreEqual(data.s, "foo");
+  }
   
+  [TestMethod]
+  public void TestInitializeNoNewOptions() {
+    var data = new DerivedObject();
+    data.Reset();
+    var options = SettingsBase.CollectOptionMembers(data);
+    data.a = false;
+    data.b = true;
+    data.c = 456;
+    data.s = "bar";
+    
+    SettingsBase.InitializeAllNewOptions(data, options);
+    Assert.AreEqual(data.a, false);
+    Assert.AreEqual(data.b, true);
+    Assert.AreEqual(data.c, 456);
+    Assert.AreEqual(data.s, "bar");
+  }
+  
+  [TestMethod]
+  public void TestInitializeAllNewOptionsNested() {
+    var data = new CombinedObject();
+    data.Reset();
+    var options = SettingsBase.CollectOptionMembers(data);
+    data.nested = new NestedObject();
+    data.nested.a = 789;
+    data.nested.b = 101112;
+    data.nested2 = new NestedObject();
+    data.nested2.a = 131415;
+    data.nested2.b = 161718;
+    
+    options.RemoveWhere(item => item.ClassName == "NestedObject");
+    SettingsBase.InitializeAllNewOptions(data, options);
+    Assert.AreEqual(data.nested.a, 123);
+    Assert.AreEqual(data.nested.b, 456);
+    Assert.AreEqual(data.nested2.a, 123);
+    Assert.AreEqual(data.nested2.b, 456);
+  }
+
   [TestMethod]
   public void TestResetOptionsDerived() {
 
