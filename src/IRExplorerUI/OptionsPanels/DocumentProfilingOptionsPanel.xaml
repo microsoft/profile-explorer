@@ -136,7 +136,7 @@
                     BorderBrush="Gray"
                     SelectedColor="{Binding ColumnTextColor, Mode=TwoWay}"
                     ShowDropDownButton="True"
-                    UsingAlphaChannel="False" />
+                     />
                 <TextBlock
                     Grid.Column="1"
                     HorizontalAlignment="Left"
@@ -157,7 +157,7 @@
                     BorderBrush="Gray"
                     SelectedColor="{Binding PercentageBarBackColor, Mode=TwoWay}"
                     ShowDropDownButton="True"
-                    UsingAlphaChannel="False" />
+                     />
                 <TextBlock
                     Grid.Column="1"
                     HorizontalAlignment="Left"
@@ -178,7 +178,7 @@
                 BorderBrush="Gray"
                 SelectedColor="{Binding PerformanceCounterBackColor, Mode=TwoWay}"
                 ShowDropDownButton="True"
-                UsingAlphaChannel="False" />
+                 />
               <TextBlock
                 Grid.Column="1"
                 HorizontalAlignment="Left"
@@ -199,7 +199,7 @@
                 BorderBrush="Gray"
                 SelectedColor="{Binding PerformanceMetricBackColor, Mode=TwoWay}"
                 ShowDropDownButton="True"
-                UsingAlphaChannel="False" />
+                 />
               <TextBlock
                 Grid.Column="1"
                 HorizontalAlignment="Left"
@@ -223,7 +223,7 @@
                     BorderBrush="Gray"
                     SelectedColor="{Binding BlockOverlayTextColor, Mode=TwoWay}"
                     ShowDropDownButton="True"
-                    UsingAlphaChannel="False" />
+                     />
                 <TextBlock
                     Grid.Column="1"
                     HorizontalAlignment="Left"
@@ -247,7 +247,7 @@
                     BorderBrush="Gray"
                     SelectedColor="{Binding HotBlockOverlayTextColor, Mode=TwoWay}"
                     ShowDropDownButton="True"
-                    UsingAlphaChannel="False" />
+                     />
                 <TextBlock
                     Grid.Column="1"
                     HorizontalAlignment="Left"
@@ -271,7 +271,7 @@
                     BorderBrush="Gray"
                     SelectedColor="{Binding BlockOverlayBorderColor, Mode=TwoWay}"
                     ShowDropDownButton="True"
-                    UsingAlphaChannel="False" />
+                     />
                 <TextBlock
                     Grid.Column="1"
                     HorizontalAlignment="Left"

@@ -105,7 +105,7 @@
                       IsManipulationEnabled="True"
                       SelectedColor="{Binding Path=Color, Mode=TwoWay}"
                       ShowDropDownButton="True"
-                      UsingAlphaChannel="False" />
+                       />
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
@@ -260,7 +260,7 @@
                       IsManipulationEnabled="True"
                       SelectedColor="{Binding Path=Color, Mode=TwoWay}"
                       ShowDropDownButton="True"
-                      UsingAlphaChannel="False" />
+                       />
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>

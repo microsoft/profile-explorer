@@ -9,6 +9,7 @@ public enum SourceSyntaxNodeKind {
   Function,
   If,
   Else,
+  ElseIf,
   Loop,
   Switch,
   SwitchCase,

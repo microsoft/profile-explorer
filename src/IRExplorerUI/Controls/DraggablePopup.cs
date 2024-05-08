@@ -32,7 +32,7 @@ public class DraggablePopup : Popup {
     };
 
     // Bring popup over other popups on click anywhere inside it.
-    PreviewMouseDown += (sender, args) => BringToFront();
+    MouseDown += (sender, args) => BringToFront();
   }
 
   public RelayCommand<SelectedColorEventArgs> PopupColorSelectedCommand =>

@@ -391,6 +391,7 @@ public class FunctionMarkingStyle : SettingsBase {
   public bool IsRegex { get; set; }
 
   public bool HasTitle => !string.IsNullOrEmpty(Title);
+  public string TitleOrName => HasTitle ? Title : Name;
 
   public FunctionMarkingStyle(string name, Color color,
                               string title = null, bool isRegex = false,

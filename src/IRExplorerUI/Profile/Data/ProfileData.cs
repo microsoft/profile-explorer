@@ -333,7 +333,7 @@ public partial class ProfileData {
   public List<int> FindModuleIds(Func<string, bool> matchCheck) {
     var ids = new List<int>();
     foreach (var module in Modules) {
-      if (matchCheck( module.Value.ModuleName)) {
+      if (matchCheck(module.Value.ModuleName)) {
         ids.Add(module.Key);
       }
     }

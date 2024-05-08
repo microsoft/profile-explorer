@@ -67,13 +67,14 @@
           <CheckBox
             Margin="0,4,0,2"
             Content="Highlight current text line"
+            ToolTip="Mark the current line in the document with a border"
             IsChecked="{Binding Path=HighlightCurrentLine, Mode=TwoWay}" />
           <CheckBox
             x:Name="SyncWithDocumentCheckBox"
             Margin="0,2,0,4"
             Content="Sync style with assembly document"
             IsChecked="{Binding Path=SyncStyleWithDocument, Mode=TwoWay}"
-            ToolTip="Use the same font as the assembly document" />
+            ToolTip="Use the same font and text size as the associated assembly document" />
           <StackPanel
             Margin="0,2,0,2"
             IsEnabled="{Binding ElementName=SyncWithDocumentCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}"
@@ -145,7 +146,7 @@
                 IsManipulationEnabled="True"
                 SelectedColor="{Binding Path=BackgroundColor, Mode=TwoWay}"
                 ShowDropDownButton="True"
-                UsingAlphaChannel="False" />
+                 />
               <TextBlock
                 Grid.Column="1"
                 HorizontalAlignment="Left"
@@ -167,7 +168,7 @@
                 BorderBrush="#707070"
                 SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
                 ShowDropDownButton="True"
-                UsingAlphaChannel="False" />
+                 />
               <TextBlock
                 Grid.Column="1"
                 HorizontalAlignment="Left"
@@ -188,7 +189,7 @@
                 BorderBrush="#707070"
                 SelectedColor="{Binding Path=CurrentLineBorderColor, Mode=TwoWay}"
                 ShowDropDownButton="True"
-                UsingAlphaChannel="False" />
+                 />
               <TextBlock
                 Grid.Column="1"
                 HorizontalAlignment="Left"
@@ -209,7 +210,7 @@
                 BorderBrush="#707070"
                 SelectedColor="{Binding Path=MarginBackgroundColor, Mode=TwoWay}"
                 ShowDropDownButton="True"
-                UsingAlphaChannel="False" />
+                 />
               <TextBlock
                 Grid.Column="1"
                 HorizontalAlignment="Left"
@@ -217,6 +218,50 @@
                 Text="Left margin background color" />
             </Grid>
           </StackPanel>
+          <Grid Margin="0,2,0,0"
+                IsEnabled="{Binding ElementName=AssemblyCheckBox, Path=IsChecked}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              SelectedColor="{Binding Path=AssemblyTextColor, Mode=TwoWay}"
+              ShowDropDownButton="True"
+               />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Assembly line text color" />
+          </Grid>
+          <Grid Margin="0,2,0,0"
+                IsEnabled="{Binding ElementName=AssemblyCheckBox, Path=IsChecked}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              SelectedColor="{Binding Path=AssemblyBackColor, Mode=TwoWay}"
+              ShowDropDownButton="True"
+            />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Assembly line background color" />
+          </Grid>
         </StackPanel>
       </TabItem>
       <TabItem

@@ -284,6 +284,40 @@
                   Header="Clear Marked Modules"
                   Style="{DynamicResource SubMenuItemHeaderStyle}"
                   ToolTip="Remove all saved module markings" />
+                <Separator />
+                  <MenuItem
+                    Click="ExportMarkedModulesHtmlMenu_OnClick"
+                    Header="Export Marked Modules as HTML File"
+                    ToolTip="Save the report with marked modules as an HTML file">
+                    <MenuItem.Icon>
+                      <Image
+                        Width="16"
+                        Height="16"
+                        Source="{StaticResource SourceIcon}" />
+                    </MenuItem.Icon>
+                  </MenuItem>
+                  <MenuItem
+                    Click="ExportMarkedModulesMarkdownMenu_OnClick"
+                    Header="Export Marked Modules as Markdown File"
+                    ToolTip="Save the report with marked modules as a Markdown file">
+                    <MenuItem.Icon>
+                      <Image
+                        Width="16"
+                        Height="16"
+                        Source="{StaticResource DocumentIcon}" />
+                    </MenuItem.Icon>
+                  </MenuItem>
+                  <MenuItem
+                    Click="CopyMarkedModulesMenu_OnClick"
+                    Header="Copy Marked Modules"
+                    ToolTip="Copy the report with marked modules as an HTML table">
+                    <MenuItem.Icon>
+                      <Image
+                        Width="16"
+                        Height="16"
+                        Source="{StaticResource ClipboardIcon}" />
+                    </MenuItem.Icon>
+                  </MenuItem>
               </MenuItem>
             </Menu>
             <Menu
@@ -330,7 +364,7 @@
                 <MenuItem
                   Click="ExportMarkedFunctionsHtmlMenu_OnClick"
                   Header="Export Marked Functions as HTML File"
-                  ToolTip="Save the report with marked function as an HTML file">
+                  ToolTip="Save the report with marked functions as an HTML file">
                   <MenuItem.Icon>
                     <Image
                       Width="16"
@@ -341,7 +375,7 @@
                 <MenuItem
                   Click="ExportMarkedFunctionsMarkdownMenu_OnClick"
                   Header="Export Marked Functions as Markdown File"
-                  ToolTip="Save the report with marked function as a Markdown file">
+                  ToolTip="Save the report with marked functions as a Markdown file">
                   <MenuItem.Icon>
                     <Image
                       Width="16"
@@ -349,7 +383,6 @@
                       Source="{StaticResource DocumentIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
-                <Separator/>
                 <MenuItem
                   Click="CopyMarkedFunctionMenu_OnClick"
                   Header="Copy Marked Functions"

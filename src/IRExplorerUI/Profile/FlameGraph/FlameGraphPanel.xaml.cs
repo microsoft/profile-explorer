@@ -544,14 +544,26 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.CopyFunctionMarkingsAsHtml(Session);
+    await ProfilingExporting.CopyFunctionMarkingsAsHtml(Session);
   }
 
   private async void ExportMarkedFunctionsHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.ExportFunctionMarkingsAsHtmlFile(Session);
+    await ProfilingExporting.ExportFunctionMarkingsAsHtmlFile(Session);
   }
 
   private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.ExportFunctionMarkingsAsMarkdownFile(Session);
+    await ProfilingExporting.ExportFunctionMarkingsAsMarkdownFile(Session);
+  }
+
+  private async void CopyMarkedModulesMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingExporting.CopyModuleMarkingsAsHtml(Session);
+  }
+
+  private async void ExportMarkedModulesHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingExporting.ExportModuleMarkingsAsHtmlFile(Session);
+  }
+
+  private async void ExportMarkedModulesMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingExporting.ExportModuleMarkingsAsMarkdownFile(Session);
   }
 }

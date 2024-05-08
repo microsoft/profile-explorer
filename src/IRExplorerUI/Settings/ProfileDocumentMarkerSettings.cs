@@ -83,16 +83,10 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     PerformanceCounterBackColor = Colors.WhiteSmoke;
   }
 
-  public string FormatWeightValue(OptionalColumn column, TimeSpan weight) {
+  public string FormatWeightValue(TimeSpan weight) {
     string suffix = "";
     if (AppendValueUnitSuffix) {
-      suffix = ValueUnit switch {
-        ValueUnitKind.Millisecond => " ms",
-        ValueUnitKind.Microsecond => " µs",
-        ValueUnitKind.Nanosecond => " ns",
-        ValueUnitKind.Second => " s",
-        _ => ""
-      };
+      suffix = $" {ValueUnitSuffix}";
     }
 
     return ValueUnit switch {
@@ -103,6 +97,14 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
       _ => weight.Ticks.ToString()
     };
   }
+
+  public string ValueUnitSuffix => ValueUnit switch {
+    ValueUnitKind.Millisecond => "ms",
+    ValueUnitKind.Microsecond => "µs",
+    ValueUnitKind.Nanosecond => "ns",
+    ValueUnitKind.Second => "s",
+    _ => ""
+  };
 
   public Brush PickBackColor(OptionalColumn column, int order, double percentage) {
     if (!ShouldUseBackColor(column)) {
@@ -160,7 +162,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     return (order < TopOrderCutoff && percentage > double.Epsilon) ||
            percentage >= ElementWeightCutoff;
   }
-  
+
   public bool IsVisibleValue(double percentage, double scale = 1.0) {
     return percentage >= ElementWeightCutoff * scale;
   }

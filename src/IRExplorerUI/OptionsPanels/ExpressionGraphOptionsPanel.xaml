@@ -17,14 +17,14 @@
                     <StackPanel Margin="0,0,0,2" Orientation="Horizontal" />
                     <CheckBox
                         Margin="0,2,0,2"
-                        Content="Print variable names"
+                        Content="Show variable names"
                         IsChecked="{Binding Path=PrintVariableNames, Mode=TwoWay}"
-                        ToolTip="Print the destination variable name for each instruction" />
+                        ToolTip="Show the destination variable name for each instruction" />
                     <CheckBox
                         Margin="0,2,0,2"
-                        Content="Print variable SSA definition numbers"
+                        Content="Show variable SSA definition numbers"
                         IsChecked="{Binding Path=PrintSSANumbers, Mode=TwoWay}"
-                        ToolTip="Print the SSA definition numbers for instructions and other operands" />
+                        ToolTip="Show the SSA definition numbers for instructions and other operands" />
                     <CheckBox
                         Margin="0,2,0,2"
                         Content="Skip over copy instructions"
@@ -36,9 +36,9 @@
                         IsChecked="{Binding Path=GroupInstructions, Mode=TwoWay}" />
                     <CheckBox
                         Margin="0,2,0,2"
-                        Content="Print expression bottom-up"
+                        Content="Show expression bottom-up"
                         IsChecked="{Binding Path=PrintBottomUp, Mode=TwoWay}"
-                        ToolTip="Print the expression inverted, with the start point placed up and the leaf operands placed down" />
+                        ToolTip="Show the expression inverted, with the start point placed up and the leaf operands placed down" />
                     <TextBlock Margin="0,6,0,2" Text="Maximum expression depth" />
                     <StackPanel
                         Margin="0,0,0,4"
@@ -52,6 +52,7 @@
                             Minimum="1"
                             TickFrequency="2"
                             TickPlacement="BottomRight"
+                            ToolTip="The maximum depth of the expression tree to show in the graph"
                             Value="{Binding Path=MaxExpressionDepth, Mode=TwoWay}" />
                         <TextBlock Margin="8,0,0,0" Text="{Binding Path=MaxExpressionDepth}" />
                         <TextBlock Margin="4,0,0,0" Text="instructions" />
@@ -61,18 +62,20 @@
                     <TextBlock FontWeight="Medium" Text="Graph Interaction" />
 
                     <CheckBox
-                        Margin="0,2,0,2"
+                        Margin="0,4,0,2"
                         Content="Bring selected node into view"
+                        ToolTip="Scroll the graph to show the node corresponding to the selected line in the associated document"
                         IsChecked="{Binding Path=BringNodesIntoView, Mode=TwoWay}" />
 
                     <CheckBox
                         x:Name="ShowPreviewCheckbox"
                         Margin="0,2,0,2"
                         Content="Show node preview popup on hover"
+                        ToolTip="Show a preview of the corresponding lines from the associated document"
                         IsChecked="{Binding Path=ShowPreviewPopup, Mode=TwoWay}" />
                     <CheckBox
                         Margin="20,3,0,2"
-                        Content="Only when the Shift key is pressed"
+                        Content="Only when a modifier key is pressed (Shift/Ctrl/Alt)"
                         IsChecked="{Binding Path=ShowPreviewPopupWithModifier, Mode=TwoWay}"
                         IsEnabled="{Binding ElementName=ShowPreviewCheckbox, Path=IsChecked}" />
                 </StackPanel>
@@ -116,7 +119,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -138,7 +141,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=BackgroundColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -160,7 +163,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=NodeColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -181,7 +184,7 @@
                           BorderBrush="#707070"
                           SelectedColor="{Binding Path=SelectedNodeColor, Mode=TwoWay}"
                           ShowDropDownButton="True"
-                          UsingAlphaChannel="False" />
+                           />
                         <TextBlock
                           Grid.Column="1"
                           HorizontalAlignment="Left"
@@ -202,7 +205,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=NodeBorderColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -223,7 +226,7 @@
                           BorderBrush="#707070"
                           SelectedColor="{Binding Path=PredecessorNodeBorderColor, Mode=TwoWay}"
                           ShowDropDownButton="True"
-                          UsingAlphaChannel="False" />
+                           />
                         <TextBlock
                           Grid.Column="1"
                           HorizontalAlignment="Left"
@@ -244,7 +247,7 @@
                           BorderBrush="#707070"
                           SelectedColor="{Binding Path=SuccessorNodeBorderColor, Mode=TwoWay}"
                           ShowDropDownButton="True"
-                          UsingAlphaChannel="False" />
+                           />
                         <TextBlock
                           Grid.Column="1"
                           HorizontalAlignment="Left"
@@ -265,7 +268,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=EdgeColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -286,7 +289,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=UnaryInstructionNodeColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -308,7 +311,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=BinaryInstructionNodeColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -330,7 +333,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=CopyInstructionNodeColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -352,7 +355,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=LoadStoreInstructionNodeColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -375,7 +378,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=CallInstructionNodeColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -398,7 +401,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=OperandNodeColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -420,7 +423,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=NumberOperandNodeColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -442,7 +445,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=IndirectionOperandNodeColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -464,7 +467,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=AddressOperandNodeColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -486,7 +489,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=LoopPhiBackedgeColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"

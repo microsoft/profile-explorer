@@ -118,13 +118,18 @@ public class CallTreeListItem : SearchableProfileItem, ITreeModel {
   public override string FunctionName {
     get {
       var name = base.FunctionName;
-      return $"{name} ({Percentage.AsPercentageString()})";
+
+      if (Kind != CallTreeListItemKind.Header) {
+        return $"{name} ({Percentage.AsPercentageString()})";
+      }
+
+      return name;
     }
     set {
       base.FunctionName = value;
     }
   }
-  
+
   public TreeNode TreeNode { get; set; } // Associated UI tree node.
 
   public IEnumerable GetChildren(object node) {
@@ -1205,16 +1210,28 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
   }
-  
+
   private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.CopyFunctionMarkingsAsHtml(Session);
+    await ProfilingExporting.CopyFunctionMarkingsAsHtml(Session);
   }
 
   private async void ExportMarkedFunctionsHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.ExportFunctionMarkingsAsHtmlFile(Session);
+    await ProfilingExporting.ExportFunctionMarkingsAsHtmlFile(Session);
   }
 
   private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.ExportFunctionMarkingsAsMarkdownFile(Session);
+    await ProfilingExporting.ExportFunctionMarkingsAsMarkdownFile(Session);
+  }
+
+  private async void CopyMarkedModulesMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingExporting.CopyModuleMarkingsAsHtml(Session);
+  }
+
+  private async void ExportMarkedModulesHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingExporting.ExportModuleMarkingsAsHtmlFile(Session);
+  }
+
+  private async void ExportMarkedModulesMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingExporting.ExportModuleMarkingsAsMarkdownFile(Session);
   }
 }

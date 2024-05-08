@@ -170,7 +170,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding InsertionColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -193,7 +193,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding InsertionBorderColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -215,7 +215,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding DeletionColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -236,7 +236,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding DeletionBorderColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -257,7 +257,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding ModificationColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -278,7 +278,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding ModificationBorderColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -301,7 +301,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding MinorModificationColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -322,7 +322,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding MinorModificationBorderColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -344,7 +344,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding PlaceholderBorderColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"

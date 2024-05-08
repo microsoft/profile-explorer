@@ -207,7 +207,7 @@ public class ProfileDocumentMarker {
       columnData = await MarkProfiledElements(result, function, document);
       document.ProfileProcessingResult = result;
       document.ProfileColumnData = columnData;
-    
+
       // Remove any overlays from a previous marking.
       foreach (var block in function.Blocks) {
         document.RemoveElementOverlays(block, ProfileOverlayTag);
@@ -286,7 +286,8 @@ public class ProfileDocumentMarker {
     // mapped to that line, for both samples and performance counters.
     int lastLine = Math.Min(sourceProcResult.LastLineIndex, document.LineCount);
     int inserted = 0;
-    
+    document.SuspendUpdate();
+
     for (int lineNumber = sourceProcResult.FirstLineIndex; lineNumber <= lastLine; lineNumber++) {
       var documentLine = document.GetLineByNumber(lineNumber + inserted);
       var location = new TextLocation(documentLine.Offset, lineNumber + inserted - 1, 0);
@@ -294,10 +295,10 @@ public class ProfileDocumentMarker {
       lineToElementMap[lineNumber + inserted] = dummyTuple;
       lineToOriginalLineMap[lineNumber + inserted] = lineNumber;
       originalLineToLineMap[lineNumber] = lineNumber + inserted;
-      
+
       if (sourceProcResult.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
         processingResult.SampledElements.Add((dummyTuple, lineWeight));
-        
+
       }
 
       if (sourceProcResult.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
@@ -342,6 +343,7 @@ public class ProfileDocumentMarker {
       assemblyRanges.Add((rangeStart, rangeEnd));
     }
 
+    document.ResumeUpdate();
     processingResult.SortSampledElements(); // Used for ordering.
     processingResult.FunctionCountersValue = sourceProcResult.FunctionCountersValue;
     document.ProfileProcessingResult = processingResult;
@@ -655,7 +657,7 @@ public class ProfileDocumentMarker {
 
       bool markOnFlowGraph = settings_.IsSignificantValue(i, weightPercentage);
       string label = $"{weightPercentage.AsTrimmedPercentageString()}";
-      string tooltip = settings_.FormatWeightValue(null, weight);
+      string tooltip = settings_.FormatWeightValue(weight);
       var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label, tooltip);
       overlay.Tag = ProfileOverlayTag;
       overlay.Background = color;
@@ -702,7 +704,7 @@ public class ProfileDocumentMarker {
         var weight = elements[i].Item2;
         double weightPercentage = profile_.ScaleWeight(weight);
 
-        string label = settings_.FormatWeightValue(timeColumn, weight);
+        string label = settings_.FormatWeightValue(weight);
         string percentageLabel = weightPercentage.AsTrimmedPercentageString();
         var columnValue = new ElementColumnValue(label, weight.Ticks, weightPercentage, i);
         var percentageColumnValue = new ElementColumnValue(percentageLabel, weight.Ticks, weightPercentage, i);

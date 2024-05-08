@@ -747,7 +747,7 @@ public partial class MainWindow : Window, ISession {
     var markings = App.Settings.MarkingSettings.BuiltinMarkingCategories.FunctionColors;
     var markingCategoryList =
       await Task.Run(() => ProfilingUtils.CollectMarkedFunctions(markings, false, this));
-    return ProfilingUtils.ExportProfilingReportAsHtml(markingCategoryList, this, true, 20);
+    return ProfilingExporting.ExportProfilingReportAsHtml(markingCategoryList, this, true, 20);
   }
 
   private async void ExportOverviewHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
@@ -795,14 +795,26 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.CopyFunctionMarkingsAsHtml(this);
+    await ProfilingExporting.CopyFunctionMarkingsAsHtml(this);
   }
 
   private async void ExportMarkedFunctionsHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.ExportFunctionMarkingsAsHtmlFile(this);
+    await ProfilingExporting.ExportFunctionMarkingsAsHtmlFile(this);
   }
 
   private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.ExportFunctionMarkingsAsMarkdownFile(this);
+    await ProfilingExporting.ExportFunctionMarkingsAsMarkdownFile(this);
+  }
+
+  private async void CopyMarkedModulesMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingExporting.CopyModuleMarkingsAsHtml(this);
+  }
+
+  private async void ExportMarkedModulesHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingExporting.ExportModuleMarkingsAsHtmlFile(this);
+  }
+
+  private async void ExportMarkedModulesMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
+    await ProfilingExporting.ExportModuleMarkingsAsMarkdownFile(this);
   }
 }

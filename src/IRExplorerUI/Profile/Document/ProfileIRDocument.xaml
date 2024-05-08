@@ -112,7 +112,7 @@
               VerticalAlignment="Center"
               Command="irExplorerUi:DocumentHostCommand.JumpToProfiledElement"
               CommandTarget="{Binding ElementName=TextView}"
-              ToolTip="Jump to hottest profiled line"
+              ToolTip="Jump to hottest profiled line (Ctrl+H)"
               Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
               <Image Source="{StaticResource HotFlameIcon}" Style="{StaticResource DisabledImageStyle}" />
             </Button>
@@ -129,11 +129,11 @@
               Padding="0"
               Command="irExplorerUi:DocumentHostCommand.JumpToNextProfiledElement"
               CommandTarget="{Binding ElementName=TextView}"
-              ToolTip="Jump to next hotter line (Shift+F2)">
+              ToolTip="Jump to next hotter line (F2)">
               <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
             </Button>
             <Separator Visibility="{Binding IsSourceFileDocument, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
-           
+
             <Menu
               Margin="2,0,0,0"
               VerticalAlignment="Center"
@@ -146,7 +146,7 @@
                 OverridesDefaultStyle="True">
                 <MenuItem.Header>
                   <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource FlowChartSolidIcon}" 
+                    <Image Source="{StaticResource FlowChartSolidIcon}"
                            Style="{StaticResource DisabledImageStyle}" />
                     <TextBlock
                       Margin="2,0,0,0"
@@ -174,7 +174,7 @@
                 x:Name="OutlineMenu"
                 Margin="0,0,0,0"
                 Padding="0,0,0,0"
-                Visibility="{Binding IsSourceFileDocument, Converter={StaticResource BoolToVisibilityConverter}}" 
+                Visibility="{Binding IsSourceFileDocument, Converter={StaticResource BoolToVisibilityConverter}}"
                 Background="{Binding Path=HasProfileInstanceFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
                 OverridesDefaultStyle="True">
                 <MenuItem.Header>

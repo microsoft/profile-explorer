@@ -89,7 +89,7 @@
                         IsManipulationEnabled="True"
                         SelectedColor="{Binding Path=BackgroundColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                         />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
@@ -110,7 +110,7 @@
                         BorderBrush="#707070"
                         SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                         />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"
@@ -131,7 +131,7 @@
                         BorderBrush="#707070"
                         SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
+                         />
                     <TextBlock
                         Grid.Column="1"
                         HorizontalAlignment="Left"

@@ -530,7 +530,7 @@ public partial class GraphPanel : ToolPanelControl {
 
   private async void Hover_MouseHover(object sender, MouseEventArgs e) {
     if (!Settings.ShowPreviewPopup ||
-        Settings.ShowPreviewPopupWithModifier && !Utils.IsShiftModifierActive()) {
+        Settings.ShowPreviewPopupWithModifier && !Utils.IsKeyboardModifierActive()) {
       return;
     }
 

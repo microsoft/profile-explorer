@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System.Collections.Generic;
+using System.Windows.Media;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -26,11 +27,15 @@ public class SourceFileSettings : TextViewSettingsBase {
   public bool AutoExpandInlineAssembly { get; set; }
   [ProtoMember(7), OptionValue(true)]
   public bool ShowSourceStatements { get; set; }
-  [ProtoMember(8), OptionValue(false)]
+  [ProtoMember(8), OptionValue(true)]
   public bool ShowSourceStatementsOnMargin { get; set; }
   [ProtoMember(9), OptionValue(true)]
   public bool ReplaceInsignificantSourceStatements { get; set; }
-  
+  [ProtoMember(10), OptionValue(typeof(Color), "#00008B")]
+  public Color AssemblyTextColor { get; set; }
+  [ProtoMember(11), OptionValue(typeof(Color), "#00FFFFFF")]
+  public Color AssemblyBackColor { get; set; }
+
   public override void Reset() {
       base.Reset();
       InitializeReferenceMembers();

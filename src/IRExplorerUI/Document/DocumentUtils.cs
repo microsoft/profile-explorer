@@ -292,7 +292,7 @@ public static class DocumentUtils {
       double weightPercentage = profile.ScaleFunctionWeight(state.Weight);
 
       var title = state.Section.ParentFunction.Name.FormatFunctionName(session, 80);
-      string text = $"({markerSettings.FormatWeightValue(null, state.Weight)})";
+      string text = $"({markerSettings.FormatWeightValue(state.Weight)})";
 
       var value = new ProfileMenuItem(text, state.Weight.Ticks, weightPercentage) {
         PrefixText = title,

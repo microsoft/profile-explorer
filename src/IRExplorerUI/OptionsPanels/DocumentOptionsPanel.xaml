@@ -30,7 +30,7 @@
                     BorderBrush="#707070"
                     SelectedColor="{Binding Path=Value, Mode=TwoWay}"
                     ShowDropDownButton="True"
-                    UsingAlphaChannel="False" />
+                     />
                 <TextBlock
                     Grid.Column="1"
                     HorizontalAlignment="Left"
@@ -182,14 +182,17 @@
                     <CheckBox
                         Margin="0,4,0,2"
                         Content="Highlight current text line"
+                        ToolTip="Mark the current line in the document with a border"
                         IsChecked="{Binding Path=HighlightCurrentLine, Mode=TwoWay}" />
                     <CheckBox
                         Margin="0,0,0,2"
                         Content="Show block separator lines"
+                        ToolTip="Draw a line between blocks in the document"
                         IsChecked="{Binding Path=ShowBlockSeparatorLine, Mode=TwoWay}" />
                     <CheckBox
                         Margin="0,0,0,2"
                         Content="Allow block folding"
+                        ToolTip="Enable the ability to fold blocks in the document"
                         IsChecked="{Binding Path=ShowBlockFolding, Mode=TwoWay}" />
                     <Separator Margin="0,4,0,4" Background="LightGray"/>
 
@@ -199,6 +202,7 @@
                         x:Name="HighlightDefinitionCheckbox"
                         Margin="0,4,0,2"
                         Content="Highlight definition(s) of selected source value"
+                        ToolTip="Mark the definition operands of the selected source operand"
                         IsChecked="{Binding Path=HighlightSourceDefinition, Mode=TwoWay}" />
                     <CheckBox
                         Margin="20,2,0,2"
@@ -210,6 +214,7 @@
                         x:Name="HighlightUsesCheckbox"
                         Margin="0,2,0,2"
                         Content="Highlight uses of selected destination value"
+                        ToolTip="Mark the use operands of the selected destination operand"
                         IsChecked="{Binding Path=HighlightDestinationUses, Mode=TwoWay}" />
                     <CheckBox
                         Margin="20,2,0,2"
@@ -220,12 +225,13 @@
                     <CheckBox
                         Margin="0,2,0,2"
                         Content="Highlight definitions of all sources of selected instruction"
+                        ToolTip="Mark the definition operands of all source operands of the selected instruction"
                         IsChecked="{Binding Path=HighlightInstructionOperands, Mode=TwoWay}" />
 
                     <CheckBox
                         x:Name="HoverCheckbox"
                         Margin="0,2,0,2"
-                        Content="Show value information on hover"
+                        Content="Show additional value info on hover"
                         IsChecked="{Binding Path=ShowInfoOnHover, Mode=TwoWay}" />
 
                     <CheckBox
@@ -236,9 +242,12 @@
                         IsEnabled="{Binding ElementName=HoverCheckbox, Path=IsChecked}" />
                     <CheckBox
                         Margin="20,2,0,2"
-                        Content="Only when the Alt key is pressed"
+                        Content="Only when a modifier key is pressed (Shift/Ctrl/Alt)"
                         IsChecked="{Binding Path=ShowInfoOnHoverWithModifier, Mode=TwoWay}"
                         IsEnabled="{Binding ElementName=HoverCheckbox, Path=IsChecked}" />
+                    <TextBlock Margin="0,8,0,0" FontSize="11" Text="Combine with Ctrl key to consider expressions when highlighting." />
+                    <TextBlock Margin="0,2,0,0" FontSize="11" Text="Combine with Shift key to all references when highlighting." />
+
                 </StackPanel>
             </TabItem>
 
@@ -281,7 +290,7 @@
                                 IsManipulationEnabled="True"
                                 SelectedColor="{Binding Path=BackgroundColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -303,7 +312,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=AlternateBackgroundColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -324,7 +333,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -345,7 +354,7 @@
                           BorderBrush="#707070"
                           SelectedColor="{Binding Path=CurrentLineBorderColor, Mode=TwoWay}"
                           ShowDropDownButton="True"
-                          UsingAlphaChannel="False" />
+                           />
                         <TextBlock
                           Grid.Column="1"
                           HorizontalAlignment="Left"
@@ -366,7 +375,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=BlockSeparatorColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -388,7 +397,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=MarginBackgroundColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -415,7 +424,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=SelectedValueColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -437,7 +446,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=DefinitionValueColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -458,7 +467,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=UseValueColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -479,7 +488,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=BorderColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -522,7 +531,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=SourceLineTextColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -543,7 +552,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=SourceLineBackColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -564,7 +573,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=InlineeOverlayTextColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
@@ -585,7 +594,7 @@
                                 BorderBrush="#707070"
                                 SelectedColor="{Binding Path=InlineeOverlayBackColor, Mode=TwoWay}"
                                 ShowDropDownButton="True"
-                                UsingAlphaChannel="False" />
+                                 />
                             <TextBlock
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"

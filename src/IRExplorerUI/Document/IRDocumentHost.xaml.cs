@@ -1084,6 +1084,17 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         await LoadPreviousSection();
       }
     }
+    else if(e.Key == Key.H && Utils.IsControlModifierActive()) {
+      JumpToHottestProfiledElement();
+    }
+    else if (e.Key == Key.F2) {
+      if(Utils.IsShiftModifierActive()) {
+        JumpToProfiledElement(1);
+      }
+      else {
+        JumpToProfiledElement(-1);
+      }
+    }
   }
 
   private void SectionPanel_ClosePanel(object sender, EventArgs e) {
@@ -1211,7 +1222,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       }
 
       string prefixText = $"B{block.Number}";
-      string text = $"({markerSettings.FormatWeightValue(null, weight)})";
+      string text = $"({markerSettings.FormatWeightValue(weight)})";
 
       var value = new ProfileMenuItem(text, weight.Ticks, weightPercentage) {
         Element = block,
@@ -1263,7 +1274,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       }
 
       string prefixText = DocumentUtils.GenerateElementPreviewText(element, TextView.SectionText, 50);
-      string text = $"({markerSettings.FormatWeightValue(null, weight)})";
+      string text = $"({markerSettings.FormatWeightValue(weight)})";
 
       var value = new ProfileMenuItem(text, weight.Ticks, weightPercentage) {
         Element = element,
@@ -2357,7 +2368,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   public RelayCommand<object> CopyDocumentCommand => new RelayCommand<object>(async obj => {
     DocumentExporting.CopyAllLinesAsHtml(TextView);
   });
-  
+
   private class DummyQuery : IElementQuery {
     public ISession Session { get; }
 

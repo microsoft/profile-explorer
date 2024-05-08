@@ -141,7 +141,8 @@
               IsEnabled="{Binding HasPreviousFunctions}"
               ToolTip="Go back to previous function (Backspace/Mouse Back button)">
               <StackPanel Orientation="Horizontal">
-                <Image Source="{StaticResource DockLeftIcon}" Style="{StaticResource DisabledImageStyle}" />
+                <Image Source="{StaticResource DockLeftIcon}"
+                       Style="{StaticResource DisabledImageStyle}" />
                 <TextBlock Margin="4,0,0,0" Text="Back" />
               </StackPanel>
             </Button>
@@ -374,10 +375,10 @@
               <Image Source="{StaticResource DownArrowIcon}" />
             </Button>
 
-
             <Separator />
 
             <ToggleButton
+              IsEnabled="False"
               Height="20"
               Margin="0,0,0,0"
               Padding="0,0,2,0"
@@ -388,7 +389,8 @@
                   Width="16"
                   Height="16"
                   Margin="0,1,0,0"
-                  Source="{StaticResource RemarkIcon}" />
+                  Source="{StaticResource RemarkIcon}"
+                  Style="{StaticResource DisabledImageStyle}"/>
                 <TextBlock Text="Remarks" />
               </StackPanel>
             </ToggleButton>
@@ -400,15 +402,16 @@
               IsChecked="{Binding Path=ShowPreviousSections, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
               IsEnabled="{Binding Path=ShowRemarks}"
               ToolTip="Show remarks from previous sections">
-              <Image Source="{StaticResource HistoryIcon}" />
+              <Image Source="{StaticResource HistoryIcon}" Style="{StaticResource DisabledImageStyle}"/>
             </ToggleButton>
             <Button
+              IsEnabled="False"
               Width="20"
               Height="20"
               Padding="0,0,0,0"
               Click="MenuItem_Click_1"
               ToolTip="Show remarks options panel">
-              <Image Source="{StaticResource ConfigIcon}" />
+              <Image Source="{StaticResource ConfigIcon}" Style="{StaticResource DisabledImageStyle}"/>
             </Button>
 
             <Separator />
@@ -424,7 +427,8 @@
                     Width="18"
                     Height="18"
                     Margin="-2,0,-2,0"
-                    Source="{StaticResource RemoveIcon}" />
+                    Source="{StaticResource RemoveIcon}"
+                    Style="{StaticResource DisabledImageStyle}"/>
                 </MenuItem.Icon>
                 <MenuItem
                   Command="local:DocumentCommand.ClearMarker"
@@ -464,7 +468,8 @@
                     Margin="-2,0,-2,0"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Source="{StaticResource TasklistIcon}" />
+                    Source="{StaticResource TasklistIcon}"
+                    Style="{StaticResource DisabledImageStyle}"/>
                 </MenuItem.Icon>
                 <Separator />
                 <MenuItem Header="Edit Task Definitions" />
@@ -483,7 +488,8 @@
                     Height="18"
                     Margin="-2,0,-2,0"
                     HorizontalAlignment="Center"
-                    Source="{StaticResource QueryIcon}" />
+                    Source="{StaticResource QueryIcon}"
+                    Style="{StaticResource DisabledImageStyle}"/>
                 </MenuItem.Icon>
                 <Separator />
                 <MenuItem Click="CloseAllQueryPanelsMenuItem_Click" Header="Close All Query Panels" />
@@ -499,7 +505,7 @@
               Padding="0,0,0,0"
               IsChecked="{Binding Path=PassOutputVisible, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
               ToolTip="Show associated pass output in this document">
-              <Image Source="{StaticResource ListIcon}" />
+              <Image Source="{StaticResource ListIcon}" Style="{StaticResource DisabledImageStyle}"/>
             </ToggleButton>
             <Button
               Width="20"
@@ -508,7 +514,7 @@
               Padding="0,0,0,0"
               Click="OpenPopupButton_Click"
               ToolTip="Open the document in a new popup window">
-              <Image Source="{StaticResource OpenExternalIcon}" />
+              <Image Source="{StaticResource OpenExternalIcon}" Style="{StaticResource DisabledImageStyle}"/>
             </Button>
 
             <ToggleButton
@@ -516,7 +522,7 @@
               Command="local:DocumentHostCommand.ShowSearch"
               CommandTarget="{Binding ElementName=TextView}"
               ToolTip="Search section text (Ctrl+F)">
-              <Image Source="{StaticResource SearchIcon}" />
+              <Image Source="{StaticResource SearchIcon}" Style="{StaticResource DisabledImageStyle}"/>
             </ToggleButton>
           </ToolBar>
         </ToolBarTray>
@@ -581,7 +587,7 @@
                   VerticalAlignment="Center"
                   Command="local:DocumentHostCommand.JumpToProfiledElement"
                   CommandTarget="{Binding ElementName=TextView}"
-                  ToolTip="Jump to hottest profiled instruction"
+                  ToolTip="Jump to hottest profiled instruction (Ctrl+H)"
                   Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                   <Image Source="{StaticResource HotFlameIcon}" Style="{StaticResource DisabledImageStyle}" />
                 </Button>
@@ -598,7 +604,7 @@
                   Padding="0"
                   Command="local:DocumentHostCommand.JumpToNextProfiledElement"
                   CommandTarget="{Binding ElementName=TextView}"
-                  ToolTip="Jump to next hotter instruction (Shift+F2)">
+                  ToolTip="Jump to next hotter instruction (F2)">
                   <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
                 </Button>
                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
@@ -774,7 +780,8 @@
                         <Image
                           Width="16"
                           Height="16"
-                          Source="{StaticResource ExcelIcon}" />
+                          Source="{StaticResource ExcelIcon}"
+                          Style="{StaticResource DisabledImageStyle}"/>
                       </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem
@@ -786,7 +793,8 @@
                         <Image
                           Width="16"
                           Height="16"
-                          Source="{StaticResource SourceIcon}" />
+                          Source="{StaticResource SourceIcon}"
+                          Style="{StaticResource DisabledImageStyle}"/>
                       </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem
@@ -798,7 +806,8 @@
                         <Image
                           Width="16"
                           Height="16"
-                          Source="{StaticResource DocumentIcon}" />
+                          Source="{StaticResource DocumentIcon}"
+                          Style="{StaticResource DisabledImageStyle}"/>
                       </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
@@ -811,7 +820,8 @@
                         <Image
                           Width="16"
                           Height="16"
-                          Source="{StaticResource ClipboardIcon}" />
+                          Source="{StaticResource ClipboardIcon}"
+                          Style="{StaticResource DisabledImageStyle}"/>
                       </MenuItem.Icon>
                     </MenuItem>
                   </MenuItem>
@@ -894,7 +904,8 @@
                     <Image
                       Width="16"
                       Height="16"
-                      Source="{StaticResource OpenExternalIcon}" />
+                      Source="{StaticResource OpenExternalIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -906,7 +917,8 @@
                     <Image
                       Width="16"
                       Height="16"
-                      Source="{StaticResource GotoDefinitionIcon}" />
+                      Source="{StaticResource GotoDefinitionIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -918,7 +930,8 @@
                     <Image
                       Width="16"
                       Height="16"
-                      Source="{StaticResource GotoDefinitionIconSkipIcon}" />
+                      Source="{StaticResource GotoDefinitionIconSkipIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                   </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
@@ -933,7 +946,8 @@
                     <Image
                       Width="16"
                       Height="16"
-                      Source="{StaticResource ClipboardIcon}" />
+                      Source="{StaticResource ClipboardIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -952,7 +966,8 @@
                     <Image
                       Width="16"
                       Height="16"
-                      Source="{StaticResource SearchIcon}" />
+                      Source="{StaticResource SearchIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -971,7 +986,8 @@
                     <Image
                       Width="16"
                       Height="16"
-                      Source="{StaticResource ListIcon}" />
+                      Source="{StaticResource ListIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -983,7 +999,8 @@
                     <Image
                       Width="16"
                       Height="16"
-                      Source="{StaticResource SectionIcon}" />
+                      Source="{StaticResource SectionIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -995,7 +1012,8 @@
                     <Image
                       Width="16"
                       Height="16"
-                      Source="{StaticResource GraphIcon}" />
+                      Source="{StaticResource GraphIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                   </MenuItem.Icon>
                 </MenuItem>
 
@@ -1011,7 +1029,8 @@
                     <Image
                       Width="16"
                       Height="16"
-                      Source="{StaticResource AddBookmarkIcon}" />
+                      Source="{StaticResource AddBookmarkIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -1024,7 +1043,8 @@
                     <Image
                       Width="16"
                       Height="16"
-                      Source="{StaticResource RemoveIcon}" />
+                      Source="{StaticResource RemoveIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                   </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
@@ -1100,7 +1120,8 @@
                     <Image
                       Width="16"
                       Height="16"
-                      Source="{StaticResource UndoIcon}" />
+                      Source="{StaticResource UndoIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                   </MenuItem.Icon>
                 </MenuItem>
 
@@ -1127,7 +1148,8 @@
                     <Image
                       Width="16"
                       Height="16"
-                      Source="{StaticResource RemoveIcon}" />
+                      Source="{StaticResource RemoveIcon}"
+                      Style="{StaticResource DisabledImageStyle}"/>
                   </MenuItem.Icon>
                 </MenuItem>
               </ContextMenu>

@@ -86,8 +86,7 @@ sealed class RangeFoldingStrategy : IBlockFoldingStrategy {
 }
 
 sealed class RangeColorizer : DocumentColorizingTransformer {
-  public class CompareRanges : IComparer<(int StartOffset, int EndOffset)> {
-
+  private class CompareRanges : IComparer<(int StartOffset, int EndOffset)> {
     public int Compare((int StartOffset, int EndOffset) x, (int StartOffset, int EndOffset) y) {
       if (x.EndOffset < y.StartOffset) {
         return -1;
@@ -102,13 +101,15 @@ sealed class RangeColorizer : DocumentColorizingTransformer {
 
   private List<(int StartOffset, int EndOffset)> ranges_;
   private Brush textColor_;
+  private Brush backColor_;
   private Typeface typeface_;
   private CompareRanges comparer_;
 
   public RangeColorizer(List<(int StartOffset, int EndOffset)> ranges,
-                        Brush textColor, Typeface typeface = null) {
+                        Brush textColor, Brush backColor = null, Typeface typeface = null) {
     ranges_ = ranges;
     textColor_ = textColor;
+    backColor_ = backColor;
     typeface_ = typeface;
     comparer_ = new CompareRanges();
     ranges.Sort((a, b) => a.CompareTo(b));
@@ -133,7 +134,13 @@ sealed class RangeColorizer : DocumentColorizingTransformer {
       int start = line.Offset > range.StartOffset ? line.Offset : range.StartOffset;
       int end = range.EndOffset > line.EndOffset ? line.EndOffset : range.EndOffset;
       ChangeLinePart(start, end, element => {
-        element.TextRunProperties.SetForegroundBrush(textColor_);
+        if (textColor_ != null) {
+          element.TextRunProperties.SetForegroundBrush(textColor_);
+        }
+
+        if(backColor_ != null) {
+          element.TextRunProperties.SetBackgroundBrush(backColor_);
+        }
 
         if (typeface_ != null) {
           element.TextRunProperties.SetTypeface(typeface_);

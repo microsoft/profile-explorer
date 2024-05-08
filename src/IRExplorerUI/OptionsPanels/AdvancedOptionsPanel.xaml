@@ -40,7 +40,7 @@
           HorizontalAlignment="Left"
           SelectedColor="{Binding NewSectionColor, Mode=TwoWay}"
           ShowDropDownButton="True"
-          UsingAlphaChannel="False"
+
           VerticalAlignment="Center"
           Width="64" />
         <TextBlock

@@ -60,7 +60,7 @@ public static class ProfilingUtils {
       }
 
       var (title, tooltip) = GenerateInstancePreviewText(node, session, maxCallers);
-      string text = $"({markerSettings.FormatWeightValue(null, node.Weight)})";
+      string text = $"({markerSettings.FormatWeightValue(node.Weight)})";
 
       var value = new ProfileMenuItem(text, node.Weight.Ticks, weightPercentage) {
         PrefixText = title,
@@ -117,7 +117,7 @@ public static class ProfilingUtils {
       var threadInfo = session.ProfileData.FindThread(thread.ThreadId);
       var backColor = timelineSettings.GetThreadBackgroundColors(threadInfo, thread.ThreadId).Margin;
 
-      string text = $"({markerSettings.FormatWeightValue(null, thread.Values.Weight)})";
+      string text = $"({markerSettings.FormatWeightValue(thread.Values.Weight)})";
       string tooltip = threadInfo is {HasName: true} ? threadInfo.Name : null;
       string title = !string.IsNullOrEmpty(tooltip) ? $"{thread.ThreadId} ({tooltip})" : $"{thread.ThreadId}";
 
@@ -176,7 +176,7 @@ public static class ProfilingUtils {
 
     var nonInlineeWeight = funcProfile.Weight - inlineeWeightSum;
     double nonInlineeWeightPercentage = funcProfile.ScaleWeight(nonInlineeWeight);
-    string nonInlineeText = $"({markerSettings.FormatWeightValue(null, nonInlineeWeight)})";
+    string nonInlineeText = $"({markerSettings.FormatWeightValue(nonInlineeWeight)})";
 
     var nonInlineeValue = new ProfileMenuItem(nonInlineeText, nonInlineeWeight.Ticks, nonInlineeWeightPercentage) {
       PrefixText = "Non-Inlinee Code",
@@ -201,7 +201,7 @@ public static class ProfilingUtils {
       }
 
       var title = node.InlineeFrame.Function.FormatFunctionName(session, 80);
-      string text = $"({markerSettings.FormatWeightValue(null, node.ExclusiveWeight)})";
+      string text = $"({markerSettings.FormatWeightValue(node.ExclusiveWeight)})";
       string tooltip = $"File {Utils.TryGetFileName(node.InlineeFrame.FilePath)}:{node.InlineeFrame.Line}\n";
       tooltip += CreateInlineeFunctionDescription(node, funcProfile, settings.ProfileMarkerSettings, session);
 
@@ -247,22 +247,27 @@ public static class ProfilingUtils {
     DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
   }
 
-  public static void PopulateMarkedModulesMenu(MenuItem menu, FunctionMarkingSettings settings,
-                                               ISession session, object triggerObject,
-                                               Action changedHandler) {
+  public static async Task PopulateMarkedModulesMenu(MenuItem menu, FunctionMarkingSettings settings,
+                                                     ISession session, object triggerObject,
+                                                     Action changedHandler) {
     if (IsTopLevelSubmenu(triggerObject)) return;
 
     CreateMarkedModulesMenu(menu,
-      (o, args) => {
-        if (o is MenuItem menuItem &&
-            menuItem.Tag is FunctionMarkingStyle style) {
-          style.IsEnabled = menuItem.IsChecked;
+      async (o, args) => {
+        if (o is MenuItem menuItem) {
+          if (menuItem.Tag is FunctionMarkingStyle style) {
+            style.IsEnabled = menuItem.IsChecked;
 
-          if (style.IsEnabled) {
-            settings.UseModuleColors = true;
+            if (style.IsEnabled) {
+              settings.UseModuleColors = true;
+            }
+
+            changedHandler();
           }
-
-          changedHandler();
+          else if (menuItem.Tag is IRTextFunction func) {
+            // Click on submenu with individual functions.
+            await session.SwitchActiveFunction(func);
+          }
         }
       },
       (o, args) => {
@@ -318,10 +323,11 @@ public static class ProfilingUtils {
     return false;
   }
 
-  public static void CreateMarkedModulesMenu(MenuItem menu,
-                                             RoutedEventHandler menuClickHandler,
-                                             MouseButtonEventHandler menuRightClickHandler,
-                                             FunctionMarkingSettings settings, ISession session) {
+  public static async void
+    CreateMarkedModulesMenu(MenuItem menu,
+                            MouseButtonEventHandler menuClickHandler,
+                            MouseButtonEventHandler menuRightClickHandler,
+                            FunctionMarkingSettings settings, ISession session) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
     var separatorIndex = defaultItems.FindIndex(item => item is Separator);
@@ -330,20 +336,17 @@ public static class ProfilingUtils {
     double maxWidth = 0;
 
     // Sort modules by weight in decreasing order.
-    var sortedModules = new List<(FunctionMarkingStyle Module, TimeSpan Weight)>();
+    List<(FunctionMarkingStyle Module, TimeSpan Weight)> sortedModules;
+    Dictionary<string, List<ProfileCallTreeNode>> moduleFuncs;
+    var categories = await CreateModuleMarkingCategories(settings, session);
 
-    foreach (var moduleStyle in settings.ModuleColors) {
-      var moduleWeight = session.ProfileData.FindModulesWeight(name =>
-        moduleStyle.NameMatches(name));
-      sortedModules.Add((moduleStyle, moduleWeight));
-    }
-
-    sortedModules.Sort((a, b) => a.Weight.CompareTo(b.Weight));
+    CreateCategoriesMenu(categories, menu, false, menuClickHandler, menuRightClickHandler, session);
+    return;
 
     // Insert module markers after separator.
     foreach (var pair in sortedModules) {
       double weightPercentage = session.ProfileData.ScaleModuleWeight(pair.Weight);
-      string text = $"({markerSettings.FormatWeightValue(null, pair.Weight)})";
+      string text = $"({markerSettings.FormatWeightValue(pair.Weight)})";
       string tooltip = "Right-click to remove module marking";
       string title = pair.Module.Name;
 
@@ -366,16 +369,28 @@ public static class ProfilingUtils {
 
       var item = new MenuItem {
         IsChecked = pair.Module.IsEnabled,
-        IsCheckable = true,
         StaysOpenOnClick = true,
         Header = value,
         Tag = pair.Module,
         HeaderTemplate = valueTemplate,
-        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle")
+        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle2")
       };
 
-      item.Click += menuClickHandler;
+      item.PreviewMouseLeftButtonUp += menuClickHandler;
       item.PreviewMouseRightButtonDown += menuRightClickHandler;
+      item.PreviewMouseLeftButtonDown += (o, args) => {
+        if (o is MenuItem menuItem) {
+          menuItem.IsChecked = !menuItem.IsChecked;
+        }
+      };
+
+      // Create a submenu with the sorted functions in the module.
+      var funcList = moduleFuncs.GetValueOrNull(pair.Module.Name);
+
+      if(funcList is {Count: > 0}) {
+        CreateFunctionsSubmenu(funcList, item, menuClickHandler, session);
+      }
+
       defaultItems.Insert(separatorIndex + 1, item);
       profileItems.Add(value);
 
@@ -390,6 +405,34 @@ public static class ProfilingUtils {
     // Populate the module menu.
     menu.Items.Clear();
     DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
+  }
+
+  public static async Task<List<FunctionMarkingCategory>> CreateModuleMarkingCategories(
+    FunctionMarkingSettings settings, ISession session) {
+    var sortedModules = new List<(FunctionMarkingStyle Module, TimeSpan Weight)>();
+
+    foreach (var moduleStyle in settings.ModuleColors) {
+      var moduleWeight = session.ProfileData.FindModulesWeight(name =>
+        moduleStyle.NameMatches(name));
+      sortedModules.Add((moduleStyle, moduleWeight));
+    }
+
+    sortedModules.Sort((a, b) => a.Weight.CompareTo(b.Weight));
+    var moduleFuncs = await Task.Run(() => CollectModuleSortedFunctions(session, 10));
+
+    var categories = new List<FunctionMarkingCategory>();
+
+    foreach (var pair in sortedModules) {
+      double weightPercentage = session.ProfileData.ScaleModuleWeight(pair.Weight);
+      var functs = moduleFuncs.GetValueOrNull(pair.Module.Name);
+      var hottestFunc = functs?.Count > 0 ? functs[0] : null;
+      var category = new FunctionMarkingCategory(pair.Module, pair.Weight, weightPercentage,
+        hottestFunc, functs);
+      categories.Add(category);
+    }
+
+    categories.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+    return categories;
   }
 
   public static async Task CreateMarkedFunctionsMenu(MenuItem menu,
@@ -535,6 +578,29 @@ public static class ProfilingUtils {
         funcNodeMap[func] = nodeList;
       }
     }
+  }
+
+  private static Dictionary<string, List<ProfileCallTreeNode>>
+    CollectModuleSortedFunctions(ISession session, int maxFunctsPerModule) {
+    var functs = session.ProfileData.GetSortedFunctions();
+    var moduleFuncs = new Dictionary<string, List<ProfileCallTreeNode>>();
+
+    // Pick top N function per module, in exclusive weight order.
+    foreach (var pair in functs) {
+      var func = pair.Item1;
+      var list = moduleFuncs.GetOrAddValue(func.ModuleName, () => new List<ProfileCallTreeNode>());
+
+      if(list.Count < maxFunctsPerModule) {
+        list.Add(session.ProfileData.CallTree.GetCombinedCallTreeNode(func));
+      }
+    }
+
+    // Sort functions by weight in decreasing order.
+    foreach (var pair in moduleFuncs) {
+      pair.Value.Sort((a, b) => b.ExclusiveWeight.CompareTo(a.ExclusiveWeight));
+    }
+
+    return moduleFuncs;
   }
 
   private static int CommonParentCallerIndex(ProfileCallTreeNode a, ProfileCallTreeNode b) {
@@ -715,9 +781,9 @@ public static class ProfilingUtils {
                                                 Func<TimeSpan, double> weightFunc) {
     var weightPerc = weightFunc(weight);
     var exclusiveWeightPerc = weightFunc(exclusiveWeight);
-    var weightText = $"{weightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, weight)})";
+    var weightText = $"{weightPerc.AsPercentageString()} ({settings.FormatWeightValue(weight)})";
     var exclusiveWeightText =
-      $"{exclusiveWeightPerc.AsPercentageString()} ({settings.FormatWeightValue(null, exclusiveWeight)})";
+      $"{exclusiveWeightPerc.AsPercentageString()} ({settings.FormatWeightValue(exclusiveWeight)})";
     return $"Total time: {weightText}\nSelf time: {exclusiveWeightText}";
   }
 
@@ -745,12 +811,18 @@ public static class ProfilingUtils {
       return currentMarkingCategories;
     }
 
+    CreateCategoriesMenu(markingCategoryList, menu, isCategoriesMenu,
+                         menuClickHandler, menuRightClickHandler, session);
+    return markingCategoryList;
+  }
+
+  private static void CreateCategoriesMenu(List<FunctionMarkingCategory> temp, MenuItem menu, bool isCategoriesMenu,
+                                           MouseButtonEventHandler menuClickHandler,
+                                           MouseButtonEventHandler menuRightClickHandler, ISession session) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
     var separatorIndex = !isCategoriesMenu ? defaultItems.FindIndex(item => item is Separator) : -1;
     var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
-    var valueTemplate = (DataTemplate)Application.Current.
-      FindResource("ProfileMenuItemValueTemplate");
     var categoriesValueTemplate = (DataTemplate)Application.Current.
       FindResource("CategoriesProfileMenuItemValueTemplate");
     var checkableValueTemplate = (DataTemplate)Application.Current.
@@ -759,13 +831,13 @@ public static class ProfilingUtils {
     var menuStyle = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle");
     double maxWidth = 0;
 
-    foreach (var category in markingCategoryList) {
-      string text = $"({markerSettings.FormatWeightValue(null, category.Weight)})";
+    foreach (var category in temp) {
+      string text = $"({markerSettings.FormatWeightValue(category.Weight)})";
       string title = null;
       string tooltip = null;
 
       if (isCategoriesMenu) {
-        title = category.Marking.Title;
+        title = category.Marking.TitleOrName;
         tooltip = DocumentUtils.FormatLongFunctionName(category.Marking.Name);
       }
       else {
@@ -823,49 +895,7 @@ public static class ProfilingUtils {
       // Create a submenu with the sorted functions
       // part of the marking/category.
       if (category.SortedFunctions is {Count: > 0}) {
-        var profileSubItems = new List<ProfileMenuItem>();
-        double subitemMaxWidth = 0;
-        int order = 0;
-
-        foreach (var node in category.SortedFunctions) {
-          double funcWeightPercentage = session.ProfileData.ScaleFunctionWeight(node.Weight);
-          string funcText = $"({markerSettings.FormatWeightValue(null, node.Weight)})";
-
-          // Stop once the weight is too small to be significant.
-          if (!markerSettings.IsVisibleValue(order++, funcWeightPercentage)) {
-            break;
-          }
-
-          var funcValue = new ProfileMenuItem(funcText, node.Weight.Ticks, funcWeightPercentage) {
-            PrefixText = node.Function.FormatFunctionName(session),
-            ToolTip = node.Function.ModuleName,
-            ShowPercentageBar = markerSettings.ShowPercentageBar(funcWeightPercentage),
-            TextWeight = markerSettings.PickTextWeight(funcWeightPercentage),
-            PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
-          };
-
-          var nodeItem = new MenuItem {
-            Header = funcValue,
-            Tag = node.Function,
-            HeaderTemplate = valueTemplate,
-            Style = menuStyle,
-          };
-
-          if (menuClickHandler != null) {
-            nodeItem.PreviewMouseLeftButtonUp += menuClickHandler;
-            nodeItem.PreviewMouseRightButtonUp += menuClickHandler;
-          }
-
-          item.Items.Add(nodeItem);
-          profileSubItems.Add(funcValue);
-
-          // Make sure percentage rects are aligned.
-          Utils.UpdateMaxMenuItemWidth(funcValue.PrefixText, ref subitemMaxWidth, menu);
-        }
-
-        foreach (var subItem in profileSubItems) {
-          subItem.MinTextWidth = subitemMaxWidth;
-        }
+        CreateFunctionsSubmenu(category.SortedFunctions, item, menuClickHandler, session);
       }
 
       defaultItems.Insert(++separatorIndex, item);
@@ -882,7 +912,63 @@ public static class ProfilingUtils {
     // Populate the menu.
     menu.Items.Clear();
     DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
-    return markingCategoryList;
+  }
+
+  private static void CreateFunctionsSubmenu(List<ProfileCallTreeNode> functions,
+                                             MenuItem parentMenuItem,
+                                             MouseButtonEventHandler menuClickHandler,
+                                             ISession session) {
+    var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
+    var valueTemplate = (DataTemplate)Application.Current.
+      FindResource("ProfileMenuItemValueTemplate");
+    var menuStyle = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle");
+    var profileSubItems = new List<ProfileMenuItem>();
+    double subitemMaxWidth = 0;
+    int order = 0;
+
+    foreach (var node in functions) {
+      double funcWeightPercentage = session.ProfileData.ScaleFunctionWeight(node.Weight);
+      double exclFuncWeightPercentage = session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight);
+      string funcText = $"({markerSettings.FormatWeightValue(node.Weight)})";
+
+      // Stop once the weight is too small to be significant.
+      if (!markerSettings.IsVisibleValue(order++, funcWeightPercentage)) {
+        break;
+      }
+
+      var tooltip = $"Exclusive Weight: {exclFuncWeightPercentage.AsPercentageString()} ({markerSettings.FormatWeightValue(node.ExclusiveWeight)})\n";
+      tooltip += $"Weight: {funcWeightPercentage.AsPercentageString()} ({markerSettings.FormatWeightValue(node.Weight)})\n";
+      tooltip += $"Module: {node.ModuleName}";
+
+      var funcValue = new ProfileMenuItem(funcText, node.Weight.Ticks, funcWeightPercentage) {
+        PrefixText = node.Function.FormatFunctionName(session, 60),
+        ToolTip = tooltip,
+        ShowPercentageBar = markerSettings.ShowPercentageBar(funcWeightPercentage),
+        TextWeight = markerSettings.PickTextWeight(funcWeightPercentage),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
+      };
+
+      var nodeItem = new MenuItem {
+        Header = funcValue,
+        Tag = node.Function,
+        HeaderTemplate = valueTemplate,
+        Style = menuStyle,
+      };
+
+      if (menuClickHandler != null) {
+        nodeItem.PreviewMouseLeftButtonUp += menuClickHandler;
+      }
+
+      parentMenuItem.Items.Add(nodeItem);
+      profileSubItems.Add(funcValue);
+
+      // Make sure percentage rects are aligned.
+      Utils.UpdateMaxMenuItemWidth(funcValue.PrefixText, ref subitemMaxWidth, nodeItem);
+    }
+
+    foreach (var subItem in profileSubItems) {
+      subItem.MinTextWidth = subitemMaxWidth;
+    }
   }
 
   private static void UncheckMenuItems(MenuItem menu, MenuItem excludedItem) {
@@ -893,474 +979,7 @@ public static class ProfilingUtils {
     }
   }
 
-  public static HtmlNode ExportFunctionListAsHtmlTable(List<ProfileCallTreeNode> list, HtmlDocument doc,
-                                                       ISession session) {
-    var itemList = new List<SearchableProfileItem>();
-    var markerOptions = App.Settings.DocumentSettings.ProfileMarkerSettings;
-
-    foreach (var node in list) {
-      if (!node.HasFunction) {
-        continue;
-      }
-
-      var item = ProfileListViewItem.From(node, session.ProfileData,
-        session.CompilerInfo.NameProvider.FormatFunctionName, null);
-      item.FunctionBackColor = markerOptions.PickBrushForPercentage(item.ExclusivePercentage);
-      itemList.Add(item);
-    }
-
-    return ExportFunctionListAsHtmlTable(itemList, doc);
-  }
-
-  public static HtmlNode ExportFunctionListAsHtmlTable(List<SearchableProfileItem> list, HtmlDocument doc) {
-    string TableStyle = @"border-collapse:collapse;border-spacing:0;";
-    string HeaderStyle =
-      @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
-    string CellStyle =
-      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
-
-    var table = doc.CreateElement("table");
-    table.SetAttributeValue("style", TableStyle);
-
-    var thead = doc.CreateElement("thead");
-    var tbody = doc.CreateElement("tbody");
-    var tr = doc.CreateElement("tr");
-
-    var th = doc.CreateElement("th");
-    th.InnerHtml = "Function";
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-    th = doc.CreateElement("th");
-    th.InnerHtml = "Module";
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-    thead.AppendChild(tr);
-
-    th = doc.CreateElement("th");
-    th.InnerHtml = HttpUtility.HtmlEncode("Time (ms)");
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-
-    th = doc.CreateElement("th");
-    th.InnerHtml = HttpUtility.HtmlEncode("Time (%)");
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-
-    th = doc.CreateElement("th");
-    th.InnerHtml = HttpUtility.HtmlEncode("Tine incl (ms)");
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-
-    th = doc.CreateElement("th");
-    th.InnerHtml = HttpUtility.HtmlEncode("Time incl (%)");
-    th.SetAttributeValue("style", HeaderStyle);
-    tr.AppendChild(th);
-
-    table.AppendChild(thead);
-
-    foreach (var node in list) {
-      tr = doc.CreateElement("tr");
-      var td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode(node.FunctionName);
-      td.SetAttributeValue("style", CellStyle);
-      tr.AppendChild(td);
-      td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode(node.ModuleName);
-      td.SetAttributeValue("style", CellStyle);
-      tr.AppendChild(td);
-
-      // Use a background color if defined.
-      string colorAttr = "";
-
-      if (node is ProfileListViewItem listViewItem) {
-        var backColor = Utils.BrushToString(listViewItem.FunctionBackColor);
-        colorAttr = backColor != null ? $";background-color:{backColor}" : "";
-      }
-
-      td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode($"{node.ExclusiveWeight.TotalMilliseconds}");
-      td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
-      tr.AppendChild(td);
-      td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode($"{node.ExclusivePercentage.AsPercentageString()}");
-      td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
-      tr.AppendChild(td);
-      td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode($"{node.Weight.TotalMilliseconds}");
-      td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
-      tr.AppendChild(td);
-      td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode($"{node.Percentage.AsPercentageString()}");
-      td.SetAttributeValue("style", $"{CellStyle}{colorAttr}");
-      tr.AppendChild(td);
-
-      tbody.AppendChild(tr);
-    }
-
-    table.AppendChild(tbody);
-    return table;
-  }
-
-  public static string ExportFunctionListAsMarkdownTable(List<ProfileCallTreeNode> list,
-                                                         ISession session) {
-    var itemList = new List<SearchableProfileItem>();
-    var nameFormatter = session.CompilerInfo.NameProvider;
-
-    foreach (var node in list) {
-      if (!node.HasFunction) {
-        continue;
-      }
-
-      itemList.Add(ProfileListViewItem.From(node, session.ProfileData,
-        session.CompilerInfo.NameProvider.FormatFunctionName, null));
-    }
-
-    return ExportFunctionListAsMarkdownTable(itemList);
-  }
-
-  public static string ExportFunctionListAsMarkdownTable(List<SearchableProfileItem> list) {
-    var sb = new StringBuilder();
-    string header = "| Function | Module |";
-    string separator = "|----------|--------|";
-    header += " Time (ms) | Time (%) | Time incl (ms) | Time incl (%) |";
-    separator += "-----------|----------|----------------|---------------|";
-
-    sb.AppendLine(header);
-    sb.AppendLine(separator);
-
-    foreach (var func in list) {
-      sb.Append($"| {func.FunctionName} | {func.ModuleName} " +
-                $"| {func.ExclusiveWeight.TotalMilliseconds} " +
-                $"| {func.ExclusivePercentage.AsPercentageString()} " +
-                $"| {func.Weight.TotalMilliseconds} " +
-                $"| {func.Percentage.AsPercentageString()} |\n");
-    }
-
-    return sb.ToString();
-  }
-
-  public static (string Html, string Plaintext)
-    ExportProfilingReportAsHtml(List<FunctionMarkingCategory> markingCategoryList, ISession session,
-                                bool includeHottestFunctions, int hotFuncLimit = 20,
-                                bool includeCategoriesTable = true,
-                                bool includeOverview = true,
-                                bool isCategoryList = true) {
-    string TableStyle = @"border-collapse:collapse;border-spacing:0;";
-    string HeaderStyle =
-      @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-family:Arial, sans-serif;";
-    string CellStyle =
-      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
-    string PatternCellStyle =
-      @"text-align:left;vertical-align:top;word-wrap:break-word;max-width:500px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;";
-
-    var doc = new HtmlDocument();
-    var sb = new StringBuilder();
-    var markingSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
-
-    if (includeCategoriesTable) {
-      if (includeOverview) {
-        ExportTraceOverviewasHtml(session, doc, sb);
-      }
-
-      AppendTitleParagraph(includeHottestFunctions ? "Categories Summary" : "Markings Summary", doc);
-      var table = doc.CreateElement("table");
-      table.SetAttributeValue("style", TableStyle);
-
-      var thead = doc.CreateElement("thead");
-      var tbody = doc.CreateElement("tbody");
-      var tr = doc.CreateElement("tr");
-      var th = doc.CreateElement("th");
-      var title = isCategoryList ? "Category" : "Marking";
-      th.InnerHtml = title;
-      th.SetAttributeValue("style", HeaderStyle);
-      tr.AppendChild(th);
-
-      th = doc.CreateElement("th");
-      th.InnerHtml = "Time (ms)";
-      th.SetAttributeValue("style", HeaderStyle);
-      tr.AppendChild(th);
-
-      th = doc.CreateElement("th");
-      th.InnerHtml = "Time (%)";
-      th.SetAttributeValue("style", HeaderStyle);
-      tr.AppendChild(th);
-      thead.AppendChild(tr);
-      table.AppendChild(thead);
-
-      string header = $"| {title} | Time (ms) | Time (%) |";
-      string separator = "|----------|--------|--------|";
-      sb.AppendLine(header);
-      sb.AppendLine(separator);
-
-      foreach (var category in markingCategoryList) {
-        if (category.Weight == TimeSpan.Zero && !includeOverview) {
-          continue;
-        }
-
-        tr = doc.CreateElement("tr");
-        var td = doc.CreateElement("td");
-        td.InnerHtml = HttpUtility.HtmlEncode(category.Marking.Title);
-        td.SetAttributeValue("style", CellStyle);
-        tr.AppendChild(td);
-
-        td = doc.CreateElement("td");
-        td.InnerHtml = HttpUtility.HtmlEncode(category.Weight.TotalMilliseconds);
-        td.SetAttributeValue("style", CellStyle);
-        tr.AppendChild(td);
-
-        td = doc.CreateElement("td");
-        td.InnerHtml = HttpUtility.HtmlEncode(category.Percentage.AsPercentageString());
-        td.SetAttributeValue("style", CellStyle);
-        tr.AppendChild(td);
-        tbody.AppendChild(tr);
-
-        sb.AppendLine(
-          $"| {category.Marking.Title} | {category.Weight.TotalMilliseconds} | {category.Percentage.AsPercentageString()} |");
-      }
-
-      table.AppendChild(tbody);
-      doc.DocumentNode.AppendChild(table);
-      AppendHtmlNewLine(doc, sb);
-    }
-
-    if (includeHottestFunctions) {
-      // Add a table with the hottest functions overall.
-      var hottestFuncts = new List<ProfileCallTreeNode>();
-      var funcList = session.ProfileData.GetSortedFunctions();
-
-      var funcTitle = $"Hottest {hotFuncLimit} Functions";
-      AppendTitleParagraph(funcTitle, doc, sb);
-
-      foreach (var pair in funcList.Take(hotFuncLimit)) {
-        hottestFuncts.Add(session.ProfileData.CallTree.GetCombinedCallTreeNode(pair.Item1));
-      }
-
-      var hotFuncTable = ExportFunctionListAsHtmlTable(hottestFuncts, doc, session);
-      doc.DocumentNode.AppendChild(hotFuncTable);
-
-      sb.AppendLine();
-      sb.AppendLine(ExportFunctionListAsMarkdownTable(hottestFuncts, session));
-    }
-
-    // Add a table for each category.
-    foreach (var category in markingCategoryList) {
-      if (category.SortedFunctions.Count == 0) {
-        continue;
-      }
-
-      var title = category.Marking.HasTitle ? category.Marking.Title : category.Marking.Name;
-      var time = markingSettings.FormatWeightValue(null, category.Weight);
-      var percentage = category.Percentage.AsPercentageString();
-
-      AppendHtmlNewLine(doc);
-      AppendTitleParagraph(title, doc, sb);
-      AppendParagraph($"Time: {time} ({percentage})", doc, sb);
-
-      var table = ExportFunctionListAsHtmlTable(category.SortedFunctions, doc, session);
-      doc.DocumentNode.AppendChild(table);
-      sb.AppendLine();
-
-      var plainText = ExportFunctionListAsMarkdownTable(category.SortedFunctions, session);
-      sb.AppendLine(plainText);
-    }
-
-    if (includeCategoriesTable) {
-      AppendHtmlNewLine(doc, sb);
-      AppendTitleParagraph(includeHottestFunctions ? "Categories Definitions" :
-        "Markings Definitions", doc);
-      var table = doc.CreateElement("table");
-      table.SetAttributeValue("style", TableStyle);
-
-      var thead = doc.CreateElement("thead");
-      var tbody = doc.CreateElement("tbody");
-      var tr = doc.CreateElement("tr");
-
-      var title = isCategoryList ? "Category" : "Marking";
-      var th = doc.CreateElement("th");
-      th.InnerHtml = title;
-      th.SetAttributeValue("style", HeaderStyle);
-      tr.AppendChild(th);
-
-      th = doc.CreateElement("th");
-      th.InnerHtml = "Pattern";
-      th.SetAttributeValue("style", HeaderStyle);
-      tr.AppendChild(th);
-      thead.AppendChild(tr);
-      table.AppendChild(thead);
-
-      string header = $"| {title} | Pattern |";
-      string separator = "|----------|--------|";
-      sb.AppendLine(header);
-      sb.AppendLine(separator);
-
-      foreach (var category in markingCategoryList) {
-        if (category.Weight == TimeSpan.Zero && !includeOverview) {
-          continue;
-        }
-
-        tr = doc.CreateElement("tr");
-        var td = doc.CreateElement("td");
-        td.InnerHtml = HttpUtility.HtmlEncode(category.Marking.Title);
-        td.SetAttributeValue("style", CellStyle);
-        tr.AppendChild(td);
-
-        td = doc.CreateElement("td");
-        td.InnerHtml = HttpUtility.HtmlEncode(category.Marking.Name);
-        td.SetAttributeValue("style", PatternCellStyle);
-        tr.AppendChild(td);
-        tbody.AppendChild(tr);
-
-        sb.AppendLine($"| {category.Marking.Title} | {category.Marking.Name} |");
-      }
-
-      table.AppendChild(tbody);
-      doc.DocumentNode.AppendChild(table);
-    }
-
-    var writer = new StringWriter();
-    doc.Save(writer);
-    return (writer.ToString(), sb.ToString());
-  }
-
-  private static void ExportTraceOverviewasHtml(ISession session, HtmlDocument doc, StringBuilder sb) {
-    var report = session.ProfileData.Report;
-
-    if (report != null) {
-      AppendTitleParagraph("Overview", doc, sb);
-      AppendParagraph($"Trace File: {report.TraceInfo.TraceFilePath}", doc, sb);
-      AppendParagraph($"Trace Duration: {report.TraceInfo.ProfileDuration}", doc, sb);
-      AppendParagraph($"Process Name: {report.Process.Name}", doc, sb);
-      AppendParagraph($"Process Id: {report.Process.ProcessId}", doc, sb);
-      AppendParagraph($"Total Time: {session.ProfileData.TotalWeight}", doc, sb);
-      AppendParagraph($"Total Time (ms): {session.ProfileData.TotalWeight.AsMillisecondsString()}", doc, sb);
-      AppendHtmlNewLine(doc, sb);
-    }
-  }
-
-  private static void AppendParagraph(string text, HtmlDocument doc, StringBuilder sb = null) {
-    string SubtitleStyle =
-      @"margin:5;text-align:left;font-family:Arial, sans-serif;font-size:14px;margin-top:0em";
-    var paragraph = doc.CreateElement("p");
-    paragraph.InnerHtml = HttpUtility.HtmlEncode(text);
-    paragraph.SetAttributeValue("style", SubtitleStyle);
-    doc.DocumentNode.AppendChild(paragraph);
-
-    if (sb != null) {
-      sb.AppendLine($"{text}  ");
-    }
-  }
-
-  private static void AppendTitleParagraph(string text, HtmlDocument doc, StringBuilder sb = null) {
-    string TitleStyle =
-      @"margin:5;text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:16px;margin-top:0em";
-    var paragraph = doc.CreateElement("p");
-    paragraph.InnerHtml = HttpUtility.HtmlEncode(text);
-    paragraph.SetAttributeValue("style", TitleStyle);
-    doc.DocumentNode.AppendChild(paragraph);
-
-    if (sb != null) {
-      sb.AppendLine($"**{text}**  ");
-    }
-  }
-
-  private static void AppendHtmlNewLine(HtmlDocument doc, StringBuilder sb = null) {
-    var newLineParagraph = doc.CreateElement("p");
-    newLineParagraph.InnerHtml = "&nbsp;";
-    newLineParagraph.SetAttributeValue("style", "margin:5;");
-    doc.DocumentNode.AppendChild(newLineParagraph);
-
-    if (sb != null) {
-      sb.AppendLine("  ");
-    }
-  }
-
-  public static async Task CopyFunctionMarkingsAsHtml(ISession session) {
-    var (html, plaintext) = await ExportFunctionMarkingsAsHtml(session);
-    Utils.CopyHtmlToClipboard(html, plaintext);
-  }
-
-  public static void CopyFunctionMarkingsAsHtml(List<FunctionMarkingCategory> markings, ISession session) {
-    var (html, plaintext) = ExportFunctionMarkingsAsHtml(markings, session);
-    Utils.CopyHtmlToClipboard(html, plaintext);
-  }
-
-  private static (string Html, string Plaintext)
-    ExportFunctionMarkingsAsHtml(List<FunctionMarkingCategory> markings, ISession session) {
-    return ExportProfilingReportAsHtml(markings, session, false, 0, true, false, true);
-  }
-
-  private static async Task<(string html, string plaintext)>
-    ExportFunctionMarkingsAsHtml(ISession session) {
-    var markingCategoryList = await Task.Run(() =>
-      CollectMarkedFunctions(App.Settings.MarkingSettings.FunctionColors, false, session));
-    return ExportProfilingReportAsHtml(markingCategoryList, session,
-                                       false, 0, true, false, false);
-  }
-
-  public static async Task ExportFunctionMarkingsAsHtmlFile(ISession session) {
-    var (html, _) = await ExportFunctionMarkingsAsHtml(session);
-    await ExportFunctionMarkingsAsHtmlFile(html, session);
-  }
-
-  private static async Task ExportFunctionMarkingsAsHtmlFile(string text, ISession session) {
-    string path = Utils.ShowSaveFileDialog("HTML file|*.html", "*.html|All Files|*.*");
-    bool success = true;
-
-    if (!string.IsNullOrEmpty(path)) {
-      try {
-        await File.WriteAllTextAsync(path, text);
-      }
-      catch (Exception ex) {
-        Trace.WriteLine($"Failed to save marked functions report to {path}: {ex.Message}");
-        success = false;
-      }
-
-      if (!success) {
-        using var centerForm = new DialogCenteringHelper(App.Current.MainWindow);
-        MessageBox.Show($"Failed to save marked functions report to {path}", "IR Explorer",
-          MessageBoxButton.OK, MessageBoxImage.Exclamation);
-      }
-    }
-  }
-
-  public static async Task ExportFunctionMarkingsAsMarkdownFile(ISession session) {
-    var (_, plaintext) = await ExportFunctionMarkingsAsHtml(session);
-    await ExportFunctionMarkingsAsMarkdownFile(plaintext, session);
-  }
-
-  private static async Task ExportFunctionMarkingsAsMarkdownFile(string text, ISession session) {
-    string path = Utils.ShowSaveFileDialog("Markdown file|*.md", "*.md|All Files|*.*");
-    bool success = true;
-
-    if (!string.IsNullOrEmpty(path)) {
-      try {
-        await File.WriteAllTextAsync(path, text);
-      }
-      catch (Exception ex) {
-        Trace.WriteLine($"Failed to save marked functions report to {path}: {ex.Message}");
-        success = false;
-      }
-
-      if (!success) {
-        using var centerForm = new DialogCenteringHelper(App.Current.MainWindow);
-        MessageBox.Show($"Failed to save marked functions report to {path}", "IR Explorer",
-          MessageBoxButton.OK, MessageBoxImage.Exclamation);
-      }
-    }
-  }
-
-  public static async Task ExportFunctionMarkingsAsHtmlFile(List<FunctionMarkingCategory> categories, ISession session) {
-    var (html, _) = ExportFunctionMarkingsAsHtml(categories, session);
-    await ExportFunctionMarkingsAsHtmlFile(html, session);
-  }
-
-  public static async Task ExportFunctionMarkingsAsMarkdownFile(List<FunctionMarkingCategory> categories, ISession session) {
-    var (_, plaintext) = ExportFunctionMarkingsAsHtml(categories, session);
-    await ExportFunctionMarkingsAsMarkdownFile(plaintext, session);
-  }
-  
-  
-  public static bool ComputeAssemblyWeightInRange(int startLine, int endLine, 
+  public static bool ComputeAssemblyWeightInRange(int startLine, int endLine,
                                                   FunctionIR function, FunctionProfileData funcProfile,
                                                   out TimeSpan weightSum, out int count) {
     var metadataTag = function.GetTag<AssemblyMetadataTag>();
@@ -1371,7 +990,7 @@ public static class ProfilingUtils {
       count = 0;
       return false;
     }
-    
+
     weightSum = TimeSpan.Zero;
     count = 0;
 
@@ -1406,10 +1025,10 @@ public static class ProfilingUtils {
       // Happens when selecting bottom-up.
       (startLine, endLine) = (endLine, startLine);
     }
-    
+
     for(int i = startLine; i<= endLine; i++) {
       int line = i;
-    
+
       // With assembly lines, source line numbers are shifted.
       if (processingResult != null) {
         if (processingResult.LineToOriginalLineMap.TryGetValue(line, out int mappedLine)) {
@@ -1417,12 +1036,14 @@ public static class ProfilingUtils {
         }
         else continue;
       }
-      
+
       if(profileResult.SourceLineWeight.TryGetValue(line, out var weight)) {
         weightSum += weight;
       }
+
+      count++; // Also count lines without weight.
     }
-    
+
     return weightSum != TimeSpan.Zero;
   }
 }

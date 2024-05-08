@@ -534,7 +534,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
                              false, true, inlinee);
   }
 
-  public void SelectElementsInLineRange(int startLine, int endLine, 
+  public void SelectElementsInLineRange(int startLine, int endLine,
                                         Func<int, int> lineMapper = null,
                                         Brush backColor = null) {
     ClearTemporaryHighlighting();
@@ -1126,7 +1126,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     // plus a dotted line between it and the document itself.
     ShowLineNumbers = false;
     UninstallCustomLineNumbers(false);
-    
+
     var leftMargins = TextArea.LeftMargins;
     var line = (Line)DottedLineMargin.Create();
     leftMargins.Insert(0, lineNumbers);
@@ -1386,11 +1386,13 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public void SuspendUpdate() {
     updateSuspended_ = true;
+    disableCaretEvent_ = true;
     overlayRenderer_.SuspendUpdate();
   }
 
   public void ResumeUpdate() {
     updateSuspended_ = false;
+    disableCaretEvent_ = false;
     overlayRenderer_.ResumeUpdate();
     UpdateHighlighting();
   }
@@ -1876,7 +1878,6 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
       return;
     }
 
-    Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Change caret to {CaretOffset}");
     var element = FindElementAtOffset(TextArea.Caret.Offset);
     SelectElement(element, true, false, TextArea.Caret.Offset);
   }
@@ -1927,7 +1928,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     if (!IsLoaded) {
       return;
     }
-    
+
     HideHoverHighlighting();
 
     if (clearSelected) {
@@ -2787,7 +2788,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     }
 
     bool highlightElement = docSettings.ShowInfoOnHover &&
-                            (!docSettings.ShowInfoOnHoverWithModifier || Utils.IsKeyboardModifierActive());
+                            (!docSettings.ShowInfoOnHoverWithModifier ||
+                             Utils.IsKeyboardModifierActive());
 
     if (!highlightElement) {
       return;

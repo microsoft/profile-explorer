@@ -128,7 +128,7 @@
         ShowDropDownButton="False"
         ShowStandardColors="False"
         ShowTabHeaders="False"
-        UsingAlphaChannel="False"
+
         Visibility="Collapsed" />
     </StackPanel>
     <StackPanel Orientation="Horizontal">

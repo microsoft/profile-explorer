@@ -1143,7 +1143,7 @@ public static class Utils {
   }
 
   public static void UpdateMaxMenuItemWidth(string title, ref double maxWidth, MenuItem targetMenu) {
-    double width = Utils.MeasureString(title, targetMenu).Width + 20;
+    double width = MeasureString(title, targetMenu).Width + 20;
     maxWidth = Math.Max(width, maxWidth);
   }
 
