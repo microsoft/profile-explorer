@@ -147,7 +147,6 @@
                                     IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
                                     IsEnabled="{Binding InputControlsEnabled}"
                                     ToolTip="Profiles all applications running on the current machine" />
-
                                 <Separator Margin="0,8,0,8" Background="LightGray"/>
 
                                 <StackPanel x:Name="AttachToProcessPanel" Visibility="{Binding ElementName=AttachRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -360,7 +359,8 @@
                                     <StackPanel>
                                         <CheckBox
                                             Margin="0,8,0,0"
-                                            Content="Profile managed (.NET) applications"
+                                            Content="Profile .NET (managed) applications"
+                                            ToolTip="Enable support for profiling .NET applications"
                                             IsChecked="{Binding Path=RecordingOptions.ProfileDotNet, Mode=TwoWay}"
                                             IsEnabled="{Binding ElementName=SystemWideRadioButton, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
                                         <CheckBox
@@ -378,7 +378,7 @@
                                             Margin="0,4,0,0"
                                             Content="Record CPU performance counter (PMC) events"
                                             IsChecked="{Binding Path=RecordingOptions.RecordPerformanceCounters, Mode=TwoWay}"
-                                            ToolTip="Collect the counters enabled in the CPU counters tab" />
+                                            ToolTip="Collect the performance counters enabled in the CPU counters tab" />
 
                                         <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
                                             <TextBlock VerticalAlignment="Center" Text="Sampling frequency" />
@@ -397,7 +397,8 @@
                                                 TickFrequency="1000"
                                                 TickPlacement="BottomRight"
                                                 ValueChanged="SamplingFrequencySlider_ValueChanged"
-                                                Value="{Binding Path=RecordingOptions.SamplingFrequency, Mode=TwoWay}" />
+                                                Value="{Binding Path=RecordingOptions.SamplingFrequency, Mode=TwoWay}"
+                                                ToolTip="Sampling profiling frequency as samples/second"/>
                                             <TextBlock
                                                 Margin="8,0,0,0"
                                                 VerticalAlignment="Center"
@@ -510,6 +511,7 @@
                                         IsTextCompletionEnabled="False"
                                         MinimumPrefixLength="1"
                                         Text="{Binding Path=ProfileFilePath, Mode=TwoWay}"
+                                        ToolTip="Path of the profile data file to load"
                                         TextChanged="ProfileAutocompleteBox_TextChanged" />
 
                                     <Button
@@ -679,22 +681,18 @@
                                     <CheckBox
                                         Margin="0,8,0,0"
                                         Content="Handle Kernel profile samples"
+                                        ToolTip="Include kernel events from the trace, connecting user mode and kernel mode stacks"
                                         IsChecked="{Binding Path=Options.IncludeKernelEvents, Mode=TwoWay}" />
                                     <CheckBox
                                         Margin="0,4,0,0"
                                         Content="Handle CPU performance counter samples"
+                                        ToolTip="Include CPU performance counter (PMC) events from the trace"
                                         IsChecked="{Binding Path=Options.IncludePerformanceCounters, Mode=TwoWay}" />
                                     <CheckBox
                                       Margin="0,4,0,0"
                                       Content="Download source files from Source Server"
                                       IsChecked="{Binding Path=SymbolSettings.SourceServerEnabled, Mode=TwoWay}"
                                       ToolTip="Download source files using the SourceLink info from the symbol files" />
-
-                                    <CheckBox
-                                        Margin="0,4,0,0"
-                                        Content="Mark source lines in inlined functions"
-                                        IsChecked="{Binding Path=Options.MarkInlinedFunctions, Mode=TwoWay}"
-                                        IsEnabled="False" />
                                 </StackPanel>
                             </Expander>
 

@@ -380,7 +380,7 @@
               VerticalAlignment="Top"
               Orientation="Horizontal" />
           </Grid>
-          <TextBlock FontSize="11" Text="Wildcards in the path are accepted, e.g. *path\foo*" />
+          <TextBlock FontSize="11" Text="Wildcards * in the path are accepted, e.g. *path\foo*" />
           <Separator Margin="0,4,0,4" Background="LightGray"/>
 
 

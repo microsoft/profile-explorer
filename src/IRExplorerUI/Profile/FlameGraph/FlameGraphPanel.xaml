@@ -391,11 +391,12 @@
               BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
               TabIndex="4"
               TextChanged="FunctionFilter_OnTextChanged"
-              ToolTip="Search functions based on a case-insensitive string (Ctrl+F)">
-              <TextBox.InputBindings>
+              ToolTip="Filter function list based based on a substring (Ctrl+F)&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
+            <TextBox.InputBindings>
                 <KeyBinding
                   Key="Escape"
                   Command="local:CallTreeCommand.ClearSearch"
+                  CommandTarget="{Binding ElementName=GraphHost}"
                   CommandParameter="{Binding ElementName=FunctionFilter}" />
               </TextBox.InputBindings>
             </TextBox>
@@ -405,7 +406,6 @@
               IsHitTestVisible="False"
               Text="Search functions"
               Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
-
           </Grid>
 
           <Button

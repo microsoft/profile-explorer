@@ -21,21 +21,25 @@
                             Margin="0,0,2,0"
                             Padding="4,0,4,0"
                             Content="Insertions"
+                            ToolTip="Show inserted lines in the diff view"
                             IsChecked="{Binding ShowInsertions, Mode=TwoWay}" />
                         <ToggleButton
                             Margin="2,0,2,0"
                             Padding="4,0,4,0"
                             Content="Deletions"
+                            ToolTip="Show deleted lines in the diff view"
                             IsChecked="{Binding ShowDeletions, Mode=TwoWay}" />
                         <ToggleButton
                             Margin="2,0,2,0"
                             Padding="4,0,4,0"
                             Content="Modifications"
+                            ToolTip="Show modified lines in the diff view"
                             IsChecked="{Binding ShowModifications, Mode=TwoWay}" />
                         <ToggleButton
                             Margin="2,0,2,0"
                             Padding="4,0,4,0"
                             Content="Minor modifications"
+                            ToolTip="Show minor, insignificant modifications in the diff view"
                             IsChecked="{Binding ShowMinorModifications, Mode=TwoWay}" />
                     </StackPanel>
 
@@ -45,17 +49,17 @@
                         Margin="0,4,0,2"
                         Content="Mark minor IR modifications differently"
                         IsChecked="{Binding IdentifyMinorDiffs, Mode=TwoWay}"
-                        ToolTip="Considers minor changes in the IR, such as different kinds of temporary variables" />
+                        ToolTip="Makr minor changes in the IR, such as different kinds of temporary variables" />
                     <CheckBox
                         Margin="20,4,0,2"
                         Content="Temporary variable name changes"
                         IsChecked="{Binding FilterTempVariableNames, Mode=TwoWay}"
-                        ToolTip="Considers name changes of temporary variables as minor" />
+                        ToolTip="Treat name changes of temporary variables as minor" />
                     <CheckBox
                         Margin="20,4,0,2"
                         Content="SSA variable identifier changes"
                         IsChecked="{Binding FilterSSADefNumbers, Mode=TwoWay}"
-                        ToolTip="Consiers changes of SSA variable identifiers (name/number) as minor" />
+                        ToolTip="Treat changes of SSA variable identifiers (name/number) as minor" />
                     <CheckBox
                         Margin="0,2,0,2"
                         Content="Filter out insignificant, noisy changes"
@@ -66,7 +70,7 @@
                         Margin="0,2,0,2"
                         Content="Mark whole line if most parts changed"
                         IsChecked="{Binding ManyDiffsMarkWholeLine, Mode=TwoWay}"
-                        ToolTip="Combine many small changes in a line into one line change" />
+                        ToolTip="Combine multiple small changes in a line into one line change" />
                     <TextBlock Margin="20,4,0,2" Text="Mark as modified line change percentage" />
                     <StackPanel
                         Margin="20,0,0,4"
@@ -106,11 +110,14 @@
                     </StackPanel>
                     <TextBlock FontWeight="Medium" Text="Diff Implementation" />
                     <StackPanel Margin="0,4,0,0" Orientation="Vertical">
-                        <RadioButton Content="Internal" IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static settings:DiffImplementationKind.Internal}}" />
+                        <RadioButton Content="Internal"
+                                     ToolTip="Use the internal diff implementation, which is faster but less accurate"
+                                     IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static settings:DiffImplementationKind.Internal}}" />
                         <RadioButton
                             x:Name="ExternalDiffRadioButton"
                             Margin="0,2,0,2"
                             Content="Beyond Compare"
+                            ToolTip="Use Beyond Compare as the external diff tool (requires Beyond Compare to be installed)"
                             IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static settings:DiffImplementationKind.External}}" />
                         <DockPanel Margin="0,2,0,2" LastChildFill="True">
                             <TextBlock
@@ -124,6 +131,7 @@
                                     Margin="8,0,62,0"
                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                     IsEnabled="{Binding ElementName=ExternalDiffRadioButton, Path=IsChecked}"
+                                    ToolTip="Path to the Beyond Compare executable"
                                     Text="{Binding ExternalDiffAppPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <Button
                                     Name="ExternalAppPathButton"

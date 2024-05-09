@@ -405,7 +405,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
 
     if (text.Length > 1) {
-      searchResultNodes_ = await Task.Run(() => GraphHost.GraphViewer.FlameGraph.SearchNodes(text));
+      bool caseInsensitive = !App.Settings.SectionSettings.FunctionSearchCaseSensitive;
+      searchResultNodes_ = await Task.Run(() => GraphHost.FlameGraph.SearchNodes(text, caseInsensitive));
       GraphHost.GraphViewer.MarkSearchResultNodes(searchResultNodes_);
       UpdateSearchResultText();
 

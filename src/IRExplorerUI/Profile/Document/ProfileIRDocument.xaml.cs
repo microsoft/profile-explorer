@@ -810,6 +810,19 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     return line;
   }
 
+  private int MapToOriginalSourceLineNumber(int line) {
+    // Map from original line to adjusted line with assembly.
+    if (sourceProfileResult_ != null) {
+      if (sourceProfileResult_.LineToOriginalLineMap.TryGetValue(line, out var mappedLine)) {
+        return mappedLine;
+      }
+
+      return -1; // Line is assembly.
+    }
+
+    return line;
+  }
+
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
                                          IRTextSection section,
                                          ProfileSampleFilter profileFilter = null,
@@ -1684,17 +1697,24 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void ExportSourceHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
-    await DocumentExporting.ExportToHtmlFile(TextView,
-                                             isSourceFileDocument_ ?
-                                             DocumentExporting.ExportSourceAsHtmlFile :
-                                             DocumentExporting.ExportFunctionAsHtmlFile);
+    if (isSourceFileDocument_) {
+      await DocumentExporting.ExportSourceToHtmlFile(TextView, MapToOriginalSourceLineNumber,
+                                                     MapFromOriginalSourceLineNumber);
+    }
+    else {
+      await DocumentExporting.ExportToHtmlFile(TextView, DocumentExporting.ExportFunctionAsHtmlFile);
+    }
+
   }
 
   private async void ExportSourceMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
-    await DocumentExporting.ExportToMarkdownFile(TextView,
-                                                 isSourceFileDocument_ ?
-                                                 DocumentExporting.ExportSourceAsMarkdownFile :
-                                                 DocumentExporting.ExportFunctionAsMarkdownFile);
+    if (isSourceFileDocument_) {
+      await DocumentExporting.ExportSourceToMarkdownFile(TextView, MapToOriginalSourceLineNumber,
+                                                         MapFromOriginalSourceLineNumber);
+    }
+    else {
+      await DocumentExporting.ExportToMarkdownFile(TextView, DocumentExporting.ExportFunctionAsMarkdownFile);
+    }
   }
 
   private async void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -1703,7 +1723,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public async Task CopySelectedLinesAsHtml() {
     if (isSourceFileDocument_) {
-      await DocumentExporting.CopySelectedSourceLinesAsHtml(TextView);
+      await DocumentExporting.CopySelectedSourceLinesAsHtml(TextView, MapToOriginalSourceLineNumber,
+                                                            MapFromOriginalSourceLineNumber);
     }
     else {
       await DocumentExporting.CopySelectedLinesAsHtml(TextView);
@@ -1712,7 +1733,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public async Task CopyAllLinesAsHtml() {
     if (isSourceFileDocument_) {
-      await DocumentExporting.CopyAllSourceLinesAsHtml(TextView);
+      await DocumentExporting.CopyAllSourceLinesAsHtml(TextView, MapToOriginalSourceLineNumber,
+                                                       MapFromOriginalSourceLineNumber);
     }
     else {
       await DocumentExporting.CopyAllLinesAsHtml(TextView);

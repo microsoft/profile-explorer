@@ -60,6 +60,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   public new bool IsInitialized => GraphViewer.IsInitialized;
   public ISession Session { get; set; }
+  public FlameGraph FlameGraph => GraphViewer.FlameGraph;
   public List<FlameGraphNode> SelectedNodes => GraphViewer.SelectedNodes;
 
   public bool EnableSingleNodeActions {

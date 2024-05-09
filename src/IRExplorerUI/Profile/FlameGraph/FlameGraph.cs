@@ -182,33 +182,27 @@ public sealed class FlameGraph {
     return callNode.Tag as FlameGraphNode;
   }
 
-  public List<FlameGraphNode> SearchNodes(string text, bool includeModuleName = true) {
+  public List<FlameGraphNode> SearchNodes(string text, bool caseInsensitive) {
     var nodes = new List<FlameGraphNode>();
-    SearchNodesImpl(RootNode, text, nodes, includeModuleName);
+    var searcher = new TextSearcher(text, caseInsensitive);
+    SearchNodesImpl(RootNode, text, searcher, nodes);
     return nodes;
   }
 
-  public void SearchNodesImpl(FlameGraphNode node, string text,
-                              List<FlameGraphNode> nodes, bool includeModuleName) {
+  public void SearchNodesImpl(FlameGraphNode node, string text, TextSearcher searcher,
+                              List<FlameGraphNode> nodes) {
     if (node.HasFunction) {
-      var result = TextSearcher.FirstIndexOf(node.FunctionName, text, 0, TextSearchKind.CaseInsensitive);
+      var result = searcher.FirstIndexOf(node.FunctionName);
 
       if (result.HasValue) {
         node.SearchResult = result;
         nodes.Add(node);
       }
-      else {
-        result = TextSearcher.FirstIndexOf(node.CallTreeNode.ModuleName, text, 0, TextSearchKind.CaseInsensitive);
-
-        if (result.HasValue) {
-          nodes.Add(node);
-        }
-      }
     }
 
     if (node.HasChildren) {
       foreach (var child in node.Children) {
-        SearchNodesImpl(child, text, nodes, includeModuleName);
+        SearchNodesImpl(child, text, searcher, nodes);
       }
     }
   }

@@ -943,7 +943,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     if (text.Length > 1) {
       searchResultNodes_ = new List<CallTreeListItem>();
-      await Task.Run(() => SearchCallTree(text, callTreeEx_, searchResultNodes_));
+      var searcher = new TextSearcher(text, !App.Settings.SectionSettings.FunctionSearchCaseSensitive);
+      await Task.Run(() => SearchCallTree(text, callTreeEx_, searcher, searchResultNodes_));
 
       if (cancelableTask.IsCanceled) {
         return;
@@ -968,8 +969,9 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       : "Not found";
   }
 
-  private void SearchCallTree(string text, CallTreeListItem node, List<CallTreeListItem> matchingNodes) {
-    var result = TextSearcher.FirstIndexOf(node.FunctionName, text, 0, TextSearchKind.CaseInsensitive);
+  private void SearchCallTree(string text, CallTreeListItem node, TextSearcher searcher,
+                              List<CallTreeListItem> matchingNodes) {
+    var result = searcher.FirstIndexOf(node.FunctionName);
 
     if (result.HasValue) {
       node.SearchResult = result;
@@ -977,7 +979,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     foreach (var child in node.Children) {
-      SearchCallTree(text, child, matchingNodes);
+      SearchCallTree(text, child, searcher, matchingNodes);
     }
   }
 

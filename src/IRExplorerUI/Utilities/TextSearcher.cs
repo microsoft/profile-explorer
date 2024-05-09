@@ -165,6 +165,20 @@ public class TextSearcher {
     return offset != -1;
   }
 
+  public TextSearchResult? FirstIndexOf(string text) {
+    if (searchKind_.HasFlag(TextSearchKind.Regex)) {
+      cachedRegex_ ??= CreateRegex(searchedText_, searchKind_);
+    }
+
+    (int offset, int length) = IndexOf(text.AsMemory(), searchedText_.AsMemory(), 0, searchKind_, cachedRegex_);
+
+    if (offset != -1) {
+      return new TextSearchResult(offset, length);
+    }
+
+    return null;
+  }
+
   public static List<TextSearchResult> AllIndexesOf(ReadOnlyMemory<char> text, string searchedText,
                                                     int startOffset = 0,
                                                     TextSearchKind searchKind = TextSearchKind.Default,

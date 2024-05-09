@@ -493,11 +493,12 @@
                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                 TextChanged="FunctionFilter_TextChanged"
-                ToolTip="Filter function list based on a case-insensitive substring">
+                ToolTip="Filter function list based based on a substring (Ctrl+F)&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
                 <TextBox.InputBindings>
                   <KeyBinding
                     Key="Escape"
                     Command="local:Command.ClearTextbox"
+                    CommandTarget="{Binding ElementName=FunctionList}"
                     CommandParameter="{Binding ElementName=FunctionFilter}" />
                 </TextBox.InputBindings>
 
@@ -513,6 +514,7 @@
             <Button
               Command="local:Command.ClearTextbox"
               CommandParameter="{Binding ElementName=FunctionFilter}"
+              CommandTarget="{Binding ElementName=FunctionList}"
               ToolBar.OverflowMode="Never"
               ToolTip="Reset function filter">
               <Image
@@ -1216,6 +1218,7 @@
                     <KeyBinding
                       Key="Escape"
                       Command="local:Command.ClearTextbox"
+                      CommandTarget="{Binding ElementName=SectionList}"
                       CommandParameter="{Binding ElementName=SectionFilter}" />
                   </TextBox.InputBindings>
                 </TextBox>
@@ -1230,6 +1233,7 @@
               <Button
                 Command="local:Command.ClearTextbox"
                 CommandParameter="{Binding ElementName=SectionFilter}"
+                CommandTarget="{Binding ElementName=SectionList}"
                 TabIndex="5"
                 ToolTip="Reset section filter">
                 <Image

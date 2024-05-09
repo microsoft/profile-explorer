@@ -64,6 +64,51 @@ public static class DocumentExporting {
     }
   }
 
+  public static async Task ExportSourceToHtmlFile(IRDocument textView,
+                                               Func<int, int> toOriginalLineMapper,
+                                               Func<int, int> fromOriginalLineMapper) {
+    string path = Utils.ShowSaveFileDialog(HtmlFileFilter, HtmlExtension);
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        success = await ExportSourceAsHtmlFile(textView, path, toOriginalLineMapper, fromOriginalLineMapper);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(textView);
+        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
+          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+  public static async Task ExportSourceToMarkdownFile(IRDocument textView,
+                                                  Func<int, int> toOriginalLineMapper,
+                                                  Func<int, int> fromOriginalLineMapper) {
+    string path = Utils.ShowSaveFileDialog(MarkdownFileFilter, MarkdownExtension);
+    bool success = true;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        success = await ExportSourceAsMarkdownFile(textView, path, toOriginalLineMapper, fromOriginalLineMapper);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(textView);
+        MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
+          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+
   public static async Task<bool> ExportSourceAsExcelFile(IRDocument textView, string filePath) {
     var function = textView.Section.ParentFunction;
     var (firstSourceLineIndex, lastSourceLineIndex) =
@@ -131,7 +176,9 @@ public static class DocumentExporting {
     return true;
   }
 
-  public static async Task<bool> ExportSourceAsHtmlFile(IRDocument textView, string filePath) {
+  public static async Task<bool> ExportSourceAsHtmlFile(IRDocument textView, string filePath,
+                                                        Func<int, int> toOriginalLineMapper,
+                                                        Func<int, int> fromOriginalLineMapper) {
     try {
       Trace.WriteLine("ExportFunctionAsHtmlFile");
       var doc = new HtmlDocument();
@@ -150,7 +197,8 @@ public static class DocumentExporting {
       p.SetAttributeValue("style", TitleStyle);
       doc.DocumentNode.AppendChild(p);
 
-      var node = await ExportSourceAsHtml(textView);
+      var node = await ExportSourceAsHtml(textView, -1, -1, toOriginalLineMapper,
+                                          fromOriginalLineMapper);
       doc.DocumentNode.AppendChild(node);
       var writer = new StringWriter();
       doc.Save(writer);
@@ -163,7 +211,9 @@ public static class DocumentExporting {
     }
   }
 
-  public static async Task<HtmlNode> ExportSourceAsHtml(IRDocument textView, int startLine = -1, int endLine = -1) {
+  public static async Task<HtmlNode> ExportSourceAsHtml(IRDocument textView, int startLine = -1, int endLine = -1,
+                                                        Func<int, int> toOriginalLineMapper = null,
+                                                        Func<int, int> fromOriginalLineMapper = null) {
     string TableStyle = @"border-collapse:collapse;border-spacing:0;";
     string HeaderStyle =
       @"background-color:#D3D3D3;white-space:nowrap;text-align:left;vertical-align:top;border-color:black;border-style:solid;border-width:1px;overflow:hidden;padding:2px 2px;font-size:14px;font-family:Arial, sans-serif;";
@@ -208,15 +258,31 @@ public static class DocumentExporting {
     thead.AppendChild(tr);
     table.AppendChild(thead);
 
+    if (!MapStartEndSourceLines(ref startLine, ref endLine, toOriginalLineMapper)) {
+      return doc.DocumentNode;
+    }
+
     for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
       // Filter out instructions not in line range if requested.
-      if (filterByLine && (i < startLine || i > endLine)) {
+      int lineNumber = i;
+
+      if (filterByLine && (lineNumber < startLine || lineNumber > endLine)) {
         continue;
       }
 
-      var line = textView.Document.GetLineByNumber(i);
+      if(fromOriginalLineMapper != null) {
+        // Map original source line to the one in the document,
+        // when inline assembly is being displayed.
+        lineNumber = fromOriginalLineMapper(lineNumber);
+
+        if (lineNumber == -1) {
+          continue;
+        }
+      }
+
+      var line = textView.Document.GetLineByNumber(lineNumber);
       string text = textView.Document.GetText(line.Offset, line.Length);
-      var tuple = columnData != null ? DocumentUtils.FindTupleOnSourceLine(i, textView) : null;
+      var tuple = columnData != null ? DocumentUtils.FindTupleOnSourceLine(lineNumber, textView) : null;
 
       tr = doc.CreateElement("tr");
       var td = doc.CreateElement("td");
@@ -225,7 +291,7 @@ public static class DocumentExporting {
       tr.AppendChild(td);
 
       td = doc.CreateElement("td");
-      td.InnerHtml = HttpUtility.HtmlEncode(i);
+      td.InnerHtml = HttpUtility.HtmlEncode(lineNumber);
       td.SetAttributeValue("style", LineNumberStyle);
       tr.AppendChild(td);
 
@@ -250,9 +316,47 @@ public static class DocumentExporting {
     return doc.DocumentNode;
   }
 
-  public static async Task<bool> ExportSourceAsMarkdownFile(IRDocument textView, string filePath) {
+  private static bool MapStartEndSourceLines(ref int startLine, ref int endLine,
+                                             Func<int, int> toOriginalLineMapper) {
+    if (toOriginalLineMapper != null) {
+      // Adjust selection start/end lines when inline assembly
+      // is being displayed by mapping back from the document line
+      // to the original source file line.
+      int firstIndex = toOriginalLineMapper(startLine);
+
+      while (firstIndex == -1 &&
+             startLine < endLine) {
+        firstIndex = toOriginalLineMapper(++startLine);
+      }
+
+      if (firstIndex == -1) {
+        return false;
+      }
+
+      int lastIndex = toOriginalLineMapper(endLine);
+
+      while (lastIndex == -1 &&
+             endLine > startLine) {
+        lastIndex = toOriginalLineMapper(--endLine);
+      }
+
+      if (lastIndex == -1) {
+        return false;
+      }
+
+      startLine = firstIndex;
+      endLine = lastIndex;
+    }
+
+    return true;
+  }
+
+  public static async Task<bool> ExportSourceAsMarkdownFile(IRDocument textView, string filePath,
+                                                            Func<int, int> toOriginalLineMapper = null,
+                                                            Func<int, int> fromOriginalLineMapper = null) {
     try {
-      var text = await ExportSourceAsMarkdown(textView);
+      var text = await ExportSourceAsMarkdown(textView, -1, textView.Document.LineCount,
+                                              toOriginalLineMapper, fromOriginalLineMapper);
       await File.WriteAllTextAsync(filePath, text);
       return true;
     }
@@ -262,7 +366,9 @@ public static class DocumentExporting {
     }
   }
 
-  public static async Task<string> ExportSourceAsMarkdown(IRDocument textView, int startLine = -1, int endLine = -1) {
+  public static async Task<string> ExportSourceAsMarkdown(IRDocument textView, int startLine = -1, int endLine = -1,
+                                                          Func<int, int> toOriginalLineMapper = null,
+                                                          Func<int, int> fromOriginalLineMapper = null) {
     var sb = new StringBuilder();
     string header =    "| Source | Line |";
     string separator = "|--------|------|";
@@ -285,13 +391,29 @@ public static class DocumentExporting {
     sb.AppendLine(header);
     sb.AppendLine(separator);
 
+    if (!MapStartEndSourceLines(ref startLine, ref endLine, toOriginalLineMapper)) {
+      return sb.ToString();
+    }
+
     for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
       // Filter out instructions not in line range if requested.
-      if (filterByLine && (i < startLine || i > endLine)) {
+      int lineNumber = i;
+
+      if (filterByLine && (lineNumber < startLine || lineNumber > endLine)) {
         continue;
       }
 
-      var line = textView.Document.GetLineByNumber(i);
+      if (fromOriginalLineMapper != null) {
+        // Map original source line to the one in the document,
+        // when inline assembly is being displayed.
+        lineNumber = fromOriginalLineMapper(lineNumber);
+
+        if (lineNumber == -1) {
+          continue;
+        }
+      }
+
+      var line = textView.Document.GetLineByNumber(lineNumber);
       string text = textView.Document.GetText(line.Offset, line.Length);
       var tuple = columnData != null ? DocumentUtils.FindTupleOnSourceLine(i, textView) : null;
 
@@ -376,9 +498,11 @@ public static class DocumentExporting {
   public static async Task CopyAllLinesAsHtml(IRDocument textView) {
     await CopyLinesAsHtml(textView, 0, textView.Document.LineCount);
   }
-  
-  public static async Task CopyAllSourceLinesAsHtml(IRDocument textView) {
-    await CopySourceLinesAsHtml(textView, 0, textView.Document.LineCount);
+
+  public static async Task CopyAllSourceLinesAsHtml(IRDocument textView, Func<int, int> toOriginalLineMapper,
+                                                    Func<int, int> fromOriginalLineMapper) {
+    await CopySourceLinesAsHtml(textView, 0, textView.Document.LineCount,
+                                toOriginalLineMapper, fromOriginalLineMapper);
   }
 
   public static async Task CopySelectedLinesAsHtml(IRDocument textView) {
@@ -667,26 +791,31 @@ public static class DocumentExporting {
     return true;
   }
 
-  public static async Task CopySelectedSourceLinesAsHtml(IRDocument textView) {
+  public static async Task CopySelectedSourceLinesAsHtml(IRDocument textView, Func<int, int> toOriginalLineMapper,
+                                                         Func<int, int> fromOriginalLineMapper) {
     int startLine = textView.TextArea.Selection.StartPosition.Line;
     int endLine = textView.TextArea.Selection.EndPosition.Line;
-    await CopySourceLinesAsHtml(textView, startLine, endLine);
+    await CopySourceLinesAsHtml(textView, startLine, endLine, toOriginalLineMapper, fromOriginalLineMapper);
   }
 
-  private static async Task CopySourceLinesAsHtml(IRDocument textView, int startLine, int endLine) {
+  private static async Task CopySourceLinesAsHtml(IRDocument textView, int startLine, int endLine,
+                                                  Func<int, int> toOriginalLineMapper,
+                                                  Func<int, int> fromOriginalLineMapper) {
     if (startLine > endLine) {
       // Happens when selecting bottom-up.
       (startLine, endLine) = (endLine, startLine);
     }
 
     var doc = new HtmlDocument();
-    doc.DocumentNode.AppendChild(await DocumentExporting.ExportSourceAsHtml(textView, startLine, endLine));
+    doc.DocumentNode.AppendChild(await ExportSourceAsHtml(textView, startLine, endLine,
+                                                          toOriginalLineMapper, fromOriginalLineMapper));
     var writer = new StringWriter();
     doc.Save(writer);
 
     // Also save as Markdown so that it can be pasted in plain text editors.
     //var plainText = ExportFunctionListAsMarkdown(funcList);
-    string plainText = await DocumentExporting.ExportSourceAsMarkdown(textView, startLine, endLine);
+    string plainText = await ExportSourceAsMarkdown(textView, startLine, endLine,
+                                                    toOriginalLineMapper, fromOriginalLineMapper);
     Utils.CopyHtmlToClipboard(writer.ToString(), plainText);
   }
 }

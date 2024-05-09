@@ -2165,8 +2165,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private void FocusSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
-    SectionFilter.Focus();
-    SectionFilter.SelectAll();
+    FunctionFilter.Focus();
+    FunctionFilter.SelectAll();
   }
 
   private async void FunctionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
