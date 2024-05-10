@@ -14,36 +14,66 @@ public class SectionSettings : SettingsBase {
 
   public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
 
-  [ProtoMember(1)] public bool ColorizeSectionNames { get; set; }
-  [ProtoMember(2)] public bool MarkAnnotatedSections { get; set; }
-  [ProtoMember(3)] public bool MarkNoDiffSectionGroups { get; set; }
-  [ProtoMember(4)] public bool ShowSectionSeparators { get; set; }
-  [ProtoMember(5)] public bool UseNameIndentation { get; set; }
-  [ProtoMember(6)] public int IndentationAmount { get; set; }
-  [ProtoMember(10)] public Color NewSectionColor { get; set; }
-  [ProtoMember(11)] public Color MissingSectionColor { get; set; }
-  [ProtoMember(12)] public Color ChangedSectionColor { get; set; }
-  [ProtoMember(13)] public bool FunctionSearchCaseSensitive { get; set; }
-  [ProtoMember(14)] public bool SectionSearchCaseSensitive { get; set; }
-  [ProtoMember(15)] public bool MarkSectionsIdenticalToPrevious { get; set; }
-  [ProtoMember(16)] public bool LowerIdenticalToPreviousOpacity { get; set; }
-  [ProtoMember(17)] public bool ShowDemangledNames { get; set; }
-  [ProtoMember(18)] public bool DemangleOnlyNames { get; set; }
-  [ProtoMember(19)] public bool DemangleNoReturnType { get; set; }
-  [ProtoMember(20)] public bool DemangleNoSpecialKeywords { get; set; }
-  [ProtoMember(21)] public bool ComputeStatistics { get; set; }
-  [ProtoMember(22)] public bool IncludeCallGraphStatistics { get; set; }
-  [ProtoMember(23)] public bool SyncSourceFile { get; set; }
-  [ProtoMember(24)] public bool SyncSelection { get; set; }
-  [ProtoMember(25)] public bool ShowCallStackPopup { get; set; }
-  [ProtoMember(26)] public int CallStackPopupDuration { get; set; }
-  [ProtoMember(28)] public bool ShowPerformanceCounterColumns { get; set; }
-  [ProtoMember(29)] public bool ShowPerformanceMetricColumns { get; set; }
-  [ProtoMember(30)] public bool AppendTimeToTotalColumn { get; set; }
-  [ProtoMember(31)] public bool AppendTimeToSelfColumn { get; set; }
-  [ProtoMember(32)] public bool ShowModulePanel { get; set; }
-  [ProtoMember(33)] public bool AlternateListRows { get; set; }
-  [ProtoMember(34)] public bool ShowMangleNamesColumn { get; set; }
+  [ProtoMember(1), OptionValue(true)]
+  public bool ColorizeSectionNames { get; set; }
+  [ProtoMember(2), OptionValue(true)]
+  public bool MarkAnnotatedSections { get; set; }
+  [ProtoMember(3), OptionValue(false)]
+  public bool MarkNoDiffSectionGroups { get; set; }
+  [ProtoMember(4), OptionValue(true)]
+  public bool ShowSectionSeparators { get; set; }
+  [ProtoMember(5), OptionValue(true)]
+  public bool UseNameIndentation { get; set; }
+  [ProtoMember(6), OptionValue(4)]
+  public int IndentationAmount { get; set; }
+  [ProtoMember(10), OptionValue(typeof(Color), "#007200")]
+  public Color NewSectionColor { get; set; }
+  [ProtoMember(11), OptionValue(typeof(Color), "#BB0025")]
+  public Color MissingSectionColor { get; set; }
+  [ProtoMember(12), OptionValue(typeof(Color), "#DE8000")]
+  public Color ChangedSectionColor { get; set; }
+  [ProtoMember(13), OptionValue(false)]
+  public bool FunctionSearchCaseSensitive { get; set; }
+  [ProtoMember(14), OptionValue(false)]
+  public bool SectionSearchCaseSensitive { get; set; }
+  [ProtoMember(15), OptionValue(true)]
+  public bool MarkSectionsIdenticalToPrevious { get; set; }
+  [ProtoMember(16), OptionValue(true)]
+  public bool LowerIdenticalToPreviousOpacity { get; set; }
+  [ProtoMember(17), OptionValue(true)]
+  public bool ShowDemangledNames { get; set; }
+  [ProtoMember(18), OptionValue(false)]
+  public bool DemangleOnlyNames { get; set; }
+  [ProtoMember(19), OptionValue(true)]
+  public bool DemangleNoReturnType { get; set; }
+  [ProtoMember(20), OptionValue(true)]
+  public bool DemangleNoSpecialKeywords { get; set; }
+  [ProtoMember(21), OptionValue(false)]
+  public bool ComputeStatistics { get; set; }
+  [ProtoMember(22), OptionValue(false)]
+  public bool IncludeCallGraphStatistics { get; set; }
+  [ProtoMember(23), OptionValue(false)]
+  public bool SyncSourceFile { get; set; }
+  [ProtoMember(24), OptionValue(true)]
+  public bool SyncSelection { get; set; }
+  [ProtoMember(25), OptionValue(true)]
+  public bool ShowCallStackPopup { get; set; }
+  [ProtoMember(26), OptionValue(0)]
+  public int CallStackPopupDuration { get; set; }
+  [ProtoMember(28), OptionValue(true)]
+  public bool ShowPerformanceCounterColumns { get; set; }
+  [ProtoMember(29), OptionValue(true)]
+  public bool ShowPerformanceMetricColumns { get; set; }
+  [ProtoMember(30), OptionValue(true)]
+  public bool AppendTimeToTotalColumn { get; set; }
+  [ProtoMember(31), OptionValue(true)]
+  public bool AppendTimeToSelfColumn { get; set; }
+  [ProtoMember(32), OptionValue(true)]
+  public bool ShowModulePanel { get; set; }
+  [ProtoMember(33), OptionValue(true)]
+  public bool AlternateListRows { get; set; }
+  [ProtoMember(34), OptionValue(false)]
+  public bool ShowMangleNamesColumn { get; set; }
 
   public FunctionNameDemanglingOptions DemanglingOptions {
     get {
@@ -78,31 +108,8 @@ public class SectionSettings : SettingsBase {
   }
 
   public override void Reset() {
-    ColorizeSectionNames = true;
-    ShowSectionSeparators = true;
-    UseNameIndentation = true;
-    IndentationAmount = 4;
-    MarkAnnotatedSections = true;
-    MarkNoDiffSectionGroups = false;
-    FunctionSearchCaseSensitive = false;
-    SectionSearchCaseSensitive = false;
-    MarkSectionsIdenticalToPrevious = true;
-    LowerIdenticalToPreviousOpacity = true;
-    ShowDemangledNames = true;
-    DemangleNoSpecialKeywords = true;
-    DemangleNoReturnType = true;
-    SyncSelection = true;
-    ShowCallStackPopup = true;
-    ShowModulePanel = true;
-    ShowPerformanceCounterColumns = true;
-    ShowPerformanceMetricColumns = true;
-    AppendTimeToSelfColumn = true;
-    AppendTimeToTotalColumn = true;
-    AlternateListRows = true;
+    ResetAllOptions(this);
     CallStackPopupDuration = DefaultCallStackPopupDuration;
-    NewSectionColor = Utils.ColorFromString("#007200");
-    MissingSectionColor = Utils.ColorFromString("#BB0025");
-    ChangedSectionColor = Utils.ColorFromString("#DE8000");
   }
 
   public SectionSettings Clone() {
@@ -111,67 +118,10 @@ public class SectionSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is SectionSettings settings &&
-           ColorizeSectionNames == settings.ColorizeSectionNames &&
-           MarkAnnotatedSections == settings.MarkAnnotatedSections &&
-           MarkNoDiffSectionGroups == settings.MarkNoDiffSectionGroups &&
-           ShowSectionSeparators == settings.ShowSectionSeparators &&
-           UseNameIndentation == settings.UseNameIndentation &&
-           IndentationAmount == settings.IndentationAmount &&
-           FunctionSearchCaseSensitive == settings.FunctionSearchCaseSensitive &&
-           SectionSearchCaseSensitive == settings.SectionSearchCaseSensitive &&
-           LowerIdenticalToPreviousOpacity == settings.LowerIdenticalToPreviousOpacity &&
-           MarkSectionsIdenticalToPrevious == settings.MarkSectionsIdenticalToPrevious &&
-           NewSectionColor.Equals(settings.NewSectionColor) &&
-           MissingSectionColor.Equals(settings.MissingSectionColor) &&
-           ChangedSectionColor.Equals(settings.ChangedSectionColor) &&
-           ShowDemangledNames == settings.ShowDemangledNames &&
-           DemangleOnlyNames == settings.DemangleOnlyNames &&
-           DemangleNoReturnType == settings.DemangleNoReturnType &&
-           DemangleNoSpecialKeywords == settings.DemangleNoSpecialKeywords &&
-           ComputeStatistics == settings.ComputeStatistics &&
-           ShowCallStackPopup == settings.ShowCallStackPopup &&
-           CallStackPopupDuration == settings.CallStackPopupDuration &&
-           SyncSourceFile == settings.SyncSourceFile &&
-           SyncSelection == settings.SyncSelection &&
-           ShowPerformanceCounterColumns == settings.ShowPerformanceCounterColumns &&
-           ShowPerformanceMetricColumns == settings.ShowPerformanceMetricColumns &&
-           AppendTimeToTotalColumn == settings.AppendTimeToTotalColumn &&
-           AppendTimeToSelfColumn == settings.AppendTimeToSelfColumn &&
-           ShowModulePanel == settings.ShowModulePanel &&
-           AlternateListRows == settings.AlternateListRows &&
-           ShowMangleNamesColumn == settings.ShowMangleNamesColumn;
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-    return $"ColorizeSectionNames: {ColorizeSectionNames}\n" +
-           $"MarkAnnotatedSections: {MarkAnnotatedSections}\n" +
-           $"MarkNoDiffSectionGroups: {MarkNoDiffSectionGroups}\n" +
-           $"ShowSectionSeparators: {ShowSectionSeparators}\n" +
-           $"UseNameIndentation: {UseNameIndentation}\n" +
-           $"IndentationAmount: {IndentationAmount}\n" +
-           $"NewSectionColor: {NewSectionColor}\n" +
-           $"MissingSectionColor: {MissingSectionColor}\n" +
-           $"ChangedSectionColor: {ChangedSectionColor}\n" +
-           $"FunctionSearchCaseSensitive: {FunctionSearchCaseSensitive}\n" +
-           $"SectionSearchCaseSensitive: {SectionSearchCaseSensitive}\n" +
-           $"MarkSectionsIdenticalToPrevious: {MarkSectionsIdenticalToPrevious}\n" +
-           $"LowerIdenticalToPreviousOpacity: {LowerIdenticalToPreviousOpacity}\n" +
-           $"ShowDemangledNames: {ShowDemangledNames}\n" +
-           $"DemangleOnlyNames: {DemangleOnlyNames}\n" +
-           $"DemangleNoReturnType: {DemangleNoReturnType}\n" +
-           $"DemangleNoSpecialKeywords: {DemangleNoSpecialKeywords}\n" +
-           $"ComputeStatistics: {ComputeStatistics}\n" +
-           $"ShowCallStackPopup: {ShowCallStackPopup}\n" +
-           $"CallStackPopupDuration: {CallStackPopupDuration}\n" +
-           $"SyncSourceFile: {SyncSourceFile}\n" +
-           $"SyncSelection: {SyncSelection}\n" +
-           $"ShowPerformanceCounterColumns: {ShowPerformanceCounterColumns}\n" +
-           $"ShowPerformanceMetricColumns: {ShowPerformanceMetricColumns}\n" +
-           $"AppendTimeToTotalColumn: {AppendTimeToTotalColumn}\n" +
-           $"AppendTimeToSelfColumn: {AppendTimeToSelfColumn}\n" +
-           $"ShowModulePanel: {ShowModulePanel}\n" +
-           $"ShowMangleNamesColumn: {ShowMangleNamesColumn}\n" +
-           $"AlternateListRows: {AlternateListRows}";
+    return PrintOptions(this);
   }
 }

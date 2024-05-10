@@ -31,9 +31,9 @@ public class SourceFileSettings : TextViewSettingsBase {
   public bool ShowSourceStatementsOnMargin { get; set; }
   [ProtoMember(9), OptionValue(true)]
   public bool ReplaceInsignificantSourceStatements { get; set; }
-  [ProtoMember(10), OptionValue(typeof(Color), "#00008B")]
+  [ProtoMember(10), OptionValue(typeof(Color), "#0202B0")]
   public Color AssemblyTextColor { get; set; }
-  [ProtoMember(11), OptionValue(typeof(Color), "#00FFFFFF")]
+  [ProtoMember(11), OptionValue(typeof(Color), "#14828282")]
   public Color AssemblyBackColor { get; set; }
 
   public override void Reset() {
@@ -56,7 +56,7 @@ public class SourceFileSettings : TextViewSettingsBase {
   public override bool Equals(object obj) {
     return obj is SourceFileSettings settings &&
            base.Equals(settings) &&
-           AreSettingsOptionsEqual(this, settings);
+           AreOptionsEqual(this, settings);
   }
 
   public override string ToString() {
@@ -86,7 +86,7 @@ public class SourceFileFinderSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return AreSettingsOptionsEqual(this, obj);
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {

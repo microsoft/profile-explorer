@@ -6,10 +6,6 @@ using ProtoBuf;
 namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
-//? TODO: options ofr
-//? - show node preview on hover
-//?      - hover time
-//? - color list item based on module name
 public class CallTreeSettings : SettingsBase {
   public static readonly int DefaultNodePopupDuration = (int)HoverPreview.HoverDuration.TotalMilliseconds;
 
@@ -17,29 +13,25 @@ public class CallTreeSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue(true)]
   public bool CombineInstances { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue(true)]
   public bool PrependModuleToFunction { get; set; }
-  [ProtoMember(3)]
+  [ProtoMember(3), OptionValue(true)]
   public bool ShowTimeAfterPercentage { get; set; }
-  [ProtoMember(4)]
+  [ProtoMember(4), OptionValue(false)]
   public bool ShowDetailsPanel { get; set; }
-  [ProtoMember(5)]
+  [ProtoMember(5), OptionValue(false)]
   public bool SyncSourceFile { get; set; }
-  [ProtoMember(6)]
+  [ProtoMember(6), OptionValue(true)]
   public bool SyncSelection { get; set; }
-  [ProtoMember(7)]
+  [ProtoMember(7), OptionValue(true)]
   public bool ShowNodePopup { get; set; }
   [ProtoMember(8)]
   public int NodePopupDuration { get; set; }
 
   public override void Reset() {
-    CombineInstances = true;
-    PrependModuleToFunction = true;
-    ShowTimeAfterPercentage = true;
-    SyncSelection = true;
-    ShowNodePopup = true;
+    ResetAllOptions(this);
     NodePopupDuration = DefaultNodePopupDuration;
   }
 
@@ -49,25 +41,10 @@ public class CallTreeSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is CallTreeSettings settings &&
-           CombineInstances == settings.CombineInstances &&
-           PrependModuleToFunction == settings.PrependModuleToFunction &&
-           ShowTimeAfterPercentage == settings.ShowTimeAfterPercentage &&
-           ShowDetailsPanel == settings.ShowDetailsPanel &&
-           SyncSourceFile == settings.SyncSourceFile &&
-           SyncSelection == settings.SyncSelection &&
-           ShowNodePopup == settings.ShowNodePopup &&
-           NodePopupDuration == settings.NodePopupDuration;
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-    return $"CombineInstances: {CombineInstances}\n" +
-           $"PrependModuleToFunction: {PrependModuleToFunction}\n" +
-           $"ShowTimeAfterPercentage: {ShowTimeAfterPercentage}\n" +
-           $"ShowDetailsPanel: {ShowDetailsPanel}\n" +
-           $"SyncSourceFile: {SyncSourceFile}\n" +
-           $"SyncSelection: {SyncSelection}\n" +
-           $"ShowNodePopup: {ShowNodePopup}\n" +
-           $"NodePopupDuration: {NodePopupDuration}";
+    return PrintOptions(this);
   }
 }

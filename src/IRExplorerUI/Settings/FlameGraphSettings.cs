@@ -14,105 +14,80 @@ namespace IRExplorerUI;
 [ProtoContract(SkipConstructor = true)]
 public class FlameGraphSettings : SettingsBase {
   public static readonly int DefaultNodePopupDuration = (int)HoverPreview.HoverDuration.TotalMilliseconds;
-  private Dictionary<ProfileCallTreeNodeKind, ColorPalette> palettes_;
-  private ColorPalette modulesPalette_;
+  public Dictionary<ProfileCallTreeNodeKind, ColorPalette> Palettes { get; set; }
+  public ColorPalette ModulesPalette { get; set; }
 
   public FlameGraphSettings() {
     Reset();
   }
 
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue(true)]
   public bool PrependModuleToFunction { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue(true)]
   public bool ShowDetailsPanel { get; set; }
-  [ProtoMember(3)]
+  [ProtoMember(3), OptionValue(false)]
   public bool SyncSourceFile { get; set; }
-  [ProtoMember(4)]
+  [ProtoMember(4), OptionValue(true)]
   public bool SyncSelection { get; set; }
-  [ProtoMember(5)]
+  [ProtoMember(5), OptionValue(false)]
   public bool UseCompactMode { get; set; }
-  [ProtoMember(6)]
+  [ProtoMember(6), OptionValue(true)]
   public bool ShowNodePopup { get; set; }
-  [ProtoMember(7)]
+  [ProtoMember(7), OptionValue(true)]
   public bool AppendPercentageToFunction { get; set; }
-  [ProtoMember(8)]
+  [ProtoMember(8), OptionValue(true)]
   public bool AppendDurationToFunction { get; set; }
-  [ProtoMember(9)]
+  [ProtoMember(9), OptionValue(0)]
   public int NodePopupDuration { get; set; }
-  [ProtoMember(10)]
+  [ProtoMember(10), OptionValue("Profile")]
   public string DefaultColorPalette { get; set; }
-  [ProtoMember(11)]
+  [ProtoMember(11), OptionValue("ProfileKernel")]
   public string KernelColorPalette { get; set; }
-  [ProtoMember(12)]
+  [ProtoMember(12), OptionValue("ProfileManaged")]
   public string ManagedColorPalette { get; set; }
-  [ProtoMember(13)]
+  [ProtoMember(13), OptionValue(true)]
   public bool UseKernelColorPalette { get; set; }
-  [ProtoMember(14)]
+  [ProtoMember(14), OptionValue(true)]
   public bool UseManagedColorPalette { get; set; }
-  [ProtoMember(15)]
+  [ProtoMember(15), OptionValue(typeof(Color), "#D0E3F1")]
   public Color SelectedNodeColor { get; set; }
-  [ProtoMember(16)]
+  [ProtoMember(16), OptionValue(typeof(Color), "#F0E68C")]
   public Color SearchResultMarkingColor { get; set; }
-  [ProtoMember(17)]
+  [ProtoMember(17), OptionValue(typeof(Color), "#000000")]
   public Color SelectedNodeBorderColor { get; set; }
-  [ProtoMember(18)]
+  [ProtoMember(18), OptionValue(typeof(Color), "#000000")]
   public Color SearchedNodeBorderColor { get; set; }
-  [ProtoMember(19)]
+  [ProtoMember(19), OptionValue(typeof(Color), "#000000")]
   public Color NodeBorderColor { get; set; }
-  [ProtoMember(20)]
+  [ProtoMember(20), OptionValue(typeof(Color), "#191970")]
   public Color NodeTextColor { get; set; }
-  [ProtoMember(21)]
+  [ProtoMember(21), OptionValue(typeof(Color), "#696969")]
   public Color NodeModuleColor { get; set; }
-  [ProtoMember(22)]
+  [ProtoMember(22), OptionValue(typeof(Color), "#800000")]
   public Color NodeWeightColor { get; set; }
-  [ProtoMember(23)]
+  [ProtoMember(23), OptionValue(typeof(Color), "#000000")]
   public Color NodePercentageColor { get; set; }
-  [ProtoMember(24)]
+  [ProtoMember(24), OptionValue(typeof(Color), "#c3ebbc")]
   public Color SearchedNodeColor { get; set; }
-  [ProtoMember(25)]
+  [ProtoMember(25), OptionValue(typeof(Color), "#00008B")]
   public Color KernelNodeBorderColor { get; set; }
-  [ProtoMember(26)]
+  [ProtoMember(26), OptionValue(typeof(Color), "#4B0082")]
   public Color ManagedNodeBorderColor { get; set; }
-  [ProtoMember(27)]
+  [ProtoMember(27), OptionValue(typeof(Color), "#0000CD")]
   public Color KernelNodeTextColor { get; set; }
-  [ProtoMember(28)]
+  [ProtoMember(28), OptionValue(typeof(Color), "#800080")]
   public Color ManagedNodeTextColor { get; set; }
 
   public Brush GetNodeDefaultBrush(FlameGraphNode node) {
     CachePalettes();
-    var palette = node.HasFunction ? palettes_[node.CallTreeNode.Kind] : palettes_[ProfileCallTreeNodeKind.Unset];
+    var palette = node.HasFunction ? Palettes[node.CallTreeNode.Kind] : Palettes[ProfileCallTreeNodeKind.Unset];
     int colorIndex = node.Depth % palette.Count;
     return palette.PickBrush(palette.Count - colorIndex - 1);
   }
 
   public override void Reset() {
-    PrependModuleToFunction = true;
-    SyncSelection = true;
-    SyncSourceFile = false;
-    ShowDetailsPanel = true;
-    ShowNodePopup = true;
-    AppendPercentageToFunction = true;
-    AppendDurationToFunction = true;
+    ResetAllOptions(this);
     NodePopupDuration = DefaultNodePopupDuration;
-    UseKernelColorPalette = true;
-    UseManagedColorPalette = true;
-    DefaultColorPalette = ColorPalette.Profile.Name;
-    KernelColorPalette = ColorPalette.ProfileKernel.Name;
-    ManagedColorPalette = ColorPalette.ProfileManaged.Name;
-    SearchResultMarkingColor = Colors.Khaki;
-    NodeTextColor = Colors.MidnightBlue;
-    KernelNodeTextColor = Colors.MediumBlue;
-    ManagedNodeTextColor = Colors.Purple;
-    NodeBorderColor = Colors.Black;
-    KernelNodeBorderColor = Colors.DarkBlue;
-    ManagedNodeBorderColor = Colors.Indigo;
-    NodeModuleColor = Colors.DimGray;
-    NodeWeightColor = Colors.Maroon;
-    NodePercentageColor = Colors.Black;
-    SelectedNodeColor = Utils.ColorFromString("#D0E3F1");
-    SelectedNodeBorderColor = Colors.Black;
-    SearchedNodeColor = Utils.ColorFromString("#c3ebbc");
-    SearchedNodeBorderColor = Colors.Black;
   }
 
   public FlameGraphSettings Clone() {
@@ -121,12 +96,12 @@ public class FlameGraphSettings : SettingsBase {
   }
 
   public void ResedCachedPalettes() {
-    palettes_ = null;
+    Palettes = null;
   }
 
   private void CachePalettes() {
-    if (palettes_ == null) {
-      palettes_ = new Dictionary<ProfileCallTreeNodeKind, ColorPalette> {
+    if (Palettes == null) {
+      Palettes = new Dictionary<ProfileCallTreeNodeKind, ColorPalette> {
         [ProfileCallTreeNodeKind.Unset] = ColorPalette.GetPalette(DefaultColorPalette),
         [ProfileCallTreeNodeKind.NativeUser] = ColorPalette.GetPalette(DefaultColorPalette),
         [ProfileCallTreeNodeKind.NativeKernel] = UseKernelColorPalette ?
@@ -140,65 +115,10 @@ public class FlameGraphSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is FlameGraphSettings settings &&
-           PrependModuleToFunction == settings.PrependModuleToFunction &&
-           ShowDetailsPanel == settings.ShowDetailsPanel &&
-           SyncSelection == settings.SyncSelection &&
-           SyncSourceFile == settings.SyncSourceFile &&
-           UseCompactMode == settings.UseCompactMode &&
-           ShowNodePopup == settings.ShowNodePopup &&
-           AppendPercentageToFunction == settings.AppendPercentageToFunction &&
-           AppendDurationToFunction == settings.AppendDurationToFunction &&
-           NodePopupDuration == settings.NodePopupDuration &&
-           DefaultColorPalette == settings.DefaultColorPalette &&
-           KernelColorPalette == settings.KernelColorPalette &&
-           ManagedColorPalette == settings.ManagedColorPalette &&
-           UseKernelColorPalette == settings.UseKernelColorPalette &&
-           UseManagedColorPalette == settings.UseManagedColorPalette &&
-           SelectedNodeColor == settings.SelectedNodeColor &&
-           SearchResultMarkingColor == settings.SearchResultMarkingColor &&
-           SelectedNodeBorderColor == settings.SelectedNodeBorderColor &&
-           SearchedNodeBorderColor == settings.SearchedNodeBorderColor &&
-           NodeBorderColor == settings.NodeBorderColor &&
-           NodeTextColor == settings.NodeTextColor &&
-           NodeModuleColor == settings.NodeModuleColor &&
-           NodeWeightColor == settings.NodeWeightColor &&
-           NodePercentageColor == settings.NodePercentageColor &&
-           SearchedNodeColor == settings.SearchedNodeColor &&
-           KernelNodeBorderColor == settings.KernelNodeBorderColor &&
-           ManagedNodeBorderColor == settings.ManagedNodeBorderColor &&
-           KernelNodeTextColor == settings.KernelNodeTextColor &&
-           ManagedNodeTextColor == settings.ManagedNodeTextColor;
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-    return $"PrependModuleToFunction: {PrependModuleToFunction}\n" +
-           $"ShowDetailsPanel: {ShowDetailsPanel}\n" +
-           $"SyncSelection: {SyncSelection}\n" +
-           $"SyncSourceFile: {SyncSourceFile}\n" +
-           $"UseCompactMode: {UseCompactMode}\n" +
-           $"ShowNodePopup: {ShowNodePopup}\n" +
-           $"AppendPercentageToFunction: {AppendPercentageToFunction}\n" +
-           $"AppendDurationToFunction: {AppendDurationToFunction}\n" +
-           $"NodePopupDuration: {NodePopupDuration}\n" +
-           $"DefaultColorPalette: {DefaultColorPalette}\n" +
-           $"KernelColorPalette: {KernelColorPalette}\n" +
-           $"ManagedColorPalette: {ManagedColorPalette}\n" +
-           $"UseKernelColorPalette: {UseKernelColorPalette}\n" +
-           $"UseManagedColorPalette: {UseManagedColorPalette}\n" +
-           $"SelectedNodeColor: {SelectedNodeColor}\n" +
-           $"SearchResultMarkingColor: {SearchResultMarkingColor}\n" +
-           $"SelectedNodeBorderColor: {SelectedNodeBorderColor}\n" +
-           $"SearchedNodeBorderColor: {SearchedNodeBorderColor}\n" +
-           $"NodeBorderColor: {NodeBorderColor}\n" +
-           $"KernelNodeBorderColor: {KernelNodeBorderColor}\n" +
-           $"ManagedNodeBorderColor: {ManagedNodeBorderColor}\n" +
-           $"NodeTextColor: {NodeTextColor}\n" +
-           $"KernelNodeTextColor: {KernelNodeTextColor}\n" +
-           $"ManagedNodeTextColor: {ManagedNodeTextColor}\n" +
-           $"NodeModuleColor: {NodeModuleColor}\n" +
-           $"NodeWeightColor: {NodeWeightColor}\n" +
-           $"NodePercentageColor: {NodePercentageColor}\n" +
-           $"SearchedNodeColor: {SearchedNodeColor}\n";
+    return PrintOptions(this);
   }
 }

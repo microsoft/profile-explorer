@@ -19,25 +19,25 @@ public class SymbolFileSourceSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue()]
   public List<string> SymbolPaths { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue(true)]
   public bool SourceServerEnabled { get; set; }
-  [ProtoMember(3)]
+  [ProtoMember(3), OptionValue(false)]
   public bool AuthorizationTokenEnabled { get; set; }
-  [ProtoMember(4)]
+  [ProtoMember(4), OptionValue("")]
   public string AuthorizationToken { get; set; }
-  [ProtoMember(5)]
+  [ProtoMember(5), OptionValue(false)]
   public bool UseEnvironmentVarSymbolPaths { get; set; }
-  [ProtoMember(6)]
+  [ProtoMember(6), OptionValue(true)]
   public bool SkipLowSampleModules { get; set; }
-  [ProtoMember(7)]
+  [ProtoMember(7), OptionValue("")]
   public string AuthorizationUser { get; set; }
-  [ProtoMember(8)]
+  [ProtoMember(8), OptionValue()]
   public HashSet<BinaryFileDescriptor> RejectedBinaryFiles { get; set; }
-  [ProtoMember(9)]
+  [ProtoMember(9), OptionValue()]
   public HashSet<SymbolFileDescriptor> RejectedSymbolFiles { get; set; }
-  [ProtoMember(10)]
+  [ProtoMember(10), OptionValue(false)]
   public bool RejectPreviouslyFailedFiles { get; set; }
 
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
@@ -174,13 +174,8 @@ public class SymbolFileSourceSettings : SettingsBase {
 
   public override void Reset() {
     InitializeReferenceMembers();
-
-    RejectedSymbolFiles.Clear();
-    RejectedBinaryFiles.Clear();
-    UseEnvironmentVarSymbolPaths = false;
-    SourceServerEnabled = true;
-    SkipLowSampleModules = true;
-
+    ResetAllOptions(this);
+    
     if (ShouldUsePrivateSymbolPath()) {
       AddSymbolServer(usePrivateServer : true);
     }
@@ -195,62 +190,15 @@ public class SymbolFileSourceSettings : SettingsBase {
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
-    SymbolPaths ??= new List<string>();
-    RejectedSymbolFiles ??= new HashSet<SymbolFileDescriptor>();
-    RejectedBinaryFiles ??= new HashSet<BinaryFileDescriptor>();
-  }
-
-  protected bool Equals(SymbolFileSourceSettings other) {
-    return SymbolPaths.AreEqual(other.SymbolPaths) &&
-           RejectedSymbolFiles.AreEqual(other.RejectedSymbolFiles) &&
-           RejectedBinaryFiles.AreEqual(other.RejectedBinaryFiles) &&
-           SourceServerEnabled == other.SourceServerEnabled &&
-           AuthorizationTokenEnabled == other.AuthorizationTokenEnabled &&
-           AuthorizationToken == other.AuthorizationToken &&
-           AuthorizationUser == AuthorizationToken &&
-           UseEnvironmentVarSymbolPaths == other.UseEnvironmentVarSymbolPaths &&
-           SkipLowSampleModules == other.SkipLowSampleModules &&
-           RejectPreviouslyFailedFiles == other.RejectPreviouslyFailedFiles;
+    InitializeReferenceOptions(this);
   }
 
   public override bool Equals(object obj) {
-    if (ReferenceEquals(null, obj))
-      return false;
-    if (ReferenceEquals(this, obj))
-      return true;
-    if (obj.GetType() != this.GetType())
-      return false;
-    return Equals((SymbolFileSourceSettings)obj);
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-    var text = $"SymbolPaths: {SymbolPaths.Count}\n" +
-               $"SourceServerEnabled: {SourceServerEnabled}\n" +
-               $"AuthorizationTokenEnabled: {AuthorizationTokenEnabled}\n" +
-               $"AuthorizationUser: {AuthorizationUser}\n" +
-               $"AuthorizationToken: {AuthorizationToken}\n" +
-               $"SkipLowSampleModules: {SkipLowSampleModules}\n" +
-               $"UseEnvironmentVarSymbolPaths: {UseEnvironmentVarSymbolPaths}\n" +
-               $"RejectPreviouslyFailedFiles: {RejectPreviouslyFailedFiles}\n";
-    text += "Symbol paths:\n";
-
-    foreach(var path in SymbolPaths) {
-      text += $" - {path}\n";
-    }
-
-    text += $"Rejected binaries: {RejectedBinaryFiles.Count}\n";
-
-    foreach (var file in RejectedBinaryFiles) {
-      text += $" - {file}\n";
-    }
-
-    text += $"\nRejected symbols: {RejectedSymbolFiles.Count}";
-
-    foreach (var file in RejectedSymbolFiles) {
-      text += $" - {file}\n";
-    }
-
-    return text;
+    return PrintOptions(this);
   }
 
   class NetAPI32 {

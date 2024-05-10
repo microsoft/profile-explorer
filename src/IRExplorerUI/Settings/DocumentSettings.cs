@@ -65,7 +65,7 @@ public class DocumentSettings : TextViewSettingsBase {
   public override bool Equals(object obj) {
     return obj is DocumentSettings settings &&
            base.Equals(settings) &&
-           AreSettingsOptionsEqual(this, settings);
+           AreOptionsEqual(this, settings);
   }
 
   public override string ToString() {

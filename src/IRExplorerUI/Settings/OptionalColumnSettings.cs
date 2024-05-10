@@ -12,13 +12,16 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class OptionalColumnSettings : SettingsBase {
-  [ProtoMember(1)]
-  private Dictionary<string, OptionalColumnStyle> columnStyles_;
-  [ProtoMember(2)]
-  private Dictionary<string, ColumnState> columnStates_;
-  [ProtoMember(3)]  public bool RemoveEmptyColumns { get; set; }
-  [ProtoMember(4)]  public bool ShowPerformanceCounterColumns { get; set; }
-  [ProtoMember(5)]  public bool ShowPerformanceMetricColumns { get; set; }
+  [ProtoMember(1), OptionValue()]
+  public Dictionary<string, OptionalColumnStyle> ColumnStyles { get; set; }
+  [ProtoMember(2), OptionValue()]
+  public Dictionary<string, ColumnState> ColumnStates { get; set; }
+  [ProtoMember(3), OptionValue(false)]
+  public bool RemoveEmptyColumns { get; set; }
+  [ProtoMember(4), OptionValue(true)]
+  public bool ShowPerformanceCounterColumns { get; set; }
+  [ProtoMember(5), OptionValue(true)]
+  public bool ShowPerformanceMetricColumns { get; set; }
 
   public OptionalColumnSettings() {
     Reset();
@@ -26,8 +29,7 @@ public class OptionalColumnSettings : SettingsBase {
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
-    columnStyles_ ??= new Dictionary<string, OptionalColumnStyle>();
-    columnStates_ ??= new Dictionary<string, ColumnState>();
+    InitializeReferenceOptions(this);
   }
 
   public static OptionalColumnStyle DefaultTimePercentageColumnStyle =>
@@ -76,17 +78,17 @@ public class OptionalColumnSettings : SettingsBase {
   }
 
   public OptionalColumnStyle GetColumnStyle(OptionalColumn column) {
-    return columnStyles_.GetValueOrNull(column.ColumnName);
+    return ColumnStyles.GetValueOrNull(column.ColumnName);
   }
 
   public void AddColumnStyle(OptionalColumn column, OptionalColumnStyle style) {
-    columnStyles_[column.ColumnName] = style;
+    ColumnStyles[column.ColumnName] = style;
   }
 
   private ColumnState GetOrCreateColumnState(OptionalColumn column) {
-    if(!columnStates_.TryGetValue(column.ColumnName, out var state)) {
+    if(!ColumnStates.TryGetValue(column.ColumnName, out var state)) {
       state = new ColumnState();
-      columnStates_[column.ColumnName] = state;
+      ColumnStates[column.ColumnName] = state;
       NumberColumnStates();
     }
 
@@ -94,7 +96,7 @@ public class OptionalColumnSettings : SettingsBase {
   }
 
   private void NumberColumnStates() {
-    var stateList = columnStates_.ToValueList();
+    var stateList = ColumnStates.ToValueList();
     stateList.Sort((a, b) => a.Order.CompareTo(b.Order));
 
     for (int i = 0; i < stateList.Count; ++i) {
@@ -126,8 +128,8 @@ public class OptionalColumnSettings : SettingsBase {
     }
 
     sortedColumns.Sort((a, b) => {
-      var aState = columnStates_[a.ColumnName];
-      var bState = columnStates_[b.ColumnName];
+      var aState = ColumnStates[a.ColumnName];
+      var bState = ColumnStates[b.ColumnName];
       return aState.Order.CompareTo(bState.Order);
     });
 
@@ -136,11 +138,7 @@ public class OptionalColumnSettings : SettingsBase {
 
   public override void Reset() {
     InitializeReferenceMembers();
-    columnStyles_.Clear();
-    columnStates_.Clear();
-    RemoveEmptyColumns = true;
-    ShowPerformanceCounterColumns = true;
-    ShowPerformanceMetricColumns = true;
+    ResetAllOptions(this);
   }
 
   public OptionalColumnSettings Clone() {
@@ -149,20 +147,11 @@ public class OptionalColumnSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is OptionalColumnSettings other &&
-           RemoveEmptyColumns == other.RemoveEmptyColumns &&
-           ShowPerformanceCounterColumns == other.ShowPerformanceCounterColumns &&
-           ShowPerformanceMetricColumns == other.ShowPerformanceMetricColumns &&
-           columnStyles_.AreEqual(other.columnStyles_) &&
-           columnStates_.AreEqual(other.columnStates_);
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-    return $"RemoveEmptyColumns: {RemoveEmptyColumns}\n" +
-           $"ShowPerformanceCounterColumns: {ShowPerformanceCounterColumns}\n" +
-           $"ShowPerformanceMetricColumns: {ShowPerformanceMetricColumns}\n" +
-           $"columnStyles_: {columnStyles_}\n" +
-           $"columnStates_: {columnStates_}";
+    return PrintOptions(this);
 
   }
 }
@@ -179,28 +168,29 @@ public class OptionalColumnStyle : SettingsBase {
     Never
   }
 
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue("")]
   public string AlternateTitle { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue(PartVisibility.Never)]
   public PartVisibility ShowPercentageBar { get; set; }
   [ProtoMember(3)]
   public Color PercentageBarBackColor { get; set; }
-  [ProtoMember(4)]
+  [ProtoMember(4), OptionValue(typeof(Color), "#000000")]
   public Color TextColor { get; set; }
-  [ProtoMember(5)]
+  [ProtoMember(5), OptionValue(PartVisibility.Never)]
   public PartVisibility ShowIcon { get; set; }
-  [ProtoMember(6)]
+  [ProtoMember(6), OptionValue(false)]
   public bool PickColorForPercentage { get; set; }
-  [ProtoMember(7)]
+  [ProtoMember(7), OptionValue(PartVisibility.Never)]
   public PartVisibility UseBackColor { get; set; }
-  [ProtoMember(8)]
+  [ProtoMember(8), OptionValue("")]
   public string BackColorPalette { get; set; }
-  [ProtoMember(9)]
+  [ProtoMember(9), OptionValue(false)]
   public bool InvertColorPalette { get; set; }
-  [ProtoMember(10)]
+  [ProtoMember(10), OptionValue(typeof(Color), "#00FFFFFF")]
   public Color BackgroundColor { get; set; }
 
   public override void Reset() {
+    ResetAllOptions(this);
   }
 
   public OptionalColumnStyle Clone() {
@@ -209,28 +199,10 @@ public class OptionalColumnStyle : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is OptionalColumnStyle other &&
-           AlternateTitle == other.AlternateTitle &&
-           ShowPercentageBar == other.ShowPercentageBar &&
-           PercentageBarBackColor.Equals(other.PercentageBarBackColor) &&
-           TextColor.Equals(other.TextColor) &&
-           ShowIcon == other.ShowIcon &&
-           PickColorForPercentage == other.PickColorForPercentage && UseBackColor == other.UseBackColor &&
-           Equals(BackColorPalette, other.BackColorPalette) &&
-           InvertColorPalette == other.InvertColorPalette &&
-           BackgroundColor == other.BackgroundColor;
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-    return $"AlternateTitle: {AlternateTitle}\n" +
-           $"ShowPercentageBar: {ShowPercentageBar}\n" +
-           $"PercentageBarBackColor: {PercentageBarBackColor}\n" +
-           $"TextColor: {TextColor}\n" +
-           $"ShowIcon: {ShowIcon}\n" +
-           $"PickColorForPercentage: {PickColorForPercentage}\n" +
-           $"UseBackColor: {UseBackColor}\n" +
-           $"BackColorPalette: {BackColorPalette}\n" +
-           $"InvertColorPalette: {InvertColorPalette}\n" +
-           $"BackgroundColor: {BackgroundColor}";
+    return PrintOptions(this);
   }
 }

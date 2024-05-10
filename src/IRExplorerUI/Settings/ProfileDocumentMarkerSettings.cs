@@ -33,54 +33,57 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   //   ("Misprediction", "Mispred")
   // };
 
-  [ProtoMember(1)] public bool MarkElements { get; set; }
-  [ProtoMember(2)] public bool MarkBlocks { get; set; }
-  [ProtoMember(3)] public bool MarkBlocksInFlowGraph { get; set; }
-  [ProtoMember(4)] public bool MarkCallTargets { get; set; }
-  [ProtoMember(5)] public bool JumpToHottestElement { get; set; }
-  [ProtoMember(7)]  public double ElementWeightCutoff { get; set; }
-  [ProtoMember(8)]  public int TopOrderCutoff { get; set; }
-  [ProtoMember(9)]  public double IconBarWeightCutoff { get; set; }
-  [ProtoMember(10)]  public Color ColumnTextColor { get; set; }
-  [ProtoMember(11)]  public Color BlockOverlayTextColor { get; set; }
-  [ProtoMember(12)]  public Color HotBlockOverlayTextColor { get; set; }
-  [ProtoMember(14)]  public Color BlockOverlayBorderColor { get; set; }
-  [ProtoMember(15)]  public double BlockOverlayBorderThickness { get; set; }
-  [ProtoMember(16)]  public Color PercentageBarBackColor { get; set; }
-  [ProtoMember(17)]  public int MaxPercentageBarWidth { get; set; }
-  [ProtoMember(18)]  public bool DisplayPercentageBar { get; set; }
-  [ProtoMember(19)]  public bool DisplayIcons { get; set; }
-  [ProtoMember(20)]  public ValueUnitKind ValueUnit { get; set; }
-  [ProtoMember(21)] public bool AppendValueUnitSuffix { get; set; }
-  [ProtoMember(22)] public int ValueUnitDecimals { get; set; }
-  [ProtoMember(23)]  public Color PerformanceMetricBackColor { get; set; }
-  [ProtoMember(24)]  public Color PerformanceCounterBackColor { get; set; }
+  [ProtoMember(1), OptionValue(true)]
+  public bool MarkElements { get; set; }
+  [ProtoMember(2), OptionValue(true)]
+  public bool MarkBlocks { get; set; }
+  [ProtoMember(3), OptionValue(true)]
+  public bool MarkBlocksInFlowGraph { get; set; }
+  [ProtoMember(4), OptionValue(true)]
+  public bool MarkCallTargets { get; set; }
+  [ProtoMember(5), OptionValue(false)]
+  public bool JumpToHottestElement { get; set; }
+  [ProtoMember(7), OptionValue(0.01)] // 1%
+  public double ElementWeightCutoff { get; set; }
+  [ProtoMember(8), OptionValue(10)]
+  public int TopOrderCutoff { get; set; }
+  [ProtoMember(9), OptionValue(0.01)] // 1%
+  public double IconBarWeightCutoff { get; set; }
+  [ProtoMember(10), OptionValue(typeof(Color), "#000000")]
+  public Color ColumnTextColor { get; set; }
+  [ProtoMember(11), OptionValue(typeof(Color), "#00008B")]
+  public Color BlockOverlayTextColor { get; set; }
+  [ProtoMember(12), OptionValue(typeof(Color), "#8B0000")]
+  public Color HotBlockOverlayTextColor { get; set; }
+  [ProtoMember(14), OptionValue(typeof(Color), "#696969")]
+  public Color BlockOverlayBorderColor { get; set; }
+  [ProtoMember(15), OptionValue()]
+  public double BlockOverlayBorderThickness { get; set; }
+  [ProtoMember(16), OptionValue(typeof(Color), "#AA4343")]
+  public Color PercentageBarBackColor { get; set; }
+  [ProtoMember(17), OptionValue(50)]
+  public int MaxPercentageBarWidth { get; set; }
+  [ProtoMember(18), OptionValue(true)]
+  public bool DisplayPercentageBar { get; set; }
+  [ProtoMember(19), OptionValue(true)]
+  public bool DisplayIcons { get; set; }
+  [ProtoMember(20), OptionValue(ValueUnitKind.Millisecond)]
+  public ValueUnitKind ValueUnit { get; set; }
+  [ProtoMember(21), OptionValue(true)]
+  public bool AppendValueUnitSuffix { get; set; }
+  [ProtoMember(22), OptionValue(2)]
+  public int ValueUnitDecimals { get; set; }
+  [ProtoMember(23), OptionValue(typeof(Color), "#FAEBD7")]
+  public Color PerformanceMetricBackColor { get; set; }
+  [ProtoMember(24), OptionValue(typeof(Color), "#F5F5F5")]
+  public Color PerformanceCounterBackColor { get; set; }
 
   public static int DefaultMaxPercentageBarWidth = 50;
   public static double DefaultElementWeightCutoff = 0.01; // 1%;
+  private static IconDrawing[] orderIcons_;
 
   public override void Reset() {
-    MarkElements = true;
-    MarkBlocks = true;
-    MarkBlocksInFlowGraph = true;
-    MarkCallTargets = true;
-    ValueUnit = ValueUnitKind.Millisecond;
-    ValueUnitDecimals = 2;
-    AppendValueUnitSuffix = true;
-    ElementWeightCutoff = DefaultElementWeightCutoff;
-    TopOrderCutoff = 10;
-    IconBarWeightCutoff = DefaultElementWeightCutoff;
-    MaxPercentageBarWidth = DefaultMaxPercentageBarWidth;
-    DisplayIcons = true;
-    DisplayPercentageBar = true;
-    ColumnTextColor = Colors.Black;
-    BlockOverlayTextColor = Colors.DarkBlue;
-    HotBlockOverlayTextColor = Colors.DarkRed;
-    BlockOverlayBorderColor = Colors.DimGray;
-    BlockOverlayBorderThickness = 1;
-    PercentageBarBackColor = Utils.ColorFromString("#Aa4343");
-    PerformanceMetricBackColor = Colors.AntiqueWhite;
-    PerformanceCounterBackColor = Colors.WhiteSmoke;
+    ResetAllOptions(this);
   }
 
   public string FormatWeightValue(TimeSpan weight) {
@@ -111,7 +114,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
       return Brushes.Transparent;
     }
 
-    //? TODO: ShouldUsePalette, ColorPalette in Appearance
     return column.Style.PickColorForPercentage &&
            !ShouldOverridePercentage(order, percentage)
       ? PickBackColorForPercentage(column, percentage)
@@ -218,7 +220,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     return PickBackColorForPercentage(null, weightPercentage);
   }
 
-  //? TODO: Cache IconDrawing between calls
   public IconDrawing PickIcon(OptionalColumn column, int order, double percentage) {
     if (!ShouldShowIcon(column)) {
       return IconDrawing.Empty;
@@ -229,29 +230,33 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
       ? PickIconForPercentage(percentage)
       : PickIconForOrder(order, percentage);
   }
-
-  //? TODO:
-  //? private void PreloadIcons() {
-  //? }
-
+  
+  static ProfileDocumentMarkerSettings() {
+    // Preload icons used to mark hot elements.
+    orderIcons_ = [
+      IconDrawing.FromIconResource("HotFlameIcon1"),
+      IconDrawing.FromIconResource("HotFlameIcon2"),
+      IconDrawing.FromIconResource("HotFlameIcon3"),
+      IconDrawing.FromIconResource("HotFlameIconTransparent")
+    ];
+  }
+  
   public IconDrawing PickIconForOrder(int order, double percentage) {
     return order switch {
-      0 => IconDrawing.FromIconResource("HotFlameIcon1"),
-      1 => IconDrawing.FromIconResource("HotFlameIcon2"),
+      0 => orderIcons_[0],
+      1 => orderIcons_[1],
       // Even if instr is the n-th hottest one, don't use an icon
       // if the percentage is small.
-      _ => IsSignificantValue(order, percentage) ?
-        IconDrawing.FromIconResource("HotFlameIcon3") :
-        IconDrawing.FromIconResource("HotFlameIconTransparent")
+      _ => IsSignificantValue(order, percentage) ? orderIcons_[2] : orderIcons_[3]
     };
   }
 
   public IconDrawing PickIconForPercentage(double percentage) {
     return percentage switch {
-      >= 0.9 => IconDrawing.FromIconResource("HotFlameIcon1"),
-      >= 0.7 => IconDrawing.FromIconResource("HotFlameIcon2"),
-      >= 0.5 => IconDrawing.FromIconResource("HotFlameIcon3"),
-      _ => IconDrawing.FromIconResource("HotFlameIconTransparent")
+      >= 0.9 => orderIcons_[0],
+      >= 0.7 => orderIcons_[1],
+      >= 0.5 => orderIcons_[2],
+      _ => orderIcons_[3]
     };
   }
 
@@ -330,53 +335,10 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is ProfileDocumentMarkerSettings other &&
-           MarkElements == other.MarkElements &&
-           MarkBlocks == other.MarkBlocks &&
-           MarkBlocksInFlowGraph == other.MarkBlocksInFlowGraph &&
-           MarkCallTargets == other.MarkCallTargets &&
-           JumpToHottestElement == other.JumpToHottestElement &&
-           ElementWeightCutoff.Equals(other.ElementWeightCutoff) &&
-           TopOrderCutoff == other.TopOrderCutoff &&
-           IconBarWeightCutoff.Equals(other.IconBarWeightCutoff) &&
-           ColumnTextColor == other.ColumnTextColor &&
-           BlockOverlayTextColor == other.BlockOverlayTextColor &&
-           HotBlockOverlayTextColor == other.HotBlockOverlayTextColor &&
-           BlockOverlayBorderColor == other.BlockOverlayBorderColor &&
-           BlockOverlayBorderThickness.Equals(other.BlockOverlayBorderThickness) &&
-           PercentageBarBackColor == other.PercentageBarBackColor &&
-           MaxPercentageBarWidth == other.MaxPercentageBarWidth &&
-           DisplayPercentageBar == other.DisplayPercentageBar &&
-           DisplayIcons == other.DisplayIcons &&
-           ValueUnit == other.ValueUnit &&
-           AppendValueUnitSuffix == other.AppendValueUnitSuffix &&
-           ValueUnitDecimals == other.ValueUnitDecimals &&
-           PerformanceMetricBackColor == other.PerformanceMetricBackColor &&
-           PerformanceCounterBackColor == other.PerformanceCounterBackColor;
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-    return $"MarkElements: {MarkElements}\n" +
-           $"MarkBlocks: {MarkBlocks}\n" +
-           $"MarkBlocksInFlowGraph: {MarkBlocksInFlowGraph}\n" +
-           $"MarkCallTargets: {MarkCallTargets}\n" +
-           $"JumpToHottestElement: {JumpToHottestElement}\n" +
-           $"ElementWeightCutoff: {ElementWeightCutoff}\n" +
-           $"TopOrderCutoff: {TopOrderCutoff}\n" +
-           $"IconBarWeightCutoff: {IconBarWeightCutoff}\n" +
-           $"ColumnTextColor: {ColumnTextColor}\n" +
-           $"BlockOverlayTextColor: {BlockOverlayTextColor}\n" +
-           $"HotBlockOverlayTextColor: {HotBlockOverlayTextColor}\n" +
-           $"BlockOverlayBorderColor: {BlockOverlayBorderColor}\n" +
-           $"BlockOverlayBorderThickness: {BlockOverlayBorderThickness}\n" +
-           $"PercentageBarBackColor: {PercentageBarBackColor}\n" +
-           $"MaxPercentageBarWidth: {MaxPercentageBarWidth}\n" +
-           $"DisplayPercentageBar: {DisplayPercentageBar}\n" +
-           $"DisplayIcons: {DisplayIcons}\n" +
-           $"ValueUnit: {ValueUnit}\n" +
-           $"AppendValueUnitSuffix: {AppendValueUnitSuffix}\n" +
-           $"ValueUnitDecimals: {ValueUnitDecimals}\n" +
-           $"PerformanceMetricBackColor: {PerformanceMetricBackColor}\n" +
-           $"PerformanceCounterBackColor: {PerformanceCounterBackColor}";
+    return PrintOptions(this);
   }
 }

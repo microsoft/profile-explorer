@@ -10,49 +10,36 @@ namespace IRExplorerUI;
 public class PreviewPopupSettings : SettingsBase {
   public PreviewPopupSettings(bool isElementPopup) {
     IsElementPopup = isElementPopup;
+    Reset();
   }
 
   [ProtoMember(1), OptionValue(false)]
   public bool JumpToHottestElement { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue(false)]
   public bool UseCompactProfilingColumns { get; set; }
-  [ProtoMember(3)]
+  [ProtoMember(3), OptionValue(false)]
   public bool ShowPerformanceCounterColumns { get; set; }
-  [ProtoMember(4)]
+  [ProtoMember(4), OptionValue(false)]
   public bool ShowPerformanceMetricColumns { get; set; }
-  [ProtoMember(5)]
+  [ProtoMember(5), OptionValue(false)]
   public bool UseSmallerFontSize { get; set; }
-  [ProtoMember(6)]
+  [ProtoMember(6), OptionValue(false)]
   public bool ShowSourcePreviewPopup { get; set; }
-  [ProtoMember(7)]
+  [ProtoMember(7), OptionValue(650)]
   public double PopupWidth { get; set; }
-  [ProtoMember(8)]
+  [ProtoMember(8), OptionValue(450)]
   public double PopupHeight { get; set; }
-  [ProtoMember(9)]
+  [ProtoMember(9), OptionValue(false)]
   public bool IsElementPopup { get; set; }
 
-  private static PreviewPopupSettings Default => new PreviewPopupSettings(false) {
-    PopupWidth = 650,
-    PopupHeight = 450, // For ASM/source preview.
-    JumpToHottestElement = true,
-    UseCompactProfilingColumns = true
-  };
-
-  private static PreviewPopupSettings ElementDefault => new PreviewPopupSettings(true) {
-    PopupWidth = 650,
-    PopupHeight = 200
-  };
-
   public override void Reset() {
-    var settings = IsElementPopup ? ElementDefault : Default;
-    PopupWidth = settings.PopupWidth;
-    PopupHeight = settings.PopupHeight;
-    JumpToHottestElement = settings.JumpToHottestElement ;
-    UseCompactProfilingColumns = settings.UseCompactProfilingColumns ;
-    ShowPerformanceCounterColumns = settings.ShowPerformanceCounterColumns ;
-    ShowPerformanceMetricColumns = settings.ShowPerformanceMetricColumns ;
-    UseSmallerFontSize = settings.UseSmallerFontSize ;
-    ShowSourcePreviewPopup = settings.ShowSourcePreviewPopup ;
+    if (IsElementPopup) {
+      PopupHeight = 200;
+    }
+    else {
+      JumpToHottestElement = true;
+      UseCompactProfilingColumns = true;
+    }
   }
 
   public PreviewPopupSettings Clone() {
@@ -61,26 +48,10 @@ public class PreviewPopupSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is PreviewPopupSettings settings &&
-           JumpToHottestElement == settings.JumpToHottestElement &&
-           UseCompactProfilingColumns == settings.UseCompactProfilingColumns &&
-           ShowPerformanceCounterColumns == settings.ShowPerformanceCounterColumns &&
-           ShowPerformanceMetricColumns == settings.ShowPerformanceMetricColumns &&
-           UseSmallerFontSize == settings.UseSmallerFontSize &&
-           ShowSourcePreviewPopup == settings.ShowSourcePreviewPopup &&
-           Math.Abs(PopupWidth - settings.PopupWidth) < Double.Epsilon &&
-           Math.Abs(PopupHeight - settings.PopupHeight) < Double.Epsilon;
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-    return $"IsElementPopup: {IsElementPopup}\n" +
-           $"JumpToHottestElement: {JumpToHottestElement}\n" +
-           $"UseCompactProfilingColumns: {UseCompactProfilingColumns}\n" +
-           $"ShowPerformanceCounterColumns: {ShowPerformanceCounterColumns}\n" +
-           $"ShowPerformanceMetricColumns: {ShowPerformanceMetricColumns}\n" +
-           $"UseSmallerFontSize: {UseSmallerFontSize}\n" +
-           $"ShowSourcePreviewPopup: {ShowSourcePreviewPopup}\n" +
-           $"PopupWidth: {PopupWidth}\n" +
-           $"PopupHeight: {PopupHeight}";
+    return PrintOptions(this);
   }
 }

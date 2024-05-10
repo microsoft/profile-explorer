@@ -23,11 +23,16 @@ public class TimelineSettings : SettingsBase {
   //?    - same settings in SectionPanel
   public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
 
-  [ProtoMember(1)] public bool SyncSelection { get; set; }
-  [ProtoMember(2)] public bool ShowCallStackPopup { get; set; }
-  [ProtoMember(3)] public int CallStackPopupDuration { get; set; }
-  [ProtoMember(4)] public bool GroupThreads { get; set; }
-  [ProtoMember(5)] public bool UseThreadColors { get; set; }
+  [ProtoMember(1), OptionValue(true)]
+  public bool SyncSelection { get; set; }
+  [ProtoMember(2), OptionValue(true)]
+  public bool ShowCallStackPopup { get; set; }
+  [ProtoMember(3), OptionValue(0)]
+  public int CallStackPopupDuration { get; set; }
+  [ProtoMember(4), OptionValue(false)]
+  public bool GroupThreads { get; set; }
+  [ProtoMember(5), OptionValue(true)]
+  public bool UseThreadColors { get; set; }
 
   public (Brush Margin, Brush Samples)
     GetThreadBackgroundColors(ProfileThread threadInfo, int threadId) {
@@ -52,9 +57,7 @@ public class TimelineSettings : SettingsBase {
   }
 
   public override void Reset() {
-    SyncSelection = true;
-    ShowCallStackPopup = true;
-    UseThreadColors = true;
+    ResetAllOptions(this);
     CallStackPopupDuration = DefaultCallStackPopupDuration;
   }
 
@@ -64,19 +67,10 @@ public class TimelineSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is TimelineSettings settings &&
-           SyncSelection == settings.SyncSelection &&
-           ShowCallStackPopup == settings.ShowCallStackPopup &&
-           CallStackPopupDuration == settings.CallStackPopupDuration &&
-           GroupThreads == settings.GroupThreads &&
-           UseThreadColors == settings.UseThreadColors;
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-      return $"SyncSelection: {SyncSelection}\n" +
-              $"ShowCallStackPopup: {ShowCallStackPopup}\n" +
-              $"CallStackPopupDuration: {CallStackPopupDuration}\n" +
-              $"GroupThreads: {GroupThreads}\n" +
-              $"UseThreadColors: {UseThreadColors}";
+    return PrintOptions(this);
   }
 }

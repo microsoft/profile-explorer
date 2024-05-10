@@ -14,29 +14,23 @@ public class SourceDocumentMarkerSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue(true)]
   public bool AnnotateSourceLines { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue(true)]
   public bool AnnotateInlinees { get; set; }
-  [ProtoMember(3)]
+  [ProtoMember(3), OptionValue(0.5)]
   public double VirtualColumnPosition { get; set; }
-  [ProtoMember(4)]
+  [ProtoMember(4), OptionValue(typeof(Color), "#696969")]
   public Color SourceLineTextColor { get; set; }
-  [ProtoMember(5)]
+  [ProtoMember(5), OptionValue(typeof(Color), "#FFFFFF")]
   public Color SourceLineBackColor { get; set; }
-  [ProtoMember(6)]
+  [ProtoMember(6), OptionValue(typeof(Color), "#008000")]
   public Color InlineeOverlayTextColor { get; set; }
-  [ProtoMember(7)]
+  [ProtoMember(7), OptionValue(typeof(Color), "#FFFFFF")]
   public Color InlineeOverlayBackColor { get; set; }
 
   public override void Reset() {
-    AnnotateSourceLines = true;
-    AnnotateInlinees = true;
-    VirtualColumnPosition = 0.5;
-    SourceLineTextColor = Colors.DimGray;
-    SourceLineBackColor = Colors.Transparent;
-    InlineeOverlayTextColor = Colors.Green;
-    InlineeOverlayBackColor = Colors.Transparent;
+    ResetAllOptions(this);
   }
 
   public SourceDocumentMarkerSettings Clone() {
@@ -45,23 +39,10 @@ public class SourceDocumentMarkerSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is SourceDocumentMarkerSettings settings &&
-            AnnotateSourceLines == settings.AnnotateSourceLines &&
-            AnnotateInlinees == settings.AnnotateInlinees &&
-            Math.Abs(VirtualColumnPosition - settings.VirtualColumnPosition) < double.Epsilon &&
-            SourceLineTextColor == settings.SourceLineTextColor &&
-            SourceLineBackColor == settings.SourceLineBackColor &&
-            InlineeOverlayTextColor == settings.InlineeOverlayTextColor &&
-            InlineeOverlayBackColor == settings.InlineeOverlayBackColor;
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-      return $"AnnotateSourceLines: {AnnotateSourceLines}\n" +
-              $"AnnotateInlinees: {AnnotateInlinees}\n" +
-              $"VirtualColumnPosition: {VirtualColumnPosition}\n" +
-              $"SourceLineTextColor: {SourceLineTextColor}\n" +
-              $"SourceLineBackColor: {SourceLineBackColor}\n" +
-              $"InlineeOverlayTextColor: {InlineeOverlayTextColor}\n" +
-              $"InlineeOverlayBackColor: {InlineeOverlayBackColor}";
+    return PrintOptions(this);
   }
 }

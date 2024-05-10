@@ -15,32 +15,27 @@ public class CallTreeNodeSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue(true)]
   public bool ShowPreviewPopup { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue(0)]
   public int PreviewPopupDuration { get; set; }
-  [ProtoMember(3)]
+  [ProtoMember(3), OptionValue(true)]
   public bool ExpandInstances { get; set; }
-  [ProtoMember(4)]
+  [ProtoMember(4), OptionValue(false)]
   public bool ExpandHistogram { get; set; }
-  [ProtoMember(5)]
+  [ProtoMember(5), OptionValue(true)]
   public bool PrependModuleToFunction { get; set; }
-  [ProtoMember(6)]
+  [ProtoMember(6), OptionValue()]
   public ProfileListViewFilter FunctionListViewFilter { get; set; }
-  [ProtoMember(7)]
+  [ProtoMember(7), OptionValue(true)]
   public bool AlternateListRows { get; set; }
-  [ProtoMember(8)]
+  [ProtoMember(8), OptionValue(true)]
   public bool ExpandThreads { get; set; }
 
   public override void Reset() {
     InitializeReferenceMembers();
-    ShowPreviewPopup = true;
-    ExpandInstances = true;
-    ExpandThreads = true;
-    PrependModuleToFunction = true;
-    AlternateListRows = true;
+    ResetAllOptions(this);
     PreviewPopupDuration = DefaultPreviewPopupDuration;
-    FunctionListViewFilter.Reset();
   }
 
   public CallTreeNodeSettings Clone() {
@@ -54,15 +49,11 @@ public class CallTreeNodeSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is CallTreeNodeSettings settings &&
-           ShowPreviewPopup == settings.ShowPreviewPopup &&
-           PreviewPopupDuration == settings.PreviewPopupDuration &&
-           ExpandInstances == settings.ExpandInstances &&
-           ExpandHistogram == settings.ExpandHistogram &&
-           ExpandThreads == settings.ExpandThreads &&
-           PrependModuleToFunction == settings.PrependModuleToFunction &&
-           AlternateListRows == settings.AlternateListRows &&
-           FunctionListViewFilter.Equals(settings.FunctionListViewFilter);
+    return AreOptionsEqual(this, obj);
+  }
+
+  public override string ToString() {
+    return PrintOptions(this);
   }
 }
 
@@ -75,39 +66,28 @@ public class ProfileListViewFilter : SettingsBase {
   public static double DefaultMinWeight = 1;
   public static int DefaultMinItems = 10;
 
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue(true)]
   public bool IsEnabled { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue(true)]
   public bool FilterByWeight { get; set; }
-  [ProtoMember(3)]
+  [ProtoMember(3), OptionValue(true)]
   public bool SortByExclusiveTime { get; set; }
-  [ProtoMember(4)]
+  [ProtoMember(4), OptionValue(0)]
   public int MinItems { get; set; }
-  [ProtoMember(5)]
+  [ProtoMember(5), OptionValue(0)]
   public double MinWeight { get; set; }
 
   public override void Reset() {
-    IsEnabled = true;
-    FilterByWeight = true;
-    SortByExclusiveTime = true;
+    ResetAllOptions(this);
     MinItems = DefaultMinItems;
     MinWeight = DefaultMinWeight;
   }
 
   public override bool Equals(object obj) {
-    return obj is ProfileListViewFilter other &&
-           IsEnabled == other.IsEnabled &&
-           FilterByWeight == other.FilterByWeight &&
-           SortByExclusiveTime == other.SortByExclusiveTime &&
-           MinItems == other.MinItems &&
-           Math.Abs(MinWeight - other.MinWeight) < double.Epsilon;
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-    return $"IsEnabled: {IsEnabled}\n" +
-           $"FilterByWeight: {FilterByWeight}\n" +
-           $"SortByExclusiveTime: {SortByExclusiveTime}\n" +
-           $"MinItems: {MinItems}\n" +
-           $"MinWeight: {MinWeight}";
+    return PrintOptions(this);
   }
 }

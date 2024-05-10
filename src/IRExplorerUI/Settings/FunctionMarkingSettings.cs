@@ -12,19 +12,19 @@ public class FunctionMarkingSettings : SettingsBase {
   private ColorPalette modulesPalette_;
   private FunctionMarkingSet builtinMarking_;
 
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue("")]
   public string Title { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue(true)]
   public bool UseAutoModuleColors { get; set; }
-  [ProtoMember(3)]
+  [ProtoMember(3), OptionValue(false)]
   public bool UseModuleColors { get; set; }
-  [ProtoMember(4)]
+  [ProtoMember(4), OptionValue(false)]
   public bool UseFunctionColors { get; set; }
-  [ProtoMember(5)]
+  [ProtoMember(5), OptionValue("LightPastels2")]
   public string ModulesColorPalette { get; set; }
-  [ProtoMember(6)]
+  [ProtoMember(6), OptionValue()]
   public FunctionMarkingSet CurrentSet { get; set; }
-  [ProtoMember(7)]
+  [ProtoMember(7), OptionValue()]
   public List<FunctionMarkingSet> SavedSets { get; set; }
 
   //? TODO: Rename Color to Markinng or MarkedModules
@@ -157,19 +157,13 @@ public class FunctionMarkingSettings : SettingsBase {
 
   public override void Reset() {
     InitializeReferenceMembers();
-    UseAutoModuleColors = true;
-    UseModuleColors = false;
-    UseFunctionColors = false;
-    ModulesColorPalette = ColorPalette.LightPastels2.Name;
-    CurrentSet = new FunctionMarkingSet();
-    SavedSets.Clear();
-    modulesPalette_ = null;
+    ResetAllOptions(this);
+    ResetCachedPalettes();
   }
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
-    CurrentSet ??= new FunctionMarkingSet();
-    SavedSets ??= new List<FunctionMarkingSet>();
+    InitializeReferenceOptions(this);
   }
 
   public FunctionMarkingSettings Clone() {
@@ -272,38 +266,24 @@ public class FunctionMarkingSettings : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is FunctionMarkingSettings settings &&
-           Title == settings.Title &&
-           ModulesColorPalette == settings.ModulesColorPalette &&
-           UseAutoModuleColors == settings.UseAutoModuleColors &&
-           UseModuleColors == settings.UseModuleColors &&
-           ModuleColors.AreEqual(settings.ModuleColors) &&
-           UseFunctionColors == settings.UseFunctionColors &&
-           FunctionColors.AreEqual(settings.FunctionColors) &&
-           SavedSets.AreEqual(settings.SavedSets);
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-    return $"Title: {Title}\n" +
-           $"UseAutoModuleColors: {UseAutoModuleColors}\n" +
-           $"UseModuleColors: {UseModuleColors}\n" +
-           $"ModuleColors: {ModuleColors}\n" +
-           $"UseFunctionColors: {UseFunctionColors}\n" +
-           $"FunctionColors: {FunctionColors}";
+    return PrintOptions(this);
   }
 }
 
 [ProtoContract(SkipConstructor = true)]
 public class FunctionMarkingSet : SettingsBase {
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue()]
   public List<FunctionMarkingStyle> ModuleColors { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue()]
   public List<FunctionMarkingStyle> FunctionColors { get; set; }
-  [ProtoMember(3)]
+  [ProtoMember(3), OptionValue("")]
   public string Title { get; set; }
 
-  public FunctionMarkingSet(string title = null) {
-    Title = title;
+  public FunctionMarkingSet() {
     InitializeReferenceMembers();
   }
 
@@ -324,14 +304,15 @@ public class FunctionMarkingSet : SettingsBase {
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
-    ModuleColors ??= new List<FunctionMarkingStyle>();
-    FunctionColors ??= new List<FunctionMarkingStyle>();
+    InitializeReferenceOptions(this);
   }
 
   public override bool Equals(object obj) {
-    return obj is FunctionMarkingSet other &&
-           ModuleColors.AreEqual(other.ModuleColors) &&
-           FunctionColors.AreEqual(other.FunctionColors);
+    return AreOptionsEqual(this, obj);
+  }
+  
+  public override string ToString() {
+    return PrintOptions(this);
   }
 
   public void MergeWith(FunctionMarkingSet set) {
@@ -428,22 +409,12 @@ public class FunctionMarkingStyle : SettingsBase {
     return new FunctionMarkingStyle(Name, Color, Title, IsRegex, IsEnabled);
   }
 
-  protected bool Equals(FunctionMarkingStyle other) {
-    return Name == other.Name &&
-           IsEnabled == other.IsEnabled &&
-           Title == other.Title &&
-           IsRegex == other.IsRegex &&
-           Color.Equals(other.Color);
+  public override bool Equals(object obj) {
+    return AreOptionsEqual(this, obj);
   }
 
-  public override bool Equals(object obj) {
-    if (ReferenceEquals(null, obj))
-      return false;
-    if (ReferenceEquals(this, obj))
-      return true;
-    if (obj.GetType() != this.GetType())
-      return false;
-    return Equals((FunctionMarkingStyle)obj);
+  public override string ToString() {
+    return PrintOptions(this);
   }
 
   public bool ValidateMarking(out string failureText) {

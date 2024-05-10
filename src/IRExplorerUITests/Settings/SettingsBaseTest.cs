@@ -212,31 +212,31 @@ public class SettingsBaseTest {
     var data2 = new TestObject();
     data1.Reset();
     data2.Reset();
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
     
     data1.a = false;
-    Assert.IsFalse(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
     
     data2.a = false;
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
     
     data1.b = true;
-    Assert.IsFalse(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
     
     data2.b = true;
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
     
     data1.c = 456;
-    Assert.IsFalse(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
     
     data2.c = 456;
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
     
     data1.s = "bar";
-    Assert.IsFalse(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
     
     data2.s = "bar";
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
   }
   
   [TestMethod]
@@ -245,51 +245,51 @@ public class SettingsBaseTest {
     var data2 = new CombinedObject();
     data1.Reset();
     data2.Reset();
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
     Assert.IsTrue(data1.nested.EqualsCalled);
     Assert.IsTrue(data1.nested2.EqualsCalled);
     
     data1.nested.a = 789;
-    Assert.IsFalse(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
     
     data2.nested.a = 789;
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
     
     data1.nested.b = 101112;
-    Assert.IsFalse(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
     
     data2.nested.b = 101112;
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
     
     data1.nested2.a = 131415;
-    Assert.IsFalse(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
     
     data2.nested2.a = 131415;
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
     
     data1.nested2.b = 161718;
-    Assert.IsFalse(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
     
     data2.nested2.b = 161718;
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
     
     data1.a = 192021;
-    Assert.IsFalse(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
     
     data2.a = 192021;
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
     
     data1.ns.a = 222324;
-    Assert.IsFalse(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
     
     data2.ns.a = 222324;
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
     
     data1.ns.b = 252627;
-    Assert.IsFalse(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
     
     data2.ns.b = 252627;
-    Assert.IsTrue(SettingsBase.AreSettingsOptionsEqual(data1, data2));
+    Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
   }
 
   [TestMethod]

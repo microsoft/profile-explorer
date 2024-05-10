@@ -4,11 +4,11 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class ColumnState : SettingsBase {
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue(true)]
   public bool IsVisible { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue(50)]
   public int Width { get; set; }
-  [ProtoMember(3)]
+  [ProtoMember(3), OptionValue(int.MaxValue)]
   public int Order { get; set; }
 
   public ColumnState() {
@@ -16,9 +16,7 @@ public class ColumnState : SettingsBase {
   }
 
   public override void Reset() {
-    IsVisible = true;
-    Order = int.MaxValue;
-    Width = 50;
+    ResetAllOptions(this);
   }
 
   public ColumnState Clone() {
@@ -27,13 +25,10 @@ public class ColumnState : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return obj is ColumnState other &&
-           IsVisible == other.IsVisible &&
-           Width == other.Width &&
-           Order == other.Order;
+    return AreOptionsEqual(this, obj);
   }
 
   public override string ToString() {
-    return $"IsVisible: {IsVisible}, Width: {Width}, Order: {Order}";
+    return PrintOptions(this);
   }
 }

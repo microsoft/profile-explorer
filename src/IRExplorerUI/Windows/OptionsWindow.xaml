@@ -35,7 +35,7 @@
         <Grid>
           <TextBlock
             Margin="4"
-            Text="Work in progress, not all panels have a settings UI.&amp;#x0a;Tip: use the wrench icon on the upper-right of each panel to quickly show its settings."
+            Text="Work in progress.&#x0a;Use the wrench icon on the upper-right of each panel to quickly show its settings."
             TextWrapping="Wrap" />
         </Grid>
       </TabItem>

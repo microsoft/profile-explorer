@@ -256,7 +256,7 @@ public class SettingsBase {
           var equals = settingsA.GetType().GetMethod("Equals");
 
           if (equals == null || equals.DeclaringType != settingsA.GetType()) {
-            return AreSettingsOptionsEqual(settingsA, settingsB, null, false, compareNestedSettings);
+            return AreOptionsEqual(settingsA, settingsB, null, false, compareNestedSettings);
           }
         }
 
@@ -298,7 +298,7 @@ public class SettingsBase {
     }
   }
   
-  public static bool AreSettingsOptionsEqual(object settingsA, object settingsB,
+  public static bool AreOptionsEqual(object settingsA, object settingsB,
                                              Type type = null, bool compareBaseClass = false,
                                              bool compareNestedSettings = true) {
     if (settingsA == null || settingsB == null ||

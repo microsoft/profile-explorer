@@ -13,37 +13,29 @@ public class FlowGraphSettings : GraphSettings {
     Reset();
   }
 
-  [ProtoMember(1)] public Color EmptyNodeColor { get; set; }
-  [ProtoMember(2)] public Color BranchNodeBorderColor { get; set; }
-  [ProtoMember(3)] public Color SwitchNodeBorderColor { get; set; }
-  [ProtoMember(4)] public Color LoopNodeBorderColor { get; set; }
-  [ProtoMember(5)] public Color ReturnNodeBorderColor { get; set; }
-  [ProtoMember(6)] public bool MarkLoopBlocks { get; set; }
-  [ProtoMember(7, OverwriteList = true)] public Color[] LoopNodeColors { get; set; }
-  [ProtoMember(8)] public bool ShowImmDominatorEdges { get; set; }
-  [ProtoMember(9)] public Color DominatorEdgeColor { get; set; }
+  [ProtoMember(1), OptionValue(typeof(Color), "#F4F4F4")]
+  public Color EmptyNodeColor { get; set; }
+  [ProtoMember(2), OptionValue(typeof(Color), "#0042B6")]
+  public Color BranchNodeBorderColor { get; set; }
+  [ProtoMember(3), OptionValue(typeof(Color), "#8500BE")]
+  public Color SwitchNodeBorderColor { get; set; }
+  [ProtoMember(4), OptionValue(typeof(Color), "#008D00")]
+  public Color LoopNodeBorderColor { get; set; }
+  [ProtoMember(5), OptionValue(typeof(Color), "#B30606")]
+  public Color ReturnNodeBorderColor { get; set; }
+  [ProtoMember(6), OptionValue(true)]
+  public bool MarkLoopBlocks { get; set; }
+  [ProtoMember(7, OverwriteList = true), OptionValue(typeof(Color), 
+     "#FCD1A4", "#FFA56D", "#FF7554", "#FC5B5B")]
+  public Color[] LoopNodeColors { get; set; }
+  [ProtoMember(8), OptionValue(true)]
+  public bool ShowImmDominatorEdges { get; set; }
+  [ProtoMember(9), OptionValue(typeof(Color), "#0042B6")]
+  public Color DominatorEdgeColor { get; set; }
 
   public override void Reset() {
     base.Reset();
-    TextColor = Colors.Black;
-    NodeColor = Utils.ColorFromString("#CBCBCB");
-    NodeBorderColor = Utils.ColorFromString("#000000");
-    EmptyNodeColor = Utils.ColorFromString("#F4F4F4");
-    BranchNodeBorderColor = Utils.ColorFromString("#0042B6");
-    SwitchNodeBorderColor = Utils.ColorFromString("#8500BE");
-    LoopNodeBorderColor = Utils.ColorFromString("#008D00");
-    ReturnNodeBorderColor = Utils.ColorFromString("#B30606");
-    MarkLoopBlocks = true;
-
-    LoopNodeColors = new[] {
-      Utils.ColorFromString("#FCD1A4"),
-      Utils.ColorFromString("#FFA56D"),
-      Utils.ColorFromString("#FF7554"),
-      Utils.ColorFromString("#FC5B5B")
-    };
-
-    ShowImmDominatorEdges = true;
-    DominatorEdgeColor = Utils.ColorFromString("#0042B6");
+    ResetAllOptions(this);
   }
 
   public FlowGraphSettings Clone() {
@@ -52,17 +44,8 @@ public class FlowGraphSettings : GraphSettings {
   }
 
   public override bool Equals(object obj) {
-    return obj is FlowGraphSettings options &&
-           base.Equals(obj) &&
-           EmptyNodeColor.Equals(options.EmptyNodeColor) &&
-           BranchNodeBorderColor.Equals(options.BranchNodeBorderColor) &&
-           SwitchNodeBorderColor.Equals(options.SwitchNodeBorderColor) &&
-           LoopNodeBorderColor.Equals(options.LoopNodeBorderColor) &&
-           ReturnNodeBorderColor.Equals(options.ReturnNodeBorderColor) &&
-           MarkLoopBlocks == options.MarkLoopBlocks &&
-           ShowImmDominatorEdges == options.ShowImmDominatorEdges &&
-           DominatorEdgeColor.Equals(options.DominatorEdgeColor) &&
-           EqualityComparer<Color[]>.Default.Equals(LoopNodeColors, options.LoopNodeColors);
+    return AreOptionsEqual(this, obj);
+    
   }
 
   protected override GraphSettings MakeClone() {
@@ -70,14 +53,6 @@ public class FlowGraphSettings : GraphSettings {
   }
 
   public override string ToString() {
-    return $"EmptyNodeColor: {EmptyNodeColor}\n" +
-           $"BranchNodeBorderColor: {BranchNodeBorderColor}\n" +
-           $"SwitchNodeBorderColor: {SwitchNodeBorderColor}\n" +
-           $"LoopNodeBorderColor: {LoopNodeBorderColor}\n" +
-           $"ReturnNodeBorderColor: {ReturnNodeBorderColor}\n" +
-           $"MarkLoopBlocks: {MarkLoopBlocks}\n" +
-           $"ShowImmDominatorEdges: {ShowImmDominatorEdges}\n" +
-           $"DominatorEdgeColor: {DominatorEdgeColor}\n" +
-           $"LoopNodeColors: {string.Join(", ", LoopNodeColors)}";
+    return PrintOptions(this);
   }
 }

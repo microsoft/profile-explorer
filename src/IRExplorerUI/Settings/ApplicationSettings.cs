@@ -62,8 +62,6 @@ public class ApplicationSettings {
   public WorkspaceSettings WorkspaceOptions { get; set; }
   [ProtoMember(22)]
   public SourceFileSettings SourceFileSettings { get; set; }
-  [ProtoMember(24)]
-  public IRDocumentPopupSettings DocumentPopupSettings { get; set; }
   [ProtoMember(25)]
   public TimelineSettings TimelineSettings { get; set; }
   [ProtoMember(26)]
@@ -92,7 +90,6 @@ public class ApplicationSettings {
     CallerCalleeSettings.Reset();
     FlameGraphSettings.Reset();
     SourceFileSettings.Reset();
-    DocumentPopupSettings.Reset();
     TimelineSettings.Reset();
     CallTreeNodeSettings.Reset();
     PreviewPopupSettings.Reset();
@@ -229,7 +226,6 @@ public class ApplicationSettings {
     FlameGraphSettings ??= new FlameGraphSettings();
     WorkspaceOptions ??= new WorkspaceSettings();
     SourceFileSettings ??= new SourceFileSettings();
-    DocumentPopupSettings ??= new IRDocumentPopupSettings();
     TimelineSettings ??= new TimelineSettings();
     CallTreeNodeSettings ??= new CallTreeNodeSettings();
     MarkingSettings ??= new FunctionMarkingSettings();

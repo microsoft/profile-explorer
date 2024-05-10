@@ -58,7 +58,7 @@ public abstract class TextViewSettingsBase : SettingsBase {
   }
 
   public override bool Equals(object obj) {
-    return AreSettingsOptionsEqual(this, obj, typeof(TextViewSettingsBase));
+    return AreOptionsEqual(this, obj, typeof(TextViewSettingsBase));
   }
 
   public override string ToString() {
