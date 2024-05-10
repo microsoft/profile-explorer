@@ -33,9 +33,9 @@ public class SettingsBaseTest {
     public bool d { get; set; }
     [ProtoMember(2), OptionValue("bar")]
     public string s2 { get; set; }
-    [ProtoMember(3), OptionValue(typeof(Color), "#F0F0F0")]
+    [ProtoMember(3), OptionValue("#F0F0F0")]
     public Color color { get; set; }
-    [ProtoMember(4), OptionValue(typeof(Color), "#F0F0F0", "#1F2F3F")]
+    [ProtoMember(4), OptionValue(new string[] {"#F0F0F0", "#1F2F3F"})]
     public Color[] colorArray { get; set; }
     
     

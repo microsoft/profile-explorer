@@ -49,33 +49,33 @@ public class FlameGraphSettings : SettingsBase {
   public bool UseKernelColorPalette { get; set; }
   [ProtoMember(14), OptionValue(true)]
   public bool UseManagedColorPalette { get; set; }
-  [ProtoMember(15), OptionValue(typeof(Color), "#D0E3F1")]
+  [ProtoMember(15), OptionValue("#D0E3F1")]
   public Color SelectedNodeColor { get; set; }
-  [ProtoMember(16), OptionValue(typeof(Color), "#F0E68C")]
+  [ProtoMember(16), OptionValue("#F0E68C")]
   public Color SearchResultMarkingColor { get; set; }
-  [ProtoMember(17), OptionValue(typeof(Color), "#000000")]
+  [ProtoMember(17), OptionValue("#000000")]
   public Color SelectedNodeBorderColor { get; set; }
-  [ProtoMember(18), OptionValue(typeof(Color), "#000000")]
+  [ProtoMember(18), OptionValue("#000000")]
   public Color SearchedNodeBorderColor { get; set; }
-  [ProtoMember(19), OptionValue(typeof(Color), "#000000")]
+  [ProtoMember(19), OptionValue("#000000")]
   public Color NodeBorderColor { get; set; }
-  [ProtoMember(20), OptionValue(typeof(Color), "#191970")]
+  [ProtoMember(20), OptionValue("#191970")]
   public Color NodeTextColor { get; set; }
-  [ProtoMember(21), OptionValue(typeof(Color), "#696969")]
+  [ProtoMember(21), OptionValue("#696969")]
   public Color NodeModuleColor { get; set; }
-  [ProtoMember(22), OptionValue(typeof(Color), "#800000")]
+  [ProtoMember(22), OptionValue("#800000")]
   public Color NodeWeightColor { get; set; }
-  [ProtoMember(23), OptionValue(typeof(Color), "#000000")]
+  [ProtoMember(23), OptionValue("#000000")]
   public Color NodePercentageColor { get; set; }
-  [ProtoMember(24), OptionValue(typeof(Color), "#c3ebbc")]
+  [ProtoMember(24), OptionValue("#c3ebbc")]
   public Color SearchedNodeColor { get; set; }
-  [ProtoMember(25), OptionValue(typeof(Color), "#00008B")]
+  [ProtoMember(25), OptionValue("#00008B")]
   public Color KernelNodeBorderColor { get; set; }
-  [ProtoMember(26), OptionValue(typeof(Color), "#4B0082")]
+  [ProtoMember(26), OptionValue("#4B0082")]
   public Color ManagedNodeBorderColor { get; set; }
-  [ProtoMember(27), OptionValue(typeof(Color), "#0000CD")]
+  [ProtoMember(27), OptionValue("#0000CD")]
   public Color KernelNodeTextColor { get; set; }
-  [ProtoMember(28), OptionValue(typeof(Color), "#800080")]
+  [ProtoMember(28), OptionValue("#800080")]
   public Color ManagedNodeTextColor { get; set; }
 
   public Brush GetNodeDefaultBrush(FlameGraphNode node) {

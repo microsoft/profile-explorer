@@ -26,11 +26,11 @@ public class SectionSettings : SettingsBase {
   public bool UseNameIndentation { get; set; }
   [ProtoMember(6), OptionValue(4)]
   public int IndentationAmount { get; set; }
-  [ProtoMember(10), OptionValue(typeof(Color), "#007200")]
+  [ProtoMember(10), OptionValue("#007200")]
   public Color NewSectionColor { get; set; }
-  [ProtoMember(11), OptionValue(typeof(Color), "#BB0025")]
+  [ProtoMember(11), OptionValue("#BB0025")]
   public Color MissingSectionColor { get; set; }
-  [ProtoMember(12), OptionValue(typeof(Color), "#DE8000")]
+  [ProtoMember(12), OptionValue("#DE8000")]
   public Color ChangedSectionColor { get; set; }
   [ProtoMember(13), OptionValue(false)]
   public bool FunctionSearchCaseSensitive { get; set; }

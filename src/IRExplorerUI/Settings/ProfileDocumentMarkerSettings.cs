@@ -49,17 +49,17 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   public int TopOrderCutoff { get; set; }
   [ProtoMember(9), OptionValue(0.01)] // 1%
   public double IconBarWeightCutoff { get; set; }
-  [ProtoMember(10), OptionValue(typeof(Color), "#000000")]
+  [ProtoMember(10), OptionValue("#000000")]
   public Color ColumnTextColor { get; set; }
-  [ProtoMember(11), OptionValue(typeof(Color), "#00008B")]
+  [ProtoMember(11), OptionValue("#00008B")]
   public Color BlockOverlayTextColor { get; set; }
-  [ProtoMember(12), OptionValue(typeof(Color), "#8B0000")]
+  [ProtoMember(12), OptionValue("#8B0000")]
   public Color HotBlockOverlayTextColor { get; set; }
-  [ProtoMember(14), OptionValue(typeof(Color), "#696969")]
+  [ProtoMember(14), OptionValue("#696969")]
   public Color BlockOverlayBorderColor { get; set; }
   [ProtoMember(15), OptionValue()]
   public double BlockOverlayBorderThickness { get; set; }
-  [ProtoMember(16), OptionValue(typeof(Color), "#AA4343")]
+  [ProtoMember(16), OptionValue("#AA4343")]
   public Color PercentageBarBackColor { get; set; }
   [ProtoMember(17), OptionValue(50)]
   public int MaxPercentageBarWidth { get; set; }
@@ -73,9 +73,9 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   public bool AppendValueUnitSuffix { get; set; }
   [ProtoMember(22), OptionValue(2)]
   public int ValueUnitDecimals { get; set; }
-  [ProtoMember(23), OptionValue(typeof(Color), "#FAEBD7")]
+  [ProtoMember(23), OptionValue("#FAEBD7")]
   public Color PerformanceMetricBackColor { get; set; }
-  [ProtoMember(24), OptionValue(typeof(Color), "#F5F5F5")]
+  [ProtoMember(24), OptionValue("#F5F5F5")]
   public Color PerformanceCounterBackColor { get; set; }
 
   public static int DefaultMaxPercentageBarWidth = 50;

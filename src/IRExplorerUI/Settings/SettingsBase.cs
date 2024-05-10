@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
+using System.Windows.Media;
 using Microsoft.Extensions.Primitives;
 using ProtoBuf;
 
@@ -53,9 +54,29 @@ namespace IRExplorerUI;
 //   }
 // }
 
-public class SettingsBase {
-  public record OptionValueId(string ClassName, int MemberId);
+// A unique identifier for an option value, combines the class name
+// with the ProtoBuf ProtoMember Id tag, which should remain stable
+// across versions of the app.
+public record OptionValueId(string ClassName, int MemberId);
 
+// Attribute to specify the default value of an option.
+[AttributeUsage(AttributeTargets.All)]
+public class OptionValueAttribute : Attribute {
+  public object Value { get; set; }
+  public bool CreateNewInstance { get; set; }
+
+  public OptionValueAttribute() {
+    // Create new object of type, calling default constructor.
+    CreateNewInstance = true;
+  }
+
+  public OptionValueAttribute(object value) {
+    // Set value to the primitive value passed in.
+    Value = value;
+  }
+}
+
+public class SettingsBase {
   private delegate bool VisitOptionAction(object settings, PropertyInfo property,
                                    OptionValueAttribute optionAttr, OptionValueId optionId);
   private delegate void VisitSettingsAction(object settings, int level);
@@ -134,8 +155,42 @@ public class SettingsBase {
     if (optionAttr.CreateNewInstance) {
       property.SetValue(obj, Activator.CreateInstance(property.PropertyType));
     }
-    else {
-      property.SetValue(obj, optionAttr.Value);
+    else if(optionAttr.Value != null) {
+      if (optionAttr.Value.GetType() == property.PropertyType) {
+        property.SetValue(obj, optionAttr.Value);
+      }
+      else if (optionAttr.Value.GetType().IsPrimitive) {
+        var convertedValue = Convert.ChangeType(optionAttr.Value, property.PropertyType);
+        property.SetValue(obj, convertedValue);
+      }
+      else if(optionAttr.Value is string strValue) {
+        
+        // Convert from string to a known type.
+        if (property.PropertyType == typeof(Color)) {
+          property.SetValue(obj, Utils.ColorFromString(strValue));
+        }
+        else {
+          throw new InvalidOperationException("Type not handled");
+        }
+      }
+      else if(optionAttr.Value is string[] strArray) {
+        // Convert from multiple strings to a an array.
+        if (property.PropertyType == typeof(Color[])) {
+          var colors = new Color[strArray.Length];
+
+          for(int i = 0; i < strArray.Length; i++) {
+            colors[i] = Utils.ColorFromString(strArray[i]);
+          }
+
+          property.SetValue(obj, colors);
+        }
+        else {
+          throw new InvalidOperationException("Type not handled");
+        }
+      }
+      else {
+        throw new InvalidOperationException("Type not handled");
+      }
     }
   }
 

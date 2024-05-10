@@ -13,23 +13,23 @@ public class ExpressionGraphSettings : GraphSettings {
     Reset();
   }
 
-  [ProtoMember(1),  OptionValue(typeof(Color), "#FFFACD")]
+  [ProtoMember(1),  OptionValue("#FFFACD")]
   public Color UnaryInstructionNodeColor { get; set; }
-  [ProtoMember(2),  OptionValue(typeof(Color), "#FFE4C4")]
+  [ProtoMember(2),  OptionValue("#FFE4C4")]
   public Color BinaryInstructionNodeColor { get; set; }
-  [ProtoMember(3),  OptionValue(typeof(Color), "#F5F5F5")]
+  [ProtoMember(3),  OptionValue("#F5F5F5")]
   public Color CopyInstructionNodeColor { get; set; }
-  [ProtoMember(4),  OptionValue(typeof(Color), "B6E8DE")]
+  [ProtoMember(4),  OptionValue("B6E8DE")]
   public Color PhiInstructionNodeColor { get; set; }
-  [ProtoMember(5),  OptionValue(typeof(Color), "#D3F8D5")]
+  [ProtoMember(5),  OptionValue("#D3F8D5")]
   public Color OperandNodeColor { get; set; }
-  [ProtoMember(6),  OptionValue(typeof(Color), "#c6def1")]
+  [ProtoMember(6),  OptionValue("#c6def1")]
   public Color NumberOperandNodeColor { get; set; }
-  [ProtoMember(7),  OptionValue(typeof(Color), "#b8bedd")]
+  [ProtoMember(7),  OptionValue("#b8bedd")]
   public Color IndirectionOperandNodeColor { get; set; }
-  [ProtoMember(8),  OptionValue(typeof(Color), "#D8BFD8")]
+  [ProtoMember(8),  OptionValue("#D8BFD8")]
   public Color AddressOperandNodeColor { get; set; }
-  [ProtoMember(9),  OptionValue(typeof(Color), "#178D1F")]
+  [ProtoMember(9),  OptionValue("#178D1F")]
   public Color LoopPhiBackedgeColor { get; set; }
   [ProtoMember(10), OptionValue(true)]
   public bool PrintVariableNames { get; set; }
@@ -43,9 +43,9 @@ public class ExpressionGraphSettings : GraphSettings {
   public int MaxExpressionDepth { get; set; }
   [ProtoMember(15), OptionValue(false)]
   public bool SkipCopyInstructions { get; set; }
-  [ProtoMember(16), OptionValue(typeof(Color), "#FFCAD1")]
+  [ProtoMember(16), OptionValue("#FFCAD1")]
   public Color LoadStoreInstructionNodeColor { get; set; }
-  [ProtoMember(17), OptionValue(typeof(Color), "#F0E68C")]
+  [ProtoMember(17), OptionValue("#F0E68C")]
   public Color CallInstructionNodeColor { get; set; }
 
   public ExpressionGraphPrinterOptions GetGraphPrinterOptions() {

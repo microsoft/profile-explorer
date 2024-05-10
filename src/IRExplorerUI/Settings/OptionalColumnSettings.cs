@@ -174,7 +174,7 @@ public class OptionalColumnStyle : SettingsBase {
   public PartVisibility ShowPercentageBar { get; set; }
   [ProtoMember(3)]
   public Color PercentageBarBackColor { get; set; }
-  [ProtoMember(4), OptionValue(typeof(Color), "#000000")]
+  [ProtoMember(4), OptionValue("#000000")]
   public Color TextColor { get; set; }
   [ProtoMember(5), OptionValue(PartVisibility.Never)]
   public PartVisibility ShowIcon { get; set; }
@@ -186,7 +186,7 @@ public class OptionalColumnStyle : SettingsBase {
   public string BackColorPalette { get; set; }
   [ProtoMember(9), OptionValue(false)]
   public bool InvertColorPalette { get; set; }
-  [ProtoMember(10), OptionValue(typeof(Color), "#00FFFFFF")]
+  [ProtoMember(10), OptionValue("#00FFFFFF")]
   public Color BackgroundColor { get; set; }
 
   public override void Reset() {

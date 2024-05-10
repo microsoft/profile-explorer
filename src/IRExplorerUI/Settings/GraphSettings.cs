@@ -33,21 +33,21 @@ public class GraphSettings : SettingsBase {
   public bool HighlightConnectedNodesOnHover { get; set; }
   [ProtoMember(9), OptionValue(true)]
   public bool HighlightConnectedNodesOnSelection { get; set; }
-  [ProtoMember(10), OptionValue(typeof(Color), "#EFECE2")]
+  [ProtoMember(10), OptionValue("#EFECE2")]
   public Color BackgroundColor { get; set; }
-  [ProtoMember(11), OptionValue(typeof(Color), "#000000")]
+  [ProtoMember(11), OptionValue("#000000")]
   public Color TextColor { get; set; }
-  [ProtoMember(12), OptionValue(typeof(Color), "#CBCBCB")]
+  [ProtoMember(12), OptionValue("#CBCBCB")]
   public Color NodeColor { get; set; }
-  [ProtoMember(13), OptionValue(typeof(Color), "#000000")]
+  [ProtoMember(13), OptionValue("#000000")]
   public Color NodeBorderColor { get; set; }
-  [ProtoMember(14), OptionValue(typeof(Color), "#000000")]
+  [ProtoMember(14), OptionValue("#000000")]
   public Color EdgeColor { get; set; }
-  [ProtoMember(15), OptionValue(typeof(Color), "#6927CC")]
+  [ProtoMember(15), OptionValue("#6927CC")]
   public Color PredecessorNodeBorderColor { get; set; }
-  [ProtoMember(16), OptionValue(typeof(Color), "#008230")]
+  [ProtoMember(16), OptionValue("#008230")]
   public Color SuccesorNodeBorderColor { get; set; }
-  [ProtoMember(17), OptionValue(typeof(Color), "#AEDCF4")]
+  [ProtoMember(17), OptionValue("#AEDCF4")]
   public Color SelectedNodeColor { get; set; }
 
   public GraphSettings Clone() {

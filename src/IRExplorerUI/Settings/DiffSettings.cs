@@ -23,23 +23,23 @@ public class DiffSettings : SettingsBase {
   public int ManyDiffsModificationPercentage { get; set; }
   [ProtoMember(5), OptionValue(75)]
   public int ManyDiffsInsertionPercentage { get; set; }
-  [ProtoMember(6), OptionValue(typeof(Color), "#FFF6D9")]
+  [ProtoMember(6), OptionValue("#FFF6D9")]
   public Color ModificationColor { get; set; }
-  [ProtoMember(7), OptionValue(typeof(Color), "#ff6f00")]
+  [ProtoMember(7), OptionValue("#ff6f00")]
   public Color ModificationBorderColor { get; set; }
-  [ProtoMember(8), OptionValue(typeof(Color), "#E2F0D3")]
+  [ProtoMember(8), OptionValue("#E2F0D3")]
   public Color InsertionColor { get; set; }
-  [ProtoMember(9), OptionValue(typeof(Color), "#7FA72E")]
+  [ProtoMember(9), OptionValue("#7FA72E")]
   public Color InsertionBorderColor { get; set; }
-  [ProtoMember(10), OptionValue(typeof(Color), "#FFE8EA")]
+  [ProtoMember(10), OptionValue("#FFE8EA")]
   public Color DeletionColor { get; set; }
-  [ProtoMember(11), OptionValue(typeof(Color), "#B33232")]
+  [ProtoMember(11), OptionValue("#B33232")]
   public Color DeletionBorderColor { get; set; }
-  [ProtoMember(12), OptionValue(typeof(Color), "#E1E1E1")]
+  [ProtoMember(12), OptionValue("#E1E1E1")]
   public Color MinorModificationColor { get; set; }
-  [ProtoMember(13), OptionValue(typeof(Color), "#8F8F8F")]
+  [ProtoMember(13), OptionValue("#8F8F8F")]
   public Color MinorModificationBorderColor { get; set; }
-  [ProtoMember(15), OptionValue(typeof(Color), "#A9A9A9")]
+  [ProtoMember(15), OptionValue("#A9A9A9")]
   public Color PlaceholderBorderColor { get; set; }
   [ProtoMember(16), OptionValue("")]
   public string ExternalDiffAppPath { get; set; }

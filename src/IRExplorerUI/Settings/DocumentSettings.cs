@@ -27,11 +27,11 @@ public class DocumentSettings : TextViewSettingsBase {
   public bool ShowInfoOnHoverWithModifier { get; set; }
   [ProtoMember(9), OptionValue(true)] 
   public bool ShowPreviewPopup { get; set; }
-  [ProtoMember(13), OptionValue(typeof(Color), "#EAE4BB")] 
+  [ProtoMember(13), OptionValue("#EAE4BB")] 
   public Color DefinitionValueColor { get; set; }
-  [ProtoMember(14), OptionValue(typeof(Color), "#B7E5C6")] 
+  [ProtoMember(14), OptionValue("#B7E5C6")] 
   public Color UseValueColor { get; set; }
-  [ProtoMember(15), OptionValue(typeof(Color), "#000000")] 
+  [ProtoMember(15), OptionValue("#000000")] 
   public Color BorderColor { get; set; }
   [ProtoMember(16), OptionValue("")] 
   public string SyntaxHighlightingName { get; set; }

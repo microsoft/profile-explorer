@@ -72,6 +72,8 @@ public class ApplicationSettings {
   public Dictionary<ToolPanelKind, PreviewPopupSettings> ElementPreviewPopupSettings { get; set; }
   [ProtoMember(29)]
   public FunctionMarkingSettings MarkingSettings { get; set; }
+  [ProtoMember(30)]
+  public HashSet<OptionValueId> KnownOptions { get; set; }
   
   public ApplicationSettings() {
     Reset();
@@ -95,6 +97,7 @@ public class ApplicationSettings {
     PreviewPopupSettings.Reset();
     MarkingSettings.Reset();
     ElementPreviewPopupSettings.Clear();
+    KnownOptions.Clear();
     AutoReloadDocument = true;
     ThemeIndex = 0; // Light theme.
   }
@@ -207,6 +210,14 @@ public class ApplicationSettings {
     App.ReloadSyntaxHighlightingFiles(irName);
   }
 
+  [ProtoBeforeSerialization]
+  public void SaveKnownOptions() {
+    // Collect all option members in the settings classes
+    // and store them in a set to be able to detect new options later
+    // when a newer version of the app is used.
+    KnownOptions = SettingsBase.CollectOptionMembers(this);
+  }
+  
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     RecentFiles ??= new List<string>();
@@ -236,6 +247,21 @@ public class ApplicationSettings {
     }
 
     ElementPreviewPopupSettings ??= new Dictionary<ToolPanelKind, PreviewPopupSettings>();
+    
+    // When adding new options to existing settings classes in a newer version of the app,
+    // ensure they are initialized to their default values. This is done by walking
+    // the nested settings using reflection and handle each option that is not part
+    // of the KnownOptions set, generated on the previous save with an older app version.
+    if (KnownOptions != null) {
+      try {
+        SettingsBase.InitializeAllNewOptions(this, KnownOptions);
+      }
+      catch (Exception ex) {
+        Trace.TraceError($"Failed to initialize new options: {ex.Message}");
+      }
+    }
+
+    KnownOptions ??= new HashSet<OptionValueId>();
   }
 
   public PreviewPopupSettings GetElementPreviewPopupSettings(ToolPanelKind panelKind) {

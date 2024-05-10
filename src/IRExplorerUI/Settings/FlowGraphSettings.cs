@@ -13,24 +13,24 @@ public class FlowGraphSettings : GraphSettings {
     Reset();
   }
 
-  [ProtoMember(1), OptionValue(typeof(Color), "#F4F4F4")]
+  [ProtoMember(1), OptionValue("#F4F4F4")]
   public Color EmptyNodeColor { get; set; }
-  [ProtoMember(2), OptionValue(typeof(Color), "#0042B6")]
+  [ProtoMember(2), OptionValue("#0042B6")]
   public Color BranchNodeBorderColor { get; set; }
-  [ProtoMember(3), OptionValue(typeof(Color), "#8500BE")]
+  [ProtoMember(3), OptionValue("#8500BE")]
   public Color SwitchNodeBorderColor { get; set; }
-  [ProtoMember(4), OptionValue(typeof(Color), "#008D00")]
+  [ProtoMember(4), OptionValue("#008D00")]
   public Color LoopNodeBorderColor { get; set; }
-  [ProtoMember(5), OptionValue(typeof(Color), "#B30606")]
+  [ProtoMember(5), OptionValue("#B30606")]
   public Color ReturnNodeBorderColor { get; set; }
   [ProtoMember(6), OptionValue(true)]
   public bool MarkLoopBlocks { get; set; }
-  [ProtoMember(7, OverwriteList = true), OptionValue(typeof(Color), 
-     "#FCD1A4", "#FFA56D", "#FF7554", "#FC5B5B")]
+  [ProtoMember(7, OverwriteList = true), OptionValue(new string[] {
+    "#FCD1A4", "#FFA56D", "#FF7554", "#FC5B5B"})]
   public Color[] LoopNodeColors { get; set; }
   [ProtoMember(8), OptionValue(true)]
   public bool ShowImmDominatorEdges { get; set; }
-  [ProtoMember(9), OptionValue(typeof(Color), "#0042B6")]
+  [ProtoMember(9), OptionValue("#0042B6")]
   public Color DominatorEdgeColor { get; set; }
 
   public override void Reset() {

@@ -31,9 +31,9 @@ public class SourceFileSettings : TextViewSettingsBase {
   public bool ShowSourceStatementsOnMargin { get; set; }
   [ProtoMember(9), OptionValue(true)]
   public bool ReplaceInsignificantSourceStatements { get; set; }
-  [ProtoMember(10), OptionValue(typeof(Color), "#0202B0")]
+  [ProtoMember(10), OptionValue("#0202B0")]
   public Color AssemblyTextColor { get; set; }
-  [ProtoMember(11), OptionValue(typeof(Color), "#14828282")]
+  [ProtoMember(11), OptionValue("#14828282")]
   public Color AssemblyBackColor { get; set; }
 
   public override void Reset() {

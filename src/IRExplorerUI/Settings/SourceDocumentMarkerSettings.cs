@@ -20,13 +20,13 @@ public class SourceDocumentMarkerSettings : SettingsBase {
   public bool AnnotateInlinees { get; set; }
   [ProtoMember(3), OptionValue(0.5)]
   public double VirtualColumnPosition { get; set; }
-  [ProtoMember(4), OptionValue(typeof(Color), "#696969")]
+  [ProtoMember(4), OptionValue("#696969")]
   public Color SourceLineTextColor { get; set; }
-  [ProtoMember(5), OptionValue(typeof(Color), "#FFFFFF")]
+  [ProtoMember(5), OptionValue("#FFFFFF")]
   public Color SourceLineBackColor { get; set; }
-  [ProtoMember(6), OptionValue(typeof(Color), "#008000")]
+  [ProtoMember(6), OptionValue("#008000")]
   public Color InlineeOverlayTextColor { get; set; }
-  [ProtoMember(7), OptionValue(typeof(Color), "#FFFFFF")]
+  [ProtoMember(7), OptionValue("#FFFFFF")]
   public Color InlineeOverlayBackColor { get; set; }
 
   public override void Reset() {
