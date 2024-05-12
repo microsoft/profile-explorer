@@ -386,7 +386,8 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     if (showSourceFile_) {
       ProfileTextView.Initialize(App.Settings.SourceFileSettings);
       var function = parsedSection_.ParentFunction;
-      var (sourceInfo, debugInfo) = await Session.CompilerInfo.SourceFileFinder.FindLocalSourceFile(function);
+      var (sourceInfo, debugInfo) = 
+        await Session.CompilerInfo.SourceFileFinder.FindLocalSourceFile(function);
 
       if (!sourceInfo.IsUnknown) {
         await ProfileTextView.LoadSourceFile(sourceInfo, parsedSection_.Section, filter);

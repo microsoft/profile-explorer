@@ -1762,6 +1762,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
+    if (Section == null) {
+      return; // Nothing loaded, ignore.
+    }
+    
     // For source files, compute the sum of the selected lines time.
     int startLine = TextView.TextArea.Selection.StartPosition.Line;
     int endLine = TextView.TextArea.Selection.EndPosition.Line;

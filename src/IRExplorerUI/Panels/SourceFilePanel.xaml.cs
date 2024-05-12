@@ -193,18 +193,31 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   private async void ResetButton_Click(object sender, RoutedEventArgs e) {
     // Re-enable source mapper if it was disabled before.
-    //? TODO: Should clear only the current file?
     if (Utils.ShowYesNoMessageBox("Do you want to reset all file mappings and exclusions?", this) ==
         MessageBoxResult.No) {
       return;
     }
 
     sourceFileFinder_.Reset();
-
-    // Try to reload source file.
     await ReloadSourceFile();
   }
 
+  private async void ClearAllFileExclusions_Click(object sender, RoutedEventArgs e) {
+    // Re-enable source mapper if it was disabled before.
+    if (Utils.ShowYesNoMessageBox("Do you want to remove all local file mapping exclusions?", this) ==
+        MessageBoxResult.No) {
+      return;
+    }
+
+    sourceFileFinder_.ResetDisabledMappings();
+    await ReloadSourceFile();
+  }
+  
+  private async void ClearFileExclusion_Click(object sender, RoutedEventArgs e) {
+    sourceFileFinder_.ResetDisabledMappings(sourceFilePath_);
+    await ReloadSourceFile();
+  }
+  
   private async Task ReloadSourceFile() {
     if (section_ == null) {
       return;
@@ -271,22 +284,15 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
     // Get the associated source file from the debug info if available,
     // since it also includes the start line number.
-    string failureText = null;
-    var (sourceInfo, debugInfo) = await sourceFileFinder_.FindLocalSourceFile(function);
+    var (sourceInfo, failureReason) = await sourceFileFinder_.FindLocalSourceFile(function);
 
-    if (!sourceInfo.IsUnknown) {
-      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter)) {
-        HandleLoadedSourceFile(sourceInfo, function);
-        return true;
-      }
-
-      failureText = $"Could not find local copy of source file:\n{sourceInfo.FilePath}";
-    }
-    else {
-      failureText = $"Could not find debug info for function:\n{function.Name}";
+    if (!sourceInfo.IsUnknown && failureReason == SourceFileFinder.FailureReason.None && 
+        await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter)) {
+      HandleLoadedSourceFile(sourceInfo, function);
+      return true;
     }
 
-    await HandleMissingSourceFile(failureText);
+    await HandleMissingSourceFile(sourceInfo, failureReason);
     return false;
   }
 
@@ -297,23 +303,17 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
     // Get the associated source file from the debug info if available,
     // since it also includes the start line number.
-    string failureText = null;
     var inlineeSourceInfo = new SourceFileDebugInfo(inlinee.FilePath, inlinee.FilePath);
-    var (sourceInfo, debugInfo) = await sourceFileFinder_.FindLocalSourceFile(inlineeSourceInfo);
+    var (sourceInfo, failureReason) = 
+      await sourceFileFinder_.FindLocalSourceFile(inlineeSourceInfo);
 
-    if (!sourceInfo.IsUnknown) {
-      if (await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter, inlinee)) {
-        HandleLoadedSourceFile(sourceInfo, null);
-        return true;
-      }
-
-      failureText = $"Could not find local copy of source file:\n{inlinee.FilePath}";
-    }
-    else {
-      failureText = $"Could not find debug info for function:\n{inlinee.Function}";
+    if (!sourceInfo.IsUnknown && failureReason == SourceFileFinder.FailureReason.None && 
+        await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter, inlinee)) {
+      HandleLoadedSourceFile(sourceInfo, null);
+      return true;
     }
 
-    await HandleMissingSourceFile(failureText);
+    await HandleMissingSourceFile(sourceInfo, failureReason);
     return false;
   }
 
@@ -358,11 +358,24 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     sourceFilePath_ = sourceInfo.FilePath;
   }
 
-  private async Task HandleMissingSourceFile(string failureText) {
+  private async Task HandleMissingSourceFile(SourceFileDebugInfo sourceInfo,
+                                             SourceFileFinder.FailureReason reason) {
+    var failureText = reason switch {
+      SourceFileFinder.FailureReason.DebugInfoNotFound => "Could not find debug info for function.",
+      SourceFileFinder.FailureReason.MappingDisabled => """
+                                                        Mapping to local file path disabled for current file.
+                                                        To re-enable mapping, use the Reset button -> Clear File Exclusion option.
+                                                        """,
+      _ => "Could not find local copy of source file."
+    };
+    
     await ProfileTextView.HandleMissingSourceFile(failureText);
     SetPanelName("");
     SourceFileLoaded = false;
     sourceFileFunc_ = null;
+    
+    // Saved failed source file path for resetting exclusions.
+    sourceFilePath_ = sourceInfo.FilePath;
   }
 
   public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {

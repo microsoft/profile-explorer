@@ -707,6 +707,7 @@ public partial class App : Application {
   }
 
   public static void Restart() {
+    //? TODO: Start new instance only after settings were saved.
     Process.Start(Process.GetCurrentProcess().MainModule.FileName);
     Current.Shutdown();
   }

@@ -59,13 +59,13 @@ public class FlameGraphSettings : SettingsBase {
   public Color SearchedNodeBorderColor { get; set; }
   [ProtoMember(19), OptionValue("#000000")]
   public Color NodeBorderColor { get; set; }
-  [ProtoMember(20), OptionValue("#191970")]
+  [ProtoMember(20), OptionValue("#000000")]
   public Color NodeTextColor { get; set; }
   [ProtoMember(21), OptionValue("#696969")]
   public Color NodeModuleColor { get; set; }
-  [ProtoMember(22), OptionValue("#800000")]
+  [ProtoMember(22), OptionValue("#191970")]
   public Color NodeWeightColor { get; set; }
-  [ProtoMember(23), OptionValue("#000000")]
+  [ProtoMember(23), OptionValue("#800000")]
   public Color NodePercentageColor { get; set; }
   [ProtoMember(24), OptionValue("#c3ebbc")]
   public Color SearchedNodeColor { get; set; }
@@ -73,7 +73,7 @@ public class FlameGraphSettings : SettingsBase {
   public Color KernelNodeBorderColor { get; set; }
   [ProtoMember(26), OptionValue("#4B0082")]
   public Color ManagedNodeBorderColor { get; set; }
-  [ProtoMember(27), OptionValue("#0000CD")]
+  [ProtoMember(27), OptionValue("#00008B")]
   public Color KernelNodeTextColor { get; set; }
   [ProtoMember(28), OptionValue("#800080")]
   public Color ManagedNodeTextColor { get; set; }

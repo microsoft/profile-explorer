@@ -940,6 +940,10 @@ public static class ProfilingUtils {
       tooltip += $"Weight: {funcWeightPercentage.AsPercentageString()} ({markerSettings.FormatWeightValue(node.Weight)})\n";
       tooltip += $"Module: {node.ModuleName}";
 
+      if (node is ProfileCallTreeGroupNode groupNode) {
+        tooltip += $"\nInstances: {groupNode.Nodes.Count}";
+      }
+
       var funcValue = new ProfileMenuItem(funcText, node.Weight.Ticks, funcWeightPercentage) {
         PrefixText = node.Function.FormatFunctionName(session, 60),
         ToolTip = tooltip,

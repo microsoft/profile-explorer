@@ -47,17 +47,42 @@
             </StackPanel>
           </Button>
 
-
-          <Button Click="ResetButton_Click" ToolTip="Reset source file mappings and exclusions">
-            <StackPanel Orientation="Horizontal">
-              <Image
-                Width="16"
-                Height="16"
-                Margin="0,1,0,0"
-                Source="{StaticResource ReloadIcon}" />
-              <TextBlock Text="Reset" />
-            </StackPanel>
-          </Button>
+          <Menu VerticalAlignment="Center"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+            <MenuItem
+              Padding="0,0,0,0"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              OverridesDefaultStyle="True"
+              ToolTip="Source file actions">
+              <MenuItem.Header>
+                <StackPanel Orientation="Horizontal">
+                  <Image
+                    Margin="2,0,0,0"
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource ReloadIcon}"
+                    Style="{StaticResource DisabledImageStyle}" />
+                  <TextBlock
+                    Margin="2,0,0,0"
+                    VerticalAlignment="Bottom"
+                    Text="Reset" />
+                  <Path
+                    Margin="4,2,2,0"
+                    VerticalAlignment="Center"
+                    Data="M 0 0 L 3 3 L 6 0 Z"
+                    Fill="Black" />
+                </StackPanel>
+              </MenuItem.Header>
+              <MenuItem Click="ClearFileExclusion_Click" Header="Clear File Exclusion"
+                        ToolTip="Remove the local file mapping exclusion set on the current file" />
+              <MenuItem Click="ClearAllFileExclusions_Click" Header="Clear All File Exclusions"
+                        ToolTip="Remove all local file mapping exclusions"/>
+              <MenuItem Click="ResetButton_Click" Header="Reset All File Settings"
+                        ToolTip="Reset all source file mappings and exclusions"/>
+            </MenuItem>
+          </Menu>
+          
           <Menu VerticalAlignment="Center"
                 IsEnabled="{Binding SourceFileLoaded}"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
