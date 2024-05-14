@@ -179,7 +179,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   public CallTreePanel() {
     InitializeComponent();
-    settings_ = PanelKind == ToolPanelKind.CallTree ?
+    Settings = PanelKind == ToolPanelKind.CallTree ?
       App.Settings.CallTreeSettings :
       App.Settings.CallerCalleeSettings;
     searchTask_ = new CancelableTaskInstance(false);
@@ -194,6 +194,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     get => settings_;
     set {
       settings_ = value;
+      settings_.TreeListColumns.RestoreColumnsState(CallTreeList);
       SetupPreviewPopup();
       OnPropertyChanged();
     }
@@ -1057,7 +1058,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private void ShowOptionsPanel() {
     if (optionsPanelWindow_ != null) {
-      optionsPanelWindow_.Close();
+      optionsPanelWindow_.ClosePopup();
       optionsPanelWindow_ = null;
       return;
     }
@@ -1109,6 +1110,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   public override void OnSessionEnd() {
     base.OnSessionEnd();
+    Settings.TreeListColumns.SaveColumnsState(CallTreeList.View as GridView);
     Reset();
   }
 

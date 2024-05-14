@@ -220,6 +220,7 @@ public partial class SectionPanelPair : ToolPanelControl {
   public override void OnSessionEnd() {
     SetMainSummary(null).Wait();
     SetDiffSummary(null).Wait();
+    MainPanel.SaveListViewColumnsState();
     MainPanel.OnSessionEnd(); //? TODO: Await, make OnSessionEnd async
     DiffPanel.OnSessionEnd();
   }

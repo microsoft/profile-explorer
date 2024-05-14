@@ -279,7 +279,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
   private void ColumnSettingsClickHandler(object sender, RoutedEventArgs e) {
     if (optionsPanelWindow_ != null) {
-      optionsPanelWindow_.Close();
+      optionsPanelWindow_.ClosePopup();
       optionsPanelWindow_ = null;
       return;
     }
@@ -360,7 +360,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         foldedTextRegions_.Add((region.StartOffset, region.EndOffset));
       }
     }
-    
+
     foldedTextRegions_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
     rowFilterIndex_ = 0;
     profileRowCollection_.Refresh();

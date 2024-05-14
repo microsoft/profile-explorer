@@ -31,6 +31,20 @@ public class CallTreeNodeSettings : SettingsBase {
   public bool AlternateListRows { get; set; }
   [ProtoMember(8), OptionValue(true)]
   public bool ExpandThreads { get; set; }
+  [ProtoMember(9), OptionValue()]
+  public ColumnSettings StackListColumns { get; set; }
+  [ProtoMember(10), OptionValue()]
+  public ColumnSettings FunctionListColumns { get; set; }
+  [ProtoMember(11), OptionValue()]
+  public ColumnSettings ModuleListColumns { get; set; }
+  [ProtoMember(12), OptionValue()]
+  public ColumnSettings ModuleFunctionListColumns { get; set; }
+  [ProtoMember(13), OptionValue()]
+  public ColumnSettings CategoryListColumns { get; set; }
+  [ProtoMember(14), OptionValue()]
+  public ColumnSettings CategoryFunctionListColumns { get; set; }
+  [ProtoMember(15), OptionValue()]
+  public ColumnSettings InstanceListColumns { get; set; }
 
   public override void Reset() {
     InitializeReferenceMembers();
@@ -45,7 +59,7 @@ public class CallTreeNodeSettings : SettingsBase {
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
-    FunctionListViewFilter ??= new ProfileListViewFilter();
+    InitializeReferenceOptions(this);
   }
 
   public override bool Equals(object obj) {

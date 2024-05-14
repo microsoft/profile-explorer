@@ -135,6 +135,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   public override void OnSessionEnd() {
     base.OnSessionEnd();
+    NodeDetailsPanel.SaveListColumnSettings();
+    NodeDetailsPanel.Reset();
     GraphHost.Reset();
     CallTree = null;
     pendingCallTree_ = null;
@@ -468,7 +470,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private void ShowOptionsPanel() {
     if (optionsPanelWindow_ != null) {
-      optionsPanelWindow_.Close();
+      optionsPanelWindow_.ClosePopup();
       optionsPanelWindow_ = null;
       return;
     }

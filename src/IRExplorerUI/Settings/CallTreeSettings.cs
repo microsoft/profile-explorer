@@ -29,10 +29,17 @@ public class CallTreeSettings : SettingsBase {
   public bool ShowNodePopup { get; set; }
   [ProtoMember(8)]
   public int NodePopupDuration { get; set; }
+  [ProtoMember(9), OptionValue()]
+  public ColumnSettings TreeListColumns { get; set; }
 
   public override void Reset() {
     ResetAllOptions(this);
     NodePopupDuration = DefaultNodePopupDuration;
+  }
+
+  [ProtoAfterDeserialization]
+  private void InitializeReferenceMembers() {
+    InitializeReferenceOptions(this);
   }
 
   public CallTreeSettings Clone() {

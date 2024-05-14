@@ -30,12 +30,17 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
 
-    <DockPanel
+    <Grid
       Grid.Row="0"
       HorizontalAlignment="Stretch"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="75" />
+      </Grid.ColumnDefinitions>
       <ToolBarTray
         Height="28"
+        Grid.Column="0"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Top"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
@@ -371,13 +376,13 @@
       </ToolBarTray>
 
       <irExplorerUi:PanelToolbarTray
-        DockPanel.Dock="Right"
+        Grid.Column="1"
         HasDuplicateButton="False"
         HasHelpButton="True"
         HasPinButton="False"
         HelpClicked="PanelToolbarTray_OnHelpClicked"
         SettingsClicked="PanelToolbarTray_OnSettingsClicked" />
-    </DockPanel>
+    </Grid>
 
     <tree:TreeList
       x:Name="CallTreeList"

@@ -279,7 +279,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
 
   private void CloseDetachedPanels() {
     // Close all popups.
-    detachedPanels_.ForEach(panel => panel.Close());
+    detachedPanels_.ForEach(panel => panel.ClosePopup());
     detachedPanels_.Clear();
   }
 
@@ -437,6 +437,8 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     }
 
     await EndSession();
+    App.SaveApplicationSettings();
+    Trace.Flush();
   }
 
   private async void MainWindow_ContentRendered(object sender, EventArgs e) {

@@ -74,6 +74,12 @@ public class SectionSettings : SettingsBase {
   public bool AlternateListRows { get; set; }
   [ProtoMember(34), OptionValue(false)]
   public bool ShowMangleNamesColumn { get; set; }
+  [ProtoMember(35), OptionValue()]
+  public ColumnSettings FunctionListColumns { get; set; }
+  [ProtoMember(36), OptionValue()]
+  public ColumnSettings SectionListColumns { get; set; }
+  [ProtoMember(37), OptionValue()]
+  public ColumnSettings ModuleListColumns { get; set; }
 
   public FunctionNameDemanglingOptions DemanglingOptions {
     get {
@@ -110,6 +116,11 @@ public class SectionSettings : SettingsBase {
   public override void Reset() {
     ResetAllOptions(this);
     CallStackPopupDuration = DefaultCallStackPopupDuration;
+  }
+
+  [ProtoAfterDeserialization]
+  private void InitializeReferenceMembers() {
+    InitializeReferenceOptions(this);
   }
 
   public SectionSettings Clone() {

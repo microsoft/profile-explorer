@@ -42,6 +42,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     Session = session;
     CanExpand = canExpand;
     PanelHost.ShowInstanceNavigation = false;
+    PanelHost.Settings = App.Settings.CallTreeNodeSettings;
     PanelHost.Initialize(session, funcInfoProvider);
     FunctionListView.Session = Session;
     FunctionListView.Settings = App.Settings.CallTreeNodeSettings;
@@ -63,7 +64,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     PanelHost.MarkingChanged += (sender, args) => UpdateMarkingUI();
     FunctionListView.MarkingChanged += (sender, args) => UpdateMarkingUI();
   }
-  
+
   private void UpdateMarkingUI() {
     Session.FunctionMarkingChanged(ToolPanelKind.Other);
   }
@@ -176,6 +177,11 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   public override async void DetachPopup() {
     base.DetachPopup();
     await ExpandDetailsPanel();
+  }
+
+  protected override void OnClosed(EventArgs e) {
+    base.OnClosed(e);
+    PanelHost.SaveListColumnSettings();
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {

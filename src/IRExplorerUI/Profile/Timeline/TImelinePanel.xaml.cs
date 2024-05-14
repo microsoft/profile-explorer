@@ -1038,7 +1038,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private void ShowOptionsPanel() {
     if (optionsPanelWindow_ != null) {
-      optionsPanelWindow_.Close();
+      optionsPanelWindow_.ClosePopup();
       optionsPanelWindow_ = null;
       return;
     }

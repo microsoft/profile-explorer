@@ -126,7 +126,25 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       CategoryList.Settings = value;
       CategoryFunctionList.Settings = value;
       InstancesList.Settings = value;
+
+      BacktraceList.RestoreColumnsState(settings_.StackListColumns);
+      FunctionList.RestoreColumnsState(settings_.FunctionListColumns);
+      ModuleList.RestoreColumnsState(settings_.ModuleListColumns);
+      ModuleFunctionList.RestoreColumnsState(settings_.ModuleFunctionListColumns);
+      CategoryList.RestoreColumnsState(settings_.CategoryListColumns);
+      CategoryFunctionList.RestoreColumnsState(settings_.CategoryFunctionListColumns);
+      InstancesList.RestoreColumnsState(settings_.InstanceListColumns);
     }
+  }
+
+  public void SaveListColumnSettings() {
+    BacktraceList.SaveColumnsState(settings_.StackListColumns);
+    FunctionList.SaveColumnsState(settings_.FunctionListColumns);
+    ModuleList.SaveColumnsState(settings_.ModuleListColumns);
+    ModuleFunctionList.SaveColumnsState(settings_.ModuleFunctionListColumns);
+    CategoryList.SaveColumnsState(settings_.CategoryListColumns);
+    CategoryFunctionList.SaveColumnsState(settings_.CategoryFunctionListColumns);
+    InstancesList.SaveColumnsState(settings_.InstanceListColumns);
   }
 
   public bool IsInstancesExpanded {

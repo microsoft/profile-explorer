@@ -1280,6 +1280,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
     // Attach additional data to the UI.
     await LoadFunctionProfile();
+    RestoreListViewColumnsState();
     UpdateMarkedFunctions(true);
 
     if (analyzeFunctions) {
@@ -3374,6 +3375,18 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   public override void OnSessionEnd() {
     base.OnSessionEnd();
     ResetUI(); //? TODO: Await, make OnSessionEnd async
+  }
+
+  public void SaveListViewColumnsState() {
+    settings_.FunctionListColumns.SaveColumnsState(FunctionList);
+    settings_.SectionListColumns.SaveColumnsState(SectionList);
+    settings_.ModuleListColumns.SaveColumnsState(ModulesList);
+  }
+
+  public void RestoreListViewColumnsState() {
+    settings_.FunctionListColumns.RestoreColumnsState(FunctionList);
+    settings_.SectionListColumns.RestoreColumnsState(SectionList);
+    settings_.ModuleListColumns.RestoreColumnsState(ModulesList);
   }
 
   private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {

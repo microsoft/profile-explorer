@@ -159,11 +159,6 @@ public class DraggablePopup : Popup {
     IsOpen = true;
   }
 
-  public void Close() {
-    IsOpen = false;
-    PopupClosed?.Invoke(this, null);
-  }
-
   protected override void OnClosed(EventArgs e) {
     base.OnClosed(e);
 

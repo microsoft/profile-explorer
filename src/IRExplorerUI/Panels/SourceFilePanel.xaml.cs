@@ -212,12 +212,12 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     sourceFileFinder_.ResetDisabledMappings();
     await ReloadSourceFile();
   }
-  
+
   private async void ClearFileExclusion_Click(object sender, RoutedEventArgs e) {
     sourceFileFinder_.ResetDisabledMappings(sourceFilePath_);
     await ReloadSourceFile();
   }
-  
+
   private async Task ReloadSourceFile() {
     if (section_ == null) {
       return;
@@ -241,7 +241,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   private void ShowOptionsPanel() {
     if (optionsPanelWindow_ != null) {
-      optionsPanelWindow_.Close();
+      optionsPanelWindow_.ClosePopup();
       optionsPanelWindow_ = null;
       return;
     }
@@ -286,7 +286,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     // since it also includes the start line number.
     var (sourceInfo, failureReason) = await sourceFileFinder_.FindLocalSourceFile(function);
 
-    if (!sourceInfo.IsUnknown && failureReason == SourceFileFinder.FailureReason.None && 
+    if (!sourceInfo.IsUnknown && failureReason == SourceFileFinder.FailureReason.None &&
         await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter)) {
       HandleLoadedSourceFile(sourceInfo, function);
       return true;
@@ -304,10 +304,10 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     // Get the associated source file from the debug info if available,
     // since it also includes the start line number.
     var inlineeSourceInfo = new SourceFileDebugInfo(inlinee.FilePath, inlinee.FilePath);
-    var (sourceInfo, failureReason) = 
+    var (sourceInfo, failureReason) =
       await sourceFileFinder_.FindLocalSourceFile(inlineeSourceInfo);
 
-    if (!sourceInfo.IsUnknown && failureReason == SourceFileFinder.FailureReason.None && 
+    if (!sourceInfo.IsUnknown && failureReason == SourceFileFinder.FailureReason.None &&
         await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter, inlinee)) {
       HandleLoadedSourceFile(sourceInfo, null);
       return true;
@@ -368,12 +368,12 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
                                                         """,
       _ => "Could not find local copy of source file."
     };
-    
+
     await ProfileTextView.HandleMissingSourceFile(failureText);
     SetPanelName("");
     SourceFileLoaded = false;
     sourceFileFunc_ = null;
-    
+
     // Saved failed source file path for resetting exclusions.
     sourceFilePath_ = sourceInfo.FilePath;
   }

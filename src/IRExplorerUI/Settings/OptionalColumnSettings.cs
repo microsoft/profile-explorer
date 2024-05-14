@@ -152,7 +152,6 @@ public class OptionalColumnSettings : SettingsBase {
 
   public override string ToString() {
     return PrintOptions(this);
-
   }
 }
 

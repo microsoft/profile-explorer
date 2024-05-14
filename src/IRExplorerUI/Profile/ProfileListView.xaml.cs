@@ -654,4 +654,12 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       ItemList.SelectedIndex = 0;
     }
   }
+
+  public void SaveColumnsState(ColumnSettings settings) {
+    settings.SaveColumnsState(ItemList);
+  }
+
+  public void RestoreColumnsState(ColumnSettings settings) {
+    settings.RestoreColumnsState(ItemList);
+  }
 }
