@@ -1402,6 +1402,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     UpdateHighlighting();
   }
 
+  public bool HandleOverlayKeyPress(KeyEventArgs e) {
+    return overlayRenderer_.KeyPressed(e);
+  }
+  
   protected override void OnPreviewKeyDown(KeyEventArgs e) {
     base.OnPreviewKeyDown(e);
 

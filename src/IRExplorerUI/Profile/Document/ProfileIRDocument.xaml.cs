@@ -315,7 +315,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       // Override Ctrl+C to copy instruction details instead of just text,
       // but not if Shift/Alt key is also pressed, copy plain text then.
       if (!Utils.IsAltModifierActive() &&
-          !Utils.IsShiftModifierActive()) {
+          !Utils.IsShiftModifierActive() &&
+          !TextView.HandleOverlayKeyPress(e)) { // Send to overlays first.
         await CopySelectedLinesAsHtml();
         e.Handled = true;
       }
