@@ -25,6 +25,7 @@ namespace IRExplorerUI.Profile;
 
 // Used as the interface for both the full IR document and lightweight version (source file).
 public interface MarkedDocument {
+  IRTextSection Section { get; }
   ISession Session { get; }
   FunctionIR Function { get; }
   double DefaultLineHeight { get; }
@@ -44,6 +45,7 @@ public interface MarkedDocument {
                                                        string label = null, string tooltip = null,
                                                        bool prepend = false);
   public void RemoveElementOverlays(IRElement element, object onlyWithTag = null);
+  public void RegisterTextColorizer(DocumentColorizingTransformer colorizer);
 }
 
 

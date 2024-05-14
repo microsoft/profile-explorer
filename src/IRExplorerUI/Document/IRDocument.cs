@@ -583,6 +583,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   public void UnloadDocument() {
+    UnregisterTextColorizers();
     ResetRenderers();
     IsLoaded = false;
     Text = "";
@@ -1163,6 +1164,10 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   public void UnregisterTextColorizer(DocumentColorizingTransformer colorizer) {
     TextArea.TextView.LineTransformers.Remove(colorizer);
+  }
+
+  public void UnregisterTextColorizers() {
+    TextArea.TextView.LineTransformers.Clear();
   }
 
   private void AddDiffTextSegments(List<DiffTextSegment> segments) {
@@ -2766,7 +2771,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     // For call function names, notify owner in case it wants
     // to switch the view to the called function.
     if (IsCallTargetElement(element)) {
-      var targetSection = FindCallTargetSection(element);
+      var targetSection = DocumentUtils.FindCallTargetSection(element, Section, Session);
 
       if (targetSection != null && FunctionCallOpen != null) {
         FunctionCallOpen.Invoke(this, targetSection);
@@ -4007,7 +4012,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
 
   private async Task<IRDocumentPopup> CreateCallTargetPreviewPopup(IRElement element, bool alwaysShow, Point position) {
     // Try to find a function definition for the call.
-    var targetSection = FindCallTargetSection(element);
+    var targetSection = DocumentUtils.FindCallTargetSection(element, Section, Session);
 
     if (targetSection == null) {
       if (alwaysShow) {
@@ -4027,16 +4032,16 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
                                            $"Function: {element.Name}");
   }
 
-  private IRTextSection FindCallTargetSection(IRElement element) {
+  private static IRTextSection FindCallTargetSection(IRElement element, IRTextSection section, ISession session) {
     if (!element.HasName) {
       return null;
     }
 
     // Function names in the summary are mangled, while the document
     // has them demangled, run the demangler while searching for the target.
-    var nameProvider = Session.CompilerInfo.NameProvider;
+    var nameProvider = session.CompilerInfo.NameProvider;
     var searchedName = element.Name;
-    var targetFunc = Section.ParentFunction.ParentSummary.FindFunction(name =>
+    var targetFunc = section.ParentFunction.ParentSummary.FindFunction(name =>
       nameProvider.FormatFunctionName(name).Equals(searchedName, StringComparison.Ordinal));
 
     if (targetFunc == null) {

@@ -389,9 +389,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     // Cancel any running tasks and hide panels.
-    await loadTask_.CancelTaskAndWaitAsync();
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
 
-    //? TODO: use await loadTask_.CancelTaskAndWaitAsync(); once UnloadSection returns Task
     await HideRemarkPanel();
     HideActionPanel();
     SaveSectionState(section);
@@ -401,9 +400,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         await PassOutput.UnloadSection(section, TextView);
       }
 
-      await RemoveRemarks();
 
       // Clear references to IR objects that would keep the previous function alive.
+      await RemoveRemarks();
       hoveredElement_ = null;
       selectedElement_ = null;
       remarkElement_ = null;
@@ -528,12 +527,13 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async Task LoadNextSection() {
     var state = historyManager_.PopNextState();
 
-    if (historyManager_ != null) {
+    if (state != null) {
       await LoadPreviousSectionState(state);
     }
   }
 
   private async Task LoadPreviousSectionState(ProfileFunctionState state) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     await session_.OpenDocumentSectionAsync(new OpenSectionEventArgs(state.Section, OpenSectionKind.ReplaceCurrent, this));
 
     if (state.ProfileFilter is {IncludesAll: false}) {
@@ -1115,9 +1115,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async Task RemoveRemarks() {
-    remarkList_ = null;
-    activeRemarkContext_ = null;
-    await UpdateDocumentRemarks(remarkList_);
+    if (remarkList_ != null) {
+      remarkList_ = null;
+      activeRemarkContext_ = null;
+      await UpdateDocumentRemarks(remarkList_);
+    }
   }
 
   private void SaveSectionState(IRTextSection section) {

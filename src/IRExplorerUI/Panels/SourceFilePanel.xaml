@@ -54,7 +54,7 @@
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               OverridesDefaultStyle="True"
-              ToolTip="Source file actions">
+              ToolTip="Clear source file exclusions and mappings">
               <MenuItem.Header>
                 <StackPanel Orientation="Horizontal">
                   <Image
@@ -91,7 +91,7 @@
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               OverridesDefaultStyle="True"
-              ToolTip="Source file actions">
+              ToolTip="Source file path actions">
               <MenuItem.Header>
                 <StackPanel Orientation="Horizontal">
                   <Image
