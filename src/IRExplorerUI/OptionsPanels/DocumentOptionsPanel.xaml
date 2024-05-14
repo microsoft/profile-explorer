@@ -509,10 +509,16 @@
                         IsChecked="{Binding Path=AnnotateSourceLines, Mode=TwoWay}"
                         ToolTip="Append the associated source code line based on the debug info file" />
                     <CheckBox
-                        Margin="0,4,0,2"
+                        Margin="0,2,0,2"
                         Content="Annotate instrs. with inlined functions trace (inlinees)"
                         IsChecked="{Binding Path=AnnotateInlinees, Mode=TwoWay}"
                         ToolTip="Append the associated list of inlined functions (inlinees) based on the debug info file" />
+                    <CheckBox
+                      Margin="0,2,0,2"
+                      Content="Underline call instruction targets"
+                      IsChecked="{Binding Path=MarkCallTargets, Mode=TwoWay}"
+                      ToolTip="Underline the names of the called functions whose code is available" />
+                    <TextBlock Margin="0,8,0,0" FontSize="11" Text="Double-click on call target navigates to function." />
                     <Separator Margin="0,4,0,4" Background="LightGray"/>
 
                     <TextBlock FontWeight="Medium" Text="Annotation Colors" />
@@ -601,6 +607,48 @@
                                 VerticalAlignment="Center"
                                 Text="Inlined functions background color" />
                         </Grid>
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="70" />
+                          <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                          Grid.Column="0"
+                          Width="64"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          AvailableColorsSortingMode="HueSaturationBrightness"
+                          BorderBrush="#707070"
+                          SelectedColor="{Binding Path=CallTargetTextColor, Mode=TwoWay}"
+                          ShowDropDownButton="True"
+                        />
+                        <TextBlock
+                          Grid.Column="1"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          Text="Call target function text color" />
+                      </Grid>
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="70" />
+                          <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                          Grid.Column="0"
+                          Width="64"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          AvailableColorsSortingMode="HueSaturationBrightness"
+                          BorderBrush="#707070"
+                          SelectedColor="{Binding Path=CallTargetBackColor, Mode=TwoWay}"
+                          ShowDropDownButton="True"
+                        />
+                        <TextBlock
+                          Grid.Column="1"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          Text="Call target function background color" />
+                      </Grid>
                     </StackPanel>
                 </StackPanel>
             </TabItem>

@@ -9,6 +9,8 @@ using IRExplorerUI.Document;
 
 namespace IRExplorerUI.Profile.Document;
 
+// A custom line margin that that overrides the default one, with support
+// for block folding - the lines part of a block folding are not numbered.
 sealed class SourceLineNumberMargin : LineNumberMargin, IWeakEventListener {
   private readonly IRDocument textView_;
   SourceLineProfileResult sourceLineProfileResult_;
@@ -62,6 +64,8 @@ sealed class SourceLineNumberMargin : LineNumberMargin, IWeakEventListener {
   }
 }
 
+// Creates block foldings for the specified ranges, used to create
+// the foldings for inline assembly sections in the source code document.
 sealed class RangeFoldingStrategy : IBlockFoldingStrategy {
   private List<(int StartOffset, int EndOffset)> ranges_;
   private bool defaultClosed_;

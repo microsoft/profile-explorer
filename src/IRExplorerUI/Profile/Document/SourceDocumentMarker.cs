@@ -7,6 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
+using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
@@ -32,12 +35,19 @@ public class SourceDocumentMarker {
       return;
     }
 
+    
     var overlays = new List<IconElementOverlay>(function.InstructionCount);
     var inlineeOverlays = new List<IconElementOverlay>(function.InstructionCount);
     var lineLengths = new List<int>(function.InstructionCount);
+    var lineToOperandMap = new Dictionary<int, OperandIR>();
+
 
     await Task.Run(() => {
       foreach (var instr in function.AllInstructions) {
+        if (settings_.MarkCallTargets) {
+          MarkCallInstruction(instr, document, lineToOperandMap);
+        }
+
         // Annotate right-hand side with source line and inlinee info.
         var tag = instr.GetTag<SourceLocationTag>();
 
@@ -114,6 +124,24 @@ public class SourceDocumentMarker {
       double position = Math.Max(settings_.VirtualColumnPosition, columnPosition);
       overlay.VirtualColumn = position + overlayMargin + inlineeOverlayMargin;
     }
+    
+    if(settings_.MarkCallTargets) {
+      var colorizer = new OperandColorizer(lineToOperandMap, settings_.CallTargetTextColor.AsBrush(),
+                                           settings_.CallTargetBackColor.AsBrush());
+      document.RegisterTextColorizer(colorizer);
+    }
+  }
+
+  private void MarkCallInstruction(InstructionIR instr, MarkedDocument document,
+                                   Dictionary<int, OperandIR> lineToOperandMap) {
+    if (irInfo_.IR.IsCallInstruction(instr) &&
+        irInfo_.IR.GetCallTarget(instr) is OperandIR callTargetOp &&
+        callTargetOp.HasName) {
+      // Mark only functions whose code is available in the session.
+      if(DocumentUtils.FindCallTargetSection(callTargetOp, document.Section, document.Session) != null) {
+        lineToOperandMap[instr.TextLocation.Line] = callTargetOp;
+      }
+    }
   }
 
   //? Currently calls are marked only with profiling data, here could be a mode
@@ -146,6 +174,55 @@ public class SourceDocumentMarker {
     }
     else {
       tooltipSb.Append($"{inlineeName}:{inlineeLine}");
+    }
+  }
+  
+  // Use to mark the call target function names.
+  public sealed class OperandColorizer : DocumentColorizingTransformer {
+    private Dictionary<int, OperandIR> lineToOperandMap_;
+    private Brush textColor_;
+    private Brush backColor_;
+    private Typeface typeface_;
+
+    public OperandColorizer(Dictionary<int, OperandIR> lineToOperandMap,
+                            Brush textColor, Brush backColor, Typeface typeface = null) {
+      lineToOperandMap_ = lineToOperandMap;
+      textColor_ = textColor;
+      backColor_ = backColor;
+      typeface_ = typeface;
+    }
+
+    protected override void ColorizeLine(DocumentLine line) {
+      if (line.Length == 0) {
+        return;
+      }
+
+      if (!lineToOperandMap_.TryGetValue(line.LineNumber - 1, out var operand)) {
+        return;
+      }
+
+      int start = operand.TextLocation.Offset;
+      int end = start + operand.TextLength;
+      
+      if(start < line.Offset || end > line.EndOffset) {
+        return;
+      }
+      
+      ChangeLinePart(start, end, element => {
+        element.TextRunProperties.SetTextDecorations(TextDecorations.Underline);
+
+        if (textColor_ != null) {
+          element.TextRunProperties.SetForegroundBrush(textColor_);
+        }
+
+        if (backColor_ != null) {
+          element.TextRunProperties.SetBackgroundBrush(backColor_);
+        }
+        
+        if (typeface_ != null) {
+          element.TextRunProperties.SetTypeface(typeface_);
+        }
+      });
     }
   }
 }

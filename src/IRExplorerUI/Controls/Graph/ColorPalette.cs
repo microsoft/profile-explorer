@@ -140,8 +140,8 @@ public class ColorPalette {
     new ColorPalette(ColorUtils.LightPastelColors, "LightPastels");
   public static ColorPalette LightPastels2 =>
     new ColorPalette(new[] {
-      "#EAE4E9","#FFF1E6","#FDE2E4","#FAD2E1",
-      "#E2ECE9","#BEE1E6","#F0EFEB","#DFE7FD",
+      "#E8DCE6","#FFEDE0","#FCDEE0","#FAD2E1",
+      "#D3EAE3","#BEE1E6","#EDE9DC","#DFE7FD",
     }, "LightPastels2");
   public static ColorPalette LightPastels3 =>
     new ColorPalette(new[] {

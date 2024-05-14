@@ -425,4 +425,25 @@ public static class DocumentUtils {
 
     return sb.ToString().Trim();
   }
+  
+  public static IRTextSection FindCallTargetSection(IRElement element, IRTextSection section, ISession session) {
+    if (!element.HasName) {
+      return null;
+    }
+
+    // Function names in the summary are mangled, while the document
+    // has them demangled, run the demangler while searching for the target.
+    var nameProvider = session.CompilerInfo.NameProvider;
+    var searchedName = element.Name;
+    var targetFunc = section.ParentFunction.ParentSummary.FindFunction(name =>
+      nameProvider.FormatFunctionName(name).Equals(searchedName, StringComparison.Ordinal));
+
+    if (targetFunc == null) {
+      return null;
+    }
+
+    // Prefer the same section as this document if there are multiple.
+    return targetFunc.SectionCount == 0 ? null : targetFunc.Sections[0];
+  }
+
 }

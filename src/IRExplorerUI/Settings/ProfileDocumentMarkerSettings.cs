@@ -57,7 +57,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   public Color HotBlockOverlayTextColor { get; set; }
   [ProtoMember(14), OptionValue("#696969")]
   public Color BlockOverlayBorderColor { get; set; }
-  [ProtoMember(15), OptionValue()]
+  [ProtoMember(15), OptionValue(1)]
   public double BlockOverlayBorderThickness { get; set; }
   [ProtoMember(16), OptionValue("#AA4343")]
   public Color PercentageBarBackColor { get; set; }
