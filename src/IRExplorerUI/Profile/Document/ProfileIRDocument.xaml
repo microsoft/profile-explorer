@@ -1,441 +1,443 @@
 ﻿<UserControl
-  x:Class="IRExplorerUI.Profile.Document.ProfileIRDocument"
-  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-  xmlns:document="clr-namespace:IRExplorerUI.Document"
-  xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
-  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  d:DesignHeight="300"
-  d:DesignWidth="500"
-  mc:Ignorable="d">
-  <UserControl.Resources>
-    <Style x:Key="ColumnsGridSplitterStyle" TargetType="{x:Type ColumnDefinition}">
-      <Style.Setters>
-        <Setter Property="Width" Value="2" />
-      </Style.Setters>
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding ColumnsVisible}" Value="False">
-          <DataTrigger.Setters>
-            <Setter Property="Width" Value="0" />
-            <Setter Property="MaxWidth" Value="0" />
-          </DataTrigger.Setters>
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
+    x:Class="IRExplorerUI.Profile.Document.ProfileIRDocument"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:document="clr-namespace:IRExplorerUI.Document"
+    xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="300"
+    d:DesignWidth="500"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style x:Key="ColumnsGridSplitterStyle" TargetType="{x:Type ColumnDefinition}">
+            <Style.Setters>
+                <Setter Property="Width" Value="2" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ColumnsVisible}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="0" />
+                        <Setter Property="MaxWidth" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
 
-    <Style x:Key="ColumnsStyle" TargetType="{x:Type ColumnDefinition}">
-      <Style.Setters>
-        <Setter Property="Width" Value="*" />
-      </Style.Setters>
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding ColumnsVisible}" Value="False">
-          <DataTrigger.Setters>
-            <Setter Property="Width" Value="0" />
-          </DataTrigger.Setters>
-        </DataTrigger>
+        <Style x:Key="ColumnsStyle" TargetType="{x:Type ColumnDefinition}">
+            <Style.Setters>
+                <Setter Property="Width" Value="*" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ColumnsVisible}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
 
-        <DataTrigger Binding="{Binding UseCompactProfilingColumns}" Value="True">
-          <DataTrigger.Setters>
-            <Setter Property="Width" Value="100" />
-          </DataTrigger.Setters>
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-  </UserControl.Resources>
-  <UserControl.CommandBindings>
-    <CommandBinding Command="irExplorerUi:DocumentHostCommand.JumpToProfiledElement" Executed="JumpToProfiledElementExecuted" />
-    <CommandBinding
-      CanExecute="JumpToNextProfiledElementCanExecute"
-      Command="irExplorerUi:DocumentHostCommand.JumpToNextProfiledElement"
-      Executed="JumpToNextProfiledElementExecuted" />
-    <CommandBinding
-      CanExecute="JumpToPreviousProfiledElementCanExecute"
-      Command="irExplorerUi:DocumentHostCommand.JumpToPreviousProfiledElement"
-      Executed="JumpToPreviousProfiledElementExecuted" />
-    <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfile" Executed="ExportSourceExecuted" />
-    <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportSourceHtmlExecuted" />
-    <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileMarkdown" Executed="ExportSourceMarkdownExecuted" />
-    <CommandBinding Command="irExplorerUi:DocumentHostCommand.CopySelectedLinesAsHTML" Executed="CopySelectedLinesAsHtmlExecuted" />
-    <CommandBinding Command="irExplorerUi:DocumentHostCommand.CopySelectedText" Executed="CopySelectedTextExecuted" />
-  </UserControl.CommandBindings>
-  <Grid>
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="2*" />
-      <ColumnDefinition Style="{StaticResource ColumnsGridSplitterStyle}" />
-      <ColumnDefinition Style="{StaticResource ColumnsStyle}" />
-    </Grid.ColumnDefinitions>
+                <DataTrigger Binding="{Binding UseCompactProfilingColumns}" Value="True">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="100" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+    <UserControl.CommandBindings>
+        <CommandBinding Command="irExplorerUi:DocumentHostCommand.JumpToProfiledElement" Executed="JumpToProfiledElementExecuted" />
+        <CommandBinding
+            CanExecute="JumpToNextProfiledElementCanExecute"
+            Command="irExplorerUi:DocumentHostCommand.JumpToNextProfiledElement"
+            Executed="JumpToNextProfiledElementExecuted" />
+        <CommandBinding
+            CanExecute="JumpToPreviousProfiledElementCanExecute"
+            Command="irExplorerUi:DocumentHostCommand.JumpToPreviousProfiledElement"
+            Executed="JumpToPreviousProfiledElementExecuted" />
+        <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfile" Executed="ExportSourceExecuted" />
+        <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileHTML" Executed="ExportSourceHtmlExecuted" />
+        <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileMarkdown" Executed="ExportSourceMarkdownExecuted" />
+        <CommandBinding Command="irExplorerUi:DocumentHostCommand.CopySelectedLinesAsHTML" Executed="CopySelectedLinesAsHtmlExecuted" />
+        <CommandBinding Command="irExplorerUi:DocumentHostCommand.CopySelectedText" Executed="CopySelectedTextExecuted" />
+    </UserControl.CommandBindings>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Style="{StaticResource ColumnsGridSplitterStyle}" />
+            <ColumnDefinition Style="{StaticResource ColumnsStyle}" />
+        </Grid.ColumnDefinitions>
 
-    <DockPanel Grid.Column="0" LastChildFill="True">
-      <Border
-        Height="23"
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Top"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        BorderThickness="0,1,0,1"
-        DockPanel.Dock="Top"
-        Visibility="{Binding ColumnsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-        <ToolBarTray
-          x:Name="ProfileToolbar"
-          HorizontalAlignment="Stretch"
-          VerticalAlignment="Stretch"
-          Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
-          IsLocked="True">
-          <ToolBar
-            Height="22"
+        <DockPanel Grid.Column="0" LastChildFill="True">
+            <Border
+                Height="23"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                BorderThickness="0,1,0,1"
+                DockPanel.Dock="Top"
+                Visibility="{Binding ColumnsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                <ToolBarTray
+                    x:Name="ProfileToolbar"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
+                    IsLocked="True">
+                    <ToolBar
+                        Height="22"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
+                        Loaded="ToolBar_Loaded">
+                        <Menu Margin="2,0,0,0" VerticalAlignment="Center">
+                            <MenuItem
+                                x:Name="ProfileElementsMenu"
+                                Margin="0,0,0,0"
+                                Padding="0,0,0,0"
+                                OverridesDefaultStyle="True"
+                                ToolTip="View sorted list of hottest lines">
+                                <MenuItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock VerticalAlignment="Bottom" Text="Profile" />
+                                        <Path
+                                            Margin="4,2,0,0"
+                                            VerticalAlignment="Center"
+                                            Data="M 0 0 L 3 3 L 6 0 Z"
+                                            Fill="Black" />
+                                    </StackPanel>
+                                </MenuItem.Header>
+                            </MenuItem>
+                        </Menu>
+                        <Button
+                            Margin="4,0,0,0"
+                            Padding="0"
+                            VerticalAlignment="Center"
+                            Command="irExplorerUi:DocumentHostCommand.JumpToProfiledElement"
+                            CommandTarget="{Binding ElementName=TextView}"
+                            ToolTip="Jump to hottest profiled line (Ctrl+H)"
+                            Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Image Source="{StaticResource HotFlameIcon}" Style="{StaticResource DisabledImageStyle}" />
+                        </Button>
+                        <Button
+                            Margin="2,0,0,0"
+                            Padding="0"
+                            Command="irExplorerUi:DocumentHostCommand.JumpToPreviousProfiledElement"
+                            CommandTarget="{Binding ElementName=TextView}"
+                            ToolTip="Jump to previous less hot line (Shift+F2)">
+                            <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
+                        </Button>
+                        <Button
+                            Margin="0,0,2,0"
+                            Padding="0"
+                            Command="irExplorerUi:DocumentHostCommand.JumpToNextProfiledElement"
+                            CommandTarget="{Binding ElementName=TextView}"
+                            ToolTip="Jump to next hotter line (F2)">
+                            <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
+                        </Button>
+                        <Separator Visibility="{Binding IsSourceFileDocument, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+
+                        <Menu
+                            Margin="2,0,0,0"
+                            VerticalAlignment="Center"
+                            ToolTip="View sorted list of inlined functions"
+                            Visibility="{Binding IsSourceFileDocument, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+                            <MenuItem
+                                x:Name="InlineesMenu"
+                                Margin="0,0,0,0"
+                                Padding="0,0,0,0"
+                                OverridesDefaultStyle="True">
+                                <MenuItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="{StaticResource FlowChartSolidIcon}" Style="{StaticResource DisabledImageStyle}" />
+                                        <TextBlock
+                                            Margin="2,0,0,0"
+                                            VerticalAlignment="Bottom"
+                                            Text="Inlinees" />
+                                        <Path
+                                            Margin="4,2,2,0"
+                                            VerticalAlignment="Center"
+                                            Data="M 0 0 L 3 3 L 6 0 Z"
+                                            Fill="Black" />
+                                    </StackPanel>
+                                </MenuItem.Header>
+                                <MenuItem
+                                    Header="Non-Inlinee"
+                                    IsCheckable="False"
+                                    Style="{DynamicResource SubMenuItemHeaderStyle}"
+                                    ToolTip="Time for parts not originating from inlined functions" />
+                                <Separator />
+                            </MenuItem>
+                        </Menu>
+                        <Separator />
+                        <Menu
+                            Margin="2,0,0,0"
+                            VerticalAlignment="Center"
+                            ToolTip="View outline of main source code statements and their associated time">
+                            <MenuItem
+                                x:Name="OutlineMenu"
+                                Margin="0,0,0,0"
+                                Padding="0,0,0,0"
+                                Background="{Binding Path=HasProfileInstanceFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                                OverridesDefaultStyle="True"
+                                Visibility="{Binding IsSourceFileDocument, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <MenuItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="{StaticResource TreeIcon}" Style="{StaticResource DisabledImageStyle}" />
+                                        <TextBlock
+                                            Margin="2,0,0,0"
+                                            VerticalAlignment="Bottom"
+                                            Text="Outline" />
+                                        <Path
+                                            Margin="4,2,2,0"
+                                            VerticalAlignment="Center"
+                                            Data="M 0 0 L 3 3 L 6 0 Z"
+                                            Fill="Black" />
+                                    </StackPanel>
+                                </MenuItem.Header>
+                            </MenuItem>
+                        </Menu>
+                        <Menu
+                            Margin="2,0,0,0"
+                            VerticalAlignment="Center"
+                            ToolTip="Select function instances to display">
+                            <MenuItem
+                                x:Name="InstancesMenu"
+                                Margin="0,0,0,0"
+                                Padding="0,0,0,0"
+                                Background="{Binding Path=HasProfileInstanceFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                                OverridesDefaultStyle="True">
+                                <MenuItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="{StaticResource TasklistIcon}" Style="{StaticResource DisabledImageStyle}" />
+                                        <TextBlock
+                                            Margin="2,0,0,0"
+                                            VerticalAlignment="Bottom"
+                                            Text="Instances" />
+                                        <Path
+                                            Margin="4,2,2,0"
+                                            VerticalAlignment="Center"
+                                            Data="M 0 0 L 3 3 L 6 0 Z"
+                                            Fill="Black" />
+                                    </StackPanel>
+                                </MenuItem.Header>
+                                <MenuItem
+                                    Click="InstanceMenuItem_OnClick"
+                                    Header="All Instances"
+                                    IsCheckable="False"
+                                    IsChecked="{Binding RemoveEmptyColumns}"
+                                    Style="{DynamicResource SubMenuItemHeaderStyle}" />
+                                <Separator />
+                            </MenuItem>
+                        </Menu>
+                        <Menu Margin="2,0,0,0" VerticalAlignment="Center">
+                            <MenuItem
+                                x:Name="ThreadsMenu"
+                                Margin="0,0,0,0"
+                                Padding="0,0,0,0"
+                                Background="{Binding Path=HasProfileThreadFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
+                                OverridesDefaultStyle="True"
+                                ToolTip="Select threads the function ran on to display">
+                                <MenuItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="{StaticResource FilterIcon}" Style="{StaticResource DisabledImageStyle}" />
+                                        <TextBlock
+                                            Margin="2,0,0,0"
+                                            VerticalAlignment="Bottom"
+                                            Text="Threads" />
+                                        <Path
+                                            Margin="4,2,2,0"
+                                            VerticalAlignment="Center"
+                                            Data="M 0 0 L 3 3 L 6 0 Z"
+                                            Fill="Black" />
+                                    </StackPanel>
+                                </MenuItem.Header>
+                                <MenuItem
+                                    Click="ThreadMenuItem_OnClick"
+                                    Header="All Threads"
+                                    IsCheckable="False"
+                                    Style="{DynamicResource SubMenuItemHeaderStyle}" />
+                                <Separator />
+                            </MenuItem>
+                        </Menu>
+                        <Separator />
+                        <Menu
+                            Margin="2,0,2,0"
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                            <MenuItem
+                                Padding="0,0,0,0"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                OverridesDefaultStyle="True"
+                                ToolTip="Export function list">
+                                <MenuItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock
+                                            Margin="2,0,0,0"
+                                            VerticalAlignment="Bottom"
+                                            Text="Export" />
+                                        <Path
+                                            Margin="4,2,0,0"
+                                            VerticalAlignment="Center"
+                                            Data="M 0 0 L 3 3 L 6 0 Z"
+                                            Fill="Black" />
+                                    </StackPanel>
+                                </MenuItem.Header>
+                                <MenuItem
+                                    Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfile"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Export as Excel File"
+                                    ToolTip="Save the document lines and additional columns as an Excel worksheet">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource ExcelIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileHTML"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Export as HTML File"
+                                    ToolTip="Save the document lines and additional columns as an HTML file">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource SourceIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileMarkdown"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Export as Markdown File"
+                                    ToolTip="Save the document lines and additional columns as a Markdown file">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource DocumentIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem
+                                    Command="{Binding CopyDocumentCommand}"
+                                    CommandTarget="{Binding ElementName=FunctionList}"
+                                    Header="Copy as HTML/Markdown table"
+                                    ToolTip="Copy the document lines and additional columns as an HTML file">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource ClipboardIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </MenuItem>
+                        </Menu>
+                        <Menu
+                            Margin="2,0,0,0"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding IsPreviewDocument, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+                            <MenuItem
+                                x:Name="ProfileViewMenu"
+                                Margin="0,0,0,0"
+                                Padding="0,0,0,0"
+                                OverridesDefaultStyle="True"
+                                ToolTip="Configure displayed profiling columns">
+                                <MenuItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="{StaticResource EyeIcon}" Style="{StaticResource DisabledImageStyle}" />
+                                        <TextBlock
+                                            Margin="4,0,0,0"
+                                            VerticalAlignment="Bottom"
+                                            Text="View" />
+                                        <Path
+                                            Margin="4,2,0,0"
+                                            VerticalAlignment="Center"
+                                            Data="M 0 0 L 3 3 L 6 0 Z"
+                                            Fill="Black" />
+                                    </StackPanel>
+                                </MenuItem.Header>
+                                <MenuItem
+                                    Checked="ViewMenuItem_OnCheckedChanged"
+                                    Header="Show Performance Counters"
+                                    IsCheckable="True"
+                                    IsChecked="{Binding ShowPerformanceCounterColumns}"
+                                    Style="{DynamicResource SubMenuItemHeaderStyle}"
+                                    Unchecked="ViewMenuItem_OnCheckedChanged" />
+                                <MenuItem
+                                    Checked="ViewMenuItem_OnCheckedChanged"
+                                    Header="Show Performance Metrics"
+                                    IsCheckable="True"
+                                    IsChecked="{Binding ShowPerformanceMetricColumns}"
+                                    Style="{DynamicResource SubMenuItemHeaderStyle}"
+                                    Unchecked="ViewMenuItem_OnCheckedChanged" />
+                                <MenuItem
+                                    Checked="ViewMenuItem_OnCheckedChanged"
+                                    Header="Hide Empty Columns"
+                                    IsCheckable="True"
+                                    IsChecked="{Binding RemoveEmptyColumns}"
+                                    Style="{DynamicResource SubMenuItemHeaderStyle}"
+                                    Unchecked="ViewMenuItem_OnCheckedChanged" />
+                                <Separator />
+                                <MenuItem
+                                    Checked="ViewMenuItem_OnCheckedChanged"
+                                    Header="Columns"
+                                    IsEnabled="False"
+                                    IsHitTestVisible="False"
+                                    Style="{DynamicResource SubMenuItemHeaderStyle}" />
+                            </MenuItem>
+                        </Menu>
+                    </ToolBar>
+                </ToolBarTray>
+            </Border>
+
+            <irExplorerUi:IRDocument
+                x:Name="TextView"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                DockPanel.Dock="Bottom"
+                FontFamily="Consolas"
+                FontSize="12"
+                HorizontalScrollBarVisibility="Auto"
+                ShowLineNumbers="True"
+                SyntaxHighlighting="C++"
+                VerticalScrollBarVisibility="Auto">
+                <irExplorerUi:IRDocument.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem
+                            Command="irExplorerUi:DocumentHostCommand.CopySelectedLinesAsHTML"
+                            CommandTarget="{Binding ElementName=TextView}"
+                            Header="Copy Selection Details"
+                            InputGestureText="Ctrl+C"
+                            ToolTip="Copy the selected text and additional profiling columns as a HTML table">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource ClipboardIcon}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem
+                            Command="irExplorerUi:DocumentHostCommand.CopySelectedText"
+                            CommandTarget="{Binding ElementName=TextView}"
+                            Header="Copy Text"
+                            InputGestureText="Ctrl+Shift+C"
+                            ToolTip="Copy the selected text only" />
+                    </ContextMenu>
+                </irExplorerUi:IRDocument.ContextMenu>
+            </irExplorerUi:IRDocument>
+        </DockPanel>
+
+        <GridSplitter
+            Grid.Column="1"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Center"
-            Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
-            Loaded="ToolBar_Loaded">
-            <Menu Margin="2,0,0,0" VerticalAlignment="Center">
-              <MenuItem
-                x:Name="ProfileElementsMenu"
-                Margin="0,0,0,0"
-                Padding="0,0,0,0"
-                OverridesDefaultStyle="True"
-                ToolTip="View sorted list of hottest lines">
-                <MenuItem.Header>
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock VerticalAlignment="Bottom" Text="Profile" />
-                    <Path
-                      Margin="4,2,0,0"
-                      VerticalAlignment="Center"
-                      Data="M 0 0 L 3 3 L 6 0 Z"
-                      Fill="Black" />
-                  </StackPanel>
-                </MenuItem.Header>
-              </MenuItem>
-            </Menu>
-            <Button
-              Margin="4,0,0,0"
-              Padding="0"
-              VerticalAlignment="Center"
-              Command="irExplorerUi:DocumentHostCommand.JumpToProfiledElement"
-              CommandTarget="{Binding ElementName=TextView}"
-              ToolTip="Jump to hottest profiled line (Ctrl+H)"
-              Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-              <Image Source="{StaticResource HotFlameIcon}" Style="{StaticResource DisabledImageStyle}" />
-            </Button>
-            <Button
-              Margin="2,0,0,0"
-              Padding="0"
-              Command="irExplorerUi:DocumentHostCommand.JumpToPreviousProfiledElement"
-              CommandTarget="{Binding ElementName=TextView}"
-              ToolTip="Jump to previous less hot line (Shift+F2)">
-              <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
-            </Button>
-            <Button
-              Margin="0,0,2,0"
-              Padding="0"
-              Command="irExplorerUi:DocumentHostCommand.JumpToNextProfiledElement"
-              CommandTarget="{Binding ElementName=TextView}"
-              ToolTip="Jump to next hotter line (F2)">
-              <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
-            </Button>
-            <Separator Visibility="{Binding IsSourceFileDocument, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+            VerticalAlignment="Stretch"
+            Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            ResizeBehavior="PreviousAndNext" />
 
-            <Menu
-              Margin="2,0,0,0"
-              VerticalAlignment="Center"
-              ToolTip="View sorted list of inlined functions"
-              Visibility="{Binding IsSourceFileDocument, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
-              <MenuItem
-                x:Name="InlineesMenu"
-                Margin="0,0,0,0"
-                Padding="0,0,0,0"
-                OverridesDefaultStyle="True">
-                <MenuItem.Header>
-                  <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource FlowChartSolidIcon}"
-                           Style="{StaticResource DisabledImageStyle}" />
-                    <TextBlock
-                      Margin="2,0,0,0"
-                      VerticalAlignment="Bottom"
-                      Text="Inlinees" />
-                    <Path
-                      Margin="4,2,2,0"
-                      VerticalAlignment="Center"
-                      Data="M 0 0 L 3 3 L 6 0 Z"
-                      Fill="Black" />
-                  </StackPanel>
-                </MenuItem.Header>
-                <MenuItem
-                  Header="Non-Inlinee"
-                  IsCheckable="False"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}"
-                  ToolTip="Time for parts not originating from inlined functions" />
-                <Separator />
-              </MenuItem>
-            </Menu>
-            <Separator />
-            <Menu Margin="2,0,0,0" VerticalAlignment="Center"
-                  ToolTip="View outline of main source code statements and their associated time">
-              <MenuItem
-                x:Name="OutlineMenu"
-                Margin="0,0,0,0"
-                Padding="0,0,0,0"
-                Visibility="{Binding IsSourceFileDocument, Converter={StaticResource BoolToVisibilityConverter}}"
-                Background="{Binding Path=HasProfileInstanceFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
-                OverridesDefaultStyle="True">
-                <MenuItem.Header>
-                  <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource TreeIcon}" Style="{StaticResource DisabledImageStyle}" />
-                    <TextBlock
-                      Margin="2,0,0,0"
-                      VerticalAlignment="Bottom"
-                      Text="Outline" />
-                    <Path
-                      Margin="4,2,2,0"
-                      VerticalAlignment="Center"
-                      Data="M 0 0 L 3 3 L 6 0 Z"
-                      Fill="Black" />
-                  </StackPanel>
-                </MenuItem.Header>
-              </MenuItem>
-            </Menu>
-            <Menu
-              Margin="2,0,0,0"
-              VerticalAlignment="Center"
-              ToolTip="Select function instances to display">
-              <MenuItem
-                x:Name="InstancesMenu"
-                Margin="0,0,0,0"
-                Padding="0,0,0,0"
-                Background="{Binding Path=HasProfileInstanceFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
-                OverridesDefaultStyle="True">
-                <MenuItem.Header>
-                  <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource TasklistIcon}" Style="{StaticResource DisabledImageStyle}" />
-                    <TextBlock
-                      Margin="2,0,0,0"
-                      VerticalAlignment="Bottom"
-                      Text="Instances" />
-                    <Path
-                      Margin="4,2,2,0"
-                      VerticalAlignment="Center"
-                      Data="M 0 0 L 3 3 L 6 0 Z"
-                      Fill="Black" />
-                  </StackPanel>
-                </MenuItem.Header>
-                <MenuItem
-                  Click="InstanceMenuItem_OnClick"
-                  Header="All Instances"
-                  IsCheckable="False"
-                  IsChecked="{Binding RemoveEmptyColumns}"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}" />
-                <Separator />
-              </MenuItem>
-            </Menu>
-            <Menu Margin="2,0,0,0" VerticalAlignment="Center">
-              <MenuItem
-                x:Name="ThreadsMenu"
-                Margin="0,0,0,0"
-                Padding="0,0,0,0"
-                Background="{Binding Path=HasProfileThreadFilter, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
-                OverridesDefaultStyle="True"
-                ToolTip="Select threads the function ran on to display">
-                <MenuItem.Header>
-                  <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource FilterIcon}" Style="{StaticResource DisabledImageStyle}" />
-                    <TextBlock
-                      Margin="2,0,0,0"
-                      VerticalAlignment="Bottom"
-                      Text="Threads" />
-                    <Path
-                      Margin="4,2,2,0"
-                      VerticalAlignment="Center"
-                      Data="M 0 0 L 3 3 L 6 0 Z"
-                      Fill="Black" />
-                  </StackPanel>
-                </MenuItem.Header>
-                <MenuItem
-                  Click="ThreadMenuItem_OnClick"
-                  Header="All Threads"
-                  IsCheckable="False"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}" />
-                <Separator />
-              </MenuItem>
-            </Menu>
-            <Separator />
-            <Menu
-              Margin="2,0,2,0"
-              VerticalAlignment="Center"
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-              <MenuItem
-                Padding="0,0,0,0"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                OverridesDefaultStyle="True"
-                ToolTip="Export function list">
-                <MenuItem.Header>
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock
-                      Margin="2,0,0,0"
-                      VerticalAlignment="Bottom"
-                      Text="Export" />
-                    <Path
-                      Margin="4,2,0,0"
-                      VerticalAlignment="Center"
-                      Data="M 0 0 L 3 3 L 6 0 Z"
-                      Fill="Black" />
-                  </StackPanel>
-                </MenuItem.Header>
-                <MenuItem
-                  Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfile"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Export as Excel File"
-                  ToolTip="Save the document lines and additional columns as an Excel worksheet">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource ExcelIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem
-                  Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileHTML"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Export as HTML File"
-                  ToolTip="Save the document lines and additional columns as an HTML file">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource SourceIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem
-                  Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileMarkdown"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Export as Markdown File"
-                  ToolTip="Save the document lines and additional columns as a Markdown file">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource DocumentIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <Separator/>
-                <MenuItem
-                  Command="{Binding CopyDocumentCommand}"
-                  CommandTarget="{Binding ElementName=FunctionList}"
-                  Header="Copy as HTML/Markdown table"
-                  ToolTip="Copy the document lines and additional columns as an HTML file">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource ClipboardIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-              </MenuItem>
-            </Menu>
-            <Menu
-              Margin="2,0,0,0"
-              VerticalAlignment="Center"
-              Visibility="{Binding IsPreviewDocument, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
-              <MenuItem
-                x:Name="ProfileViewMenu"
-                Margin="0,0,0,0"
-                Padding="0,0,0,0"
-                OverridesDefaultStyle="True"
-                ToolTip="Configure displayed profiling columns">
-                <MenuItem.Header>
-                  <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource EyeIcon}" Style="{StaticResource DisabledImageStyle}" />
-                    <TextBlock
-                      Margin="4,0,0,0"
-                      VerticalAlignment="Bottom"
-                      Text="View" />
-                    <Path
-                      Margin="4,2,0,0"
-                      VerticalAlignment="Center"
-                      Data="M 0 0 L 3 3 L 6 0 Z"
-                      Fill="Black" />
-                  </StackPanel>
-                </MenuItem.Header>
-                <MenuItem
-                  Checked="ViewMenuItem_OnCheckedChanged"
-                  Header="Show Performance Counters"
-                  IsCheckable="True"
-                  IsChecked="{Binding ShowPerformanceCounterColumns}"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}"
-                  Unchecked="ViewMenuItem_OnCheckedChanged" />
-                <MenuItem
-                  Checked="ViewMenuItem_OnCheckedChanged"
-                  Header="Show Performance Metrics"
-                  IsCheckable="True"
-                  IsChecked="{Binding ShowPerformanceMetricColumns}"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}"
-                  Unchecked="ViewMenuItem_OnCheckedChanged" />
-                <MenuItem
-                  Checked="ViewMenuItem_OnCheckedChanged"
-                  Header="Hide Empty Columns"
-                  IsCheckable="True"
-                  IsChecked="{Binding RemoveEmptyColumns}"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}"
-                  Unchecked="ViewMenuItem_OnCheckedChanged" />
-                <Separator />
-                <MenuItem
-                  Checked="ViewMenuItem_OnCheckedChanged"
-                  Header="Columns"
-                  IsHitTestVisible="False"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}" />
-              </MenuItem>
-            </Menu>
-          </ToolBar>
-        </ToolBarTray>
-      </Border>
-
-      <irExplorerUi:IRDocument
-        x:Name="TextView"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-        DockPanel.Dock="Bottom"
-        FontFamily="Consolas"
-        FontSize="12"
-        HorizontalScrollBarVisibility="Auto"
-        ShowLineNumbers="True"
-        SyntaxHighlighting="C++"
-        VerticalScrollBarVisibility="Auto">
-        <irExplorerUi:IRDocument.ContextMenu>
-          <ContextMenu>
-            <MenuItem
-              Command="irExplorerUi:DocumentHostCommand.CopySelectedLinesAsHTML"
-              CommandTarget="{Binding ElementName=TextView}"
-              Header="Copy Selection Details"
-              ToolTip="Copy the selected text and additional profiling columns as a HTML table"
-              InputGestureText="Ctrl+C">
-              <MenuItem.Icon>
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource ClipboardIcon}" />
-              </MenuItem.Icon>
-            </MenuItem>
-            <MenuItem
-              Command="irExplorerUi:DocumentHostCommand.CopySelectedText"
-              CommandTarget="{Binding ElementName=TextView}"
-              Header="Copy Text"
-              InputGestureText="Ctrl+Shift+C"
-              ToolTip="Copy the selected text only" />
-          </ContextMenu>
-        </irExplorerUi:IRDocument.ContextMenu>
-      </irExplorerUi:IRDocument>
-    </DockPanel>
-
-    <GridSplitter
-      Grid.Column="1"
-      HorizontalAlignment="Stretch"
-      VerticalAlignment="Stretch"
-      Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-      ResizeBehavior="PreviousAndNext" />
-
-    <document:DocumentColumns
-      x:Name="ProfileColumns"
-      Grid.Column="2"
-      Padding="-1,0,0,0"
-      HorizontalAlignment="Stretch"
-      VerticalAlignment="Stretch" />
-  </Grid>
+        <document:DocumentColumns
+            x:Name="ProfileColumns"
+            Grid.Column="2"
+            Padding="-1,0,0,0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch" />
+    </Grid>
 </UserControl>

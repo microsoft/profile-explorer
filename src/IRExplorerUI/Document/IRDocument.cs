@@ -203,6 +203,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   private bool selectingText_;
   private HashSet<FoldingSection> foldedBlocks_;
   private bool hasCustomLineNumbers_;
+  private List<IVisualLineTransformer> registerdTransformers_;
 
   public IRDocument() {
     // Setup element tracking data structures.
@@ -222,6 +223,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     expressionStyle_ = DefaultHighlightingStyles.LightStyleSet;
     markerChildStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.StyleSet);
     markerParentStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.LightStyleSet);
+    registerdTransformers_ = new();
 
     SetupProperties();
     SetupStableRenderers();
@@ -583,7 +585,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   }
 
   public void UnloadDocument() {
-    UnregisterTextColorizers();
+    UnregisterTextTransformers();
     ResetRenderers();
     IsLoaded = false;
     Text = "";
@@ -1156,18 +1158,25 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     ShowLineNumbers = restoreBuiltin;
   }
 
-  public void RegisterTextColorizer(DocumentColorizingTransformer colorizer) {
-    if (!TextArea.TextView.LineTransformers.Contains(colorizer)) {
-      TextArea.TextView.LineTransformers.Add(colorizer);
+  public void RegisterTextTransformer(DocumentColorizingTransformer transformer) {
+    if (!TextArea.TextView.LineTransformers.Contains(transformer)) {
+      TextArea.TextView.LineTransformers.Add(transformer);
+      registerdTransformers_.Add(transformer);
     }
   }
 
-  public void UnregisterTextColorizer(DocumentColorizingTransformer colorizer) {
-    TextArea.TextView.LineTransformers.Remove(colorizer);
+  public void UnregisterTextTransformer(DocumentColorizingTransformer transformer) {
+    if(registerdTransformers_.Remove(transformer)) {
+      TextArea.TextView.LineTransformers.Remove(transformer);
+    }
   }
 
-  public void UnregisterTextColorizers() {
-    TextArea.TextView.LineTransformers.Clear();
+  public void UnregisterTextTransformers() {
+    foreach (var transformer in registerdTransformers_) {
+      TextArea.TextView.LineTransformers.Remove(transformer);
+    }
+
+    registerdTransformers_.Clear();
   }
 
   private void AddDiffTextSegments(List<DiffTextSegment> segments) {

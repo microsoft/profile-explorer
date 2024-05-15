@@ -45,7 +45,7 @@ public interface MarkedDocument {
                                                        string label = null, string tooltip = null,
                                                        bool prepend = false);
   public void RemoveElementOverlays(IRElement element, object onlyWithTag = null);
-  public void RegisterTextColorizer(DocumentColorizingTransformer colorizer);
+  public void RegisterTextTransformer(DocumentColorizingTransformer transformer);
 }
 
 

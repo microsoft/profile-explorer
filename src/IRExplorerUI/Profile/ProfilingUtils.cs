@@ -113,7 +113,6 @@ public static class ProfilingUtils {
     foreach (var thread in node.SortedByWeightPerThreadWeights) {
       double weightPercentage = funcProfile.ScaleWeight(thread.Values.Weight);
 
-
       var threadInfo = session.ProfileData.FindThread(thread.ThreadId);
       var backColor = timelineSettings.GetThreadBackgroundColors(threadInfo, thread.ThreadId).Margin;
 
@@ -795,7 +794,6 @@ public static class ProfilingUtils {
     }
   }
 
-
   public static async Task<List<FunctionMarkingCategory>>
     CreateMarkedFunctionsMenu(MenuItem menu, bool isCategoriesMenu,
                               MouseButtonEventHandler menuClickHandler,
@@ -1014,9 +1012,8 @@ public static class ProfilingUtils {
       }
     }
 
-    return weightSum != TimeSpan.Zero;
+    return count > 1;
   }
-
 
   public static bool ComputeSourceWeightInRange(int startLine, int endLine,
                                                 SourceLineProcessingResult profileResult,
@@ -1048,6 +1045,6 @@ public static class ProfilingUtils {
       count++; // Also count lines without weight.
     }
 
-    return weightSum != TimeSpan.Zero;
+    return count > 1;
   }
 }

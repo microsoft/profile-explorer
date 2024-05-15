@@ -522,6 +522,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void UpdateMarkingUI() {
+    UpdateMarkedFunctions(false);
     Session.FunctionMarkingChanged(ToolPanelKind.FlameGraph);
   }
 

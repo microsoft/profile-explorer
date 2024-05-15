@@ -213,25 +213,22 @@ public partial class FlameGraphViewer : FrameworkElement {
   }
 
   public FlameGraphNode SelectNode(ProfileCallTreeNode graphNode) {
-    var nodes = flameGraph_.GetNodes(graphNode);
+    var fgNodes = flameGraph_.GetNodes(graphNode);
 
     // Because the flame graph can be rooted at a different node then
     // the call tree, parts of the call tree may not have a flame graph node.
-    if (nodes is {Count: > 0}) {
-      foreach (var node in nodes) {
-        SelectNode(node, true, false);
-      }
-
-      return nodes[0];
+    if (fgNodes is {Count: > 0}) {
+      SelectNodes(fgNodes);
+      return fgNodes[0];
     }
 
     return null;
   }
 
   public List<FlameGraphNode> SelectNodes(ProfileCallTreeNode graphNode) {
-    var nodes = flameGraph_.GetNodes(graphNode);
-    SelectNodes(nodes);
-    return nodes;
+    var fgNodes = flameGraph_.GetNodes(graphNode);
+    SelectNodes(fgNodes);
+    return fgNodes;
   }
 
   public List<FlameGraphNode> SelectNodes(List<ProfileCallTreeNode> nodes) {

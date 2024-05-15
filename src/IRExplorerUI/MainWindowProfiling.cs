@@ -323,11 +323,9 @@ public partial class MainWindow : Window, ISession {
       return false;
     }
 
-
     if (sourcePanelKind != ToolPanelKind.Section) {
       await SwitchActiveFunction(node.Function, false);
     }
-
 
     if (sourcePanelKind != ToolPanelKind.FlameGraph) {
       if (FindPanel(ToolPanelKind.FlameGraph) is FlameGraphPanel flameGraphPanel) {
@@ -637,7 +635,7 @@ public partial class MainWindow : Window, ISession {
     foreach (var markingSet in builtinMarkings.FunctionColors) {
       var item = new MenuItem {
         Header = markingSet.Title,
-        ToolTip = markingSet.Name,
+        ToolTip = DocumentUtils.FormatLongFunctionName(markingSet.Name),
         Tag = markingSet,
       };
 

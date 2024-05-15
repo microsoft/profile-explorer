@@ -20,7 +20,7 @@ public class FunctionMarkingSettings : SettingsBase {
   public bool UseModuleColors { get; set; }
   [ProtoMember(4), OptionValue(false)]
   public bool UseFunctionColors { get; set; }
-  [ProtoMember(5), OptionValue("LightPastels2")]
+  [ProtoMember(5), OptionValue("LightPastels")]
   public string ModulesColorPalette { get; set; }
   [ProtoMember(6), OptionValue()]
   public FunctionMarkingSet CurrentSet { get; set; }
@@ -293,7 +293,6 @@ public class FunctionMarkingSet : SettingsBase {
     foreach (var marking in FunctionColors) {
       clone.FunctionColors.Add(marking.Clone());
     }
-
 
     foreach (var marking in ModuleColors) {
       clone.ModuleColors.Add(marking.Clone());

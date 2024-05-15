@@ -132,11 +132,13 @@ public class SourceFileFinder {
   
   public void ResetDisabledMappings() {
     disabledSourceMappings_.Clear();
+    sourceFileMapper_.ResetMissingFiles();
     SaveSettings();
   }
   
   public void ResetDisabledMappings(string filePath) {
     disabledSourceMappings_.Remove(filePath);
+    sourceFileMapper_.ResetMissingFile(filePath);
     SaveSettings();
   }
 

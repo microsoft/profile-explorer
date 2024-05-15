@@ -256,6 +256,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private bool columnsVisible_;
   private bool ignoreNextCaretEvent_;
   private bool disableCaretEvent_;
+  private bool selectedLines_;
   private ReadOnlyMemory<char> originalSourceText_;
   private ReadOnlyMemory<char> sourceText_;
   private bool hasProfileInfo_;
@@ -298,6 +299,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.TextRegionFolded += TextViewOnTextRegionFolded;
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
     TextView.PreviewMouseDown += TextView_PreviewMouseDown;
+    TextView.PreviewMouseUp += TextView_PreviewMouseUp;
     PreviewKeyDown += TextView_PreviewKeyDown;
     TextView.FunctionCallOpen += TextViewOnFunctionCallOpen;
   }
@@ -345,9 +347,28 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       e.Handled = true;
       await LoadNextSection();
     }
+    else if(e.ChangedButton == MouseButton.Left) {
+      // Disable selecting the assembly lines associated with the source line
+      // during a selection of multiple lines.
+      disableCaretEvent_ = true;
+      selectedLines_ = false;
+    }
   }
 
-  public async Task LoadPreviousSection() {
+  private async void TextView_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
+    if(e.ChangedButton == MouseButton.Left) {
+      if(!selectedLines_) {
+        // No multi-line selection was done,
+        // select assembly lines associated with the source line.
+        HighlightElementsOnSelectedLine();
+      }
+
+      disableCaretEvent_ = false;
+      selectedLines_ = false;
+    }
+  }
+
+    public async Task LoadPreviousSection() {
     var state = historyManager_.PopPreviousState();
 
     if (state != null) {
@@ -495,7 +516,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     return true;
   }
 
-
   private async Task HideProfile() {
     HasProfileInfo = false;
     ColumnsVisible = false;
@@ -624,7 +644,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public bool HasProfileInstanceFilter => profileFilter_ is {HasInstanceFilter:true};
   public bool HasProfileThreadFilter => profileFilter_ is {HasThreadFilter:true};
 
-
   string MakeSyntaxNodePreviewText(string text, int maxLength) {
     if (string.IsNullOrEmpty(text)) {
       return "";
@@ -713,7 +732,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
           if (sourceProcessingResult.SourceLineWeight.TryGetValue(line, out var w)) {
             weight += w;
           }
-
 
           if (sourceProcessingResult.SourceLineCounters.TryGetValue(line, out var c)) {
             counters.Add(c);
@@ -1276,7 +1294,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     assemblyColorizer_ = new RangeColorizer(sourceProfileResult_.AssemblyRanges,
       ((SourceFileSettings)settings_).AssemblyTextColor.AsBrush(),
       ((SourceFileSettings)settings_).AssemblyBackColor.AsBrush(), asmFont);
-    TextView.RegisterTextColorizer(assemblyColorizer_);
+    TextView.RegisterTextTransformer(assemblyColorizer_);
   }
 
   private void SetupSourceAssemblyFolding(bool defaultClosed) {
@@ -1466,8 +1484,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       }
     }
 
-    TextView.SyntaxHighlighting = highlightingDef;
     TextView.Text = text;
+    TextView.SyntaxHighlighting = highlightingDef;
     sourceText_ = text.AsMemory();
     originalSourceText_ = sourceText_;
     disableCaretEvent_ = false;
@@ -1633,7 +1651,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     sourceProfileResult_ = null;
 
     if (assemblyColorizer_ != null) {
-      TextView.UnregisterTextColorizer(assemblyColorizer_);
+      TextView.UnregisterTextTransformer(assemblyColorizer_);
       TextView.UninstallBlockFolding();
       assemblyColorizer_ = null;
     }
@@ -1752,7 +1770,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     await ApplyProfileFilter();
   }
 
-
   private void ProfileColumns_RowSelected(object sender, int line) {
     if (ignoreNextRowSelectedEvent_) {
       ignoreNextRowSelectedEvent_ = false;
@@ -1784,6 +1801,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       double weightPercentage = funcProfile.ScaleWeight(weightSum);
       string text = $"Selected {count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
       Session.SetApplicationStatus(text, "Sum of time for the selected instructions");
+      selectedLines_ = true;
     }
     else {
       if (funcProfile == null ||
@@ -1797,6 +1815,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       double weightPercentage = funcProfile.ScaleWeight(weightSum);
       string text = $"Selected {count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
       Session.SetApplicationStatus(text, "Sum of time for the selected source lines");
+      selectedLines_ = true;
     }
   }
 

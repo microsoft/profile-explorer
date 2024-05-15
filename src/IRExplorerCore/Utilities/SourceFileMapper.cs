@@ -56,6 +56,18 @@ public class SourceFileMapper {
     }
   }
 
+  public void ResetMissingFiles() {
+    lock (lockObject_) {
+      missingFilesSet_.Clear();
+    }
+  }
+
+  public void ResetMissingFile(string filePath) {
+    lock (lockObject_) {
+      missingFilesSet_.Remove(filePath);
+    }
+  }
+
   private bool TryLookupInMap(string sourceFile, out string result) {
     int index = sourceFile.LastIndexOf(Path.DirectorySeparatorChar);
 

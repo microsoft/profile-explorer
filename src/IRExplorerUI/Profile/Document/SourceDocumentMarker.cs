@@ -128,7 +128,7 @@ public class SourceDocumentMarker {
     if(settings_.MarkCallTargets) {
       var colorizer = new OperandColorizer(lineToOperandMap, settings_.CallTargetTextColor.AsBrush(),
                                            settings_.CallTargetBackColor.AsBrush());
-      document.RegisterTextColorizer(colorizer);
+      document.RegisterTextTransformer(colorizer);
     }
   }
 
