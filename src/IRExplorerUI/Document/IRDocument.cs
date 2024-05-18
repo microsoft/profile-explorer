@@ -1414,7 +1414,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
   public bool HandleOverlayKeyPress(KeyEventArgs e) {
     return overlayRenderer_.KeyPressed(e);
   }
-  
+
   protected override void OnPreviewKeyDown(KeyEventArgs e) {
     base.OnPreviewKeyDown(e);
 
@@ -1599,7 +1599,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     var borderPen = ColorPens.GetBoldPen(docSettings.BorderColor);
     var lightBorderPen = ColorPens.GetTransparentPen(docSettings.BorderColor, 150);
     selectedStyle_ ??= new HighlightingStyle();
-    selectedStyle_.BackColor = ColorBrushes.GetBrush(settings_.SelectedValueColor);
+    //selectedStyle_.BackColor = ColorBrushes.GetBrush(settings_.SelectedValueColor);
+    selectedStyle_.BackColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.4);
     selectedStyle_.Border = borderPen;
     selectedBlockStyle_ ??= new HighlightingStyle();
     selectedBlockStyle_.BackColor = ColorBrushes.GetBrush(Colors.Transparent);
@@ -4094,7 +4095,8 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     var position = e.GetPosition(TextArea.TextView);
 
     // Ignore click outside the text view, such as the right marker bar.
-    if (position.X >= TextArea.TextView.ActualWidth ||
+    if (position.X <= 0 ||
+        position.X >= TextArea.TextView.ActualWidth ||
         position.Y >= TextArea.TextView.ActualHeight) {
       return;
     }

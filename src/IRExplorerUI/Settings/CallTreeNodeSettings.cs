@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Windows.Media;
 using IRExplorerUI.Profile;
 using ProtoBuf;
 
@@ -45,6 +46,14 @@ public class CallTreeNodeSettings : SettingsBase {
   public ColumnSettings CategoryFunctionListColumns { get; set; }
   [ProtoMember(15), OptionValue()]
   public ColumnSettings InstanceListColumns { get; set; }
+  [ProtoMember(16), OptionValue("#F2EA9D")]
+  public Color HistogramBarColor { get; set; }
+  [ProtoMember(17), OptionValue("#B22222")]
+  public Color HistogramAverageColor { get; set; }
+  [ProtoMember(18), OptionValue("#00008B")]
+  public Color HistogramMedianColor { get; set; }
+  [ProtoMember(19), OptionValue("#008000")]
+  public Color HistogramCurrentColor { get; set; }
 
   public override void Reset() {
     InitializeReferenceMembers();

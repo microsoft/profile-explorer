@@ -26,8 +26,8 @@
     <TabControl
       Grid.Row="0"
       Margin="0,0,0,4"
-      BorderThickness="0"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+      BorderThickness="0"
       IsSynchronizedWithCurrentItem="True"
       SelectedIndex="0"
       TabStripPlacement="Left">
@@ -40,9 +40,7 @@
         </Grid>
       </TabItem>
       <TabItem Header="Summary" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <options:SectionOptionsPanel
             x:Name="SummaryOptionsPanel"
             Width="Auto"
@@ -53,9 +51,7 @@
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Document" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <options:DocumentOptionsPanel
             x:Name="DocumentOptionsPanel"
             Width="Auto"
@@ -65,49 +61,8 @@
             Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Flow Graph" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
-          <options:FlowGraphOptionsPanel
-            x:Name="GraphOptionsPanel"
-            Width="Auto"
-            Height="Auto"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
-        </ScrollViewer>
-      </TabItem>
-      <TabItem Header="Expression Graph" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
-          <options:ExpressionGraphOptionsPanel
-            x:Name="ExpressionGraphOptionsPanel"
-            Width="Auto"
-            Height="Auto"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
-        </ScrollViewer>
-      </TabItem>
-      <TabItem Header="Diffing" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
-          <options:DiffOptionsPanel
-            x:Name="DiffOptionsPanel"
-            Width="Auto"
-            Height="Auto"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
-        </ScrollViewer>
-      </TabItem>
       <TabItem Header="Timeline" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <options:TimelineOptionsPanel
             x:Name="TimelineOptionsPanel"
             Width="Auto"
@@ -117,10 +72,19 @@
             Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
+      <TabItem Header="Source File" Style="{StaticResource TabControlStyle}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <options:SourceFileOptionsPanel
+            x:Name="SourceFileOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="Visible" />
+        </ScrollViewer>
+      </TabItem>
       <TabItem Header="Flame Graph" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <options:FlameGraphOptionsPanel
             x:Name="FlameGraphOptionsPanel"
             Width="Auto"
@@ -131,9 +95,7 @@
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Call Tree" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <options:CallTreeOptionsPanel
             x:Name="CallTreeOptionsPanel"
             Width="Auto"
@@ -144,9 +106,7 @@
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Caller/Callee" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <options:CallTreeOptionsPanel
             x:Name="CallerCalleeOptionsPanel"
             Width="Auto"
@@ -156,12 +116,11 @@
             Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Source File" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
-          <options:SourceFileOptionsPanel
-            x:Name="SourceFileOptionsPanel"
+
+      <TabItem Header="Flow Graph" Style="{StaticResource TabControlStyle}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <options:FlowGraphOptionsPanel
+            x:Name="GraphOptionsPanel"
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
@@ -169,17 +128,53 @@
             Visibility="Visible" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Profiling" IsEnabled="False" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
+      <TabItem Header="Expression Graph" Style="{StaticResource TabControlStyle}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <options:ExpressionGraphOptionsPanel
+            x:Name="ExpressionGraphOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="Visible" />
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="Preview Popup" Style="{StaticResource TabControlStyle}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <options:PreviewPopupOptionsPanel
+            x:Name="PreviewPopupOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="Visible" />
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="Diffing" Style="{StaticResource TabControlStyle}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <options:DiffOptionsPanel
+            x:Name="DiffOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="Visible" />
+        </ScrollViewer>
+      </TabItem>
+
+      <TabItem
+        Header="Profiling"
+        IsEnabled="False"
+        Style="{StaticResource TabControlStyle}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Advanced" IsEnabled="False" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
+      <TabItem
+        Header="Advanced"
+        IsEnabled="False"
+        Style="{StaticResource TabControlStyle}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <TextBlock Text="TODO" />
         </ScrollViewer>
       </TabItem>
@@ -193,31 +188,29 @@
         <ColumnDefinition Width="50" />
       </Grid.ColumnDefinitions>
 
-      <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2">
+      <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal">
         <Button
-
           x:Name="ResetButton"
-          Click="ResetButton_OnClick"
           Height="24"
           Padding="4,2,4,2"
-          ToolTip="Reset all settings to their default values"
-          HorizontalContentAlignment="Left">
+          HorizontalContentAlignment="Left"
+          Click="ResetButton_OnClick"
+          ToolTip="Reset all settings to their default values">
           <StackPanel Orientation="Horizontal">
             <Image
               Width="16"
               Height="16"
               Source="{StaticResource UndoIcon}" />
-            <TextBlock Margin="4,0,0,0" Text="Default" />
+            <TextBlock Margin="4,0,0,0" Text="Reset" />
           </StackPanel>
         </Button>
         <Button
-
+          x:Name="ImportButton"
           Height="24"
           Margin="2,0,0,0"
           Padding="4,2,4,2"
-          x:Name="ImportButton"
-          Click="ImportButton_OnClick"
           HorizontalContentAlignment="Left"
+          Click="ImportButton_OnClick"
           ToolTip="Import all settings from an exported ZIP file">
           <StackPanel Orientation="Horizontal">
             <Image
@@ -228,13 +221,12 @@
           </StackPanel>
         </Button>
         <Button
-
+          x:Name="ExportButton"
           Height="24"
           Margin="2,0,0,0"
           Padding="4,2,4,2"
-          x:Name="ExportButton"
-          Click="ExportButton_OnClick"
           HorizontalContentAlignment="Left"
+          Click="ExportButton_OnClick"
           ToolTip="Export all settings to a ZIP file">
           <StackPanel Orientation="Horizontal">
             <Image
@@ -247,22 +239,20 @@
       </StackPanel>
       <Button
         x:Name="ApplyButton"
-        Click="ApplyButton_OnClick"
         Grid.Column="2"
         Height="24"
-        VerticalAlignment="Top"
         Margin="0,0,4,0"
-
+        VerticalAlignment="Top"
         BorderThickness="1,1,1,1"
+        Click="ApplyButton_OnClick"
         Content="Apply" />
       <Button
         x:Name="CloseButton"
-        Click="CloseButton_OnClick"
         Grid.Column="3"
         Height="24"
         VerticalAlignment="Top"
-
         BorderThickness="1,1,1,1"
+        Click="CloseButton_OnClick"
         Content="Close" />
     </Grid>
   </Grid>

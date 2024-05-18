@@ -31,7 +31,7 @@ public class SourceFileSettings : TextViewSettingsBase {
   public bool ShowSourceStatementsOnMargin { get; set; }
   [ProtoMember(9), OptionValue(true)]
   public bool ReplaceInsignificantSourceStatements { get; set; }
-  [ProtoMember(10), OptionValue("#707070")]
+  [ProtoMember(10), OptionValue("#505050")]
   public Color AssemblyTextColor { get; set; }
   [ProtoMember(11), OptionValue("#00000000")]
   public Color AssemblyBackColor { get; set; }
@@ -40,7 +40,6 @@ public class SourceFileSettings : TextViewSettingsBase {
       base.Reset();
       InitializeReferenceMembers();
       ResetAllOptions(this);
-      ProfileMarkerSettings.JumpToHottestElement = true;
   }
 
   [ProtoAfterDeserialization]

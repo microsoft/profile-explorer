@@ -91,7 +91,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     ToolbarPanel.Background = color;
     PanelBorder.BorderBrush = color;
   }
-  
+
   public event PropertyChangedEventHandler PropertyChanged;
   public IRElement PreviewedElement { get; set; }
 
@@ -202,6 +202,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     ProfileTextView.ShowPerformanceMetricColumns = settings_.ShowPerformanceMetricColumns;
     ProfileTextView.ProfileFilter = filter;
     ProfileTextView.Initialize(App.Settings.DocumentSettings);
+    ProfileTextView.Focus();
     await SetupInitialMode(parsedSection, showSourceCode);
   }
 
@@ -386,7 +387,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     if (showSourceFile_) {
       ProfileTextView.Initialize(App.Settings.SourceFileSettings);
       var function = parsedSection_.ParentFunction;
-      var (sourceInfo, debugInfo) = 
+      var (sourceInfo, debugInfo) =
         await Session.CompilerInfo.SourceFileFinder.FindLocalSourceFile(function);
 
       if (!sourceInfo.IsUnknown) {

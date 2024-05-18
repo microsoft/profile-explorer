@@ -487,6 +487,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     if (TextView.IsLoaded) {
       historyManager_.SaveCurrentState();
+      TextView.UnloadDocument();
     }
 
     await TextView.LoadSection(parsedSection);
@@ -1271,7 +1272,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void SelectSyntaxNodeLineRange(ProfileSourceSyntaxNode node) {
-    var backColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.3);
+    var backColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.4);
     TextView.SelectElementsInLineRange(node.Start.Line, node.End.Line,
       MapFromOriginalSourceLineNumber, backColor);
   }
@@ -1639,7 +1640,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private void ResetInstance() {
     ResetInstanceProfiling();
-    TextView.UnloadDocument();
     sourceText_ = null;
     inlinee_ = null;
   }
@@ -1783,7 +1783,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (Section == null) {
       return; // Nothing loaded, ignore.
     }
-    
+
     // For source files, compute the sum of the selected lines time.
     int startLine = TextView.TextArea.Selection.StartPosition.Line;
     int endLine = TextView.TextArea.Selection.EndPosition.Line;

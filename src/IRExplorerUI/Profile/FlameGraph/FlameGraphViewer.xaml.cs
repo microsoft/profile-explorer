@@ -552,7 +552,7 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         if (nodes is {Count:> 0}) {
           foreach (var node in nodes) {
-            SelectNode(node, true);
+            SelectNode(node, true, false);
           }
 
           return;
@@ -575,12 +575,13 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     while (startNode.Depth >= stopNode.Depth) {
+      list.Add(startNode);
+
       if (startNode == stopNode) {
         found = true;
         break;
       }
 
-      list.Add(startNode);
       startNode = startNode.Parent;
     }
 

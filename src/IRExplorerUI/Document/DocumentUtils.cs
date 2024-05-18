@@ -106,7 +106,7 @@ public static class DocumentUtils {
       // is meant to be associated with the start line, while GetRectsForSegment
       // would use the first line still in view, so skip manually over it.
       if (segment.Element is BlockIR &&
-          segment.Element.TextLocation.Line < viewStartLine) {
+          segment.Element.TextLocation.Line < viewStartLine - 1) {
         continue;
       }
 
@@ -425,7 +425,7 @@ public static class DocumentUtils {
 
     return sb.ToString().Trim();
   }
-  
+
   public static IRTextSection FindCallTargetSection(IRElement element, IRTextSection section, ISession session) {
     if (!element.HasName) {
       return null;

@@ -167,7 +167,7 @@
               VerticalAlignment="Center"
               Text="Managed (.NET) code color palette" />
           </StackPanel>
-          <Separator Margin="0,4,0,4" Background="LightGray"/>
+          <Separator Margin="0,4,0,4" Background="LightGray" />
 
           <TextBlock
             Margin="0,4,0,4"
@@ -187,8 +187,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=NodeTextColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -209,8 +208,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=KernelNodeTextColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -231,8 +229,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=ManagedNodeTextColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -253,8 +250,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=NodeModuleColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -275,8 +271,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=NodePercentageColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -297,8 +292,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=NodeWeightColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -319,8 +313,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=NodeBorderColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -341,8 +334,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=KernelNodeBorderColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -363,8 +355,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=ManagedNodeBorderColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -385,8 +376,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=SelectedNodeColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -407,8 +397,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=SelectedNodeBorderColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -429,8 +418,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=SearchResultMarkingColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -451,8 +439,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=SearchedNodeColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -473,8 +460,7 @@
               BorderBrush="#707070"
               IsManipulationEnabled="True"
               SelectedColor="{Binding Path=SearchedNodeBorderColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -514,9 +500,9 @@
             Content="Alternate list view background color"
             IsChecked="{Binding AlternateListRows, Mode=TwoWay}"
             ToolTip="Alternate the background color of the function/module list view items" />
-          <Separator Margin="0,4,0,4" Background="LightGray"/>
+          <Separator Margin="0,4,0,4" Background="LightGray" />
 
-          <TextBlock FontWeight="Medium" Text="Function List" />
+          <TextBlock FontWeight="Medium" Text="Function Lists" />
           <StackPanel x:Name="FunctionListOptionsPanel">
             <CheckBox
               x:Name="FilterWeightCheckBox"
@@ -560,7 +546,7 @@
               IsChecked="{Binding SortByExclusiveTime}" />
           </StackPanel>
 
-          <Separator Margin="0,4,0,4" Background="LightGray"/>
+          <Separator Margin="0,4,0,4" Background="LightGray" />
           <TextBlock FontWeight="Medium" Text="Preview Popup" />
           <CheckBox
             x:Name="ShowDetailsPopupCheckbox"
@@ -611,6 +597,93 @@
           </StackPanel>
 
           <local:PreviewPopupOptionsPanel x:Name="PreviewPopupOptionsPanel" IsEnabled="{Binding ElementName=ShowDetailsPopupCheckbox, Path=IsChecked}" />
+          <Separator Margin="0,2,0,4" Background="LightGray" />
+
+          <TextBlock FontWeight="Medium" Text="Histogram Colors" />
+          <Grid Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=HistogramBarColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Function group color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=HistogramAverageColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Average line color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=HistogramMedianColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Median line color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=HistogramCurrentColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Current instance color" />
+          </Grid>
         </StackPanel>
 
       </TabItem>

@@ -508,6 +508,10 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     series.FillColor = OxyColors.WhiteSmoke;
     series.StrokeThickness = 0.5;
 
+    OxyColor ColorFromArgb(Color color) {
+      return OxyColor.FromArgb(color.A, color.R, color.G, color.B);
+    }
+
     foreach (var bin in bins) {
       if (bin.Count == 0) {
         continue;
@@ -515,8 +519,8 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
       long start = bin.Weight.Ticks;
       long end = (bin.Weight + TimeSpan.FromTicks(weightPerBin)).Ticks;
-      double height = maxHeight / nodes.Count * bin.Count;
-      var item = new BinHistogramItem(start, end, bin.Count, bin.Count, OxyColors.Khaki) {
+      var barColor = ColorFromArgb(settings_.HistogramBarColor);
+      var item = new BinHistogramItem(start, end, bin.Count, bin.Count, barColor) {
         Count = bin.Count,
         TotalWeight = bin.TotalWeight,
         AverageWeight = TimeSpan.FromTicks(bin.TotalWeight.Ticks / bin.Count),
@@ -583,14 +587,14 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       model.Annotations.Add(point);
     }
 
-    AddPointAnnotation(currentNode.Weight.Ticks, OxyColors.Green);
+    AddPointAnnotation(currentNode.Weight.Ticks, ColorFromArgb(settings_.HistogramCurrentColor));
 
     // Add lines for median and average time.
     double average = nodes.Average(node => node.Weight.Ticks);
-    AddLineAnnotation(average, OxyColors.Firebrick, LineStyle.Dot);
+    AddLineAnnotation(average, ColorFromArgb(settings_.HistogramAverageColor), LineStyle.Dot);
 
     long median = nodes[nodes.Count / 2].Weight.Ticks;
-    AddLineAnnotation(median, OxyColors.DarkBlue, LineStyle.Dot);
+    AddLineAnnotation(median, ColorFromArgb(settings_.HistogramMedianColor), LineStyle.Dot);
 
     var plotView = new PlotView();
     plotView.Model = model;

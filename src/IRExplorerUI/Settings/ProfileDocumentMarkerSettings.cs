@@ -41,7 +41,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   public bool MarkBlocksInFlowGraph { get; set; }
   [ProtoMember(4), OptionValue(true)]
   public bool MarkCallTargets { get; set; }
-  [ProtoMember(5), OptionValue(false)]
+  [ProtoMember(5), OptionValue(true)]
   public bool JumpToHottestElement { get; set; }
   [ProtoMember(7), OptionValue(0.01)] // 1%
   public double ElementWeightCutoff { get; set; }
@@ -230,7 +230,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
       ? PickIconForPercentage(percentage)
       : PickIconForOrder(order, percentage);
   }
-  
+
   static ProfileDocumentMarkerSettings() {
     // Preload icons used to mark hot elements.
     orderIcons_ = [
@@ -240,7 +240,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
       IconDrawing.FromIconResource("HotFlameIconTransparent")
     ];
   }
-  
+
   public IconDrawing PickIconForOrder(int order, double percentage) {
     return order switch {
       0 => orderIcons_[0],

@@ -279,7 +279,8 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
 
   private void CloseDetachedPanels() {
     // Close all popups.
-    detachedPanels_.ForEach(panel => panel.ClosePopup());
+    var clone = detachedPanels_.CloneList();
+    clone.ForEach(panel => panel.ClosePopup());
     detachedPanels_.Clear();
   }
 

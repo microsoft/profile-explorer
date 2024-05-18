@@ -1126,7 +1126,9 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private async void ProcessList_PreviewKeyDown(object sender, KeyEventArgs e) {
-    await LoadProfileTraceFileAndCloseWindow(symbolSettings_);
+    if (e.Key == Key.Enter) {
+      await LoadProfileTraceFileAndCloseWindow(symbolSettings_);
+    }
   }
 
   private void ClearRejectedButton_Click(object sender, RoutedEventArgs e) {
