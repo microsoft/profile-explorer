@@ -133,7 +133,7 @@ public static class DocumentCommand {
     new RoutedUICommand("Untitled", "UndoAction", typeof(IRDocumentHost));
 }
 
-public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChanged {
+public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   private const float ParentStyleLightAdjustment = 1.20f;
   private const int DefaultMaxExpressionLevel = 4;
   private const int ExpressionLevelIncrement = 2;
@@ -1600,7 +1600,7 @@ public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChan
     var lightBorderPen = ColorPens.GetTransparentPen(docSettings.BorderColor, 150);
     selectedStyle_ ??= new HighlightingStyle();
     //selectedStyle_.BackColor = ColorBrushes.GetBrush(settings_.SelectedValueColor);
-    selectedStyle_.BackColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.4);
+    selectedStyle_.BackColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.5);
     selectedStyle_.Border = borderPen;
     selectedBlockStyle_ ??= new HighlightingStyle();
     selectedBlockStyle_.BackColor = ColorBrushes.GetBrush(Colors.Transparent);

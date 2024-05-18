@@ -8,6 +8,8 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class PreviewPopupSettings : SettingsBase {
+  public PreviewPopupSettings() : this(false) {}
+
   public PreviewPopupSettings(bool isElementPopup) {
     IsElementPopup = isElementPopup;
     Reset();

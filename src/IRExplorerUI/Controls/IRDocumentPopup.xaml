@@ -3,19 +3,19 @@
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:controls="clr-namespace:IRExplorerUI.Controls"
-  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  xmlns:document="clr-namespace:IRExplorerUI.Profile.Document"
   xmlns:controls1="clr-namespace:IRExplorerUI.Controls"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:document="clr-namespace:IRExplorerUI.Profile.Document"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   d:DesignHeight="450"
   d:DesignWidth="800"
   AllowsTransparency="True"
+  FocusManager.IsFocusScope="True"
   SnapsToDevicePixels="True"
   UseLayoutRounding="True"
-  FocusManager.IsFocusScope="True"
   mc:Ignorable="d">
   <controls:DraggablePopup.Resources>
-    <Style TargetType="Button" x:Key="PopupButton">
+    <Style x:Key="PopupButton" TargetType="Button">
       <Setter Property="OverridesDefaultStyle" Value="True" />
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -23,13 +23,14 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="{x:Type Button}">
-            <Border Background="{TemplateBinding Background}"
-                    BorderBrush="{TemplateBinding BorderBrush}"
-                    BorderThickness="{TemplateBinding BorderThickness}">
+            <Border
+              Background="{TemplateBinding Background}"
+              BorderBrush="{TemplateBinding BorderBrush}"
+              BorderThickness="{TemplateBinding BorderThickness}">
               <ContentPresenter
-                                Content="{TemplateBinding Content}"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center" />
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Content="{TemplateBinding Content}" />
             </Border>
           </ControlTemplate>
         </Setter.Value>
@@ -37,9 +38,9 @@
 
       <Style.Triggers>
         <Trigger Property="IsMouseOver" Value="True">
-          <Setter Property="Background" Value="#BEE6FD"/>
-          <Setter Property="BorderBrush" Value="Black"/>
-          <Setter Property="BorderThickness" Value="1"/>
+          <Setter Property="Background" Value="#BEE6FD" />
+          <Setter Property="BorderBrush" Value="Black" />
+          <Setter Property="BorderThickness" Value="1" />
         </Trigger>
       </Style.Triggers>
     </Style>
@@ -58,11 +59,14 @@
         ShadowDepth="2"
         Color="#FF929292" />
     </Border.Effect>
-    <Grid x:Name="ToolbarPanel" ContextMenu="{StaticResource PopupContextMenu}"
-    Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}">
+    <Grid
+      x:Name="ToolbarPanel"
+      Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}"
+      ContextMenu="{StaticResource PopupContextMenu}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="200" />
+        <ColumnDefinition Width="20" />
         <ColumnDefinition Width="20" />
       </Grid.ColumnDefinitions>
       <Grid.RowDefinitions>
@@ -79,53 +83,77 @@
         TextTrimming="CharacterEllipsis"
         ToolTip="{Binding PanelToolTip}" />
 
-      <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+      <StackPanel
+        Grid.Column="1"
+        HorizontalAlignment="Right"
+        Orientation="Horizontal">
         <Button
           Margin="2,0,2,0"
+          BorderThickness="1"
           Click="BackButton_Click"
           IsEnabled="{Binding HasPreviousFunctions}"
-          BorderThickness="1"
           Style="{StaticResource PopupButton}"
-          Visibility="{Binding ShowHistoryButtons, Converter={StaticResource BoolToVisibilityConverter}}"
-          ToolTip="Go back to previous function (Backspace/Mouse Back button)">
+          ToolTip="Go back to previous function (Backspace/Mouse Back button)"
+          Visibility="{Binding ShowHistoryButtons, Converter={StaticResource BoolToVisibilityConverter}}">
           <StackPanel Orientation="Horizontal">
             <Image Source="{StaticResource DockLeftIcon}" Style="{StaticResource DisabledImageStyle}" />
-            <TextBlock Margin="4,0,0,0" Text="Back" VerticalAlignment="Center"/>
+            <TextBlock
+              Margin="4,0,0,0"
+              VerticalAlignment="Center"
+              Text="Back" />
           </StackPanel>
         </Button>
         <Button
           Margin="2,0,0,0"
+          BorderThickness="1"
           Click="NextButton_Click"
           IsEnabled="{Binding HasNextFunctions}"
-          BorderThickness="1"
           Style="{StaticResource PopupButton}"
-          Visibility="{Binding ShowHistoryButtons, Converter={StaticResource BoolToVisibilityConverter}}"
-          ToolTip="Go back to next function (Shift+Backspace/Mouse Forward button)">
+          ToolTip="Go back to next function (Shift+Backspace/Mouse Forward button)"
+          Visibility="{Binding ShowHistoryButtons, Converter={StaticResource BoolToVisibilityConverter}}">
           <StackPanel Orientation="Horizontal">
             <Image Source="{StaticResource DockRightIcon}" Style="{StaticResource DisabledImageStyle}" />
           </StackPanel>
         </Button>
-        <TextBlock Text=" | "
-                   Visibility="{Binding ShowHistoryButtons, Converter={StaticResource BoolToVisibilityConverter}}"/>
-        <StackPanel Orientation="Horizontal"
-                    Visibility="{Binding ShowModeButtons, Converter={StaticResource BoolToVisibilityConverter}}" >
-        <TextBlock Text="Show" VerticalAlignment="Center" Margin="0,0,4,0" />
-        <ToggleButton Content="ASM" Height="18" VerticalAlignment="Center"
-                      IsChecked="{Binding ShowAssembly}"
-                      Click="ModeToggleButton_Click"
-                      ToolTip="Show function assembly"
-                      Background="{x:Null}" Padding="2,0,2,0" />
-        <ToggleButton Content="Source" Height="18" VerticalAlignment="Center"
-                      IsChecked="{Binding ShowSourceFile}"
-                      Click="ModeToggleButton_Click"
-                      ToolTip="Show function source code"
-                      Background="{x:Null}" Margin="-1,0,0,0" Padding="2,0,2,0" />
+
+        <Border
+          Width="1"
+          Margin="4,0,4,0"
+          HorizontalAlignment="Left"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+          BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+          BorderThickness="1,0,0,0"
+          Visibility="{Binding ShowHistoryButtons, Converter={StaticResource BoolToVisibilityConverter}}" />
+        <StackPanel Orientation="Horizontal" Visibility="{Binding ShowModeButtons, Converter={StaticResource BoolToVisibilityConverter}}">
+          <TextBlock
+            Margin="0,0,4,0"
+            VerticalAlignment="Center"
+            Text="Show" />
+          <ToggleButton
+            Height="18"
+            Padding="2,0,2,0"
+            VerticalAlignment="Center"
+            Background="{x:Null}"
+            Click="ModeToggleButton_Click"
+            Content="ASM"
+            IsChecked="{Binding ShowAssembly}"
+            ToolTip="Show function assembly" />
+          <ToggleButton
+            Height="18"
+            Margin="-1,0,0,0"
+            Padding="2,0,2,0"
+            VerticalAlignment="Center"
+            Background="{x:Null}"
+            Click="ModeToggleButton_Click"
+            Content="Source"
+            IsChecked="{Binding ShowSourceFile}"
+            ToolTip="Show function source code" />
         </StackPanel>
         <Button
           x:Name="OpenButton"
-          Margin="2,0,0,0"
           Width="20"
           Height="20"
+          Margin="2,0,0,0"
           Background="{x:Null}"
           BorderBrush="{x:Null}"
           Click="OpenButton_Click"
@@ -135,8 +163,32 @@
             Height="14"
             Source="{StaticResource LayoutOpenNewIcon}" />
         </Button>
-
       </StackPanel>
+
+      <Border
+        Grid.Column="2"
+        Width="1"
+        Margin="1,0,1,0"
+        HorizontalAlignment="Left"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+        BorderThickness="1,0,0,0" />
+      <Button
+        x:Name="OptionsButton"
+        Grid.Column="2"
+        Width="20"
+        Margin="0,0,-3,0"
+        HorizontalAlignment="Right"
+        Background="{x:Null}"
+        BorderBrush="{x:Null}"
+        Click="OptionButton_Click"
+        ToolTip="Close popup">
+        <Image
+          Width="16"
+          Height="16"
+          Margin="0,-1,0,0"
+          Source="{StaticResource SettingsIcon}" />
+      </Button>
 
       <Button
         x:Name="CloseButton"
@@ -155,11 +207,11 @@
         x:Name="ProfileTextView"
         Grid.Row="1"
         Grid.ColumnSpan="4"
-        FocusManager.IsFocusScope="True"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         DockPanel.Dock="Bottom"
+        FocusManager.IsFocusScope="True"
         ScrollViewer.HorizontalScrollBarVisibility="Hidden"
         ScrollViewer.VerticalScrollBarVisibility="Hidden" />
 

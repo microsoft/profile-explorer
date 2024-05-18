@@ -228,7 +228,7 @@
                           Height="12"
                           HorizontalAlignment="Left"
                           VerticalAlignment="Center"
-                          Background="Green" />
+                          Background="{Binding HistogramInstanceBrush}" />
                         <TextBlock
                           Margin="16,0,0,0"
                           VerticalAlignment="Center"
@@ -241,7 +241,7 @@
                           Height="12"
                           HorizontalAlignment="Left"
                           VerticalAlignment="Center"
-                          Background="DarkBlue" />
+                          Background="{Binding HistogramMedianBrush}" />
                         <TextBlock
                           Margin="16,0,0,0"
                           VerticalAlignment="Center"
@@ -254,7 +254,7 @@
                           Height="12"
                           HorizontalAlignment="Left"
                           VerticalAlignment="Center"
-                          Background="Firebrick" />
+                          Background="{Binding HistogramAverageBrush}" />
                         <TextBlock
                           Margin="16,0,0,0"
                           VerticalAlignment="Center"
@@ -270,7 +270,7 @@
 
             <Expander
               x:Name="ThreadsExpander"
-              MaxHeight="180"
+              MaxHeight="150"
               Margin="0,0,0,8"
               HorizontalAlignment="Stretch"
               Header="Threads"
@@ -361,7 +361,7 @@
                                 Source="{StaticResource LayoutOpenNewIcon}" />
                             </MenuItem.Icon>
                           </MenuItem>
-                          <Separator Background="LightGray"/>
+                          <Separator Background="LightGray" />
                           <MenuItem
                             Command="{Binding DataContext.FilterToThreadCommand}"
                             CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
@@ -380,7 +380,7 @@
                             CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
                             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                             Header="Exclude Thread" />
-                          <Separator Background="LightGray"/>
+                          <Separator Background="LightGray" />
 
                           <MenuItem
                             Command="{Binding DataContext.FilterToSameNameThreadCommand}"
@@ -425,7 +425,7 @@
               </ItemsControl>
             </Expander>
 
-            <Separator Background="LightGray"/>
+            <Separator Background="LightGray" />
             <Grid>
               <TextBlock
                 Margin="4,4,0,2"
@@ -443,23 +443,23 @@
                   Margin="2,0,0,0"
                   HorizontalAlignment="Right"
                   VerticalAlignment="Center"
-                  Click="MarkModuleButton_OnClick"
                   Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                   BorderThickness="0"
+                  Click="MarkModuleButton_OnClick"
                   ToolTip="Mark all functions belonging to this module (saved)">
                   <Image
-                    Margin="0,1,0,0"
                     Width="16"
                     Height="16"
+                    Margin="0,1,0,0"
                     Source="{StaticResource AddBookmarkIcon}"
                     Style="{StaticResource DisabledImageStyle}" />
                   <Button.ContextMenu>
                     <ContextMenu DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}" Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
-                    <MenuItem>
-                      <MenuItem.Header>
-                        <client:ColorSelector ColorSelectedCommand="{Binding MarkModuleCommand}" />
-                      </MenuItem.Header>
-                    </MenuItem>
+                      <MenuItem>
+                        <MenuItem.Header>
+                          <client:ColorSelector ColorSelectedCommand="{Binding MarkModuleCommand}" />
+                        </MenuItem.Header>
+                      </MenuItem>
                     </ContextMenu>
                   </Button.ContextMenu>
                 </Button>
@@ -569,13 +569,13 @@
                   Click="MarkModuleButton_OnClick"
                   ToolTip="Mark all functions with the same name (saved)">
                   <Image
-                    Margin="0,1,0,0"
                     Width="16"
                     Height="16"
+                    Margin="0,1,0,0"
                     Source="{StaticResource BookmarkIcon}"
                     Style="{StaticResource DisabledImageStyle}" />
                   <Button.ContextMenu>
-                    <ContextMenu  DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}" Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
+                    <ContextMenu DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}" Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
                       <MenuItem>
                         <MenuItem.Header>
                           <client:ColorSelector ColorSelectedCommand="{Binding MarkFunctionCommand}" />
@@ -683,8 +683,8 @@
             Grid.Row="2"
             MinHeight="100"
             NameColumnTitle="Module Function"
-            ShowContextColumn="True"
-            ShowCombinedTimeNameRow="True"/>
+            ShowCombinedTimeNameRow="True"
+            ShowContextColumn="True" />
         </Grid>
       </TabItem>
       <TabItem
@@ -717,8 +717,8 @@
             Grid.Row="2"
             MinHeight="100"
             NameColumnTitle="Category Function"
-            ShowContextColumn="True"
-            ShowCombinedTimeNameRow="True" />
+            ShowCombinedTimeNameRow="True"
+            ShowContextColumn="True" />
         </Grid>
       </TabItem>
       <TabItem

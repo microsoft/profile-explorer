@@ -134,6 +134,14 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       CategoryList.RestoreColumnsState(settings_.CategoryListColumns);
       CategoryFunctionList.RestoreColumnsState(settings_.CategoryFunctionListColumns);
       InstancesList.RestoreColumnsState(settings_.InstanceListColumns);
+
+      OnPropertyChanged(nameof(HistogramInstanceBrush));
+      OnPropertyChanged(nameof(HistogramAverageBrush));
+      OnPropertyChanged(nameof(HistogramMedianBrush));
+
+      if (IsHistogramExpanded) {
+        InvokeSetupInstancesHistogram();
+      }
     }
   }
 
@@ -184,6 +192,10 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       }
     }
   }
+
+  public Brush HistogramInstanceBrush => settings_?.HistogramCurrentColor.AsBrush();
+  public Brush HistogramAverageBrush => settings_?.HistogramAverageColor.AsBrush();
+  public Brush HistogramMedianBrush => settings_?.HistogramMedianColor.AsBrush();
 
   public ProfileCallTreeNodeEx InstancesNode {
     get => instancesNode_;
@@ -705,7 +717,9 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     // Create the histogram on the next render pass,
     // after the host has been expanded, otherwise some computations assert.
     Dispatcher.BeginInvoke(() => {
-      SetupInstancesHistogram(instanceNodes_, CallTreeNode.CallTreeNode, useSelfTimeHistogram_);
+      if (instanceNodes_ != null) {
+        SetupInstancesHistogram(instanceNodes_, CallTreeNode.CallTreeNode, useSelfTimeHistogram_);
+      }
     }, DispatcherPriority.Background);
   }
 

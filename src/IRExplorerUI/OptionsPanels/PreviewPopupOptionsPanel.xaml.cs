@@ -8,6 +8,8 @@ using System.Windows.Input;
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class PreviewPopupOptionsPanel : OptionsPanelBase {
+  public override double DefaultHeight => 220;
+
   public PreviewPopupOptionsPanel() {
     InitializeComponent();
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;

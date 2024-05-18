@@ -30,7 +30,7 @@ public class SourceDocumentMarker {
     irInfo_ = ir;
   }
 
-  public async Task Mark(MarkedDocument document, FunctionIR function) {
+  public async Task Mark(IRDocument document, FunctionIR function) {
     if (!settings_.AnnotateSourceLines && !settings_.AnnotateInlinees) {
       return;
     }
@@ -132,7 +132,7 @@ public class SourceDocumentMarker {
     }
   }
 
-  private void MarkCallInstruction(InstructionIR instr, MarkedDocument document,
+  private void MarkCallInstruction(InstructionIR instr, IRDocument document,
                                    Dictionary<int, OperandIR> lineToOperandMap) {
     if (irInfo_.IR.IsCallInstruction(instr) &&
         irInfo_.IR.GetCallTarget(instr) is OperandIR callTargetOp &&
@@ -146,7 +146,7 @@ public class SourceDocumentMarker {
 
   //? Currently calls are marked only with profiling data, here could be a mode
   //? that instead uses only the IR to mark calls.
-  //private void MarkCallInstruction(InstructionIR instr, MarkedDocument document) {
+  //private void MarkCallInstruction(InstructionIR instr, IRDocument document) {
   //  if (irInfo_.IR.IsCallInstruction(instr) &&
   //          irInfo_.IR.GetCallTarget(instr) is OperandIR callTargetOp &&
   //          callTargetOp.HasName) {

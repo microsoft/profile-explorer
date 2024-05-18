@@ -1221,8 +1221,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     if (node.StartElement is InstructionIR instr) {
       // Place before the call opcode.
       int lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
-      overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
-        App.Settings.DocumentSettings.FontSize).Width - 20;
+      overlay.MarginX = Utils.MeasureString(lineOffset, Utils.GetTextTypeface(TextView),
+                                            TextView.FontSize).Width - 20;
     }
   }
 
@@ -1272,9 +1272,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void SelectSyntaxNodeLineRange(ProfileSourceSyntaxNode node) {
-    var backColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.4);
     TextView.SelectElementsInLineRange(node.Start.Line, node.End.Line,
-      MapFromOriginalSourceLineNumber, backColor);
+                                       MapFromOriginalSourceLineNumber);
   }
 
   private void SetupSourceAssembly() {

@@ -18,6 +18,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Document;
+using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Profile;
 using MouseHoverLogic = IRExplorerUI.Utilities.UI.MouseHoverLogic;
 
@@ -35,6 +36,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private ParsedIRTextSection parsedSection_;
   private PreviewPopupSettings settings_;
   private bool showHistoryButtons_;
+  private OptionsPanelHostWindow optionsPanelWindow_;
 
   public IRDocumentPopup(Point position, UIElement owner, ISession session, PreviewPopupSettings settings) {
     Debug.Assert(settings != null);
@@ -151,9 +153,15 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
   private async Task SetupInitialMode(ParsedIRTextSection parsedSection, bool showSourceCode) {
     parsedSection_ = parsedSection;
-    ShowModeButtons = true;
-    ShowAssembly = !showSourceCode && !settings_.ShowSourcePreviewPopup;
-    await SwitchAssemblySourceMode();
+    await ReloadDocument(showSourceCode);
+  }
+
+  private async Task ReloadDocument(bool showSourceCode = false) {
+    if (parsedSection_ != null) {
+      ShowModeButtons = true;
+      ShowAssembly = !showSourceCode && !settings_.ShowSourcePreviewPopup;
+      await SwitchAssemblySourceMode();
+    }
   }
 
   public static async Task<IRDocumentPopup> CreateNew(IRDocument document, IRElement previewedElement,
@@ -195,15 +203,19 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private async Task InitializeFromSection(ParsedIRTextSection parsedSection,
                                            ProfileSampleFilter filter,
                                            bool showSourceCode) {
+    ReloadSettings();
+    ProfileTextView.ProfileFilter = filter;
+    ProfileTextView.Focus();
+    await SetupInitialMode(parsedSection, showSourceCode);
+  }
+
+  private void ReloadSettings() {
     ProfileTextView.IsPreviewDocument = true;
     ProfileTextView.UseSmallerFontSize = settings_.UseSmallerFontSize;
     ProfileTextView.UseCompactProfilingColumns = settings_.UseCompactProfilingColumns;
     ProfileTextView.ShowPerformanceCounterColumns = settings_.ShowPerformanceCounterColumns;
     ProfileTextView.ShowPerformanceMetricColumns = settings_.ShowPerformanceMetricColumns;
-    ProfileTextView.ProfileFilter = filter;
     ProfileTextView.Initialize(App.Settings.DocumentSettings);
-    ProfileTextView.Focus();
-    await SetupInitialMode(parsedSection, showSourceCode);
   }
 
   private static IRDocumentPopup CreatePopup(IRTextSection section, IRElement previewedElement,
@@ -412,6 +424,39 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
   private async void BackButton_Click(object sender, RoutedEventArgs e) {
     await ProfileTextView.LoadPreviousSection();
+  }
+
+  private void OptionButton_Click(object sender, RoutedEventArgs e) {
+    ShowOptionsPanel();
+  }
+
+  private void ShowOptionsPanel() {
+    if (optionsPanelWindow_ != null) {
+      optionsPanelWindow_.ClosePopup();
+      optionsPanelWindow_ = null;
+      return;
+    }
+
+    FrameworkElement relativeControl = ProfileTextView;
+    optionsPanelWindow_ = OptionsPanelHostWindow.Create<PreviewPopupOptionsPanel, PreviewPopupSettings>(
+      settings_.Clone(), relativeControl, Session,
+      async (newSettings, commit) => {
+        if (!newSettings.Equals(settings_)) {
+          settings_ = newSettings;
+          App.Settings.PreviewPopupSettings = newSettings;
+          ReloadSettings();
+          await ReloadDocument();
+
+          if (commit) {
+            App.SaveApplicationSettings();
+          }
+
+          return settings_.Clone();
+        }
+
+        return null;
+      },
+      () => optionsPanelWindow_ = null);
   }
 }
 

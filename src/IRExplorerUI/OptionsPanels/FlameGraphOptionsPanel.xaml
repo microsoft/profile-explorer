@@ -595,9 +595,11 @@
                 ToolTip="Reset value to default duration" />
             </StackPanel>
           </StackPanel>
-
-          <local:PreviewPopupOptionsPanel x:Name="PreviewPopupOptionsPanel" IsEnabled="{Binding ElementName=ShowDetailsPopupCheckbox, Path=IsChecked}" />
-          <Separator Margin="0,2,0,4" Background="LightGray" />
+          <TextBlock
+            Margin="0,6,0,0"
+            FontSize="11"
+            Text="More settings available from Preview popup and Options window." />
+          <Separator Margin="0,4,0,4" Background="LightGray" />
 
           <TextBlock FontWeight="Medium" Text="Histogram Colors" />
           <Grid Margin="0,4,0,0">

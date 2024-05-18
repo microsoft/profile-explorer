@@ -28,7 +28,6 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
 
     //? TODO: Change to calling Initialize
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
-    PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
@@ -41,15 +40,17 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
 
   public override void OnSettingsChanged(object newSettings) {
     settings_ = (FlameGraphSettings)newSettings;
+    ReloadAdditionalSettings();
   }
 
   public override void ReloadSettings() {
     base.ReloadSettings();
-    //? TODO: Change to calling ReloadSettings
+    ReloadAdditionalSettings();
+  }
+
+  private void ReloadAdditionalSettings() {
     DetailsPanel.DataContext = null;
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
-    PreviewPopupOptionsPanel.DataContext = null;
-    PreviewPopupOptionsPanel.DataContext = App.Settings.PreviewPopupSettings;
     FunctionListOptionsPanel.DataContext = null;
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
     FunctionMarkingOptionsPanel.ReloadSettings();
@@ -58,7 +59,6 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   public override void PanelResetting() {
     base.PanelResetting();
     App.Settings.CallTreeNodeSettings.Reset();
-    App.Settings.PreviewPopupSettings.Reset();
   }
 
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {

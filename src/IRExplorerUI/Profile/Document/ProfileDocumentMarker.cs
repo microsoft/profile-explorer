@@ -23,32 +23,6 @@ using TextLocation = IRExplorerCore.TextLocation;
 
 namespace IRExplorerUI.Profile;
 
-// Used as the interface for both the full IR document and lightweight version (source file).
-public interface MarkedDocument {
-  IRTextSection Section { get; }
-  ISession Session { get; }
-  FunctionIR Function { get; }
-  double DefaultLineHeight { get; }
-  int LineCount { get; }
-  IRDocumentColumnData ProfileColumnData { get; set; }
-  FunctionProcessingResult ProfileProcessingResult { get; set; }
-  public void SuspendUpdate();
-  public void ResumeUpdate();
-  public void ClearInstructionMarkers();
-  public void MarkElements(ICollection<ValueTuple<IRElement, Brush>> elementColorPairs);
-  public void MarkBlock(IRElement element, Brush selectedColor, bool raiseEvent = true);
-  public DocumentLine GetLineByNumber(int lineNumber);
-  public DocumentLine GetLineByOffset(int offset);
-
-  public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
-                                                       double width, double height,
-                                                       string label = null, string tooltip = null,
-                                                       bool prepend = false);
-  public void RemoveElementOverlays(IRElement element, object onlyWithTag = null);
-  public void RegisterTextTransformer(DocumentColorizingTransformer transformer);
-}
-
-
 //? TODO: Use better names for members
 public record SourceLineProfileResult(
   FunctionProcessingResult Result,
@@ -197,7 +171,7 @@ public class ProfileDocumentMarker {
     return name;
   }
 
-  public async Task<IRDocumentColumnData> Mark(MarkedDocument document, FunctionIR function,
+  public async Task<IRDocumentColumnData> Mark(IRDocument document, FunctionIR function,
                                                IRTextFunction textFunction) {
     document.SuspendUpdate();
     IRDocumentColumnData columnData = null;
@@ -227,7 +201,7 @@ public class ProfileDocumentMarker {
     return columnData;
   }
 
-  public async Task<IRDocumentColumnData> MarkSourceLines(MarkedDocument document,
+  public async Task<IRDocumentColumnData> MarkSourceLines(IRDocument document,
                                                           SourceLineProfileResult processingResult) {
     document.ProfileColumnData =
       await MarkProfiledElements(processingResult.Result, processingResult.Function, document);
@@ -235,7 +209,7 @@ public class ProfileDocumentMarker {
   }
 
   public async Task<SourceLineProfileResult>
-    PrepareSourceLineProfile(FunctionProfileData profile, MarkedDocument document,
+    PrepareSourceLineProfile(FunctionProfileData profile, IRDocument document,
                              SourceLineProcessingResult sourceProcResult,
                              ParsedIRTextSection parsedSection = null) {
     var sourceLineWeights = sourceProcResult.SourceLineWeightList;
@@ -314,7 +288,7 @@ public class ProfileDocumentMarker {
       }
 
       var instrLine = document.GetLineByNumber(lineNumber + inserted);
-      var instrDocument = (IRDocument)document; //? TODO: Get rid of MarkedDocument, it's always IRDocument
+      var instrDocument = (IRDocument)document; //? TODO: Get rid of IRDocument, it's always IRDocument
       int rangeStart = instrLine.EndOffset;
       int rangeEnd = instrLine.EndOffset;
 
@@ -392,7 +366,7 @@ public class ProfileDocumentMarker {
   }
 
   public static void UpdateColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
-                               FunctionIR function, MarkedDocument document,
+                               FunctionIR function, IRDocument document,
                                ProfileDocumentMarkerSettings settings,
                                OptionalColumnSettings columnSettings) {
     Trace.WriteLine($"Apply {column.ColumnName}, is main column: {column.IsMainColumn}");
@@ -467,7 +441,7 @@ public class ProfileDocumentMarker {
     }
   }
 
-  public void MarkCallSites(MarkedDocument document, FunctionIR function, IRTextFunction textFunction,
+  public void MarkCallSites(IRDocument document, FunctionIR function, IRTextFunction textFunction,
                             SourceLineProfileResult processingResult) {
     var metadataTag = function.GetTag<AssemblyMetadataTag>();
     bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
@@ -477,7 +451,7 @@ public class ProfileDocumentMarker {
     }
   }
 
-  private void MarkCallSites(MarkedDocument document, FunctionIR function, IRTextFunction textFunction,
+  private void MarkCallSites(IRDocument document, FunctionIR function, IRTextFunction textFunction,
                              AssemblyMetadataTag metadataTag, SourceLineProfileResult processingResult = null) {
     // Mark indirect call sites and list the hottest call targets.
     // Useful especially for virtual function calls.
@@ -576,8 +550,8 @@ public class ProfileDocumentMarker {
       if (element is InstructionIR instr) {
         // Place before the call opcode.
         int lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
-        overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
-                                              App.Settings.DocumentSettings.FontSize).Width - 20;
+        overlay.MarginX = Utils.MeasureString(lineOffset, Utils.GetTextTypeface(document),
+                                              document.FontSize).Width - 20;
       }
 
       // Show a popup on hover with the list of call targets.
@@ -588,7 +562,7 @@ public class ProfileDocumentMarker {
   }
 
   private void SetupCallSiteHoverPreview(IconElementOverlay overlay, List<ProfileCallTreeNode> list,
-                                         MarkedDocument document) {
+                                         IRDocument document) {
     // The overlay hover preview is somewhat of a hack,
     // since the hover event is fired over the entire document,
     // but the popup should be shown only if mouse is over the overlay.
@@ -632,7 +606,7 @@ public class ProfileDocumentMarker {
     };
   }
 
-  private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, MarkedDocument document) {
+  private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, IRDocument document) {
     if (!settings_.MarkBlocks) {
       return;
     }
@@ -692,7 +666,7 @@ public class ProfileDocumentMarker {
 
   private async Task<IRDocumentColumnData>
     MarkProfiledElements(FunctionProcessingResult result,
-                         FunctionIR function, MarkedDocument document) {
+                         FunctionIR function, IRDocument document) {
     // Add a time column.
     var elements = result.SampledElements;
     var columnData = new IRDocumentColumnData(function.InstructionCount);
@@ -816,20 +790,20 @@ public class ProfileDocumentMarker {
   }
 
   public void UpdateColumnStyles(IRDocumentColumnData columnData,
-                                 FunctionIR function, MarkedDocument document) {
+                                 FunctionIR function, IRDocument document) {
     foreach (var column in columnData.Columns) {
       UpdateColumnStyle(column, columnData, function, document, settings_, columnSettings_);
     }
   }
 
-  private void SetupColumnHeaderEvents(FunctionIR function, MarkedDocument document,
+  private void SetupColumnHeaderEvents(FunctionIR function, IRDocument document,
                                        IRDocumentColumnData columnData) {
     foreach (var column in columnData.Columns) {
       column.HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
     }
   }
 
-  private void CreatePerfCounterColumn(FunctionIR function, MarkedDocument document,
+  private void CreatePerfCounterColumn(FunctionIR function, IRDocument document,
                                        IRDocumentColumnData columnData, List<PerformanceCounter> perfCounters,
                                        OptionalColumn[] counterColumns, int k) {
     var counterInfo = perfCounters[k];
@@ -839,7 +813,7 @@ public class ProfileDocumentMarker {
     columnData.AddColumn(counterColumns[k]);
   }
 
-  private OptionalColumnEventHandler ColumnHeaderClickHandler(MarkedDocument document, FunctionIR function,
+  private OptionalColumnEventHandler ColumnHeaderClickHandler(IRDocument document, FunctionIR function,
                                                               IRDocumentColumnData columnData) {
     return (column, columnHeader) => {
       var currentMainColumn = columnData.MainColumn;

@@ -29,7 +29,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private ListCollectionView profileRowCollection_;
   private List<(int StartOffset, int EndOffset)> foldedTextRegions_;
   private int rowFilterIndex_;
-  private MarkedDocument associatedDocument_;
+  private IRDocument associatedDocument_;
   private OptionsPanelHostWindow optionsPanelWindow_;
   private Dictionary<IRElement, ElementRowValue> profileDataRowsMap_;
 
@@ -92,7 +92,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     foldedTextRegions_.Clear();
   }
 
-  public async Task Display(IRDocumentColumnData columnData, MarkedDocument associatedDocument) {
+  public async Task Display(IRDocumentColumnData columnData, IRDocument associatedDocument) {
     Reset(); // Remove any existing columns.
     UpdateColumnsList();
 
