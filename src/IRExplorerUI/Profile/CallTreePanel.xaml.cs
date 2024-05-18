@@ -185,7 +185,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     searchTask_ = new CancelableTaskInstance(false);
     callTreeNodeToNodeExMap_ = new Dictionary<ProfileCallTreeNode, CallTreeListItem>();
     stateStack_ = new Stack<IRTextFunction>();
-    loadTask_ = new CancelableTaskInstance();
+    loadTask_ = new CancelableTaskInstance(false);
     DataContext = this;
     SetupEvents();
   }

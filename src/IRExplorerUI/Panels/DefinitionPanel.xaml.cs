@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using IRExplorerCore;
@@ -85,7 +86,7 @@ public partial class DefinitionPanel : ToolPanelControl {
     definedOperand_ = op;
   }
 
-  public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     if (TextView.Section == section) {
       return;
     }
@@ -109,7 +110,7 @@ public partial class DefinitionPanel : ToolPanelControl {
     }
   }
 
-  public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
     if (TextView.Section != section) {
       return;
     }

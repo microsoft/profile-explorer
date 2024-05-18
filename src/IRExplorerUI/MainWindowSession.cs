@@ -1060,7 +1060,7 @@ public partial class MainWindow : Window, ISession {
     Trace.TraceInformation(
       $"Document {ObjectTracker.Track(document)}: Switch to section ({section.Number}) {section.Name}");
 
-    NotifyOfSectionUnload(document, true);
+    await NotifyOfSectionUnload(document, true);
     ResetDocumentEvents(document);
     ResetStatusBar();
     var delayedAction = UpdateUIBeforeSectionLoad(section, document);
@@ -1083,7 +1083,7 @@ public partial class MainWindow : Window, ISession {
     if (result != null) {
       // Update UI to reflect new section before starting long-running tasks.
       await document.LoadSectionMinimal(result);
-      NotifyPanelsOfSectionLoad(section, document, true);
+      await NotifyPanelsOfSectionLoad(section, document, true);
       SetupDocumentEvents(document);
       await UpdateUIAfterSectionSwitch(section, document);
 

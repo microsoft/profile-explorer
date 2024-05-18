@@ -77,7 +77,7 @@ public partial class NotesPanel : ToolPanelControl {
     await LoadSessionNotes();
   }
 
-  public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     await SwitchText(section, document);
   }
 
@@ -106,7 +106,7 @@ public partial class NotesPanel : ToolPanelControl {
     await TextView.SearchText(new SearchInfo());
   }
 
-  public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
     if (!showSectionText_) {
       SaveSessionNotes();
     }

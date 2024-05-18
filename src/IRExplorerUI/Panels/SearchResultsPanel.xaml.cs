@@ -355,7 +355,7 @@ public partial class SearchResultsPanel : ToolPanelControl, INotifyPropertyChang
 
   public override ToolPanelKind PanelKind => ToolPanelKind.SearchResults;
 
-  public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
     base.OnDocumentSectionUnloaded(section, document);
     ResetSectionTextCache();
   }

@@ -37,11 +37,11 @@ public class ToolPanelControl : UserControl, IToolPanel {
     return Task.CompletedTask;
   }
 
-  public virtual void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+  public virtual async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     Document = document;
   }
 
-  public virtual void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+  public virtual async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
     Document = null;
   }
 

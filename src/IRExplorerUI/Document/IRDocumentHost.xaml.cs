@@ -155,7 +155,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     SetupEvents();
     var hover = new MouseHoverLogic(this);
     hover.MouseHover += Hover_MouseHover;
-    loadTask_ = new CancelableTaskInstance(true, Session.SessionState.RegisterCancelableTask,
+    loadTask_ = new CancelableTaskInstance(false, Session.SessionState.RegisterCancelableTask,
                                            Session.SessionState.UnregisterCancelableTask);
     activeQueryPanels_ = new List<QueryPanel>();
     profileFilter_ = new ProfileSampleFilter();

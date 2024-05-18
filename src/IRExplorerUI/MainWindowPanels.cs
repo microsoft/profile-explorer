@@ -171,7 +171,7 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private void NotifyPanelsOfElementEvent(HandledEventKind eventKind, IRDocument document,
+  private async Task NotifyPanelsOfElementEvent(HandledEventKind eventKind, IRDocument document,
                                           Action<IToolPanel> action) {
     foreach (var (kind, list) in panelHostSet_) {
       foreach (var panelHost in list) {
@@ -199,10 +199,10 @@ public partial class MainWindow : Window, ISession {
         // tab header. Ensure that the panel is connected properly.
         if (panel.IsUnloaded || panel.Document != document) {
           if (!panel.IsUnloaded) {
-            panel.OnDocumentSectionUnloaded(panel.Document.Section, panel.Document);
+            await panel.OnDocumentSectionUnloaded(panel.Document.Section, panel.Document);
           }
 
-          panel.OnDocumentSectionLoaded(document.Section, document);
+          await panel.OnDocumentSectionLoaded(document.Section, document);
 
           // After this action, the load/unload events for the panel
           // will trigger, but since it was done here already,
@@ -240,27 +240,27 @@ public partial class MainWindow : Window, ISession {
     sessionState_.DocumentHosts.ForEach(document => { document.DocumentHost.OnSessionSave(); });
   }
 
-  private void NotifyPanelsOfSectionLoad(IRTextSection section, IRDocumentHost document, bool notifyAll) {
-    ForEachPanel(panel => {
+  private async Task NotifyPanelsOfSectionLoad(IRTextSection section, IRDocumentHost document, bool notifyAll) {
+    ForEachPanel(async panel => {
       // See comments in NotifyPanelsOfElementEvent about this check.
       if (panel.IgnoreNextLoadEvent) {
         panel.IgnoreNextLoadEvent = false;
       }
       else if (ShouldNotifyPanel(panel, document.TextView, notifyAll)) {
-        panel.OnDocumentSectionLoaded(section, document.TextView);
+        await panel.OnDocumentSectionLoaded(section, document.TextView);
       }
     });
   }
 
-  private void NotifyPanelsOfSectionUnload(IRTextSection section, IRDocumentHost document,
+  private async Task NotifyPanelsOfSectionUnload(IRTextSection section, IRDocumentHost document,
                                            bool notifyAll, bool ignoreBoundPanels = false) {
-    ForEachPanel(panel => {
+    ForEachPanel(async panel => {
       // See comments in NotifyPanelsOfElementEvent about this check.
       if (panel.IgnoreNextUnloadEvent) {
         panel.IgnoreNextUnloadEvent = false;
       }
       else if (ShouldNotifyPanel(panel, document.TextView, notifyAll, ignoreBoundPanels)) {
-        panel.OnDocumentSectionUnloaded(section, document.TextView);
+        await panel.OnDocumentSectionUnloaded(section, document.TextView);
       }
     });
   }
@@ -285,24 +285,24 @@ public partial class MainWindow : Window, ISession {
     return panel.BoundDocument == document;
   }
 
-  private void NotifyOfSectionUnload(IRDocumentHost document, bool notifyAll,
+  private async Task NotifyOfSectionUnload(IRDocumentHost document, bool notifyAll,
                                      bool ignoreBoundPanels = false,
                                      bool switchingActiveDocument = false) {
     var section = document.Section;
 
     if (section != null) {
       document.UnloadSection(section, switchingActiveDocument);
-      NotifyPanelsOfSectionUnload(section, document, notifyAll, ignoreBoundPanels);
+      await NotifyPanelsOfSectionUnload(section, document, notifyAll, ignoreBoundPanels);
     }
   }
 
-  private void NotifyPanelsOfElementHighlight(IRHighlightingEventArgs e, IRDocument document) {
-    NotifyPanelsOfElementEvent(HandledEventKind.ElementHighlighting, document,
+  private async Task NotifyPanelsOfElementHighlight(IRHighlightingEventArgs e, IRDocument document) {
+    await NotifyPanelsOfElementEvent(HandledEventKind.ElementHighlighting, document,
                                panel => panel.OnElementHighlighted(e));
   }
 
-  private void NotifyPanelsOfElementSelection(IRElementEventArgs e, IRDocument document) {
-    NotifyPanelsOfElementEvent(HandledEventKind.ElementSelection, document,
+  private async Task NotifyPanelsOfElementSelection(IRElementEventArgs e, IRDocument document) {
+    await NotifyPanelsOfElementEvent(HandledEventKind.ElementSelection, document,
                                panel => panel.OnElementSelected(e));
   }
 
@@ -378,7 +378,7 @@ public partial class MainWindow : Window, ISession {
       await ExitDocumentDiffState();
     }
 
-    NotifyOfSectionUnload(document, true);
+    await NotifyOfSectionUnload(document, true);
     UnbindPanels(docHostInfo.DocumentHost);
     RenameAllPanels();
     ResetDocumentEvents(docHostInfo.DocumentHost);
@@ -411,7 +411,7 @@ public partial class MainWindow : Window, ISession {
 
       if (docHost.Section != null) {
         await SectionPanel.SelectSection(docHost.Section, false);
-        NotifyPanelsOfSectionLoad(docHost.Section, docHost, false);
+        await NotifyPanelsOfSectionLoad(docHost.Section, docHost, false);
       }
     }
   }
@@ -447,7 +447,7 @@ public partial class MainWindow : Window, ISession {
       }
 
       if (activeDocument != null) {
-        NotifyOfSectionUnload(activeDocument, false, true, true);
+        await NotifyOfSectionUnload(activeDocument, false, true, true);
       }
 
       var hostDocPair = FindDocumentHostPair(document);

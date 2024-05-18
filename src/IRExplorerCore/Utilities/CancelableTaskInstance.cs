@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace IRExplorerCore;
@@ -159,7 +160,6 @@ public class CancelableTaskInstance : IDisposable {
     // Cancel the task and wait for it to complete.
     canceledTask.Cancel();
     unregisterAction_?.Invoke(canceledTask);
-
     await canceledTask.WaitToCompleteAsync();
   }
 }

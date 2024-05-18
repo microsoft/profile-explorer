@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -139,12 +140,12 @@ public partial class BookmarksPanel : ToolPanelControl {
 
   public override ToolPanelKind PanelKind => ToolPanelKind.Bookmarks;
 
-  public override void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     InitializeForDocument(document);
     IsPanelEnabled = Document != null;
   }
 
-  public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
     ResetBookmarks();
   }
 

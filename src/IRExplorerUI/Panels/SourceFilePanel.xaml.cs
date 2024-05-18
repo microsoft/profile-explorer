@@ -37,11 +37,13 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private bool disableInlineeComboboxEvents_;
   private IRDocument associatedDocument_;
   private string inlineeText_;
+  private CancelableTaskInstance loadTask_;
 
   public SourceFilePanel() {
     InitializeComponent();
     DataContext = this;
     SetupEvents();
+    loadTask_ = new CancelableTaskInstance(false);
   }
 
   private void SetupEvents() {
@@ -266,15 +268,17 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       () => optionsPanelWindow_ = null);
   }
 
-  public async Task LoadSourceFile(IRTextSection section, ProfileSampleFilter profileFilter = null) {
+  public async Task LoadSourceFile(IRTextSection section, ProfileSampleFilter profileFilter = null,
+                                   IRDocument associaDocument = null) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     section_ = section;
+    associatedDocument_ = associaDocument;
     await LoadSourceFileForFunction(section_.ParentFunction, profileFilter);
   }
 
-  public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
-    base.OnDocumentSectionLoaded(section, document);
-    associatedDocument_ = document;
-    await LoadSourceFile(section);
+  public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+    await base.OnDocumentSectionLoaded(section, document);
+    await LoadSourceFile(section, null, document);
   }
 
   private async Task<bool> LoadSourceFileForFunction(IRTextFunction function, ProfileSampleFilter profileFilter = null) {
@@ -378,13 +382,14 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     sourceFilePath_ = sourceInfo.FilePath;
   }
 
-  public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
-    base.OnDocumentSectionUnloaded(section, document);
-    ResetState();
+  public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    await base.OnDocumentSectionUnloaded(section, document);
+    await ResetState();
   }
 
-  private void ResetState() {
-    ProfileTextView.Reset();
+  private async Task ResetState() {
+    await ProfileTextView.Reset();
     section_ = null;
     SourceFileLoaded = false;
     sourceFileFunc_ = null;
@@ -454,6 +459,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   public async Task<bool> LoadInlineeSourceFile(SourceStackFrame inlinee) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
     if (inlinee == currentInlinee_) {
       return true;
     }
@@ -470,7 +477,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public override void OnSessionEnd() {
     base.OnSessionEnd();
-    ResetState();
+    ResetState(); //? TODO: Make OnSessionEnd async
     ProfileTextView.SetSourceText("", "");
   }
 

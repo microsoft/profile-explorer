@@ -391,8 +391,8 @@ public partial class MainWindow : Window, ISession {
     // may be wrongly be associated with diff mode, for ex. the panel states.
     var leftDocumentHost = FindDocumentHost(diffState.LeftDocument.TextView);
     var rightDocumentHost = FindDocumentHost(diffState.RightDocument.TextView);
-    NotifyPanelsOfSectionUnload(diffState.LeftDocument.Section, leftDocumentHost, true);
-    NotifyPanelsOfSectionUnload(diffState.RightDocument.Section, rightDocumentHost, true);
+    await NotifyPanelsOfSectionUnload(diffState.LeftDocument.Section, leftDocumentHost, true);
+    await NotifyPanelsOfSectionUnload(diffState.RightDocument.Section, rightDocumentHost, true);
 
     // Prepare documents for diff mode.
     await diffState.LeftDocument.EnterDiffMode();
@@ -406,8 +406,8 @@ public partial class MainWindow : Window, ISession {
     // may be wrongly be associated with diff mode, for ex. the panel states.
     var leftDocumentHost = FindDocumentHost(diffState.LeftDocument.TextView);
     var rightDocumentHost = FindDocumentHost(diffState.RightDocument.TextView);
-    NotifyPanelsOfSectionUnload(diffState.LeftDocument.Section, leftDocumentHost, true);
-    NotifyPanelsOfSectionUnload(diffState.RightDocument.Section, rightDocumentHost, true);
+    await NotifyPanelsOfSectionUnload(diffState.LeftDocument.Section, leftDocumentHost, true);
+    await NotifyPanelsOfSectionUnload(diffState.RightDocument.Section, rightDocumentHost, true);
 
     await diffState.LeftDocument.ExitDiffMode();
     await diffState.RightDocument.ExitDiffMode();
@@ -569,11 +569,11 @@ public partial class MainWindow : Window, ISession {
     // For the active document only, notify panels of the change
     // and redo other section post-load tasks.
     if (IsActiveDocument(leftDocumentHost)) {
-      NotifyPanelsOfSectionLoad(newLeftSection, leftDocumentHost, true);
+      await NotifyPanelsOfSectionLoad(newLeftSection, leftDocumentHost, true);
       await GenerateGraphs(newLeftSection, leftDocument, false);
     }
     else if (IsActiveDocument(rightDocumentHost)) {
-      NotifyPanelsOfSectionLoad(newRightSection, rightDocumentHost, true);
+      await NotifyPanelsOfSectionLoad(newRightSection, rightDocumentHost, true);
       await GenerateGraphs(newRightSection, rightDocument, false);
     }
   }
@@ -773,11 +773,11 @@ public partial class MainWindow : Window, ISession {
   private async Task UpdateDiffedFunction(IRDocument document, DiffMarkingResult diffResult,
                                           IRTextSection newSection) {
     var documentHost = FindDocumentHost(document);
-    NotifyPanelsOfSectionUnload(document.Section, documentHost, true);
+    await NotifyPanelsOfSectionUnload(document.Section, documentHost, true);
 
     // Load new text and function after diffing.
     await documentHost.LoadDiffedFunction(diffResult, newSection);
-    NotifyPanelsOfSectionLoad(document.Section, documentHost, true);
+    await NotifyPanelsOfSectionLoad(document.Section, documentHost, true);
 
     await GenerateGraphs(newSection, document, false);
   }

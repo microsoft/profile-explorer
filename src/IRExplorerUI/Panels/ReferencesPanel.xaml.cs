@@ -536,7 +536,7 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     set => FixedToolbar.IsPinned = value;
   }
 
-  public override void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     if (section == section_) {
       return;
     }
@@ -557,7 +557,7 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     IsPanelEnabled = document != null;
   }
 
-  public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
     if (element_ == null || section_ != section) {
       return;
     }

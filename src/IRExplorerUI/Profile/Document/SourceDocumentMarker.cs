@@ -40,7 +40,7 @@ public class SourceDocumentMarker {
     var inlineeOverlays = new List<IconElementOverlay>(function.InstructionCount);
     var lineLengths = new List<int>(function.InstructionCount);
     var lineToOperandMap = new Dictionary<int, OperandIR>();
-
+    document.SuspendUpdate();
 
     await Task.Run(() => {
       foreach (var instr in function.AllInstructions) {
@@ -130,6 +130,8 @@ public class SourceDocumentMarker {
                                            settings_.CallTargetBackColor.AsBrush());
       document.RegisterTextTransformer(colorizer);
     }
+
+    document.ResumeUpdate();
   }
 
   private void MarkCallInstruction(InstructionIR instr, IRDocument document,

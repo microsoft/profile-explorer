@@ -268,6 +268,8 @@ public class Disassembler : IDisposable {
         builder.Append(name);
         return true;
       }
+
+      return false;
     }
 
     if (debugInfo_ != null) {

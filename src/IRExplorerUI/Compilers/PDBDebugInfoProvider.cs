@@ -298,10 +298,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   }
 
   public FunctionDebugInfo FindFunctionByRVA(long rva) {
-    if (!EnsureLoaded()) {
-      return null;
-    }
-
     try {
       var symbol = FindFunctionSymbolByRVA(rva);
 
@@ -617,33 +613,35 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   }
 
   public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
-    lock (funcInfo) {
-      if (funcInfo.HasSourceLines) {
-        return true; // Already populated.
-      }
+    if (funcInfo.HasSourceLines) {
+      return true; // Already populated.
+    }
 
-      try {
-        session_.findLinesByRVA((uint)funcInfo.StartRVA, (uint)funcInfo.Size, out var lineEnum);
+    if (!EnsureLoaded()) {
+      return false;
+    }
 
-        while (true) {
-          lineEnum.Next(1, out var lineNumber, out uint retrieved);
+    try {
+      session_.findLinesByRVA((uint)funcInfo.StartRVA, (uint)funcInfo.Size, out var lineEnum);
 
-          if (retrieved == 0) {
-            break;
-          }
+      while (true) {
+        lineEnum.Next(1, out var lineNumber, out uint retrieved);
 
-          funcInfo.AddSourceLine(new SourceLineDebugInfo(
-                                   (int)lineNumber.addressOffset,
-                                   (int)lineNumber.lineNumber,
-                                   (int)lineNumber.columnNumber));
+        if (retrieved == 0) {
+          break;
         }
 
-        return true;
+        funcInfo.AddSourceLine(new SourceLineDebugInfo(
+                                  (int)lineNumber.addressOffset,
+                                  (int)lineNumber.lineNumber,
+                                  (int)lineNumber.columnNumber));
       }
-      catch (Exception ex) {
-        Trace.TraceError($"Failed to populate source lines for {funcInfo.Name}: {ex.Message}");
-        return false;
-      }
+
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to populate source lines for {funcInfo.Name}: {ex.Message}");
+      return false;
     }
   }
 
@@ -724,6 +722,10 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
   private IDiaSymbol FindFunctionSymbolImpl(SymTagEnum symbolType, string functionName, string demangledName,
                                             string queryDemangledName) {
+    if (!EnsureLoaded()) {
+      return null;
+    }
+
     try {
       globalSymbol_.findChildren(symbolType, queryDemangledName, 0, out var symbolEnum);
       IDiaSymbol candidateSymbol = null;

@@ -937,7 +937,7 @@ public partial class GraphPanel : ToolPanelControl {
     GraphHost.Background = ColorBrushes.GetBrush(Settings.BackgroundColor);
   }
 
-  public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     var previousSection = Document?.Section;
     InitializeFromDocument(document);
 
@@ -996,7 +996,7 @@ public partial class GraphPanel : ToolPanelControl {
     delayRestoreState_ = false;
   }
 
-  public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
     if (Section != section) {
       return;
     }

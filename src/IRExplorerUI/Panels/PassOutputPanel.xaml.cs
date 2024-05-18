@@ -426,7 +426,7 @@ public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged 
     }
   }
 
-  public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     if (HasPinnedContent) {
       return;
     }
@@ -465,7 +465,7 @@ public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged 
     Section = null;
   }
 
-  public override async void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+  public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
     if (HasPinnedContent || Section != section) {
       return;
     }

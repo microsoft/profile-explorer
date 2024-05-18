@@ -124,10 +124,7 @@ public class CancelableTask : IDisposable {
 
   protected virtual void Dispose(bool disposing) {
     if (!disposed_) {
-      if (!IsCanceled || completeOnCancel_) {
-        taskCompletedEvent_.Set(); // May not be marked as completed yet.
-      }
-
+      taskCompletedEvent_.Set(); // May not be marked as completed yet.
       tokenSource_.Dispose();
       taskCompletedEvent_.Dispose();
       disposed_ = true;

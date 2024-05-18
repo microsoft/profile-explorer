@@ -4092,6 +4092,10 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   }
 
   private void IRDocument_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+    if (updateSuspended_) {
+      return;
+    }
+
     var position = e.GetPosition(TextArea.TextView);
 
     // Ignore click outside the text view, such as the right marker bar.

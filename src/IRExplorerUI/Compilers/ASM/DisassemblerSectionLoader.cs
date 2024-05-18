@@ -20,6 +20,7 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   private bool isManagedImage_;
   private bool preloadFunctions_;
   private DebugFileSearchResult debugInfoFile_;
+  private bool resolveCallTargetNames_;
 
   public DisassemblerSectionLoader(string binaryFilePath, ICompilerInfoProvider compilerInfo,
                                    IDebugInfoProvider debugInfo, bool preloadFunctions = true) {
@@ -41,6 +42,22 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   public DebugFileSearchResult DebugInfoFile {
     get => debugInfoFile_;
     set => debugInfoFile_ = value;
+  }
+
+  public bool ResolveCallTargetNames {
+    get => resolveCallTargetNames_;
+    set {
+      resolveCallTargetNames_ = value;
+
+      if (disassembler_ != null) {
+        if (value) {
+          disassembler_.UseSymbolNameResolver(null);
+        }
+        else {
+          disassembler_.UseSymbolNameResolver((value) => null);
+        }
+      }
+    }
   }
 
   public void RegisterFunction(IRTextFunction function, FunctionDebugInfo debugInfo) {

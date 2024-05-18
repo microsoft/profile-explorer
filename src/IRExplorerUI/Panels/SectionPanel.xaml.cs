@@ -24,6 +24,7 @@ using ClosedXML.Excel;
 using HtmlAgilityPack;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
+using IRExplorerUI.Compilers;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
@@ -2602,6 +2603,12 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
     Session.SetApplicationProgress(true, double.NaN, "Computing statistics");
 
+    foreach (var loadedDoc in Session.SessionState.Documents) {
+      if (loadedDoc.Loader is DisassemblerSectionLoader disasmLoader) {
+        disasmLoader.ResolveCallTargetNames = false;
+      }
+    }
+
     foreach (var function in functions) {
       if (function.SectionCount == 0) {
         continue;
@@ -2645,6 +2652,12 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       // Complete only now after all tasks were canceled,
       // otherwise the session ending would move on and break the tasks still executing.
       cancelableTask.Completed();
+    }
+
+    foreach (var loadedDoc in Session.SessionState.Documents) {
+      if (loadedDoc.Loader is DisassemblerSectionLoader disasmLoader) {
+        disasmLoader.ResolveCallTargetNames = true;
+      }
     }
 
     Session.SetApplicationProgress(false, double.NaN);

@@ -66,8 +66,8 @@ public interface IToolPanel {
   void OnSessionEnd();
   void OnSessionSave();
   Task OnReloadSettings();
-  void OnDocumentSectionLoaded(IRTextSection section, IRDocument document);
-  void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document);
+  Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document);
+  Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document);
   void OnElementSelected(IRElementEventArgs e);
   void OnElementHighlighted(IRHighlightingEventArgs e);
   void ClonePanel(IToolPanel basePanel);

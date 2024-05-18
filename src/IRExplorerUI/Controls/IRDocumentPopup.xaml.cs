@@ -394,7 +394,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private async Task SwitchAssemblySourceMode() {
     // Save current profile filter to restore after switch.
     var filter = ProfileTextView.ProfileFilter;
-    ProfileTextView.Reset();
+    await ProfileTextView.Reset();
 
     if (showSourceFile_) {
       ProfileTextView.Initialize(App.Settings.SourceFileSettings);

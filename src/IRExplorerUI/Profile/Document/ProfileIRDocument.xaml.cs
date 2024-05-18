@@ -281,7 +281,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ShowPerformanceCounterColumns = true;
     ShowPerformanceMetricColumns = true;
     DataContext = this;
-    loadTask_ = new CancelableTaskInstance();
+    loadTask_ = new CancelableTaskInstance(false);
     profileFilter_ = new ProfileSampleFilter();
     historyManager_ = new ProfileHistoryManager(() =>
       new ProfileFunctionState(TextView.Section, TextView.Function,
@@ -982,8 +982,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     if (showSourceStatements) {
       syntaxNodes = await Task.Run(() =>
-        PrepareSourceSyntaxTree(sourceText_.ToString(), sourceProcessingResult_,
-                                sourceProfileResult_, sourceLanguage_));
+        PrepareSourceSyntaxTree(sourceText_.ToString(), sourceLineProfileResult,
+          processingResult, sourceLanguage_));
     }
 
     // Replace the text after the assembly lines were inserted.
@@ -997,7 +997,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     // Annotate the source lines with the profiling data based on the code statements.
     if (syntaxNodes != null) {
-      await MarkSourceFileStructure(syntaxNodes, sourceProfileResult_,
+      await MarkSourceFileStructure(syntaxNodes, processingResult,
                                     originalSourceText_, section.ParentFunction);
     }
 
@@ -1026,7 +1026,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     UpdateProfileDescription(funcProfile);
     await UpdateProfilingColumns();
     if (showAssemblyLines) {
-      SetupSourceAssembly();
+      SetupSourceAssembly(processingResult);
     }
 
     return true;
@@ -1276,12 +1276,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                        MapFromOriginalSourceLineNumber);
   }
 
-  private void SetupSourceAssembly() {
+  private void SetupSourceAssembly(SourceLineProfileResult processingResult) {
 
     // Replace the default line number left margin with one
     // that doesn't number the assembly lines, to keep same line numbers
     // with the original source file.
-    var lineNumbers = new SourceLineNumberMargin(TextView, sourceProfileResult_);
+    var lineNumbers = new SourceLineNumberMargin(TextView, processingResult);
     TextView.SetupCustomLineNumbers(lineNumbers);
 
     // Create the block foldings for each source line and its assembly section.
@@ -1291,7 +1291,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     // Change the text color of the assembly section to be the same
     // (the source syntax highlighting may mark some ASM opcodes for ex).
     var asmFont = new Typeface(TextView.FontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-    assemblyColorizer_ = new RangeColorizer(sourceProfileResult_.AssemblyRanges,
+    assemblyColorizer_ = new RangeColorizer(processingResult.AssemblyRanges,
       ((SourceFileSettings)settings_).AssemblyTextColor.AsBrush(),
       ((SourceFileSettings)settings_).AssemblyBackColor.AsBrush(), asmFont);
     TextView.RegisterTextTransformer(assemblyColorizer_);
@@ -1629,7 +1629,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
            sourceProfileResult_.LineToOriginalLineMap.ContainsKey(line);
   }
 
-  public void Reset() {
+  public async Task Reset() {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     ResetProfilingMenus();
     ResetInstance();
     ProfileFilter = new ProfileSampleFilter();
