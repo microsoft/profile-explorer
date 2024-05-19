@@ -375,13 +375,13 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
   public RelayCommand<object> ExportCategoriesHtmlCommand => new RelayCommand<object>(async obj => {
     if (categories_ != null) {
-      ProfilingExporting.ExportFunctionMarkingsAsHtmlFile(categories_, Session);
+      await ProfilingExporting.ExportFunctionMarkingsAsHtmlFile(categories_, Session);
     }
   });
 
   public RelayCommand<object> ExportCategoriesMarkdownCommand => new RelayCommand<object>(async obj => {
     if (categories_ != null) {
-      ProfilingExporting.ExportFunctionMarkingsAsMarkdownFile(categories_, Session);
+      await ProfilingExporting.ExportFunctionMarkingsAsMarkdownFile(categories_, Session);
     }
   });
 

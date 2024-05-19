@@ -26,7 +26,6 @@ public partial class MainWindow : Window, ISession {
   private CancelableTaskInstance updateProfileTask_ = new CancelableTaskInstance();
   private ProfileData.ProcessingResult allThreadsProfile_;
   private ProfileFilterState profileFilter_;
-  private List<FunctionMarkingCategory> currentMarkingCategories_;
 
   public ProfileData ProfileData => sessionState_?.ProfileData;
   public ProfileFilterState ProfileFilter {
@@ -137,7 +136,6 @@ public partial class MainWindow : Window, ISession {
     ProfileFilter = state;
     ProfileFilterStateHost.DataContext = null;
     ProfileFilterStateHost.DataContext = state;
-    currentMarkingCategories_ = null;
   }
 
   public async Task<bool> RemoveProfileSamplesFilter() {
@@ -590,26 +588,26 @@ public partial class MainWindow : Window, ISession {
     ProfileFilter?.RemoveThreadFilter?.Invoke();
   }
 
-  private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
+  private async void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
     MarkingSettings.FunctionColors.Clear();
-    ReloadMarkingSettings();
+    await ReloadMarkingSettings();
   }
 
-  private void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
+  private async void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
     MarkingSettings.ModuleColors.Clear();
-    ReloadMarkingSettings();
+    await ReloadMarkingSettings();
   }
 
-  private void MarkingMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+  private async void MarkingMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     // Add the saved markings menu items.
-    CreateSavedMarkingMenu(SwitchMarkingsMenu, markingSet => {
+    CreateSavedMarkingMenu(SwitchMarkingsMenu, async markingSet => {
       MarkingSettings.SwitchMarkingSet(markingSet);
-      ReloadMarkingSettings();
+      await ReloadMarkingSettings();
     });
 
-    CreateSavedMarkingMenu(AppendMarkingsMenu, markingSet => {
+    CreateSavedMarkingMenu(AppendMarkingsMenu, async markingSet => {
       MarkingSettings.AppendMarkingSet(markingSet);
-      ReloadMarkingSettings();
+      await ReloadMarkingSettings();
     });
 
     // Add the built-in function markings to the menu,
@@ -682,9 +680,9 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private void ReloadMarkingSettings() {
+  private async Task ReloadMarkingSettings() {
     // Notify all panels about the marking changes.
-    FunctionMarkingChanged(ToolPanelKind.Other);
+    await FunctionMarkingChanged(ToolPanelKind.Other);
   }
 
   private void SaveMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
@@ -695,9 +693,9 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private void ImportMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
+  private async void ImportMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
     if(MarkingSettings.ImportMarkings(this)) {
-      ReloadMarkingSettings();
+      await ReloadMarkingSettings();
     }
   }
 
@@ -716,13 +714,13 @@ public partial class MainWindow : Window, ISession {
       return;
     }
 
-    currentMarkingCategories_ = await ProfilingUtils.CreateFunctionsCategoriesMenu(CategoriesMenu, async (o, args) => {
+    await ProfilingUtils.CreateFunctionsCategoriesMenu(CategoriesMenu, async (o, args) => {
         if (o is MenuItem menuItem &&
             menuItem.Tag is IRTextFunction func) {
           await SwitchActiveFunction(func);
         }
       }, null,
-      currentMarkingCategories_, MarkingSettings, this);
+      MarkingSettings, this);
   }
 
   private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {

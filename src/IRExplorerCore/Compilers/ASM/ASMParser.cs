@@ -479,7 +479,7 @@ public sealed class ASMParser : ParserBase {
     SkipKeywords(); // Skip DWORD PTR, etc.
     OperandIR operand = null;
 
-    // operand = varOp | intOp | floatOp | | addressOp | indirOp | labelOp | pasOp
+    // operand = varOp | intOp | floatOp | addressOp | indirOp | labelOp | pasOp
     if (IsIdentifier()) {
       // Variable/temporary.
       //? TODO: If it starts with @ it's address
@@ -599,9 +599,6 @@ public sealed class ASMParser : ParserBase {
       }
       else if (TokenIs(TokenKind.OpenCurly)) {
         SkipAfterToken(TokenKind.CloseCurly);
-      }
-      else if (TokenIs(TokenKind.Less)) {
-        SkipAfterToken(TokenKind.Greater);
       }
       else {
         break;

@@ -136,8 +136,8 @@ public partial class ColorSelector : UserControl {
   private void Button_MouseUp(object sender, MouseButtonEventArgs e) {
     var button = sender as Button;
     var brush = button.Background as SolidColorBrush;
-    RaiseSelectedColorEvent(brush.Color);
     Utils.CloseParentMenu(this);
+    RaiseSelectedColorEvent(brush.Color);
     e.Handled = true;
   }
 

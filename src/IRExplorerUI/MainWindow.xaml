@@ -1081,7 +1081,7 @@
                                     Height="20"
                                     VerticalAlignment="Center"
                                     Background="#F7EFCD"
-                                    ToolTip="Color functions based on the module name">
+                                    ToolTip="Color functions based on the function name">
                                     <MenuItem
                                         x:Name="FunctionMenu"
                                         Height="20"
@@ -1217,7 +1217,7 @@
                                 Margin="0,0,2,0"
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                 BorderThickness="1,0,0,0"
-                                Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                             <TextBlock
                                 Margin="2,0,0,0"

@@ -11,19 +11,9 @@
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
         <StackPanel Margin="4,4,4,4">
-            <TextBlock VerticalAlignment="Center" Text="Initial function view:" />
-            <RadioButton
-                Margin="0,4,0,0"
-                VerticalAlignment="Center"
-                Content="Assembly"
-                IsChecked="{Binding ShowSourcePreviewPopup, Converter={StaticResource InvertedBoolConverter}}" />
-            <RadioButton
-                Margin="0,2,0,0"
-                VerticalAlignment="Center"
-                Content="Source code"
-                IsChecked="{Binding ShowSourcePreviewPopup}" />
+          <TextBlock FontWeight="Medium" Text="Preview Popup" Margin="0,4,0,0" />
             <CheckBox
-                Margin="0,8,0,2"
+                Margin="0,4,0,2"
                 Content="Jump to the hottest function line"
                 IsChecked="{Binding JumpToHottestElement, Mode=TwoWay}"
                 ToolTip="Jump to the hottest profiled instruction/source line" />
@@ -49,6 +39,17 @@
                 Content="Use smaller font size"
                 IsChecked="{Binding UseSmallerFontSize, Mode=TwoWay}"
                 ToolTip="Use a more compact, smaller font size" />
+          <TextBlock VerticalAlignment="Center" Text="Initial function view:" Margin="0,4,0,0" />
+          <RadioButton
+            Margin="0,4,0,0"
+            VerticalAlignment="Center"
+            Content="Assembly"
+            IsChecked="{Binding ShowSourcePreviewPopup, Converter={StaticResource InvertedBoolConverter}}" />
+          <RadioButton
+            Margin="0,2,0,0"
+            VerticalAlignment="Center"
+            Content="Source code"
+            IsChecked="{Binding ShowSourcePreviewPopup}" />
         </StackPanel>
     </Grid>
 </local:OptionsPanelBase>

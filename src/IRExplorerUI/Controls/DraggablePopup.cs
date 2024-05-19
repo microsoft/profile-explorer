@@ -16,7 +16,6 @@ namespace IRExplorerUI.Controls;
 
 public class DraggablePopup : Popup {
   private bool duringMinimize_;
-  private bool isDetached_;
   private bool isAlwaysOnTop_;
 
   public DraggablePopup() {
@@ -32,7 +31,7 @@ public class DraggablePopup : Popup {
     };
 
     // Bring popup over other popups on click anywhere inside it.
-    MouseDown += (sender, args) => BringToFront();
+    PreviewMouseDown += (sender, args) => BringToFront();
   }
 
   public RelayCommand<SelectedColorEventArgs> PopupColorSelectedCommand =>
@@ -62,14 +61,14 @@ public class DraggablePopup : Popup {
     }
   }
 
-  public bool IsDetached => isDetached_;
+  public bool IsDetached { get; private set; }
 
   public virtual bool ShouldStartDragging(MouseButtonEventArgs e) {
     return e.LeftButton == MouseButtonState.Pressed;
   }
 
   public virtual void DetachPopup() {
-    isDetached_ = true;
+    IsDetached = true;
     StaysOpen = true;
     PopupDetached?.Invoke(this, null);
   }

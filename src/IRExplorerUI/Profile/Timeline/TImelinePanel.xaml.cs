@@ -157,7 +157,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   public async Task DisplayFlameGraph() {
     var callTree = Session.ProfileData.CallTree;
-    SchedulePendingCallTree(callTree);
+    await SchedulePendingCallTree(callTree);
   }
 
   public override void OnSessionEnd() {

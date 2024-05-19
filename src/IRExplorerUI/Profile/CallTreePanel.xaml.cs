@@ -1135,8 +1135,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     UpdateMarkedFunctions();
   }
 
-  private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
+  private async void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
       e.OriginalSource, () => UpdateMarkedFunctions());
   }
 
@@ -1173,7 +1173,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
-  public void UpdateMarkedFunctions(bool externalCall = false) {
+  public async Task UpdateMarkedFunctions(bool externalCall = false) {
     if (callTreeNodeToNodeExMap_ != null) {
       UpdateMarkedFunctionsImpl();
       OnPropertyChanged(nameof(HasEnabledMarkedModules));

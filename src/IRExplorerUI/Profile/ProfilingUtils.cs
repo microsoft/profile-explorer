@@ -248,7 +248,7 @@ public static class ProfilingUtils {
 
   public static async Task PopulateMarkedModulesMenu(MenuItem menu, FunctionMarkingSettings settings,
                                                      ISession session, object triggerObject,
-                                                     Action changedHandler) {
+                                                     Func<Task> changedHandler) {
     if (IsTopLevelSubmenu(triggerObject)) return;
 
     CreateMarkedModulesMenu(menu,
@@ -261,7 +261,7 @@ public static class ProfilingUtils {
               settings.UseModuleColors = true;
             }
 
-            changedHandler();
+            await changedHandler();
           }
           else if (menuItem.Tag is IRTextFunction func) {
             // Click on submenu with individual functions.
@@ -280,7 +280,7 @@ public static class ProfilingUtils {
 
   public static async Task PopulateMarkedFunctionsMenu(MenuItem menu, FunctionMarkingSettings settings,
                                                        ISession session, object triggerObject,
-                                                       Action changedHandler) {
+                                                       Func<Task> changedHandler) {
     if (IsTopLevelSubmenu(triggerObject)) return;
 
     await CreateMarkedFunctionsMenu(menu,
@@ -293,7 +293,7 @@ public static class ProfilingUtils {
               settings.UseFunctionColors = true;
             }
 
-            changedHandler();
+            await changedHandler();
           }
           else if (menuItem.Tag is IRTextFunction func) {
             // Click on submenu with individual functions.
@@ -327,83 +327,8 @@ public static class ProfilingUtils {
                             MouseButtonEventHandler menuClickHandler,
                             MouseButtonEventHandler menuRightClickHandler,
                             FunctionMarkingSettings settings, ISession session) {
-    var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
-    var profileItems = new List<ProfileMenuItem>();
-    var separatorIndex = defaultItems.FindIndex(item => item is Separator);
-    var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
-    var valueTemplate = (DataTemplate)Application.Current.FindResource("CheckableProfileMenuItemValueTemplate");
-    double maxWidth = 0;
-
-    // Sort modules by weight in decreasing order.
-    List<(FunctionMarkingStyle Module, TimeSpan Weight)> sortedModules;
-    Dictionary<string, List<ProfileCallTreeNode>> moduleFuncs;
     var categories = await CreateModuleMarkingCategories(settings, session);
-
     CreateCategoriesMenu(categories, menu, false, menuClickHandler, menuRightClickHandler, session);
-    return;
-
-    // Insert module markers after separator.
-    foreach (var pair in sortedModules) {
-      double weightPercentage = session.ProfileData.ScaleModuleWeight(pair.Weight);
-      string text = $"({markerSettings.FormatWeightValue(pair.Weight)})";
-      string tooltip = "Right-click to remove module marking";
-      string title = pair.Module.Name;
-
-      if (pair.Module.HasTitle) {
-        title = $"{pair.Module.Title} ({title})";
-      }
-
-      if (pair.Module.IsRegex) {
-        title = $"{title} (Regex)";
-      }
-
-      var value = new ProfileMenuItem(text, pair.Weight.Ticks, weightPercentage) {
-        PrefixText = title,
-        ToolTip = tooltip,
-        ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
-        TextWeight = markerSettings.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
-        BackColor = pair.Module.Color.AsBrush()
-      };
-
-      var item = new MenuItem {
-        IsChecked = pair.Module.IsEnabled,
-        StaysOpenOnClick = true,
-        Header = value,
-        Tag = pair.Module,
-        HeaderTemplate = valueTemplate,
-        Style = (Style)Application.Current.FindResource("SubMenuItemHeaderStyle2")
-      };
-
-      item.PreviewMouseLeftButtonUp += menuClickHandler;
-      item.PreviewMouseRightButtonDown += menuRightClickHandler;
-      item.PreviewMouseLeftButtonDown += (o, args) => {
-        if (o is MenuItem menuItem) {
-          menuItem.IsChecked = !menuItem.IsChecked;
-        }
-      };
-
-      // Create a submenu with the sorted functions in the module.
-      var funcList = moduleFuncs.GetValueOrNull(pair.Module.Name);
-
-      if(funcList is {Count: > 0}) {
-        CreateFunctionsSubmenu(funcList, item, menuClickHandler, session);
-      }
-
-      defaultItems.Insert(separatorIndex + 1, item);
-      profileItems.Add(value);
-
-      // Make sure percentage rects are aligned.
-      Utils.UpdateMaxMenuItemWidth(title, ref maxWidth, menu);
-    }
-
-    foreach (var value in profileItems) {
-      value.MinTextWidth = maxWidth;
-    }
-
-    // Populate the module menu.
-    menu.Items.Clear();
-    DocumentUtils.RestoreDefaultMenuItems(menu, defaultItems);
   }
 
   public static async Task<List<FunctionMarkingCategory>> CreateModuleMarkingCategories(
@@ -439,19 +364,16 @@ public static class ProfilingUtils {
                                                      MouseButtonEventHandler menuRightClickHandler,
                                                      FunctionMarkingSettings settings, ISession session) {
     await CreateMarkedFunctionsMenu(menu, false, menuClickHandler, menuRightClickHandler,
-      settings.FunctionColors, session, null);
+      settings.FunctionColors, session);
   }
 
-  public static async Task<List<FunctionMarkingCategory>>
-
+  public static async Task
     CreateFunctionsCategoriesMenu(MenuItem menu,
                                   MouseButtonEventHandler menuClickHandler,
                                   MouseButtonEventHandler menuRightClickHandler,
-                                  List<FunctionMarkingCategory> currentMarkingCategories,
                                   FunctionMarkingSettings settings, ISession session) {
-    return await CreateMarkedFunctionsMenu(menu, true, menuClickHandler, menuRightClickHandler,
-      settings.BuiltinMarkingCategories.FunctionColors,
-      session, currentMarkingCategories);
+    await CreateMarkedFunctionsMenu(menu, true, menuClickHandler, menuRightClickHandler,
+      settings.BuiltinMarkingCategories.FunctionColors, session);
   }
 
   public static List<FunctionMarkingCategory> CollectMarkedFunctions(List<FunctionMarkingStyle> markings,
@@ -794,24 +716,17 @@ public static class ProfilingUtils {
     }
   }
 
-  public static async Task<List<FunctionMarkingCategory>>
+  public static async Task
     CreateMarkedFunctionsMenu(MenuItem menu, bool isCategoriesMenu,
                               MouseButtonEventHandler menuClickHandler,
                               MouseButtonEventHandler menuRightClickHandler,
-                              List<FunctionMarkingStyle> markings, ISession session,
-                              List<FunctionMarkingCategory> currentMarkingCategories) {
+                              List<FunctionMarkingStyle> markings, ISession session) {
     // Collect all marked functions and their weight by category.
     var markingCategoryList =
       await Task.Run(() => CollectMarkedFunctions(markings, isCategoriesMenu, session));
 
-    if (currentMarkingCategories != null &&
-        currentMarkingCategories.Equals(markingCategoryList)) {
-      return currentMarkingCategories;
-    }
-
     CreateCategoriesMenu(markingCategoryList, menu, isCategoriesMenu,
                          menuClickHandler, menuRightClickHandler, session);
-    return markingCategoryList;
   }
 
   private static void CreateCategoriesMenu(List<FunctionMarkingCategory> temp, MenuItem menu, bool isCategoriesMenu,

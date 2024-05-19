@@ -88,7 +88,7 @@ public partial class GraphPanel : ToolPanelControl {
     SetupCommands();
   }
 
-  public IRElement Element {
+  public IRElement SelectedElement {
     get => GraphViewer.SelectedElement;
     set {
       GraphViewer.SelectElement(value);
@@ -148,7 +148,7 @@ public partial class GraphPanel : ToolPanelControl {
     IsPanelEnabled = false;
   }
 
-  public void Highlight(IRHighlightingEventArgs info) {
+  private void Highlight(IRHighlightingEventArgs info) {
     if (!Settings.SyncMarkedNodes && info.Type == HighlighingType.Marked) {
       return;
     }
@@ -252,6 +252,10 @@ public partial class GraphPanel : ToolPanelControl {
       }
 
       Focus();
+    }
+    else {
+      GraphViewer.ResetHighlightedNodes(HighlighingType.Selected);
+      GraphViewer.ResetHighlightedNodes(HighlighingType.Hovered);
     }
   }
 
@@ -1026,7 +1030,7 @@ public partial class GraphPanel : ToolPanelControl {
     }
 
     if (e.Element is BlockIR block) {
-      Element = block;
+      SelectedElement = block;
     }
   }
 

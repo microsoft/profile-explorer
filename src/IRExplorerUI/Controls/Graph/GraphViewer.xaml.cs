@@ -15,9 +15,11 @@ using IRExplorerCore.IR;
 namespace IRExplorerUI;
 
 public partial class GraphViewer : FrameworkElement {
-  public static Pen DefaultPen = ColorPens.GetPen(Colors.Black, 0.025);
-  public static Pen DefaultBoldPen = ColorPens.GetPen(Colors.Black, 0.04);
-  public static Pen DefaultSelectedPen = ColorPens.GetPen(Colors.Black, 0.05);
+  private static readonly double DefaultBoldThickness = 0.05;
+  public static readonly Pen DefaultPen = ColorPens.GetPen(Colors.Black, 0.025);
+  public static readonly Pen DefaultBoldPen = ColorPens.GetPen(Colors.Black, DefaultBoldThickness);
+  public static readonly Pen DefaultSelectedPen = ColorPens.GetPen(Colors.Black, 0.065);
+  
   private readonly double GraphMargin = 0.15;
   private readonly double ScaleFactor = 50;
   private IRElement element_;
@@ -138,12 +140,12 @@ public partial class GraphViewer : FrameworkElement {
     MarkNode(node, selectedColor);
   }
 
-  public void MarkNode(GraphNode node, Color selectedColor, bool useBoldBorder = true) {
+  private void MarkNode(GraphNode node, Color selectedColor, bool useBoldBorder = true) {
     var pen = useBoldBorder ? DefaultBoldPen : DefaultPen;
     MarkNode(node, new HighlightingStyle(selectedColor, pen));
   }
 
-  public void MarkNode(GraphNode node, HighlightingStyle style) {
+  private void MarkNode(GraphNode node, HighlightingStyle style) {
     if (node == null) {
       return;
     }
@@ -156,7 +158,7 @@ public partial class GraphViewer : FrameworkElement {
     });
   }
 
-  public void MarkNodePredecessors(GraphNode node, HighlightingStyle style) {
+  private void MarkNodePredecessors(GraphNode node, HighlightingStyle style) {
     if (node?.NodeInfo.InEdges != null) {
       foreach (var edge in node.NodeInfo.InEdges) {
         var fromNode = edge.NodeFrom?.Tag as GraphNode;
@@ -165,7 +167,7 @@ public partial class GraphViewer : FrameworkElement {
     }
   }
 
-  public void MarkNodeSuccessors(GraphNode node, HighlightingStyle style) {
+  private void MarkNodeSuccessors(GraphNode node, HighlightingStyle style) {
     if (node?.NodeInfo.InEdges != null) {
       foreach (var edge in node.NodeInfo.OutEdges) {
         var toNode = edge.NodeTo?.Tag as GraphNode;
@@ -174,7 +176,7 @@ public partial class GraphViewer : FrameworkElement {
     }
   }
 
-  public void MarkNodeLoop(GraphNode node, HighlightingStyle style) {
+  private void MarkNodeLoop(GraphNode node, HighlightingStyle style) {
     var loopTag = node?.NodeInfo.ElementData.GetTag<LoopBlockTag>();
 
     if (loopTag == null) {
@@ -186,7 +188,7 @@ public partial class GraphViewer : FrameworkElement {
     }
   }
 
-  public void MarkNodeLoopNest(GraphNode node, HighlightingStyle style) {
+  private void MarkNodeLoopNest(GraphNode node, HighlightingStyle style) {
     var loopTag = node?.NodeInfo.ElementData.GetTag<LoopBlockTag>();
 
     if (loopTag == null) {
@@ -201,11 +203,7 @@ public partial class GraphViewer : FrameworkElement {
   public GraphNode FindPointedNode(Point point) {
     var result = VisualTreeHelper.HitTest(this, point);
 
-    if (result == null) {
-      return null;
-    }
-
-    if (result.VisualHit is DrawingVisual visual) {
+    if (result?.VisualHit is DrawingVisual visual) {
       return visual.ReadLocalValue(TagProperty) as GraphNode;
     }
 
@@ -236,7 +234,6 @@ public partial class GraphViewer : FrameworkElement {
     if (block != null) {
       if (graph_.DataNodeMap.TryGetValue(block, out var node)) {
         var graphNode = node.Tag as GraphNode;
-
         HighlightConnectedNodes(graphNode, selectedNodes_,
                                 settings_.HighlightConnectedNodesOnSelection);
       }
@@ -268,8 +265,7 @@ public partial class GraphViewer : FrameworkElement {
     foreach (var element in info.Group.Elements) {
       var block = element.ParentBlock;
 
-      if (block != null && graph_.DataNodeMap.ContainsKey(block)) {
-        var node = graph_.DataNodeMap[block];
+      if (block != null && graph_.DataNodeMap.TryGetValue(block, out var node)) {
         var graphNode = node.Tag as GraphNode;
 
         // Keep track of entire blocks being marked,
@@ -278,7 +274,7 @@ public partial class GraphViewer : FrameworkElement {
           markedBlocks_.Add(blockElement);
         }
 
-        // If it's a block not being marked, highlight
+        // If it's a block being marked, highlight
         // the entire group of the block and its pred/succ. blocks.
         if (element is BlockIR && info.Type != HighlighingType.Marked) {
           HighlightConnectedNodes(graphNode, group,
@@ -356,7 +352,7 @@ public partial class GraphViewer : FrameworkElement {
   public void ShowGraph(Graph graph, ICompilerInfoProvider sessionCompilerInfo) {
     compilerInfo_ = sessionCompilerInfo;
     ReloadGraph(graph);
-    GraphLoaded?.Invoke(this, new EventArgs());
+    GraphLoaded?.Invoke(this, EventArgs.Empty);
   }
 
   public void ReloadCurrentGraph() {
@@ -449,8 +445,8 @@ public partial class GraphViewer : FrameworkElement {
 
   private void ReloadSettings() {
     selectedNodeStyle_ = new HighlightingStyle(settings_.SelectedNodeColor, DefaultSelectedPen);
-    predecessorNodeBorder_ = ColorPens.GetPen(settings_.PredecessorNodeBorderColor, 0.05);
-    successorNodeBorder_ = ColorPens.GetPen(settings_.SuccessorNodeBorderColor, 0.05);
+    predecessorNodeBorder_ = ColorPens.GetPen(settings_.PredecessorNodeBorderColor, DefaultBoldThickness);
+    successorNodeBorder_ = ColorPens.GetPen(settings_.SuccessorNodeBorderColor, DefaultBoldThickness);
 
     if (graph_ != null) {
       ReloadGraph(graph_);
@@ -486,14 +482,9 @@ public partial class GraphViewer : FrameworkElement {
     var point = e.GetPosition(this);
     var graphNode = FindPointedNode(point);
 
-    if (graphNode != null) {
-      if (hoveredNode_ != graphNode) {
-        HighlightConnectedNodes(graphNode, hoverNodes_, settings_.HighlightConnectedNodesOnHover);
-        hoveredNode_ = graphNode;
-      }
-    }
-    else {
-      ResetHighlightedNodes(HighlighingType.Hovered);
+    if (graphNode != null && hoveredNode_ != graphNode) {
+      HighlightConnectedNodes(graphNode, hoverNodes_, settings_.HighlightConnectedNodesOnHover);
+      hoveredNode_ = graphNode;
     }
   }
 
@@ -553,6 +544,9 @@ public partial class GraphViewer : FrameworkElement {
 
       e.Handled = true;
     }
+    else {
+      ResetHighlightedNodes(HighlighingType.Selected);
+    }
   }
 
   private async Task MarkNodeDominatorsAsync(GraphNode node, HighlightingStyle style,
@@ -601,8 +595,16 @@ public partial class GraphViewer : FrameworkElement {
       return;
     }
 
+    if (group == selectedNodes_) {
+      node.IsSelected = true;
+    }
+    else if (group == hoverNodes_) {
+      node.IsHovered = true;
+    }
+    
     SetNodeStyle(node, style);
     group[node] = style;
+
   }
 
   private GraphNode GetBlockNode(BlockIR block) {
@@ -624,6 +626,18 @@ public partial class GraphViewer : FrameworkElement {
 
   private void ResetHighlightedNodes(Dictionary<GraphNode, HighlightingStyle> group) {
     var tempNodes = new List<GraphNode>(group.Keys);
+
+    if (group == selectedNodes_) {
+      foreach (var node in group.Keys) {
+        node.IsSelected = false;
+      }
+    }
+    else if (group == hoverNodes_) {
+      foreach (var node in group.Keys) {
+        node.IsHovered = false;
+      }
+    }
+    
     group.Clear();
 
     foreach (var node in tempNodes) {

@@ -475,9 +475,9 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     return fileLoaded;
   }
 
-  public override void OnSessionEnd() {
+  public override async void OnSessionEnd() {
     base.OnSessionEnd();
-    ResetState(); //? TODO: Make OnSessionEnd async
+    await ResetState(); //? TODO: Make OnSessionEnd async
     ProfileTextView.SetSourceText("", "");
   }
 

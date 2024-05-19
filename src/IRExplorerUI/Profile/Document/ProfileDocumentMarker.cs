@@ -329,6 +329,8 @@ public class ProfileDocumentMarker {
   }
 
   public List<InlineeListItem> GenerateInlineeList(FunctionProcessingResult result) {
+    // Group the sample elements by the deepest inlinee they originate from.
+    // This computes the total time per inlinee and a list of elements associated with it.
     var inlineeMap = new Dictionary<string, InlineeListItem>();
 
     foreach (var pair in result.SampledElements) {
@@ -360,6 +362,7 @@ public class ProfileDocumentMarker {
       }
     }
 
+    // Sort by decreasing weight.
     var inlineeList = inlineeMap.ToValueList();
     inlineeList.Sort((a, b) => b.ExclusiveWeight.CompareTo(a.ExclusiveWeight));
     return inlineeList;
@@ -526,8 +529,10 @@ public class ProfileDocumentMarker {
     // Add the overlays to the document.
     var indirectIcon = IconDrawing.FromIconResource("ExecuteIconColor");
     var directIcon = IconDrawing.FromIconResource("ExecuteIcon");
-    document.SuspendUpdate();
 
+    var overlayListMap = new Dictionary<IElementOverlay, List<ProfileCallTreeNode>>();
+    document.SuspendUpdate();
+    
     foreach (var (element, pair) in overlayMap) {
       var color = App.Settings.DocumentSettings.BackgroundColor;
 
@@ -546,6 +551,7 @@ public class ProfileDocumentMarker {
       overlay.ShowBorderOnMouseOverOnly = true;
       overlay.AlignmentX = HorizontalAlignment.Left;
       overlay.MarginY = 2;
+      overlayListMap[overlay] = pair.List;
 
       if (element is InstructionIR instr) {
         // Place before the call opcode.
@@ -553,28 +559,27 @@ public class ProfileDocumentMarker {
         overlay.MarginX = Utils.MeasureString(lineOffset, Utils.GetTextTypeface(document),
                                               document.FontSize).Width - 20;
       }
-
-      // Show a popup on hover with the list of call targets.
-      SetupCallSiteHoverPreview(overlay, pair.List, document);
     }
 
+    // Show a popup on hover with the list of call targets.
+    SetupCallSiteHoverPreview(overlayListMap, document);
     document.ResumeUpdate();
   }
 
-  private void SetupCallSiteHoverPreview(IconElementOverlay overlay, List<ProfileCallTreeNode> list,
+  private void SetupCallSiteHoverPreview(Dictionary<IElementOverlay, List<ProfileCallTreeNode>> overlayListMap,
                                          IRDocument document) {
     // The overlay hover preview is somewhat of a hack,
     // since the hover event is fired over the entire document,
     // but the popup should be shown only if mouse is over the overlay.
-    //? TODO: Find a way to integrate hover login into overlay.OnHover
     var view = document as UIElement;
     CallTreeNodePopup popup = null;
-    IElementOverlay hoveredOverlay = null;
+    (IElementOverlay Overlay, List<ProfileCallTreeNode> List) hoveredOverlay = (null, null);
 
+    // Create a single hover handler for all overlays.
     var preview = new PopupHoverPreview(
       view, HoverPreview.HoverDuration,
       (mousePoint, previewPoint) => {
-        if (hoveredOverlay == null) {
+        if (hoveredOverlay.Overlay == null) {
           return null; // Nothing actually hovered.
         }
 
@@ -588,7 +593,7 @@ public class ProfileDocumentMarker {
           popup.UpdatePosition(previewPoint, view);
         }
 
-        popup.ShowFunctions(list, irInfo_.NameProvider.FormatFunctionName);
+        popup.ShowFunctions(hoveredOverlay.List, irInfo_.NameProvider.FormatFunctionName);
         return popup;
       },
       (mousePoint, popup) => true,
@@ -596,14 +601,19 @@ public class ProfileDocumentMarker {
         document.Session.RegisterDetachedPanel(popup);
       });
 
-    overlay.OnHover += (sender, e) => {
-      hoveredOverlay = sender as IElementOverlay;
-    };
+    foreach (var pair in overlayListMap) {
+      pair.Key.OnHover += (sender, e) => {
+        hoveredOverlay.Overlay = sender as IElementOverlay;
+        hoveredOverlay.List = overlayListMap[hoveredOverlay.Overlay];
+      };
 
-    overlay.OnHoverEnd += (sender, e) => {
-      preview.HideDelayed();
-      hoveredOverlay = null;
-    };
+      pair.Key.OnHoverEnd += (sender, e) => {
+        preview.HideDelayed();
+        hoveredOverlay = (null, null);
+      };
+    }
+
+    document.RegisterHoverPreview(preview);
   }
 
   private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, IRDocument document) {

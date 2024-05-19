@@ -63,17 +63,23 @@ public class FlameGraphRenderer {
     ReloadSettings();
     dummyNodeStyles_ = new Dictionary<HighlightingStyle, HighlightingStyle>();
   }
+  
+  public double MaxGraphWidth => maxWidth_;
+  public double MaxGraphHeight => (maxNodeDepth_ + 1) * nodeHeight_;
+  public Rect VisibleArea => visibleArea_;
+  public Rect GraphArea => new Rect(0, 0, MaxGraphWidth, MaxGraphHeight);
+  public Dictionary<FlameGraphNode, HighlightingStyle> SelectedNodes { get; set; }
 
   private void ReloadSettings() {
     settings_.ResedCachedPalettes();
     App.Settings.MarkingSettings.ResetCachedPalettes();
     defaultBorder_ = ColorPens.GetPen(settings_.NodeBorderColor, 0.5);
-    kernelBorder_ = ColorPens.GetPen(settings_.KernelNodeBorderColor,  1);
+    kernelBorder_ = ColorPens.GetPen(settings_.KernelNodeBorderColor, 1);
     managedBorder_ = ColorPens.GetPen(settings_.ManagedNodeBorderColor, 1);
 
     font_ = new Typeface(FontName);
-    nameFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Medium,
-                             FontStretch.FromOpenTypeStretch(5));
+    nameFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, 
+                             FontWeights.Medium, FontStretches.Normal);
     nodeTextBrush_ = settings_.NodeTextColor.AsBrush();
     kernelNodeTextBrush_ = settings_.KernelNodeTextColor.AsBrush();
     managedNodeTextBrush_ = settings_.ManagedNodeTextColor.AsBrush();
@@ -96,14 +102,6 @@ public class FlameGraphRenderer {
       nameGlyphs_ = new GlyphRunCache(nameFont_, fontSize_, VisualTreeHelper.GetDpi(graphVisual_).PixelsPerDip);
     }
   }
-
-  public GlyphRunCache GlyphsCache => glyphs_;
-  public GlyphRunCache NameGlyphsCache => nameGlyphs_;
-  public double MaxGraphWidth => maxWidth_;
-  public double MaxGraphHeight => (maxNodeDepth_ + 1) * nodeHeight_;
-  public Rect VisibleArea => visibleArea_;
-  public Rect GraphArea => new Rect(0, 0, MaxGraphWidth, MaxGraphHeight);
-  public Dictionary<FlameGraphNode, HighlightingStyle> SelectedNodes { get; set; }
 
   public static BitmapSource BitmapSourceFromBrush(Brush drawingBrush, int size = 32, int dpi = 96) {
     // RenderTargetBitmap = builds a bitmap rendering of a visual
@@ -411,7 +409,7 @@ public class FlameGraphRenderer {
 
   private void SetupNode(FlameGraphNode node) {
     node.Style = GetNodeStyle(node);
-    node.TextColor = GetNodeTextColor(node);;
+    node.TextColor = GetNodeTextColor(node);
     node.ModuleTextColor = nodeModuleBrush_;
     node.WeightTextColor = nodeWeightBrush_;
     node.PercentageTextColor = nodePercentageBrush_;
@@ -454,14 +452,14 @@ public class FlameGraphRenderer {
       // Recompute the position of all nodes and rebuild the quad tree.
       // This is done once, with node position/size being relative to the maxWidth,
       // except when dummy nodes get involved, which can force a re-layout.
-        nodesQuadTree_ = new QuadTree<FlameGraphNode>();
-        dummyNodesQuadTree_ = new QuadTree<FlameGraphGroupNode>();
-        nodesQuadTree_.Bounds = quadGraphArea_;
-        dummyNodesQuadTree_.Bounds = quadGraphArea_;
-        maxNodeDepth_ = 0;
+      nodesQuadTree_ = new QuadTree<FlameGraphNode>();
+      dummyNodesQuadTree_ = new QuadTree<FlameGraphGroupNode>();
+      nodesQuadTree_.Bounds = quadGraphArea_;
+      dummyNodesQuadTree_.Bounds = quadGraphArea_;
+      maxNodeDepth_ = 0;
 
-        UpdateNodeLayout(flameGraph_.RootNode, 0, 0, true);
-        nodeLayoutRecomputed = true;
+      UpdateNodeLayout(flameGraph_.RootNode, 0, 0, true);
+      nodeLayoutRecomputed = true;
     }
 
     // Update only the visible nodes on scrolling.
@@ -480,13 +478,15 @@ public class FlameGraphRenderer {
     if (shrinkingNodes > 0) {
       //? TODO: Removing from the quad tree is very slow,
       //? recompute the entire layout instead...
-      //! Consider a faster implementation or other kind of spatial tree.
       return false;
     }
 
-    // Redraw selected nodes to show on top.
+    // Draw the placeholders for insignificant nodes.
+    bool unchanged = DrawDummyNodes(graphDC, layoutChanged);
+
+    // Redraw selected nodes to show on top of everything else.
     DrawSelectedNodes(graphDC);
-    return DrawDummyNodes(graphDC, layoutChanged);
+    return unchanged;
   }
 
   private void DrawSelectedNodes(DrawingContext graphDC) {
@@ -497,7 +497,7 @@ public class FlameGraphRenderer {
       var pathNode = node;
 
       while (pathNode != null) {
-        if(pathNode == flameGraph_.RootNode) {
+        if (pathNode == flameGraph_.RootNode) {
           onPath = true;
           break;
         }
@@ -510,7 +510,7 @@ public class FlameGraphRenderer {
         pathNode = pathNode.Parent;
       }
 
-      if(onPath) {
+      if (onPath) {
         DrawNode(node, graphDC);
       }
     }
@@ -588,7 +588,7 @@ public class FlameGraphRenderer {
 
   private void DrawDummyNode(FlameGraphGroupNode node, DrawingContext graphDC) {
     var scaledBounds = new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top,
-                                node.Bounds.Width * maxWidth_, node.Bounds.Height);
+      node.Bounds.Width * maxWidth_, node.Bounds.Height);
 
     if (cachedDummyNodeGuidelines_ == null) {
       cachedDummyNodeGuidelines_ = CreateGuidelineSet(scaledBounds, 0.5f);
@@ -833,7 +833,7 @@ public class FlameGraphRenderer {
   private (string Text, GlyphRun glyphs, bool Trimmed, Size TextSize)
     TrimTextToWidth(string text, double maxWidth, bool useNameFont) {
     string originalText = text;
-    var glyphsCache = useNameFont ? NameGlyphsCache : GlyphsCache;
+    var glyphsCache = useNameFont ? nameGlyphs_ : glyphs_;
 
     if (maxWidth <= 0 || string.IsNullOrEmpty(text)) {
       return ("", glyphsCache.GetGlyphs("").Glyphs, false, new Size(0, 0));

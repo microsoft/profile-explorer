@@ -204,6 +204,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   private HashSet<FoldingSection> foldedBlocks_;
   private bool hasCustomLineNumbers_;
   private List<IVisualLineTransformer> registerdTransformers_;
+  private List<HoverPreview> registeredHoverPreviews_;
 
   public IRDocument() {
     // Setup element tracking data structures.
@@ -224,6 +225,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     markerChildStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.StyleSet);
     markerParentStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.LightStyleSet);
     registerdTransformers_ = new();
+    registeredHoverPreviews_ = new();
 
     SetupProperties();
     SetupStableRenderers();
@@ -573,6 +575,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     if (line >= 0 && line <= Document.LineCount) {
       TextArea.Caret.Line = line;
       ScrollToLine(line);
+      
     }
   }
 
@@ -586,6 +589,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   public void UnloadDocument() {
     UnregisterTextTransformers();
+    UnregisterHoverPreviews();
     ResetRenderers();
     IsLoaded = false;
     Text = "";
@@ -1179,6 +1183,18 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
     registerdTransformers_.Clear();
   }
+  
+  public void RegisterHoverPreview(PopupHoverPreview preview) {
+    registeredHoverPreviews_.Add(preview); 
+  }
+
+  public void UnregisterHoverPreviews() {
+    foreach (var ppreview in registeredHoverPreviews_) {
+      ppreview.Unregister();
+    }
+
+    registeredHoverPreviews_.Clear();
+  }
 
   private void AddDiffTextSegments(List<DiffTextSegment> segments) {
     diffSegments_ = segments;
@@ -1588,27 +1604,27 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     if (settings_ is not DocumentSettings docSettings) {
       // Selection styles are also used in non-IR documents,
       // make sure they are not null and have reasonable defaults.
-      selectedStyle_ ??= new HighlightingStyle();
-      selectedStyle_.BackColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.5);
-      selectedStyle_.Border = settings_.CurrentLineBorderColor.AsPen();
-      selectedBlockStyle_ ??= new HighlightingStyle();
-      selectedBlockStyle_.BackColor = settings_.BackgroundColor.AsBrush();
-      selectedBlockStyle_.Border = settings_.CurrentLineBorderColor.AsPen();
+      selectedStyle_ = new HighlightingStyle {
+        BackColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.5),
+        Border = settings_.CurrentLineBorderColor.AsPen()
+      };
+      
+      selectedBlockStyle_ = new HighlightingStyle {
+        BackColor = settings_.BackgroundColor.AsBrush(),
+        Border = settings_.CurrentLineBorderColor.AsPen()
+      };
       return;
     }
 
     var borderPen = ColorPens.GetBoldPen(docSettings.BorderColor);
     var lightBorderPen = ColorPens.GetTransparentPen(docSettings.BorderColor, 150);
-    selectedStyle_ ??= new HighlightingStyle();
-    //selectedStyle_.BackColor = ColorBrushes.GetBrush(settings_.SelectedValueColor);
-    selectedStyle_.BackColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.5);
-    selectedStyle_.Border = borderPen;
-    selectedBlockStyle_ ??= new HighlightingStyle();
-    selectedBlockStyle_.BackColor = ColorBrushes.GetBrush(Colors.Transparent);
-
-    selectedBlockStyle_.Border =
-      ColorPens.GetPen(ColorUtils.AdjustLight(settings_.SelectedValueColor, 0.75f), 2);
-
+    
+    selectedStyle_ ??= new HighlightingStyle {
+      BackColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.5),
+      Border = borderPen
+    };
+    
+    selectedBlockStyle_ = selectedStyle_;
     ssaUserStyle_ ??= new PairHighlightingStyle();
     ssaUserStyle_.ParentStyle.BackColor =
       ColorBrushes.GetBrush(
@@ -1617,24 +1633,36 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     ssaUserStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(docSettings.UseValueColor);
     ssaUserStyle_.ChildStyle.Border = borderPen;
 
-    iteratedUserStyle_ ??= new PairHighlightingStyle();
-    iteratedUserStyle_.ParentStyle.BackColor = ColorBrushes.GetTransparentBrush(docSettings.UseValueColor, 0);
-    iteratedUserStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(docSettings.UseValueColor, 50);
-    iteratedUserStyle_.ChildStyle.Border = lightBorderPen;
+    iteratedUserStyle_ = new PairHighlightingStyle {
+      ParentStyle = {
+        BackColor = ColorBrushes.GetTransparentBrush(docSettings.UseValueColor, 0)
+      },
+      ChildStyle = {
+        BackColor = ColorBrushes.GetTransparentBrush(docSettings.UseValueColor, 50),
+        Border = lightBorderPen
+      }
+    };
 
-    ssaDefinitionStyle_ ??= new PairHighlightingStyle();
-    ssaDefinitionStyle_.ParentStyle.BackColor = ColorBrushes.GetBrush(
-      ColorUtils.AdjustLight(docSettings.DefinitionValueColor, ParentStyleLightAdjustment));
+    ssaDefinitionStyle_ = new PairHighlightingStyle {
+      ParentStyle = {
+        BackColor = ColorBrushes.GetBrush(
+          ColorUtils.AdjustLight(docSettings.DefinitionValueColor, ParentStyleLightAdjustment))
+      },
+      ChildStyle = {
+        BackColor = ColorBrushes.GetBrush(docSettings.DefinitionValueColor),
+        Border = borderPen
+      }
+    };
 
-    ssaDefinitionStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(docSettings.DefinitionValueColor);
-    ssaDefinitionStyle_.ChildStyle.Border = borderPen;
-
-    iteratedDefinitionStyle_ ??= new PairHighlightingStyle();
-    iteratedDefinitionStyle_.ParentStyle.BackColor =
-      ColorBrushes.GetTransparentBrush(docSettings.DefinitionValueColor, 0);
-    iteratedDefinitionStyle_.ChildStyle.BackColor =
-      ColorBrushes.GetTransparentBrush(docSettings.DefinitionValueColor, 50);
-    iteratedDefinitionStyle_.ChildStyle.Border = lightBorderPen;
+    iteratedDefinitionStyle_ = new PairHighlightingStyle {
+      ParentStyle = {
+        BackColor = ColorBrushes.GetTransparentBrush(docSettings.DefinitionValueColor, 0)
+      },
+      ChildStyle = {
+        BackColor = ColorBrushes.GetTransparentBrush(docSettings.DefinitionValueColor, 50),
+        Border = lightBorderPen
+      }
+    };
   }
 
   private void ReloadSettings() {
@@ -2603,7 +2631,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
       highlighter.Add(new HighlightedElementGroup(op.Parent, definitionStyle_.ParentStyle));
     }
 
-    if (element is BlockIR && highlighter.Type == HighlighingType.Hovered) {
+    if (element is BlockIR && highlighter.Type == HighlighingType.Selected) {
       highlighter.Add(new HighlightedElementGroup(element, selectedBlockStyle_));
     }
     else {

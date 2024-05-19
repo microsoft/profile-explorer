@@ -1568,7 +1568,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void BlockSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-    if (e.AddedItems.Count != 1) {
+    if (duringSectionSwitching_ || e.AddedItems.Count != 1) {
       return;
     }
 
@@ -2369,7 +2369,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public RelayCommand<object> CopyDocumentCommand => new RelayCommand<object>(async obj => {
-    DocumentExporting.CopyAllLinesAsHtml(TextView);
+    await DocumentExporting.CopyAllLinesAsHtml(TextView);
   });
 
   private class DummyQuery : IElementQuery {

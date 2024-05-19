@@ -501,22 +501,22 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       () => optionsPanelWindow_ = null);
   }
 
-  private void ToggleButton_Click(object sender, RoutedEventArgs e) {
+  private async void ToggleButton_Click(object sender, RoutedEventArgs e) {
     // Force an update for toolbar buttons.
-    ReloadSettings();
+    await ReloadSettings();
   }
 
-  private void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
+  private async void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
     MarkingSettings.ModuleColors.Clear();
-    ReloadSettings();
+    await ReloadSettings();
   }
 
-  private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
+  private async void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
     MarkingSettings.FunctionColors.Clear();
-    ReloadSettings();
+    await ReloadSettings();
   }
 
-  private void ReloadSettings() {
+  private async Task ReloadSettings() {
     GraphHost.SettingsUpdated(settings_);
     UpdateMarkingUI();
   }
@@ -530,8 +530,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     Settings = App.Settings.FlameGraphSettings;
   }
 
-  private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
+  private async void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
       e.OriginalSource, ReloadSettings);
   }
 

@@ -11,11 +11,11 @@ using IRExplorerUI.Utilities.UI;
 
 namespace IRExplorerUI;
 
-public abstract class HoverPreview {
+public abstract class HoverPreview : IDisposable {
   public static readonly TimeSpan HoverDuration = TimeSpan.FromMilliseconds(200);
   public static readonly TimeSpan LongHoverDuration = TimeSpan.FromMilliseconds(800);
   public static readonly TimeSpan ExtraLongHoverDuration = TimeSpan.FromMilliseconds(1500);
-  protected UIElement control_;
+  private UIElement control_;
   private MouseHoverLogic hover_;
   protected UIElement previewPopup_;
   private DelayedAction removeHoveredAction_;
@@ -93,6 +93,10 @@ public abstract class HoverPreview {
     if (OnHoverStopped(e.GetPosition(control_))) {
       HidePreviewPopupDelayed(HoverDuration);
     }
+  }
+
+  public void Dispose() {
+    hover_?.Dispose();
   }
 }
 

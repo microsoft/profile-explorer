@@ -1171,7 +1171,7 @@ public partial class MainWindow : Window, ISession {
   private void GraphViewer_GraphNodeSelected(object sender, IRElementEventArgs e) {
     var panel = ((GraphViewer)sender).HostPanel;
     var document = FindTargetDocument(panel);
-    document.TextView.HighlightElement(e.Element, HighlighingType.Hovered);
+    document.TextView.HighlightElement(e.Element, HighlighingType.Selected);
   }
 
   private Graph ComputeFlowGraph(FunctionIR function, IRTextSection section,
@@ -1423,11 +1423,11 @@ private async Task UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentH
                         });
   }
 
-  private void TextView_BlockSelected(object sender, IRElementEventArgs e) {
+  private async void TextView_BlockSelected(object sender, IRElementEventArgs e) {
     var document = sender as IRDocument;
 
     if (document != null) {
-      NotifyPanelsOfElementSelection(e, document);
+      await NotifyPanelsOfElementSelection(e, document);
     }
 
     var block = e.Element.ParentBlock;
@@ -1465,17 +1465,17 @@ private async Task UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentH
     bookmarksPanel.Bookmarks.Refresh();
   }
 
-  private void TextView_IRElementHighlighting(object sender, IRHighlightingEventArgs e) {
+  private async void TextView_IRElementHighlighting(object sender, IRHighlightingEventArgs e) {
     var document = sender as IRDocument;
 
     if (document != null) {
-      NotifyPanelsOfElementHighlight(e, document);
+      await NotifyPanelsOfElementHighlight(e, document);
     }
   }
 
-  private void TextView_IRElementSelected(object sender, IRElementEventArgs e) {
+  private async void TextView_IRElementSelected(object sender, IRElementEventArgs e) {
     if (sender is IRDocument document) {
-      NotifyPanelsOfElementSelection(e, document);
+      await NotifyPanelsOfElementSelection(e, document);
     }
   }
 

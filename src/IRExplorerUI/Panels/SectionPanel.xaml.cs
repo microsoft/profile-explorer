@@ -1282,14 +1282,14 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     // Attach additional data to the UI.
     await LoadFunctionProfile();
     RestoreListViewColumnsState();
-    UpdateMarkedFunctions(true);
+    await UpdateMarkedFunctions(true);
 
     if (analyzeFunctions) {
       await RunFunctionAnalysis();
     }
   }
 
-  public void UpdateMarkedFunctions(bool externalCall = false) {
+  public async Task UpdateMarkedFunctions(bool externalCall = false) {
     if (functions_ != null) {
       UpdateMarkedFunctionsImpl();
       OnPropertyChanged(nameof(HasEnabledMarkedModules));
@@ -2410,7 +2410,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         OnPropertyChanged(nameof(ShowModules));
       }
 
-      UpdateMarkedFunctions();
+      await UpdateMarkedFunctions();
       initialMarkingSettings_ = MarkingSettings.Clone();
     }
   }
@@ -3385,9 +3385,9 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     Session.SavePanelState(data, this, null);
   }
 
-  public override void OnSessionEnd() {
+  public override async void OnSessionEnd() {
     base.OnSessionEnd();
-    ResetUI(); //? TODO: Await, make OnSessionEnd async
+    await ResetUI(); //? TODO: Make OnSessionEnd async
   }
 
   public void SaveListViewColumnsState() {
@@ -3510,23 +3510,23 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     ShowSections = false;
   }
 
-  private void ToggleButton_Click(object sender, RoutedEventArgs e) {
+  private async void ToggleButton_Click(object sender, RoutedEventArgs e) {
     // Force an update for toolbar buttons.
-    UpdateMarkedFunctions();
+    await UpdateMarkedFunctions();
   }
 
-  private void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
+  private async void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
     MarkingSettings.ModuleColors.Clear();
-    UpdateMarkedFunctions();
+    await UpdateMarkedFunctions();
   }
 
-  private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
+  private async void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
     MarkingSettings.FunctionColors.Clear();
-    UpdateMarkedFunctions();
+    await UpdateMarkedFunctions();
   }
 
-  private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
+  private async void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
       e.OriginalSource, () => UpdateMarkedFunctions());
   }
 
