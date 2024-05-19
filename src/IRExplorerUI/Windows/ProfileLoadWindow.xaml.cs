@@ -74,6 +74,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
   public ISession Session { get; set; }
 
   public string ProfileFilePath {

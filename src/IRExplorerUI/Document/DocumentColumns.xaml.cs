@@ -30,7 +30,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private List<(int StartOffset, int EndOffset)> foldedTextRegions_;
   private int rowFilterIndex_;
   private IRDocument associatedDocument_;
-  private OptionsPanelHostWindow optionsPanelWindow_;
+  private OptionsPanelHostPopup optionsPanelPopup_;
   private Dictionary<IRElement, ElementRowValue> profileDataRowsMap_;
 
   public DocumentColumns() {
@@ -278,15 +278,15 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   private void ColumnSettingsClickHandler(object sender, RoutedEventArgs e) {
-    if (optionsPanelWindow_ != null) {
-      optionsPanelWindow_.ClosePopup();
-      optionsPanelWindow_ = null;
+    if (optionsPanelPopup_ != null) {
+      optionsPanelPopup_.ClosePopup();
+      optionsPanelPopup_ = null;
       return;
     }
 
     var columnHeader = (GridViewColumnHeader)sender;
     var column = (OptionalColumn)columnHeader.Tag;
-    optionsPanelWindow_ = OptionsPanelHostWindow.Create<ColumnOptionsPanel, OptionalColumnStyle>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.Create<ColumnOptionsPanel, OptionalColumnStyle>(
       column.Style.Clone(), columnHeader, null,
       async (newSettings, commit) => {
         if (!newSettings.Equals(column.Style)) {
@@ -308,7 +308,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
         return null;
       },
-      () => optionsPanelWindow_ = null,
+      () => optionsPanelPopup_ = null,
       new Point(0, columnHeader.ActualHeight - 1));
   }
 

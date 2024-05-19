@@ -103,7 +103,7 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
         StyleContextMenu.Items.Add(menuItem);
       }
 
-      if (Parent is OptionsPanelHostWindow popup) {
+      if (Parent is OptionsPanelHostPopup popup) {
         popup.StaysOpen = true;
         StyleContextMenu.Closed += StyleContextMenu_Closed;
       }
@@ -116,7 +116,7 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
   }
 
   private void StyleContextMenu_Closed(object sender, RoutedEventArgs e) {
-    var popup = Parent as OptionsPanelHostWindow;
+    var popup = Parent as OptionsPanelHostPopup;
     popup.StaysOpen = false;
   }
 

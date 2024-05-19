@@ -490,7 +490,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private Dictionary<IRTextSection, IRTextSectionEx> sectionExtMap_;
   private Dictionary<IRTextFunction, IRTextFunctionEx> functionExtMap_;
   private ScrollViewer sectionsScrollViewer_;
-  private OptionsPanelHostWindow optionsPanelWindow_;
+  private OptionsPanelHostPopup optionsPanelPopup_;
   private bool optionsPanelVisible_;
   private GridViewColumnValueSorter<FunctionFieldKind> functionValueSorter_;
   private GridViewColumnValueSorter<SectionFieldKind> sectionValueSorter_;
@@ -2337,25 +2337,25 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
                              Math.Min(SectionList.ActualHeight, SectionOptionsPanel.DefaultHeight));
     var position = new Point(SectionList.ActualWidth - width, 0);
     initialMarkingSettings_ = MarkingSettings.Clone();
-     optionsPanelWindow_ = new OptionsPanelHostWindow(new SectionOptionsPanel(),
+     optionsPanelPopup_ = new OptionsPanelHostPopup(new SectionOptionsPanel(),
                                                      position, width, height, SectionList,
                                                      settings_.Clone(), Session);
-    optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
-    optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
-    optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;
-    optionsPanelWindow_.IsOpen = true;
+    optionsPanelPopup_.PanelClosed += OptionsPanel_PanelClosed;
+    optionsPanelPopup_.PanelReset += OptionsPanel_PanelReset;
+    optionsPanelPopup_.SettingsChanged += OptionsPanel_SettingsChanged;
+    optionsPanelPopup_.IsOpen = true;
     optionsPanelVisible_ = true;
   }
 
   private async void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
-    var newSettings = (SectionSettings)optionsPanelWindow_.Settings;
+    var newSettings = (SectionSettings)optionsPanelPopup_.Settings;
     await HandleNewSettings(newSettings, false);
-    optionsPanelWindow_.Settings = settings_.Clone();
+    optionsPanelPopup_.Settings = settings_.Clone();
   }
 
   private async void OptionsPanel_PanelReset(object sender, EventArgs e) {
     await HandleNewSettings(new SectionSettings(), true);
-    optionsPanelWindow_.Settings = settings_.Clone();
+    optionsPanelPopup_.Settings = settings_.Clone();
   }
 
   private async void OptionsPanel_PanelClosed(object sender, EventArgs e) {
@@ -2367,15 +2367,15 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return;
     }
 
-    optionsPanelWindow_.IsOpen = false;
-    optionsPanelWindow_.PanelClosed -= OptionsPanel_PanelClosed;
-    optionsPanelWindow_.PanelReset -= OptionsPanel_PanelReset;
-    optionsPanelWindow_.SettingsChanged -= OptionsPanel_SettingsChanged;
+    optionsPanelPopup_.IsOpen = false;
+    optionsPanelPopup_.PanelClosed -= OptionsPanel_PanelClosed;
+    optionsPanelPopup_.PanelReset -= OptionsPanel_PanelReset;
+    optionsPanelPopup_.SettingsChanged -= OptionsPanel_SettingsChanged;
 
-    var newSettings = (SectionSettings)optionsPanelWindow_.Settings;
+    var newSettings = (SectionSettings)optionsPanelPopup_.Settings;
     await HandleNewSettings(newSettings, true);
 
-    optionsPanelWindow_ = null;
+    optionsPanelPopup_ = null;
     optionsPanelVisible_ = false;
   }
 

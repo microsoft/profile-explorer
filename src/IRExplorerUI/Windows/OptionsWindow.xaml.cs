@@ -12,6 +12,7 @@ public partial class OptionsWindow : Window {
 
   public OptionsWindow(ISession session) {
     InitializeComponent();
+    DataContext = this;
     Session = session;
     LoadSettings();
 
@@ -19,6 +20,8 @@ public partial class OptionsWindow : Window {
       await SaveAndReloadSettings();
     };
   }
+
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   private void LoadSettings() {
     SummaryOptionsPanel.Initialize(this, App.Settings.SectionSettings, Session);

@@ -32,7 +32,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   private IRTextFunction sourceFileFunc_;
   private string sourceFilePath_;
   private SourceStackFrame currentInlinee_;
-  private OptionsPanelHostWindow optionsPanelWindow_;
+  private OptionsPanelHostPopup optionsPanelPopup_;
   private SourceFileSettings settings_;
   private bool disableInlineeComboboxEvents_;
   private IRDocument associatedDocument_;
@@ -242,14 +242,14 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private void ShowOptionsPanel() {
-    if (optionsPanelWindow_ != null) {
-      optionsPanelWindow_.ClosePopup();
-      optionsPanelWindow_ = null;
+    if (optionsPanelPopup_ != null) {
+      optionsPanelPopup_.ClosePopup();
+      optionsPanelPopup_ = null;
       return;
     }
 
     FrameworkElement relativeControl = ProfileTextView;
-    optionsPanelWindow_ = OptionsPanelHostWindow.Create<SourceFileOptionsPanel, SourceFileSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.Create<SourceFileOptionsPanel, SourceFileSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
@@ -265,7 +265,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
         return null;
       },
-      () => optionsPanelWindow_ = null);
+      () => optionsPanelPopup_ = null);
   }
 
   public async Task LoadSourceFile(IRTextSection section, ProfileSampleFilter profileFilter = null,

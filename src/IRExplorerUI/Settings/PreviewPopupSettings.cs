@@ -35,8 +35,12 @@ public class PreviewPopupSettings : SettingsBase {
   public bool IsElementPopup { get; set; }
 
   public override void Reset() {
-    if (IsElementPopup) {
+    bool isElementPopup = IsElementPopup;
+    ResetAllOptions(this);
+
+    if (isElementPopup) {
       PopupHeight = 200;
+      IsElementPopup = true;
     }
     else {
       JumpToHottestElement = true;

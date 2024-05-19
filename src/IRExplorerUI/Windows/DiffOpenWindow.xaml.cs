@@ -15,6 +15,7 @@ public partial class DiffOpenWindow : Window {
     DataContext = this;
   }
 
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
   public ISession Session { get; set; }
   public string BaseFilePath { get; set; }
   public string DiffFilePath { get; set; }

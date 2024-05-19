@@ -22,6 +22,7 @@ public partial class NotesPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public ISession Session {
     get => TextView.Session;

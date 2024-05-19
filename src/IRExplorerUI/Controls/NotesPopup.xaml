@@ -12,6 +12,11 @@
   xmlns:doc="clr-namespace:IRExplorerUI.Document"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <controls:DraggablePopup.LayoutTransform>
+    <ScaleTransform ScaleX="{Binding WindowScaling}"
+                    ScaleY="{Binding WindowScaling}"/>
+  </controls:DraggablePopup.LayoutTransform>
+
   <Border
     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"

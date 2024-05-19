@@ -24,6 +24,7 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using IRExplorerCore;
 using IRExplorerCore.IR;
+using IRExplorerCore.Utilities;
 using Microsoft.Win32;
 using Xceed.Wpf.Toolkit.Core.Utilities;
 
@@ -498,7 +499,7 @@ public static class Utils {
         return null;
       }
 
-      vsPath = vsPath.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.RemoveEmptyEntries).First();
+      vsPath = vsPath.SplitLinesRemoveEmpty().First();
       string msvcPathInfo = Path.Combine(vsPath, @"VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt");
       string msvcVersion = File.ReadLines(msvcPathInfo).First();
       return Path.Combine(vsPath, @"VC\Tools\MSVC", msvcVersion, @"bin\HostX64\x64");

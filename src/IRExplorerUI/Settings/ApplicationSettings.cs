@@ -25,7 +25,7 @@ public class ApplicationSettings {
   [ProtoMember(3)]
   public string MainWindowPlacement { get; set; }
   [ProtoMember(4)]
-  public int ThemeIndex { get; set; }
+  public GeneralSettings GeneralSettings { get; set; }
   [ProtoMember(5)]
   public List<Tuple<string, string>> RecentComparedFiles { get; set; }
   [ProtoMember(6)]
@@ -74,7 +74,7 @@ public class ApplicationSettings {
   public FunctionMarkingSettings MarkingSettings { get; set; }
   [ProtoMember(30)]
   public HashSet<OptionValueId> KnownOptions { get; set; }
-  
+
   public ApplicationSettings() {
     Reset();
   }
@@ -82,6 +82,7 @@ public class ApplicationSettings {
   public void Reset() {
     InitializeReferenceMembers();
 
+    GeneralSettings.Reset();
     DocumentSettings.Reset();
     FlowGraphSettings.Reset();
     ExpressionGraphSettings.Reset();
@@ -99,7 +100,6 @@ public class ApplicationSettings {
     ElementPreviewPopupSettings.Clear();
     KnownOptions.Clear();
     AutoReloadDocument = true;
-    ThemeIndex = 0; // Light theme.
   }
 
   public void AddRecentFile(string path) {
@@ -217,12 +217,13 @@ public class ApplicationSettings {
     // when a newer version of the app is used.
     KnownOptions = SettingsBase.CollectOptionMembers(this);
   }
-  
+
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     RecentFiles ??= new List<string>();
     RecentTextSearches ??= new List<string>();
     RecentComparedFiles ??= new List<Tuple<string, string>>();
+    GeneralSettings ??= new();
     DocumentSettings ??= new DocumentSettings();
     FlowGraphSettings ??= new FlowGraphSettings();
     ExpressionGraphSettings ??= new ExpressionGraphSettings();
@@ -240,14 +241,13 @@ public class ApplicationSettings {
     TimelineSettings ??= new TimelineSettings();
     CallTreeNodeSettings ??= new CallTreeNodeSettings();
     MarkingSettings ??= new FunctionMarkingSettings();
+    ElementPreviewPopupSettings ??= new Dictionary<ToolPanelKind, PreviewPopupSettings>();
 
     if (PreviewPopupSettings == null) {
       PreviewPopupSettings = new PreviewPopupSettings(false);
       PreviewPopupSettings.Reset();
     }
 
-    ElementPreviewPopupSettings ??= new Dictionary<ToolPanelKind, PreviewPopupSettings>();
-    
     // When adding new options to existing settings classes in a newer version of the app,
     // ensure they are initialized to their default values. This is done by walking
     // the nested settings using reflection and handle each option that is not part

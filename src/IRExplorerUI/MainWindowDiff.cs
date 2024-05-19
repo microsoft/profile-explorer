@@ -15,7 +15,7 @@ using IRExplorerUI.OptionsPanels;
 namespace IRExplorerUI;
 
 public partial class MainWindow : Window, ISession {
-  private OptionsPanelHostWindow diffOptionsPanelHost_;
+  private OptionsPanelHostPopup diffOptionsPanelHost_;
   private DateTime documentLoadStartTime_;
   private bool documentLoadProgressVisible_;
   private bool loadingDocuments_;
@@ -810,7 +810,7 @@ public partial class MainWindow : Window, ISession {
     double height = Math.Max(DiffOptionsPanel.MinimumHeight,
                              Math.Min(MainGrid.ActualHeight, DiffOptionsPanel.DefaultHeight));
     var position = new Point(230, MainMenu.ActualHeight + 1);
-    diffOptionsPanelHost_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, width, height, MainGrid,
+    diffOptionsPanelHost_ = new OptionsPanelHostPopup(new DiffOptionsPanel(), position, width, height, MainGrid,
                                                        App.Settings.DiffSettings.Clone(), this);
     diffOptionsPanelHost_.PanelClosed += DiffOptionsPanel_PanelClosed;
     diffOptionsPanelHost_.PanelReset += DiffOptionsPanel_PanelReset;

@@ -62,7 +62,7 @@ public partial class GraphPanel : ToolPanelControl {
   private Point draggingStart_;
   private Point draggingViewStart_;
   private Graph graph_;
-  private OptionsPanelHostWindow graphOptionsPanel_;
+  private OptionsPanelHostPopup graphOptionsPanel_;
   private GraphNode hoveredNode_;
   private bool ignoreNextHover_;
   private CancelableTask loadTask_;
@@ -742,7 +742,7 @@ public partial class GraphPanel : ToolPanelControl {
       double height = Math.Max(ExpressionGraphOptionsPanel.MinimumHeight,
                                Math.Min(GraphHost.ActualHeight, ExpressionGraphOptionsPanel.DefaultHeight));
       var position = new Point(GraphHost.ActualWidth - width, 0);
-      graphOptionsPanel_ = new OptionsPanelHostWindow(new ExpressionGraphOptionsPanel(),
+      graphOptionsPanel_ = new OptionsPanelHostPopup(new ExpressionGraphOptionsPanel(),
                                                       position, width, height, GraphHost,
                                                       Settings.Clone(), Session);
     }
@@ -752,7 +752,7 @@ public partial class GraphPanel : ToolPanelControl {
       double height = Math.Max(FlowGraphOptionsPanel.MinimumHeight,
                                Math.Min(GraphHost.ActualHeight, FlowGraphOptionsPanel.DefaultHeight));
       var position = new Point(GraphHost.ActualWidth - width, 0);
-      graphOptionsPanel_ = new OptionsPanelHostWindow(new FlowGraphOptionsPanel(),
+      graphOptionsPanel_ = new OptionsPanelHostPopup(new FlowGraphOptionsPanel(),
                                                       position, width, height, GraphHost,
                                                       Settings.Clone(), Session);
     }

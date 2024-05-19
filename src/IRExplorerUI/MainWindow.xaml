@@ -190,12 +190,10 @@
     </Window.InputBindings>
 
     <Grid x:Name="MainGrid">
-        <!--  Zoom for the entire app  -->
-        <!--<Grid.LayoutTransform>
-            <ScaleTransform CenterX="0" CenterY="0"
-            ScaleX="{Binding ElementName=uiScaleSlider,Path=Value}"
-            ScaleY="{Binding ElementName=uiScaleSlider,Path=Value}"/>
-        </Grid.LayoutTransform>-->
+      <Grid.LayoutTransform>
+        <ScaleTransform ScaleX="{Binding WindowScaling}"
+                        ScaleY="{Binding WindowScaling}"/>
+      </Grid.LayoutTransform>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="20" />
@@ -330,6 +328,16 @@
                                     Source="{StaticResource PinIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
+                        <Separator />
+                        <MenuItem
+                          Click="ZoomInUIMenuClicked"
+                          Header="Zoom In UI"/>
+                        <MenuItem
+                          Click="ZoomOutUIMenuClicked"
+                          Header="Zoom Out UI"/>
+                        <MenuItem
+                          Click="ResetUIZoomMenuClicked"
+                          Header="Reset Zoom"/>
                         <Separator />
 
                         <MenuItem

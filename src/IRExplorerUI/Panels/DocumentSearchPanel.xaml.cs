@@ -38,6 +38,8 @@ public partial class DocumentSearchPanel : DraggablePopup {
     SetupResultsPanel();
   }
 
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
+
   public override bool ShouldStartDragging(MouseButtonEventArgs e) {
     if (e.LeftButton == MouseButtonState.Pressed && SearchPanelHost.IsMouseOver) {
       DetachPanel();

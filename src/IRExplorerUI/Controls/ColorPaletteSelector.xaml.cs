@@ -37,6 +37,7 @@ public partial class ColorPaletteSelector : UserControl, INotifyPropertyChanged 
 
   public ColorPaletteSelector() {
     InitializeComponent();
+    DataContext = this;
   }
 
   public double PreviewWidth {
@@ -71,6 +72,7 @@ public partial class ColorPaletteSelector : UserControl, INotifyPropertyChanged 
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

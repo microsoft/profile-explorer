@@ -96,7 +96,7 @@ public class ASMDiffInputFilter : IDiffInputFilter {
   }
 
   public FilteredDiffInput FilterInputText(string text) {
-    string[] lines = text.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None);
+    string[] lines = text.SplitLines();
     var result = new FilteredDiffInput(lines.Length);
 
     var builder = new StringBuilder(text.Length);

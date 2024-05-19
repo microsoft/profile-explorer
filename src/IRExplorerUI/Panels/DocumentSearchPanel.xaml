@@ -14,6 +14,11 @@
   StaysOpen="False"
   UseLayoutRounding="True"
   mc:Ignorable="d">
+  <controls:DraggablePopup.LayoutTransform>
+    <ScaleTransform ScaleX="{Binding WindowScaling}"
+                    ScaleY="{Binding WindowScaling}"/>
+  </controls:DraggablePopup.LayoutTransform>
+
   <Border
     Margin="0,0,6,6"
     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"

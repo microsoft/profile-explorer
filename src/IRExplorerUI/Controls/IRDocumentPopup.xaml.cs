@@ -36,7 +36,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private ParsedIRTextSection parsedSection_;
   private PreviewPopupSettings settings_;
   private bool showHistoryButtons_;
-  private OptionsPanelHostWindow optionsPanelWindow_;
+  private OptionsPanelHostPopup optionsPanelPopup_;
 
   public IRDocumentPopup(Point position, UIElement owner, ISession session, PreviewPopupSettings settings) {
     Debug.Assert(settings != null);
@@ -96,6 +96,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
   public event PropertyChangedEventHandler PropertyChanged;
   public IRElement PreviewedElement { get; set; }
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public ISession Session {
     get => session;
@@ -431,14 +432,14 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private void ShowOptionsPanel() {
-    if (optionsPanelWindow_ != null) {
-      optionsPanelWindow_.ClosePopup();
-      optionsPanelWindow_ = null;
+    if (optionsPanelPopup_ != null) {
+      optionsPanelPopup_.ClosePopup();
+      optionsPanelPopup_ = null;
       return;
     }
 
     FrameworkElement relativeControl = ProfileTextView;
-    optionsPanelWindow_ = OptionsPanelHostWindow.Create<PreviewPopupOptionsPanel, PreviewPopupSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.Create<PreviewPopupOptionsPanel, PreviewPopupSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
@@ -456,7 +457,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
         return null;
       },
-      () => optionsPanelWindow_ = null);
+      () => optionsPanelPopup_ = null);
   }
 }
 

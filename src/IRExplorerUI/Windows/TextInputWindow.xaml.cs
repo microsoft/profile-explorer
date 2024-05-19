@@ -30,6 +30,7 @@ public partial class TextInputWindow : Window {
     this.Owner = owner;
   }
 
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
   public string InputTitle { get; set; }
   public string InputPrompt { get; set; }
   public string AcceptButtonLabel { get; set; }
@@ -81,4 +82,3 @@ public partial class TextInputWindow : Window {
     Close();
   }
 }
-

@@ -120,8 +120,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private List<(BlockIR, TimeSpan)> profileBlocks_;
   private int profileElementIndex_;
   private int profileBlockIndex_;
-  private OptionsPanelHostWindow remarkOptionsPanelWindow_;
-  private OptionsPanelHostWindow optionsPanelWindow_;
+  private OptionsPanelHostPopup remarkOptionsPanelPopup_;
+  private OptionsPanelHostPopup optionsPanelPopup_;
   private DocumentOptionsPanel optionsPanel_;
   private DelayedAction delayedHideActionPanel_;
   private bool profileVisible_;
@@ -1013,11 +1013,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
     if (optionsPanelVisible_) {
-      var newSettings = (DocumentSettings)optionsPanelWindow_.Settings;
+      var newSettings = (DocumentSettings)optionsPanelPopup_.Settings;
 
       if (newSettings != null) {
         await LoadNewSettings(newSettings, optionsPanel_.SyntaxFileChanged, false);
-        optionsPanelWindow_.Settings = newSettings.Clone();
+        optionsPanelPopup_.Settings = newSettings.Clone();
       }
     }
   }
@@ -1040,7 +1040,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async void OptionsPanel_PanelReset(object sender, EventArgs e) {
     var newOptions = new DocumentSettings();
     await LoadNewSettings(newOptions, true, false);
-    optionsPanelWindow_.Settings = newOptions;
+    optionsPanelPopup_.Settings = newOptions;
   }
 
   private async void OptionsPanel_PanelClosed(object sender, EventArgs e) {
@@ -1761,13 +1761,13 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     var position = new Point(relativeElement.ActualWidth - width, 0);
 
     optionsPanel_ = new DocumentOptionsPanel();
-    optionsPanelWindow_ = new OptionsPanelHostWindow(optionsPanel_, position, width, height, relativeElement,
+    optionsPanelPopup_ = new OptionsPanelHostPopup(optionsPanel_, position, width, height, relativeElement,
                                                      settings_.Clone(), Session);
 
-    optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
-    optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
-    optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;
-    optionsPanelWindow_.IsOpen = true;
+    optionsPanelPopup_.PanelClosed += OptionsPanel_PanelClosed;
+    optionsPanelPopup_.PanelReset += OptionsPanel_PanelReset;
+    optionsPanelPopup_.SettingsChanged += OptionsPanel_SettingsChanged;
+    optionsPanelPopup_.IsOpen = true;
     optionsPanelVisible_ = true;
     TextView.DisableOverlayEventHandlers();
   }
@@ -1777,17 +1777,17 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       return;
     }
 
-    optionsPanelWindow_.IsOpen = false;
-    optionsPanelWindow_.PanelClosed -= OptionsPanel_PanelClosed;
-    optionsPanelWindow_.PanelReset -= OptionsPanel_PanelReset;
-    optionsPanelWindow_.SettingsChanged -= OptionsPanel_SettingsChanged;
+    optionsPanelPopup_.IsOpen = false;
+    optionsPanelPopup_.PanelClosed -= OptionsPanel_PanelClosed;
+    optionsPanelPopup_.PanelReset -= OptionsPanel_PanelReset;
+    optionsPanelPopup_.SettingsChanged -= OptionsPanel_SettingsChanged;
 
-    var newSettings = (DocumentSettings)optionsPanelWindow_.Settings;
+    var newSettings = (DocumentSettings)optionsPanelPopup_.Settings;
     await LoadNewSettings(newSettings, syntaxFileChanged, true);
     TextView.EnableOverlayEventHandlers();
 
     optionsPanel_ = null;
-    optionsPanelWindow_ = null;
+    optionsPanelPopup_ = null;
     optionsPanelVisible_ = false;
   }
 
@@ -1802,13 +1802,13 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
                              Math.Min(TextView.ActualHeight, RemarkOptionsPanel.DefaultHeight));
     var position = new Point(RemarkOptionsPanel.LeftMargin, 0);
 
-    remarkOptionsPanelWindow_ = new OptionsPanelHostWindow(new RemarkOptionsPanel(),
+    remarkOptionsPanelPopup_ = new OptionsPanelHostPopup(new RemarkOptionsPanel(),
                                                            position, width, height, TextView,
                                                            remarkSettings_.Clone(), Session);
-    remarkOptionsPanelWindow_.PanelClosed += RemarkOptionsPanel_PanelClosed;
-    remarkOptionsPanelWindow_.PanelReset += RemarkOptionsPanel_PanelReset;
-    remarkOptionsPanelWindow_.SettingsChanged += RemarkOptionsPanel_SettingsChanged;
-    remarkOptionsPanelWindow_.IsOpen = true;
+    remarkOptionsPanelPopup_.PanelClosed += RemarkOptionsPanel_PanelClosed;
+    remarkOptionsPanelPopup_.PanelReset += RemarkOptionsPanel_PanelReset;
+    remarkOptionsPanelPopup_.SettingsChanged += RemarkOptionsPanel_SettingsChanged;
+    remarkOptionsPanelPopup_.IsOpen = true;
     remarkOptionsPanelVisible_ = true;
   }
 
@@ -1817,15 +1817,15 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       return;
     }
 
-    remarkOptionsPanelWindow_.IsOpen = false;
-    remarkOptionsPanelWindow_.PanelClosed -= RemarkOptionsPanel_PanelClosed;
-    remarkOptionsPanelWindow_.PanelReset -= RemarkOptionsPanel_PanelReset;
-    remarkOptionsPanelWindow_.SettingsChanged -= RemarkOptionsPanel_SettingsChanged;
+    remarkOptionsPanelPopup_.IsOpen = false;
+    remarkOptionsPanelPopup_.PanelClosed -= RemarkOptionsPanel_PanelClosed;
+    remarkOptionsPanelPopup_.PanelReset -= RemarkOptionsPanel_PanelReset;
+    remarkOptionsPanelPopup_.SettingsChanged -= RemarkOptionsPanel_SettingsChanged;
 
-    var newSettings = (RemarkSettings)remarkOptionsPanelWindow_.Settings;
+    var newSettings = (RemarkSettings)remarkOptionsPanelPopup_.Settings;
     await HandleNewRemarkSettings(newSettings, true);
 
-    remarkOptionsPanelWindow_ = null;
+    remarkOptionsPanelPopup_ = null;
     remarkOptionsPanelVisible_ = false;
   }
 
@@ -1865,18 +1865,18 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async void RemarkOptionsPanel_SettingsChanged(object sender, EventArgs e) {
     if (remarkOptionsPanelVisible_) {
-      var newSettings = (RemarkSettings)remarkOptionsPanelWindow_.Settings;
+      var newSettings = (RemarkSettings)remarkOptionsPanelPopup_.Settings;
 
       if (newSettings != null) {
         await HandleNewRemarkSettings(newSettings, false);
-        remarkOptionsPanelWindow_.Settings = remarkSettings_.Clone();
+        remarkOptionsPanelPopup_.Settings = remarkSettings_.Clone();
       }
     }
   }
 
   private async void RemarkOptionsPanel_PanelReset(object sender, EventArgs e) {
     await HandleNewRemarkSettings(new RemarkSettings(), true);
-    remarkOptionsPanelWindow_.Settings = remarkSettings_.Clone();
+    remarkOptionsPanelPopup_.Settings = remarkSettings_.Clone();
   }
 
   private async void RemarkOptionsPanel_PanelClosed(object sender, EventArgs e) {

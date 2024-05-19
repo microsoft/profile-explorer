@@ -9,11 +9,11 @@ using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.OptionsPanels;
 
-public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
+public partial class OptionsPanelHostPopup : DraggablePopup, IOptionsPanel {
   private bool closed_;
   private IOptionsPanel optionsPanel_;
 
-  public OptionsPanelHostWindow(UserControl panel, Point position,
+  public OptionsPanelHostPopup(UserControl panel, Point position,
                                 double width, double height,
                                 UIElement referenceElement,
                                 SettingsBase settings, ISession session,
@@ -23,11 +23,12 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
     // Offset to account for drop shadow margin.
     position.Offset(6, 0);
     Initialize(position, width, height, referenceElement);
-    StaysOpen = true; // Keep popup open when clicking outside.
+    ZoomTransform.ScaleX = WindowScaling;
+    ZoomTransform.ScaleY = WindowScaling;
 
+    StaysOpen = true; // Keep popup open when clicking outside.
     PanelResizeGrip.ResizedControl = this;
     ShowResetButton = showResetButton;
-    DataContext = this;
 
     optionsPanel_ = (IOptionsPanel)panel;
     optionsPanel_.Initialize(this, settings, session);
@@ -38,7 +39,7 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
     PanelHost.Content = panel;
   }
 
-  public static OptionsPanelHostWindow Create<T, S>(SettingsBase settings, FrameworkElement relativeControl, ISession session,
+  public static OptionsPanelHostPopup Create<T, S>(SettingsBase settings, FrameworkElement relativeControl, ISession session,
                                                     Func<S, bool, Task<S>> newSettingsHandler,
                                                     Action panelClosedHandler,
                                                     Point positionAdjustment = new Point())
@@ -51,7 +52,7 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
                              Math.Min(relativeControl.ActualHeight, panel.DefaultHeight));
     var position = new Point(relativeControl.ActualWidth - width, 0);
     position .Offset(positionAdjustment.X, positionAdjustment.Y);
-    var panelHost = new OptionsPanelHostWindow(panel, position, width, height, relativeControl,
+    var panelHost = new OptionsPanelHostPopup(panel, position, width, height, relativeControl,
                                                settings, session);
     panelHost.SettingsChanged += async (sender, args) => {
       var result = await newSettingsHandler((S)panelHost.Settings, false);
@@ -86,6 +87,8 @@ public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
   public event EventHandler PanelReset;
   public event EventHandler SettingsChanged;
   public event EventHandler<bool> StayOpenChanged;
+
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
   public bool ShowResetButton { get; set; }
 
   public SettingsBase Settings {

@@ -26,9 +26,11 @@ public partial class IconSelector : UserControl {
     InitializeComponent();
     Focusable = true;
     Loaded += IconSelector_Loaded;
+    DataContext = this;
   }
 
   public event EventHandler<SelectedIconEventArgs> IconSelected;
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public ICommand IconSelectedCommand {
     get => (ICommand)GetValue(IconSelectedCommandProperty);

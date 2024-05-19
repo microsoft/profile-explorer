@@ -9,7 +9,13 @@
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
-    <xctk:SplitButton
+
+  <UserControl.LayoutTransform>
+    <ScaleTransform ScaleX="{Binding WindowScaling}"
+                    ScaleY="{Binding WindowScaling}"/>
+  </UserControl.LayoutTransform>
+
+  <xctk:SplitButton
         x:Name="PaletteSplitButton"
         HorizontalContentAlignment="Stretch"
         VerticalContentAlignment="Stretch"

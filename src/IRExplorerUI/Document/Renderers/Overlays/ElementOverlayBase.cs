@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using IRExplorerCore.IR;
+using IRExplorerCore.Utilities;
 using Microsoft.Diagnostics.Tracing;
 using ProtoBuf;
 
@@ -230,8 +231,8 @@ public abstract class ElementOverlayBase : IElementOverlay {
 
     var text = DocumentUtils.CreateFormattedText(host, Label, font, fontSize,
                                                  ActiveTextBrush, TextWeight);
-    string[] lines = Label.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None);
-    double extraHeight = lines.Length > 1 ? elementRect.Height * (lines.Length - 1) : 0;
+    int lines = Label.CountLines();
+    double extraHeight = lines > 1 ? elementRect.Height * (lines - 1) : 0;
 
     double height = elementRect.Height + extraHeight;
     double width = elementRect.Width + text.WidthIncludingTrailingWhitespace + 2 * Padding;

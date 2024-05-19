@@ -174,7 +174,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private bool ignoreNextSelectionEvent_;
   private bool showSearchSection_;
   private string searchResultText_;
-  private OptionsPanelHostWindow optionsPanelWindow_;
+  private OptionsPanelHostPopup optionsPanelPopup_;
   private CancelableTaskInstance loadTask_;
 
   public CallTreePanel() {
@@ -1057,9 +1057,9 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void ShowOptionsPanel() {
-    if (optionsPanelWindow_ != null) {
-      optionsPanelWindow_.ClosePopup();
-      optionsPanelWindow_ = null;
+    if (optionsPanelPopup_ != null) {
+      optionsPanelPopup_.ClosePopup();
+      optionsPanelPopup_ = null;
       return;
     }
 
@@ -1067,7 +1067,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     //? when a panel shows multiple settings objects.
     var initialMarkingSettings = MarkingSettings.Clone();
     FrameworkElement relativeControl = CallTreeList;
-    optionsPanelWindow_ = OptionsPanelHostWindow.Create<CallTreeOptionsPanel, CallTreeSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.Create<CallTreeOptionsPanel, CallTreeSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(settings_) ||
@@ -1094,7 +1094,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
         return null;
       },
-      () => optionsPanelWindow_ = null);
+      () => optionsPanelPopup_ = null);
   }
 
   public override async Task OnReloadSettings() {

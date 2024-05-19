@@ -42,6 +42,8 @@ public partial class WorkspacesWindow : Window {
     };
   }
 
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
+
   private void ReloadWorkspacesList() {
     var list = new ObservableCollectionRefresh<Workspace>(settings_.Workspaces);
     WorkspacesList.ItemsSource = list;

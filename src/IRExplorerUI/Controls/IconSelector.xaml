@@ -7,6 +7,11 @@
   d:DesignHeight="250"
   d:DesignWidth="400"
   mc:Ignorable="d">
+  <UserControl.LayoutTransform>
+    <ScaleTransform ScaleX="{Binding WindowScaling}"
+                    ScaleY="{Binding WindowScaling}"/>
+  </UserControl.LayoutTransform>
+
   <StackPanel Orientation="Vertical">
     <StackPanel Margin="0,2,0,0" Orientation="Horizontal">
       <Button

@@ -1,5 +1,5 @@
 ﻿<controls:DraggablePopup
-  x:Class="IRExplorerUI.OptionsPanels.OptionsPanelHostWindow"
+  x:Class="IRExplorerUI.OptionsPanels.OptionsPanelHostPopup"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:controls="clr-namespace:IRExplorerUI.Controls"
@@ -12,7 +12,11 @@
   StaysOpen="False"
   UseLayoutRounding="True"
   mc:Ignorable="d">
+  <controls:DraggablePopup.LayoutTransform>
+    <ScaleTransform x:Name="ZoomTransform"/>
+  </controls:DraggablePopup.LayoutTransform>
   <Border
+    x:Name="Host"
     Margin="0,0,6,6"
     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"

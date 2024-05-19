@@ -14,6 +14,11 @@
   SnapsToDevicePixels="True"
   UseLayoutRounding="True"
   mc:Ignorable="d">
+  <controls:DraggablePopup.LayoutTransform>
+    <ScaleTransform ScaleX="{Binding WindowScaling}"
+                    ScaleY="{Binding WindowScaling}"/>
+  </controls:DraggablePopup.LayoutTransform>
+
   <controls:DraggablePopup.Resources>
     <Style x:Key="PopupButton" TargetType="Button">
       <Setter Property="OverridesDefaultStyle" Value="True" />
@@ -45,6 +50,7 @@
       </Style.Triggers>
     </Style>
   </controls:DraggablePopup.Resources>
+
   <Border
     x:Name="PanelBorder"
     Margin="0,0,6,6"

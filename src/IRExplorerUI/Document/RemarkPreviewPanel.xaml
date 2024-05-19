@@ -17,6 +17,11 @@
   SnapsToDevicePixels="True"
   UseLayoutRounding="True"
   mc:Ignorable="d">
+  <controls:DraggablePopup.LayoutTransform>
+    <ScaleTransform ScaleX="{Binding WindowScaling}"
+                    ScaleY="{Binding WindowScaling}"/>
+  </controls:DraggablePopup.LayoutTransform>
+
   <controls:DraggablePopup.Resources>
     <sys:String x:Key="ActiveBorderColor">#00008b</sys:String>
   </controls:DraggablePopup.Resources>

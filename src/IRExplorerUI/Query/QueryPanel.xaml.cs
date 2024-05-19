@@ -27,6 +27,7 @@ public class ElementQueryInfoView : INotifyPropertyChanged {
 
   public event EventHandler Closed;
   public event PropertyChangedEventHandler PropertyChanged;
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public QueryDefinition View {
     get => view_;

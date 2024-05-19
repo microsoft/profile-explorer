@@ -29,6 +29,8 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   private string backtraceText_;
   private ProfileCallTreeNodeEx nodeEx_;
 
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
+
   public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,
                            Point position, UIElement referenceElement,
                            ISession session, bool canExpand = true) {

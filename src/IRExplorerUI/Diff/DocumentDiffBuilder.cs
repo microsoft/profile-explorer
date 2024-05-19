@@ -8,6 +8,7 @@ using DiffPlex;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
 using IRExplorerCore;
+using IRExplorerCore.Utilities;
 using IRExplorerUI.Diff;
 
 namespace IRExplorerUI;
@@ -133,8 +134,8 @@ public class DocumentDiffBuilder {
             return new DocumentDiffResult(leftSection, rightSection, null, true);
           }
 
-          string[] leftLines = leftText.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None);
-          string[] rightLines = rightText.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None);
+          string[] leftLines = leftText.SplitLines();
+          string[] rightLines = rightText.SplitLines();
 
           if (leftLines.Length != rightLines.Length) {
             return new DocumentDiffResult(leftSection, rightSection, null, true);

@@ -10,6 +10,7 @@ using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
+using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI.Compilers.Default;
 
@@ -127,7 +128,7 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
   public List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section,
                                      RemarkProviderOptions options,
                                      CancelableTask cancelableTask) {
-    string[] lines = text.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None);
+    string[] lines = text.SplitLines();
     return ExtractRemarks(new List<string>(lines), function, section,
                           options, cancelableTask);
   }

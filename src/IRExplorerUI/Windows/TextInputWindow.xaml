@@ -13,7 +13,11 @@
     WindowStyle="ToolWindow"
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-        <Grid.RowDefinitions>
+      <Grid.LayoutTransform>
+        <ScaleTransform ScaleX="{Binding WindowScaling}"
+                        ScaleY="{Binding WindowScaling}"/>
+      </Grid.LayoutTransform>
+      <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="38" />
         </Grid.RowDefinitions>

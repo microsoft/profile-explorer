@@ -238,6 +238,7 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
   public event EventHandler<RemarkContextChangedEventArgs> RemarkContextChanged;
   public event EventHandler<Remark> RemarkChanged;
   public event PropertyChangedEventHandler PropertyChanged;
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public bool ShowPreview {
     get => showPreview_;

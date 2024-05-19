@@ -136,6 +136,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
 
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
   public SessionStateManager SessionState => sessionState_;
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public bool ProfileControlsVisible {
     get => profileControlsVisible;
@@ -340,7 +341,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     App.Session = this;
     PopulateRecentFilesMenu();
     PopulateWorkspacesCombobox();
-    ThemeCombobox.SelectedIndex = App.Settings.ThemeIndex;
+    ThemeCombobox.SelectedIndex = App.Settings.GeneralSettings.ThemeIndex;
     DiffModeButton.IsEnabled = false;
     SetActiveProfileFilter(new ProfileFilterState());
   }
@@ -395,7 +396,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
   private async void MainWindow_Closing(object sender, CancelEventArgs e) {
     // Save settings, including the window state.
     App.Settings.MainWindowPlacement = WindowPlacement.GetPlacement(this);
-    App.Settings.ThemeIndex = ThemeCombobox.SelectedIndex;
+    App.Settings.GeneralSettings.ThemeIndex = ThemeCombobox.SelectedIndex;
 
     SaveDockLayout();
     App.SaveApplicationSettings();
@@ -773,8 +774,6 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
 
     if (FullScreenButton.IsChecked.HasValue && FullScreenButton.IsChecked.Value) {
       fullScreenRestoreState_ = new MainWindowState(this);
-      MainMenu.Visibility = Visibility.Collapsed;
-      MainGrid.RowDefinitions[0].Height = new GridLength(0);
       Visibility = Visibility.Collapsed;
       ResizeMode = ResizeMode.NoResize;
       WindowStyle = WindowStyle.None;
@@ -1074,5 +1073,20 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
 
   private void ProfileMenuItem_Click(object sender, RoutedEventArgs e) {
     ReloadMarkingSettings();
+  }
+
+  private void ZoomInUIMenuClicked(object sender, RoutedEventArgs e) {
+    App.Settings.GeneralSettings.ZoomInWindow();
+    OnPropertyChanged(nameof(WindowScaling));
+  }
+
+  private void ZoomOutUIMenuClicked(object sender, RoutedEventArgs e) {
+    App.Settings.GeneralSettings.ZoomOutWindow();
+    OnPropertyChanged(nameof(WindowScaling));
+  }
+
+  private void ResetUIZoomMenuClicked(object sender, RoutedEventArgs e) {
+    App.Settings.GeneralSettings.ResetWindowZoom();
+    OnPropertyChanged(nameof(WindowScaling));
   }
 }

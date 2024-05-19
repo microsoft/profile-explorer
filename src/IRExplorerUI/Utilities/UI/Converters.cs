@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using IRExplorerCore.Utilities;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 
@@ -70,7 +71,7 @@ public class ListToStringConverter : IValueConverter {
     var list = new List<string>();
 
     if (value is string text) {
-      string[] lines = text.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.RemoveEmptyEntries);
+      string[] lines = text.SplitLinesRemoveEmpty();
       list.AddRange(lines);
     }
 
@@ -105,7 +106,7 @@ public class ListPairToStringConverter : IValueConverter {
     var dict = new List<(string Variable, string Value)>();
 
     if (value is string text) {
-      string[] lines = text.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.RemoveEmptyEntries);
+      string[] lines = text.SplitLinesRemoveEmpty();
 
       foreach (string line in lines) {
         int splitIndex = line.IndexOfAny(SPLIT_CHARS);
@@ -156,7 +157,7 @@ public class DictionaryToStringConverter : IValueConverter {
     var dict = new Dictionary<string, string>();
 
     if (value is string text) {
-      string[] lines = text.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.RemoveEmptyEntries);
+      string[] lines = text.SplitLinesRemoveEmpty();
 
       foreach (string line in lines) {
         int splitIndex = line.IndexOfAny(SPLIT_CHARS);

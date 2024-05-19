@@ -7,6 +7,8 @@ using System.Collections.Generic;
 namespace IRExplorerCore.Utilities;
 
 public static class ExtensionMethods {
+  private static readonly string[] NewLineStrings = {"\r\n", "\r", "\n"};
+
   public static string Indent(this string value, int spaces) {
     string whitespace = new string(' ', spaces);
     string valueNoCr = value.Replace("\r\n", "\n", StringComparison.Ordinal);
@@ -54,5 +56,46 @@ public static class ExtensionMethods {
     }
 
     return defaultValue;
+  }
+
+  public static string[] NewLineSeparators(this string value) {
+    return NewLineStrings;
+  }
+
+  public static string[] SplitLines(this string value) {
+    return value.Split(NewLineStrings, StringSplitOptions.None);
+  }
+
+
+  public static string[] SplitLinesRemoveEmpty(this string value) {
+    return value.Split(NewLineStrings, StringSplitOptions.RemoveEmptyEntries);
+  }
+
+  public static int CountLines(this string value) {
+    if (string.IsNullOrEmpty(value)) {
+      return 0;
+    }
+
+    int count = 1;
+    int index = 0;
+
+    while (index < value.Length) {
+      bool found = false;
+
+      foreach (var separator in NewLineStrings) {
+        int lineIndex = value.IndexOf(separator, index, StringComparison.Ordinal);
+
+        if (lineIndex != -1) {
+          index = lineIndex + 1;
+          count++;
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) break;
+    }
+
+    return count;
   }
 }

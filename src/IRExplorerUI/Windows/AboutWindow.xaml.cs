@@ -15,6 +15,7 @@ public partial class AboutWindow : Window {
     DataContext = this;
   }
 
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
   public string CopyrightText => $"Copyright (c) {DateTime.Now.Year} Microsoft Corporation";
   public string VersionText => $"Version {Assembly.GetExecutingAssembly().GetName().Version.ToString()}";
   public string LicenseText => App.GetLicenseText();

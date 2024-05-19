@@ -52,7 +52,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private bool hasThreadFilter_;
   private string threadFilterText_;
   private bool showNodePanel_;
-  private OptionsPanelHostWindow optionsPanelWindow_;
+  private OptionsPanelHostPopup optionsPanelPopup_;
   private ProfileFilterState profileFilter;
 
   public TimelinePanel() {
@@ -1037,14 +1037,14 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void ShowOptionsPanel() {
-    if (optionsPanelWindow_ != null) {
-      optionsPanelWindow_.ClosePopup();
-      optionsPanelWindow_ = null;
+    if (optionsPanelPopup_ != null) {
+      optionsPanelPopup_.ClosePopup();
+      optionsPanelPopup_ = null;
       return;
     }
 
     FrameworkElement relativeControl = ShowNodePanel ? NodeDetailsPanel : TimelineHost;
-    optionsPanelWindow_ = OptionsPanelHostWindow.Create<TimelineOptionsPanel, TimelineSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.Create<TimelineOptionsPanel, TimelineSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
@@ -1060,7 +1060,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
         return null;
       },
-      () => optionsPanelWindow_ = null);
+      () => optionsPanelPopup_ = null);
   }
 
   public override async Task OnReloadSettings() {

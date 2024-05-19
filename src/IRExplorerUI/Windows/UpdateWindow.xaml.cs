@@ -17,6 +17,7 @@ public partial class UpdateWindow : Window {
     InitializeComponent();
   }
 
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
   public bool InstallUpdate { get; set; }
 
   private void UpdateButton_Click(object sender, RoutedEventArgs e) {

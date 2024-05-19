@@ -49,7 +49,7 @@ public partial class ColorSelector : UserControl {
     Focusable = true;
     PreviewKeyDown += ColorSelector_PreviewKeyDown;
     Loaded += ColorSelector_Loaded;
-
+    DataContext = this;
     ButtonBrushes = new Brush[ButtonColors.Length];
 
     for (int i = 0; i < ButtonColors.Length; i++) {

@@ -42,7 +42,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   private string searchResultText_;
   private bool hasRootNode;
   private FlameGraphNode rootNode_;
-  private OptionsPanelHostWindow optionsPanelWindow_;
+  private OptionsPanelHostPopup optionsPanelPopup_;
 
   public FlameGraphPanel() {
     InitializeComponent();
@@ -469,9 +469,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void ShowOptionsPanel() {
-    if (optionsPanelWindow_ != null) {
-      optionsPanelWindow_.ClosePopup();
-      optionsPanelWindow_ = null;
+    if (optionsPanelPopup_ != null) {
+      optionsPanelPopup_.ClosePopup();
+      optionsPanelPopup_ = null;
       return;
     }
 
@@ -479,7 +479,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     //? when a panel shows multiple settings objects.
     var initialMarkingSettings = MarkingSettings.Clone();
     FrameworkElement relativeControl = settings_.ShowDetailsPanel ? NodeDetailsPanel : GraphHost;
-    optionsPanelWindow_ = OptionsPanelHostWindow.Create<FlameGraphOptionsPanel, FlameGraphSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.Create<FlameGraphOptionsPanel, FlameGraphSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(settings_) ||
@@ -498,7 +498,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
         return null;
       },
-      () => optionsPanelWindow_ = null);
+      () => optionsPanelPopup_ = null);
   }
 
   private async void ToggleButton_Click(object sender, RoutedEventArgs e) {

@@ -16,6 +16,11 @@
   SnapsToDevicePixels="True"
   UseLayoutRounding="True"
   mc:Ignorable="d">
+  <controls:DraggablePopup.LayoutTransform>
+    <ScaleTransform ScaleX="{Binding WindowScaling}"
+                    ScaleY="{Binding WindowScaling}"/>
+  </controls:DraggablePopup.LayoutTransform>
+
   <Border
     x:Name="PanelBorder"
     Margin="0,0,6,6"
