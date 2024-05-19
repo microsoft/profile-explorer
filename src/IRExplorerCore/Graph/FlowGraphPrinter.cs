@@ -22,6 +22,7 @@ nslimit=2;
         ";
   private FunctionIR function_;
   private Dictionary<string, TaggedObject> blockNameMap_;
+  private DominatorAlgorithm dominatorAlgo_;
 
   public FlowGraphPrinter(FunctionIR function) {
     function_ = function;
@@ -61,14 +62,22 @@ nslimit=2;
       CreateNode(block, builder);
     }
 
+    // Compute the dominator tree, used to mark loop back-edges and immediate dominators.
+    var cache = FunctionAnalysisCache.Get(function_);
+    dominatorAlgo_ = cache.GetDominators();
+    
+    if(!dominatorAlgo_.IsValid) {
+      dominatorAlgo_ = null; 
+    }
+    
     foreach (var block in function_.Blocks) {
       foreach (var successorBlock in block.Successors) {
         CreateEdge(block, successorBlock, builder);
       }
     }
 
-    //string domEdges = PrintDominatorEdges(DominatorAlgorithmOptions.Dominators);
-    //builder.AppendLine(domEdges);
+    string domEdges = PrintDominatorEdges(DominatorAlgorithmOptions.Dominators);
+    builder.AppendLine(domEdges);
   }
 
   private void CreateNode(BlockIR block, StringBuilder builder) {
@@ -77,6 +86,23 @@ nslimit=2;
   }
 
   private void CreateEdge(BlockIR block1, BlockIR block2, StringBuilder builder) {
+    // A loop back-edge is an edge from a block to a block with a lower number,
+    // with the lower number block dominating the other block.
+    if (block2.Number <= block1.Number) {
+      bool accept = true;
+
+      if (dominatorAlgo_ != null) {
+        // Use dominator tree for the complete check, otherwise
+        // mark edge only using the block numbers, which is not always correct.
+        accept = dominatorAlgo_.Dominates(block1, block2);
+      }
+
+      if (accept) {
+        CreateEdgeWithStyle(block1.Id, block2.Id, "dashed", builder);
+        return;
+      }
+    }
+
     CreateEdge(block1.Id, block2.Id, builder);
   }
 
@@ -86,11 +112,7 @@ nslimit=2;
   }
 
   private string PrintDominatorEdges(DominatorAlgorithmOptions options) {
-    var cache = FunctionAnalysisCache.Get(function_);
-    var dominatorAlgo = cache.GetDominators();
-
-    if (dominatorAlgo.DomTreeRootNode == null) {
-      Trace.TraceWarning($"Invalid DomTree {ObjectTracker.Track(dominatorAlgo)}");
+    if (dominatorAlgo_ == null) {
       return ""; // Invalid CFG.
     }
 
@@ -102,7 +124,7 @@ nslimit=2;
         continue;
       }
 
-      var immDomBlock = dominatorAlgo.GetImmediateDominator(block);
+      var immDomBlock = dominatorAlgo_.GetImmediateDominator(block);
 
       if (immDomBlock != null) {
         CreateEdgeWithStyle(block, immDomBlock, builder);

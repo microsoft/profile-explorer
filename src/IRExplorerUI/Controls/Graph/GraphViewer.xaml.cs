@@ -18,7 +18,7 @@ public partial class GraphViewer : FrameworkElement {
   private static readonly double DefaultBoldThickness = 0.05;
   public static readonly Pen DefaultPen = ColorPens.GetPen(Colors.Black, 0.025);
   public static readonly Pen DefaultBoldPen = ColorPens.GetPen(Colors.Black, DefaultBoldThickness);
-  public static readonly Pen DefaultSelectedPen = ColorPens.GetPen(Colors.Black, 0.065);
+  public static readonly Pen DefaultSelectedPen = ColorPens.GetPen(Colors.Black, 0.05);
   
   private readonly double GraphMargin = 0.15;
   private readonly double ScaleFactor = 50;

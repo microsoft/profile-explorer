@@ -147,6 +147,9 @@ public sealed class FlowGraphStyleProvider : IGraphStyleProvider {
     if (edge.Style == Edge.EdgeKind.Dotted) {
       return GraphEdgeKind.ImmediateDominator;
     }
+    else if(edge.Style == Edge.EdgeKind.Dashed) {
+      return GraphEdgeKind.Loop;
+    }
 
     if (graph_.Kind == GraphKind.FlowGraph) {
       var fromBlock = edge.NodeFrom?.ElementData as BlockIR;

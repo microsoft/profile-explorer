@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace IRExplorerCore.Collections;
 
+// A lightweight list implementation that stores a single item or an array of items.
 public struct TinyList<T> : IList<T> {
   private object value_; // Either T or array of T.
   private int count_;

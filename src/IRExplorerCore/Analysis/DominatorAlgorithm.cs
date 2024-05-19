@@ -91,6 +91,7 @@ public class DominatorAlgorithm {
   }
 
   public DominatorTreeNode DomTreeRootNode => treeRootNode_;
+  public bool IsValid => treeRootNode_ != null;
 
   public BlockIR GetImmediateDominator(BlockIR block) {
     int blockId = GetBlockId(block);

@@ -281,7 +281,6 @@ public class SparseBitvector : IEquatable<SparseBitvector> {
       get {
         int sum = 0;
 
-        //? TODO: Check if it get unrolled by JIT
         for (int i = 0; i < ValuesPerNode; i++) {
           sum += BitOperations.PopCount(data_[i]);
         }
