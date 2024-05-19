@@ -46,7 +46,7 @@ public class GraphSettings : SettingsBase {
   [ProtoMember(15), OptionValue("#6927CC")]
   public Color PredecessorNodeBorderColor { get; set; }
   [ProtoMember(16), OptionValue("#008230")]
-  public Color SuccesorNodeBorderColor { get; set; }
+  public Color SuccessorNodeBorderColor { get; set; }
   [ProtoMember(17), OptionValue("#AEDCF4")]
   public Color SelectedNodeColor { get; set; }
 

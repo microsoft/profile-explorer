@@ -70,11 +70,11 @@ public class Workspace : IEquatable<Workspace> {
 public class WorkspaceSettings {
   private static readonly string SettingsFileName = "settings.proto";
   private static readonly string DefaultWorkspaceName = "Default";
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue()]
   public List<Workspace> Workspaces { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue()]
   public Workspace ActiveWorkspace { get; set; }
-  [ProtoMember(3)]
+  [ProtoMember(3), OptionValue()]
   public Dictionary<string, Workspace> CompilerDefaultWorkspace { get; set; }
 
   public WorkspaceSettings() {

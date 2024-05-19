@@ -670,7 +670,8 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     await LateLoadSectionSetup(parsedSection);
   }
 
-  public async Task LoadSection(ParsedIRTextSection parsedSection) {
+  public async Task LoadSection(ParsedIRTextSection parsedSection,
+                                bool isSourceCode = false) {
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Load section {parsedSection}");
 
     // If the section loading is not done in two stages,
@@ -680,7 +681,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     }
 
     await ComputeElementListsAsync();
-    await LateLoadSectionSetup(parsedSection);
+    await LateLoadSectionSetup(parsedSection, isSourceCode);
   }
 
   public void MarkBlock(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
@@ -1588,7 +1589,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
       // Selection styles are also used in non-IR documents,
       // make sure they are not null and have reasonable defaults.
       selectedStyle_ ??= new HighlightingStyle();
-      selectedStyle_.BackColor = Brushes.Transparent;
+      selectedStyle_.BackColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.5);
       selectedStyle_.Border = settings_.CurrentLineBorderColor.AsPen();
       selectedBlockStyle_ ??= new HighlightingStyle();
       selectedBlockStyle_.BackColor = settings_.BackgroundColor.AsBrush();
@@ -2924,7 +2925,8 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     await Task.Run(() => ComputeElementLists());
   }
 
-  private async Task LateLoadSectionSetup(ParsedIRTextSection parsedSection) {
+  private async Task LateLoadSectionSetup(ParsedIRTextSection parsedSection,
+                                          bool isSourceCode = false) {
     Trace.TraceInformation(
       $"Document {ObjectTracker.Track(this)}: Complete setup for {parsedSection}");
 
@@ -2951,8 +2953,10 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     //if (other != null)
     //    CloneOtherSectionAnnotations(other);
 
-    // Do compiler-specifiec document work.
-    await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
+    // Do compiler-specific document work.
+    if (!isSourceCode) {
+      await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
+    }
   }
 
   //? TODO: Check if other sections have marked elements and try to mark same ones

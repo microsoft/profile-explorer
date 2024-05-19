@@ -450,7 +450,7 @@ public partial class GraphViewer : FrameworkElement {
   private void ReloadSettings() {
     selectedNodeStyle_ = new HighlightingStyle(settings_.SelectedNodeColor, DefaultSelectedPen);
     predecessorNodeBorder_ = ColorPens.GetPen(settings_.PredecessorNodeBorderColor, 0.05);
-    successorNodeBorder_ = ColorPens.GetPen(settings_.SuccesorNodeBorderColor, 0.05);
+    successorNodeBorder_ = ColorPens.GetPen(settings_.SuccessorNodeBorderColor, 0.05);
 
     if (graph_ != null) {
       ReloadGraph(graph_);

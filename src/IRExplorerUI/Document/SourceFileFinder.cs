@@ -18,7 +18,7 @@ public class SourceFileFinder {
     MappingDisabled,
     MappingCanceled
   }
-  
+
   private SourceFileMapper sourceFileMapper_;
   private List<string> disabledSourceMappings_;
   private ISession session_;
@@ -91,15 +91,17 @@ public class SourceFileFinder {
       if (!string.IsNullOrEmpty(filePath)) {
         sourceInfo.FilePath = filePath;
       }
-      else if (Utils.ShowYesNoMessageBox("Continue asking for the location of this source file?", null) ==
-               MessageBoxResult.No) {
-        if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
-          disabledSourceMappings_.Add(sourceInfo.FilePath);
+      else {
+        if (Utils.ShowYesNoMessageBox("Continue asking for the location of this source file?", null) ==
+            MessageBoxResult.No) {
+          if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
+            disabledSourceMappings_.Add(sourceInfo.FilePath);
+          }
         }
+
+        SaveSettings();
       }
 
-      SaveSettings();
-      
       if (File.Exists(sourceInfo.FilePath)) {
         return (sourceInfo, FailureReason.None);
       }
@@ -129,13 +131,13 @@ public class SourceFileFinder {
     sourceFileMapper_.Reset();
     SaveSettings();
   }
-  
+
   public void ResetDisabledMappings() {
     disabledSourceMappings_.Clear();
     sourceFileMapper_.ResetMissingFiles();
     SaveSettings();
   }
-  
+
   public void ResetDisabledMappings(string filePath) {
     disabledSourceMappings_.Remove(filePath);
     sourceFileMapper_.ResetMissingFile(filePath);

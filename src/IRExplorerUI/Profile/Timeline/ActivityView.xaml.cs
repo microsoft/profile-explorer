@@ -30,7 +30,7 @@ public class MarkedSamples {
 }
 
 public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
-  private const double DefaultSliceWidth = 8;
+  private const double DefaultSliceWidth = 4;
   private const double TimeBarHeight = 18;
   private const double MinSampleHeight = 4;
   private const double TopMarginY = 1 + TimeBarHeight;

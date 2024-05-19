@@ -27,7 +27,6 @@ public class FunctionMarkingSettings : SettingsBase {
   [ProtoMember(7), OptionValue()]
   public List<FunctionMarkingSet> SavedSets { get; set; }
 
-  //? TODO: Rename Color to Markinng or MarkedModules
   public List<FunctionMarkingStyle> ModuleColors => CurrentSet?.ModuleColors;
   public List<FunctionMarkingStyle> FunctionColors => CurrentSet?.FunctionColors;
 
@@ -309,7 +308,7 @@ public class FunctionMarkingSet : SettingsBase {
   public override bool Equals(object obj) {
     return AreOptionsEqual(this, obj);
   }
-  
+
   public override string ToString() {
     return PrintOptions(this);
   }

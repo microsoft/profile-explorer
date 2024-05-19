@@ -13,7 +13,7 @@ public class SourceFileSettings : TextViewSettingsBase {
     Reset();
   }
 
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue()]
   public SourceFileFinderSettings FinderSettings { get; set; }
   [ProtoMember(2), OptionValue(true)]
   public bool SyncStyleWithDocument { get; set; }
@@ -59,7 +59,7 @@ public class SourceFileSettings : TextViewSettingsBase {
   }
 
   public override string ToString() {
-    return base.ToString() + PrintOptions(this);
+    return PrintOptions(this);
   }
 }
 

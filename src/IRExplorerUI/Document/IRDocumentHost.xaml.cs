@@ -374,11 +374,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public async Task ReloadSettings(bool hasProfilingChanges = true) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, true);
     TextView.Initialize(settings_, session_);
 
     if (hasProfilingChanges) {
+      using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
       await LoadProfile();
     }
   }
@@ -489,7 +489,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       await PassOutput.SwitchSection(parsedSection.Section, TextView);
     }
 
-    await ReloadRemarks();
+    await ReloadRemarks(task);
 
     if (parsedSection.LoadFailed || !await LoadProfile()) {
       await HideProfile();
@@ -626,13 +626,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     await TextView.LoadDiffedFunction(diffResult, newSection);
 
     if (PassOutputVisible) {
       await PassOutput.SwitchSection(newSection, TextView);
     }
 
-    await ReloadRemarks();
+    await ReloadRemarks(task);
   }
 
   public async Task LoadDiffedPassOutput(DiffMarkingResult diffResult) {
@@ -1147,7 +1148,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     UpdateProfileFilterUI();
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var funcProfile = Session.ProfileData.GetFunctionProfile(Section.ParentFunction);
 
     if (funcProfile == null) {
@@ -1411,15 +1411,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     DocumentUtils.RemoveNonDefaultMenuItems(InlineesMenu);
   }
 
-  private async Task ReloadRemarks() {
+  private async Task ReloadRemarks(CancelableTask loadTask) {
     await RemoveRemarks();
 
     // Loading remarks can take several seconds for very large functions,
     // this makes it possible to cancel the work if section switches.
-    using var cancelableTask = loadTask_.CreateTask();
-    remarkList_ = await FindRemarks(cancelableTask);
+    remarkList_ = await FindRemarks(loadTask);
 
-    if (cancelableTask.IsCanceled) {
+    if (loadTask.IsCanceled) {
       return;
     }
 
@@ -1427,7 +1426,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async Task<List<Remark>> FindRemarks(CancelableTask cancelableTask) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var remarkProvider = Session.CompilerInfo.RemarkProvider;
 
     return await Task.Run(() => {
@@ -1853,10 +1851,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
                               newSettings.SectionHistoryDepth != remarkSettings_.SectionHistoryDepth);
     App.Settings.RemarkSettings = newSettings;
     await UpdateRemarkSettings(newSettings);
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
 
     if (rebuildRemarkList) {
       Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Find and load remarks");
-      await ReloadRemarks();
+      await ReloadRemarks(task);
     }
     else {
       Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Load remarks");

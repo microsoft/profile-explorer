@@ -27,7 +27,7 @@ public class CallTreeSettings : SettingsBase {
   public bool SyncSelection { get; set; }
   [ProtoMember(7), OptionValue(true)]
   public bool ShowNodePopup { get; set; }
-  [ProtoMember(8)]
+  [ProtoMember(8), OptionValue(0)]
   public int NodePopupDuration { get; set; }
   [ProtoMember(9), OptionValue()]
   public ColumnSettings TreeListColumns { get; set; }

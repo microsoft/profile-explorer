@@ -256,7 +256,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     initTasks.Add(ActivityView.Initialize(Session.ProfileData, activityArea));
     ActivityView.IsTimeBarVisible = true;
-    ActivityView.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
+    ActivityView.SampleBorderColor = ColorPens.GetPen(Colors.Black, 0.25);
     ActivityView.SamplesBackColor = ColorBrushes.GetBrush("#F4A0A0");
 
     var threadActivityArea = new Rect(0, 0, ActivityViewAreaWidth, 25);
@@ -265,7 +265,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       var threadView = new ActivityTimelineView();
       SetupActivityViewEvents(threadView.ActivityHost);
       threadView.ActivityHost.BackColor = Brushes.WhiteSmoke;
-      threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.DimGray);
+      threadView.ActivityHost.SampleBorderColor = ColorPens.GetPen(Colors.Black, 0.25);
       threadView.ThreadActivityAction += ThreadView_ThreadActivityAction;
 
       // Set thread background colors.

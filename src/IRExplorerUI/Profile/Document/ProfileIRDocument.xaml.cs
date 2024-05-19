@@ -993,7 +993,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     // Load the dummy section with the source lines.
     var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, processingResult.Function);
-    await TextView.LoadSection(dummyParsedSection);
+    await TextView.LoadSection(dummyParsedSection, true);
 
     // Annotate the source lines with the profiling data based on the code statements.
     if (syntaxNodes != null) {
@@ -1272,6 +1272,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void SelectSyntaxNodeLineRange(ProfileSourceSyntaxNode node) {
+    var selectionColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.5);
     TextView.SelectElementsInLineRange(node.Start.Line, node.End.Line,
                                        MapFromOriginalSourceLineNumber);
   }

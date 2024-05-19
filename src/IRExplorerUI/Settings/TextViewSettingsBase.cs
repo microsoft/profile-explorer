@@ -8,9 +8,9 @@ namespace IRExplorerUI;
 [ProtoInclude(100, typeof(DocumentSettings))]
 [ProtoInclude(200, typeof(SourceFileSettings))]
 public abstract class TextViewSettingsBase : SettingsBase {
-  [ProtoMember(1)]
+  [ProtoMember(1), OptionValue()]
   public ProfileDocumentMarkerSettings ProfileMarkerSettings { get; set; }
-  [ProtoMember(2)]
+  [ProtoMember(2), OptionValue()]
   public OptionalColumnSettings ColumnSettings { get; set; }
   [ProtoMember(3), OptionValue("Consolas")]
   public string FontName { get; set; }
@@ -38,7 +38,7 @@ public abstract class TextViewSettingsBase : SettingsBase {
   public TextViewSettingsBase() {
     Reset();
   }
-  
+
   public override void Reset() {
     InitializeReferenceMembers();
     ResetAllOptions(this, typeof(TextViewSettingsBase));
