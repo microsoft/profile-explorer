@@ -305,18 +305,18 @@
                             InputGestureText="Ctrl+F4" />
                         <Separator />
                         <MenuItem Command="local:AppCommand.OpenNewDocument" Header="Launch New _Instance" />
-                        <MenuItem Click="MenuItem_Exit" Header="E_xit" />
+                        <MenuItem Click="ExitMenuItem_Click" Header="E_xit" />
                     </MenuItem>
 
                     <MenuItem Header="View">
                         <MenuItem
-                            Click="ResetWorkspaceMenuClicked"
+                            Click="ResetWorkspaceMenu_Click"
                             Header="Reset Workspace"
                             ToolTip="Restore default layout of workplace" />
-                        <MenuItem Click="ShowWorkspacesMenuClicked" Header="Manage Workspaces" />
+                        <MenuItem Click="ShowWorkspacesMenu_Click" Header="Manage Workspaces" />
                         <MenuItem
                             x:Name="AlwaysOnTopCheckbox"
-                            Click="AlwaysOnTopMenuClicked"
+                            Click="AlwaysOnTopMenu_Click"
                             Header="Always on Top"
                             IsCheckable="True"
                             IsChecked="False"
@@ -330,68 +330,71 @@
                         </MenuItem>
                         <Separator />
                         <MenuItem
-                          Click="ZoomInUIMenuClicked"
-                          Header="Zoom In UI"/>
+                          Click="ZoomInUIMenu_Click"
+                          Header="Zoom In UI (+5%)"
+                          ToolTip="Enlarge the UI for the entire application"/>
                         <MenuItem
-                          Click="ZoomOutUIMenuClicked"
-                          Header="Zoom Out UI"/>
+                          Click="ZoomOutUIMenu_Click"
+                          Header="Zoom Out UI (-5%)"
+                          ToolTip="Shrink the UI for the entire application"/>
                         <MenuItem
-                          Click="ResetUIZoomMenuClicked"
-                          Header="Reset Zoom"/>
+                          Click="ResetUIZoomMenu_Click"
+                          ToolTip="Restore default UI scaling for the entire application"
+                          Header="Reset Zoom (100%)"/>
                         <Separator />
 
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Summary Panel"
                             Tag="Section" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Pass Output Panel"
                             Tag="PassOutput" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Definition Panel"
                             Tag="Definition" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="References Panel"
                             Tag="References" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Bookmarks Panel"
                             Tag="Bookmarks" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Source File Panel"
                             Tag="Source" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Search Results Panel"
                             Tag="SearchResults" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Notes Panel"
                             Tag="Notes" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Scripting Panel"
                             Tag="Scripting" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Developer Panel"
                             Tag="Developer" />
                         <Separator />
 
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Flow Graph Panel"
                             Tag="FlowGraph" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Dominator Tree Panel"
                             Tag="DominatorTree" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Post-Dominator Tree Panel"
                             Tag="PostDominatorTree" />
                         <MenuItem Header="Control Dependence Graph Panel" IsEnabled="False" />
@@ -403,19 +406,19 @@
                         <Separator />
 
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Call Tree Panel"
                             Tag="CallTree" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Caller/Callee Panel"
                             Tag="CallerCallee" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Flame Graph Panel"
                             Tag="FlameGraph" />
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Timeline Panel"
                             Tag="Timeline" />
                     </MenuItem>
@@ -450,7 +453,7 @@
                         <Separator />
 
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Summary Panel"
                             Tag="Section">
                             <MenuItem.Icon>
@@ -461,7 +464,7 @@
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Timeline Panel"
                             Tag="Timeline">
                             <MenuItem.Icon>
@@ -472,7 +475,7 @@
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Flame Graph Panel"
                             Tag="FlameGraph">
                             <MenuItem.Icon>
@@ -483,7 +486,7 @@
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Call Tree Panel"
                             Tag="CallTree">
                             <MenuItem.Icon>
@@ -494,7 +497,7 @@
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Caller/Callee Panel"
                             Tag="CallerCallee">
                             <MenuItem.Icon>
@@ -519,7 +522,7 @@
                             </MenuItem.Icon>
                         </MenuItem>
 
-                        <MenuItem Click="MenuItem_OnClick2" Header="Function report">
+                        <MenuItem Click="FunctionReportMenu_Click" Header="Function report">
                             <MenuItem.Icon>
                                 <Image
                                     Width="16"
@@ -529,7 +532,7 @@
                         </MenuItem>
                         <Separator />
 
-                        <MenuItem Click="MenuItem_Click_6" Header="Settings">
+                        <MenuItem Click="SettingsMenu_Click" Header="Settings">
                             <MenuItem.Icon>
                                 <Image
                                     Width="16"
@@ -540,7 +543,7 @@
                     </MenuItem>
 
                     <MenuItem Header="Help">
-                        <MenuItem Click="MenuItem_Click_4" Header="Documentation">
+                        <MenuItem Click="OpenDocsMenu_Click" Header="Documentation">
                             <MenuItem.Icon>
                                 <Image
                                     Width="16"
@@ -549,7 +552,7 @@
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem
-                            Click="ShowPanelMenuClicked"
+                            Click="ShowPanelMenu_Click"
                             Header="Help Panel"
                             Tag="Help">
                             <MenuItem.Icon>
@@ -564,9 +567,9 @@
                                 x:Name="DevMenuStartupTime"
                                 Header="Diff time: 0"
                                 IsEnabled="False" />
-                            <MenuItem Click="MenuItem_OnClick" Header="Open log file" />
-                            <MenuItem Click="MenuItem_Click_2" Header="Create debug files" />
-                            <MenuItem Click="MenuItem_OnClick3" Header="Force GC" />
+                            <MenuItem Click="OpenLogMenu_Click" Header="Open log file" />
+                            <MenuItem Click="CreateDumpMenu_Click" Header="Create debug files" />
+                            <MenuItem Click="ForceGCMenu_Click" Header="Force GC" />
                             <MenuItem.Icon>
                                 <Image
                                     Width="16"
@@ -577,7 +580,8 @@
 
                         <Separator />
 
-                        <MenuItem Click="MenuItem_Click_5" Header="About" />
+                        <MenuItem Click="CheckUpdatesMenu_Click" Header="Check for Updates" />
+                        <MenuItem Click="AboutMenu_Click" Header="About IR Explorer" />
                     </MenuItem>
                 </Menu>
 

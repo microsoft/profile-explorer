@@ -24,6 +24,7 @@ public partial class OptionsWindow : Window {
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   private void LoadSettings() {
+    GeneralOptionsPanel.Initialize(this, App.Settings.GeneralSettings, Session);
     SummaryOptionsPanel.Initialize(this, App.Settings.SectionSettings, Session);
     DocumentOptionsPanel.Initialize(this, App.Settings.DocumentSettings, Session);
     GraphOptionsPanel.Initialize(this, App.Settings.FlowGraphSettings, Session);

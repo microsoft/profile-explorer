@@ -453,11 +453,9 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     var time = DateTime.UtcNow - App.AppStartTime;
     DevMenuStartupTime.Header = $"Startup time: {time.TotalMilliseconds} ms";
 
-    DelayedAction.StartNew(TimeSpan.FromSeconds(3), () => {
-      Dispatcher.BeginInvoke(new Action(() => {
-        CheckForUpdate();
-      }));
-    });
+    if (App.Settings.GeneralSettings.CheckForUpdates) {
+      CheckForUpdatesOnStartup();
+    }
 
     string[] args = Environment.GetCommandLineArgs();
 
@@ -470,6 +468,14 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
         await SetupLoadedProfile();
       }
     }
+  }
+
+  private void CheckForUpdatesOnStartup() {
+    DelayedAction.StartNew(TimeSpan.FromSeconds(5), () => {
+      Dispatcher.BeginInvoke(new Action(() => {
+        CheckForUpdate();
+      }));
+    });
   }
 
   private void StartApplicationUpdateTimer() {
@@ -668,7 +674,9 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
       HideStartPage();
     }
 
-    StartApplicationUpdateTimer();
+    if (App.Settings.GeneralSettings.CheckForUpdates) {
+      StartApplicationUpdateTimer();
+    }
   }
 
   private async void SectionPanel_DisplayCallGraph(object sender, DisplayCallGraphEventArgs e) {
@@ -844,7 +852,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     await EndSession();
   }
 
-  private void MenuItem_Click_2(object sender, RoutedEventArgs e) {
+  private void CreateDumpMenu_Click(object sender, RoutedEventArgs e) {
     TextInputWindow input = new("Save marked functions/modules", "Saved marking set name:", "Save", "Cancel");
 
     if (input.Show(out string result, true)) {
@@ -890,7 +898,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     UpdateButton.Visibility = Visibility.Collapsed;
   }
 
-  private void MenuItem_Exit(object sender, RoutedEventArgs e) {
+  private void ExitMenuItem_Click(object sender, RoutedEventArgs e) {
     Close();
   }
 
@@ -899,17 +907,17 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     PopulateRecentFilesMenu();
   }
 
-  private void MenuItem_Click_6(object sender, RoutedEventArgs e) {
+  private void SettingsMenu_Click(object sender, RoutedEventArgs e) {
     var optionsWindow = new OptionsWindow(this);
     optionsWindow.Owner = this;
     optionsWindow.ShowDialog();
   }
 
-  private void MenuItem_Click_4(object sender, RoutedEventArgs e) {
+  private void OpenDocsMenu_Click(object sender, RoutedEventArgs e) {
     App.OpenDocumentation();
   }
 
-  private void MenuItem_Click_5(object sender, RoutedEventArgs e) {
+  private void AboutMenu_Click(object sender, RoutedEventArgs e) {
     var window = new AboutWindow();
     window.Owner = this;
     window.ShowDialog();
@@ -942,7 +950,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     InstallExtension();
   }
 
-  private void AlwaysOnTopMenuClicked(object sender, RoutedEventArgs e) {
+  private void AlwaysOnTopMenu_Click(object sender, RoutedEventArgs e) {
     SetAlwaysOnTop(AlwaysOnTopCheckbox.IsChecked);
   }
 
@@ -1015,8 +1023,8 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     ShowDocumentSearchPanel();
   }
 
-  private void MenuItem_OnClick2(object sender, RoutedEventArgs e) {
-    SectionPanel.ShowModuleReport();
+  private async void FunctionReportMenu_Click(object sender, RoutedEventArgs e) {
+    await SectionPanel.ShowModuleReport();
   }
 
   private class MainWindowState {
@@ -1046,7 +1054,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     }
   }
 
-  private void ShowWorkspacesMenuClicked(object sender, RoutedEventArgs e) {
+  private void ShowWorkspacesMenu_Click(object sender, RoutedEventArgs e) {
     ShowWorkspacesWindow();
   }
 
@@ -1075,18 +1083,22 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     ReloadMarkingSettings();
   }
 
-  private void ZoomInUIMenuClicked(object sender, RoutedEventArgs e) {
+  private void ZoomInUIMenu_Click(object sender, RoutedEventArgs e) {
     App.Settings.GeneralSettings.ZoomInWindow();
     OnPropertyChanged(nameof(WindowScaling));
   }
 
-  private void ZoomOutUIMenuClicked(object sender, RoutedEventArgs e) {
+  private void ZoomOutUIMenu_Click(object sender, RoutedEventArgs e) {
     App.Settings.GeneralSettings.ZoomOutWindow();
     OnPropertyChanged(nameof(WindowScaling));
   }
 
-  private void ResetUIZoomMenuClicked(object sender, RoutedEventArgs e) {
+  private void ResetUIZoomMenu_Click(object sender, RoutedEventArgs e) {
     App.Settings.GeneralSettings.ResetWindowZoom();
     OnPropertyChanged(nameof(WindowScaling));
+  }
+
+  private void CheckUpdatesMenu_Click(object sender, RoutedEventArgs e) {
+    CheckForUpdate();
   }
 }

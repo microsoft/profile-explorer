@@ -1331,7 +1331,7 @@ public partial class MainWindow : Window, ISession {
     PopulateWorkspacesCombobox();
   }
 
-  private async void ShowPanelMenuClicked(object sender, RoutedEventArgs e) {
+  private async void ShowPanelMenu_Click(object sender, RoutedEventArgs e) {
     string panelName = ((MenuItem)sender).Tag as string;
     var panelKind = Enum.Parse<ToolPanelKind>(panelName);
     await ShowPanel(panelKind);
@@ -1418,7 +1418,7 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private void MenuItem_OnClick(object sender, RoutedEventArgs e) {
+  private void OpenLogMenu_Click(object sender, RoutedEventArgs e) {
     Trace.Flush();
     string file = App.GetTraceFilePath();
 
@@ -1441,12 +1441,12 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private void ResetWorkspaceMenuClicked(object sender, RoutedEventArgs e) {
+  private void ResetWorkspaceMenu_Click(object sender, RoutedEventArgs e) {
     App.Settings.WorkspaceOptions.RestoreDefaultActiveWorkspace();
     RestoreDockLayout();
   }
 
-  private void MenuItem_OnClick3(object sender, RoutedEventArgs e) {
+  private void ForceGCMenu_Click(object sender, RoutedEventArgs e) {
     Trace.WriteLine("Force GC start");
     GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true, true);
     GC.WaitForPendingFinalizers();

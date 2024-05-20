@@ -8,6 +8,7 @@ using System.Windows.Input;
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class GeneralOptionsPanel : OptionsPanelBase {
+  private GeneralSettings settings_;
   public const double DefaultHeight = 320;
   public const double MinimumHeight = 200;
   public const double DefaultWidth = 350;
@@ -18,6 +19,15 @@ public partial class GeneralOptionsPanel : OptionsPanelBase {
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
 
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+    base.Initialize(parent, settings, session);
+    settings_ = (GeneralSettings)Settings;
+  }
+
+  public override void OnSettingsChanged(object newSettings) {
+    settings_ = (GeneralSettings)newSettings;
+  }
+
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
     NotifySettingsChanged();
   }
@@ -26,5 +36,10 @@ public partial class GeneralOptionsPanel : OptionsPanelBase {
     DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
       RaiseSettingsChanged(null);
     });
+  }
+
+  private void ResetUIZoomButton_Click(object sender, RoutedEventArgs e) {
+    settings_.WindowScaling = 1.0;
+    ReloadSettings();
   }
 }

@@ -8,10 +8,9 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class GeneralSettings : SettingsBase {
-  private static readonly double MinZoomAmount = 0.8;
-  private static readonly double MaxZoomAmount = 1.5;
+  private static readonly double MinZoomAmount = 0.5;
+  private static readonly double MaxZoomAmount = 2;
   private static readonly double ZoomStep = 0.05;
-
 
   public GeneralSettings() {
     Reset();

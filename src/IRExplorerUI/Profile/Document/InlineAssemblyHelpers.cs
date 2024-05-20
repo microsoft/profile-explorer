@@ -11,7 +11,7 @@ namespace IRExplorerUI.Profile.Document;
 
 // A custom line margin that that overrides the default one, with support
 // for block folding - the lines part of a block folding are not numbered.
-sealed class SourceLineNumberMargin : LineNumberMargin, IWeakEventListener {
+sealed class SourceLineNumberMargin : LineNumberMargin {
   private readonly IRDocument textView_;
   SourceLineProfileResult sourceLineProfileResult_;
 

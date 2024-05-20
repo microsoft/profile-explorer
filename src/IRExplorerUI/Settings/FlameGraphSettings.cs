@@ -73,7 +73,7 @@ public class FlameGraphSettings : SettingsBase {
   public Color KernelNodeBorderColor { get; set; }
   [ProtoMember(26), OptionValue("#4B0082")]
   public Color ManagedNodeBorderColor { get; set; }
-  [ProtoMember(27), OptionValue("#00008B")]
+  [ProtoMember(27), OptionValue("#00009B")]
   public Color KernelNodeTextColor { get; set; }
   [ProtoMember(28), OptionValue("#800080")]
   public Color ManagedNodeTextColor { get; set; }

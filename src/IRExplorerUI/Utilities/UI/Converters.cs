@@ -298,7 +298,7 @@ class DoubleScalingConverter : IValueConverter {
     }
 
     double maxValue = double.Parse((string)parameter);
-    return Math.Min(doubleValue * maxValue, maxValue);
+    return doubleValue * maxValue;
   }
 
   public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {

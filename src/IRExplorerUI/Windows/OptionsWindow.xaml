@@ -31,18 +31,22 @@
     <TabControl
       Grid.Row="0"
       Margin="0,0,0,4"
+      Padding="16,0,0,0"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       BorderThickness="0"
       IsSynchronizedWithCurrentItem="True"
       SelectedIndex="0"
       TabStripPlacement="Left">
-      <TabItem Header="General" Style="{StaticResource TabControlStyle}">
-        <Grid>
-          <TextBlock
-            Margin="4"
-            Text="Work in progress.&#x0a;Use the wrench icon on the upper-right of each panel to quickly show its settings."
-            TextWrapping="Wrap" />
-        </Grid>
+      <TabItem Header="Applicatiomn" Style="{StaticResource TabControlStyle}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <options:GeneralOptionsPanel
+            x:Name="GeneralOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="Visible" />
+        </ScrollViewer>
       </TabItem>
       <TabItem Header="Summary" Style="{StaticResource TabControlStyle}">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">

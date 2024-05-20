@@ -277,8 +277,8 @@ public partial class SectionPanelPair : ToolPanelControl {
     Trace.TraceInformation("AnalyzeDocumentDiffs: done");
   }
 
-  public void ShowModuleReport() {
-    MainPanel.ShowModuleReport();
+  public async Task ShowModuleReport() {
+    await MainPanel.ShowModuleReport();
   }
 
   public void MarkFunctions(List<IRTextFunction> list) {

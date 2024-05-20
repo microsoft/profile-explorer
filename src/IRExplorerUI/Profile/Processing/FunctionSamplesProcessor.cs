@@ -50,7 +50,8 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
     return chunk;
   }
 
-  protected override void ProcessSample(ProfileSample sample, ResolvedProfileStack stack, int sampleIndex, object chunkData) {
+  protected override void ProcessSample(ProfileSample sample, ResolvedProfileStack stack,
+                                        int sampleIndex, object chunkData) {
     var data = (ChunkData)chunkData;
     var currentNode = node_;
     bool match = false;
@@ -116,12 +117,12 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
 
     // Sort each list in parallel, since samples may not be in order.
     var sortTasks = new List<Task>();
-    
+
     foreach (var pair in threadListMap_) {
       var list = pair.Value;
       sortTasks.Add(Task.Run(() => list.Sort((a, b) => a.Index.CompareTo(b.Index))));
     }
-    
+
     Task.WaitAll(sortTasks.ToArray());
   }
 }

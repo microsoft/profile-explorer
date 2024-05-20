@@ -249,6 +249,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task ReloadSettings() {
+    OnPropertyChanged(nameof(WindowScaling));
     await CompilerInfo.ReloadSettings();
 
     if (!IsSessionStarted) {

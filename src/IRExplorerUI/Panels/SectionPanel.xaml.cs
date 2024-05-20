@@ -1497,10 +1497,14 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     await statisticsTask_.WaitForTaskAsync();
   }
 
-  public void ShowModuleReport() {
-    //? TODO: Wait for it to be computed
+  public async Task ShowModuleReport() {
     if (functionStatMap_ == null) {
-      return;
+      await ComputeFunctionStatistics(functions_);
+      await WaitForStatistics();
+
+      if (functionStatMap_ == null) {
+        return;
+      }
     }
 
     moduleReport_ = new ModuleReport(functionStatMap_);

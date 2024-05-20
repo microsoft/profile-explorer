@@ -11,44 +11,48 @@
   xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
   <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <StackPanel Margin="4,4,4,4">
-      <TextBlock FontWeight="Medium" Text="Section List" />
       <CheckBox
-        Content="Use indentation for nested section names"
-        IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        Name="IndentationCheckbox"
-        ToolTip="Show section names indentend based on the parent/child relationship" />
-      <Separator Margin="0,4,0,4" />
-
-      <TextBlock FontWeight="Medium" Text="Function List" />
-      <CheckBox
-        Content="Compute instruction statistics"
-        IsChecked="{Binding ComputeStatistics, Mode=TwoWay}"
+        Content="Check for updates on application startup"
+        IsChecked="{Binding CheckForUpdates, Mode=TwoWay}"
         Margin="0,4,0,2"
-        ToolTip="Compute function IR statistics on document load and show extra columns"
-        x:Name="StatisticsCheckbox" />
-
-      <Grid Margin="0,4,0,0">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="70" />
-          <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-        <xctk:ColorPicker
-          AvailableColorsSortingMode="HueSaturationBrightness"
-          BorderBrush="Gray"
-          Grid.Column="0"
-          HorizontalAlignment="Left"
-          SelectedColor="{Binding NewSectionColor, Mode=TwoWay}"
-          ShowDropDownButton="True"
-
+        ToolTip="Automatically check for new versions of the application on startup." />
+      <CheckBox
+        Content="Disable hardware-accelerated rendering"
+        IsChecked="{Binding DisableHardwareRendering, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="Switch from hardware-accelerated to software rendering of the application UI." />
+      <StackPanel
+        Margin="0,4,0,0"
+        IsEnabled="{Binding ElementName=FilterWeightCheckBox, Path=IsChecked}"
+        Orientation="Horizontal">
+        <TextBlock VerticalAlignment="Center" Text="Window UI scaling"/>
+        <xctk:DoubleUpDown
+          Width="70"
+          Margin="8,0,0,0"
+          Maximum="200"
+          Minimum="50"
+          Increment="5"
+          FormatString="F0"
+          ParsingNumberStyle="AllowThousands"
+          ShowButtonSpinner="True"
           VerticalAlignment="Center"
-          Width="64" />
-        <TextBlock
-          Grid.Column="1"
-          HorizontalAlignment="Left"
-          Text="New section border color"
-          VerticalAlignment="Center" />
-      </Grid>
+          ToolTip="Resize the entire application UI"
+          Value="{Binding Path=WindowScaling, Mode=TwoWay, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=100.0}" />
+        <TextBlock Margin="4,0,0,0" Text="%" VerticalAlignment="Center"/>
+        <Button
+          Height="20"
+          Margin="8,0,0,0"
+          Padding="2,0,2,0"
+          VerticalAlignment="Center"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+          Click="ResetUIZoomButton_Click"
+          Content="Default"
+          ToolTip="Reset the application UI scaling to 100%" />
+      </StackPanel>
+      <TextBlock
+        Margin="0,24,0,0"
+        Text="Options window in progress.&#x0a;Use the wrench icon on the upper-right of each panel to quickly show its settings."
+        TextWrapping="Wrap" />
     </StackPanel>
   </Grid>
 </local:OptionsPanelBase>

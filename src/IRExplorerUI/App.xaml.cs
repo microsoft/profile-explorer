@@ -8,6 +8,8 @@ using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Shell;
 using System.Xml;
 using IRExplorerCore.SourceParser;
@@ -583,16 +585,12 @@ public partial class App : Application {
   }
 
   protected override void OnStartup(StartupEventArgs e) {
-    //? TODO: Needed to run under Wine on Linux
-    //RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
-
     AppStartTime = DateTime.UtcNow;
     base.OnStartup(e);
 
     if (!Debugger.IsAttached) {
       SetupExceptionHandling();
     }
-
 
     FixPopupPlacement();
 
@@ -608,6 +606,11 @@ public partial class App : Application {
       Utils.TryDeleteFile(GetSettingsFilePath());
       Settings = new ApplicationSettings();
       IsFirstRun = true;
+    }
+
+    if (Settings.GeneralSettings.DisableHardwareRendering) {
+      Trace.WriteLine($"Disable hardware rendering");
+      RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
     }
   }
 
