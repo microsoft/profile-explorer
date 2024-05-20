@@ -19,7 +19,7 @@ public partial class GraphViewer : FrameworkElement {
   public static readonly Pen DefaultPen = ColorPens.GetPen(Colors.Black, 0.025);
   public static readonly Pen DefaultBoldPen = ColorPens.GetPen(Colors.Black, DefaultBoldThickness);
   public static readonly Pen DefaultSelectedPen = ColorPens.GetPen(Colors.Black, 0.05);
-  
+
   private readonly double GraphMargin = 0.15;
   private readonly double ScaleFactor = 50;
   private IRElement element_;
@@ -601,7 +601,10 @@ public partial class GraphViewer : FrameworkElement {
     else if (group == hoverNodes_) {
       node.IsHovered = true;
     }
-    
+    else if (group == markedNodes_) {
+      node.IsMarked = true;
+    }
+
     SetNodeStyle(node, style);
     group[node] = style;
 
@@ -637,7 +640,12 @@ public partial class GraphViewer : FrameworkElement {
         node.IsHovered = false;
       }
     }
-    
+    else if (group == markedNodes_) {
+      foreach (var node in group.Keys) {
+        node.IsMarked = false;
+      }
+    }
+
     group.Clear();
 
     foreach (var node in tempNodes) {

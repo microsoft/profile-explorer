@@ -35,7 +35,7 @@ public interface IGraphStyleProvider {
 public class GraphNode {
   private const double DefaultTextSize = 0.225;
   private const double DefaultLabelTextSize = 0.205;
-  
+
   public Node NodeInfo { get; set; }
   public GraphSettings Settings { get; set; }
   public DrawingVisual Visual { get; set; }
@@ -48,6 +48,7 @@ public class GraphNode {
   public Brush TextColor { get; set; }
   public bool IsSelected { get; set; }
   public bool IsHovered { get; set; }
+  public bool IsMarked { get; set; }
 
   public void Draw() {
     using var dc = Visual.RenderOpen();
@@ -60,8 +61,8 @@ public class GraphNode {
     var textFont = TextFont;
 
     if (graphTag != null) {
-      if (graphTag.BackgroundColor.HasValue && 
-          !IsSelected && !IsHovered) {
+      if (graphTag.BackgroundColor.HasValue &&
+          !IsSelected && !IsHovered && !IsMarked) {
         backColor = graphTag.BackgroundColor.Value.AsBrush();
       }
 

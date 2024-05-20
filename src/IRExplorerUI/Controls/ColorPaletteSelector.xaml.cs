@@ -37,7 +37,8 @@ public partial class ColorPaletteSelector : UserControl, INotifyPropertyChanged 
 
   public ColorPaletteSelector() {
     InitializeComponent();
-    DataContext = this;
+    ZoomTransform.ScaleX = WindowScaling;
+    ZoomTransform.ScaleY = WindowScaling;
   }
 
   public double PreviewWidth {

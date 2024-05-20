@@ -1158,7 +1158,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     if (reloadFilterMenus) {
       ProfilingUtils.CreateInstancesMenu(InstancesMenu, Section, funcProfile,
-                             InstanceMenuItem_OnClick, settings_, Session);
+                             InstanceMenuItem_OnClick,
+                             InstanceMenuItem_OnRightClick,
+                             settings_, Session);
       ProfilingUtils.CreateThreadsMenu(ThreadsMenu, Section, funcProfile,
                            ThreadMenuItem_OnClick, settings_, Session);
     }
@@ -1168,6 +1170,16 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     return true;
+  }
+
+  private void InstanceMenuItem_OnRightClick(object sender, MouseButtonEventArgs e) {
+    if (sender is MenuItem menuItem) {
+      if (menuItem.Tag is ProfileCallTreeNode node) {
+        Session.SelectProfileFunctionInPanel(node, ToolPanelKind.FlameGraph);
+        Session.SelectProfileFunctionInPanel(node, ToolPanelKind.CallTree);
+        e.Handled = true;
+      }
+    }
   }
 
   private async Task<bool> UpdateProfilingColumns() {

@@ -22,6 +22,7 @@ public class SourceFileFinder {
   private SourceFileMapper sourceFileMapper_;
   private List<string> disabledSourceMappings_;
   private ISession session_;
+  private bool disableOpenDialog_;
 
   public SourceFileFinder(ISession session) {
     session_ = session;
@@ -84,18 +85,33 @@ public class SourceFileFinder {
       return (sourceInfo, FailureReason.None);
     }
     else if (!IsDisabledSourceFilePath(sourceInfo.FilePath)) {
-      var filePath = sourceFileMapper_.Map(sourceInfo.FilePath, () =>
-                                             Utils.ShowOpenFileDialog(
-                                               $"Source File|{Utils.TryGetFileName(sourceInfo.OriginalFilePath)}",
-                                               null, $"Open {sourceInfo.OriginalFilePath}"));
+      var filePath = sourceFileMapper_.Map(sourceInfo.FilePath, () => {
+        if (disableOpenDialog_) {
+          return null;
+        }
+
+        return Utils.ShowOpenFileDialog(
+          $"Source File|{Utils.TryGetFileName(sourceInfo.OriginalFilePath)}",
+          null, $"Open {sourceInfo.OriginalFilePath}");
+      });
+
       if (!string.IsNullOrEmpty(filePath)) {
         sourceInfo.FilePath = filePath;
       }
-      else {
-        if (Utils.ShowYesNoMessageBox("Continue asking for the location of this source file?", null) ==
-            MessageBoxResult.No) {
+      else if(!disableOpenDialog_) {
+        var result = Utils.ShowYesNoCancelMessageBox("""
+                                               Continue asking for the location of this source file?
+                                               
+                                               Press Cancel to stop showing the Open File dialog during the current session for source files that cannot be found.
+                                               """, null);
+        if(result == MessageBoxResult.No ||
+           result == MessageBoxResult.Cancel) {
           if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
             disabledSourceMappings_.Add(sourceInfo.FilePath);
+          }
+
+          if (result == MessageBoxResult.Cancel) {
+            disableOpenDialog_ = true; // Stop showing open dialog for current session.
           }
         }
 
@@ -129,18 +145,21 @@ public class SourceFileFinder {
   public void Reset() {
     disabledSourceMappings_.Clear();
     sourceFileMapper_.Reset();
+    disableOpenDialog_ = false;
     SaveSettings();
   }
 
   public void ResetDisabledMappings() {
     disabledSourceMappings_.Clear();
     sourceFileMapper_.ResetMissingFiles();
+    disableOpenDialog_ = false;
     SaveSettings();
   }
 
   public void ResetDisabledMappings(string filePath) {
     disabledSourceMappings_.Remove(filePath);
     sourceFileMapper_.ResetMissingFile(filePath);
+    disableOpenDialog_ = false;
     SaveSettings();
   }
 

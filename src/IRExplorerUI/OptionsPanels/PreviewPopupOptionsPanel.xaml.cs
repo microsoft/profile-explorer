@@ -8,7 +8,7 @@ using System.Windows.Input;
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class PreviewPopupOptionsPanel : OptionsPanelBase {
-  public override double DefaultHeight => 220;
+  public override double DefaultHeight => 250;
 
   public PreviewPopupOptionsPanel() {
     InitializeComponent();

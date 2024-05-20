@@ -40,6 +40,7 @@ public static class ProfilingUtils {
   public static void CreateInstancesMenu(MenuItem menu, IRTextSection section,
                                          FunctionProfileData funcProfile,
                                          RoutedEventHandler menuClickHandler,
+                                         MouseButtonEventHandler menuRightClickHandler,
                                          TextViewSettingsBase settings, ISession session) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
@@ -80,6 +81,11 @@ public static class ProfilingUtils {
       };
 
       item.Click += menuClickHandler;
+
+      if (menuRightClickHandler != null) {
+        item.PreviewMouseRightButtonUp += menuRightClickHandler;
+      }
+
       defaultItems.Add(item);
       profileItems.Add(value);
 
@@ -554,6 +560,8 @@ public static class ProfilingUtils {
     int completeLineRemaining = maxCompleteLineLength;
     int index = 0;
     node = node.Caller;
+
+    completeSb.AppendLine("Right-click to select instance in Flame Graph and Call Tree\n");
 
     while (node != null) {
       // Build the shorter title stack trace.

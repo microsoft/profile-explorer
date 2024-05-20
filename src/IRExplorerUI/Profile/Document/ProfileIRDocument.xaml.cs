@@ -927,7 +927,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private void CreateProfileFilterMenus(IRTextSection section, FunctionProfileData funcProfile) {
     ProfilingUtils.CreateInstancesMenu(InstancesMenu, section, funcProfile,
-                                      InstanceMenuItem_OnClick, settings_, Session);
+                                      InstanceMenuItem_OnClick,
+                                      InstanceMenuItem_OnRightClick,
+                                      settings_, Session);
     ProfilingUtils.CreateThreadsMenu(ThreadsMenu, section, funcProfile,
                                     ThreadMenuItem_OnClick, settings_, Session);
     ProfilingUtils.SyncInstancesMenuWithFilter(InstancesMenu, profileFilter_);
@@ -1765,6 +1767,17 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ProfilingUtils.HandleInstanceMenuItemChanged(sender as MenuItem, InstancesMenu, profileFilter_);
     await ApplyProfileFilter();
   }
+
+  private void InstanceMenuItem_OnRightClick(object sender, MouseButtonEventArgs e) {
+    if (sender is MenuItem menuItem) {
+      if (menuItem.Tag is ProfileCallTreeNode node) {
+        Session.SelectProfileFunctionInPanel(node, ToolPanelKind.FlameGraph);
+        Session.SelectProfileFunctionInPanel(node, ToolPanelKind.CallTree);
+        e.Handled = true;
+      }
+    }
+  }
+
 
   private async void ThreadMenuItem_OnClick(object sender, RoutedEventArgs e) {
     ProfilingUtils.HandleThreadMenuItemChanged(sender as MenuItem, ThreadsMenu, profileFilter_);

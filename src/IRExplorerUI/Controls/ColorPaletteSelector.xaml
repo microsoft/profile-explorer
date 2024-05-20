@@ -11,8 +11,7 @@
     mc:Ignorable="d">
 
   <UserControl.LayoutTransform>
-    <ScaleTransform ScaleX="{Binding WindowScaling}"
-                    ScaleY="{Binding WindowScaling}"/>
+    <ScaleTransform x:Name="ZoomTransform"/>
   </UserControl.LayoutTransform>
 
   <xctk:SplitButton
