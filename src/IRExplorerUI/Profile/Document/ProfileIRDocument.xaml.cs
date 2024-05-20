@@ -916,8 +916,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       return false;
     }
 
-    CreateProfileElementMenus(funcProfile);
-
     if (reloadFilterMenus) {
       CreateProfileFilterMenus(section, funcProfile);
     }
@@ -996,6 +994,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     // Load the dummy section with the source lines.
     var dummyParsedSection = new ParsedIRTextSection(section, sourceText_, processingResult.Function);
     await TextView.LoadSection(dummyParsedSection, true);
+    CreateProfileElementMenus(funcProfile);
 
     // Annotate the source lines with the profiling data based on the code statements.
     if (syntaxNodes != null) {
@@ -1397,10 +1396,12 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings_.ProfileMarkerSettings;
     int order = 0;
+    int index = 0;
 
     foreach (var (element, weight) in result.SampledElements) {
       // For source files, don't include assembly line elements.
       if (isSourceFileDocument_ && !IsSourceLine(element.TextLocation.Line + 1)) {
+        index++;
         continue;
       }
 
@@ -1421,10 +1422,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         prefixText = DocumentUtils.GenerateElementPreviewText(element, TextView.SectionText, 50);
       }
 
+      int line = MapToOriginalSourceLineNumber(element.TextLocation.Line + 1);
       var value = new ProfileMenuItem(text, weight.Ticks, weightPercentage) {
         Element = element,
         PrefixText = prefixText,
-        ToolTip = $"Line {element.TextLocation.Line + 1}",
+        ToolTip = $"Line {line}",
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
         PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
@@ -1432,7 +1434,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
       var item = new MenuItem {
         Header = value,
-        Tag = list.Count,
+        Tag = index,
         HeaderTemplate = valueTemplate
       };
 
@@ -1446,6 +1448,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       // Make sure percentage rects are aligned.
       Utils.UpdateMaxMenuItemWidth(prefixText, ref maxWidth, ProfileElementsMenu);
       list.Add(value);
+      index++;
     }
 
     foreach (var value in list) {
