@@ -23,7 +23,6 @@ public interface ICompilerInfoProvider {
   INameProvider NameProvider { get; }
   ISectionStyleProvider SectionStyleProvider { get; }
   IRRemarkProvider RemarkProvider { get; }
-  SourceFileFinder SourceFileFinder { get; }
   List<QueryDefinition> BuiltinQueries { get; }
   List<FunctionTaskDefinition> BuiltinFunctionTasks { get; }
   List<FunctionTaskDefinition> ScriptFunctionTasks { get; }

@@ -74,7 +74,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     get => settings_;
     set {
       settings_ = value;
-      sourceFileFinder_ = Session.CompilerInfo.SourceFileFinder;
+      ReloadSourceFileFinder(settings_.FinderSettings);
       OnPropertyChanged();
 
       if (settings_.SyncStyleWithDocument) {
@@ -90,6 +90,11 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
         ProfileTextView.Initialize(settings_);
       }
     }
+  }
+
+  private void ReloadSourceFileFinder(SourceFileFinderSettings settings) {
+    sourceFileFinder_ = new SourceFileFinder(Session);
+    sourceFileFinder_.LoadSettings(settings);
   }
 
   public string InlineeText {
@@ -162,13 +167,14 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       UpdateInlineeText();
       var inlinee = (SourceStackFrame)InlineeComboBox.SelectedItem;
 
-      if (InlineeComboBox.SelectedIndex > 0) {
-        await LoadInlineeSourceFile(inlinee);
+      if (InlineeComboBox.SelectedIndex > 0 &&
+          await LoadInlineeSourceFile(inlinee)) {
+        return;
       }
-      else {
-        // First item means "no inlinee".
-        await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter);
-      }
+
+      // If failing to load inlinee, load main source file instead.
+      InlineeComboBox.SelectedIndex = 0; // First item means "no inlinee".
+      await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter);
     }
   }
 
@@ -201,6 +207,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
 
     sourceFileFinder_.Reset();
+    sourceFileFinder_.SaveSettings(settings_.FinderSettings);
     await ReloadSourceFile();
   }
 
@@ -212,11 +219,13 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
 
     sourceFileFinder_.ResetDisabledMappings();
+    sourceFileFinder_.SaveSettings(settings_.FinderSettings);
     await ReloadSourceFile();
   }
 
   private async void ClearFileExclusion_Click(object sender, RoutedEventArgs e) {
     sourceFileFinder_.ResetDisabledMappings(sourceFilePath_);
+    sourceFileFinder_.SaveSettings(settings_.FinderSettings);
     await ReloadSourceFile();
   }
 
@@ -253,9 +262,9 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {
+          App.Settings.SourceFileSettings = newSettings;
           Settings = newSettings;
           await ReloadSourceFile();
-          App.Settings.SourceFileSettings = newSettings;
 
           if (commit) {
             App.SaveApplicationSettings();

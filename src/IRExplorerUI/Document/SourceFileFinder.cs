@@ -26,17 +26,14 @@ public class SourceFileFinder {
 
   public SourceFileFinder(ISession session) {
     session_ = session;
-    LoadSettings();
   }
 
-  private void LoadSettings() {
-    var settings = App.Settings.SourceFileSettings.FinderSettings;
+  public void LoadSettings(SourceFileFinderSettings settings) {
     disabledSourceMappings_ = settings.DisabledSourceMappings;
     sourceFileMapper_ = new SourceFileMapper(settings.SourceMappings.CloneDictionary());
   }
 
-  public void SaveSettings() {
-    var settings = App.Settings.SourceFileSettings.FinderSettings;
+  public void SaveSettings(SourceFileFinderSettings settings) {
     settings.SourceMappings = sourceFileMapper_.SourceMap.CloneDictionary();
     settings.DisabledSourceMappings = disabledSourceMappings_;
     App.SaveApplicationSettings();
@@ -114,8 +111,6 @@ public class SourceFileFinder {
             disableOpenDialog_ = true; // Stop showing open dialog for current session.
           }
         }
-
-        SaveSettings();
       }
 
       if (File.Exists(sourceInfo.FilePath)) {
@@ -146,21 +141,18 @@ public class SourceFileFinder {
     disabledSourceMappings_.Clear();
     sourceFileMapper_.Reset();
     disableOpenDialog_ = false;
-    SaveSettings();
   }
 
   public void ResetDisabledMappings() {
     disabledSourceMappings_.Clear();
     sourceFileMapper_.ResetMissingFiles();
     disableOpenDialog_ = false;
-    SaveSettings();
   }
 
   public void ResetDisabledMappings(string filePath) {
     disabledSourceMappings_.Remove(filePath);
     sourceFileMapper_.ResetMissingFile(filePath);
     disableOpenDialog_ = false;
-    SaveSettings();
   }
 
   private SourceFileDebugInfo LocateSourceFile(FunctionProfileData funcProfile,

@@ -575,7 +575,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     if (line >= 0 && line <= Document.LineCount) {
       TextArea.Caret.Line = line;
       ScrollToLine(line);
-      
+
     }
   }
 
@@ -1183,9 +1183,9 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
     registerdTransformers_.Clear();
   }
-  
+
   public void RegisterHoverPreview(PopupHoverPreview preview) {
-    registeredHoverPreviews_.Add(preview); 
+    registeredHoverPreviews_.Add(preview);
   }
 
   public void UnregisterHoverPreviews() {
@@ -1608,7 +1608,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
         BackColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.5),
         Border = settings_.CurrentLineBorderColor.AsPen()
       };
-      
+
       selectedBlockStyle_ = new HighlightingStyle {
         BackColor = settings_.BackgroundColor.AsBrush(),
         Border = settings_.CurrentLineBorderColor.AsPen()
@@ -1618,12 +1618,12 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
     var borderPen = ColorPens.GetBoldPen(docSettings.BorderColor);
     var lightBorderPen = ColorPens.GetTransparentPen(docSettings.BorderColor, 150);
-    
+
     selectedStyle_ ??= new HighlightingStyle {
       BackColor = ColorBrushes.GetTransparentBrush(settings_.SelectedValueColor, 0.5),
       Border = borderPen
     };
-    
+
     selectedBlockStyle_ = selectedStyle_;
     ssaUserStyle_ ??= new PairHighlightingStyle();
     ssaUserStyle_.ParentStyle.BackColor =
@@ -4074,7 +4074,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
       return null;
 
     return await IRDocumentPopup.CreateNew(result, position,this, Session,
-                                           App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Other),
+                                           App.Settings.PreviewPopupSettings,
                                            $"Function: {element.Name}");
   }
 

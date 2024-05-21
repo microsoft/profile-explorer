@@ -43,8 +43,6 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   public INameProvider NameProvider => names_;
   public ISectionStyleProvider SectionStyleProvider => styles_;
   public IRRemarkProvider RemarkProvider => remarks_;
-  // Recreate SourceFileFinder on each request to use updated settings.
-  public SourceFileFinder SourceFileFinder => new SourceFileFinder(session_);
   public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>();
   public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>();
   public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>();
@@ -257,7 +255,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
       overlay.ShowBorderOnMouseOverOnly = false;
       overlay.UseLabelBackground = true;
     }
-    
+
     document.ResumeUpdate();
   }
 
