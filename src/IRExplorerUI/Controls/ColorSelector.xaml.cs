@@ -46,10 +46,11 @@ public partial class ColorSelector : UserControl {
 
   public ColorSelector() {
     InitializeComponent();
+    ZoomTransform.ScaleX = WindowScaling;
+    ZoomTransform.ScaleY = WindowScaling;
     Focusable = true;
     PreviewKeyDown += ColorSelector_PreviewKeyDown;
     Loaded += ColorSelector_Loaded;
-    DataContext = this;
     ButtonBrushes = new Brush[ButtonColors.Length];
 
     for (int i = 0; i < ButtonColors.Length; i++) {
@@ -58,6 +59,7 @@ public partial class ColorSelector : UserControl {
   }
 
   public event EventHandler<SelectedColorEventArgs> ColorSelected;
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public ICommand ColorSelectedCommand {
     get => (ICommand)GetValue(ColorSelectedCommandProperty);

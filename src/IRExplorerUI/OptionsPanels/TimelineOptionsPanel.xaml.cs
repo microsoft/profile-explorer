@@ -19,7 +19,9 @@ public partial class TimelineOptionsPanel : OptionsPanelBase {
   }
 
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    NotifySettingsChanged();
+    if (!Utils.SourceIsTextBox(e)) {
+      NotifySettingsChanged();
+    }
   }
 
   private void NotifySettingsChanged() {

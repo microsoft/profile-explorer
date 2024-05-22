@@ -31,7 +31,7 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
-  
+
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);
     settings_ = (FlameGraphSettings)Settings;
@@ -62,7 +62,9 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   }
 
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    NotifySettingsChanged();
+    if (!Utils.SourceIsTextBox(e)) {
+      NotifySettingsChanged();
+    }
   }
 
   private void NotifySettingsChanged() {

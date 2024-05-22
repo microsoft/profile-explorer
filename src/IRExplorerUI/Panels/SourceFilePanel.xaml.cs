@@ -173,7 +173,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       }
 
       // If failing to load inlinee, load main source file instead.
-      InlineeComboBox.SelectedIndex = 0; // First item means "no inlinee".
       await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter);
     }
   }
@@ -287,6 +286,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     await base.OnDocumentSectionLoaded(section, document);
+    Utils.EnableControl(this);
     await LoadSourceFile(section, null, document);
   }
 
@@ -395,6 +395,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     await base.OnDocumentSectionUnloaded(section, document);
     await ResetState();
+    Utils.DisableControl(this);
   }
 
   private async Task ResetState() {
@@ -424,9 +425,11 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
           settings_.SyncInlineeWithDocument) {
         // Display deepest inlinee instead, if that fails
         // then it falls back to loading the function's source below.
-        if (await LoadInlineeSourceFile(tag)) {
-          return;
+        if (!await LoadInlineeSourceFile(tag)) {
+          InlineeComboBox.SelectedIndex = 0; // First item means "no inlinee".
         }
+
+        return;
       }
       else {
         ResetInlinee();
@@ -499,6 +502,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   public override async Task OnReloadSettings() {
+    sourceFileFinder_.SaveSettings(settings_.FinderSettings);
     Settings = App.Settings.SourceFileSettings;
   }
 

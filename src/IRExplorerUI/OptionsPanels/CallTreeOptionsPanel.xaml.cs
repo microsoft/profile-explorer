@@ -22,9 +22,11 @@ public partial class CallTreeOptionsPanel : OptionsPanelBase {
     base.Initialize(parent, settings, session);
     FunctionMarkingOptionsPanel.Initialize(parent, App.Settings.MarkingSettings, session);
   }
-  
+
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    NotifySettingsChanged();
+    if (!Utils.SourceIsTextBox(e)) {
+      NotifySettingsChanged();
+    }
   }
 
   private void NotifySettingsChanged() {

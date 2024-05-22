@@ -898,7 +898,7 @@
                                     Command="local:DocumentCommand.PreviewDefinition"
                                     CommandTarget="{Binding ElementName=TextView}"
                                     Header="Preview Definition"
-                                    InputGestureText="Shift+Return"
+                                    InputGestureText="Alt+Return"
                                     ToolTip="Preview operand definition or call target function">
                                     <MenuItem.Icon>
                                         <Image
@@ -1282,5 +1282,10 @@
             Command="local:DocumentHostCommand.CopySelectedText"
             CommandTarget="{Binding ElementName=TextView}"
             Modifiers="Ctrl+Shift" />
+        <KeyBinding
+          Key="Return"
+          Command="local:DocumentCommand.PreviewDefinition"
+          CommandTarget="{Binding ElementName=TextView}"
+          Modifiers="Alt" />
     </UserControl.InputBindings>
 </UserControl>

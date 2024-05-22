@@ -993,7 +993,7 @@
                   <Image
                     Width="16"
                     Height="16"
-                    Source="{StaticResource BookIcon}" />
+                    Source="{StaticResource BookmarkIcon}" />
                 </MenuItem.Icon>
                 <MenuItem>
                   <MenuItem.Header>

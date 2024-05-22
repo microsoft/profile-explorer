@@ -1432,9 +1432,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     return overlayRenderer_.KeyPressed(e);
   }
 
-  protected override void OnPreviewKeyDown(KeyEventArgs e) {
-    base.OnPreviewKeyDown(e);
-
+  private void IRDocument_PreviewKeyDown(object sender, KeyEventArgs e) {
     if (margin_.SelectedBookmark != null) {
       e.Handled = EditBookmarkText(margin_.SelectedBookmark, e.Key);
       return;
@@ -1448,20 +1446,19 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
     switch (e.Key) {
       case Key.Return: {
-        if (GetSelectedElement() is var element &&
-            TryOpenFunctionCallTarget(element)) {
-          e.Handled = true;
-          return;
-        }
-
-        if (Utils.IsShiftModifierActive()) {
+        if (Utils.IsAltModifierActive()) {
           PreviewDefinitionExecuted(this, null);
         }
         else if (Utils.IsControlModifierActive()) {
           GoToDefinitionSkipCopiesExecuted(this, null);
         }
         else {
-          GoToDefinitionExecuted(this, null);
+          if (GetSelectedElement() is var element &&
+              TryOpenFunctionCallTarget(element)) {
+          }
+          else {
+            GoToDefinitionExecuted(this, null);
+          }
         }
 
         e.Handled = true;
@@ -3683,6 +3680,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
       return;
     }
 
+    PreviewKeyDown += IRDocument_PreviewKeyDown;
     MouseDown += IRDocument_MouseDown;
     PreviewMouseLeftButtonDown += IRDocument_PreviewMouseLeftButtonDown;
     PreviewMouseRightButtonDown += IRDocument_PreviewMouseRightButtonDown;

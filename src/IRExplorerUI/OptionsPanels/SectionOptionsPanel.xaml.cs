@@ -22,9 +22,11 @@ public partial class SectionOptionsPanel : OptionsPanelBase {
     base.Initialize(parent, settings, session);
     FunctionMarkingOptionsPanel.Initialize(parent, App.Settings.MarkingSettings, session);
   }
-  
+
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    NotifySettingsChanged();
+    if (!Utils.SourceIsTextBox(e)) {
+      NotifySettingsChanged();
+    }
   }
 
   private void NotifySettingsChanged() {
@@ -46,7 +48,7 @@ public partial class SectionOptionsPanel : OptionsPanelBase {
     ((SectionSettings)Settings).CallStackPopupDuration = SectionSettings.DefaultCallStackPopupDuration;
     ReloadSettings();
   }
-  
+
   private void ShortCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
     ((SectionSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDuration.Milliseconds;
     ReloadSettings();

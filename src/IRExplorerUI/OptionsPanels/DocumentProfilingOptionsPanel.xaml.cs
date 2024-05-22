@@ -24,7 +24,7 @@ public partial class DocumentProfilingOptionsPanel : OptionsPanelBase {
       {ValueUnitKind.Millisecond, "Millisecond"},
       {ValueUnitKind.Microsecond, "Microsecond"},
       {ValueUnitKind.Nanosecond, "Nanosecond"},
-    };  
+    };
 
   public DocumentProfilingOptionsPanel() {
     InitializeComponent();
@@ -38,7 +38,9 @@ public partial class DocumentProfilingOptionsPanel : OptionsPanelBase {
   }
 
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    NotifySettingsChanged();
+    if (!Utils.SourceIsTextBox(e)) {
+      NotifySettingsChanged();
+    }
   }
 
   private void NotifySettingsChanged() {

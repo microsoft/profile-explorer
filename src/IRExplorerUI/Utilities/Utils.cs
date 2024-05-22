@@ -1253,6 +1253,10 @@ public static class Utils {
     }
   }
 
+  public static bool SourceIsTextBox(MouseButtonEventArgs e) {
+    return e.OriginalSource.GetType().Name == "TextBoxView";
+  }
+
   public static Typeface GetTextTypeface(Control element) {
     return new Typeface(element.FontFamily, element.FontStyle,
                         element.FontWeight, element.FontStretch);

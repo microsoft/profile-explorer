@@ -9,8 +9,7 @@
   d:DesignWidth="400"
   mc:Ignorable="d">
   <UserControl.LayoutTransform>
-    <ScaleTransform ScaleX="{Binding WindowScaling}"
-                    ScaleY="{Binding WindowScaling}"/>
+    <ScaleTransform x:Name="ZoomTransform"/>
   </UserControl.LayoutTransform>
 
   <StackPanel Orientation="Vertical"

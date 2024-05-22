@@ -22,7 +22,7 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
     InitializeComponent();
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
-  
+
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);
@@ -39,7 +39,9 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
   }
 
   private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    NotifySettingsChanged();
+    if (!Utils.SourceIsTextBox(e)) {
+      NotifySettingsChanged();
+    }
   }
 
   private void NotifySettingsChanged() {
