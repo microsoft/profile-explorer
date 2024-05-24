@@ -66,10 +66,10 @@ public class ReferenceInfo {
     get {
       return Info.Kind switch {
         ReferenceKind.Address => "Address",
-        ReferenceKind.Load => "Load",
-        ReferenceKind.Store => "Store",
-        ReferenceKind.SSA => "SSA use",
-        _ => ""
+        ReferenceKind.Load    => "Load",
+        ReferenceKind.Store   => "Store",
+        ReferenceKind.SSA     => "SSA use",
+        _                     => ""
       };
     }
   }
@@ -441,7 +441,9 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
 
     var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
     previewPopup_ = await IRDocumentPopup.CreateNew(Document, element, position,
-                                                    relativeElement, App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.References),
+                                                    relativeElement,
+                                                    App.Settings.GetElementPreviewPopupSettings(
+                                                      ToolPanelKind.References),
                                                     "Use of ");
     previewPopup_.PopupDetached += Popup_PopupDetached;
     previewPopup_.ShowPopup();

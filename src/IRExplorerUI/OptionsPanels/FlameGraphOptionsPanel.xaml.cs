@@ -2,16 +2,8 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
-using IRExplorerUI.Controls;
-using Microsoft.Diagnostics.Tracing.Parsers.MicrosoftWindowsWPF;
-using DispatcherPriority = System.Windows.Threading.DispatcherPriority;
 
 namespace IRExplorerUI.OptionsPanels;
 

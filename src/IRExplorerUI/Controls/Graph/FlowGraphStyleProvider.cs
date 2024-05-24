@@ -133,9 +133,9 @@ public sealed class FlowGraphStyleProvider : IGraphStyleProvider {
     var element = node.ElementData;
 
     return element switch {
-      null => defaultNodeStyle_,
+      null          => defaultNodeStyle_,
       BlockIR block => GetBlockNodeStyle(block),
-      _ => defaultNodeStyle_
+      _             => defaultNodeStyle_
     };
   }
 
@@ -147,7 +147,7 @@ public sealed class FlowGraphStyleProvider : IGraphStyleProvider {
     if (edge.Style == Edge.EdgeKind.Dotted) {
       return GraphEdgeKind.ImmediateDominator;
     }
-    else if(edge.Style == Edge.EdgeKind.Dashed) {
+    else if (edge.Style == Edge.EdgeKind.Dashed) {
       return GraphEdgeKind.Loop;
     }
 

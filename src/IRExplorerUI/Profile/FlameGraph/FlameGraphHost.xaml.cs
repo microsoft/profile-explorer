@@ -4,13 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using IRExplorerCore;
@@ -134,9 +133,9 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   public RelayCommand<object> MarkInstanceCommand => new RelayCommand<object>(async obj => {
     MarkSelectedNodes(obj, (node, color) => GraphViewer.MarkNode(node, GraphViewer.MarkedColoredNodeStyle(color)));
   });
-
   public RelayCommand<object> MarkAllInstancesCommand => new RelayCommand<object>(async obj => {
-    MarkSelectedNodes(obj, (node, color) => MarkFunctionInstances(node.Function, GraphViewer.MarkedColoredNodeStyle(color)));
+    MarkSelectedNodes(
+      obj, (node, color) => MarkFunctionInstances(node.Function, GraphViewer.MarkedColoredNodeStyle(color)));
   });
   public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
@@ -152,7 +151,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     SettingsUpdated(settings_);
     MarkingChanged?.Invoke(this, EventArgs.Empty);
   });
-
   public RelayCommand<object> MarkTimelineCommand => new RelayCommand<object>(async obj => {
     if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
       GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
@@ -167,7 +165,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                                                      GraphViewer, Session, null, false, brush);
     }
   });
-
   public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
@@ -193,7 +190,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       await Session.OpenProfileFunction(GraphViewer.SelectedNode.CallTreeNode, mode, filter);
     }
   });
-
   public RelayCommand<object> OpenInstanceInNewTabCommand => new RelayCommand<object>(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
@@ -512,7 +508,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
     var fgNodes = GraphViewer.SelectNodes(nodes);
 
-    if(bringIntoView && fgNodes.Count > 0) {
+    if (bringIntoView && fgNodes.Count > 0) {
       BringNodeIntoView(fgNodes[0], fitSize);
     }
   }
@@ -592,46 +588,46 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       nodeHoverPreview_ = null;
     }
 
-    if(!settings_.ShowNodePopup) {
+    if (!settings_.ShowNodePopup) {
       return;
     }
 
     nodeHoverPreview_ = new PopupHoverPreview(GraphViewer,
-      TimeSpan.FromMilliseconds(settings_.NodePopupDuration),
-      (mousePoint, previewPoint) => {
-        var pointedNode = GraphViewer.FindPointedNode(mousePoint);
-        var callNode = pointedNode?.CallTreeNode;
+                                              TimeSpan.FromMilliseconds(settings_.NodePopupDuration),
+                                              (mousePoint, previewPoint) => {
+                                                var pointedNode = GraphViewer.FindPointedNode(mousePoint);
+                                                var callNode = pointedNode?.CallTreeNode;
 
-        if (callNode != null) {
-          // If popup already opened for this node reuse the instance.
-          if (nodeHoverPreview_.PreviewPopup is CallTreeNodePopup
-            popup) {
-            popup.UpdatePosition(previewPoint, GraphViewer);
-          }
-          else {
-            popup = new CallTreeNodePopup(
-              callNode, this, previewPoint, GraphViewer, Session);
-          }
+                                                if (callNode != null) {
+                                                  // If popup already opened for this node reuse the instance.
+                                                  if (nodeHoverPreview_.PreviewPopup is CallTreeNodePopup
+                                                    popup) {
+                                                    popup.UpdatePosition(previewPoint, GraphViewer);
+                                                  }
+                                                  else {
+                                                    popup = new CallTreeNodePopup(
+                                                      callNode, this, previewPoint, GraphViewer, Session);
+                                                  }
 
-          popup.UpdateNode(callNode);
-          return popup;
-        }
+                                                  popup.UpdateNode(callNode);
+                                                  return popup;
+                                                }
 
-        return null;
-      },
-      (mousePoint, popup) => {
-        if (popup is CallTreeNodePopup previewPopup) {
-          // Hide if not over the same node anymore.
-          var pointedNode = GraphViewer.FindPointedNode(mousePoint);
-          return previewPopup.CallTreeNode.CallTreeNode !=
-                 pointedNode?.CallTreeNode;
-        }
+                                                return null;
+                                              },
+                                              (mousePoint, popup) => {
+                                                if (popup is CallTreeNodePopup previewPopup) {
+                                                  // Hide if not over the same node anymore.
+                                                  var pointedNode = GraphViewer.FindPointedNode(mousePoint);
+                                                  return previewPopup.CallTreeNode.CallTreeNode !=
+                                                         pointedNode?.CallTreeNode;
+                                                }
 
-        return true;
-      },
-      popup => {
-        Session.RegisterDetachedPanel(popup);
-      });
+                                                return true;
+                                              },
+                                              popup => {
+                                                Session.RegisterDetachedPanel(popup);
+                                              });
   }
 
   private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) {

@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -63,7 +62,7 @@ public class FlameGraphRenderer {
     ReloadSettings();
     dummyNodeStyles_ = new Dictionary<HighlightingStyle, HighlightingStyle>();
   }
-  
+
   public double MaxGraphWidth => maxWidth_;
   public double MaxGraphHeight => (maxNodeDepth_ + 1) * nodeHeight_;
   public Rect VisibleArea => visibleArea_;
@@ -78,7 +77,7 @@ public class FlameGraphRenderer {
     managedBorder_ = ColorPens.GetPen(settings_.ManagedNodeBorderColor, 1);
 
     font_ = new Typeface(FontName);
-    nameFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, 
+    nameFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal,
                              FontWeights.Medium, FontStretches.Normal);
     nodeTextBrush_ = settings_.NodeTextColor.AsBrush();
     kernelNodeTextBrush_ = settings_.KernelNodeTextColor.AsBrush();
@@ -588,7 +587,7 @@ public class FlameGraphRenderer {
 
   private void DrawDummyNode(FlameGraphGroupNode node, DrawingContext graphDC) {
     var scaledBounds = new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top,
-      node.Bounds.Width * maxWidth_, node.Bounds.Height);
+                                node.Bounds.Width * maxWidth_, node.Bounds.Height);
 
     if (cachedDummyNodeGuidelines_ == null) {
       cachedDummyNodeGuidelines_ = CreateGuidelineSet(scaledBounds, 0.5f);
@@ -877,7 +876,7 @@ public class FlameGraphRenderer {
     glyphsCache.CacheGlyphs(glyphInfo, originalText, maxWidth);
 
     return (text, glyphInfo.Glyphs, trimmed,
-      new Size(glyphInfo.TextWidth, glyphInfo.TextHeight));
+            new Size(glyphInfo.TextWidth, glyphInfo.TextHeight));
   }
 
   private GuidelineSet CreateGuidelineSet(Rect rect, double penWidth) {

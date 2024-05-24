@@ -35,7 +35,6 @@ public interface IGraphStyleProvider {
 public class GraphNode {
   private const double DefaultTextSize = 0.225;
   private const double DefaultLabelTextSize = 0.205;
-
   public Node NodeInfo { get; set; }
   public GraphSettings Settings { get; set; }
   public DrawingVisual Visual { get; set; }
@@ -142,10 +141,13 @@ public class GraphRenderer {
     //? pass the renderer and use these definitions instead.
     edgeFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
     nodeFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-    markedNodeFont_= new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-    boldMarkedNodeFont_= new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal);
+    markedNodeFont_ =
+      new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    boldMarkedNodeFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.DemiBold,
+                                       FontStretches.Normal);
     labelFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-    boldLabelFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal);
+    boldLabelFont_ = new Typeface(new FontFamily(FontName), FontStyles.Normal, FontWeights.DemiBold,
+                                  FontStretches.Normal);
 
     graphStyle_ = graph.Kind switch {
       GraphKind.FlowGraph =>
@@ -300,13 +302,13 @@ public class GraphRenderer {
       var edgeType = graphStyle_.GetEdgeKind(edge);
 
       var sc = edgeType switch {
-        GraphEdgeKind.Default => defaultSC,
-        GraphEdgeKind.Branch => branchSC,
-        GraphEdgeKind.Loop => loopSC,
-        GraphEdgeKind.Return => returnSC,
-        GraphEdgeKind.ImmediateDominator => immDomSC,
+        GraphEdgeKind.Default                => defaultSC,
+        GraphEdgeKind.Branch                 => branchSC,
+        GraphEdgeKind.Loop                   => loopSC,
+        GraphEdgeKind.Return                 => returnSC,
+        GraphEdgeKind.ImmediateDominator     => immDomSC,
         GraphEdgeKind.ImmediatePostDominator => immDomSC,
-        _ => defaultSC
+        _                                    => defaultSC
       };
 
       //? TODO: Avoid making copies at all

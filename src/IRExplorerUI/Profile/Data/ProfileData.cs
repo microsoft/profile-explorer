@@ -332,6 +332,7 @@ public partial class ProfileData {
 
   public List<int> FindModuleIds(Func<string, bool> matchCheck) {
     var ids = new List<int>();
+
     foreach (var module in Modules) {
       if (matchCheck(module.Value.ModuleName)) {
         ids.Add(module.Key);
@@ -345,7 +346,7 @@ public partial class ProfileData {
     var ids = FindModuleIds(matchCheck);
     var weight = TimeSpan.Zero;
 
-    foreach (var id in ids) {
+    foreach (int id in ids) {
       weight += ModuleWeights.GetValueOrDefault(id);
     }
 

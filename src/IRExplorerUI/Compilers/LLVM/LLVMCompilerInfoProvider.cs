@@ -8,7 +8,6 @@ using IRExplorerCore.IR;
 using IRExplorerCore.LLVM;
 using IRExplorerUI.Compilers.Default;
 using IRExplorerUI.Diff;
-using IRExplorerUI.Document;
 using IRExplorerUI.Query;
 
 namespace IRExplorerUI.Compilers.LLVM;
@@ -63,15 +62,18 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
     return Utils.LocateDebugInfoFile(imagePath, ".pdb");
   }
 
-  DebugFileSearchResult ICompilerInfoProvider.FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings) {
+  DebugFileSearchResult ICompilerInfoProvider.FindDebugInfoFile(SymbolFileDescriptor symbolFile,
+                                                                SymbolFileSourceSettings settings) {
     return DebugFileSearchResult.None;
   }
 
-  public async Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath, SymbolFileSourceSettings settings = null) {
+  public async Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath,
+                                                                  SymbolFileSourceSettings settings = null) {
     return DebugFileSearchResult.None;
   }
 
-  public async Task<DebugFileSearchResult> FindDebugInfoFileAsync(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
+  public async Task<DebugFileSearchResult> FindDebugInfoFileAsync(SymbolFileDescriptor symbolFile,
+                                                                  SymbolFileSourceSettings settings = null) {
     return DebugFileSearchResult.None;
   }
 
@@ -89,7 +91,7 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
   }
 
   public Task<BinaryFileSearchResult> FindBinaryFileAsync(BinaryFileDescriptor binaryFile,
-                                                     SymbolFileSourceSettings settings = null) {
+                                                          SymbolFileSourceSettings settings = null) {
     return null;
   }
 

@@ -52,7 +52,8 @@
             BorderBrush="{TemplateBinding BorderBrush}"
             BorderThickness="{TemplateBinding BorderThickness}"
             ToolTip="{TemplateBinding ToolTip}">
-            <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+            <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsSelected" Value="true">
@@ -88,7 +89,8 @@
             BorderBrush="{TemplateBinding BorderBrush}"
             BorderThickness="{TemplateBinding BorderThickness}"
             ToolTip="{TemplateBinding ToolTip}">
-            <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+            <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsSelected" Value="true">
@@ -122,7 +124,8 @@
             Background="{TemplateBinding Background}"
             BorderBrush="{TemplateBinding BorderBrush}"
             BorderThickness="{TemplateBinding BorderThickness}">
-            <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+            <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
           </Border>
 
           <ControlTemplate.Triggers>
@@ -223,7 +226,8 @@
     <MenuItem Header="Mark Loop">
       <MenuItem>
         <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkLoop" CommandTarget="{Binding ElementName=GraphHost}" />
+          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkLoop"
+                               CommandTarget="{Binding ElementName=GraphHost}" />
         </MenuItem.Header>
       </MenuItem>
     </MenuItem>
@@ -320,8 +324,10 @@
     </Style.Resources>
 
     <Setter Property="Background" Value="Transparent" />
-    <Setter Property="HorizontalContentAlignment" Value="{Binding Path=HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" />
-    <Setter Property="VerticalContentAlignment" Value="{Binding Path=VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" />
+    <Setter Property="HorizontalContentAlignment"
+            Value="{Binding Path=HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" />
+    <Setter Property="VerticalContentAlignment"
+            Value="{Binding Path=VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" />
     <Setter Property="Padding" Value="1,0,0,0" />
     <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
     <Setter Property="FocusVisualStyle" Value="{StaticResource TreeViewItemFocusVisual}" />
@@ -393,7 +399,9 @@
 
           </Grid>
           <ControlTemplate.Triggers>
-            <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Converter={StaticResource LineConverter}}" Value="true">
+            <DataTrigger
+              Binding="{Binding RelativeSource={RelativeSource Self}, Converter={StaticResource LineConverter}}"
+              Value="true">
               <Setter TargetName="VerLn" Property="VerticalAlignment" Value="Stretch" />
             </DataTrigger>
             <Trigger Property="IsExpanded" Value="false">
@@ -417,7 +425,8 @@
               <Setter TargetName="PART_Header" Property="MinHeight" Value="19" />
             </MultiTrigger>
             <Trigger Property="IsSelected" Value="true">
-              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+              <Setter TargetName="Bd" Property="Background"
+                      Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
               <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
             </Trigger>
             <MultiTrigger>
@@ -425,7 +434,8 @@
                 <Condition Property="IsSelected" Value="true" />
                 <Condition Property="IsSelectionActive" Value="false" />
               </MultiTrigger.Conditions>
-              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+              <Setter TargetName="Bd" Property="Background"
+                      Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
               <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
             </MultiTrigger>
             <Trigger Property="IsEnabled" Value="false">
@@ -469,7 +479,8 @@
               <Setter TargetName="SelectedLine" Property="Visibility" Value="Visible" />
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
-              <Setter TargetName="ContentSite" Property="TextBlock.Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+              <Setter TargetName="ContentSite" Property="TextBlock.Foreground"
+                      Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -580,7 +591,8 @@
                   Background="{StaticResource Menu.Background}"
                   BorderBrush="{StaticResource Menu.Static.Border}"
                   BorderThickness="1">
-                  <ScrollViewer x:Name="SubMenuScrollViewer" Style="{DynamicResource {ComponentResourceKey ResourceId=MenuScrollViewer, TypeInTargetAssembly={x:Type FrameworkElement}}}">
+                  <ScrollViewer x:Name="SubMenuScrollViewer"
+                                Style="{DynamicResource {ComponentResourceKey ResourceId=MenuScrollViewer, TypeInTargetAssembly={x:Type FrameworkElement}}}">
                     <Grid RenderOptions.ClearTypeHint="Enabled">
                       <Canvas
                         Width="0"
@@ -623,16 +635,20 @@
             </Trigger>
             <Trigger Property="IsHighlighted" Value="True">
               <Setter TargetName="templateRoot" Property="Background" Value="Transparent" />
-              <Setter TargetName="templateRoot" Property="BorderBrush" Value="{StaticResource MenuItem.Highlight.Border}" />
+              <Setter TargetName="templateRoot" Property="BorderBrush"
+                      Value="{StaticResource MenuItem.Highlight.Border}" />
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
-              <Setter TargetName="templateRoot" Property="TextElement.Foreground" Value="{StaticResource Menu.Disabled.Foreground}" />
+              <Setter TargetName="templateRoot" Property="TextElement.Foreground"
+                      Value="{StaticResource Menu.Disabled.Foreground}" />
               <Setter TargetName="Glyph" Property="Fill" Value="{StaticResource Menu.Disabled.Foreground}" />
               <Setter TargetName="RightArrow" Property="Fill" Value="{StaticResource Menu.Disabled.Foreground}" />
             </Trigger>
             <Trigger SourceName="SubMenuScrollViewer" Property="ScrollViewer.CanContentScroll" Value="false">
-              <Setter TargetName="OpaqueRect" Property="Canvas.Top" Value="{Binding VerticalOffset, ElementName=SubMenuScrollViewer}" />
-              <Setter TargetName="OpaqueRect" Property="Canvas.Left" Value="{Binding HorizontalOffset, ElementName=SubMenuScrollViewer}" />
+              <Setter TargetName="OpaqueRect" Property="Canvas.Top"
+                      Value="{Binding VerticalOffset, ElementName=SubMenuScrollViewer}" />
+              <Setter TargetName="OpaqueRect" Property="Canvas.Left"
+                      Value="{Binding HorizontalOffset, ElementName=SubMenuScrollViewer}" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -719,11 +735,14 @@
               <Setter TargetName="Icon" Property="Visibility" Value="Collapsed" />
             </Trigger>
             <Trigger Property="IsHighlighted" Value="True">
-              <Setter TargetName="templateRoot" Property="Background" Value="{StaticResource MenuItem.Highlight.Background}" />
-              <Setter TargetName="templateRoot" Property="BorderBrush" Value="{StaticResource MenuItem.Highlight.Border}" />
+              <Setter TargetName="templateRoot" Property="Background"
+                      Value="{StaticResource MenuItem.Highlight.Background}" />
+              <Setter TargetName="templateRoot" Property="BorderBrush"
+                      Value="{StaticResource MenuItem.Highlight.Border}" />
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
-              <Setter TargetName="templateRoot" Property="TextElement.Foreground" Value="{StaticResource Menu.Disabled.Foreground}" />
+              <Setter TargetName="templateRoot" Property="TextElement.Foreground"
+                      Value="{StaticResource Menu.Disabled.Foreground}" />
               <Setter TargetName="Glyph" Property="Fill" Value="{StaticResource Menu.Disabled.Foreground}" />
             </Trigger>
             <MultiTrigger>
@@ -731,8 +750,10 @@
                 <Condition Property="IsHighlighted" Value="True" />
                 <Condition Property="IsEnabled" Value="False" />
               </MultiTrigger.Conditions>
-              <Setter TargetName="templateRoot" Property="Background" Value="{StaticResource MenuItem.Highlight.Disabled.Background}" />
-              <Setter TargetName="templateRoot" Property="BorderBrush" Value="{StaticResource MenuItem.Highlight.Disabled.Border}" />
+              <Setter TargetName="templateRoot" Property="Background"
+                      Value="{StaticResource MenuItem.Highlight.Disabled.Background}" />
+              <Setter TargetName="templateRoot" Property="BorderBrush"
+                      Value="{StaticResource MenuItem.Highlight.Disabled.Border}" />
             </MultiTrigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>

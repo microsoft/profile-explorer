@@ -2,15 +2,11 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using IRExplorerUI.Controls;
@@ -28,7 +24,6 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   private bool showBacktraceView_;
   private string backtraceText_;
   private ProfileCallTreeNodeEx nodeEx_;
-
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,

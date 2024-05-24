@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -17,8 +16,6 @@ using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Utilities;
-using Microsoft.Diagnostics.Tracing.Stacks;
-using Microsoft.Extensions.Primitives;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
@@ -274,7 +271,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     var task2 = Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode.CallTreeNode));
     var task3 = Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode.CallTreeNode));
     var task4 = Task.Run(() => ProfilingUtils.CollectMarkedFunctions(markings, false,
-      Session, CallTreeNode.CallTreeNode));
+                                                                     Session, CallTreeNode.CallTreeNode));
     BacktraceList.ShowFunctions(await task1);
     FunctionList.ShowFunctions(await task2, settings_.FunctionListViewFilter);
     ModuleList.ShowModules(await task3);
@@ -439,7 +436,8 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     var threadList = node.SortedByWeightPerThreadWeights;
     var itemsList = new List<ThreadListItem>();
 
-    foreach (var item in threadList) {;
+    foreach (var item in threadList) {
+      ;
       var threadInfo = Session.ProfileData.FindThread(item.ThreadId);
       var backColor = App.Settings.TimelineSettings.
         GetThreadBackgroundColors(threadInfo, item.ThreadId).Margin;
@@ -762,21 +760,18 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeThread);
       }
     });
-
   public RelayCommand<object> ExcludeSameNameThreadCommand =>
     new RelayCommand<object>(async obj => {
       if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeSameNameThread);
       }
     });
-
   public RelayCommand<object> FilterToThreadCommand =>
     new RelayCommand<object>(async obj => {
       if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToThread);
       }
     });
-
   public RelayCommand<object> FilterToSameNameThreadCommand =>
     new RelayCommand<object>(async obj => {
       if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
@@ -845,17 +840,16 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       }
     }
   });
-
   public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
     if (obj is SelectedColorEventArgs e) {
       if (CallTreeNode.CallTreeNode is ProfileCallTreeGroupNode groupNode) {
         foreach (var node in groupNode.Nodes) {
-          var funcName = node.FormatFunctionName(Session);
+          string funcName = node.FormatFunctionName(Session);
           MarkFunction(funcName, e.SelectedColor);
         }
       }
       else {
-        var funcName = CallTreeNode.CallTreeNode.FormatFunctionName(Session);
+        string funcName = CallTreeNode.CallTreeNode.FormatFunctionName(Session);
         MarkFunction(funcName, e.SelectedColor);
       }
     }

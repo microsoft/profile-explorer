@@ -17,9 +17,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading;
 using System.Xml;
-using DocumentFormat.OpenXml.Vml.Spreadsheet;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using IRExplorerCore;
@@ -723,7 +721,7 @@ public static class Utils {
     T foundParent = null;
     var currentParent = VisualTreeHelper.GetParent(child);
 
-    while(currentParent != null) {
+    while (currentParent != null) {
       var element = currentParent as FrameworkElement;
 
       if (element is T && (parentName == null || element?.Name == parentName)) {
@@ -1148,17 +1146,16 @@ public static class Utils {
     maxWidth = Math.Max(width, maxWidth);
   }
 
-
   public static Size MeasureString(string text, Control targetControl) {
     var font = new Typeface(targetControl.FontFamily, targetControl.FontStyle,
-      targetControl.FontWeight, targetControl.FontStretch);
+                            targetControl.FontWeight, targetControl.FontStretch);
     return MeasureString(text, font, targetControl.FontSize);
   }
 
   public static Size MeasureString(string text, string fontName, double fontSize,
                                    FontWeight? fontWeight = null) {
     var font = new Typeface(new FontFamily(fontName), FontStyles.Normal,
-      fontWeight ?? FontWeights.Normal, FontStretches.Normal);
+                            fontWeight ?? FontWeights.Normal, FontStretches.Normal);
     return MeasureString(text, font, fontSize);
   }
 
@@ -1279,21 +1276,21 @@ public static class Utils {
   }
 
   public static string ConvertHtmlToClipboardFormat(string html) {
-    var encoding = new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-    var data = Array.Empty<byte>();
-    var header = encoding.GetBytes(String.Format(HEADER, 0, 1, 2, 3));
+    var encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+    byte[] data = Array.Empty<byte>();
+    byte[] header = encoding.GetBytes(String.Format(HEADER, 0, 1, 2, 3));
     data = data.Concat(header).ToArray();
 
-    var startHtml = data.Length;
+    int startHtml = data.Length;
     data = data.Concat(encoding.GetBytes(HTML_START)).ToArray();
 
-    var startFragment = data.Length;
+    int startFragment = data.Length;
     data = data.Concat(encoding.GetBytes(html)).ToArray();
-    var endFragment = data.Length;
+    int endFragment = data.Length;
     data = data.Concat(encoding.GetBytes(HTML_END)).ToArray();
 
-    var endHtml = data.Length;
-    var newHeader = encoding.GetBytes(
+    int endHtml = data.Length;
+    byte[] newHeader = encoding.GetBytes(
       String.Format(HEADER, startHtml, endHtml, startFragment, endFragment));
     Array.Copy(newHeader, data, length: startHtml);
     return encoding.GetString(data);
@@ -1305,12 +1302,10 @@ public static class Utils {
     "EndHTML:{1:0000000000}\r\n" +
     "StartFragment:{2:0000000000}\r\n" +
     "EndFragment:{3:0000000000}\r\n";
-
   static readonly string HTML_START =
     "<html>\r\n" +
     "<body>\r\n" +
     "<!--StartFragment-->";
-
   static readonly string HTML_END =
     "<!--EndFragment-->\r\n" +
     "</body>\r\n" +

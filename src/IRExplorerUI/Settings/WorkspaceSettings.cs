@@ -7,10 +7,6 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using IRExplorerCore;
-using IRExplorerCore.ASM;
 using ProtoBuf;
 
 namespace IRExplorerUI.Settings;
@@ -26,9 +22,7 @@ public class Workspace : IEquatable<Workspace> {
   [ProtoMember(4)]
   public int Order { get; set; }
   public bool IsNew { get; set; }
-
   public Workspace() { }
-
 
   public bool Equals(Workspace other) {
     if (ReferenceEquals(null, other))
@@ -95,7 +89,7 @@ public class WorkspaceSettings {
   public string GetBuiltinWorkspaceName(string compiler) {
     return compiler switch {
       "ASM" => "Profiling",
-      _ => "Profiling"
+      _     => "Profiling"
     };
   }
 

@@ -55,7 +55,7 @@ public partial class FlameGraphViewer : FrameworkElement {
   }
 
   public void SaveFixedMarkedNodes(List<(ProfileCallTreeNode Node,
-                                         HighlightingStyle Style)> list) {
+                                     HighlightingStyle Style)> list) {
     foreach (var pair in fixedMarkedNodes_) {
       if (pair.Key.HasFunction) {
         list.Add((pair.Key.CallTreeNode, pair.Value));
@@ -64,16 +64,16 @@ public partial class FlameGraphViewer : FrameworkElement {
   }
 
   public List<(ProfileCallTreeNode Node,
-               HighlightingStyle Style)>
+      HighlightingStyle Style)>
     RestoreFixedMarkedNodes(List<(ProfileCallTreeNode Node,
-                                  HighlightingStyle Style)> markedNodes,
+                              HighlightingStyle Style)> markedNodes,
                             ProfileCallTree callTree) {
     if (markedNodes.Count == 0) {
       return null;
     }
 
     List<(ProfileCallTreeNode Node,
-          HighlightingStyle Style)> unmatchedList = null;
+      HighlightingStyle Style)> unmatchedList = null;
 
     foreach (var pair in markedNodes) {
       // Find in the call tree node that corresponds to
@@ -426,9 +426,9 @@ public partial class FlameGraphViewer : FrameworkElement {
 
   private void HighlightNode(FlameGraphNode node, HighlighingType type) {
     node.Style = type switch {
-      HighlighingType.Hovered => PickHoveredNodeStyle(node.Style),
+      HighlighingType.Hovered  => PickHoveredNodeStyle(node.Style),
       HighlighingType.Selected => PickSelectedNodeStyle(node.Style),
-      _ => node.Style
+      _                        => node.Style
     };
 
     var group = GetHighlightedNodeGroup(type);
@@ -444,10 +444,10 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     node.Style = type switch {
-      HighlighingType.Hovered => PickHoveredNodeStyle(style),
+      HighlighingType.Hovered  => PickHoveredNodeStyle(style),
       HighlighingType.Selected => PickSelectedNodeStyle(style),
-      HighlighingType.Marked => PickMarkedNodeStyle(node, style),
-      _ => node.Style
+      HighlighingType.Marked   => PickMarkedNodeStyle(node, style),
+      _                        => node.Style
     };
 
     var group = GetHighlightedNodeGroup(type);
@@ -495,10 +495,10 @@ public partial class FlameGraphViewer : FrameworkElement {
 
   private Dictionary<FlameGraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
     return type switch {
-      HighlighingType.Hovered => hoverNodes_,
+      HighlighingType.Hovered  => hoverNodes_,
       HighlighingType.Selected => selectedNodes_,
-      HighlighingType.Marked => markedNodes_,
-      _ => throw new InvalidOperationException("Unsupported highlighting type")
+      HighlighingType.Marked   => markedNodes_,
+      _                        => throw new InvalidOperationException("Unsupported highlighting type")
     };
   }
 
@@ -550,7 +550,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         // the currently selected one and new one.
         var nodes = FindNodesInBetween(graphNode, selectedNode_);
 
-        if (nodes is {Count:> 0}) {
+        if (nodes is {Count: > 0}) {
           foreach (var node in nodes) {
             SelectNode(node, true, false);
           }

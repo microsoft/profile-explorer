@@ -37,9 +37,9 @@ public class SourceFileSettings : TextViewSettingsBase {
   public Color AssemblyBackColor { get; set; }
 
   public override void Reset() {
-      base.Reset();
-      InitializeReferenceMembers();
-      ResetAllOptions(this);
+    base.Reset();
+    InitializeReferenceMembers();
+    ResetAllOptions(this);
   }
 
   [ProtoAfterDeserialization]

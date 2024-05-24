@@ -38,7 +38,6 @@ public abstract class IRTextSectionLoader : IDisposable {
   protected object lockObject_;
   protected long sectionPreprocessingCompleted_;
   protected bool disposed_;
-
   public event EventHandler<bool> SectionPreprocessingCompleted;
   public bool SectionSignaturesComputed => Interlocked.Read(ref sectionPreprocessingCompleted_) != 0;
   public abstract IRTextSummary LoadDocument(ProgressInfoHandler progressHandler);

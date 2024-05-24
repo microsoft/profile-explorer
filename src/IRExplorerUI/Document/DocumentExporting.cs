@@ -2,23 +2,14 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
 using ClosedXML.Excel;
 using HtmlAgilityPack;
-using ICSharpCode.AvalonEdit;
-using ICSharpCode.AvalonEdit.Document;
-using ICSharpCode.AvalonEdit.Rendering;
-using IRExplorerCore;
-using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Document;
@@ -44,7 +35,7 @@ public static class DocumentExporting {
   }
 
   private static async Task ExportToFile(IRDocument textView, string fileFilter, string defaultExtension,
-                                        Func<IRDocument, string, Task<bool>> saveAction) {
+                                         Func<IRDocument, string, Task<bool>> saveAction) {
     string path = Utils.ShowSaveFileDialog(fileFilter, defaultExtension);
     bool success = true;
 
@@ -65,8 +56,8 @@ public static class DocumentExporting {
   }
 
   public static async Task ExportSourceToHtmlFile(IRDocument textView,
-                                               Func<int, int> toOriginalLineMapper,
-                                               Func<int, int> fromOriginalLineMapper) {
+                                                  Func<int, int> toOriginalLineMapper,
+                                                  Func<int, int> fromOriginalLineMapper) {
     string path = Utils.ShowSaveFileDialog(HtmlFileFilter, HtmlExtension);
     bool success = true;
 
@@ -81,14 +72,14 @@ public static class DocumentExporting {
       if (!success) {
         using var centerForm = new DialogCenteringHelper(textView);
         MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
-          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }
   }
 
   public static async Task ExportSourceToMarkdownFile(IRDocument textView,
-                                                  Func<int, int> toOriginalLineMapper,
-                                                  Func<int, int> fromOriginalLineMapper) {
+                                                      Func<int, int> toOriginalLineMapper,
+                                                      Func<int, int> fromOriginalLineMapper) {
     string path = Utils.ShowSaveFileDialog(MarkdownFileFilter, MarkdownExtension);
     bool success = true;
 
@@ -103,15 +94,14 @@ public static class DocumentExporting {
       if (!success) {
         using var centerForm = new DialogCenteringHelper(textView);
         MessageBox.Show($"Failed to save list to {path}", "IR Explorer",
-          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }
   }
 
-
   public static async Task<bool> ExportSourceAsExcelFile(IRDocument textView, string filePath) {
     var function = textView.Section.ParentFunction;
-    var (firstSourceLineIndex, lastSourceLineIndex) =
+    (int firstSourceLineIndex, int lastSourceLineIndex) =
       await DocumentUtils.FindFunctionSourceLineRange(function, textView);
 
     if (firstSourceLineIndex == 0) {
@@ -187,7 +177,7 @@ public static class DocumentExporting {
 
       var p = doc.CreateElement("p");
       var function = textView.Section.ParentFunction;
-      var funcName = function.FormatFunctionName(textView.Session);
+      string funcName = function.FormatFunctionName(textView.Session);
       p.InnerHtml = $"Function: {HttpUtility.HtmlEncode(funcName)}";
       p.SetAttributeValue("style", TitleStyle);
       doc.DocumentNode.AppendChild(p);
@@ -223,7 +213,7 @@ public static class DocumentExporting {
       @"color:#006400;text-align:left;vertical-align:top;word-wrap:break-word;max-width:300px;overflow:hidden;padding:2px 2px;border-color:black;border-style:solid;border-width:1px;font-size:14px;font-family:Arial, sans-serif;";
 
     var function = textView.Section.ParentFunction;
-    var (firstSourceLineIndex, lastSourceLineIndex) =
+    (int firstSourceLineIndex, int lastSourceLineIndex) =
       await DocumentUtils.FindFunctionSourceLineRange(function, textView);
 
     var columnData = textView.ProfileColumnData;
@@ -270,7 +260,7 @@ public static class DocumentExporting {
         continue;
       }
 
-      if(fromOriginalLineMapper != null) {
+      if (fromOriginalLineMapper != null) {
         // Map original source line to the one in the document,
         // when inline assembly is being displayed.
         lineNumber = fromOriginalLineMapper(lineNumber);
@@ -355,8 +345,8 @@ public static class DocumentExporting {
                                                             Func<int, int> toOriginalLineMapper = null,
                                                             Func<int, int> fromOriginalLineMapper = null) {
     try {
-      var text = await ExportSourceAsMarkdown(textView, -1, textView.Document.LineCount,
-                                              toOriginalLineMapper, fromOriginalLineMapper);
+      string text = await ExportSourceAsMarkdown(textView, -1, textView.Document.LineCount,
+                                                 toOriginalLineMapper, fromOriginalLineMapper);
       await File.WriteAllTextAsync(filePath, text);
       return true;
     }
@@ -370,11 +360,11 @@ public static class DocumentExporting {
                                                           Func<int, int> toOriginalLineMapper = null,
                                                           Func<int, int> fromOriginalLineMapper = null) {
     var sb = new StringBuilder();
-    string header =    "| Source | Line |";
+    string header = "| Source | Line |";
     string separator = "|--------|------|";
 
     var function = textView.Section.ParentFunction;
-    var (firstSourceLineIndex, lastSourceLineIndex) =
+    (int firstSourceLineIndex, int lastSourceLineIndex) =
       await DocumentUtils.FindFunctionSourceLineRange(function, textView);
 
     var columnData = textView.ProfileColumnData;
@@ -454,7 +444,7 @@ public static class DocumentExporting {
 
   public static async Task<bool> ExportFunctionAsMarkdownFile(IRDocument textView, string filePath) {
     try {
-      var text = ExportFunctionAsMarkdown(textView);
+      string text = ExportFunctionAsMarkdown(textView);
       await File.WriteAllTextAsync(filePath, text);
       return true;
     }
@@ -472,7 +462,7 @@ public static class DocumentExporting {
         @"text-align:left;font-family:Arial, sans-serif;font-weight:bold;font-size:16px;margin-top:0em";
 
       var p = doc.CreateElement("p");
-      var funcName = textView.Section.FormatFunctionName(textView.Session);
+      string funcName = textView.Section.FormatFunctionName(textView.Session);
 
       p.InnerHtml = $"Function: {HttpUtility.HtmlEncode(funcName)}";
       p.SetAttributeValue("style", TitleStyle);
@@ -650,7 +640,7 @@ public static class DocumentExporting {
   private static string ExportFunctionAsMarkdown(IRDocument textView, bool includeBlocks = true,
                                                  int startLine = -1, int endLine = -1) {
     var sb = new StringBuilder();
-    string header    = "| Instruction | Line |";
+    string header = "| Instruction | Line |";
     string separator = "|-------------|------|";
 
     var columnData = textView.ProfileColumnData;
@@ -706,7 +696,7 @@ public static class DocumentExporting {
         var line = textView.Document.GetLineByNumber(tuple.TextLocation.Line + 1);
         string text = textView.Document.GetText(line.Offset, line.Length);
         var sourceTag = tuple.GetTag<SourceLocationTag>();
-        var sourceLine = sourceTag != null ? sourceTag.Line.ToString() : "";
+        string sourceLine = sourceTag != null ? sourceTag.Line.ToString() : "";
         sb.Append($"| {text} | {sourceLine} |");
 
         if (columnData != null) {
@@ -719,7 +709,6 @@ public static class DocumentExporting {
 
     return sb.ToString();
   }
-
 
   public static async Task<bool> ExportFunctionAsExcelFile(IRDocument textView, string filePath) {
     var wb = new XLWorkbook();

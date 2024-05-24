@@ -86,12 +86,12 @@ public class QueryValue : BindableObject {
 
   public static object GetDefaultValue(QueryValueKind kind) {
     return kind switch {
-      QueryValueKind.Bool => false,
+      QueryValueKind.Bool    => false,
       QueryValueKind.Element => null,
-      QueryValueKind.Number => 0,
-      QueryValueKind.String => "",
-      QueryValueKind.Color => Colors.White,
-      _ => null
+      QueryValueKind.Number  => 0,
+      QueryValueKind.String  => "",
+      QueryValueKind.Color   => Colors.White,
+      _                      => null
     };
   }
 

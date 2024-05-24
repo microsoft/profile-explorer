@@ -26,7 +26,7 @@ public sealed class CurrentLineHighlighter : IBackgroundRenderer {
     // Draw a border around the current line.
     textView.EnsureVisualLines();
     var currentLine = textView.Document.GetLineByOffset(editor_.CaretOffset);
-    var width = textView.ActualWidth + textView.HorizontalOffset;
+    double width = textView.ActualWidth + textView.HorizontalOffset;
 
     foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, currentLine)) {
       var lineRect = Utils.SnapRectToPixels(rect.X, rect.Y, width, rect.Height);

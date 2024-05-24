@@ -1,6 +1,6 @@
-﻿// // Copyright (c) Microsoft Corporation
-// // The Microsoft Corporation licenses this file to you under the MIT license.
-// // See the LICENSE file in the project root for more information.
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,7 +26,7 @@ public static class ProfilingExporting {
       }
 
       var item = ProfileListViewItem.From(node, session.ProfileData,
-        session.CompilerInfo.NameProvider.FormatFunctionName, null);
+                                          session.CompilerInfo.NameProvider.FormatFunctionName, null);
       item.FunctionBackColor = markerOptions.PickBrushForPercentage(item.ExclusivePercentage);
       itemList.Add(item);
     }
@@ -95,7 +95,7 @@ public static class ProfilingExporting {
       string colorAttr = "";
 
       if (node is ProfileListViewItem listViewItem) {
-        var backColor = Utils.BrushToString(listViewItem.FunctionBackColor);
+        string backColor = Utils.BrushToString(listViewItem.FunctionBackColor);
         colorAttr = backColor != null ? $";background-color:{backColor}" : "";
       }
 
@@ -134,7 +134,7 @@ public static class ProfilingExporting {
       }
 
       itemList.Add(ProfileListViewItem.From(node, session.ProfileData,
-        session.CompilerInfo.NameProvider.FormatFunctionName, null));
+                                            session.CompilerInfo.NameProvider.FormatFunctionName, null));
     }
 
     return ExportFunctionListAsMarkdownTable(itemList);
@@ -145,7 +145,8 @@ public static class ProfilingExporting {
     var sb = new StringBuilder();
     string header = "| Function | Module |";
     string separator = "|----------|--------|";
-    header += $" Time ({markingSettings.ValueUnitSuffix}) | Time (%) | Time incl ({markingSettings.ValueUnitSuffix}) | Time incl (%) |";
+    header +=
+      $" Time ({markingSettings.ValueUnitSuffix}) | Time (%) | Time incl ({markingSettings.ValueUnitSuffix}) | Time incl (%) |";
     separator += "-----------|----------|----------------|---------------|";
 
     sb.AppendLine(header);
@@ -193,7 +194,7 @@ public static class ProfilingExporting {
       var tbody = doc.CreateElement("tbody");
       var tr = doc.CreateElement("tr");
       var th = doc.CreateElement("th");
-      var title = isCategoryList ? "Category" : "Marking";
+      string title = isCategoryList ? "Category" : "Marking";
       th.InnerHtml = title;
       th.SetAttributeValue("style", HeaderStyle);
       tr.AppendChild(th);
@@ -251,7 +252,7 @@ public static class ProfilingExporting {
       var hottestFuncts = new List<ProfileCallTreeNode>();
       var funcList = session.ProfileData.GetSortedFunctions();
 
-      var funcTitle = $"Hottest {hotFuncLimit} Functions";
+      string funcTitle = $"Hottest {hotFuncLimit} Functions";
       AppendTitleParagraph(funcTitle, doc, sb);
 
       foreach (var pair in funcList.Take(hotFuncLimit)) {
@@ -271,8 +272,8 @@ public static class ProfilingExporting {
         continue;
       }
 
-      var time = markingSettings.FormatWeightValue(category.Weight);
-      var percentage = category.Percentage.AsPercentageString();
+      string time = markingSettings.FormatWeightValue(category.Weight);
+      string percentage = category.Percentage.AsPercentageString();
 
       AppendHtmlNewLine(doc);
       AppendTitleParagraph(category.Marking.TitleOrName, doc, sb);
@@ -282,14 +283,14 @@ public static class ProfilingExporting {
       doc.DocumentNode.AppendChild(table);
       sb.AppendLine();
 
-      var plainText = ExportFunctionListAsMarkdownTable(category.SortedFunctions, session);
+      string plainText = ExportFunctionListAsMarkdownTable(category.SortedFunctions, session);
       sb.AppendLine(plainText);
     }
 
     if (includeCategoriesTable) {
       AppendHtmlNewLine(doc, sb);
       AppendTitleParagraph(includeHottestFunctions ? "Categories Definitions" :
-        "Markings Definitions", doc);
+                             "Markings Definitions", doc);
       var table = doc.CreateElement("table");
       table.SetAttributeValue("style", TableStyle);
 
@@ -297,7 +298,7 @@ public static class ProfilingExporting {
       var tbody = doc.CreateElement("tbody");
       var tr = doc.CreateElement("tr");
 
-      var title = isCategoryList ? "Category" : "Marking";
+      string title = isCategoryList ? "Category" : "Marking";
       var th = doc.CreateElement("th");
       th.InnerHtml = title;
       th.SetAttributeValue("style", HeaderStyle);
@@ -397,12 +398,12 @@ public static class ProfilingExporting {
   }
 
   public static async Task CopyFunctionMarkingsAsHtml(ISession session) {
-    var (html, plaintext) = await ExportFunctionMarkingsAsHtml(session);
+    (string html, string plaintext) = await ExportFunctionMarkingsAsHtml(session);
     Utils.CopyHtmlToClipboard(html, plaintext);
   }
 
   public static void CopyFunctionMarkingsAsHtml(List<FunctionMarkingCategory> markings, ISession session) {
-    var (html, plaintext) = ExportFunctionMarkingsAsHtml(markings, session);
+    (string html, string plaintext) = ExportFunctionMarkingsAsHtml(markings, session);
     Utils.CopyHtmlToClipboard(html, plaintext);
   }
 
@@ -414,21 +415,25 @@ public static class ProfilingExporting {
   private static async Task<(string html, string plaintext)>
     ExportFunctionMarkingsAsHtml(ISession session) {
     var markingCategoryList = await Task.Run(() =>
-      ProfilingUtils.CollectMarkedFunctions(App.Settings.MarkingSettings.FunctionColors, false, session));
+                                               ProfilingUtils.CollectMarkedFunctions(
+                                                 App.Settings.MarkingSettings.FunctionColors, false, session));
     return ExportProfilingReportAsHtml(markingCategoryList, session,
-      false, 0, true, false, false);
+                                       false, 0, true, false, false);
   }
 
   private static async Task<(string html, string plaintext)>
     ExportModuleMarkingsAsHtml(ISession session) {
     var markingCategoryList = await Task.Run<List<FunctionMarkingCategory>>(() =>
-      ProfilingUtils.CreateModuleMarkingCategories(App.Settings.MarkingSettings, session));
+                                                                              ProfilingUtils.
+                                                                                CreateModuleMarkingCategories(
+                                                                                  App.Settings.MarkingSettings,
+                                                                                  session));
     return ExportProfilingReportAsHtml(markingCategoryList, session,
-      false, 0, true, false, false);
+                                       false, 0, true, false, false);
   }
 
   public static async Task ExportFunctionMarkingsAsHtmlFile(ISession session) {
-    var (html, _) = await ExportFunctionMarkingsAsHtml(session);
+    (string html, _) = await ExportFunctionMarkingsAsHtml(session);
     await ExportFunctionMarkingsAsHtmlFile(html, session);
   }
 
@@ -446,15 +451,15 @@ public static class ProfilingExporting {
       }
 
       if (!success) {
-        using var centerForm = new DialogCenteringHelper(App.Current.MainWindow);
+        using var centerForm = new DialogCenteringHelper(Application.Current.MainWindow);
         MessageBox.Show($"Failed to save marked functions report to {path}", "IR Explorer",
-          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }
   }
 
   public static async Task ExportFunctionMarkingsAsMarkdownFile(ISession session) {
-    var (_, plaintext) = await ExportFunctionMarkingsAsHtml(session);
+    (_, string plaintext) = await ExportFunctionMarkingsAsHtml(session);
     await ExportFunctionMarkingsAsMarkdownFile(plaintext, session);
   }
 
@@ -472,35 +477,37 @@ public static class ProfilingExporting {
       }
 
       if (!success) {
-        using var centerForm = new DialogCenteringHelper(App.Current.MainWindow);
+        using var centerForm = new DialogCenteringHelper(Application.Current.MainWindow);
         MessageBox.Show($"Failed to save marked functions report to {path}", "IR Explorer",
-          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }
   }
 
-  public static async Task ExportFunctionMarkingsAsHtmlFile(List<FunctionMarkingCategory> categories, ISession session) {
-    var (html, _) = ExportFunctionMarkingsAsHtml(categories, session);
+  public static async Task
+    ExportFunctionMarkingsAsHtmlFile(List<FunctionMarkingCategory> categories, ISession session) {
+    (string html, _) = ExportFunctionMarkingsAsHtml(categories, session);
     await ExportFunctionMarkingsAsHtmlFile(html, session);
   }
 
-  public static async Task ExportFunctionMarkingsAsMarkdownFile(List<FunctionMarkingCategory> categories, ISession session) {
-    var (_, plaintext) = ExportFunctionMarkingsAsHtml(categories, session);
+  public static async Task ExportFunctionMarkingsAsMarkdownFile(List<FunctionMarkingCategory> categories,
+                                                                ISession session) {
+    (_, string plaintext) = ExportFunctionMarkingsAsHtml(categories, session);
     await ExportFunctionMarkingsAsMarkdownFile(plaintext, session);
   }
 
   public static async Task CopyModuleMarkingsAsHtml(ISession session) {
-    var (html, plaintext) = await ExportModuleMarkingsAsHtml(session);
+    (string html, string plaintext) = await ExportModuleMarkingsAsHtml(session);
     Utils.CopyHtmlToClipboard(html, plaintext);
   }
 
   public static async Task ExportModuleMarkingsAsHtmlFile(ISession session) {
-    var (html, _) = await ExportModuleMarkingsAsHtml(session);
+    (string html, _) = await ExportModuleMarkingsAsHtml(session);
     await ExportFunctionMarkingsAsHtmlFile(html, session);
   }
 
   public static async Task ExportModuleMarkingsAsMarkdownFile(ISession session) {
-    var (_, plaintext) = await ExportModuleMarkingsAsHtml(session);
+    (_, string plaintext) = await ExportModuleMarkingsAsHtml(session);
     await ExportFunctionMarkingsAsMarkdownFile(plaintext, session);
   }
 }

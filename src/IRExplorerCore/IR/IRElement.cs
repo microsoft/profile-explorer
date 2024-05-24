@@ -41,9 +41,9 @@ public class IRElement : TaggedObject {
   public TupleIR ParentTuple {
     get {
       return this switch {
-        TupleIR _ => this as TupleIR,
+        TupleIR _   => this as TupleIR,
         OperandIR _ => ((OperandIR)this).Parent,
-        _ => null
+        _           => null
       };
     }
   }
@@ -52,8 +52,8 @@ public class IRElement : TaggedObject {
     get {
       return this switch {
         InstructionIR _ => this as InstructionIR,
-        OperandIR _ => ((OperandIR)this).Parent as InstructionIR,
-        _ => null
+        OperandIR _     => ((OperandIR)this).Parent as InstructionIR,
+        _               => null
       };
     }
   }

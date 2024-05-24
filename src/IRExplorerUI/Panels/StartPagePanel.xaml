@@ -152,7 +152,9 @@
                     <StackPanel.Style>
                       <Style TargetType="{x:Type StackPanel}">
                         <Style.Triggers>
-                          <DataTrigger Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}" Value="False">
+                          <DataTrigger
+                            Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}"
+                            Value="False">
                             <Setter Property="Visibility" Value="Collapsed" />
                           </DataTrigger>
                         </Style.Triggers>
@@ -242,7 +244,9 @@
                     <StackPanel.Style>
                       <Style TargetType="{x:Type StackPanel}">
                         <Style.Triggers>
-                          <DataTrigger Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}" Value="False">
+                          <DataTrigger
+                            Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}"
+                            Value="False">
                             <Setter Property="Visibility" Value="Collapsed" />
                           </DataTrigger>
                         </Style.Triggers>

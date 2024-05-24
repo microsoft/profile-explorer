@@ -8,7 +8,6 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Diff;
-using IRExplorerUI.Document;
 using IRExplorerUI.Query;
 using ProtoBuf;
 
@@ -40,8 +39,12 @@ public interface ICompilerInfoProvider {
   DebugFileSearchResult FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null);
   DebugFileSearchResult FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null);
   Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath, SymbolFileSourceSettings settings = null);
-  Task<DebugFileSearchResult> FindDebugInfoFileAsync(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null);
-  Task<BinaryFileSearchResult> FindBinaryFileAsync(BinaryFileDescriptor binaryFile, SymbolFileSourceSettings settings = null);
+
+  Task<DebugFileSearchResult> FindDebugInfoFileAsync(SymbolFileDescriptor symbolFile,
+                                                     SymbolFileSourceSettings settings = null);
+
+  Task<BinaryFileSearchResult> FindBinaryFileAsync(BinaryFileDescriptor binaryFile,
+                                                   SymbolFileSourceSettings settings = null);
 }
 
 [ProtoContract]

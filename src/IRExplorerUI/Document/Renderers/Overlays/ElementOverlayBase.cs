@@ -2,13 +2,11 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using IRExplorerCore.IR;
 using IRExplorerCore.Utilities;
-using Microsoft.Diagnostics.Tracing;
 using ProtoBuf;
 
 namespace IRExplorerUI.Document;
@@ -201,7 +199,7 @@ public abstract class ElementOverlayBase : IElementOverlay {
       }
     }
 
-    if(e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) {
+    if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) {
       // Copy the label to the clipboard.
       if (HasToolTip) {
         Clipboard.Clear();
@@ -211,6 +209,7 @@ public abstract class ElementOverlayBase : IElementOverlay {
         Clipboard.Clear();
         Clipboard.SetText(Label, TextDataFormat.UnicodeText);
       }
+
       return true;
     }
 

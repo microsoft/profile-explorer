@@ -62,7 +62,7 @@
             IsChecked="{Binding Path=SyncInlineeWithDocument, Mode=TwoWay}"
             ToolTip="Display the deepest inlined function for the selection in the assembly document" />
 
-          <Separator Margin="0,4,0,4" Background="LightGray"/>
+          <Separator Margin="0,4,0,4" Background="LightGray" />
           <TextBlock FontWeight="Medium" Text="Document Style" />
           <CheckBox
             Margin="0,4,0,2"
@@ -108,8 +108,9 @@
               Value="{Binding Path=FontSize, Mode=TwoWay}" />
           </StackPanel>
 
-          <Separator Margin="0,4,0,4" Background="LightGray"/>
-          <DockPanel IsEnabled="{Binding ElementName=SyncWithDocumentCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}">
+          <Separator Margin="0,4,0,4" Background="LightGray" />
+          <DockPanel
+            IsEnabled="{Binding ElementName=SyncWithDocumentCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}">
             <TextBlock FontWeight="Medium" Text="Document Colors" />
             <Button
               x:Name="StyleButton"
@@ -145,8 +146,7 @@
                 BorderBrush="#707070"
                 IsManipulationEnabled="True"
                 SelectedColor="{Binding Path=BackgroundColor, Mode=TwoWay}"
-                ShowDropDownButton="True"
-                 />
+                ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
                 HorizontalAlignment="Left"
@@ -167,8 +167,7 @@
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
                 SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
-                ShowDropDownButton="True"
-                 />
+                ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
                 HorizontalAlignment="Left"
@@ -188,8 +187,7 @@
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
                 SelectedColor="{Binding Path=CurrentLineBorderColor, Mode=TwoWay}"
-                ShowDropDownButton="True"
-                 />
+                ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
                 HorizontalAlignment="Left"
@@ -209,8 +207,7 @@
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
                 SelectedColor="{Binding Path=MarginBackgroundColor, Mode=TwoWay}"
-                ShowDropDownButton="True"
-                 />
+                ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
                 HorizontalAlignment="Left"
@@ -232,8 +229,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               SelectedColor="{Binding Path=AssemblyTextColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-               />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -254,8 +250,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               SelectedColor="{Binding Path=AssemblyBackColor, Mode=TwoWay}"
-              ShowDropDownButton="True"
-            />
+              ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
               HorizontalAlignment="Left"
@@ -312,7 +307,8 @@
               </ListView.View>
               <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                  <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                  <Setter Property="Background"
+                          Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                   <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 </Style>
               </ListView.ItemContainerStyle>
@@ -381,7 +377,7 @@
               Orientation="Horizontal" />
           </Grid>
           <TextBlock FontSize="11" Text="Wildcards * in the path are accepted, e.g. *path\foo*" />
-          <Separator Margin="0,4,0,4" Background="LightGray"/>
+          <Separator Margin="0,4,0,4" Background="LightGray" />
 
 
           <TextBlock FontWeight="Medium" Text="File Path Mappings" />
@@ -436,7 +432,8 @@
               </ListView.View>
               <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                  <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                  <Setter Property="Background"
+                          Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                   <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 </Style>
               </ListView.ItemContainerStyle>

@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
@@ -17,7 +20,7 @@ sealed class SourceLineNumberMargin : LineNumberMargin {
 
   static SourceLineNumberMargin() {
     DefaultStyleKeyProperty.OverrideMetadata(typeof(SourceLineNumberMargin),
-      new FrameworkPropertyMetadata(typeof(SourceLineNumberMargin)));
+                                             new FrameworkPropertyMetadata(typeof(SourceLineNumberMargin)));
   }
 
   public SourceLineNumberMargin(IRDocument textView, SourceLineProfileResult sourceLineProfileResult) {
@@ -26,8 +29,8 @@ sealed class SourceLineNumberMargin : LineNumberMargin {
   }
 
   protected override void OnRender(DrawingContext drawingContext) {
-    var textView = this.TextView;
-    var renderSize = this.RenderSize;
+    var textView = TextView;
+    var renderSize = RenderSize;
 
     if (textView == null || !textView.VisualLinesValid) {
       return;
@@ -43,11 +46,11 @@ sealed class SourceLineNumberMargin : LineNumberMargin {
           // Line numbers before function start are unchanged.
         }
         else if (lineNumber > sourceLineProfileResult_.SourceLineResult.LastLineIndex +
-                 sourceLineProfileResult_.AssemblyLineCount) {
+          sourceLineProfileResult_.AssemblyLineCount) {
           // For lines after function end, subtract the assembly line count.
           lineNumber -= sourceLineProfileResult_.AssemblyLineCount;
         }
-        else if (sourceLineProfileResult_.LineToOriginalLineMap.TryGetValue(lineNumber, out var mappedLine)) {
+        else if (sourceLineProfileResult_.LineToOriginalLineMap.TryGetValue(lineNumber, out int mappedLine)) {
           lineNumber = mappedLine;
         }
         else {
@@ -142,7 +145,7 @@ sealed class RangeColorizer : DocumentColorizingTransformer {
           element.TextRunProperties.SetForegroundBrush(textColor_);
         }
 
-        if(backColor_ != null) {
+        if (backColor_ != null) {
           element.TextRunProperties.SetBackgroundBrush(backColor_);
         }
 

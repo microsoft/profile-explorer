@@ -185,14 +185,14 @@ public sealed class LightIRDocument : TextEditor {
     ScrollToLine(line);
   }
 
-
   private void SetupPreviewPopup() {
     if (previewPopup_ != null) {
       previewPopup_.UnregisterHoverEvents();
       previewPopup_ = null;
     }
 
-    previewPopup_ = new IRDocumentPopupInstance(App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Other), Session);
+    previewPopup_ =
+      new IRDocumentPopupInstance(App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Other), Session);
     previewPopup_.SetupHoverEvents(this, HoverPreview.HoverDuration, () => {
       if (Session.CurrentDocument == null) {
         return null;

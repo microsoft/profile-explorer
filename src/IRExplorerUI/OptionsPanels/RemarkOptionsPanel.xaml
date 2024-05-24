@@ -60,7 +60,7 @@
           IsChecked="{Binding Path=ShowPreviousAnalysisRemarks}"
           IsEnabled="{Binding ElementName=PreviousSectionsCheckbox, Path=IsChecked}"
           Margin="32,0,0,2" />
-        <Separator Margin="0,4,0,0" Background="LightGray"/>
+        <Separator Margin="0,4,0,0" Background="LightGray" />
       </StackPanel>
     </Grid>
 
@@ -203,7 +203,7 @@
     <Grid Grid.Row="2" Margin="4,4,4,4">
       <StackPanel>
 
-        <Separator Margin="0,0,0,4" Background="LightGray"/>
+        <Separator Margin="0,0,0,4" Background="LightGray" />
         <TextBlock
           FontWeight="Medium"
           Margin="0,0,0,4"

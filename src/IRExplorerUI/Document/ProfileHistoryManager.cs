@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -23,7 +26,6 @@ public class ProfileHistoryManager {
 
   public bool HasNextStates => nextFunctionsStack_.Count > 0;
   public bool HasPreviousStates => prevFunctionsStack_.Count > 0;
-
   public Stack<ProfileFunctionState> PreviousFunctions => prevFunctionsStack_;
   public Stack<ProfileFunctionState> NextFunctions => nextFunctionsStack_;
 
@@ -119,9 +121,9 @@ public class ProfileFunctionState {
   }
 
   public IRTextSection Section { get; set; }
-  public FunctionIR Function { get; set;}
+  public FunctionIR Function { get; set; }
   public ReadOnlyMemory<char> Text { get; set; }
-  public ProfileSampleFilter ProfileFilter { get; set;}
+  public ProfileSampleFilter ProfileFilter { get; set; }
   public TimeSpan Weight { get; set; }
   public ParsedIRTextSection ParsedSection =>
     new ParsedIRTextSection(Section, Text, Function);
@@ -135,7 +137,7 @@ public class ProfileFunctionState {
       return false;
     if (ReferenceEquals(this, obj))
       return true;
-    if (obj.GetType() != this.GetType())
+    if (obj.GetType() != GetType())
       return false;
     return Equals((ProfileFunctionState)obj);
   }

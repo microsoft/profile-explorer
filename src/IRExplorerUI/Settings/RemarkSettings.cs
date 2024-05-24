@@ -50,7 +50,6 @@ public class RemarkSettings : SettingsBase {
   public Dictionary<string, bool> CategoryFilter { get; set; }
   [ProtoMember(19), OptionValue(false)]
   public bool ShowPreviousAnalysisRemarks { get; set; }
-  
   public string SearchedText { get; set; }
   public bool HasCategoryFilters => CategoryFilter != null && CategoryFilter.Count > 0;
 
@@ -62,7 +61,7 @@ public class RemarkSettings : SettingsBase {
   private void InitializeReferenceMembers() {
     InitializeReferenceOptions(this);
   }
-  
+
   public RemarkSettings Clone() {
     byte[] serialized = StateSerializer.Serialize(this);
     return StateSerializer.Deserialize<RemarkSettings>(serialized);

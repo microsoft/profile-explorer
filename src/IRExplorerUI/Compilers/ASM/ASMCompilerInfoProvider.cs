@@ -1,9 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using IRExplorerCore;
@@ -11,7 +9,6 @@ using IRExplorerCore.ASM;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers.Default;
 using IRExplorerUI.Diff;
-using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Query;
 
@@ -73,7 +70,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     }
 
     if (!loadedDoc.DebugInfoFileExists) {
-        return null;
+      return null;
     }
 
     if (loadedDoc.BinaryFileExists) {
@@ -135,7 +132,8 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     }
   }
 
-  public async Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath, SymbolFileSourceSettings settings = null) {
+  public async Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath,
+                                                                  SymbolFileSourceSettings settings = null) {
     using var info = new PEBinaryInfoProvider(imagePath);
 
     if (!info.Initialize()) {
@@ -196,8 +194,9 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
 
     return PDBDebugInfoProvider.LocateDebugInfoFile(symbolFile, settings);
   }
+
   public async Task<BinaryFileSearchResult> FindBinaryFileAsync(BinaryFileDescriptor binaryFile,
-                                                           SymbolFileSourceSettings settings = null) {
+                                                                SymbolFileSourceSettings settings = null) {
     if (settings == null) {
       // Make sure the binary directory is also included in the symbol search.
       settings = App.Settings.SymbolSettings.Clone();

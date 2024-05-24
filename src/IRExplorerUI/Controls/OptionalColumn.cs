@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Media;
 using IRExplorerUI.Profile;
 
 namespace IRExplorerUI;
@@ -55,9 +54,8 @@ public class OptionalColumn : ICloneable {
   public bool HasCustomStyle => !string.IsNullOrEmpty(ColumnTemplateName);
   public Style CustomStyle =>
     !string.IsNullOrEmpty(ColumnTemplateName) ? (Style)Application.Current.FindResource(ColumnTemplateName) : null;
-
   public bool IsPerformanceCounter => PerformanceCounter is {IsMetric: false};
-  public bool IsPerformanceMetric => PerformanceCounter is { IsMetric: true };
+  public bool IsPerformanceMetric => PerformanceCounter is {IsMetric: true};
 
   public static OptionalColumn Binding(string binding, string columnName, string title, string tooltip = null,
                                        IValueConverter converter = null, double width = double.NaN,
@@ -88,7 +86,7 @@ public class OptionalColumn : ICloneable {
     var functionGrid = (GridView)listView.View;
     var removedColumns = new List<GridViewColumn>();
 
-    foreach(var column in functionGrid.Columns) { 
+    foreach (var column in functionGrid.Columns) {
       var header = column.Header as GridViewColumnHeader;
 
       if (predicate == null || predicate(header)) {

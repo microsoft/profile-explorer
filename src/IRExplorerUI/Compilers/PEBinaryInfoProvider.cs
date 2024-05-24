@@ -125,7 +125,7 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
   }
 
   public static async Task<BinaryFileSearchResult> LocateBinaryFileAsync(BinaryFileDescriptor binaryFile,
-                                                                    SymbolFileSourceSettings settings) {
+                                                                         SymbolFileSourceSettings settings) {
     // Check if the binary was requested before.
     if (resolvedBinariesCache_.TryGetValue(binaryFile, out var searchResult)) {
       return searchResult;

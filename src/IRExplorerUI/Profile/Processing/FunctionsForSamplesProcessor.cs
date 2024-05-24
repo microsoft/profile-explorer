@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System.Collections.Generic;
 using IRExplorerCore;
 
 namespace IRExplorerUI.Profile;
@@ -36,7 +39,8 @@ public sealed class FunctionsForSamplesProcessor : ProfileSampleProcessor {
     return chunk;
   }
 
-  protected override void ProcessSample(ProfileSample sample, ResolvedProfileStack stack, int sampleIndex, object chunkData) {
+  protected override void ProcessSample(ProfileSample sample, ResolvedProfileStack stack, int sampleIndex,
+                                        object chunkData) {
     var data = (ChunkData)chunkData;
 
     foreach (var stackFrame in stack.StackFrames) {

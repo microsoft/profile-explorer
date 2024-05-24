@@ -16,7 +16,7 @@
   <Grid>
     <Grid.LayoutTransform>
       <ScaleTransform ScaleX="{Binding WindowScaling}"
-                      ScaleY="{Binding WindowScaling}"/>
+                      ScaleY="{Binding WindowScaling}" />
     </Grid.LayoutTransform>
 
     <StackPanel Margin="10,10,10,0">

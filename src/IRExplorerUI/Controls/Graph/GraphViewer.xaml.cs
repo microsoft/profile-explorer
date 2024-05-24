@@ -19,7 +19,6 @@ public partial class GraphViewer : FrameworkElement {
   public static readonly Pen DefaultPen = ColorPens.GetPen(Colors.Black, 0.025);
   public static readonly Pen DefaultBoldPen = ColorPens.GetPen(Colors.Black, DefaultBoldThickness);
   public static readonly Pen DefaultSelectedPen = ColorPens.GetPen(Colors.Black, 0.05);
-
   private readonly double GraphMargin = 0.15;
   private readonly double ScaleFactor = 50;
   private IRElement element_;
@@ -31,7 +30,6 @@ public partial class GraphViewer : FrameworkElement {
   private Dictionary<GraphNode, HighlightingStyle> markedNodes_;
   private Dictionary<GraphNode, HighlightingStyle> selectedNodes_;
   private HighlightingStyleCyclingCollection nodeStyles_;
-
   private Pen predecessorNodeBorder_;
   private Pen successorNodeBorder_;
   private HighlightingStyle selectedNodeStyle_;
@@ -607,7 +605,6 @@ public partial class GraphViewer : FrameworkElement {
 
     SetNodeStyle(node, style);
     group[node] = style;
-
   }
 
   private GraphNode GetBlockNode(BlockIR block) {
@@ -620,10 +617,10 @@ public partial class GraphViewer : FrameworkElement {
 
   private Dictionary<GraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
     return type switch {
-      HighlighingType.Hovered => hoverNodes_,
+      HighlighingType.Hovered  => hoverNodes_,
       HighlighingType.Selected => selectedNodes_,
-      HighlighingType.Marked => markedNodes_,
-      _ => throw new InvalidOperationException("Unsupported highlighting type")
+      HighlighingType.Marked   => markedNodes_,
+      _                        => throw new InvalidOperationException("Unsupported highlighting type")
     };
   }
 

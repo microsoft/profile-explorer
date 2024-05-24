@@ -66,7 +66,6 @@ public static class ExtensionMethods {
     return value.Split(NewLineStrings, StringSplitOptions.None);
   }
 
-
   public static string[] SplitLinesRemoveEmpty(this string value) {
     return value.Split(NewLineStrings, StringSplitOptions.RemoveEmptyEntries);
   }
@@ -82,7 +81,7 @@ public static class ExtensionMethods {
     while (index < value.Length) {
       bool found = false;
 
-      foreach (var separator in NewLineStrings) {
+      foreach (string separator in NewLineStrings) {
         int lineIndex = value.IndexOf(separator, index, StringComparison.Ordinal);
 
         if (lineIndex != -1) {

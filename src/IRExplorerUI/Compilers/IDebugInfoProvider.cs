@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using ProtoBuf;

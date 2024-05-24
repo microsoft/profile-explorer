@@ -13,7 +13,7 @@
   UseLayoutRounding="True"
   mc:Ignorable="d">
   <controls:DraggablePopup.LayoutTransform>
-    <ScaleTransform x:Name="ZoomTransform"/>
+    <ScaleTransform x:Name="ZoomTransform" />
   </controls:DraggablePopup.LayoutTransform>
   <Border
     x:Name="Host"

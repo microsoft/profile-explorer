@@ -1,25 +1,17 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.using System;
+// See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using IRExplorerUI.Controls;
 using Microsoft.Web.WebView2.Core;
 
 namespace IRExplorerUI.Panels;
@@ -101,7 +93,7 @@ public partial class HelpPanel : ToolPanelControl {
       using var response = await client.GetAsync(App.GetHelpIndexFilePath());
 
       if (response.IsSuccessStatusCode) {
-        var contents = await response.Content.ReadAsStringAsync();
+        string contents = await response.Content.ReadAsStringAsync();
         helpIndex_ = HelpIndex.Deserialize(contents);
 
         if (helpIndex_ != null) {

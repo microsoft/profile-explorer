@@ -186,7 +186,7 @@ public class RawProfileData : IDisposable {
   }
 
   public DotNetDebugInfoProvider GetOrAddManagedModuleDebugInfo(int processId, string moduleName,
-                                                         long moduleId, Machine architecture) {
+                                                                long moduleId, Machine architecture) {
     var data = GetOrCreateManagedData(processId);
     var proc = GetOrCreateProcess(processId);
 

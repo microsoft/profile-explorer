@@ -160,7 +160,7 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
     int prevMergedLine = -1;
     int mergedLineCount = 0;
     double prevMergedY = -1;
-    
+
     foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
       if (geoBuilder == null) {
         geoBuilder = new BackgroundGeometryBuilder {
@@ -173,10 +173,10 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
       }
       else if (segment.Element is TupleIR) {
         int line = segment.Element.TextLocation.Line;
-        
+
         // Extend width to cover entire line.
         foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
-          var width = textView.ActualWidth + textView.HorizontalOffset;
+          double width = textView.ActualWidth + textView.HorizontalOffset;
           var actualRect = Utils.SnapRectToPixels(rect.X - 1, rect.Y, width, rect.Height);
 
           // When selecting multiple consecutive tuples, create a single
@@ -188,8 +188,8 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
               // is unchanged, this happens with lines that are in a collapsed block folding.
               if (Math.Abs(actualRect.Y - prevMergedY) > double.Epsilon) {
                 mergedRect = new Rect(mergedRect.Left, mergedRect.Top,
-                  Math.Max(mergedRect.Width, actualRect.Width),
-                  mergedRect.Height + actualRect.Height);
+                                      Math.Max(mergedRect.Width, actualRect.Width),
+                                      mergedRect.Height + actualRect.Height);
               }
 
               mergedLineCount++;
@@ -220,7 +220,7 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
     if (mergedLineCount > 0) {
       geoBuilder.AddRectangle(textView, mergedRect);
     }
-    
+
     if (geoBuilder != null) {
       var geometry = geoBuilder.CreateGeometry();
 

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -11,7 +14,6 @@ namespace IRExplorerUI;
 public class FunctionMarkingSettings : SettingsBase {
   private ColorPalette modulesPalette_;
   private FunctionMarkingSet builtinMarking_;
-
   [ProtoMember(1), OptionValue("")]
   public string Title { get; set; }
   [ProtoMember(2), OptionValue(true)]
@@ -26,7 +28,6 @@ public class FunctionMarkingSettings : SettingsBase {
   public FunctionMarkingSet CurrentSet { get; set; }
   [ProtoMember(7), OptionValue()]
   public List<FunctionMarkingSet> SavedSets { get; set; }
-
   public List<FunctionMarkingStyle> ModuleColors => CurrentSet?.ModuleColors;
   public List<FunctionMarkingStyle> FunctionColors => CurrentSet?.FunctionColors;
 
@@ -36,7 +37,7 @@ public class FunctionMarkingSettings : SettingsBase {
         return builtinMarking_;
       }
 
-      var markingsFile = App.GetFunctionMarkingsFilePath(App.Session.CompilerInfo.CompilerIRName);
+      string markingsFile = App.GetFunctionMarkingsFilePath(App.Session.CompilerInfo.CompilerIRName);
 
       if (!JsonUtils.DeserializeFromFile<FunctionMarkingSet>(markingsFile, out builtinMarking_)) {
         builtinMarking_ = new FunctionMarkingSet();
@@ -47,10 +48,10 @@ public class FunctionMarkingSettings : SettingsBase {
   }
 
   public bool ImportMarkings(FrameworkElement owner) {
-    var filePath = Utils.ShowOpenFileDialog("JSON files|*.json", "*.*", "Import markings from file");
+    string filePath = Utils.ShowOpenFileDialog("JSON files|*.json", "*.*", "Import markings from file");
 
     if (filePath != null) {
-      var (result, failureText) = LoadFromFile(filePath);
+      (bool result, string failureText) = LoadFromFile(filePath);
 
       if (!result) {
         Utils.ShowWarningMessageBox($"Failed to import markings from {filePath}.\n{failureText}", owner);
@@ -64,7 +65,7 @@ public class FunctionMarkingSettings : SettingsBase {
   }
 
   public bool ExportMarkings(FrameworkElement owner) {
-    var filePath = Utils.ShowSaveFileDialog("JSON files|*.json", "*.*", "Export markings to file");
+    string filePath = Utils.ShowSaveFileDialog("JSON files|*.json", "*.*", "Export markings to file");
 
     if (filePath != null) {
       if (!SaveToFile(filePath)) {
@@ -115,7 +116,7 @@ public class FunctionMarkingSettings : SettingsBase {
       return (false, "Failed to read markings file");
     }
 
-    if (!ValidateMarkings(data, out var failureText)) {
+    if (!ValidateMarkings(data, out string failureText)) {
       return (false, failureText);
     }
 
@@ -131,6 +132,7 @@ public class FunctionMarkingSettings : SettingsBase {
         SavedSets.Add(savedSet);
       }
     }
+
     return (true, null);
   }
 
@@ -316,13 +318,13 @@ public class FunctionMarkingSet : SettingsBase {
   public void MergeWith(FunctionMarkingSet set) {
     foreach (var marking in set.FunctionColors) {
       FunctionColors.RemoveAll(item =>
-        item.Name.Equals(marking.Name, StringComparison.Ordinal));
+                                 item.Name.Equals(marking.Name, StringComparison.Ordinal));
       FunctionColors.Add(marking.Clone());
     }
 
     foreach (var marking in set.ModuleColors) {
       ModuleColors.RemoveAll(item =>
-        item.Name.Equals(marking.Name, StringComparison.Ordinal));
+                               item.Name.Equals(marking.Name, StringComparison.Ordinal));
       ModuleColors.Add(marking.Clone());
     }
   }
@@ -349,7 +351,6 @@ public class FunctionMarkingSet : SettingsBase {
 public class FunctionMarkingStyle : SettingsBase {
   private TextSearcher searcher_;
   private string name_;
-
   [ProtoMember(1)]
   public bool IsEnabled { get; set; }
   [ProtoMember(2)]
@@ -368,7 +369,6 @@ public class FunctionMarkingStyle : SettingsBase {
   public Color Color { get; set; }
   [ProtoMember(5)]
   public bool IsRegex { get; set; }
-
   public bool HasTitle => !string.IsNullOrEmpty(Title);
   public string TitleOrName => HasTitle ? Title : Name;
 
@@ -433,10 +433,11 @@ public class FunctionMarkingStyle : SettingsBase {
     }
 
     try {
-      Regex re = new Regex(pattern, RegexOptions.None, TimeSpan.FromSeconds(1));
+      var re = new Regex(pattern, RegexOptions.None, TimeSpan.FromSeconds(1));
       re.IsMatch(" ");
     }
     catch { return false; }
+
     return true;
   }
 }

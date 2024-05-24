@@ -50,7 +50,6 @@ class ColorUtils {
     "#ede2f2",
     "#f8eddc"
   };
-
   private static Color[] cachedLightPastelColors_;
   private static Color[] cachedPastelColors_;
   private static Brush[] cachedPastelBrushes_;

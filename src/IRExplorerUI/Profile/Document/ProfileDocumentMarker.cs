@@ -4,21 +4,15 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
-using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Utilities;
-using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
-using IRExplorerUI.OptionsPanels;
-using IRExplorerUI.Profile.Document;
 using TextLocation = IRExplorerCore.TextLocation;
 
 namespace IRExplorerUI.Profile;
@@ -71,21 +65,21 @@ public class ProfileDocumentMarker {
 
   public OptionalColumn TimeColumnTemplate() {
     string timeUnit = settings_.ValueUnit switch {
-      ProfileDocumentMarkerSettings.ValueUnitKind.Second => "sec",
+      ProfileDocumentMarkerSettings.ValueUnitKind.Second      => "sec",
       ProfileDocumentMarkerSettings.ValueUnitKind.Millisecond => "ms",
       ProfileDocumentMarkerSettings.ValueUnitKind.Microsecond => "µs",
-      ProfileDocumentMarkerSettings.ValueUnitKind.Nanosecond => "ns",
+      ProfileDocumentMarkerSettings.ValueUnitKind.Nanosecond  => "ns",
     };
 
     TimeColumnDefinition.Title = $"Time ({timeUnit})";
     TimeColumnDefinition.Style = columnSettings_.GetColumnStyle(TimeColumnDefinition) ??
-                        OptionalColumnSettings.DefaultTimeColumnStyle;
+                                 OptionalColumnSettings.DefaultTimeColumnStyle;
     return TimeColumnDefinition;
   }
 
   public OptionalColumn TimePercentageColumnTemplate() {
     TimePercentageColumnDefinition.Style = columnSettings_.GetColumnStyle(TimePercentageColumnDefinition) ??
-                                   OptionalColumnSettings.DefaultTimePercentageColumnStyle;
+                                           OptionalColumnSettings.DefaultTimePercentageColumnStyle;
     return TimePercentageColumnDefinition;
   }
 
@@ -189,7 +183,7 @@ public class ProfileDocumentMarker {
         document.RemoveElementOverlays(block, ProfileOverlayTag);
       }
 
-      foreach(var tuple in function.AllTuples) {
+      foreach (var tuple in function.AllTuples) {
         document.RemoveElementOverlays(tuple, ProfileOverlayTag);
       }
 
@@ -274,7 +268,6 @@ public class ProfileDocumentMarker {
 
       if (sourceProcResult.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
         processingResult.SampledElements.Add((dummyTuple, lineWeight));
-
       }
 
       if (sourceProcResult.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
@@ -296,7 +289,7 @@ public class ProfileDocumentMarker {
         var instr = pair.Element;
         var instrWeight = pair.Profile.Weight;
         var instrCounters = pair.Profile.Counters;
-        var instrText = parsedSection.Text.Slice(instr.TextLocation.Offset, instr.TextLength).ToString();
+        string instrText = parsedSection.Text.Slice(instr.TextLocation.Offset, instr.TextLength).ToString();
         instrDocument.Document.Insert(instrLine.EndOffset, $"\n{instrText.TrimEnd()}");
 
         inserted++;
@@ -369,9 +362,9 @@ public class ProfileDocumentMarker {
   }
 
   public static void UpdateColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
-                               FunctionIR function, IRDocument document,
-                               ProfileDocumentMarkerSettings settings,
-                               OptionalColumnSettings columnSettings) {
+                                       FunctionIR function, IRDocument document,
+                                       ProfileDocumentMarkerSettings settings,
+                                       OptionalColumnSettings columnSettings) {
     Trace.WriteLine($"Apply {column.ColumnName}, is main column: {column.IsMainColumn}");
     column.IsVisible = columnSettings.IsColumnVisible(column);
 
@@ -532,7 +525,7 @@ public class ProfileDocumentMarker {
 
     var overlayListMap = new Dictionary<IElementOverlay, List<ProfileCallTreeNode>>();
     document.SuspendUpdate();
-    
+
     foreach (var (element, pair) in overlayMap) {
       var color = App.Settings.DocumentSettings.BackgroundColor;
 
@@ -664,10 +657,10 @@ public class ProfileDocumentMarker {
       if (settings_.MarkBlocksInFlowGraph &&
           weightPercentage > settings_.ElementWeightCutoff) {
         block.AddTag(GraphNodeTag.MakeColor(weightPercentage.AsTrimmedPercentageString(),
-          ((SolidColorBrush)color).Color,
-          ((SolidColorBrush)overlay.TextColor).Color,
-          ((SolidColorBrush)overlay.TextColor).Color,
-          (i < 3 || weightPercentage >= 0.1))); // Bold text for >10%.
+                                            ((SolidColorBrush)color).Color,
+                                            ((SolidColorBrush)overlay.TextColor).Color,
+                                            ((SolidColorBrush)overlay.TextColor).Color,
+                                            (i < 3 || weightPercentage >= 0.1))); // Bold text for >10%.
       }
     }
 

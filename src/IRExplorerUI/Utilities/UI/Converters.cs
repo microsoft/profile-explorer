@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Windows;
@@ -212,18 +211,18 @@ public class ProfileCallTreeNodeKindConverter : IValueConverter {
     if (value is ProfileCallTreeNodeKind kind) {
       if (parameter is bool flag and true) {
         return kind switch {
-          ProfileCallTreeNodeKind.NativeUser => "U",
+          ProfileCallTreeNodeKind.NativeUser   => "U",
           ProfileCallTreeNodeKind.NativeKernel => "K",
-          ProfileCallTreeNodeKind.Managed => "M",
-          _ => ""
+          ProfileCallTreeNodeKind.Managed      => "M",
+          _                                    => ""
         };
       }
 
       return kind switch {
-        ProfileCallTreeNodeKind.NativeUser => "User mode execution context",
+        ProfileCallTreeNodeKind.NativeUser   => "User mode execution context",
         ProfileCallTreeNodeKind.NativeKernel => "Kernel mode execution context",
-        ProfileCallTreeNodeKind.Managed => "Managed (.NET) execution context",
-        _ => ""
+        ProfileCallTreeNodeKind.Managed      => "Managed (.NET) execution context",
+        _                                    => ""
       };
     }
 
@@ -484,9 +483,8 @@ public class FunctionNameConverter : IValueConverter {
   public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
     return null;
   }
-
-
 }
+
 public class LongFunctionNameConverter : IValueConverter {
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
     if (string.IsNullOrEmpty(value as string)) {

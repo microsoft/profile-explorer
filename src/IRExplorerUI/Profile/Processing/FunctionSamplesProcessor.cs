@@ -1,6 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using IRExplorerCore.Utilities;
 
@@ -84,7 +85,7 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
 
     if (match) {
       var threadList = data.ThreadListMap.GetOrAddValue(stack.Context.ThreadId,
-        () => new List<SampleIndex>());
+                                                        () => new List<SampleIndex>());
       var index = new SampleIndex(sampleIndex, sample.Time);
       threadList.Add(index);
       data.AllThreadsList.Add(index);

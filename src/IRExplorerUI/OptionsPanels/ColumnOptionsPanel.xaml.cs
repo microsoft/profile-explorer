@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace IRExplorerUI.OptionsPanels;
@@ -14,7 +13,6 @@ public partial class ColumnOptionsPanel : OptionsPanelBase {
   public override double MinimumHeight => 340;
   public override double DefaultWidth => 280;
   public override double MinimumWidth => 300;
-
   public Dictionary<OptionalColumnStyle.PartVisibility, string>
     PartVisibilityKinds { get; } =
     new Dictionary<OptionalColumnStyle.PartVisibility, string>() {
@@ -45,6 +43,5 @@ public partial class ColumnOptionsPanel : OptionsPanelBase {
   }
 
   private void MaxWidthButton_Click(object sender, RoutedEventArgs e) {
-
   }
 }

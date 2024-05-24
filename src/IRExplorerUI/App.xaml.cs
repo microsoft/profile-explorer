@@ -12,8 +12,6 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shell;
 using System.Xml;
-using IRExplorerCore.SourceParser;
-using IRExplorerUI.Settings;
 
 namespace IRExplorerUI;
 
@@ -617,7 +615,7 @@ public partial class App : Application {
   private static void FixPopupPlacement() {
     // On touchscreen laptops, popups are not displayed in the right place.
     // Hack taken from https://stackoverflow.com/a/54298981 to fix it.
-    var ifLeft = SystemParameters.MenuDropAlignment;
+    bool ifLeft = SystemParameters.MenuDropAlignment;
 
     if (ifLeft) {
       // change to false

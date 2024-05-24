@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using IRExplorerCore;
@@ -9,7 +12,6 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
   public SampleTimeRangeInfo TimeRange { get; set; }
   public List<int> ThreadIds { get; set; }
   public List<ProfileCallTreeNode> FunctionInstances { get; set; }
-
   public bool HasThreadFilter => ThreadIds is {Count: > 0};
   public bool HasInstanceFilter => FunctionInstances is {Count: > 0};
   public bool IncludesAll => TimeRange == null &&
@@ -17,7 +19,6 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
                              !HasInstanceFilter;
 
   public ProfileSampleFilter() {
-
   }
 
   public ProfileSampleFilter(ProfileCallTreeNode instance) {
@@ -72,7 +73,6 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
     return clone;
   }
 
-
   public ProfileSampleFilter CloneForCallTarget(IRTextFunction targetFunc) {
     var targetFilter = Clone();
 
@@ -116,7 +116,7 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
   }
 
   public override string ToString() {
-    var text = $"TimeRange: {TimeRange}, HasInstanceFilter: {HasInstanceFilter}, HasThreadFilter: {HasThreadFilter}";
+    string text = $"TimeRange: {TimeRange}, HasInstanceFilter: {HasInstanceFilter}, HasThreadFilter: {HasThreadFilter}";
 
     if (HasInstanceFilter) {
       foreach (var item in FunctionInstances) {
@@ -125,7 +125,7 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
     }
 
     if (HasThreadFilter) {
-      foreach (var item in ThreadIds) {
+      foreach (int item in ThreadIds) {
         text += $"\n - thread: {item}";
       }
     }
@@ -144,19 +144,17 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
   }
 }
 
-
 public class ProfileFilterState {
   public ProfileFilterState(ProfileSampleFilter filter = null) {
     Filter = filter ?? new ProfileSampleFilter();
   }
-  
+
   public bool HasAnyFilter => HasThreadFilter || HasFilter;
   public ProfileSampleFilter Filter { get; set; }
   public bool HasFilter { get; set; }
   public TimeSpan FilteredTime { get; set; }
   public bool HasThreadFilter { get; set; }
   public string ThreadFilterText { get; set; }
-    
   public Func<Task> RemoveThreadFilter { get; set; }
   public Func<Task> RemoveTimeRangeFilter { get; set; }
 }

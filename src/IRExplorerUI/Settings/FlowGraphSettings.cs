@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-using System.Collections.Generic;
 using System.Windows.Media;
 using ProtoBuf;
 
@@ -26,7 +25,8 @@ public class FlowGraphSettings : GraphSettings {
   [ProtoMember(6), OptionValue(true)]
   public bool MarkLoopBlocks { get; set; }
   [ProtoMember(7, OverwriteList = true), OptionValue(new string[] {
-    "#FCD1A4", "#FFA56D", "#FF7554", "#FC5B5B"})]
+    "#FCD1A4", "#FFA56D", "#FF7554", "#FC5B5B"
+  })]
   public Color[] LoopNodeColors { get; set; }
   [ProtoMember(8), OptionValue(true)]
   public bool ShowImmDominatorEdges { get; set; }
@@ -45,7 +45,6 @@ public class FlowGraphSettings : GraphSettings {
 
   public override bool Equals(object obj) {
     return AreOptionsEqual(this, obj);
-    
   }
 
   protected override GraphSettings MakeClone() {

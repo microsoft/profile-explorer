@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 using IRExplorerCore;
-using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI.Profile;
 

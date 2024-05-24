@@ -1,9 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +13,6 @@ namespace IRExplorerUI.Profile;
 public sealed class ProfileModuleBuilder {
   private ISession session_;
   private BinaryFileDescriptor binaryInfo_;
-
   private ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)> functionMap_;
   private ProfileDataReport report_;
   private ReaderWriterLockSlim lock_;
@@ -36,7 +33,7 @@ public sealed class ProfileModuleBuilder {
   public bool IsManaged { get; set; }
 
   public async Task<bool> Initialize(BinaryFileDescriptor binaryInfo,
-    SymbolFileSourceSettings symbolSettings,
+                                     SymbolFileSourceSettings symbolSettings,
                                      IDebugInfoProvider debugInfo) {
     if (Initialized) {
       return true;

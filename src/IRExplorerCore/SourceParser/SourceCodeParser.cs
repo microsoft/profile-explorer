@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -105,7 +108,7 @@ public class SourceCodeParser {
             nodeKind = SourceSyntaxNodeKind.Loop;
             break;
           }
-          case "switch_statement": 
+          case "switch_statement":
           case "match_expression": { // Rust
             nodeKind = SourceSyntaxNodeKind.Switch;
             break;
@@ -128,7 +131,7 @@ public class SourceCodeParser {
             nodeKind = SourceSyntaxNodeKind.Function;
             break;
           }
-          case "call_expression": 
+          case "call_expression":
           case "macro_invocation": { // Rust
             nodeKind = SourceSyntaxNodeKind.Call;
             break;

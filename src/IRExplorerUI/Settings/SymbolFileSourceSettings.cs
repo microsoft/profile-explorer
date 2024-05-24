@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -12,7 +15,6 @@ public class SymbolFileSourceSettings : SettingsBase {
   private const string DefaultPublicSymbolServer = @"https://msdl.microsoft.com/download/symbols";
   private const string DefaultSymbolCachePath = @"C:\Symbols";
   private const string DefaultEnvironmentVarSymbolPath = @"_NT_SYMBOL_PATH";
-
   public const int LowSampleModuleCutoff = 10;
 
   public SymbolFileSourceSettings() {
@@ -39,7 +41,6 @@ public class SymbolFileSourceSettings : SettingsBase {
   public HashSet<SymbolFileDescriptor> RejectedSymbolFiles { get; set; }
   [ProtoMember(10), OptionValue(false)]
   public bool RejectPreviouslyFailedFiles { get; set; }
-
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
 
   public string EnvironmentVarSymbolPath {
@@ -56,7 +57,7 @@ public class SymbolFileSourceSettings : SettingsBase {
 
   public void AddSymbolServer(bool usePrivateServer) {
     string symbolServer = usePrivateServer ? DefaultPrivateSymbolServer : DefaultPublicSymbolServer;
-    var path = $"srv*{DefaultSymbolCachePath}*{symbolServer}";
+    string path = $"srv*{DefaultSymbolCachePath}*{symbolServer}";
 
     if (!SymbolPaths.Contains(path)) {
       SymbolPaths.Add(path);
@@ -74,9 +75,9 @@ public class SymbolFileSourceSettings : SettingsBase {
     }
 
     foreach (string p in path.Split(";")) {
-      var dir = Utils.TryGetDirectoryName(p);
+      string dir = Utils.TryGetDirectoryName(p);
 
-      if(!string.IsNullOrEmpty(dir) && !HasSymbolPath(dir)) {
+      if (!string.IsNullOrEmpty(dir) && !HasSymbolPath(dir)) {
         SymbolPaths.Insert(0, dir); // Prepend path.
       }
     }
@@ -175,9 +176,9 @@ public class SymbolFileSourceSettings : SettingsBase {
   public override void Reset() {
     InitializeReferenceMembers();
     ResetAllOptions(this);
-    
+
     if (ShouldUsePrivateSymbolPath()) {
-      AddSymbolServer(usePrivateServer : true);
+      AddSymbolServer(usePrivateServer: true);
     }
 
     AddSymbolServer(usePrivateServer: false);

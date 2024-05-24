@@ -447,7 +447,7 @@
               VirtualizingStackPanel.IsVirtualizing="True"
               VirtualizingStackPanel.VirtualizationMode="Recycling">
 
-            <ItemsControl x:Name="ActivityViewList">
+              <ItemsControl x:Name="ActivityViewList">
                 <ItemsControl.ItemsPanel>
                   <ItemsPanelTemplate>
                     <VirtualizingStackPanel Orientation="Vertical" />

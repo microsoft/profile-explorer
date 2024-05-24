@@ -171,7 +171,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
         if (progressCallback != null) {
           int current = (int)data.TimeStampRelativeMSec; // Copy since data gets reused.
           int total = (int)source_.SessionDuration.TotalMilliseconds;
-          
+
           progressCallback(new ProcessListProgress {
             Total = total,
             Current = current,
@@ -239,7 +239,8 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
     symbolParser.ImageIDDbgID_RSDS += data => {
       if (IsAcceptedProcess(data.ProcessID)) {
-        Trace.WriteLine($"PDB signature: imageBase: {data.ImageBase}, file: {data.PdbFileName}, age: {data.Age}, guid: {data.GuidSig}");
+        Trace.WriteLine(
+          $"PDB signature: imageBase: {data.ImageBase}, file: {data.PdbFileName}, age: {data.Age}, guid: {data.GuidSig}");
         var symbolFile = new SymbolFileDescriptor(data.PdbFileName, data.GuidSig, data.Age);
         profile.AddDebugFileForImage(symbolFile, (long)data.ImageBase, data.ProcessID);
       }
@@ -852,13 +853,13 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
   private string ToOptimizationLevel(OptimizationTier tier) {
     return tier switch {
-      OptimizationTier.MinOptJitted => "MinOptJitted",
-      OptimizationTier.Optimized => "Optimized",
+      OptimizationTier.MinOptJitted   => "MinOptJitted",
+      OptimizationTier.Optimized      => "Optimized",
       OptimizationTier.OptimizedTier1 => "OptimizedTier1",
-      OptimizationTier.PreJIT => "PreJIT",
-      OptimizationTier.QuickJitted => "QuickJitted",
-      OptimizationTier.ReadyToRun => "ReadyToRun",
-      _ => null
+      OptimizationTier.PreJIT         => "PreJIT",
+      OptimizationTier.QuickJitted    => "QuickJitted",
+      OptimizationTier.ReadyToRun     => "ReadyToRun",
+      _                               => null
     };
   }
 

@@ -2,14 +2,12 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Threading;
 using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI.Controls;
@@ -78,7 +76,6 @@ public class DraggablePopup : Popup {
   }
 
   public virtual void PopupOpened() {
-
   }
 
   protected override void OnOpened(EventArgs e) {

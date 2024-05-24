@@ -1,8 +1,12 @@
-﻿using System.Windows;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace IRExplorerUI.Controls;
+
 /// <summary>
 /// Interaction logic for ColorPaletteViewer.xaml
 /// </summary>
@@ -35,7 +39,7 @@ public partial class ColorPaletteViewer : UserControl {
       return;
     }
 
-    double width  = ActualWidth;
+    double width = ActualWidth;
     double height = ActualHeight;
     double cellWidth = width / palette.Colors.Count;
     var pen = ColorPens.GetTransparentPen(Colors.Black, 50, 0.5);

@@ -1,14 +1,13 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-using System;
 using ProtoBuf;
 
 namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class PreviewPopupSettings : SettingsBase {
-  public PreviewPopupSettings() : this(false) {}
+  public PreviewPopupSettings() : this(false) { }
 
   public PreviewPopupSettings(bool isElementPopup) {
     IsElementPopup = isElementPopup;

@@ -57,8 +57,8 @@
               <DataTemplate>
                 <StackPanel>
                   <Grid Background="{Binding FunctionBackColor}">
-                  <ContentPresenter Content="{Binding Name}"
-                                    ToolTip="{Binding FunctionName}" />
+                    <ContentPresenter Content="{Binding Name}"
+                                      ToolTip="{Binding FunctionName}" />
                   </Grid>
                   <ContentControl
                     HorizontalAlignment="Stretch"
@@ -90,28 +90,29 @@
             <GridViewColumn.CellTemplate>
               <DataTemplate>
                 <Grid HorizontalAlignment="Stretch" Background="{Binding ModuleBackColor}">
-                <TextBlock
-                  Margin="1,0,0,0"
-                  HorizontalAlignment="Left"
-                  VerticalAlignment="Center"
-                  FontWeight="Medium"
-                  Text="{Binding Path=ModuleName}">
-                  <TextBlock.Style>
-                    <Style TargetType="{x:Type TextBlock}">
-                      <Style.Triggers>
-                        <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                          <Setter Property="FontWeight" Value="Bold" />
-                        </DataTrigger>
-                      </Style.Triggers>
-                    </Style>
-                  </TextBlock.Style>
-                </TextBlock>
-                  </Grid>
+                  <TextBlock
+                    Margin="1,0,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    FontWeight="Medium"
+                    Text="{Binding Path=ModuleName}">
+                    <TextBlock.Style>
+                      <Style TargetType="{x:Type TextBlock}">
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                            <Setter Property="FontWeight" Value="Bold" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                </Grid>
               </DataTemplate>
             </GridViewColumn.CellTemplate>
           </GridViewColumn>
 
-          <GridViewColumn Width="150" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowExclusiveTimeColumn}">
+          <GridViewColumn Width="150"
+                          irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowExclusiveTimeColumn}">
             <GridViewColumnHeader x:Name="ChildExclusiveTimeColumnHeader" Content="{Binding ExclusiveTimeColumnTitle}" />
             <GridViewColumn.HeaderContainerStyle>
               <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -148,7 +149,8 @@
             </GridViewColumn.CellTemplate>
           </GridViewColumn>
 
-          <GridViewColumn Width="180" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowCombinedTimeColumn}">
+          <GridViewColumn Width="180"
+                          irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowCombinedTimeColumn}">
             <GridViewColumnHeader x:Name="ChildCombinedTimeColumnHeader" Content="{Binding TimeColumnTitle}" />
             <GridViewColumn.HeaderContainerStyle>
               <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -269,7 +271,8 @@
               </MenuItem.Icon>
             </MenuItem>
           </MenuItem>
-          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+          <Separator
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
           <MenuItem
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
             Command="{Binding CopyFunctionDetailsCommand}"
@@ -298,10 +301,12 @@
             Header="Copy Mangled Function Name"
             InputGestureText="Ctrl+Alt+C"
             ToolTip="Copy the mangled function name to the clipboard (C++)" />
-          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"/>
+          <Separator
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
-          <MenuItem Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
-                    Header="Mark Module" ToolTip="Mark all functions belonging to this module (saved)">
+          <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
+            Header="Mark Module" ToolTip="Mark all functions belonging to this module (saved)">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -315,8 +320,9 @@
 
             </MenuItem>
           </MenuItem>
-          <MenuItem Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
-                    Header="Mark Function" ToolTip="Mark all functions with the same name (saved)">
+          <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
+            Header="Mark Function" ToolTip="Mark all functions with the same name (saved)">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -330,7 +336,8 @@
 
             </MenuItem>
           </MenuItem>
-          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"/>
+          <Separator
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
           <MenuItem
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}"
@@ -389,40 +396,39 @@
             Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}"
             Command="{Binding ExportCategoriesHtmlCommand}"
             Header="Export Categories as HTML File"
-              ToolTip="Save the report with function categories as an HTML file">
-              <MenuItem.Icon>
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource SourceIcon}" />
-              </MenuItem.Icon>
-            </MenuItem>
-            <MenuItem
-              Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}"
-              Command="{Binding ExportCategoriesMarkdownCommand}"
-              Header="Export Categories as Markdown File"
-              ToolTip="Save the report with function categories as a Markdown file">
-              <MenuItem.Icon>
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource DocumentIcon}" />
-              </MenuItem.Icon>
-            </MenuItem>
-            <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}"
-            />
-            <MenuItem
-              Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}"
-              Command="{Binding CopyCategoriesCommand}"
-              Header="Copy Categories as HTML/Markdown"
-              ToolTip="Copy the report with function categories as an HTML table">
-              <MenuItem.Icon>
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource ClipboardIcon}" />
-              </MenuItem.Icon>
-            </MenuItem>
+            ToolTip="Save the report with function categories as an HTML file">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource SourceIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}"
+            Command="{Binding ExportCategoriesMarkdownCommand}"
+            Header="Export Categories as Markdown File"
+            ToolTip="Save the report with function categories as a Markdown file">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource DocumentIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}" />
+          <MenuItem
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}"
+            Command="{Binding CopyCategoriesCommand}"
+            Header="Copy Categories as HTML/Markdown"
+            ToolTip="Copy the report with function categories as an HTML table">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource ClipboardIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
         </ContextMenu>
       </ListView.ContextMenu>
     </ListView>

@@ -16,7 +16,6 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using IRExplorerCore.Utilities;
 using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
@@ -96,7 +95,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   public bool HasCallTree => callTree_ != null;
-
 
   public ProfileFilterState ProfileFilter {
     get => profileFilter;

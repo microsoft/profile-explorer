@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -141,8 +139,8 @@ public class SearchableProfileItem : BindableObject {
   }
 
   public static void CopyFunctionListAsHtml(List<SearchableProfileItem> list) {
-    var html = ExportFunctionListAsHtml((list));
-    var plainText = ProfilingExporting.ExportFunctionListAsMarkdownTable(list);
+    string html = ExportFunctionListAsHtml((list));
+    string plainText = ProfilingExporting.ExportFunctionListAsMarkdownTable(list);
     Utils.CopyHtmlToClipboard(html, plainText);
   }
 

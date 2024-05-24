@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System.Collections.Generic;
 using System.Windows.Controls;
 using ProtoBuf;
 
@@ -8,7 +11,6 @@ namespace IRExplorerUI;
 public class ColumnSettings : SettingsBase {
   [ProtoMember(1), OptionValue()]
   public Dictionary<string, ColumnState> ColumnStates { get; set; }
-
 
   public ColumnSettings() {
     Reset();
@@ -26,9 +28,9 @@ public class ColumnSettings : SettingsBase {
   }
 
   public void SaveColumnsState(GridView gridView) {
-    foreach(var column in gridView.Columns) {
-      if(column.Header is GridViewColumnHeader header &&
-         !string.IsNullOrEmpty(header.Name)) {
+    foreach (var column in gridView.Columns) {
+      if (column.Header is GridViewColumnHeader header &&
+          !string.IsNullOrEmpty(header.Name)) {
         var state = GetOrCreateColumnState(header.Name);
         state.IsVisible = true; //? TODO: Support saving visibility
         state.Width = (int)column.ActualWidth;
@@ -36,7 +38,6 @@ public class ColumnSettings : SettingsBase {
       }
     }
   }
-
 
   public void RestoreColumnsState(ListView listView) {
     if (listView.View is GridView gridView) {
@@ -47,11 +48,11 @@ public class ColumnSettings : SettingsBase {
   public void RestoreColumnsState(GridView gridView) {
     List<(GridViewColumn, ColumnState)> pairs = new();
 
-    foreach(var column in gridView.Columns) {
+    foreach (var column in gridView.Columns) {
       if (column.Header is not GridViewColumnHeader header ||
           string.IsNullOrEmpty(header.Name)) continue;
 
-      if(ColumnStates.TryGetValue(header.Name, out var state)) {
+      if (ColumnStates.TryGetValue(header.Name, out var state)) {
         column.Width = state.Width;
         pairs.Add((column, state));
       }
@@ -62,18 +63,18 @@ public class ColumnSettings : SettingsBase {
 
     // Restore column order.
     pairs.Sort((a, b) => {
-      if(a.Item2 == null || b.Item2 == null) return 0;
+      if (a.Item2 == null || b.Item2 == null) return 0;
       return a.Item2.Order.CompareTo(b.Item2.Order);
     });
     gridView.Columns.Clear();
 
-    foreach(var (column, _) in pairs) {
+    foreach (var (column, _) in pairs) {
       gridView.Columns.Add(column);
     }
   }
 
   private ColumnState GetOrCreateColumnState(string columnName) {
-    if(!ColumnStates.TryGetValue(columnName, out var state)) {
+    if (!ColumnStates.TryGetValue(columnName, out var state)) {
       state = new ColumnState();
       ColumnStates[columnName] = state;
     }

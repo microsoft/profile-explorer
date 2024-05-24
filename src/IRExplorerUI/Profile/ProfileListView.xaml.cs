@@ -6,17 +6,14 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using HtmlAgilityPack;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.Utilities;
-using Microsoft.Diagnostics.Runtime;
 
 namespace IRExplorerUI.Profile;
 
@@ -222,7 +219,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       previewPopup_ = null;
     }
 
-    if(!Settings.ShowPreviewPopup) {
+    if (!Settings.ShowPreviewPopup) {
       return;
     }
 
@@ -248,7 +245,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
   public event EventHandler MarkingChanged;
   public event PropertyChangedEventHandler PropertyChanged;
-
   public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
       var brush = GetMarkedNodeColor(item);
@@ -275,6 +271,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       await Session.OpenProfileFunction(item.CallTreeNode, openMode);
     }
   }
+
   public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
       var filter = new ProfileSampleFilter(item.CallTreeNode);
@@ -329,18 +326,17 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     if (ItemList.SelectedItems.Count > 0) {
       var funcList = new List<SearchableProfileItem>();
 
-      foreach (var item in ItemList.SelectedItems) {
+      foreach (object item in ItemList.SelectedItems) {
         funcList.Add((SearchableProfileItem)item);
       }
 
       SearchableProfileItem.CopyFunctionListAsHtml(funcList);
     }
   });
-
   public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
 
-    foreach (var item in ItemList.SelectedItems) {
+    foreach (object item in ItemList.SelectedItems) {
       if (item is ProfileListViewItem profileItem &&
           obj is SelectedColorEventArgs e) {
         markingSettings.AddModuleColor(profileItem.ModuleName, e.SelectedColor);
@@ -351,11 +347,10 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     UpdateMarkedFunctions();
     MarkingChanged?.Invoke(this, EventArgs.Empty);
   });
-
   public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
 
-    foreach (var item in ItemList.SelectedItems) {
+    foreach (object item in ItemList.SelectedItems) {
       if (item is ProfileListViewItem profileItem &&
           obj is SelectedColorEventArgs e) {
         markingSettings.AddFunctionColor(profileItem.FunctionName, e.SelectedColor);
@@ -366,19 +361,16 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     UpdateMarkedFunctions();
     MarkingChanged?.Invoke(this, EventArgs.Empty);
   });
-
   public RelayCommand<object> CopyCategoriesCommand => new RelayCommand<object>(async obj => {
     if (categories_ != null) {
       ProfilingExporting.CopyFunctionMarkingsAsHtml(categories_, Session);
     }
   });
-
   public RelayCommand<object> ExportCategoriesHtmlCommand => new RelayCommand<object>(async obj => {
     if (categories_ != null) {
       await ProfilingExporting.ExportFunctionMarkingsAsHtmlFile(categories_, Session);
     }
   });
-
   public RelayCommand<object> ExportCategoriesMarkdownCommand => new RelayCommand<object>(async obj => {
     if (categories_ != null) {
       await ProfilingExporting.ExportFunctionMarkingsAsMarkdownFile(categories_, Session);
@@ -518,7 +510,8 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
     itemList_ = new List<ProfileListViewItem>(nodes.Count);
     filteredNodes.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
-                                                                         Session.CompilerInfo.NameProvider.FormatFunctionName,
+                                                                         Session.CompilerInfo.NameProvider.
+                                                                           FormatFunctionName,
                                                                          Settings)));
     UpdateMarkedFunctions();
     ItemList.ItemsSource = itemList_;
@@ -528,8 +521,8 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public void ShowModules(List<ModuleProfileInfo> modules) {
     itemList_ = new List<ProfileListViewItem>(modules.Count);
     modules.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
-                                                                 Session.CompilerInfo.NameProvider.FormatFunctionName,
-                                                                 Settings)));
+                                                                   Session.CompilerInfo.NameProvider.FormatFunctionName,
+                                                                   Settings)));
     UpdateMarkedFunctions();
     ItemList.ItemsSource = new ListCollectionView(itemList_);
     ItemList.ContextMenu = null;
@@ -539,12 +532,12 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     itemList_ = new List<ProfileListViewItem>(categories.Count);
 
     foreach (var node in categories) {
-      if(node.SortedFunctions.Count == 0) {
+      if (node.SortedFunctions.Count == 0) {
         continue;
       }
 
       itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
-        Session.CompilerInfo.NameProvider.FormatFunctionName, Settings));
+                                             Session.CompilerInfo.NameProvider.FormatFunctionName, Settings));
     }
 
     UpdateMarkedFunctions();
@@ -627,7 +620,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     if (ItemList.SelectedItems.Count > 1) {
       var selectedNodes = new List<ProfileCallTreeNode>();
 
-      foreach (var item in ItemList.SelectedItems) {
+      foreach (object item in ItemList.SelectedItems) {
         if (item is ProfileListViewItem profileItem && profileItem.CallTreeNode != null) {
           selectedNodes.Add(profileItem.CallTreeNode);
         }
@@ -635,7 +628,8 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
 
       var weightSum = ProfileCallTree.CombinedCallTreeNodesWeight(selectedNodes);
       double weightPercentage = Session.ProfileData.ScaleFunctionWeight(weightSum);
-      string text = $"Selected {ItemList.SelectedItems.Count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
+      string text =
+        $"Selected {ItemList.SelectedItems.Count}: {weightPercentage.AsPercentageString()} ({weightSum.AsMillisecondsString()})";
       Session.SetApplicationStatus(text, "Sum of time for the selected functions");
     }
     else {

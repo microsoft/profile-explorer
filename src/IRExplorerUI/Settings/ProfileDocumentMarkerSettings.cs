@@ -2,7 +2,6 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 using ProtoBuf;
@@ -32,7 +31,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   //   ("Instruction", "Instr"),
   //   ("Misprediction", "Mispred")
   // };
-
   [ProtoMember(1), OptionValue(true)]
   public bool MarkElements { get; set; }
   [ProtoMember(2), OptionValue(true)]
@@ -77,7 +75,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   public Color PerformanceMetricBackColor { get; set; }
   [ProtoMember(24), OptionValue("#F5F5F5")]
   public Color PerformanceCounterBackColor { get; set; }
-
   public static int DefaultMaxPercentageBarWidth = 50;
   public static double DefaultElementWeightCutoff = 0.01; // 1%;
   private static IconDrawing[] orderIcons_;
@@ -88,6 +85,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
 
   public string FormatWeightValue(TimeSpan weight) {
     string suffix = "";
+
     if (AppendValueUnitSuffix) {
       suffix = $" {ValueUnitSuffix}";
     }
@@ -95,18 +93,18 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     return ValueUnit switch {
       ValueUnitKind.Millisecond => weight.AsMillisecondsString(ValueUnitDecimals, suffix),
       ValueUnitKind.Microsecond => weight.AsMicrosecondString(ValueUnitDecimals, suffix),
-      ValueUnitKind.Nanosecond => weight.AsNanosecondsString(ValueUnitDecimals, suffix),
-      ValueUnitKind.Second => weight.AsSecondsString(ValueUnitDecimals, suffix),
-      _ => weight.Ticks.ToString()
+      ValueUnitKind.Nanosecond  => weight.AsNanosecondsString(ValueUnitDecimals, suffix),
+      ValueUnitKind.Second      => weight.AsSecondsString(ValueUnitDecimals, suffix),
+      _                         => weight.Ticks.ToString()
     };
   }
 
   public string ValueUnitSuffix => ValueUnit switch {
     ValueUnitKind.Millisecond => "ms",
     ValueUnitKind.Microsecond => "µs",
-    ValueUnitKind.Nanosecond => "ns",
-    ValueUnitKind.Second => "s",
-    _ => ""
+    ValueUnitKind.Nanosecond  => "ns",
+    ValueUnitKind.Second      => "s",
+    _                         => ""
   };
 
   public Brush PickBackColor(OptionalColumn column, int order, double percentage) {
@@ -195,7 +193,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
         >= 0.9 => FontWeights.Bold,
         >= 0.7 => FontWeights.Medium,
         >= 0.5 => FontWeights.SemiBold,
-        _ => FontWeights.Normal
+        _      => FontWeights.Normal
       };
     }
 
@@ -210,9 +208,9 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
 
   public FontWeight PickTextWeight(double percentage) {
     return percentage switch {
-      >= 0.9 => FontWeights.Bold,
+      >= 0.9  => FontWeights.Bold,
       >= 0.75 => FontWeights.Medium,
-      _ => FontWeights.Normal
+      _       => FontWeights.Normal
     };
   }
 
@@ -256,7 +254,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
       >= 0.9 => orderIcons_[0],
       >= 0.7 => orderIcons_[1],
       >= 0.5 => orderIcons_[2],
-      _ => orderIcons_[3]
+      _      => orderIcons_[3]
     };
   }
 
@@ -294,7 +292,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   private bool ShouldShowIcon(OptionalColumn column) {
     return DisplayIcons && (column.Style.ShowIcon == OptionalColumnStyle.PartVisibility.Always ||
                             (column.IsMainColumn &&
-                            column.Style.ShowIcon == OptionalColumnStyle.PartVisibility.IfActiveColumn));
+                             column.Style.ShowIcon == OptionalColumnStyle.PartVisibility.IfActiveColumn));
   }
 
   private bool ShouldUseBackColor(OptionalColumn column) {

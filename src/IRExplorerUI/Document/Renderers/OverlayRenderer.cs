@@ -78,7 +78,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
 
   public bool RemoveAllElementOverlays(IRElement element, object onlyWithTag = null) {
     if (overlaySegmentMap_.TryGetValue(element, out var segment)) {
-      if(onlyWithTag != null) {
+      if (onlyWithTag != null) {
         segment.Overlays.RemoveAll(overlay => overlay.Tag == onlyWithTag);
       }
       else {
@@ -387,6 +387,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
       ShowTooltip(hoverSegment.Item1);
     }
   }
+
   public void SuspendUpdate() {
     updateSuspended_ = true;
   }
@@ -436,7 +437,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
       return;
     }
 
-    if(hoverTooltip_ != null && tooltipOverlay_ == elementOverlay) {
+    if (hoverTooltip_ != null && tooltipOverlay_ == elementOverlay) {
       return; // Already showing the right tooltip.
     }
 

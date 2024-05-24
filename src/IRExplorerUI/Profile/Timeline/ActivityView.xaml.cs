@@ -448,13 +448,13 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
   }
 
   private SampleTimeRangeInfo GetSelectedTimeRange() {
-    var (startIndex, endIndex) = TimeRangeToSampleIndex(selectionStartTime_, selectionEndTime_);
+    (int startIndex, int endIndex) = TimeRangeToSampleIndex(selectionStartTime_, selectionEndTime_);
     return new SampleTimeRangeInfo(selectionStartTime_ + startTime_, selectionEndTime_ + startTime_,
                                    startIndex, endIndex, ThreadId);
   }
 
   private SampleTimeRangeInfo GetFilteredTimeRange() {
-    var (startIndex, endIndex) = TimeRangeToSampleIndex(filterStartTime_, filterEndTime_);
+    (int startIndex, int endIndex) = TimeRangeToSampleIndex(filterStartTime_, filterEndTime_);
     return new SampleTimeRangeInfo(filterStartTime_ + startTime_, filterEndTime_ + startTime_,
                                    startIndex, endIndex, ThreadId);
   }
@@ -822,19 +822,19 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     foreach (var markedSamples in markedSamples_) {
       int index = markedSamples.Samples.BinarySearch(querySample,
-        Comparer<SampleIndex>.Create((a, b) => {
-          var timeDiff = a.Time - startTime_ - b.Time;
+                                                     Comparer<SampleIndex>.Create((a, b) => {
+                                                       var timeDiff = a.Time - startTime_ - b.Time;
 
-          if (timeDiff > closeTimeDiff) {
-            return 1;
-          }
+                                                       if (timeDiff > closeTimeDiff) {
+                                                         return 1;
+                                                       }
 
-          if (timeDiff < -closeTimeDiff) {
-            return -1;
-          }
+                                                       if (timeDiff < -closeTimeDiff) {
+                                                         return -1;
+                                                       }
 
-          return 0;
-        }));
+                                                       return 0;
+                                                     }));
 
       if (index >= 0) {
         return markedSamples;
@@ -1125,7 +1125,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
       if (slice.FirstSampleIndex >= 0) {
         for (int sampleIndex = slice.FirstSampleIndex;
-          sampleIndex < slice.FirstSampleIndex + slice.SampleCount; sampleIndex++) {
+             sampleIndex < slice.FirstSampleIndex + slice.SampleCount; sampleIndex++) {
           if (profile_.Samples[sampleIndex].Sample.Time >= queryTime) {
             if (!IsSingleThreadView || profile_.Samples[sampleIndex].Stack.Context.ThreadId == ThreadId) {
               return sampleIndex;
@@ -1153,7 +1153,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
       if (slice.FirstSampleIndex >= 0) {
         for (int sampleIndex = slice.FirstSampleIndex + slice.SampleCount - 1; sampleIndex >= slice.FirstSampleIndex;
-          sampleIndex--) {
+             sampleIndex--) {
           if (profile_.Samples[sampleIndex].Sample.Time <= queryTime) {
             if (!IsSingleThreadView || profile_.Samples[sampleIndex].Stack.Context.ThreadId == ThreadId) {
               return sampleIndex;

@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,7 +8,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerUI.Controls;
-using IRExplorerUI.Profile;
 
 namespace IRExplorerUI;
 
@@ -53,7 +51,8 @@ public partial class BookmarksPanel : ToolPanelControl {
       previewPopup_ = null;
     }
 
-    previewPopup_ = new IRDocumentPopupInstance(App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Bookmarks), Session);
+    previewPopup_ =
+      new IRDocumentPopupInstance(App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Bookmarks), Session);
     previewPopup_.SetupHoverEvents(BookmarkList, HoverPreview.HoverDuration, () => {
       var hoveredItem = Utils.FindPointedListViewItem(BookmarkList);
 

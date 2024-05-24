@@ -33,7 +33,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ =
     new ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult>();
   private static object undecorateLock_ = new object();
-
   private SymbolFileSourceSettings settings_;
   private string debugFilePath_;
   private IDiaDataSource diaSource_;
@@ -58,7 +57,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
   public static async Task<DebugFileSearchResult>
     LocateDebugInfoFileAsync(SymbolFileDescriptor symbolFile,
-                        SymbolFileSourceSettings settings) {
+                             SymbolFileSourceSettings settings) {
     if (symbolFile == null) {
       return DebugFileSearchResult.None;
     }
@@ -301,7 +300,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     try {
       var symbol = FindFunctionSymbolByRVA(rva);
 
-      if(symbol != null) {
+      if (symbol != null) {
         return new FunctionDebugInfo(symbol.name, symbol.relativeVirtualAddress, (long)symbol.length);
       }
     }
@@ -432,11 +431,11 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       if (!File.Exists(filePath)) {
         return false;
       }
-      
+
       // If the source server requires authentication, but it's not properly set up,
       // usually an HTML error page is returned instead, treat it as a failure.
       //? TODO: Better way to detect this, may need change in TraceEvent lib.
-      var fileText = File.ReadAllText(filePath);
+      string fileText = File.ReadAllText(filePath);
       return !fileText.Contains(@"<!DOCTYPE html");
     }
     catch (Exception ex) {
@@ -491,6 +490,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
             }
           }
         }
+
         return (sourceLine, sourceFile);
       }
     }
@@ -632,9 +632,9 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         }
 
         funcInfo.AddSourceLine(new SourceLineDebugInfo(
-                                  (int)lineNumber.addressOffset,
-                                  (int)lineNumber.lineNumber,
-                                  (int)lineNumber.columnNumber));
+                                 (int)lineNumber.addressOffset,
+                                 (int)lineNumber.lineNumber,
+                                 (int)lineNumber.columnNumber));
       }
 
       return true;
@@ -706,7 +706,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       if (funcSym != null) {
         return funcSym;
       }
-      
+
       session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var pubSym);
 
       if (pubSym != null) {
@@ -759,12 +759,14 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
 sealed class BasicAuthenticationHandler : MessageProcessingHandler {
   private SymbolFileSourceSettings settings_;
+
   public BasicAuthenticationHandler(SymbolFileSourceSettings settings) {
     settings_ = settings;
     InnerHandler = new HttpClientHandler();
   }
 
-  protected override HttpRequestMessage ProcessRequest(HttpRequestMessage request, CancellationToken cancellationToken) {
+  protected override HttpRequestMessage
+    ProcessRequest(HttpRequestMessage request, CancellationToken cancellationToken) {
     Trace.WriteLine($"HTTP request: {request.RequestUri}, host: {request.RequestUri.Host}");
 
     if (settings_.AuthorizationTokenEnabled) {
@@ -779,7 +781,8 @@ sealed class BasicAuthenticationHandler : MessageProcessingHandler {
     return request;
   }
 
-  protected override HttpResponseMessage ProcessResponse(HttpResponseMessage response, CancellationToken cancellationToken) {
+  protected override HttpResponseMessage ProcessResponse(HttpResponseMessage response,
+                                                         CancellationToken cancellationToken) {
     return response;
   }
 }

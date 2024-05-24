@@ -338,13 +338,16 @@
                           <Image.Style>
                             <Style TargetType="{x:Type Image}">
                               <Style.Triggers>
-                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Loaded}">
+                                <DataTrigger Binding="{Binding State}"
+                                             Value="{x:Static profile:ModuleLoadState.Loaded}">
                                   <Setter Property="Source" Value="{StaticResource CheckIcon}" />
                                 </DataTrigger>
-                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.NotFound}">
+                                <DataTrigger Binding="{Binding State}"
+                                             Value="{x:Static profile:ModuleLoadState.NotFound}">
                                   <Setter Property="Source" Value="{StaticResource VoidIcon}" />
                                 </DataTrigger>
-                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Failed}">
+                                <DataTrigger Binding="{Binding State}"
+                                             Value="{x:Static profile:ModuleLoadState.Failed}">
                                   <Setter Property="Source" Value="{StaticResource WarningYellow}" />
                                 </DataTrigger>
                               </Style.Triggers>
@@ -356,13 +359,16 @@
                           <TextBlock.Style>
                             <Style TargetType="{x:Type TextBlock}">
                               <Style.Triggers>
-                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Loaded}">
+                                <DataTrigger Binding="{Binding State}"
+                                             Value="{x:Static profile:ModuleLoadState.Loaded}">
                                   <Setter Property="Text" Value="Yes" />
                                 </DataTrigger>
-                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.NotFound}">
+                                <DataTrigger Binding="{Binding State}"
+                                             Value="{x:Static profile:ModuleLoadState.NotFound}">
                                   <Setter Property="Text" Value="Not Found" />
                                 </DataTrigger>
-                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Failed}">
+                                <DataTrigger Binding="{Binding State}"
+                                             Value="{x:Static profile:ModuleLoadState.Failed}">
                                   <Setter Property="Text" Value="Failed" />
                                 </DataTrigger>
                               </Style.Triggers>
@@ -375,7 +381,8 @@
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
 
-              <GridViewColumn Width="150" DisplayMemberBinding="{Binding DebugInfoFile.SymbolFile.FileName, StringFormat={}{0:mm\\:ss\\.ff}}">
+              <GridViewColumn Width="150"
+                              DisplayMemberBinding="{Binding DebugInfoFile.SymbolFile.FileName, StringFormat={}{0:mm\\:ss\\.ff}}">
                 <GridViewColumnHeader Content="Debug file" />
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">

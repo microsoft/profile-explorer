@@ -7,7 +7,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -172,7 +171,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async Task NotifyPanelsOfElementEvent(HandledEventKind eventKind, IRDocument document,
-                                          Action<IToolPanel> action) {
+                                                Action<IToolPanel> action) {
     foreach (var (kind, list) in panelHostSet_) {
       foreach (var panelHost in list) {
         var panel = panelHost.Panel;
@@ -253,7 +252,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async Task NotifyPanelsOfSectionUnload(IRTextSection section, IRDocumentHost document,
-                                           bool notifyAll, bool ignoreBoundPanels = false) {
+                                                 bool notifyAll, bool ignoreBoundPanels = false) {
     ForEachPanel(async panel => {
       // See comments in NotifyPanelsOfElementEvent about this check.
       if (panel.IgnoreNextUnloadEvent) {
@@ -286,8 +285,8 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async Task NotifyOfSectionUnload(IRDocumentHost document, bool notifyAll,
-                                     bool ignoreBoundPanels = false,
-                                     bool switchingActiveDocument = false) {
+                                           bool ignoreBoundPanels = false,
+                                           bool switchingActiveDocument = false) {
     var section = document.Section;
 
     if (section != null) {
@@ -298,12 +297,12 @@ public partial class MainWindow : Window, ISession {
 
   private async Task NotifyPanelsOfElementHighlight(IRHighlightingEventArgs e, IRDocument document) {
     await NotifyPanelsOfElementEvent(HandledEventKind.ElementHighlighting, document,
-                               panel => panel.OnElementHighlighted(e));
+                                     panel => panel.OnElementHighlighted(e));
   }
 
   private async Task NotifyPanelsOfElementSelection(IRElementEventArgs e, IRDocument document) {
     await NotifyPanelsOfElementEvent(HandledEventKind.ElementSelection, document,
-                               panel => panel.OnElementSelected(e));
+                                     panel => panel.OnElementSelected(e));
   }
 
   private void SetupPanelEvents(PanelHostInfo panelHost) {
@@ -615,27 +614,27 @@ public partial class MainWindow : Window, ISession {
 
   private string GetDefaultPanelName(ToolPanelKind kind) {
     return kind switch {
-      ToolPanelKind.Bookmarks => "Bookmarks",
-      ToolPanelKind.Definition => "Definition",
-      ToolPanelKind.FlowGraph => "Flow Graph",
-      ToolPanelKind.DominatorTree => "Dominator Tree",
+      ToolPanelKind.Bookmarks         => "Bookmarks",
+      ToolPanelKind.Definition        => "Definition",
+      ToolPanelKind.FlowGraph         => "Flow Graph",
+      ToolPanelKind.DominatorTree     => "Dominator Tree",
       ToolPanelKind.PostDominatorTree => "Post-Dominator Tree",
-      ToolPanelKind.ExpressionGraph => "Expression Graph",
-      ToolPanelKind.CallGraph => "Call Graph",
-      ToolPanelKind.CallTree => "Call Tree",
-      ToolPanelKind.CallerCallee => "Caller/Callee",
-      ToolPanelKind.FlameGraph => "Flame Graph",
-      ToolPanelKind.Timeline => "Timeline",
-      ToolPanelKind.Developer => "Developer",
-      ToolPanelKind.Notes => "Notes",
-      ToolPanelKind.References => "References",
-      ToolPanelKind.Section => "Summary",
-      ToolPanelKind.Source => "Source File",
-      ToolPanelKind.PassOutput => "Pass Output",
-      ToolPanelKind.SearchResults => "Search Results",
-      ToolPanelKind.Scripting => "Scripting",
-      ToolPanelKind.Help => "Help",
-      _ => ""
+      ToolPanelKind.ExpressionGraph   => "Expression Graph",
+      ToolPanelKind.CallGraph         => "Call Graph",
+      ToolPanelKind.CallTree          => "Call Tree",
+      ToolPanelKind.CallerCallee      => "Caller/Callee",
+      ToolPanelKind.FlameGraph        => "Flame Graph",
+      ToolPanelKind.Timeline          => "Timeline",
+      ToolPanelKind.Developer         => "Developer",
+      ToolPanelKind.Notes             => "Notes",
+      ToolPanelKind.References        => "References",
+      ToolPanelKind.Section           => "Summary",
+      ToolPanelKind.Source            => "Source File",
+      ToolPanelKind.PassOutput        => "Pass Output",
+      ToolPanelKind.SearchResults     => "Search Results",
+      ToolPanelKind.Scripting         => "Scripting",
+      ToolPanelKind.Help              => "Help",
+      _                               => ""
     };
   }
 
@@ -685,17 +684,17 @@ public partial class MainWindow : Window, ISession {
 
   private IToolPanel CreateNewPanel(ToolPanelKind kind) {
     return kind switch {
-      ToolPanelKind.Definition => new DefinitionPanel(),
-      ToolPanelKind.References => new ReferencesPanel(),
-      ToolPanelKind.Notes => new NotesPanel(),
-      ToolPanelKind.PassOutput => new PassOutputPanel(),
-      ToolPanelKind.FlowGraph => new GraphPanel(),
-      ToolPanelKind.DominatorTree => new GraphPanel(),
+      ToolPanelKind.Definition        => new DefinitionPanel(),
+      ToolPanelKind.References        => new ReferencesPanel(),
+      ToolPanelKind.Notes             => new NotesPanel(),
+      ToolPanelKind.PassOutput        => new PassOutputPanel(),
+      ToolPanelKind.FlowGraph         => new GraphPanel(),
+      ToolPanelKind.DominatorTree     => new GraphPanel(),
       ToolPanelKind.PostDominatorTree => new GraphPanel(),
-      ToolPanelKind.ExpressionGraph => new ExpressionGraphPanel(),
-      ToolPanelKind.SearchResults => new SearchResultsPanel(),
-      ToolPanelKind.Scripting => new ScriptingPanel(),
-      _ => throw new InvalidOperationException()
+      ToolPanelKind.ExpressionGraph   => new ExpressionGraphPanel(),
+      ToolPanelKind.SearchResults     => new SearchResultsPanel(),
+      ToolPanelKind.Scripting         => new ScriptingPanel(),
+      _                               => throw new InvalidOperationException()
     };
   }
 

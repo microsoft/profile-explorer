@@ -5,11 +5,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using DocumentFormat.OpenXml.Packaging;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
@@ -270,7 +267,7 @@ public sealed class ProfileCallTree {
       return null;
     }
 
-    if(!funcToNodesMap_.TryGetValue(queryNode.Function, out var nodeList)) {
+    if (!funcToNodesMap_.TryGetValue(queryNode.Function, out var nodeList)) {
       return null;
     }
 
@@ -359,6 +356,7 @@ public sealed class ProfileCallTree {
     if (nodes == null || nodes.Count == 0) {
       return new ProfileCallTreeGroupNode();
     }
+
     if (nodes.Count == 1) {
       return nodes[0];
     }
@@ -414,8 +412,8 @@ public sealed class ProfileCallTree {
       if (combineLists && node.HasThreadWeights) {
         foreach (var pair in node.ThreadWeights) {
           threadsMap.AccumulateValue(pair.Key,
-            countWeight ? pair.Value.Weight : TimeSpan.Zero,
-            pair.Value.ExclusiveWeight);
+                                     countWeight ? pair.Value.Weight : TimeSpan.Zero,
+                                     pair.Value.ExclusiveWeight);
         }
       }
 
@@ -471,8 +469,8 @@ public sealed class ProfileCallTree {
     }
 
     return new ProfileCallTreeGroupNode(nodes[0].FunctionDebugInfo, nodes[0].Function, nodes,
-      childrenSet.ToList(), callersSet.ToList(),
-      callSiteMap, threadsMap) {
+                                        childrenSet.ToList(), callersSet.ToList(),
+                                        callSiteMap, threadsMap) {
       Weight = weight, ExclusiveWeight = excWeight,
       Kind = kind
     };

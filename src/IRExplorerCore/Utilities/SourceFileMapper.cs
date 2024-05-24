@@ -72,7 +72,7 @@ public class SourceFileMapper {
     int index = sourceFile.LastIndexOf(Path.DirectorySeparatorChar);
 
     while (index > 0) {
-      if (map_.TryGetValue(sourceFile.Substring(0, index), out var mappedDirectory)) {
+      if (map_.TryGetValue(sourceFile.Substring(0, index), out string mappedDirectory)) {
         result = Path.Combine(mappedDirectory, sourceFile.Substring(index + 1));
         return true;
       }

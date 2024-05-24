@@ -110,7 +110,7 @@ public partial class DeveloperPanel : ToolPanelControl {
         using var stream = new FileStream(traceFile, FileMode.Open,
                                           FileAccess.Read, FileShare.ReadWrite);
         using var streamReader = new StreamReader(stream);
-        var text = await streamReader.ReadToEndAsync();
+        string text = await streamReader.ReadToEndAsync();
 
         if (text != previousLogFileText_) {
           await TextView.SetText(text);

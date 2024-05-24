@@ -19,7 +19,7 @@
   mc:Ignorable="d">
   <controls:DraggablePopup.LayoutTransform>
     <ScaleTransform ScaleX="{Binding WindowScaling}"
-                    ScaleY="{Binding WindowScaling}"/>
+                    ScaleY="{Binding WindowScaling}" />
   </controls:DraggablePopup.LayoutTransform>
 
   <controls:DraggablePopup.Resources>

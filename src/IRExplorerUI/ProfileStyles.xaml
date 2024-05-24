@@ -120,7 +120,7 @@
     </Border>
   </DataTemplate>
 
-    <DataTemplate x:Key="CheckableProfileMenuItemValueTemplate">
+  <DataTemplate x:Key="CheckableProfileMenuItemValueTemplate">
     <Border
       Padding="0"
       HorizontalAlignment="Stretch"
@@ -131,7 +131,8 @@
         <Border Background="{Binding BackColor}"
                 BorderBrush="Black"
                 BorderThickness="1"
-                Width="16" Height="16"></Border>
+                Width="16" Height="16">
+        </Border>
         <TextBlock
           MinWidth="{Binding MinTextWidth}"
           Margin="4,0,2,0"
@@ -181,7 +182,7 @@
     </Border>
   </DataTemplate>
 
-    <DataTemplate x:Key="CategoriesProfileMenuItemValueTemplate">
+  <DataTemplate x:Key="CategoriesProfileMenuItemValueTemplate">
     <Border
       Padding="0"
       HorizontalAlignment="Stretch"
@@ -505,13 +506,16 @@
       <Border.Style>
         <Style TargetType="{x:Type Border}">
           <Style.Triggers>
-            <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}" Value="{x:Static profile:ProfileCallTreeNodeKind.NativeKernel}">
+            <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}"
+                         Value="{x:Static profile:ProfileCallTreeNodeKind.NativeKernel}">
               <Setter Property="Background" Value="#D7ECFF" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}" Value="{x:Static profile:ProfileCallTreeNodeKind.Managed}">
+            <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}"
+                         Value="{x:Static profile:ProfileCallTreeNodeKind.Managed}">
               <Setter Property="Background" Value="MistyRose" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}" Value="{x:Static profile:ProfileCallTreeNodeKind.NativeUser}">
+            <DataTrigger Binding="{Binding Path=CallTreeNode.Kind}"
+                         Value="{x:Static profile:ProfileCallTreeNodeKind.NativeUser}">
               <Setter Property="Opacity" Value="0.5" />
             </DataTrigger>
           </Style.Triggers>

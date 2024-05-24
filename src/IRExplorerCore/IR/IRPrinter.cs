@@ -164,7 +164,7 @@ public class IRPrinter {
         ? string.Format("label &{0}.{1}", op.NameValue)
         : $"&{op.NameValue}",
       OperandKind.Other => "other",
-      _ => ""
+      _                 => ""
     };
 
     var ssaTag = op.GetTag<ISSAValue>();

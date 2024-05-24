@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -22,7 +21,6 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
     InitializeComponent();
     PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
-
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);
@@ -57,7 +55,7 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
       mappings.Add(pair);
     }
 
-    var list = new ObservableCollectionRefresh<KeyValuePair<string, string>> (mappings);
+    var list = new ObservableCollectionRefresh<KeyValuePair<string, string>>(mappings);
     MappedPathsList.ItemsSource = list;
   }
 

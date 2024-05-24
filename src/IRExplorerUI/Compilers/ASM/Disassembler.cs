@@ -618,11 +618,11 @@ public class Disassembler : IDisposable {
 
     public static DisassemblerHandle Create(Machine architecture) {
       return architecture switch {
-        Machine.I386 => Create(Architecture.X86, DisassembleMode.Bit32),
+        Machine.I386  => Create(Architecture.X86, DisassembleMode.Bit32),
         Machine.Amd64 => Create(Architecture.X86, DisassembleMode.Bit64),
-        Machine.Arm => Create(Architecture.Arm, DisassembleMode.Arm),
+        Machine.Arm   => Create(Architecture.Arm, DisassembleMode.Arm),
         Machine.Arm64 => Create(Architecture.Arm64, DisassembleMode.Arm),
-        _ => throw new NotSupportedException("Unsupported architecture!")
+        _             => throw new NotSupportedException("Unsupported architecture!")
       };
     }
 

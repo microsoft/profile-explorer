@@ -5,16 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using HtmlAgilityPack;
 using IRExplorerCore;
-using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
@@ -26,8 +21,8 @@ public partial class MainWindow : Window, ISession {
   private CancelableTaskInstance updateProfileTask_ = new CancelableTaskInstance();
   private ProfileData.ProcessingResult allThreadsProfile_;
   private ProfileFilterState profileFilter_;
-
   public ProfileData ProfileData => sessionState_?.ProfileData;
+
   public ProfileFilterState ProfileFilter {
     get => profileFilter_;
     set => profileFilter_ = value;
@@ -224,6 +219,7 @@ public partial class MainWindow : Window, ISession {
         if (panel != null) {
           await SelectFunctionSamples(node, panel);
         }
+
         break;
       }
       case ToolPanelKind.Source: {
@@ -266,6 +262,7 @@ public partial class MainWindow : Window, ISession {
         if (panel != null) {
           await panel.SelectFunction(func);
         }
+
         break;
       }
       case ToolPanelKind.Timeline: {
@@ -280,6 +277,7 @@ public partial class MainWindow : Window, ISession {
             await SelectFunctionSamples(nodeList[0], panel);
           }
         }
+
         break;
       }
       default: {
@@ -496,7 +494,7 @@ public partial class MainWindow : Window, ISession {
                                                           ProfileData profile) {
     var filter = new ProfileSampleFilter();
     filter.TimeRange = new SampleTimeRangeInfo(TimeSpan.Zero, TimeSpan.Zero,
-      sampleStartIndex, sampleEndIndex, threadId);
+                                               sampleStartIndex, sampleEndIndex, threadId);
 
     if (threadId != -1) {
       filter.AddThread(threadId);
@@ -614,7 +612,7 @@ public partial class MainWindow : Window, ISession {
     // if not already added, after the title "builtin markings" title.
     int insertionIndex = 1;
 
-    foreach (var item in MarkingMenu.Items) {
+    foreach (object item in MarkingMenu.Items) {
       if (item is MenuItem menuItem &&
           menuItem.Name == "BuiltinMarkingsMenu") {
         break;
@@ -660,7 +658,7 @@ public partial class MainWindow : Window, ISession {
     menu.Items.Clear();
 
     foreach (var markingSet in MarkingSettings.SavedSets) {
-      var tooltip = $"Function markings: {markingSet.FunctionColors.Count}";
+      string tooltip = $"Function markings: {markingSet.FunctionColors.Count}";
       tooltip += $"\nModule markings: {markingSet.ModuleColors.Count}";
       tooltip += "\nRight-click to remove marking set";
 
@@ -694,7 +692,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async void ImportMarkingsMenuItem_OnClick(object sender, RoutedEventArgs e) {
-    if(MarkingSettings.ImportMarkings(this)) {
+    if (MarkingSettings.ImportMarkings(this)) {
       await ReloadMarkingSettings();
     }
   }
@@ -704,7 +702,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void EditMarkingsMenu_OnClick(object sender, RoutedEventArgs e) {
-    var filePath = App.GetFunctionMarkingsFilePath(compilerInfo_.CompilerIRName);
+    string filePath = App.GetFunctionMarkingsFilePath(compilerInfo_.CompilerIRName);
     Utils.OpenExternalFile(filePath);
   }
 
@@ -715,26 +713,26 @@ public partial class MainWindow : Window, ISession {
     }
 
     await ProfilingUtils.CreateFunctionsCategoriesMenu(CategoriesMenu, async (o, args) => {
-        if (o is MenuItem menuItem &&
-            menuItem.Tag is IRTextFunction func) {
-          await SwitchActiveFunction(func);
-        }
-      }, null,
-      MarkingSettings, this);
+                                                         if (o is MenuItem menuItem &&
+                                                             menuItem.Tag is IRTextFunction func) {
+                                                           await SwitchActiveFunction(func);
+                                                         }
+                                                       }, null,
+                                                       MarkingSettings, this);
   }
 
   private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     await ProfilingUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, this,
-      e.OriginalSource, ReloadMarkingSettings);
+                                                     e.OriginalSource, ReloadMarkingSettings);
   }
 
   private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, this,
-      e.OriginalSource, ReloadMarkingSettings);
+                                             e.OriginalSource, ReloadMarkingSettings);
   }
 
   private async void CopyOverviewMenu_OnClick(object sender, RoutedEventArgs e) {
-    var (html, plaintext) = await ExportProfilingReportAsHtml();
+    (string html, string plaintext) = await ExportProfilingReportAsHtml();
     Utils.CopyHtmlToClipboard(html, plaintext);
   }
 
@@ -752,7 +750,7 @@ public partial class MainWindow : Window, ISession {
 
     if (!string.IsNullOrEmpty(path)) {
       try {
-        var (html, _) = await ExportProfilingReportAsHtml();
+        (string html, _) = await ExportProfilingReportAsHtml();
         await File.WriteAllTextAsync(path, html);
       }
       catch (Exception ex) {
@@ -763,7 +761,7 @@ public partial class MainWindow : Window, ISession {
       if (!success) {
         using var centerForm = new DialogCenteringHelper(this);
         MessageBox.Show($"Failed to save profiling report to {path}", "IR Explorer",
-          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }
   }
@@ -774,7 +772,7 @@ public partial class MainWindow : Window, ISession {
 
     if (!string.IsNullOrEmpty(path)) {
       try {
-        var (_, plaintext) = await ExportProfilingReportAsHtml();
+        (_, string plaintext) = await ExportProfilingReportAsHtml();
         await File.WriteAllTextAsync(path, plaintext);
       }
       catch (Exception ex) {
@@ -785,7 +783,7 @@ public partial class MainWindow : Window, ISession {
       if (!success) {
         using var centerForm = new DialogCenteringHelper(this);
         MessageBox.Show($"Failed to save profiling report to {path}", "IR Explorer",
-          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
     }
   }

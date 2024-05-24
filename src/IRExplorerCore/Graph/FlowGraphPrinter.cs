@@ -2,7 +2,6 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
@@ -65,11 +64,11 @@ nslimit=2;
     // Compute the dominator tree, used to mark loop back-edges and immediate dominators.
     var cache = FunctionAnalysisCache.Get(function_);
     dominatorAlgo_ = cache.GetDominators();
-    
-    if(!dominatorAlgo_.IsValid) {
-      dominatorAlgo_ = null; 
+
+    if (!dominatorAlgo_.IsValid) {
+      dominatorAlgo_ = null;
     }
-    
+
     foreach (var block in function_.Blocks) {
       foreach (var successorBlock in block.Successors) {
         CreateEdge(block, successorBlock, builder);

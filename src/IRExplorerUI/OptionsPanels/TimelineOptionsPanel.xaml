@@ -22,46 +22,46 @@
         IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
         ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
         Margin="0,2,0,2" />
-          <StackPanel Margin="20,0,0,2" Orientation="Horizontal"
-                      IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}" >
-          <TextBlock Text="Hover duration (ms)" VerticalAlignment="Center"/>
-            <xctk:IntegerUpDown
-              Margin="8,0,0,0"
-              Maximum="5000"
-              Minimum="50"
-              Width="70"
-              ParsingNumberStyle="Number"
-              ShowButtonSpinner="True"
-              Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
-            <Button
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              VerticalAlignment="Center"
-              Margin="4,0,0,0"
-              Padding="2,0,2,0"
-              Content="Default"
-              Click="ResetNodePopupDurationButton_Click"
-              Height="20"
-              ToolTip="Reset value to default duration" />
-            <Button
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              VerticalAlignment="Center"
-              Margin="2,0,0,0"
-              Padding="2,0,2,0"
-              Content="Short"
-              Click="ShortNodePopupDurationButton_Click"
-              Height="20"
-              ToolTip="Reset value to default duration" />
-            <Button
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              VerticalAlignment="Center"
-              Margin="2,0,0,0"
-              Padding="2,0,2,0"
-              Content="Long"
-              Click="LongNodePopupDurationButton_Click"
-              Height="20"
-              ToolTip="Reset value to default duration" />
-          </StackPanel>
-      <Separator Margin="0,4,0,4" Background="LightGray"/>
+      <StackPanel Margin="20,0,0,2" Orientation="Horizontal"
+                  IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}">
+        <TextBlock Text="Hover duration (ms)" VerticalAlignment="Center" />
+        <xctk:IntegerUpDown
+          Margin="8,0,0,0"
+          Maximum="5000"
+          Minimum="50"
+          Width="70"
+          ParsingNumberStyle="Number"
+          ShowButtonSpinner="True"
+          Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
+        <Button
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+          VerticalAlignment="Center"
+          Margin="4,0,0,0"
+          Padding="2,0,2,0"
+          Content="Default"
+          Click="ResetNodePopupDurationButton_Click"
+          Height="20"
+          ToolTip="Reset value to default duration" />
+        <Button
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+          VerticalAlignment="Center"
+          Margin="2,0,0,0"
+          Padding="2,0,2,0"
+          Content="Short"
+          Click="ShortNodePopupDurationButton_Click"
+          Height="20"
+          ToolTip="Reset value to default duration" />
+        <Button
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+          VerticalAlignment="Center"
+          Margin="2,0,0,0"
+          Padding="2,0,2,0"
+          Content="Long"
+          Click="LongNodePopupDurationButton_Click"
+          Height="20"
+          ToolTip="Reset value to default duration" />
+      </StackPanel>
+      <Separator Margin="0,4,0,4" Background="LightGray" />
       <TextBlock FontWeight="Medium" Text="Threads" />
       <CheckBox
         IsEnabled="False"

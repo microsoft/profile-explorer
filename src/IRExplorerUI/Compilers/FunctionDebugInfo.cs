@@ -60,7 +60,6 @@ public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
   [ProtoMember(5)]
   public string FilePath { get; private set; } //? Move to FunctionDebugInfo, add OriginalFilePath for SourceLink
   public List<SourceStackFrame> Inlinees { get; set; }
-
   public static readonly SourceLineDebugInfo Unknown = new SourceLineDebugInfo(-1, -1);
   public bool IsUnknown => Line == -1;
 
@@ -132,11 +131,9 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   public uint Size { get; set; }
   [ProtoMember(7)]
   public short OptimizationLevel { get; set; } // Used for OptimizationTier in managed code.
-
   public bool HasSourceLines => SourceLines is {Count: > 0};
   public SourceLineDebugInfo FirstSourceLine => HasSourceLines ?
     SourceLines[0] : SourceLineDebugInfo.Unknown;
-
   public SourceLineDebugInfo LastSourceLine => HasSourceLines ?
     SourceLines[^1] : SourceLineDebugInfo.Unknown;
 

@@ -1,21 +1,14 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace IRExplorerUI.Controls;
+
 /// <summary>
 /// Interaction logic for ColorPaletteSelector.xaml
 /// </summary>
@@ -67,6 +60,7 @@ public partial class ColorPaletteSelector : UserControl, INotifyPropertyChanged 
       }
     }
   }
+
   private void PaletteList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
     SelectedPalette = PaletteList.SelectedItem as ColorPalette;
     PaletteSplitButton.IsOpen = false;

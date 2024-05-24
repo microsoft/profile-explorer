@@ -2,17 +2,13 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
@@ -105,7 +101,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
   }
 
-
   public bool SourceFileLoaded {
     get => sourceFileLoaded_;
     set {
@@ -194,7 +189,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private void UpdateInlineeText() {
-    var total = ((ListCollectionView)InlineeComboBox.ItemsSource).Count;
+    int total = ((ListCollectionView)InlineeComboBox.ItemsSource).Count;
     InlineeText = $"{InlineeComboBox.SelectedIndex + 1}/{total}";
   }
 
@@ -268,6 +263,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
           if (commit) {
             App.SaveApplicationSettings();
           }
+
           return settings_.Clone();
         }
 
@@ -290,7 +286,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     await LoadSourceFile(section, null, document);
   }
 
-  private async Task<bool> LoadSourceFileForFunction(IRTextFunction function, ProfileSampleFilter profileFilter = null) {
+  private async Task<bool>
+    LoadSourceFileForFunction(IRTextFunction function, ProfileSampleFilter profileFilter = null) {
     if (!ShouldReloadFunction(function, profileFilter)) {
       return true;
     }
@@ -309,7 +306,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     return false;
   }
 
-  private async Task<bool> LoadSourceFileForInlinee(SourceStackFrame inlinee, ProfileSampleFilter profileFilter = null) {
+  private async Task<bool>
+    LoadSourceFileForInlinee(SourceStackFrame inlinee, ProfileSampleFilter profileFilter = null) {
     if (!ShouldReloadInlinee(inlinee, profileFilter)) {
       return true;
     }
@@ -364,7 +362,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
   }
 
-    private void HandleLoadedSourceFile(SourceFileDebugInfo sourceInfo, IRTextFunction function) {
+  private void HandleLoadedSourceFile(SourceFileDebugInfo sourceInfo, IRTextFunction function) {
     SetPanelName(sourceInfo.OriginalFilePath);
     SourceFileLoaded = true;
     sourceFileFunc_ = function;
@@ -373,7 +371,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   private async Task HandleMissingSourceFile(SourceFileDebugInfo sourceInfo,
                                              SourceFileFinder.FailureReason reason) {
-    var failureText = reason switch {
+    string failureText = reason switch {
       SourceFileFinder.FailureReason.DebugInfoNotFound => "Could not find debug info for function.",
       SourceFileFinder.FailureReason.MappingDisabled => """
                                                         Mapping to local file path disabled for current file.
@@ -453,7 +451,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var inlinees = tag.InlineesReversed;
 
     // Add an entry that means "no inlinee" in the front.
-    inlinees.Insert(0, new SourceStackFrame("No Inlinee", "", 0,0));
+    inlinees.Insert(0, new SourceStackFrame("No Inlinee", "", 0, 0));
     InlineeComboBox.ItemsSource = new ListCollectionView(inlinees);
     OnPropertyChanged(nameof(HasInlinees));
 
@@ -517,7 +515,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
     await IRDocumentPopupInstance.ShowPreviewPopup(ProfileTextView.Section.ParentFunction, "",
                                                    this, Session, ProfileTextView.ProfileFilter, true);
-
   }
 
   private async void InlineeButton_OnClick(object sender, RoutedEventArgs e) {
@@ -533,7 +530,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   private void ExpandAssemblyButton_Click(object sender, RoutedEventArgs e) {
     ProfileTextView.ExpandBlockFoldings();
-
   }
 
   private async void ToggleButton_Click(object sender, RoutedEventArgs e) {

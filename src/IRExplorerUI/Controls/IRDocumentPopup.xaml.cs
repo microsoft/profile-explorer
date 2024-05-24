@@ -9,12 +9,9 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using DocumentFormat.OpenXml.Drawing.Charts;
-using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerUI.Document;
@@ -123,9 +120,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
   public bool ShowHistoryButtons {
     get => showHistoryButtons_;
-    set {
-      SetField(ref showHistoryButtons_, value);
-    }
+    set => SetField(ref showHistoryButtons_, value);
   }
 
   public bool HasPreviousFunctions => ProfileTextView.HasPreviousFunctions;
@@ -230,7 +225,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private void UpdatePopupTitle() {
-    var title = GetFunctionName();
+    string title = GetFunctionName();
 
     if (PreviewedElement != null) {
       string elementText = Utils.MakeElementDescription(PreviewedElement);
@@ -245,7 +240,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       title = $"{title}{TitleSuffix}";
     }
 
-    var tooltip = GetTooltipFunctionName();
+    string tooltip = GetTooltipFunctionName();
 
     if (!string.IsNullOrEmpty(DescriptionPrefix)) {
       tooltip = $"{DescriptionPrefix}{tooltip}";
@@ -269,7 +264,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
   private string GetTooltipFunctionName() {
     if (parsedSection_ != null) {
-      var funName = parsedSection_.ParentFunction.FormatFunctionName(session);
+      string funName = parsedSection_.ParentFunction.FormatFunctionName(session);
       return $"Module: {parsedSection_.Section.ModuleName}\nFunction: {DocumentUtils.FormatLongFunctionName(funName)}";
     }
 
@@ -401,7 +396,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       ProfileTextView.Initialize(App.Settings.SourceFileSettings);
       var function = parsedSection_.ParentFunction;
       var sourceFileFinder = new SourceFileFinder(Session);
-        sourceFileFinder.LoadSettings(App.Settings.SourceFileSettings.FinderSettings);
+      sourceFileFinder.LoadSettings(App.Settings.SourceFileSettings.FinderSettings);
       var (sourceInfo, debugInfo) =
         await sourceFileFinder.FindLocalSourceFile(function);
 
@@ -410,7 +405,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
         await ProfileTextView.LoadSourceFile(sourceInfo, parsedSection_.Section, filter);
       }
       else {
-        var failureText = $"Could not find debug info for function:\n{function.Name}";
+        string failureText = $"Could not find debug info for function:\n{function.Name}";
         await ProfileTextView.HandleMissingSourceFile(failureText);
       }
     }
@@ -680,7 +675,7 @@ public class PreviewPopupArgs {
   }
 
   public static PreviewPopupArgs ForLoadedSection(ParsedIRTextSection section,
-                                                   UIElement relativeElement, string title = "") {
+                                                  UIElement relativeElement, string title = "") {
     return new PreviewPopupArgs {
       LoadedSection = section,
       RelativeElement = relativeElement,

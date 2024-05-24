@@ -4,25 +4,15 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
-using System.Windows.Media;
 using System.Windows.Threading;
-using DocumentFormat.OpenXml.Office2010.PowerPoint;
-using DocumentFormat.OpenXml.Wordprocessing;
 using IRExplorerCore;
-using IRExplorerUI.Controls;
-using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
-using IRExplorerUI.Profile.Document;
-using Color = System.Windows.Media.Color;
-using Style = System.Windows.Style;
 
 namespace IRExplorerUI.Profile;
 
@@ -113,7 +103,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
   }
 
-  public bool HasEnabledMarkedFunctions => MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
+  public bool HasEnabledMarkedFunctions =>
+    MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
   public bool HasEnabledMarkedModules => MarkingSettings.UseModuleColors && MarkingSettings.ModuleColors.Count > 0;
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
 
@@ -334,7 +325,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
           weightPercentage = Session.ProfileData.ScaleFunctionWeight(selectionWeight);
         }
 
-        string text = $"Selected {nodes.Count}: {weightPercentage.AsPercentageString()} ({selectionWeight.AsMillisecondsString()})";
+        string text =
+          $"Selected {nodes.Count}: {weightPercentage.AsPercentageString()} ({selectionWeight.AsMillisecondsString()})";
         Session.SetApplicationStatus(text, "Sum of selected flame graph nodes");
       }
       else {
@@ -532,12 +524,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private async void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     await ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
-      e.OriginalSource, ReloadSettings);
+                                                   e.OriginalSource, ReloadSettings);
   }
 
   private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
     await ProfilingUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
-      e.OriginalSource, ReloadSettings);
+                                                     e.OriginalSource, ReloadSettings);
   }
 
   public void UpdateMarkedFunctions(bool externalCall) {

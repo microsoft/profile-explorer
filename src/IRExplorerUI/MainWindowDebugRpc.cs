@@ -127,15 +127,15 @@ public partial class MainWindow : Window, ISession {
   private DocumentActionKind CommandToAction(ElementCommand command) {
     return command switch {
       ElementCommand.GoToDefinition => DocumentActionKind.GoToDefinition,
-      ElementCommand.MarkBlock => DocumentActionKind.MarkBlock,
+      ElementCommand.MarkBlock      => DocumentActionKind.MarkBlock,
       ElementCommand.MarkExpression => DocumentActionKind.MarkExpression,
       ElementCommand.MarkReferences => DocumentActionKind.MarkReferences,
-      ElementCommand.MarkUses => DocumentActionKind.MarkUses,
+      ElementCommand.MarkUses       => DocumentActionKind.MarkUses,
       ElementCommand.ShowExpression => DocumentActionKind.ShowExpressionGraph,
       ElementCommand.ShowReferences => DocumentActionKind.ShowReferences,
-      ElementCommand.ShowUses => DocumentActionKind.ShowUses,
-      ElementCommand.ClearMarker => DocumentActionKind.ClearMarker,
-      _ => throw new NotImplementedException()
+      ElementCommand.ShowUses       => DocumentActionKind.ShowUses,
+      ElementCommand.ClearMarker    => DocumentActionKind.ClearMarker,
+      _                             => throw new NotImplementedException()
     };
   }
 
@@ -252,7 +252,7 @@ public partial class MainWindow : Window, ISession {
       IRElementKind.UserParent =>
         new HighlightingStyle(Colors.Lavender, ColorPens.GetPen(Colors.Purple)),
       IRElementKind.Block => new HighlightingStyle(Colors.LightBlue, ColorPens.GetPen(Colors.LightBlue)),
-      _ => new HighlightingStyle(Colors.Gray)
+      _                   => new HighlightingStyle(Colors.Gray)
     };
   }
 

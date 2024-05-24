@@ -1,4 +1,7 @@
-﻿using System.Windows;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System.Windows;
 using System.Windows.Input;
 
 namespace IRExplorerUI.Windows;
@@ -6,11 +9,11 @@ namespace IRExplorerUI.Windows;
 public partial class TextInputWindow : Window {
   public TextInputWindow() {
     InitializeComponent();
-    this.Loaded += (sender, args) => {
+    Loaded += (sender, args) => {
       AutocompleteBox.Focus();
     };
 
-    this.PreviewKeyDown += (sender, args) => {
+    PreviewKeyDown += (sender, args) => {
       if (args.Key == Key.Escape) {
         Cancel();
       }
@@ -27,7 +30,7 @@ public partial class TextInputWindow : Window {
     InputPrompt = prompt;
     AcceptButtonLabel = acceptButtonLabel;
     CancelButtonLabel = cancelButtonLabel;
-    this.Owner = owner;
+    Owner = owner;
   }
 
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
@@ -40,7 +43,7 @@ public partial class TextInputWindow : Window {
     DataContext = this;
 
     if (showNextToMouseCursor) {
-      Point position = Mouse.GetPosition(App.Current.MainWindow);
+      var position = Mouse.GetPosition(Application.Current.MainWindow);
       Left = position.X + SystemParameters.CursorWidth;
       Top = position.Y + SystemParameters.CursorHeight;
     }
@@ -51,7 +54,7 @@ public partial class TextInputWindow : Window {
       WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
 
-    var result = ShowDialog();
+    bool? result = ShowDialog();
 
     if (result == true) {
       inputText = AutocompleteBox.Text.Trim();

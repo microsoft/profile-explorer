@@ -26,7 +26,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private static ProfileImage prevImage_;
   [ThreadStatic]
   private static ProfileModuleBuilder prevProfileModuleBuilder_;
-
   private ProfileDataProviderOptions options_;
   private ProfileDataReport report_;
   private ISession session_;
@@ -531,7 +530,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         continue;
       }
 
-      foreach (var frame in stack.FramePointers) {
+      foreach (long frame in stack.FramePointers) {
         ProfileImage frameImage = null;
 
         if (ETWEventProcessor.IsKernelAddress((ulong)frame, pointerSize)) {
@@ -607,7 +606,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // all the images ones loaded in the process.
       int moduleIndex = topModules.FindIndex(pair => pair.Item1 == imageList[i]);
       bool acceptModule = moduleIndex >= 0;
-      if(!acceptModule) continue;
+      if (!acceptModule) continue;
 
       var binaryFile = FromProfileImage(imageList[i]);
 
@@ -772,7 +771,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   private ProfileModuleBuilder CreateModuleBuilder(ProfileImage image, RawProfileData rawProfile, int processId,
-                                         SymbolFileSourceSettings symbolSettings) {
+                                                   SymbolFileSourceSettings symbolSettings) {
     var imageModule = new ProfileModuleBuilder(report_, session_);
     IDebugInfoProvider imageDebugInfo = null;
 
@@ -801,16 +800,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         ConfigureAwait(false).GetAwaiter().GetResult()) {
         Trace.TraceWarning($"Failed to load debug debugInfo for image: {image.FilePath}");
       }
-
     }
 
     return imageModule;
   }
 
   private DebugFileSearchResult GetDebugInfoFile(BinaryFileSearchResult binaryFile,
-                                                             ProfileImage image, RawProfileData rawProfile, int processId,
-                                                             SymbolFileSourceSettings symbolSettings) {
+                                                 ProfileImage image, RawProfileData rawProfile, int processId,
+                                                 SymbolFileSourceSettings symbolSettings) {
     DebugFileSearchResult result = null;
+
     if (binaryFile is {Found: true}) {
       return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings);
     }
@@ -843,7 +842,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   private ProfileModuleBuilder GetModuleBuilder(RawProfileData rawProfile, ProfileImage queryImage, int processId,
-                                    SymbolFileSourceSettings symbolSettings) {
+                                                SymbolFileSourceSettings symbolSettings) {
     // prevImage_/prevModule_ are TLS variables since this is called from multiple threads.
     if (queryImage == prevImage_) {
       return prevProfileModuleBuilder_;
@@ -941,7 +940,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           counter.IP : counter.IP - frameImage.BaseAddress;
 
         var funcPair = profileModuleBuilder.GetOrCreateFunction(frameRva);
-        var funcRva = funcPair.DebugInfo.RVA;
+        uint funcRva = funcPair.DebugInfo.RVA;
         long offset = frameRva - funcRva;
 
         FunctionProfileData profile = null;

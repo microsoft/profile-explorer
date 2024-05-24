@@ -7,9 +7,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore;
-using IRExplorerCore.IR;
 using IRExplorerUI.Profile;
 
 namespace IRExplorerUI;
@@ -78,7 +76,6 @@ static class ExtensionMethods {
     return brush.Color.A == 0;
   }
 
-
   public static bool IsTransparent(this Brush brush) {
     return brush is SolidColorBrush {Color.A: 0};
   }
@@ -123,7 +120,7 @@ static class ExtensionMethods {
   }
 
   public static string AsNanosecondsString(this TimeSpan value, int digits = 2,
-                                            string suffix = " ns") {
+                                           string suffix = " ns") {
     double roundedValue = value.TotalNanoseconds.TruncateToDigits(digits);
     return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
   }
@@ -252,7 +249,8 @@ static class ExtensionMethods {
     return FormatName(name, session.CompilerInfo.NameProvider.FormatFunctionName, maxLength);
   }
 
-  public static string FormatFunctionName(this ProfileCallTreeNode node, ISession session, int maxLength = int.MaxValue) {
+  public static string FormatFunctionName(this ProfileCallTreeNode node, ISession session,
+                                          int maxLength = int.MaxValue) {
     return FormatName(node.FunctionName, session.CompilerInfo.NameProvider.FormatFunctionName, maxLength);
   }
 

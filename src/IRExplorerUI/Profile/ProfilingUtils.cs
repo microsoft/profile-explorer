@@ -1,16 +1,14 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using HtmlAgilityPack;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
@@ -26,7 +24,6 @@ public record FunctionMarkingCategory(
   double Percentage,
   ProfileCallTreeNode HottestFunction,
   List<ProfileCallTreeNode> SortedFunctions) {
-
   public virtual bool Equals(FunctionMarkingCategory other) {
     if (ReferenceEquals(null, other)) return false;
     if (ReferenceEquals(this, other)) return true;
@@ -60,7 +57,7 @@ public static class ProfilingUtils {
         break;
       }
 
-      var (title, tooltip) = GenerateInstancePreviewText(node, session, maxCallers);
+      (string title, string tooltip) = GenerateInstancePreviewText(node, session, maxCallers);
       string text = $"({markerSettings.FormatWeightValue(node.Weight)})";
 
       var value = new ProfileMenuItem(text, node.Weight.Ticks, weightPercentage) {
@@ -173,7 +170,7 @@ public static class ProfilingUtils {
     double maxWidth = 0;
 
     // Compute time spent in non-inlinee parts.
-    TimeSpan inlineeWeightSum = TimeSpan.Zero;
+    var inlineeWeightSum = TimeSpan.Zero;
 
     foreach (var node in inlineeList) {
       inlineeWeightSum += node.ExclusiveWeight;
@@ -205,7 +202,7 @@ public static class ProfilingUtils {
         break;
       }
 
-      var title = node.InlineeFrame.Function.FormatFunctionName(session, 80);
+      string title = node.InlineeFrame.Function.FormatFunctionName(session, 80);
       string text = $"({markerSettings.FormatWeightValue(node.ExclusiveWeight)})";
       string tooltip = $"File {Utils.TryGetFileName(node.InlineeFrame.FilePath)}:{node.InlineeFrame.Line}\n";
       tooltip += CreateInlineeFunctionDescription(node, funcProfile, settings.ProfileMarkerSettings, session);
@@ -258,30 +255,30 @@ public static class ProfilingUtils {
     if (IsTopLevelSubmenu(triggerObject)) return;
 
     CreateMarkedModulesMenu(menu,
-      async (o, args) => {
-        if (o is MenuItem menuItem) {
-          if (menuItem.Tag is FunctionMarkingStyle style) {
-            style.IsEnabled = menuItem.IsChecked;
+                            async (o, args) => {
+                              if (o is MenuItem menuItem) {
+                                if (menuItem.Tag is FunctionMarkingStyle style) {
+                                  style.IsEnabled = menuItem.IsChecked;
 
-            if (style.IsEnabled) {
-              settings.UseModuleColors = true;
-            }
+                                  if (style.IsEnabled) {
+                                    settings.UseModuleColors = true;
+                                  }
 
-            await changedHandler();
-          }
-          else if (menuItem.Tag is IRTextFunction func) {
-            // Click on submenu with individual functions.
-            await session.SwitchActiveFunction(func);
-          }
-        }
-      },
-      (o, args) => {
-        var style = ((MenuItem)o).Tag as FunctionMarkingStyle;
-        settings.ModuleColors.Remove(style);
-        menu.IsSubmenuOpen = false;
-        changedHandler();
-      },
-      settings, session);
+                                  await changedHandler();
+                                }
+                                else if (menuItem.Tag is IRTextFunction func) {
+                                  // Click on submenu with individual functions.
+                                  await session.SwitchActiveFunction(func);
+                                }
+                              }
+                            },
+                            (o, args) => {
+                              var style = ((MenuItem)o).Tag as FunctionMarkingStyle;
+                              settings.ModuleColors.Remove(style);
+                              menu.IsSubmenuOpen = false;
+                              changedHandler();
+                            },
+                            settings, session);
   }
 
   public static async Task PopulateMarkedFunctionsMenu(MenuItem menu, FunctionMarkingSettings settings,
@@ -290,30 +287,30 @@ public static class ProfilingUtils {
     if (IsTopLevelSubmenu(triggerObject)) return;
 
     await CreateMarkedFunctionsMenu(menu,
-      async (o, args) => {
-        if (o is MenuItem menuItem) {
-          if (menuItem.Tag is FunctionMarkingStyle style) {
-            style.IsEnabled = menuItem.IsChecked;
+                                    async (o, args) => {
+                                      if (o is MenuItem menuItem) {
+                                        if (menuItem.Tag is FunctionMarkingStyle style) {
+                                          style.IsEnabled = menuItem.IsChecked;
 
-            if (style.IsEnabled) {
-              settings.UseFunctionColors = true;
-            }
+                                          if (style.IsEnabled) {
+                                            settings.UseFunctionColors = true;
+                                          }
 
-            await changedHandler();
-          }
-          else if (menuItem.Tag is IRTextFunction func) {
-            // Click on submenu with individual functions.
-            await session.SwitchActiveFunction(func);
-          }
-        }
-      },
-      (o, args) => {
-        var style = ((MenuItem)o).Tag as FunctionMarkingStyle;
-        settings.FunctionColors.Remove(style);
-        menu.IsSubmenuOpen = false;
-        changedHandler();
-      },
-      settings, session);
+                                          await changedHandler();
+                                        }
+                                        else if (menuItem.Tag is IRTextFunction func) {
+                                          // Click on submenu with individual functions.
+                                          await session.SwitchActiveFunction(func);
+                                        }
+                                      }
+                                    },
+                                    (o, args) => {
+                                      var style = ((MenuItem)o).Tag as FunctionMarkingStyle;
+                                      settings.FunctionColors.Remove(style);
+                                      menu.IsSubmenuOpen = false;
+                                      changedHandler();
+                                    },
+                                    settings, session);
   }
 
   private static bool IsTopLevelSubmenu(object triggerObject) {
@@ -343,7 +340,7 @@ public static class ProfilingUtils {
 
     foreach (var moduleStyle in settings.ModuleColors) {
       var moduleWeight = session.ProfileData.FindModulesWeight(name =>
-        moduleStyle.NameMatches(name));
+                                                                 moduleStyle.NameMatches(name));
       sortedModules.Add((moduleStyle, moduleWeight));
     }
 
@@ -357,7 +354,7 @@ public static class ProfilingUtils {
       var functs = moduleFuncs.GetValueOrNull(pair.Module.Name);
       var hottestFunc = functs?.Count > 0 ? functs[0] : null;
       var category = new FunctionMarkingCategory(pair.Module, pair.Weight, weightPercentage,
-        hottestFunc, functs);
+                                                 hottestFunc, functs);
       categories.Add(category);
     }
 
@@ -370,7 +367,7 @@ public static class ProfilingUtils {
                                                      MouseButtonEventHandler menuRightClickHandler,
                                                      FunctionMarkingSettings settings, ISession session) {
     await CreateMarkedFunctionsMenu(menu, false, menuClickHandler, menuRightClickHandler,
-      settings.FunctionColors, session);
+                                    settings.FunctionColors, session);
   }
 
   public static async Task
@@ -379,7 +376,7 @@ public static class ProfilingUtils {
                                   MouseButtonEventHandler menuRightClickHandler,
                                   FunctionMarkingSettings settings, ISession session) {
     await CreateMarkedFunctionsMenu(menu, true, menuClickHandler, menuRightClickHandler,
-      settings.BuiltinMarkingCategories.FunctionColors, session);
+                                    settings.BuiltinMarkingCategories.FunctionColors, session);
   }
 
   public static List<FunctionMarkingCategory> CollectMarkedFunctions(List<FunctionMarkingStyle> markings,
@@ -387,7 +384,7 @@ public static class ProfilingUtils {
                                                                      ProfileCallTreeNode startNode = null) {
     // Collect functions across all markings to compute the "Unmarked" weight.
     var markingCategoryList = new List<FunctionMarkingCategory>();
-    var lockObject = new object();
+    object lockObject = new object();
     var tasks = new List<Task>();
 
     foreach (var marking in markings) {
@@ -415,12 +412,12 @@ public static class ProfilingUtils {
         }
 
         funcList.Sort((a, b) =>
-          b.Weight.CompareTo(a.Weight));
+                        b.Weight.CompareTo(a.Weight));
         var hottestFunc = funcList.Count > 0 ? funcList[0] : null;
 
         lock (lockObject) {
           markingCategoryList.Add(new FunctionMarkingCategory(marking, weight, weightPercentage,
-            hottestFunc, funcList));
+                                                              hottestFunc, funcList));
         }
       }));
     }
@@ -442,7 +439,7 @@ public static class ProfilingUtils {
       double otherWeightPercentage = session.ProfileData.ScaleFunctionWeight(otherWeight);
       var uncategorizedMarking = new FunctionMarkingCategory(
         new FunctionMarkingStyle("Other functions not covered by categories",
-          Colors.Transparent, "Uncategorized"),
+                                 Colors.Transparent, "Uncategorized"),
         otherWeight, otherWeightPercentage, null, null);
       markingCategoryList.Add(uncategorizedMarking);
     }
@@ -493,7 +490,8 @@ public static class ProfilingUtils {
       }
 
       var matchingFuncList = loadedDoc.Summary.FindFunctions(name =>
-        marking.NameMatches(nameProvider.FormatFunctionName(name)));
+                                                               marking.NameMatches(
+                                                                 nameProvider.FormatFunctionName(name)));
 
       foreach (var func in matchingFuncList) {
         var nodeList = session.ProfileData.CallTree.GetCallTreeNodes(func);
@@ -517,7 +515,7 @@ public static class ProfilingUtils {
       var func = pair.Item1;
       var list = moduleFuncs.GetOrAddValue(func.ModuleName, () => new List<ProfileCallTreeNode>());
 
-      if(list.Count < maxFunctsPerModule) {
+      if (list.Count < maxFunctsPerModule) {
         list.Add(session.ProfileData.CallTree.GetCombinedCallTreeNode(func));
       }
     }
@@ -567,7 +565,7 @@ public static class ProfilingUtils {
       // Build the shorter title stack trace.
       if (index < maxCallers && remaining > 0) {
         int maxNameLength = Math.Min(remaining, maxSingleLength);
-        var name = node.FormatFunctionName(nameProvider.FormatFunctionName, maxNameLength);
+        string name = node.FormatFunctionName(nameProvider.FormatFunctionName, maxNameLength);
         remaining -= name.Length;
 
         if (index == 0) {
@@ -581,7 +579,7 @@ public static class ProfilingUtils {
       // Build the longer tooltip stack trace.
       if (completeRemaining > 0) {
         int maxNameLength = Math.Min(completeRemaining, maxSingleLength);
-        var name = node.FormatFunctionName(nameProvider.FormatFunctionName, maxNameLength);
+        string name = node.FormatFunctionName(nameProvider.FormatFunctionName, maxNameLength);
 
         if (index == 0) {
           completeSb.Append(name);
@@ -643,7 +641,7 @@ public static class ProfilingUtils {
   }
 
   public static void SyncThreadsMenuWithFilter(MenuItem menu, ProfileSampleFilter instanceFilter) {
-    foreach (var item in menu.Items) {
+    foreach (object item in menu.Items) {
       if (item is MenuItem menuItem && menuItem.Tag is int threadId) {
         menuItem.IsChecked = instanceFilter != null && instanceFilter.IncludesThread(threadId);
       }
@@ -676,7 +674,7 @@ public static class ProfilingUtils {
     if (instanceFilter.HasThreadFilter) {
       sb.AppendLine("\nThreads included:");
 
-      foreach (var threadId in instanceFilter.ThreadIds) {
+      foreach (int threadId in instanceFilter.ThreadIds) {
         var threadInfo = session.ProfileData.FindThread(threadId);
         string threadName = threadInfo is {HasName: true} ? threadInfo.Name : null;
 
@@ -695,29 +693,29 @@ public static class ProfilingUtils {
   public static string CreateProfileFunctionDescription(FunctionProfileData funcProfile,
                                                         ProfileDocumentMarkerSettings settings, ISession session) {
     return CreateProfileDescription(funcProfile.Weight, funcProfile.ExclusiveWeight,
-      settings, session.ProfileData.ScaleFunctionWeight);
+                                    settings, session.ProfileData.ScaleFunctionWeight);
   }
 
   public static string CreateInlineeFunctionDescription(InlineeListItem inlinee,
                                                         FunctionProfileData funcProfile,
                                                         ProfileDocumentMarkerSettings settings, ISession session) {
     return CreateProfileDescription(inlinee.Weight, inlinee.ExclusiveWeight,
-      settings, funcProfile.ScaleWeight);
+                                    settings, funcProfile.ScaleWeight);
   }
 
   public static string CreateProfileDescription(TimeSpan weight, TimeSpan exclusiveWeight,
                                                 ProfileDocumentMarkerSettings settings,
                                                 Func<TimeSpan, double> weightFunc) {
-    var weightPerc = weightFunc(weight);
-    var exclusiveWeightPerc = weightFunc(exclusiveWeight);
-    var weightText = $"{weightPerc.AsPercentageString()} ({settings.FormatWeightValue(weight)})";
-    var exclusiveWeightText =
+    double weightPerc = weightFunc(weight);
+    double exclusiveWeightPerc = weightFunc(exclusiveWeight);
+    string weightText = $"{weightPerc.AsPercentageString()} ({settings.FormatWeightValue(weight)})";
+    string exclusiveWeightText =
       $"{exclusiveWeightPerc.AsPercentageString()} ({settings.FormatWeightValue(exclusiveWeight)})";
     return $"Total time: {weightText}\nSelf time: {exclusiveWeightText}";
   }
 
   public static void SyncInstancesMenuWithFilter(MenuItem menu, ProfileSampleFilter instanceFilter) {
-    foreach (var item in menu.Items) {
+    foreach (object item in menu.Items) {
       if (item is MenuItem menuItem && menuItem.Tag is ProfileCallTreeNode node) {
         menuItem.IsChecked = instanceFilter != null && instanceFilter.IncludesInstance(node);
       }
@@ -742,7 +740,7 @@ public static class ProfilingUtils {
                                            MouseButtonEventHandler menuRightClickHandler, ISession session) {
     var defaultItems = DocumentUtils.SaveDefaultMenuItems(menu);
     var profileItems = new List<ProfileMenuItem>();
-    var separatorIndex = !isCategoriesMenu ? defaultItems.FindIndex(item => item is Separator) : -1;
+    int separatorIndex = !isCategoriesMenu ? defaultItems.FindIndex(item => item is Separator) : -1;
     var markerSettings = App.Settings.DocumentSettings.ProfileMarkerSettings;
     var categoriesValueTemplate = (DataTemplate)Application.Current.
       FindResource("CategoriesProfileMenuItemValueTemplate");
@@ -786,7 +784,7 @@ public static class ProfilingUtils {
         TextWeight = markerSettings.PickTextWeight(category.Percentage),
         PercentageBarBackColor = category.HottestFunction != null ?
           markerSettings.PercentageBarBackColor.AsBrush() :
-          (Brush)App.Current.FindResource("ProfileUncategorizedBrush"),
+          (Brush)Application.Current.FindResource("ProfileUncategorizedBrush"),
         BackColor = !isCategoriesMenu ? category.Marking.Color.AsBrush() : Brushes.Transparent
       };
 
@@ -857,8 +855,10 @@ public static class ProfilingUtils {
         break;
       }
 
-      var tooltip = $"Exclusive Weight: {exclFuncWeightPercentage.AsPercentageString()} ({markerSettings.FormatWeightValue(node.ExclusiveWeight)})\n";
-      tooltip += $"Weight: {funcWeightPercentage.AsPercentageString()} ({markerSettings.FormatWeightValue(node.Weight)})\n";
+      string tooltip =
+        $"Exclusive Weight: {exclFuncWeightPercentage.AsPercentageString()} ({markerSettings.FormatWeightValue(node.ExclusiveWeight)})\n";
+      tooltip +=
+        $"Weight: {funcWeightPercentage.AsPercentageString()} ({markerSettings.FormatWeightValue(node.Weight)})\n";
       tooltip += $"Module: {node.ModuleName}";
 
       if (node is ProfileCallTreeGroupNode groupNode) {
@@ -897,7 +897,7 @@ public static class ProfilingUtils {
   }
 
   private static void UncheckMenuItems(MenuItem menu, MenuItem excludedItem) {
-    foreach (var item in menu.Items) {
+    foreach (object item in menu.Items) {
       if (item is MenuItem menuItem && menuItem != excludedItem) {
         menuItem.IsChecked = false;
       }
@@ -950,7 +950,7 @@ public static class ProfilingUtils {
       (startLine, endLine) = (endLine, startLine);
     }
 
-    for(int i = startLine; i<= endLine; i++) {
+    for (int i = startLine; i <= endLine; i++) {
       int line = i;
 
       // With assembly lines, source line numbers are shifted.
@@ -961,7 +961,7 @@ public static class ProfilingUtils {
         else continue;
       }
 
-      if(profileResult.SourceLineWeight.TryGetValue(line, out var weight)) {
+      if (profileResult.SourceLineWeight.TryGetValue(line, out var weight)) {
         weightSum += weight;
       }
 

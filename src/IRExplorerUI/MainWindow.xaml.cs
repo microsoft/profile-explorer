@@ -6,21 +6,18 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Interop;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using AutoUpdaterDotNET;
 using AvalonDock.Controls;
 using AvalonDock.Layout;
-using AvalonDock.Layout.Serialization;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
@@ -33,7 +30,6 @@ using IRExplorerUI.Document;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Scripting;
-using IRExplorerUI.Settings;
 using IRExplorerUI.Utilities;
 using IRExplorerUI.Windows;
 
@@ -223,7 +219,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     // Handle touchpad horizontal scroll event, which is not supported
     // in WPF by default. This sends the event to any ScrollViewer.
     var source = PresentationSource.FromVisual(this);
-    ((HwndSource) source)?.AddHook(Hook);
+    ((HwndSource)source)?.AddHook(Hook);
   }
 
   private IntPtr Hook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) {
@@ -238,11 +234,11 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
   }
 
   private void OnMouseTilt(int tilt) {
-    UIElement element = Mouse.DirectlyOver as UIElement;
+    var element = Mouse.DirectlyOver as UIElement;
 
     if (element == null) return;
 
-    ScrollViewer scrollViewer = element is ScrollViewer viewer ?
+    var scrollViewer = element is ScrollViewer viewer ?
       viewer : Utils.FindParent<ScrollViewer>(element);
 
     if (scrollViewer != null) {
@@ -858,8 +854,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     if (input.Show(out string result, true)) {
       Trace.WriteLine($"Result  ={result}");
     }
-
-}
+  }
 
   private async Task DisplayCallGraph(IRTextSummary summary, IRTextSection section,
                                       bool buildPartialGraph) {

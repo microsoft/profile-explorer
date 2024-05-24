@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Enumeration;
@@ -82,7 +85,7 @@ public class SourceFileFinder {
       return (sourceInfo, FailureReason.None);
     }
     else if (!IsDisabledSourceFilePath(sourceInfo.FilePath)) {
-      var filePath = sourceFileMapper_.Map(sourceInfo.FilePath, () => {
+      string filePath = sourceFileMapper_.Map(sourceInfo.FilePath, () => {
         if (disableOpenDialog_) {
           return null;
         }
@@ -95,14 +98,15 @@ public class SourceFileFinder {
       if (!string.IsNullOrEmpty(filePath)) {
         sourceInfo.FilePath = filePath;
       }
-      else if(!disableOpenDialog_) {
+      else if (!disableOpenDialog_) {
         var result = Utils.ShowYesNoCancelMessageBox("""
-                                               Continue asking for the location of this source file?
-                                               
-                                               Press Cancel to stop showing the Open File dialog during the current session for source files that cannot be found.
-                                               """, null);
-        if(result == MessageBoxResult.No ||
-           result == MessageBoxResult.Cancel) {
+                                                     Continue asking for the location of this source file?
+
+                                                     Press Cancel to stop showing the Open File dialog during the current session for source files that cannot be found.
+                                                     """, null);
+
+        if (result == MessageBoxResult.No ||
+            result == MessageBoxResult.Cancel) {
           if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
             disabledSourceMappings_.Add(sourceInfo.FilePath);
           }
@@ -121,12 +125,12 @@ public class SourceFileFinder {
       }
     }
     else {
-      return  (sourceInfo, FailureReason.MappingDisabled);
+      return (sourceInfo, FailureReason.MappingDisabled);
     }
   }
 
   private bool IsDisabledSourceFilePath(string filePath) {
-    foreach (var path in disabledSourceMappings_) {
+    foreach (string path in disabledSourceMappings_) {
       // Do a case-insensitive wildcard (*) match.
       if (path.Equals(filePath, StringComparison.OrdinalIgnoreCase) ||
           FileSystemName.MatchesSimpleExpression(path, filePath)) {

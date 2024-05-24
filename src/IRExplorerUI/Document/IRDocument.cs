@@ -27,7 +27,6 @@ using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
-using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
@@ -246,7 +245,6 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   public event EventHandler<FoldingSection> TextRegionFolded;
   public event EventHandler<FoldingSection> TextRegionUnfolded;
   public event EventHandler<IRTextSection> FunctionCallOpen;
-
   public event PropertyChangedEventHandler PropertyChanged;
   public List<BlockIR> Blocks => Function.Blocks;
   public BookmarkManager BookmarkManager => bookmarks_;
@@ -575,7 +573,6 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     if (line >= 0 && line <= Document.LineCount) {
       TextArea.Caret.Line = line;
       ScrollToLine(line);
-
     }
   }
 
@@ -1102,7 +1099,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     // Set initial folded state.
     foldedBlocks_ = new HashSet<FoldingSection>();
 
-    foreach(var folding in foldings) {
+    foreach (var folding in foldings) {
       if (folding.IsFolded) {
         foldedBlocks_.Add(folding);
       }
@@ -1139,9 +1136,9 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     var line = (Line)DottedLineMargin.Create();
     leftMargins.Insert(0, lineNumbers);
     leftMargins.Insert(1, line);
-    var lineNumbersForeground = new Binding("LineNumbersForeground") { Source = this };
+    var lineNumbersForeground = new Binding("LineNumbersForeground") {Source = this};
     line.SetBinding(Shape.StrokeProperty, lineNumbersForeground);
-    lineNumbers.SetBinding(Control.ForegroundProperty, lineNumbersForeground);
+    lineNumbers.SetBinding(ForegroundProperty, lineNumbersForeground);
     hasCustomLineNumbers_ = true;
   }
 
@@ -1171,7 +1168,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   }
 
   public void UnregisterTextTransformer(DocumentColorizingTransformer transformer) {
-    if(registerdTransformers_.Remove(transformer)) {
+    if (registerdTransformers_.Remove(transformer)) {
       TextArea.TextView.LineTransformers.Remove(transformer);
     }
   }
@@ -1280,11 +1277,11 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   }
 
   private IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
-                                                       double width, double height,
-                                                       string label, string tooltip,
-                                                       HorizontalAlignment alignmentX,
-                                                       VerticalAlignment alignmentY,
-                                                       double marginX, double marginY) {
+                                                        double width, double height,
+                                                        string label, string tooltip,
+                                                        HorizontalAlignment alignmentX,
+                                                        VerticalAlignment alignmentY,
+                                                        double marginX, double marginY) {
     var overlay = IconElementOverlay.CreateDefault(icon, width, height,
                                                    Brushes.Transparent,
                                                    selectedStyle_.BackColor,
@@ -1439,7 +1436,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     }
 
     // Notify overlay layer in case there is a selected overlay visual.
-    if(overlayRenderer_.KeyPressed(e)) {
+    if (overlayRenderer_.KeyPressed(e)) {
       e.Handled = true;
       return;
     }
@@ -1746,10 +1743,10 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   private ElementHighlighter GetHighlighter(HighlighingType type) {
     return type switch {
-      HighlighingType.Hovered => hoverHighlighter_,
+      HighlighingType.Hovered  => hoverHighlighter_,
       HighlighingType.Selected => selectedHighlighter_,
-      HighlighingType.Marked => markedHighlighter_,
-      _ => throw new Exception("Unknown type")
+      HighlighingType.Marked   => markedHighlighter_,
+      _                        => throw new Exception("Unknown type")
     };
   }
 
@@ -2596,8 +2593,8 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   }
 
   private HighlightedElementGroup HighlightDefinedOperand(IRElement op, IRElement defElement,
-                                                   ElementHighlighter highlighter,
-                                                   PairHighlightingStyle style) {
+                                                          ElementHighlighter highlighter,
+                                                          PairHighlightingStyle style) {
     var group = new HighlightedElementGroup(style.ChildStyle);
     group.Add(op);
     group.Add(defElement);
@@ -2606,14 +2603,14 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   }
 
   private HighlightedElementGroup HighlightInstruction(InstructionIR instr, ElementHighlighter highlighter,
-                                                PairHighlightingStyle style) {
+                                                       PairHighlightingStyle style) {
     var group = new HighlightedElementGroup(instr, style.ParentStyle);
     highlighter.Add(group);
     return group;
   }
 
   private HighlightedElementGroup HighlightOperand(IRElement op, ElementHighlighter highlighter,
-                                            PairHighlightingStyle style) {
+                                                   PairHighlightingStyle style) {
     var group = new HighlightedElementGroup(op, style.ChildStyle);
     highlighter.Add(group);
     return group;
@@ -2916,9 +2913,9 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
     // Don't send event to overlays that may extend under the scrollbar.
     if (!disableOverlayEvents_ &&
-      (docVerticalScrollBar_ == null || !docVerticalScrollBar_.IsMouseOver) &&
-      (e.LeftButton == MouseButtonState.Released &&
-       e.RightButton == MouseButtonState.Released)) {
+        (docVerticalScrollBar_ == null || !docVerticalScrollBar_.IsMouseOver) &&
+        (e.LeftButton == MouseButtonState.Released &&
+         e.RightButton == MouseButtonState.Released)) {
       overlayRenderer_.MouseMoved(e);
     }
   }
@@ -3818,8 +3815,8 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
     // Create the overlay and place it on top of the text.
     overlayRenderer_ ??= new OverlayRenderer(markedHighlighter_);
-    overlayRenderer_.TextFont =  new Typeface(FontFamily, FontStyle,
-                                          FontWeight, FontStretch);
+    overlayRenderer_.TextFont = new Typeface(FontFamily, FontStyle,
+                                             FontWeight, FontStretch);
     TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
     TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
 
@@ -4051,7 +4048,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   private async Task<IRDocumentPopup> CreateElementPreviewPopup(IRElement element, Point position) {
     return await IRDocumentPopup.CreateNew(this, element, position,
-                                            this, App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Other));
+                                           this, App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.Other));
   }
 
   private async Task<IRDocumentPopup> CreateCallTargetPreviewPopup(IRElement element, bool alwaysShow, Point position) {
@@ -4071,7 +4068,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     if (result == null)
       return null;
 
-    return await IRDocumentPopup.CreateNew(result, position,this, Session,
+    return await IRDocumentPopup.CreateNew(result, position, this, Session,
                                            App.Settings.PreviewPopupSettings,
                                            $"Function: {element.Name}");
   }
@@ -4084,9 +4081,11 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     // Function names in the summary are mangled, while the document
     // has them demangled, run the demangler while searching for the target.
     var nameProvider = session.CompilerInfo.NameProvider;
-    var searchedName = element.Name;
+    string searchedName = element.Name;
     var targetFunc = section.ParentFunction.ParentSummary.FindFunction(name =>
-      nameProvider.FormatFunctionName(name).Equals(searchedName, StringComparison.Ordinal));
+                                                                         nameProvider.FormatFunctionName(name).
+                                                                           Equals(searchedName,
+                                                                                  StringComparison.Ordinal));
 
     if (targetFunc == null) {
       return null;

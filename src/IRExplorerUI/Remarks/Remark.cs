@@ -116,14 +116,14 @@ public class Remark {
   public RemarkContext Context { get; set; }
   public bool IsInstructionRemark { get; set; }
   public int Priority => Kind switch {
-    RemarkKind.Default => 2,
-    RemarkKind.Verbose => 3,
-    RemarkKind.Trace => 4,
-    RemarkKind.Warning => 5,
-    RemarkKind.Error => 6,
+    RemarkKind.Default      => 2,
+    RemarkKind.Verbose      => 3,
+    RemarkKind.Trace        => 4,
+    RemarkKind.Warning      => 5,
+    RemarkKind.Error        => 6,
     RemarkKind.Optimization => 0, // 0 is most important
-    RemarkKind.Analysis => 1,
-    _ => throw new ArgumentOutOfRangeException()
+    RemarkKind.Analysis     => 1,
+    _                       => throw new ArgumentOutOfRangeException()
   };
 
   public override string ToString() {

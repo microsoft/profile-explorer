@@ -6,7 +6,6 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using Microsoft.Web.WebView2.Core;
 
 namespace IRExplorerUI.Controls;
 

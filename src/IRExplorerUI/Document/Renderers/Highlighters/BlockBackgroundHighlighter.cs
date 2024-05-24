@@ -70,8 +70,7 @@ public sealed class BlockBackgroundHighlighter : IBackgroundRenderer {
     var oddGeoBuilder = CreateGeometryBuilder();
     Span<Rect> separatorLines = stackalloc Rect[visualLines.Count + 1];
     int separatorLineCount = 0;
-    var width = textView.ActualWidth + textView.HorizontalOffset;
-
+    double width = textView.ActualWidth + textView.HorizontalOffset;
 
     foreach (var segment in segments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
       var block = segment.Element as BlockIR;

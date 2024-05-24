@@ -2,7 +2,6 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -21,7 +20,6 @@ public partial class ColorSelector : UserControl {
   public static DependencyProperty ColorSelectedCommandProperty =
     DependencyProperty.Register("ColorSelectedCommand", typeof(ICommand), typeof(ColorSelector));
   private static readonly Color[] ButtonColors;
-
   public Brush[] ButtonBrushes { get; set; }
 
   static ColorSelector() {
@@ -87,11 +85,11 @@ public partial class ColorSelector : UserControl {
       Key.D7 => 7,
       Key.D8 => 8,
       Key.D9 => 9,
-      Key.A => 10,
-      Key.B => 11,
-      Key.C => 12,
-      Key.D => 13,
-      Key.E => 14,
+      Key.A  => 10,
+      Key.B  => 11,
+      Key.C  => 12,
+      Key.D  => 13,
+      Key.E  => 14,
       _      => -1
     };
 

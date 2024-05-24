@@ -1,7 +1,9 @@
-﻿using System.Windows.Media;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System.Windows.Media;
 using IRExplorerUI;
 using JetBrains.Annotations;
-using Microsoft.VisualBasic.CompilerServices;
 using ProtoBuf;
 using Utils = IRExplorerUI.Utils;
 
@@ -21,7 +23,7 @@ public class SettingsBaseTest {
     public int c { get; set; }
     [ProtoMember(4), OptionValue("foo")]
     public string s { get; set; }
-    
+
     public override void Reset() {
       ResetAllOptions(this, typeof(TestObject));
     }
@@ -37,8 +39,7 @@ public class SettingsBaseTest {
     public Color color { get; set; }
     [ProtoMember(4), OptionValue(new string[] {"#F0F0F0", "#1F2F3F"})]
     public Color[] colorArray { get; set; }
-    
-    
+
     public override void Reset() {
       base.Reset();
       ResetAllOptions(this);
@@ -52,7 +53,7 @@ public class SettingsBaseTest {
     [ProtoMember(2), OptionValue(456)]
     public int b { get; set; }
     public bool EqualsCalled = false;
-    
+
     public override void Reset() {
       ResetAllOptions(this);
     }
@@ -66,7 +67,7 @@ public class SettingsBaseTest {
   private class NonSettingsObject {
     public int a { get; set; } = 123;
     public int b { get; set; } = 456;
-    
+
     public override bool Equals(object? obj) {
       return a == ((NonSettingsObject)obj).a && b == ((NonSettingsObject)obj).b;
     }
@@ -86,8 +87,8 @@ public class SettingsBaseTest {
     public TestObject test { get; set; }
     [ProtoMember(6)]
     public DerivedObject derived { get; set; }
-    
-    public override void Reset() { 
+
+    public override void Reset() {
       ResetAllOptions(this);
     }
   }
@@ -100,29 +101,29 @@ public class SettingsBaseTest {
     public Dictionary<string, int> dict { get; set; }
     [ProtoMember(3), OptionValue(true)]
     public bool flag { get; set; }
-    
+
     public override void Reset() {
       ResetAllOptions(this);
     }
   }
-  
+
   [TestMethod]
   public void TestCollectOptions() {
     var data = new DerivedObject();
     var options = SettingsBase.CollectOptionMembers(data);
     Assert.AreEqual(options.Count, 8);
 
-    var expectedIds = new int[] {
+    int[]? expectedIds = new int[] {
       1, 2, 3, 4, 101, 102, 103, 104
     };
 
-    foreach (var id in expectedIds) {
+    foreach (int id in expectedIds) {
       var optionId = options.First(item => item.MemberId == id);
       Assert.IsNotNull(optionId);
       Assert.AreEqual(optionId.ClassName, "DerivedObject");
     }
   }
-  
+
   [TestMethod]
   public void TestResetOptions() {
     var data = new TestObject();
@@ -130,14 +131,14 @@ public class SettingsBaseTest {
     data.b = true;
     data.c = 456;
     data.s = "bar";
-    
+
     data.Reset();
     Assert.AreEqual(data.a, true);
     Assert.AreEqual(data.b, false);
     Assert.AreEqual(data.c, 123);
     Assert.AreEqual(data.s, "foo");
   }
-  
+
   [TestMethod]
   public void TestResetOptionsNested() {
     var data = new CombinedObject();
@@ -151,7 +152,7 @@ public class SettingsBaseTest {
     data.ns = new NonSettingsObject();
     data.ns.a = 222324;
     data.ns.b = 252627;
-    
+
     data.Reset();
     Assert.AreEqual(data.nested.a, 123);
     Assert.AreEqual(data.nested.b, 456);
@@ -161,7 +162,7 @@ public class SettingsBaseTest {
     Assert.AreEqual(data.ns.a, 123);
     Assert.AreEqual(data.ns.b, 456);
   }
-  
+
   [TestMethod]
   public void TestResetOptionsNestedDerived() {
     var data = new DerivedObject();
@@ -172,8 +173,8 @@ public class SettingsBaseTest {
     data.d = false;
     data.s2 = "baz";
     data.color = Colors.Black;
-    data.colorArray = new Color[] { Colors.Black, Colors.White };
-    
+    data.colorArray = new Color[] {Colors.Black, Colors.White};
+
     data.Reset();
     Assert.AreEqual(data.a, true);
     Assert.AreEqual(data.b, false);
@@ -185,18 +186,18 @@ public class SettingsBaseTest {
     Assert.AreEqual(data.colorArray[0], Utils.ColorFromString("#F0F0F0"));
     Assert.AreEqual(data.colorArray[1], Utils.ColorFromString("#1F2F3F"));
   }
-  
+
   [TestMethod]
   public void TestResetOptionsCollection() {
     var data = new CollectionObject();
-    data.list = new List<int> { 1, 2, 3 };
-    data.dict = new Dictionary<string, int> { { "a", 1 }, { "b", 2 } };
-    
+    data.list = new List<int> {1, 2, 3};
+    data.dict = new Dictionary<string, int> {{"a", 1}, {"b", 2}};
+
     data.Reset();
     Assert.AreEqual(data.list.Count, 0);
     Assert.AreEqual(data.dict.Count, 0);
   }
-  
+
   [TestMethod]
   public void TestConstructOptionsCollection() {
     var data = new CollectionObject();
@@ -205,7 +206,7 @@ public class SettingsBaseTest {
     Assert.AreEqual(data.dict.Count, 0);
     Assert.IsTrue(data.flag);
   }
-  
+
   [TestMethod]
   public void TestAreSettingsOptionsEqual() {
     var data1 = new TestObject();
@@ -213,32 +214,32 @@ public class SettingsBaseTest {
     data1.Reset();
     data2.Reset();
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data1.a = false;
     Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data2.a = false;
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data1.b = true;
     Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data2.b = true;
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data1.c = 456;
     Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data2.c = 456;
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data1.s = "bar";
     Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data2.s = "bar";
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
   }
-  
+
   [TestMethod]
   public void TestAreSettingsOptionsEqualNested() {
     var data1 = new CombinedObject();
@@ -248,46 +249,46 @@ public class SettingsBaseTest {
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
     Assert.IsTrue(data1.nested.EqualsCalled);
     Assert.IsTrue(data1.nested2.EqualsCalled);
-    
+
     data1.nested.a = 789;
     Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data2.nested.a = 789;
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data1.nested.b = 101112;
     Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data2.nested.b = 101112;
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data1.nested2.a = 131415;
     Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data2.nested2.a = 131415;
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data1.nested2.b = 161718;
     Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data2.nested2.b = 161718;
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data1.a = 192021;
     Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data2.a = 192021;
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data1.ns.a = 222324;
     Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data2.ns.a = 222324;
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data1.ns.b = 252627;
     Assert.IsFalse(SettingsBase.AreOptionsEqual(data1, data2));
-    
+
     data2.ns.b = 252627;
     Assert.IsTrue(SettingsBase.AreOptionsEqual(data1, data2));
   }
@@ -301,7 +302,7 @@ public class SettingsBaseTest {
     data.b = true;
     data.c = 456;
     data.s = "bar";
-    
+
     options.RemoveWhere(item => item.MemberId >= 100);
     SettingsBase.InitializeAllNewOptions(data, options);
     Assert.AreEqual(data.a, true);
@@ -309,7 +310,7 @@ public class SettingsBaseTest {
     Assert.AreEqual(data.c, 123);
     Assert.AreEqual(data.s, "foo");
   }
-  
+
   [TestMethod]
   public void TestInitializeNoNewOptions() {
     var data = new DerivedObject();
@@ -319,14 +320,14 @@ public class SettingsBaseTest {
     data.b = true;
     data.c = 456;
     data.s = "bar";
-    
+
     SettingsBase.InitializeAllNewOptions(data, options);
     Assert.AreEqual(data.a, false);
     Assert.AreEqual(data.b, true);
     Assert.AreEqual(data.c, 456);
     Assert.AreEqual(data.s, "bar");
   }
-  
+
   [TestMethod]
   public void TestInitializeAllNewOptionsNested() {
     var data = new CombinedObject();
@@ -338,7 +339,7 @@ public class SettingsBaseTest {
     data.nested2 = new NestedObject();
     data.nested2.a = 131415;
     data.nested2.b = 161718;
-    
+
     options.RemoveWhere(item => item.ClassName == "NestedObject");
     SettingsBase.InitializeAllNewOptions(data, options);
     Assert.AreEqual(data.nested.a, 123);
@@ -353,6 +354,6 @@ public class SettingsBaseTest {
     SettingsBase.InitializeReferenceOptions(data);
     Assert.IsNotNull(data.list);
     Assert.IsNotNull(data.dict);
-    Assert.IsFalse(data.flag);// Should not be changed.
+    Assert.IsFalse(data.flag); // Should not be changed.
   }
 }

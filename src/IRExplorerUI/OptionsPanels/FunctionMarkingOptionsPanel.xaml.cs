@@ -137,7 +137,7 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
   }
 
   private void MarkingImport_Click(object sender, RoutedEventArgs e) {
-    if(settings_.ImportMarkings(this)) {
+    if (settings_.ImportMarkings(this)) {
       ReloadMarkingsList();
       ReloadFunctionList();
       ReloadMarkingsList();

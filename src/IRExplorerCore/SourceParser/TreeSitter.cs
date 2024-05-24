@@ -1,26 +1,6 @@
-﻿/*
-MIT License
-
-Copyright (c) 2023 Microsoft Corporation
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -32,7 +12,6 @@ SOFTWARE.
 //
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace IRExplorerCore.SourceParser;
@@ -148,7 +127,7 @@ public sealed class TSParser : IDisposable {
   public bool set_language(TSLanguage language) { return ts_parser_set_language(Ptr, language.Ptr); }
 
   public TSLanguage language() {
-    var ptr = ts_parser_language(Ptr);
+    IntPtr ptr = ts_parser_language(Ptr);
     return ptr != IntPtr.Zero ? new TSLanguage(ptr) : null;
   }
 
@@ -162,8 +141,8 @@ public sealed class TSParser : IDisposable {
   }
 
   public TSTree parse_string(TSTree oldTree, string input) {
-    var ptr = ts_parser_parse_string_encoding(Ptr, oldTree != null ? oldTree.Ptr : IntPtr.Zero,
-      input, (uint)input.Length * 2, TSInputEncoding.TSInputEncodingUTF16);
+    IntPtr ptr = ts_parser_parse_string_encoding(Ptr, oldTree != null ? oldTree.Ptr : IntPtr.Zero,
+                                                 input, (uint)input.Length * 2, TSInputEncoding.TSInputEncodingUTF16);
     return ptr != IntPtr.Zero ? new TSTree(ptr) : null;
   }
 
@@ -378,7 +357,7 @@ public sealed class TSTree : IDisposable {
   }
 
   public TSTree copy() {
-    var ptr = ts_tree_copy(Ptr);
+    IntPtr ptr = ts_tree_copy(Ptr);
     return ptr != IntPtr.Zero ? new TSTree(ptr) : null;
   }
 
@@ -389,7 +368,7 @@ public sealed class TSTree : IDisposable {
   }
 
   public TSLanguage language() {
-    var ptr = ts_tree_language(Ptr);
+    IntPtr ptr = ts_tree_language(Ptr);
     return ptr != IntPtr.Zero ? new TSLanguage(ptr) : null;
   }
 
@@ -507,8 +486,8 @@ public struct TSNode {
   }
 
   public string to_string() {
-    var dat = ts_node_string(this);
-    var str = Marshal.PtrToStringAnsi(dat);
+    IntPtr dat = ts_node_string(this);
+    string str = Marshal.PtrToStringAnsi(dat);
     ts_node_string_free(dat);
     return str;
   }
@@ -806,7 +785,7 @@ public sealed class TSCursor : IDisposable {
   }
 
   public TSCursor(TSNode node, TSLanguage lang) {
-    this.cursor = ts_tree_cursor_new(node);
+    cursor = ts_tree_cursor_new(node);
     this.lang = lang;
     Ptr = new IntPtr(1);
   }
@@ -1075,7 +1054,7 @@ public sealed class TSQueryCursor : IDisposable {
         captures = new TSQueryCapture [match.capture_count];
 
         for (ushort i = 0; i < match.capture_count; i++) {
-          var intPtr = match.captures + Marshal.SizeOf(typeof(TSQueryCapture)) * i;
+          IntPtr intPtr = match.captures + Marshal.SizeOf(typeof(TSQueryCapture)) * i;
           captures[i] = Marshal.PtrToStructure<TSQueryCapture>(intPtr);
         }
       }
@@ -1181,7 +1160,7 @@ public sealed class TSLanguage : IDisposable {
   }
 
   public TSQuery query_new(string source, out uint error_offset, out TSQueryError error_type) {
-    var ptr = ts_query_new(Ptr, source, (uint)source.Length, out error_offset, out error_type);
+    IntPtr ptr = ts_query_new(Ptr, source, (uint)source.Length, out error_offset, out error_type);
     return ptr != IntPtr.Zero ? new TSQuery(ptr) : null;
   }
 

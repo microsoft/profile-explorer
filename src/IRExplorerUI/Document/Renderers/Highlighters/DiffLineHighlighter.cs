@@ -192,12 +192,12 @@ public sealed class DiffLineHighlighter : IBackgroundRenderer {
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Pen GetSegmentPen(DiffTextSegment segment) {
     return segment.Kind switch {
-      DiffKind.Deletion => deletionPen_,
-      DiffKind.Insertion => insertionPen_,
-      DiffKind.Modification => modificationPen_,
+      DiffKind.Deletion          => deletionPen_,
+      DiffKind.Insertion         => insertionPen_,
+      DiffKind.Modification      => modificationPen_,
       DiffKind.MinorModification => minorModificationPen_,
-      DiffKind.Placeholder => placeholderPen_,
-      _ => null
+      DiffKind.Placeholder       => placeholderPen_,
+      _                          => null
     };
   }
 

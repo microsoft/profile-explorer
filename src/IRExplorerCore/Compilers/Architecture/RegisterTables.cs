@@ -94,10 +94,10 @@ public static class RegisterTables {
 
   public static RegisterTable SelectRegisterTable(IRMode irMode) {
     return irMode switch {
-      IRMode.x86_64 => x86RegisterTable_,
-      IRMode.ARM64 => arm64RegisterTable_,
+      IRMode.x86_64  => x86RegisterTable_,
+      IRMode.ARM64   => arm64RegisterTable_,
       IRMode.Default => x86RegisterTable_,
-      _ => throw new ArgumentException("invalid valid", nameof(irMode))
+      _              => throw new ArgumentException("invalid valid", nameof(irMode))
     };
   }
 }

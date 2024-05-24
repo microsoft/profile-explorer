@@ -1,9 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Windows.Media;
 using IRExplorerCore.Utilities;
 using ProtoBuf;
@@ -86,7 +84,7 @@ public class OptionalColumnSettings : SettingsBase {
   }
 
   private ColumnState GetOrCreateColumnState(OptionalColumn column) {
-    if(!ColumnStates.TryGetValue(column.ColumnName, out var state)) {
+    if (!ColumnStates.TryGetValue(column.ColumnName, out var state)) {
       state = new ColumnState();
       ColumnStates[column.ColumnName] = state;
       NumberColumnStates();

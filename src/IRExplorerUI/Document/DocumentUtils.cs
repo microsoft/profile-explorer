@@ -3,22 +3,18 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
-using IRExplorerUI.Profile;
 using IRExplorerUI.Profile.Document;
 
 namespace IRExplorerUI.Document;
@@ -196,7 +192,7 @@ public static class DocumentUtils {
   }
 
   public static string GenerateElementPreviewText(IRElement element, ReadOnlyMemory<char> documentText,
-    int maxLength = 0) {
+                                                  int maxLength = 0) {
     var instr = element.ParentInstruction;
     string text = "";
 
@@ -222,7 +218,6 @@ public static class DocumentUtils {
         var firstDest = instr.Destinations[0];
         start = firstDest.TextLocation.Offset - instr.TextLocation.Offset;
         start = Math.Min(instr.OpcodeLocation.Offset - instr.TextLocation.Offset, start); // Include opcode.
-
       }
       else {
         start = instr.OpcodeLocation.Offset - instr.TextLocation.Offset; // Include opcode.
@@ -287,11 +282,10 @@ public static class DocumentUtils {
     int order = 0;
     double maxWidth = 0;
 
-
     foreach (var state in states) {
       double weightPercentage = profile.ScaleFunctionWeight(state.Weight);
 
-      var title = state.Section.ParentFunction.Name.FormatFunctionName(session, 80);
+      string title = state.Section.ParentFunction.Name.FormatFunctionName(session, 80);
       string text = $"({markerSettings.FormatWeightValue(state.Weight)})";
 
       var value = new ProfileMenuItem(text, state.Weight.Ticks, weightPercentage) {
@@ -383,7 +377,7 @@ public static class DocumentUtils {
     // cutting a class/function name.
     var sb = new StringBuilder();
 
-    for (var i = 0; i < name.Length; i++) {
+    for (int i = 0; i < name.Length; i++) {
       int splitPoint = i + Math.Min(maxLineLength, name.Length - i);
 
       if (name.Length - splitPoint < maxSplitPointAdjustment) {
@@ -434,9 +428,11 @@ public static class DocumentUtils {
     // Function names in the summary are mangled, while the document
     // has them demangled, run the demangler while searching for the target.
     var nameProvider = session.CompilerInfo.NameProvider;
-    var searchedName = element.Name;
+    string searchedName = element.Name;
     var targetFunc = section.ParentFunction.ParentSummary.FindFunction(name =>
-      nameProvider.FormatFunctionName(name).Equals(searchedName, StringComparison.Ordinal));
+                                                                         nameProvider.FormatFunctionName(name).
+                                                                           Equals(searchedName,
+                                                                                  StringComparison.Ordinal));
 
     if (targetFunc == null) {
       return null;
@@ -445,5 +441,4 @@ public static class DocumentUtils {
     // Prefer the same section as this document if there are multiple.
     return targetFunc.SectionCount == 0 ? null : targetFunc.Sections[0];
   }
-
 }

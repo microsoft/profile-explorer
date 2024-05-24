@@ -243,7 +243,8 @@
                 Source="{StaticResource SourceIcon}" />
             </ToggleButton>
 
-            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Separator
+              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
             <Menu
               Height="20"
               Margin="2,0,0,0"
@@ -285,39 +286,39 @@
                   Style="{DynamicResource SubMenuItemHeaderStyle}"
                   ToolTip="Remove all saved module markings" />
                 <Separator />
-                  <MenuItem
-                    Click="ExportMarkedModulesHtmlMenu_OnClick"
-                    Header="Export Marked Modules as HTML File"
-                    ToolTip="Save the report with marked modules as an HTML file">
-                    <MenuItem.Icon>
-                      <Image
-                        Width="16"
-                        Height="16"
-                        Source="{StaticResource SourceIcon}" />
-                    </MenuItem.Icon>
-                  </MenuItem>
-                  <MenuItem
-                    Click="ExportMarkedModulesMarkdownMenu_OnClick"
-                    Header="Export Marked Modules as Markdown File"
-                    ToolTip="Save the report with marked modules as a Markdown file">
-                    <MenuItem.Icon>
-                      <Image
-                        Width="16"
-                        Height="16"
-                        Source="{StaticResource DocumentIcon}" />
-                    </MenuItem.Icon>
-                  </MenuItem>
-                  <MenuItem
-                    Click="CopyMarkedModulesMenu_OnClick"
-                    Header="Copy Marked Modules"
-                    ToolTip="Copy the report with marked modules as an HTML table">
-                    <MenuItem.Icon>
-                      <Image
-                        Width="16"
-                        Height="16"
-                        Source="{StaticResource ClipboardIcon}" />
-                    </MenuItem.Icon>
-                  </MenuItem>
+                <MenuItem
+                  Click="ExportMarkedModulesHtmlMenu_OnClick"
+                  Header="Export Marked Modules as HTML File"
+                  ToolTip="Save the report with marked modules as an HTML file">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource SourceIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem
+                  Click="ExportMarkedModulesMarkdownMenu_OnClick"
+                  Header="Export Marked Modules as Markdown File"
+                  ToolTip="Save the report with marked modules as a Markdown file">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource DocumentIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem
+                  Click="CopyMarkedModulesMenu_OnClick"
+                  Header="Copy Marked Modules"
+                  ToolTip="Copy the report with marked modules as an HTML table">
+                  <MenuItem.Icon>
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource ClipboardIcon}" />
+                  </MenuItem.Icon>
+                </MenuItem>
               </MenuItem>
             </Menu>
             <Menu
@@ -360,7 +361,7 @@
                   Header="Clear Marked Functions"
                   Style="{DynamicResource SubMenuItemHeaderStyle}"
                   ToolTip="Remove all saved function markings" />
-                <Separator/>
+                <Separator />
                 <MenuItem
                   Click="ExportMarkedFunctionsHtmlMenu_OnClick"
                   Header="Export Marked Functions as HTML File"
@@ -396,7 +397,8 @@
                 </MenuItem>
               </MenuItem>
             </Menu>
-            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Separator
+              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <Menu
               Margin="0,0,0,0"
@@ -458,7 +460,7 @@
                       Source="{StaticResource DocumentIcon}" />
                   </MenuItem.Icon>
                 </MenuItem>
-                <Separator/>
+                <Separator />
                 <MenuItem
                   Command="{Binding CopyAllFunctionsCommand}"
                   CommandTarget="{Binding ElementName=FunctionList}"
@@ -474,7 +476,8 @@
               </MenuItem>
             </Menu>
 
-            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Separator
+              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <Image Source="{StaticResource SearchIcon}" ToolBar.OverflowMode="Never" />
             <Grid
@@ -522,7 +525,8 @@
                 Height="16"
                 Source="{StaticResource ClearIcon}" />
             </Button>
-            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Separator
+              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <Button
               Click="ScrollUpButton_OnClick"
@@ -584,7 +588,7 @@
                   <DataTemplate>
                     <DockPanel Margin="2">
                       <Grid Margin="0,0,0,2" DockPanel.Dock="Top">
-                        <TextBlock FontWeight="Medium" Text="{Binding Name}"/>
+                        <TextBlock FontWeight="Medium" Text="{Binding Name}" />
                         <Image
                           Width="16"
                           Height="16"
@@ -627,7 +631,8 @@
 
               <Style.Triggers>
                 <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                  <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                  <Setter Property="Background"
+                          Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                 </Trigger>
                 <Trigger Property="ItemsControl.AlternationIndex" Value="1">
                   <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
@@ -802,7 +807,8 @@
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
 
-              <GridViewColumn Width="200" local:GridViewColumnVisibility.IsVisible="{Binding AlternateNameColumnVisible}">
+              <GridViewColumn Width="200"
+                              local:GridViewColumnVisibility.IsVisible="{Binding AlternateNameColumnVisible}">
                 <GridViewColumnHeader x:Name="AlternateNameColumnHeader" Content="Mangled Name" />
 
                 <GridViewColumn.HeaderContainerStyle>
@@ -832,14 +838,16 @@
 
               <Style.Triggers>
                 <DataTrigger Binding="{Binding Path=IsDeletionDiff}" Value="True">
-                  <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background"
+                          Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="FontWeight" Value="Medium" />
                   <Setter Property="BorderBrush" Value="{Binding Path=MissingSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Path=IsInsertionDiff}" Value="True">
-                  <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background"
+                          Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="FontWeight" Value="Medium" />
                   <Setter Property="BorderBrush" Value="{Binding Path=NewSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
@@ -847,7 +855,8 @@
 
                 <DataTrigger Binding="{Binding Path=HasDiffs}" Value="True">
                   <Setter Property="FontWeight" Value="Medium" />
-                  <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background"
+                          Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="BorderBrush" Value="{Binding Path=ChangedSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
@@ -858,7 +867,8 @@
                 </DataTrigger>
 
                 <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                  <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                  <Setter Property="Background"
+                          Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                 </Trigger>
                 <Trigger Property="ItemsControl.AlternationIndex" Value="1">
                   <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
@@ -1086,7 +1096,8 @@
                 ToolTip="Opens the IR document in the default external editor"
                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
-              <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+              <Separator
+                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
               <MenuItem
                 Command="{Binding SelectFunctionCallTreeCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -1130,7 +1141,8 @@
                 </MenuItem.Icon>
               </MenuItem>
 
-              <Separator Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
+              <Separator
+                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
               <MenuItem
                 Command="local:Command.SaveFunctionText"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -1175,9 +1187,11 @@
       VerticalAlignment="Stretch"
       Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
 
-    <Grid Grid.Column="2" Visibility="{Binding IsSectionListVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+    <Grid Grid.Column="2"
+          Visibility="{Binding IsSectionListVisible, Converter={StaticResource BoolToVisibilityConverter}}">
 
-      <Grid x:Name="SectionGrid" Visibility="{Binding ShowSections, Converter={StaticResource BoolToVisibilityConverter}}">
+      <Grid x:Name="SectionGrid"
+            Visibility="{Binding ShowSections, Converter={StaticResource BoolToVisibilityConverter}}">
         <Grid.RowDefinitions>
           <RowDefinition Height="28" />
           <RowDefinition Height="*" />
@@ -1439,14 +1453,16 @@
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Path=IsDeletionDiff}" Value="True">
-                  <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background"
+                          Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="FontWeight" Value="Medium" />
                   <Setter Property="BorderBrush" Value="{Binding Path=MissingSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Path=IsInsertionDiff}" Value="True">
-                  <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background"
+                          Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="FontWeight" Value="Medium" />
                   <Setter Property="BorderBrush" Value="{Binding Path=NewSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
@@ -1454,7 +1470,8 @@
 
                 <DataTrigger Binding="{Binding Path=HasDiffs}" Value="True">
                   <Setter Property="FontWeight" Value="Medium" />
-                  <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background"
+                          Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="BorderBrush" Value="{Binding Path=ChangedSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>

@@ -95,7 +95,7 @@ public partial class ActivityTimelineView : UserControl, INotifyPropertyChanged 
       pendingClick_ = false; // Cancel click action.
       ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.FilterToThread);
     }
-    else  if(e.LeftButton == MouseButtonState.Pressed) {
+    else if (e.LeftButton == MouseButtonState.Pressed) {
       // There is no way in WPF to ignore a click event if double-click happens,
       // add some delay to the action to see that a double-click happens.
       pendingClick_ = true;
@@ -107,7 +107,7 @@ public partial class ActivityTimelineView : UserControl, INotifyPropertyChanged 
         if (pendingClick_) { // No double-click happened.
           pendingClick_ = false;
           Dispatcher.Invoke(() =>
-            ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.SelectThread));
+                              ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.SelectThread));
         }
       });
     }

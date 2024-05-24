@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
@@ -131,7 +130,6 @@ public class FunctionProfileData {
       long rva = pair.Key + FunctionDebugInfo.RVA - offsetData.InitialMultiplier;
       var lineInfo = debugInfo.FindSourceLineByRVA(rva, inlinee != null);
 
-
       if (!lineInfo.IsUnknown) {
         int line = lineInfo.Line;
 
@@ -140,7 +138,7 @@ public class FunctionProfileData {
           // at the call site, if filtering by an inlinee is used.
           var matchingInlinee = lineInfo.FindSameFunctionInlinee(inlinee);
 
-          if(matchingInlinee != null) {
+          if (matchingInlinee != null) {
             line = matchingInlinee.Line;
           }
           else {
@@ -166,7 +164,7 @@ public class FunctionProfileData {
           // at the call site, if filtering by an inlinee is used.
           var matchingInlinee = lineInfo.FindSameFunctionInlinee(inlinee);
 
-          if(matchingInlinee != null) {
+          if (matchingInlinee != null) {
             line = matchingInlinee.Line;
           }
           else {
@@ -214,9 +212,9 @@ public class FunctionProfileData {
     SampleStartIndex = int.MaxValue;
     SampleEndIndex = int.MinValue;
   }
-  
+
   private void InitializeReferenceMembers(FunctionDebugInfo debugInfo) {
-    if(debugInfo != null) {
+    if (debugInfo != null) {
       int size = (int)debugInfo.Size / 4; // Assume 4 bytes per instruction.
       InstructionWeight ??= new Dictionary<long, TimeSpan>(size);
       InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>(size);
@@ -225,7 +223,7 @@ public class FunctionProfileData {
       InstructionWeight ??= new Dictionary<long, TimeSpan>();
       InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>();
     }
-    
+
     SampleStartIndex = int.MaxValue;
     SampleEndIndex = int.MinValue;
   }
@@ -239,7 +237,8 @@ public class FunctionProcessingResult {
       (TimeSpan Weight, PerformanceCounterValueSet Counters) Profile)>> SampledElements) {
     public SampledElementsToLineMapping() :
       this(new Dictionary<int, List<(IRElement Element,
-        (TimeSpan Weight, PerformanceCounterValueSet Counters) Profile)>>()) { }
+             (TimeSpan Weight, PerformanceCounterValueSet Counters) Profile)>>()) {
+    }
   }
 
   public FunctionProcessingResult(int capacity = 0) {
@@ -267,7 +266,8 @@ public class FunctionProcessingResult {
     SampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
   }
 
-  public SampledElementsToLineMapping BuildSampledElementsToLineMapping(FunctionProfileData profile, ParsedIRTextSection parsedSection) {
+  public SampledElementsToLineMapping BuildSampledElementsToLineMapping(FunctionProfileData profile,
+                                                                        ParsedIRTextSection parsedSection) {
     var elementMap = BuildElementToWeightMap();
     var counterMap = BuildElementToCounterMap();
     var instrToLineMap = new SampledElementsToLineMapping();
@@ -281,14 +281,16 @@ public class FunctionProcessingResult {
         var weight = elementMap.GetValueOr(instr, TimeSpan.Zero);
         var counters = counterMap.GetValueOrNull(instr);
         var list = instrToLineMap.SampledElements.GetOrAddValue(tag.Line,
-          () => new List<(IRElement Element, (TimeSpan Weight, PerformanceCounterValueSet Counters))>());
+                                                                () =>
+                                                                  new List<(IRElement Element, (TimeSpan Weight,
+                                                                    PerformanceCounterValueSet Counters))>());
         list.Add((instr, (weight, counters)));
       }
     }
 
     // Sort elements in each line group by text offset.
     foreach (var linePair in instrToLineMap.SampledElements) {
-      linePair.Value.Sort((a,b) => a.Item1.TextLocation.CompareTo(b.Item1.TextLocation));
+      linePair.Value.Sort((a, b) => a.Item1.TextLocation.CompareTo(b.Item1.TextLocation));
     }
 
     return instrToLineMap;

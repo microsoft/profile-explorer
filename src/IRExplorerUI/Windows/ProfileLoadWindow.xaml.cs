@@ -13,10 +13,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Navigation;
 using System.Windows.Threading;
-using DocumentFormat.OpenXml.Presentation;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
@@ -475,7 +473,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       LoadProgressBar.Value = progressInfo.Current;
 
       LoadProgressLabel.Text = progressInfo.Stage switch {
-        ProfileLoadStage.TraceReading => "Reading trace",
+        ProfileLoadStage.TraceReading    => "Reading trace",
         ProfileLoadStage.TraceProcessing => "Processing trace",
         ProfileLoadStage.BinaryLoading => "Loading binaries" +
                                           (!string.IsNullOrEmpty(progressInfo.Optional) ?
@@ -484,7 +482,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
                                           (!string.IsNullOrEmpty(progressInfo.Optional) ?
                                             $" ({progressInfo.Optional.TrimToLength(15)})" : ""),
         ProfileLoadStage.PerfCounterProcessing => "Processing CPU perf. counters",
-        _ => ""
+        _                                      => ""
       };
 
       if (progressInfo.Total != 0) {
@@ -567,7 +565,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       LoadProgressBar.Value = 0;
       ResetProcessList();
 
-      var list = await ETWProfileDataProvider.FindTraceProcesses(ProfileFilePath, options_, ProcessListProgressCallback, task);
+      var list = await ETWProfileDataProvider.FindTraceProcesses(ProfileFilePath, options_, ProcessListProgressCallback,
+                                                                 task);
       IsLoadingProcessList = false;
 
       if (!IsLoadingProfile) {
@@ -684,7 +683,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     if (progressInfo != null) {
       status += progressInfo.Stage switch {
         ProfileLoadStage.TraceReading => $", {progressInfo.Total / 1000}K samples",
-        _ => ""
+        _                             => ""
       };
     }
 
@@ -1016,13 +1015,13 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     ReloadSymbolPathsList();
 
     // Wait for the UI to update
-    Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle , () => {
+    Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => {
       Utils.SelectEditableListViewItem(SymbolPathsList, symbolSettings_.SymbolPaths.Count - 1);
     });
   }
 
   private void RemoveSymbolPathButton_Click(object sender, RoutedEventArgs e) {
-    foreach (var item in SymbolPathsList.SelectedItems) {
+    foreach (object item in SymbolPathsList.SelectedItems) {
       string symbolPath = item as string;
       symbolSettings_.SymbolPaths.Remove(symbolPath);
     }
@@ -1039,8 +1038,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       return; // Cannot move an item up if it is already at the top of the list
     }
 
-    var selectedIndex = SymbolPathsList.SelectedIndex;
-    var selectedItem = SymbolPathsList.SelectedItem as string;
+    int selectedIndex = SymbolPathsList.SelectedIndex;
+    string selectedItem = SymbolPathsList.SelectedItem as string;
     symbolSettings_.SymbolPaths.RemoveAt(selectedIndex);
     symbolSettings_.SymbolPaths.Insert(selectedIndex - 1, selectedItem);
     ReloadSymbolPathsList();
@@ -1055,8 +1054,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       return; // Cannot move an item down if it is already at the bottom of the list
     }
 
-    var selectedIndex = SymbolPathsList.SelectedIndex;
-    var selectedItem = SymbolPathsList.SelectedItem as string;
+    int selectedIndex = SymbolPathsList.SelectedIndex;
+    string selectedItem = SymbolPathsList.SelectedItem as string;
     symbolSettings_.SymbolPaths.RemoveAt(selectedIndex);
     symbolSettings_.SymbolPaths.Insert(selectedIndex + 1, selectedItem);
     ReloadSymbolPathsList();
@@ -1093,8 +1092,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       return;
     }
 
-    var item = textBox.DataContext;
-    var index = symbolSettings_.SymbolPaths.IndexOf(item as string);
+    object item = textBox.DataContext;
+    int index = symbolSettings_.SymbolPaths.IndexOf(item as string);
 
     if (index == -1) {
       return;
@@ -1144,7 +1143,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void RemoveRejectedBinariesButton_Click(object sender, RoutedEventArgs e) {
-    foreach (var item in RejectedBinariesList.SelectedItems) {
+    foreach (object item in RejectedBinariesList.SelectedItems) {
       symbolSettings_.RejectedBinaryFiles.Remove(item as BinaryFileDescriptor);
     }
 
@@ -1160,7 +1159,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void RemoveRejectedSymbolsButton_Click(object sender, RoutedEventArgs e) {
-    foreach (var item in RejectedSymbolsList.SelectedItems) {
+    foreach (object item in RejectedSymbolsList.SelectedItems) {
       symbolSettings_.RejectedSymbolFiles.Remove(item as SymbolFileDescriptor);
     }
 

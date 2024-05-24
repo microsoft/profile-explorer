@@ -38,8 +38,8 @@ public sealed class FunctionIR : IRElement {
   public List<BlockIR> SortedBlocks { get; private set; }
   public BlockIR EntryBlock => Blocks.Count > 0 ? Blocks[0] : null;
   public BlockIR ExitBlock => Blocks.Count > 0 ? Blocks[^1] : null;
-  public int BlockCount => Blocks.Count; 
-  
+  public int BlockCount => Blocks.Count;
+
   public IEnumerable<IRElement> AllElements {
     get {
       foreach (var block in Blocks) {

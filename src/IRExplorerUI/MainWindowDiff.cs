@@ -811,7 +811,7 @@ public partial class MainWindow : Window, ISession {
                              Math.Min(MainGrid.ActualHeight, DiffOptionsPanel.DefaultHeight));
     var position = new Point(230, MainMenu.ActualHeight + 1);
     diffOptionsPanelHost_ = new OptionsPanelHostPopup(new DiffOptionsPanel(), position, width, height, MainGrid,
-                                                       App.Settings.DiffSettings.Clone(), this);
+                                                      App.Settings.DiffSettings.Clone(), this);
     diffOptionsPanelHost_.PanelClosed += DiffOptionsPanel_PanelClosed;
     diffOptionsPanelHost_.PanelReset += DiffOptionsPanel_PanelReset;
     diffOptionsPanelHost_.SettingsChanged += DiffOptionsPanel_SettingsChanged;

@@ -194,7 +194,7 @@
               <TextBlock Text="Details" />
             </StackPanel>
           </ToggleButton>
-          <Separator/>
+          <Separator />
           <Menu
             Height="20"
             VerticalAlignment="Center"
@@ -308,7 +308,7 @@
                 Header="Clear Marked Functions"
                 Style="{DynamicResource SubMenuItemHeaderStyle}"
                 ToolTip="Remove all saved function markings" />
-              <Separator/>
+              <Separator />
               <MenuItem
                 Click="ExportMarkedFunctionsHtmlMenu_OnClick"
                 Header="Export Marked Functions as HTML File"
@@ -392,7 +392,7 @@
               TabIndex="4"
               TextChanged="FunctionFilter_OnTextChanged"
               ToolTip="Filter function list based based on a substring (Ctrl+F)&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
-            <TextBox.InputBindings>
+              <TextBox.InputBindings>
                 <KeyBinding
                   Key="Escape"
                   Command="local:CallTreeCommand.ClearSearch"
@@ -438,13 +438,15 @@
             Command="local:CallTreeCommand.PreviousSearchResult"
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Previous search result">
-            <Image Source="{StaticResource UpArrowIcon}" Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Image Source="{StaticResource UpArrowIcon}"
+                   Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
           </Button>
           <Button
             Command="local:CallTreeCommand.NextSearchResult"
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Next search result">
-            <Image Source="{StaticResource DownArrowIcon}" Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Image Source="{StaticResource DownArrowIcon}"
+                   Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
           </Button>
         </ToolBar>
       </ToolBarTray>

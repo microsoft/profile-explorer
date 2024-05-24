@@ -77,12 +77,12 @@
               <MenuItem Click="ClearFileExclusion_Click" Header="Clear File Exclusion"
                         ToolTip="Remove the local file mapping exclusion set on the current file" />
               <MenuItem Click="ClearAllFileExclusions_Click" Header="Clear All File Exclusions"
-                        ToolTip="Remove all local file mapping exclusions"/>
+                        ToolTip="Remove all local file mapping exclusions" />
               <MenuItem Click="ResetButton_Click" Header="Reset All File Settings"
-                        ToolTip="Reset all source file mappings and exclusions"/>
+                        ToolTip="Reset all source file mappings and exclusions" />
             </MenuItem>
           </Menu>
-          
+
           <Menu VerticalAlignment="Center"
                 IsEnabled="{Binding SourceFileLoaded}"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
@@ -112,7 +112,7 @@
               <MenuItem Click="SourceFile_CopyPath" Header="Copy source file path"
                         ToolTip="Copy the file path of the current source file" />
               <MenuItem Click="SourceFile_Open" Header="Open source file"
-                        ToolTip="Open the current source file in the default editor"/>
+                        ToolTip="Open the current source file in the default editor" />
             </MenuItem>
           </Menu>
 
@@ -147,10 +147,10 @@
                 Margin="0,1,0,0"
                 Source="{StaticResource TreeIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Text="Inlinees" ToolTip="Functions inlined into the displayed function"/>
+              <TextBlock Text="Inlinees" ToolTip="Functions inlined into the displayed function" />
             </StackPanel>
           </ToggleButton>
-          <Separator/>
+          <Separator />
           <ToggleButton
             Height="20"
             Padding="0,0,0,0"
@@ -165,7 +165,7 @@
                 Margin="0,1,0,0"
                 Source="{StaticResource InlineAssemblyIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Text="ASM" Margin="4,0,0,0"/>
+              <TextBlock Text="ASM" Margin="4,0,0,0" />
             </StackPanel>
           </ToggleButton>
           <Button Padding="0" Click="CollapseAssemblyButton_Click"
@@ -182,14 +182,14 @@
           <Button Padding="0" Click="ExpandAssemblyButton_Click" Width="20"
                   IsEnabled="{Binding SourceFileLoaded}"
                   ToolTip="Expand all sections of assembly code">
-              <Image
-                Width="18"
-                Height="18"
-                Margin="0,1,0,0"
-                Style="{StaticResource DisabledImageStyle}"
-                Source="{StaticResource ExpandIcon}" />
+            <Image
+              Width="18"
+              Height="18"
+              Margin="0,1,0,0"
+              Style="{StaticResource DisabledImageStyle}"
+              Source="{StaticResource ExpandIcon}" />
           </Button>
-          <Separator/>
+          <Separator />
           <ComboBox
             Name="InlineeComboBox"
             Width="200"
@@ -203,7 +203,7 @@
             <ComboBox.ItemTemplate>
               <DataTemplate>
                 <TextBlock Text="{Binding Path=Function, Converter={StaticResource FunctionNameConverter}}"
-                ToolTip="{Binding Path=Function, Converter={StaticResource LongFunctionNameConverter}}"/>
+                           ToolTip="{Binding Path=Function, Converter={StaticResource LongFunctionNameConverter}}" />
               </DataTemplate>
             </ComboBox.ItemTemplate>
           </ComboBox>
@@ -220,7 +220,8 @@
             <Image Source="{StaticResource DownArrowIcon}" Style="{StaticResource DisabledImageStyle}" />
           </Button>
           <TextBlock Text="{Binding InlineeText}" Margin="4,0,4,0" VerticalAlignment="Center"
-                     Visibility="{Binding HasInlinees, Converter={StaticResource BoolToVisibilityConverter}}"></TextBlock>
+                     Visibility="{Binding HasInlinees, Converter={StaticResource BoolToVisibilityConverter}}">
+          </TextBlock>
           <Separator />
           <Button
             Width="20"

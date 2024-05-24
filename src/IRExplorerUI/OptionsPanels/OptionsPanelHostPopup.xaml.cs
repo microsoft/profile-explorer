@@ -14,10 +14,10 @@ public partial class OptionsPanelHostPopup : DraggablePopup, IOptionsPanel {
   private IOptionsPanel optionsPanel_;
 
   public OptionsPanelHostPopup(UserControl panel, Point position,
-                                double width, double height,
-                                UIElement referenceElement,
-                                SettingsBase settings, ISession session,
-                                bool showResetButton = true) {
+                               double width, double height,
+                               UIElement referenceElement,
+                               SettingsBase settings, ISession session,
+                               bool showResetButton = true) {
     InitializeComponent();
 
     // Offset to account for drop shadow margin.
@@ -39,21 +39,22 @@ public partial class OptionsPanelHostPopup : DraggablePopup, IOptionsPanel {
     PanelHost.Content = panel;
   }
 
-  public static OptionsPanelHostPopup Create<T, S>(SettingsBase settings, FrameworkElement relativeControl, ISession session,
-                                                    Func<S, bool, Task<S>> newSettingsHandler,
-                                                    Action panelClosedHandler,
-                                                    Point positionAdjustment = new Point())
+  public static OptionsPanelHostPopup Create<T, S>(SettingsBase settings, FrameworkElement relativeControl,
+                                                   ISession session,
+                                                   Func<S, bool, Task<S>> newSettingsHandler,
+                                                   Action panelClosedHandler,
+                                                   Point positionAdjustment = new Point())
     where T : OptionsPanelBase, new()
-    where S: SettingsBase, new() {
+    where S : SettingsBase, new() {
     var panel = new T();
     double width = Math.Max(panel.MinimumWidth,
                             Math.Min(relativeControl.ActualWidth, panel.DefaultWidth));
     double height = Math.Max(panel.MinimumHeight,
                              Math.Min(relativeControl.ActualHeight, panel.DefaultHeight));
     var position = new Point(relativeControl.ActualWidth - width, 0);
-    position .Offset(positionAdjustment.X, positionAdjustment.Y);
+    position.Offset(positionAdjustment.X, positionAdjustment.Y);
     var panelHost = new OptionsPanelHostPopup(panel, position, width, height, relativeControl,
-                                               settings, session);
+                                              settings, session);
     panelHost.SettingsChanged += async (sender, args) => {
       var result = await newSettingsHandler((S)panelHost.Settings, false);
 
@@ -62,7 +63,7 @@ public partial class OptionsPanelHostPopup : DraggablePopup, IOptionsPanel {
       }
     };
     panelHost.PanelReset += async (sender, args) => {
-      var newSettings =  new S();
+      var newSettings = new S();
       panelHost.Settings = newSettings;
       var result = await newSettingsHandler(newSettings, true);
 
@@ -87,7 +88,6 @@ public partial class OptionsPanelHostPopup : DraggablePopup, IOptionsPanel {
   public event EventHandler PanelReset;
   public event EventHandler SettingsChanged;
   public event EventHandler<bool> StayOpenChanged;
-
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
   public bool ShowResetButton { get; set; }
 

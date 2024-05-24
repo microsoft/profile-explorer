@@ -15,7 +15,6 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Folding;
 using IRExplorerCore.IR;
 using IRExplorerUI.OptionsPanels;
-using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Document;
 
@@ -156,8 +155,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
       void SetValueBorder(ElementRowValue row) {
         foreach (var value in row.Values) {
-            value.BorderBrush = blockSeparatorColor;
-            value.BorderThickness = new Thickness(1, 0, 1, 0);
+          value.BorderBrush = blockSeparatorColor;
+          value.BorderThickness = new Thickness(1, 0, 1, 0);
         }
       }
 
@@ -170,7 +169,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
       void AddDummyRows(int count, bool isOddBlock) {
         for (int i = 0; i < count; i++) {
-          elementValueList.Add(isOddBlock ? oddDummyRow: dummyRow);
+          elementValueList.Add(isOddBlock ? oddDummyRow : dummyRow);
         }
       }
 
@@ -508,7 +507,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     ColumnsList.Background = settings_.BackgroundColor.AsBrush();
     ColumnsList.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
     ColumnsListItemHeight = Utils.MeasureString("0123456789ABCXYZ!?|()",
-      settings_.FontName, TextFontSize).Height;
+                                                settings_.FontName, TextFontSize).Height;
   }
 
   private void ColumnHeaderOnClick(object sender, RoutedEventArgs e) {
@@ -547,7 +546,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   private void ColumnsList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
-    if(ColumnsList.SelectedItem != null) {
+    if (ColumnsList.SelectedItem != null) {
       RowSelected?.Invoke(this, ColumnsList.SelectedIndex);
     }
   }

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
 using IRExplorerCore;
 
@@ -19,17 +22,18 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
   private FunctionProfileProcessor(ProfileSampleFilter filter) {
     filter_ = filter;
 
-    if (filter_ != null && filter_.FunctionInstances is {Count:> 0}) {
+    if (filter_ != null && filter_.FunctionInstances is {Count: > 0}) {
       // Compute once the list of functions on the path
       // from call tree root to the function instance node.
       filterStackFuncts_ = new List<List<IRTextFunction>>();
-      
-      foreach(var instance in  filter_.FunctionInstances) {
+
+      foreach (var instance in filter_.FunctionInstances) {
         if (instance is ProfileCallTreeGroupNode groupNode) {
-          foreach(var node in groupNode.Nodes) {
+          foreach (var node in groupNode.Nodes) {
             AddInstanceFilter(node);
           }
-        } else {
+        }
+        else {
           AddInstanceFilter(instance);
         }
       }
@@ -72,17 +76,17 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
       }
 
       bool foundMatch = false;
-      
-      foreach(var stackFuncts in filterStackFuncts_) {
+
+      foreach (var stackFuncts in filterStackFuncts_) {
         // Check if instance path nodes are a prefix of the call stack.
         if (stack.FrameCount < stackFuncts.Count) {
           continue;
         }
-        
+
         bool isMatch = true;
 
         for (int i = 0; i < stackFuncts.Count; i++) {
-          if (stackFuncts[i] != 
+          if (stackFuncts[i] !=
               stack.StackFrames[stack.FrameCount - i - 1].FrameDetails.Function) {
             isMatch = false;
             break;
@@ -94,8 +98,8 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
           break;
         }
       }
-      
-      if(!foundMatch) {
+
+      if (!foundMatch) {
         return;
       }
     }
@@ -114,7 +118,7 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
       }
 
       var frameDetails = resolvedFrame.FrameDetails;
-      
+
       if (isTopFrame && data.StackModules.Add(frameDetails.Image.Id)) {
         data.ModuleWeights.AccumulateValue(frameDetails.Image.Id, sample.Weight);
       }

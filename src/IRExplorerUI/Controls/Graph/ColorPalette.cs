@@ -34,7 +34,7 @@ public class ColorPalette {
     Colors = new List<Color>();
     Brushes = new List<Brush>();
 
-    foreach (var color in colors) {
+    foreach (string color in colors) {
       Colors.Add(Utils.ColorFromString(color));
     }
 
@@ -56,8 +56,8 @@ public class ColorPalette {
       for (int i = 0; i < ColorUtils.LightPastelColors.Length; i++) {
         var color = Utils.ColorFromString(ColorUtils.LightPastelColors[i]);
         list.Add(new ColorPalette(new List<Color> {
-          color
-        }, $"LightPastelColor{i}"));
+                                    color
+                                  }, $"LightPastelColor{i}"));
       }
 
       return list;
@@ -76,7 +76,6 @@ public class ColorPalette {
       ProfileManaged,
       ProfileKernel,
     };
-
   public static List<ColorPalette>[] BuiltinPaletteSets = new List<ColorPalette>[] {
     BuiltinPalettes,
     GradientBuiltinPalettes
@@ -132,31 +131,30 @@ public class ColorPalette {
     new ColorPalette(ColorUtils.PastelColors, "Pastels");
   public static ColorPalette Pastels2 =>
     new ColorPalette(new[] {
-      "#E2E2DF","#D2D2CF","#E2CFC4","#F7D9C4",
-      "#FAEDCB","#C9E4DE","#C6DEF1","#DBCDF0",
-      "#F2C6DE","#F9C6C9"
+      "#E2E2DF", "#D2D2CF", "#E2CFC4", "#F7D9C4",
+      "#FAEDCB", "#C9E4DE", "#C6DEF1", "#DBCDF0",
+      "#F2C6DE", "#F9C6C9"
     }, "Pastels2");
   public static ColorPalette LightPastels =>
     new ColorPalette(ColorUtils.LightPastelColors, "LightPastels");
   public static ColorPalette LightPastels2 =>
     new ColorPalette(new[] {
-      "#E8DCE6","#FFEDE0","#FCDEE0","#FAD2E1",
-      "#D3EAE3","#BEE1E6","#EDE9DC","#DFE7FD",
+      "#E8DCE6", "#FFEDE0", "#FCDEE0", "#FAD2E1",
+      "#D3EAE3", "#BEE1E6", "#EDE9DC", "#DFE7FD",
     }, "LightPastels2");
   public static ColorPalette LightPastels3 =>
     new ColorPalette(new[] {
-      "#FFF1E6","#FDE2E4","#FAD2E1",
-      "#C5DEDD","#DBE7E4","#F0EFEB","#BCD4E6","#99C1DE"
+      "#FFF1E6", "#FDE2E4", "#FAD2E1",
+      "#C5DEDD", "#DBE7E4", "#F0EFEB", "#BCD4E6", "#99C1DE"
     }, "LightPastels3");
   public static ColorPalette LightPastels4 =>
     new ColorPalette(new[] {
-      "#F0D7DF","#F8EAEC","#F7DDD9",
-      "#F7E6DA","#E3E9DD","#C4DBD9","#D4E5E3",
+      "#F0D7DF", "#F8EAEC", "#F7DDD9",
+      "#F7E6DA", "#E3E9DD", "#C4DBD9", "#D4E5E3",
       "#C8C7D6"
     }, "LightPastels4");
   public static ColorPalette DarkHue => MakeHue(0.9f, 0.2f, 10);
   public static ColorPalette LightHue => MakeHue(0.9f, 0.5f, 10);
-
   [ProtoMember(1)]
   public string Name { get; set; }
   [ProtoMember(2)]
@@ -164,10 +162,8 @@ public class ColorPalette {
   [ProtoMember(3)]
   public List<Color> Colors { get; set; }
   public List<Brush> Brushes { get; set; }
-
   public int Count => Colors.Count;
   public Color this[int index] => Colors[index];
-
 
   public static ColorPalette MakeHue(float saturation, float light, int lightSteps) {
     var colors = new List<Color>();

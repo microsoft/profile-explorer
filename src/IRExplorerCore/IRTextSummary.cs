@@ -80,7 +80,6 @@ public class IRTextSummary {
     return list;
   }
 
-
   public List<IRTextFunction> FindAllFunctions(string nameSubstring) {
     return Functions.FindAll(func => func.Name.Contains(nameSubstring, StringComparison.Ordinal));
   }

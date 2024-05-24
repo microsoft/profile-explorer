@@ -9,8 +9,8 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
- <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-   <TabControl BorderThickness="0"
+  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <TabControl BorderThickness="0"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
       <TabItem Header="General" Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
@@ -30,7 +30,7 @@
             IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Sync file displayed in the Source File panel with selection" />
-          <Separator Margin="0,4,0,4" Background="LightGray"/>
+          <Separator Margin="0,4,0,4" Background="LightGray" />
           <TextBlock FontWeight="Medium" Text="Function node" />
 
           <CheckBox
@@ -44,15 +44,15 @@
             IsChecked="{Binding PrependModuleToFunction, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Show the module name in front of the function name" />
-         <CheckBox
+          <CheckBox
             x:Name="ShowCallStackPopupCheckbox"
             Content="Show function details on hover"
             IsChecked="{Binding ShowNodePopup, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
             Margin="0,2,0,2" />
           <StackPanel Margin="20,0,0,2" Orientation="Horizontal"
-                      IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}" >
-          <TextBlock Text="Hover duration (ms)" VerticalAlignment="Center"/>
+                      IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}">
+            <TextBlock Text="Hover duration (ms)" VerticalAlignment="Center" />
             <xctk:IntegerUpDown
               Margin="8,0,0,0"
               Maximum="5000"
@@ -92,12 +92,12 @@
 
         </StackPanel>
       </TabItem>
-     <TabItem
-       x:Name="MarkingPanel"
-       Header="Marking"
-       Style="{StaticResource TabControlStyle}">
-       <local:FunctionMarkingOptionsPanel x:Name="FunctionMarkingOptionsPanel" />
-     </TabItem>
+      <TabItem
+        x:Name="MarkingPanel"
+        Header="Marking"
+        Style="{StaticResource TabControlStyle}">
+        <local:FunctionMarkingOptionsPanel x:Name="FunctionMarkingOptionsPanel" />
+      </TabItem>
       <TabItem IsEnabled="False" Header="Details Panel" Style="{StaticResource TabControlStyle}">
       </TabItem>
     </TabControl>

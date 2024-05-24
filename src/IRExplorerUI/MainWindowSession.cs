@@ -587,13 +587,13 @@ public partial class MainWindow : Window, ISession {
 
   private async Task OpenDocument() {
     await Utils.ShowOpenFileDialogAsync(CompilerInfo.OpenFileFilter, "*.*", "Open file",
-      async path => {
-        var loadedDoc = await OpenDocument(path);
+                                        async path => {
+                                          var loadedDoc = await OpenDocument(path);
 
-        if (loadedDoc != null) {
-          AddRecentFile(path);
-        }
-      });
+                                          if (loadedDoc != null) {
+                                            AddRecentFile(path);
+                                          }
+                                        });
   }
 
   private async Task<LoadedDocument>
@@ -1022,8 +1022,8 @@ public partial class MainWindow : Window, ISession {
     var document = targetDocument;
 
     if (args.OpenKind == OpenSectionKind.NewTab ||
-         args.OpenKind == OpenSectionKind.NewTabDockLeft ||
-         args.OpenKind == OpenSectionKind.NewTabDockRight) {
+        args.OpenKind == OpenSectionKind.NewTabDockLeft ||
+        args.OpenKind == OpenSectionKind.NewTabDockRight) {
       document = (await AddNewDocument(args.OpenKind)).DocumentHost;
     }
     else if (args.OpenKind == OpenSectionKind.ReplaceCurrent ||
@@ -1135,10 +1135,10 @@ public partial class MainWindow : Window, ISession {
 
   private async Task GenerateGraphs(GraphKind graphKind, IRTextSection section, IRDocument document) {
     var panelKind = graphKind switch {
-      GraphKind.FlowGraph => ToolPanelKind.FlowGraph,
-      GraphKind.DominatorTree => ToolPanelKind.DominatorTree,
+      GraphKind.FlowGraph         => ToolPanelKind.FlowGraph,
+      GraphKind.DominatorTree     => ToolPanelKind.DominatorTree,
       GraphKind.PostDominatorTree => ToolPanelKind.PostDominatorTree,
-      _ => throw new InvalidOperationException("Unexpected graph kind!")
+      _                           => throw new InvalidOperationException("Unexpected graph kind!")
     };
 
     var action = GetComputeGraphAction(graphKind);
@@ -1152,20 +1152,20 @@ public partial class MainWindow : Window, ISession {
   private Func<FunctionIR, IRTextSection, CancelableTask, Graph> GetComputeGraphAction(
     GraphKind graphKind) {
     return graphKind switch {
-      GraphKind.FlowGraph => ComputeFlowGraph,
-      GraphKind.DominatorTree => ComputeDominatorTree,
+      GraphKind.FlowGraph         => ComputeFlowGraph,
+      GraphKind.DominatorTree     => ComputeDominatorTree,
       GraphKind.PostDominatorTree => ComputePostDominatorTree,
-      _ => throw new InvalidOperationException("Unexpected graph kind!")
+      _                           => throw new InvalidOperationException("Unexpected graph kind!")
     };
   }
 
   private Func<FunctionIR, IRTextSection, CancelableTask, Graph> GetComputeGraphAction(
     ToolPanelKind graphKind) {
     return graphKind switch {
-      ToolPanelKind.FlowGraph => ComputeFlowGraph,
-      ToolPanelKind.DominatorTree => ComputeDominatorTree,
+      ToolPanelKind.FlowGraph         => ComputeFlowGraph,
+      ToolPanelKind.DominatorTree     => ComputeDominatorTree,
       ToolPanelKind.PostDominatorTree => ComputePostDominatorTree,
-      _ => throw new InvalidOperationException("Unexpected graph kind!")
+      _                               => throw new InvalidOperationException("Unexpected graph kind!")
     };
   }
 
@@ -1242,8 +1242,8 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-private async Task UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentHost document,
-                                              DelayedAction delayedAction = null) {
+  private async Task UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentHost document,
+                                                DelayedAction delayedAction = null) {
     var docHostPair = FindDocumentHostPair(document);
 
     //? TODO: Can happen if the loading is slow (debug mode?)

@@ -86,8 +86,8 @@ public sealed class OperandIR : IRElement {
 
       return Kind switch {
         OperandKind.Address when Value is OperandIR ir => ir.NameValue,
-        OperandKind.LabelAddress => BlockLabelValue.NameValue,
-        _ => (ReadOnlyMemory<char>)Value
+        OperandKind.LabelAddress                       => BlockLabelValue.NameValue,
+        _                                              => (ReadOnlyMemory<char>)Value
       };
     }
   }
@@ -114,15 +114,15 @@ public sealed class OperandIR : IRElement {
 
   public override string ToString() {
     string result = Kind switch {
-      OperandKind.Variable => $"var {Value}.{Type}",
-      OperandKind.Temporary => $"temp {Value}.{Type}",
-      OperandKind.IntConstant => $"intconst {Value}.{Type}",
+      OperandKind.Variable      => $"var {Value}.{Type}",
+      OperandKind.Temporary     => $"temp {Value}.{Type}",
+      OperandKind.IntConstant   => $"intconst {Value}.{Type}",
       OperandKind.FloatConstant => $"floatconst {Value}.{Type}",
-      OperandKind.Indirection => $"indir {Value}.{Type}",
-      OperandKind.Address => $"address {Value}.{Type}",
-      OperandKind.LabelAddress => $"label {Value}.{Type}",
-      OperandKind.Other => "other",
-      _ => "<unexpected>"
+      OperandKind.Indirection   => $"indir {Value}.{Type}",
+      OperandKind.Address       => $"address {Value}.{Type}",
+      OperandKind.LabelAddress  => $"label {Value}.{Type}",
+      OperandKind.Other         => "other",
+      _                         => "<unexpected>"
     };
 
     var ssaTag = GetTag<ISSAValue>();

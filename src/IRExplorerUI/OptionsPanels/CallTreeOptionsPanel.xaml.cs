@@ -35,7 +35,6 @@ public partial class CallTreeOptionsPanel : OptionsPanelBase {
     });
   }
 
-
   private void ResetCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
     ((CallTreeSettings)Settings).NodePopupDuration = CallTreeSettings.DefaultNodePopupDuration;
     ReloadSettings();

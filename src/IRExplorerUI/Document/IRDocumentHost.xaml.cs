@@ -5,10 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
-using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -16,13 +13,10 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using ClosedXML.Excel;
-using HtmlAgilityPack;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
-using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
@@ -30,7 +24,6 @@ using IRExplorerUI.Profile;
 using IRExplorerUI.Profile.Document;
 using IRExplorerUI.Query;
 using IRExplorerUI.Utilities;
-using Microsoft.Extensions.Primitives;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -161,7 +154,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     profileFilter_ = new ProfileSampleFilter();
     historyManager_ = new ProfileHistoryManager(() => {
       var state = new ProfileFunctionState(TextView.Section, TextView.Function,
-        TextView.SectionText, profileFilter_);
+                                           TextView.SectionText, profileFilter_);
 
       if (funcProfile_ != null) {
         state.Weight = funcProfile_.Weight;
@@ -214,7 +207,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     historyManager_.ClearNextStates(); // Reset forward history.
     var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab :
-                                               OpenSectionKind.ReplaceCurrent;
+      OpenSectionKind.ReplaceCurrent;
     await Session.OpenProfileFunction(targetFunc, mode,
                                       targetFilter, this);
   }
@@ -249,10 +242,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   public event EventHandler<bool> PassOutputShowBeforeChanged;
   public event EventHandler<bool> PassOutputVisibilityChanged;
   public event PropertyChangedEventHandler PropertyChanged;
-
   public string TitlePrefix { get; set; }
   public string TitleSuffix { get; set; }
-
   public string DescriptionPrefix { get; set; }
   public string DescriptionSuffix { get; set; }
 
@@ -355,14 +346,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   public bool HasPreviousFunctions => historyManager_.HasPreviousStates;
   public bool HasNextFunctions => historyManager_.HasNextStates;
-
-  public bool HasProfileInstanceFilter {
-    get => profileFilter_ is {HasInstanceFilter:true};
-  }
-
-  public bool HasProfileThreadFilter {
-    get => profileFilter_ is {HasThreadFilter:true};
-  }
+  public bool HasProfileInstanceFilter => profileFilter_ is {HasInstanceFilter: true};
+  public bool HasProfileThreadFilter => profileFilter_ is {HasThreadFilter: true};
 
   public void NotifyPropertyChanged(string propertyName) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -399,7 +384,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       if (PassOutputVisible) {
         await PassOutput.UnloadSection(section, TextView);
       }
-
 
       // Clear references to IR objects that would keep the previous function alive.
       await RemoveRemarks();
@@ -504,8 +488,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     NotifyPropertyChanged(nameof(HasPreviousFunctions));
     NotifyPropertyChanged(nameof(HasNextFunctions));
     DocumentUtils.CreateBackMenu(BackMenu, historyManager_.PreviousFunctions,
-      BackMenuItem_OnClick,
-      settings_, session_);
+                                 BackMenuItem_OnClick,
+                                 settings_, session_);
   }
 
   private async void BackMenuItem_OnClick(object sender, RoutedEventArgs e) {
@@ -535,7 +519,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async Task LoadPreviousSectionState(ProfileFunctionState state) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    await session_.OpenDocumentSectionAsync(new OpenSectionEventArgs(state.Section, OpenSectionKind.ReplaceCurrent, this));
+    await session_.OpenDocumentSectionAsync(
+      new OpenSectionEventArgs(state.Section, OpenSectionKind.ReplaceCurrent, this));
 
     if (state.ProfileFilter is {IncludesAll: false}) {
       await SwitchProfileInstanceAsync(state.ProfileFilter);
@@ -556,12 +541,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     bool kindResult = remark.Kind switch {
-      RemarkKind.Analysis => remarkSettings.Analysis,
+      RemarkKind.Analysis     => remarkSettings.Analysis,
       RemarkKind.Optimization => remarkSettings.Optimization,
-      RemarkKind.Default => remarkSettings.Default,
-      RemarkKind.Verbose => remarkSettings.Verbose,
-      RemarkKind.Trace => remarkSettings.Trace,
-      _ => false
+      RemarkKind.Default      => remarkSettings.Default,
+      RemarkKind.Verbose      => remarkSettings.Verbose,
+      RemarkKind.Trace        => remarkSettings.Trace,
+      _                       => false
     };
 
     if (!kindResult) {
@@ -1087,11 +1072,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         await LoadPreviousSection();
       }
     }
-    else if(e.Key == Key.H && Utils.IsControlModifierActive()) {
+    else if (e.Key == Key.H && Utils.IsControlModifierActive()) {
       JumpToHottestProfiledElement();
     }
     else if (e.Key == Key.F2) {
-      if(Utils.IsShiftModifierActive()) {
+      if (Utils.IsShiftModifierActive()) {
         JumpToProfiledElement(1);
       }
       else {
@@ -1158,11 +1143,11 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     if (reloadFilterMenus) {
       ProfilingUtils.CreateInstancesMenu(InstancesMenu, Section, funcProfile,
-                             InstanceMenuItem_OnClick,
-                             InstanceMenuItem_OnRightClick,
-                             settings_, Session);
+                                         InstanceMenuItem_OnClick,
+                                         InstanceMenuItem_OnRightClick,
+                                         settings_, Session);
       ProfilingUtils.CreateThreadsMenu(ThreadsMenu, Section, funcProfile,
-                           ThreadMenuItem_OnClick, settings_, Session);
+                                       ThreadMenuItem_OnClick, settings_, Session);
     }
 
     if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
@@ -1273,7 +1258,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void CreateProfileElementMenu(FunctionProfileData funcProfile,
-                                      FunctionProcessingResult result) {
+                                        FunctionProcessingResult result) {
     var list = new List<ProfileMenuItem>(result.SampledElements.Count);
     ProfileElementsMenu.Items.Clear();
 
@@ -1364,7 +1349,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async Task<ProfileData> ComputeInstanceProfile() {
     return await LongRunningAction.Start(
       async () => await Task.Run(() => Session.ProfileData.
-        ComputeProfile(Session.ProfileData, profileFilter_, false)),
+                                   ComputeProfile(Session.ProfileData, profileFilter_, false)),
       TimeSpan.FromMilliseconds(500),
       "Filtering function instance", this, Session);
   }
@@ -1387,7 +1372,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     if (TextView.ProfileProcessingResult != null) {
       var inlineeList = profileMarker_.GenerateInlineeList(TextView.ProfileProcessingResult);
       ProfilingUtils.CreateInlineesMenu(InlineesMenu, Section, inlineeList,
-                                       funcProfile, InlineeMenuItem_OnClick, settings_, Session);
+                                        funcProfile, InlineeMenuItem_OnClick, settings_, Session);
       CreateProfileBlockMenu(funcProfile, TextView.ProfileProcessingResult);
       CreateProfileElementMenu(funcProfile, TextView.ProfileProcessingResult);
     }
@@ -1511,7 +1496,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     return (remarkSettings_.ShowDocumentRemarks ? filteredList : null,
-      remarkSettings_.ShowMarginRemarks ? markerRemarksGroups : null);
+            remarkSettings_.ShowMarginRemarks ? markerRemarksGroups : null);
   }
 
   private async Task UpdateDocumentRemarks(List<Remark> remarks) {
@@ -1774,7 +1759,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     optionsPanel_ = new DocumentOptionsPanel();
     optionsPanelPopup_ = new OptionsPanelHostPopup(optionsPanel_, position, width, height, relativeElement,
-                                                     settings_.Clone(), Session);
+                                                   settings_.Clone(), Session);
 
     optionsPanelPopup_.PanelClosed += OptionsPanel_PanelClosed;
     optionsPanelPopup_.PanelReset += OptionsPanel_PanelReset;
@@ -1815,8 +1800,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     var position = new Point(RemarkOptionsPanel.LeftMargin, 0);
 
     remarkOptionsPanelPopup_ = new OptionsPanelHostPopup(new RemarkOptionsPanel(),
-                                                           position, width, height, TextView,
-                                                           remarkSettings_.Clone(), Session);
+                                                         position, width, height, TextView,
+                                                         remarkSettings_.Clone(), Session);
     remarkOptionsPanelPopup_.PanelClosed += RemarkOptionsPanel_PanelClosed;
     remarkOptionsPanelPopup_.PanelReset += RemarkOptionsPanel_PanelReset;
     remarkOptionsPanelPopup_.SettingsChanged += RemarkOptionsPanel_SettingsChanged;
@@ -2415,7 +2400,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async void InlineeMenuItem_OnClick(object sender, RoutedEventArgs e) {
     var inlinee = ((MenuItem)sender)?.Tag as InlineeListItem;
 
-    if (inlinee != null && inlinee.ElementWeights is {Count:>0}) {
+    if (inlinee != null && inlinee.ElementWeights is {Count: > 0}) {
       // Sort by weight and bring the hottest element into view.
       var elements = inlinee.SortedElements;
       TextView.SetCaretAtElement(elements[0]);

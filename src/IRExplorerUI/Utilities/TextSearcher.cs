@@ -41,8 +41,7 @@ public class TextSearcher {
   private Regex cachedRegex_;
   private TextSearchKind searchKind_;
   private string searchedText_;
-
-  public TextSearcher() {}
+  public TextSearcher() { }
 
   public TextSearcher(string text, bool caseInsensitive = false) {
     searchedText_ = text;
@@ -249,7 +248,7 @@ public class TextSearcher {
     }
     else if (searchKind.HasFlag(TextSearchKind.Wildcard)) {
       if (FileSystemName.MatchesSimpleExpression(searchedText.ToString(), text.ToString(),
-        searchKind.HasFlag(TextSearchKind.CaseInsensitive))) {
+                                                 searchKind.HasFlag(TextSearchKind.CaseInsensitive))) {
         return (startOffset, searchedText.Length);
       }
     }

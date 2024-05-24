@@ -9,7 +9,7 @@
   mc:Ignorable="d">
   <UserControl.LayoutTransform>
     <ScaleTransform ScaleX="{Binding WindowScaling}"
-                    ScaleY="{Binding WindowScaling}"/>
+                    ScaleY="{Binding WindowScaling}" />
   </UserControl.LayoutTransform>
 
   <StackPanel Orientation="Vertical">

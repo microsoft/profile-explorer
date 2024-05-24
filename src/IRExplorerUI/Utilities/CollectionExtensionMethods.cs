@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +17,7 @@ public static class CollectionExtensionMethods {
     if (list == null) {
       return null;
     }
-    
+
     return list.ConvertAll(item => item);
   }
 
@@ -26,11 +29,10 @@ public static class CollectionExtensionMethods {
              list.Count != other.Count) {
       return false;
     }
-    
+
     return list.SequenceEqual(other);
   }
-  
-  
+
   public static bool AreEqual(this IList list, IList other) {
     if (ReferenceEquals(list, other)) {
       return true;
@@ -49,13 +51,12 @@ public static class CollectionExtensionMethods {
     return true;
   }
 
-
   public static Dictionary<TKey, TValue> CloneDictionary<TKey, TValue>(
     this Dictionary<TKey, TValue> dict) {
     if (dict == null) {
       return null;
     }
-    
+
     var newDict = new Dictionary<TKey, TValue>(dict.Count);
 
     foreach (var item in dict) {
@@ -69,7 +70,7 @@ public static class CollectionExtensionMethods {
     if (hashSet == null) {
       return null;
     }
-    
+
     var newHashSet = new HashSet<T>(hashSet.Count);
 
     foreach (var item in hashSet) {
@@ -224,7 +225,6 @@ public static class CollectionExtensionMethods {
       return false;
     if (first.Count != second.Count)
       return false;
-    
 
     foreach (DictionaryEntry kvp in first) {
       if (!second.Contains(kvp.Key))
@@ -235,7 +235,7 @@ public static class CollectionExtensionMethods {
 
     return true;
   }
-  
+
   public static bool AreEqual<T>(this HashSet<T> first, HashSet<T> second) {
     if (first == second)
       return true;

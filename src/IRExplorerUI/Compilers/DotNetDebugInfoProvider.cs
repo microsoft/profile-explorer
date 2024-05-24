@@ -144,14 +144,14 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
     return SourceLineDebugInfo.Unknown;
   }
 
-  public bool LoadDebugInfo(string debugFilePath,  IDebugInfoProvider other = null) {
+  public bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null) {
     return true;
   }
 
   public void Unload() {
   }
 
-  public bool LoadDebugInfo(DebugFileSearchResult debugFile,  IDebugInfoProvider other = null) {
+  public bool LoadDebugInfo(DebugFileSearchResult debugFile, IDebugInfoProvider other = null) {
     return true;
   }
 

@@ -89,7 +89,10 @@ public interface ISession {
   void UnregisterDetachedPanel(DraggablePopup panel);
   Task<bool> SaveSessionDocument(string filePath);
   Task<LoadedDocument> OpenSessionDocument(string filePath);
-  Task<LoadedDocument> LoadProfileBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null);
+
+  Task<LoadedDocument> LoadProfileBinaryDocument(string filePath, string modulePath,
+                                                 IDebugInfoProvider debugInfo = null);
+
   Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function);
 
   //? TODO: Extract into an IProfilingSession, connecting all profile panels
@@ -110,12 +113,15 @@ public interface ISession {
 
   Task<bool> FilterProfileSamples(ProfileFilterState filter);
   Task<bool> RemoveProfileSamplesFilter();
+
   Task<bool> OpenProfileFunction(ProfileCallTreeNode node, OpenSectionKind openMode,
                                  ProfileSampleFilter instanceFilter = null,
                                  IRDocumentHost targetDocument = null);
+
   Task<bool> OpenProfileFunction(IRTextFunction function, OpenSectionKind openMode,
                                  ProfileSampleFilter instanceFilter = null,
                                  IRDocumentHost targetDocument = null);
+
   Task<bool> SwitchActiveProfileFunction(ProfileCallTreeNode node);
   Task<bool> SelectProfileFunctionInPanel(ProfileCallTreeNode node, ToolPanelKind panelKind);
   Task<bool> SelectProfileFunctionInPanel(IRTextFunction node, ToolPanelKind panelKind);
@@ -131,7 +137,6 @@ public interface ISession {
   Task<bool> ProfileFunctionSelected(IRTextFunction function, ToolPanelKind sourcePanelKind);
   Task<bool> ProfileFunctionDeselected();
   Task<bool> FunctionMarkingChanged(ToolPanelKind sourcePanelKind);
-
   bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);
   IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);
   void SetApplicationStatus(string text, string tooltip = "");

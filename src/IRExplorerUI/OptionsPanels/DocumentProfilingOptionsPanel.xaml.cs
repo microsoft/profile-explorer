@@ -14,9 +14,7 @@ public partial class DocumentProfilingOptionsPanel : OptionsPanelBase {
   public const double MinimumHeight = 200;
   public const double DefaultWidth = 350;
   public const double MinimumWidth = 350;
-
   private bool showsDocumentSettings_;
-
   public Dictionary<ValueUnitKind, string>
     ValueUnitKinds { get; } =
     new Dictionary<ValueUnitKind, string>() {
@@ -51,13 +49,13 @@ public partial class DocumentProfilingOptionsPanel : OptionsPanelBase {
 
   private void MaxWidthButton_Click(object sender, RoutedEventArgs e) {
     ((ProfileDocumentMarkerSettings)Settings).MaxPercentageBarWidth =
-      ProfileDocumentMarkerSettings.DefaultMaxPercentageBarWidth;
+      DefaultMaxPercentageBarWidth;
     ReloadSettings();
   }
 
   private void WeightCutoffButton_Click(object sender, RoutedEventArgs e) {
     ((ProfileDocumentMarkerSettings)Settings).ElementWeightCutoff =
-      ProfileDocumentMarkerSettings.DefaultElementWeightCutoff;
+      DefaultElementWeightCutoff;
     ReloadSettings();
   }
 }

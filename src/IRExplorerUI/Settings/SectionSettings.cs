@@ -13,7 +13,6 @@ public class SectionSettings : SettingsBase {
   }
 
   public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
-
   [ProtoMember(1), OptionValue(true)]
   public bool ColorizeSectionNames { get; set; }
   [ProtoMember(2), OptionValue(true)]

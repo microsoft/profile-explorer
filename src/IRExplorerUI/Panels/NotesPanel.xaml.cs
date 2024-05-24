@@ -53,8 +53,8 @@ public partial class NotesPanel : ToolPanelControl {
 
     showSectionText_ = kindString switch {
       "Document" => false,
-      "Section" => true,
-      _ => showSectionText_
+      "Section"  => true,
+      _          => showSectionText_
     };
 
     await SwitchText(Session.CurrentDocumentSection, Session.CurrentDocument);

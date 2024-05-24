@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Generic;
 using System.Text;
 using IRExplorerCore;
@@ -14,7 +17,6 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   public IRTextFunction Function { get; set; }
   private TinyList<ProfileCallTreeNode> children_;
   private ProfileCallTreeNode caller_; // Can't be serialized, reconstructed.
-
   public FunctionDebugInfo FunctionDebugInfo { get; set; }
   public TimeSpan Weight { get; set; }
   public TimeSpan ExclusiveWeight { get; set; }
@@ -22,13 +24,12 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   public object Tag { get; set; }
   public int Id { get; set; }
   public ProfileCallTreeNodeKind Kind { get; set; }
-  
+
   //? TODO: Replace Threads dict and CallSites with a TinyDictionary-like data struct
   //? like TinyList, also consider DictionarySlim instead of Dictionary from
   //? https://github.com/dotnet/corefxlab/blob/archive/src/Microsoft.Experimental.Collections/Microsoft/Collections/Extensions/DictionarySlim
   public Dictionary<int, (TimeSpan Weight, TimeSpan ExclusiveWeight)> ThreadWeights { get; set; }
   public bool HasThreadWeights => ThreadWeights != null && ThreadWeights.Count > 0;
-  
   public virtual List<ProfileCallTreeNode> Nodes => new List<ProfileCallTreeNode>() {this};
   public IList<ProfileCallTreeNode> Children => children_;
   public virtual List<ProfileCallTreeNode> Callers => new List<ProfileCallTreeNode> {caller_};
@@ -270,7 +271,6 @@ public sealed class ProfileCallTreeGroupNode : ProfileCallTreeNode {
   private List<ProfileCallTreeNode> callers_;
 
   public ProfileCallTreeGroupNode() {
-
   }
 
   public ProfileCallTreeGroupNode(FunctionDebugInfo funcInfo, IRTextFunction function,

@@ -34,7 +34,7 @@
           VerticalAlignment="Center"
           Text="Module color palette" />
       </StackPanel>
-      <Separator Margin="0,4,0,4" Background="LightGray"/>
+      <Separator Margin="0,4,0,4" Background="LightGray" />
 
       <TextBlock FontWeight="Medium" Text="Module marking" />
       <CheckBox
@@ -84,7 +84,7 @@
                       BorderThickness="0"
                       PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
                       Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                      ToolTip="{Binding Path=Name}"/>
+                      ToolTip="{Binding Path=Name}" />
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
@@ -104,8 +104,7 @@
                       BorderBrush="#707070"
                       IsManipulationEnabled="True"
                       SelectedColor="{Binding Path=Color, Mode=TwoWay}"
-                      ShowDropDownButton="True"
-                       />
+                      ShowDropDownButton="True" />
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
@@ -189,7 +188,7 @@
 
         </StackPanel>
       </Grid>
-      <Separator Margin="0,4,0,4" Background="LightGray"/>
+      <Separator Margin="0,4,0,4" Background="LightGray" />
       <TextBlock FontWeight="Medium" Text="Function marking" />
 
       <CheckBox
@@ -239,7 +238,7 @@
                       BorderThickness="0"
                       PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
                       Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                      ToolTip="{Binding Path=Name}"/>
+                      ToolTip="{Binding Path=Name}" />
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
@@ -259,8 +258,7 @@
                       BorderBrush="#707070"
                       IsManipulationEnabled="True"
                       SelectedColor="{Binding Path=Color, Mode=TwoWay}"
-                      ShowDropDownButton="True"
-                       />
+                      ShowDropDownButton="True" />
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
@@ -377,7 +375,7 @@
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                   </Style>
                 </GridViewColumn.HeaderContainerStyle>
-               </GridViewColumn>
+              </GridViewColumn>
               <GridViewColumn Width="Auto" Header="Functions" DisplayMemberBinding="{Binding FunctionColors.Count}">
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">

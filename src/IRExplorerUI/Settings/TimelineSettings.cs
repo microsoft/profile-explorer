@@ -22,7 +22,6 @@ public class TimelineSettings : SettingsBase {
   //?    - hover time
   //?    - same settings in SectionPanel
   public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
-
   [ProtoMember(1), OptionValue(true)]
   public bool SyncSelection { get; set; }
   [ProtoMember(2), OptionValue(true)]
@@ -53,7 +52,7 @@ public class TimelineSettings : SettingsBase {
     }
 
     return (ColorBrushes.GetBrush(ColorUtils.GenerateLightPastelColor(colorIndex)),
-      ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(colorIndex)));
+            ColorBrushes.GetBrush(ColorUtils.GeneratePastelColor(colorIndex)));
   }
 
   public override void Reset() {

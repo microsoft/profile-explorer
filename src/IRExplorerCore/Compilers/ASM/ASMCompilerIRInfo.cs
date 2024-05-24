@@ -15,7 +15,7 @@ public sealed class ASMCompilerIRInfo : ICompilerIRInfo {
   public IRMode Mode { get; set; }
   public InstructionOffsetData InstructionOffsetData => Mode switch {
     IRMode.ARM64 => InstructionOffsetData.ConstantSize(4),
-    _ => InstructionOffsetData.VariableSize(1, 16)
+    _            => InstructionOffsetData.VariableSize(1, 16)
   };
 
   public IRParsingErrorHandler CreateParsingErrorHandler() {

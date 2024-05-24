@@ -743,8 +743,8 @@ public partial class GraphPanel : ToolPanelControl {
                                Math.Min(GraphHost.ActualHeight, ExpressionGraphOptionsPanel.DefaultHeight));
       var position = new Point(GraphHost.ActualWidth - width, 0);
       graphOptionsPanel_ = new OptionsPanelHostPopup(new ExpressionGraphOptionsPanel(),
-                                                      position, width, height, GraphHost,
-                                                      Settings.Clone(), Session);
+                                                     position, width, height, GraphHost,
+                                                     Settings.Clone(), Session);
     }
     else {
       double width = Math.Max(FlowGraphOptionsPanel.MinimumWidth,
@@ -753,8 +753,8 @@ public partial class GraphPanel : ToolPanelControl {
                                Math.Min(GraphHost.ActualHeight, FlowGraphOptionsPanel.DefaultHeight));
       var position = new Point(GraphHost.ActualWidth - width, 0);
       graphOptionsPanel_ = new OptionsPanelHostPopup(new FlowGraphOptionsPanel(),
-                                                      position, width, height, GraphHost,
-                                                      Settings.Clone(), Session);
+                                                     position, width, height, GraphHost,
+                                                     Settings.Clone(), Session);
     }
 
     graphOptionsPanel_.PanelClosed += OptionsPanel_PanelClosed;
@@ -849,7 +849,9 @@ public partial class GraphPanel : ToolPanelControl {
 
     var position = Mouse.GetPosition(GraphHost).AdjustForMouseCursor();
     previewPopup_ = await IRDocumentPopup.CreateNew(Document, node.NodeInfo.ElementData, position,
-                                                    GraphHost, App.Settings.GetElementPreviewPopupSettings(ToolPanelKind.FlowGraph),
+                                                    GraphHost,
+                                                    App.Settings.
+                                                      GetElementPreviewPopupSettings(ToolPanelKind.FlowGraph),
                                                     "Block ");
     previewPopup_.PopupDetached += Popup_PopupDetached;
     previewPopup_.ShowPopup();
