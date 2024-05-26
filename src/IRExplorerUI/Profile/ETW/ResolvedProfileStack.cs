@@ -34,9 +34,9 @@ public sealed class ResolvedProfileStack {
     new ConcurrentDictionary<ResolvedProfileStackFrameDetails, ResolvedProfileStackFrameDetails>();
 
   // Stack frames with the same IP have a unique instance shared among all call stacks.
-  private static ConcurrentDictionary<long, ResolvedProfileStackFrame> frameInstances_ =
+  public static ConcurrentDictionary<long, ResolvedProfileStackFrame> frameInstances_ =
     new ConcurrentDictionary<long, ResolvedProfileStackFrame>();
-  private static ConcurrentDictionary<long, ResolvedProfileStackFrame> kernelFrameInstances_ =
+  public static ConcurrentDictionary<long, ResolvedProfileStackFrame> kernelFrameInstances_ =
     new ConcurrentDictionary<long, ResolvedProfileStackFrame>();
 
   public ResolvedProfileStack(int frameCount, ProfileContext context) {

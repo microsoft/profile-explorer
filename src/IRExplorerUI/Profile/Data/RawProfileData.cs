@@ -387,6 +387,7 @@ public class RawProfileData : IDisposable {
       existingStack = stacks_.Count;
     }
     else {
+      stack.Discard();
       Debug.Assert(stack == FindStack(existingStack));
     }
 
@@ -595,34 +596,29 @@ public class RawProfileData : IDisposable {
 
     return data;
   }
+}
 
-  private class StackComparer : IEqualityComparer<long[]> {
-    public unsafe bool Equals(long[] data1, long[] data2) {
-      fixed (long* p1 = data1, p2 = data2) {
-        return new Span<long>(p1, data1.Length).
-          SequenceEqual(new Span<long>(p2, data2.Length));
-      }
+public class StackComparer : IEqualityComparer<long[]> {
+  public bool Equals(long[] data1, long[] data2) {
+    return AreEqual(data1, data2);
+  }
+
+  public int GetHashCode(long[] data) {
+    return ComputeHashCode(data);
+  }
+
+  public static bool AreEqual(long[] data1, long[] data2) {
+    if(data1.Length != data2.Length) {
+      return false;
     }
 
-    public int GetHashCode(long[] data) {
-      int hash = 0;
-      int left = data.Length;
-      int i = 0;
+    return data1.AsSpan().SequenceEqual(data2.AsSpan());
+  }
 
-      while (left >= 4) {
-        hash = HashCode.Combine(hash, data[i], data[i + 1], data[i + 2], data[i + 3]);
-        left -= 4;
-        i += 4;
-      }
-
-      while (left > 0) {
-        hash = HashCode.Combine(hash, data[i]);
-        left--;
-        i++;
-      }
-
-      return hash;
-    }
+  public static int ComputeHashCode(long[] data) {
+    HashCode hash = new();
+    hash.AddBytes(MemoryMarshal.AsBytes(data.AsSpan()));
+    return hash.ToHashCode();
   }
 }
 

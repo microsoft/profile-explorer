@@ -214,7 +214,10 @@ public sealed partial class ETWEventProcessor : IDisposable {
     var kernel = new KernelTraceEventParser(source_, KernelTraceEventParser.
                                               ParserTrackingOptions.ThreadToProcess);
     UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
-    source_.Process(); // Handles ThreadDCStop to build mapping.
+
+    if (!isRealTime_) {
+      source_.Process(); // Handles ThreadDCStop to build mapping.
+    }
 
     // For ETL file, the image timestamp (needed to find a binary on a symbol server)
     // can show up in the ImageID event instead the usual Kernel.ImageGroup.
@@ -239,8 +242,9 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
     symbolParser.ImageIDDbgID_RSDS += data => {
       if (IsAcceptedProcess(data.ProcessID)) {
-        Trace.WriteLine(
-          $"PDB signature: imageBase: {data.ImageBase}, file: {data.PdbFileName}, age: {data.Age}, guid: {data.GuidSig}");
+#if DEBUG
+        Trace.WriteLine($"PDB signature: imageBase: {data.ImageBase}, file: {data.PdbFileName}, age: {data.Age}, guid: {data.GuidSig}");
+#endif
         var symbolFile = new SymbolFileDescriptor(data.PdbFileName, data.GuidSig, data.Age);
         profile.AddDebugFileForImage(symbolFile, (long)data.ImageBase, data.ProcessID);
       }
@@ -678,9 +682,15 @@ public sealed partial class ETWEventProcessor : IDisposable {
           source_.StopProcessing();
         }
 
-        int current = (int)data.TimeStampRelativeMSec; // Copy since data gets reused.
-        int total = (int)source_.SessionDuration.TotalMilliseconds;
-        UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, total, current);
+        if (isRealTime_) {
+          int current = (int)data.TimeStampRelativeMSec; // Copy since data gets reused.
+          int total = (int)source_.SessionDuration.TotalMilliseconds;
+          UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, total, current);
+        }
+        else {
+          UpdateProgress(progressCallback, ProfileLoadStage.TraceReading,
+                         sampleId, sampleId);
+        }
       }
     };
 
@@ -759,7 +769,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
 #endif
 
     if (providerOptions_.IncludePerformanceCounters) {
-      Trace.WriteLine("Collecting PMC events");
+      Trace.WriteLine("Enable PMC event handling");
 
       kernel.PerfInfoPMCSample += data => {
         if (!IsAcceptedProcess(data.ProcessID)) {

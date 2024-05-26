@@ -20,6 +20,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private const int IMAGE_LOCK_COUNT = 64;
   private const int PROGRESS_UPDATE_INTERVAL = 32768; // Progress UI update after pow2 N samples.
 
+#if DEBUG
+  // For collecting statistics on stack frame resolution.
+  private volatile static int UnresolvedStackCount;
+  private volatile static int ResolvedStackCount;
+#endif
+
   // Per-thread caching of the previously handled image
   // and module builder, with hotspots many samples have the same.
   [ThreadStatic]
@@ -383,8 +389,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
       if (resolvedStack == null) {
+  #if DEBUG
+        Interlocked.Increment(ref UnresolvedStackCount);
+  #endif
+
         resolvedStack = ProcessUnresolvedStack(stack, context, rawProfile, symbolSettings);
         stack.SetOptionalData(resolvedStack); // Cache resolved stack.
+      }
+      else {
+#if DEBUG
+        Interlocked.Increment(ref ResolvedStackCount);
+#endif
       }
 
       samples.Add((sample, resolvedStack));
@@ -633,7 +648,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     // Determine the compiler target for the new session.
     var irMode = IRMode.Default;
+
+#if DEBUG
     var binSw = Stopwatch.StartNew();
+#endif
 
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
@@ -672,7 +690,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       }
     }
 
+#if DEBUG
     Trace.WriteLine($"Binary download time: {binSw.Elapsed}");
+#endif
 
     // Start a new session in the proper ASM mode.
     await session_.StartNewSession(mainImageName, SessionKind.FileSession,
@@ -748,7 +768,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
 
     UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
+#if DEBUG
     var sw = Stopwatch.StartNew();
+#endif
 
     // Wait for the PDBs to be loaded.
     for (int i = 0; i < imageLimit; i++) {
@@ -767,7 +789,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
 
     UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
+#if DEBUG
     Trace.WriteLine($"PDB download time: {sw.Elapsed}");
+#endif
   }
 
   private ProfileModuleBuilder CreateModuleBuilder(ProfileImage image, RawProfileData rawProfile, int processId,
@@ -789,7 +813,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // the PDB signature from the trace file.
 
       if (rejectedDebugModules_.Contains(image)) {
-        Trace.WriteLine($"=> Skipped rejected module {image.ModuleName}");
+#if DEBUG
+        Trace.WriteLine($"Skipped rejected module {image.ModuleName}");
+#endif
         return imageModule;
       }
 
@@ -940,7 +966,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           counter.IP : counter.IP - frameImage.BaseAddress;
 
         var funcPair = profileModuleBuilder.GetOrCreateFunction(frameRva);
-        uint funcRva = funcPair.DebugInfo.RVA;
+        long funcRva = funcPair.DebugInfo.RVA;
         long offset = frameRva - funcRva;
 
         FunctionProfileData profile = null;

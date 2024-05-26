@@ -163,13 +163,13 @@ public class ProfileStack : IEquatable<ProfileStack> {
   }
 
   public object GetOptionalData() {
-    Interlocked.MemoryBarrierProcessWide();
+    Interlocked.MemoryBarrier();
     return optionalData_;
   }
 
   public void SetOptionalData(object value) {
     optionalData_ = value;
-    Interlocked.MemoryBarrierProcessWide();
+    Interlocked.MemoryBarrier();
   }
 
   public long[] CloneFramePointers() {
@@ -191,12 +191,17 @@ public class ProfileStack : IEquatable<ProfileStack> {
     return profileData.FindImageForIP(FramePointers[frameIndex], profileData.FindContext(ContextId));
   }
 
+  public void Discard() {
+    ReturnArray(FramePointers);
+  }
+
   public override bool Equals(object obj) {
     return obj is ProfileStack other && Equals(other);
   }
 
   public override int GetHashCode() {
-    return HashCode.Combine(FramePointers, ContextId);
+    int framePtrHash = StackComparer.ComputeHashCode(FramePointers);
+    return HashCode.Combine(framePtrHash, ContextId);
   }
 
   public override string ToString() {
@@ -212,7 +217,8 @@ public class ProfileStack : IEquatable<ProfileStack> {
 
     // FramePointers is allocated using interning, ref. equality is sufficient.
     return ContextId == other.ContextId &&
-           FramePointers == other.FramePointers;
+           (FramePointers == other.FramePointers ||
+            StackComparer.AreEqual(FramePointers, other.FramePointers));
   }
 
   private long[] RentArray(int frameCount) {

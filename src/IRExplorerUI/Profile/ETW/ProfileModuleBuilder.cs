@@ -42,12 +42,14 @@ public sealed class ProfileModuleBuilder {
     binaryInfo_ = binaryInfo;
     symbolSettings_ = symbolSettings;
     string imageName = binaryInfo.ImageName;
+#if DEBUG
     Trace.WriteLine($"ModuleInfo init {imageName}");
+#endif
 
     var binFile = await FindBinaryFilePath(symbolSettings).ConfigureAwait(false);
 
     if (binFile == null || !binFile.Found) {
-      Trace.TraceWarning($"  Could not find local path for image {imageName}");
+      Trace.TraceWarning($"Could not find local path for image {imageName}");
       report_.AddModuleInfo(binaryInfo, binFile, ModuleLoadState.NotFound);
       CreateDummyDocument(binaryInfo);
       return true; // Try to continue just with debug info.
@@ -57,13 +59,15 @@ public sealed class ProfileModuleBuilder {
       ConfigureAwait(false);
 
     if (loadedDoc == null) {
-      Trace.TraceWarning($"  Failed to load document for image {imageName}");
+      Trace.TraceWarning($"Failed to load document for image {imageName}");
       report_.AddModuleInfo(binaryInfo, binFile, ModuleLoadState.Failed);
       CreateDummyDocument(binaryInfo);
       return false;
     }
 
+#if DEBUG
     Trace.TraceWarning($"  Loaded document for image {imageName}");
+#endif
     report_.AddModuleInfo(binaryInfo, binFile, ModuleLoadState.Loaded);
 
     ModuleDocument = loadedDoc;
@@ -79,7 +83,10 @@ public sealed class ProfileModuleBuilder {
       loadedDoc.DebugInfo = debugInfo;
     }
 
+#if DEBUG
     Trace.TraceInformation($"Initialized image {imageName}");
+#endif
+
     Initialized = true;
     return true;
   }

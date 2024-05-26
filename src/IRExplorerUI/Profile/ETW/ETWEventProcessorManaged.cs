@@ -109,7 +109,9 @@ public sealed partial class ETWEventProcessor {
 
     if (moduleDebugInfo != null) {
       moduleDebugInfo.ManagedSymbolFile = FromModuleLoad(data);
+#if DEBUG
       Trace.WriteLine($"Set managed symbol {moduleDebugInfo.ManagedSymbolFile}");
+#endif
     }
   }
 
@@ -167,9 +169,8 @@ public sealed partial class ETWEventProcessor {
       $"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
 #endif
 
-    ulong funcRva = data.MethodStartAddress;
     string funcName = $"{data.MethodNamespace}.{data.MethodName}";
-    var funcInfo = new FunctionDebugInfo(funcName, (long)funcRva, data.MethodSize,
+    var funcInfo = new FunctionDebugInfo(funcName, (long)data.MethodStartAddress, data.MethodSize,
                                          (short)data.OptimizationTier, data.MethodToken, (short)data.ReJITID);
     profile.AddManagedMethodMapping(data.ModuleID, data.MethodID, data.ReJITID, funcInfo,
                                     (long)data.MethodStartAddress, data.MethodSize, data.ProcessID);

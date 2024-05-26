@@ -690,7 +690,6 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     margin_.AddBlock(group, raiseEvent);
 
     if (raiseEvent) {
-      Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark block {((BlockIR)element).Number}");
       RecordReversibleAction(DocumentActionKind.MarkElement, element);
     }
 
