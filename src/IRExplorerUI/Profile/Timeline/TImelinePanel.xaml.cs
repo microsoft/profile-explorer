@@ -871,9 +871,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     foreach (var threadView in threadActivityViews_) {
       threadView.ActivityHost.SetMaxWidth(newWidth);
 
-      if (source != threadView.TimelineHost) {
-        threadView.TimelineHost.SetMaxWidth(newWidth, false);
-      }
+      // if (source != threadView.TimelineHost) {
+      //   threadView.TimelineHost.SetMaxWidth(newWidth, false);
+      // }
     }
   }
 
@@ -903,7 +903,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     foreach (var view in threadActivityViews_) {
       view.ActivityHost.SetHorizontalOffset(offset);
-      view.TimelineHost.SetHorizontalOffset(offset);
+      //view.TimelineHost.SetHorizontalOffset(offset);
     }
   }
 

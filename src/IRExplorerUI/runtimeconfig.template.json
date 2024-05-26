@@ -1,5 +1,10 @@
 {
   "configProperties": {
-    "Switch.System.Windows.Media.EnableHardwareAccelerationInRdp": true
+    "Switch.System.Windows.Media.EnableHardwareAccelerationInRdp": true,
+    "System.GC.Concurrent": true,
+    "System.GC.Server": true,
+    "System.GC.HeapCount": 16,
+    "System.GC.HighMemoryPercent": 50,
+    "System.GC.RetainVM": false
   }
 }
