@@ -8,8 +8,8 @@ using IRExplorerCore.IR;
 namespace IRExplorerUI;
 
 public interface IRRemarkProvider {
-  // per-section cache of remarks, don't have to re-parse all output
-  // when switching sections
+  // TODO: add per-section cache of remarks, don't have to reparse
+  // all output when switching sections.
   string SettingsFilePath { get; }
   List<RemarkCategory> RemarkCategories { get; }
   List<RemarkSectionBoundary> RemarkSectionBoundaries { get; }
@@ -32,8 +32,7 @@ public interface IRRemarkProvider {
   OptimizationRemark GetOptimizationRemarkInfo(Remark remark);
 }
 
-public class OptimizationRemark //: PassRemark
-{
+public class OptimizationRemark {
   public string OptimizationName { get; set; }
   public object Info { get; set; }
 }
@@ -49,5 +48,5 @@ public class RemarkProviderOptions {
   public bool FindOperandRemarks { get; set; }
   public bool IgnoreOverlappingOperandRemarks { get; set; }
 
-  //? multi-threading, max cores
+  //? TODO: Options for multi-threading, max cores
 }

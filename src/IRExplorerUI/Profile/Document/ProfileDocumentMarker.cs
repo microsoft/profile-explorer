@@ -167,12 +167,13 @@ public class ProfileDocumentMarker {
 
   public async Task<IRDocumentColumnData> Mark(IRDocument document, FunctionIR function,
                                                IRTextFunction textFunction) {
-    document.SuspendUpdate();
     IRDocumentColumnData columnData = null;
     var metadataTag = function.GetTag<AssemblyMetadataTag>();
     bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
     if (hasInstrOffsetMetadata) {
+      document.SuspendUpdate();
+
       var result = await Task.Run(() => profile_.Process(function, irInfo_.IR));
       columnData = await MarkProfiledElements(result, function, document);
       document.ProfileProcessingResult = result;
@@ -187,11 +188,11 @@ public class ProfileDocumentMarker {
         document.RemoveElementOverlays(tuple, ProfileOverlayTag);
       }
 
-      MarkProfiledBlocks(result.BlockSampledElements, document);
-      MarkCallSites(document, function, textFunction, metadataTag);
+      MarkProfiledBlocks(result.BlockSampledElements, document, false);
+      MarkCallSites(document, function, textFunction, metadataTag, null, false);
+      document.ResumeUpdate();
     }
 
-    document.ResumeUpdate();
     return columnData;
   }
 
@@ -281,7 +282,6 @@ public class ProfileDocumentMarker {
       }
 
       var instrLine = document.GetLineByNumber(lineNumber + inserted);
-      var instrDocument = (IRDocument)document; //? TODO: Get rid of IRDocument, it's always IRDocument
       int rangeStart = instrLine.EndOffset;
       int rangeEnd = instrLine.EndOffset;
 
@@ -290,10 +290,10 @@ public class ProfileDocumentMarker {
         var instrWeight = pair.Profile.Weight;
         var instrCounters = pair.Profile.Counters;
         string instrText = parsedSection.Text.Slice(instr.TextLocation.Offset, instr.TextLength).ToString();
-        instrDocument.Document.Insert(instrLine.EndOffset, $"\n{instrText.TrimEnd()}");
+        document.Document.Insert(instrLine.EndOffset, $"\n{instrText.TrimEnd()}");
 
         inserted++;
-        instrLine = instrDocument.GetLineByNumber(lineNumber + inserted);
+        instrLine = document.GetLineByNumber(lineNumber + inserted);
         rangeEnd = instrLine.EndOffset;
 
         location = new TextLocation(instrLine.Offset, lineNumber + inserted - 1, 0);
@@ -448,7 +448,8 @@ public class ProfileDocumentMarker {
   }
 
   private void MarkCallSites(IRDocument document, FunctionIR function, IRTextFunction textFunction,
-                             AssemblyMetadataTag metadataTag, SourceLineProfileResult processingResult = null) {
+                             AssemblyMetadataTag metadataTag, SourceLineProfileResult processingResult = null,
+                             bool suspendUpdates = true) {
     // Mark indirect call sites and list the hottest call targets.
     // Useful especially for virtual function calls.
     var callTree = globalProfile_.CallTree;
@@ -522,9 +523,11 @@ public class ProfileDocumentMarker {
     // Add the overlays to the document.
     var indirectIcon = IconDrawing.FromIconResource("ExecuteIconColor");
     var directIcon = IconDrawing.FromIconResource("ExecuteIcon");
-
     var overlayListMap = new Dictionary<IElementOverlay, List<ProfileCallTreeNode>>();
-    document.SuspendUpdate();
+
+    if (suspendUpdates) {
+      document.SuspendUpdate();
+    }
 
     foreach (var (element, pair) in overlayMap) {
       var color = App.Settings.DocumentSettings.BackgroundColor;
@@ -556,7 +559,10 @@ public class ProfileDocumentMarker {
 
     // Show a popup on hover with the list of call targets.
     SetupCallSiteHoverPreview(overlayListMap, document);
-    document.ResumeUpdate();
+
+    if (suspendUpdates) {
+      document.ResumeUpdate();
+    }
   }
 
   private void SetupCallSiteHoverPreview(Dictionary<IElementOverlay, List<ProfileCallTreeNode>> overlayListMap,
@@ -609,12 +615,15 @@ public class ProfileDocumentMarker {
     document.RegisterHoverPreview(preview);
   }
 
-  private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, IRDocument document) {
+  private void MarkProfiledBlocks(List<(BlockIR, TimeSpan)> blockWeights, IRDocument document, bool suspendUpdates) {
     if (!settings_.MarkBlocks) {
       return;
     }
 
-    document.SuspendUpdate();
+    if (suspendUpdates) {
+      document.SuspendUpdate();
+    }
+
     double overlayHeight = document.DefaultLineHeight;
     var blockPen = ColorPens.GetPen(settings_.BlockOverlayBorderColor,
                                     settings_.BlockOverlayBorderThickness);
@@ -664,7 +673,9 @@ public class ProfileDocumentMarker {
       }
     }
 
-    document.ResumeUpdate();
+    if (suspendUpdates) {
+      document.ResumeUpdate();
+    }
   }
 
   private async Task<IRDocumentColumnData>
@@ -794,9 +805,13 @@ public class ProfileDocumentMarker {
 
   public void UpdateColumnStyles(IRDocumentColumnData columnData,
                                  FunctionIR function, IRDocument document) {
+    document.SuspendUpdate();
+
     foreach (var column in columnData.Columns) {
       UpdateColumnStyle(column, columnData, function, document, settings_, columnSettings_);
     }
+
+    document.ResumeUpdate();
   }
 
   private void SetupColumnHeaderEvents(FunctionIR function, IRDocument document,

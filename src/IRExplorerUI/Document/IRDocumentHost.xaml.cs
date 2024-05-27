@@ -1413,13 +1413,19 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     // Loading remarks can take several seconds for very large functions,
     // this makes it possible to cancel the work if section switches.
+    var prevRemarkList = remarkList_;
     remarkList_ = await FindRemarks(loadTask);
 
     if (loadTask.IsCanceled) {
       return;
     }
 
-    await AddRemarks(remarkList_);
+    if (remarkList_ is { Count: > 0 }) {
+      await AddRemarks(remarkList_);
+    }
+    else if(prevRemarkList is { Count: > 0}) {
+      TextView.RemoveRemarks();
+    }
   }
 
   private async Task<List<Remark>> FindRemarks(CancelableTask cancelableTask) {

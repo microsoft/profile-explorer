@@ -288,7 +288,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void SetupEvents() {
-    TextView.TextArea.Caret.PositionChanged += Caret_PositionChanged;
+    TextView.CaretChanged += TextView_CaretChanged;
     TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
     TextView.TextArea.SelectionChanged += TextAreaOnSelectionChanged;
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
@@ -1580,7 +1580,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     e.CanExecute = HasProfileElement(1);
   }
 
-  private void Caret_PositionChanged(object sender, EventArgs e) {
+  private void TextView_CaretChanged(object sender, int e) {
     if (!TextView.IsLoaded) {
       return; // Event still triggered when unloading document, ignore.
     }
