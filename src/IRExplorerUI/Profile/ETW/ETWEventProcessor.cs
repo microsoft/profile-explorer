@@ -817,7 +817,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
     Trace.WriteLine("Done processing ETW events");
     Trace.WriteLine($"  samples: {profile.Samples.Count}");
-    Trace.WriteLine($"  events: {profile.PerformanceCountersEvents.Count}");
+    Trace.WriteLine($"  events: {profile.PerformanceCountersEvents?.Count}");
     //Trace.Flush();
 
     profile.LoadingCompleted();

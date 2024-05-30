@@ -236,7 +236,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       // and the available area is valid.
       await Dispatcher.BeginInvoke(async () => {
         await InitializeCallTree(pendingCallTree_);
-      }, DispatcherPriority.Background);
+      }, DispatcherPriority.Render);
 
       pendingCallTree_ = null;
     }

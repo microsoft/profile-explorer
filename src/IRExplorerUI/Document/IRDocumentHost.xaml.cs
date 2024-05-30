@@ -2268,7 +2268,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
       profileElementIndex_ = 0;
       JumpToProfiledElement(profileElements_[profileElementIndex_].Item1);
-    }, DispatcherPriority.ContextIdle);
+    }, DispatcherPriority.Render);
   }
 
   private bool HasProfileElements() {

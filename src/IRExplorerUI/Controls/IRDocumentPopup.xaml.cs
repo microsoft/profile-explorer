@@ -380,7 +380,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
       // var similarValueFinder = new SimilarValueFinder(function_);
       // refElement = similarValueFinder.Find(instr);
       result.TextView.ScrollToVerticalOffset(ProfileTextView.TextView.VerticalOffset);
-    }, DispatcherPriority.Background);
+    }, DispatcherPriority.Render);
   }
 
   private async void ModeToggleButton_Click(object sender, RoutedEventArgs e) {

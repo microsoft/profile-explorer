@@ -63,7 +63,7 @@ public struct ThreadSampleRange {
   public int EndIndex;
 }
 
-public partial class ProfileData {
+public class ProfileData {
   public ProfileData(TimeSpan profileWeight, TimeSpan totalWeight) : this() {
     ProfileWeight = profileWeight;
     TotalWeight = totalWeight;
