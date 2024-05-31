@@ -44,7 +44,9 @@ public class FlowGraphSettings : GraphSettings {
   }
 
   public override bool Equals(object obj) {
-    return AreOptionsEqual(this, obj);
+    return obj is FlowGraphSettings settings &&
+           base.Equals(settings) &&
+           AreOptionsEqual(this, settings);
   }
 
   protected override GraphSettings MakeClone() {

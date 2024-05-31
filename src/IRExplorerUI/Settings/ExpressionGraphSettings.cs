@@ -70,7 +70,9 @@ public class ExpressionGraphSettings : GraphSettings {
   }
 
   public override bool Equals(object obj) {
-    return AreOptionsEqual(this, obj);
+    return obj is ExpressionGraphSettings settings &&
+           base.Equals(settings) &&
+           AreOptionsEqual(this, settings);
   }
 
   protected override GraphSettings MakeClone() {

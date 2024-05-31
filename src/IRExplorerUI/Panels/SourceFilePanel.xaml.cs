@@ -275,6 +275,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   public async Task LoadSourceFile(IRTextSection section, ProfileSampleFilter profileFilter = null,
                                    IRDocument associaDocument = null) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    Utils.EnableControl(this);
     section_ = section;
     associatedDocument_ = associaDocument;
     await LoadSourceFileForFunction(section_.ParentFunction, profileFilter);
@@ -282,7 +283,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
 
   public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     await base.OnDocumentSectionLoaded(section, document);
-    Utils.EnableControl(this);
     await LoadSourceFile(section, null, document);
   }
 
@@ -390,6 +390,10 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+    if (section_ != section) {
+      return;
+    }
+
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     await base.OnDocumentSectionUnloaded(section, document);
     await ResetState();

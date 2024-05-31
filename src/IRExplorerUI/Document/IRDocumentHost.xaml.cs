@@ -1008,7 +1008,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async Task LoadNewSettings(DocumentSettings newSettings, bool force, bool commit) {
-    if (force || newSettings.HasChanges(Settings)) {
+    if (force || !newSettings.Equals(Settings)) {
       bool hasProfilingChanges = newSettings.HasProfilingChanges(Settings);
       App.Settings.DocumentSettings = newSettings;
       Settings = newSettings;

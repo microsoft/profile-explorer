@@ -222,6 +222,7 @@ public partial class GraphPanel : ToolPanelControl {
 
   private void OptionsPanel_PanelReset(object sender, EventArgs e) {
     Settings.Reset();
+    ReloadSettings();
     graphOptionsPanel_.Settings = Settings.Clone();
   }
 
@@ -775,7 +776,7 @@ public partial class GraphPanel : ToolPanelControl {
     if (PanelKind == ToolPanelKind.ExpressionGraph) {
       var newSettings = (ExpressionGraphSettings)graphOptionsPanel_.Settings;
 
-      if (newSettings.HasChanges(Settings)) {
+      if (!newSettings.Equals(Settings)) {
         App.Settings.ExpressionGraphSettings = newSettings;
         App.SaveApplicationSettings();
         ReloadSettings();
@@ -784,7 +785,7 @@ public partial class GraphPanel : ToolPanelControl {
     else {
       var newSettings = (FlowGraphSettings)graphOptionsPanel_.Settings;
 
-      if (newSettings.HasChanges(Settings)) {
+      if (!newSettings.Equals(Settings)) {
         App.Settings.FlowGraphSettings = newSettings;
         App.SaveApplicationSettings();
         ReloadSettings();

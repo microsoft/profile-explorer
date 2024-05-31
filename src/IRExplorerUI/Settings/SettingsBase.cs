@@ -27,29 +27,29 @@ namespace IRExplorerUI;
 // public class ExampleSettings : SettingsBase {
 //   [ProtoMember(1), OptionValue("Default Value")]
 //   public string SomeSetting { get; set; }
-// 
+//
 //   public ExampleSettings() {
 //     Reset();
 //   }
-// 
+//
 //   public override void Reset() {
 //     InitializeReferenceMembers();
 //     ResetAllOptions(this);
 //   }
-// 
+//
 //   [ProtoAfterDeserialization]
 //   private void InitializeReferenceMembers() {
 //     // Initialize reference members here.
 //   }
-// 
+//
 //   public override bool Equals(object obj) {
 //     return AreSettingsOptionsEqual(this, obj);
 //   }
-// 
+//
 //   public override string ToString() {
 //     return PrintOptions(this);
 //   }
-// 
+//
 //   public ExampleSettings Clone() {
 //     byte[] serialized = StateSerializer.Serialize(this);
 //     return StateSerializer.Deserialize<ExampleSettings>(serialized);
@@ -95,10 +95,6 @@ public class SettingsBase {
   }
 
   public virtual void Reset() { }
-
-  public virtual bool HasChanges(SettingsBase other) {
-    return !other.Equals(this);
-  }
 
   public static HashSet<OptionValueId> CollectOptionMembers(object settings) {
     var set = new HashSet<OptionValueId>();

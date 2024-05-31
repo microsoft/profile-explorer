@@ -33,7 +33,7 @@ public class GraphSettings : SettingsBase {
   public bool HighlightConnectedNodesOnHover { get; set; }
   [ProtoMember(9), OptionValue(true)]
   public bool HighlightConnectedNodesOnSelection { get; set; }
-  [ProtoMember(10), OptionValue("#EFECE2")]
+  [ProtoMember(10), OptionValue("#F0F0F0")]
   public Color BackgroundColor { get; set; }
   [ProtoMember(11), OptionValue("#000000")]
   public Color TextColor { get; set; }

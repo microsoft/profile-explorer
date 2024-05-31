@@ -14,9 +14,9 @@ public static class ErrorReporting {
     var time = DateTime.Now;
     string fileName = $"IRExplorer-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.trace";
 
-    string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                               fileName);
-
+    var folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "irexplorer");
+    string path = Path.Combine(folderPath, fileName);
+    Directory.CreateDirectory(folderPath);
     File.WriteAllText(path, stackTrace);
     return path;
   }

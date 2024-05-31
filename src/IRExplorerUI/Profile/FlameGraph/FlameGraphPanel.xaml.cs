@@ -150,7 +150,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     var groupNode = callTree_.GetCombinedCallTreeNode(function);
 
     if (groupNode is {Nodes.Count: > 0}) {
-      GraphHost.SelectNode(groupNode, false, bringIntoView);
+      GraphHost.SelectNode(groupNode, true, bringIntoView);
       await NodeDetailsPanel.ShowWithDetailsAsync(groupNode);
     }
   }
@@ -336,7 +336,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private void NodeDetailsPanel_NodesSelected(object sender, List<ProfileCallTreeNode> e) {
-    GraphHost.SelectNodes(e);
+    GraphHost.SelectNodes(e, true);
   }
 
   private void NodeDetailsPanel_NodeInstanceChanged(object sender, ProfileCallTreeNode e) {

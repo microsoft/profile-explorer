@@ -53,8 +53,8 @@ public abstract class TextViewSettingsBase : SettingsBase {
   }
 
   public bool HasProfilingChanges(TextViewSettingsBase other) {
-    return ProfileMarkerSettings.HasChanges(other.ProfileMarkerSettings) ||
-           ColumnSettings.HasChanges(other.ColumnSettings) ||
+    return !ProfileMarkerSettings.Equals(other.ProfileMarkerSettings) ||
+           !ColumnSettings.Equals(other.ColumnSettings) ||
            // Changing font means columns must be redrawn.
            FontName != other.FontName ||
            Math.Abs(FontSize - other.FontSize) >= double.Epsilon;
