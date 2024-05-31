@@ -434,6 +434,10 @@ public partial class MainWindow : Window, ISession {
       return;
     }
 
+    if (!IsSessionStarted) {
+      return; // When closing main window, ignore even if triggered.
+    }
+
     if (!(docHost.Content is IRDocumentHost document)) {
       return;
     }
@@ -898,6 +902,10 @@ public partial class MainWindow : Window, ISession {
   private void LayoutAnchorable_IsActiveChanged(object sender, EventArgs e) {
     if (!(sender is LayoutAnchorable panelHost)) {
       return;
+    }
+
+    if (!IsSessionStarted) {
+      return; // When closing main window, ignore even if triggered.
     }
 
     if (!(panelHost.Content is IToolPanel toolPanel)) {

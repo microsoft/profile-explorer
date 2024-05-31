@@ -1549,7 +1549,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       }
 
       JumpToProfiledElement(0);
-    }, DispatcherPriority.ContextIdle);
+    }, DispatcherPriority.Render);
   }
 
   private void JumpToProfiledElement(int offset) {

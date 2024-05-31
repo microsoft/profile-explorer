@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
@@ -127,7 +128,7 @@ public partial class GraphPanel : ToolPanelControl {
     FitGraphIntoView();
 
     if (delayRestoreState_) {
-      LoadSavedState();
+      Dispatcher.BeginInvoke(() => LoadSavedState(), DispatcherPriority.Render);
     }
 
     IsPanelEnabled = true;
@@ -951,6 +952,7 @@ public partial class GraphPanel : ToolPanelControl {
     if (document.DuringSectionLoading) {
       Trace.TraceInformation(
         $"Graph panel {ObjectTracker.Track(this)}: Ignore graph reload during section switch");
+      delayRestoreState_ = !restoredState_;
       return;
     }
 
@@ -963,14 +965,16 @@ public partial class GraphPanel : ToolPanelControl {
 
     if (section != null && section != previousSection) {
       // User switched between two sections, reload the proper graph.
+      delayRestoreState_ = !delayRestoreState_;
       await Session.SwitchGraphsAsync(this, section, document);
+      return;
     }
 
     if (!restoredState_) {
       delayRestoreState_ = true;
     }
     else {
-      LoadSavedState();
+      Dispatcher.BeginInvoke(() => LoadSavedState(), DispatcherPriority.Render);
     }
   }
 

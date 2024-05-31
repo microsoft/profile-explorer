@@ -35,7 +35,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private ProfileDataProviderOptions options_;
   private ProfileDataReport report_;
   private ISession session_;
-  private ICompilerInfoProvider compilerInfo_;
   private ProfileData profileData_;
   private object lockObject_;
   private object[] imageLocks_;
@@ -72,53 +71,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
   }
 
-  //private void ProcessInlineeSample(TimeSpan sampleWeight, long sampleOffset,
-  //    IRTextFunction textFunction, ModuleInfo module) {
-  //    return; //? TODO: Reimplement, this needs to have the inlined func still in the binary
-
-  //    // Load current function.
-  //    var loader = module.ModuleDocument.Loader;
-  //    var result = loader.LoadSection(textFunction.Sections[^1]);
-  //    var metadataTag = result.Function.GetTag<AssemblyMetadataTag>();
-  //    bool hasInstrOffsetMetadata =
-  //        metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
-
-  //    if (hasInstrOffsetMetadata && !result.IsCached) {
-  //        // Add source location debugInfo only once, can be slow.
-  //        module.FunctionDebugInfo.AnnotateSourceLocations(result.Function, textFunction.Name);
-  //    }
-
-  //    // Try to find instr. referenced by RVA, then go over all inlinees.
-  //    if (!hasInstrOffsetMetadata ||
-  //        !metadataTag.OffsetToElementMap.TryGetValue(sampleOffset, out var rvaInstr)) {
-  //        return;
-  //    }
-
-  //    var lineInfo = rvaInstr.GetTag<SourceLocationTag>();
-
-  //    if (lineInfo == null || !lineInfo.HasInlinees) {
-  //        return;
-  //    }
-
-  //    // For each inlinee, add the sample to its line.
-  //    foreach (var inlinee in lineInfo.Inlinees) {
-  //        if (!module.unmangledFuncNamesMap_.TryGetValue(inlinee.Function, out var inlineeTextFunc)) {
-  //            // The function may have been inlined at all call sites
-  //            // and not be found in the binary, make a dummy func. for it.
-  //            inlineeTextFunc = new IRTextFunction(inlinee.Function);
-  //            module.Summary.AddFunction(inlineeTextFunc);
-  //            module.unmangledFuncNamesMap_[inlinee.Function] = inlineeTextFunc;
-  //        }
-
-  //        var inlineeProfile = profileData_.GetOrCreateFunctionProfile(
-  //            inlineeTextFunc, inlinee.FilePath);
-  //        inlineeProfile.AddLineSample(inlinee.Line, sampleWeight);
-  //        inlineeProfile.Weight += sampleWeight;
-  //    }
-  //}
-
   public void Dispose() {
-    //FunctionDebugInfo?.Dispose();
+
   }
 
   public async Task<ProfileData> LoadTraceAsync(string tracePath, List<int> processIds,
@@ -285,7 +239,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         Trace.WriteLine($"Done compute func profile/call tree in {sw2.Elapsed}");
         Trace.WriteLine($"Done processing trace in {sw.Elapsed}");
 
-        if (rawProfile.PerformanceCountersEvents.Count > 0) {
+        if (rawProfile.HasPerformanceCountersEvents) {
           // Process performance counters.
           ProcessPerformanceCounters(rawProfile, processIds, symbolSettings, progressCallback, cancelableTask);
         }

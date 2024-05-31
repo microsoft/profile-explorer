@@ -718,7 +718,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       if (instanceNodes_ != null) {
         SetupInstancesHistogram(instanceNodes_, CallTreeNode.CallTreeNode, useSelfTimeHistogram_);
       }
-    }, DispatcherPriority.Background);
+    }, DispatcherPriority.Render);
   }
 
   public class BinHistogramItem : HistogramItem {

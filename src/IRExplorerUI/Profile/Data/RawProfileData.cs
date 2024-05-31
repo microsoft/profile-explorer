@@ -74,7 +74,6 @@ public class RawProfileData : IDisposable {
     stackData_ = new HashSet<long[]>(new StackComparer());
     samples_ = new List<ProfileSample>();
     perfCounters_ = new List<PerformanceCounter>();
-    perfCountersEvents_ = new CompressedSegmentedList<PerformanceCounterEvent>();
     imageSymbols_ = new Dictionary<int, Dictionary<long, SymbolFileDescriptor>>();
 
     if (handlesDotNetEvents) {
@@ -90,6 +89,8 @@ public class RawProfileData : IDisposable {
   public CompressedSegmentedList<PerformanceCounterEvent> PerformanceCountersEvents => perfCountersEvents_;
   public List<PerformanceCounter> PerformanceCounters => perfCounters_;
 
+  public bool HasPerformanceCountersEvents => PerformanceCountersEvents is {Count: > 0};
+
   public bool HasManagedMethods(int processId) {
     return procManagedDataMap_ != null && procManagedDataMap_.ContainsKey(processId);
   }
@@ -101,6 +102,10 @@ public class RawProfileData : IDisposable {
   }
 
   public int ComputePerfCounterChunkLength(int chunks) {
+    if (perfCountersEvents_ == null) {
+      return 0;
+    }
+
     int chunkSize = Math.Max(1, perfCountersEvents_.Count / chunks);
     chunkSize = CompressedSegmentedList<PerformanceCounterEvent>.RoundUpToSegmentLength(chunkSize);
     return Math.Min(chunkSize, perfCountersEvents_.Count);
@@ -248,7 +253,7 @@ public class RawProfileData : IDisposable {
     lastProcStacks_ = null;
 
     // Wait for any compression tasks.
-    perfCountersEvents_.Wait();
+    perfCountersEvents_?.Wait();
   }
 
   public void ManagedLoadingCompleted() {
@@ -346,6 +351,7 @@ public class RawProfileData : IDisposable {
 
   public int AddPerformanceCounterEvent(PerformanceCounterEvent counterEvent) {
     Debug.Assert(counterEvent.ContextId != 0);
+    perfCountersEvents_ ??= new();
     perfCountersEvents_.Add(counterEvent);
     return perfCountersEvents_.Count;
   }
@@ -526,6 +532,10 @@ public class RawProfileData : IDisposable {
   }
 
   public void PrintPerfCounters(int processId) {
+    if (perfCountersEvents_ == null) {
+      return;
+    }
+
     foreach (var sample in perfCountersEvents_) {
       var context = sample.GetContext(this);
 
