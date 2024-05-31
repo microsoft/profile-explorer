@@ -479,14 +479,13 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public async Task<bool> LoadAssembly(ParsedIRTextSection parsedSection,
                                        ProfileSampleFilter profileFilter = null) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    ResetInstance();
-    IsSourceFileDocument = false;
 
-    if (TextView.IsLoaded) {
+    if (TextView.IsLoaded && !IsSourceFileDocument) {
       historyManager_.SaveCurrentState();
-      TextView.UnloadDocument();
     }
 
+    ResetInstance();
+    IsSourceFileDocument = false;
     await TextView.LoadSection(parsedSection);
 
     // Apply profile filter if needed.
@@ -899,6 +898,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       text += $"\n{failureText}";
     }
 
+    TextView.UnloadDocument();
     SetSourceText(text, "");
     await HideProfile();
   }
@@ -1646,6 +1646,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   private void ResetInstance() {
     ResetInstanceProfiling();
+    TextView.UnloadDocument();
     sourceText_ = null;
     inlinee_ = null;
   }

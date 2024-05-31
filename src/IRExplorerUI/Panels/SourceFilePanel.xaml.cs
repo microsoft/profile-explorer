@@ -244,6 +244,12 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
   }
 
+  private void SourceFile_Show(object sender, RoutedEventArgs e) {
+    if (!string.IsNullOrEmpty(sourceFilePath_)) {
+      Utils.OpenExplorerAtFile(sourceFilePath_);
+    }
+  }
+
   private void ShowOptionsPanel() {
     if (optionsPanelPopup_ != null) {
       optionsPanelPopup_.ClosePopup();

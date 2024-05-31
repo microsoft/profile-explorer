@@ -574,6 +574,19 @@ public static class Utils {
     }
   }
 
+  public static void OpenExplorerAtFile(string path) {
+    if (!File.Exists(path)) {
+      return;
+    }
+
+    try {
+      Process.Start("explorer.exe", "/select, " + path);
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to start explorer.exe for {path}: {ex.Message}");
+    }
+  }
+
   public struct KeyCharInfo {
     public bool IsLetter;
     public char Letter;

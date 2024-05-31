@@ -109,9 +109,11 @@
                     Fill="Black" />
                 </StackPanel>
               </MenuItem.Header>
-              <MenuItem Click="SourceFile_CopyPath" Header="Copy source file path"
+              <MenuItem Click="SourceFile_CopyPath" Header="Copy Source File Path"
                         ToolTip="Copy the file path of the current source file" />
-              <MenuItem Click="SourceFile_Open" Header="Open source file"
+              <MenuItem Click="SourceFile_Show" Header="Show Source File in File Explorer"
+                        ToolTip="Open the source file directory and select the file" />
+              <MenuItem Click="SourceFile_Open" Header="Open Source File"
                         ToolTip="Open the current source file in the default editor" />
             </MenuItem>
           </Menu>

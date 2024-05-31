@@ -87,7 +87,7 @@ public static class ErrorReporting {
           $"Crash information written to:\n{sectionPath}\n{stackTracePath}",
           "IR Explorer Crash", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        OpenExplorerAtFile(stackTracePath);
+        Utils.OpenExplorerAtFile(stackTracePath);
 
         // Show auto-saved backup info.
         string autosavePath = Utils.GetAutoSaveFilePath();
@@ -97,7 +97,7 @@ public static class ErrorReporting {
                           "IR Explorer Crash", MessageBoxButton.OK,
                           MessageBoxImage.Information);
 
-          OpenExplorerAtFile(autosavePath);
+          Utils.OpenExplorerAtFile(autosavePath);
         }
       }
     }
@@ -113,14 +113,10 @@ public static class ErrorReporting {
   public static void SaveOpenSections() {
     try {
       string sectionPath = CreateSectionDump();
-      OpenExplorerAtFile(sectionPath);
+      Utils.OpenExplorerAtFile(sectionPath);
     }
     catch (Exception ex) {
       MessageBox.Show($"Failed to save crash information: {ex}");
     }
-  }
-
-  private static void OpenExplorerAtFile(string path) {
-    Process.Start("explorer.exe", "/select, " + path);
   }
 }
