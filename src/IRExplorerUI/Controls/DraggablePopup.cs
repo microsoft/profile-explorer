@@ -93,7 +93,8 @@ public class DraggablePopup : Popup {
     // some adjustment of the values based on the monitor.
     var screenPosition = position;
 
-    if (referenceElement != null) {
+    if (referenceElement != null &&
+        PresentationSource.FromVisual(referenceElement) != null) {
       screenPosition = referenceElement.PointToScreen(position);
       screenPosition = Utils.CoordinatesToScreen(screenPosition, referenceElement);
     }

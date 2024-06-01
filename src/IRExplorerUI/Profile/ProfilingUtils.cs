@@ -257,7 +257,7 @@ public static class ProfilingUtils {
 
     CreateMarkedModulesMenu(menu,
                             async (o, args) => {
-                              if (o is MenuItem menuItem) {
+                              if (args.Source is MenuItem menuItem) {
                                 if (menuItem.Tag is FunctionMarkingStyle style) {
                                   style.IsEnabled = menuItem.IsChecked;
 
@@ -274,10 +274,12 @@ public static class ProfilingUtils {
                               }
                             },
                             (o, args) => {
-                              var style = ((MenuItem)o).Tag as FunctionMarkingStyle;
-                              settings.ModuleColors.Remove(style);
-                              menu.IsSubmenuOpen = false;
-                              changedHandler();
+                              if (args.Source is MenuItem menuItem) {
+                                var style = menuItem.Tag as FunctionMarkingStyle;
+                                settings.ModuleColors.Remove(style);
+                                menu.IsSubmenuOpen = false;
+                                changedHandler();
+                              }
                             },
                             settings, session);
   }
@@ -289,7 +291,7 @@ public static class ProfilingUtils {
 
     await CreateMarkedFunctionsMenu(menu,
                                     async (o, args) => {
-                                      if (o is MenuItem menuItem) {
+                                      if (args.Source is MenuItem menuItem) {
                                         if (menuItem.Tag is FunctionMarkingStyle style) {
                                           style.IsEnabled = menuItem.IsChecked;
 
@@ -306,10 +308,12 @@ public static class ProfilingUtils {
                                       }
                                     },
                                     (o, args) => {
-                                      var style = ((MenuItem)o).Tag as FunctionMarkingStyle;
-                                      settings.FunctionColors.Remove(style);
-                                      menu.IsSubmenuOpen = false;
-                                      changedHandler();
+                                      if (args.Source is MenuItem menuItem) {
+                                        var style = menuItem.Tag as FunctionMarkingStyle;
+                                        settings.FunctionColors.Remove(style);
+                                        menu.IsSubmenuOpen = false;
+                                        changedHandler();
+                                      }
                                     },
                                     settings, session);
   }
@@ -807,7 +811,8 @@ public static class ProfilingUtils {
       }
 
       item.PreviewMouseLeftButtonDown += (o, args) => {
-        if (!isCategoriesMenu && o is MenuItem menuItem) {
+        if (!isCategoriesMenu && args.Source is MenuItem menuItem &&
+            menuItem.Tag is FunctionMarkingStyle) {
           menuItem.IsChecked = !menuItem.IsChecked;
         }
       };
