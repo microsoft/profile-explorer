@@ -8,7 +8,7 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class CallTreeNodeSettings : SettingsBase {
-  public static readonly int DefaultPreviewPopupDuration = (int)HoverPreview.LongHoverDuration.TotalMilliseconds;
+  public static readonly int DefaultPreviewPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
 
   public CallTreeNodeSettings() {
     Reset();
