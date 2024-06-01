@@ -301,6 +301,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     // Get the associated source file from the debug info if available,
     // since it also includes the start line number.
     var (sourceInfo, failureReason) = await sourceFileFinder_.FindLocalSourceFile(function);
+    sourceFileFinder_.SaveSettings(settings_.FinderSettings);
 
     if (!sourceInfo.IsUnknown && failureReason == SourceFileFinder.FailureReason.None &&
         await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter)) {
@@ -323,7 +324,8 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var inlineeSourceInfo = new SourceFileDebugInfo(inlinee.FilePath, inlinee.FilePath);
     var (sourceInfo, failureReason) =
       await sourceFileFinder_.FindLocalSourceFile(inlineeSourceInfo);
-
+    sourceFileFinder_.SaveSettings(settings_.FinderSettings);
+    
     if (!sourceInfo.IsUnknown && failureReason == SourceFileFinder.FailureReason.None &&
         await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter, inlinee)) {
       HandleLoadedSourceFile(sourceInfo, null);
