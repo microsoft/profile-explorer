@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Threading.Tasks;
@@ -427,12 +428,14 @@ public static class DocumentUtils {
 
     // Function names in the summary are mangled, while the document
     // has them demangled, run the demangler while searching for the target.
-    var nameProvider = session.CompilerInfo.NameProvider;
+    var summary = section.ParentFunction.ParentSummary;
     string searchedName = element.Name;
-    var targetFunc = section.ParentFunction.ParentSummary.FindFunction(name =>
-                                                                         nameProvider.FormatFunctionName(name).
-                                                                           Equals(searchedName,
-                                                                                  StringComparison.Ordinal));
+    var targetFunc = summary.FindFunction(searchedName);
+
+    if (targetFunc == null) {
+      var nameProvider = session.CompilerInfo.NameProvider;
+      targetFunc = summary.FindFunction(searchedName, nameProvider.FormatFunctionName);
+    }
 
     if (targetFunc == null) {
       return null;

@@ -32,6 +32,10 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   //? to be searched for in new locations.
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ =
     new ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult>();
+
+  private ConcurrentDictionary<long, SourceFileDebugInfo> sourceFileByRvaCache_ = new();
+  private ConcurrentDictionary<string, SourceFileDebugInfo> sourceFileByNameCache_ = new();
+  private ConcurrentDictionary<uint, List<SourceStackFrame>> inlineeByRvaCache_ = new();
   private static object undecorateLock_ = new object();
   private SymbolFileSourceSettings settings_;
   private string debugFilePath_;
@@ -276,11 +280,22 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
   public SourceFileDebugInfo FindSourceFilePathByRVA(long rva) {
     // Find the first line in the function.
+    if (sourceFileByRvaCache_.TryGetValue(rva, out var fileInfo)) {
+      return fileInfo;
+    }
+    
     var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(rva);
-    return FindFunctionSourceFilePathImpl(lineInfo, sourceFile, (uint)rva);
+    fileInfo = FindFunctionSourceFilePathImpl(lineInfo, sourceFile, (uint)rva);
+
+    sourceFileByRvaCache_.TryAdd(rva, fileInfo);
+    return fileInfo;
   }
 
   public SourceFileDebugInfo FindFunctionSourceFilePath(string functionName) {
+    if (sourceFileByNameCache_.TryGetValue(functionName, out var fileInfo)) {
+      return fileInfo;
+    }
+    
     var funcSymbol = FindFunctionSymbol(functionName);
 
     if (funcSymbol == null) {
@@ -289,7 +304,9 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
     // Find the first line in the function.
     var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(funcSymbol.relativeVirtualAddress);
-    return FindFunctionSourceFilePathImpl(lineInfo, sourceFile, funcSymbol.relativeVirtualAddress);
+    fileInfo = FindFunctionSourceFilePathImpl(lineInfo, sourceFile, funcSymbol.relativeVirtualAddress);
+    sourceFileByNameCache_.TryAdd(functionName, fileInfo);
+    return fileInfo;
   }
 
   public SourceLineDebugInfo FindSourceLineByRVA(long rva, bool includeInlinees) {
@@ -582,33 +599,46 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
   private IEnumerable<SourceStackFrame>
     EnumerateInlinees(IDiaSymbol funcSymbol, uint instrRVA) {
-    funcSymbol.findInlineFramesByRVA(instrRVA, out var inlineeFrameEnum);
-
-    foreach (IDiaSymbol inlineFrame in inlineeFrameEnum) {
-      inlineFrame.findInlineeLinesByRVA(instrRVA, 0, out var inlineeLineEnum);
-
-      while (true) {
-        inlineeLineEnum.Next(1, out var inlineeLineNumber, out uint inlineeRetrieved);
-
-        if (inlineeRetrieved == 0) {
-          break;
-        }
-
-        // Getting the source file of the inlinee often fails, ignore it.
-        string inlineeFileName = null;
-
-        try {
-          inlineeFileName = inlineeLineNumber.sourceFile.fileName;
-        }
-        catch {
-          //? TODO: Any way to detect this and avoid throwing?
-        }
-
-        yield return new SourceStackFrame(
-          inlineFrame.name, inlineeFileName,
-          (int)inlineeLineNumber.lineNumber,
-          (int)inlineeLineNumber.columnNumber);
+    if (inlineeByRvaCache_.TryGetValue(instrRVA, out var inlineeList)) {
+      // Use the preloaded list of inlinees.
+      foreach (var inlinee in inlineeList) {
+        yield return inlinee;
       }
+    }
+    else {
+      inlineeList = new List<SourceStackFrame>();
+      funcSymbol.findInlineFramesByRVA(instrRVA, out var inlineeFrameEnum);
+
+      foreach (IDiaSymbol inlineFrame in inlineeFrameEnum) {
+        inlineFrame.findInlineeLinesByRVA(instrRVA, 0, out var inlineeLineEnum);
+
+        while (true) {
+          inlineeLineEnum.Next(1, out var inlineeLineNumber, out uint inlineeRetrieved);
+
+          if (inlineeRetrieved == 0) {
+            break;
+          }
+
+          // Getting the source file of the inlinee often fails, ignore it.
+          string inlineeFileName = null;
+
+          try {
+            inlineeFileName = inlineeLineNumber.sourceFile.fileName;
+          }
+          catch {
+            //? TODO: Any way to detect this and avoid throwing?
+          }
+
+          var inlinee = new SourceStackFrame(
+            inlineFrame.name, inlineeFileName,
+            (int)inlineeLineNumber.lineNumber,
+            (int)inlineeLineNumber.columnNumber);
+          inlineeList.Add(inlinee);
+          yield return inlinee;
+        }
+      }
+
+      inlineeByRvaCache_.TryAdd(instrRVA, inlineeList);
     }
   }
 

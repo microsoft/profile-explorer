@@ -601,7 +601,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   }
 
   public async Task<bool> InitializeFromDocument(IRDocument doc, bool copyTemporaryHighlighting = true,
-                                                 string text = null) {
+                                                 string text = null, bool analyzeFunction = true) {
     if (Section == doc.Section) {
       return false;
     }
@@ -635,7 +635,11 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     }
 
     SetupBlockFolding();
-    await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
+
+    if (analyzeFunction) {
+      await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
+    }
+
     return true;
   }
 
@@ -1931,6 +1935,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     ClearBlockMarkers();
     ClearInstructionMarkers();
     overlayRenderer_.Clear();
+    TextArea.TextView.Redraw();
   }
 
   private void ClearBlockMarkersExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -4070,32 +4075,6 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     return await IRDocumentPopup.CreateNew(result, position, this, Session,
                                            App.Settings.PreviewPopupSettings,
                                            $"Function: {element.Name}");
-  }
-
-  private static IRTextSection FindCallTargetSection(IRElement element, IRTextSection section, ISession session) {
-    if (!element.HasName) {
-      return null;
-    }
-
-    // Function names in the summary are mangled, while the document
-    // has them demangled, run the demangler while searching for the target.
-    var nameProvider = session.CompilerInfo.NameProvider;
-    string searchedName = element.Name;
-    var targetFunc = section.ParentFunction.ParentSummary.FindFunction(name =>
-                                                                         nameProvider.FormatFunctionName(name).
-                                                                           Equals(searchedName,
-                                                                                  StringComparison.Ordinal));
-
-    if (targetFunc == null) {
-      return null;
-    }
-
-    // Prefer the same section as this document if there are multiple.
-    if (targetFunc.SectionCount == 0) {
-      return null;
-    }
-
-    return targetFunc.Sections[0];
   }
 
   private void Popup_PopupDetached(object sender, EventArgs e) {

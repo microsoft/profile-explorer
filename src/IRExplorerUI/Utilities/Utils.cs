@@ -205,10 +205,12 @@ public static class Utils {
                                                  MessageBoxImage image) {
     if (owner != null) {
       using var centerForm = new DialogCenteringHelper(owner);
-      return MessageBox.Show(text, "IR Explorer", buttons, image);
+      return MessageBox.Show(text, "IR Explorer", buttons, image, 
+                             MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
     }
     else {
-      return MessageBox.Show(text, "IR Explorer", buttons, image);
+      return MessageBox.Show(text, "IR Explorer", buttons, image, 
+                             MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
     }
   }
 

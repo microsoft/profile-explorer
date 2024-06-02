@@ -174,7 +174,6 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     Children.Clear();
     ClearConnectedElements();
     ClearElementOverlays();
-    textView_?.Redraw();
     Version++;
   }
 

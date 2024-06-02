@@ -359,23 +359,23 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public async Task ReloadSettings(bool hasProfilingChanges = true) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, true);
     TextView.Initialize(settings_, session_);
 
     if (hasProfilingChanges) {
-      using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
       await LoadProfile();
     }
   }
 
   public async void UnloadSection(IRTextSection section, bool switchingActiveDocument) {
+    // Cancel any running tasks and hide panels.
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    
     if (!duringSwitchSearchResults_ && !switchingActiveDocument) {
       HideSearchPanel();
     }
-
-    // Cancel any running tasks and hide panels.
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-
+    
     await HideRemarkPanel();
     HideActionPanel();
     SaveSectionState(section);
@@ -1852,9 +1852,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
                              newSettings.ShowPreviousSections &&
                              (newSettings.StopAtSectionBoundaries != remarkSettings_.StopAtSectionBoundaries ||
                               newSettings.SectionHistoryDepth != remarkSettings_.SectionHistoryDepth);
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     App.Settings.RemarkSettings = newSettings;
     await UpdateRemarkSettings(newSettings);
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
 
     if (rebuildRemarkList) {
       Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Find and load remarks");
