@@ -104,7 +104,7 @@
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom the graph view to 100% (Ctrl+0)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource ResetWidthIcon}" />
+              <Image Source="{StaticResource ResetWidthIcon}" Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Reset" />
             </StackPanel>
           </Button>
@@ -113,13 +113,17 @@
             Command="local:GraphCommand.GraphZoomOut"
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom Out (Ctrol+_">
-            <Image Source="{StaticResource ZoomOutIcon}" Width="15" Height="15" />
+            <Image Source="{StaticResource ZoomOutIcon}"
+                   Style="{StaticResource DisabledImageStyle}"
+                   Width="15" Height="15" />
           </Button>
           <Button
             Command="local:GraphCommand.GraphZoomIn"
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom In (Ctrl+=)">
-            <Image Source="{StaticResource ZoomInIcon}" Width="15" Height="15" />
+            <Image Source="{StaticResource ZoomInIcon}"
+                   Style="{StaticResource DisabledImageStyle}"
+                   Width="15" Height="15" />
           </Button>
           <Separator />
           <Button
@@ -128,8 +132,9 @@
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource FitWidthIcon}" />
-              <TextBlock Margin="4,0,0,0" Text="Fit Width" />
+              <Image Source="{StaticResource FitWidthIcon}"
+                     Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Margin="4,0,0,0" Text="Width" />
             </StackPanel>
           </Button>
           <Button
@@ -137,8 +142,9 @@
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom the view to show the entire graph (Ctrl+A)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource FitAllIcon}" />
-              <TextBlock Margin="4,0,0,0" Text="Fit All" />
+              <Image Source="{StaticResource FitAllIcon}"
+                     Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock Margin="4,0,0,0" Text="All" />
             </StackPanel>
           </Button>
 
@@ -146,7 +152,7 @@
           <Menu VerticalAlignment="Center"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
             <MenuItem
-              Padding="0,2,2,2"
+              Padding="0,2,0,2"
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Header="Clear"
@@ -155,7 +161,8 @@
                 <Image
                   Width="16"
                   Height="16"
-                  Source="{StaticResource RemoveIcon}" />
+                  Source="{StaticResource RemoveIcon}"
+                  Style="{StaticResource DisabledImageStyle}" />
               </MenuItem.Icon>
               <MenuItem
                 Command="local:GraphCommand.ClearMarked"
@@ -167,14 +174,6 @@
                 Header="All Markers" />
             </MenuItem>
           </Menu>
-          <Separator />
-          <Button
-            Command="local:GraphCommand.GraphZoomIn"
-            CommandTarget="{Binding ElementName=GraphHost}"
-            IsEnabled="False"
-            ToolTip="Search graph node text (Ctrl+F)">
-            <Image Source="{StaticResource SearchIcon}" />
-          </Button>
         </ToolBar>
       </ToolBarTray>
 

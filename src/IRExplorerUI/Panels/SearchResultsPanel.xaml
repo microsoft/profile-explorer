@@ -60,14 +60,16 @@
             CommandTarget="{Binding ElementName=ResultList}"
             Margin="4,0,0,0"
             ToolTip="Jump to previous section results (Ctrl+Shift+F3)">
-            <Image Source="{StaticResource BoldUpArrowIcon}" />
+            <Image Source="{StaticResource BoldUpArrowIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
 
           <Button
             Command="local:SearchResultsCommand.JumpToNextSection"
             CommandTarget="{Binding ElementName=ResultList}"
             ToolTip="Jump to next section results (Ctrl+F3)">
-            <Image Source="{StaticResource BoldDownArrowIcon}" />
+            <Image Source="{StaticResource BoldDownArrowIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
           <Separator />
 
@@ -76,14 +78,16 @@
             CommandTarget="{Binding ElementName=ResultList}"
             Margin="4,0,0,0"
             ToolTip="Jump to previous result (Shift+F3)">
-            <Image Source="{StaticResource UpArrowIcon}" />
+            <Image Source="{StaticResource UpArrowIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
 
           <Button
             Command="local:SearchResultsCommand.JumpToNext"
             CommandTarget="{Binding ElementName=ResultList}"
             ToolTip="Jump to next result (F3)">
-            <Image Source="{StaticResource DownArrowIcon}" />
+            <Image Source="{StaticResource DownArrowIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
 
           <TextBlock

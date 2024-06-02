@@ -82,7 +82,8 @@
             CommandTarget="{Binding ElementName=CallTreeList}"
             ToolTip="Expand hottest call path"
             Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
-            <Image Source="{StaticResource HotFlameIcon}" />
+            <Image Source="{StaticResource HotFlameIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
           <Separator
             Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
@@ -312,7 +313,8 @@
           </Menu>
           <Separator />
 
-          <Image Source="{StaticResource SearchIcon}" Style="{StaticResource DisabledImageStyle}" />
+          <Image Source="{StaticResource SearchIcon}"
+                 Style="{StaticResource DisabledImageStyle}" />
           <Grid Height="24">
             <TextBox
               x:Name="FunctionFilter"

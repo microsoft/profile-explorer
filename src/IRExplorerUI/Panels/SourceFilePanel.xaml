@@ -42,7 +42,8 @@
                 Width="16"
                 Height="16"
                 Margin="0,1,1,0"
-                Source="{StaticResource FolderIcon}" />
+                Source="{StaticResource FolderIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Text="Open" />
             </StackPanel>
           </Button>

@@ -2967,9 +2967,6 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     DuringSectionLoading = false;
     IsLoaded = true;
 
-    UpdateHighlighting();
-    NotifyPropertyChanged("Blocks"); // Force block dropdown to update.
-
     //? TODO: Check if other sections have marked elements and try to mark same ones
     //!  - session can be queried
     //!  - load func and deserialize state object
@@ -2983,6 +2980,8 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     if (!isSourceCode) {
       await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
     }
+    
+    UpdateHighlighting();
   }
 
   //? TODO: Check if other sections have marked elements and try to mark same ones

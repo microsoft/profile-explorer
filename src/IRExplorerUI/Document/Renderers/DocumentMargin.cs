@@ -260,7 +260,7 @@ public class DocumentMargin : AbstractMargin {
   }
 
   public void ClearBookmarks() {
-    bookmarkSegments_.Clear();
+    bookmarkSegments_ = new();
     Version++;
   }
 

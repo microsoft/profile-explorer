@@ -112,7 +112,8 @@
             Command="local:ReferenceCommand.CopyToClipboard"
             CommandTarget="{Binding ElementName=ReferenceList}"
             ToolTip="Copy reference list to clipboard (Ctrl+C)">
-            <Image Source="{StaticResource ClipboardIcon}" />
+            <Image Source="{StaticResource ClipboardIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
 
           <Separator />
