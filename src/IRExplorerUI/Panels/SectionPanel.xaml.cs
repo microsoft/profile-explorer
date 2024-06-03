@@ -1265,7 +1265,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
 
     // Create mappings between each section and their UI counterpart.
-    SetupSectionExtensions(force);
+    if (!SetupSectionExtensions(force)) {
+      await ResetUI();
+      return;
+    }
 
     // Create mappings between each function and their UI counterparts.
     // In two-document diff mode, also add entries for functions that are found
@@ -1350,7 +1353,9 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   public List<IRTextSectionEx> CreateSectionsExtension(bool force = false) {
-    SetupSectionExtensions(force);
+    if (!SetupSectionExtensions(force)) {
+      return new List<IRTextSectionEx>();
+    }
     var sections = new List<IRTextSectionEx>();
     int sectionIndex = 0;
 
@@ -1932,6 +1937,10 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private bool SetupSectionExtensions(bool force = false) {
     if (sectionExtensionComputed_ && !force) {
+      return false;
+    }
+
+    if (summary_ == null) {
       return false;
     }
 

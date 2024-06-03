@@ -1125,7 +1125,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private void SaveSectionState(IRTextSection section) {
     // Annotations made in diff mode are not saved right now,
-    // since the text and function IR can be different than the original function.
+    // since the text and function IR can be different from the original function.
     if (TextView.DiffModeEnabled) {
       return;
     }

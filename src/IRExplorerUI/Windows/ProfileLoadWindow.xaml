@@ -780,7 +780,8 @@
                                   HorizontalAlignment="Right"
                                   ToolTip="Select symbols directory from file system"
                                   Click="SymbolPathBrowseButton_Click">
-                                  <Image Source="{StaticResource FolderIcon}" />
+                                  <Image Source="{StaticResource FolderIcon}"
+                                         Style="{StaticResource DisabledImageStyle}"/>
                                   </Button>
                               </DataTemplate>
                             </GridViewColumn.CellTemplate>

@@ -267,6 +267,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   public IRDocumentColumnData ProfileColumnData { get; set; }
   public FunctionProcessingResult ProfileProcessingResult { get; set; }
   public double DefaultLineHeight => TextArea.TextView.DefaultLineHeight;
+  public IEnumerable<FoldingSection> BlockFoldings => folding_?.AllFoldings;
 
   private static int AdjustVisibleLine(int line) {
     // Leave a few lines be visible above.
@@ -2980,7 +2981,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     if (!isSourceCode) {
       await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
     }
-    
+
     UpdateHighlighting();
   }
 

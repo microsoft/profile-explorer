@@ -1108,13 +1108,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       return;
     }
 
-    if (string.IsNullOrEmpty(textBox.Text)) {
-      // Remove entry if there is no text in it
-      symbolSettings_.SymbolPaths.RemoveAt(index);
-      ReloadSymbolPathsList();
-      return;
-    }
-
     // Update list with the new text
     if (symbolSettings_.SymbolPaths[index] != textBox.Text) {
       symbolSettings_.SymbolPaths[index] = textBox.Text;
