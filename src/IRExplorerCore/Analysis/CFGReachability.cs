@@ -93,10 +93,10 @@ public class CFGReachability {
   }
 
   private void InitializeBitVectors() {
-    reachableBlocks_ = new BitArray[maxBlockNumber_];
+    reachableBlocks_ = new BitArray[maxBlockNumber_ + 1];
 
-    foreach (var block in function_.Blocks) {
-      reachableBlocks_[block.Number] = new BitArray(maxBlockNumber_);
+    for (int i = 0; i <= maxBlockNumber_; i++) {
+      reachableBlocks_[i] = new BitArray(maxBlockNumber_ + 1);
     }
 
     if (function_.EntryBlock != null) {
@@ -107,7 +107,7 @@ public class CFGReachability {
   private void Compute() {
     //? TODO: This entire code is very inefficient
     //? A proper sparse bit-vector is needed.
-    var currentValues = new BitArray(maxBlockNumber_);
+    var currentValues = new BitArray(maxBlockNumber_ + 1);
     bool changed = true;
     //var sw = Stopwatch.StartNew();
 
