@@ -51,7 +51,7 @@
       </StackPanel>
       <TextBlock
         Margin="0,24,0,0"
-        Text="Options window in progress.&#x0a;Use the wrench icon on the upper-right of each panel to quickly show its settings."
+        Text="Options window in progress.&#x0a;Use the gear icon on the upper-right of each panel to quickly show its settings."
         TextWrapping="Wrap" />
     </StackPanel>
   </Grid>

@@ -223,7 +223,8 @@
                   Width="16"
                   Height="16"
                   Margin="0,1,0,0"
-                  Source="{StaticResource SwitchIcon}" />
+                  Source="{StaticResource SwitchIcon}"
+                  Style="{StaticResource DisabledImageStyle}" />
                 <TextBlock Margin="2,0,0,0" Text="Sync" />
               </StackPanel>
             </ToggleButton>
@@ -240,7 +241,8 @@
                 Width="16"
                 Height="16"
                 Margin="0,1,0,0"
-                Source="{StaticResource SourceIcon}" />
+                Source="{StaticResource SourceIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
             </ToggleButton>
 
             <Separator
@@ -479,7 +481,9 @@
             <Separator
               Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-            <Image Source="{StaticResource SearchIcon}" ToolBar.OverflowMode="Never" />
+            <Image Source="{StaticResource SearchIcon}"
+                   Style="{StaticResource DisabledImageStyle}"
+                   ToolBar.OverflowMode="Never" />
             <Grid
               x:Name="FunctionFilterGrid"
               Height="24"
@@ -523,6 +527,7 @@
               <Image
                 Width="16"
                 Height="16"
+                Style="{StaticResource DisabledImageStyle}"
                 Source="{StaticResource ClearIcon}" />
             </Button>
             <Separator
@@ -535,6 +540,7 @@
               <Image
                 Width="16"
                 Height="16"
+                Style="{StaticResource DisabledImageStyle}"
                 Source="{StaticResource UpArrowIcon}" />
             </Button>
           </ToolBar>

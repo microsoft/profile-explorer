@@ -6,7 +6,7 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:options="clr-namespace:IRExplorerUI.OptionsPanels"
   Title="Settings"
-  Width="600"
+  Width="650"
   Height="500"
   MinWidth="400"
   MinHeight="300"

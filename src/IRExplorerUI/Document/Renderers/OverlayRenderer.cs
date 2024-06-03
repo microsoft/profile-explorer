@@ -174,14 +174,12 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     Children.Clear();
     ClearConnectedElements();
     ClearElementOverlays();
-    textView_?.Redraw();
     Version++;
   }
 
   public void ClearElementOverlays() {
-    overlaySegments_.Clear();
-    overlaySegmentMap_.Clear();
-    textView_?.Redraw();
+    overlaySegments_ = new();
+    overlaySegmentMap_ = new();
   }
 
   public void Add(Visual drawingVisual) {

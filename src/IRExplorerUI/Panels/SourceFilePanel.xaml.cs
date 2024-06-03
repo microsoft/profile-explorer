@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -17,6 +18,8 @@ using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Profile;
+using IRExplorerUI.Profile.Document;
+using ProtoBuf;
 
 namespace IRExplorerUI;
 
@@ -279,21 +282,23 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   public async Task LoadSourceFile(IRTextSection section, ProfileSampleFilter profileFilter = null,
-                                   IRDocument associaDocument = null) {
+                                   IRDocument associatedDocument = null,
+                                   bool restoreState = false) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     Utils.EnableControl(this);
     section_ = section;
-    associatedDocument_ = associaDocument;
-    await LoadSourceFileForFunction(section_.ParentFunction, profileFilter);
+    associatedDocument_ = associatedDocument;
+    await LoadSourceFileForFunction(section_.ParentFunction, profileFilter, restoreState);
   }
 
   public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     await base.OnDocumentSectionLoaded(section, document);
-    await LoadSourceFile(section, null, document);
+    await LoadSourceFile(section, null, document, true);
   }
 
   private async Task<bool>
-    LoadSourceFileForFunction(IRTextFunction function, ProfileSampleFilter profileFilter = null) {
+    LoadSourceFileForFunction(IRTextFunction function, ProfileSampleFilter profileFilter = null,
+                              bool restoreState = false) {
     if (!ShouldReloadFunction(function, profileFilter)) {
       return true;
     }
@@ -303,8 +308,11 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var (sourceInfo, failureReason) = await sourceFileFinder_.FindLocalSourceFile(function);
     sourceFileFinder_.SaveSettings(settings_.FinderSettings);
 
+    byte[] data = Session.LoadPanelState(this, section_) as byte[];
+    var state = StateSerializer.Deserialize<ProfileIRDocument.SourceFileState>(data);
+
     if (!sourceInfo.IsUnknown && failureReason == SourceFileFinder.FailureReason.None &&
-        await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter)) {
+        await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter, null, state)) {
       HandleLoadedSourceFile(sourceInfo, function);
       return true;
     }
@@ -325,7 +333,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var (sourceInfo, failureReason) =
       await sourceFileFinder_.FindLocalSourceFile(inlineeSourceInfo);
     sourceFileFinder_.SaveSettings(settings_.FinderSettings);
-    
+
     if (!sourceInfo.IsUnknown && failureReason == SourceFileFinder.FailureReason.None &&
         await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter, inlinee)) {
       HandleLoadedSourceFile(sourceInfo, null);
@@ -403,6 +411,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
 
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    ProfileTextView.SaveSectionState(this);
     await base.OnDocumentSectionUnloaded(section, document);
     await ResetState();
     Utils.DisableControl(this);

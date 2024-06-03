@@ -74,7 +74,6 @@ public partial class WorkspacesWindow : Window {
   private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
     if (sender is TextBox textBox) {
       Utils.SelectTextBoxListViewItem(textBox, WorkspacesList);
-      e.Handled = true;
     }
   }
 

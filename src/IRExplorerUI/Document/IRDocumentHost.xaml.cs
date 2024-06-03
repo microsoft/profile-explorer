@@ -178,7 +178,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.BlockSelected += TextView_BlockSelected;
     TextView.ElementSelected += TextView_ElementSelected;
     TextView.ElementUnselected += TextView_ElementUnselected;
-    TextView.PropertyChanged += TextView_PropertyChanged;
     TextView.GotKeyboardFocus += TextView_GotKeyboardFocus;
     TextView.CaretChanged += TextViewOnCaretChanged;
     TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
@@ -359,22 +358,26 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public async Task ReloadSettings(bool hasProfilingChanges = true) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, true);
     TextView.Initialize(settings_, session_);
 
     if (hasProfilingChanges) {
-      using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
       await LoadProfile();
     }
   }
 
   public async void UnloadSection(IRTextSection section, bool switchingActiveDocument) {
+    // Cancel any running tasks and hide panels.
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
+    if (Section != section) {
+      return;
+    }
+
     if (!duringSwitchSearchResults_ && !switchingActiveDocument) {
       HideSearchPanel();
     }
-
-    // Cancel any running tasks and hide panels.
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
 
     await HideRemarkPanel();
     HideActionPanel();
@@ -473,14 +476,25 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       await PassOutput.SwitchSection(parsedSection.Section, TextView);
     }
 
+    PopulateBlockSelector();
     await ReloadRemarks(task);
 
-    if (parsedSection.LoadFailed || !await LoadProfile()) {
+    // When applying profile, jump to hottest element
+    // only if the vertical offset is 0.
+    bool jumpToHottestElement = verticalOffset < double.Epsilon;
+
+    if (parsedSection.LoadFailed ||
+        !await LoadProfile(true, jumpToHottestElement)) {
       await HideProfile();
     }
 
-    TextView.ScrollToHorizontalOffset(horizontalOffset);
-    TextView.ScrollToVerticalOffset(verticalOffset);
+    if (!jumpToHottestElement) {
+      Dispatcher.BeginInvoke(() => {
+        TextView.ScrollToHorizontalOffset(horizontalOffset);
+        TextView.ScrollToVerticalOffset(verticalOffset);
+      }, DispatcherPriority.Render);
+    }
+
     duringSectionSwitching_ = false;
   }
 
@@ -518,7 +532,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async Task LoadPreviousSectionState(ProfileFunctionState state) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     await session_.OpenDocumentSectionAsync(
       new OpenSectionEventArgs(state.Section, OpenSectionKind.ReplaceCurrent, this));
 
@@ -1112,7 +1125,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private void SaveSectionState(IRTextSection section) {
     // Annotations made in diff mode are not saved right now,
-    // since the text and function IR can be different than the original function.
+    // since the text and function IR can be different from the original function.
     if (TextView.DiffModeEnabled) {
       return;
     }
@@ -1127,7 +1140,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     Session.SetSectionAnnotationState(section, state.HasAnnotations);
   }
 
-  private async Task<bool> LoadProfile(bool reloadFilterMenus = true) {
+  private async Task<bool> LoadProfile(bool reloadFilterMenus = true,
+                                       bool jumpToHottestElement = true) {
     if (Session.ProfileData == null) {
       return false;
     }
@@ -1150,7 +1164,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
                                        ThreadMenuItem_OnClick, settings_, Session);
     }
 
-    if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
+    if (jumpToHottestElement &&
+        settings_.ProfileMarkerSettings.JumpToHottestElement) {
       JumpToHottestProfiledElement();
     }
 
@@ -1550,9 +1565,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private void TextView_PropertyChanged(object sender, PropertyChangedEventArgs e) {
-    var blockList = new CollectionView(TextView.Blocks);
-    BlockSelector.ItemsSource = blockList;
+  private void PopulateBlockSelector() {
+    if (TextView.Blocks != null) {
+      var blockList = new CollectionView(TextView.Blocks);
+      BlockSelector.ItemsSource = blockList;
+    }
+    else {
+      BlockSelector.ItemsSource = null;
+    }
   }
 
   private void TextView_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
@@ -1852,9 +1872,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
                              newSettings.ShowPreviousSections &&
                              (newSettings.StopAtSectionBoundaries != remarkSettings_.StopAtSectionBoundaries ||
                               newSettings.SectionHistoryDepth != remarkSettings_.SectionHistoryDepth);
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     App.Settings.RemarkSettings = newSettings;
     await UpdateRemarkSettings(newSettings);
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
 
     if (rebuildRemarkList) {
       Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Find and load remarks");

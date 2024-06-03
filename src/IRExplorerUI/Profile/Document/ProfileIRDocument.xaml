@@ -78,7 +78,7 @@
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
         BorderThickness="0,1,0,1"
         DockPanel.Dock="Top"
-        IsEnabled="{Binding ColumnsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+        Visibility="{Binding ColumnsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
         <ToolBarTray
           x:Name="ProfileToolbar"
           HorizontalAlignment="Stretch"
@@ -444,6 +444,6 @@
       Padding="-1,0,0,0"
       HorizontalAlignment="Stretch"
       VerticalAlignment="Stretch"
-      IsEnabled="{Binding ColumnsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+      Visibility="{Binding ColumnsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
   </Grid>
 </UserControl>

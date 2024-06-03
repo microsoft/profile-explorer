@@ -51,7 +51,8 @@
             CommandParameter="{Binding ElementName=BookmarkList, Path=SelectedItem}"
             CommandTarget="{Binding ElementName=BookmarkList}"
             ToolTip="Jump to Bookmark (Return)">
-            <Image Source="{StaticResource BookmarkArrowIcon}" />
+            <Image Source="{StaticResource BookmarkArrowIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
 
           <Separator />
@@ -61,10 +62,12 @@
             CommandTarget="{Binding ElementName=BookmarkList}"
             Margin="4,0,0,0"
             ToolTip="Jump to previous bookmark (Shift+F2)">
-            <Image Source="{StaticResource UpArrowIcon}" />
+            <Image Source="{StaticResource UpArrowIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
           <Button Command="local:DocumentCommand.NextBookmark" ToolTip="Jump to next bookmark (F2)">
-            <Image Source="{StaticResource DownArrowIcon}" />
+            <Image Source="{StaticResource DownArrowIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
           <Separator />
 
@@ -73,7 +76,8 @@
             CommandTarget="{Binding ElementName=BookmarkList}"
             Margin="4,0,0,0"
             ToolTip="Jump to first bookmark">
-            <Image Source="{StaticResource BoldUpArrowIcon}" />
+            <Image Source="{StaticResource BoldUpArrowIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
 
           <Button
@@ -81,7 +85,8 @@
             CommandTarget="{Binding ElementName=BookmarkList}"
             Margin="4,0,0,0"
             ToolTip="Jump to last bookmark">
-            <Image Source="{StaticResource BoldDownArrowIcon}" />
+            <Image Source="{StaticResource BoldDownArrowIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
           <Separator />
 
@@ -97,6 +102,7 @@
               <MenuItem.Icon>
                 <Image
                   Height="16"
+                  Style="{StaticResource DisabledImageStyle}"
                   Source="{StaticResource RemoveIcon}"
                   Width="16" />
               </MenuItem.Icon>

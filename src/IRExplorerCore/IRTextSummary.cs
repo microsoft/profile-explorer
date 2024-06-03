@@ -4,11 +4,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using IRExplorerCore.Utilities;
 
 namespace IRExplorerCore;
 
 public class IRTextSummary {
   private Dictionary<string, IRTextFunction> functionNameMap_;
+  private Dictionary<string, IRTextFunction> unmangledFunctionNameMap_;
   private Dictionary<int, IRTextFunction> functionMap_;
   private Dictionary<int, IRTextSection> sectionMap_;
   private int hashCode_;
@@ -58,14 +60,17 @@ public class IRTextSummary {
     return functionNameMap_.TryGetValue(name, out var result) ? result : null;
   }
 
-  public IRTextFunction FindFunction(Func<string, bool> matchCheck) {
-    foreach (var function in Functions) {
-      if (matchCheck(function.Name)) {
-        return function;
+  public IRTextFunction FindFunction(string name, Func<string, string> matchCheck) {
+    if (unmangledFunctionNameMap_ == null) {
+      unmangledFunctionNameMap_ = new();
+      
+      foreach (var function in Functions) {
+        var unmangledName = matchCheck(function.Name);
+        unmangledFunctionNameMap_[unmangledName] = function;
       }
     }
-
-    return null;
+    
+    return unmangledFunctionNameMap_.GetValueOrNull(name);
   }
 
   public List<IRTextFunction> FindFunctions(Func<string, bool> matchCheck) {

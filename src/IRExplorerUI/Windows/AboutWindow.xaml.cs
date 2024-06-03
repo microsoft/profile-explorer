@@ -17,7 +17,7 @@ public partial class AboutWindow : Window {
 
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
   public string CopyrightText => $"Copyright (c) {DateTime.Now.Year} Microsoft Corporation";
-  public string VersionText => $"Version {Assembly.GetExecutingAssembly().GetName().Version.ToString()}";
+  public string VersionText => $"Version {Assembly.GetExecutingAssembly()?.GetName()?.Version}";
   public string LicenseText => App.GetLicenseText();
 
   private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e) {

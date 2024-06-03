@@ -22,6 +22,7 @@ using IRExplorerCore.SourceParser;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
 using IRExplorerUI.Utilities;
+using ProtoBuf;
 
 namespace IRExplorerUI.Profile.Document;
 
@@ -245,6 +246,16 @@ public class ProfileMenuItem : BindableObject {
 }
 
 public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
+  [ProtoContract]
+  public class SourceFileState {
+    [ProtoMember(1)]
+    public double HorizontalOffset;
+    [ProtoMember(2)]
+    public double VerticalOffset;
+    [ProtoMember(3)]
+    public List<bool> AssemblyFoldingStates;
+  }
+
   private List<(IRElement, TimeSpan)> profileElements_;
   private int profileElementIndex_;
   private SourceLineProcessingResult sourceProcessingResult_;
@@ -585,7 +596,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async Task<bool> LoadSourceFileProfileInstance(IRTextSection section,
-                                                         bool reloadFilterMenus = true) {
+                                                         bool reloadFilterMenus = true,
+                                                         bool jumpToHottestLine = true) {
     UpdateProfileFilterUI();
     var instanceProfile = await ComputeInstanceProfile();
     var funcProfile = instanceProfile.GetFunctionProfile(section.ParentFunction);
@@ -594,7 +606,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       return false;
     }
 
-    if (!(await MarkSourceFileProfile(section, funcProfile))) {
+    if (!(await MarkSourceFileProfile(section, funcProfile, jumpToHottestLine))) {
       return false;
     }
 
@@ -843,7 +855,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public async Task<bool> LoadSourceFile(SourceFileDebugInfo sourceInfo,
                                          IRTextSection section,
                                          ProfileSampleFilter profileFilter = null,
-                                         SourceStackFrame inlinee = null) {
+                                         SourceStackFrame inlinee = null,
+                                         SourceFileState previousState = null) {
     try {
       using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
       ResetInstance();
@@ -858,11 +871,23 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       ignoreNextCaretEvent_ = true;
       bool success = true;
 
+      // When applying profile, jump to hottest line
+      // only if the vertical offset is 0.
+      double horizontalOffset = 0;
+      double verticalOffset = 0;
+
+      if (previousState != null) {
+        horizontalOffset = previousState.HorizontalOffset;
+        verticalOffset = previousState.VerticalOffset;
+      }
+
+      bool jumpToHottestLine = verticalOffset < double.Epsilon;
+
       if (profileFilter is {IncludesAll: false}) {
         success = await LoadSourceFileProfileInstance(section);
       }
       else {
-        success = await LoadSourceFileProfile(section);
+        success = await LoadSourceFileProfile(section, true, jumpToHottestLine);
       }
 
       if (!success) {
@@ -872,7 +897,17 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
       //? TODO: Is panel is not visible, scroll doesn't do anything,
       //? should be executed again when panel is activated.
-      if (!settings_.ProfileMarkerSettings.JumpToHottestElement) {
+      if (previousState != null && !jumpToHottestLine) {
+        if (previousState.AssemblyFoldingStates != null) {
+          RestoreFoldingsState(previousState.AssemblyFoldingStates);
+        }
+
+        Dispatcher.BeginInvoke(() => {
+          TextView.ScrollToHorizontalOffset(horizontalOffset);
+          TextView.ScrollToVerticalOffset(verticalOffset);
+        }, DispatcherPriority.Render);
+      }
+      else if (!settings_.ProfileMarkerSettings.JumpToHottestElement) {
         (int firstSourceLineIndex, int lastSourceLineIndex) =
           await DocumentUtils.FindFunctionSourceLineRange(section.ParentFunction, TextView);
 
@@ -903,14 +938,15 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     await HideProfile();
   }
 
-  private async Task<bool> LoadSourceFileProfile(IRTextSection section, bool reloadFilterMenus = true) {
+  private async Task<bool> LoadSourceFileProfile(IRTextSection section, bool reloadFilterMenus = true,
+                                                 bool jumpToHottestLine = true) {
     var funcProfile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
 
     if (funcProfile == null) {
       return false;
     }
 
-    if (!(await MarkSourceFileProfile(section, funcProfile))) {
+    if (!(await MarkSourceFileProfile(section, funcProfile, jumpToHottestLine))) {
       return false;
     }
 
@@ -932,7 +968,9 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     ProfilingUtils.SyncThreadsMenuWithFilter(ThreadsMenu, profileFilter_);
   }
 
-  private async Task<bool> MarkSourceFileProfile(IRTextSection section, FunctionProfileData funcProfile) {
+  private async Task<bool> MarkSourceFileProfile(IRTextSection section,
+                                                 FunctionProfileData funcProfile,
+                                                 bool jumpToHottestLine = true) {
     ResetInstanceProfiling();
     profileMarker_ = new ProfileDocumentMarker(funcProfile, Session.ProfileData,
                                                settings_.ProfileMarkerSettings,
@@ -1018,7 +1056,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       PatchSourceStructureRows(syntaxNodes, funcProfile);
     }
 
-    if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
+    if (jumpToHottestLine &&
+        settings_.ProfileMarkerSettings.JumpToHottestElement) {
       JumpToHottestProfiledElement(true);
     }
 
@@ -1306,6 +1345,51 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     // Sync the initial folding status in the columns with the document.
     ProfileColumns.SetupFoldedTextRegions(foldings);
+  }
+
+  private List<bool> SaveFoldingsState() {
+    var foldings = TextView.BlockFoldings;
+    var list = new List<bool>();
+
+    if (foldings != null) {
+      foreach (var folding in foldings) {
+        list.Add(folding.IsFolded);
+      }
+    }
+
+    return list;
+  }
+
+  private void RestoreFoldingsState(List<bool> foldingStates) {
+    var foldings = TextView.BlockFoldings;
+
+    if (foldings == null) {
+      return;
+    }
+
+    int index = 0;
+
+    foreach (var folding in foldings) {
+      if (index == foldingStates.Count) {
+        break;
+      }
+
+      folding.IsFolded = foldingStates[index];
+      index++;
+    }
+
+    // Sync the initial folding status in the columns with the document.
+    ProfileColumns.SetupFoldedTextRegions(foldings);
+  }
+
+  public void SaveSectionState(IToolPanel panel) {
+    var state = new SourceFileState {
+      HorizontalOffset = TextView.HorizontalOffset,
+      VerticalOffset = TextView.VerticalOffset,
+      AssemblyFoldingStates = SaveFoldingsState()
+    };
+    byte[] data = StateSerializer.Serialize(state);
+    Session.SavePanelState(data, panel, Section);
   }
 
   private async Task ApplyProfileFilter() {
@@ -1692,6 +1776,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public void Initialize(TextViewSettingsBase settings) {
     settings_ = settings;
+    Background = settings_.BackgroundColor.AsBrush();
     ProfileViewMenu.DataContext = settings_.ColumnSettings;
     TextView.Initialize(settings, Session);
     TextView.FontFamily = new FontFamily(settings_.FontName);

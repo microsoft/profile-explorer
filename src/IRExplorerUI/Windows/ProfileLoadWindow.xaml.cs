@@ -17,7 +17,9 @@ using System.Windows.Navigation;
 using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Controls;
 using IRExplorerUI.Profile;
+using Microsoft.Win32;
 
 namespace IRExplorerUI;
 
@@ -342,6 +344,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private async Task LoadProfileTraceFileAndCloseWindow(SymbolFileSourceSettings symbolSettings) {
+    SaveCurrentOptions();
+
     if (await LoadProfileTraceFile(symbolSettings) && !windowClosed_) {
       DialogResult = true;
       Close();
@@ -728,7 +732,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     ShowProcessList = false;
     ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
 
-    if (!string.IsNullOrEmpty(ProfileFilePath)) {
+    if (File.Exists(ProfileFilePath)) {
       processList_ = await LoadProcessList(ProfileFilePath);
 
       if (processList_ == null) {
@@ -1076,18 +1080,23 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void SymbolPath_LostFocus(object sender, RoutedEventArgs e) {
-    var textBox = sender as TextBox;
+    var textBox = sender as FileSystemTextBox;
     UpdateSymbolPath(textBox);
   }
 
   private void SymbolPath_KeyDown(object sender, KeyEventArgs e) {
     if (e.Key == Key.Enter) {
-      var textBox = sender as TextBox;
+      var textBox = sender as FileSystemTextBox;
       UpdateSymbolPath(textBox);
     }
   }
 
-  private void UpdateSymbolPath(TextBox textBox) {
+  private void SymbolPath_OnDropDownClosed(object sender, RoutedPropertyChangedEventArgs<bool> e) {
+    var textBox = sender as FileSystemTextBox;
+    UpdateSymbolPath(textBox);
+  }
+
+  private void UpdateSymbolPath(FileSystemTextBox textBox) {
     if (textBox == null) {
       return;
     }
@@ -1099,23 +1108,16 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       return;
     }
 
-    if (string.IsNullOrEmpty(textBox.Text)) {
-      // Remove entry if there is no text in it
-      symbolSettings_.SymbolPaths.RemoveAt(index);
-      ReloadSymbolPathsList();
-
-      return;
-    }
-
     // Update list with the new text
-    symbolSettings_.SymbolPaths[index] = textBox.Text;
-    ReloadSymbolPathsList();
+    if (symbolSettings_.SymbolPaths[index] != textBox.Text) {
+      symbolSettings_.SymbolPaths[index] = textBox.Text;
+      ReloadSymbolPathsList();
+    }
   }
 
   private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-    if (sender is TextBox textBox) {
+    if (sender is FileSystemTextBox textBox) {
       Utils.SelectTextBoxListViewItem(textBox, SymbolPathsList);
-      e.Handled = true;
     }
   }
 
@@ -1171,6 +1173,20 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         MessageBoxResult.Yes) {
       symbolSettings_.RejectedSymbolFiles.Clear();
       ReloadSymbolPathsList();
+    }
+  }
+
+  private void SymbolPathBrowseButton_Click(object sender, RoutedEventArgs e) {
+    var listViewItem = Utils.FocusParentListViewItem(sender as Control, SymbolPathsList);
+    var textBox = Utils.FindChild<FileSystemTextBox>(listViewItem);
+
+    using var centerForm = new DialogCenteringHelper(this);
+    var dialog = new OpenFolderDialog();
+    dialog.Title = "Select symbols directory";
+
+    if (dialog.ShowDialog(this) == true) {
+      textBox.Text = dialog.FolderName;
+      UpdateSymbolPath(textBox);
     }
   }
 }

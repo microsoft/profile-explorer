@@ -64,7 +64,6 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
   private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
     if (sender is TextBox textBox) {
       Utils.SelectTextBoxListViewItem(textBox, ModuleList);
-      e.Handled = true;
     }
   }
 

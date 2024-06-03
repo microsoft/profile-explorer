@@ -23,6 +23,7 @@ using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.Utilities;
+using IRExplorerUI.Controls;
 using Microsoft.Win32;
 using Xceed.Wpf.Toolkit.Core.Utilities;
 
@@ -205,10 +206,12 @@ public static class Utils {
                                                  MessageBoxImage image) {
     if (owner != null) {
       using var centerForm = new DialogCenteringHelper(owner);
-      return MessageBox.Show(text, "IR Explorer", buttons, image);
+      return MessageBox.Show(text, "IR Explorer", buttons, image,
+                             MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
     }
     else {
-      return MessageBox.Show(text, "IR Explorer", buttons, image);
+      return MessageBox.Show(text, "IR Explorer", buttons, image,
+                             MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
     }
   }
 
@@ -1223,15 +1226,29 @@ public static class Utils {
     }
 
     textBox.Focus();
-    textBox.SelectAll();
+    FocusParentListViewItem(textBox, listView);
+  }
 
+
+  public static void SelectTextBoxListViewItem(FileSystemTextBox textBox, ListView listView) {
+    if (textBox.IsKeyboardFocused) {
+      return;
+    }
+
+    textBox.Focus();
+    FocusParentListViewItem(textBox, listView);
+  }
+
+  public static ListViewItem FocusParentListViewItem(Control control, ListView listView) {
     // Try to move selection to the item in the list view.
-    var listViewItem = VisualTreeHelperEx.FindAncestorByType<ListViewItem>(textBox);
+    var listViewItem = VisualTreeHelperEx.FindAncestorByType<ListViewItem>(control);
 
     if (listViewItem != null) {
       listView.SelectedItem = null;
       listViewItem.IsSelected = true;
     }
+
+    return listViewItem;
   }
 
   private static void Control_SizeChanged(object sender, SizeChangedEventArgs e) {

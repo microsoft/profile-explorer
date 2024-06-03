@@ -20,9 +20,11 @@ public class DefinitionPanelState {
 
 public partial class DefinitionPanel : ToolPanelControl {
   private IRElement definedOperand_;
-
+  private CancelableTaskInstance loadTask_;
+  
   public DefinitionPanel() {
     InitializeComponent();
+    loadTask_ = new CancelableTaskInstance(false);
   }
 
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
@@ -86,11 +88,13 @@ public partial class DefinitionPanel : ToolPanelControl {
   }
 
   public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    
     if (TextView.Section == section) {
       return;
     }
 
-    await TextView.InitializeFromDocument(document, false);
+    await TextView.InitializeFromDocument(document, false, null, false);
     Document = document;
 
     if (Session.LoadPanelState(this, section, document) is DefinitionPanelState savedState) {
@@ -110,6 +114,8 @@ public partial class DefinitionPanel : ToolPanelControl {
   }
 
   public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    
     if (TextView.Section != section) {
       return;
     }

@@ -8,13 +8,13 @@ using System.Windows.Controls;
 
 namespace IRExplorerUI.Controls;
 
-class FileSystemTextBox : AutoCompleteBox {
-  private string extensionFilter_;
-  public string ExtensionFilter { get => extensionFilter_; set => extensionFilter_ = value; }
+public class FileSystemTextBox : AutoCompleteBox {
+  public string ExtensionFilter { get; set; }
+  public bool ShowOnlyDirectories { get; set; }
 
   protected override void OnInitialized(EventArgs e) {
     base.OnInitialized(e);
-    extensionFilter_ = "*.*";
+    ExtensionFilter = "*.*";
     Populating += FileSystemTextBox_Populating;
   }
 
@@ -26,7 +26,7 @@ class FileSystemTextBox : AutoCompleteBox {
       string dirname = Path.GetDirectoryName(text);
 
       if (dirname != null && Directory.Exists(dirname)) {
-        string[] files = Directory.GetFiles(dirname, extensionFilter_, SearchOption.TopDirectoryOnly);
+        string[] files = Directory.GetFiles(dirname, ExtensionFilter, SearchOption.TopDirectoryOnly);
         string[] dirs = Directory.GetDirectories(dirname, "*", SearchOption.TopDirectoryOnly);
         var candidates = new List<string>(files.Length + dirs.Length);
 
@@ -34,8 +34,10 @@ class FileSystemTextBox : AutoCompleteBox {
           candidates.Add(f);
         }
 
-        foreach (string f in files) {
-          candidates.Add(f);
+        if (!ShowOnlyDirectories) {
+          foreach (string f in files) {
+            candidates.Add(f);
+          }
         }
 
         box.ItemsSource = candidates;

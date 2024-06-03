@@ -521,11 +521,9 @@
                     HorizontalAlignment="Stretch"
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
-                    IsDropDownOpen="True"
                     IsEnabled="{Binding InputControlsEnabled}"
-                    IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
-                    Text="{Binding Path=ProfileFilePath, Mode=TwoWay}"
+                    Text="{Binding Path=ProfileFilePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     ToolTip="Path of the profile data file to load"
                     TextChanged="ProfileAutocompleteBox_TextChanged" />
 
@@ -752,14 +750,39 @@
                             </GridViewColumn.HeaderContainerStyle>
                             <GridViewColumn.CellTemplate>
                               <DataTemplate>
-                                <TextBox
-                                  Background="Transparent"
+                                <controls:FileSystemTextBox
                                   BorderThickness="0"
                                   KeyDown="SymbolPath_KeyDown"
                                   LostFocus="SymbolPath_LostFocus"
-                                  MaxLines="1"
+                                  DropDownClosed="SymbolPath_OnDropDownClosed"
+                                  FilterMode="StartsWithOrdinal"
+                                  ShowOnlyDirectories="True"
+                                  MinimumPrefixLength="0"
                                   PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
                                   Text="{Binding Path=.}" />
+                              </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                          </GridViewColumn>
+                          <GridViewColumn Width="Auto">
+                            <GridViewColumn.HeaderContainerStyle>
+                              <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                              </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                            <GridViewColumn.CellTemplate>
+                              <DataTemplate>
+                                <Button
+                                  x:Name="BaseBrowseButton"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  Height="20"
+                                  Padding="4,2,4,2"
+                                  HorizontalAlignment="Right"
+                                  ToolTip="Select symbols directory from file system"
+                                  Click="SymbolPathBrowseButton_Click">
+                                  <Image Source="{StaticResource FolderIcon}"
+                                         Style="{StaticResource DisabledImageStyle}"/>
+                                  </Button>
                               </DataTemplate>
                             </GridViewColumn.CellTemplate>
                           </GridViewColumn>
@@ -1189,9 +1212,9 @@
                 </StackPanel>
               </Expander>
               <Expander
-                Margin="8,10,8,8"
+                Margin="8,8,8,8"
                 IsEnabled="{Binding InputControlsEnabled}"
-                IsExpanded="True">
+                IsExpanded="False">
                 <Expander.Header>
                   <TextBlock FontWeight="Medium" Text="Binary files" />
                 </Expander.Header>

@@ -134,6 +134,8 @@ public partial class GraphPanel : ToolPanelControl {
     IsPanelEnabled = true;
     HasPinnedContent = false;
     Utils.EnableControl(GraphHost);
+    Utils.EnableControl(this);
+
   }
 
   public void HideGraph() {
@@ -145,7 +147,8 @@ public partial class GraphPanel : ToolPanelControl {
     graph_ = null;
     Document = null;
     hoveredNode_ = null;
-    Utils.DisableControl(GraphViewer);
+    Utils.DisableControl(this);
+    Utils.DisableControl(GraphHost, 0.5);
     IsPanelEnabled = false;
   }
 
@@ -1014,7 +1017,8 @@ public partial class GraphPanel : ToolPanelControl {
 
     HidePreviewPopup(true);
     HideQueryPanel();
-    Utils.DisableControl(GraphHost);
+    Utils.DisableControl(this);
+    Utils.DisableControl(GraphHost, 0.5);
     restoredState_ = false;
 
     var state = new GraphPanelState();
