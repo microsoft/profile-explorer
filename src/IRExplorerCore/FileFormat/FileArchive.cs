@@ -7,11 +7,12 @@ using System.Security;
 using System.IO.Compression;
 using System.Diagnostics;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace IRExplorerCore.FileFormat;
 
 public sealed class FileArchive : IDisposable {
-  private static string HeaderFilePath = "HEADER-4F1B8FB1-DD26-4D60-B275-6C0588668EE6";
+  private const string HeaderFilePath = "HEADER-4F1B8FB1-DD26-4D60-B275-6C0588668EE6";
   private static readonly Guid FileSignature = new Guid("80BCEE32-5110-4A25-87D3-D359B0C2634C");
   private const int FileFormatVersion = 1;
   private const int MinFileFormatVersion = 1;
@@ -32,6 +33,14 @@ public sealed class FileArchive : IDisposable {
 
     internal void RemoveFile(string path) {
       Files.RemoveAll(entry => entry.Name.Equals(path, StringComparison.Ordinal));
+    }
+
+    public T GetOptionalData<T>() {
+      if (OptionalData is JsonElement json) {
+        return json.Deserialize<T>();
+      }
+
+      return (T)OptionalData;
     }
   }
 
@@ -58,9 +67,10 @@ public sealed class FileArchive : IDisposable {
   private bool modified_;
   private bool disposed_;
 
-  private FileArchive(Stream stream, bool createNew,
+  private FileArchive(Stream stream, bool openForWrite,
                       CompressionLevel level = CompressionLevel.Fastest) {
-    archive_ = new ZipArchive(stream, ZipArchiveMode.Update);
+    var mode = openForWrite ? ZipArchiveMode.Update : ZipArchiveMode.Read;
+    archive_ = new ZipArchive(stream, mode);
     archiveStream_ = stream;
     compressionLevel_ = level;
     CreateHeader();
@@ -68,10 +78,16 @@ public sealed class FileArchive : IDisposable {
 
   public List<FileEntry> Files => header_.Files;
   public int FileCount => Files.Count;
+  public long UncompressedSize => Files.Sum(entry => entry.Size);
+  public bool HasOptionalData => header_.OptionalData != null;
 
-  public object OptionalData {
-    get => header_.OptionalData;
-    set => header_.OptionalData = value;
+  // Optional data that can be serialized together with the header.
+  public void SetOptionalData(object dataObject) {
+    header_.OptionalData = dataObject;
+  }
+
+  public T GetOptionalData<T>() {
+    return header_.GetOptionalData<T>();
   }
 
   public IEnumerable<FileEntry> GetFilesOfKind(int kind) {
@@ -95,7 +111,7 @@ public sealed class FileArchive : IDisposable {
       var stream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite);
       var archive = new FileArchive(stream, false);
 
-      if (!(await archive.LoadHeader())) {
+      if (!(await archive.LoadHeader().ConfigureAwait(false))) {
         Trace.WriteLine($"Failed to validate archive header for {filePath}");
         return null;
       }
@@ -109,12 +125,12 @@ public sealed class FileArchive : IDisposable {
   }
 
   public static async Task<FileArchive> LoadOrCreateAsync(string filePath, CompressionLevel compressionLevel) {
-    return await CreateAsyncImpl(filePath, compressionLevel, false, true);
+    return await CreateAsyncImpl(filePath, compressionLevel, false, true).ConfigureAwait(false);
   }
 
   public static async Task<FileArchive> CreateAsync(string filePath, CompressionLevel compressionLevel,
                                                     bool overwriteExisting = true) {
-    return await CreateAsyncImpl(filePath, compressionLevel, overwriteExisting, false);
+    return await CreateAsyncImpl(filePath, compressionLevel, overwriteExisting, false).ConfigureAwait(false);
   }
 
   private static async Task<FileArchive> CreateAsyncImpl(string filePath, CompressionLevel compressionLevel,
@@ -128,7 +144,7 @@ public sealed class FileArchive : IDisposable {
           File.Delete(filePath);
         }
         else if (loadExisting) {
-          return await LoadAsync(filePath);
+          return await LoadAsync(filePath).ConfigureAwait(false);
         }
         else {
           return null;
@@ -146,15 +162,20 @@ public sealed class FileArchive : IDisposable {
   }
 
   public async Task<bool> SaveAsync() {
-    await SaveHeader();
-    archive_.Dispose();
-    archive_ = null;
-    archiveStream_ = null;
+    await SaveHeader().ConfigureAwait(false);
+    Close();
     return true;
   }
 
-  public async Task<bool> AddFileAsync(string sourceFilePath, string optionalDirectory = null,
-                                       bool keepExisting = false, int fileKind = 0) {
+  private void Close() {
+    archive_?.Dispose();
+    archive_ = null;
+    archiveStream_ = null;
+    modified_ = false;
+  }
+
+  public async Task<bool> AddFileAsync(string sourceFilePath, int fileKind = 0, string optionalDirectory = null,
+                                       bool keepExisting = false) {
     try {
       await using var sourceStream = File.OpenRead(sourceFilePath);
       var archiveFilePath = Path.GetFileName(sourceFilePath);
@@ -163,7 +184,7 @@ public sealed class FileArchive : IDisposable {
         archiveFilePath = Path.Combine(optionalDirectory, archiveFilePath);
       }
 
-      return await AddFileStreamAsync(archiveFilePath, sourceStream, keepExisting, fileKind);
+      return await AddFileStreamAsync(archiveFilePath, sourceStream, fileKind, keepExisting).ConfigureAwait(false);
     }
     catch (Exception ex) {
       Trace.WriteLine($"Failed to add file {sourceFilePath}: {ex.Message}");
@@ -171,8 +192,9 @@ public sealed class FileArchive : IDisposable {
     }
   }
 
-  public async Task<bool> AddFilesAsync(IEnumerable<string> sourceFilePaths, string optionalDirectory = null,
-                                        bool keepExisting = false, int fileKind = 0) {
+  public async Task<bool> AddFilesAsync(IEnumerable<string> sourceFilePaths, int fileKind = 0,
+                                        string optionalDirectory = null,
+                                        bool keepExisting = false) {
     try {
       foreach (var filePath in sourceFilePaths) {
         await using var sourceStream = File.OpenRead(filePath);
@@ -182,7 +204,7 @@ public sealed class FileArchive : IDisposable {
           archiveFilePath = Path.Combine(optionalDirectory, archiveFilePath);
         }
 
-        if (!(await AddFileStreamAsync(archiveFilePath, sourceStream, keepExisting, fileKind))) {
+        if (!(await AddFileStreamAsync(archiveFilePath, sourceStream, fileKind, keepExisting).ConfigureAwait(false))) {
           return false;
         }
       }
@@ -196,14 +218,15 @@ public sealed class FileArchive : IDisposable {
   }
 
   public async Task<bool> AddDirectoryAsync(string directoryPath, bool includeSubdirs = false,
+                                            int fileKind = 0,
                                             string searchPattern = "*", string optionalDirectory = null,
-                                            bool keepExisting = false, int fileKind = 0) {
+                                            bool keepExisting = false) {
     try {
       var searchOption = includeSubdirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
       var files = Directory.EnumerateFiles(directoryPath, searchPattern, searchOption);
 
       foreach (var file in files) {
-        // If file is in a directoryPath subdir, create the correspondng
+        // If file is in a directoryPath subdir, create the corresponding
         // subdir in the archive too, combined with the subdir force by client.
         string subdirPath = Path.GetRelativePath(directoryPath, file);
         subdirPath = Path.GetDirectoryName(subdirPath);
@@ -212,7 +235,7 @@ public sealed class FileArchive : IDisposable {
           subdirPath = Path.Combine(optionalDirectory, subdirPath);
         }
 
-        if (!(await AddFileAsync(file, subdirPath, keepExisting, fileKind))) {
+        if (!(await AddFileAsync(file, fileKind, subdirPath, keepExisting).ConfigureAwait(false))) {
           return false;
         }
       }
@@ -225,43 +248,55 @@ public sealed class FileArchive : IDisposable {
     }
   }
 
-  public async Task<bool> AddFileStreamAsync(string archiveFilePath, Stream sourceStream,
-                                             bool keepExisting = false, int fileKind = 0) {
+  public async Task<bool> AddFileStreamAsync(string sourceFilePath, Stream sourceStream,
+                                             int fileKind = 0,
+                                             bool keepExisting = false) {
     try {
-      var existingEntry = header_.FindFile(archiveFilePath);
+      var existingEntry = header_.FindFile(sourceFilePath);
 
       if (existingEntry != null) {
         if (keepExisting) {
           return true;
         }
 
-        var entry = archive_.GetEntry(archiveFilePath);
-
-        if (entry != null) {
-          entry.Delete();
-        }
-
-        header_.RemoveFile(archiveFilePath);
+        await RemoveFile(sourceFilePath).ConfigureAwait(false);
       }
 
-      var newEntry = archive_.CreateEntry(archiveFilePath, compressionLevel_);
+      var newEntry = archive_.CreateEntry(sourceFilePath, compressionLevel_);
       await using var entryStream = newEntry.Open();
-      await sourceStream.CopyToAsync(entryStream);
+      await sourceStream.CopyToAsync(entryStream).ConfigureAwait(false);
 
-      header_.AddFile(archiveFilePath, fileKind, sourceStream.Length);
+      if (sourceFilePath != HeaderFilePath) {
+        header_.AddFile(sourceFilePath, fileKind, sourceStream.Length);
+      }
+
       modified_ = true;
       return true;
     }
     catch (Exception ex) {
-      Trace.WriteLine($"Failed to add file {archiveFilePath}: {ex.Message}");
+      Trace.WriteLine($"Failed to add file {sourceFilePath}: {ex.Message}");
       return false;
     }
+  }
+
+  public async Task<bool> RemoveFile(string archiveFilePath) {
+    var entry = archive_.GetEntry(archiveFilePath);
+
+    if (entry != null) {
+      header_.RemoveFile(archiveFilePath);
+      entry.Delete();
+      modified_ = true;
+      return true;
+    }
+
+    return false;
   }
 
   public async Task<bool> ExtractFileToDirectoryAsync(FileEntry file, string directoryPath,
                                                       bool preserveArchiveDirs = true,
                                                       bool overwriteExisting = true) {
-    return await ExtractFileToDirectoryAsync(file.ArchivePath, directoryPath, preserveArchiveDirs, overwriteExisting);
+    return await ExtractFileToDirectoryAsync(file.ArchivePath, directoryPath,
+                                             preserveArchiveDirs, overwriteExisting).ConfigureAwait(false);
   }
 
   public async Task<bool> ExtractFileToDirectoryAsync(string archiveFilePath, string directoryPath,
@@ -279,7 +314,7 @@ public sealed class FileArchive : IDisposable {
         Directory.CreateDirectory(outFileDir);
       }
 
-      return await ExtractFileAsync(archiveFilePath, outFilePath, overwriteExisting);
+      return await ExtractFileAsync(archiveFilePath, outFilePath, overwriteExisting).ConfigureAwait(false);
     }
     catch (Exception ex) {
       Trace.WriteLine($"Failed to add file {archiveFilePath}: {ex.Message}");
@@ -287,14 +322,96 @@ public sealed class FileArchive : IDisposable {
     }
   }
 
-  public async Task<bool> ExtractAllToDirectoryAsync() {
-    // Skip over header file
+  public async Task<bool> ExtractAllToDirectoryAsync(string directoryPath,
+                                                     bool preserveArchiveDirs = true,
+                                                     bool overwriteExisting = true) {
+    foreach (var file in Files) {
+      if (!(await ExtractFileToDirectoryAsync(file, directoryPath,
+                                              preserveArchiveDirs, overwriteExisting).ConfigureAwait(false))) {
+        return false;
+      }
+    }
+
     return true;
+  }
+
+  public static async Task<bool> ExtractAllToDirectoryAsync(string archivePath,
+                                                            string directoryPath,
+                                                            bool preserveArchiveDirs = true,
+                                                            bool overwriteExisting = true) {
+    using var archive = await LoadAsync(archivePath).ConfigureAwait(false);
+
+    if (archive == null) {
+      return false;
+    }
+
+    return await archive.ExtractAllToDirectoryAsync(directoryPath, preserveArchiveDirs, overwriteExisting).
+      ConfigureAwait(false);
+  }
+
+  public static async Task<bool> CreateFromFileAsync(string archivePath, CompressionLevel compressionLevel,
+                                                     string sourceFilePath,
+                                                     int fileKind = 0,
+                                                     bool overwriteExisting = true) {
+    using var archive = await CreateAsync(archivePath, compressionLevel, overwriteExisting).ConfigureAwait(false);
+
+    if (archive == null ||
+        !(await archive.AddFileAsync(sourceFilePath, fileKind, null, false).ConfigureAwait(false))) {
+      return false;
+    }
+
+    return await archive.SaveAsync().ConfigureAwait(false);
+  }
+
+  public static async Task<bool> CreateFromFilesAsync(string archivePath, CompressionLevel compressionLevel,
+                                                      IEnumerable<string> sourceFilePaths,
+                                                      int fileKind = 0,
+                                                      bool overwriteExisting = true) {
+    using var archive = await CreateAsync(archivePath, compressionLevel, overwriteExisting).ConfigureAwait(false);
+
+    if (archive == null ||
+        !(await archive.AddFilesAsync(sourceFilePaths, fileKind, null, false).ConfigureAwait(false))) {
+      return false;
+    }
+
+    return await archive.SaveAsync().ConfigureAwait(false);
+  }
+
+  public static async Task<bool> CreateFromStreamAsync(string archivePath, CompressionLevel compressionLevel,
+                                                       string sourceFilePath,
+                                                       Stream sourceStream,
+                                                       int fileKind = 0,
+                                                       bool overwriteExisting = true) {
+    using var archive = await CreateAsync(archivePath, compressionLevel, overwriteExisting).ConfigureAwait(false);
+
+    if (archive == null ||
+        !(await archive.AddFileStreamAsync(sourceFilePath, sourceStream, fileKind, false).ConfigureAwait(false))) {
+      return false;
+    }
+
+    return await archive.SaveAsync().ConfigureAwait(false);
+  }
+
+  public static async Task<bool> CreateFromDirectoryAsync(string archivePath, CompressionLevel compressionLevel,
+                                                          string directoryPath,
+                                                          bool includeSubdirs = false,
+                                                          string searchPattern = "*",
+                                                          int fileKind = 0,
+                                                          bool overwriteExisting = true) {
+    using var archive = await CreateAsync(archivePath, compressionLevel, overwriteExisting).ConfigureAwait(false);
+
+    if (archive == null ||
+        !(await archive.AddDirectoryAsync(directoryPath, includeSubdirs, fileKind, searchPattern, null, false).
+          ConfigureAwait(false))) {
+      return false;
+    }
+
+    return await archive.SaveAsync().ConfigureAwait(false);
   }
 
   public async Task<bool> ExtractFileAsync(FileEntry file, string outFilePath,
                                            bool overwriteExisting = true) {
-    return await ExtractFileAsync(file.ArchivePath, outFilePath, overwriteExisting);
+    return await ExtractFileAsync(file.ArchivePath, outFilePath, overwriteExisting).ConfigureAwait(false);
   }
 
   public async Task<bool> ExtractFileAsync(string archiveFilePath, string outFilePath,
@@ -310,7 +427,7 @@ public sealed class FileArchive : IDisposable {
       }
 
       await using var stream = new FileStream(outFilePath, FileMode.CreateNew, FileAccess.Write);
-      return await ExtractFileAsync(archiveFilePath, stream);
+      return await ExtractFileAsync(archiveFilePath, stream).ConfigureAwait(false);
     }
     catch (Exception ex) {
       Trace.WriteLine($"Failed to extract file {archiveFilePath} to {outFilePath}: {ex.Message}");
@@ -319,7 +436,7 @@ public sealed class FileArchive : IDisposable {
   }
 
   public async Task<bool> ExtractFileAsync(FileEntry file, Stream outStream) {
-    return await ExtractFileAsync(file.ArchivePath, outStream);
+    return await ExtractFileAsync(file.ArchivePath, outStream).ConfigureAwait(false);
   }
 
   public async Task<bool> ExtractFileAsync(string archiveFilePath, Stream outStream) {
@@ -332,7 +449,7 @@ public sealed class FileArchive : IDisposable {
       }
 
       await using var entryStream = entry.Open();
-      await entryStream.CopyToAsync(outStream);
+      await entryStream.CopyToAsync(outStream).ConfigureAwait(false);
       return true;
     }
     catch (Exception ex) {
@@ -374,17 +491,17 @@ public sealed class FileArchive : IDisposable {
     var options = new JsonSerializerOptions();
     options.IgnoreReadOnlyFields = true;
     options.IgnoreReadOnlyProperties = true;
-    await JsonSerializer.SerializeAsync<Header>(stream, header_, options);
+    await JsonSerializer.SerializeAsync<Header>(stream, header_, options).ConfigureAwait(false);
     stream.Position = 0;
-    return await AddFileStreamAsync(HeaderFilePath, stream);
+    return await AddFileStreamAsync(HeaderFilePath, stream).ConfigureAwait(false);
   }
 
   private async Task<bool> LoadHeader() {
     using var stream = new MemoryStream();
 
-    if (await ExtractFileAsync(HeaderFilePath, stream)) {
+    if (await ExtractFileAsync(HeaderFilePath, stream).ConfigureAwait(false)) {
       stream.Position = 0;
-      header_ = await JsonSerializer.DeserializeAsync<Header>(stream);
+      header_ = await JsonSerializer.DeserializeAsync<Header>(stream).ConfigureAwait(false);
       return ValidateHeader(header_);
     }
 
@@ -399,12 +516,12 @@ public sealed class FileArchive : IDisposable {
   private void Dispose(bool disposing) {
     if (!disposed_) {
       if (disposing) {
-        //if (modified_) {
-          archive_?.Dispose();
-        //}
+        if (modified_) {
+          // Force saving the header if SaveAsync was not used.
+          SaveAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+        }
 
-        archive_ = null;
-        archiveStream_ = null;
+        Close();
       }
 
       disposed_ = true;
