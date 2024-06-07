@@ -14,6 +14,7 @@ namespace IRExplorerCore.FileFormat;
 public sealed class FileArchive : IDisposable {
   private const string HeaderFilePath = "HEADER-4F1B8FB1-DD26-4D60-B275-6C0588668EE6";
   private static readonly Guid FileSignature = new Guid("80BCEE32-5110-4A25-87D3-D359B0C2634C");
+  private const int FileBufferSize = 128 * 1024;
   private const int FileFormatVersion = 1;
   private const int MinFileFormatVersion = 1;
 
@@ -69,8 +70,15 @@ public sealed class FileArchive : IDisposable {
 
   private FileArchive(Stream stream, bool openForWrite,
                       CompressionLevel level = CompressionLevel.Fastest) {
-    var mode = openForWrite ? ZipArchiveMode.Update : ZipArchiveMode.Read;
-    archive_ = new ZipArchive(stream, mode);
+    try {
+      var mode = openForWrite ? ZipArchiveMode.Create : ZipArchiveMode.Read;
+      archive_ = new ZipArchive(stream, mode, leaveOpen: false);
+    }
+    catch {
+      stream?.Dispose();
+      throw;
+    }
+
     archiveStream_ = stream;
     compressionLevel_ = level;
     CreateHeader();
@@ -108,7 +116,8 @@ public sealed class FileArchive : IDisposable {
 
   public static async Task<FileArchive> LoadAsync(string filePath) {
     try {
-      var stream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite);
+      var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read,
+                                  bufferSize: FileBufferSize, useAsync: false);
       var archive = new FileArchive(stream, false);
 
       if (!(await archive.LoadHeader().ConfigureAwait(false))) {
@@ -124,16 +133,20 @@ public sealed class FileArchive : IDisposable {
     }
   }
 
-  public static async Task<FileArchive> LoadOrCreateAsync(string filePath, CompressionLevel compressionLevel) {
+  public static async Task<FileArchive> LoadOrCreateAsync(string filePath,
+                                                          CompressionLevel compressionLevel =
+                                                            CompressionLevel.Fastest) {
     return await CreateAsyncImpl(filePath, compressionLevel, false, true).ConfigureAwait(false);
   }
 
-  public static async Task<FileArchive> CreateAsync(string filePath, CompressionLevel compressionLevel,
+  public static async Task<FileArchive> CreateAsync(string filePath,
+                                                    CompressionLevel compressionLevel = CompressionLevel.Fastest,
                                                     bool overwriteExisting = true) {
     return await CreateAsyncImpl(filePath, compressionLevel, overwriteExisting, false).ConfigureAwait(false);
   }
 
-  private static async Task<FileArchive> CreateAsyncImpl(string filePath, CompressionLevel compressionLevel,
+  private static async Task<FileArchive> CreateAsyncImpl(string filePath,
+                                                         CompressionLevel compressionLevel = CompressionLevel.Fastest,
                                                          bool overwriteExisting = true,
                                                          bool loadExisting = false) {
     try {
@@ -151,7 +164,8 @@ public sealed class FileArchive : IDisposable {
         }
       }
 
-      var stream = new FileStream(filePath, FileMode.CreateNew, FileAccess.ReadWrite);
+      var stream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None,
+                                  bufferSize: FileBufferSize, useAsync: false);
       var archive = new FileArchive(stream, true, compressionLevel);
       return archive;
     }
@@ -349,8 +363,9 @@ public sealed class FileArchive : IDisposable {
       ConfigureAwait(false);
   }
 
-  public static async Task<bool> CreateFromFileAsync(string archivePath, CompressionLevel compressionLevel,
-                                                     string sourceFilePath,
+  public static async Task<bool> CreateFromFileAsync(string sourceFilePath,
+                                                     string archivePath,
+                                                     CompressionLevel compressionLevel = CompressionLevel.Fastest,
                                                      int fileKind = 0,
                                                      bool overwriteExisting = true) {
     using var archive = await CreateAsync(archivePath, compressionLevel, overwriteExisting).ConfigureAwait(false);
@@ -363,8 +378,9 @@ public sealed class FileArchive : IDisposable {
     return await archive.SaveAsync().ConfigureAwait(false);
   }
 
-  public static async Task<bool> CreateFromFilesAsync(string archivePath, CompressionLevel compressionLevel,
-                                                      IEnumerable<string> sourceFilePaths,
+  public static async Task<bool> CreateFromFilesAsync(IEnumerable<string> sourceFilePaths,
+                                                      string archivePath,
+                                                      CompressionLevel compressionLevel = CompressionLevel.Fastest,
                                                       int fileKind = 0,
                                                       bool overwriteExisting = true) {
     using var archive = await CreateAsync(archivePath, compressionLevel, overwriteExisting).ConfigureAwait(false);
@@ -377,9 +393,10 @@ public sealed class FileArchive : IDisposable {
     return await archive.SaveAsync().ConfigureAwait(false);
   }
 
-  public static async Task<bool> CreateFromStreamAsync(string archivePath, CompressionLevel compressionLevel,
+  public static async Task<bool> CreateFromStreamAsync(Stream sourceStream,
                                                        string sourceFilePath,
-                                                       Stream sourceStream,
+                                                       string archivePath,
+                                                       CompressionLevel compressionLevel = CompressionLevel.Fastest,
                                                        int fileKind = 0,
                                                        bool overwriteExisting = true) {
     using var archive = await CreateAsync(archivePath, compressionLevel, overwriteExisting).ConfigureAwait(false);
@@ -392,8 +409,9 @@ public sealed class FileArchive : IDisposable {
     return await archive.SaveAsync().ConfigureAwait(false);
   }
 
-  public static async Task<bool> CreateFromDirectoryAsync(string archivePath, CompressionLevel compressionLevel,
-                                                          string directoryPath,
+  public static async Task<bool> CreateFromDirectoryAsync(string directoryPath,
+                                                          string archivePath,
+                                                          CompressionLevel compressionLevel = CompressionLevel.Fastest,
                                                           bool includeSubdirs = false,
                                                           string searchPattern = "*",
                                                           int fileKind = 0,
@@ -426,7 +444,8 @@ public sealed class FileArchive : IDisposable {
         }
       }
 
-      await using var stream = new FileStream(outFilePath, FileMode.CreateNew, FileAccess.Write);
+      await using var stream = new FileStream(outFilePath, FileMode.CreateNew, FileAccess.Write,
+                                              FileShare.None, bufferSize: FileBufferSize, useAsync: false);
       return await ExtractFileAsync(archiveFilePath, stream).ConfigureAwait(false);
     }
     catch (Exception ex) {
@@ -456,6 +475,22 @@ public sealed class FileArchive : IDisposable {
       Trace.WriteLine($"Failed to extract file {archiveFilePath}: {ex.Message}");
       return false;
     }
+  }
+
+  public async Task<MemoryStream> ExtractFileToMemoryAsync(string archiveFilePath) {
+    var outStream = new MemoryStream();
+
+    if (await ExtractFileAsync(archiveFilePath, outStream)) {
+      return outStream;
+    }
+    else {
+      outStream.Dispose();
+      return null;
+    }
+  }
+
+  public async Task<MemoryStream> ExtractFileToMemoryAsync(FileEntry file) {
+    return await ExtractFileToMemoryAsync(file.ArchivePath);
   }
 
   public FileEntry FindFile(string archiveFilePath) {
@@ -499,13 +534,32 @@ public sealed class FileArchive : IDisposable {
   private async Task<bool> LoadHeader() {
     using var stream = new MemoryStream();
 
-    if (await ExtractFileAsync(HeaderFilePath, stream).ConfigureAwait(false)) {
+    if (!await ExtractFileAsync(HeaderFilePath, stream).ConfigureAwait(false)) {
+      // When opening a plain ZIP file, accept it by
+      // populating the header with the existing files.
       stream.Position = 0;
-      header_ = await JsonSerializer.DeserializeAsync<Header>(stream).ConfigureAwait(false);
-      return ValidateHeader(header_);
+      return CreateHeaderFromArchive();
     }
 
-    return false;
+    stream.Position = 0;
+    header_ = await JsonSerializer.DeserializeAsync<Header>(stream).ConfigureAwait(false);
+    return ValidateHeader(header_);
+  }
+
+  private bool CreateHeaderFromArchive() {
+    try {
+      CreateHeader();
+
+      foreach (var entry in archive_.Entries) {
+        header_.AddFile(entry.FullName, 0, entry.Length);
+      }
+
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to create header from archive contents");
+      return false;
+    }
   }
 
   private bool ValidateHeader(Header header) {

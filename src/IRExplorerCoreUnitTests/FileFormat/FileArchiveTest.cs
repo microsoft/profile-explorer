@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -209,11 +210,28 @@ public class FileArchiveTest {
   }
 
   [TestMethod]
+  public async Task TestExtractFileToStreamAsync() {
+    var path = $@"{ResultPath}\archive.zip";
+    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+
+    await FileArchive.CreateFromFileAsync(file1, path, CompressionLevel.Fastest);
+    Assert.IsTrue(File.Exists(path));
+
+    using var loadedArchive = await FileArchive.LoadAsync(path);
+    Assert.IsNotNull(loadedArchive);
+    Assert.IsTrue(loadedArchive.FileCount == 1);
+
+    using var outStream = await loadedArchive.ExtractFileToMemoryAsync("file1.txt");
+    Assert.IsNotNull(outStream);
+    Assert.IsTrue(AreFilesEqual(outStream, file1));
+  }
+
+  [TestMethod]
   public async Task TestCreateFromFileAsync() {
     var path = $@"{ResultPath}\archive.zip";
     var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
 
-    await FileArchive.CreateFromFileAsync(path, CompressionLevel.Fastest, file1);
+    await FileArchive.CreateFromFileAsync(file1, path, CompressionLevel.Fastest);
     Assert.IsTrue(File.Exists(path));
 
     ZipFile.ExtractToDirectory(path, OutPath);
@@ -225,8 +243,7 @@ public class FileArchiveTest {
     var path = $@"{ResultPath}\archive.zip";
     var stream = CreateTestStream(1023);
 
-    await FileArchive.CreateFromStreamAsync(path, CompressionLevel.Fastest,
-                                            "file1.txt", stream);
+    await FileArchive.CreateFromStreamAsync(stream, "file1.txt", path, CompressionLevel.Fastest);
     Assert.IsTrue(File.Exists(path));
 
     ZipFile.ExtractToDirectory(path, OutPath);
@@ -283,6 +300,25 @@ public class FileArchiveTest {
     Assert.IsTrue(loadedData.Value1 == 123);
     Assert.IsTrue(loadedData.Value2 == 456);
     Assert.IsTrue(loadedData.Value3 == "foo");
+  }
+
+  [TestMethod]
+  public async Task TestPlainZipFile() {
+    var path = $@"{ResultPath}\archive.zip";
+    Directory.CreateDirectory($@"{InPath}\subdir");
+    var file1 = CreateTestFile($@"{InPath}\subdir\file1.txt", 1023);
+    var file2 = CreateTestFile($@"{InPath}\subdir\file2.txt", 4095);
+    var file3 = CreateTestFile($@"{InPath}\file3.txt", 1023);
+
+    // Create zip file without included header,
+    // extracting files should still work.
+    ZipFile.CreateFromDirectory(InPath, path, CompressionLevel.Fastest, false);
+    Assert.IsTrue(File.Exists(path));
+
+    await FileArchive.ExtractAllToDirectoryAsync(path, OutPath);
+    Assert.IsTrue(AreFilesEqual(file1, $@"{OutPath}\subdir\file1.txt"));
+    Assert.IsTrue(AreFilesEqual(file2, $@"{OutPath}\subdir\file2.txt"));
+    Assert.IsTrue(AreFilesEqual(file3, $@"{OutPath}\file3.txt"));
   }
 
   private MemoryStream CreateTestStream(int size) {
