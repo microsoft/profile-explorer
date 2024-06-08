@@ -84,6 +84,9 @@ public sealed class FileArchive : IDisposable {
     CreateHeader();
   }
 
+  public delegate void FileProgressDelegate(int currentFile, int totalFiles);
+  public event FileProgressDelegate OnFileAdded; // Notified when adding multiple files only.
+  public event FileProgressDelegate OnFileExtracted; // Notified when extracting multiple files only.
   public List<FileEntry> Files => header_.Files;
   public int FileCount => Files.Count;
   public long UncompressedSize => Files.Sum(entry => entry.Size);
@@ -98,7 +101,7 @@ public sealed class FileArchive : IDisposable {
     return header_.GetOptionalData<T>();
   }
 
-  public IEnumerable<FileEntry> GetFilesOfKind(int kind) {
+  public IEnumerable<FileEntry> FindFilesOfKind(int kind) {
     foreach (var entry in Files) {
       if (entry.Kind == kind) {
         yield return entry;
@@ -107,11 +110,36 @@ public sealed class FileArchive : IDisposable {
   }
 
   public bool HasFilesOfKind(int kind) {
-    foreach (var entry in GetFilesOfKind(kind)) {
+    foreach (var entry in FindFilesOfKind(kind)) {
       return true;
     }
 
     return false;
+  }
+
+  public IEnumerable<FileEntry> FindFilesInDirectory(string directoryPath, int optionalKind = 0) {
+    foreach (var entry in Files) {
+      if (optionalKind != 0 && entry.Kind != optionalKind) {
+        continue; // Filter based on kind.
+      }
+
+      var entryDir = entry.Directory;
+
+      if (entryDir == directoryPath) {
+        yield return entry;
+      }
+
+      // For a directoryPath foo accept files in dirs like
+      // foo/file.ext and foo/bar/file.ext, but reject
+      // foobar/file.ext and bar/foo/file.ext and bar/foofile.ext.
+      int prefixIndex = entryDir.IndexOf(directoryPath, StringComparison.Ordinal);
+
+      if (prefixIndex == 0 &&
+          (prefixIndex + directoryPath.Length == entryDir.Length - 1 ||
+           entryDir[prefixIndex + directoryPath.Length] == Path.DirectorySeparatorChar)) {
+        yield return entry;
+      }
+    }
   }
 
   public static async Task<FileArchive> LoadAsync(string filePath) {
@@ -198,7 +226,7 @@ public sealed class FileArchive : IDisposable {
         archiveFilePath = Path.Combine(optionalDirectory, archiveFilePath);
       }
 
-      return await AddFileStreamAsync(archiveFilePath, sourceStream, fileKind, keepExisting).ConfigureAwait(false);
+      return await AddFileStreamAsync(sourceStream, archiveFilePath, fileKind, keepExisting).ConfigureAwait(false);
     }
     catch (Exception ex) {
       Trace.WriteLine($"Failed to add file {sourceFilePath}: {ex.Message}");
@@ -210,7 +238,11 @@ public sealed class FileArchive : IDisposable {
                                         string optionalDirectory = null,
                                         bool keepExisting = false) {
     try {
-      foreach (var filePath in sourceFilePaths) {
+      var files = sourceFilePaths.ToList();
+      int index = 0;
+      OnFileAdded?.Invoke(0, files.Count);
+
+      foreach (var filePath in files) {
         await using var sourceStream = File.OpenRead(filePath);
         var archiveFilePath = Path.GetFileName(filePath);
 
@@ -218,9 +250,11 @@ public sealed class FileArchive : IDisposable {
           archiveFilePath = Path.Combine(optionalDirectory, archiveFilePath);
         }
 
-        if (!(await AddFileStreamAsync(archiveFilePath, sourceStream, fileKind, keepExisting).ConfigureAwait(false))) {
+        if (!(await AddFileStreamAsync(sourceStream, archiveFilePath, fileKind, keepExisting).ConfigureAwait(false))) {
           return false;
         }
+
+        OnFileAdded?.Invoke(++index, files.Count);
       }
 
       return true;
@@ -237,7 +271,9 @@ public sealed class FileArchive : IDisposable {
                                             bool keepExisting = false) {
     try {
       var searchOption = includeSubdirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-      var files = Directory.EnumerateFiles(directoryPath, searchPattern, searchOption);
+      var files = Directory.EnumerateFiles(directoryPath, searchPattern, searchOption).ToList();
+      int index = 0;
+      OnFileAdded?.Invoke(0, files.Count);
 
       foreach (var file in files) {
         // If file is in a directoryPath subdir, create the corresponding
@@ -252,6 +288,8 @@ public sealed class FileArchive : IDisposable {
         if (!(await AddFileAsync(file, fileKind, subdirPath, keepExisting).ConfigureAwait(false))) {
           return false;
         }
+
+        OnFileAdded?.Invoke(++index, files.Count);
       }
 
       return true;
@@ -262,33 +300,34 @@ public sealed class FileArchive : IDisposable {
     }
   }
 
-  public async Task<bool> AddFileStreamAsync(string sourceFilePath, Stream sourceStream,
+  public async Task<bool> AddFileStreamAsync(Stream sourceStream,
+                                             string archiveFilePath,
                                              int fileKind = 0,
                                              bool keepExisting = false) {
     try {
-      var existingEntry = header_.FindFile(sourceFilePath);
+      var existingEntry = header_.FindFile(archiveFilePath);
 
       if (existingEntry != null) {
         if (keepExisting) {
           return true;
         }
 
-        await RemoveFile(sourceFilePath).ConfigureAwait(false);
+        await RemoveFile(archiveFilePath).ConfigureAwait(false);
       }
 
-      var newEntry = archive_.CreateEntry(sourceFilePath, compressionLevel_);
+      var newEntry = archive_.CreateEntry(archiveFilePath, compressionLevel_);
       await using var entryStream = newEntry.Open();
       await sourceStream.CopyToAsync(entryStream).ConfigureAwait(false);
 
-      if (sourceFilePath != HeaderFilePath) {
-        header_.AddFile(sourceFilePath, fileKind, sourceStream.Length);
+      if (archiveFilePath != HeaderFilePath) {
+        header_.AddFile(archiveFilePath, fileKind, sourceStream.Length);
       }
 
       modified_ = true;
       return true;
     }
     catch (Exception ex) {
-      Trace.WriteLine($"Failed to add file {sourceFilePath}: {ex.Message}");
+      Trace.WriteLine($"Failed to add file {archiveFilePath}: {ex.Message}");
       return false;
     }
   }
@@ -304,6 +343,64 @@ public sealed class FileArchive : IDisposable {
     }
 
     return false;
+  }
+
+  public async Task<bool> ExtractFilesToDirectoryAsync(IEnumerable<string> files, string directoryPath,
+                                                       bool preserveArchiveDirs = true,
+                                                       bool overwriteExisting = true) {
+    int index = 0;
+    OnFileExtracted?.Invoke(0, Files.Count);
+
+    foreach (var file in files) {
+      if (!await ExtractFileToDirectoryAsync(file, directoryPath,
+                                             preserveArchiveDirs, overwriteExisting).ConfigureAwait(false)) {
+        return false;
+      }
+
+      OnFileExtracted?.Invoke(++index, Files.Count);
+    }
+
+    return true;
+  }
+
+  public async Task<bool> ExtractFilesToDirectoryAsync(IEnumerable<FileEntry> files, string directoryPath,
+                                                       bool preserveArchiveDirs = true,
+                                                       bool overwriteExisting = true) {
+    int index = 0;
+    OnFileExtracted?.Invoke(0, Files.Count);
+
+    foreach (var file in files) {
+      if (!await ExtractFileToDirectoryAsync(file, directoryPath,
+                                             preserveArchiveDirs, overwriteExisting).ConfigureAwait(false)) {
+        return false;
+      }
+
+      OnFileExtracted?.Invoke(++index, Files.Count);
+    }
+
+    return true;
+  }
+
+  public async Task<bool> ExtractAllFilesOfKindToDirectoryAsync(int kind, string directoryPath,
+                                                                string optionalArchiveDirectory = null,
+                                                                bool preserveArchiveDirs = true,
+                                                                bool overwriteExisting = true) {
+    var files = !string.IsNullOrEmpty(optionalArchiveDirectory) ?
+      FindFilesInDirectory(optionalArchiveDirectory, kind) :
+      FindFilesOfKind(kind);
+    int index = 0;
+    OnFileExtracted?.Invoke(0, Files.Count);
+
+    foreach (var file in files) {
+      if (!await ExtractFileToDirectoryAsync(file, directoryPath,
+                                             preserveArchiveDirs, overwriteExisting).ConfigureAwait(false)) {
+        return false;
+      }
+
+      OnFileExtracted?.Invoke(++index, Files.Count);
+    }
+
+    return true;
   }
 
   public async Task<bool> ExtractFileToDirectoryAsync(FileEntry file, string directoryPath,
@@ -339,11 +436,16 @@ public sealed class FileArchive : IDisposable {
   public async Task<bool> ExtractAllToDirectoryAsync(string directoryPath,
                                                      bool preserveArchiveDirs = true,
                                                      bool overwriteExisting = true) {
+    int index = 0;
+    OnFileExtracted?.Invoke(0, Files.Count);
+
     foreach (var file in Files) {
       if (!(await ExtractFileToDirectoryAsync(file, directoryPath,
                                               preserveArchiveDirs, overwriteExisting).ConfigureAwait(false))) {
         return false;
       }
+
+      OnFileExtracted?.Invoke(++index, Files.Count);
     }
 
     return true;
@@ -402,7 +504,7 @@ public sealed class FileArchive : IDisposable {
     using var archive = await CreateAsync(archivePath, compressionLevel, overwriteExisting).ConfigureAwait(false);
 
     if (archive == null ||
-        !(await archive.AddFileStreamAsync(sourceFilePath, sourceStream, fileKind, false).ConfigureAwait(false))) {
+        !(await archive.AddFileStreamAsync(sourceStream, sourceFilePath, fileKind, false).ConfigureAwait(false))) {
       return false;
     }
 
@@ -526,9 +628,10 @@ public sealed class FileArchive : IDisposable {
     var options = new JsonSerializerOptions();
     options.IgnoreReadOnlyFields = true;
     options.IgnoreReadOnlyProperties = true;
+    options.WriteIndented = true;
     await JsonSerializer.SerializeAsync<Header>(stream, header_, options).ConfigureAwait(false);
     stream.Position = 0;
-    return await AddFileStreamAsync(HeaderFilePath, stream).ConfigureAwait(false);
+    return await AddFileStreamAsync(stream, HeaderFilePath).ConfigureAwait(false);
   }
 
   private async Task<bool> LoadHeader() {

@@ -2,7 +2,6 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -66,7 +65,7 @@ public class FileArchiveTest {
     var file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
-    Assert.IsTrue(await archive.AddFileStreamAsync(@"file1.txt", stream));
+    Assert.IsTrue(await archive.AddFileStreamAsync(stream, @"file1.txt"));
     Assert.IsTrue(await archive.AddFileAsync(file2));
     Assert.IsTrue(await archive.SaveAsync());
     Assert.IsTrue(File.Exists(path));
@@ -269,8 +268,23 @@ public class FileArchiveTest {
     Assert.IsTrue(loadedArchive.FileCount == 3);
     Assert.IsTrue(loadedArchive.HasFilesOfKind(123));
     Assert.IsTrue(loadedArchive.HasFilesOfKind(456));
-    Assert.IsTrue(loadedArchive.GetFilesOfKind(123).Count() == 2);
-    Assert.IsTrue(loadedArchive.GetFilesOfKind(456).Count() == 1);
+    Assert.IsTrue(loadedArchive.FindFilesOfKind(123).Count() == 2);
+    Assert.IsTrue(loadedArchive.FindFilesOfKind(456).Count() == 1);
+  }
+
+  [TestMethod]
+  public async Task TestFindFilesInDirectory() {
+    throw new InvalidOperationException("TODO: Implement");
+  }
+
+  [TestMethod]
+  public async Task TestExtractFilesToDirectoryAsync() {
+    throw new InvalidOperationException("TODO: Implement");
+  }
+
+  [TestMethod]
+  public async Task TestExtractAllFilesOfKindToDirectoryAsync() {
+    throw new InvalidOperationException("TODO: Implement");
   }
 
   class ExtraData {
