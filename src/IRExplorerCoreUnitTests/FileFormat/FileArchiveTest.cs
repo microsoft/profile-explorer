@@ -274,17 +274,63 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestFindFilesInDirectory() {
-    throw new InvalidOperationException("TODO: Implement");
-  }
+    var path = $@"{ResultPath}\archive.zip";
+    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+    var file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
+    var file3 = CreateTestFile($@"{InPath}\file3.txt", 4095);
 
-  [TestMethod]
-  public async Task TestExtractFilesToDirectoryAsync() {
-    throw new InvalidOperationException("TODO: Implement");
+    using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
+    Assert.IsTrue(await archive.AddFileAsync(file1, 123, "foo", false));
+    Assert.IsTrue(await archive.AddFileAsync(file2, 456, "bar", false));
+    Assert.IsTrue(await archive.AddFileAsync(file3, 123, "foobar", false));
+    Assert.IsTrue(await archive.AddFileAsync(file1, 123, "foo\\bar", false));
+    Assert.IsTrue(await archive.AddFileAsync(file2, 456, "foo\\bar", false));
+    Assert.IsTrue(await archive.SaveAsync());
+    Assert.IsTrue(File.Exists(path));
+
+    using var loadedArchive = await FileArchive.LoadAsync(path);
+    Assert.IsNotNull(loadedArchive);
+
+    var result1 = loadedArchive.FindFilesInDirectory("bar");
+    Assert.IsTrue(result1.Count() == 1);
+    Assert.IsTrue(result1.Count(entry => entry.ArchivePath == "bar\\file2.txt") == 1);
+
+    var result2 = loadedArchive.FindFilesInDirectory("foo");
+    Assert.IsTrue(result2.Count() == 3);
+    Assert.IsTrue(result2.Count(entry => entry.ArchivePath == "foo\\file1.txt") == 1);
+    Assert.IsTrue(result2.Count(entry => entry.ArchivePath == "foo\\bar\\file1.txt") == 1);
+    Assert.IsTrue(result2.Count(entry => entry.ArchivePath == "foo\\bar\\file2.txt") == 1);
+
+    var result3 = loadedArchive.FindFilesInDirectory("foo\\bar");
+    Assert.IsTrue(result3.Count() == 2);
+    Assert.IsTrue(result3.Count(entry => entry.ArchivePath == "foo\\bar\\file1.txt") == 1);
+    Assert.IsTrue(result3.Count(entry => entry.ArchivePath == "foo\\bar\\file2.txt") == 1);
+
+    await loadedArchive.ExtractFilesToDirectoryAsync(result3, OutPath);
+    Assert.IsTrue(AreFilesEqual(file1, $@"{OutPath}\foo\bar\file1.txt"));
+    Assert.IsTrue(AreFilesEqual(file2, $@"{OutPath}\foo\bar\file2.txt"));
   }
 
   [TestMethod]
   public async Task TestExtractAllFilesOfKindToDirectoryAsync() {
-    throw new InvalidOperationException("TODO: Implement");
+    var path = $@"{ResultPath}\archive.zip";
+    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+    var file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
+    var file3 = CreateTestFile($@"{InPath}\file3.txt", 4095);
+
+    using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
+    Assert.IsTrue(await archive.AddFileAsync(file1, 123, null, false));
+    Assert.IsTrue(await archive.AddFileAsync(file2, 456, null, false));
+    Assert.IsTrue(await archive.AddFileAsync(file3, 456, "foo", false));
+    Assert.IsTrue(await archive.SaveAsync());
+    Assert.IsTrue(File.Exists(path));
+
+    using var loadedArchive = await FileArchive.LoadAsync(path);
+    Assert.IsNotNull(loadedArchive);
+
+    await loadedArchive.ExtractAllFilesOfKindToDirectoryAsync(456, OutPath);
+    Assert.IsTrue(AreFilesEqual(file2, $@"{OutPath}\file2.txt"));
+    Assert.IsTrue(AreFilesEqual(file3, $@"{OutPath}\foo\file3.txt"));
   }
 
   class ExtraData {

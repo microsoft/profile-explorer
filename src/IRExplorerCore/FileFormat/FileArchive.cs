@@ -127,6 +127,7 @@ public sealed class FileArchive : IDisposable {
 
       if (entryDir == directoryPath) {
         yield return entry;
+        continue;
       }
 
       // For a directoryPath foo accept files in dirs like
