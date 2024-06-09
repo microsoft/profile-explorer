@@ -924,6 +924,11 @@
                     Content="Include __NT__SYMBOL__PATH environment variable"
                     IsChecked="{Binding Path=SymbolSettings.UseEnvironmentVarSymbolPaths, Mode=TwoWay}"
                     ToolTip="Append the NT__SYMBOL__PATH environment variable to the list of sources" />
+                  <CheckBox
+                    Margin="0,4,0,0"
+                    Content="Include subdirectories for local paths"
+                    IsChecked="{Binding Path=SymbolSettings.IncludeSymbolSubdirectories, Mode=TwoWay}"
+                    ToolTip="Scan and include all subdirectories with symbols for the local paths in the list" />
 
                   <CheckBox
                     Margin="0,4,0,0"

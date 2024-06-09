@@ -87,6 +87,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       int acceptedProcessId = processIds.Count == 1 ? processIds[0] : 0;
       symbolSettings.InsertSymbolPath(tracePath); // Include the trace path in the symbol search path.
 
+      if (symbolSettings.IncludeSymbolSubdirectories) {
+        symbolSettings.ExpandSymbolPathsSubdirectories([".pdb"]);
+      }
+
       using var eventProcessor = new ETWEventProcessor(tracePath, options, acceptedProcessId);
       return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
     });
