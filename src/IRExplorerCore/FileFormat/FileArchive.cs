@@ -572,6 +572,7 @@ public sealed class FileArchive : IDisposable {
 
       await using var entryStream = entry.Open();
       await entryStream.CopyToAsync(outStream).ConfigureAwait(false);
+      outStream.Position = 0;
       return true;
     }
     catch (Exception ex) {

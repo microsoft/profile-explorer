@@ -1,22 +1,98 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Enumeration;
 using System.Threading;
 using System.Threading.Tasks;
 using IRExplorerCore;
+using IRExplorerCore.FileFormat;
 using IRExplorerUI.Compilers;
+using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
 
 public sealed class ProfileModuleBuilder {
+  [ProtoContract]
+  private class SymbolFileCache {
+    [ProtoMember(1)]
+    public SymbolFileDescriptor SymbolFile { get; set; }
+    [ProtoMember(2)]
+    public List<FunctionDebugInfo> FunctionList { get; set; }
+    public static string DefaultCacheDirectoryPath => Path.Combine(Path.GetTempPath(), "irexplorer", "symcache");
+
+    public static bool Serialize(SymbolFileCache symCache, string directoryPath) {
+      try {
+        var outStream = new MemoryStream();
+        Serializer.Serialize(outStream, symCache);
+        outStream.Position = 0;
+
+        if (!Directory.Exists(directoryPath)) {
+          Directory.CreateDirectory(directoryPath);
+        }
+
+        var cacheFile = MakeCacheFilePath(symCache.SymbolFile);
+        var cachePath = Path.Combine(directoryPath, cacheFile);
+
+        //? TODO: Convert everything to RunSync or add the support in the FileArchive
+        return FileArchive.CreateFromStreamAsync(outStream, cacheFile, cachePath).ConfigureAwait(false).
+          GetAwaiter().GetResult();
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save symbol file cache: {ex.Message}");
+        return false;
+      }
+    }
+
+    public static SymbolFileCache Deserialize(SymbolFileDescriptor symbolFile, string directoryPath) {
+      try {
+        var cacheFile = MakeCacheFilePath(symbolFile);
+        var cachePath = Path.Combine(directoryPath, cacheFile);
+
+        if (!File.Exists(cachePath)) {
+          return null;
+        }
+
+        using var archive = FileArchive.LoadAsync(cachePath).ConfigureAwait(false).GetAwaiter().GetResult();
+
+        if (archive != null) {
+          using var stream = Utils.RunSync<MemoryStream>(() => archive.ExtractFileToMemoryAsync(cacheFile));
+
+          if (stream != null) {
+            var symCache = Serializer.Deserialize<SymbolFileCache>(stream);
+
+            if (symCache.SymbolFile.Equals(symbolFile)) {
+              return symCache;
+            }
+
+            Trace.WriteLine($"Symbol file mismatch in deserialized symbol file cache");
+            Trace.WriteLine($"  actual: {symCache.SymbolFile} vs expected {symbolFile}");
+          }
+        }
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to load symbol file cache: {ex.Message}");
+      }
+
+      return null;
+    }
+
+    private static string MakeCacheFilePath(SymbolFileDescriptor symbolFile) {
+      return $"{Utils.TryGetFileName(symbolFile.FileName)}-{symbolFile.Id}-{symbolFile.Age}.cache";
+    }
+  }
+
   private ISession session_;
   private BinaryFileDescriptor binaryInfo_;
   private ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)> functionMap_;
   private ProfileDataReport report_;
   private ReaderWriterLockSlim lock_;
   private SymbolFileSourceSettings symbolSettings_;
+  private List<FunctionDebugInfo> functionListCache_;
 
   public ProfileModuleBuilder(ProfileDataReport report, ISession session) {
     report_ = report;
@@ -107,6 +183,28 @@ public sealed class ProfileModuleBuilder {
     DebugInfo = session_.CompilerInfo.CreateDebugInfoProvider(ModuleDocument.DebugInfoFile);
     HasDebugInfo = DebugInfo != null;
 
+#if true
+    if (HasDebugInfo) {
+      var sw = Stopwatch.StartNew();
+      var cacheDirPath = Path.Combine(Path.GetTempPath(), "irexplorer", "symcache");
+      var symCache = SymbolFileCache.Deserialize(debugInfoFile.SymbolFile, cacheDirPath);
+
+      if (symCache != null) {
+        functionListCache_ = symCache.FunctionList;
+        Trace.WriteLine($"PDB cache load for {debugInfoFile.SymbolFile.FileName}: {sw.Elapsed}");
+      }
+      else {
+        functionListCache_ = DebugInfo.GetSortedFunctions();
+        symCache = new SymbolFileCache() {
+          SymbolFile = debugInfoFile.SymbolFile,
+          FunctionList = functionListCache_
+        };
+        SymbolFileCache.Serialize(symCache, cacheDirPath);
+        Trace.WriteLine($"PDB cache create for {debugInfoFile.SymbolFile.FileName}: {sw.Elapsed}");
+      }
+    }
+#endif
+
     if (HasDebugInfo) {
       if (ModuleDocument.Loader is DisassemblerSectionLoader disassemblerSectionLoader) {
         disassemblerSectionLoader.Initialize(DebugInfo);
@@ -147,8 +245,13 @@ public sealed class ProfileModuleBuilder {
       FunctionDebugInfo debugInfo = null;
 
       if (HasDebugInfo) {
-        // Search for the function at this RVA.
-        debugInfo = DebugInfo.FindFunctionByRVA(funcAddress);
+        if (functionListCache_ != null) {
+          debugInfo = FunctionDebugInfo.BinarySearch(functionListCache_, funcAddress);
+        }
+        else {
+          // Search for the function at this RVA.
+          debugInfo = DebugInfo.FindFunctionByRVA(funcAddress);
+        }
       }
 
       if (debugInfo == null) {

@@ -30,6 +30,21 @@ using Xceed.Wpf.Toolkit.Core.Utilities;
 namespace IRExplorerUI;
 
 public static class Utils {
+  private static readonly TaskFactory TaskFactoryInstance = new
+    TaskFactory(CancellationToken.None,
+                TaskCreationOptions.None,
+                TaskContinuationOptions.None,
+                TaskScheduler.Default);
+
+  public static TResult RunSync<TResult>(Func<Task<TResult>> func) {
+    return TaskFactoryInstance.StartNew<Task<TResult>>(func).
+      Unwrap<TResult>().GetAwaiter().GetResult();
+  }
+
+  public static void RunSync(Func<Task> func) {
+    TaskFactoryInstance.StartNew<Task>(func).Unwrap().GetAwaiter().GetResult();
+  }
+
   public static bool IsShiftModifierActive() {
     return (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
   }
@@ -574,6 +589,30 @@ public static class Utils {
     catch (Exception ex) {
       Trace.TraceError($"Failed GetFileExtension for {filePath}: {ex}");
       return "";
+    }
+  }
+
+  public static long ComputeDirectorySize(string path, bool recursive = false) {
+    try {
+      if (!Directory.Exists(path)) {
+        return 0;
+      }
+
+      long total = 0;
+
+      foreach (var file in Directory.EnumerateFileSystemEntries(path)) {
+        if (!File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
+          total += file.Length;
+        }
+        else if (recursive) {
+          total += ComputeDirectorySize(file, true);
+        }
+      }
+
+      return total;
+    }
+    catch {
+      return 0;
     }
   }
 
@@ -1228,7 +1267,6 @@ public static class Utils {
     textBox.Focus();
     FocusParentListViewItem(textBox, listView);
   }
-
 
   public static void SelectTextBoxListViewItem(FileSystemTextBox textBox, ListView listView) {
     if (textBox.IsKeyboardFocused) {
