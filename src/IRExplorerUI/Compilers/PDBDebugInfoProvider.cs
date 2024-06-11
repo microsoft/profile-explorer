@@ -32,12 +32,15 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   //? to be searched for in new locations.
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ =
     new ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult>();
-
   private ConcurrentDictionary<long, SourceFileDebugInfo> sourceFileByRvaCache_ = new();
   private ConcurrentDictionary<string, SourceFileDebugInfo> sourceFileByNameCache_ = new();
   private ConcurrentDictionary<uint, List<SourceStackFrame>> inlineeByRvaCache_ = new();
   private static object undecorateLock_ = new object();
+  private SymbolFileDescriptor symbolFile_;
   private SymbolFileSourceSettings settings_;
+  private SymbolFileCache symbolCache_;
+  private SymbolReader symbolReader_;
+  private NativeSymbolModule symbolReaderPDB_;
   private string debugFilePath_;
   private IDiaDataSource diaSource_;
   private IDiaSession session_;
@@ -45,11 +48,9 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private List<FunctionDebugInfo> sortedFunctionList_;
   private bool loadFailed_;
   private bool disposed_;
-  private int creationThreadId_;
 
   public PDBDebugInfoProvider(SymbolFileSourceSettings settings) {
     settings_ = settings;
-    creationThreadId_ = Thread.CurrentThread.ManagedThreadId;
   }
 
   ~PDBDebugInfoProvider() {
@@ -189,10 +190,11 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       return false;
     }
 
+    symbolFile_ = debugFile.SymbolFile;
     return LoadDebugInfo(debugFile.FilePath, other);
   }
 
-  public bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null) {
+  private bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null) {
     if (loadFailed_) {
       return false; // Failed before, don't try again.
     }
@@ -223,6 +225,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       // Copy the already loaded function list from another PDB
       // provider that was created on another thread and is unusable otherwise.
       lock (this) {
+        symbolCache_ = otherPdb.symbolCache_;
         sortedFunctionList_ = otherPdb.sortedFunctionList_;
       }
     }
@@ -251,16 +254,30 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return AnnotateSourceLocations(function, textFunc.Name);
   }
 
-  public bool AnnotateSourceLocations(FunctionIR function, string functionName) {
-    var metadataTag = function.GetTag<AssemblyMetadataTag>();
+  public bool AnnotateSourceLocations(FunctionIR function, FunctionDebugInfo funcDebugInfo) {
+    var funcSymbol = FindFunctionSymbolByRVA(funcDebugInfo.RVA);
 
-    if (metadataTag == null) {
+    if (funcSymbol == null) {
       return false;
     }
 
+    return AnnotateSourceLocationsImpl(function, funcSymbol);
+  }
+
+  public bool AnnotateSourceLocations(FunctionIR function, string functionName) {
     var funcSymbol = FindFunctionSymbol(functionName);
 
     if (funcSymbol == null) {
+      return false;
+    }
+
+    return AnnotateSourceLocationsImpl(function, funcSymbol);
+  }
+
+  private bool AnnotateSourceLocationsImpl(FunctionIR function, IDiaSymbol funcSymbol) {
+    var metadataTag = function.GetTag<AssemblyMetadataTag>();
+
+    if (metadataTag == null) {
       return false;
     }
 
@@ -283,7 +300,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     if (sourceFileByRvaCache_.TryGetValue(rva, out var fileInfo)) {
       return fileInfo;
     }
-    
+
     var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(rva);
     fileInfo = FindFunctionSourceFilePathImpl(lineInfo, sourceFile, (uint)rva);
 
@@ -295,7 +312,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     if (sourceFileByNameCache_.TryGetValue(functionName, out var fileInfo)) {
       return fileInfo;
     }
-    
+
     var funcSymbol = FindFunctionSymbol(functionName);
 
     if (funcSymbol == null) {
@@ -345,21 +362,42 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return EnumerateFunctionsImpl();
   }
 
-  public List<FunctionDebugInfo> GetSortedFunctions() {
+  public async Task<List<FunctionDebugInfo>> GetSortedFunctions() {
     lock (this) {
       if (sortedFunctionList_ != null) {
         return sortedFunctionList_;
       }
 
-      sortedFunctionList_ = new List<FunctionDebugInfo>();
+      //? TODO: Use UI option for path
+      var cacheDirPath = Path.Combine(Path.GetTempPath(), "irexplorer", "symcache");
+      symbolCache_ = SymbolFileCache.Deserialize(symbolFile_, cacheDirPath);
 
-      foreach (var funcInfo in EnumerateFunctionsImpl()) {
-        if (!funcInfo.IsUnknown) {
-          sortedFunctionList_.Add(funcInfo);
+      if (symbolCache_ != null) {
+        Trace.WriteLine($"PDB cache loaded for {symbolFile_.FileName}");
+        sortedFunctionList_ = symbolCache_.FunctionList;
+      }
+      else {
+        // Create sorted list of functions and public symbols.
+        sortedFunctionList_ = new List<FunctionDebugInfo>();
+
+        foreach (var funcInfo in EnumerateFunctionsImpl()) {
+          if (!funcInfo.IsUnknown) {
+            sortedFunctionList_.Add(funcInfo);
+          }
         }
+
+        sortedFunctionList_.Sort();
+
+        // Save symbol cache file.
+        symbolCache_ = new SymbolFileCache() {
+          SymbolFile = symbolFile_,
+          FunctionList = sortedFunctionList_
+        };
+
+        SymbolFileCache.Serialize(symbolCache_, cacheDirPath);
+        Trace.WriteLine($"PDB cache created for {symbolFile_.FileName}");
       }
 
-      sortedFunctionList_.Sort();
       return sortedFunctionList_;
     }
   }
@@ -375,6 +413,11 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     if (disposing) {
+      symbolReaderPDB_?.Dispose();
+      symbolReader_?.Dispose();
+      symbolReaderPDB_ = null;
+      symbolReader_ = null;
+      symbolCache_ = null;
       sortedFunctionList_ = null;
     }
 
@@ -409,12 +452,19 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     // Try to use the source server if no exact local file found.
     if ((!localFileFound || hasChecksumMismatch) && settings_.SourceServerEnabled) {
       try {
-        using var logWriter = new StringWriter();
-        using var authHandler = new BasicAuthenticationHandler(settings_);
-        using var symbolReader = new SymbolReader(logWriter, null, authHandler);
-        symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
-        using var pdb = symbolReader.OpenNativeSymbolFile(debugFilePath_);
-        var sourceLine = pdb.SourceLocationForRva(rva);
+        if (symbolReaderPDB_ == null) {
+          var logWriter = new StringWriter();
+          var authHandler = new BasicAuthenticationHandler(settings_);
+          symbolReader_ = new SymbolReader(logWriter, null, authHandler);
+          symbolReader_.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
+          symbolReaderPDB_ = symbolReader_.OpenNativeSymbolFile(debugFilePath_);
+
+          if (symbolReaderPDB_ == null) {
+            Trace.WriteLine($"Failed to initialize SymbolReader for {lineInfo.FilePath}");
+          }
+        }
+
+        var sourceLine = symbolReaderPDB_.SourceLocationForRva(rva);
 
         Trace.WriteLine($"Query source server for {sourceLine?.SourceFile?.BuildTimeFilePath}");
 
@@ -430,7 +480,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
           }
           else {
             Trace.WriteLine($"Failed to download source file {filePath}");
-            Trace.WriteLine(logWriter.ToString());
+            Trace.WriteLine(symbolReader_.Log.ToString());
             Trace.WriteLine("---------------------------------");
           }
         }

@@ -274,8 +274,7 @@ public class Disassembler : IDisposable {
 
     if (debugInfo_ != null) {
       var func = FindFunctionByRva(rva);
-
-      //? TODO: UI option to demangle
+      
       if (func != null) {
         if (funcNameFormatter_ != null) {
           builder.Append(funcNameFormatter_(func.Name));
@@ -293,7 +292,11 @@ public class Disassembler : IDisposable {
 
   private FunctionDebugInfo FindFunctionByRva(long rva) {
     if (debugInfo_ != null) {
-      return debugInfo_.FindFunctionByRVA(rva);
+      if (sortedFuncList_ == null) {
+        sortedFuncList_ = Utils.RunSync(() => debugInfo_.GetSortedFunctions());
+      }
+
+      return FunctionDebugInfo.BinarySearch(sortedFuncList_, rva);
     }
 
     return null;

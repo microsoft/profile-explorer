@@ -131,11 +131,8 @@ public partial class GraphPanel : ToolPanelControl {
       Dispatcher.BeginInvoke(() => LoadSavedState(), DispatcherPriority.Render);
     }
 
-    IsPanelEnabled = true;
     HasPinnedContent = false;
-    Utils.EnableControl(GraphHost);
-    Utils.EnableControl(this);
-
+    EnablePanel();
   }
 
   public void HideGraph() {
@@ -144,12 +141,10 @@ public partial class GraphPanel : ToolPanelControl {
     }
 
     GraphViewer.HideGraph();
-    graph_ = null;
     Document = null;
+    graph_ = null;
     hoveredNode_ = null;
-    Utils.DisableControl(this);
-    Utils.DisableControl(GraphHost, 0.5);
-    IsPanelEnabled = false;
+    DisablePanel();
   }
 
   private void Highlight(IRHighlightingEventArgs info) {
@@ -167,7 +162,6 @@ public partial class GraphPanel : ToolPanelControl {
   }
 
   public CancelableTask OnGenerateGraphStart(IRTextSection section) {
-    Utils.DisableControl(GraphViewer);
     var animation = new DoubleAnimation(0.25, TimeSpan.FromSeconds(0.5));
     animation.BeginTime = TimeSpan.FromSeconds(1);
     GraphViewer.BeginAnimation(OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
@@ -182,7 +176,6 @@ public partial class GraphPanel : ToolPanelControl {
 
   public void OnGenerateGraphDone(CancelableTask task, bool failed = false) {
     if (!failed) {
-      Utils.EnableControl(GraphViewer);
       GraphHost.ScrollToHorizontalOffset(0);
       GraphHost.ScrollToVerticalOffset(0);
       var animation = new DoubleAnimation(1.0, TimeSpan.FromSeconds(0.2));
@@ -1017,8 +1010,7 @@ public partial class GraphPanel : ToolPanelControl {
 
     HidePreviewPopup(true);
     HideQueryPanel();
-    Utils.DisableControl(this);
-    Utils.DisableControl(GraphHost, 0.5);
+    DisablePanel();
     restoredState_ = false;
 
     var state = new GraphPanelState();
@@ -1033,6 +1025,18 @@ public partial class GraphPanel : ToolPanelControl {
     Document = null;
     graph_ = null;
     hoveredNode_ = null;
+  }
+
+  private void EnablePanel() {
+    IsPanelEnabled = true;
+    Utils.EnableControl(GraphHost);
+    Utils.EnableControl(ToolbarHost);
+  }
+
+  private void DisablePanel() {
+    Utils.DisableControl(ToolbarHost);
+    Utils.DisableControl(GraphHost, 0.5);
+    IsPanelEnabled = false;
   }
 
   public override void OnElementSelected(IRElementEventArgs e) {

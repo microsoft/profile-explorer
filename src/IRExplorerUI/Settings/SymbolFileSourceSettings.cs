@@ -142,7 +142,8 @@ public class SymbolFileSourceSettings : SettingsBase {
         continue; // Skip over symbol servers.
       }
 
-      BuildSymbolsDirectoriesSet(path, symbolPathSet, symbolExtensions);
+      //? TODO: Option for max level
+      BuildSymbolsDirectoriesSet(path, symbolPathSet, symbolExtensions, 0, 3);
     }
 
     SymbolPaths = symbolPathSet.ToList();
@@ -150,40 +151,42 @@ public class SymbolFileSourceSettings : SettingsBase {
 
   private void BuildSymbolsDirectoriesSet(string path, HashSet<string> symbolDirs,
                                           string[] symbolExtensions,
-                                          int level = 0) {
-    if (!Directory.Exists(path)) return;
+                                          int level = 0, int maxLevel = 0) {
+    if (!Directory.Exists(path) || level >= maxLevel) {
+      return;
+    }
 
-    if (level == 0) {
-      // Check the drive type for the top-level directory
-      // and accept only local paths (exclude mapped network paths).
-      try {
+    try {
+      if (level == 0) {
+        // Check the drive type for the top-level directory
+        // and accept only local paths (exclude mapped network paths).
         var driveInfo = new DriveInfo(path);
 
         if (driveInfo.DriveType != DriveType.Fixed) {
           return;
         }
       }
-      catch {
-        return;
-      }
-    }
 
-    foreach (var file in Directory.EnumerateFileSystemEntries(path)) {
-      if (File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
-        BuildSymbolsDirectoriesSet(file, symbolDirs, symbolExtensions, level + 1);
-      }
-      else if (level > 0) {
-        // Top-level directory already included in set,
-        // check files only for subdirectories.
-        var extension = Path.GetExtension(file);
+      foreach (var file in Directory.EnumerateFileSystemEntries(path)) {
+        if (File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
+          BuildSymbolsDirectoriesSet(file, symbolDirs, symbolExtensions, level + 1);
+        }
+        else if (level > 0) {
+          // Top-level directory already included in set,
+          // check files only for subdirectories.
+          var extension = Path.GetExtension(file);
 
-        foreach (var symbolExt in symbolExtensions) {
-          if (extension.Equals(symbolExt, StringComparison.OrdinalIgnoreCase)) {
-            symbolDirs.Add(path);
-            break;
+          foreach (var symbolExt in symbolExtensions) {
+            if (extension.Equals(symbolExt, StringComparison.OrdinalIgnoreCase)) {
+              symbolDirs.Add(path);
+              break;
+            }
           }
         }
       }
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to expand symbols dir set: {ex.Message}");
     }
   }
 

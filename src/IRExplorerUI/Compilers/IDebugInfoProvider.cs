@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
+using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using ProtoBuf;
@@ -13,13 +14,13 @@ namespace IRExplorerUI.Compilers;
 public interface IDebugInfoProvider : IDisposable {
   public Machine? Architecture { get; }
   public SymbolFileSourceSettings SymbolSettings { get; set; }
-  bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null);
+  //bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null);
   bool LoadDebugInfo(DebugFileSearchResult debugFile, IDebugInfoProvider other = null);
   void Unload();
   bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc);
-  bool AnnotateSourceLocations(FunctionIR function, string functionName);
+  bool AnnotateSourceLocations(FunctionIR function, FunctionDebugInfo funcDebugInfo);
   IEnumerable<FunctionDebugInfo> EnumerateFunctions();
-  List<FunctionDebugInfo> GetSortedFunctions();
+  Task<List<FunctionDebugInfo>> GetSortedFunctions();
   FunctionDebugInfo FindFunction(string functionName);
   FunctionDebugInfo FindFunctionByRVA(long rva);
   bool PopulateSourceLines(FunctionDebugInfo funcInfo);

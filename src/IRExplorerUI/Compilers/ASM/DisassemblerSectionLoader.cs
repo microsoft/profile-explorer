@@ -86,7 +86,7 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     InitializeDisassembler();
 
     if (preloadFunctions_) {
-      var functs = debugInfo_.GetSortedFunctions();
+      var functs = Utils.RunSync(() => debugInfo_.GetSortedFunctions());
 
       foreach (var funcInfo in functs) {
         if (funcInfo.RVA == 0) {
@@ -121,7 +121,7 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
 
     // For managed code, the code data is found on each function.
 
-    if (debugInfo_.LoadDebugInfo("")) {
+    if (debugInfo_.LoadDebugInfo(null)) {
       disassembler_ = Disassembler.CreateForMachine(debugInfo_, compilerInfo_.NameProvider.FormatFunctionName);
       return true;
     }

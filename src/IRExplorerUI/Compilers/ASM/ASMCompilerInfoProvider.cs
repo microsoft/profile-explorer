@@ -48,13 +48,21 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     return Task.CompletedTask;
   }
 
-  public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
+  public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section, 
+                                                FunctionDebugInfo funcDebugInfo) {
     // Annotate the instructions with debug info (line numbers, source files)
     // if the debug file is specified and available.
     var debugInfo = await GetOrCreateDebugInfoProvider(section.ParentFunction);
 
     if (debugInfo != null) {
-      await Task.Run(() => debugInfo.AnnotateSourceLocations(function, section.ParentFunction));
+      await Task.Run(() => {
+        if (funcDebugInfo != null) {
+          return debugInfo.AnnotateSourceLocations(function, funcDebugInfo);
+        }
+        else {
+          return debugInfo.AnnotateSourceLocations(function, section.ParentFunction);
+        }
+      });
     }
 
     return true;
@@ -122,7 +130,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
 
       var newProvider = new PDBDebugInfoProvider(App.Settings.SymbolSettings);
 
-      if (newProvider.LoadDebugInfo(debugFile.FilePath, provider)) {
+      if (newProvider.LoadDebugInfo(debugFile, provider)) {
         loadedDebugInfo_[debugFile] = newProvider;
         provider?.Dispose();
         return newProvider;

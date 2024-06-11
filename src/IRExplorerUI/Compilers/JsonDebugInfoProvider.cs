@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
+using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
@@ -27,15 +28,24 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
   }
 
   public bool AnnotateSourceLocations(FunctionIR function, string functionName) {
+    var funcInfo = FindFunction(functionName);
+
+    if (funcInfo == null) {
+      return false;
+    }
+
+    return AnnotateSourceLocations(function, funcInfo);
+  }
+
+  public bool AnnotateSourceLocations(FunctionIR function,
+                                      FunctionDebugInfo funcInfo) {
     var metadataTag = function.GetTag<AssemblyMetadataTag>();
 
     if (metadataTag == null) {
       return false;
     }
 
-    var funcInfo = FindFunction(functionName);
-
-    if (funcInfo == null || !funcInfo.HasSourceLines) {
+    if ( !funcInfo.HasSourceLines) {
       return false;
     }
 
@@ -61,7 +71,7 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
     return functions_;
   }
 
-  public List<FunctionDebugInfo> GetSortedFunctions() {
+  public async Task<List<FunctionDebugInfo>> GetSortedFunctions() {
     return functions_;
   }
 
@@ -122,7 +132,7 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
       return false;
     }
 
-    return LoadDebugInfo(debugFile.FilePath);
+    return LoadDebugInfo(debugFile);
   }
 
   public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {

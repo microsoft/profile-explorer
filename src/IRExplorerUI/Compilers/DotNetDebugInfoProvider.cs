@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection.PortableExecutable;
+using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
@@ -69,13 +70,22 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
   }
 
   public bool AnnotateSourceLocations(FunctionIR function, string functionName) {
+    var funcInfo = FindFunction(functionName);
+
+    if (funcInfo == null) {
+      return false;
+    }
+
+    return AnnotateSourceLocations(function, funcInfo);
+  }
+
+  public bool AnnotateSourceLocations(FunctionIR function,
+                                      FunctionDebugInfo funcInfo) {
     var metadataTag = function.GetTag<AssemblyMetadataTag>();
 
     if (metadataTag == null) {
       return false;
     }
-
-    var funcInfo = FindFunction(functionName);
 
     if (!EnsureHasSourceLines(funcInfo)) {
       return false;
@@ -103,7 +113,7 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
     return functions_;
   }
 
-  public List<FunctionDebugInfo> GetSortedFunctions() {
+  public async Task<List<FunctionDebugInfo>> GetSortedFunctions() {
     return functions_;
   }
 

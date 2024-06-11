@@ -210,7 +210,8 @@ public partial class MainWindow : Window, ISession {
       var parsedSection = docInfo.Loader.LoadSection(section);
 
       if (parsedSection != null && parsedSection.Function != null) {
-        await compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section);
+        var funcDebugInfo = ProfileData?.GetFunctionProfile(section.ParentFunction)?.FunctionDebugInfo;
+        await compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section, funcDebugInfo);
         addressTag_ = parsedSection.Function.GetTag<AssemblyMetadataTag>();
         return parsedSection;
       }
@@ -1083,41 +1084,48 @@ public partial class MainWindow : Window, ISession {
     // Handle loading failures.
     UpdateUIForSectionLoading(result, document);
 
-    if (result != null) {
-      // Update UI to reflect new section before starting long-running tasks.
-      await document.LoadSectionMinimal(result);
+    if (result == null) {
+      // Hide any UI that may show due to long-running tasks.
+      UpdateUIAfterSectionLoad(section, document, delayedAction);
+      return null;
+    }
+    
+    // Update UI to reflect new section before starting long-running tasks.
+    await document.LoadSectionMinimal(result);
 
-      if (task.IsCanceled) {
-        return null;
-      }
-
-      await NotifyPanelsOfSectionLoad(section, document, true);
-
-      if (task.IsCanceled) {
-        return null;
-      }
-
-      SetupDocumentEvents(document);
-      await UpdateUIAfterSectionSwitch(section, document);
-
-      if (task.IsCanceled) {
-        return null;
-      }
-
-      // Load both the document and generate graphs in parallel,
-      // since both can be fairly time-consuming for huge functions.
-      var graphTask = Task.CompletedTask;
-
-      if (runExtraTasks) {
-        graphTask = GenerateGraphs(section, document.TextView);
-      }
-
-      var documentTask = document.LoadSection(result);
-      await Task.WhenAll(documentTask, graphTask);
+    if (task.IsCanceled) {
+      return null;
     }
 
-    // Hide any UI that may show due to long-running tasks.
+    await NotifyPanelsOfSectionLoad(section, document, true);
+
+    if (task.IsCanceled) {
+      return null;
+    }
+
+    SetupDocumentEvents(document);
+    await UpdateUIAfterSectionSwitch(section, document);
+
+    if (task.IsCanceled) {
+      return null;
+    }
+
+    // Load both the document and generate graphs in parallel,
+    // since both can be fairly time-consuming for huge functions.
+    var documentTask = document.LoadSection(result);
+    Task graphTask = null;
+
+    if (runExtraTasks) {
+      graphTask = GenerateGraphs(section, document.TextView);
+    }
+
+    await documentTask;
     UpdateUIAfterSectionLoad(section, document, delayedAction);
+
+    if (graphTask != null) {
+      await graphTask;
+    }
+
     return result;
   }
 

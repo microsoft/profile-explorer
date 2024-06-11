@@ -28,7 +28,8 @@ public interface ICompilerInfoProvider {
   string OpenFileFilter { get; }
   string OpenDebugFileFilter { get; }
   Task ReloadSettings();
-  Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section);
+  Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section, 
+                                   FunctionDebugInfo funcDebugInfo = null);
   Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section);
   Task HandleLoadedDocument(LoadedDocument document, string modulePath);
   IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);

@@ -95,7 +95,8 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
     return null;
   }
 
-  public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
+  public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section,
+                                                FunctionDebugInfo funcDebugInfo) {
     //? TODO: var loopGraph = new LoopGraph(function);
     //loopGraph.FindLoops();
     return true;
