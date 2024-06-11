@@ -27,7 +27,6 @@ using IRExplorerUI.Query;
 namespace IRExplorerUI;
 
 public partial class MainWindow : Window, ISession {
-  private DateTime lastDocumentLoadUpdate_;
   private SemaphoreSlim SessionLoadCompleted = new SemaphoreSlim(1);
   public bool SilentMode { get; set; }
   public ICompilerInfoProvider CompilerInfo => compilerInfo_;
@@ -61,6 +60,10 @@ public partial class MainWindow : Window, ISession {
 
   public async Task SwitchGraphsAsync(GraphPanel graphPanel, IRTextSection section, IRDocument document,
                                       Func<FunctionIR, IRTextSection, CancelableTask, Graph> computeGraphAction) {
+    if (document.Function == null) {
+      return; // Function failed to load, ignore.
+    }
+
     var loadTask = graphPanel.OnGenerateGraphStart(section);
     var functionGraph = await Task.Run(() => computeGraphAction(document.Function, section, loadTask));
 
@@ -692,6 +695,8 @@ public partial class MainWindow : Window, ISession {
     sessionState_ = new SessionStateManager(filePath, sessionKind, compilerInfo_);
     sessionState_.DocumentChanged += DocumentState_DocumentChangedEvent;
     sessionState_.ChangeDocumentWatcherState(App.Settings.AutoReloadDocument);
+    documentLoadTask_ = new CancelableTaskInstance(false, SessionState.RegisterCancelableTask,
+                                                   SessionState.UnregisterCancelableTask);
     ClearGraphLayoutCache();
     compilerInfo_.ReloadSettings();
 
@@ -807,8 +812,6 @@ public partial class MainWindow : Window, ISession {
     if (diffTime.TotalMilliseconds < 100) {
       return;
     }
-
-    lastDocumentLoadUpdate_ = currentTime;
 
     // Schedule the UI update.
     Dispatcher.BeginInvoke(new Action(() => {
@@ -1061,32 +1064,45 @@ public partial class MainWindow : Window, ISession {
     Trace.TraceInformation(
       $"Document {ObjectTracker.Track(document)}: Switch to section ({section.Number}) {section.Name}");
 
+    // Wait for any other pending opening tasks to complete,
+    // otherwise the opened document and panels can get out of sync.
+    using var task = await documentLoadTask_.CancelPreviousAndCreateTaskAsync();
+
     await NotifyOfSectionUnload(document, true);
     ResetDocumentEvents(document);
     ResetStatusBar();
     var delayedAction = UpdateUIBeforeSectionLoad(section, document);
+
+    // Load section and try to parse it.
     var result = await LoadAndParseSection(section);
 
-    if (result == null || result.Function == null) {
-      Trace.TraceError($"Document {ObjectTracker.Track(document)}: Failed to parse function");
-      OptionalStatusText.Text = "Failed to parser section IR";
-      OptionalStatusText.ToolTip = FormatParsingErrors(result, "Section IR parsing errors");
+    if (task.IsCanceled) {
+      return null;
     }
-    else if (result.HadParsingErrors) {
-      Trace.TraceWarning($"Document {ObjectTracker.Track(document)}: Parsed function with errors");
-      OptionalStatusText.Text = "IR parsing issues";
-      OptionalStatusText.ToolTip = FormatParsingErrors(result, "Section IR parsing errors");
-    }
-    else {
-      OptionalStatusText.Text = "";
-    }
+
+    // Handle loading failures.
+    UpdateUIForSectionLoading(result, document);
 
     if (result != null) {
       // Update UI to reflect new section before starting long-running tasks.
       await document.LoadSectionMinimal(result);
+
+      if (task.IsCanceled) {
+        return null;
+      }
+
       await NotifyPanelsOfSectionLoad(section, document, true);
+
+      if (task.IsCanceled) {
+        return null;
+      }
+
       SetupDocumentEvents(document);
       await UpdateUIAfterSectionSwitch(section, document);
+
+      if (task.IsCanceled) {
+        return null;
+      }
 
       // Load both the document and generate graphs in parallel,
       // since both can be fairly time-consuming for huge functions.
@@ -1103,6 +1119,22 @@ public partial class MainWindow : Window, ISession {
     // Hide any UI that may show due to long-running tasks.
     UpdateUIAfterSectionLoad(section, document, delayedAction);
     return result;
+  }
+
+  private void UpdateUIForSectionLoading(ParsedIRTextSection result, IRDocumentHost document) {
+    if (result == null || result.Function == null) {
+      Trace.TraceError($"Document {ObjectTracker.Track(document)}: Failed to parse function");
+      OptionalStatusText.Text = "Failed to parser section IR";
+      OptionalStatusText.ToolTip = FormatParsingErrors(result, "Section IR parsing errors");
+    }
+    else if (result.HadParsingErrors) {
+      Trace.TraceWarning($"Document {ObjectTracker.Track(document)}: Parsed function with errors");
+      OptionalStatusText.Text = "IR parsing issues";
+      OptionalStatusText.ToolTip = FormatParsingErrors(result, "Section IR parsing errors");
+    }
+    else {
+      OptionalStatusText.Text = "";
+    }
   }
 
   private string FormatParsingErrors(ParsedIRTextSection result, string message) {
@@ -1728,7 +1760,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void CanExecuteDocumentCommand(object sender, CanExecuteRoutedEventArgs e) {
-    e.CanExecute = sessionState_ != null;
+    e.CanExecute = IsSessionStarted;
     e.Handled = true;
   }
 }

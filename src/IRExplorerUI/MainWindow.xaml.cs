@@ -101,6 +101,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
   private DateTime lastDocumentLoadTime_;
   private DateTime lastDocumentReloadQueryTime_;
   private DelayedAction statusTextAction_;
+  private CancelableTaskInstance documentLoadTask_;
   private object lockObject_;
   private bool documentSearchVisible_;
   private DocumentSearchPanel documentSearchPanel_;
@@ -398,7 +399,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     App.SaveApplicationSettings();
     Trace.Flush();
 
-    if (sessionState_ == null) {
+    if (!IsSessionStarted) {
       return;
     }
 
@@ -442,7 +443,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
   private async void MainWindow_ContentRendered(object sender, EventArgs e) {
     SetupStartPagePanel();
 
-    if (sessionState_ == null) {
+    if (!IsSessionStarted) {
       ShowStartPage();
     }
 
@@ -662,7 +663,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
       }
     }
 
-    if (sessionState_ == null) {
+    if (!IsSessionStarted) {
       Utils.DisableControl(DockManager, 0.75);
     }
     else {
@@ -730,7 +731,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
   }
 
   private void UpdateStartPagePanelPosition() {
-    if (sessionState_ != null) {
+    if (IsSessionStarted) {
       return;
     }
 

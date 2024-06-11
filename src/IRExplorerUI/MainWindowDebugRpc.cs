@@ -356,7 +356,7 @@ public partial class MainWindow : Window, ISession {
     }
 
     await Dispatcher.BeginInvoke(new Action(async () => {
-      if (sessionState_ == null ||
+      if (!IsSessionStarted ||
           sessionState_.MainDocument == null) {
         return;
       }

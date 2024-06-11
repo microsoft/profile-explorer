@@ -81,7 +81,7 @@ public partial class DefinitionPanel : ToolPanelControl {
 
   private void SwitchDefinitionElement(OperandIR op, IRElement defOp) {
     //? TODO: Go through the NameProvider
-    SymbolName.Text = op.GetText(Document.Text).ToString();
+    SymbolName.Text = op.GetText(Document.SectionText).ToString();
     TextView.MarkElementWithDefaultStyle(defOp);
     TextView.BringElementIntoView(defOp);
     definedOperand_ = op;

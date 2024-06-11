@@ -37,6 +37,11 @@ public class SourceDocumentMarker {
     document.SuspendUpdate();
 
     await Task.Run(() => {
+      // Cache the strings generated for each line and inlinee frame.
+      string lineNumberTooltip = null;
+      var inlineeLineNumberMap = new Dictionary<int, string>();
+      var inlineeFrameMap = new Dictionary<SourceStackFrame, (string Title, string Tooltip)>();
+
       foreach (var instr in function.AllInstructions) {
         if (settings_.MarkCallTargets) {
           MarkCallInstruction(instr, document, lineToOperandMap);
@@ -50,10 +55,17 @@ public class SourceDocumentMarker {
         }
 
         if (tag.Line != 0 && settings_.AnnotateSourceLines) {
-          string fileName = Utils.TryGetFileName(tag.FilePath);
-          string label = $"{tag.Line}";
-          string tooltip = $"Line number for file {fileName}";
-          var overlay = document.RegisterIconElementOverlay(instr, null, 16, 0, label, tooltip);
+          if (!inlineeLineNumberMap.TryGetValue(tag.Line, out string label)) {
+            label = $"{tag.Line}";
+            inlineeLineNumberMap[tag.Line] = label;
+          }
+
+          if (lineNumberTooltip == null) {
+            string fileName = Utils.TryGetFileName(tag.FilePath);
+            lineNumberTooltip = $"Line number for file {fileName} ({tag.FilePath})";
+          }
+
+          var overlay = document.RegisterIconElementOverlay(instr, null, 16, 0, label, lineNumberTooltip);
           overlay.Tag = SourceOverlayTag;
           overlay.IsLabelPinned = true;
           overlay.AllowLabelEditing = false;
@@ -68,22 +80,32 @@ public class SourceDocumentMarker {
           var sb = new StringBuilder();
           var tooltipSb = new StringBuilder();
           tooltipSb.AppendLine("Inlined functions");
-          tooltipSb.AppendLine("name:line (file) in call tree order:\n");
+          tooltipSb.AppendLine("name:line (file) in calling order:\n");
 
-          for (int k = 0; k < tag.Inlinees.Count; k++) {
-            var inlinee = tag.Inlinees[tag.Inlinees.Count - k - 1]; // Append backwards.
-            string inlineeName = irInfo_.NameProvider.FormatFunctionName(inlinee.Function);
-            sb.Append($"{inlineeName}:{tag.Inlinees[k].Line}");
+          var inlinees = tag.Inlinees;
+          inlineeOverlays.EnsureCapacity(inlineeOverlays.Count + inlinees.Count);
 
-            AppendInlineeTooltip(inlineeName, inlinee.Line, inlinee.FilePath, k, tooltipSb);
-            tooltipSb.AppendLine();
+          for (int k = 0; k < inlinees.Count; k++) {
+            var inlinee = inlinees[inlinees.Count - k - 1]; // Append backwards.
 
-            if (k != tag.Inlinees.Count - 1) {
+            if (!inlineeFrameMap.TryGetValue(inlinee, out var inlineeText)) {
+              string inlineeName = irInfo_.NameProvider.FormatFunctionName(inlinee.Function);
+
+              inlineeText = new ValueTuple<string, string>();
+              inlineeText.Title = $"{inlineeName}:{inlinees[k].Line}";
+              inlineeText.Tooltip = MakeInlineeTooltip(inlineeName, inlinee.Line, inlinee.FilePath, k);
+              inlineeFrameMap[inlinee] = inlineeText;
+            }
+
+            sb.Append(inlineeText.Title);
+            tooltipSb.AppendLine(inlineeText.Tooltip);
+
+            if (k != inlinees.Count - 1) {
               sb.Append("  |  ");
             }
           }
 
-          // AppendInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
+          // MakeInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
           var inlineeOverlay =
             document.RegisterIconElementOverlay(instr, null, 16, 0, sb.ToString(), tooltipSb.ToString());
           inlineeOverlay.Tag = SourceOverlayTag;
@@ -160,16 +182,15 @@ public class SourceDocumentMarker {
   //  }
   //}
 
-  private void AppendInlineeTooltip(string inlineeName, int inlineeLine, string inlineeFilePath,
-                                    int index, StringBuilder tooltipSb) {
+  private string MakeInlineeTooltip(string inlineeName, int inlineeLine, string inlineeFilePath, int index) {
     string inlineeFileName = Utils.TryGetFileName(inlineeFilePath);
     inlineeName = inlineeName.TrimToLength(FunctionNameMaxLength);
 
     if (!string.IsNullOrEmpty(inlineeFileName)) {
-      tooltipSb.Append($"{inlineeName}:{inlineeLine} ({inlineeFileName})");
+      return $"{inlineeName}:{inlineeLine} ({inlineeFileName})";
     }
     else {
-      tooltipSb.Append($"{inlineeName}:{inlineeLine}");
+      return $"{inlineeName}:{inlineeLine}";
     }
   }
 

@@ -69,7 +69,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async void ToggleDiffModeExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (sessionState_ == null) {
+    if (!IsSessionStarted) {
       return; // No sessions started yet.
     }
 
@@ -82,7 +82,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async void SwapDiffDocumentsExecuted(object sender, ExecutedRoutedEventArgs e) {
-    if (sessionState_ == null) {
+    if (!IsSessionStarted) {
       return; // No sessions started yet.
     }
 
@@ -236,7 +236,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async Task<bool> EnterDocumentDiffState() {
-    if (sessionState_ == null) {
+    if (!IsSessionStarted) {
       // No session started yet.
       return false;
     }
@@ -261,7 +261,7 @@ public partial class MainWindow : Window, ISession {
   private async Task<bool> EnterDocumentDiffState(IRDocumentHost leftDocument,
                                                   IRDocumentHost rightDocument) {
     //? TODO: Both these checks should be an assert
-    if (sessionState_ == null) {
+    if (!IsSessionStarted) {
       // No session started yet.
       return false;
     }

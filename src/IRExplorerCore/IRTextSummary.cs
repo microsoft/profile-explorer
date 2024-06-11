@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using IRExplorerCore.Utilities;
 
@@ -62,15 +63,29 @@ public class IRTextSummary {
 
   public IRTextFunction FindFunction(string name, Func<string, string> matchCheck) {
     if (unmangledFunctionNameMap_ == null) {
+      ComputeUnmangledFunctionNameMap(matchCheck);
+    }
+    
+    return unmangledFunctionNameMap_.GetValueOrNull(name);
+  }
+
+  public void ComputeUnmangledFunctionNameMap(Func<string, string> matchCheck) {
+    lock (this) {
+      if (unmangledFunctionNameMap_ != null) {
+        return;
+      }
+
+      var sw = Stopwatch.StartNew();
       unmangledFunctionNameMap_ = new();
-      
+
       foreach (var function in Functions) {
         var unmangledName = matchCheck(function.Name);
         unmangledFunctionNameMap_[unmangledName] = function;
       }
+
+      Trace.WriteLine($"Computed for {ModuleName} map in {sw.ElapsedMilliseconds}");
+      Trace.Flush();
     }
-    
-    return unmangledFunctionNameMap_.GetValueOrNull(name);
   }
 
   public List<IRTextFunction> FindFunctions(Func<string, bool> matchCheck) {

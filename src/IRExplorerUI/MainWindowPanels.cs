@@ -497,7 +497,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private IRDocumentHost FindActiveDocumentHost() {
-    if (sessionState_ == null) {
+    if (!IsSessionStarted) {
       return null;
     }
 
@@ -506,7 +506,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private IRDocument FindActiveDocumentView() {
-    if (sessionState_ == null) {
+    if (!IsSessionStarted) {
       return null;
     }
 
@@ -1249,7 +1249,7 @@ public partial class MainWindow : Window, ISession {
       return;
     }
 
-    if (sessionState_ == null || sessionState_.Documents.Count == 0) {
+    if (!IsSessionStarted || sessionState_.Documents.Count == 0) {
       // No proper session started yet.
       return;
     }

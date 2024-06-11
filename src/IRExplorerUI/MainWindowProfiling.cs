@@ -465,12 +465,12 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void CanExecuteProfileCommand(object sender, CanExecuteRoutedEventArgs e) {
-    e.CanExecute = sessionState_ != null && sessionState_.ProfileData != null;
+    e.CanExecute = IsSessionStarted && sessionState_.ProfileData != null;
     e.Handled = true;
   }
 
   private void CanExecuteLoadProfileCommand(object sender, CanExecuteRoutedEventArgs e) {
-    e.CanExecute = sessionState_ == null || sessionState_.ProfileData == null;
+    e.CanExecute = !IsSessionStarted || sessionState_.ProfileData == null;
     e.Handled = true;
   }
 
