@@ -86,9 +86,9 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     InitializeDisassembler();
 
     if (preloadFunctions_) {
-      var functs = Utils.RunSync(() => debugInfo_.GetSortedFunctions());
+      var funcList = debugInfo_.GetSortedFunctions();
 
-      foreach (var funcInfo in functs) {
+      foreach (var funcInfo in funcList) {
         if (funcInfo.RVA == 0) {
           continue; // Some entries don't represent real functions.
         }

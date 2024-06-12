@@ -71,7 +71,7 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
     return functions_;
   }
 
-  public async Task<List<FunctionDebugInfo>> GetSortedFunctions() {
+  public List<FunctionDebugInfo> GetSortedFunctions() {
     return functions_;
   }
 

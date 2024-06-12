@@ -20,7 +20,7 @@ public interface IDebugInfoProvider : IDisposable {
   bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc);
   bool AnnotateSourceLocations(FunctionIR function, FunctionDebugInfo funcDebugInfo);
   IEnumerable<FunctionDebugInfo> EnumerateFunctions();
-  Task<List<FunctionDebugInfo>> GetSortedFunctions();
+  List<FunctionDebugInfo> GetSortedFunctions();
   FunctionDebugInfo FindFunction(string functionName);
   FunctionDebugInfo FindFunctionByRVA(long rva);
   bool PopulateSourceLines(FunctionDebugInfo funcInfo);

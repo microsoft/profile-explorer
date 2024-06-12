@@ -365,9 +365,11 @@ public class ProfileDocumentMarker {
                                        FunctionIR function, IRDocument document,
                                        ProfileDocumentMarkerSettings settings,
                                        OptionalColumnSettings columnSettings) {
-    Trace.WriteLine($"Apply {column.ColumnName}, is main column: {column.IsMainColumn}");
+#if DEBUG
+    Trace.WriteLine($"Update column {column.ColumnName}, is main column: {column.IsMainColumn}");
+#endif
+    
     column.IsVisible = columnSettings.IsColumnVisible(column);
-
     var elementColorPairs = new List<ValueTuple<IRElement, Brush>>(function.TupleCount);
     var cells = columnData.ColumnValues.GetValueOrNull(column);
 

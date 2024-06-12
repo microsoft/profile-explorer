@@ -156,8 +156,10 @@ public partial class GraphPanel : ToolPanelControl {
   }
 
   public void InitializeFromDocument(IRDocument document) {
+#if DEBUG
     Trace.TraceInformation(
       $"Graph panel {ObjectTracker.Track(this)}: initialize with doc {ObjectTracker.Track(document)}");
+#endif
     Document = document;
   }
 
@@ -946,8 +948,11 @@ public partial class GraphPanel : ToolPanelControl {
     InitializeFromDocument(document);
 
     if (document.DuringSectionLoading) {
+#if DEBUG
       Trace.TraceInformation(
         $"Graph panel {ObjectTracker.Track(this)}: Ignore graph reload during section switch");
+#endif
+      
       delayRestoreState_ = !restoredState_;
       return;
     }
@@ -1021,7 +1026,10 @@ public partial class GraphPanel : ToolPanelControl {
     Session.SavePanelState(data, this, section);
 
     // Clear references to IR objects that would keep the previous function alive.
+#if DEBUG
     Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: unloaded doc {ObjectTracker.Track(Document)}");
+#endif
+    
     Document = null;
     graph_ = null;
     hoveredNode_ = null;

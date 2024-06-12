@@ -23,7 +23,6 @@ public sealed class ProfileModuleBuilder {
   private ProfileDataReport report_;
   private ReaderWriterLockSlim lock_;
   private SymbolFileSourceSettings symbolSettings_;
-  private List<FunctionDebugInfo> sortedFunctionList_;
 
   public ProfileModuleBuilder(ProfileDataReport report, ISession session) {
     report_ = report;
@@ -114,14 +113,6 @@ public sealed class ProfileModuleBuilder {
     DebugInfo = session_.CompilerInfo.CreateDebugInfoProvider(ModuleDocument.DebugInfoFile);
     HasDebugInfo = DebugInfo != null;
 
-#if true
-    if (HasDebugInfo) {
-      //? TODO: load on demand if >N queries are done
-      var sw = Stopwatch.StartNew();
-      sortedFunctionList_ = await DebugInfo.GetSortedFunctions();
-    }
-#endif
-
     if (HasDebugInfo) {
       if (ModuleDocument.Loader is DisassemblerSectionLoader disassemblerSectionLoader) {
         disassemblerSectionLoader.Initialize(DebugInfo);
@@ -162,13 +153,8 @@ public sealed class ProfileModuleBuilder {
       FunctionDebugInfo debugInfo = null;
 
       if (HasDebugInfo) {
-        if (sortedFunctionList_ != null) {
-          debugInfo = FunctionDebugInfo.BinarySearch(sortedFunctionList_, funcAddress);
-        }
-        else {
-          // Search for the function at this RVA.
-          debugInfo = DebugInfo.FindFunctionByRVA(funcAddress);
-        }
+        // Search for the function at this RVA.
+        debugInfo = DebugInfo.FindFunctionByRVA(funcAddress);
       }
 
       if (debugInfo == null) {

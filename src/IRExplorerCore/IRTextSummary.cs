@@ -75,16 +75,12 @@ public class IRTextSummary {
         return;
       }
 
-      var sw = Stopwatch.StartNew();
       unmangledFunctionNameMap_ = new();
 
       foreach (var function in Functions) {
         var unmangledName = matchCheck(function.Name);
         unmangledFunctionNameMap_[unmangledName] = function;
       }
-
-      Trace.WriteLine($"Computed for {ModuleName} map in {sw.ElapsedMilliseconds}");
-      Trace.Flush();
     }
   }
 

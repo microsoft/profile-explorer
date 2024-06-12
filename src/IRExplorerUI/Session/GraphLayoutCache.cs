@@ -35,7 +35,9 @@ public class GraphLayoutCache {
       bool useCache = typeof(T) == typeof(FunctionIR);
 
       if (useCache && graphLayout_.TryGetValue(section, out var graphData)) {
+#if DEBUG
         Trace.TraceInformation($"Graph cache: Loading cached section graph for {section}");
+#endif
         graphText = graphData.ToString();
       }
       else {
@@ -54,14 +56,18 @@ public class GraphLayoutCache {
         byte[] inputTextHash = CompressionUtils.CreateSHA256(inputText);
 
         if (useCache && shapeGraphLayout_.TryGetValue(inputTextHash, out var shapeGraphData)) {
+#if DEBUG
           Trace.TraceInformation($"Graph cache: Loading cached graph layout for {section}");
+#endif
           // Associate graph layout with the section.
           graphText = shapeGraphData.ToString(); // Decompress.
           CacheGraphLayoutAndShape(section, shapeGraphData);
         }
         else {
           // This is a new graph layout that must be computed through Graphviz.
+#if DEBUG
           Trace.TraceInformation($"Graph cache: Compute new graph layout for {section}");
+#endif
           graphText = printer.CreateGraph(inputText, task);
 
           if (string.IsNullOrEmpty(graphText)) {

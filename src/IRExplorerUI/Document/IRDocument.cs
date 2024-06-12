@@ -297,8 +297,10 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   }
 
   public void ExecuteDocumentAction(DocumentAction action) {
+#if DEBUG
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Execute {action}");
-
+#endif
+    
     switch (action.ActionKind) {
       case DocumentActionKind.SelectElement: {
         if (action.Element != null) {
@@ -656,9 +658,11 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   }
 
   public async Task LoadSavedSection(ParsedIRTextSection parsedSection, IRDocumentState savedState) {
+#if DEBUG
     Trace.TraceInformation(
       $"Document {ObjectTracker.Track(this)}: Load saved section {parsedSection}");
-
+#endif
+    
     selectedElements_ = savedState.SelectedElements?.ToHashSet(item => (IRElement)item) ??
                         new HashSet<IRElement>();
 
@@ -678,8 +682,9 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   public async Task LoadSection(ParsedIRTextSection parsedSection,
                                 bool isSourceCode = false) {
+#if DEBUG
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Load section {parsedSection}");
-
+#endif
     // If the section loading is not done in two stages,
     // run the first stage now to initialize the text view.
     if (!DuringSectionLoading) {
@@ -734,7 +739,9 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   public void MarkElement(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
     if (raiseEvent) {
+#if DEBUG
       Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element.Id}");
+  #endif
       RecordReversibleAction(DocumentActionKind.MarkElement, element);
     }
 
@@ -769,7 +776,9 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   public void MarkElementAppend(IRElement element, HighlightingStyle style,
                                 HighlighingType highlightingType, bool raiseEvent = true) {
+#if DEBUG
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element.Id}");
+#endif
     var highlighter = GetHighlighter(highlightingType);
 
     var group = new HighlightedElementGroup(element, style);
@@ -918,7 +927,9 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     ResetExpressionLevel(element);
 
     if (element != null) {
+#if DEBUG
       Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Select element {element.Id}");
+#endif
 
       // Don't highlight a block unless the header is selected.
       if (element is BlockIR && fromUICommand && textOffset != -1) {
@@ -1001,7 +1012,10 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   }
 
   public void PreloadSection(ParsedIRTextSection parsedSection) {
+#if DEBUG
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Start setup for {parsedSection}");
+#endif
+    
     DuringSectionLoading = true;
     Section = parsedSection.Section;
     Function = parsedSection.Function;
@@ -1724,7 +1738,9 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     }
 
     if (action != null) {
-      //Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Record undo action {action}");
+#if DEBUG
+      Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Record undo action {action}");
+#endif
       actionUndoStack_.Push(action);
     }
   }
@@ -2954,9 +2970,11 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   private async Task LateLoadSectionSetup(ParsedIRTextSection parsedSection,
                                           bool isSourceCode = false) {
+#if DEBUG
     Trace.TraceInformation(
       $"Document {ObjectTracker.Track(this)}: Complete setup for {parsedSection}");
-
+#endif
+    
     // Folding uses the basic block boundaries.
     actionUndoStack_.Clear();
     SetupBlockHighlighter();

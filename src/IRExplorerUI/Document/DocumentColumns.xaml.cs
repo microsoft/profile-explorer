@@ -253,7 +253,6 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     });
 
     // Handle clicks on the column headers.
-    Trace.WriteLine($"Show {columnData.Columns.Count} columns");
     var sortedColumns = columnSettings_.FilterAndSortColumns(columnData.Columns);
     profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, sortedColumns);
 

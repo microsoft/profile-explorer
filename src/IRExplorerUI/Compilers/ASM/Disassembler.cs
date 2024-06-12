@@ -292,11 +292,7 @@ public class Disassembler : IDisposable {
 
   private FunctionDebugInfo FindFunctionByRva(long rva) {
     if (debugInfo_ != null) {
-      if (sortedFuncList_ == null) {
-        sortedFuncList_ = Utils.RunSync(() => debugInfo_.GetSortedFunctions());
-      }
-
-      return FunctionDebugInfo.BinarySearch(sortedFuncList_, rva);
+      return debugInfo_.FindFunctionByRVA(rva);
     }
 
     return null;

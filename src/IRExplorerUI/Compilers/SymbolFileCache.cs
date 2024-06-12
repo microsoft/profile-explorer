@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using IRExplorerCore.FileFormat;
 using ProtoBuf;
 
@@ -18,7 +19,7 @@ public class SymbolFileCache {
   public List<FunctionDebugInfo> FunctionList { get; set; }
   public static string DefaultCacheDirectoryPath => Path.Combine(Path.GetTempPath(), "irexplorer", "symcache");
 
-  public static bool Serialize(SymbolFileCache symCache, string directoryPath) {
+  public static async Task<bool> SerializeAsync(SymbolFileCache symCache, string directoryPath) {
     try {
       var outStream = new MemoryStream();
       Serializer.Serialize(outStream, symCache);
@@ -32,8 +33,7 @@ public class SymbolFileCache {
       var cachePath = Path.Combine(directoryPath, cacheFile);
 
       //? TODO: Convert everything to RunSync or add the support in the FileArchive
-      return FileArchive.CreateFromStreamAsync(outStream, cacheFile, cachePath).ConfigureAwait(false).
-        GetAwaiter().GetResult();
+      return await FileArchive.CreateFromStreamAsync(outStream, cacheFile, cachePath).ConfigureAwait(false);
     }
     catch (Exception ex) {
       Trace.WriteLine($"Failed to save symbol file cache: {ex.Message}");
@@ -41,7 +41,7 @@ public class SymbolFileCache {
     }
   }
 
-  public static SymbolFileCache Deserialize(SymbolFileDescriptor symbolFile, string directoryPath) {
+  public static async Task<SymbolFileCache> DeserializeAsync(SymbolFileDescriptor symbolFile, string directoryPath) {
     try {
       var cacheFile = MakeCacheFilePath(symbolFile);
       var cachePath = Path.Combine(directoryPath, cacheFile);
@@ -50,10 +50,10 @@ public class SymbolFileCache {
         return null;
       }
 
-      using var archive = FileArchive.LoadAsync(cachePath).ConfigureAwait(false).GetAwaiter().GetResult();
+      using var archive = await FileArchive.LoadAsync(cachePath).ConfigureAwait(false);
 
       if (archive != null) {
-        using var stream = Utils.RunSync<MemoryStream>(() => archive.ExtractFileToMemoryAsync(cacheFile));
+        using var stream = await archive.ExtractFileToMemoryAsync(cacheFile);
 
         if (stream != null) {
           var symCache = Serializer.Deserialize<SymbolFileCache>(stream);
