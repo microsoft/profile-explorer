@@ -429,6 +429,28 @@
           </GridViewColumn>
 
           <GridViewColumn Width="150">
+            <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="Time (total)" />
+
+            <GridViewColumn.HeaderContainerStyle>
+              <Style TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+              </Style>
+            </GridViewColumn.HeaderContainerStyle>
+
+            <GridViewColumn.CellTemplate>
+              <DataTemplate>
+                <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
+                  <ContentControl
+                    HorizontalAlignment="Stretch"
+                    Content="{Binding}"
+                    ContentTemplate="{StaticResource ProfilePercentageTemplate}"
+                    Visibility="{Binding HasCallTreeNode, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </Border>
+              </DataTemplate>
+            </GridViewColumn.CellTemplate>
+          </GridViewColumn>
+          
+          <GridViewColumn Width="150">
             <GridViewColumnHeader x:Name="ExclusiveChildTimeColumnHeader" Content="Time (self)" />
 
             <GridViewColumn.HeaderContainerStyle>
@@ -450,27 +472,6 @@
             </GridViewColumn.CellTemplate>
           </GridViewColumn>
 
-          <GridViewColumn Width="150">
-            <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="Time (total)" />
-
-            <GridViewColumn.HeaderContainerStyle>
-              <Style TargetType="{x:Type GridViewColumnHeader}">
-                <Setter Property="HorizontalContentAlignment" Value="Left" />
-              </Style>
-            </GridViewColumn.HeaderContainerStyle>
-
-            <GridViewColumn.CellTemplate>
-              <DataTemplate>
-                <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
-                  <ContentControl
-                    HorizontalAlignment="Stretch"
-                    Content="{Binding}"
-                    ContentTemplate="{StaticResource ProfilePercentageTemplate}"
-                    Visibility="{Binding HasCallTreeNode, Converter={StaticResource BoolToVisibilityConverter}}" />
-                </Border>
-              </DataTemplate>
-            </GridViewColumn.CellTemplate>
-          </GridViewColumn>
           <GridViewColumn Width="120">
             <GridViewColumnHeader x:Name="ChildAlternateNameColumnHeader" Content="Module" />
 

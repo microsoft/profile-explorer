@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows;
@@ -100,47 +101,99 @@ static class ExtensionMethods {
     return ColorPens.GetBoldPen(color);
   }
 
+  // Cache percentage and time value to string conversion result
+  // to reduce GC pressure when rendering.
+  private record PercentageString(double value, int digits, bool trim, string suffix);
+  private record TimeString(TimeSpan value, int digits, string suffix);
+  private static ConcurrentDictionary<PercentageString, string> percentageStringCache_ = new();
+  private static ConcurrentDictionary<TimeString, string> nanosecondsTimeStringCache_ = new();
+  private static ConcurrentDictionary<TimeString, string> microsecondTimeStringCache_ = new();
+  private static ConcurrentDictionary<TimeString, string> millisecondsTimeStringCache_ = new();
+  private static ConcurrentDictionary<TimeString, string> secondsTimeStringCache_ = new();
+  
   public static string AsTrimmedPercentageString(this double value, int digits = 2, string suffix = "%") {
     return AsPercentageString(value, digits, true, suffix);
   }
 
   public static string AsPercentageString(this double value, int digits = 2,
                                           bool trim = false, string suffix = "%") {
+    var entry = new PercentageString(value, digits, trim, suffix);
+
+    if (percentageStringCache_.TryGetValue(entry, out var percentageString)) {
+      return percentageString;
+    }
+    
     value = Math.Round(value * 100, digits);
 
     if (value == 0 && trim) {
+      percentageStringCache_.TryAdd(entry, "");
       return "";
     }
 
-    return digits switch {
+    percentageString = digits switch {
       1 => $"{value:0.0}{suffix}",
       2 => $"{value:0.00}{suffix}",
       _ => string.Format("{0:0." + new string('0', digits) + "}", value) + suffix
     };
+
+    percentageStringCache_.TryAdd(entry, percentageString);
+    return percentageString;
   }
 
   public static string AsNanosecondsString(this TimeSpan value, int digits = 2,
                                            string suffix = " ns") {
+    var entry = new TimeString(value, digits, suffix);
+
+    if (nanosecondsTimeStringCache_.TryGetValue(entry, out var timeString)) {
+      return timeString;
+    }
+    
     double roundedValue = value.TotalNanoseconds.TruncateToDigits(digits);
-    return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
+    timeString = string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
+    nanosecondsTimeStringCache_.TryAdd(entry, timeString);
+    return timeString;
   }
 
   public static string AsMicrosecondString(this TimeSpan value, int digits = 2,
                                            string suffix = " µs") {
+    var entry = new TimeString(value, digits, suffix);
+
+    if (microsecondTimeStringCache_.TryGetValue(entry, out var timeString)) {
+      return timeString;
+    }
+    
     double roundedValue = value.TotalMicroseconds.TruncateToDigits(digits);
-    return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
+    timeString = string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
+    microsecondTimeStringCache_.TryAdd(entry, timeString);
+    return timeString;
   }
 
   public static string AsMillisecondsString(this TimeSpan value, int digits = 2,
                                             string suffix = " ms") {
+    var entry = new TimeString(value, digits, suffix);
+
+    if (millisecondsTimeStringCache_.TryGetValue(entry, out var timeString)) {
+      return timeString;
+    }
+    
     double roundedValue = value.TotalMilliseconds.TruncateToDigits(digits);
-    return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
+    timeString = string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
+    millisecondsTimeStringCache_.TryAdd(entry, timeString);
+    return timeString;
   }
 
   public static string AsSecondsString(this TimeSpan value, int digits = 2,
                                        string suffix = " s") {
+    var entry = new TimeString(value, digits, suffix);
+
+    if (secondsTimeStringCache_.TryGetValue(entry, out var timeString)) {
+      return timeString;
+    }
+    
     double roundedValue = value.TotalSeconds.TruncateToDigits(digits);
-    return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
+    timeString = string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
+    secondsTimeStringCache_.TryAdd(entry, timeString);
+    return timeString;
   }
 
   public static string AsTimeString(this TimeSpan value, int digits = 2) {

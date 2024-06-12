@@ -285,6 +285,11 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
                                    IRDocument associatedDocument = null,
                                    bool restoreState = false) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
+    if (section_ != null && section_.Equals(section)) {
+      return;
+    }
+    
     Utils.EnableControl(this);
     section_ = section;
     associatedDocument_ = associatedDocument;

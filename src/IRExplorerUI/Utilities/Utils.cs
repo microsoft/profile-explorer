@@ -221,12 +221,13 @@ public static class Utils {
                                                  MessageBoxImage image) {
     if (owner != null) {
       using var centerForm = new DialogCenteringHelper(owner);
-      return MessageBox.Show(text, "IR Explorer", buttons, image,
-                             MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
+      return MessageBox.Show(App.Current.MainWindow, text, "IR Explorer", buttons, image,
+                             MessageBoxResult.OK);
     }
     else {
-      return MessageBox.Show(text, "IR Explorer", buttons, image,
-                             MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
+      // Likely called from a non-UI thread, show through the Dispatcher.
+      return App.Current.Dispatcher.Invoke(() => MessageBox.Show(App.Current.MainWindow, text, "IR Explorer", buttons,
+                                                                 image, MessageBoxResult.OK));
     }
   }
 

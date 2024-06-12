@@ -341,7 +341,7 @@ public class FlameGraphRenderer {
         }
         case 1: {
           if (settings_.AppendPercentageToFunction) {
-            label = flameGraph_.ScaleWeight(node).AsPercentageString();
+            label = node.Percentage.AsPercentageString();
             margin = FlameGraphNode.ExtraValueMargin;
             textColor = node.PercentageTextColor;
             useNameFont = true;

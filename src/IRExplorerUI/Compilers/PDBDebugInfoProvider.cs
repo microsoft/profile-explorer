@@ -359,7 +359,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       }
     }
 
-    return EnumerateFunctionsImpl();
+    return CollectFunctionDebugInfo();
   }
 
   public async Task<List<FunctionDebugInfo>> GetSortedFunctions() {
@@ -378,14 +378,12 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       }
       else {
         // Create sorted list of functions and public symbols.
-        sortedFunctionList_ = new List<FunctionDebugInfo>();
+        sortedFunctionList_ = CollectFunctionDebugInfo();
 
-        foreach (var funcInfo in EnumerateFunctionsImpl()) {
-          if (!funcInfo.IsUnknown) {
-            sortedFunctionList_.Add(funcInfo);
-          }
+        if (sortedFunctionList_ == null) {
+          return null;
         }
-
+        
         sortedFunctionList_.Sort();
 
         // Save symbol cache file.
@@ -638,6 +636,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
           locationTag.AddInlinee(inlinee);
         }
       }
+      
+      Marshal.ReleaseComObject(lineEnum);
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to get source lines for {funcSymbol.name}: {ex.Message}");
@@ -686,8 +686,11 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
           inlineeList.Add(inlinee);
           yield return inlinee;
         }
+
+        Marshal.ReleaseComObject(inlineeLineEnum);
       }
 
+      Marshal.ReleaseComObject(inlineeFrameEnum);
       inlineeByRvaCache_.TryAdd(instrRVA, inlineeList);
     }
   }
@@ -725,42 +728,46 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
   }
 
-  private IEnumerable<FunctionDebugInfo> EnumerateFunctionsImpl() {
+  private List<FunctionDebugInfo> CollectFunctionDebugInfo() {
     if (!EnsureLoaded()) {
-      yield break;
+      return null;
     }
 
-    IDiaEnumSymbols symbolEnum;
+    List<FunctionDebugInfo> funcSymbols = null;
+    IDiaEnumSymbols symbolEnum = null;
+    IDiaEnumSymbols publicSymbolEnum = null;
 
     try {
       globalSymbol_.findChildren(SymTagEnum.SymTagFunction, null, 0, out symbolEnum);
-    }
-    catch (Exception ex) {
-      Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
-      yield break;
-    }
-
-    foreach (IDiaSymbol sym in symbolEnum) {
-      //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
-      var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
-      yield return funcInfo;
-    }
-
-    // Functions also show up as public symbols.
-    IDiaEnumSymbols publicSymbolEnum;
-
-    try {
       globalSymbol_.findChildren(SymTagEnum.SymTagPublicSymbol, null, 0, out publicSymbolEnum);
+      funcSymbols = new List<FunctionDebugInfo>(symbolEnum.count + publicSymbolEnum.count);
+
+      foreach (IDiaSymbol sym in symbolEnum) {
+        //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
+        var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+        funcSymbols.Add(funcInfo);
+      }
+
+      foreach (IDiaSymbol sym in publicSymbolEnum) {
+        //Trace.WriteLine($" PublicSym {sym.name}: RVA {sym.relativeVirtualAddress:X} size {sym.length}");
+        var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+        funcSymbols.Add(funcInfo);
+      }
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
-      yield break;
+    }
+    finally {
+      if (symbolEnum != null) {
+        Marshal.ReleaseComObject(symbolEnum);
+      }
+      
+      if (publicSymbolEnum != null) {
+        Marshal.ReleaseComObject(publicSymbolEnum);
+      }
     }
 
-    foreach (IDiaSymbol sym in publicSymbolEnum) {
-      //Trace.WriteLine($" PublicSym {sym.name}: RVA {sym.relativeVirtualAddress:X} size {sym.length}");
-      yield return new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
-    }
+    return funcSymbols;
   }
 
   private IDiaSymbol FindFunctionSymbol(string functionName) {

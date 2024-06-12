@@ -400,7 +400,7 @@ public partial class FlameGraphViewer : FrameworkElement {
   }
 
   private void SetupEvents() {
-    MouseLeftButtonDown += OnMouseLeftButtonDown;
+    MouseLeftButtonUp += OnMouseLeftButtonUp;
     MouseRightButtonDown += OnMouseRightButtonDown;
     MouseMove += OnMouseMove;
   }
@@ -536,7 +536,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     SelectPointedNode(e, false);
   }
 
-  private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+  private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
     SelectPointedNode(e, true);
   }
 

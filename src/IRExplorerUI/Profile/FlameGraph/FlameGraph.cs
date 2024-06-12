@@ -222,7 +222,7 @@ public sealed class FlameGraph {
     Trace.WriteLine($"Timeline Samples: {data.Samples.Count}");
     data.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
 
-    var flameNode = new FlameGraphNode(null, RootWeight, 0, nameFormatter_);
+    var flameNode = CreateFlameGraphNode(null, RootWeight, 0);
     flameNode.StartTime = TimeSpan.MaxValue;
     flameNode.EndTime = TimeSpan.MinValue;
 
@@ -277,18 +277,22 @@ public sealed class FlameGraph {
     if (rootNode == null) {
       // Make on dummy root node that hosts all real root nodes.
       RootWeight = CallTree.TotalRootNodesWeight;
-      var flameNode = new FlameGraphNode(null, RootWeight, 0, nameFormatter_);
+      var flameNode = CreateFlameGraphNode(null, RootWeight, 0);
       RootNode = Build(flameNode, CallTree.RootNodes, 0);
     }
     else {
       RootWeight = rootNode.Weight;
-      var flameNode = new FlameGraphNode(rootNode, rootNode.Weight, 0, nameFormatter_);
+      var flameNode = CreateFlameGraphNode(rootNode, rootNode.Weight, 0);
       RootNode = Build(flameNode, rootNode.Children, 0);
     }
   }
 
   public double ScaleWeight(FlameGraphNode node) {
     return node.Weight.Ticks * rootWeightReciprocal_;
+  }
+  
+  public double ScaleExclusiveWeight(FlameGraphNode node) {
+    return node.ExclusiveWeight.Ticks * rootWeightReciprocal_;
   }
 
   public double ScaleStartTime(TimeSpan time) {
@@ -405,17 +409,34 @@ public sealed class FlameGraph {
       childrenWeight += child.Weight;
     }
 
+    // Place nodes left to right based on weight, heaviest first.
     sortedChildren.Sort((a, b) => b.Weight.CompareTo(a.Weight));
 
     flameNode.Children = new List<FlameGraphNode>(children.Count);
     flameNode.ChildrenWeight = childrenWeight;
 
     foreach (var child in sortedChildren) {
-      var childFlameNode = new FlameGraphNode(child, child.Weight, depth + 1, nameFormatter_);
+      var childFlameNode = CreateFlameGraphNode(child, child.Weight, depth + 1);
       var childNode = Build(childFlameNode, child.Children, depth + 1);
       childNode.Parent = flameNode;
       flameNode.Children.Add(childNode);
       child.Tag = childFlameNode; // Quick mapping between call tree and flame graph node.
+    }
+
+    return flameNode;
+  }
+
+  private FlameGraphNode CreateFlameGraphNode(ProfileCallTreeNode callTreeNode, TimeSpan weight, int depth) {
+    var flameNode = new FlameGraphNode(callTreeNode, weight, depth, nameFormatter_);
+
+    if (callTreeNode != null) {
+      flameNode.ExclusiveWeight = callTreeNode.ExclusiveWeight;
+      flameNode.Percentage = ScaleWeight(flameNode);
+      flameNode.ExclusivePercentage = ScaleExclusiveWeight(flameNode);
+    }
+    else {
+      // For the root node, exclusive time is 0% and inclusive 100%.
+      flameNode.Percentage = 1;
     }
 
     return flameNode;

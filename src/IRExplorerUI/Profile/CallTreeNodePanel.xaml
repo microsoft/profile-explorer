@@ -655,8 +655,8 @@
         <profile:ProfileListView
           x:Name="FunctionList"
           NameColumnTitle="Function"
+          ShowCombinedTimeNameRow="True"
           ShowContextColumn="True"
-          ShowExclusiveTimeNameRow="True"
           ShowModuleColumn="True" />
       </TabItem>
       <TabItem
@@ -724,6 +724,7 @@
             MinHeight="100"
             NameColumnTitle="Category Function"
             ShowCombinedTimeNameRow="True"
+            ShowModuleColumn="True"
             ShowContextColumn="True" />
         </Grid>
       </TabItem>

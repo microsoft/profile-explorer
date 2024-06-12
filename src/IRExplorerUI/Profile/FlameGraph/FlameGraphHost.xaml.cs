@@ -565,11 +565,9 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         SetMaxWidth(args.NewSize.Width, false);
       }
     };
-
-    GraphHost.PreviewMouseWheel += OnPreviewMouseWheel;
-    GraphHost.PreviewMouseDown += OnPreviewMouseDown;
-
+    
     // Setup events for the flame graph area.
+    GraphHost.PreviewMouseWheel += OnPreviewMouseWheel;
     MouseLeftButtonDown += OnMouseLeftButtonDown;
     MouseLeftButtonUp += OnMouseLeftButtonUp;
     MouseRightButtonDown += OnMouseRightButtonDown;
@@ -628,20 +626,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                                               popup => {
                                                 Session.RegisterDetachedPanel(popup);
                                               });
-  }
-
-  private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) {
-    HidePreviewPopup();
-
-    if (IsMouseOutsideViewport(e)) {
-      return;
-    }
-
-    var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
-
-    if (pointedNode == null) {
-      GraphViewer.ClearSelection(); // Click outside graph is captured here.
-    }
   }
 
   private void HidePreviewPopup() {
@@ -822,7 +806,18 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     if (dragging_) {
       EndMouseDragging();
       e.Handled = true;
+      
+      // Don't deselect nodes if dragging was done.
+      var draggingEnd = e.GetPosition(GraphHost);
+      var draggingDistance = draggingEnd - draggingStart_;
+
+      if (Math.Abs(draggingDistance.X) > double.Epsilon ||
+          Math.Abs(draggingDistance.Y) > double.Epsilon) {
+        return;
+      }
     }
+    
+    HandleNodeSelection(e);
   }
 
   private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
@@ -832,13 +827,17 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       return;
     }
 
-    if (!HandleNodeSelection(e)) {
+    HidePreviewPopup();
+    var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
+
+    if (pointedNode == null) {
       StartMouseDragging(e);
       e.Handled = true;
     }
   }
 
   private void OnMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
+    HidePreviewPopup();
     HandleNodeSelection(e);
   }
 
@@ -847,8 +846,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       return false;
     }
 
-    var point = e.GetPosition(GraphViewer);
-    var pointedNode = GraphViewer.FindPointedNode(point);
+    var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
     if (pointedNode == null) {
       GraphViewer.ClearSelection(); // Click outside graph is captured here.

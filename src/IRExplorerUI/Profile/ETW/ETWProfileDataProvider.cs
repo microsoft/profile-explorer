@@ -299,7 +299,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     var sampleRefs = CollectionsMarshal.AsSpan(rawProfile.Samples).Slice(start, end - start);
     int sampleIndex = 0;
 
-    foreach (var sample in sampleRefs) {
+    foreach (ref var sample in sampleRefs) {
       // Update progress every pow2 N samples.
       if ((++sampleIndex & PROGRESS_UPDATE_INTERVAL - 1) == 0) {
         if (cancelableTask is {IsCanceled: true}) {
@@ -487,10 +487,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     CollectTopModules(RawProfileData rawProfile, ProfileProcess mainProcess) {
     var moduleMap = new Dictionary<ProfileImage, int>();
     int pointerSize = rawProfile.TraceInfo.PointerSize;
+    var sampleRefs = CollectionsMarshal.AsSpan(rawProfile.Samples);
+    var timer = Stopwatch.StartNew();
     int index = 0;
-    var sw = Stopwatch.StartNew();
 
-    foreach (var sample in rawProfile.Samples) {
+    foreach (ref var sample in sampleRefs) {
       var context = sample.GetContext(rawProfile);
 
       if (context.ProcessId != mainProcess.ProcessId) {
@@ -521,7 +522,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // Stop collecting after a couple seconds, it's good enough
       // for an approximated set of used modules.
       if ((++index & PROGRESS_UPDATE_INTERVAL - 1) == 0 &&
-          sw.ElapsedMilliseconds > 2000) {
+          timer.ElapsedMilliseconds > 2000) {
         break;
       }
     }
@@ -530,7 +531,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     moduleList.Sort((a, b) => b.Item2.CompareTo(a.Item2));
 
 #if DEBUG
-    Trace.WriteLine($"Collected top modules: {sw.Elapsed}, modules: {moduleMap.Count}");
+    Trace.WriteLine($"Collected top modules: {timer.Elapsed}, modules: {moduleMap.Count}");
 
     foreach (var pair in moduleList) {
       Trace.WriteLine($"  - {pair.Item1.ModuleName}: {pair.Item2}");
@@ -869,6 +870,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
 
     //? TODO: Parallel
+    //? TODO: Use ref foreach
     currentSampleIndex_ = 0;
     Trace.WriteLine($"Start process PMC at {DateTime.Now}");
     var sw = Stopwatch.StartNew();
